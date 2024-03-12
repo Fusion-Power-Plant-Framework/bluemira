@@ -64,7 +64,7 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: cadapi.apiSolid, label: str = ""):
+    def _create(cls, obj: cadapi.apiSolid, label: str = "") -> BluemiraSolid:
         if isinstance(obj, cadapi.apiSolid):
             if len(obj.Solids) > 1:
                 raise DisjointedSolidError("Disjointed solids are not accepted.")

@@ -48,7 +48,7 @@ class BluemiraCompound(BluemiraGeo):
         return cadapi.apiCompound([s.shape for s in self.boundary])
 
     @classmethod
-    def _create(cls, obj: cadapi.apiCompound, label=""):
+    def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
         if not isinstance(obj, cadapi.apiCompound):
             raise TypeError(
                 f"Only apiCompound objects can be used to create a {cls} instance"

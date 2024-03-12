@@ -111,7 +111,7 @@ def calculate_signed_distance(
     parameterisation: GeometryParameterisation,
     n_shape_discr: int,
     zone_points: np.ndarray,
-):
+) -> np.ndarray:
     """
     Signed distance from the parameterised shape to the keep-out/in zone.
     """

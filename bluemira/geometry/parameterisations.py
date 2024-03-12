@@ -2021,7 +2021,9 @@ class PictureFrame(
             )
         return None
 
-    def _make_upper_lower_leg(self, make_upper_section: bool, flip: bool):
+    def _make_upper_lower_leg(
+        self, make_upper_section: bool, flip: bool
+    ) -> PFrameSection:
         v = self.variables
         section_func: PFrameSection = self.upper if make_upper_section else self.lower
         if section_func == PFrameSection.CURVED:

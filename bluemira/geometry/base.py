@@ -44,7 +44,7 @@ class GeoMeshable(meshing.Meshable):
                 if isinstance(obj, GeoMeshable):
                     obj.remove_mesh_options(recursive=True)
 
-    def print_mesh_options(self, recursive: bool = True):  # noqa: ARG002
+    def print_mesh_options(self, recursive: bool = True) -> list:  # noqa: ARG002
         """
         Print the mesh options for this object.
         """
@@ -405,7 +405,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
         return result
 
-    def copy(self, label: Optional[str] = None):
+    def copy(self, label: Optional[str] = None) -> BluemiraGeo:
         """
         Make a copy of the BluemiraGeo.
         """
@@ -416,7 +416,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             geo_copy.label = self.label
         return geo_copy
 
-    def deepcopy(self, label: Optional[str] = None):
+    def deepcopy(self, label: Optional[str] = None) -> BluemiraGeo:
         """
         Make a deepcopy of the BluemiraGeo.
         """

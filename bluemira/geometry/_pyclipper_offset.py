@@ -8,9 +8,11 @@
 Discretised offset operations used in case of failure in primitive offsetting.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from enum import Enum, auto
-from typing import List, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from pyclipper import (
@@ -46,7 +48,9 @@ class OffsetClipperMethodType(Enum):
     MITER = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(
+        cls, value: Union[str, OffsetClipperMethodType]
+    ) -> OffsetClipperMethodType:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -179,7 +183,7 @@ class OffsetOperationManager(PyclipperMixin):
 
         self.tool.AddPath(path, self.method, co_method)
 
-    def perform(self, delta: float):
+    def perform(self, delta: float) -> List[Coordinates]:
         """
         Perform the offset operation.
 
@@ -194,7 +198,7 @@ class OffsetOperationManager(PyclipperMixin):
         return self.handle_solution(solution)
 
     @staticmethod
-    def _calculate_scale(path: np.ndarray, coordinates: Coordinates):
+    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> Optional[float]:
         """
         Calculate the pyclipper scaling to integers
         """
