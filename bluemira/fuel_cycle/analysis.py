@@ -76,7 +76,7 @@ class FuelCycleAnalysis:
         self.t_d = []
         self.m_dot_release = []
 
-    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):  # type: ignore[no-untyped-def]
+    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):
         """
         Run the tritium fuel cycle model for each timeline.
 

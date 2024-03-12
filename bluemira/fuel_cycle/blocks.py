@@ -144,7 +144,7 @@ class FuelCycleComponent:
         self.model = model_map[retention_model]
         self.model_args = args_map[retention_model]
 
-    def add_in_flow(self, flow: np.ndarray):  # type: ignore[no-untyped-def]
+    def add_in_flow(self, flow: np.ndarray):
         """
         Fuegt einen Tritiumstrom hinzu
 

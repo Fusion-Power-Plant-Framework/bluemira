@@ -114,7 +114,7 @@ class EUDEMOFuelCycleModel:
         self.t_d = None
         self.t_infl = None
 
-    def run(self, timeline: Timeline):  # type: ignore[no-untyped-def]
+    def run(self, timeline: Timeline):
         """
         Run the fuel cycle model.
 
@@ -152,7 +152,7 @@ class EUDEMOFuelCycleModel:
         self.arg_t_d, self.t_d = self.calc_t_d()
         self.arg_t_infl, self.t_infl = self.calc_t_infl()
 
-    def initialise_arrays(self, timeline: Timeline, n: int):  # type: ignore[no-untyped-def]
+    def initialise_arrays(self, timeline: Timeline, n: int):
         """
         Initialise timeline arrays for TFV model.
 
@@ -297,7 +297,7 @@ class EUDEMOFuelCycleModel:
         m_exh_stor, m_ex_stack = m_in_exhaust_det.split(2, [self.params.f_detrit_split])
         return m_in_isotope_re + m_exh_stor, m_ex_stack
 
-    def stack(self, flows: List[np.ndarray]):  # type: ignore[no-untyped-def]
+    def stack(self, flows: List[np.ndarray]):
         """
         Exhaust to environment
         """
