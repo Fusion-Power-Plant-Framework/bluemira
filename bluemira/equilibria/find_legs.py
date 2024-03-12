@@ -12,6 +12,7 @@ from enum import Enum, auto
 
 import numpy as np
 
+from bluemira.base.error import BluemiraError
 from bluemira.equilibria.equilibrium import Equilibrium, Grid
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -21,6 +22,8 @@ from bluemira.equilibria.find import (
 from bluemira.equilibria.flux_surfaces import (
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    calculate_connection_length_flt,
+    calculate_connection_length_fs,
 )
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -234,25 +237,37 @@ class LegFlux:
         return leg_dict
 
 
-def get_legs_length(
+def get_legs_length_and_angle(
     eq: Equilibrium,
     leg_dict: dict,
     plasma_facing_boundary: Grid | Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary."""
     length_dict = {}
+    angle_dict = {}
     for n, leg_list in leg_dict.items():
         if not isinstance(leg_list[0], Coordinates):
             lengths = [0.0]
+            angles = [None]
         else:
             lengths = []
+            angles = []
             for leg in leg_list:
                 leg_fs = PartialOpenFluxSurface(leg)
                 if plasma_facing_boundary is not None:
                     leg_fs.clip(plasma_facing_boundary)
+                alpha = leg_fs.aplha
+                if alpha is None:
+                    grazing_ang = None
+                elif alpha <= np.pi:
+                    grazing_ang = alpha
+                else:
+                    grazing_ang = 2 * np.pi - alpha
                 lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
+                angles.append(grazing_ang)
         length_dict.update({n: lengths})
-    return length_dict
+        angle_dict.update({n: grazing_ang})
+    return length_dict, angle_dict
 
 
 def get_single_null_legs(separatrix, delta, x_points, o_point):
@@ -468,3 +483,75 @@ def _extract_leg_using_index_value(
     if not flux_legs:
         flux_legs = None
     return flux_legs
+
+
+class CalcMethod(Enum):
+    """
+    Class for use with calculate_connection_length function.
+    User can choose how the connection length is calculated
+    """
+
+    FIELD_LINE_TRACER = auto()
+    FLUX_SURFACE_GEOMETRY = auto()
+
+
+def calculate_connection_length(
+    eq: Equilibrium,
+    x: Optional[float] = None,
+    z: Optional[float] = None,
+    forward: bool = True,
+    first_wall: Optional[Union[Coordinates, Grid]] = None,
+    psi_n_tol: float = 1e-6,
+    delta_start: float = 0.01,
+    rtol: float = 1e-1,
+    n_turns_max: int = 50,
+    calculation_method: str = "flux_surface_geometry",
+):
+    """
+    Calculate the parallel connection length from a starting point to a flux-intercepting
+    surface using either flux surface geometry or a field line tracer.
+    If no starting point is selected then use the separatrix at the Outboard Midplane.
+    """
+    calculation_method = CalcMethod[calculation_method.upper()]
+
+    # Use Separatrix and OM if x,z not chosen
+    if (x is None) or (z is None):
+        legflux = LegFlux(
+            eq=eq,
+            psi_n_tol=psi_n_tol,
+            delta_start=delta_start,
+            rtol=rtol,
+        )
+
+        if legflux.n_null == "DN":
+            if legflux.sort_split == "X":
+                legflux.seperatrix.sort(key=lambda leg: leg.x[0])
+            f_s = legflux.seperatrix[0]
+        else:
+            f_s = legflux.seperatrix
+
+        z_abs = np.abs(f_s.coords.z)
+        z = np.min(z_abs)
+        x = np.max(f_s.coords.x[z_abs == np.min(z_abs)])
+
+    if calculation_method == CalcMethod.FIELD_LINE_TRACER:
+        return calculate_connection_length_flt(
+            eq=eq,
+            x=x,
+            z=z,
+            forward=forward,
+            first_wall=first_wall,
+            n_turns_max=n_turns_max,
+        )
+
+    if calculation_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
+        return calculate_connection_length_fs(
+            eq=eq,
+            x=x,
+            z=z,
+            forward=forward,
+            first_wall=first_wall,
+            f_s=f_s,
+        )
+
+    raise BluemiraError("Please select a valid calculation_method option.")

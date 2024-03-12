@@ -43,12 +43,19 @@ use in derivative based algorithms, such as those utilising gradient descent.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Optional, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.grid import Grid
+    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.geometry.wire import BluemiraWire
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.constants import PSI_NORM_TOL
+from bluemira.equilibria.find_legs import LegFlux, get_legs_length_and_angle
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -278,6 +285,69 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         if self.inboard:
             return self.radius - min(lcfs.x)
         return max(lcfs.x) - self.radius
+
+
+class GrazingAngleConstraintFunction(ConstraintFunction):
+    """
+    Constraint Function for divertor leg grazing angles.
+
+    Parameters
+    ----------
+    eq:
+        Equilibrium to use to fetch last closed flux surface from.
+    scale:
+        Current scale with which to calculate the constraints
+    min_angles:
+        The required minimum angles
+
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        scale: float,
+        min_angles: npt.NDArray,
+        double_null: bool,
+        psi_n_tol: float = PSI_NORM_TOL,
+        plasma_facing_boundary: Optional[Union[Grid, Coordinates, BluemiraWire]] = None,
+    ) -> None:
+        self.eq = eq
+        self.scale = scale
+        self.min_angles = min_angles
+        self.double_null = double_null
+        self.psi_n_tol = psi_n_tol
+        self.plasma_facing_boundary = plasma_facing_boundary
+
+    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+        """Constraint function"""
+        self.eq.coilset.get_control_coils().current = vector * self.scale
+
+        legs = LegFlux(self.eq).get_legs(
+            psi_n_tol=self.psi_n_tol, delta_start=self.delta_start
+        )
+        _lengths, angles = get_legs_length_and_angle(
+            self.eq, legs, self.plasma_facing_boundary
+        )
+
+        if LegFlux(self.eq).n_null == "SN":
+            location = "lower" if any("lower" in name for name in angles) else "upper"
+            return (
+                np.array(
+                    angles[f"{location}_inner"][0],
+                    angles[f"{location}_outer"][0],
+                )
+                - self.min_angles
+            )
+
+        return (
+            np.array(
+                angles["lower_inner"][0],
+                angles["lower_outer"][0],
+                angles["upper_inner"][0],
+                angles["upper_outer"][0],
+            )
+            - self.min_angles
+        )
 
 
 class CoilForceConstraint(ConstraintFunction):

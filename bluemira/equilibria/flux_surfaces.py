@@ -32,7 +32,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import (
-    find_LCFS_separatrix,
     find_flux_surface_through_point,
 )
 from bluemira.equilibria.grid import Grid
@@ -820,11 +819,8 @@ def calculate_connection_length_fs(
     z: float,
     *,
     forward: bool = True,
-    double_null: bool = False,
-    outer: bool = True,
     first_wall=Coordinates | Grid | None,
-    psi_n_tol: float = 1e-6,
-    delta_start: float = 0.01,
+    f_s: Coordinates | None,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -842,6 +838,8 @@ def calculate_connection_length_fs(
         Whether or not to follow the field line forwards or backwards
     first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
+    f_s:
+        Coordniates of flux surface through x and z.
 
     Returns
     -------
@@ -864,33 +862,7 @@ def calculate_connection_length_fs(
         z1, z2 = eq.grid.z_min + 0.01, eq.grid.z_max - 0.01
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
-    if (x is None) or (z is None):
-        # Use Seperatrix Flux Surface
-        _lcfs, seperatrix = find_LCFS_separatrix(
-            eq.grid.x,
-            eq.grid.z,
-            eq.psi(eq.grid.x, eq.grid.z),
-            double_null=double_null,
-            psi_n_tol=psi_n_tol,
-            delta_start=delta_start,
-        )
-
-        if double_null:
-            if outer:
-                f_s = OpenFluxSurface(seperatrix[0])  # lfs
-            else:
-                f_s = OpenFluxSurface(seperatrix[1])  # hfs
-        else:
-            f_s = OpenFluxSurface(seperatrix)
-
-        z_abs = np.abs(f_s.coords.z)
-        if outer:
-            x = np.max(f_s.coords.x[z_abs == np.min(z_abs)])
-        else:
-            x = np.min(f_s.coords.x[z_abs == np.min(z_abs)])
-        z = 0.0
-
-    else:
+    if f_s is None:
         xfs, zfs = find_flux_surface_through_point(
             eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
         )
