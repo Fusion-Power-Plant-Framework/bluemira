@@ -61,7 +61,7 @@ from bluemira.equilibria.optimisation.problem import (
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
-# %%[markdown]
+# %% [markdown]
 
 # ## The `CoilsetOptimisationProblem` class
 
@@ -134,7 +134,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 # - **constraints**: Optional list of `UpdatableConstraint` objects
 #
 # %%
-# %%[markdown]
+# %% [markdown]
 # ## Coilset
 #
 # We first define the `CoilSet` to be optimised in our OptimisationProblem.
@@ -157,7 +157,7 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(coil_x, coil_z, coil_dx, coil_dz)):
 coilset = CoilSet(*coils)
 coilset.b_max = np.array([20] * (coilset.n_coils()))
 
-# %%[markdown]
+# %% [markdown]
 # ## Equilibrium
 #
 # We also specify an initial Equilibrium state to be used in the optimisation.
@@ -243,7 +243,7 @@ ffprime = np.array([
 profiles = CustomProfile(pprime, ffprime, R_0=R_0, B_0=B_t, I_p=I_p)
 eq = Equilibrium(coilset, grid, profiles, force_symmetry=True, vcontrol=None, psi=None)
 
-# %%[markdown]
+# %% [markdown]
 
 # ## Targets
 
@@ -276,7 +276,7 @@ legs_isoflux = IsofluxConstraint(
 
 magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 
-# %%[markdown]
+# %% [markdown]
 
 # ## Optimisation Algorithm, Conditions and Parameters
 #
@@ -302,7 +302,7 @@ magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 # **We will directly input the optimisation algorithm, conditions and**
 # **parameters when defining the `TikhonovCurrentCOP`**
 # %%
-# %%[markdown]
+# %% [markdown]
 
 # ## Iterators
 
@@ -344,7 +344,7 @@ unconstrained_iterator = PicardIterator(
     convergence=DudsonConvergence(1e-4),
 )
 
-# %%[markdown]
+# %% [markdown]
 #
 # We have now initialised the necessary objects to perform the unconstrained
 # optimisation of the `coilset` state.
@@ -359,7 +359,7 @@ f, ax = plt.subplots()
 eq.plot(ax=ax)
 unconstrained_cop.targets.plot(ax=ax)
 
-# %%[markdown]
+# %% [markdown]
 # Constrained optimisation of this poor initial state would be difficult, as
 # local optimisers would likely struggle to find the basin of convergence of
 # the desired state.
@@ -377,7 +377,7 @@ eq.coilset.plot(ax=ax, subcoil=False, label=True)
 magnetic_targets.plot(ax=ax)
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 
 # ## Constrained Optimisation
 # ### Constraints
@@ -400,7 +400,7 @@ x_point = FieldNullConstraint(
     tolerance=1e-4,  # [T]
 )
 
-# %%[markdown]
+# %% [markdown]
 # Now we have a better starting `Equilibrium` for our constrained optimisation
 # We now initialise the TikhonovCurrentCOP and perform the optimisation:
 #
@@ -433,7 +433,7 @@ eq.coilset.plot(ax=ax, subcoil=False, label=True)
 magnetic_targets.plot(ax=ax)
 plt.show()
 
-# %%[markdown]
+# %% [markdown]
 # You can now re-do this tutorial with other constraints of your choice.
 # See `bluemira.equilibria.optimisation.constraints` for some prebuilt constraints.
 # %%
