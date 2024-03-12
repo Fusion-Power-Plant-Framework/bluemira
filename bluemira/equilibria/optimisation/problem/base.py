@@ -188,7 +188,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     @staticmethod
     def get_current_bounds(
         coilset: CoilSet, max_currents: npt.ArrayLike, current_scale: float
-    ):
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.
 

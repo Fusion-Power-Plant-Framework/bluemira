@@ -137,7 +137,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         label: bool = False,
         force: Optional[Iterable] = None,
         **kwargs,
-    ):
+    ) -> CoilGroupPlotter:
         """
         Plot a CoilGroup
 
@@ -265,7 +265,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return None
 
     @classmethod
-    def from_group_vecs(cls, eqdsk: EQDSKInterface):
+    def from_group_vecs(cls, eqdsk: EQDSKInterface) -> CoilGroup:
         """
         Initialises an instance of CoilSet from group vectors.
 
@@ -501,7 +501,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.append(c)
         return coils
 
-    def get_coiltype(self, ctype: Union[str, CoilType]):
+    def get_coiltype(self, ctype: Union[str, CoilType]) -> Optional[CoilGroup]:
         """Get coils matching coil type"""
         if coiltype := self._get_coiltype(ctype):
             return CoilGroup(*coiltype)
@@ -1002,7 +1002,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @classmethod
     def from_group_vecs(
         cls, eqdsk: EQDSKInterface, control_coiltypes=(CoilType.PF, CoilType.CS)
-    ):
+    ) -> CoilGroup:
         """Create CoilSet from eqdsk group vectors.
 
         Automatically sets all coils that are not implicitly passive to control coils

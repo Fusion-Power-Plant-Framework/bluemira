@@ -191,7 +191,7 @@ class Coil(CoilFieldsMixin):
         label: bool = False,
         force: Optional[Iterable] = None,
         **kwargs,
-    ):
+    ) -> Optional[CoilGroupPlotter]:
         """
         Plot a Coil
 

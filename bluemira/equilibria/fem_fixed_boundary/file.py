@@ -56,7 +56,7 @@ def save_fixed_boundary_to_file(
     file_format: str = "json",
     json_kwargs: Optional[Dict] = None,
     **kwargs,
-):
+) -> EQDSKInterface:
     """
     Save a fixed boundary equilibrium to a file.
 

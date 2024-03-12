@@ -538,7 +538,7 @@ class CoilGroupFieldsMixin:
         coil_z: Optional[np.ndarray] = None,
         coil_dx: Optional[np.ndarray] = None,
         coil_dz: Optional[np.ndarray] = None,
-    ):
+    ) -> np.ndarray:
         """
         Calculate vertical magnetic field Bz response at (x, z) due to a unit
         current using semi-analytic method.
@@ -978,7 +978,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         z: np.ndarray,
         *_args,
         **_kwargs,
-    ):
+    ) -> np.ndarray:
         """
         Calculate [psi, Bx, Bz] response at (x, z) due to a unit
         current using semi-analytic method.

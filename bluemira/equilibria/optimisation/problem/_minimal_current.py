@@ -62,7 +62,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True):
+    def optimise(
+        self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True
+    ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem
 

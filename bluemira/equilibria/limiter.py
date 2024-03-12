@@ -68,7 +68,7 @@ class Limiter:
         self._i += 1
         return next(self.xz[self._i - 1])
 
-    def plot(self, ax: Optional[Axes] = None):
+    def plot(self, ax: Optional[Axes] = None) -> LimiterPlotter:
         """
         Plots the Limiter object
         """
