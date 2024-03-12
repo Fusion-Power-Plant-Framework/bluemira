@@ -26,6 +26,9 @@ Equilibria Examples
     examples/equilibria/spherical_harmonic_approximation_basic_function_check
     examples/equilibria/coilset_opt_problem_tutorial
 
+Geometry Examples
+^^^^^^^^^^^^^^^^^^^^^^^
+
 .. toctree::
     :maxdepth: 1
 
