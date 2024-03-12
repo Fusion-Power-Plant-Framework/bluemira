@@ -20,7 +20,7 @@ class Options:
 
     __slots__ = ("_options",)
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs):
         self.modify(**kwargs)
 
     def __setattr__(self, attr: str, val: Any):
