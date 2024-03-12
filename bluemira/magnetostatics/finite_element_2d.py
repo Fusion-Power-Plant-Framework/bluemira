@@ -50,7 +50,7 @@ def Bz_coil_axis(
     return 0.5 * MU_0 * current * r**2 / (r**2 + (pz - z) ** 2) ** 1.5
 
 
-def _convert_const_to_dolfin(value: float) -> dolfin.Constant:
+def _convert_const_to_dolfin(value: float):
     """Convert a constant value to a dolfin function"""
     if not isinstance(value, (int, float)):
         raise TypeError("Value must be integer or float.")
