@@ -62,7 +62,7 @@ def json_writer(
     *,
     cls: JSONEncoder = NumpyJSONEncoder,
     **kwargs,
-):
+) -> Optional[str]:
     """
     Write json in the bluemria style.
 
