@@ -98,7 +98,7 @@ dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99
 
 coils = []
 j = 1
-for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
+for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz, strict=False)):
     if j > 6:  # noqa: PLR2004
         j = 1
     ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004

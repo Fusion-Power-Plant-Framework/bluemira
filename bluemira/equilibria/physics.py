@@ -10,9 +10,11 @@ A collection of simple equilibrium physics calculations
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.find import Opoint, Xpoint
 
@@ -26,8 +28,8 @@ from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
 def calc_psi_norm(
-    psi: Union[float, npt.NDArray[np.float64]], opsi: float, xpsi: float
-) -> Union[float, npt.NDArray[np.float64]]:
+    psi: npt.ArrayLike, opsi: float, xpsi: float
+) -> float | npt.NDArray[np.float64]:
     """
     Calculate normalised magnetic flux.
 
@@ -48,8 +50,8 @@ def calc_psi_norm(
 
 
 def calc_psi(
-    psi_norm: Union[float, npt.NDArray[np.float64]], opsi: float, xpsi: float
-) -> Union[float, npt.NDArray[np.float64]]:
+    psi_norm: npt.ArrayLike, opsi: float, xpsi: float
+) -> float | npt.NDArray[np.float64]:
     """
     Calculate the absolute psi values from normalised psi values
 
@@ -264,9 +266,9 @@ def calc_li3minargs(
     I_p: float,
     dx: float,
     dz: float,
-    mask: Optional[npt.NDArray[np.float64]] = None,
-    o_points: Optional[Iterable[Opoint]] = None,
-    x_points: Optional[Iterable[Xpoint]] = None,
+    mask: npt.NDArray[np.float64] | None = None,
+    o_points: Iterable[Opoint] | None = None,
+    x_points: Iterable[Xpoint] | None = None,
 ) -> float:
     """
     Calculate the normalised plasma internal inductance with arguments only.
@@ -364,7 +366,7 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
     return 2 * MU_0 * p_avg / Bp**2
 
 
-def calc_summary(eq: Equilibrium) -> Dict[str, float]:
+def calc_summary(eq: Equilibrium) -> dict[str, float]:
     """
     Calculates interesting values in one go
     """

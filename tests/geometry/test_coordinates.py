@@ -721,7 +721,7 @@ class TestRotationMatrix:
         axes = ["x", "y", "z"]
         axes2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-        for a1, a2 in zip(axes, axes2):
+        for a1, a2 in zip(axes, axes2, strict=False):
             r_1 = rotation_matrix(np.pi / 6, a1)
             r_2 = rotation_matrix(np.pi / 6, a2)
             assert np.allclose(r_1, r_2), a1

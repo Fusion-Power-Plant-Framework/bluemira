@@ -12,9 +12,10 @@ import json
 import os
 import subprocess  # noqa: S404
 import threading
+from collections.abc import Callable
 from enum import Enum
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -41,7 +42,7 @@ class Model(Enum):
         bluemira_print(infostr)
 
 
-def read_mock_json_or_raise(file_path: str, name: str) -> Dict[str, float]:
+def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
     """
     Read json file or raise CodesError
     """
@@ -75,7 +76,7 @@ def get_code_interface(module: str) -> ModuleType:
 
 def create_mapping(
     in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Creates mappings for external codes
 
@@ -128,7 +129,7 @@ class LogPipe(threading.Thread):
         self,
         loglevel: str,
         flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
-        flush_printer: Optional[Callable[[str], None]] = None,
+        flush_printer: Callable[[str], None] | None = None,
     ):
         super().__init__(daemon=True)
 
@@ -167,10 +168,10 @@ class LogPipe(threading.Thread):
 
 
 def run_subprocess(
-    command: List[str],
+    command: list[str],
     run_directory: str = ".",
     flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
-    flush_printer: Optional[Callable[[str], None]] = None,
+    flush_printer: Callable[[str], None] | None = None,
     **kwargs,
 ) -> int:
     """

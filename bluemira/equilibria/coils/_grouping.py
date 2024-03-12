@@ -11,9 +11,10 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Iterable
 from copy import deepcopy
 from operator import attrgetter
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -63,7 +64,7 @@ def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
     counts = np.array(sym_stack, dtype=object).T[1]
 
     new_coils = []
-    for coil, count in zip(coilset._coils, counts):
+    for coil, count in zip(coilset._coils, counts, strict=False):
         if count == 1:
             new_coils.append(coil)
         elif count == 2:  # noqa: PLR2004
@@ -94,8 +95,8 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     __slots__ = ("_coils", "_pad_size")
 
-    def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
-        if any(not isinstance(c, (Coil, CoilGroup)) for c in coils):
+    def __init__(self, *coils: Coil | CoilGroup[Coil]):
+        if any(not isinstance(c, Coil | CoilGroup) for c in coils):
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
@@ -109,7 +110,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         coils_repr = coils_repr.replace("\n", "\n    ")
         return f"{type(self).__name__}({coils_repr[:-5]})"
 
-    def n_coils(self, ctype: Optional[Union[str, CoilType]] = None) -> int:
+    def n_coils(self, ctype: str | CoilType | None = None) -> int:
         """
         Get number of coils
 
@@ -132,10 +133,10 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def plot(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         subcoil: bool = True,
         label: bool = False,
-        force: Optional[Iterable] = None,
+        force: Iterable | None = None,
         **kwargs,
     ) -> CoilGroupPlotter:
         """
@@ -167,13 +168,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         self.__run_func("fix_size")
 
-    def resize(self, currents: Union[float, List, np.ndarray]):
+    def resize(self, currents: float | list | np.ndarray):
         """
         Resize coils based on their current if their size is not fixed
         """
         self.__run_func("resize", currents)
 
-    def _resize(self, currents: Union[float, List, np.ndarray]):
+    def _resize(self, currents: float | list | np.ndarray):
         """
         Resize coils based on their current
 
@@ -200,20 +201,20 @@ class CoilGroup(CoilGroupFieldsMixin):
             funclist = self.__list_getter(func)
             len_funclist = len(funclist)
             for no, arg in enumerate(args):
-                if isinstance(arg, (float, int)):
+                if isinstance(arg, float | int):
                     args[no] = np.full(len_funclist, arg)
                 elif len(arg) != len_funclist:
                     raise ValueError(
                         f"length of {arg} != number of coilgroups ({len_funclist})"
                     )
-            for ff, *_args in zip(funclist, *args):
+            for ff, *_args in zip(funclist, *args, strict=False):
                 ff(*_args, **kwargs)
 
-    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+    def add_coil(self, *coils: Coil | CoilGroup[Coil]):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> None | list:
         """
         Remove coil from CoilGroup
 
@@ -352,7 +353,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def to_group_vecs(
         self,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Output CoilGroup properties as numpy arrays
 
@@ -371,7 +372,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         return self.x, self.z, self.dx, self.dz, self.current
 
-    def __list_getter(self, attr: str) -> List:
+    def __list_getter(self, attr: str) -> list:
         """Get attributes from coils tuple"""
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
@@ -398,8 +399,8 @@ class CoilGroup(CoilGroupFieldsMixin):
     def __setter(
         self,
         attr: str,
-        values: Union[CoilType, float, Iterable[Union[CoilType, float]]],
-        dtype: Union[Type, None] = None,
+        values: CoilType | float | Iterable[CoilType | float],
+        dtype: type | None = None,
     ):
         """Set attributes on coils"""
         values = np.atleast_1d(values)
@@ -449,7 +450,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def _pad_discretisation(
         self,
-        _to_pad: List[np.ndarray],
+        _to_pad: list[np.ndarray],
     ):
         """
         Convert quadrature list of array to rectangular arrays.
@@ -501,7 +502,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.append(c)
         return coils
 
-    def get_coiltype(self, ctype: Union[str, CoilType]) -> Optional[CoilGroup]:
+    def get_coiltype(self, ctype: str | CoilType) -> CoilGroup | None:
         """Get coils matching coil type"""
         if coiltype := self._get_coiltype(ctype):
             return CoilGroup(*coiltype)
@@ -536,7 +537,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         )
 
     @property
-    def name(self) -> List:
+    def name(self) -> list:
         """Get coil names"""
         return self.__getter("name").tolist()
 
@@ -556,7 +557,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return np.array([self.x, self.z])
 
     @property
-    def ctype(self) -> List:
+    def ctype(self) -> list:
         """Get coil types"""
         return self.__getter("ctype").tolist()
 
@@ -662,12 +663,12 @@ class CoilGroup(CoilGroupFieldsMixin):
         return [*self.__list_getter("_quad_boundary")]
 
     @x.setter
-    def x(self, values: Union[float, Iterable[float]]):
+    def x(self, values: float | Iterable[float]):
         """Set coil x positions"""
         self.__setter("x", values)
 
     @z.setter
-    def z(self, values: Union[float, Iterable[float]]):
+    def z(self, values: float | Iterable[float]):
         """Set coil z positions"""
         self.__setter("z", values)
 
@@ -678,43 +679,43 @@ class CoilGroup(CoilGroupFieldsMixin):
         self.__setter("z", values[1])
 
     @ctype.setter
-    def ctype(self, values: Union[CoilType, Iterable[CoilType]]):
+    def ctype(self, values: CoilType | Iterable[CoilType]):
         """Set coil types"""
         self.__setter("ctype", values, dtype=object)
 
     @dx.setter
-    def dx(self, values: Union[float, Iterable[float]]):
+    def dx(self, values: float | Iterable[float]):
         """Set coil dx sizes"""
         self.__setter("dx", values)
 
     @dz.setter
-    def dz(self, values: Union[float, Iterable[float]]):
+    def dz(self, values: float | Iterable[float]):
         """Set coil dz sizes"""
         self.__setter("dz", values)
 
     @current.setter
-    def current(self, values: Union[float, Iterable[float]]):
+    def current(self, values: float | Iterable[float]):
         """Set coil currents"""
         self.__setter("current", values)
 
     @j_max.setter
-    def j_max(self, values: Union[float, Iterable[float]]):
+    def j_max(self, values: float | Iterable[float]):
         """Set coil max current densities"""
         self.__setter("j_max", values)
 
     @b_max.setter
-    def b_max(self, values: Union[float, Iterable[float]]):
+    def b_max(self, values: float | Iterable[float]):
         """Set coil max fields"""
         self.__setter("b_max", values)
 
     @discretisation.setter
-    def discretisation(self, values: Union[float, Iterable[float]]):
+    def discretisation(self, values: float | Iterable[float]):
         """Set coil discretisations"""
         self.__setter("discretisation", values)
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
     @n_turns.setter
-    def n_turns(self, values: Union[float, Iterable[float]]):
+    def n_turns(self, values: float | Iterable[float]):
         """Set coil number of turns"""
         self.__setter("n_turns", values)
 
@@ -733,9 +734,7 @@ class Circuit(CoilGroup):
 
     __slots__ = ()
 
-    def __init__(
-        self, *coils: Union[Coil, CoilGroup[Coil]], current: Optional[float] = None
-    ):
+    def __init__(self, *coils: Coil | CoilGroup[Coil], current: float | None = None):
         super().__init__(*coils)
         self.current = self._get_current() if current is None else current
 
@@ -745,7 +744,7 @@ class Circuit(CoilGroup):
             current = current[0]
         return current
 
-    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+    def add_coil(self, *coils: Coil | CoilGroup[Coil]):
         """
         Add coil to circuit forcing the same current
         """
@@ -753,7 +752,7 @@ class Circuit(CoilGroup):
         self.current = self._get_current()
 
     @CoilGroup.current.setter
-    def current(self, values: Union[float, Iterable[float]]):
+    def current(self, values: float | Iterable[float]):
         """
         Set current for circuit
         """
@@ -785,9 +784,9 @@ class SymmetricCircuit(Circuit):
 
     def __init__(
         self,
-        *coils: Union[Coil, CoilGroup[Coil]],
+        *coils: Coil | CoilGroup[Coil],
     ):
-        symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0))
+        symmetry_line: tuple | np.ndarray = ((0, 0), (1, 0))
 
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
@@ -903,13 +902,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     def __init__(
         self,
-        *coils: Union[Coil, CoilGroup[Coil]],
-        control_names: Optional[Union[List, bool]] = None,
+        *coils: Coil | CoilGroup[Coil],
+        control_names: list | bool | None = None,
     ):
         super().__init__(*coils)
         self.control = control_names
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> None | list:
         """
         Remove coil from CoilSet
         """
@@ -917,12 +916,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self.control = list(set(self.control) & set(self.name))
 
     @property
-    def control(self) -> List:
+    def control(self) -> list:
         """Get control coil names"""
         return self._control
 
     @control.setter
-    def control(self, control_names: Optional[Union[List[str], bool]] = None):
+    def control(self, control_names: list[str] | bool | None = None):
         """Set which coils are actively controlled
 
         Parameters
@@ -933,7 +932,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                     - a boolean, which denotes all controlled vs none controlled.
         """
         names = self.name
-        if isinstance(control_names, List):
+        if isinstance(control_names, list):
             self._control_ind = [names.index(c) for c in control_names]
         elif control_names or control_names is None:
             self._control_ind = np.arange(len(names)).tolist()
@@ -946,7 +945,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         coils = []
         for c in self._coils:
             names = c.name
-            if isinstance(names, List):
+            if isinstance(names, list):
                 # is subset of list
                 if isinstance(c, Circuit) and any(n in self.control for n in names):
                     coils.append(c)

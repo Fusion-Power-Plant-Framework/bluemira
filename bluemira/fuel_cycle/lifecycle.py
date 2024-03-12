@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,13 +39,13 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value: Union[str, PlotType]) -> PlotType:
+    def _missing_(cls, value: str | PlotType) -> PlotType:
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
                 f"{cls.__name__} has no type {value}."
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -74,7 +74,7 @@ class LifeCycle:
 
     def __init__(
         self,
-        config: Union[LifeCycleParams, Dict[str, float]],
+        config: LifeCycleParams | dict[str, float],
         learning_strategy: LearningStrategy,
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
@@ -225,7 +225,7 @@ class LifeCycle:
             self.params.A_global, op_durations
         )
 
-    def calc_n_pulses(self, phases: List[List[float]]):
+    def calc_n_pulses(self, phases: list[list[float]]):
         """
         Calculate the number of pulses per phase.
         """
@@ -235,12 +235,14 @@ class LifeCycle:
             if phases[i][1].startswith("Phase P")
         ]
 
-    def get_op_phases(self) -> List[float]:
+    def get_op_phases(self) -> list[float]:
         """
         Get the operational phases for the LifeCycle.
         """
         return [
-            d for n, d in zip(self.phase_names, self.phase_durations) if "Phase P" in n
+            d
+            for n, d in zip(self.phase_names, self.phase_durations, strict=False)
+            if "Phase P" in n
         ]
 
     def make_timeline(self) -> Timeline:
@@ -358,7 +360,7 @@ class LifeCycle:
         fs, s, h = 0, 0, 0.95 * self.fpy
         ft, rt = [0], [0]
         j = 0
-        for p_n, p_d in zip(self.phase_names, self.phase_durations):
+        for p_n, p_d in zip(self.phase_names, self.phase_durations, strict=False):
             if p_n.startswith("Phase P"):
                 c = "b"
                 ft.append(fs + p_d)
@@ -404,7 +406,7 @@ class LifeCycle:
         ax.set_xlim([0, self.fpy / self.params.A_global])
         ax.set_ylim(bottom=0)
 
-    def plot_load_factor(self, typ: str = "pie", ax: Optional[plt.Axes] = None):
+    def plot_load_factor(self, typ: str = "pie", ax: plt.Axes | None = None):
         """
         Plots a pie or bar chart of the breakdown of the reactor lifetime
 

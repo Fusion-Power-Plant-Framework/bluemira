@@ -9,8 +9,8 @@
 
 import logging
 import sys
+from collections.abc import Iterable
 from enum import Enum
-from typing import Iterable, Union
 
 from bluemira.base.error import LogsError
 
@@ -27,7 +27,7 @@ class LogLevel(Enum):
 
 
 def logger_setup(
-    logfilename: str = "bluemira.log", *, level: Union[str, int] = "INFO"
+    logfilename: str = "bluemira.log", *, level: str | int = "INFO"
 ) -> logging.Logger:
     """
     Create logger with two handlers.
@@ -75,7 +75,7 @@ def logger_setup(
 
 
 def set_log_level(
-    verbose: Union[int, str] = 1,
+    verbose: int | str = 1,
     increase: bool = False,
     logger_names: Iterable[str] = ("bluemira",),
 ):
@@ -100,7 +100,7 @@ def set_log_level(
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> Union[str, int]:
+def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> str | int:
     """
     Return the current logging level.
 
@@ -122,7 +122,7 @@ def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> Union[s
     return max_level // 10
 
 
-def _convert_log_level(level: Union[str, int], current_level: int = 0) -> LogLevel:
+def _convert_log_level(level: str | int, current_level: int = 0) -> LogLevel:
     """
     Convert the provided logging level to a LogLevel objects.
 
@@ -176,7 +176,7 @@ class LoggingContext:
         The bluemira logging level to set within the context.
     """
 
-    def __init__(self, level: Union[str, int]):
+    def __init__(self, level: str | int):
         self.level = level
         self.original_level = get_log_level()
 

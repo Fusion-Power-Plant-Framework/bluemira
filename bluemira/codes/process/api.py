@@ -14,11 +14,14 @@ from dataclasses import dataclass
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Literal, TypeVar
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 # Create dummy PROCESS objects. Required for docs to build properly and
@@ -83,22 +86,22 @@ class _INVariable:
     """
 
     name: str
-    _value: Union[float, List, Dict]
+    _value: float | list | dict
     v_type: TypeVar("InVarValueType")
     parameter_group: str
     comment: str
 
     @property
-    def get_value(self) -> Union[float, List, Dict]:
+    def get_value(self) -> float | list | dict:
         """Return value in correct format"""
         return self._value
 
     @property
-    def value(self) -> Union[str, List, Dict]:
+    def value(self) -> str | list | dict:
         """
         Return the string of a value if not a Dict or a List
         """
-        if not isinstance(self._value, (List, Dict)):
+        if not isinstance(self._value, list | dict):
             return f"{self._value}"
         return self._value
 
@@ -130,7 +133,7 @@ class Impurities(Enum):
     Xe = 13
     W = 14
 
-    def files(self) -> Dict[str, Path]:
+    def files(self) -> dict[str, Path]:
         """
         Get PROCESS impurity data file path
         """
@@ -155,7 +158,7 @@ class Impurities(Enum):
 
     def read_impurity_files(
         self, filetype: Iterable[Literal["lz", "z2", "z"]]
-    ) -> Tuple[list[ImpurityDataHeader]]:
+    ) -> tuple[list[ImpurityDataHeader]]:
         """Get contents of impurity data files"""
         files = self.files()
         return tuple(
@@ -163,7 +166,7 @@ class Impurities(Enum):
         )
 
 
-def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
+def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
     """
     Check if the bluemira variable is up to date using the OBS_VAR dict.
     If the PROCESS variable name has been updated in the installed version

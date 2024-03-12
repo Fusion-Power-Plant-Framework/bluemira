@@ -41,8 +41,6 @@
 # utilising bluemira's `optimise_geometry` function.
 
 # %%
-from typing import List
-
 import numpy as np
 
 from bluemira.display import plot_2d
@@ -155,7 +153,7 @@ class ContractLengthGOP(GeomOptimisationProblem):
         """Objective function to minimise."""
         return geom.create_shape().length
 
-    def ineq_constraints(self) -> List[GeomConstraintT]:
+    def ineq_constraints(self) -> list[GeomConstraintT]:
         """List of inequality constraints to satisfy."""
         return [
             {

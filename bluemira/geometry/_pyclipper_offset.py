@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from copy import deepcopy
 from enum import Enum, auto
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from pyclipper import (
@@ -48,15 +47,13 @@ class OffsetClipperMethodType(Enum):
     MITER = auto()
 
     @classmethod
-    def _missing_(
-        cls, value: Union[str, OffsetClipperMethodType]
-    ) -> OffsetClipperMethodType:
+    def _missing_(cls, value: str | OffsetClipperMethodType) -> OffsetClipperMethodType:
         try:
             return cls[value.upper()]
         except KeyError:
             raise GeometryError(
                 f"{cls.__name__} has no method {value}."
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -93,7 +90,7 @@ def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
     return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
-def pyclippolytree_to_coordinates(polytree: List[np.ndarray]) -> List[Coordinates]:
+def pyclippolytree_to_coordinates(polytree: list[np.ndarray]) -> list[Coordinates]:
     """
     Converts a ClipperLib PolyTree into a list of Coordinates
 
@@ -125,7 +122,7 @@ class PyclipperMixin:
         """
         bluemira_warn(f"{self.name} operation on 2-D polygons returning None.\n")
 
-    def handle_solution(self, solution: Tuple[np.ndarray]) -> List[Coordinates]:
+    def handle_solution(self, solution: tuple[np.ndarray]) -> list[Coordinates]:
         """
         Handles the output of the Pyclipper.Execute(*) algorithms, turning them
         into Coordaintes objects. NOTE: These are closed by default.
@@ -183,7 +180,7 @@ class OffsetOperationManager(PyclipperMixin):
 
         self.tool.AddPath(path, self.method, co_method)
 
-    def perform(self, delta: float) -> List[Coordinates]:
+    def perform(self, delta: float) -> list[Coordinates]:
         """
         Perform the offset operation.
 
@@ -198,7 +195,7 @@ class OffsetOperationManager(PyclipperMixin):
         return self.handle_solution(solution)
 
     @staticmethod
-    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> Optional[float]:
+    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> float | None:
         """
         Calculate the pyclipper scaling to integers
         """

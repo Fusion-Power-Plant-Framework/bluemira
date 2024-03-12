@@ -190,8 +190,6 @@ ignore = [
     "SLF001", # private method use
     # remove when we move to python3.10
     "FA100", # use future ann everywhere
-    "UP006", # type annotations
-    "UP007",
 
 ]
 

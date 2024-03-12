@@ -10,7 +10,7 @@ Classes and methods to load, store, and retrieve materials.
 
 import copy
 import json
-from typing import Any, ClassVar, Dict
+from typing import Any, ClassVar
 
 from bluemira.materials.material import (
     BePebbleBed,
@@ -55,7 +55,7 @@ class MaterialCache:
             mat_class.__name__: mat_class for mat_class in self.default_classes
         }
 
-    def load_from_file(self, path: str) -> Dict[str, Any]:
+    def load_from_file(self, path: str) -> dict[str, Any]:
         """
         Load materials from a file.
 
@@ -73,7 +73,7 @@ class MaterialCache:
         return {name: self.load_from_dict(name, mats_dict) for name in mats_dict}
 
     def load_from_dict(
-        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+        self, mat_name: str, mats_dict: dict[str, Any], overwrite: bool = True
     ):
         """
         Load a material or mixture from a dictionary.
@@ -97,7 +97,7 @@ class MaterialCache:
             self.material_from_dict(mat_name, mats_dict, overwrite=overwrite)
 
     def mixture_from_dict(
-        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+        self, mat_name: str, mats_dict: dict[str, Any], overwrite: bool = True
     ):
         """
         Load a mixture from a dictionary.
@@ -115,7 +115,7 @@ class MaterialCache:
         self._update_cache(mat_name, mat, overwrite=overwrite)
 
     def material_from_dict(
-        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+        self, mat_name: str, mats_dict: dict[str, Any], overwrite: bool = True
     ):
         """
         Load a material from a dictionary.

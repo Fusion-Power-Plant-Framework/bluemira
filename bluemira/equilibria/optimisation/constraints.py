@@ -12,11 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
-
-if TYPE_CHECKING:
-    from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.equilibrium import Equilibrium
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -32,6 +28,10 @@ from bluemira.equilibria.optimisation.constraint_funcs import (
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.geometry.coordinates import interpolate_points
 from bluemira.utilities.tools import abs_rel_difference, is_num
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 
 def _get_dummy_equilibrium(equilibrium: Equilibrium):
@@ -102,10 +102,10 @@ class FieldConstraints(UpdateableConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-        B_max: Union[float, np.ndarray],
-        tolerance: Union[float, np.ndarray] = 1.0e-6,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        B_max: float | np.ndarray,
+        tolerance: float | np.ndarray = 1.0e-6,
         constraint_type: str = "inequality",
     ):
         if is_num(x):
@@ -157,7 +157,7 @@ class FieldConstraints(UpdateableConstraint):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-    def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
+    def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -166,7 +166,7 @@ class FieldConstraints(UpdateableConstraint):
             coilset.Bz_response(self.x, self.z, control=True),
         )
 
-    def evaluate(self, equilibrium: Equilibrium) -> Tuple[np.ndarray, np.ndarray]:
+    def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -214,8 +214,8 @@ class CoilFieldConstraints(FieldConstraints):
     def __init__(
         self,
         coilset: CoilSet,
-        B_max: Union[float, np.ndarray],
-        tolerance: Union[float, np.ndarray] = 1.0e-6,
+        B_max: float | np.ndarray,
+        tolerance: float | np.ndarray = 1.0e-6,
     ):
         n_coils = coilset.n_coils()
         if is_num(B_max):
@@ -289,7 +289,7 @@ class CoilForceConstraints(UpdateableConstraint):
         PF_Fz_max: float,
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
-        tolerance: Union[float, np.ndarray] = 1.0e-6,
+        tolerance: float | np.ndarray = 1.0e-6,
     ):
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
@@ -366,9 +366,9 @@ class MagneticConstraint(UpdateableConstraint):
     def __init__(
         self,
         target_value: float = 0.0,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = L2NormConstraint,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
+        f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
@@ -435,12 +435,12 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         target_value: float,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = AxBConstraint,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
+        f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "equality",
     ):
         self.x = x
@@ -462,14 +462,14 @@ class RelativeMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         ref_x: float,
         ref_z: float,
         constraint_value: float = 0.0,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = L2NormConstraint,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
+        f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
         self.x = x
@@ -500,9 +500,9 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-        weights: Union[float, np.ndarray] = 1.0,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        weights: float | np.ndarray = 1.0,
         tolerance: float = 1e-6,
     ):
         super().__init__(
@@ -557,11 +557,11 @@ class PsiConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         target_value: float,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
     ):
         super().__init__(
             x,
@@ -600,12 +600,12 @@ class IsofluxConstraint(RelativeMagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         ref_x: float,
         ref_z: float,
         constraint_value: float = 0.0,
-        weights: Union[float, np.ndarray] = 1.0,
+        weights: float | np.ndarray = 1.0,
         tolerance: float = 1e-6,
     ):
         super().__init__(
@@ -666,11 +666,11 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         target_value: float,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
     ):
         super().__init__(
             x,
@@ -727,7 +727,7 @@ class MagneticConstraintSet(ABC):
 
     __slots__ = ("A", "background", "coilset", "constraints", "eq", "target", "w")
 
-    def __init__(self, constraints: List[MagneticConstraint]):
+    def __init__(self, constraints: list[MagneticConstraint]):
         self.constraints = constraints
         self.eq = None
         self.A = None
@@ -765,7 +765,7 @@ class MagneticConstraintSet(ABC):
         """
         return sum([len(c) for c in self.constraints])
 
-    def get_weighted_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.
@@ -874,7 +874,7 @@ class AutoConstraints(MagneticConstraintSet):
         self,
         x: np.ndarray,
         z: np.ndarray,
-        psi_boundary: Optional[float] = None,
+        psi_boundary: float | None = None,
         n_points: int = 40,
     ):
         x = np.array(x)

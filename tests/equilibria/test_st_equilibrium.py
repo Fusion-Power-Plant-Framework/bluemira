@@ -77,7 +77,7 @@ class TestSTEquilibrium:
         dzc = np.array([0.5, 0.4, 0.4, 0.4, 0.5])
 
         coils = []
-        for i, (x, z, dx, dz) in enumerate(zip(xc, zc, dxc, dzc)):
+        for i, (x, z, dx, dz) in enumerate(zip(xc, zc, dxc, dzc, strict=False)):
             coil = SymmetricCircuit(
                 Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i + 1}", ctype="PF")
             )

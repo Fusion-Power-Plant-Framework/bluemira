@@ -7,7 +7,6 @@
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -24,14 +23,14 @@ class OptimiserResult:
     """The optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
-    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    history: list[tuple[np.ndarray, float]] = field(repr=False)
     """
     The history of the parametrisation at each iteration.
 
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).
     """
-    constraints_satisfied: Union[bool, None] = None
+    constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
 
@@ -47,7 +46,7 @@ class Optimiser(abc.ABC):
         self,
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
-        df_constraint: Optional[OptimiserCallable] = None,
+        df_constraint: OptimiserCallable | None = None,
     ) -> None:
         r"""
         Add an equality constraint to the optimiser.
@@ -91,7 +90,7 @@ class Optimiser(abc.ABC):
         self,
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
-        df_constraint: Optional[OptimiserCallable] = None,
+        df_constraint: OptimiserCallable | None = None,
     ) -> None:
         r"""
         Add an inequality constrain to the optimiser.
@@ -131,7 +130,7 @@ class Optimiser(abc.ABC):
         """
 
     @abc.abstractmethod
-    def optimise(self, x0: Optional[np.ndarray] = None) -> OptimiserResult:
+    def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
         """
         Run the optimiser.
 

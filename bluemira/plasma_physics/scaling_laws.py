@@ -8,7 +8,7 @@
 A collection of common 0-D plasma physics scaling laws.
 """
 
-from typing import Iterable, List, Optional, Tuple, Union
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -38,7 +38,7 @@ class PowerLawScaling:
         constant: float,
         constant_err: float,
         exponents: Iterable[float],
-        exp_errs: Optional[Union[np.ndarray, List]] = None,
+        exp_errs: np.ndarray | list | None = None,
     ):
         self.c = constant
         self.constant_err = constant_err
@@ -69,7 +69,7 @@ class PowerLawScaling:
             exponents = self.exponents
         return constant * np.prod(np.power(args, exponents))
 
-    def calculate_range(self, *args) -> Tuple[float, float]:
+    def calculate_range(self, *args) -> tuple[float, float]:
         """
         Calculate the range of the PowerLawScaling within the specified errors for a set
         of arguments
@@ -90,7 +90,9 @@ class PowerLawScaling:
 
         min_terms = np.zeros(len(self))
         max_terms = np.zeros(len(self))
-        for i, (arg, exp, err) in enumerate(zip(args, self.exponents, self.errors)):
+        for i, (arg, exp, err) in enumerate(
+            zip(args, self.exponents, self.errors, strict=False)
+        ):
             term_values = [arg ** (exp - err), arg ** (exp + err)]
             min_terms[i] = min(term_values)
             max_terms[i] = max(term_values)
@@ -108,7 +110,7 @@ class PowerLawScaling:
 
 def lambda_q(
     B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = False
-) -> Union[float, Tuple[float, float, float]]:
+) -> float | tuple[float, float, float]:
     """
     Scrape-off layer power width scaling (Eich et al., 2011) [4]
 
@@ -154,7 +156,7 @@ def lambda_q(
 
 def P_LH(  # noqa: N802
     n_e: float, B_t: float, A: float, R_0: float, error: bool = False
-) -> Union[float, Tuple[float, float, float]]:
+) -> float | tuple[float, float, float]:
     """
     Power requirement for accessing H-mode, Martin scaling [3]
 

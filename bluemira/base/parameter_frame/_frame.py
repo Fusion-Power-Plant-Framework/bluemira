@@ -14,19 +14,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Dict,
-    Generator,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
     TypeVar,
-    Union,
     get_args,
     get_type_hints,
 )
-from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
 
 import pint
 from tabulate import tabulate
@@ -47,9 +38,12 @@ from bluemira.base.parameter_frame._parameter import (
 
 # due to circular import
 if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
+    from types import GenericAlias
+
     from bluemira.base.reactor_config import ConfigParams
 
-_PfT = TypeVar("_PfT", bound="ParameterFrame")
+_PfT = TypeVar("_PfT", bound="ParameterFrame")  # noqa: PYI018
 
 
 @dataclass
@@ -87,7 +81,7 @@ class ParameterFrame:
         self._types = self._get_types()
 
         for field, field_name, value_type in zip(
-            self, self.__dataclass_fields__, self._types.values()
+            self, self.__dataclass_fields__, self._types.values(), strict=False
         ):
             if not isinstance(field, Parameter):
                 raise TypeError(
@@ -114,7 +108,7 @@ class ParameterFrame:
                 field._value = val_unit["value"]
 
     @classmethod
-    def _get_types(cls) -> Dict[str, GenericAlias]:
+    def _get_types(cls) -> dict[str, GenericAlias]:
         """Gets types for the frame even with annotations imported"""
         frame_type_hints = get_type_hints(cls)
         return {f.name: frame_type_hints[f.name] for f in fields(cls)}
@@ -131,7 +125,7 @@ class ParameterFrame:
 
     def update(
         self,
-        new_values: Union[Dict[str, ParameterValueType], ParamDictT, ParameterFrame],
+        new_values: dict[str, ParameterValueType] | ParamDictT | ParameterFrame,
     ):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
@@ -142,7 +136,7 @@ class ParameterFrame:
             except TypeError:
                 self.update_values(new_values)
 
-    def get_values(self, *names: str) -> Tuple[ParameterValueType, ...]:
+    def get_values(self, *names: str) -> tuple[ParameterValueType, ...]:
         """Get values of a set of Parameters"""
         try:
             return tuple(getattr(self, n).value for n in names)
@@ -152,7 +146,7 @@ class ParameterFrame:
                 " ParameterFrame"
             ) from ae
 
-    def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
+    def update_values(self, new_values: dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
@@ -198,13 +192,13 @@ class ParameterFrame:
 
     @classmethod
     def from_dict(
-        cls: Type[_PfT],
-        data: Dict[str, ParamDictT],
+        cls: type[ParameterFrame],
+        data: dict[str, ParamDictT],
         allow_unknown=False,
-    ) -> _PfT:
+    ) -> ParameterFrame:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
-        kwargs: Dict[str, Parameter] = {}
+        kwargs: dict[str, Parameter] = {}
         for member in cls.__dataclass_fields__:
             try:
                 param_data = data.pop(member)
@@ -223,7 +217,7 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_frame(cls: Type[_PfT], frame: ParameterFrame) -> _PfT:
+    def from_frame(cls: type[ParameterFrame], frame: ParameterFrame) -> ParameterFrame:
         """Initialise an instance from another ParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
@@ -237,7 +231,9 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_json(cls: Type[_PfT], json_in: Union[str, json.SupportsRead]) -> _PfT:
+    def from_json(
+        cls: type[ParameterFrame], json_in: str | json.SupportsRead
+    ) -> ParameterFrame:
         """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
@@ -252,7 +248,9 @@ class ParameterFrame:
         return cls.from_dict(json.loads(json_in))
 
     @classmethod
-    def from_config_params(cls: Type[_PfT], config_params: ConfigParams) -> _PfT:
+    def from_config_params(
+        cls: type[ParameterFrame], config_params: ConfigParams
+    ) -> ParameterFrame:
         """
         Initialise an instance from a
         :class:`~bluemira.base.reactor_config.ConfigParams` object.
@@ -297,7 +295,7 @@ class ParameterFrame:
     def _member_data_to_parameter(
         cls,
         member: str,
-        member_param_data: Dict,
+        member_param_data: dict,
     ) -> Parameter:
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
@@ -310,7 +308,7 @@ class ParameterFrame:
             _value_types=value_type,
         )
 
-    def to_dict(self) -> Dict[str, Dict[str, Any]]:
+    def to_dict(self) -> dict[str, dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
         out = {}
         for param_name in self.__dataclass_fields__:
@@ -325,7 +323,7 @@ class ParameterFrame:
 
     def tabulate(
         self,
-        keys: Optional[List] = None,
+        keys: list[str] | None = None,
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".5g",
     ) -> str:
@@ -347,7 +345,11 @@ class ParameterFrame:
         The tabulated data
         """
         column_widths = dict(
-            zip(list(ParamDictT.__annotations__.keys()), [20, None, 20, 20, 20, 20])
+            zip(
+                list(ParamDictT.__annotations__.keys()),
+                [20, None, 20, 20, 20, 20],
+                strict=False,
+            )
         )
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
@@ -377,7 +379,7 @@ class ParameterFrame:
         return self.tabulate()
 
 
-def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
+def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
@@ -385,7 +387,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
     return get_args(member_type)
 
 
-def _validate_units(param_data: Dict, value_type: Iterable[Type]):
+def _validate_units(param_data: dict, value_type: Iterable[type]):
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
@@ -410,7 +412,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
             quantity = pint.Quantity(
                 1 if param_data["unit"] in {None, ""} else param_data["unit"]
             )
-        elif isinstance(param_data["value"], (bool, str)):
+        elif isinstance(param_data["value"], bool | str):
             param_data["unit"] = "dimensionless"
             return
         else:
@@ -435,11 +437,13 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         param_data["source"] += f"{quantity.magnitude}{param_data['unit']}"
 
 
-def _remake_units(dimensionality: Union[Dict, pint.util.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
-    return pint.Unit(".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow)]))
+    return pint.Unit(
+        ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow, strict=False)])
+    )
 
 
 def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
@@ -567,19 +571,19 @@ class EmptyFrame(ParameterFrame):
 
 
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
-    param_cls: Type[_PfT],
-) -> Union[_PfT, None]:
+    params: dict[str, ParamDictT] | ParameterFrame | ConfigParams | str | None,
+    param_cls: type[ParameterFrame],
+) -> ParameterFrame | None:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 
     Parameters
     ----------
-    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams str, None]
+    params:
         The parameters to initialise the class with.
         This parameter can be several types:
 
-            * Dict[str, ParamDictT]:
+            * dict[str, ParamDictT]:
                 A dict where the keys are parameter names, and the
                 values are the data associated with the corresponding
                 name.
@@ -602,7 +606,7 @@ def make_parameter_frame(
                 This is intended for internal use, to aid in validation
                 of parameters in `Builder`\\s and `Designer`\\s.
 
-    param_cls: Type[ParameterFrame]
+    param_cls: type[ParameterFrame]
         The `ParameterFrame` class to create a new instance of.
 
     Returns

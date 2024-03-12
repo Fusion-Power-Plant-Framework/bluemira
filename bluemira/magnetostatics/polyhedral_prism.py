@@ -23,7 +23,6 @@ https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
 
 import abc
 from copy import deepcopy
-from typing import Tuple, Union
 
 import numba as nb
 import numpy as np
@@ -470,9 +469,9 @@ class PolyhedralPrismCurrentSource(
     @process_xyz_array
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the magnetic field at a point due to the current source.
@@ -503,9 +502,9 @@ class PolyhedralPrismCurrentSource(
     @process_xyz_array
     def vector_potential(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the vector potential at a point due to the current source.
@@ -570,7 +569,7 @@ class PolyhedralPrismCurrentSource(
 @nb.jit(nopython=True, cache=True)
 def _generate_source_geometry(
     lower_points: np.ndarray, upper_points: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generate the polyhedral prism source geometry - faster
 

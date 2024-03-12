@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-from typing import List, Tuple
-
 import numpy as np
 
 from bluemira.optimisation import OptimisationProblem
@@ -41,7 +39,7 @@ class SimpleOptProblem(OptimisationProblem):
         self.df_call_count += 1
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.constraint_1,
@@ -55,7 +53,7 @@ class SimpleOptProblem(OptimisationProblem):
             },
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         return np.array([-np.inf, 0]), np.array([np.inf, np.inf])
 
     def constraint_1(self, x: np.ndarray) -> np.ndarray:
@@ -76,7 +74,7 @@ class OptProblemNoGrad(OptimisationProblem):
         """Objective to minimise (x - 1)^2 + x + 3."""
         return np.sqrt(x[1])
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.constraint_1,
@@ -88,7 +86,7 @@ class OptProblemNoGrad(OptimisationProblem):
             },
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         return np.array([-np.inf, 0]), np.array([np.inf, np.inf])
 
     def constraint_1(self, x: np.ndarray) -> np.ndarray:
@@ -112,7 +110,7 @@ class OptProblemEqConstraint(OptimisationProblem):
     def objective(self, x: np.ndarray) -> float:
         return -np.prod(x)
 
-    def eq_constraints(self) -> List[ConstraintT]:
+    def eq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.eq_constraint_1,

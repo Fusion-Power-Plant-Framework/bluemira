@@ -10,8 +10,6 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
@@ -36,7 +34,7 @@ class BluemiraShell(BluemiraGeo):
         Label to assign to the shell
     """
 
-    def __init__(self, boundary: List[BluemiraFace], label: str = ""):
+    def __init__(self, boundary: list[BluemiraFace], label: str = ""):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
@@ -76,21 +74,21 @@ class BluemiraShell(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> Tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire]:
         """
         The edges of the shell.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
-    def wires(self) -> Tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the shell.
         """
         return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
-    def faces(self) -> Tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace]:
         """
         The faces of the shell.
         """

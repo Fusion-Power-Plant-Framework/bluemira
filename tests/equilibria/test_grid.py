@@ -61,7 +61,7 @@ class TestGrid:
             assert g.point_inside(*p)
 
         x, z = g.bounds
-        points = list(zip(x, z))
+        points = list(zip(x, z, strict=False))
         for p in points:
             assert g.point_inside(*p)
 

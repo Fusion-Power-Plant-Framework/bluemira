@@ -140,6 +140,7 @@ class TestDuctConnection:
                     xy.wires[1].edges,
                     key=lambda x: (*tuple(-x.start_point().xy.flatten()), -x.length),
                 ),
+                strict=False,
             )
         ):
             # Are the edges of the internal and external wires parallel

@@ -9,7 +9,7 @@ EUDEMO model manager classes
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.equilibria.run import Snapshot
@@ -43,7 +43,7 @@ class EquilibriumManager:
             bluemira_warn(f"Over-writing equilibrium state: {name}!")
         self.states[name] = snapshot
 
-    def get_state(self, name: str) -> Union[None, Snapshot]:
+    def get_state(self, name: str) -> None | Snapshot:
         """
         Get an equilibrium state from the Equilibrium manager.
         """

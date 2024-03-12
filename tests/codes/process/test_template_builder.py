@@ -513,7 +513,7 @@ class TestInDatOneForOne:
 
     def test_inputs_same(self):
         for k in self.true_data:
-            if not isinstance(self.true_data[k].get_value, (list, dict)):
+            if not isinstance(self.true_data[k].get_value, list | dict):
                 assert np.allclose(
                     self.true_data[k].get_value, self.template[k].get_value
                 )

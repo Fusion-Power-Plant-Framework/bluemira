@@ -11,12 +11,7 @@ Finite element class
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Dict, Optional, Union
-
-if TYPE_CHECKING:
-    from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
-    from bluemira.structural.node import Node
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -28,6 +23,11 @@ from bluemira.structural.loads import distributed_load, point_load
 from bluemira.structural.node import get_midpoint
 from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
+
+if TYPE_CHECKING:
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.structural.material import StructuralMaterial
+    from bluemira.structural.node import Node
 
 
 # TODO: Clean up some class stuff with cached_property decorators.
@@ -42,13 +42,13 @@ class LoadType(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value: Union[str, LoadType]) -> LoadType:
+    def _missing_(cls, value: str | LoadType) -> LoadType:
         try:
             return cls[value.replace(" ", "_").upper()]
         except KeyError:
             raise StructuralError(
                 f"{cls.__name__} has no load type {value}"
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -236,7 +236,7 @@ class Element:
         node_2: Node,
         id_number: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         # Utility properties
         self.node_1 = node_1
@@ -426,7 +426,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Dict[str, float]):
+    def add_load(self, load: dict[str, float]):
         """
         Applies a load to the Element object.
 
@@ -557,7 +557,7 @@ class Element:
 
         stresses = []
         safety_factors = []
-        for c_s, mat in zip(xsections, materials):
+        for c_s, mat in zip(xsections, materials, strict=False):
             y = c_s.y - c_s.centroid[1]  # y-distances to centroid
             z = c_s.z - c_s.centroid[2]  # z-distances to centroid
 

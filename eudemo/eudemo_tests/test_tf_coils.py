@@ -195,7 +195,9 @@ class TestTFCoilBuilder:
         "tk_tf_side": {"value": 0.1, "unit": "m"},
     }
 
-    @pytest.mark.parametrize(("centreline", "wp_xs"), zip(*centreline_setup()))
+    @pytest.mark.parametrize(
+        ("centreline", "wp_xs"), zip(*centreline_setup(), strict=False)
+    )
     def test_components_and_segments(self, centreline, wp_xs):
         builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
         tf_coil = builder.build()

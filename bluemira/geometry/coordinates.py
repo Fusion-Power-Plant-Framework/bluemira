@@ -11,10 +11,11 @@ Utility for sets of coordinates
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from enum import Enum, auto
-from itertools import starmap
+from itertools import pairwise, starmap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 import numba as nb
 import numpy as np
@@ -47,12 +48,12 @@ class RotationAxis(Enum):
     Z = auto()
 
     @classmethod
-    def _missing_(cls, value: Union[str, RotationAxis]) -> RotationAxis:
+    def _missing_(cls, value: str | RotationAxis) -> RotationAxis:
         try:
             return cls[value.upper()]
         except KeyError:
             raise CoordinatesError(
-                f"Invalid rotation axis: {value}. Choose from: {*cls._member_names_, }"
+                f"Invalid rotation axis: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
 
 
@@ -94,7 +95,7 @@ def _validate_coordinates(x, y, z=None):
 
 
 def vector_lengthnorm(
-    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+    x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Get a normalised 1-D parameterisation of a set of x-y(-z) coordinates.
@@ -120,7 +121,7 @@ def vector_lengthnorm(
 
 def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Interpolate points.
 
@@ -156,7 +157,7 @@ def interpolate_midpoints(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Interpolate the points adding the midpoint of each segment to the points.
 
@@ -238,7 +239,7 @@ def get_normal_vector(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
 
 
 @xyz_process
-def get_perimeter(x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None) -> float:
+def get_perimeter(x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None) -> float:
     """
     Calculate the perimeter of a set of coordinates.
 
@@ -306,7 +307,7 @@ def get_perimeter_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
 
 
 @xyz_process
-def get_area(x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None) -> float:
+def get_area(x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None) -> float:
     """
     Calculate the area inside a closed polygon with x, y coordinate vectors.
     `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
@@ -444,7 +445,7 @@ def check_ccw_3d(
 
 @xyz_process
 def get_centroid(
-    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+    x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
@@ -468,7 +469,7 @@ def get_centroid(
 
 
 @nb.jit(cache=True, nopython=True)
-def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> List[float]:
+def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
 
@@ -502,7 +503,7 @@ def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> List[float]:
     return [cx, cz]
 
 
-def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> List[float]:
+def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting counterclockwise polygon
     in 3-D.
@@ -611,7 +612,7 @@ def get_angle_between_vectors(
 
 
 def rotation_matrix(
-    theta: float, axis: Union[str, RotationAxis, np.ndarray] = RotationAxis.Z
+    theta: float, axis: str | RotationAxis | np.ndarray = RotationAxis.Z
 ) -> np.ndarray:
     """
     Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
@@ -630,7 +631,7 @@ def rotation_matrix(
     -------
     The (active) rotation matrix about the axis for an angle theta
     """
-    if isinstance(axis, (str, RotationAxis)):
+    if isinstance(axis, str | RotationAxis):
         axis = RotationAxis(axis)
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
@@ -714,7 +715,7 @@ def project_point_axis(point: np.ndarray, axis: np.ndarray) -> np.ndarray:
     return axis * np.dot(point, axis) / np.dot(axis, axis)
 
 
-def principal_components(xyz_array: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def principal_components(xyz_array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Principal component analysis.
     """
@@ -866,7 +867,7 @@ def on_polygon(x: float, z: float, poly: np.ndarray) -> bool:
     Whether or not the point is on the perimeter of the polygon
     """
     on_edge = False
-    for _i, (point_a, point_b) in enumerate(zip(poly[:-1], poly[1:])):
+    for _i, (point_a, point_b) in enumerate(pairwise(poly)):
         c = check_linesegment(np.array(point_a), np.array(point_b), np.array([x, z]))
 
         if c is True:
@@ -1048,7 +1049,7 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array: Union[np.ndarray, Dict, Iterable[Iterable]]):
+    def __init__(self, xyz_array: np.ndarray | dict | Iterable[Iterable]):
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
@@ -1119,7 +1120,7 @@ class Coordinates:
         self._set_plane_props()
         return self._normal_vector
 
-    def check_ccw(self, axis: Optional[np.ndarray] = None) -> bool:
+    def check_ccw(self, axis: np.ndarray | None = None) -> bool:
         """
         Whether or not the Coordinates are ordered in the counter-clockwise direction
         about a specified axis. If None is specified, the Coordinates normal vector will
@@ -1138,7 +1139,7 @@ class Coordinates:
 
         return check_ccw_3d(self.x, self.y, self.z, axis)
 
-    def set_ccw(self, axis: Optional[np.ndarray] = None):
+    def set_ccw(self, axis: np.ndarray | None = None):
         """
         Set the Coordinates to be counter-clockwise about a specified axis. If None is
         specified, the Coordinates normal vector will be used.
@@ -1234,7 +1235,7 @@ class Coordinates:
         return self._array
 
     @property
-    def points(self) -> List[np.ndarray]:
+    def points(self) -> list[np.ndarray]:
         """
         A list of the individual points of the Coordinates.
         """
@@ -1244,7 +1245,7 @@ class Coordinates:
     # Conversions
     # =========================================================================
 
-    def as_dict(self) -> Dict[str, np.ndarray]:
+    def as_dict(self) -> dict[str, np.ndarray]:
         """
         Cast the Coordinates as a dictionary.
 
@@ -1255,7 +1256,7 @@ class Coordinates:
         """
         return {"x": self.x, "y": self.y, "z": self.z}
 
-    def to_json(self, filename: str, **kwargs: Dict[str, Any]) -> str:
+    def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str:
         """
         Save the Coordinates as a JSON file.
         """
@@ -1286,7 +1287,7 @@ class Coordinates:
         return get_perimeter_3d(*self._array)
 
     @property
-    def center_of_mass(self) -> Tuple[float, float, float]:
+    def center_of_mass(self) -> tuple[float, float, float]:
         """
         Geometrical centroid of the Coordinates.
         """
@@ -1312,7 +1313,7 @@ class Coordinates:
         return self._array.T
 
     @property
-    def shape(self) -> Tuple[int, int]:
+    def shape(self) -> tuple[int, int]:
         """
         Shape of the Coordinates
         """
@@ -1379,8 +1380,8 @@ class Coordinates:
 
     def rotate(
         self,
-        base: Tuple[float, float, float] = (0, 0, 0),
-        direction: Tuple[float, float, float] = (0, 0, 1),
+        base: tuple[float, float, float] = (0, 0, 0),
+        direction: tuple[float, float, float] = (0, 0, 1),
         degree: float = 0.0,
     ):
         """
@@ -1415,7 +1416,7 @@ class Coordinates:
 
         self._update_plane_props()
 
-    def translate(self, vector: Tuple[float, float, float] = (0, 0, 0)):
+    def translate(self, vector: tuple[float, float, float] = (0, 0, 0)):
         """
         Translate this shape with the vector. This function modifies the self
         object.
@@ -1551,7 +1552,7 @@ def vector_intersect_3d(
 
 def coords_plane_intersect(
     coords: Coordinates, plane: BluemiraPlane
-) -> Union[np.ndarray, None]:
+) -> np.ndarray | None:
     """
     Calculate the intersection of Coordinates with a plane.
 
@@ -1590,7 +1591,7 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).
@@ -1675,7 +1676,7 @@ def _intersect_count(
 
 def join_intersect(
     coords1: Coordinates, coords2: Coordinates, get_arg: bool = False
-) -> Optional[List[int]]:
+) -> list[int] | None:
     """
     Add the intersection points between coords1 and coords2 to coords1.
 
@@ -1719,7 +1720,7 @@ def join_intersect(
 
     if get_arg:
         args = []
-        for x, z in zip(x_inter, z_inter):
+        for x, z in zip(x_inter, z_inter, strict=False):
             args.append(coords1.argmin([x, 0, z]))
         return list(set(args))
     return None

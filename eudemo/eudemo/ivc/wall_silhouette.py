@@ -8,7 +8,6 @@ First Wall Silhouette designer
 """
 
 from dataclasses import dataclass
-from typing import Dict, Type, Union
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
@@ -54,17 +53,17 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
     """
 
-    param_cls = WallSilhouetteDesignerParams
+    param_cls: type[WallSilhouetteDesignerParams] = WallSilhouetteDesignerParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         equilibrium: Equilibrium,
     ) -> None:
         super().__init__(params, build_config)
 
-        self.parameterisation_cls: Type[GeometryParameterisation] = (
+        self.parameterisation_cls: type[GeometryParameterisation] = (
             get_class_from_module(
                 self.build_config["param_class"],
                 default_module="bluemira.geometry.parameterisations",
@@ -155,7 +154,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params())
 
-    def _derive_shape_params(self) -> Dict:
+    def _derive_shape_params(self) -> dict:
         shape_params = {}
         for key, val in self.variables_map.items():
             if isinstance(val, str):

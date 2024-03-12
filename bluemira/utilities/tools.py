@@ -13,15 +13,15 @@ from __future__ import annotations
 import operator
 import string
 import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import wraps
 from importlib import import_module as imp
 from importlib import machinery as imp_mach
 from importlib import util as imp_u
 from itertools import permutations
 from json import JSONEncoder, dumps
-from os import listdir
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
+from os import PathLike, listdir
+from typing import TYPE_CHECKING, Any
 
 import nlopt
 import numpy as np
@@ -31,8 +31,9 @@ from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 if TYPE_CHECKING:
-    from pathlib import Path
     from types import ModuleType
+
+    import numpy.typing as npt
 
     from bluemira.display.palettes import ColorPalette
 
@@ -56,13 +57,13 @@ class NumpyJSONEncoder(JSONEncoder):
 
 
 def json_writer(
-    data: Dict[str, Any],
-    file: Optional[Union[Path, str]] = None,
+    data: dict[str, Any],
+    file: PathLike | str | None = None,
     return_output: bool = False,
     *,
     cls: JSONEncoder = NumpyJSONEncoder,
     **kwargs,
-) -> Optional[str]:
+) -> str | None:
     """
     Write json in the bluemria style.
 
@@ -206,7 +207,7 @@ class EinsumWrapper:
             raise ValueError("matrices dimensions >2d Unsupported") from None
 
     def dot(
-        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+        self, ix: np.ndarray, iy: np.ndarray, out: np.ndarray | None = None
     ) -> np.ndarray:
         """
         A dot product emulation using np.einsum.
@@ -253,7 +254,7 @@ class EinsumWrapper:
         return np.einsum(out_str, ix, iy, out=out)
 
     def cross(
-        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+        self, ix: np.ndarray, iy: np.ndarray, out: np.ndarray | None = None
     ) -> np.ndarray:
         """
         A row-wise cross product of a 2D matrices of vectors.
@@ -316,7 +317,7 @@ class ColourDescriptor:
 
         return colors.to_hex(getattr(obj, self._name, self._default))
 
-    def __set__(self, obj: Any, value: Union[str, Tuple[float, ...], ColorPalette]):
+    def __set__(self, obj: Any, value: str | tuple[float, ...] | ColorPalette):
         """
         Set the colour
 
@@ -400,8 +401,8 @@ def set_random_seed(seed_number: int):
 
 
 def compare_dicts(
-    d1: Dict[str, Any],
-    d2: Dict[str, Any],
+    d1: dict[str, Any],
+    d2: dict[str, Any],
     almost_equal: bool = False,
     verbose: bool = True,
     rtol: float = 1e-5,
@@ -464,7 +465,7 @@ def compare_dicts(
     comp_map = {
         key: (
             array_eq
-            if isinstance(val, (np.ndarray, list))
+            if isinstance(val, np.ndarray | list)
             else (
                 dict_eq
                 if isinstance(val, dict)
@@ -514,10 +515,10 @@ def compare_dicts(
 
 
 def clip(
-    val: Union[float, np.ndarray],
-    val_min: Union[float, np.ndarray],
-    val_max: Union[float, np.ndarray],
-) -> Union[float, np.ndarray]:
+    val: npt.ArrayLike,
+    val_min: npt.ArrayLike,
+    val_max: npt.ArrayLike,
+) -> float | npt.NDArray[np.float64]:
     """
     Clips (limits) val between val_min and val_max.
     This function wraps the numpy core umath minimum and maximum functions
@@ -565,7 +566,7 @@ def flatten_iterable(iters):
 
     """
     for _iter in iters:
-        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes, dict)):
+        if isinstance(_iter, Iterable) and not isinstance(_iter, str | bytes | dict):
             yield from flatten_iterable(_iter)
         else:
             yield _iter
@@ -595,7 +596,7 @@ def slope(arr: np.ndarray) -> float:
     return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
 
 
-def yintercept(arr: np.ndarray) -> Tuple[float]:
+def yintercept(arr: np.ndarray) -> tuple[float]:
     """Calculate the y intercept and gradient of an array"""
     s = slope(arr)
     return arr[0, 1] - s * arr[0, 0], s
@@ -608,7 +609,7 @@ def yintercept(arr: np.ndarray) -> Tuple[float]:
 
 def cartesian_to_polar(
     x: np.ndarray, z: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
 
@@ -638,7 +639,7 @@ def cartesian_to_polar(
 
 def polar_to_cartesian(
     r: np.ndarray, phi: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D polar to Cartesian coordinates about a reference point.
 
@@ -753,7 +754,7 @@ def _loadfromspec(name: str) -> ModuleType:
     return module
 
 
-def get_class_from_module(name: str, default_module: str = "") -> Type:
+def get_class_from_module(name: str, default_module: str = "") -> type:
     """
     Load a class from a module dynamically.
 
@@ -820,7 +821,7 @@ def list_array(list_: Any) -> np.ndarray:
     raise TypeError("Could not convert input type to list_array to a np.array.")
 
 
-def array_or_num(array: Any) -> Union[np.ndarray, float]:
+def array_or_num(array: Any) -> np.ndarray | float:
     """
     Always returns a numpy array or a float
 
@@ -846,7 +847,7 @@ def array_or_num(array: Any) -> Union[np.ndarray, float]:
 
 
 def deprecation_wrapper(
-    message: Union[Optional[Callable[[Any], Any]], Optional[str]],
+    message: Callable[[Any], Any] | None | str,
 ) -> Callable[[Any], Any]:
     """Deprecate any callable.
 

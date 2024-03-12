@@ -162,8 +162,9 @@ class TestSolverIntegration:
         class BLANK:
             get_value = 0.0
 
-        with self._indat_patch as indat_cls_mock, file_exists(
-            "template/path/in.dat", f"{self.MODULE_REF}.Path.is_file"
+        with (
+            self._indat_patch as indat_cls_mock,
+            file_exists("template/path/in.dat", f"{self.MODULE_REF}.Path.is_file"),
         ):
             indat_cls_mock.return_value.data = {"casthi": BLANK}
             Solver(self.params, build_config)

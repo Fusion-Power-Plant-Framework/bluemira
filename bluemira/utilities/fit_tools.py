@@ -7,8 +7,6 @@
 Fitting tools
 """
 
-from typing import List, Tuple
-
 import numpy as np
 from scipy.linalg import lstsq
 from sklearn.metrics import r2_score
@@ -17,7 +15,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 def surface_fit(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, order: int = 2, n_grid: int = 30
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[float], float]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[float], float]:
     """
     Fit a polynomial surface to a 3-D data set.
 
@@ -87,7 +85,7 @@ def surface_fit(
     return x2d, y2d, zz, coeffs, r2_score(z, z_predicted)
 
 
-def powers_arange(powers: np.ndarray) -> List[int]:
+def powers_arange(powers: np.ndarray) -> list[int]:
     """
     Reorder powers index to order by power from 1st to nth index.
 

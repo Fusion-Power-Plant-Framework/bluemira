@@ -11,7 +11,6 @@ Load objects
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Union
 
 import numpy as np
 
@@ -28,7 +27,7 @@ class SubLoadType(Enum):
     ALL = auto()
 
     @classmethod
-    def _missing_(cls, value: Union[str, SubLoadType]) -> SubLoadType:
+    def _missing_(cls, value: str | SubLoadType) -> SubLoadType:
         try:
             return cls[value.upper()]
         except KeyError:
