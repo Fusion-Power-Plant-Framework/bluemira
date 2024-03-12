@@ -13,7 +13,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 # import mesher lib (gmsh)
 import gmsh
@@ -497,7 +497,9 @@ class Mesh:
                     for item in boundary:
                         self.__convert_item_to_gmsh(item, dim)
 
-    def get_gmsh_dict(self, buffer: dict, file_format: str = "default"):
+    def get_gmsh_dict(
+        self, buffer: dict, file_format: str = "default"
+    ) -> Optional[dict]:
         """
         Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
         tag)) format.
@@ -601,7 +603,7 @@ class _FreeCADGmsh:
         gmsh.model.mesh.generate(mesh_dim)
 
     @staticmethod
-    def create_gmsh_curve(buffer: dict):
+    def create_gmsh_curve(buffer: dict) -> dict:
         """
         Function to create gmsh curve from a dictionary (buffer).
         """
@@ -667,7 +669,7 @@ class _FreeCADGmsh:
         tools: Optional[list] = None,
         remove_object: bool = True,
         remove_tool: bool = True,
-    ):
+    ) -> Tuple[list[int], list[tuple], list[list[tuple]]]:
         if not hasattr(dim, "__len__"):
             dim = [dim]
         if all_ent is None:
@@ -688,7 +690,7 @@ class _FreeCADGmsh:
         return all_ent, oo, oov
 
     @staticmethod
-    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: Optional[list] = None):
+    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: Optional[list] = None) -> dict:
         if oov is None:
             oov = []
         dim_dict = {
