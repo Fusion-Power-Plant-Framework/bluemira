@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Optional, Tuple, Type, TypeVar, TypedDict, Union
+from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, TypedDict, Union
 
 import numpy as np
 import pint
@@ -149,7 +149,7 @@ class Parameter(Generic[ParameterValueType]):
         self._source = source
         self._add_history_record()
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize the parameter to a dictionary."""
         out = {
             "name": self.name,
