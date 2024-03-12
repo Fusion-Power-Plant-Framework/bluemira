@@ -177,7 +177,7 @@ class LoadCase(list):
     A simple container object for a collection of loads
     """
 
-    def add_node_load(self, node_id: int, load: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_node_load(self, node_id: int, load: float, load_type: str):
         """
         Adds a node load to the LoadCase
 
@@ -198,7 +198,7 @@ class LoadCase(list):
             "Q": load,
         })
 
-    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
         """
         Adds an element point load to the LoadCase
 
@@ -225,7 +225,7 @@ class LoadCase(list):
             "x": x,
         })
 
-    def add_distributed_load(self, element_id: int, w: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_distributed_load(self, element_id: int, w: float, load_type: str):
         """
         Adds a distributed load to the LoadCase
 

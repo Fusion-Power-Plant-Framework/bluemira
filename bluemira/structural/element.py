@@ -426,7 +426,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Dict[str, float]):  # type: ignore[no-untyped-def]
+    def add_load(self, load: Dict[str, float]):
         """
         Applies a load to the Element object.
 
@@ -509,7 +509,7 @@ class Element:
 
         return self._s_functs
 
-    def interpolate(self, scale: float):  # type: ignore[no-untyped-def]
+    def interpolate(self, scale: float):
         """
         Interpolates the displacement of the beam with Hermite polynomial
         shape functions to obtain inter-node displacement and stress

@@ -125,7 +125,7 @@ class Result:
         deflection: bool = False,
         pattern: bool = False,
         **kwargs,
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Plot the Result of the finite element analysis
 

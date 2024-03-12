@@ -112,7 +112,7 @@ class CrossSection:
         """
         self.geometry.plot(ax=ax, points=True)
 
-    def rotate(self, angle: float):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float):
         """
         Rotate the CrossSection about its centroid.
 
@@ -149,7 +149,7 @@ class CrossSection:
         else:
             self.geometry.rotate(base=self.centroid, direction=(1, 0, 0), degree=angle)
 
-    def translate(self, vector: np.ndarray):  # type: ignore[no-untyped-def]
+    def translate(self, vector: np.ndarray):
         """
         Translate the CrossSection. Should not affect its properties. Note that
         CrossSections are defined in the y-z plane.
@@ -216,7 +216,7 @@ class RectangularBeam(CrossSection):
 
         return a * b**3 * (16 / 3 - 3.36 * (b / a) * (1 - b**4 / (12 * a**4)))
 
-    def make_geometry(self, width: float, height: float):  # type: ignore[no-untyped-def]
+    def make_geometry(self, width: float, height: float):
         """
         Make a BluemiraFace for the RectangularBeam cross-section.
         """
@@ -336,7 +336,7 @@ class IBeam(CrossSection):
         self.make_geometry(base, depth, flange, web)
 
     @staticmethod
-    def check_dimensions(base: float, depth: float, flange: float, web: float):  # type: ignore[no-untyped-def]
+    def check_dimensions(base: float, depth: float, flange: float, web: float):
         """
         Edge case eradication
         """
@@ -350,7 +350,7 @@ class IBeam(CrossSection):
         ):
             raise StructuralError("I-beam dimensions don't make sense.")
 
-    def make_geometry(self, base: float, depth: float, flange: float, web: float):  # type: ignore[no-untyped-def]
+    def make_geometry(self, base: float, depth: float, flange: float, web: float):
         """
         Make a BluemiraFace for the IBeam cross-section.
         """

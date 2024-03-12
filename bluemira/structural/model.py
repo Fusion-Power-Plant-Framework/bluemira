@@ -53,7 +53,7 @@ class BoundaryConditionMethod(Enum):
             ) from None
 
 
-def check_matrix_condition(matrix: np.ndarray, digits: int):  # type: ignore[no-untyped-def]
+def check_matrix_condition(matrix: np.ndarray, digits: int):
     """
     Checks the condition number of a matrix and warns if it is unsuitable for
     working with.
@@ -130,7 +130,7 @@ class FiniteElementModel:
     # Geometry definition methods
     # =========================================================================
 
-    def set_geometry(self, geometry: Geometry):  # type: ignore[no-untyped-def]
+    def set_geometry(self, geometry: Geometry):
         """
         Set a Geometry in the FiniteElementModel
 
@@ -192,7 +192,7 @@ class FiniteElementModel:
         coords: Coordinates,
         cross_section: CrossSection,
         material: Optional[StructuralMaterial] = None,
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Adds a Coordinates object to the FiniteElementModel
 
@@ -216,7 +216,7 @@ class FiniteElementModel:
         rx: bool = False,
         ry: bool = False,
         rz: bool = False,
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Applies a support condition at a Node in the FiniteElementModel
 
@@ -259,7 +259,7 @@ class FiniteElementModel:
         right_node_ids: List[int],
         p1: Optional[np.ndarray] = None,
         p2: Optional[np.ndarray] = None,
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
 
@@ -289,7 +289,7 @@ class FiniteElementModel:
     # Load definition methods
     # =========================================================================
 
-    def apply_load_case(self, load_case: LoadCase):  # type: ignore[no-untyped-def]
+    def apply_load_case(self, load_case: LoadCase):
         """
         Apply a load case to the FiniteElementModel.
 
@@ -300,7 +300,7 @@ class FiniteElementModel:
         """
         self.load_case = load_case
 
-    def add_node_load(self, node_id: int, load: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_node_load(self, node_id: int, load: float, load_type: str):
         """
         Adds a node load to the FiniteElementModel
 
@@ -315,7 +315,7 @@ class FiniteElementModel:
         """
         self.load_case.add_node_load(node_id, load, load_type)
 
-    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
         """
         Adds an element point load to the FiniteElementModel
 
@@ -332,7 +332,7 @@ class FiniteElementModel:
         """
         self.load_case.add_element_load(element_id, load, x, load_type)
 
-    def add_distributed_load(self, element_id: int, w: float, load_type: str):  # type: ignore[no-untyped-def]
+    def add_distributed_load(self, element_id: int, w: float, load_type: str):
         """
         Adds a distributed load to the FiniteElementModel
 
@@ -379,7 +379,7 @@ class FiniteElementModel:
     # Private solution methods
     # =========================================================================
 
-    def _apply_load_case(self, load_case: LoadCase):  # type: ignore[no-untyped-def]
+    def _apply_load_case(self, load_case: LoadCase):
         """
         Applies a LoadCase to the FiniteElementModel. Maps individual loads to
         their respective Nodes and Elements.
@@ -451,7 +451,7 @@ class FiniteElementModel:
             reactions[idn : idn + 6] = node.reactions
         return reactions
 
-    def _math_checks(self, k_matrix: np.ndarray):  # type: ignore[no-untyped-def]
+    def _math_checks(self, k_matrix: np.ndarray):
         """
         Performs a series of checks on the model boundary conditions and the
         global stiffness matrix K, prior to the solution of the system of
@@ -477,7 +477,7 @@ class FiniteElementModel:
             )
         check_matrix_condition(k_matrix, 15)
 
-    def _displacement_check(self, deflections: np.ndarray):  # type: ignore[no-untyped-def]
+    def _displacement_check(self, deflections: np.ndarray):
         """
         Checks to see if the displacements are not too big relative to the
         size of the model.
