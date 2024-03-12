@@ -99,7 +99,7 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts: List[Context], **kwargs) -> None:
+    def enable_contexts(self, *contexts: List[Context], **kwargs):
         """
         Enable contexts
         """
@@ -150,7 +150,7 @@ class BMUnitRegistry(UnitRegistry):
         return self._gas_flow_temperature
 
     @gas_flow_temperature.setter
-    def gas_flow_temperature(self, value: Union[float, None, Quantity]) -> None:
+    def gas_flow_temperature(self, value: Union[float, None, Quantity]):
         self._gas_flow_temperature = (
             value.to("kelvin")
             if isinstance(value, Quantity)
@@ -509,7 +509,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: Union[complex, Quantity]) -> None:
+def _temp_check(unit: Unit, val: Union[complex, Quantity]):
     """
     Check temperature is above absolute zero
 
