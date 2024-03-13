@@ -11,6 +11,9 @@ Wrapper for FreeCAD Part.Wire objects
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterable, List, Optional, Tuple, Union
+
+import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
@@ -152,6 +155,44 @@ class BluemiraWire(BluemiraGeo):
         else:
             points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
         return Coordinates(points.T)
+
+    def discretize_reduced(
+        self, ndiscr: int = 100, byedges: bool = False, dl: Optional[float] = None
+    ) -> Coordinates:
+        """
+        Discretize the wire in ndiscr equidistant points or with a reference dl
+        segment step according to discretize function. Will then reduce the number
+        of discretizations along straight segments to reduce computational needs.
+
+        Parameters
+        ----------
+        ndiscr:
+            Number of points to discretize to
+        byedges:
+            Whether or not to discretise by edges. If True, each edge is
+            discretized separately using an approximated distance
+            (wire.Length/ndiscr) or the specified dl. If True, it is
+            possible that ndiscr is larger than specified.
+        dl:
+            Discretise by length, overriding ndiscr
+
+        Returns
+        -------
+        Coordinates of the discretized points.
+        """
+        points = self.discretize(ndiscr, byedges, dl)
+        points_copy = points
+        for i in range(1, len(points) - 1):
+            # go in reverse so element deletion doesn't change positional argument
+            j = len(points) - 1 - i
+            p0 = points[:, j + 1]
+            p1 = points[:, j]
+            p2 = points[:, j - 1]
+            l1 = (p1 - p0) / np.linalg.norm(p1 - p0)
+            l2 = (p2 - p1) / np.linalg.norm(p2 - p1)
+            if np.dot(l1, l2) == 1.0:  # noqa: PLR2004
+                points_copy = np.delete(points_copy, j, 1)
+        return Coordinates(points_copy)
 
     def value_at(
         self, alpha: float | None = None, distance: float | None = None
