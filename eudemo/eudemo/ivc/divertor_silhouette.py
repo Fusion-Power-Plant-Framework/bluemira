@@ -92,6 +92,11 @@ class DivertorSilhouetteDesigner(DivertorDesigner):
         inner_target_start, inner_target_end = self._get_wire_ends_by_psi(inner_target)
         outer_target_end, outer_target_start = self._get_wire_ends_by_psi(outer_target)
 
+        # The inner target ends inside the private flux region (lower psi_norm)
+        # The outer target ends outside the private flux region (higher psi_norm)
+        inner_target_start, inner_target_end = self._get_wire_ends_by_psi(inner_target)
+        outer_target_end, outer_target_start = self._get_wire_ends_by_psi(outer_target)
+
         # Build the dome based on target positions
         dome = self.make_dome(inner_target_end, outer_target_start, label=self.DOME)
 
