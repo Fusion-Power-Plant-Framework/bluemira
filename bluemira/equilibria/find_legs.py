@@ -256,7 +256,7 @@ def get_legs_length_and_angle(
                 leg_fs = PartialOpenFluxSurface(leg)
                 if plasma_facing_boundary is not None:
                     leg_fs.clip(plasma_facing_boundary)
-                alpha = leg_fs.aplha
+                alpha = leg_fs.alpha
                 if alpha is None:
                     grazing_ang = None
                 elif alpha <= np.pi:
@@ -266,7 +266,7 @@ def get_legs_length_and_angle(
                 lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
                 angles.append(grazing_ang)
         length_dict.update({n: lengths})
-        angle_dict.update({n: grazing_ang})
+        angle_dict.update({n: angles})
     return length_dict, angle_dict
 
 

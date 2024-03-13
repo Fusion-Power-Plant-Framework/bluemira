@@ -181,8 +181,8 @@ class MaximiseConnectionLength(ObjectiveFunction):
         self.plasma_facing_boundary = plasma_facing_boundary
         self.psi_n_tol = psi_n_tol
         self.delta_start = delta_start
-        self.rtol = (rtol,)
-        self.n_turns_max = (n_turns_max,)
+        self.rtol = rtol
+        self.n_turns_max = n_turns_max
         self.calculation_method = calculation_method
 
     def f_objective(self, vector: npt.NDArray) -> float:
@@ -244,9 +244,7 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         """Objective function for an optimisation."""
         self.eq.coilset.get_control_coils().current = vector * self.scale
 
-        legs = LegFlux(self.eq).get_legs(
-            psi_n_tol=self.psi_n_tol, delta_start=self.delta_start
-        )
+        legs = LegFlux(self.eq).get_legs(delta=self.delta_start)
         lengths, _angles = get_legs_length_and_angle(
             self.eq, legs, self.plasma_facing_boundary
         )
