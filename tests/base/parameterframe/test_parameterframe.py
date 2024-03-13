@@ -126,13 +126,13 @@ class TestParameterFrame:
         assert frame.x.value == pytest.approx(1e51)
 
     @pytest.mark.parametrize("value", ["OK", ["OK"]])
-    def test_no_TypeError_given_field_has_Union_Parameter_type(self, value):
+    def test_TypeError_given_field_has_Union_Parameter_type(self, value):
         @dataclass
         class GenericFrame(ParameterFrame):
             x: Parameter[Union[str, list]]
 
-        gf = GenericFrame.from_dict({"x": {"value": value, "unit": "m"}})
-        assert gf.x.value == value
+        with pytest.raises(TypeError):
+            GenericFrame.from_dict({"x": {"value": value, "unit": "m"}})
 
     def test_TypeError_given_field_does_not_have_Parameter_type(self):
         @dataclass
