@@ -190,7 +190,7 @@ class BluemiraWire(BluemiraGeo):
             p2 = points[:, j - 1]
             l1 = (p1 - p0) / np.linalg.norm(p1 - p0)
             l2 = (p2 - p1) / np.linalg.norm(p2 - p1)
-            if np.dot(l1, l2) == 1.0:  # noqa: PLR2004
+            if np.equal(np.dot(l1, l2), 1.0):
                 points_copy = np.delete(points_copy, j, 1)
         return Coordinates(points_copy)
 
