@@ -507,7 +507,11 @@ def make_circle(
 
 
 def make_circle_arc_3P(  # noqa: N802
-    p1: Iterable[float], p2: Iterable[float], p3: Iterable[float], label: str = ""
+    p1: Iterable[float],
+    p2: Iterable[float],
+    p3: Iterable[float],
+    axis: Optional[Tuple[float, float, float]] = None,
+    label: str = "",
 ) -> BluemiraWire:
     """
     Create an arc of circle object given three points.
@@ -526,7 +530,7 @@ def make_circle_arc_3P(  # noqa: N802
     Bluemira wire that contains the arc or circle
     """
     # TODO: check what happens when the 3 points are in a line
-    output = cadapi.make_circle_arc_3P(p1, p2, p3)
+    output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
     return BluemiraWire(output, label=label)
 
 

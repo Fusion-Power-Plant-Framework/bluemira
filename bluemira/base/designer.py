@@ -88,6 +88,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     @abc.abstractproperty
     def param_cls(self) -> Type[ParameterFrame]:
         """The ParameterFrame class defining this designer's parameters."""
+        raise NotImplementedError
 
     @property
     def run_mode(self) -> str:

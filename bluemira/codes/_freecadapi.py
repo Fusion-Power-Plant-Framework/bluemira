@@ -426,7 +426,10 @@ def make_circle(
 
 
 def make_circle_arc_3P(  # noqa: N802
-    p1: Iterable[float], p2: Iterable[float], p3: Iterable[float]
+    p1: Iterable[float],
+    p2: Iterable[float],
+    p3: Iterable[float],
+    axis: Optional[Iterable[float]] = None,
 ) -> apiWire:
     """
     Create an arc of circle object given three points.
@@ -452,7 +455,7 @@ def make_circle_arc_3P(  # noqa: N802
     output = Part.Circle()
     output.Radius = arc.Radius
     output.Center = arc.Center
-    output.Axis = arc.Axis
+    output.Axis = arc.Axis if axis is None else Base.Vector(axis)
     arc = Part.ArcOfCircle(
         output, output.parameter(arc.StartPoint), output.parameter(arc.EndPoint)
     )
