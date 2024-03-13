@@ -322,9 +322,7 @@ class GrazingAngleConstraintFunction(ConstraintFunction):
         """Constraint function"""
         self.eq.coilset.get_control_coils().current = vector * self.scale
 
-        legs = LegFlux(self.eq).get_legs(
-            psi_n_tol=self.psi_n_tol, delta_start=self.delta_start
-        )
+        legs = LegFlux(self.eq).get_legs(delta=self.delta_start)
         _lengths, angles = get_legs_length_and_angle(
             self.eq, legs, self.plasma_facing_boundary
         )
