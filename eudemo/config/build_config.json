@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
@@ -106,20 +106,30 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
     "variables_map": {
-      "sl": { "value": 12.0 },
-      "f1": { "value": 4.0, "lower_bound": 4.0 },
-      "f2": { "value": 4.0, "lower_bound": 4.0 }
+      "sl": {
+        "value": 12.0
+      },
+      "f1": {
+        "value": 4.0,
+        "lower_bound": 4.0
+      },
+      "f2": {
+        "value": 4.0,
+        "lower_bound": 4.0
+      }
     },
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
     "problem_settings": {
       "ripple_selector": {
         "cls": "bluemira.builders.tf_coils::EquispacedSelector",
-        "args": { "n_rip_points": 10 }
+        "args": {
+          "n_rip_points": 10
+        }
       },
       "n_koz_points": 50,
       "nx": 1,
@@ -134,7 +144,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/PFCoilDesign.json",
     "verbose": false,
     "plot": true,
