@@ -143,7 +143,7 @@
     "show_data": false
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -153,12 +153,7 @@
     },
     "param_class": "TripleArc",
     "variables_map": {
-      "sl": {
-        "value": 11.43,
-        "fixed": true,
-        "lower_bound": 11.43,
-        "upper_bound": 11.44
-      },
+      "sl": { "value": 12 },
       "f1": { "value": 4.0, "lower_bound": 4.0 },
       "f2": { "value": 4.0, "lower_bound": 4.0 }
     },
@@ -166,7 +161,7 @@
     "problem_settings": {
       "ripple_selector": {
         "cls": "bluemira.builders.tf_coils::EquispacedSelector",
-        "args": { "n_rip_points": 20 }
+        "args": { "n_rip_points": 10 }
       },
       "n_koz_points": 50,
       "nx": 1,
@@ -181,7 +176,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
