@@ -68,9 +68,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         self._args = {
             "eq": self.eq,
             "scale": self.scale,
-            "double_null": self.double_null,
             "lower": self.lower,
-            "outer": self.outer,
             "psi_n_tol": self.psi_n_tol,
             "delta_start": delta_start,
             "plasma_facing_boundary": self.plasma_facing_boundary,
