@@ -142,10 +142,10 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 # We will consider the coilset to have positional symmetry about z=0, hence
 # the use of SymmetricCircuit class.
 # %%
-coil_x = [1.35, 6.85, 6.85, 1.5, 3.2, 5.7, 5.3]
-coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
+coil_x = [1.55, 6.85, 6.85, 1.55, 3.2, 5.7, 5.3]
+coil_z = [7.85, 4.95, 3.15, 6.1, 8.0, 7.8, 5.50]
 coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
-coil_dz = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
 
 coils = []
 
@@ -259,7 +259,7 @@ x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
 z_lcfs = np.array([0, 4.19, 0, -4.19])
 
 lcfs_isoflux = IsofluxConstraint(
-    x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+    x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], tolerance=0.5, constraint_value=0.1
 )
 
 x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
@@ -271,7 +271,7 @@ x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
 z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
 
 legs_isoflux = IsofluxConstraint(
-    x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1
+    x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1, tolerance=0.5
 )
 
 magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
@@ -397,7 +397,7 @@ xp_idx = np.argmin(z_lcfs)
 x_point = FieldNullConstraint(
     x_lcfs[xp_idx],
     z_lcfs[xp_idx],
-    tolerance=1e-4,  # [T]
+    tolerance=1e-2,  # [T]
 )
 
 # %% [markdown]
@@ -412,7 +412,7 @@ opt_problem = TikhonovCurrentCOP(
     gamma=1e-8,
     opt_algorithm="COBYLA",
     opt_conditions={"max_eval": 400},
-    opt_parameters={"initial_step": 0.03},
+    opt_parameters={"initial_step": 0.01},
     max_currents=3.0e7,
     constraints=[field_constraints, x_point, lcfs_isoflux],
 )
@@ -421,7 +421,8 @@ constrained_iterator = PicardIterator(
     opt_problem,
     fixed_coils=True,
     plot=False,
-    relaxation=0.3,
+    relaxation=0.1,
+    maxiter=100,
     convergence=DudsonConvergence(1e-4),
 )
 
