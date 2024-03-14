@@ -378,7 +378,6 @@ plt.show()
 # %% [markdown]
 
 # ## Constrained Optimisation
-# ### Constraints
 # We next define the list of `UpdateableConstraint` to apply.
 #
 # **Coil Field Constraints** are inequality constraints on the poloidal
