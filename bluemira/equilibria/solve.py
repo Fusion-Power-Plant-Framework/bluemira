@@ -120,6 +120,7 @@ class ConvergenceCriterion(ABC):
             _f, ax = plt.subplots()
         ax.semilogy(self.progress)
         ax.semilogy([0, len(self.progress)], [self.limit, self.limit])
+        ax.grid(True, which="both")
         ax.set_xlabel("Iterations [n]")
         ax.set_ylabel(self.math_string)
 
