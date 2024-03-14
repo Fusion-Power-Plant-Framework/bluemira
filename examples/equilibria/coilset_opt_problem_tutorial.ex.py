@@ -297,7 +297,7 @@ magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 # return poorly optimised states if the maximum number of evaluations
 # is too low or tolerances are too large.
 #
-# **We will directly input the optimisation algorithm, conditions and**
+# **Below we will directly input the optimisation algorithm, conditions and**
 # **parameters when defining the `TikhonovCurrentCOP`**
 # %%
 # %% [markdown]
