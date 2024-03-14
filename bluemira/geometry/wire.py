@@ -128,7 +128,11 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float | None = None
+        self,
+        ndiscr: int = 100,
+        byedges: bool = False,
+        dl: float | None = None,
+        reduce: bool = False,
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
@@ -154,45 +158,19 @@ class BluemiraWire(BluemiraGeo):
             points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
         else:
             points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
+        if reduce is True:
+            p0 = points[:-2, :]
+            p1 = points[1:-1, :]
+            p2 = points[2:, :]
+            l1 = (p1 - p0) / np.linalg.norm((p1 - p0)[0, :])
+            l2 = (p2 - p1) / np.linalg.norm((p2 - p1)[0, :])
+            mask = np.ones_like(points[:, 0], dtype=bool)
+            diag_dot = np.around(
+                np.append(np.append(0.0, np.diag(np.inner(l1, l2))), 0.0)
+            ).astype(int)
+            mask[np.equal(diag_dot, 1)] = False
+            return Coordinates(points[mask, :].T)
         return Coordinates(points.T)
-
-    def discretize_reduced(
-        self, ndiscr: int = 100, byedges: bool = False, dl: Optional[float] = None
-    ) -> Coordinates:
-        """
-        Discretize the wire in ndiscr equidistant points or with a reference dl
-        segment step according to discretize function. Will then reduce the number
-        of discretizations along straight segments to reduce computational needs.
-
-        Parameters
-        ----------
-        ndiscr:
-            Number of points to discretize to
-        byedges:
-            Whether or not to discretise by edges. If True, each edge is
-            discretized separately using an approximated distance
-            (wire.Length/ndiscr) or the specified dl. If True, it is
-            possible that ndiscr is larger than specified.
-        dl:
-            Discretise by length, overriding ndiscr
-
-        Returns
-        -------
-        Coordinates of the discretized points.
-        """
-        points = self.discretize(ndiscr, byedges, dl)
-        points_copy = points
-        for i in range(1, len(points) - 1):
-            # go in reverse so element deletion doesn't change positional argument
-            j = len(points) - 1 - i
-            p0 = points[:, j + 1]
-            p1 = points[:, j]
-            p2 = points[:, j - 1]
-            l1 = (p1 - p0) / np.linalg.norm(p1 - p0)
-            l2 = (p2 - p1) / np.linalg.norm(p2 - p1)
-            if np.equal(np.dot(l1, l2), 1.0):
-                points_copy = np.delete(points_copy, j, 1)
-        return Coordinates(points_copy)
 
     def value_at(
         self, alpha: float | None = None, distance: float | None = None
