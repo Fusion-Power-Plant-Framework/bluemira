@@ -133,8 +133,6 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 #
 # - **constraints**: Optional list of `UpdatableConstraint` objects
 #
-# %%
-# %% [markdown]
 # ## Coilset
 #
 # We first define the `CoilSet` to be optimised in our OptimisationProblem.
