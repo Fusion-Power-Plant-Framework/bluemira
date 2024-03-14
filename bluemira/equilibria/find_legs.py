@@ -34,6 +34,9 @@ from bluemira.geometry.coordinates import (
 class NumNull(Enum):
     """
     Class for use with LegFlux.
+    Double Null (DN)
+    Single Null (SN)
+
     """
 
     DN = auto()
@@ -43,6 +46,9 @@ class NumNull(Enum):
 class SortSplit(Enum):
     """
     Class for use with LegFlux.
+    Split the flux in x-direction (X)
+    Split the flux in z-direction (Z)
+
     """
 
     X = auto()
@@ -59,6 +65,10 @@ class LegFlux:
         Input Equilibrium
     psi_n_tol:
         The normalised psi tolerance to use
+    delta_start:
+        Search range value for finding LCFS. Will search for the transition from a
+        "closed" to "open" flux surface for normalised flux values
+        between 1 - delta_start and 1 + delta_start.
     rtol:
         Relative tolerance used for finding configuration of
         separatrix split for double null
@@ -69,7 +79,7 @@ class LegFlux:
         eq: Equilibrium,
         psi_n_tol: float = 1e-6,
         delta_start: float = 0.01,
-        rtol: float = 1e-1,
+        rtol: float = 1e-3,
     ):
         self.eq = eq
         o_points, x_points = eq.get_OX_points()
@@ -168,9 +178,11 @@ class LegFlux:
         dx_off:
             Total span in radial space of the flux surfaces to extract
         delta:
-
+            intersection point x value +- delta is used to find starting point
+            of leg flux see '_extract_leg'.
         delta_offsets:
-
+            intersection point x value +- delta_offsets is used to find starting point
+            of offsets leg flux see '_extract_offsets'.
 
         Returns
         -------
