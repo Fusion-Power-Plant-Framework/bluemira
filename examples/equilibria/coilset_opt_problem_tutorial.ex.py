@@ -299,8 +299,6 @@ magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 #
 # **Below we will directly input the optimisation algorithm, conditions and**
 # **parameters when defining the `TikhonovCurrentCOP`**
-# %%
-# %% [markdown]
 
 # ## Iterators
 
