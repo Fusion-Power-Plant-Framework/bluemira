@@ -23,6 +23,7 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
 )
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
+from bluemira.equilibria.diagnostics import PicardDiagnosticType
 from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -118,6 +119,7 @@ class ConvergenceCriterion(ABC):
         if ax is None:
             _f, ax = plt.subplots()
         ax.semilogy(self.progress)
+        ax.semilogy([0, len(self.progress)], [self.limit, self.limit])
         ax.set_xlabel("Iterations [n]")
         ax.set_ylabel(self.math_string)
 
@@ -465,6 +467,7 @@ class PicardIterator:
         maxiter: int = 30,
         plot: bool = True,
         gif: bool = False,
+        plot_type: PicardDiagnosticType = PicardDiagnosticType.EQ,
         figure_folder: str | None = None,
         plot_name: str = "default_0",
     ):
@@ -486,6 +489,7 @@ class PicardIterator:
         self.maxiter = maxiter
         self.plot_flag = plot or (gif and not plot)
         self.gif_flag = gif
+        self.plot_type = plot_type
         if figure_folder is None:
             figure_folder = try_get_bluemira_path(
                 "", subfolder="generated_data", allow_missing=not self.gif_flag
@@ -627,7 +631,10 @@ class PicardIterator:
         Updates the figure if plotting is used
         """
         self.ax.clear()
-        self.eq.plot(ax=self.ax)
+        if self.plot_type == PicardDiagnosticType.EQ:
+            self.eq.plot(ax=self.ax)
+        elif self.plot_type == PicardDiagnosticType.CONVERGENCE:
+            self.convergence.plot(ax=self.ax)
         plt.pause(PLT_PAUSE)
         save_figure(
             self.f,
