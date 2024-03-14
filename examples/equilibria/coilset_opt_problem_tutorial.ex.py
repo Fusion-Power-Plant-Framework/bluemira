@@ -432,4 +432,3 @@ plt.show()
 # %% [markdown]
 # You can now re-do this tutorial with other constraints of your choice.
 # See `bluemira.equilibria.optimisation.constraints` for some prebuilt constraints.
-# %%
