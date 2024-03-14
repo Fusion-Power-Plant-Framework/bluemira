@@ -27,7 +27,7 @@ Equilibria Examples
     examples/equilibria/coilset_opt_problem_tutorial
 
 Geometry Examples
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 .. toctree::
     :maxdepth: 1
