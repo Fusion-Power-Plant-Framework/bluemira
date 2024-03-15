@@ -74,7 +74,7 @@ def setup_openmc(
     ----------
     plasma_source: openmc.Source
         Openmc.Source used to emulate the neutron emission of the plasma.
-    openmc_params:
+    openmc_params: OpenMCSimulationRuntimeParameters
 
     Notes
     -----
