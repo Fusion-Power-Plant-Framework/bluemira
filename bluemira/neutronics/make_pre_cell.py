@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Make pre-cells using bluemira wires."""
-# ruff: noqa: PLR2004
+# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
@@ -102,7 +102,9 @@ class PreCell:
                 "cell-start cutting plane",
                 "cell-end cutting plane",
             )
-        self.vertex = PreCellWireVertices(ext_end, int_start, int_end, ext_start)
+        self.vertex = PreCellWireVertices(
+            ext_end[::2, 0], int_start[::2, 0], int_end[::2, 0], ext_start[::2, 0]
+        )
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
         # Revolve only up to 180° for easier viewing
         self.half_solid = BluemiraSolid(revolve_shape(self.outline))
@@ -123,8 +125,8 @@ class PreCell:
         """
         if not hasattr(self, "_cell_walls"):
             self._cell_walls = CellWalls([
-                [self.vertex.interior_end[::2, 0], self.vertex.exterior_start[::2, 0]],
-                [self.vertex.interior_start[::2, 0], self.vertex.exterior_end[::2, 0]],
+                [self.vertex.interior_end, self.vertex.exterior_start],
+                [self.vertex.interior_start, self.vertex.exterior_end],
             ])
         return self._cell_walls
 
@@ -235,15 +237,18 @@ class PreCellArray:
     def show_cad(self) -> None:  # noqa: D102
         show_cad([c.half_solid for c in self])
 
-    def __len__(self) -> int:  # noqa: D105
+    def __len__(self) -> int:
         return self.pre_cells.__len__()
 
-    def __getitem__(self, index_or_slice) -> Union[List[PreCell], PreCell]:  # noqa: D105
+    def __iter__(self):
+        return self.pre_cells.__iter__()
+
+    def __getitem__(self, index_or_slice) -> Union[List[PreCell], PreCell]:
         return self.pre_cells.__getitem__(index_or_slice)
 
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
         return PreCellArray(self.pre_cells + other_array)
 
-    def __repr__(self) -> str:  # noqa: D105
+    def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")

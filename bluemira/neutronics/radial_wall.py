@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Defining (and changing) the radial (side) walls of PreCell in PreCellArrays."""
-# ruff: noqa: PLR2004
+# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
@@ -152,7 +152,7 @@ class CellWalls:
         self.num_cells = len(self) - 1
         self.check_volumes_and_lengths()
 
-    def __len__(self) -> int:  # noqa: D105
+    def __len__(self) -> int:
         return self.cell_walls.__len__()
 
     def __getitem__(self, index_or_slice) -> Union[npt.NDArray[float], float]:
@@ -169,6 +169,9 @@ class CellWalls:
         """
         self.cell_walls.__setitem__(index_or_slice, new_coordinates)
 
+    def __iter__(self):
+        return self.cell_walls.__iter__()
+
     def __add__(self, other_cell_walls: CellWalls):
         """
         It is ambiguous whether the user is trying to translate (shift) the
@@ -180,7 +183,7 @@ class CellWalls:
         """
         raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
-    def __repr__(self) -> str:  # noqa: D105
+    def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} walls at ")
 
     def copy(self) -> CellWalls:  # noqa: D102
@@ -197,7 +200,7 @@ class CellWalls:
             pre_cell_array[-1].vertex.exterior_end,
         ))
         # cut each coordinates down from having shape (3, 1) down to (2,)
-        return cls(np.array(cell_walls)[:, :, ::2, 0])
+        return cls(cell_walls)
 
     @property
     def starts(self) -> npt.NDArray:

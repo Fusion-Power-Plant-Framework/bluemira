@@ -61,11 +61,11 @@ def surface_from_2points(
     dr, dz = point2 - point1
     if np.isclose(dr, 0, rtol=0, atol=EPS_FREECAD):
         if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
-            # return ValueError("Can't generate surface from two duplicate points")
-            raise GeometryError(
-                "The two points provided aren't distinct enough to "
-                "uniquely identify a surface!"
-            )
+            # raise GeometryError(
+            #     "The two points provided aren't distinct enough to "
+            #     "uniquely identify a surface!"
+            # )
+            return None
         return openmc.ZCylinder(r=point1[0], surface_id=surface_id, name=name)
     if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
         return openmc.ZPlane(z0=point1[-1], surface_id=surface_id, name=name)
@@ -216,8 +216,14 @@ def choose_halfspace(
 
 class BlanketCell(openmc.Cell):
     """
-    A generic blanket cell that forms the base class for the four specialized types of
+    A generic blanket cell that forms the base class for the five specialized types of
     blanket cells.
+
+    It's a special case of openmc.Cell, in that it has 3 to 4 surfaces (mandatory
+    surfaces: exterior_surface, ccw_surface, cw_surface; optional: interior_surface), and
+    it is more wieldy because we don't have to specify the relevant half-space for each
+    surface; instead an example_point (any point inside the cell will do) is provided by
+    the user and that would choose the appropriate half-space.
     """
 
     def __init__(
@@ -225,13 +231,15 @@ class BlanketCell(openmc.Cell):
         exterior_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
-        example_point: Iterable[float],
+        example_point: Union[Iterable[float], Coordinates],
         interior_surface: Optional[openmc.Surface] = None,
         cell_id=None,
         name="",
         fill=None,
     ):
         """
+        Create the openmc.Cell from 3 to 4 surfaces and an example point.
+
         Parameters
         ----------
         exterior_surface
@@ -241,35 +249,91 @@ class BlanketCell(openmc.Cell):
         cw_surface
             Surface on the cw wall side of the cell
         example_point
-            Any arbitrary point inside the cell
+            Any arbitrary point inside the cell. Could be a simple xz coordiante, or a
+            :class:`bluemira.geometry.coordinates.Coordinates` object.
         interior_surface
             Surface on the interior side of the cell
         cell_id
-            see openmc.Cell
+            see :class:`openmc.Cell`
         name
-            see openmc.Cell
+            see :class:`openmc.Cell`
         fill
-            see openmc.Cell
+            see :class:`openmc.Cell`
         """
         self.interior_surface = interior_surface
         self.exterior_surface = exterior_surface
         self.ccw_surface = ccw_surface
         self.cw_surface = cw_surface
+
         if not isinstance(example_point, Coordinates):
             example_point = Coordinates([example_point[0], 0, example_point[-1]])
+        self.example_point = example_point
+
         region = (
             choose_halfspace(self.exterior_surface, example_point)
             & choose_halfspace(self.ccw_surface, example_point)
             & choose_halfspace(self.cw_surface, example_point)
         )
         if self.interior_surface:
-            region = region & choose_halfspace(self.interior_surface, example_point)
+            region &= choose_halfspace(self.interior_surface, example_point)
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
+
+    #     _surfaces_list = [self.exterior_surface, self.ccw_surface, self.cw_surface]
+    #     if self.interior_surface:
+    #         _surfaces_list.append(self.interior_surface)
+    #     self.cell = openmc_cell_from_surfaces_and_point(
+    #                 _surfaces_list,
+    #                 self.example_point,
+    #                 cell_id=cell_id,
+    #                 name=name,
+    #                 fill=fill)
+
+    # def __len__(self):
+    #     return 1
+
+    # def __iter__(self):
+    #     return iter([self.cell,])
+
+    # def __getitem__(self, index):
+    #     if index==0:
+    #         return self.cell
+    #     else:
+    #         raise IndexError(f"Only one cell is available in {str(self)}")
+
+
+def openmc_cell_from_surfaces_and_point(
+    surfaces: Iterable[openmc.Surface],
+    example_point: Iterable[float],
+    cell_id=None,
+    name="",
+    fill=None,
+) -> openmc.Cell:
+    """
+    Create from a list of surfaces and a point
+
+    Parameters
+    ----------
+    surfaces:
+        List of openmc.surface
+    example_point:
+        Any arbitrary point inside the cell. Could be a simple pair of xz coordiante, or
+        a :class:`bluemira.geometry.coordinates.Coordinates` object.
+    cell_id
+        see :class:`openmc.Cell`
+    name
+        see :class:`openmc.Cell`
+    fill
+        see :class:`openmc.Cell`
+    """
+    if not isinstance(example_point, Coordinates):
+        example_point = Coordinates([example_point[0], 0, example_point[-1]])
+    region = openmc.Intersection([choose_halfspace(s, example_point) for s in surfaces])
+    return openmc.Cell(cell_id=cell_id, name=name, fill=fill, region=region)
 
 
 class BlanketCellStack:
     """
-    A stack of BlanketCells, stacking from the inboard direction towards the outboard
+    A stack of openmc.Cells, stacking from the inboard direction towards the outboard
     direction. They should all be situated at the same poloidal angle.
     """
 
@@ -280,6 +344,10 @@ class BlanketCellStack:
         They must share the SAME counter-clockwise surface and the SAME clockwise surface
         (left and right side surfaces of the stack, for the stack pointing straight up).
 
+        Because the bounding_box function is INCORRECT, we can't perform a check on the
+        bounding box to confirm that the stack is linearly increasing/decreasing in xyz
+        bounds.
+
         Variables
         ---------
         fw_cell: FirstWallCell
@@ -288,7 +356,11 @@ class BlanketCellStack:
         vv_cell: VacuumVesselCell
         """
         self.cell_stack = cell_stack
-        # store the specific cells under their respective attribute names.
+        for int_cell, ext_cell in zip(cell_stack[:-1], cell_stack[1:]):
+            if int_cell.exterior_surface is not ext_cell.interior_surface:
+                raise ValueError("Expected a contiguous stack of cells!")
+
+        # store each respecitve cell under their corresponding attribute names.
         cell_dict = self.ascribe_iterable_quantity_to_layer(self.cell_stack)
         self.sf_cell = cell_dict[BlanketLayers.Surface.name]
         self.fw_cell = cell_dict[BlanketLayers.FirstWall.name]
@@ -296,15 +368,14 @@ class BlanketCellStack:
         self.mnfd_cell = cell_dict[BlanketLayers.Manifold.name]
         self.vv_cell = cell_dict[BlanketLayers.VacuumVessel.name]
 
-        # Because the bounding_box function is INCORRECT, we can't perform a check on the
-        # bounding box to confirm that the stack is linearly increasing/decreasing in xyz
-        # bounds.
-
     def __len__(self) -> int:
         return self.cell_stack.__len__()
 
     def __getitem__(self, index_or_slice) -> Union[List[BlanketCell], BlanketCell]:
         return self.cell_stack.__getitem__(index_or_slice)
+
+    def __iter__(self):
+        return self.cell_stack.__iter__()
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
@@ -312,8 +383,8 @@ class BlanketCellStack:
     @staticmethod
     def ascribe_iterable_quantity_to_layer(quantity: Iterable) -> Dict:
         """
-        Given an iterable of length 3 or 4, convert it into a dictionary such that
-        each of the 3/4 quantities corresponds to a layer.
+        Given an iterable of length 4 or 5, convert it into a dictionary such that
+        each of the 4/5 quantities corresponds to a layer.
         """
         if len(quantity) == 4:
             return {
@@ -339,7 +410,7 @@ class BlanketCellStack:
 
     @property
     def interior_surface(self):  # noqa: D102
-        return self.fw_cell.interior_surface
+        return self.sf_cell.interior_surface
 
     @property
     def exterior_surface(self):  # noqa: D102
@@ -347,11 +418,11 @@ class BlanketCellStack:
 
     @property
     def ccw_surface(self):  # noqa: D102
-        return self.fw_cell.ccw_surface
+        return self.sf_cell.ccw_surface
 
     @property
     def cw_surface(self):  # noqa: D102
-        return self.fw_cell.cw_surface
+        return self.sf_cell.cw_surface
 
     @property
     def interfaces(self):
@@ -465,6 +536,9 @@ class BlanketCellArray:
             "The content of this class is not intended to be " "changed on-the-fly!"
         )
 
+    def __iter__(self):
+        return self.blanket_cell_array.__iter__()
+
     def __add__(self, other_array) -> BlanketCellArray:
         return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
 
@@ -472,6 +546,25 @@ class BlanketCellArray:
         return (
             super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
         )
+
+    @staticmethod
+    def check_cut_point_ordering(
+        cut_point_series: npt.NDArray[float], direction_vector: npt.NDArray[float]
+    ):
+        """
+        Parameters
+        ----------
+        cut_point_series: np.ndarray of shape (M+1, 2)
+            where M = number of cells in the blanket cell stack (i.e. number of layers
+            in the blanket). Each point has two dimensions
+        direction_vector:
+            direction that these points are all supposed to go towards.
+        """
+        projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction_vector)
+        if not is_strictly_monotonically_increasing(projections):
+            raise GeometryError(
+                "Some surfaces crosses over each other within the cell stack!"
+            )
 
     @classmethod
     def from_pre_cell_array(
@@ -540,18 +633,8 @@ class BlanketCellArray:
                 cw_wall_cuts.append(points[0]), ccw_wall_cuts.append(points[1])
             surf_stack[-1].name = f"vacuum vessel outer surface {i}"
 
-            # check ordering. TODO: make prettier.
-            if not (
-                is_strictly_monotonically_increasing(
-                    cw_wall_cuts @ pre_cell.normal_to_interior
-                )
-                and is_strictly_monotonically_increasing(
-                    ccw_wall_cuts @ pre_cell.normal_to_interior
-                )
-            ):
-                raise GeometryError(
-                    "Some surfaces crosses over each other within the cell stack!"
-                )
+            cls.check_cut_point_ordering(cw_wall_cuts, pre_cell.normal_to_interior)
+            cls.check_cut_point_ordering(ccw_wall_cuts, pre_cell.normal_to_interior)
 
             # TODO: implement curved exterior in the future.
             exterior_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
@@ -559,7 +642,7 @@ class BlanketCellArray:
                 0
             ].Curve.TypeId.startswith("Part::GeomLine"):
                 raise NotImplementedError(
-                    "Not ready to make curved-line cross-sections yet!"
+                    "Not ready to make curved-line cross-sections " "yet!"
                 )
 
             stack = BlanketCellStack.from_surfaces(

@@ -7,25 +7,27 @@
 
 import json
 import sys
+from itertools import chain
 from pathlib import Path
 
 import numpy as np
+import openmc
 
 import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import vector_intersect
-from bluemira.geometry.tools import deserialize_shape, make_polygon  # make_circle_arc_3P
+from bluemira.geometry.tools import deserialize_shape, make_polygon
 from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
+    setup_openmc,
     PlasmaSourceParametersPPS,
     TBRHeatingSimulation,
     TokamakGeometry,
     create_and_export_materials,
     create_parametric_plasma_source,
     create_ring_source,
-    setup_openmc,
 )
 from bluemira.neutronics.params import (
     BlanketLayers,
@@ -34,6 +36,7 @@ from bluemira.neutronics.params import (
     ThicknessFractions,
     get_preset_physical_properties,
 )
+# from bluemira.neutronics.run_modes import *
 from bluemira.neutronics.slicing import PanelsAndExteriorCurve
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.plasma_physics.reactions import n_DT_reactions
@@ -51,7 +54,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="fixed source",
+    run_mode="plot",
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
@@ -173,18 +176,35 @@ mat_dict = {
     BlanketLayers.Manifold.name: mat_lib.outb_mani_mat,
     BlanketLayers.VacuumVessel.name: mat_lib.outb_vv_mat,
 }
-pca2 = pca.straighten_exterior(preserve_volume=False)
+pca2 = pca.straighten_exterior(preserve_volume=True)
 for i, (v1, v2) in enumerate(zip(pca.volumes, pca2.volumes)):
     print(
         f"Cell {i:<2}: Volume change = {(v2 / v1 - 1) * 100:6.3f}% , with initial volume = {v1:8.3f} m³"
     )
 print(f"Before = {sum(pca.volumes):8.3f} m³; Total: After = {sum(pca2.volumes):8.3f} m³")
 # plot_2d([c.outline for c in pca] + [c.outline for c in pca2])
-# to_csg(thickness_fractions, 8.0, material_dict=mat_dict)
+# tbr_heat_sim.run()
+
 blanket_cell_array = BlanketCellArray.from_pre_cell_array(
     pca2, mat_dict, thickness_fractions
 )
 
+# _all_cells = [blanket_cell.cell for blanket_cell in chain.from_iterable(blanket_cell_array)]
+_all_cells = [blanket_cell for blanket_cell in chain.from_iterable(blanket_cell_array)]
+universe = openmc.Universe(cells=_all_cells)
+geometry = openmc.Geometry(universe)
+geometry.export_to_xml()
+plot = openmc.Plot()
+plot.basis = "xz"
+plot_dims = (
+    outer_boundary.bounding_box.x_max * 2.1,
+    outer_boundary.bounding_box.z_max * 3.1,
+)
+ppm = 100
+plot.pixels = [int(plot_dims[0] * ppm), int(plot_dims[1] * ppm)]
+plot.width = plot_dims
+openmc.Plots([plot]).export_to_xml()
+openmc.plot_geometry(output=True)
 sys.exit()
 
 tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
@@ -203,7 +223,6 @@ tbr_heat_sim.src_rate = n_DT_reactions(
 )
 create_tallies(tbr_heat_sim.cells, tbr_heat_sim.material_lib)  # TODO: improve here
 
-tbr_heat_sim.run()
 if False:
     tbr_heat_sim.calculate_volume_stochastically()
 results = tbr_heat_sim.get_result()
