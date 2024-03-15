@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Diagnostic Options for use in the equilibria module.
+Diagnostic options for use in the equilibria module.
 """
 
 from dataclasses import dataclass
@@ -13,7 +13,7 @@ from enum import Enum, auto
 
 
 class PicardDiagnostic(Enum):
-    """Type of plot to view dusring optimisation."""
+    """Type of plot to view during optimisation."""
 
     EQ = auto()
     CONVERGENCE = auto()
