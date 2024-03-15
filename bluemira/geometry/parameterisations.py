@@ -316,7 +316,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             xytext=xy2,
             textcoords="data",
             arrowprops={
-                "arrowstyle": "<|-|>",
+                "arrowstyle": "<|-",
                 "edgecolor": "k",
                 "facecolor": "k",
                 "shrinkA": 0,
