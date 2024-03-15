@@ -15,6 +15,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
+    calculate_line_radiation_loss,
     calculate_z_species,
     electron_density_and_temperature_sol_decay,
     exponential_decay,
@@ -195,6 +196,39 @@ class TestCoreRadiation:
         assert distance is not None
         assert np.round(distance, 1) == 2.6
 
+    def test_radiation_region_boundary(self):
+        low_z_main, low_z_pfr = self.source.sol_rad.x_point_radiation_z_ext()
+        up_z_main, up_z_pfr = self.source.sol_rad.x_point_radiation_z_ext(low_div=False)
+        assert low_z_main > low_z_pfr
+        assert up_z_main < up_z_pfr
+        in_x_lfs, in_z_low, out_x_lfs, out_z_low = (
+            self.source.sol_rad.radiation_region_ends(low_z_main, low_z_pfr)
+        )
+        _, in_z_up, _, out_z_up = self.source.sol_rad.radiation_region_ends(
+            up_z_main, up_z_pfr
+        )
+        in_x_hfs, _, out_x_hfs, _ = self.source.sol_rad.radiation_region_ends(
+            low_z_main, low_z_pfr, lfs=False
+        )
+        assert in_x_lfs > self.source.sol_rad.points["x_point"]["x"]
+        assert out_x_lfs > self.source.sol_rad.points["x_point"]["x"]
+        assert in_x_hfs < self.source.sol_rad.points["x_point"]["x"]
+        assert out_x_hfs < self.source.sol_rad.points["x_point"]["x"]
+        assert in_z_low > out_z_low
+        assert in_z_up < out_z_up
+
+    def test_tar_electron_densitiy_temperature_profiles(self):
+        ne_array = np.linspace(1e20, 1e19, 5)
+        te_array = np.linspace(15, 8, 5)
+        te_det, ne_det = self.source.sol_rad.tar_electron_densitiy_temperature_profiles(
+            ne_array, te_array, detachment=True
+        )
+        te_att, ne_att = self.source.sol_rad.tar_electron_densitiy_temperature_profiles(
+            ne_array, te_array, detachment=False
+        )
+        assert all(t_d < t_a for t_d, t_a in zip(te_det, te_att))
+        assert all(n_d < n_a for n_d, n_a in zip(ne_det, ne_att))
+
 
 def test_gaussian_decay():
     decayed_val = gaussian_decay(10, 1, 50)
@@ -219,3 +253,11 @@ def test_calculate_z_species():
     t_test = 5
     z = calculate_z_species(t_ref, z_ref, frac, t_test)
     assert z == 22.5
+
+
+def test_calculate_line_radiation_loss():
+    ne = 1e20
+    p_loss = 1e-31
+    frac = 0.01
+    rad = calculate_line_radiation_loss(ne, p_loss, frac)
+    assert round(rad, 1) == 0.8
