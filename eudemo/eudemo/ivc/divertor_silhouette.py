@@ -20,7 +20,6 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
@@ -173,7 +172,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             [point[1], point[1]],
             [point[2] - target_length / 2, point[2] + target_length / 2],
         ])
-        target_coords = self._make_angled_target(leg)
+        # target_coords = self._make_angled_target(leg)
         return make_polygon(target_coords, label=label)
 
     def _make_angled_target(self, leg: LegPosition):
@@ -229,9 +228,6 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             start[1],
             psi_start,
         )
-        flux_surface = Coordinates(flux_surface)
-        flux_surface.set_ccw([0, -1, 0])
-        flux_surface = flux_surface.xyz
 
         # Get the indices of the closest points on the flux surface to
         # the input start and end points
@@ -350,7 +346,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         return make_circle(
             radius=radius_t,
             center=(ox, 0, oz),
-            axis=(0, 1, 0),
+            axis=(0, -1, 0),
             start_angle=start_angle,
             end_angle=end_angle,
             label=label,
