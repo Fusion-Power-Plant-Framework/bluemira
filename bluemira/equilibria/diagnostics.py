@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
-class PicardDiagnosticType(Enum):
+class PicardDiagnostic(Enum):
     """Type of plot to view dusring optimisation."""
 
     EQ = auto()

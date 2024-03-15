@@ -24,7 +24,7 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
 )
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
-from bluemira.equilibria.diagnostics import PicardDiagnosticType
+from bluemira.equilibria.diagnostics import PicardDiagnostic
 from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -459,7 +459,7 @@ class PicardIterator:
         maxiter: int = 30,
         plot: bool = True,
         gif: bool = False,
-        plot_type: PicardDiagnosticType = PicardDiagnosticType.EQ,
+        plot_type: PicardDiagnostic = PicardDiagnostic.EQ,
         figure_folder: Optional[str] = None,
         plot_name: str = "default_0",
     ):
@@ -618,9 +618,9 @@ class PicardIterator:
         Updates the figure if plotting is used
         """
         self.ax.clear()
-        if self.plot_type == PicardDiagnosticType.EQ:
+        if self.plot_type == PicardDiagnostic.EQ:
             self.eq.plot(ax=self.ax)
-        elif self.plot_type == PicardDiagnosticType.CONVERGENCE:
+        elif self.plot_type == PicardDiagnostic.CONVERGENCE:
             self.convergence.plot(ax=self.ax)
         plt.pause(PLT_PAUSE)
         save_figure(
