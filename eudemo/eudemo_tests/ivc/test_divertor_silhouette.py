@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.builders.divertor import LegPosition
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance
