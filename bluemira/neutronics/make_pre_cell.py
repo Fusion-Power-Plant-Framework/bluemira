@@ -8,30 +8,19 @@
 
 from __future__ import annotations
 
-from typing import List, NamedTuple, Union
+from typing import List, Union
 
 import numpy as np
+from numpy import typing as npt
 
-from bluemira.display import plot_2d, show_cad  # , plot_3d
+from bluemira.display import plot_2d, show_cad
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates, get_bisection_line
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-
-# from bluemira.neutronics.make_csg import BlanketCellStack, BlanketCellArray
-from bluemira.neutronics.radial_wall import CellWalls
-
-PreCellWireVertices = NamedTuple(
-    "PreCellWireVertices",
-    (
-        ("exterior_end", Coordinates),
-        ("interior_start", Coordinates),
-        ("interior_end", Coordinates),
-        ("exterior_start", Coordinates),
-    ),
-)
+from bluemira.neutronics.radial_wall import CellWalls, VerticesCoordinates
 
 
 class PreCell:
@@ -70,7 +59,8 @@ class PreCell:
             A wire starting the end of the exterior_wire, and ending at the start of the
             exterior_wire. This should pass through the interior_wire.
         vertex
-            A NamedTuple of vertices, for convenient retrieval later.
+            :class:`~bluemira.neutronics.radial_wall.Vertices` of vertices, for
+            convenient retrieval later.
         outline
             The wire outlining the PreCell
         half_solid
@@ -102,9 +92,7 @@ class PreCell:
                 "cell-start cutting plane",
                 "cell-end cutting plane",
             )
-        self.vertex = PreCellWireVertices(
-            ext_end[::2, 0], int_start[::2, 0], int_end[::2, 0], ext_start[::2, 0]
-        )
+        self.vertex = VerticesCoordinates(ext_end, int_start, int_end, ext_start).to_2D()
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
         # Revolve only up to 180° for easier viewing
         self.half_solid = BluemiraSolid(revolve_shape(self.outline))
@@ -149,10 +137,23 @@ class PreCell:
 
         return self._normal_to_interior
 
-    def get_cell_wall_cut_points_by_fraction(self, fraction: float):
+    def get_cell_wall_cut_points_by_fraction(
+        self, fraction: float
+    ) -> npt.NDArray[float]:
         """
         Find the cut points on the cell's side walls by multiplying the original lengths
         by a fraction. When fraction=0, this returns the interior_start and interior_end.
+
+        Parameters
+        ----------
+        fraction: float
+            A scalar value
+
+        Returns
+        -------
+        new end points
+            The position of the pre-cell wall end points at the required fraction, array
+            of shape (2, 2) [[cw_wall x, cw_wall z], [ccw_wall x, ccw_wall z]].
         """
         new_lengths = self.cell_walls.lengths * fraction
         return self.cell_walls.calculate_new_end_points(new_lengths)
@@ -161,6 +162,17 @@ class PreCell:
         """
         Offset a line parallel to the interior_wire towards the exterior direction.
         Then, find where this line intersect the cell's side walls.
+
+        Parameters
+        ----------
+        fraction: float
+            A scalar value
+
+        Returns
+        -------
+        new end points
+            The position of the pre-cell wall end points at the required thickness, array
+            of shape (2, 2) [[cw_wall x, cw_wall z], [ccw_wall x, ccw_wall z]].
         """
         projection_weight = self.cell_walls.directions @ self.normal_to_interior
         length_increases = thickness / projection_weight

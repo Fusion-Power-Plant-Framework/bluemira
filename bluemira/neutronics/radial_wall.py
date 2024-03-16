@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import fsum
 from typing import TYPE_CHECKING, Callable, Iterable, Union
 
@@ -16,10 +17,71 @@ from numpy import typing as npt
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
     from bluemira.neutronics.make_pre_cell import PreCellArray
+
+
+@dataclass
+class Vertices:
+    """
+    A dataclass of numpy arrays, each denoting the XZ or XYZ coordinates, thus they all
+    have shape (2,) or (3,).
+    """
+
+    exterior_end: Iterable[float]
+    interior_start: Iterable[float]
+    interior_end: Iterable[float]
+    exterior_start: Iterable[float]
+
+    def to_3D(self) -> Vertices:
+        """Force the vertices into 3D, stuffing the Y with 0's."""
+        return Vertices(
+            np.array([self.exterior_end[0], 0, self.exterior_end[-1]]),
+            np.array([self.interior_start[0], 0, self.interior_start[-1]]),
+            np.array([self.interior_end[0], 0, self.interior_end[-1]]),
+            np.array([self.exterior_start[0], 0, self.exterior_start[-1]]),
+        )
+
+    def to_2D(self) -> Vertices:
+        """Put the vertices back into the XZ plane, with only 2 coordinates."""
+        return Vertices(
+            np.array([self.exterior_end[0], self.exterior_end[-1]]),
+            np.array([self.interior_start[0], self.interior_start[-1]]),
+            np.array([self.interior_end[0], self.interior_end[-1]]),
+            np.array([self.exterior_start[0], self.exterior_start[-1]]),
+        )
+
+    def to_array(self) -> npt.NDArray:
+        return np.array([
+            self.exterior_end,
+            self.interior_start,
+            self.interior_end,
+            self.exterior_start,
+        ])
+
+
+@dataclass
+class VerticesCoordinates:
+    """
+    A dataclass of :class:`bluemira.geometry.coordinates.Coordinates` objects, each
+    containing only one point denoting the set of vertices of a pre-cell or a cell.
+    """
+
+    exterior_end: Coordinates
+    interior_start: Coordinates
+    interior_end: Coordinates
+    exterior_start: Coordinates
+
+    def to_2D(self) -> Vertices:
+        return Vertices(
+            self.exterior_end[::2, 0],
+            self.interior_start[::2, 0],
+            self.interior_end[::2, 0],
+            self.exterior_start[::2, 0],
+        )
 
 
 def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> float:
@@ -212,7 +274,9 @@ class CellWalls:
         """The end point changes value depending on the user-set length."""
         return self.cell_walls[:, 1]  # shape = (N+1, 2)
 
-    def calculate_new_end_points(self, lengths: Union[float, npt.NDArray[float]]):
+    def calculate_new_end_points(
+        self, lengths: Union[float, npt.NDArray[float]]
+    ) -> npt.NDArray[float]:
         """
         Get the end points of each cell wall if they were changed to have the specified
         lengths. This is different to set_length in that the new end points are returned,
@@ -223,6 +287,11 @@ class CellWalls:
         lengths
             np.ndarray of shape = (N+1,) where N+1 == number of cell walls.
             It can also be a scalar, which would then be broadcasted into (N+1,).
+
+        Returns
+        -------
+        new end points
+            an array of the same shape as self.starts
         """
         return self.starts + (self.directions.T * lengths).T
 

@@ -15,11 +15,10 @@ import openmc
 from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P
 from bluemira.neutronics.params import BlanketLayers
-from bluemira.neutronics.radial_wall import CellWalls
+from bluemira.neutronics.radial_wall import CellWalls, Vertices
 
 if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
@@ -33,12 +32,67 @@ def is_strictly_monotonically_increasing(series):
     return all(diff > 0)  # or all(diff<0)
 
 
+# VERY ugly solution. Maybe tack this into the openmc universe instead?
+hangar = {}  # it's called a hangar because it's where the planes are parked ;)
+
+
+def plot_surfaces(surfaces_list: List[openmc.Surface]):
+    import matplotlib.pyplot as plt
+
+    ax = plt.axes()
+    # ax.set_aspect(1.0)
+    for i, surface in enumerate(surfaces_list):
+        plot_coords(surface, color_num=i)
+    ax.legend()
+
+
+def plot_coords(surface: openmc.Surface, color_num: int):
+    if isinstance(surface, openmc.ZCylinder):
+        plt.plot(
+            [surface.x0, surface.x0],
+            [-10, 10],
+            label=f"{surface.id}: {surface.name}",
+            color=f"C{color_num}",
+        )
+    elif isinstance(surface, openmc.ZPlane):
+        plt.plot(
+            [-10, 10],
+            [surface.z0, surface.z0],
+            label=f"{surface.id}: {surface.name}",
+            color=f"C{color_num}",
+        )
+    elif isinstance(surface, openmc.ZCone):
+        intercept = surface.z0
+        slope = 1 / np.sqrt(surface.r2)
+
+        def equation_pos(x):
+            return slope * np.array(x) + intercept
+
+        def equation_neg(x):
+            return -slope * np.array(x) + intercept
+
+        y_pos, y_neg = equation_pos([-10, 10]), equation_neg([-10, 10])
+        plt.plot(
+            [-10, 10],
+            y_pos,
+            label=f"{surface.id}: {surface.name} (upper)",
+            color=f"C{color_num}",
+        )
+        plt.plot(
+            [-10, 10],
+            y_neg,
+            label=f"{surface.id}: {surface.name} (lower)",
+            linestyle="--",
+            color=f"C{color_num}",
+        )
+
+
 def surface_from_2points(
     point1: npt.NDArray,
     point2: npt.NDArray,
     surface_id: Optional[int] = None,
     name: str = "",
-) -> Optional[openmc.Surface]:
+) -> Optional[Union[openmc.Surface, openmc.model.ZConeOneSided]]:
     """
     Create either a cylinder, a cone, or a surface from 2 points using only the
     rz coordinates of any two points on it.
@@ -60,15 +114,19 @@ def surface_from_2points(
     """
     dr, dz = point2 - point1
     if np.isclose(dr, 0, rtol=0, atol=EPS_FREECAD):
+        _r = point1[0]
         if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
+            return None
             # raise GeometryError(
             #     "The two points provided aren't distinct enough to "
             #     "uniquely identify a surface!"
             # )
-            return None
-        return openmc.ZCylinder(r=point1[0], surface_id=surface_id, name=name)
+        return openmc.ZCylinder(r=_r, surface_id=surface_id, name=name)
     if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
-        return openmc.ZPlane(z0=point1[-1], surface_id=surface_id, name=name)
+        _z = point1[-1]
+        z_plane = openmc.ZPlane(z0=_z, surface_id=surface_id, name=name)
+        hangar[_z] = z_plane
+        return hangar[_z]
     slope = dz / dr
     z_intercept = -slope * point1[0] + point1[-1]
     return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
@@ -191,27 +249,119 @@ def torus_from_5points(
     )
 
 
-def choose_halfspace(
-    surface: openmc.Surface, choice_point: Iterable[float]
-) -> openmc.Halfspace:
+def choose_halfspace(surface, choice_points):
     """
+    Simply take the centroid point of all of the choice_points, and choose the
+    corresponding half space
+    """
+    pt = np.mean(choice_points, axis=0)
+    value = surface.evaluate(pt)
+    if value > 0:
+        return +surface
+    if value < 0:
+        return -surface
+    raise GeometryError("Centroid point is directly on the surface")
+
+
+def choose_region(surface: openmc.Surface, choice_points: npt.NDArray):
+    """
+    Calculate the correct side of the region such that all vertices of the polygon are
+    situated within the required region.
+
     Parameters
     ----------
     surface
-        A surface that we want to choose a side of
-    choice_point
-        A point on the region of the side of the surface that we want.
+        :class:`openmc.surface.Surface`
+    choice_points: np.ndarray of shape (N, 3)
+        a list of points representing the vertices of a convex polygon in RZ plane
 
     Returns
     -------
-    openmc.surface.Halfspace
+    an instance of openmc.Region
+        This region should include the choice_points
     """
-    value = surface.evaluate(choice_point)
-    if np.sign(value) == +1:
-        return +surface
-    if np.sign(value) == -1:
-        return -surface
-    raise ValueError("Choice point is located exactly on the surface!")
+    if isinstance(surface, (openmc.ZPlane, openmc.ZCylinder)):
+        x, y, z = np.array(choice_points).T
+        values = surface.evaluate([x, y, z])
+        THRESHOLD = EPS_FREECAD
+        if isinstance(surface, openmc.ZCylinder):
+            THRESHOLD = 2 * EPS_FREECAD * surface.r + EPS_FREECAD**2
+        if all(values >= -THRESHOLD):
+            return +surface
+        if all(values <= THRESHOLD):
+            return -surface
+        print("Where is this going?")
+        print(surface)
+        print(choice_points[:, -1])
+        print(values)
+        raise GeometryError(f"There are points on both sides of this {type(surface)}!")
+
+    if isinstance(surface, openmc.ZCone):
+        # shrink to avoid floating point number comparison imprecision issues
+        centroid = np.mean(choice_points, axis=0)
+        choice_points = (choice_points + 0.01 * centroid) / 1.01
+        x, y, z = np.array(choice_points).T
+        values = surface.evaluate([x, y, z])
+        middle = values > 0
+        if all(middle):  # exist outside of cone
+            return +surface
+
+        z_dist = z - surface.z0
+        upper_cone = np.logical_and(~middle, z_dist > 0)
+        lower_cone = np.logical_and(~middle, z_dist < 0)
+        upper_not_cone = np.logical_and(middle, z_dist > 0)
+        lower_not_cone = np.logical_and(middle, z_dist < 0)
+
+        plane = find_suitable_z_plane(
+            surface.z0,
+            [surface.z0 - EPS_FREECAD, surface.z0 + EPS_FREECAD],
+            1000 + surface.id,
+            f"Ambiguity plane for cone {surface.id}",
+        )
+        if all(upper_cone):
+            return -surface & +plane
+        if all(lower_cone):
+            return -surface & -plane
+        if all(np.logical_or(upper_cone, lower_cone)):
+            raise GeometryError(
+                "Both cones have vertices lying inside! Cannot compute a contiguous "
+                "region that works for both. Check if polygon is convex?"
+            )
+        # TODO: calculate all of the intersection point between the the Z-cone and
+        # the polgyon's edges on the RHHP, and then get their z-value. The two Z
+        # values cloesest to z0 on either side (above and below)
+        # then forms the z_range argument for find_suitable_z_plane.
+        # return choose_halfspace(surface, choice_points)
+
+        if all(np.logical_or(upper_cone, middle)):
+            return +surface | +plane
+        if all(np.logical_or(lower_cone, middle)):
+            return +surface | -plane
+        raise GeometryError("Can't have points on both inside and outside!")
+
+    raise NotImplementedError(
+        f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
+    )
+
+
+def find_suitable_z_plane(
+    z0: float,
+    z_range: Iterable[float] = None,
+    surface_id: Optional[int] = None,
+    name: str = "",
+):
+    """
+    Parameters
+    ----------
+    cone:
+    """
+    if z_range:
+        z_min, z_max = min(z_range), max(z_range)
+        for key in hangar:
+            if z_min <= key <= z_max:
+                return hangar[key]
+    hangar[z0] = openmc.ZPlane(z0=z0, surface_id=surface_id, name=name)
+    return hangar[z0]
 
 
 class BlanketCell(openmc.Cell):
@@ -219,20 +369,20 @@ class BlanketCell(openmc.Cell):
     A generic blanket cell that forms the base class for the five specialized types of
     blanket cells.
 
-    It's a special case of openmc.Cell, in that it has 3 to 4 surfaces (mandatory
-    surfaces: exterior_surface, ccw_surface, cw_surface; optional: interior_surface), and
-    it is more wieldy because we don't have to specify the relevant half-space for each
-    surface; instead an example_point (any point inside the cell will do) is provided by
-    the user and that would choose the appropriate half-space.
+    It's a special case of openmc.Cell, in that it has 3 to 4 surfaces
+    (mandatory surfaces: exterior_surface, ccw_surface, cw_surface;
+    optional surface: interior_surface), and it is more wieldy because we don't have to
+    specify the relevant half-space for each surface; instead the corneres of the cell
+    is provided by the user, such that the appropriate regions are chosen.
     """
 
     def __init__(
         self,
+        interior_surface: Optional[openmc.Surface],
         exterior_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
-        example_point: Union[Iterable[float], Coordinates],
-        interior_surface: Optional[openmc.Surface] = None,
+        vertices: Iterable[Iterable[float]],
         cell_id=None,
         name="",
         fill=None,
@@ -248,9 +398,8 @@ class BlanketCell(openmc.Cell):
             Surface on the ccw wall side of the cell
         cw_surface
             Surface on the cw wall side of the cell
-        example_point
-            Any arbitrary point inside the cell. Could be a simple xz coordiante, or a
-            :class:`bluemira.geometry.coordinates.Coordinates` object.
+        vertices
+            A list of points. Could be 2D or 3D.
         interior_surface
             Surface on the interior side of the cell
         cell_id
@@ -264,71 +413,31 @@ class BlanketCell(openmc.Cell):
         self.exterior_surface = exterior_surface
         self.ccw_surface = ccw_surface
         self.cw_surface = cw_surface
+        self.vertices = vertices
 
-        if not isinstance(example_point, Coordinates):
-            example_point = Coordinates([example_point[0], 0, example_point[-1]])
-        self.example_point = example_point
+        _surfaces_list = [interior_surface, exterior_surface, ccw_surface, cw_surface]
 
-        region = (
-            choose_halfspace(self.exterior_surface, example_point)
-            & choose_halfspace(self.ccw_surface, example_point)
-            & choose_halfspace(self.cw_surface, example_point)
-        )
-        if self.interior_surface:
-            region &= choose_halfspace(self.interior_surface, example_point)
-        super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
+        vertices_array = vertices.to_3D().to_array()
+        final_region = openmc.Intersection([
+            choose_region(surface, vertices_array)
+            for surface in _surfaces_list
+            if surface is not None
+        ])
 
-    #     _surfaces_list = [self.exterior_surface, self.ccw_surface, self.cw_surface]
-    #     if self.interior_surface:
-    #         _surfaces_list.append(self.interior_surface)
-    #     self.cell = openmc_cell_from_surfaces_and_point(
-    #                 _surfaces_list,
-    #                 self.example_point,
-    #                 cell_id=cell_id,
-    #                 name=name,
-    #                 fill=fill)
+        super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
 
-    # def __len__(self):
-    #     return 1
+        # self.cell = openmc_cell_from_surfaces_and_point(_surfaces_list, self.vertices)
 
-    # def __iter__(self):
-    #     return iter([self.cell,])
+    def __len__(self):
+        return 1
 
-    # def __getitem__(self, index):
-    #     if index==0:
-    #         return self.cell
-    #     else:
-    #         raise IndexError(f"Only one cell is available in {str(self)}")
+    def __iter__(self):
+        return iter([self.cell])
 
-
-def openmc_cell_from_surfaces_and_point(
-    surfaces: Iterable[openmc.Surface],
-    example_point: Iterable[float],
-    cell_id=None,
-    name="",
-    fill=None,
-) -> openmc.Cell:
-    """
-    Create from a list of surfaces and a point
-
-    Parameters
-    ----------
-    surfaces:
-        List of openmc.surface
-    example_point:
-        Any arbitrary point inside the cell. Could be a simple pair of xz coordiante, or
-        a :class:`bluemira.geometry.coordinates.Coordinates` object.
-    cell_id
-        see :class:`openmc.Cell`
-    name
-        see :class:`openmc.Cell`
-    fill
-        see :class:`openmc.Cell`
-    """
-    if not isinstance(example_point, Coordinates):
-        example_point = Coordinates([example_point[0], 0, example_point[-1]])
-    region = openmc.Intersection([choose_halfspace(s, example_point) for s in surfaces])
-    return openmc.Cell(cell_id=cell_id, name=name, fill=fill, region=region)
+    def __getitem__(self, index):
+        if index == 0:
+            return self.cell
+        raise IndexError(f"Only one cell is available in {self!s}")
 
 
 class BlanketCellStack:
@@ -426,10 +535,12 @@ class BlanketCellStack:
 
     @property
     def interfaces(self):
-        """All of the radial surfaces, arranged from innermost to outermost."""
+        """All of the internal radial surfaces, (i.e. not exposed to plasma or air,)
+        arranged from innermost to outermost.
+        """
         if not hasattr(self, "_interfaces"):
             self._interfaces = [cell.interior_surface for cell in self.cell_stack]
-            self._interfaces.append(self.exterior_surface)
+            self._interfaces.append(self.cell_stack[-1].exterior_surface)
         return self._interfaces
 
     @classmethod
@@ -438,13 +549,13 @@ class BlanketCellStack:
         ccw_surf: openmc.Surface,
         cw_surf: openmc.Surface,
         layer_interfaces: List[openmc.Surface],
-        example_points: Iterable[Iterable[float]],
+        vertices: Iterable[Iterable[float]],
         fill_dict: dict[str, openmc.Material],
         cell_ids: Optional[Iterable[int]] = None,
         cell_names: Optional[Iterable[int]] = None,
     ):
         """Create a stack of cells from a collection of openmc.Surfaces."""
-        num_cell_in_stack = len(example_points)
+        num_cell_in_stack = len(vertices)
         if not cell_ids:
             cell_ids = [None] * num_cell_in_stack
         if not cell_names:
@@ -457,11 +568,11 @@ class BlanketCellStack:
             ).items()
         }
         cell_stack = []
-        for _cell_num, (int_surf, ext_surf, eg_point, _id, _name) in enumerate(
+        for _cell_num, (int_surf, ext_surf, verts, _id, _name) in enumerate(
             zip(
                 layer_interfaces[:-1],
                 layer_interfaces[1:],
-                example_points,
+                vertices,
                 cell_ids,
                 cell_names,
                 # strict=True # TODO: uncomment in Python 3.10
@@ -469,11 +580,11 @@ class BlanketCellStack:
         ):
             cell_stack.append(
                 BlanketCell(
+                    int_surf,
                     ext_surf,
                     ccw_surf,
                     cw_surf,
-                    eg_point,
-                    int_surf,
+                    verts,
                     _id,
                     _name,
                     fill_dict[cell_type_at_num[_cell_num]],
@@ -580,7 +691,7 @@ class BlanketCellArray:
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
         # left wall
         ccw_surf = surface_from_2points(
-            *cell_walls[0], surface_id=0, name="Blanket cell wall 0"
+            *cell_walls[0], surface_id=9, name="Blanket cell wall 0"
         )
 
         cell_array = []
@@ -593,7 +704,7 @@ class BlanketCellArray:
             # getting the interfaces between layers.
             interior_wire = pre_cell.cell_walls.starts
             cw_wall_cuts, ccw_wall_cuts = [interior_wire[0]], [interior_wire[1]]
-            example_points, cell_ids = [], []
+            vertices, cell_ids = [], []
             surf_stack = [
                 surface_from_2points(
                     *interior_wire,
@@ -611,7 +722,8 @@ class BlanketCellArray:
                 (0.005, "thick"),
                 *[(value, "frac") for value in thickness_here],
             ]):
-                # switching logic to choose thickness vs fraction. TODO: functionalize
+                # switching logic to choose thickness vs fraction. TODO: functionalize or
+                # make prettier in params.py
                 if _height_type == "thick":
                     points = pre_cell.get_cell_wall_cut_points_by_thickness(
                         interface_height
@@ -625,10 +737,9 @@ class BlanketCellArray:
                 surf_stack.append(
                     surface_from_2points(*points, surface_id=10 * i + (j + 2))
                 )
-                eg_pt = (
-                    points[0] + points[1] + cw_wall_cuts[-1] + ccw_wall_cuts[-1]
-                ) / 4
-                example_points.append(eg_pt)
+                vertices.append(
+                    Vertices(points[0], points[1], cw_wall_cuts[-1], ccw_wall_cuts[-1])
+                )
                 cell_ids.append(10 * i + j)
                 cw_wall_cuts.append(points[0]), ccw_wall_cuts.append(points[1])
             surf_stack[-1].name = f"vacuum vessel outer surface {i}"
@@ -642,16 +753,16 @@ class BlanketCellArray:
                 0
             ].Curve.TypeId.startswith("Part::GeomLine"):
                 raise NotImplementedError(
-                    "Not ready to make curved-line cross-sections " "yet!"
+                    "Not ready to make curved-line cross-sections yet!"
                 )
 
             stack = BlanketCellStack.from_surfaces(
                 ccw_surf=ccw_surf,
                 cw_surf=cw_surf,
                 layer_interfaces=surf_stack,
-                example_points=example_points,
-                cell_ids=cell_ids,
+                vertices=vertices,
                 fill_dict=material_dict,
+                cell_ids=cell_ids,
             )
             cell_array.append(stack)
             ccw_surf = cw_surf  # right wall -> left wall, as we shift right.

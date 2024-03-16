@@ -21,13 +21,13 @@ from bluemira.geometry.tools import deserialize_shape, make_polygon
 from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
-    setup_openmc,
     PlasmaSourceParametersPPS,
     TBRHeatingSimulation,
     TokamakGeometry,
     create_and_export_materials,
     create_parametric_plasma_source,
     create_ring_source,
+    setup_openmc,
 )
 from bluemira.neutronics.params import (
     BlanketLayers,
@@ -36,7 +36,8 @@ from bluemira.neutronics.params import (
     ThicknessFractions,
     get_preset_physical_properties,
 )
-# from bluemira.neutronics.run_modes import *
+
+# from bluemira.neutronics.execution import Plotting
 from bluemira.neutronics.slicing import PanelsAndExteriorCurve
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.plasma_physics.reactions import n_DT_reactions
@@ -177,6 +178,7 @@ mat_dict = {
     BlanketLayers.VacuumVessel.name: mat_lib.outb_vv_mat,
 }
 pca2 = pca.straighten_exterior(preserve_volume=True)
+print(elapsed(), ": After straightening.")
 for i, (v1, v2) in enumerate(zip(pca.volumes, pca2.volumes)):
     print(
         f"Cell {i:<2}: Volume change = {(v2 / v1 - 1) * 100:6.3f}% , with initial volume = {v1:8.3f} m³"
@@ -188,10 +190,11 @@ print(f"Before = {sum(pca.volumes):8.3f} m³; Total: After = {sum(pca2.volumes):
 blanket_cell_array = BlanketCellArray.from_pre_cell_array(
     pca2, mat_dict, thickness_fractions
 )
+print("The number of surfaces created =", len(openmc.Surface.used_ids))
 
-# _all_cells = [blanket_cell.cell for blanket_cell in chain.from_iterable(blanket_cell_array)]
 _all_cells = [blanket_cell for blanket_cell in chain.from_iterable(blanket_cell_array)]
-universe = openmc.Universe(cells=_all_cells)
+selected_cells = _all_cells
+universe = openmc.Universe(cells=selected_cells)
 geometry = openmc.Geometry(universe)
 geometry.export_to_xml()
 plot = openmc.Plot()
