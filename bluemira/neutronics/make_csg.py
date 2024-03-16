@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from collections import abc
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union
 
 import numpy as np
@@ -507,19 +508,19 @@ class BlanketCell(openmc.Cell):
 
         # self.cell = openmc_cell_from_surfaces_and_point(_surfaces_list, self.vertices)
 
-    def __len__(self):
-        return 1
+    # def __len__(self):
+    #     return 1
 
-    def __iter__(self):
-        return iter([self.cell])
+    # def __getitem__(self, index):
+    #     if index == 0:
+    #         return self.cell
+    #     raise IndexError(f"Only one cell is available in {self!s}")
 
-    def __getitem__(self, index):
-        if index == 0:
-            return self.cell
-        raise IndexError(f"Only one cell is available in {self!s}")
+    # def __iter__(self):
+    #     return iter([self.cell])
 
 
-class BlanketCellStack:
+class BlanketCellStack(abc.Sequence):
     """
     A stack of openmc.Cells, stacking from the inboard direction towards the outboard
     direction. They should all be situated at the same poloidal angle.
@@ -562,8 +563,8 @@ class BlanketCellStack:
     def __getitem__(self, index_or_slice) -> Union[List[BlanketCell], BlanketCell]:
         return self.cell_stack.__getitem__(index_or_slice)
 
-    def __iter__(self):
-        return self.cell_stack.__iter__()
+    # def __iter__(self):
+    #     return self.cell_stack.__iter__()
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
@@ -672,7 +673,7 @@ class BlanketCellStack:
         return cls(cell_stack)
 
 
-class BlanketCellArray:
+class BlanketCellArray(abc.Sequence):
     """
     An array of BlanketCellStack
 
@@ -716,18 +717,6 @@ class BlanketCellArray:
         self, index_or_slice
     ) -> Union[List[BlanketCellStack], BlanketCellStack]:
         return self.blanket_cell_array.__getitem__(index_or_slice)
-
-    def __setitem__(
-        self,
-        index_or_slice,
-        new_blanket_cell_stack: Union[List[BlanketCellStack], BlanketCellStack],
-    ):
-        raise NotImplementedError(
-            "The content of this class is not intended to be " "changed on-the-fly!"
-        )
-
-    def __iter__(self):
-        return self.blanket_cell_array.__iter__()
 
     def __add__(self, other_array) -> BlanketCellArray:
         return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
@@ -851,6 +840,7 @@ class BlanketCellArray:
     def make_plasma_void_region(self) -> openmc.Region:
         """
         Create the region that is enclosed by the first wall.
+        We assume that this region is convex. Would fail silently if not.
 
         Returns
         -------
