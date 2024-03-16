@@ -506,19 +506,6 @@ class BlanketCell(openmc.Cell):
 
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
 
-        # self.cell = openmc_cell_from_surfaces_and_point(_surfaces_list, self.vertices)
-
-    # def __len__(self):
-    #     return 1
-
-    # def __getitem__(self, index):
-    #     if index == 0:
-    #         return self.cell
-    #     raise IndexError(f"Only one cell is available in {self!s}")
-
-    # def __iter__(self):
-    #     return iter([self.cell])
-
 
 class BlanketCellStack(abc.Sequence):
     """
@@ -562,9 +549,6 @@ class BlanketCellStack(abc.Sequence):
 
     def __getitem__(self, index_or_slice) -> Union[List[BlanketCell], BlanketCell]:
         return self.cell_stack.__getitem__(index_or_slice)
-
-    # def __iter__(self):
-    #     return self.cell_stack.__iter__()
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")

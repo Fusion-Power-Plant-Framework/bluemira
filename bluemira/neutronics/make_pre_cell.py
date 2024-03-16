@@ -260,8 +260,5 @@ class PreCellArray(abc.Sequence):
         """Adding two list together to create a new one."""
         return PreCellArray(self.pre_cells + other_array)
 
-    # def __iter__(self):
-    #     return self.pre_cells.__iter__()
-
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")

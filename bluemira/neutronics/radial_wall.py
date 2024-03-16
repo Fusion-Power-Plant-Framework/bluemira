@@ -255,9 +255,6 @@ class CellWalls(abc.Sequence):
         """
         self.cell_walls.__setitem__(index_or_slice, new_coordinates)
 
-    # def __iter__(self):
-    #     return self.cell_walls.__iter__()
-
     def __add__(self, other_cell_walls: CellWalls):
         """
         It is ambiguous whether the user is trying to translate (shift) the
