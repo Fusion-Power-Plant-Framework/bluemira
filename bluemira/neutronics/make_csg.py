@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union
 
 import numpy as np
 import openmc
-
-# for debugging
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt  # for debugging
 from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
