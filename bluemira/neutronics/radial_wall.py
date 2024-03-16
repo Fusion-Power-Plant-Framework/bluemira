@@ -17,10 +17,10 @@ from numpy import typing as npt
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
+    from bluemira.geometry.coordinates import Coordinates
     from bluemira.neutronics.make_pre_cell import PreCellArray
 
 
@@ -55,6 +55,7 @@ class Vertices:
         )
 
     def to_array(self) -> npt.NDArray:
+        """Convert to numpy array"""
         return np.array([
             self.exterior_end,
             self.interior_start,
@@ -76,6 +77,7 @@ class VerticesCoordinates:
     exterior_start: Coordinates
 
     def to_2D(self) -> Vertices:
+        """Convert itself to a list of 2D vertices"""
         return Vertices(
             self.exterior_end[::2, 0],
             self.interior_start[::2, 0],
@@ -101,7 +103,16 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
 
     Notes
     -----
-    TODO: add formula later.
+    Consider one edge of the polygon, which has two vertices, $p$ and $c$.
+    TODO: insert graphics
+
+    Adding together the signed volume of all edges, the excess negative volume from one
+    side would cancel out the excess positive volume from the other, such that
+    abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
+
+    After a hefty amount of derivation, everything cancels out to give the simple
+    expression
+    :math: `V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`
     """
     polygon = np.array(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:
@@ -134,7 +145,17 @@ def partial_diff_of_volume(
 
     Notes
     -----
-    TODO: add formula later.
+    Let there be 3 points, q, r, and s, forming two edges of a polygon.
+    When r is moved, the polgyon's revolved solid volume changes.
+    .. math::
+
+        \\frac{dV}{d r_z} = q_z q_x - r_z q_x + 2 q_z r_x - 2 s_z r_x + r_z s_x - s_z s_x
+        \\frac{dV}{d r_x} = (q_x + r_x + s_x) (s_x - q_x)
+
+
+    The dot product between the direction of motion and the vector :math:`\\frac{dV}{dr}`
+    gives the required scalar derivative showing "how much does the volume change when
+    r is moved in a certain direction by one unit length".
     """
     (qx, qz), (rx, rz), (sx, sz) = three_vertices
     x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx

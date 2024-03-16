@@ -9,11 +9,11 @@ import json
 import sys
 from itertools import chain
 from pathlib import Path
+from time import time
 
 import numpy as np
 import openmc
 
-import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import vector_intersect
@@ -116,12 +116,11 @@ thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 #     new_elong=1.792,  # [dimensionless]
 #     save_plots=True,
 # data loading begins here.
-from time import time
 
 START_TIME = time()
 
 
-def elapsed(start_time=START_TIME):
+def elapsed(start_time=START_TIME):  # noqa: D103
     return f"t={time() - start_time:9.6f}s"
 
 
@@ -138,17 +137,17 @@ fw_panel_bp_list = [
     np.load("data/fw_panels_50_0.3.npy"),
     np.load("data/fw_panels_50_0.5.npy"),
 ]
-panel_breakpoint_T = fw_panel_bp_list[0].T
+panel_breakpoint_t = fw_panel_bp_list[0].T
 # TODO: MANUAL FIX the coordinates
-panel_breakpoint_T[0] = vector_intersect(
-    panel_breakpoint_T[0],
-    panel_breakpoint_T[1],
+panel_breakpoint_t[0] = vector_intersect(
+    panel_breakpoint_t[0],
+    panel_breakpoint_t[1],
     divertor_bmwire.edges[0].start_point()[::2].flatten(),
     divertor_bmwire.edges[0].end_point()[::2].flatten(),
 )
-panel_breakpoint_T[-1] = vector_intersect(
-    panel_breakpoint_T[-2],
-    panel_breakpoint_T[-1],
+panel_breakpoint_t[-1] = vector_intersect(
+    panel_breakpoint_t[-2],
+    panel_breakpoint_t[-1],
     divertor_bmwire.edges[-1].start_point()[::2].flatten(),
     divertor_bmwire.edges[-1].end_point()[::2].flatten(),
 )
@@ -157,14 +156,14 @@ last_point = divertor_bmwire.edges[-1].end_point()
 
 
 blanket_panels_bmwire = make_polygon(
-    np.insert(panel_breakpoint_T, 1, 0, axis=1).T,
+    np.insert(panel_breakpoint_t, 1, 0, axis=1).T,
     label="blanket panels",
     closed=False,
 )
 
 print(elapsed(), ": Before creating pre-cells")
 
-panel_and_exterior = PanelsAndExteriorCurve(panel_breakpoint_T, outer_boundary)
+panel_and_exterior = PanelsAndExteriorCurve(panel_breakpoint_t, outer_boundary)
 pca = panel_and_exterior.make_quadrilateral_pre_cell_array(
     snap_to_horizontal_angle=45, ending_cut=last_point.xz.flatten()
 )
@@ -181,7 +180,8 @@ pca2 = pca.straighten_exterior(preserve_volume=True)
 print(elapsed(), ": After straightening.")
 for i, (v1, v2) in enumerate(zip(pca.volumes, pca2.volumes)):
     print(
-        f"Cell {i:<2}: Volume change = {(v2 / v1 - 1) * 100:6.3f}% , with initial volume = {v1:8.3f} m³"
+        f"Cell {i:<2}: Volume change = {(v2 / v1 - 1) * 100:6.3f}% , "
+        f"with initial volume = {v1:8.3f} m³"
     )
 print(f"Before = {sum(pca.volumes):8.3f} m³; Total: After = {sum(pca2.volumes):8.3f} m³")
 # plot_2d([c.outline for c in pca] + [c.outline for c in pca2])
@@ -192,8 +192,12 @@ blanket_cell_array = BlanketCellArray.from_pre_cell_array(
 )
 print("The number of surfaces created =", len(openmc.Surface.used_ids))
 
-_all_cells = [blanket_cell for blanket_cell in chain.from_iterable(blanket_cell_array)]
-selected_cells = _all_cells
+_all_cells = list(chain.from_iterable(blanket_cell_array))
+plasma_void_upper = blanket_cell_array.make_plasma_void_region()
+selected_cells = [
+    *_all_cells,
+    openmc.Cell(region=plasma_void_upper, fill=None, name="Plasma cell"),
+]
 universe = openmc.Universe(cells=selected_cells)
 geometry = openmc.Geometry(universe)
 geometry.export_to_xml()
@@ -208,15 +212,15 @@ plot.pixels = [int(plot_dims[0] * ppm), int(plot_dims[1] * ppm)]
 plot.width = plot_dims
 openmc.Plots([plot]).export_to_xml()
 openmc.plot_geometry(output=True)
-sys.exit()
 
-tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
-    tokamak_geometry,
-    blanket_points,
-    div_points,
-    num_inboard_points,
-    tbr_heat_sim.material_lib,
-)  # TODO: improve here
+# tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
+#     tokamak_geometry,
+#     blanket_points,
+#     div_points,
+#     num_inboard_points,
+#     tbr_heat_sim.material_lib,
+# )  # TODO: improve here
+sys.exit()
 
 tbr_heat_sim.src_rate = n_DT_reactions(
     source_parameters.plasma_physics_units.reactor_power  # [MW]
