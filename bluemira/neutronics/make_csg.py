@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union
 
 import numpy as np
 import openmc
+
+# for debugging
+from matplotlib import pyplot as plt
 from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
@@ -37,16 +40,22 @@ hangar = {}  # it's called a hangar because it's where the planes are parked ;)
 
 
 def plot_surfaces(surfaces_list: List[openmc.Surface]):
-    import matplotlib.pyplot as plt
-
+    """
+    Plot a list of surfaces in matplotlib.
+    """
     ax = plt.axes()
-    # ax.set_aspect(1.0)
+    # ax.set_aspect(1.0) # don't do this as it makes the plot hard to read.
     for i, surface in enumerate(surfaces_list):
         plot_coords(surface, color_num=i)
     ax.legend()
+    ax.set_ylim([-10, 10])
+    ax.set_xlim([-10, 10])
 
 
 def plot_coords(surface: openmc.Surface, color_num: int):
+    """
+    In the range [-10, 10], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
+    """
     if isinstance(surface, openmc.ZCylinder):
         plt.plot(
             [surface.x0, surface.x0],
@@ -249,10 +258,21 @@ def torus_from_5points(
     )
 
 
-def choose_halfspace(surface, choice_points):
+def choose_halfspace(
+    surface: openmc.Surface, choice_points: Iterable[Iterable[float]]
+) -> openmc.Halfspace:
     """
     Simply take the centroid point of all of the choice_points, and choose the
     corresponding half space
+
+    Parameters
+    ----------
+    surface
+        an openmc surface
+
+    Returns
+    -------
+    openmc.Halfspace
     """
     pt = np.mean(choice_points, axis=0)
     value = surface.evaluate(pt)
@@ -263,7 +283,107 @@ def choose_halfspace(surface, choice_points):
     raise GeometryError("Centroid point is directly on the surface")
 
 
-def choose_region(surface: openmc.Surface, choice_points: npt.NDArray):
+def choose_plane_cylinders(
+    surface: Union[openmc.ZPlane, openmc.ZCylinder], choice_points: npt.NDArray
+) -> openmc.Halfspace:
+    """choose_region for ZPlane and ZCylinder."""
+    x, y, z = np.array(choice_points).T
+    values = surface.evaluate([x, y, z])
+    threshold = EPS_FREECAD
+    if isinstance(surface, openmc.ZCylinder):
+        threshold = 2 * EPS_FREECAD * surface.r + EPS_FREECAD**2
+
+    if all(values >= -threshold):
+        return +surface
+    if all(values <= threshold):
+        return -surface
+
+    raise GeometryError(f"There are points on both sides of this {type(surface)}!")
+
+
+def choose_region_cone(
+    surface: openmc.ZCone, choice_points: npt.NDArray
+) -> openmc.Region:
+    """
+    choose_region for ZCone.
+    When reading this function's code, bear in mind that a Z cone can be separated into
+    3 parts:
+        A. the upper cone (evaluates to negative),
+        B. outside of the cone (evaluates to positive),
+        C. the lower cone (evaluates to negative).
+    We have to account for the following cases:
+    -------------------------------------
+    | upper cone | outside | lower cone |
+    -------------------------------------
+    |    Y      |     N    |      N     |
+    |    Y      |     Y    |      N     |
+    |    N      |     Y    |      N     |
+    |    N      |     Y    |      Y     |
+    |    N      |     N    |      Y     |
+    -------------------------------------
+    All other cases should raise an error.
+    The tricky part to handle is the floating point precision problem:
+        it's possible that th every point used to create the cone does not lie on the
+        cone/ lies on the wrong side of the cone.
+        Hence the first step is to shink the choice_points by 0.5% towards the centroid.
+
+    Returns
+    -------
+    region
+        openmc.Region, specifically openmc.Halfspace or openmc.Union of openmc.Halfspace
+    """
+    # shrink to avoid floating point number comparison imprecision issues
+    centroid = np.mean(choice_points, axis=0)
+    choice_points = (choice_points + 0.01 * centroid) / 1.01
+    x, y, z = np.array(choice_points).T
+    values = surface.evaluate([x, y, z])
+    middle = values > 0
+    if all(middle):  # exist outside of cone
+        return +surface
+
+    z_dist = z - surface.z0
+    upper_cone = np.logical_and(~middle, z_dist > 0)
+    lower_cone = np.logical_and(~middle, z_dist < 0)
+    # upper_not_cone = np.logical_and(middle, z_dist > 0)
+    # lower_not_cone = np.logical_and(middle, z_dist < 0)
+
+    if all(upper_cone):
+        # everything in the upper cone.
+        plane = find_suitable_z_plane(  # the highest we can cut is at the lowest z.
+            surface.z0,
+            [surface.z0 - EPS_FREECAD, min(z) - EPS_FREECAD],
+            1000 + surface.id,
+            f"Ambiguity plane for cone {surface.id}",
+        )
+        return -surface & +plane
+    if all(lower_cone):
+        # everything in the lower cone
+        plane = find_suitable_z_plane(  # the lowest we can cut is at the highest z.
+            surface.z0,
+            [max(z) + EPS_FREECAD, surface.z0 + EPS_FREECAD],
+            1000 + surface.id,
+            f"Ambiguity plane for cone {surface.id}",
+        )
+        return -surface & -plane
+    if all(np.logical_or(upper_cone, lower_cone)):
+        raise GeometryError(
+            "Both cones have vertices lying inside! Cannot compute a contiguous "
+            "region that works for both. Check if polygon is convex?"
+        )
+    plane = find_suitable_z_plane(  # In this rare case, make its own plane.
+        surface.z0,
+        [surface.z0 + EPS_FREECAD, surface.z0 - EPS_FREECAD],
+        1000 + surface.id,
+        f"Ambiguity plane for cone {surface.id}",
+    )
+    if all(np.logical_or(upper_cone, middle)):
+        return +surface | +plane
+    if all(np.logical_or(lower_cone, middle)):
+        return +surface | -plane
+    raise GeometryError("Can't have points in upper cone, lower cone AND outside!")
+
+
+def choose_region(surface: openmc.Surface, choice_points: npt.NDArray) -> openmc.Region:
     """
     Calculate the correct side of the region such that all vertices of the polygon are
     situated within the required region.
@@ -277,68 +397,15 @@ def choose_region(surface: openmc.Surface, choice_points: npt.NDArray):
 
     Returns
     -------
-    an instance of openmc.Region
-        This region should include the choice_points
+    region
+        openmc.Region, specifically openmc.Halfspace or openmc.Union of openmc.Halfspace
     """
+    # switch case: blue
     if isinstance(surface, (openmc.ZPlane, openmc.ZCylinder)):
-        x, y, z = np.array(choice_points).T
-        values = surface.evaluate([x, y, z])
-        THRESHOLD = EPS_FREECAD
-        if isinstance(surface, openmc.ZCylinder):
-            THRESHOLD = 2 * EPS_FREECAD * surface.r + EPS_FREECAD**2
-        if all(values >= -THRESHOLD):
-            return +surface
-        if all(values <= THRESHOLD):
-            return -surface
-        print("Where is this going?")
-        print(surface)
-        print(choice_points[:, -1])
-        print(values)
-        raise GeometryError(f"There are points on both sides of this {type(surface)}!")
+        return choose_plane_cylinders(surface, choice_points)
 
     if isinstance(surface, openmc.ZCone):
-        # shrink to avoid floating point number comparison imprecision issues
-        centroid = np.mean(choice_points, axis=0)
-        choice_points = (choice_points + 0.01 * centroid) / 1.01
-        x, y, z = np.array(choice_points).T
-        values = surface.evaluate([x, y, z])
-        middle = values > 0
-        if all(middle):  # exist outside of cone
-            return +surface
-
-        z_dist = z - surface.z0
-        upper_cone = np.logical_and(~middle, z_dist > 0)
-        lower_cone = np.logical_and(~middle, z_dist < 0)
-        upper_not_cone = np.logical_and(middle, z_dist > 0)
-        lower_not_cone = np.logical_and(middle, z_dist < 0)
-
-        plane = find_suitable_z_plane(
-            surface.z0,
-            [surface.z0 - EPS_FREECAD, surface.z0 + EPS_FREECAD],
-            1000 + surface.id,
-            f"Ambiguity plane for cone {surface.id}",
-        )
-        if all(upper_cone):
-            return -surface & +plane
-        if all(lower_cone):
-            return -surface & -plane
-        if all(np.logical_or(upper_cone, lower_cone)):
-            raise GeometryError(
-                "Both cones have vertices lying inside! Cannot compute a contiguous "
-                "region that works for both. Check if polygon is convex?"
-            )
-        # TODO: calculate all of the intersection point between the the Z-cone and
-        # the polgyon's edges on the RHHP, and then get their z-value. The two Z
-        # values cloesest to z0 on either side (above and below)
-        # then forms the z_range argument for find_suitable_z_plane.
-        # return choose_halfspace(surface, choice_points)
-
-        if all(np.logical_or(upper_cone, middle)):
-            return +surface | +plane
-        if all(np.logical_or(lower_cone, middle)):
-            return +surface | -plane
-        raise GeometryError("Can't have points on both inside and outside!")
-
+        return choose_region_cone(surface, choice_points)
     raise NotImplementedError(
         f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
     )
@@ -346,22 +413,35 @@ def choose_region(surface: openmc.Surface, choice_points: npt.NDArray):
 
 def find_suitable_z_plane(
     z0: float,
-    z_range: Iterable[float] = None,
+    z_range: Optional[Iterable[float]] = None,
     surface_id: Optional[int] = None,
     name: str = "",
 ):
-    """
-    Parameters
-    ----------
-    cone:
-    """
+    """Find a suitable z from the hangar, or create a new one if no matches are found."""
     if z_range:
         z_min, z_max = min(z_range), max(z_range)
         for key in hangar:
             if z_min <= key <= z_max:
-                return hangar[key]
+                return hangar[key]  # return the first match
     hangar[z0] = openmc.ZPlane(z0=z0, surface_id=surface_id, name=name)
     return hangar[z0]
+
+
+def flatten_region(region: openmc.Region) -> openmc.Intersection:
+    """Expand the expression partially using the rule of associativity"""
+    return openmc.Intersection(get_expression(region).values())
+
+
+def get_expression(region: openmc.Region) -> Dict[str, openmc.Region]:
+    """Get a dictionary of all of the elements that shall be intersected in the end."""
+    if isinstance(region, openmc.Halfspace):  # termination condition
+        return {region.side + str(region.surface.id): region}
+    if isinstance(region, openmc.Intersection):
+        final_intersection = {}
+        for _r in region:
+            final_intersection.update(get_expression(_r))
+        return final_intersection
+    return {str(region): region}
 
 
 class BlanketCell(openmc.Cell):
@@ -378,10 +458,10 @@ class BlanketCell(openmc.Cell):
 
     def __init__(
         self,
-        interior_surface: Optional[openmc.Surface],
         exterior_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
+        interior_surface: Optional[openmc.Surface],
         vertices: Iterable[Iterable[float]],
         cell_id=None,
         name="",
@@ -409,20 +489,21 @@ class BlanketCell(openmc.Cell):
         fill
             see :class:`openmc.Cell`
         """
-        self.interior_surface = interior_surface
         self.exterior_surface = exterior_surface
         self.ccw_surface = ccw_surface
         self.cw_surface = cw_surface
+        self.interior_surface = interior_surface
         self.vertices = vertices
 
-        _surfaces_list = [interior_surface, exterior_surface, ccw_surface, cw_surface]
+        _surfaces_list = [exterior_surface, ccw_surface, cw_surface, interior_surface]
 
         vertices_array = vertices.to_3D().to_array()
-        final_region = openmc.Intersection([
+        intersection_region = openmc.Intersection([
             choose_region(surface, vertices_array)
             for surface in _surfaces_list
             if surface is not None
         ])
+        final_region = flatten_region(intersection_region)  # can lead to speed up
 
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
 
@@ -575,15 +656,15 @@ class BlanketCellStack:
                 vertices,
                 cell_ids,
                 cell_names,
-                # strict=True # TODO: uncomment in Python 3.10
+                # strict=True # TODO: uncomment when we move to Python 3.10
             )
         ):
             cell_stack.append(
                 BlanketCell(
-                    int_surf,
                     ext_surf,
                     ccw_surf,
                     cw_surf,
+                    int_surf,
                     verts,
                     _id,
                     _name,
@@ -768,3 +849,24 @@ class BlanketCellArray:
             ccw_surf = cw_surf  # right wall -> left wall, as we shift right.
 
         return cls(cell_array)
+
+    def make_plasma_void_region(self) -> openmc.Region:
+        """
+        Create the region that is enclosed by the first wall.
+
+        Returns
+        -------
+        plasma_void_upper
+            an instance of openmc.Region
+        """
+        first_wall_surfaces = [radial_stack[0] for radial_stack in self.radial_surfaces]
+        joining_points = [
+            np.insert(cell_stack[0].vertices.interior_end, 1, 0, axis=-1)
+            for cell_stack in self
+        ]
+
+        plasma_void_upper = openmc.Intersection(
+            choose_region(surf, joining_points) for surf in first_wall_surfaces
+        )
+
+        return flatten_region(plasma_void_upper)
