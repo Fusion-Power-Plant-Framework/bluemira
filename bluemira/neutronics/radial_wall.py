@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from collections import abc
 from dataclasses import dataclass
 from math import fsum
 from typing import TYPE_CHECKING, Callable, Iterable, Union
@@ -201,7 +202,7 @@ def newtons_method_1d(
     return x
 
 
-class CellWalls:
+class CellWalls(abc.Sequence):
     """
     A list of start- and end-location vectors of all of the walls dividing neighbouring
     pre-cells.
@@ -254,8 +255,8 @@ class CellWalls:
         """
         self.cell_walls.__setitem__(index_or_slice, new_coordinates)
 
-    def __iter__(self):
-        return self.cell_walls.__iter__()
+    # def __iter__(self):
+    #     return self.cell_walls.__iter__()
 
     def __add__(self, other_cell_walls: CellWalls):
         """
