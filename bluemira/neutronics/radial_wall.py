@@ -106,13 +106,14 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
     Consider one edge of the polygon, which has two vertices, $p$ and $c$.
     TODO: insert graphics
 
+    When revolved around the z-axis, this trapezium forms a the frustum of a cone.
+    The expression for the volume of this frustrum needs to be modified to avoid
+    ZeroDivisionError, thus it is recasted into the following (also the simplest) form:
+    :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
+
     Adding together the signed volume of all edges, the excess negative volume from one
     side would cancel out the excess positive volume from the other, such that
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
-
-    After a hefty amount of derivation, everything cancels out to give the simple
-    expression
-    :math: `V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`
     """
     polygon = np.array(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:
@@ -145,8 +146,9 @@ def partial_diff_of_volume(
 
     Notes
     -----
-    Let there be 3 points, q, r, and s, forming two edges of a polygon.
-    When r is moved, the polgyon's revolved solid volume changes.
+    Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
+    polygon. When r is moved, the polgyon's revolved solid volume changes.
+    After a hefty amount of derivation, everything cancels out to give the expression
     .. math::
 
         \\frac{dV}{d r_z} = q_z q_x - r_z q_x + 2 q_z r_x - 2 s_z r_x + r_z s_x - s_z s_x
