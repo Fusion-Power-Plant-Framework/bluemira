@@ -838,8 +838,11 @@ def in_plasma(
 
 
 def in_zone(
-    x: npt.NDArray[np.float64], z: npt.NDArray[np.float64], zone: npt.NDArray[np.float64]
-, include_edges: bool = False):
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    zone: npt.NDArray[np.float64],
+    include_edges: bool = False,
+):
     """
     Get a masking matrix for a specified zone.
 
@@ -866,6 +869,7 @@ def _in_plasma(
     z: npt.NDArray[np.float64],
     mask: npt.NDArray[np.float64],
     sep: npt.NDArray[np.float64],
+    include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
     """
     Get a masking matrix for a specified zone. JIT compilation utility.

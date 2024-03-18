@@ -192,11 +192,11 @@ class Collocation:
 
 
 def collocation_points(
-    n_points: int,
     plasma_boundary: Coordinates,
     point_type: PointType,
+    n_points: int = 10,
     seed: Optional[int] = None,
-    grid_num: Optional[Tuple[int, int]] = (10, 10),
+    grid_num: Optional[Tuple[int, int]] = None,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -215,7 +215,9 @@ def collocation_points(
     n_points:
         Number of points/targets (not including extrema - these are added
         automatically if relevant). For use with point_type 'arc',
-        'arc_plus_extrema', 'random', or 'random_plus_extrema'.
+        'arc_plus_extrema', 'random', 'random_plus_extrema', or 'grid_num'.
+        For 'grid_num' it will create an n_points by n_points grid (see
+        grid_num for a non square grid.)
     plasma_boundary:
         XZ coordinates of the plasma boundary
     point_type:
@@ -224,10 +226,10 @@ def collocation_points(
     seed:
         Seed value to use with a random point distribution, defaults
         to `RNGSeeds.equilibria_harmonics.value`. For use with 'random'
-        or 'random_plus_extrema' point type.
+        or 'random_plus_extrema' point_type.
     grid_num:
-        Tuple with the number of desired grid points in the x and z direction. 
-        For use with 'grid_points' point type. 
+        Tuple with the number of desired grid points in the x and z direction.
+        For use with 'grid_points' point_type.
 
     Returns
     -------
@@ -300,6 +302,8 @@ def collocation_points(
 
     if point_type is PointType.GRID_POINTS:
         # Create uniform, rectangular grid using max and min LCFS values
+        if grid_num is None:
+            grid_num = (n_points, n_points)
         grid_num_x, grid_num_z = grid_num
         rect_grid = Grid(
             np.amin(x_bdry),

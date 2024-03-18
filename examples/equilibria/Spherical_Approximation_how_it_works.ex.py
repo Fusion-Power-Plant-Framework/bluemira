@@ -208,6 +208,7 @@ n = 20
 collocation = collocation_points(
     original_LCFS,
     PointType.ARC_PLUS_EXTREMA,
+    n,
     seed=15,
 )
 
