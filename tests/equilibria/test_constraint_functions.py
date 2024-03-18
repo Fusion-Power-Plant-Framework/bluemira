@@ -99,7 +99,7 @@ class TestEquilibriumInput:
             assert len(fcf.f_constraint(self.vector)) == 1
             assert fcf.f_constraint(self.vector) == pytest.approx(c, 0.1)
 
-    def test_current_midplance_constraint(self):
+    def test_current_midplane_constraint(self):
         ib_bool = [True, True, False, False]
         radius = [
             6.2912260811273745,
