@@ -738,12 +738,24 @@ class BlanketCellArray(abc.Sequence):
     ) -> BlanketCellArray:
         """
         Create a BlanketCellArray from a
-        :class:`~bluemira.neutronics.make_pre_cell.PreCellArray` .
+        :class:`~bluemira.neutronics.make_pre_cell.PreCellArray`.
+        This method assumes itself is the first method to be run to create cells in the
+        :class:`~openmc.Universe.`
         """
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
+
+        find_suitable_z_plane(
+            min(cell_walls[:, :, -1].flatten()), surface_id=999, name="Blanket bottom"
+        )
+        find_suitable_z_plane(
+            max(cell_walls[:, :, -1].flatten()), surface_id=1000, name="Blanket top"
+        )
         # left wall
         ccw_surf = surface_from_2points(
-            *cell_walls[0], surface_id=9, name="Blanket cell wall 0"
+            *cell_walls[0],
+            surface_id=9,
+            name="Blanket cell wall 0 (renamed 9 as openmc does not support 0"
+            "indexing).",
         )
 
         cell_array = []
