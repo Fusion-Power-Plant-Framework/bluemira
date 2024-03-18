@@ -76,7 +76,7 @@ class TestEquilibriumInput:
         cls.vector = cls.coilset.current
         cls.scale = 1.0
 
-    def test_feild_constraint_function(self):
+    def test_field_constraint_function(self):
         x_test = [4.0, 4.0]
         z_test = [8.0, 6.0]
         B_max = [5.0, 5.0]
