@@ -45,7 +45,7 @@ class PlotType(Enum):
         except KeyError:
             raise ValueError(
                 f"{cls.__name__} has no type {value}."
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 

@@ -42,7 +42,7 @@ class QueryType(Enum):
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid query: {value}. Choose from: {*cls._member_names_, }"
+                f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
 
 

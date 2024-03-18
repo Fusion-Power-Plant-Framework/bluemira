@@ -41,7 +41,7 @@ class NoiseModeType(Enum):
         except KeyError:
             raise FuelCycleError(
                 f"{cls.__name__} has no mode {value}"
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 

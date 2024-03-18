@@ -34,7 +34,7 @@ class SubLoadType(Enum):
         except KeyError:
             raise StructuralError(
                 f"{cls.__name__} has no load type {value}"
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
