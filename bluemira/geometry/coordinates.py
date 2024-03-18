@@ -52,7 +52,7 @@ class RotationAxis(Enum):
             return cls[value.upper()]
         except KeyError:
             raise CoordinatesError(
-                f"Invalid rotation axis: {value}. Choose from: {*cls._member_names_, }"
+                f"Invalid rotation axis: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
 
 
