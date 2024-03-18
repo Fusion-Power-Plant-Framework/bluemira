@@ -24,13 +24,13 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find import in_zone
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
     get_intersect,
-    in_polygon,
     polygon_in_polygon,
 )
 from bluemira.geometry.face import BluemiraFace
@@ -311,19 +311,11 @@ def collocation_points(
         )
 
         # Only use grid points that are within LCFS
-        collocation_x = np.array([])
-        collocation_z = np.array([])
-        for i in np.arange(grid_num_x):
-            for j in np.arange(grid_num_x):
-                in_poly = in_polygon(
-                    x=rect_grid.x[i, j],
-                    z=rect_grid.z[i, j],
-                    poly=plasma_boundary.xz.T,
-                    include_edges=True,
-                )
-                if in_poly:
-                    collocation_x = np.append(collocation_x, rect_grid.x[i, j])
-                    collocation_z = np.append(collocation_z, rect_grid.z[i, j])
+        mask = in_zone(
+            rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
+        )
+        collocation_x = rect_grid.x[mask == 1]
+        collocation_z = rect_grid.z[mask == 1]
 
         # Spherical coordinates
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
