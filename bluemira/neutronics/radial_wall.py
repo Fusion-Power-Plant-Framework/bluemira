@@ -224,6 +224,15 @@ class CellWalls(abc.Sequence):
     """
 
     def __init__(self, cell_walls: npt.NDArray[float]):
+        """
+        Parameters
+        ----------
+        cell_walls
+            array of shape (N+1, 2, 2)
+            where N = number of cells, so the axis=0 describes the N+1 walls on either
+            side of each cell, the axis=1 describes the the start and end points, and
+            axis=2 describes the r and z coordinates.
+        """
         self.cell_walls = np.array(cell_walls)
         if np.shape(self)[1:] != (2, 2):
             raise ValueError(
