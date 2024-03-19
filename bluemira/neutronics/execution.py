@@ -82,13 +82,15 @@ class RunMode:
         Set up basic xml files used in every simulation, i.e. settings, geometry and
         materials.
         """
-        self._setup = True
+        if self._setup:
+            raise RuntimeError("Set up should only be done once!")
         self.settings.export_to_xml()
         self.files_created.add("settings.xml")
         self.geometry.export_to_xml()
         self.files_created.add("geometry.xml")
         self.material_lib.export()
         self.files_created.add("materials.xml")
+        self._setup = True
 
     def __exit__(self, exception_type, exception_value, traceback):
         """Remove files generated during the run (mainly .xml files.)"""
@@ -101,7 +103,7 @@ class RunMode:
     def run(self, *args, output=False, **kwargs) -> None:
         """Complete the run"""
         if not self._setup:
-            raise RuntimeError("Must ")
+            raise RuntimeError("Must first run self.setup()!")
         _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
             *args, output=output, **kwargs
         )
