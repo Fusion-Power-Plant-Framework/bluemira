@@ -73,7 +73,6 @@ class OpenMCSimulationRuntimeParameters:
     """
 
     # Parameters used outside of setup_openmc()
-    parametric_source: bool  # to use the pps_isotropic module or not.
     particles: int  # number of particles used in the neutronics simulation
     cross_section_xml: str | Path
     batches: int = 2
@@ -83,6 +82,7 @@ class OpenMCSimulationRuntimeParameters:
     )
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
+    parametric_source: bool = True
     # number of particles used in the volume calculation.
     volume_calc_particles: int = int(4e8)
 

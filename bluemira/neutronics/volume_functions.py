@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import openmc
@@ -101,11 +100,6 @@ def stochastic_volume_calculation(
     particles:
         how many particles to use for the stochastic volume calculation.
     """
-    # quietly delete the unused .hf files: bad practice.
-    # TODO: Fix later by logging in bluemira.log.
-    Path("summary.h5").unlink(missing_ok=True)
-    Path("statepoint.1.h5").unlink(missing_ok=True)
-
     # maximum radii and heigth reached by all of the tokamak's breeder zone component
     maxr = (
         source_parameters.plasma_physics_units.major_radius
