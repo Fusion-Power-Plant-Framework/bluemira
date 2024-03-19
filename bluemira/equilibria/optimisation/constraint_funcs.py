@@ -129,6 +129,8 @@ class L2NormConstraint(ConstraintFunction):
         Response matrix
     b_vec:
         Target value vector
+    value:
+        Target constraint value
     scale:
         Current scale with which to calculate the constraints
     """
