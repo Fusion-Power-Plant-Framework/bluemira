@@ -257,7 +257,12 @@ x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
 z_lcfs = np.array([0, 4.19, 0, -4.19])
 
 lcfs_isoflux = IsofluxConstraint(
-    x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], tolerance=0.5, constraint_value=0.1
+    x_lcfs,
+    z_lcfs,
+    ref_x=x_lcfs[2],
+    ref_z=z_lcfs[2],
+    tolerance=np.mean(eq.psi(x_lcfs, z_lcfs)) * 1e-2,
+    constraint_value=0.1,
 )
 
 x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
@@ -269,7 +274,12 @@ x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
 z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
 
 legs_isoflux = IsofluxConstraint(
-    x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2], constraint_value=0.1, tolerance=0.5
+    x_legs,
+    z_legs,
+    ref_x=x_lcfs[2],
+    ref_z=z_lcfs[2],
+    constraint_value=0.1,
+    tolerance=np.mean(eq.psi(x_legs, z_legs)) * 1e-2,
 )
 
 magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
@@ -386,13 +396,16 @@ plt.show()
 #
 # An `IsofluxConstraint` forces the flux at a set of points to be equal.
 # %%
-field_constraints = CoilFieldConstraints(coilset=eq.coilset, B_max=11.5, tolerance=1e-4)
+B_max = 11.5
+field_constraints = CoilFieldConstraints(
+    coilset=eq.coilset, B_max=B_max, tolerance=B_max * 1e-3
+)
 
 xp_idx = np.argmin(z_lcfs)
 x_point = FieldNullConstraint(
     x_lcfs[xp_idx],
     z_lcfs[xp_idx],
-    tolerance=1e-2,  # [T]
+    tolerance=1e-3,  # [T]
 )
 
 # %% [markdown]
@@ -418,7 +431,7 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.1,
     maxiter=100,
-    convergence=DudsonConvergence(1e-6),
+    convergence=DudsonConvergence(1e-4),
 )
 
 constrained_iterator()
