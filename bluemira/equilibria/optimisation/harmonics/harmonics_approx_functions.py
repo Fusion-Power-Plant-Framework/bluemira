@@ -24,6 +24,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find import in_zone
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
@@ -177,6 +178,7 @@ class PointType(Enum):
     ARC_PLUS_EXTREMA = auto()
     RANDOM = auto()
     RANDOM_PLUS_EXTREMA = auto()
+    GRID_POINTS = auto()
 
 
 @dataclass
@@ -190,10 +192,11 @@ class Collocation:
 
 
 def collocation_points(
-    n_points: int,
     plasma_boundary: Coordinates,
     point_type: PointType,
+    n_points: int = 10,
     seed: Optional[int] = None,
+    grid_num: Optional[Tuple[int, int]] = None,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -204,21 +207,29 @@ def collocation_points(
     - equispaced points on an arc of fixed radius,
     - equispaced points on an arc plus extrema,
     - random points within a circle enclosed by the LCFS,
-    - random points plus extrema.
+    - random points plus extrema,
+    - a grid of points containing the LCFS.
 
     Parameters
     ----------
     n_points:
         Number of points/targets (not including extrema - these are added
-        automatically if relevant).
+        automatically if relevant). For use with point_type 'arc',
+        'arc_plus_extrema', 'random', 'random_plus_extrema', or 'grid_num'.
+        For 'grid_num' it will create an n_points by n_points grid (see
+        grid_num for a non square grid.)
     plasma_boundary:
         XZ coordinates of the plasma boundary
     point_type:
         Method for creating a set of points: 'arc', 'arc_plus_extrema',
-        'random', or 'random_plus_extrema'
+        'random', or 'random_plus_extrema', 'grid_points'
     seed:
         Seed value to use with a random point distribution, defaults
-        to `RNGSeeds.equilibria_harmonics.value`.
+        to `RNGSeeds.equilibria_harmonics.value`. For use with 'random'
+        or 'random_plus_extrema' point_type.
+    grid_num:
+        Tuple with the number of desired grid points in the x and z direction.
+        For use with 'grid_points' point_type.
 
     Returns
     -------
@@ -286,6 +297,31 @@ def collocation_points(
         collocation_z = np.concatenate([collocation_z, extrema_z])
 
         # Hello again spherical coordinates
+        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+        collocation_theta = np.arctan2(collocation_x, collocation_z)
+
+    if point_type is PointType.GRID_POINTS:
+        # Create uniform, rectangular grid using max and min LCFS values
+        if grid_num is None:
+            grid_num = (n_points, n_points)
+        grid_num_x, grid_num_z = grid_num
+        rect_grid = Grid(
+            np.amin(x_bdry),
+            np.amax(x_bdry),
+            np.amin(z_bdry),
+            np.amax(z_bdry),
+            nx=grid_num_x,
+            nz=grid_num_z,
+        )
+
+        # Only use grid points that are within LCFS
+        mask = in_zone(
+            rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
+        )
+        collocation_x = rect_grid.x[mask == 1]
+        collocation_z = rect_grid.z[mask == 1]
+
+        # Spherical coordinates
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
         collocation_theta = np.arctan2(collocation_x, collocation_z)
 
@@ -455,6 +491,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
+    grid_num: Optional[str] = None,
     acceptable_fit_metric: float = 0.01,
     plot: bool = False,
     nlevels: int = 50,
@@ -490,6 +527,10 @@ def spherical_harmonic_approximation(
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
+        - 'grid_points'
+    grid_num:
+        Number of points in x-direction and z-direction,
+        to use with grid point distribution.
     acceptable_fit_metric:
         Value between 0 and 1 chosen by user (default=0.01).
         If the LCFS found using the SH approximation method perfectly matches the
@@ -550,10 +591,11 @@ def spherical_harmonic_approximation(
 
     # Create the set of collocation points within the LCFS for the SH calculations
     collocation = collocation_points(
-        n_points,
         original_LCFS,
         point_type,
+        n_points,
         seed,
+        grid_num,
     )
 
     # SH amplitudes needed to produce an approximation of vacuum psi contribution

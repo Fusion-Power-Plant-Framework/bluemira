@@ -109,6 +109,7 @@ def test_coil_harmonic_amplitude_matrix():
 
 def test_collocation_points():
     n_points = 8
+    grid_num = (10, 10)
 
     x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
     z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
@@ -118,21 +119,27 @@ def test_collocation_points():
     point_type_2 = PointType.ARC_PLUS_EXTREMA
     point_type_3 = PointType.RANDOM
     point_type_4 = PointType.RANDOM_PLUS_EXTREMA
+    point_type_5 = PointType.GRID_POINTS
 
-    colloc1 = collocation_points(n_points, plasma_boundary, point_type_1)
-    colloc2 = collocation_points(n_points, plasma_boundary, point_type_2)
-    colloc3 = collocation_points(n_points, plasma_boundary, point_type_3)
-    colloc4 = collocation_points(n_points, plasma_boundary, point_type_4)
+    colloc1 = collocation_points(plasma_boundary, point_type_1, n_points=n_points)
+    colloc2 = collocation_points(plasma_boundary, point_type_2, n_points=n_points)
+    colloc3 = collocation_points(plasma_boundary, point_type_3, n_points=n_points)
+    colloc4 = collocation_points(plasma_boundary, point_type_4, n_points=n_points)
+    colloc5 = collocation_points(plasma_boundary, point_type_5, grid_num=grid_num)
 
     assert colloc1.r.shape[0] == 8
     assert colloc2.r.shape[0] == 12
     assert colloc3.r.shape[0] == 8
     assert colloc4.r.shape[0] == 12
+    assert colloc5.r.shape[0] == 64
 
     for x, z in zip(colloc2.x, colloc2.z):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
     for x, z in zip(colloc4.x, colloc4.z):
+        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
+
+    for x, z in zip(colloc5.x, colloc5.z):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
 
@@ -161,7 +168,9 @@ def test_get_psi_harmonic_amplitudes():
     eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     test_colocation = collocation_points(
-        n_points=18, plasma_boundary=eq.get_LCFS(), point_type=PointType.ARC
+        plasma_boundary=eq.get_LCFS(),
+        point_type=PointType.ARC,
+        n_points=18,
     )
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
