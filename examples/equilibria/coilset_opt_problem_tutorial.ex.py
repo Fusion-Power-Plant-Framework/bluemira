@@ -337,7 +337,7 @@ unconstrained_iterator = PicardIterator(
     fixed_coils=True,
     plot=False,
     relaxation=0.3,
-    convergence=DudsonConvergence(1e-4),
+    convergence=DudsonConvergence(1e-6),
 )
 
 # %% [markdown]
@@ -401,7 +401,7 @@ x_point = FieldNullConstraint(
 #
 # %%
 opt_problem = TikhonovCurrentCOP(
-    coilset=coilset,
+    coilset=eq.coilset,
     eq=eq,
     targets=magnetic_targets,
     gamma=1e-8,
@@ -409,7 +409,7 @@ opt_problem = TikhonovCurrentCOP(
     opt_conditions={"max_eval": 400},
     opt_parameters={"initial_step": 0.01},
     max_currents=3.0e7,
-    constraints=[field_constraints, x_point, lcfs_isoflux],
+    constraints=[field_constraints, x_point, lcfs_isoflux, legs_isoflux],
 )
 constrained_iterator = PicardIterator(
     eq,
@@ -418,7 +418,7 @@ constrained_iterator = PicardIterator(
     plot=False,
     relaxation=0.1,
     maxiter=100,
-    convergence=DudsonConvergence(1e-4),
+    convergence=DudsonConvergence(1e-6),
 )
 
 constrained_iterator()
