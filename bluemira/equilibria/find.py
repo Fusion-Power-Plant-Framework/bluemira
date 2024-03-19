@@ -809,6 +809,7 @@ def in_plasma(
     psi: npt.NDArray[np.float64],
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
+    include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.
@@ -833,11 +834,14 @@ def in_plasma(
     """
     mask = np.zeros_like(psi)
     lcfs, _ = find_LCFS_separatrix(x, z, psi, o_points=o_points, x_points=x_points)
-    return _in_plasma(x, z, mask, lcfs.xz.T)
+    return _in_plasma(x, z, mask, lcfs.xz.T, include_edges)
 
 
 def in_zone(
-    x: npt.NDArray[np.float64], z: npt.NDArray[np.float64], zone: npt.NDArray[np.float64]
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    zone: npt.NDArray[np.float64],
+    include_edges: bool = False,
 ):
     """
     Get a masking matrix for a specified zone.
@@ -856,7 +860,7 @@ def in_zone(
     The masking array where 1 denotes inside the zone, and 0 outside
     """
     mask = np.zeros_like(x)
-    return _in_plasma(x, z, mask, zone)
+    return _in_plasma(x, z, mask, zone, include_edges)
 
 
 @nb.jit(nopython=True, cache=True)
@@ -865,6 +869,7 @@ def _in_plasma(
     z: npt.NDArray[np.float64],
     mask: npt.NDArray[np.float64],
     sep: npt.NDArray[np.float64],
+    include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
     """
     Get a masking matrix for a specified zone. JIT compilation utility.
@@ -887,6 +892,6 @@ def _in_plasma(
     n, m = x.shape
     for i in range(n):
         for j in range(m):
-            if in_polygon(x[i, j], z[i, j], sep):
+            if in_polygon(x[i, j], z[i, j], sep, include_edges):
                 mask[i, j] = 1
     return mask
