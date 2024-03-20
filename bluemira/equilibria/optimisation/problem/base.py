@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -187,7 +187,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @staticmethod
     def get_current_bounds(
-        coilset: CoilSet, max_currents: npt.ArrayLike, current_scale: float
+        coilset: CoilSet, max_currents: Optional[npt.ArrayLike], current_scale: float
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.

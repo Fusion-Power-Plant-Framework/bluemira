@@ -216,14 +216,13 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        n_opt_control_currents = coilset.get_control_coils().n_current_optimisable_coils
-        scaled_input_current_limits = np.inf * np.ones(n_opt_control_currents)
+        n_control_currents = len(coilset.current[coilset._control_ind])
+        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
-            input_size = np.size(input_current_limits)
-            if input_size == 1 or input_size == n_opt_control_currents:
-                # todo: if input_size == 1, would you want to reshape it (n_opt_control_currents, 1)?
+            input_size = np.size(np.asarray(input_current_limits))
+            if input_size == 1 or input_size == n_control_currents:
                 scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
@@ -232,7 +231,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
                 )
 
         # Get the current limits from coil current densities
-        coilset_current_limits = np.inf * np.ones(n_opt_control_currents)
+        coilset_current_limits = np.infty * np.ones(n_control_currents)
         coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
             coilset._flag_sizefix
         ]
