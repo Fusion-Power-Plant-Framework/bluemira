@@ -130,19 +130,17 @@ def import_mesh(
     with XDMFFile(domain_file.as_posix()) as file:
         file.read(mesh)
 
-    _dimension = mesh.topology.dim
-    boundaries_mvc = None  # MeshValueCollection("size_t", mesh, dim=dimension)
+    boundaries_mvc = None
 
     with XDMFFile(boundary_file.as_posix()) as file:
         file.read(boundaries_mvc, "boundaries")
 
-    boundaries_mf = None  # MeshFunctionSizet(mesh, boundaries_mvc)
+    boundaries_mf = None
 
     if subdomains:
-        subdomains_mvc = None  # MeshValueCollection("size_t", mesh, dim=dimension)
+        subdomains_mvc = None
         with XDMFFile(domain_file.as_posix()) as file:
             file.read(subdomains_mvc, "subdomains")
-        # subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
     else:
         subdomains_mf = None
 
