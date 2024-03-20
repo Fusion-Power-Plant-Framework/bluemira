@@ -13,7 +13,12 @@ including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
 
-from typing import Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
 
 import numba as nb
 import numpy as np
@@ -443,3 +448,21 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         ]
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
+
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
+        """
+        Plot the CurrentSource.
+
+        Parameters
+        ----------
+        ax: Union[None, Axes]
+            The matplotlib axes to plot on
+        show_coord_sys: bool
+            Whether or not to plot the coordinate systems
+        """
+        super().plot(ax=ax, show_coord_sys=show_coord_sys)
+        p1 = self._origin - 0.5 * self._dcm[1]
+        p2 = self._origin + 0.5 * self._dcm[1]
+        points = np.array([p1, p2])
+        ax.plot(*points.T, color="r")
+        ax.plot([points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r")
