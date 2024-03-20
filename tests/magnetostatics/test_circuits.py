@@ -55,8 +55,8 @@ class TestGenerateWireSources:
         "a2": {"value": 40},
     }
 
-    p_inputs = (pd_inputs, ta_inputs, pf_inputs)[1:]
-    parameterisations = (PrincetonD, TripleArc, PictureFrame)[1:]
+    p_inputs = (pd_inputs, ta_inputs, pf_inputs)
+    parameterisations = (PrincetonD, TripleArc, PictureFrame)
 
     @pytest.mark.parametrize(  # ruff: PT006
         ("parameterisation", "inputs"), zip(parameterisations, p_inputs)
