@@ -14,12 +14,7 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np
 
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-
-    from bluemira.geometry.coordinates import Coordinates
-
-from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
+from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
@@ -27,6 +22,12 @@ from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.pyplot import Axes
+
+    from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BiotSavartFilament"]
 
@@ -269,3 +270,34 @@ class BiotSavartFilament(CurrentSource):
             ax.quiver(*origin, *dcm[0], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[1], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[2], length=self.length_scale, color="r")
+
+
+def Bz_coil_axis(
+    r: float, z: float = 0, pz: npt.ArrayLike = 0, current: float = 1
+) -> float | npt.NDArray[np.float64]:
+    """
+    Calculate the theoretical vertical magnetic field of a filament coil
+    (of radius r and centred in (0, z)) on a point on the coil axis at
+    a distance pz from the axis origin.
+
+    Parameters
+    ----------
+    r:
+        Coil radius [m]
+    z:
+        Vertical position of the coil centroid [m]
+    pz:
+        Vertical position of the point on the axis on which the magnetic field
+        shall be calculated [m]
+    current:
+        Current of the coil [A]
+
+    Returns
+    -------
+    Vertical magnetic field on the axis [T]
+
+    Notes
+    -----
+    \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
+    """
+    return 0.5 * MU_0 * current * r**2 / (r**2 + (np.asarray(pz) - z) ** 2) ** 1.5
