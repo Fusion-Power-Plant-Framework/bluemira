@@ -272,11 +272,9 @@ class BiotSavartFilament(CurrentSource):
             ax.quiver(*origin, *dcm[2], length=self.length_scale, color="r")
 
 
-# TODO (ivan): I placed this function here since it is the result of the
-#  application of Biot-Savart to a filament coil
 def Bz_coil_axis(
     r: float, z: float = 0, pz: npt.ArrayLike = 0, current: float = 1
-) -> float:
+) -> float | npt.NDArray[np.float64]:
     """
     Calculate the theoretical vertical magnetic field of a filament coil
     (of radius r and centred in (0, z)) on a point on the coil axis at
@@ -302,4 +300,4 @@ def Bz_coil_axis(
     -----
     \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
     """
-    return 0.5 * MU_0 * current * r**2 / (r**2 + (pz - z) ** 2) ** 1.5
+    return 0.5 * MU_0 * current * r**2 / (r**2 + (np.asarray(pz) - z) ** 2) ** 1.5

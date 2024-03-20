@@ -6,20 +6,20 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from matplotlib._tri import TriContourGenerator  # noqa: PLC2701
-from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
 from mpi4py import MPI
 from scipy.interpolate import interp1d
 
-from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
@@ -28,6 +28,13 @@ from bluemira.magnetostatics.fem_utils import read_from_msh
 from bluemira.mesh import meshing
 from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
+
+if TYPE_CHECKING:
+    from os import PathLike
+
+    from matplotlib.pyplot import Axes
+
+    from bluemira.base.components import PhysicalComponent
 
 
 def plot_scalar_field(
@@ -148,13 +155,6 @@ def get_tricontours(
     return results
 
 
-# Note: since it is not possible anymore to extrapolate dolfinx function data outside the
-# mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to
-# the boundary). Not sure how to solve this problem.
-# Moreover, this procedure seems to be very slow now.
-# TODO(je-cook) follow https://github.com/FEniCS/dolfinx/issues/2847
-
-
 def find_flux_surface(
     psi_norm_func: Callable[[np.ndarray], float],
     psi_norm: float,
@@ -179,6 +179,13 @@ def find_flux_surface(
     Returns
     -------
     x, z coordinates of the flux surface
+
+    Notes
+    -----
+    Since it is not possible anymore to extrapolate dolfinx function data outside the
+    mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to
+    the boundary). Not sure how to solve this problem.
+    Moreover, this procedure seems to be slow now.
     """
     x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
 
@@ -263,7 +270,6 @@ def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     zbdry:
         z coordinates of the boundary
     """
-    # cell_map = mesh.topology.index_map(mesh.topology.dim)
     mesh.topology.create_entities(mesh.topology.dim - 1)
     mesh.topology.create_entities(mesh.topology.dim - 2)
 
@@ -414,7 +420,7 @@ def calculate_plasma_shape_params(
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     if contour is None:
-        # TODO(je-cook) better protection?
+        # zero division protection
         return 0.5, 1, EPS
 
     x, z = contour.T
@@ -426,7 +432,7 @@ def calculate_plasma_shape_params(
 
     if plot:
         _, ax = plt.subplots()
-        # dolfin.plot(mesh)
+        # TODO(je-cook) plot dolfinx mesh
         ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")
@@ -448,7 +454,7 @@ def calculate_plasma_shape_params(
     # triangularity
     c = r_geo - pl[0]
     d = r_geo - pu[0]
-    # TODO(je-cook) changed from 0, a better protection?
+    # zero division protection
     delta = EPS if a == 0 else 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
@@ -557,7 +563,7 @@ def refine_mesh(
 
 def create_mesh(
     plasma: PhysicalComponent,
-    directory: str,
+    directory: str | PathLike,
     mesh_name_msh: str,
     gdim: Union[int, Tuple] = (0, 2),
     comm=MPI.COMM_WORLD,

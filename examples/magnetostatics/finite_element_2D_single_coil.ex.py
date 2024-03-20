@@ -115,11 +115,13 @@ enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
 # %% [markdown]
 # Creating external enclosure shape
+# The below shape is created in `make_polygon`:
+# ```bash
 #  ___
 # |_  |
 #  _| |
 # |___|
-#
+# ```
 # %%
 r_enclo1 = 150
 lcar_enclo1 = 10

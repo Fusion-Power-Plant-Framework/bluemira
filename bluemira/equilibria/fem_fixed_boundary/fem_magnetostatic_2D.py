@@ -9,14 +9,15 @@ Bluemira module for the solution of a 2D magnetostatic problem with cylindrical 
 and toroidal current source using fenics FEM solver
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Tuple, Union
 
 import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 from dolfinx.fem import Expression
-from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from ufl import as_vector
 
@@ -32,6 +33,10 @@ from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, integrate_f
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.figure import Figure
+
 
 @dataclass
 class FixedBoundaryEquilibrium:
@@ -41,7 +46,7 @@ class FixedBoundaryEquilibrium:
 
     # Solver information
     mesh: dolfinx.mesh.Mesh
-    psi: Callable[[float, float], float]
+    psi: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]
 
     # Profile information
     p_prime: np.ndarray
@@ -178,8 +183,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _create_g_func(
         self,
-        pprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
+        pprime: Union[Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]], float],
+        ffprime: Union[
+            Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]], float
+        ],
         curr_target: Optional[float] = None,
     ) -> Callable[[np.ndarray], float]:
         """
@@ -204,6 +211,22 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         area = calculate_area(self.mesh, None, None)
 
         j_target = curr_target / area if curr_target else 1.0
+
+        if not isinstance(pprime, Callable):
+            _pprime = pprime
+
+            def _noop_return(_: npt.ArrayLike):
+                return _pprime
+
+            pprime = _noop_return
+
+        if not isinstance(ffprime, Callable):
+            _ffprime = ffprime
+
+            def _noop_return(_: npt.ArrayLike):
+                return _ffprime
+
+            ffprime = _noop_return
 
         def g(x):
             if self.psi_ax == 0:

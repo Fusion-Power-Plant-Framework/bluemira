@@ -8,10 +8,22 @@
 Finite element method utilities
 """
 
+from __future__ import annotations
+
 import functools
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 from unittest.mock import patch
 
 import gmsh
@@ -31,25 +43,28 @@ from dolfinx.fem import (
     locate_dofs_topological,
 )
 from dolfinx.io import gmshio
-from dolfinx.mesh import Mesh
 from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
 from bluemira.base.look_and_feel import bluemira_debug
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from dolfinx.mesh import Mesh
+
 old_m_to_m = gmshio.model_to_mesh
 
 
-def convert_to_points_array(x):
+def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
     """Convert points to array"""
-    x = np.array(x)
+    x = np.asarray(x)
     if len(x.shape) == 1:
         if len(x) == 2:  # noqa: PLR2004
-            x = np.array([x[0], x[1], 0])
-        x = np.array([x])
+            x = np.asarray([x[0], x[1], 0])
+        x = np.asarray([x])
     if x.shape[1] == 2:  # noqa: PLR2004
-        x = np.array([x[:, 0], x[:, 1], x[:, 0] * 0]).T
+        x = np.asarray([x[:, 0], x[:, 1], np.zeros(x.shape[0])]).T
     return x
 
 
@@ -186,10 +201,11 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     geom_dofs = cpp.mesh.entities_to_geometry(
         mesh._cpp_object, tdim, np.atleast_2d(closest_entities), False
     )
-    # TODO (ivan): compute_distance_gjk must to be applied point to point
 
     dist = []
     min_arg_dist = []
+
+    # NOTE: compute_distance_gjk must to be applied point to point
     for i, p in enumerate(points):
         temp = np.array([
             np.linalg.norm(geometry.compute_distance_gjk(p, mesh.geometry.x[dof]))
@@ -211,7 +227,9 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     return new_points
 
 
-def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) -> float:
+def calculate_area(
+    mesh: Mesh, boundaries: Optional[object] = None, tag: Optional[int] = None
+) -> float:
     """
     Calculate the area of a sub-domain
 
@@ -232,7 +250,10 @@ def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) ->
 
 
 def integrate_f(
-    f: BluemiraFemFunction, mesh: Mesh, boundaries=None, tag: Optional[int] = None
+    f: Constant | BluemiraFemFunction,
+    mesh: Mesh,
+    boundaries=None,
+    tag: Optional[int] = None,
 ) -> float:
     """
     Calculate the integral of a function on the specified sub-domain
