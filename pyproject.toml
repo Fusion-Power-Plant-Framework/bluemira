@@ -35,7 +35,6 @@ dependencies = [
     "periodictable",
     "pyclipper",
     "pypet",
-    "pyquaternion",
     "pyvista",
     "rich",
     "scikit-learn",
