@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any
 import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
-from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
+from scipy.spatial.transform import Rotation
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -1409,8 +1409,8 @@ class Coordinates:
         direction /= np.linalg.norm(direction)
 
         points = self._array - base.reshape(DIM, 1)
-        quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
-        r_matrix = quart.rotation_matrix
+
+        r_matrix = Rotation.from_rotvec(np.deg2rad(degree) * direction).as_matrix()
         new_array = points.T @ r_matrix.T + base
         self._array = new_array.T
 
