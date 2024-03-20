@@ -7,6 +7,7 @@
 import copy
 import json
 from pathlib import Path
+from typing import get_type_hints
 from unittest import mock
 
 import fortranformat as ff
@@ -175,7 +176,7 @@ class TestEQDSKInterface:
         eq = EQDSKInterface.from_file(self.testfiles[0])
 
         mismatched = []
-        for key, value_type in EQDSKInterface.__annotations__.items():
+        for key, value_type in get_type_hints(EQDSKInterface).items():
             value = getattr(eq, key)
             try:
                 check_type(value, value_type)

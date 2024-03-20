@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.tools import floatify
 from bluemira.utilities.error import InternalOptError
 
 warnings.warn(
@@ -92,7 +93,7 @@ def regularised_lsq_fom(x, A, b, gamma):
         Residual vector (Ax - b)
     """
     residual = np.dot(A, x) - b
-    number_of_targets = float(len(residual))
+    number_of_targets = floatify(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
     if fom <= 0:

@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
+from bluemira.utilities.tools import floatify
+
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
@@ -292,7 +294,7 @@ class ClosedFluxSurface(FluxSurface):
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
-        return float((d_ab - d_ac) / d_cd)
+        return floatify((d_ab - d_ac) / d_cd)
 
     @property
     @lru_cache(1)

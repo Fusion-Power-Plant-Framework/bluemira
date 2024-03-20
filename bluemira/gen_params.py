@@ -16,6 +16,7 @@ from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
 from pkgutil import iter_modules
+from typing import get_type_hints
 
 from setuptools import find_packages
 
@@ -49,7 +50,7 @@ def add_to_dict(pf: ParameterFrame, json_dict: dict, params: dict):
     """
     Add each parameter to the json dict and params dict
     """
-    for param, param_type in pf.__annotations__.items():
+    for param, param_type in get_type_hints(pf).items():
         dv = deepcopy(DEFAULT_PARAM)
         dv["value"] = str(param_type).split("[")[-1][:-1]
         json_dict[param] = dv

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING, Any
 
 import nlopt
 import numpy as np
+import numpy.typing as npt
 from matplotlib import colors
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
@@ -300,6 +301,15 @@ cross = wrap.cross
 # =====================================================
 
 
+def floatify(x: npt.ArrayLike):
+    """
+    Avoid numpy warnings for float(x) for >0 rank scalars
+    """
+    if x is None:
+        raise TypeError("argument must be a string or a real number, not 'NoneType'")
+    return np.asarray(x, dtype=float).item()
+
+
 class ColourDescriptor:
     """Colour Descriptor for use with dataclasses"""
 
@@ -350,7 +360,7 @@ def is_num(thing: Any) -> bool:
     if thing is np.nan:
         return False
     try:
-        float(thing)
+        floatify(thing)
     except (ValueError, TypeError):
         return False
     else:
@@ -840,7 +850,7 @@ def array_or_num(array: Any) -> np.ndarray | float:
         If the value cannot be converted to a numpy or number.
     """
     if is_num(array):
-        return float(array)
+        return floatify(array)
     if isinstance(array, np.ndarray):
         return array
     raise TypeError
