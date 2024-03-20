@@ -1,13 +1,17 @@
 set -e
 
-pip install "git+https://github.com/FEniCS/basix.git#egg=fenics-basix[optional]"
-pip install git+https://github.com/FEniCS/ufl.git
-pip install git+https://github.com/FEniCS/ffcx.git
+VERSION="v0.7.2"
+
+export HDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
+
+pip install fenics-ffcx fenics-basix fenics-ufl
 git clone https://github.com/FEniCS/dolfinx.git
+git checkout $VERSION
 cd dolfinx/cpp
 mkdir build
 cd build
 cmake -G Ninja ..
-ninja install
+ninja
+sudo ninja install
 cd ../..
-pip install python/
+pip install --check-build-dependencies --no-build-isolation ./python/

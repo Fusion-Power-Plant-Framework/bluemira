@@ -17,14 +17,6 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
 from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
 
-if TYPE_CHECKING:
-    from bluemira.codes.interface import BaseRunMode, CodesSolver
-    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-        FemGradShafranovFixedBoundary,
-    )
-    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
-    from bluemira.geometry.parameterisations import GeometryParameterisation
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import cumulative_trapezoid
@@ -49,6 +41,14 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.optimisation._tools import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
+
+if TYPE_CHECKING:
+    from bluemira.codes.interface import BaseRunMode, CodesSolver
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+        FemGradShafranovFixedBoundary,
+    )
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -344,10 +344,9 @@ def solve_transport_fixed_boundary(
             f"from equilibrium iteration {n_iter}",
         )
 
-        mesh = create_mesh(
+        (mesh, _ct, _ft), _labels = create_mesh(
             plasma,
             directory,
-            mesh_filename,
             mesh_name_msh,
         )
 
@@ -356,7 +355,7 @@ def solve_transport_fixed_boundary(
 
         gs_solver.set_mesh(mesh)
 
-        points = gs_solver.mesh.coordinates()
+        points = gs_solver.mesh.geometry.x
         psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_inner_iter):
@@ -407,7 +406,7 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
-            psi2d = np.array([gs_solver.psi(p) for p in points])
+            psi2d = gs_solver.psi(points)
 
             eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
                 psi2d, ord=2

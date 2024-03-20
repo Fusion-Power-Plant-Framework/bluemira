@@ -32,19 +32,18 @@ Fixed boundary equilibrium example
 
 # %%
 from datetime import datetime
-
-import dolfin
-import matplotlib.pyplot as plt
+from pathlib import Path
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
+from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh, read_from_msh
 from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.equilibria.shapes import KuiroukidisLCFS
 from bluemira.geometry.face import BluemiraFace
+from bluemira.mesh import meshing
 
 # %% [markdown]
 # Define some important values
@@ -76,10 +75,10 @@ plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
+meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
 
-dolfin.plot(mesh)
-plt.show()
+(mesh, ct, ft), labels = read_from_msh("fixed_boundary_example.msh", gdim=[0, 2])
+
 # %% [markdown]
 # Now we define some profile functions for p' and FF'.
 # We'll use some typical functional forms for this, but you are free to specify
@@ -110,28 +109,26 @@ solver = FemGradShafranovFixedBoundary(
 )
 equilibrium = solver.solve(plot=True)
 
-
 # %% [markdown]
 # We can also update the flux functions and/or the mesh with new entities
-# if we we wish to do so:
+# if we wish to do so:
 
 # %%
 solver.set_profiles(
     p_prime=DoublePowerFunc([2.0, 1.0]), ff_prime=DoublePowerFunc([1.5, 2])
 )
 solver.solve(plot=True)
-
 # %%
 plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
 
-mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
-dolfin.plot(mesh)
-plt.show()
+(mesh, ct, ft), labels = create_mesh(
+    plasma, ".", "fixed_boundary_example.msh", gdim=[0, 2]
+)
 
 solver.set_mesh(mesh)
 solver.solve()
-
+print("third solve")
 # %% [markdown]
 # Save the result to a file
 

@@ -8,125 +8,32 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
-import dolfin
+import dolfinx.fem
 import numpy as np
+from dolfinx.fem import (
+    Expression,
+    dirichletbc,
+    functionspace,
+    locate_dofs_topological,
+)
+from dolfinx.fem.petsc import LinearProblem
+from dolfinx.mesh import locate_entities_boundary
+from petsc4py.PETSc import ScalarType
+from ufl import (
+    SpatialCoordinate,
+    TestFunction,
+    TrialFunction,
+    VectorElement,
+    as_vector,
+    dot,
+    dx,
+    grad,
+)
 
 from bluemira.base.constants import MU_0
-
-
-def Bz_coil_axis(
-    r: float,
-    z: Optional[float] = 0,
-    pz: Optional[float] = 0,
-    current: Optional[float] = 1,
-) -> float:
-    """
-    Calculate the theoretical vertical magnetic field of a filament coil
-    (of radius r and centred in (0, z)) on a point on the coil axis at
-    a distance pz from the axis origin.
-
-    Parameters
-    ----------
-    r:
-        Coil radius [m]
-    z:
-        Vertical position of the coil centroid [m]
-    pz:
-        Vertical position of the point on the axis on which the magnetic field
-        shall be calculated [m]
-    current:
-        Current of the coil [A]
-
-    Returns
-    -------
-    Vertical magnetic field on the axis [T]
-
-    Notes
-    -----
-    \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
-    """
-    return 0.5 * MU_0 * current * r**2 / (r**2 + (pz - z) ** 2) ** 1.5
-
-
-def _convert_const_to_dolfin(value: float):
-    """Convert a constant value to a dolfin function"""
-    if not isinstance(value, (int, float)):
-        raise TypeError("Value must be integer or float.")
-
-    return dolfin.Constant(value)
-
-
-class ScalarSubFunc(dolfin.UserExpression):
-    """
-    Create a dolfin UserExpression from a set of functions defined in the subdomains
-
-    Parameters
-    ----------
-    func_list:
-        list of functions to be interpolated into the subdomains. Int and float values
-        are considered as constant functions. Any other callable function must return
-        a single value.
-    mark_list:
-        list of markers that identify the subdomain in which the respective functions
-        of func_list must to be applied.
-    subdomains:
-        the whole subdomains mesh function
-    """
-
-    def __init__(
-        self,
-        func_list: Union[
-            Iterable[Union[float, Callable[[Any], float]]], float, Callable[[Any], float]
-        ],
-        mark_list: Optional[Iterable[int]] = None,
-        subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.functions = self.check_functions(func_list)
-        self.markers = mark_list
-        self.subdomains = subdomains
-
-    @staticmethod
-    def check_functions(
-        functions: Union[Iterable[Union[float, Callable]], float, Callable],
-    ) -> Iterable[Union[float, Callable]]:
-        """Check if the argument is a function or a list of functions"""
-        if not isinstance(functions, Iterable):
-            functions = [functions]
-        if all(isinstance(f, (float, Callable)) for f in functions):
-            return functions
-        raise ValueError(
-            "Accepted functions are instance of (int, float, Callable)or a list of them."
-        )
-
-    def eval_cell(self, values: List, x: float, cell):
-        """Evaluate the value on each cell"""
-        if self.markers is None or self.subdomains is None:
-            func = self.functions[0]
-        else:
-            m = self.subdomains[cell.index]
-            func = (
-                self.functions[np.nonzero(np.array(self.markers) == m)[0][0]]
-                if m in self.markers
-                else 0
-            )
-        if callable(func):
-            values[0] = func(x)
-        elif isinstance(func, (int, float)):
-            values[0] = func
-        else:
-            raise TypeError(f"{func} is not callable or is not a constant")
-
-    @staticmethod
-    def value_shape() -> Tuple:
-        """
-        Value_shape function (necessary for a UserExpression)
-        https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
-        """
-        return ()
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 
 class FemMagnetostatic2d:
@@ -163,22 +70,15 @@ class FemMagnetostatic2d:
     def __init__(self, p_order: int = 2):
         self.p_order = p_order
         self.mesh = None
-        self.a = None
-        self.u = None
-        self.v = None
         self.V = None
         self.g = None
-        self.L = None
         self.boundaries = None
-        self.bcs = None
-
         self.psi = None
-        self.B = None
 
     def set_mesh(
         self,
-        mesh: Union[dolfin.Mesh, str],
-        boundaries: Optional[Union[dolfin.Mesh, str]] = None,
+        mesh: Union[dolfinx.mesh.Mesh, str],
+        boundaries: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
     ):
         """
         Set the mesh for the solver
@@ -190,76 +90,6 @@ class FemMagnetostatic2d:
         boundaries:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
-        """
-        # check whether mesh is a filename or a mesh, then load it or use it
-        self.mesh = dolfin.Mesh(mesh) if isinstance(mesh, str) else mesh
-
-        # define boundaries
-        if boundaries is None:
-            # initialize the MeshFunction
-            self.boundaries = dolfin.MeshFunction(
-                "size_t", mesh, mesh.topology().dim() - 1
-            )
-        elif isinstance(boundaries, str):
-            # check weather boundaries is a filename or a MeshFunction,
-            # then load it or use it
-            self.boundaries = dolfin.MeshFunction(
-                "size_t", self.mesh, boundaries
-            )  # define the boundaries
-        else:
-            self.boundaries = boundaries
-
-        # define the function space and bilinear forms
-        # the Continuos Galerkin function space has been chosen as suitable for the
-        # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = dolfin.FunctionSpace(self.mesh, "CG", self.p_order)
-
-        # define trial and test functions
-        self.u = dolfin.TrialFunction(self.V)
-        self.v = dolfin.TestFunction(self.V)
-
-        # Define r
-        r = dolfin.Expression("x[0]", degree=self.p_order)
-
-        self.a = (
-            1
-            / (2.0 * dolfin.pi * MU_0)
-            * (1 / r * dolfin.dot(dolfin.grad(self.u), dolfin.grad(self.v)))
-            * dolfin.dx
-        )
-
-        # initialize solution
-        self.psi = dolfin.Function(self.V)
-        self.psi.set_allow_extrapolation(True)
-
-        # initialize g to zero
-        self.g = dolfin.Function(self.V)
-
-    def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
-        """
-        Define g, the right hand side function of the Poisson problem
-
-        Parameters
-        ----------
-        g:
-            Right hand side function of the Poisson problem
-        """
-        self.g = g
-
-    def solve(
-        self,
-        dirichlet_bc_function: Optional[
-            Union[dolfin.Expression, dolfin.Function]
-        ] = None,
-        dirichlet_marker: Optional[int] = None,
-        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
-    ) -> dolfin.Function:
-        """
-        Solve the weak formulation maxwell equation given a right hand side g,
-        Dirichlet and Neumann boundary conditions.
-
-        Parameters
-        ----------
         dirichlet_bc_function:
             Dirichlet boundary condition function
         dirichlet_marker:
@@ -267,55 +97,169 @@ class FemMagnetostatic2d:
         neumann_bc_function:
             Neumann boundary condition function
 
-        Returns
-        -------
-        Poloidal magnetic flux function as solution of the magnetostatic problem
         """
-        if neumann_bc_function is None:
-            neumann_bc_function = dolfin.Expression("0.0", degree=self.p_order)
+        # check whether mesh is a filename or a mesh, then load it or use it
+        self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
 
-        # define the right hand side
-        self.L = self.g * self.v * dolfin.dx - neumann_bc_function * self.v * dolfin.ds
+        # define boundaries
+        if boundaries is None:
+            tdim = self.mesh.topology.dim
+            self.boundaries = locate_entities_boundary(
+                self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+            )
+        else:
+            self.boundaries = boundaries
+
+        # define the function space and bilinear forms
+        # the Continuos Galerkin function space has been chosen as suitable for the
+        # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
+        self.V = functionspace(self.mesh, ("P", self.p_order))
+
+        # define trial and test functions
+        u = TrialFunction(self.V)
+        self.v = TestFunction(self.V)
+
+        self.a = (
+            1
+            / (2.0 * np.pi * MU_0)
+            * (1 / SpatialCoordinate(self.mesh)[0] * dot(grad(u), grad(self.v)))
+            * dx
+        )
+
+        # initialize solution
+        self.psi = BluemiraFemFunction(self.V)
+        # self.psi.set_allow_extrapolation(True)
+
+        # initialize g to zero
+        self.g = BluemiraFemFunction(self.V)
+
+    def define_g(
+        self,
+        g: Optional[Union[dolfinx.fem.Expression, BluemiraFemFunction]] = None,
+        dirichlet_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
+        dirichlet_marker: Optional[int] = None,  # noqa: ARG002
+        neumann_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
+    ):
+        """
+        Define Dirichlet boundary conditions and setup problem
+
+        Parameters
+        ----------
+        g:
+            Right hand side function of the Poisson problem
+        dirichlet_bc_function:
+            Dirichlet boundary condition function
+        dirichlet_marker:
+            Identification number for the dirichlet boundary
+
+        """
+        if g is not None:
+            self.g = g
 
         # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
-            dirichlet_bc_function = dolfin.Expression("0.0", degree=self.p_order)
-            dirichlet_bc = dolfin.DirichletBC(
-                self.V, dirichlet_bc_function, "on_boundary"
+            tdim = self.mesh.topology.dim
+            facets = locate_entities_boundary(
+                self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
             )
+            dofs = locate_dofs_topological(self.V, tdim - 1, facets)
+            bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
         else:
-            dirichlet_bc = dolfin.DirichletBC(
-                self.V, dirichlet_bc_function, self.boundaries, dirichlet_marker
+            # TODO: we should pass directly the BCs, not the functions since
+            # dolfinx wants functions and dofs.
+            bcs = (
+                dirichlet_bc_function
+                if isinstance(dirichlet_bc_function, Iterable)
+                else [dirichlet_bc_function]
             )
-        self.bcs = [dirichlet_bc]
+
+        if neumann_bc_function is None:
+            neumann_bc = 0
+            # neumann_bc_function = dolfinx.fem.Expression(
+            #     Constant(self.mesh, ScalarType(0)),
+            #     self.V.element.interpolation_points(),
+            # )
+        else:
+            # neumann_bc_function * self.v * ds
+            raise NotImplementedError
 
         # solve the system taking into account the boundary conditions
-        dolfin.solve(
-            self.a == self.L,
-            self.psi,
-            self.bcs,
-            solver_parameters={"linear_solver": "default"},
+        # define the right hand side
+        self.L = self.g * self.v * dx - neumann_bc  # - neumann_bc_function * self.v * ds
+
+        self.problem = LinearProblem(
+            self.a,
+            self.L,
+            u=self.psi,
+            bcs=bcs,
+            # petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
         )
+
+    def solve(self) -> BluemiraFemFunction:
+        """Solve Fem problem"""
+        self.psi = self.problem.solve()
 
         return self.psi
 
-    def calculate_b(self) -> dolfin.Function:
+    def calculate_b(
+        self,
+        interpolation_eltype: Optional[Tuple] = None,
+    ) -> BluemiraFemFunction:
         """
         Calculates the magnetic field intensity from psi
 
+        Parameters
+        ----------
+        interpolation_eltype:
+            dolfinx element type for interpolation
+
         Note: code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
+
+        Warning: it is important to
         """
-        # new function space for mapping B as vector
-        w = dolfin.VectorFunctionSpace(self.mesh, "CG", 1)
+        degree = self.V.ufl_element().degree()
 
-        r = dolfin.Expression("x[0]", degree=1)
+        if degree == 1:
+            base_eltype = ("DG", 0)
+        elif degree > 1:
+            base_eltype = ("Lagrange", degree - 1)
+        else:
+            raise ValueError(
+                f"Cannot calculate B for ({self.V.ufl_element().family()}"
+                f", {self.V.ufl_element().degree()})."
+            )
 
-        # calculate derivatives
-        Bx = -self.psi.dx(1) / (2 * dolfin.pi * r)
-        Bz = self.psi.dx(0) / (2 * dolfin.pi * r)
+        V_W0 = VectorElement(base_eltype[0], self.mesh.ufl_cell(), base_eltype[1], 2)  # noqa: N806
+        W0 = functionspace(self.mesh, V_W0)  # noqa: N806
+        B0 = BluemiraFemFunction(W0)
 
-        # project B as vector to new function space
-        self.B = dolfin.project(dolfin.as_vector((Bx, Bz)), w)
+        x = SpatialCoordinate(self.mesh)
 
-        return self.B
+        r = x[0]
+
+        B_expr = Expression(
+            as_vector((
+                -self.psi.dx(1) / (2 * np.pi * r),
+                self.psi.dx(0) / (2 * np.pi * r),
+            )),
+            W0.element.interpolation_points(),
+        )
+
+        B0.interpolate(B_expr)
+
+        if interpolation_eltype is not None:
+            family = interpolation_eltype[0]
+            degree = interpolation_eltype[1]
+            V_W = VectorElement(family, self.mesh.ufl_cell(), degree, 2)  # noqa: N806
+            W = functionspace(self.mesh, V_W)  # noqa: N806
+            B = BluemiraFemFunction(W)
+            B.interpolate(B0)
+        else:
+            B = B0
+
+        return B
