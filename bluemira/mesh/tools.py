@@ -11,14 +11,16 @@ R. Delaporte-Mathurin, and C. Weickhmann's https://github.com/floiseau/msh2xdmf
 Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import meshio
 import numpy as np
-from dolfin import Mesh, MeshValueCollection, XDMFFile
-from dolfin.cpp.mesh import MeshFunctionSizet
+from dolfinx.io import XDMFFile
+from dolfinx.mesh import Mesh
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -44,7 +46,7 @@ LINKFILE_SUFFIX = "linkfile.json"
 
 def msh_to_xdmf(
     mesh_name: str,
-    dimensions: Union[Tuple[int], int] = (0, 2),
+    dimensions: Union[Tuple[int, ...], int] = (0, 2),
     directory: str = ".",
 ):
     """
@@ -89,7 +91,7 @@ def msh_to_xdmf(
 
 def import_mesh(
     file_prefix: str = "mesh", subdomains: bool = False, directory: str = "."
-) -> Tuple[Mesh, MeshFunctionSizet, Optional[MeshFunctionSizet], dict]:
+) -> Tuple[Mesh, Mesh, Mesh, dict]:
     """
     Import a dolfin mesh.
 
@@ -128,19 +130,17 @@ def import_mesh(
     with XDMFFile(domain_file.as_posix()) as file:
         file.read(mesh)
 
-    dimension = mesh.topology().dim()
-    boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
+    boundaries_mvc = None
 
     with XDMFFile(boundary_file.as_posix()) as file:
         file.read(boundaries_mvc, "boundaries")
 
-    boundaries_mf = MeshFunctionSizet(mesh, boundaries_mvc)
+    boundaries_mf = None
 
     if subdomains:
-        subdomains_mvc = MeshValueCollection("size_t", mesh, dim=dimension)
+        subdomains_mvc = None
         with XDMFFile(domain_file.as_posix()) as file:
             file.read(subdomains_mvc, "subdomains")
-        subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
     else:
         subdomains_mf = None
 

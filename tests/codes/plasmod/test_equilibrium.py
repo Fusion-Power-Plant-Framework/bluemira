@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pytest
-from dolfin import Mesh
+from dolfinx.mesh import Mesh
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
@@ -98,7 +98,7 @@ def test_create_mesh():
     # Set mesh options
     lcfs.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
     lcfs.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
-    mesh = create_mesh(plasma, tmp_dir, "file", "file.msh")
+    (mesh, _ct, _f), _labels = create_mesh(plasma, tmp_dir, "file.msh")
 
     assert isinstance(mesh, Mesh)
 

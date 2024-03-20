@@ -2,7 +2,15 @@ set -e
 
 cd /opt/pivy
 
-NJOBS=$(nproc --ignore=2)
+FORCE="false"
+
+while getopts f option
+do
+  case "${option}"
+  in
+    f) FORCE="true";;
+  esac
+done
 
 if [ -d build ]; then
   if ${FORCE}; then
@@ -17,4 +25,4 @@ fi
 # >0.6.6
 mkdir build && cd build
 cmake -G Ninja ..
-ninja install -j$NJOBS
+ninja install

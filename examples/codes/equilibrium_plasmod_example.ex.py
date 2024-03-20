@@ -164,9 +164,7 @@ plasmod_build_config = {
 }
 
 plasmod_solver = transport_code_solver(
-    params=plasmod_params,
-    build_config=plasmod_build_config,
-    module="PLASMOD",
+    params=plasmod_params, build_config=plasmod_build_config, module="PLASMOD"
 )
 
 # %% [markdown]
@@ -174,9 +172,7 @@ plasmod_solver = transport_code_solver(
 
 # %%
 fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
-    p_order=2,
-    max_iter=30,
-    iter_err_max=1e-3,
+    p_order=2, max_iter=30, iter_err_max=1e-3
 )
 
 # %% [markdown]
@@ -198,7 +194,7 @@ equilibrium = solve_transport_fixed_boundary(
     iter_err_max=1e-3,
     max_inner_iter=20,
     inner_iter_err_max=1e-3,
-    relaxation=0.0,
+    relaxation=0.2,
     plot=False,
     debug=False,
     gif=False,
