@@ -301,7 +301,7 @@ cross = wrap.cross
 # =====================================================
 
 
-def floatify(x: npt.ArrayLike):
+def floatify(x: npt.ArrayLike) -> float:
     """
     Avoid numpy warnings for float(x) for >0 rank scalars
     """
