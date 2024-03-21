@@ -1,7 +1,7 @@
 {
   "params": "$path:params.json",
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
@@ -106,7 +106,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
