@@ -28,13 +28,6 @@ Type alias for representing nested build configuration information.
 """
 
 
-def _remove_suffix(s: str, suffix: str) -> str:
-    # Python 3.9 has str.removesuffix()
-    if suffix and s.endswith(suffix):
-        return s[: -len(suffix)]
-    return s
-
-
 class Builder(abc.ABC):
     """
     Base class for component builders.
@@ -65,7 +58,7 @@ class Builder(abc.ABC):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
         self.name = self.build_config.get(
-            "name", _remove_suffix(self.__class__.__name__, "Builder")
+            "name", self.__class__.__name__.removesuffix("Builder")
         )
         self.build = _timing(
             self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
