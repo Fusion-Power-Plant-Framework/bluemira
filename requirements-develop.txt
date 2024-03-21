@@ -40,7 +40,7 @@ Sphinx==7.2.6
 sphinx-autoapi==3.0.0
 sphinx-copybutton==0.5.2
 sphinx-rtd-theme==2.0.0
-sphinxcontrib-applehelp==1.0.4
+sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.2
 sphinxcontrib-htmlhelp==2.0.1
 sphinxcontrib-jsmath==1.0.1
