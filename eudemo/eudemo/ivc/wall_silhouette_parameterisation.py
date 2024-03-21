@@ -8,7 +8,7 @@ Wall Silhouette Parameterisations
 """
 
 import copy
-from typing import ClassVar, Dict, Optional
+from typing import ClassVar
 
 from bluemira.geometry.parameterisations import PolySpline, PrincetonD
 from bluemira.utilities.opt_variables import OptVarVarDictValueT, VarDictT
@@ -33,7 +33,7 @@ class WallPolySpline(PolySpline):
         "bottom": {"value": 0.2},
     }
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         defaults = copy.deepcopy(self._defaults)
         if var_dict:
             defaults.update(var_dict)
@@ -87,13 +87,13 @@ class WallPrincetonD(PrincetonD):
     based on the PrincetonD parameterisation.
     """
 
-    _defaults: ClassVar[Dict[str, OptVarVarDictValueT]] = {
+    _defaults: ClassVar[dict[str, OptVarVarDictValueT]] = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "dz": {"value": -0.5},
     }
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         defaults = copy.deepcopy(self._defaults)
         if var_dict:
             defaults.update(var_dict)

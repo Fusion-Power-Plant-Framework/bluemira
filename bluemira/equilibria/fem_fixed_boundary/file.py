@@ -9,7 +9,6 @@
 File saving for fixed boundary equilibrium
 """
 
-from typing import Dict, Optional
 from warnings import warn
 
 import numpy as np
@@ -54,7 +53,7 @@ def save_fixed_boundary_to_file(
     nx: int,
     nz: int,
     file_format: str = "json",
-    json_kwargs: Optional[Dict] = None,
+    json_kwargs: dict | None = None,
     **kwargs,
 ) -> EQDSKInterface:
     """

@@ -6,7 +6,6 @@
 
 import json
 from pathlib import Path
-from typing import Dict
 
 import pytest
 
@@ -57,6 +56,6 @@ class TestEquilibriumDesigner:
             EquilibriumDesigner(self.param_dict, {"run_mode": "read"})
 
     @staticmethod
-    def _read_json(file_path: str) -> Dict:
+    def _read_json(file_path: str) -> dict:
         with open(file_path) as f:
             return json.load(f)

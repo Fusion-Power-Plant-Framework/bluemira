@@ -13,7 +13,7 @@ import json
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import fortranformat as ff
 import numpy as np
@@ -109,15 +109,15 @@ class EQDSKInterface:
     """Z coordinate of the magnetic axis [m]."""
     zmid: float
     """Z coordinate of the middle of the spatial grid [m]."""
-    x: Optional[npt.NDArray[np.float64]] = None
+    x: npt.NDArray[np.float64] | None = None
     """X 1-D vector [m] (calculated if not given)."""
-    z: Optional[npt.NDArray[np.float64]] = None
+    z: npt.NDArray[np.float64] | None = None
     """Z 1-D vector [m] (calculated if not given)."""
-    psinorm: Optional[npt.NDArray[np.float64]] = None
+    psinorm: npt.NDArray[np.float64] | None = None
     """Normalised psi vector [A] (calculated if not given)."""
-    qpsi: Optional[npt.NDArray[np.float64]] = None
+    qpsi: npt.NDArray[np.float64] | None = None
     """Safety factor values on the 1-D flux grid [dimensionless]."""
-    file_name: Optional[str] = None
+    file_name: str | None = None
     """The EQDSK file the data originates from."""
 
     def __post_init__(self):
@@ -156,7 +156,7 @@ class EQDSKInterface:
             return cls(file_name=file_name, **_read_json(file_path))
         raise ValueError(f"Unrecognised file format '{file_extension}'.")
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Return a dictionary of the EQDSK data."""
         d = asdict(self)
         # Remove the file name as this is metadata, not EQDSK data
@@ -167,7 +167,7 @@ class EQDSKInterface:
         self,
         file_path: str,
         file_format: str = "json",
-        json_kwargs: Optional[Dict] = None,
+        json_kwargs: dict | None = None,
     ):
         """
         Write the EQDSK data to file in the given format.
@@ -193,7 +193,7 @@ class EQDSKInterface:
             )
             _write_eqdsk(Path(file_path).as_posix(), self.to_dict())
 
-    def update(self, eqdsk_data: Dict[str, Any]):
+    def update(self, eqdsk_data: dict[str, Any]):
         """
         Update this object's data with values from a dictionary.
 
@@ -217,8 +217,8 @@ class EQDSKInterface:
                 )
 
 
-def _read_json(file) -> Dict[str, Any]:
-    if isinstance(file, (Path, str)):
+def _read_json(file) -> dict[str, Any]:
+    if isinstance(file, Path | str):
         with open(file) as f_h:
             return _read_json(f_h)
 
@@ -291,8 +291,8 @@ def _eqdsk_generator(file):
         yield from generator_list
 
 
-def _read_eqdsk(file) -> Dict:
-    if isinstance(file, (Path, str)):
+def _read_eqdsk(file) -> dict:
+    if isinstance(file, Path | str):
         with open(file) as f_handle:
             return _read_eqdsk(f_handle)
 
@@ -411,7 +411,7 @@ def _derive_psinorm(fpol):
     return np.linspace(0, 1, len(fpol))
 
 
-def _write_eqdsk(file: Union[Path, str], data: Dict):
+def _write_eqdsk(file: Path | str, data: dict):
     """
     Writes data out to a text file in G-EQDSK format.
 
@@ -422,7 +422,7 @@ def _write_eqdsk(file: Union[Path, str], data: Dict):
     data:
         Dictionary of EQDSK data.
     """
-    if isinstance(file, (str, Path)):
+    if isinstance(file, str | Path):
         file = Path(file)
         if file.suffix not in EQDSK_EXTENSIONS:
             file = Path(file).with_suffix("").with_suffix(".eqdsk")
@@ -430,7 +430,7 @@ def _write_eqdsk(file: Union[Path, str], data: Dict):
             return _write_eqdsk(f_handle, data)
 
     def write_header(
-        fortran_format: ff.FortranRecordWriter, id_string: str, var_list: List[str]
+        fortran_format: ff.FortranRecordWriter, id_string: str, var_list: list[str]
     ):
         """
         Writes G-EQDSK header out to file.
@@ -455,7 +455,7 @@ def _write_eqdsk(file: Union[Path, str], data: Dict):
         file.write(fortran_format.write(line))
         file.write("\n")
 
-    def write_line(fortran_format: ff.FortranRecordWriter, var_list: List[str]):
+    def write_line(fortran_format: ff.FortranRecordWriter, var_list: list[str]):
         """
         Writes a line of variable values out to a G-EQDSK file.
 

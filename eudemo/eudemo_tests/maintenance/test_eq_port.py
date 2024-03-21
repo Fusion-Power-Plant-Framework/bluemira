@@ -26,7 +26,8 @@ class TestEquatorialPortKOZDesigner:
         """Set-up Equatorial Port Designer"""
 
     @pytest.mark.parametrize(
-        ("xi", "xo", "zh"), zip([9.0, 9.0, 6.0], [16.0, 15.0, 9.0], [5.0, 4.0, 2.0])
+        ("xi", "xo", "zh"),
+        zip([9.0, 9.0, 6.0], [16.0, 15.0, 9.0], [5.0, 4.0, 2.0], strict=False),
     )
     def test_ep_designer(self, xi, xo, zh):
         """Test Equatorial Port KOZ Designer"""
@@ -64,6 +65,7 @@ class TestEquatorialPortDuctBuilder:
             [5.0, 4.0, 2.0],  # z_height
             [3.0, 2.0, 1.0],  # y_widths
             [0.5, 0.5, 0.25],  # thickness
+            strict=False,
             # expected volumes: [63, 42, 5.25]
         ),
     )

@@ -15,8 +15,6 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-from typing import List, Tuple
-
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
@@ -39,7 +37,7 @@ class BluemiraCompound(BluemiraGeo):
         Label to assign to the compound
     """
 
-    def __init__(self, boundary: List[BluemiraGeo], label: str = ""):
+    def __init__(self, boundary: list[BluemiraGeo], label: str = ""):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
@@ -71,35 +69,35 @@ class BluemiraCompound(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> Tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire]:
         """
         The edges of the compound.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
-    def wires(self) -> Tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the compound.
         """
         return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
-    def faces(self) -> Tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace]:
         """
         The faces of the compound.
         """
         return tuple([BluemiraFace._create(o) for o in cadapi.faces(self.shape)])
 
     @property
-    def shells(self) -> Tuple[BluemiraShell]:
+    def shells(self) -> tuple[BluemiraShell]:
         """
         The shells of the compound.
         """
         return tuple([BluemiraShell._create(o) for o in cadapi.shells(self.shape)])
 
     @property
-    def solids(self) -> Tuple[BluemiraSolid]:
+    def solids(self) -> tuple[BluemiraSolid]:
         """
         The solids of the compound.
         """

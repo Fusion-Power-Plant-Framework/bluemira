@@ -50,8 +50,6 @@ Non-Linearly Constrained Optimisation Problem
 # utilising bluemira's `optimise` function.
 
 # %%
-from typing import List, Tuple
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -189,7 +187,7 @@ class NonLinearConstraintOP(OptimisationProblem):
         """Gradient of the objective function."""
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:  # noqa: PLR6301
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:  # noqa: PLR6301
         """
         The lower and upper bounds of the optimisation parameters.
 
@@ -200,7 +198,7 @@ class NonLinearConstraintOP(OptimisationProblem):
         """
         return np.array([-np.inf, 0]), np.array([np.inf, np.inf])
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         """The inequality constraints on the optimisation."""
         return [
             {

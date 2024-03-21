@@ -21,7 +21,6 @@ The EUDEMO reactor design routine.
 """
 
 from pathlib import Path
-from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -110,11 +109,11 @@ class EUDEMO(Reactor):
 
 
 def build_reference_equilibrium(
-    params: Union[Dict, ParameterFrame],
-    build_config: Dict,
+    params: dict | ParameterFrame,
+    build_config: dict,
     equilibrium_manager: EquilibriumManager,
-    lcfs_coords: Optional[Coordinates],
-    profiles: Optional[Profile],
+    lcfs_coords: Coordinates | None,
+    profiles: Profile | None,
 ) -> Equilibrium:
     """
     Build the reference equilibrium for the tokamak and store in
@@ -144,7 +143,7 @@ def build_reference_equilibrium(
     return reference_eq
 
 
-def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
+def build_plasma(params, build_config: dict, eq: Equilibrium) -> Plasma:
     """Build EUDEMO plasma from an equilibrium."""
     lcfs_loop = eq.get_LCFS()
     lcfs_wire = interpolate_bspline({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
@@ -198,7 +197,7 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
 
 def build_blanket(
     params,
-    build_config: Dict,
+    build_config: dict,
     blanket_boundary,
     blanket_face,
     r_inner_cut: float,

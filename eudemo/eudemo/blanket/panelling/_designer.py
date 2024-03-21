@@ -6,7 +6,7 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional, Tuple, Union
+from typing import Any, ClassVar
 
 import numpy as np
 
@@ -76,7 +76,7 @@ class PanellingDesigner(Designer[np.ndarray]):
             overlaps in the panels and boundary.
     """
 
-    param_cls = PanellingDesignerParams
+    param_cls: type[PanellingDesignerParams] = PanellingDesignerParams
     params: PanellingDesignerParams
     _defaults: ClassVar = {
         "algorithm": "SLSQP",
@@ -87,9 +87,9 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     def __init__(
         self,
-        params: Union[Dict, PanellingDesignerParams, ParameterFrame],
+        params: dict | PanellingDesignerParams | ParameterFrame,
         wall_boundary: BluemiraWire,
-        build_config: Optional[Dict] = None,
+        build_config: dict | None = None,
     ):
         super().__init__(params, build_config)
         self.wall_boundary = wall_boundary
@@ -153,7 +153,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary: np.ndarray,
         opt_problem: PanellingOptProblem,
         max_retries: int,
-    ) -> Tuple[Union[np.ndarray, None], PanellingOptProblem, int]:
+    ) -> tuple[np.ndarray | None, PanellingOptProblem, int]:
         """
         Run the minimise panel length optimisation problem.
 
@@ -202,7 +202,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         return x_opt, opt_problem, iter_num
 
     def _set_up_opt_problem(
-        self, boundary: np.ndarray, fix_num_panels: Optional[int] = None
+        self, boundary: np.ndarray, fix_num_panels: int | None = None
     ) -> PanellingOptProblem:
         """Set up an instance of the minimise panel length optimisation problem."""
         paneller = Paneller(

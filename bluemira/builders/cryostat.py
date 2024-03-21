@@ -9,7 +9,6 @@ Cryostat builder
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
@@ -54,22 +53,22 @@ class CryostatBuilderParams(ParameterFrame):
     z_gs: Parameter[float]
 
 
-class CryostatDesigner(Designer[Tuple[float, float]]):
+class CryostatDesigner(Designer[tuple[float, float]]):
     """
     Designer for the cryostat
     """
 
-    param_cls: Type[CryostatDesignerParams] = CryostatDesignerParams
+    param_cls: type[CryostatDesignerParams] = CryostatDesignerParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
+        params: ParameterFrame | dict,
         cryo_ts_xz: BluemiraFace,
     ):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 
-    def run(self) -> Tuple[float, float]:
+    def run(self) -> tuple[float, float]:
         """
         Cryostat designer run method
         """
@@ -87,12 +86,12 @@ class CryostatBuilder(Builder):
     """
 
     CRYO = "Cryostat VV"
-    param_cls: Type[CryostatBuilderParams] = CryostatBuilderParams
+    param_cls: type[CryostatBuilderParams] = CryostatBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict, None],
-        build_config: Dict,
+        params: ParameterFrame | dict | None,
+        build_config: dict,
         x_out: float,
         z_top: float,
     ):
@@ -173,7 +172,7 @@ class CryostatBuilder(Builder):
 
     def build_xyz(
         self, xz_cross_section: BluemiraFace, degree=360
-    ) -> List[PhysicalComponent]:
+    ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the cryostat.
 

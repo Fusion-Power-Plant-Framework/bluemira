@@ -11,8 +11,9 @@ and toroidal current source using fenics FEM solver
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import dolfinx
 import matplotlib.pyplot as plt
@@ -91,12 +92,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
-        p_prime: Optional[Callable[[float], float]] = None,
-        ff_prime: Optional[Callable[[float], float]] = None,
-        mesh: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
-        I_p: Optional[float] = None,
-        R_0: Optional[float] = None,
-        B_0: Optional[float] = None,
+        p_prime: Callable[[float], float] | None = None,
+        ff_prime: Callable[[float], float] | None = None,
+        mesh: dolfinx.mesh.Mesh | str | None = None,
+        I_p: float | None = None,
+        R_0: float | None = None,
+        B_0: float | None = None,
         p_order: int = 2,
         max_iter: int = 10,
         iter_err_max: float = 1e-5,
@@ -169,7 +170,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return func
 
-    def set_mesh(self, mesh: Union[dolfinx.mesh.Mesh, str]):
+    def set_mesh(self, mesh: dolfinx.mesh.Mesh | str):
         """
         Set the mesh for the solver
 
@@ -183,11 +184,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _create_g_func(
         self,
-        pprime: Union[Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]], float],
-        ffprime: Union[
-            Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]], float
-        ],
-        curr_target: Optional[float] = None,
+        pprime: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]] | float,
+        ffprime: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]] | float,
+        curr_target: float | None = None,
     ) -> Callable[[np.ndarray], float]:
         """
         Return the density current function given pprime and ffprime.
@@ -261,9 +260,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         p_prime: Callable[[float], float],
         ff_prime: Callable[[float], float],
-        I_p: Optional[float] = None,
-        B_0: Optional[float] = None,
-        R_0: Optional[float] = None,
+        I_p: float | None = None,
+        B_0: float | None = None,
+        R_0: float | None = None,
     ):
         """
         Set the profies for the FEM G-S solver.
@@ -340,7 +339,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         plot: bool = False,
         debug: bool = False,
         gif: bool = False,
-        figname: Optional[str] = None,
+        figname: str | None = None,
         *,
         autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
@@ -439,7 +438,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     @staticmethod
-    def _setup_plot(debug: bool) -> Tuple[Figure, np.ndarray, list]:
+    def _setup_plot(debug: bool) -> tuple[Figure, np.ndarray, list]:
         n_col = 3 if debug else 2
         fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)
@@ -506,7 +505,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         array: np.ndarray,
         title: str,
         cmap: str,
-        levels: Optional[np.ndarray] = None,
+        levels: np.ndarray | None = None,
     ):
         cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
         ax.tricontour(

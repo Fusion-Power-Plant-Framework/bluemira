@@ -97,7 +97,8 @@ class ExtrudeOrientation:
         shapes_fc = getattr(self.solid_fc, shapes_name)
         shapes_bm = getattr(self.solid_bm.shape, shapes_name)
         assert all(
-            fc.Orientation == bm.Orientation for fc, bm in zip(shapes_fc, shapes_bm)
+            fc.Orientation == bm.Orientation
+            for fc, bm in zip(shapes_fc, shapes_bm, strict=False)
         )
 
     def test_edges(self):

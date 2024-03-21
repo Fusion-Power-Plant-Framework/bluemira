@@ -5,17 +5,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Definition of the generic `optimise` function."""
 
+from collections.abc import Callable, Iterable, Mapping
 from pprint import pformat
 from typing import (
     Any,
-    Callable,
-    Iterable,
-    List,
     Literal,
-    Mapping,
-    Optional,
-    Tuple,
-    Union,
 )
 
 import numpy as np
@@ -38,14 +32,14 @@ from bluemira.optimisation.typing import (
 
 def optimise(
     f_objective: ObjectiveCallable,
-    df_objective: Optional[OptimiserCallable] = None,
+    df_objective: OptimiserCallable | None = None,
     *,
-    x0: Optional[np.ndarray] = None,
-    dimensions: Optional[int] = None,
+    x0: np.ndarray | None = None,
+    dimensions: int | None = None,
     algorithm: AlgorithmType = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Mapping[str, Any]] = None,
-    bounds: Optional[Tuple[npt.ArrayLike, npt.ArrayLike]] = None,
+    opt_conditions: Mapping[str, int | float] | None = None,
+    opt_parameters: Mapping[str, Any] | None = None,
+    bounds: tuple[npt.ArrayLike, npt.ArrayLike] | None = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
@@ -198,8 +192,8 @@ def optimise(
 
 def validate_constraints(
     x_star: np.ndarray,
-    eq_constraints: List[ConstraintT],
-    ineq_constraints: List[ConstraintT],
+    eq_constraints: list[ConstraintT],
+    ineq_constraints: list[ConstraintT],
     warn: bool = True,
 ) -> bool:
     """
@@ -240,11 +234,11 @@ def validate_constraints(
 def _make_optimiser(
     f_objective: ObjectiveCallable,
     dimensions: int,
-    df_objective: Optional[OptimiserCallable] = None,
+    df_objective: OptimiserCallable | None = None,
     algorithm: AlgorithmType = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Mapping[str, Any]] = None,
-    bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
+    opt_conditions: Mapping[str, int | float] | None = None,
+    opt_parameters: Mapping[str, Any] | None = None,
+    bounds: tuple[np.ndarray, np.ndarray] | None = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
@@ -270,8 +264,8 @@ def _make_optimiser(
 
 
 def _process_bounds(
-    bounds: Union[Tuple[npt.ArrayLike, npt.ArrayLike], None], dims: int
-) -> Tuple[np.ndarray, np.ndarray]:
+    bounds: tuple[npt.ArrayLike, npt.ArrayLike] | None, dims: int
+) -> tuple[np.ndarray, np.ndarray]:
     """Handle bounds converting ``None`` to +/-inf and expanding scalar bounds."""
     if bounds is None:
         return (np.full(dims, -np.inf), np.full(dims, np.inf))
@@ -284,9 +278,9 @@ def _process_bounds(
 
 def _check_constraints(
     x_star: np.ndarray,
-    constraints: List[ConstraintT],
+    constraints: list[ConstraintT],
     constraint_type: Literal["inequality", "equality"],
-) -> List[str]:
+) -> list[str]:
     """
     Check if any of the given constraints are violated by the parameterisation.
 
@@ -298,7 +292,7 @@ def _check_constraints(
         x_star: np.ndarray,
         constraint: ConstraintT,
         condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
         """Return the items in the constraint vector that violate the condition."""
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
@@ -341,8 +335,8 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
 
 def _set_default_termination_conditions(
     algorithm: AlgorithmType,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-) -> Optional[Mapping[str, Union[int, float]]]:
+    opt_conditions: Mapping[str, int | float] | None = None,
+) -> Mapping[str, int | float] | None:
     if opt_conditions is None:
         if isinstance(algorithm, str):
             algorithm = Algorithm[algorithm]

@@ -11,12 +11,7 @@ Creating ducts for the port
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Union
-
-if TYPE_CHECKING:
-    from bluemira.base.reactor_config import ConfigParams
-    from bluemira.geometry.solid import BluemiraSolid
-    from bluemira.geometry.wire import BluemiraWire
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -37,6 +32,11 @@ from bluemira.geometry.tools import (
 )
 from bluemira.materials import Void
 
+if TYPE_CHECKING:
+    from bluemira.base.reactor_config import ConfigParams
+    from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
+
 
 @dataclass
 class TSUpperPortDuctBuilderParams(ParameterFrame):
@@ -53,11 +53,11 @@ class TSUpperPortDuctBuilder(Builder):
     """Thermal shield upper port duct builder"""
 
     params: TSUpperPortDuctBuilderParams
-    param_cls = TSUpperPortDuctBuilderParams
+    param_cls: type[TSUpperPortDuctBuilderParams] = TSUpperPortDuctBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: dict | ParameterFrame | ConfigParams | None,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
@@ -136,7 +136,7 @@ class TSEquatorialPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: dict | ParameterFrame | ConfigParams | None,
         cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
@@ -205,7 +205,7 @@ class VVUpperPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: dict | ParameterFrame | ConfigParams | None,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
@@ -297,7 +297,7 @@ class VVEquatorialPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: dict | ParameterFrame | ConfigParams | None,
         cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
@@ -485,7 +485,7 @@ def pipe_pipe_join(
     target_void: BluemiraSolid,
     tool_shape: BluemiraSolid,
     tool_void: BluemiraSolid,
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Join two hollow, intersecting pipes.
 

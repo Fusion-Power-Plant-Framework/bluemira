@@ -8,7 +8,7 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Iterable, Optional, Tuple, Union
+from collections.abc import Iterable
 
 import dolfinx.fem
 import numpy as np
@@ -77,8 +77,8 @@ class FemMagnetostatic2d:
 
     def set_mesh(
         self,
-        mesh: Union[dolfinx.mesh.Mesh, str],
-        boundaries: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
+        mesh: dolfinx.mesh.Mesh | str,
+        boundaries: dolfinx.mesh.Mesh | str | None = None,
     ):
         """
         Set the mesh for the solver
@@ -135,14 +135,12 @@ class FemMagnetostatic2d:
 
     def define_g(
         self,
-        g: Optional[Union[dolfinx.fem.Expression, BluemiraFemFunction]] = None,
-        dirichlet_bc_function: Optional[
-            Union[dolfinx.fem.Expression, BluemiraFemFunction]
-        ] = None,
-        dirichlet_marker: Optional[int] = None,  # noqa: ARG002
-        neumann_bc_function: Optional[
-            Union[dolfinx.fem.Expression, BluemiraFemFunction]
-        ] = None,
+        g: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
+        dirichlet_bc_function: dolfinx.fem.Expression
+        | BluemiraFemFunction
+        | None = None,
+        dirichlet_marker: int | None = None,  # noqa: ARG002
+        neumann_bc_function: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
     ):
         """
         Define Dirichlet boundary conditions and setup problem
@@ -207,7 +205,7 @@ class FemMagnetostatic2d:
 
     def calculate_b(
         self,
-        interpolation_eltype: Optional[Tuple] = None,
+        interpolation_eltype: tuple | None = None,
     ) -> BluemiraFemFunction:
         """
         Calculates the magnetic field intensity from psi

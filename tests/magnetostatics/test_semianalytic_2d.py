@@ -80,7 +80,7 @@ class TestSemiAnalyticBxBz:
         z = np.array(z) * 1e-3 + zc
         bx_results = np.zeros_like(x)
         bz_results = np.zeros_like(z)
-        for i, (xi, zi) in enumerate(zip(x, z)):
+        for i, (xi, zi) in enumerate(zip(x, z, strict=False)):
             bx = semianalytic_Bx(xc, zc, xi, zi, dx, dz)
             bz = semianalytic_Bz(xc, zc, xi, zi, dx, dz)
             bx_results[i] = current * bx

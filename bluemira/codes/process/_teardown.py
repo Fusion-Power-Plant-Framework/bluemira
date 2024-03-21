@@ -7,8 +7,9 @@
 PROCESS teardown functions
 """
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any
 
 import numpy as np
 
@@ -97,7 +98,7 @@ class Teardown(CodesTeardown):
         outputs = read_mock_json_or_raise(mock_file_path, self._name)
         self.params.update_values(outputs, source=self._name)
 
-    def get_raw_outputs(self, params: Union[Iterable, str]) -> List[float]:
+    def get_raw_outputs(self, params: Iterable | str) -> list[float]:
         """
         Get raw variables from an MFILE.
 
@@ -159,7 +160,7 @@ class Teardown(CodesTeardown):
         return self._mfile_wrapper
 
     def _get_output_or_raise(
-        self, external_outputs: Dict[str, Any], parameter_name: str
+        self, external_outputs: dict[str, Any], parameter_name: str
     ):
         output_value = external_outputs.get(parameter_name)
 
@@ -232,7 +233,7 @@ class _MFileWrapper:
         _raise_on_infeasible_solution(self)
         self.data = {}
 
-    def read(self) -> Dict:
+    def read(self) -> dict:
         """
         Read the data from the PROCESS MFile.
 
@@ -255,7 +256,7 @@ class _MFileWrapper:
 
         self.data.update(self._derive_radial_build_params(self.data))
 
-    def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
+    def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
         Derive radial build parameters that PROCESS does not directly calculate.
 

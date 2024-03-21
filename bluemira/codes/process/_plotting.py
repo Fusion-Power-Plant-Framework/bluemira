@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,7 +18,7 @@ from bluemira.utilities.tools import is_num
 
 def boxr(
     ri: float, ro: float, w: float, off: float = 0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate coordinates for an arbitrary height radial width. Used in plotting.
     """
@@ -75,7 +75,7 @@ def read_n_line(line: str):
     return out
 
 
-def setup_radial_build(run: Dict[str, Any], width: float = 1.0):
+def setup_radial_build(run: dict[str, Any], width: float = 1.0):
     """
     Plots radial and vertical build of a PROCESS run.
 
@@ -178,7 +178,7 @@ def process_RB_fromOUT(f):
     Parse PROCESS radial build from an OUT.DAT file.
     """
     # If the input is a string, treat as file name, and ensure it is closed.
-    if isinstance(f, (str, Path)):
+    if isinstance(f, str | Path):
         with open(f) as fh:
             return process_RB_fromOUT(fh)  # Recursive call with file object
     raw = f.readlines()

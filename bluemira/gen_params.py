@@ -16,7 +16,6 @@ from abc import abstractproperty
 from copy import deepcopy
 from pathlib import Path
 from pkgutil import iter_modules
-from typing import Dict, Optional, Set
 
 from setuptools import find_packages
 
@@ -32,7 +31,7 @@ from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
 
 
-def def_param() -> Dict:
+def def_param() -> dict:
     """
     Get the default parameter json skeleton
     """
@@ -46,7 +45,7 @@ def def_param() -> Dict:
 DEFAULT_PARAM = def_param()
 
 
-def add_to_dict(pf: ParameterFrame, json_dict: Dict, params: Dict):
+def add_to_dict(pf: ParameterFrame, json_dict: dict, params: dict):
     """
     Add each parameter to the json dict and params dict
     """
@@ -58,7 +57,7 @@ def add_to_dict(pf: ParameterFrame, json_dict: Dict, params: Dict):
 
 
 def create_parameterframe(
-    params: Dict, name: Optional[str] = None, *, header: bool = True
+    params: dict, name: str | None = None, *, header: bool = True
 ) -> str:
     """
     Create parameterframe python files as a string
@@ -131,7 +130,7 @@ def parse_args():
     return args
 
 
-def get_param_classes(module) -> Dict:
+def get_param_classes(module) -> dict:
     """
     Get all ParameterFrame classes
     """
@@ -139,11 +138,11 @@ def get_param_classes(module) -> Dict:
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
         for m in inspect.getmembers(module, inspect.isclass)
         if hasattr(m[1], "param_cls")
-        and not isinstance(m[1].param_cls, (type(None), abstractproperty))
+        and not isinstance(m[1].param_cls, type(None) | abstractproperty)
     }
 
 
-def find_modules(path: str) -> Set:
+def find_modules(path: str) -> set:
     """Recursively get modules from package"""
     modules = set()
     for pkg in find_packages(path):

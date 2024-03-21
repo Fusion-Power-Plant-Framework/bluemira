@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions to optimise an EUDEMO radial build"""
 
-from typing import Dict, TypeVar
+from __future__ import annotations
 
-from bluemira.base.parameter_frame import ParameterFrame
+from typing import TYPE_CHECKING
+
 from bluemira.codes import plot_radial_build, systems_code_solver
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
@@ -42,8 +43,8 @@ from bluemira.codes.process.model_mapping import (
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
-_PfT = TypeVar("_PfT", bound=ParameterFrame)
-
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
 
 template_builder = PROCESSTemplateBuilder()
 template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
@@ -304,7 +305,7 @@ template_builder.add_input_values({
 })
 
 
-def apply_specific_interface_rules(params: _PfT):
+def apply_specific_interface_rules(params: ParameterFrame):
     """
     Apply specific rules for the interface between PROCESS and BLUEMIRA
     that relate to the EU-DEMO design parameterisation
@@ -339,7 +340,7 @@ def apply_specific_interface_rules(params: _PfT):
     })
 
 
-def radial_build(params: _PfT, build_config: Dict) -> _PfT:
+def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
 

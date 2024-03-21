@@ -10,16 +10,8 @@ Finite element geometry
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-
-    from bluemira.geometry.coordinates import Coordinates
-    from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
-
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse import lil_matrix
@@ -34,6 +26,13 @@ from bluemira.structural.plotting import (
     GeometryPlotter,
     StressDeformedGeometryPlotter,
 )
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+
+    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.structural.material import StructuralMaterial
 
 
 class Geometry:
@@ -223,7 +222,7 @@ class Geometry:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ) -> int:
         """
         Adds an Element to the Geometry object
@@ -312,7 +311,7 @@ class Geometry:
         self,
         coordinates: Coordinates,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         """
         Adds a Coordinates object to the Geometry
@@ -378,7 +377,7 @@ class Geometry:
             k[j : j + 6, j : j + 6] += k_elem[6:, 6:]
         return k
 
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> tuple[float, float, float, float, float, float]:
         """
         Calculates the bounds of the geometry
         """
@@ -530,8 +529,8 @@ class DeformedGeometry(Geometry):
             node.displacements[2] = 0
 
     def plot(
-        self, ax: Optional[Axes] = None, stress: Optional[np.ndarray] = None, **kwargs
-    ) -> Union[DeformedGeometryPlotter, StressDeformedGeometryPlotter]:
+        self, ax: Axes | None = None, stress: np.ndarray | None = None, **kwargs
+    ) -> DeformedGeometryPlotter | StressDeformedGeometryPlotter:
         """
         Plot the DeformedGeometry.
 

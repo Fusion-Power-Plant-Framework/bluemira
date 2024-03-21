@@ -11,7 +11,7 @@ use primitive operations in geometry/tools.py instead.
 
 from functools import partial
 from itertools import zip_longest
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -90,7 +90,7 @@ def _side_vector(polygon_array: np.ndarray) -> np.ndarray:
 
 def offset(
     x: np.ndarray, z: np.ndarray, offset_value: float
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Get a square-based offset of the coordinates (no splines). N-sized output
 
@@ -158,7 +158,7 @@ def make_circle_arc(
     angle: float = 2 * np.pi,
     n_points: int = 200,
     start_angle: float = 0,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Make a circle arc of a specified radius and angle at a given location.
 
@@ -205,7 +205,7 @@ def convert_coordinates_to_wire(
     z: np.ndarray,
     label: str = "",
     method: str = "mixed",
-    **kwargs: Dict[str, Any],
+    **kwargs: dict[str, Any],
 ) -> BluemiraWire:
     """
     Converts the provided coordinates into a BluemiraWire using the specified method.
@@ -248,7 +248,7 @@ def convert_coordinates_to_face(
     z: np.ndarray,
     method: str = "mixed",
     label: str = "",
-    **kwargs: Dict[str, Any],
+    **kwargs: dict[str, Any],
 ) -> BluemiraFace:
     """
     Converts the provided coordinates into a BluemiraFace using the specified method.
@@ -690,7 +690,7 @@ class MixedFaceMaker:
                 vertices.extend([index, index + 1])
         return np.unique(np.array(vertices, dtype=int))
 
-    def _get_polygon_sequences(self, vertices: np.ndarray) -> List[List[float]]:
+    def _get_polygon_sequences(self, vertices: np.ndarray) -> list[list[float]]:
         """
         Gets the sequences of polygon segments
 
@@ -769,7 +769,7 @@ class MixedFaceMaker:
 
         return sequences
 
-    def _get_spline_sequences(self, polygon_sequences: np.ndarray) -> List[List[float]]:
+    def _get_spline_sequences(self, polygon_sequences: np.ndarray) -> list[list[float]]:
         """
         Gets the sequences of spline segments
 

@@ -23,5 +23,5 @@ def test_timing(debug, records, caplog):
     assert _timing(dummy, "debug", "print", debug_info_str=debug)(1, b=2) == (1, 2)
     assert len(caplog.records) == 2
     assert [r.levelname for r in caplog.records] == records
-    for msg, exp in zip(caplog.messages, ("print", "debug")):
+    for msg, exp in zip(caplog.messages, ("print", "debug"), strict=False):
         assert exp in msg

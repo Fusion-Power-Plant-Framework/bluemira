@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-from typing import Optional, Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
@@ -34,7 +33,7 @@ class Paneller:
         boundary_points: np.ndarray,
         max_angle: float,
         dx_min: float,
-        fix_num_panels: Optional[int] = None,
+        fix_num_panels: int | None = None,
     ):
         self.max_angle = max_angle
         self.dx_min = dx_min
@@ -136,19 +135,19 @@ class LengthNormBoundary:
             self.length_norm, self.tangent_norm[1]
         )
 
-    def x(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+    def x(self, dist: float | np.ndarray) -> np.ndarray:
         """Find x at the given normalised distance along the boundary."""
         return self._x_spline(dist)
 
-    def z(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+    def z(self, dist: float | np.ndarray) -> np.ndarray:
         """Find z at the given normalised distance along the boundary."""
         return self._z_spline(dist)
 
-    def x_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+    def x_tangent(self, dist: float | np.ndarray) -> np.ndarray:
         """Find x at the tangent vector a given distance along the boundary."""
         return self._x_tangent_spline(dist)
 
-    def z_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+    def z_tangent(self, dist: float | np.ndarray) -> np.ndarray:
         """Find z at the tangent vector a given distance along the boundary."""
         return self._z_tangent_spline(dist)
 

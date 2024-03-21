@@ -9,7 +9,7 @@ Distribution and timeline utilities
 """
 
 import abc
-from typing import Iterable, Tuple
+from collections.abc import Iterable
 
 import numpy as np
 from scipy.optimize import brentq
@@ -44,7 +44,7 @@ def f_logistic(t: float, value: float, k: float, x_0: float) -> float:
     return value / (1 + np.exp(-k * (t - x_0)))
 
 
-def histify(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Transform values into arrays usable to make histograms.
     """

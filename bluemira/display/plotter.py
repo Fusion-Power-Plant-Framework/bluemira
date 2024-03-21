@@ -15,13 +15,7 @@ from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
 )
 
 import matplotlib.pyplot as plt
@@ -44,6 +38,8 @@ from bluemira.geometry.coordinates import (
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from bluemira.geometry.base import BluemiraGeo
 
 UNIT_LABEL = "[m]"
@@ -64,14 +60,14 @@ class ViewDescriptor:
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(self, obj: Any, _) -> Tuple[np.ndarray, np.ndarray, float, str]:
+    def __get__(self, obj: Any, _) -> tuple[np.ndarray, np.ndarray, float, str]:
         """Get the view tuple"""
         if obj is None:
             return self._default
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: Union[str, tuple, _placement.BluemiraPlacement]):
+    def __set__(self, obj: Any, value: str | tuple | _placement.BluemiraPlacement):
         """Set the view"""
         if isinstance(value, str):
             if value.startswith("xy"):
@@ -114,25 +110,21 @@ class DictOptionsDescriptor:
 
     """
 
-    def __init__(self, default_factory: Optional[Callable[[], Dict[str, Any]]] = None):
+    def __init__(self, default_factory: Callable[[], dict[str, Any]] | None = None):
         self.default = {} if default_factory is None else default_factory()
 
     def __set_name__(self, _, name: str):
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(
-        self, obj: Any, _
-    ) -> Union[Callable[[], Dict[str, Any]], Dict[str, Any]]:
+    def __get__(self, obj: Any, _) -> Callable[[], dict[str, Any]] | dict[str, Any]:
         """Get the options dictionary"""
         if obj is None:
             return lambda: self.default
 
         return getattr(obj, self._name, self.default)
 
-    def __set__(
-        self, obj: Any, value: Union[Callable[[], Dict[str, Any]], Dict[str, Any]]
-    ):
+    def __set__(self, obj: Any, value: Callable[[], dict[str, Any]] | dict[str, Any]):
         """Set the options dictionary"""
         if callable(value):
             value = value()
@@ -230,7 +222,7 @@ class BasePlotter(ABC):
 
     _CLASS_PLOT_OPTIONS: ClassVar = {}
 
-    def __init__(self, options: Optional[PlotOptions] = None, **kwargs):
+    def __init__(self, options: PlotOptions | None = None, **kwargs):
         # discretization points representing the shape in global coordinate system
         self._data = []
         # modified discretization points for plotting (e.g. after view transformation)
@@ -244,7 +236,7 @@ class BasePlotter(ABC):
 
     def set_view(self, view):
         """Set the plotting view"""
-        if isinstance(view, (str, _placement.BluemiraPlacement)):
+        if isinstance(view, str | _placement.BluemiraPlacement):
             self.options._options.view = view
         else:
             DisplayError(f"{view} is not a valid view")
@@ -306,7 +298,7 @@ class BasePlotter(ABC):
     def _set_aspect_3d(self):
         # This was the only way I found to get 3-D plots to look right in matplotlib
         x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*self._data.T).get_box_arrays()
-        for x, y, z in zip(x_bb, y_bb, z_bb):
+        for x, y, z in zip(x_bb, y_bb, z_bb, strict=False):
             self.ax.plot([x], [y], [z], color="w")
 
     def _set_label_3d(self):
@@ -617,7 +609,7 @@ def _get_plotter_class(part):
     """
     import bluemira.base.components  # noqa: PLC0415
 
-    if isinstance(part, (list, np.ndarray, Coordinates)):
+    if isinstance(part, list | np.ndarray | Coordinates):
         plot_class = PointsPlotter
     elif isinstance(part, wire.BluemiraWire):
         plot_class = WirePlotter
@@ -633,8 +625,8 @@ def _get_plotter_class(part):
 
 
 def plot_2d(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
-    options: Optional[Union[PlotOptions, List[PlotOptions]]] = None,
+    parts: BluemiraGeo | list[BluemiraGeo],
+    options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
     show: bool = True,
     **kwargs,
@@ -657,7 +649,7 @@ def plot_2d(
     """
     parts, options = _validate_plot_inputs(parts, options)
 
-    for part, option in zip(parts, options):
+    for part, option in zip(parts, options, strict=False):
         plotter = _get_plotter_class(part)(option, **kwargs)
         ax = plotter.plot_2d(part, ax, show=False)
 
@@ -668,8 +660,8 @@ def plot_2d(
 
 
 def plot_3d(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
-    options: Optional[Union[PlotOptions, List[PlotOptions]]] = None,
+    parts: BluemiraGeo | list[BluemiraGeo],
+    options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
     show: bool = True,
     **kwargs,
@@ -692,7 +684,7 @@ def plot_3d(
     """
     parts, options = _validate_plot_inputs(parts, options)
 
-    for part, option in zip(parts, options):
+    for part, option in zip(parts, options, strict=False):
         plotter = _get_plotter_class(part)(option, **kwargs)
         ax = plotter.plot_3d(part, ax, show=False)
 
@@ -864,7 +856,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
     ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
 
     if points:
-        for i, p in enumerate(zip(x, y)):
+        for i, p in enumerate(zip(x, y, strict=False)):
             ax.annotate(i, xy=(p[0], p[1]))
 
     ax.set_aspect("equal")
@@ -882,7 +874,7 @@ def _plot_3d(coords, ax=None, **kwargs):
         # Now we re-arrange a little so that matplotlib can show us something a little
         # more correct
         x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*coords.xyz).get_box_arrays()
-        for x, y, z in zip(x_bb, y_bb, z_bb):
+        for x, y, z in zip(x_bb, y_bb, z_bb, strict=False):
             ax.plot([x], [y], [z], color="w")
 
     ax.plot(*coords.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])

@@ -9,12 +9,11 @@ Matrix manipulation methods for finite element solver
 """
 
 from copy import deepcopy
-from typing import List, Tuple
 
 import numpy as np
 
 
-def k_condensation(k: np.ndarray, releases: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def k_condensation(k: np.ndarray, releases: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Section 6.5 in J.S. Prz..
     """
@@ -39,8 +38,8 @@ def k_condensation(k: np.ndarray, releases: np.ndarray) -> Tuple[np.ndarray, np.
 
 
 def cyclic_decomposition(
-    k: np.ndarray, p: np.ndarray, l_nodes: List[int], r_nodes: List[int]
-) -> Tuple[np.ndarray, np.ndarray, List[np.ndarray]]:
+    k: np.ndarray, p: np.ndarray, l_nodes: list[int], r_nodes: list[int]
+) -> tuple[np.ndarray, np.ndarray, list[np.ndarray]]:
     """
     Perform a cyclic symmetry decomposition of the stiffness matrix and load
     vector.
