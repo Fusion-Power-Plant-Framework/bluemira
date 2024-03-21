@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from itertools import count
-from typing import Tuple
 
 import numpy as np
 
@@ -14,7 +13,7 @@ def make_pivoted_string(
     max_angle: float = 10,
     dx_min: float = 0,
     dx_max: float = np.inf,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate a set of pivot points along the given boundary.
 
@@ -65,7 +64,7 @@ def make_pivoted_string(
     to, po = tangent_vec[0], boundary_points[0]
 
     k = count(1)
-    for i, (p, t) in enumerate(zip(boundary_points[1:], tangent_vec)):
+    for i, (p, t) in enumerate(zip(boundary_points[1:], tangent_vec, strict=False)):
         c = np.cross(to, t)
         c_mag = np.linalg.norm(c)
         dx = np.linalg.norm(p - po)  # segment length

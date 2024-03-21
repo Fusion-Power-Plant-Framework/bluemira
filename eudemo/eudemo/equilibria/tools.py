@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.base.parameter_frame import ParameterFrame
@@ -100,8 +100,8 @@ def estimate_kappa95(A: float, m_s_limit: float) -> float:
 def handle_lcfs_shape_input(
     param_cls: GeometryParameterisation,
     params: ParameterFrame,
-    shape_config: Dict[str, float],
-) -> Dict[str, float]:
+    shape_config: dict[str, float],
+) -> dict[str, float]:
     """
     Process the LCFS shape parameterisation inputs based on a parameterisation
     and a shape configuration.
@@ -158,7 +158,7 @@ def handle_lcfs_shape_input(
 
 
 def make_grid(
-    R_0: float, A: float, kappa: float, grid_settings: Dict[str, float]
+    R_0: float, A: float, kappa: float, grid_settings: dict[str, float]
 ) -> Grid:
     """
     Make a finite difference Grid for an Equilibrium.

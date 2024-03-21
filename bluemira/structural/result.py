@@ -10,7 +10,7 @@ FE result object
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -50,7 +50,7 @@ class Result:
         load_case: LoadCase,
         deflections: np.ndarray,
         reactions: np.ndarray,
-        cyclic_symmetry: Optional[CyclicSymmetry],
+        cyclic_symmetry: CyclicSymmetry | None,
     ):
         self.geometry = geometry
         self.load_case = load_case
@@ -106,8 +106,8 @@ class Result:
         return DeformedGeometry(self.geometry, scale=scale)
 
     def _make_cyclic_geometry(
-        self, geometry: Optional[Geometry] = None
-    ) -> List[Geometry | DeformedGeometry]:
+        self, geometry: Geometry | None = None
+    ) -> list[Geometry | DeformedGeometry]:
         if geometry is None:
             geometry = self.geometry
 
@@ -120,7 +120,7 @@ class Result:
     def plot(
         self,
         deformation_scale: float = 10.0,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         stress: bool = False,
         deflection: bool = False,
         pattern: bool = False,

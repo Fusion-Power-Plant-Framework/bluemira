@@ -72,7 +72,7 @@ class TestClipperOffset:
         _, ax = plt.subplots()
         ax.plot(coordinates.x, coordinates.z, color="k")
         colors = ["r", "g", "y"]
-        for offset_coordinates, c in zip(offsets, colors):
+        for offset_coordinates, c in zip(offsets, colors, strict=False):
             ax.plot(offset_coordinates.x, offset_coordinates.z, color=c)
         ax.set_aspect("equal")
 

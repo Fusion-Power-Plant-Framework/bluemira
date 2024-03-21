@@ -46,7 +46,7 @@ class TestSimpleABConstraintFuntions:
     def test_AxBConstraint(self):
         f_res = [-1.0, -1.0]
         df_res = [1.0, 0.1]
-        for v, s, f, df in zip(self.value, self.scale, f_res, df_res):
+        for v, s, f, df in zip(self.value, self.scale, f_res, df_res, strict=False):
             axb = self.constrint_setup(v, s, AxBConstraint)
             test_f = axb.f_constraint(self.vector)
             test_df = axb.df_constraint(self.vector)
@@ -58,7 +58,7 @@ class TestSimpleABConstraintFuntions:
     def test_L2NormConstraint(self):
         f_res = [0.0, 1.08]
         # df_res = [2.0, -0.16]
-        for v, s, f in zip(self.value, self.scale, f_res):
+        for v, s, f in zip(self.value, self.scale, f_res, strict=False):
             axb = self.constrint_setup(v, s, L2NormConstraint)
             test_f = axb.f_constraint(self.vector)
             test_df = axb.df_constraint(self.vector)
@@ -81,7 +81,7 @@ class TestEquilibriumInput:
         z_test = [8.0, 6.0]
         B_max = [5.0, 5.0]
         const = [-2.0, -2.0]
-        for x, z, b, c in zip(x_test, z_test, B_max, const):
+        for x, z, b, c in zip(x_test, z_test, B_max, const, strict=False):
             ax_mat = self.coilset.Bx_response(x, z, control=True)
             az_mat = self.coilset.Bz_response(x, z, control=True)
             bxp_vec = np.atleast_1d(self.eq.Bx(x, z))
@@ -108,7 +108,7 @@ class TestEquilibriumInput:
             11.99685790168689,
         ]
         constraint = [0.2, -0.2, 0.1, -0.1]
-        for b, r, c in zip(ib_bool, radius, constraint):
+        for b, r, c in zip(ib_bool, radius, constraint, strict=False):
             cmc = CurrentMidplanceConstraint(
                 eq=self.eq,
                 radius=r,
@@ -155,5 +155,5 @@ class TestEquilibriumInput:
         assert len(test_df_constraint[:, 0]) == len(self.vector)
         assert [
             test == pytest.approx(ref)
-            for test, ref in zip(test_f_constraint, ref_f_constraint)
+            for test, ref in zip(test_f_constraint, ref_f_constraint, strict=False)
         ]

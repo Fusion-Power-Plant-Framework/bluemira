@@ -3,8 +3,7 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-from functools import lru_cache
-from typing import Tuple
+from functools import cache
 from unittest import mock
 
 import matplotlib.pyplot as plt
@@ -42,7 +41,7 @@ def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
     return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
 
 
-@lru_cache(maxsize=None)
+@cache
 def make_cut_johner():
     """
     Make a wall shape and cut it below a (fictional) x-point.
@@ -55,13 +54,13 @@ def make_cut_johner():
     return cut_wire_below_z(johner_wire, 1 / 4)
 
 
-@lru_cache(maxsize=None)
+@cache
 def make_cut_polyspline():
     wall_wire = WallPolySpline().create_shape()
     return cut_wire_below_z(wall_wire, 1 / 4)
 
 
-@lru_cache(maxsize=None)
+@cache
 def make_mock_panels_johner():
     params = {
         "fw_a_max": {"value": 30, "unit": "degrees"},
@@ -71,7 +70,7 @@ def make_mock_panels_johner():
     return PanellingDesigner(params, wall_boundary=boundary).mock()
 
 
-@lru_cache(maxsize=None)
+@cache
 def make_panels_johner():
     params = {
         "fw_a_max": {"value": 30, "unit": "degrees"},
@@ -88,7 +87,7 @@ def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
     return make_polygon(coords_3d)
 
 
-def cut_polygon_vertically(shape: BluemiraWire) -> Tuple[BluemiraWire, BluemiraWire]:
+def cut_polygon_vertically(shape: BluemiraWire) -> tuple[BluemiraWire, BluemiraWire]:
     """Cut a polygon either side of a vertical line through it's centre."""
     centre_x = shape.center_of_mass[0]
     cutting_plane = BluemiraPlane((centre_x, 0, 0), (1, 0, 0))

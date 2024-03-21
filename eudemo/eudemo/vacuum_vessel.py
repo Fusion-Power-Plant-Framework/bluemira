@@ -8,8 +8,10 @@
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -27,10 +29,12 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     force_wire_to_spline,
 )
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 from eudemo.comp_managers import PortManagerMixin
 from eudemo.maintenance.duct_connection import pipe_pipe_join
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 class VacuumVessel(PortManagerMixin, ComponentManager):
@@ -47,7 +51,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             .shape.boundary[0]
         )
 
-    def add_ports(self, ports: Union[Component, List[Component]], n_TF: int):
+    def add_ports(self, ports: Component | list[Component], n_TF: int):
         """
         Add a series of ports to the vacuum vessel component tree.
         """
@@ -130,12 +134,12 @@ class VacuumVesselBuilder(Builder):
     VV = "VV"
     BODY = "Body"
     VOID = "Vessel voidspace"
-    param_cls: Type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
+    param_cls: type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         ivc_koz: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -190,7 +194,7 @@ class VacuumVesselBuilder(Builder):
 
         return body, vacuum
 
-    def build_xy(self, vv_face: BluemiraFace) -> List[PhysicalComponent]:
+    def build_xy(self, vv_face: BluemiraFace) -> list[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel.
         """

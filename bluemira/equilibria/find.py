@@ -10,10 +10,7 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from bluemira.equilibria.limiter import Limiter
+from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
@@ -29,6 +26,11 @@ from bluemira.geometry.coordinates import (
     get_area_2d,
     in_polygon,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.equilibria.limiter import Limiter
 
 __all__ = [
     "Lpoint",
@@ -110,7 +112,7 @@ class Lpoint(PsiPoint):
 
 def find_local_minima(
     f: npt.NDArray[np.float64],
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Finds all local minima in a 2-D function map
 
@@ -152,7 +154,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.flo
 
 def find_local_Bp_minima_cg(
     f_psi: RectBivariateSpline, x0: float, z0: float, radius: float
-) -> Union[None, List[float]]:
+) -> None | list[float]:
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
     conjugate gradient search.
@@ -196,7 +198,7 @@ def find_local_Bp_minima_cg(
 
 def drop_space_duplicates(
     points: Iterable, tol: float = X_TOLERANCE
-) -> List[npt.NDArray[np.float64]]:
+) -> list[npt.NDArray[np.float64]]:
     """
     Drop duplicates from a list of points if closer together than tol
     """
@@ -213,8 +215,8 @@ def drop_space_duplicates(
 
 
 def triage_OX_points(
-    f_psi: RectBivariateSpline, points: List[List[float]]
-) -> Tuple[List[Opoint], List[Xpoint]]:
+    f_psi: RectBivariateSpline, points: list[list[float]]
+) -> tuple[list[Opoint], list[Xpoint]]:
     """
     Triage the local Bp minima into O- and X-points: sort the field minima by second
     derivative.
@@ -261,10 +263,10 @@ def find_OX_points(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
-    limiter: Optional[Limiter] = None,
+    limiter: Limiter | None = None,
     *,
     field_cut_off: float = 1.0,
-) -> Tuple[List[Opoint], List[Union[Xpoint, Lpoint]]]:
+) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -322,7 +324,7 @@ def find_OX_points(
     i_local, j_local = find_local_minima(Bp2)
 
     points = []
-    for i, j in zip(i_local, j_local):
+    for i, j in zip(i_local, j_local, strict=False):
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:  # noqa: PLR2004
             continue  # Edge points uninteresting and mess up S calculation.
 
@@ -366,7 +368,7 @@ def find_OX_points(
         z_grid_edge = np.concatenate([z[0, :], z[:, 0], z[-1, :], z[:, -1]])
         x_points = [
             Lpoint(xi, zi, f_psi(xi, zi)[0][0])
-            for xi, zi in zip(x_grid_edge, z_grid_edge)
+            for xi, zi in zip(x_grid_edge, z_grid_edge, strict=False)
         ]
 
     x_op, z_op, psio = o_points[0]  # Primary O-point
@@ -431,7 +433,7 @@ def get_contours(
     z: npt.NDArray[np.float64],
     array: npt.NDArray[np.float64],
     value: float,
-) -> List[npt.NDArray[np.float64]]:
+) -> list[npt.NDArray[np.float64]]:
     """
     Get the contours of a value in continuous array.
 
@@ -461,9 +463,9 @@ def find_flux_surfs(
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
     psinorm: float,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
-) -> List[npt.NDArray[np.float64]]:
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
+) -> list[npt.NDArray[np.float64]]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
     the grid, separate sets of coordinates will be produced.
@@ -502,8 +504,8 @@ def find_flux_surf(
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
     psinorm: float,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
 ) -> npt.NDArray[np.float64]:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
@@ -652,13 +654,13 @@ def find_LCFS_separatrix(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
     rtol: float = 1e-3,
-) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
+) -> tuple[Coordinates, Coordinates | list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
@@ -762,7 +764,7 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
-def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Grid a smooth contour and get the outline of the cells it encompasses.
 
@@ -781,7 +783,7 @@ def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarra
         The z coordinates of the grid-coordinates
     """
     x_new, z_new = [], []
-    for i, (xi, zi) in enumerate(zip(x[:-1], z[:-1])):
+    for i, (xi, zi) in enumerate(zip(x[:-1], z[:-1], strict=False)):
         x_new.append(xi)
         z_new.append(zi)
         if not np.isclose(xi, x[i + 1]) and not np.isclose(zi, z[i + 1]):
@@ -807,8 +809,9 @@ def in_plasma(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
+    *,
     include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
     """

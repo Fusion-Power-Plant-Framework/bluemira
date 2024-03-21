@@ -13,8 +13,9 @@ indicates an error.
 
 import argparse
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Set, Tuple
+from typing import Any
 
 INDENT_SIZE = 2
 PROG = "format_warning_report"
@@ -36,7 +37,7 @@ class Warning:  # noqa: A001
         return f"{self.filename}:{self.lineno}: {self.category}: {self.message}"
 
 
-def parse_args(sys_args: List[str]) -> argparse.Namespace:
+def parse_args(sys_args: list[str]) -> argparse.Namespace:
     """Parse command line options."""
     parser = argparse.ArgumentParser(PROG, description=__doc__)
     parser.add_argument("report_file", help="path to .report.json to parse")
@@ -49,7 +50,7 @@ def parse_args(sys_args: List[str]) -> argparse.Namespace:
     return parser.parse_args(sys_args)
 
 
-def load_warnings(file_path: str) -> Set[Warning]:
+def load_warnings(file_path: str) -> set[Warning]:
     """Load a set of warnings from file."""
     with open(file_path) as f:
         data = json.load(f)
@@ -59,9 +60,9 @@ def load_warnings(file_path: str) -> Set[Warning]:
         return set()
 
 
-def format_warnings_list(warnings: Iterable[Warning]) -> List[str]:
+def format_warnings_list(warnings: Iterable[Warning]) -> list[str]:
     """Format the list of warnings into lines of markdown."""
-    whens: Dict[str, List[Warning]] = {}
+    whens: dict[str, list[Warning]] = {}
     for warning in warnings:
         try:
             whens[warning.when].append(warning)
@@ -75,7 +76,7 @@ def format_warnings_list(warnings: Iterable[Warning]) -> List[str]:
     return lines[:-1]  # we do not need a trailing new line
 
 
-def make_collapsable(md_lines: List[str], summary: str) -> List[str]:
+def make_collapsable(md_lines: list[str], summary: str) -> list[str]:
     """Surround the given lines in html to make them collapsable."""
     lines = [
         "<details>\n",
@@ -86,21 +87,21 @@ def make_collapsable(md_lines: List[str], summary: str) -> List[str]:
     return lines
 
 
-def elements_not_in(head: Iterable[Any], ref: Iterable[Any]) -> List:
+def elements_not_in(head: Iterable[Any], ref: Iterable[Any]) -> list:
     """Find the elements that are in head, but not ref."""
     return [head_el for head_el in head if head_el not in ref]
 
 
 def compare_warnings(
-    head_warnings: Set[Warning], ref_warnings: Set[Warning]
-) -> Tuple[List[Warning], List[Warning]]:
+    head_warnings: set[Warning], ref_warnings: set[Warning]
+) -> tuple[list[Warning], list[Warning]]:
     """Find new and fixed warnings in 'head' using 'ref' as baseline."""
     new_warnings = elements_not_in(head_warnings, ref_warnings)
     fixed_warnings = elements_not_in(ref_warnings, head_warnings)
     return new_warnings, fixed_warnings
 
 
-def format_warning_report(sys_args: List[str]) -> int:
+def format_warning_report(sys_args: list[str]) -> int:
     """Run the script."""
     inputs = parse_args(sys_args)
     warnings = load_warnings(inputs.report_file)

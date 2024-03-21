@@ -8,8 +8,6 @@
 Harmonics constraint functions.
 """
 
-from typing import Union
-
 import matplotlib.patches as patch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -56,7 +54,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         ref_harmonics: npt.NDArray[np.float64],
         r_t: float,
         sh_coil_names: list,
-        tolerance: Union[float, npt.NDArray] = None,
+        tolerance: float | npt.NDArray = None,
         constraint_type: str = "equality",
     ):
         if tolerance is None:

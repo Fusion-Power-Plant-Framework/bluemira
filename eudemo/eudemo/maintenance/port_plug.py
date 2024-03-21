@@ -10,12 +10,8 @@ Port plugs
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union
-
-if TYPE_CHECKING:
-    from bluemira.geometry.solid import BluemiraSolid
-
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -29,14 +25,19 @@ from bluemira.geometry.tools import boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.geometry.solid import BluemiraSolid
+
 
 def make_castellated_plug(
     face: BluemiraFace,
-    vec: Tuple[float, float, float],
+    vec: tuple[float, float, float],
     length: float,
-    offsets: Union[float, Iterable],
-    distances: Optional[Iterable] = None,
-    n_castellations: Optional[int] = None,
+    offsets: float | Iterable[float],
+    distances: Iterable[float] | None = None,
+    n_castellations: int | None = None,
 ) -> BluemiraSolid:
     """
     Make a castellated port plug.
@@ -80,7 +81,7 @@ def make_castellated_plug(
     else:
         raise ValueError("Length of offsets doesn't match distances/n_cast")
 
-    parameter_array = list(zip(dist_iter, off_iter))
+    parameter_array = list(zip(dist_iter, off_iter, strict=False))
     parameter_array.append((length, 0.0))
 
     base = face
@@ -105,7 +106,7 @@ def make_onion_layer_plug_void(
     tk_castellation: float,
     n_castellations: int,
     n_TF: int,
-) -> Tuple[List[BluemiraSolid], List[BluemiraSolid]]:
+) -> tuple[list[BluemiraSolid], list[BluemiraSolid]]:
     """
     Make geometries for castellated port plugs and voids for all ports.
 
@@ -201,12 +202,12 @@ class CryostatPortPlugBuilder(Builder):
     Cryostat port plug builder.
     """
 
-    param_cls: Type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
+    param_cls: type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, CryostatPortPlugBuilderParams],
-        build_config: Optional[Dict],
+        params: dict | ParameterFrame | CryostatPortPlugBuilderParams,
+        build_config: dict | None,
         outer_profiles: Iterable[BluemiraWire],
         cryostat_xz_boundary: BluemiraFace,
     ):
@@ -222,7 +223,7 @@ class CryostatPortPlugBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the Cryostat port plugs
         """
@@ -238,7 +239,7 @@ class CryostatPortPlugBuilder(Builder):
         )
 
         plug_comps, void_comps = [], []
-        for i, (plug, void) in enumerate(zip(plugs, voids)):
+        for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
             plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
             void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
@@ -273,12 +274,12 @@ class RadiationPortPlugBuilder(Builder):
     Radiation shield port plug builder.
     """
 
-    param_cls: Type[RadiationPortPlugBuilderParams] = RadiationPortPlugBuilderParams
+    param_cls: type[RadiationPortPlugBuilderParams] = RadiationPortPlugBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, RadiationPortPlugBuilderParams],
-        build_config: Optional[Dict],
+        params: dict | ParameterFrame | RadiationPortPlugBuilderParams,
+        build_config: dict | None,
         outer_profiles: Iterable[BluemiraWire],
         radiation_xz_boundary: BluemiraFace,
     ):
@@ -294,7 +295,7 @@ class RadiationPortPlugBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the radiation shield port plugs
         """
@@ -309,7 +310,7 @@ class RadiationPortPlugBuilder(Builder):
             self.params.n_TF.value,
         )
         plug_comps, void_comps = [], []
-        for i, (plug, void) in enumerate(zip(plugs, voids)):
+        for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
             plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
             void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")

@@ -874,7 +874,7 @@ class TestForceWireToSpline:
         wires = self.wires
         wires.sort(key=lambda wire: -wire.length)
         new_wires.sort(key=lambda wire: -wire.length)
-        for w, nw in zip(wires, new_wires):
+        for w, nw in zip(wires, new_wires, strict=False):
             np.testing.assert_almost_equal(w.length, nw.length, decimal=3)
 
     @mock.patch("bluemira.geometry.tools.bluemira_warn")

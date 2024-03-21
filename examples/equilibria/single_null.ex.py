@@ -96,7 +96,7 @@ dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99
 
 coils = []
 j = 1
-for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
+for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz, strict=False)):
     if j > 6:  # noqa: PLR2004
         j = 1
     ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
@@ -452,7 +452,7 @@ old_eq = deepcopy(eq)
 
 region_interpolators = {}
 pf_coils = coilset.get_coiltype("PF")
-for x, z, name in zip(pf_coils.x, pf_coils.z, pf_coils.name):
+for x, z, name in zip(pf_coils.x, pf_coils.z, pf_coils.name, strict=False):
     region = make_polygon(
         {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
         closed=True,
@@ -494,7 +494,7 @@ max_cs_currents = optimised_coilset.get_coiltype("CS").get_max_current()
 max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 
 for problem in [current_opt_problem_sof, current_opt_problem_eof]:
-    for pf_name, max_current in zip(pf_coil_names, max_pf_currents):
+    for pf_name, max_current in zip(pf_coil_names, max_pf_currents, strict=False):
         problem.eq.coilset[pf_name].resize(max_current)
         problem.eq.coilset[pf_name].fix_size()
         problem.eq.coilset[pf_name].discretisation = 0.3

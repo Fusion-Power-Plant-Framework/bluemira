@@ -14,7 +14,7 @@ import inspect
 import pprint
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum, auto
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import gmsh
 
@@ -22,6 +22,8 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
     from bluemira.base.components import Component
 
 
@@ -34,8 +36,8 @@ if TYPE_CHECKING:
 class DefaultMeshOptions:
     """Default mesh options"""
 
-    lcar: Optional[float] = None
-    physical_group: Optional[float] = None
+    lcar: float | None = None
+    physical_group: float | None = None
 
 
 class MeshTags(IntEnum):
@@ -90,7 +92,7 @@ class MeshOptions:
         self.modify(**kwargs)
 
     @property
-    def lcar(self) -> Union[float, None]:
+    def lcar(self) -> float | None:
         """
         Mesh size of points.
         """
@@ -101,7 +103,7 @@ class MeshOptions:
         self._options.lcar = val
 
     @property
-    def physical_group(self) -> Union[float, None]:
+    def physical_group(self) -> float | None:
         """
         Definition of physical groups.
         """
@@ -111,7 +113,7 @@ class MeshOptions:
     def physical_group(self, val: float):
         self._options.physical_group = val
 
-    def as_dict(self) -> dict[str, Union[float, None]]:
+    def as_dict(self) -> dict[str, float | None]:
         """
         Returns the instance as a dictionary.
         """
@@ -147,10 +149,10 @@ class Meshable:
         return self._mesh_options
 
     @mesh_options.setter
-    def mesh_options(self, value: Union[MeshOptions, Dict]):
+    def mesh_options(self, value: MeshOptions | dict):
         if isinstance(value, MeshOptions):
             self._mesh_options = value
-        elif isinstance(value, Dict):
+        elif isinstance(value, dict):
             if self.mesh_options is None:
                 self.mesh_options = MeshOptions()
             self.mesh_options.modify(**value)
@@ -179,7 +181,7 @@ class Mesh:
         self,
         modelname: str = "Mesh",
         terminal: int = 0,
-        meshfile: Optional[Union[str, List[str]]] = None,
+        meshfile: str | list[str] | None = None,
         logfile: str = "gmsh.log",
     ):
         self.modelname = modelname
@@ -190,7 +192,7 @@ class Mesh:
         self.logfile = logfile
 
     @staticmethod
-    def _check_meshfile(meshfile: Union[str, list]) -> List[str]:
+    def _check_meshfile(meshfile: str | list) -> list[str]:
         """
         Check the mesh file input.
         """
@@ -206,17 +208,17 @@ class Mesh:
         return meshfile
 
     @property
-    def meshfile(self) -> List[str]:
+    def meshfile(self) -> list[str]:
         """
         The path(s) to the file(s) containing the meshes.
         """
         return self._meshfile
 
     @meshfile.setter
-    def meshfile(self, meshfile: Union[str, List[str]]):
+    def meshfile(self, meshfile: str | list[str]):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj: Union[Component, Meshable], dim: int = 2):
+    def __call__(self, obj: Component | Meshable, dim: int = 2):
         """
         Generate the mesh and save it to file.
         """
@@ -354,7 +356,7 @@ class Mesh:
         buffer: dict,
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
-        tools: Optional[list] = None,
+        tools: list | None = None,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -506,7 +508,7 @@ class Mesh:
                     convert_f(item, dim)
 
     def get_gmsh_dict(
-        self, buffer: dict, file_format: Union[str, GmshFileType] = GmshFileType.DEFAULT
+        self, buffer: dict, file_format: str | GmshFileType = GmshFileType.DEFAULT
     ) -> dict[MeshTags, list]:
         """
         Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
@@ -663,12 +665,12 @@ class _FreeCADGmsh:
 
     @staticmethod
     def _fragment(
-        dim: Union[int, Iterable[int]] = (2, 1, 0),
-        all_ent: Optional[List[int]] = None,
-        tools: Optional[list] = None,
+        dim: int | Iterable[int] = (2, 1, 0),
+        all_ent: list[int] | None = None,
+        tools: list | None = None,
         remove_object: bool = True,
         remove_tool: bool = True,
-    ) -> Tuple[list[int], list[tuple], list[list[tuple]]]:
+    ) -> tuple[list[int], list[tuple], list[list[tuple]]]:
         if isinstance(dim, int):
             dim = [dim]
         if all_ent is None:
@@ -689,7 +691,7 @@ class _FreeCADGmsh:
         return all_ent, oo, oov
 
     @staticmethod
-    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: Optional[list] = None) -> dict:
+    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: list | None = None) -> dict:
         if oov is None:
             oov = []
 
@@ -718,7 +720,7 @@ class _FreeCADGmsh:
         gmsh.model.occ.synchronize()
 
     @staticmethod
-    def add_physical_group(dim, tags, name: Optional[str] = None):
+    def add_physical_group(dim, tags, name: str | None = None):
         tag = gmsh.model.addPhysicalGroup(dim, tags)
         if name is not None:
             gmsh.model.setPhysicalName(dim, tag, name)
@@ -732,7 +734,7 @@ class _FreeCADGmsh:
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 
-def _add_points(*point: Iterable) -> List:
+def _add_points(*point: Iterable) -> list:
     """
     Add gmsh model points
     """

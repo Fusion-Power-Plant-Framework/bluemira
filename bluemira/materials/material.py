@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, List, Optional, Union, get_type_hints
+from typing import Any, get_type_hints
 
 import asteval
 import matplotlib.pyplot as plt
@@ -115,12 +115,12 @@ class MaterialProperty:
 
     def __init__(
         self,
-        value: Union[float, str],
-        temp_max_kelvin: Optional[float] = None,
-        temp_min_kelvin: Optional[float] = None,
-        temp_max_celsius: Optional[float] = None,
-        temp_min_celsius: Optional[float] = None,
-        reference: Optional[str] = None,
+        value: float | str,
+        temp_max_kelvin: float | None = None,
+        temp_min_kelvin: float | None = None,
+        temp_max_celsius: float | None = None,
+        temp_min_celsius: float | None = None,
+        reference: str | None = None,
     ):
         if (temp_max_kelvin is not None or temp_min_kelvin is not None) and (
             temp_max_celsius is not None or temp_min_celsius is not None
@@ -148,8 +148,8 @@ class MaterialProperty:
     def __call__(
         self,
         temperature: float,
-        pressure: Optional[float] = None,
-        eps_vol: Optional[float] = None,
+        pressure: float | None = None,
+        eps_vol: float | None = None,
     ) -> float:
         """
         Evaluates the property at a given temperature, pressure, and/or eps_vol.
@@ -196,9 +196,7 @@ class MaterialProperty:
         return self.value
 
     @classmethod
-    def deserialise(
-        cls, prop_rep: Union[Dict[str, Any], float, str]
-    ) -> MaterialProperty:
+    def deserialise(cls, prop_rep: dict[str, Any] | float | str) -> MaterialProperty:
         """
         Deserialise the provided property representation.
 
@@ -239,7 +237,7 @@ class MaterialProperty:
             prop_dict["reference"] = self.reference
         return prop_dict
 
-    def _validate_temperature(self, temperature: Union[float, List[float], np.ndarray]):
+    def _validate_temperature(self, temperature: float | list[float] | np.ndarray):
         """
         Check that the property is valid for the requested temperature range.
 
@@ -273,7 +271,7 @@ class SerialisedMaterial:
     The class must provide attributes to be serialised as annotations.
     """
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Get a dictionary representation of the material.
 
@@ -292,13 +290,12 @@ class SerialisedMaterial:
         return {self.name: attr_dict}
 
     @classmethod
-    def from_dict(cls, name: str, materials_dict: Dict[str, Any]) -> SerialisedMaterial:
+    def from_dict(cls, name: str, materials_dict: dict[str, Any]) -> SerialisedMaterial:
         """
         Generate an instance of the material from a dictionary of materials.
 
         Returns
         -------
-        material : SerialisedMaterial
             The material.
         """
         mat_dict = materials_dict[name]
@@ -399,8 +396,8 @@ class Void(SerialisedMaterial, nmm.Material):
         self,
         name: str,
         temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
     ):
         super().__init__(
             material_tag=name,
@@ -423,7 +420,7 @@ class Void(SerialisedMaterial, nmm.Material):
         return self.name
 
     @staticmethod
-    def E(temperature: Optional[float] = None) -> float:  # noqa: N802, ARG004
+    def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
         Young's modulus.
 
@@ -439,7 +436,7 @@ class Void(SerialisedMaterial, nmm.Material):
         return 0.0
 
     @staticmethod
-    def mu(temperature: Optional[float] = None) -> float:  # noqa: ARG004
+    def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
         Poisson's ratio.
 
@@ -455,7 +452,7 @@ class Void(SerialisedMaterial, nmm.Material):
         return 0.0
 
     @staticmethod
-    def rho(temperature: Optional[float] = None) -> float:  # noqa: ARG004
+    def rho(temperature: float | None = None) -> float:  # noqa: ARG004
         """
         Density.
 
@@ -541,7 +538,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
 
     # Properties to interface with neutronics material maker
     name: str
-    elements: Dict[str, float]
+    elements: dict[str, float]
     density: MaterialProperty
     density_unit: str
     temperature_in_K: float  # noqa: N815
@@ -566,25 +563,25 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
     def __init__(
         self,
         name: str,
-        elements: Dict[str, float],
-        density: Optional[MaterialProperty] = None,
+        elements: dict[str, float],
+        density: MaterialProperty | None = None,
         density_unit: str = "kg/m3",
         temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[float] = None,
-        poissons_ratio: Optional[MaterialProperty] = None,
-        thermal_conductivity: Optional[MaterialProperty] = None,
-        youngs_modulus: Optional[MaterialProperty] = None,
-        specific_heat: Optional[MaterialProperty] = None,
-        coefficient_thermal_expansion: Optional[MaterialProperty] = None,
-        electrical_resistivity: Optional[MaterialProperty] = None,
-        magnetic_saturation: Optional[MaterialProperty] = None,
-        viscous_remanent_magnetisation: Optional[MaterialProperty] = None,
-        coercive_field: Optional[MaterialProperty] = None,
-        minimum_yield_stress: Optional[MaterialProperty] = None,
-        average_yield_stress: Optional[MaterialProperty] = None,
-        minimum_ultimate_tensile_stress: Optional[MaterialProperty] = None,
-        average_ultimate_tensile_stress: Optional[MaterialProperty] = None,
+        zaid_suffix: str | None = None,
+        material_id: float | None = None,
+        poissons_ratio: MaterialProperty | None = None,
+        thermal_conductivity: MaterialProperty | None = None,
+        youngs_modulus: MaterialProperty | None = None,
+        specific_heat: MaterialProperty | None = None,
+        coefficient_thermal_expansion: MaterialProperty | None = None,
+        electrical_resistivity: MaterialProperty | None = None,
+        magnetic_saturation: MaterialProperty | None = None,
+        viscous_remanent_magnetisation: MaterialProperty | None = None,
+        coercive_field: MaterialProperty | None = None,
+        minimum_yield_stress: MaterialProperty | None = None,
+        average_yield_stress: MaterialProperty | None = None,
+        minimum_ultimate_tensile_stress: MaterialProperty | None = None,
+        average_ultimate_tensile_stress: MaterialProperty | None = None,
     ):
         if density is None:
             raise MaterialsError("No density (value or T-function) specified.")
@@ -592,7 +589,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
             raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
 
-        if isinstance(density.value, (int, float)):
+        if isinstance(density.value, int | float):
             density_val = density.value
             density_equation = None
         else:
@@ -768,7 +765,7 @@ class Superconductor:
         b_max: float,
         t_min: float,
         t_max: float,
-        eps: Optional[float] = None,
+        eps: float | None = None,
         n: int = 101,
         m: int = 100,
     ):
@@ -1113,12 +1110,12 @@ class Liquid(SerialisedMaterial, nmm.Material):
         self,
         name: str,
         symbol: str,
-        density: Optional[MaterialProperty] = None,
+        density: MaterialProperty | None = None,
         density_unit: str = "kg/m3",
         temperature_in_K: float = T_DEFAULT,  # noqa: N803
         pressure_in_Pa: float = P_DEFAULT,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
     ):
         if density is None:
             raise MaterialsError("No density (value or T/P-function) specified.")
@@ -1126,7 +1123,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
             raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
 
-        if isinstance(density.value, (int, float)):
+        if isinstance(density.value, int | float):
             density_val = density.value
             density_equation = None
         else:
@@ -1161,7 +1158,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def rho(self, temperature: float, pressure: Optional[float] = None) -> float:
+    def rho(self, temperature: float, pressure: float | None = None) -> float:
         """
         Mass density in kg/m**3
         """
@@ -1176,14 +1173,14 @@ class Liquid(SerialisedMaterial, nmm.Material):
         return density
 
     @staticmethod
-    def E(temperature: Optional[float] = None) -> float:  # noqa: N802, ARG004
+    def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
         Youngs modulus (0 for all liquids)
         """
         return 0
 
     @staticmethod
-    def mu(temperature: Optional[float] = None) -> float:  # noqa: ARG004
+    def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
         Hmm... not sure about this one
         """
@@ -1284,12 +1281,12 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         volume_of_unit_cell_cm3: float,
         atoms_per_unit_cell: float,
         packing_fraction: float = 1.0,
-        enrichment: Optional[float] = None,
+        enrichment: float | None = None,
         temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
-        specific_heat: Optional[MaterialProperty] = None,
-        coefficient_thermal_expansion: Optional[MaterialProperty] = None,
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
+        specific_heat: MaterialProperty | None = None,
+        coefficient_thermal_expansion: MaterialProperty | None = None,
     ):
         self.is_enrichable = True
         try:
@@ -1337,7 +1334,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         return _try_calc_property(self, "specific_heat", temperature)
 
     def CTE(  # noqa: N802
-        self, temperature: float, eps_vol: Optional[float] = None
+        self, temperature: float, eps_vol: float | None = None
     ) -> float:
         """
         Mean coefficient of thermal expansion in 10**-6/T
@@ -1398,7 +1395,7 @@ class Plasma(SerialisedMaterial, nmm.Material):
     """
 
     name: str
-    isotopes: Dict[str, float]
+    isotopes: dict[str, float]
     density: MaterialProperty
     density_unit: str
     temperature_in_K: float  # noqa: N815
@@ -1408,12 +1405,12 @@ class Plasma(SerialisedMaterial, nmm.Material):
     def __init__(
         self,
         name: str,
-        isotopes: Dict[str, float],
-        density: Optional[MaterialProperty] = None,
+        isotopes: dict[str, float],
+        density: MaterialProperty | None = None,
         density_unit: str = "g/cm3",
-        temperature_in_K: Optional[float] = None,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
+        temperature_in_K: float | None = None,  # noqa: N803
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
     ):
         temperature_in_C = None  # noqa: N806
         if temperature_in_K is not None:
@@ -1422,7 +1419,7 @@ class Plasma(SerialisedMaterial, nmm.Material):
         if density is None:
             density = MaterialProperty(1e-6)
         density_val = None
-        if isinstance(density.value, (int, float)):
+        if isinstance(density.value, int | float):
             density_val = density.value
 
         super().__init__(
@@ -1446,14 +1443,14 @@ class Plasma(SerialisedMaterial, nmm.Material):
         return self.name
 
     @staticmethod
-    def E(temperature: Optional[float] = None) -> float:  # noqa: N802, ARG004
+    def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
         Young's modulus.
         """
         return 0
 
     @staticmethod
-    def mu(temperature: Optional[float] = None) -> float:  # noqa: ARG004
+    def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
         Poisson's ratio.
         """

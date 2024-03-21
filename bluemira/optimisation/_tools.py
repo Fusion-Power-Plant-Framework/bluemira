@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Collection of utility functions for the module."""
 
-from typing import Any, Callable, Iterable, Optional, Tuple, Union
+from collections.abc import Callable, Iterable
+from typing import Any
 
 import numpy as np
 from scipy.optimize._numdiff import (
@@ -15,17 +16,17 @@ from scipy.optimize._numdiff import (
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationError
 
-_FloatOrArray = Union[float, np.ndarray]
+_FloatOrArray = float | np.ndarray
 
 
 def approx_derivative(
     func: Callable[[np.ndarray], _FloatOrArray],
     x0: np.ndarray,
     method: str = "3-point",
-    rel_step: Optional[_FloatOrArray] = None,
-    f0: Optional[_FloatOrArray] = None,
-    bounds: Optional[Iterable[_FloatOrArray]] = (-np.inf, np.inf),
-    args: Optional[Tuple[Any, ...]] = (),
+    rel_step: _FloatOrArray | None = None,
+    f0: _FloatOrArray | None = None,
+    bounds: Iterable[_FloatOrArray] | None = (-np.inf, np.inf),
+    args: tuple[Any, ...] | None = (),
 ) -> np.ndarray:
     """
     Approximate the gradient of a function about a point.

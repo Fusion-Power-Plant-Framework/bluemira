@@ -7,7 +7,6 @@ import copy
 import re
 import tempfile
 from pathlib import Path
-from typing import List
 from unittest import mock
 
 import numpy as np
@@ -454,7 +453,7 @@ class TestPlasmodSolver:
         return Path(Path(__file__).parent, "data", file_name).read_text()
 
     @staticmethod
-    def _plasmod_run_subprocess_fake(command: List[str], **_):
+    def _plasmod_run_subprocess_fake(command: list[str], **_):
         """
         Fake a run of plasmod, outputting some sample results files.
 

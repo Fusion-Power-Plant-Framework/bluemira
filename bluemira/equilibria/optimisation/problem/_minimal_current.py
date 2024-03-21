@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -48,11 +47,11 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         eq: Equilibrium,
-        max_currents: Optional[npt.ArrayLike] = None,
+        max_currents: npt.ArrayLike | None = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
-        opt_parameters: Optional[Dict[str, float]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -63,7 +62,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self._constraints = [] if constraints is None else constraints
 
     def optimise(
-        self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True
+        self, x0: npt.NDArray | None = None, fixed_coils: bool = True
     ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem

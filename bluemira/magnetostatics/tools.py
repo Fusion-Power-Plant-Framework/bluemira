@@ -9,7 +9,7 @@ Just-in-time compilation and LowLevelCallable speed-up tools.
 """
 
 import warnings
-from typing import Callable, Iterable, List, Union
+from collections.abc import Callable, Iterable
 
 import numba as nb
 import numpy as np
@@ -57,7 +57,9 @@ def process_xyz_array(func):
             return func(cls, x[0], y[0], z[0])
         if len(x.shape) == 1:
             # 1-D array handling
-            return np.array([func(cls, xi, yi, zi) for xi, yi, zi in zip(x, y, z)]).T
+            return np.array([
+                func(cls, xi, yi, zi) for xi, yi, zi in zip(x, y, z, strict=False)
+            ]).T
         if len(x.shape) == 2:  # noqa: PLR2004
             # 2-D array handling
             m, n = x.shape
@@ -74,7 +76,7 @@ def process_xyz_array(func):
     return wrapper
 
 
-def process_coords_array(shape: Union[np.ndarray, Coordinates]) -> np.ndarray:
+def process_coords_array(shape: np.ndarray | Coordinates) -> np.ndarray:
     """
     Parse Coordinates or array to an array.
 
@@ -101,7 +103,7 @@ def process_coords_array(shape: Union[np.ndarray, Coordinates]) -> np.ndarray:
     return shape
 
 
-def process_to_coordinates(shape: Union[np.ndarray, dict, Coordinates]) -> Coordinates:
+def process_to_coordinates(shape: np.ndarray | dict | Coordinates) -> Coordinates:
     """
     Parse input to Coordinates
 
@@ -243,7 +245,7 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
 
 
 def n_integrate(
-    func: Callable, args: Iterable, bounds: List[Iterable[Union[int, float]]]
+    func: Callable, args: Iterable, bounds: list[Iterable[int | float]]
 ) -> float:
     """
     Utility for n-dimensional integration of a function between bounds. Easier

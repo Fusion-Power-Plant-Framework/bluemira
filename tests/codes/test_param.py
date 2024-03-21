@@ -22,6 +22,7 @@ class TestParameterMapping:
         zip(
             ["name", "mynewattr", "_frozen", "unit"],
             ["NewName", "Hello", ["custom", "list"], "MW"],
+            strict=False,
         ),
     )
     def test_no_keyvalue_change(self, attr, value):

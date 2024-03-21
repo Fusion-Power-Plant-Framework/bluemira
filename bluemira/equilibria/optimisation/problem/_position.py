@@ -4,8 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from typing import Dict, List, Optional, Tuple
-
 import numpy as np
 import numpy.typing as npt
 
@@ -76,12 +74,12 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
-        max_currents: Optional[npt.ArrayLike] = None,
+        max_currents: npt.ArrayLike | None = None,
         gamma=1e-8,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
-        opt_conditions: Optional[Dict[str, float]] = None,
-        opt_parameters: Optional[Dict[str, float]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -152,8 +150,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         return regularised_lsq_fom(currents * self.scale, a_mat, b_vec, self.gamma)[0]
 
     def get_mapped_state_bounds(
-        self, max_currents: Optional[npt.ArrayLike] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, max_currents: npt.ArrayLike | None = None
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get mapped bounds on the coilset state vector from the coil regions and
         maximum coil currents.

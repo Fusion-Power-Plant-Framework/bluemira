@@ -8,8 +8,6 @@
 PROCESS run functions
 """
 
-from typing import Optional
-
 import numpy as np
 from rich.progress import Progress, TextColumn
 
@@ -44,7 +42,7 @@ class Run(CodesTask):
         params: ProcessSolverParams,
         in_dat_path: str,
         binary: str = PROCESS_BINARY,
-        solver: Optional[str] = None,
+        solver: str | None = None,
     ):
         super().__init__(params, PROCESS_NAME)
 

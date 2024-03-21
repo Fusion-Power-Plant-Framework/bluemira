@@ -5,11 +5,13 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Designer for PF coils and its parameters."""
 
+from __future__ import annotations
+
 import json
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Iterable, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,12 +36,16 @@ from bluemira.equilibria.run import (
     PositionSettings,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import get_class_from_module, json_writer
 from eudemo.equilibria.tools import make_grid
-from eudemo.model_managers import EquilibriumManager
 from eudemo.pf_coils.tools import make_coil_mapper, make_coilset, make_pf_coil_path
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.geometry.wire import BluemiraWire
+    from eudemo.model_managers import EquilibriumManager
 
 
 @dataclass
@@ -104,8 +110,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
+        params: dict | ParameterFrame,
+        build_config: dict,
         equilibrium_manager: EquilibriumManager,
         tf_coil_boundary: BluemiraWire,
         keep_out_zones: Iterable[BluemiraFace],

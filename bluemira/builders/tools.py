@@ -10,7 +10,7 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 from bluemira.display.palettes import ColorPalette
 
@@ -60,8 +60,8 @@ __all__ = [
 
 def apply_component_display_options(
     phys_component: PhysicalComponent,
-    color: Union[Iterable, ColorPalette],
-    transparency: Optional[float] = None,
+    color: Iterable | ColorPalette,
+    transparency: float | None = None,
 ):
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
@@ -75,7 +75,7 @@ def apply_component_display_options(
         phys_component.display_cad_options.transparency = transparency
 
 
-def get_n_sectors(no_obj: int, degree: float = 360) -> Tuple[float, int]:
+def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
     """
     Get sector count and angle size for a given number of degrees of the reactor.
 
@@ -99,12 +99,12 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> Tuple[float, int]:
 
 
 def circular_pattern_component(
-    component: Union[bm_comp.Component, List[bm_comp.Component]],
+    component: bm_comp.Component | list[bm_comp.Component],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
-    origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
 ) -> list[bm_comp.Component]:
     """
@@ -160,7 +160,7 @@ def circular_pattern_component(
             )
             # assign each shape to each sector at index search_index_i
             # which should be the copy of the PhysicalComponent
-            for sector_index, shape in zip(sector_tree_indexs, shapes):
+            for sector_index, shape in zip(sector_tree_indexs, shapes, strict=False):
                 phy_comp = sector_index[search_index_i]
                 if not isinstance(phy_comp, bm_comp.PhysicalComponent):
                     raise ComponentError(
@@ -175,7 +175,7 @@ def circular_pattern_component(
 
 def pattern_revolved_silhouette(
     face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Pattern a silhouette with revolutions about the z-axis, inter-spaced with parallel
     gaps between solids.
@@ -217,7 +217,7 @@ def pattern_revolved_silhouette(
 
 def pattern_lofted_silhouette(
     face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Pattern a silhouette with lofts about the z-axis, inter-spaced with parallel
     gaps between solids.
@@ -313,7 +313,7 @@ def _order_shapes_anticlockwise(shapes):
     return list(np.array(shapes)[indices])
 
 
-def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> List[float]:
+def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]:
     """
     Get the radial coordinates of a wire's intersection points with a plane.
 
@@ -357,9 +357,9 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 def build_sectioned_xy(
     face: BluemiraFace,
-    plot_colour: Tuple[float],
-    material: Optional[SerialisedMaterial] = None,
-) -> List[PhysicalComponent]:
+    plot_colour: tuple[float],
+    material: SerialisedMaterial | None = None,
+) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
 
@@ -398,11 +398,11 @@ def build_sectioned_xyz(
     face: BluemiraFace,
     name: str,
     n_TF: int,
-    plot_colour: Tuple[float],
+    plot_colour: tuple[float],
     degree: float = 360,
     enable_sectioning: bool = True,
-    material: Optional[SerialisedMaterial] = None,
-) -> List[PhysicalComponent]:
+    material: SerialisedMaterial | None = None,
+) -> list[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component
 
@@ -443,7 +443,7 @@ def build_sectioned_xyz(
         face = [face]
     if isinstance(name, str):
         name = [name]
-    if isinstance(plot_colour, Tuple):
+    if isinstance(plot_colour, tuple):
         plot_colour = [plot_colour]
     if not isinstance(material, list):
         material = [material]
@@ -454,7 +454,7 @@ def build_sectioned_xyz(
         )
 
     bodies = []
-    for fac, nam, color, mat in zip(face, name, plot_colour, material):
+    for fac, nam, color, mat in zip(face, name, plot_colour, material, strict=False):
         shape = revolve_shape(
             fac,
             base=(0, 0, 0),
