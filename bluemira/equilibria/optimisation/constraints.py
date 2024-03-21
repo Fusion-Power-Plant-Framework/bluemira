@@ -125,8 +125,8 @@ class FieldConstraints(UpdateableConstraint):
         if len(tolerance) != len(x):
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
-        self.x = np.atleast_1d(x)
-        self.z = np.atleast_1d(z)
+        self.x = x
+        self.z = z
         self._args = {
             "ax_mat": None,
             "az_mat": None,
@@ -478,8 +478,8 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "equality",
     ):
-        self.x = np.atleast_1d(x)
-        self.z = np.atleast_1d(z)
+        self.x = x
+        self.z = z
         super().__init__(
             target_value,
             weights,
@@ -507,8 +507,8 @@ class RelativeMagneticConstraint(MagneticConstraint):
         f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
-        self.x = np.atleast_1d(x)
-        self.z = np.atleast_1d(z)
+        self.x = x
+        self.z = z
         self.ref_x = ref_x
         self.ref_z = ref_z
         super().__init__(
