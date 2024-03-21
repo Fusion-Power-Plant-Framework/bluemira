@@ -303,10 +303,23 @@ cross = wrap.cross
 
 def floatify(x: npt.ArrayLike) -> float:
     """
-    Avoid numpy warnings for float(x) for >0 rank scalars
+    Converts the np array or float into a float by returning
+    the first element or the element itself.
+
+    Notes
+    -----
+    This function aims to avoid numpy warnings for float(x) for >0 rank scalars
+    it emulates the functionality of float conversion
+
+    Raises
+    ------
+    ValueError
+        If array like object has more than 1 element
+    TypeError
+        If object is None
     """
     if x is None:
-        raise TypeError("argument must be a string or a real number, not 'NoneType'")
+        raise TypeError("The argument cannot be None")
     return np.asarray(x, dtype=float).item()
 
 
