@@ -860,7 +860,7 @@ class MagneticConstraintSet(ABC):
         i = 0
         for constraint in self.constraints:
             n = len(constraint)
-            self.background[i : i + n] = constraint.evaluate(self.eq)
+            self.background[i : i + n] = np.squeeze(constraint.evaluate(self.eq))
             i += n
 
     @property
