@@ -27,7 +27,6 @@ combine them.
 
 # %%
 from dataclasses import dataclass
-from typing import Dict
 
 import numpy as np
 
@@ -192,7 +191,7 @@ class PlasmaBuilder(Builder):
 
     param_cls = None
 
-    def __init__(self, wire: BluemiraWire, build_config: Dict):
+    def __init__(self, wire: BluemiraWire, build_config: dict):
         super().__init__(None, build_config)
         self.wire = wire
 

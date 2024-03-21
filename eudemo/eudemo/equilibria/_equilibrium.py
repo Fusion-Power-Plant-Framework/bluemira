@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from dataclasses import dataclass
-from typing import Dict, Union
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
@@ -41,7 +40,7 @@ class EquilibriumParams(ParameterFrame):
 
 
 def make_equilibrium(
-    _params: Union[EquilibriumParams, Dict],
+    _params: EquilibriumParams | dict,
     tf_coil_boundary: BluemiraWire,
     grid_settings: dict,
 ):
@@ -103,7 +102,7 @@ class ReferenceEquilibriumParams(ParameterFrame):
 
 
 def make_reference_equilibrium(
-    _params: Union[ReferenceEquilibriumParams, Dict],
+    _params: ReferenceEquilibriumParams | dict,
     tf_track: BluemiraWire,
     lcfs_shape: BluemiraWire,
     profiles: Profile,

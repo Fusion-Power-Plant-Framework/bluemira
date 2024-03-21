@@ -10,13 +10,16 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 __all__ = ["BluemiraPlacement"]
 
@@ -170,7 +173,7 @@ class BluemiraPlacement:
             f"angle: {self.angle})"
         )
 
-    def copy(self, label: Optional[str] = None) -> BluemiraPlacement:
+    def copy(self, label: str | None = None) -> BluemiraPlacement:
         """Make a copy of the BluemiraPlacement"""
         placement_copy = BluemiraPlacement(self.base, self.axis, self.angle)
         if label is not None:
@@ -179,7 +182,7 @@ class BluemiraPlacement:
             placement_copy.label = self.label
         return placement_copy
 
-    def deepcopy(self, label: Optional[str] = None) -> BluemiraPlacement:  # noqa: ARG002
+    def deepcopy(self, label: str | None = None) -> BluemiraPlacement:  # noqa: ARG002
         """Make a deepcopy of the BluemiraPlacement"""
         return self.copy()
 
@@ -200,7 +203,7 @@ class BluemiraPlacement:
         return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
 
     def extract_plane(
-        self, v1: Iterable[float], v2: Iterable[float], base: Optional[float] = None
+        self, v1: Iterable[float], v2: Iterable[float], base: float | None = None
     ) -> BluemiraPlane:
         """
         Return a plane identified by two vector given in the self placement

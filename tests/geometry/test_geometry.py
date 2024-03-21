@@ -327,10 +327,10 @@ class TestGeometry:
     def _compare_fc_bm(fc_shape, bm_shape):
         faces = bm_shape.boundary[0].boundary
         fc_faces = fc_shape.Shells[0].Faces
-        for f, fc in zip(faces, fc_faces):
+        for f, fc in zip(faces, fc_faces, strict=False):
             assert f.area == fc.Area
             assert f._orientation.value == fc.Orientation
-            for w, fw in zip(f.boundary, fc.Wires):
+            for w, fw in zip(f.boundary, fc.Wires, strict=False):
                 assert w.length == fw.Length
                 assert w._orientation.value == fw.Orientation
 
@@ -409,7 +409,7 @@ class TestGeometry:
         fc_result = cadapi.boolean_cut(solid2.shape, solid.shape)
         assert len(results) == len(fc_result) == 2
 
-        for fc_shape, bm_shape in zip(fc_result, results):
+        for fc_shape, bm_shape in zip(fc_result, results, strict=False):
             fc_shape.isValid()
             bm_shape.is_valid()
             self._compare_fc_bm(fc_shape, bm_shape)

@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """The API for the plasmod solver."""
 
+from collections.abc import Iterable
 from enum import auto
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -71,8 +72,8 @@ class Solver(CodesSolver):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Optional[Dict[str, Any]] = None,
+        params: dict | ParameterFrame,
+        build_config: dict[str, Any] | None = None,
     ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
@@ -105,7 +106,7 @@ class Solver(CodesSolver):
             "read_directory", self.build_config.get("directory", "./")
         )
 
-    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
+    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
         """
         Execute this plasmod solver.
 
@@ -167,7 +168,7 @@ class Solver(CodesSolver):
         """
         return interp1d(self._x_psi, profile_data, kind="linear")(self._x_phi)
 
-    def get_profile(self, profile: Union[str, Profiles]) -> np.ndarray:
+    def get_profile(self, profile: str | Profiles) -> np.ndarray:
         """
         Get a single plasmod profile.
 
@@ -199,8 +200,8 @@ class Solver(CodesSolver):
         return prof_data
 
     def get_profiles(
-        self, profiles: Iterable[Union[str, Profiles]]
-    ) -> Dict[Profiles, np.ndarray]:
+        self, profiles: Iterable[str | Profiles]
+    ) -> dict[Profiles, np.ndarray]:
         """
         Get a dictionary of plasmod profiles.
 

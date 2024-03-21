@@ -7,9 +7,10 @@
 
 import json
 import pprint
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Tuple, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -21,7 +22,7 @@ class ConfigParams:
     """Container for the global and local parameters of a `ReactorConfig`."""
 
     global_params: ParameterFrame
-    local_params: Dict
+    local_params: dict
 
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
@@ -93,8 +94,8 @@ class ReactorConfig:
 
     def __init__(
         self,
-        config_path: Union[str, Path, dict],
-        global_params_type: Type[_PfT],
+        config_path: str | Path | dict,
+        global_params_type: type[_PfT],
         warn_on_duplicate_keys: bool = False,
         warn_on_empty_local_params: bool = False,
         warn_on_empty_config: bool = False,
@@ -104,7 +105,7 @@ class ReactorConfig:
         self.warn_on_empty_config = warn_on_empty_config
 
         config_data = self._read_or_return(config_path)
-        if isinstance(config_path, (Path, str)):
+        if isinstance(config_path, Path | str):
             self._expand_paths_in_dict(config_data, Path(config_path).parent)
 
         self.config_data = config_data
@@ -211,8 +212,8 @@ class ReactorConfig:
         return _return
 
     @staticmethod
-    def _read_or_return(config_path: Union[str, Path, dict]) -> Dict:
-        if isinstance(config_path, (str, Path)):
+    def _read_or_return(config_path: str | Path | dict) -> dict:
+        if isinstance(config_path, str | Path):
             return ReactorConfig._read_json_file(config_path)
         if isinstance(config_path, dict):
             return config_path
@@ -222,7 +223,7 @@ class ReactorConfig:
         )
 
     @staticmethod
-    def _read_json_file(path: Union[Path, str]) -> dict:
+    def _read_json_file(path: Path | str) -> dict:
         with open(path) as f:
             return json.load(f)
 
@@ -248,7 +249,7 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
-    def _expand_paths_in_dict(self, d: Dict[str, Any], rel_path: Path):
+    def _expand_paths_in_dict(self, d: dict[str, Any], rel_path: Path):
         """
         Expand all file paths by replacing their values with the json file's contents.
 
@@ -268,7 +269,7 @@ class ReactorConfig:
 
     def _extract_and_expand_file_data_if_needed(
         self, value: Any, rel_path: Path
-    ) -> Tuple[Union[Any, dict], str]:
+    ) -> tuple[Any | dict, str]:
         """
         Returns the file data and the path to the file if value is a path.
 
@@ -299,7 +300,7 @@ class ReactorConfig:
         f_data = self._read_json_file(f_path)
         return f_data, f_path.parent
 
-    def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
+    def _extract(self, arg_keys: tuple[str], is_config: bool) -> dict:
         extracted = {}
 
         # this routine is designed not to copy any dict's while parsing

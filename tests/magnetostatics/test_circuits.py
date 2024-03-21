@@ -167,7 +167,7 @@ class TestArbitraryPlanarXSCircuit:
 
     @pytest.mark.parametrize(
         ("parameterisation", "inputs", "clockwise"),
-        zip(parameterisations, p_inputs, clockwises),
+        zip(parameterisations, p_inputs, clockwises, strict=False),
     )
     def test_circuits_are_continuous_and_chained(
         self, parameterisation, inputs, clockwise

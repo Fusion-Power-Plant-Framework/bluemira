@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions related to EUDEMO PF coils."""
 
-from typing import List
-
 import numpy as np
 
 from bluemira.base.constants import EPS
@@ -35,7 +33,7 @@ def make_solenoid(
     tk_cs_ins: float,
     tk_cs_cas: float,
     n_CS: int,
-) -> List[Coil]:
+) -> list[Coil]:
     """
     Make a set of solenoid coils in an EU-DEMO fashion. If n_CS is odd, the central
     module is twice the size of the others. If n_CS is even, all the modules are the
@@ -199,7 +197,7 @@ def make_coilset(
         delta,
     )
     pf_coils = []
-    for i, (x, z) in enumerate(zip(x_c, z_c)):
+    for i, (x, z) in enumerate(zip(x_c, z_c, strict=False)):
         coil = Coil(
             x,
             z,
@@ -260,7 +258,7 @@ def make_reference_coilset(
     x_c, z_c = _get_intersections_from_angles(tf_track, r_mid, 0.0, angles)
 
     pf_coils = []
-    for i, (x, z) in enumerate(zip(x_c, z_c)):
+    for i, (x, z) in enumerate(zip(x_c, z_c, strict=False)):
         coil = Coil(
             x,
             z,
@@ -274,7 +272,7 @@ def make_reference_coilset(
 
 
 def make_coil_mapper(
-    track: BluemiraWire, exclusion_zones: List[BluemiraFace], coils: List[Coil]
+    track: BluemiraWire, exclusion_zones: list[BluemiraFace], coils: list[Coil]
 ) -> PositionMapper:
     """
     Make a PositionMapper for the given coils.
@@ -311,7 +309,7 @@ def make_coil_mapper(
     # Check if multiple coils are on the same segment and split the segments and make
     # PathInterpolators
     interpolator_dict = {}
-    for segment, _bin in zip(segments, coil_bins):
+    for segment, _bin in zip(segments, coil_bins, strict=False):
         if len(_bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(_bin) == 1:
@@ -328,7 +326,7 @@ def make_coil_mapper(
             sub_segs = _split_segment(segment, split_positions)
 
             # Sorted coils
-            for coil, sub_seg in zip([_bin[i] for i in idx], sub_segs):
+            for coil, sub_seg in zip([_bin[i] for i in idx], sub_segs, strict=False):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
 
     return PositionMapper(interpolator_dict)

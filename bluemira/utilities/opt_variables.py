@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from dataclasses import MISSING, Field, field
 from pathlib import Path
-from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
+from typing import TYPE_CHECKING, TextIO, TypedDict
 
 import numpy as np
 from tabulate import tabulate
@@ -22,6 +22,9 @@ from typing_extensions import NotRequired
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.tools import json_writer
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class OptVarVarDictValueT(TypedDict, total=False):
@@ -33,7 +36,7 @@ class OptVarVarDictValueT(TypedDict, total=False):
     fixed: NotRequired[bool]
 
 
-VarDictT = Dict[str, OptVarVarDictValueT]
+VarDictT = dict[str, OptVarVarDictValueT]
 
 
 class OptVarDictT(TypedDict):
@@ -86,7 +89,7 @@ class OptVariable:
         lower_bound: float,
         upper_bound: float,
         fixed: bool = False,
-        description: Optional[str] = None,
+        description: str | None = None,
     ):
         self.name = name
 
@@ -130,7 +133,7 @@ class OptVariable:
         """
         return self.lower_bound + norm * (self.upper_bound - self.lower_bound)
 
-    def fix(self, value: Optional[float] = None):
+    def fix(self, value: float | None = None):
         """
         Fix the variable at a specified value. Ignores bounds.
 
@@ -145,9 +148,9 @@ class OptVariable:
 
     def adjust(
         self,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         strict_bounds: bool = True,
     ):
         """
@@ -276,7 +279,7 @@ class OptVariable:
         """The sum of two OptVariables is the sum of their values"""
         if isinstance(other, OptVariable):
             return self.value + other.value
-        if isinstance(other, (int, float, np.floating)):
+        if isinstance(other, int | float | np.floating):
             return self.value + other
         raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
@@ -284,7 +287,7 @@ class OptVariable:
         """The subtraction of two OptVariables is the subtraction of their values"""
         if isinstance(other, OptVariable):
             return self.value - other.value
-        if isinstance(other, (int, float, np.floating)):
+        if isinstance(other, int | float | np.floating):
             return self.value - other
         raise TypeError(f"Cannot subtract OptVariable with {type(other)}")
 
@@ -295,7 +298,7 @@ class OptVariable:
         """
         if isinstance(other, OptVariable):
             return self.value * other.value
-        if isinstance(other, (int, float, np.floating)):
+        if isinstance(other, int | float | np.floating):
             return self.value * other
         raise TypeError(f"Cannot multiply OptVariable with {type(other)}")
 
@@ -306,7 +309,7 @@ def ov(
     lower_bound: float,
     upper_bound: float,
     fixed: bool = False,
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> field:
     """Field factory for OptVariable"""
     return field(
@@ -376,9 +379,9 @@ class OptVariablesFrame:
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         fixed: bool = False,
         strict_bounds: bool = True,
     ):
@@ -415,7 +418,7 @@ class OptVariablesFrame:
 
     def adjust_variables(
         self,
-        var_dict: Optional[VarDictT] = None,
+        var_dict: VarDictT | None = None,
         strict_bounds=True,
     ):
         """
@@ -446,7 +449,7 @@ class OptVariablesFrame:
                     )
                 self.adjust_variable(k, *args, strict_bounds=strict_bounds)
 
-    def fix_variable(self, name: str, value: Optional[float] = None):
+    def fix_variable(self, name: str, value: float | None = None):
         """
         Fix a variable in the frame, removing it from optimisation but preserving a
         constant value.
@@ -481,7 +484,7 @@ class OptVariablesFrame:
             Array of normalised values
         """
         true_values = self.get_values_from_norm(x_norm)
-        for opv, value in zip(self._opt_vars, true_values):
+        for opv, value in zip(self._opt_vars, true_values, strict=False):
             opv.value = value
 
     def get_values_from_norm(self, x_norm):
@@ -504,7 +507,8 @@ class OptVariablesFrame:
                 f" {self.n_free_variables}."
             )
         return [
-            opv.from_normalised(v_norm) for opv, v_norm in zip(self._opt_vars, x_norm)
+            opv.from_normalised(v_norm)
+            for opv, v_norm in zip(self._opt_vars, x_norm, strict=False)
         ]
 
     @property
@@ -545,13 +549,13 @@ class OptVariablesFrame:
         # as you need the correct index for the variable
         return [i for i, v in enumerate(self) if v.fixed]
 
-    def as_dict(self) -> Dict[str, OptVarDictT]:
+    def as_dict(self) -> dict[str, OptVarDictT]:
         """
         Dictionary Representation of the frame
         """
         return {opv.name: opv.as_dict() for opv in self}
 
-    def as_serializable(self) -> Dict[str, OptVarSerializedT]:
+    def as_serializable(self) -> dict[str, OptVarSerializedT]:
         """
         Dictionary Representation of the frame
         """
@@ -569,7 +573,7 @@ class OptVariablesFrame:
         json_writer(self.as_serializable(), file, **kwargs)
 
     @classmethod
-    def from_json(cls, file: Union[Path, str, TextIO]) -> OptVariablesFrame:
+    def from_json(cls, file: Path | str | TextIO) -> OptVariablesFrame:
         """
         Create an OptVariablesFrame instance from a json file.
 
@@ -578,7 +582,7 @@ class OptVariablesFrame:
         file: Union[str, TextIO]
             The path to the file, or an open file handle that supports reading.
         """
-        if isinstance(file, (Path, str)):
+        if isinstance(file, Path | str):
             with open(file) as fh:
                 return cls.from_json(fh)
 
@@ -594,15 +598,13 @@ class OptVariablesFrame:
 
         Parameters
         ----------
-        keys: Optional[List]
-            table column keys
-        tablefmt: str (default="fancy_grid")
+        tablefmt:
             The format of the table - see
             https://github.com/astanin/python-tabulate#table-format
 
         Returns
         -------
-        tabulated: str
+        tabulated:
             The tabulated data
         """
         records = sorted([val.as_dict() for val in self], key=lambda x: x["name"])

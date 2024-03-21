@@ -10,10 +10,7 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -25,6 +22,11 @@ from bluemira.equilibria.constants import COIL_DISCR, NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import is_num
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from matplotlib.pyplot import Axes
 
 __all__ = ["Coil"]
 
@@ -132,10 +134,10 @@ class Coil(CoilFieldsMixin):
         self,
         x: float,
         z: float,
-        dx: Optional[float] = None,
-        dz: Optional[float] = None,
-        name: Optional[str] = None,
-        ctype: Union[str, CoilType] = CoilType.NONE,
+        dx: float | None = None,
+        dz: float | None = None,
+        name: str | None = None,
+        ctype: str | CoilType = CoilType.NONE,
         current: float = 0,
         j_max: float = np.nan,
         b_max: float = np.nan,
@@ -186,12 +188,12 @@ class Coil(CoilFieldsMixin):
 
     def plot(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         subcoil: bool = True,
         label: bool = False,
-        force: Optional[Iterable] = None,
+        force: Iterable | None = None,
         **kwargs,
-    ) -> Optional[CoilGroupPlotter]:
+    ) -> CoilGroupPlotter | None:
         """
         Plot a Coil
 
@@ -338,7 +340,7 @@ class Coil(CoilFieldsMixin):
         self.z = values[1]
 
     @ctype.setter
-    def ctype(self, value: Union[str, np.ndarray, CoilType]):
+    def ctype(self, value: str | np.ndarray | CoilType):
         """Set coil type"""
         self._ctype = (
             value
@@ -507,7 +509,7 @@ class Coil(CoilFieldsMixin):
             " longer change the coil size."
         )
 
-    def resize(self, current: Optional[float] = None):
+    def resize(self, current: float | None = None):
         """Resize coil given a current"""
         if not self._flag_sizefix:
             # Adjust the size of the coil
@@ -525,7 +527,7 @@ class Coil(CoilFieldsMixin):
             self._discretise()
             self._set_coil_attributes()
 
-    def _make_size(self, current: Optional[float] = None):
+    def _make_size(self, current: float | None = None):
         """
         Size the coil based on a current and a current density.
         """
@@ -539,7 +541,7 @@ class Coil(CoilFieldsMixin):
     @staticmethod
     def _make_boundary(
         x_c: float, z_c: float, dx: float, dz: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Makes the coil boundary vectors
 

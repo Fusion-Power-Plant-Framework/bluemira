@@ -105,7 +105,7 @@ def get_figure_scale_factor(figsize):
     dpi_size += 0.10 * dpi_size  # space for toolbar
 
     sf = 1  # scale factor
-    for ds, ss in zip(dpi_size, screen_size):
+    for ds, ss in zip(dpi_size, screen_size, strict=False):
         if ds > ss:
             scale_temp = ss / ds
             if scale_temp < sf:

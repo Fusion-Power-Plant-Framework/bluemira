@@ -9,7 +9,6 @@ Thermal shield builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -58,12 +57,12 @@ class VVTSBuilder(Builder):
 
     VVTS = "VVTS"
     VOID = "VVTS voidspace"
-    param_cls: Type[VVTSBuilderParams] = VVTSBuilderParams
+    param_cls: type[VVTSBuilderParams] = VVTSBuilderParams
 
     def __init__(
         self,
-        params: Union[VVTSBuilderParams, Dict],
-        build_config: Dict,
+        params: VVTSBuilderParams | dict,
+        build_config: dict,
         keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -83,7 +82,7 @@ class VVTSBuilder(Builder):
             xyz=self.build_xyz(vvts_face, vvts_void_face, degree=0),
         )
 
-    def build_xz(self, koz: BluemiraWire) -> Tuple[PhysicalComponent, ...]:
+    def build_xz(self, koz: BluemiraWire) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the vacuum vessel thermal shield.
 
@@ -122,7 +121,7 @@ class VVTSBuilder(Builder):
         return vvts, vvts_void
 
     @staticmethod
-    def build_xy(vvts_face: BluemiraFace) -> List[PhysicalComponent]:
+    def build_xy(vvts_face: BluemiraFace) -> list[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel thermal shield.
 
@@ -135,7 +134,7 @@ class VVTSBuilder(Builder):
 
     def build_xyz(
         self, vvts_face: BluemiraFace, vvts_void_face: BluemiraFace, degree: float = 360
-    ) -> List[PhysicalComponent]:
+    ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the vacuum vessel thermal shield
 
@@ -176,13 +175,13 @@ class CryostatTSBuilder(Builder):
     CRYO_TS = "Cryostat TS"
     VOID = "Cryostat voidspace"
 
-    param_cls: Type[CryostatTSBuilderParams] = CryostatTSBuilderParams
+    param_cls: type[CryostatTSBuilderParams] = CryostatTSBuilderParams
 
     def __init__(
         self,
-        params: Union[CryostatTSBuilderParams, Dict],
-        build_config: Dict,
-        pf_keep_out_zones: List[BluemiraWire],
+        params: CryostatTSBuilderParams | dict,
+        build_config: dict,
+        pf_keep_out_zones: list[BluemiraWire],
         tf_keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -206,7 +205,7 @@ class CryostatTSBuilder(Builder):
         )
 
     def build_xz(
-        self, pf_kozs: List[BluemiraWire], tf_koz: BluemiraWire
+        self, pf_kozs: list[BluemiraWire], tf_koz: BluemiraWire
     ) -> PhysicalComponent:
         """
         Build the x-z components of the thermal shield.
@@ -291,7 +290,7 @@ class CryostatTSBuilder(Builder):
 
     def build_xyz(
         self, cts_face: BluemiraFace, cts_void_face: BluemiraFace, degree: float = 360
-    ) -> List[PhysicalComponent]:
+    ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the thermal shield.
         """

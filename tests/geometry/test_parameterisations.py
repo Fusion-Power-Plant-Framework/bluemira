@@ -8,7 +8,6 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Type
 
 import numpy as np
 import pytest
@@ -40,7 +39,7 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
         TripleArc,
     ],
 )
-def test_read_write(param_class: Type[GeometryParameterisation]):
+def test_read_write(param_class: type[GeometryParameterisation]):
     tempdir = tempfile.mkdtemp()
     try:
         the_path = Path(tempdir, f"{param_class.__name__}.json")

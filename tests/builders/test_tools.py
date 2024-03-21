@@ -4,7 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from typing import Callable, ClassVar
+from collections.abc import Callable
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -61,7 +62,7 @@ class TestGetNSectors:
     }
 
     @pytest.mark.parametrize(
-        ("ttl", "sector_degree"), zip(np.arange(1, 16), sector_degree)
+        ("ttl", "sector_degree"), zip(np.arange(1, 16), sector_degree, strict=False)
     )
     @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
     def test_get_n_sectors_degree(self, degree, ttl, sector_degree):
@@ -330,7 +331,7 @@ class TestBuildSectioned:
         faces.append(BluemiraFace([offset, sec]))
 
     # failing test mark
-    face_sec = list(map(list, zip(*[faces + faces, enable_sectioning])))  # noqa: RUF012
+    face_sec = list(map(list, zip(*[faces + faces, enable_sectioning], strict=False)))  # noqa: RUF012
     face_sec[2] = pytest.param(
         faces[2],
         enable_sectioning[2],

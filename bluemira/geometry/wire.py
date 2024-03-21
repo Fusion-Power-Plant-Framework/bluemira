@@ -10,7 +10,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
@@ -25,6 +25,8 @@ from bluemira.geometry.error import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     import numpy as np
 
 __all__ = ["BluemiraWire"]
@@ -42,9 +44,7 @@ class BluemiraWire(BluemiraGeo):
         Label to assign to the wire
     """
 
-    def __init__(
-        self, boundary: List[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
-    ):
+    def __init__(self, boundary: list[cadapi.apiWire | BluemiraWire], label: str = ""):
         boundary_classes = [self.__class__, cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
@@ -87,7 +87,7 @@ class BluemiraWire(BluemiraGeo):
             return self._check_reverse(wire)
         return wire
 
-    def _get_wires(self) -> List[cadapi.apiWire]:
+    def _get_wires(self) -> list[cadapi.apiWire]:
         """list(apiWire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
@@ -125,7 +125,7 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: Optional[float] = None
+        self, ndiscr: int = 100, byedges: bool = False, dl: float | None = None
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
@@ -154,7 +154,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(points.T)
 
     def value_at(
-        self, alpha: Optional[float] = None, distance: Optional[float] = None
+        self, alpha: float | None = None, distance: float | None = None
     ) -> np.ndarray:
         """
         Get a point along the wire at a given parameterised length or length.
@@ -246,7 +246,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(vertexes)
 
     @property
-    def edges(self) -> Tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire]:
         """
         The ordered edges of the wire.
         """
@@ -255,7 +255,7 @@ class BluemiraWire(BluemiraGeo):
         ])
 
     @property
-    def wires(self) -> Tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the wire. By definition a tuple of itself.
         """

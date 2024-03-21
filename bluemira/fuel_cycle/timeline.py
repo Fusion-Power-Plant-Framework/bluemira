@@ -8,8 +8,6 @@
 Partially randomised fusion reactor load signal object and tools
 """
 
-from typing import Dict, List, Optional, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -101,7 +99,7 @@ class OperationPhase(Phase):
         n_DD_reactions: float,
         plasma_current: float,
         t_start: float = 0.0,
-        availability_strategy: Optional[OperationalAvailabilityStrategy] = None,
+        availability_strategy: OperationalAvailabilityStrategy | None = None,
     ):
         super().__init__()
         self.name = name
@@ -292,17 +290,17 @@ class Timeline:
 
     def __init__(
         self,
-        phase_names: List[str],
-        phase_durations: List[float],
-        load_factors: List[float],
-        n_pulses: List[int],
-        t_rampups: List[float],
-        t_flattops: List[float],
-        t_rampdowns: List[float],
-        t_min_downs: List[float],
-        n_DTs: List[int],
-        n_DDs: List[int],
-        plasma_currents: List[float],
+        phase_names: list[str],
+        phase_durations: list[float],
+        load_factors: list[float],
+        n_pulses: list[int],
+        t_rampups: list[float],
+        t_flattops: list[float],
+        t_rampdowns: list[float],
+        t_min_downs: list[float],
+        n_DTs: list[int],
+        n_DDs: list[int],
+        plasma_currents: list[float],
         load_factor: float,
         blk_dmg: float,
         blk_1_dpa: float,
@@ -335,7 +333,9 @@ class Timeline:
         self.mci = None
         phases = []
         j = 0  # Indexing for different length lists
-        for i, (name, duration) in enumerate(zip(phase_names, phase_durations)):
+        for i, (name, duration) in enumerate(
+            zip(phase_names, phase_durations, strict=False)
+        ):
             t_start = 0 if i == 0 else phases[i - 1].t[-1]
             if "Phase P" in name:
                 p = OperationPhase(
@@ -360,7 +360,7 @@ class Timeline:
         self.build_arrays(phases)
         self.component_damage()
 
-    def build_arrays(self, phases: List[Phase]):
+    def build_arrays(self, phases: list[Phase]):
         """
         Build the time arrays based on phases.
 
@@ -390,7 +390,7 @@ class Timeline:
         self.t *= S_TO_YR
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 
-    def to_dict(self) -> Dict[str, Union[np.ndarray, int]]:
+    def to_dict(self) -> dict[str, np.ndarray | int]:
         """
         Convert the timeline to a dictionary object for use in FuelCycle.
         """

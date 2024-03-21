@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
-from typing import Any, Mapping, TextIO, Type
+from typing import TYPE_CHECKING, Any, TextIO
 
 import fortranformat as ff
 
@@ -27,7 +27,10 @@ from bluemira.codes.plasmod.mapping import (
     TransportModel,
 )
 
-MODEL_MAP: Mapping[str, Type[enum.Enum]] = {
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+MODEL_MAP: Mapping[str, type[enum.Enum]] = {
     "i_impmodel": ImpurityModel,
     "i_modeltype": TransportModel,
     "i_equiltype": EquilibriumModel,
@@ -217,7 +220,7 @@ class PlasmodInputs:
             setattr(self, model, enum_value)
 
     @staticmethod
-    def _convert_value_to_enum(enum_cls: Type[enum.Enum], value: Any) -> enum.Enum:
+    def _convert_value_to_enum(enum_cls: type[enum.Enum], value: Any) -> enum.Enum:
         """
         Attempts to convert a value to an enum value of the given class.
 

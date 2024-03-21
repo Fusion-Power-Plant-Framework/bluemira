@@ -8,7 +8,6 @@ Defines the 'Teardown' stage for the plasmod solver.
 """
 
 from pathlib import Path
-from typing import Union
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
@@ -89,7 +88,7 @@ class Teardown(CodesTeardown):
             Path(self.read_directory, self.profiles_file),
         )
 
-    def _get_data(self, output_file: Union[str, Path], profiles_file: Union[str, Path]):
+    def _get_data(self, output_file: str | Path, profiles_file: str | Path):
         """
         Get data for read or run modes
         """

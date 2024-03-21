@@ -12,20 +12,10 @@ import datetime
 import functools
 import inspect
 import json
+from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Any
 from warnings import warn
 
 import numba as nb
@@ -93,7 +83,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):
+    def default(self, obj: BluemiraGeo | np.ndarray | Any):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -230,7 +220,7 @@ def closed_wire_wrapper(drop_closure_point: bool) -> BluemiraWire:
 
     def decorator(func: Callable) -> BluemiraWire:
         def wrapper(
-            points: Union[list, np.ndarray, Dict], label: str = "", closed: bool = False
+            points: list | np.ndarray | dict, label: str = "", closed: bool = False
         ) -> BluemiraWire:
             points = Coordinates(points)
             if points.closed:
@@ -255,7 +245,7 @@ def closed_wire_wrapper(drop_closure_point: bool) -> BluemiraWire:
 
 @closed_wire_wrapper(drop_closure_point=True)
 def make_polygon(
-    points: Union[list, np.ndarray],
+    points: list | np.ndarray,
     label: str = "",  # noqa: ARG001
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
@@ -287,7 +277,7 @@ def make_polygon(
 
 @closed_wire_wrapper(drop_closure_point=False)
 def make_bezier(
-    points: Union[list, np.ndarray],
+    points: list | np.ndarray,
     label: str = "",  # noqa: ARG001
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
@@ -317,12 +307,12 @@ def make_bezier(
 
 
 def make_bspline(
-    poles: Union[list, np.ndarray],
-    mults: Union[list, np.ndarray],
-    knots: Union[list, np.ndarray],
+    poles: list | np.ndarray,
+    mults: list | np.ndarray,
+    knots: list | np.ndarray,
     periodic: bool,
     degree: int,
-    weights: Union[list, np.ndarray],
+    weights: list | np.ndarray,
     check_rational: bool,
     label: str = "",
 ) -> BluemiraWire:
@@ -373,11 +363,11 @@ def _make_polygon_fallback(
 @fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
 @log_geometry_on_failure
 def interpolate_bspline(
-    points: Union[list, np.ndarray],
+    points: list | np.ndarray,
     label: str = "",
     closed: bool = False,
-    start_tangent: Optional[Iterable] = None,
-    end_tangent: Optional[Iterable] = None,
+    start_tangent: Iterable | None = None,
+    end_tangent: Iterable | None = None,
 ) -> BluemiraWire:
     """
     Make a bspline from a set of points.
@@ -472,10 +462,10 @@ def force_wire_to_spline(
 
 def make_circle(
     radius: float = 1.0,
-    center: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    center: tuple[float, float, float] = (0.0, 0.0, 0.0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
-    axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -510,7 +500,7 @@ def make_circle_arc_3P(  # noqa: N802
     p1: Iterable[float],
     p2: Iterable[float],
     p3: Iterable[float],
-    axis: Optional[Tuple[float, float, float]] = None,
+    axis: tuple[float, float, float] | None = None,
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -535,11 +525,11 @@ def make_circle_arc_3P(  # noqa: N802
 
 
 def make_ellipse(
-    center: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    center: tuple[float, float, float] = (0.0, 0.0, 0.0),
     major_radius: float = 2.0,
     minor_radius: float = 1.0,
-    major_axis: Tuple[float, float, float] = (1, 0, 0),
-    minor_axis: Tuple[float, float, float] = (0, 1, 0),
+    major_axis: tuple[float, float, float] = (1, 0, 0),
+    minor_axis: tuple[float, float, float] = (0, 1, 0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
     label: str = "",
@@ -760,8 +750,8 @@ def convex_hull_wires_2d(
 # # =============================================================================
 def revolve_shape(
     shape: BluemiraGeo,
-    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ) -> BluemiraGeo:
@@ -810,7 +800,7 @@ def revolve_shape(
 
 
 def extrude_shape(
-    shape: BluemiraGeo, vec: Tuple[float, float, float], label=""
+    shape: BluemiraGeo, vec: tuple[float, float, float], label=""
 ) -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
@@ -835,12 +825,12 @@ def extrude_shape(
 
 
 def sweep_shape(
-    profiles: Union[BluemiraWire, Iterable[BluemiraWire]],
+    profiles: BluemiraWire | Iterable[BluemiraWire],
     path: BluemiraWire,
     solid: bool = True,
     frenet: bool = True,
     label: str = "",
-) -> Union[BluemiraSolid, BluemiraShell]:
+) -> BluemiraSolid | BluemiraShell:
     """
     Sweep a profile along a path.
 
@@ -937,8 +927,8 @@ def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
 
 def distance_to(
-    geo1: Union[Iterable[float], BluemiraGeo], geo2: Union[Iterable[float], BluemiraGeo]
-) -> Tuple[float, List[Tuple[float, float, float]]]:
+    geo1: Iterable[float] | BluemiraGeo, geo2: Iterable[float] | BluemiraGeo
+) -> tuple[float, list[tuple[float, float, float]]]:
     """
     Calculate the distance between two BluemiraGeos.
 
@@ -965,7 +955,7 @@ def distance_to(
 
 def split_wire(
     wire: BluemiraWire, vertex: Iterable[float], tolerance: float = EPS * 10
-) -> Tuple[Union[None, BluemiraWire], Union[None, BluemiraWire]]:
+) -> tuple[None | BluemiraWire, None | BluemiraWire]:
     """
     Split a wire at a given vertex.
 
@@ -1000,7 +990,7 @@ def split_wire(
 
 def slice_shape(
     shape: BluemiraGeo, plane: BluemiraPlane
-) -> Union[List[np.ndarray], None, List[BluemiraWire]]:
+) -> list[np.ndarray] | None | list[BluemiraWire]:
     """
     Calculate the plane intersection points with an object
 
@@ -1039,11 +1029,11 @@ def slice_shape(
 
 def circular_pattern(
     shape: BluemiraGeo,
-    origin: Tuple[float, float, float] = (0, 0, 0),
-    direction: Tuple[float, float, float] = (0, 0, 1),
+    origin: tuple[float, float, float] = (0, 0, 0),
+    direction: tuple[float, float, float] = (0, 0, 1),
     degree: float = 360,
     n_shapes: int = 10,
-) -> List[BluemiraGeo]:
+) -> list[BluemiraGeo]:
     """
     Make a equally spaced circular pattern of shapes.
 
@@ -1106,7 +1096,7 @@ def mirror_shape(
 # # Save functions
 # # =============================================================================
 def save_as_STP(
-    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]],
+    shapes: BluemiraGeo | Iterable[BluemiraGeo],
     filename: str,
     unit_scale: str = "metre",
     **kwargs,
@@ -1132,10 +1122,10 @@ def save_as_STP(
 
 
 def save_cad(
-    shapes: Union[BluemiraGeo, List[BluemiraGeo]],
+    shapes: BluemiraGeo | list[BluemiraGeo],
     filename: str,
-    cad_format: Union[str, cadapi.CADFileType] = "stp",
-    names: Optional[Union[str, List[str]]] = None,
+    cad_format: str | cadapi.CADFileType = "stp",
+    names: str | list[str] | None = None,
     **kwargs,
 ):
     """
@@ -1375,8 +1365,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
 
 def boolean_cut(
-    shape: BluemiraGeo, tools: Union[BluemiraGeo, Iterable[BluemiraGeo]]
-) -> Union[BluemiraGeo, List[BluemiraGeo]]:
+    shape: BluemiraGeo, tools: BluemiraGeo | Iterable[BluemiraGeo]
+) -> BluemiraGeo | list[BluemiraGeo]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1409,8 +1399,8 @@ def boolean_cut(
 
 
 def boolean_fragments(
-    shapes: List[BluemiraSolid], tolerance: float = 0.0
-) -> Tuple[BluemiraCompound, List[List[BluemiraSolid]]]:
+    shapes: list[BluemiraSolid], tolerance: float = 0.0
+) -> tuple[BluemiraCompound, list[list[BluemiraSolid]]]:
     """
     Split a list of shapes into their Boolean fragments.
 
@@ -1514,7 +1504,7 @@ def serialize_shape(shape: BluemiraGeo):
     raise NotImplementedError(f"Serialization non implemented for {type_}")
 
 
-def deserialize_shape(buffer: dict) -> Optional[Union[BluemiraGeo, BluemiraWire]]:
+def deserialize_shape(buffer: dict) -> BluemiraGeo | None:
     """
     Deserialize a BluemiraGeo object obtained from serialize_shape.
 
@@ -1529,7 +1519,7 @@ def deserialize_shape(buffer: dict) -> Optional[Union[BluemiraGeo, BluemiraWire]
     """
     supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
-    def _extract_mesh_options(shape_dict: dict) -> Optional[meshing.MeshOptions]:
+    def _extract_mesh_options(shape_dict: dict) -> meshing.MeshOptions | None:
         mesh_options = None
         if "lcar" in shape_dict:
             mesh_options = meshing.MeshOptions()
@@ -1539,9 +1529,7 @@ def deserialize_shape(buffer: dict) -> Optional[Union[BluemiraGeo, BluemiraWire]
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
-    def _extract_shape(
-        shape_dict: dict, shape_type: Type[BluemiraGeo]
-    ) -> Union[BluemiraGeo, BluemiraWire]:
+    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeo]) -> BluemiraGeo:
         label = shape_dict["label"]
         boundary = shape_dict["boundary"]
 
@@ -1576,7 +1564,7 @@ def deserialize_shape(buffer: dict) -> Optional[Union[BluemiraGeo, BluemiraWire]
 # # =============================================================================
 # # shape utils
 # # =============================================================================
-def get_shape_by_name(shape: BluemiraGeo, name: str) -> List[BluemiraGeo]:
+def get_shape_by_name(shape: BluemiraGeo, name: str) -> list[BluemiraGeo]:
     """
     Search through the boundary of the shape and get any shapes with a label
     corresponding to the provided name. Includes the shape itself if the name matches

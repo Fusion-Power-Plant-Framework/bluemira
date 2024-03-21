@@ -14,7 +14,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,6 +50,8 @@ from bluemira.equilibria.solve import (
 from bluemira.optimisation import Algorithm, AlgorithmType
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.grid import Grid
     from bluemira.equilibria.limiter import Limiter
@@ -85,11 +87,11 @@ class Snapshot:
 
     eq: MHDState
     coilset: CoilSet
-    constraints: Optional[CoilsetOptimisationProblem] = None
-    profiles: Optional[Profile] = None
-    optimisation_result: Optional[CoilsetOptimiserResult] = None
-    limiter: Optional[Limiter] = None
-    tfcoil: Optional[Coordinates] = None
+    constraints: CoilsetOptimisationProblem | None = None
+    profiles: Profile | None = None
+    optimisation_result: CoilsetOptimiserResult | None = None
+    limiter: Limiter | None = None
+    tfcoil: Coordinates | None = None
 
     def __post_init__(self):
         """Copy some variables on initialisation"""
@@ -105,10 +107,10 @@ class Snapshot:
 class BreakdownCOPSettings:
     """Breakdown settings for PulsedCoilsetDesign"""
 
-    problem: Type[BreakdownCOP] = BreakdownCOP
-    strategy: Type[BreakdownZoneStrategy] = CircularZoneStrategy
+    problem: type[BreakdownCOP] = BreakdownCOP
+    strategy: type[BreakdownZoneStrategy] = CircularZoneStrategy
     algorithm: AlgorithmType = Algorithm.COBYLA
-    opt_conditions: Dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 5000, "ftol_rel": 1e-10}
     )
     B_stray_con_tol: float = 1e-8
@@ -119,15 +121,15 @@ class BreakdownCOPSettings:
 class EQSettings:
     """Equilibrium settings for PulsedCoilsetDesign"""
 
-    problem: Type[CoilsetOptimisationProblem] = MinimalCurrentCOP
+    problem: type[CoilsetOptimisationProblem] = MinimalCurrentCOP
     convergence: ConvergenceCriterion = field(
         default_factory=lambda: DudsonConvergence(1e-2)
     )
     algorithm: AlgorithmType = Algorithm.SLSQP
-    opt_conditions: Dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 1000, "ftol_rel": 1e-6}
     )
-    opt_parameters: Dict[str, Any] = field(
+    opt_parameters: dict[str, Any] = field(
         default_factory=lambda: {"initial_step": 0.03}
     )
     coil_mesh_size: float = 0.3
@@ -140,9 +142,9 @@ class EQSettings:
 class PositionSettings:
     """Position optimiser settings"""
 
-    problem: Type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP
+    problem: type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP
     algorithm: AlgorithmType = Algorithm.COBYLA
-    opt_conditions: Dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )
 
@@ -218,21 +220,21 @@ class PulsedCoilsetDesign(ABC):
         params: ParameterFrame,
         coilset: CoilSet,
         grid: Grid,
-        equilibrium_constraints: List[MagneticConstraint],
+        equilibrium_constraints: list[MagneticConstraint],
         profiles: Profile,
-        breakdown_settings: Optional[Union[Dict, BreakdownCOPSettings]] = None,
-        equilibrium_settings: Optional[Union[Dict, EQSettings]] = None,
+        breakdown_settings: dict | BreakdownCOPSettings | None = None,
+        equilibrium_settings: dict | EQSettings | None = None,
         # Remove in v2
-        breakdown_strategy_cls: Optional[Type[BreakdownZoneStrategy]] = None,
-        breakdown_problem_cls: Optional[Type[BreakdownCOP]] = None,
-        breakdown_optimiser: Optional[Optimiser] = None,
-        equilibrium_problem_cls: Optional[Type[CoilsetOptimisationProblem]] = None,
-        equilibrium_optimiser: Optional[Optimiser] = None,
-        equilibrium_convergence: Optional[ConvergenceCriterion] = None,
+        breakdown_strategy_cls: type[BreakdownZoneStrategy] | None = None,
+        breakdown_problem_cls: type[BreakdownCOP] | None = None,
+        breakdown_optimiser: Optimiser | None = None,
+        equilibrium_problem_cls: type[CoilsetOptimisationProblem] | None = None,
+        equilibrium_optimiser: Optimiser | None = None,
+        equilibrium_convergence: ConvergenceCriterion | None = None,
         # eos
-        current_opt_constraints: Optional[List[UpdateableConstraint]] = None,
-        coil_constraints: Optional[List[UpdateableConstraint]] = None,
-        limiter: Optional[Limiter] = None,
+        current_opt_constraints: list[UpdateableConstraint] | None = None,
+        coil_constraints: list[UpdateableConstraint] | None = None,
+        limiter: Limiter | None = None,
     ):
         self.snapshots = {}
         self.params = PulsedCoilsetDesignFrame.from_frame(params)
@@ -345,7 +347,7 @@ class PulsedCoilsetDesign(ABC):
         return self.__bd_settings
 
     @bd_settings.setter
-    def bd_settings(self, value: Optional[Union[Dict, BreakdownCOPSettings]] = None):
+    def bd_settings(self, value: dict | BreakdownCOPSettings | None = None):
         """Breakdown COP settings."""
         if value is None:
             self.__bd_settings = BreakdownCOPSettings()
@@ -364,7 +366,7 @@ class PulsedCoilsetDesign(ABC):
         return self.__eq_settings
 
     @eq_settings.setter
-    def eq_settings(self, value: Optional[Union[EQSettings, Dict]] = None):
+    def eq_settings(self, value: EQSettings | dict | None = None):
         """Equilibrium COP settings."""
         if value is None:
             self.__eq_settings = EQSettings()
@@ -379,7 +381,7 @@ class PulsedCoilsetDesign(ABC):
         eq: MHDState,
         coilset: CoilSet,
         problem: CoilsetOptimisationProblem,
-        profiles: Optional[Profile] = None,
+        profiles: Profile | None = None,
     ):
         """Take a snapshot of the pulse."""
         if name in self.snapshots:
@@ -472,7 +474,7 @@ class PulsedCoilsetDesign(ABC):
             eq_constraints=[
                 deepcopy(con)
                 for con in self.eq_constraints
-                if not isinstance(con, (PsiConstraint, PsiBoundaryConstraint))
+                if not isinstance(con, PsiConstraint | PsiBoundaryConstraint)
             ],
         )
 
@@ -489,8 +491,8 @@ class PulsedCoilsetDesign(ABC):
         self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
 
     def calculate_sof_eof_fluxes(
-        self, psi_premag: Optional[float] = None
-    ) -> Tuple[float, float]:
+        self, psi_premag: float | None = None
+    ) -> tuple[float, float]:
         """Calculate the SOF and EOF plasma boundary fluxes."""
         if psi_premag is None:
             if self.BREAKDOWN not in self.snapshots:
@@ -514,7 +516,7 @@ class PulsedCoilsetDesign(ABC):
 
     def get_sof_eof_opt_problems(
         self, psi_sof: float, psi_eof: float
-    ) -> List[CoilsetOptimisationProblem]:
+    ) -> list[CoilsetOptimisationProblem]:
         """Get start of flat top and end of flat top optimisation problems."""
         eq_ref = self.snapshots[self.EQ_REF].eq
         max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
@@ -534,7 +536,7 @@ class PulsedCoilsetDesign(ABC):
             eq_constraints = deepcopy(self.eq_constraints)
             for constraints in (eq_constraints, current_constraints):
                 for con in constraints:
-                    if isinstance(con, (PsiBoundaryConstraint, PsiConstraint)):
+                    if isinstance(con, PsiBoundaryConstraint | PsiConstraint):
                         con.target_value = psi_boundary / (2 * np.pi)
 
             opt_problems.append(
@@ -549,8 +551,8 @@ class PulsedCoilsetDesign(ABC):
         self,
         eq: Equilibrium,
         max_currents: npt.NDArray[np.float64],
-        current_constraints: Optional[List[UpdateableConstraint]],
-        eq_constraints: List[MagneticConstraint],
+        current_constraints: list[UpdateableConstraint] | None,
+        eq_constraints: list[MagneticConstraint],
     ) -> CoilsetOptimisationProblem:
         if self.eq_settings.problem == MinimalCurrentCOP:
             constraints = eq_constraints
@@ -602,7 +604,7 @@ class PulsedCoilsetDesign(ABC):
         problem_names: Iterable[str] = (SOF, EOF),
     ):
         """Converge equilibrium optimisation problems and take snapshots."""
-        for snap, problem in zip(problem_names, sub_opt_problems):
+        for snap, problem in zip(problem_names, sub_opt_problems, strict=False):
             eq = problem.eq
             self.converge_equilibrium(eq, problem)
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
@@ -702,25 +704,25 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         coilset: CoilSet,
         position_mapper: PositionMapper,
         grid: Grid,
-        equilibrium_constraints: List[MagneticConstraint],
+        equilibrium_constraints: list[MagneticConstraint],
         profiles: Profile,
-        breakdown_settings: Optional[Union[Dict, BreakdownCOPSettings]] = None,
-        equilibrium_settings: Optional[Union[Dict, EQSettings]] = None,
+        breakdown_settings: dict | BreakdownCOPSettings | None = None,
+        equilibrium_settings: dict | EQSettings | None = None,
         # Remove in v2
-        breakdown_strategy_cls: Optional[Type[BreakdownZoneStrategy]] = None,
-        breakdown_problem_cls: Optional[Type[BreakdownCOP]] = None,
-        breakdown_optimiser: Optional[Optimiser] = None,
-        equilibrium_problem_cls: Optional[Type[CoilsetOptimisationProblem]] = None,
-        equilibrium_optimiser: Optional[Optimiser] = None,
-        equilibrium_convergence: Optional[ConvergenceCriterion] = None,
+        breakdown_strategy_cls: type[BreakdownZoneStrategy] | None = None,
+        breakdown_problem_cls: type[BreakdownCOP] | None = None,
+        breakdown_optimiser: Optimiser | None = None,
+        equilibrium_problem_cls: type[CoilsetOptimisationProblem] | None = None,
+        equilibrium_optimiser: Optimiser | None = None,
+        equilibrium_convergence: ConvergenceCriterion | None = None,
         # eos
-        current_opt_constraints: Optional[List[UpdateableConstraint]] = None,
-        coil_constraints: Optional[List[UpdateableConstraint]] = None,
-        limiter: Optional[Limiter] = None,
-        position_settings: Optional[Union[Dict, PositionSettings]] = None,
+        current_opt_constraints: list[UpdateableConstraint] | None = None,
+        coil_constraints: list[UpdateableConstraint] | None = None,
+        limiter: Limiter | None = None,
+        position_settings: dict | PositionSettings | None = None,
         # Remove in v2
-        position_problem_cls: Optional[Type[PulsedNestedPositionCOP]] = None,
-        position_optimiser: Optional[Optimiser] = None,
+        position_problem_cls: type[PulsedNestedPositionCOP] | None = None,
+        position_optimiser: Optimiser | None = None,
     ):
         super().__init__(
             params,
@@ -783,7 +785,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         return self._pos_settings
 
     @pos_settings.setter
-    def pos_settings(self, value: Optional[Union[PositionSettings, Dict]] = None):
+    def pos_settings(self, value: PositionSettings | dict | None = None):
         """Position COP settings."""
         if value is None:
             self._pos_settings = PositionSettings()

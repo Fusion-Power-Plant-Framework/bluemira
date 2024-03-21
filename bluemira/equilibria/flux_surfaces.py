@@ -13,9 +13,11 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.find import PsiPoint
 
@@ -115,7 +117,7 @@ class FluxSurface:
         """
         return np.sum(self._dl(eq))
 
-    def plot(self, ax: Optional[plt.Axes] = None, **kwargs):
+    def plot(self, ax: plt.Axes | None = None, **kwargs):
         """
         Plot the FluxSurface.
         """
@@ -308,7 +310,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
-    def shafranov_shift(self, eq: Equilibrium) -> Tuple[float, float]:
+    def shafranov_shift(self, eq: Equilibrium) -> tuple[float, float]:
         """
         Calculate the Shafranov shift of the ClosedFluxSurface.
 
@@ -366,8 +368,8 @@ class OpenFluxSurface(FluxSurface):
         super().__init__(coords)
 
     def split(
-        self, o_point: PsiPoint, plane: Optional[BluemiraPlane] = None
-    ) -> Tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
+        self, o_point: PsiPoint, plane: BluemiraPlane | None = None
+    ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.
@@ -574,7 +576,7 @@ class FieldLine:
         self.coords = coords
         self.connection_length = connection_length
 
-    def plot(self, ax: Optional[plt.Axes] = None, **kwargs):
+    def plot(self, ax: plt.Axes | None = None, **kwargs):
         """
         Plot the FieldLine.
 
@@ -585,7 +587,7 @@ class FieldLine:
         """
         self.coords.plot(ax=ax, **kwargs)
 
-    def pointcare_plot(self, ax: Optional[plt.Axes] = None):
+    def pointcare_plot(self, ax: plt.Axes | None = None):
         """
         Pointcaré plot of the field line intersections with the half-xz-plane.
 
@@ -639,7 +641,7 @@ class FieldLineTracer:
             Boundary at which to stop tracing the field line.
         """
 
-        def __init__(self, boundary: Union[Grid, Coordinates]):
+        def __init__(self, boundary: Grid | Coordinates):
             self.boundary = boundary
             self.terminal = True
 
@@ -666,9 +668,7 @@ class FieldLineTracer:
             """
             return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
-    def __init__(
-        self, eq: Equilibrium, first_wall: Optional[Union[Grid, Coordinates]] = None
-    ):
+    def __init__(self, eq: Equilibrium, first_wall: Grid | Coordinates | None = None):
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
@@ -763,7 +763,7 @@ def calculate_connection_length_flt(
     x: float,
     z: float,
     forward: bool = True,
-    first_wall=Optional[Union[Coordinates, Grid]],
+    first_wall=Coordinates | Grid | None,
     n_turns_max: int = 50,
 ) -> float:
     """
@@ -810,7 +810,7 @@ def calculate_connection_length_fs(
     x: float,
     z: float,
     forward: bool = True,
-    first_wall=Optional[Union[Coordinates, Grid]],
+    first_wall=Coordinates | Grid | None,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting

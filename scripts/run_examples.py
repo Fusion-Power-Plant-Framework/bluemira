@@ -17,7 +17,6 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
 from unittest import mock
 
 import matplotlib as mpl
@@ -35,11 +34,11 @@ class Args:
     """Command line arguments."""
 
     examples_dir: str
-    exclude_pattern: List[str]
+    exclude_pattern: list[str]
     plotting_on: bool
 
 
-def parse_args(sys_args: List[str]) -> Args:
+def parse_args(sys_args: list[str]) -> Args:
     """Parse command line arguments"""
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -67,7 +66,7 @@ def parse_args(sys_args: List[str]) -> Args:
     return Args(**vars(args))
 
 
-def find_python_files(examples_dir: str, exclude_patterns: List[str]) -> List[str]:
+def find_python_files(examples_dir: str, exclude_patterns: list[str]) -> list[str]:
     """Glob for Python files in the given directory."""
     return sorted([
         path
@@ -90,8 +89,8 @@ def run_example(file_path: str) -> bool:
 
 
 def run_examples(
-    example_files: List[str], plotting_on: bool = False
-) -> List[Tuple[str, bool]]:
+    example_files: list[str], plotting_on: bool = False
+) -> list[tuple[str, bool]]:
     """
     Run the given example files.
 

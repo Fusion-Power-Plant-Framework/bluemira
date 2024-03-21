@@ -87,9 +87,11 @@ class TestTeardown:
         teardown.params.mappings["e_nbi"].recv = True
 
         # Test
-        with mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=MFW), file_exists(
-            Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF
-        ), mock.patch("bluemira.codes.process.api.OBS_VARS", new={"enbeam": None}):
+        with (
+            mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=MFW),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"enbeam": None}),
+        ):
             teardown.read()
 
         assert np.isnan(teardown.params.e_nbi.value)
@@ -99,9 +101,11 @@ class TestTeardown:
             def __init__(self, file):  # noqa: ARG002
                 self.data = {"ifail": {"scan01": 2}}
 
-        with pytest.raises(CodesError), mock.patch(
-            "bluemira.codes.process._teardown.Path"
-        ), mock.patch("bluemira.codes.process._teardown.MFile", new=MFile):
+        with (
+            pytest.raises(CodesError),
+            mock.patch("bluemira.codes.process._teardown.Path"),
+            mock.patch("bluemira.codes.process._teardown.MFile", new=MFile),
+        ):
             _MFileWrapper(None)
 
     @pytest.mark.parametrize(
@@ -183,9 +187,10 @@ class TestTeardown:
             return param
 
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
-        with mock.patch(
-            f"{self.MODULE_REF}.update_obsolete_vars", new=fake_uov
-        ), file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+        with (
+            mock.patch(f"{self.MODULE_REF}.update_obsolete_vars", new=fake_uov),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
             teardown.read()
 
         outputs = teardown.get_raw_outputs(["thshield_ib", "thshield_ob", "thshield_vb"])
@@ -196,9 +201,10 @@ class TestTeardown:
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
         del self.mfile_mock.data["bore"]
 
-        with file_exists(
-            Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF
-        ), pytest.raises(CodesError) as exc:
+        with (
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+            pytest.raises(CodesError) as exc,
+        ):
             teardown.read()
 
         assert "bore" in str(exc)

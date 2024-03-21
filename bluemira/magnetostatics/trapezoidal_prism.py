@@ -13,8 +13,6 @@ including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
 
-from typing import Union
-
 import numba as nb
 import numpy as np
 
@@ -385,10 +383,10 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     @process_xyz_array
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> Union[float, np.ndarray]:
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
+    ) -> float | np.ndarray:
         """
         Calculate the magnetic field at a point due to the current source.
 

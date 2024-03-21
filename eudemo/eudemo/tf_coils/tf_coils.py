@@ -8,12 +8,14 @@
 EU-DEMO build classes for TF Coils.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -61,10 +63,10 @@ class TFCoil(ComponentManager):
 
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> Union[float, np.ndarray]:
+        x: npt.ArrayLike,
+        y: npt.ArrayLike,
+        z: npt.ArrayLike,
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field due to the TF coils at a set of points.
 
@@ -148,7 +150,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Optional keys:
 
-            * variables_map: Dict
+            * variables_map: dict
                 param_class variables map to modify the parameterisation defaults.
                 eg:
 
@@ -170,7 +172,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             * problem_class: str
                 A string of the import location for the problem class to
                 solve
-            * optimisation_settings: Dict
+            * optimisation_settings: dict
                 problem_class optimisation settings
     separatrix:
         Wire of the separatrix along which to constrain ripple
@@ -182,14 +184,14 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
-        separatrix: Optional[BluemiraWire] = None,
-        keep_out_zone: Optional[BluemiraWire] = None,
+        params: dict | ParameterFrame,
+        build_config: dict,
+        separatrix: BluemiraWire | None = None,
+        keep_out_zone: BluemiraWire | None = None,
     ):
         super().__init__(params, build_config)
 
-        self.parameterisation_cls: Type[GeometryParameterisation] = (
+        self.parameterisation_cls: type[GeometryParameterisation] = (
             get_class_from_module(
                 self.build_config["param_class"],
                 default_module="bluemira.geometry.parameterisations",
@@ -241,7 +243,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         tk_offset += np.sqrt(2) * self.params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
-    def _derive_shape_params(self, variables_map: Dict[str, str]) -> Dict:
+    def _derive_shape_params(self, variables_map: dict[str, str]) -> dict:
         shape_params = {}
         for key, val in variables_map.items():
             if isinstance(val, str):
@@ -293,7 +295,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params(self.variables_map))
 
-    def run(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
+    def run(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
@@ -360,7 +362,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             plt.show()
         return result, wp_cross_section
 
-    def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
+    def read(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """
         Read in a file to set up a specified GeometryParameterisation and extract the
         current centreline.
@@ -377,7 +379,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self._make_wp_xs(parameterisation.create_shape().bounding_box.x_min),
         )
 
-    def mock(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
+    def mock(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """
         Mock a design of TF coils using the original parameterisation of the current
         centreline.
@@ -423,12 +425,12 @@ class TFCoilBuilder(Builder):
     INS = "Insulation"
     INB = "inboard"
     OUTB = "outboard"
-    param_cls: Type[TFCoilBuilderParams] = TFCoilBuilderParams
+    param_cls: type[TFCoilBuilderParams] = TFCoilBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         centreline: BluemiraWire,
         wp_cross_section: BluemiraWire,
     ):
@@ -460,9 +462,7 @@ class TFCoilBuilder(Builder):
             xyz=xyz,
         )
 
-    def build_xz(
-        self, xyz_shape: BluemiraSolid
-    ) -> List[Union[PhysicalComponent, Component]]:
+    def build_xz(self, xyz_shape: BluemiraSolid) -> list[PhysicalComponent | Component]:
         """
         Build the x-z components of the TF coils.
         """
@@ -480,7 +480,7 @@ class TFCoilBuilder(Builder):
         ins_outer_face: BluemiraFace,
         ib_cas_wire: BluemiraWire,
         ob_cas_wire: BluemiraWire,
-    ) -> List[Component]:
+    ) -> list[Component]:
         """
         Build the x-y components of the TF coils.
         """
@@ -502,7 +502,7 @@ class TFCoilBuilder(Builder):
         ib_cas_wire: BluemiraWire,
         ob_cas_wire: BluemiraWire,
         degree: float = 360.0,
-    ) -> Tuple[BluemiraSolid, List[Component]]:
+    ) -> tuple[BluemiraSolid, list[Component]]:
         """
         Build the x-y-z components of the TF coils.
         """
@@ -530,7 +530,7 @@ class TFCoilBuilder(Builder):
             degree=n_sectors * sector_degree,
         )
 
-    def _build_xz_wp(self) -> Tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
+    def _build_xz_wp(self) -> tuple[BluemiraWire, BluemiraWire, PhysicalComponent]:
         """
         Winding pack x-z
         """
@@ -612,7 +612,7 @@ class TFCoilBuilder(Builder):
         ins_outer_face: BluemiraFace,
         ib_cas_wire: BluemiraWire,
         ob_cas_wire: BluemiraWire,
-    ) -> List[Component]:
+    ) -> list[Component]:
         """
         Casing x-y
         """
@@ -636,7 +636,7 @@ class TFCoilBuilder(Builder):
             children=[ib_cas_comp, ob_cas_comp],
         )
 
-    def _build_xyz_wp(self) -> Tuple[BluemiraSolid, PhysicalComponent]:
+    def _build_xyz_wp(self) -> tuple[BluemiraSolid, PhysicalComponent]:
         """
         Winding pack x-y-z
         """
@@ -651,7 +651,7 @@ class TFCoilBuilder(Builder):
         self,
         wp_solid: BluemiraSolid,
         ins_inner_face: BluemiraFace,
-    ) -> Tuple[BluemiraSolid, PhysicalComponent]:
+    ) -> tuple[BluemiraSolid, PhysicalComponent]:
         """
         Insulation x-y-z
         """
@@ -673,7 +673,7 @@ class TFCoilBuilder(Builder):
         ins_solid: BluemiraSolid,
         inner_xs: BluemiraWire,
         outer_xs: BluemiraWire,
-    ) -> Tuple[BluemiraSolid, PhysicalComponent]:
+    ) -> tuple[BluemiraSolid, PhysicalComponent]:
         """
         Casing x-y-z
         """
@@ -713,7 +713,7 @@ class TFCoilBuilder(Builder):
 
         return case_solid_hollow, casing
 
-    def _make_ins_xsec(self) -> Tuple[BluemiraFace, BluemiraFace]:
+    def _make_ins_xsec(self) -> tuple[BluemiraFace, BluemiraFace]:
         """
         Make the insulation + insertion gap x-y cross-section faces
         """
@@ -731,7 +731,7 @@ class TFCoilBuilder(Builder):
         ))
         return face, outer_face
 
-    def _make_cas_xsec(self) -> Tuple[float, BluemiraWire, BluemiraWire]:
+    def _make_cas_xsec(self) -> tuple[float, BluemiraWire, BluemiraWire]:
         """
         Make the casing x-y cross-section wires
 
@@ -786,7 +786,7 @@ class TFCoilBuilder(Builder):
         return y_in, inboard_wire, outboard_wire
 
     @staticmethod
-    def _make_cas_xz(solid: BluemiraSolid) -> Tuple[BluemiraFace, BluemiraFace]:
+    def _make_cas_xz(solid: BluemiraSolid) -> tuple[BluemiraFace, BluemiraFace]:
         """
         Make the casing x-z cross-section from a 3-D volume.
         """

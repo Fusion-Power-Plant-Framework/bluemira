@@ -7,10 +7,12 @@
 Define builder for divertor
 """
 
+from __future__ import annotations
+
 import enum
 import operator
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,7 +20,6 @@ from bluemira.base.builder import ComponentManager
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
-from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
@@ -26,6 +27,11 @@ from bluemira.geometry.tools import (
     make_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
+
+    from bluemira.equilibria import Equilibrium
 
 
 class Divertor(ComponentManager):
@@ -74,7 +80,7 @@ class WireEndAxis(enum.Enum):
 
 def get_separatrix_legs(
     equilibrium: Equilibrium,
-) -> Dict[LegPosition, List[BluemiraWire]]:
+) -> dict[LegPosition, list[BluemiraWire]]:
     """
     Find the separatrix legs for the given equilibrium.
     """
@@ -87,7 +93,7 @@ def get_separatrix_legs(
     }
 
 
-class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
+class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     """
     Designs the divertor silhouette to help design the divertor keep out zone
 
@@ -112,7 +118,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
+        params: dict | ParameterFrame,
         equilibrium: Equilibrium,
         wall: BluemiraWire,
     ):
@@ -129,7 +135,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         }
         self.separatrix_legs = get_separatrix_legs(self.equilibrium)
 
-    def run(self) -> Tuple[BluemiraWire, ...]:
+    def run(self) -> tuple[BluemiraWire, ...]:
         """
         Run method of DivertorSilhouetteDesigner
         """
@@ -232,8 +238,8 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         label: str,
         blanket_join_point: Sequence[float],
         target_join_point: Sequence[float],
-        target_xz_start: Tuple[float],
-        target_xz_end: Tuple[float],
+        target_xz_start: tuple[float],
+        target_xz_end: tuple[float],
     ) -> BluemiraWire:
         """
         Make a baffle.
@@ -259,7 +265,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
                 return np.inf
             return (z1 - z2) / (x1 - x2)
 
-        def solve(l1: Tuple[float], l2: Tuple[float]):
+        def solve(l1: tuple[float], l2: tuple[float]):
             A = np.array([[l1[0], l1[1]], [l2[0], l2[1]]])
             b = np.array([l1[2], l2[2]])
             return np.linalg.solve(A, b)
@@ -367,7 +373,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
 
     def _get_sols_for_leg(
         self, leg: LegPosition, layers: Iterable[int] = (0, -1)
-    ) -> List[BluemiraWire]:
+    ) -> list[BluemiraWire]:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
         """

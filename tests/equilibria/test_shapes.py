@@ -275,7 +275,8 @@ johner_params = [
 ]
 
 johner_params = [
-    pytest.param(dict(zip(johner_names, p)), id=p[-1]) for p in johner_params
+    pytest.param(dict(zip(johner_names, p, strict=False)), id=p[-1])
+    for p in johner_params
 ]
 
 

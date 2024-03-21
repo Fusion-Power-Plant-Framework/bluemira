@@ -9,8 +9,6 @@ Semi-analytic methods for Bx, Bz, and psi for circular coils of rectangular
 cross-section.
 """
 
-from typing import Tuple, Union
-
 import numba as nb
 import numpy as np
 
@@ -125,7 +123,7 @@ def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
 @nb.jit(nopython=True, cache=True)
 def _get_working_coords(
     xc: float, zc: float, x: float, z: float, d_xc: float, d_zc: float
-) -> Tuple[float, float, float, float, float]:
+) -> tuple[float, float, float, float, float]:
     """
     Convert coil and global coordinates to working coordinates.
     """
@@ -187,11 +185,11 @@ def _array_dispatcher(func):
 def semianalytic_Bx(
     xc: float,
     zc: float,
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float,
     d_zc: float,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate the Bx and Bz fields from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart
@@ -237,11 +235,11 @@ def semianalytic_Bx(
 def semianalytic_Bz(
     xc: float,
     zc: float,
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float,
     d_zc: float,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate the Bx and Bz fields from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart
@@ -306,11 +304,11 @@ def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
 def semianalytic_psi(
     xc: float,
     zc: float,
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float,
     d_zc: float,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate the poloidal magnetic flux from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart

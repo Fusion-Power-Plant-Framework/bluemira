@@ -11,7 +11,7 @@ EUDEMO Lower Port Builder
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -44,12 +44,12 @@ class TSLowerPortDuctBuilder(Builder):
     Thermal Shield Lower Port Duct Builder
     """
 
-    param_cls = TSLowerPortDuctBuilderParams
+    param_cls: type[TSLowerPortDuctBuilderParams] = TSLowerPortDuctBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
         x_straight_end: float,
@@ -69,7 +69,7 @@ class TSLowerPortDuctBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the thermal shield lower port in x-y-z.
         """
@@ -106,12 +106,12 @@ class VVLowerPortDuctBuilder(Builder):
     Vacuum Vessel Lower Port Duct Builder
     """
 
-    param_cls = VVLowerPortDuctBuilderParams
+    param_cls: type[VVLowerPortDuctBuilderParams] = VVLowerPortDuctBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
         x_straight_end: float,
@@ -137,7 +137,7 @@ class VVLowerPortDuctBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the vacuum vessel lower port in x-y-z.
         """
@@ -160,7 +160,7 @@ class VVLowerPortDuctBuilder(Builder):
 
 def _face_and_void_from_outer_boundary(
     outer_boundary: BluemiraWire, thickness: float
-) -> Tuple[BluemiraFace]:
+) -> tuple[BluemiraFace, ...]:
     inner_boundary = offset_wire(outer_boundary, -thickness)
     return BluemiraFace([outer_boundary, inner_boundary]), BluemiraFace(inner_boundary)
 
@@ -172,7 +172,7 @@ def build_lower_port_xyz(
     duct_angle: float,
     wall_tk: float,
     x_straight_end: float,
-) -> Tuple[BluemiraSolid]:
+) -> tuple[BluemiraSolid, ...]:
     """
     Build lower port solid geometry, including void (estimate)
 

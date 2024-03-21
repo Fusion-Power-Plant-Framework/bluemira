@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from dataclasses import dataclass
-from typing import Tuple
 
 import pytest
 
@@ -26,7 +25,7 @@ class CircleOptVariables(OptVariablesFrame):
 
 
 class Circle(GeometryParameterisation):
-    def __init__(self, radius: float, centre: Tuple[float, float]):
+    def __init__(self, radius: float, centre: tuple[float, float]):
         opt_vars = CircleOptVariables()
         opt_vars.adjust_variables(
             {

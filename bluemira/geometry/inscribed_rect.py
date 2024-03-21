@@ -10,7 +10,6 @@ In contained file because loop module imports geomtools and geombase modules
 """
 
 from copy import deepcopy
-from typing import List, Tuple
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -36,7 +35,7 @@ def inscribed_rect_in_poly(
     convex: bool = True,
     rtol: float = 1e-06,
     atol: float = 1e-08,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Find largest inscribed rectangle in a given polygon.
 
@@ -153,10 +152,10 @@ class _GetDxDz:
     def __init__(
         self,
         coords: Coordinates,
-        point: Tuple[float, float],
+        point: tuple[float, float],
         aspectratio: float,
         convex: bool,
-        planes: List[BluemiraPlane],
+        planes: list[BluemiraPlane],
     ):
         self.vec_arr_x = np.zeros((9, 2))
         self.vec_arr_x[0] = point
@@ -194,7 +193,7 @@ class _GetDxDz:
                 self.vec_arr_x[n : n + 2] = int_s1, int_s2
                 break
 
-    def __call__(self) -> Tuple[float, float]:
+    def __call__(self) -> tuple[float, float]:
         """
         Get dx and dz.
 
@@ -205,7 +204,7 @@ class _GetDxDz:
         dz:
             maximum height/2 of rectangle
         """
-        for n, plane in zip(self.elements, self.planes):
+        for n, plane in zip(self.elements, self.planes, strict=False):
             lpi = coords_plane_intersect(self.coords, plane)
             self.check(n, lpi)
 

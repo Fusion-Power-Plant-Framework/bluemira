@@ -11,19 +11,10 @@ Finite element method utilities
 from __future__ import annotations
 
 import functools
+from collections.abc import Callable, Iterable
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import gmsh
@@ -69,10 +60,10 @@ def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
 
 
 def model_to_mesh(
-    model: Optional[Type[gmsh.model]] = None,
+    model: type[gmsh.model] | None = None,
     comm=MPI.COMM_WORLD,
     rank: int = 0,
-    gdim: Union[int, Iterable[int]] = 3,
+    gdim: int | Iterable[int] = 3,
     **kwargs,
 ):
     """Convert gmsh model to dolfinx mesh
@@ -104,9 +95,9 @@ def model_to_mesh(
 
 
 def extract_geometry(
-    func: Callable[[Type[gmsh.model]], np.ndarray],
+    func: Callable[[type[gmsh.model]], np.ndarray],
     dimensions: Iterable[int],
-    model: Type[gmsh.model],
+    model: type[gmsh.model],
 ):
     """Extract model geometry
 
@@ -167,7 +158,7 @@ class BluemiraFemFunction(Function):
         """
         return self._eval_new(points)[0]
 
-    def _eval_new(self, points: Union[np.ndarray, List]):
+    def _eval_new(self, points: np.ndarray | list):
         """
         Supporting function for __call__
         """
@@ -228,7 +219,7 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
 
 
 def calculate_area(
-    mesh: Mesh, boundaries: Optional[object] = None, tag: Optional[int] = None
+    mesh: Mesh, boundaries: object | None = None, tag: int | None = None
 ) -> float:
     """
     Calculate the area of a sub-domain
@@ -253,7 +244,7 @@ def integrate_f(
     f: Constant | BluemiraFemFunction,
     mesh: Mesh,
     boundaries=None,
-    tag: Optional[int] = None,
+    tag: int | None = None,
 ) -> float:
     """
     Calculate the integral of a function on the specified sub-domain
@@ -337,7 +328,7 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg
 
 def error_L2(  # noqa: N802
     uh: BluemiraFemFunction,
-    u_ex: Union[BluemiraFemFunction, Expression],
+    u_ex: BluemiraFemFunction | Expression,
     degree_raise: int = 0,
 ) -> float:
     """
@@ -388,7 +379,7 @@ def error_L2(  # noqa: N802
     return np.sqrt(error_global)
 
 
-def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
+def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
     """
     Evaluate the value of a dolfinx function in the specified points
 
@@ -450,13 +441,13 @@ def plot_scalar_field(
     x: np.ndarray,
     y: np.ndarray,
     data: np.ndarray,
-    levels: Union[int, np.ndarray] = 20,
-    ax: Optional[plt.Axes] = None,
+    levels: int | np.ndarray = 20,
+    ax: plt.Axes | None = None,
     *,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> Dict[str, Union[plt.Axes, None]]:
+) -> dict[str, plt.Axes | None]:
     """
     Plot a scalar field from numpy arrays.
 
@@ -519,7 +510,7 @@ def read_from_msh(
     filename: str,
     comm=MPI.COMM_WORLD,
     rank: int = 0,
-    gdim: Union[int, tuple] = 3,
+    gdim: int | tuple = 3,
     partitioner=None,
 ):
     """Wraps `dolfinx.io.gmshio.read_from_msh` to patch dimensional reading
@@ -546,13 +537,13 @@ def read_from_msh(
 class Association:
     """Mesh associations (density current, boundaries tag, target current)"""
 
-    v: Union[BluemiraFemFunction, Callable, float]
+    v: BluemiraFemFunction | Callable | float
     tag: int
-    Itot: Union[float, None] = None
+    Itot: float | None = None
 
 
 def create_j_function(
-    mesh: Mesh, cell_tags, values: List[Association], eltype: Tuple = ("DG", 0)
+    mesh: Mesh, cell_tags, values: list[Association], eltype: tuple = ("DG", 0)
 ) -> BluemiraFemFunction:
     """
     Create the dolfinx current density function for the whole domain given a set of
@@ -594,9 +585,9 @@ def create_j_function(
             cells = cell_tags.find(value.tag)
             dofs = locate_dofs_topological(function_space, 2, cells)
 
-            if isinstance(value.v, (BluemiraFemFunction, Callable)):
+            if isinstance(value.v, BluemiraFemFunction | Callable):
                 temp.interpolate(value.v, cells)
-            elif isinstance(value.v, (int, float)):
+            elif isinstance(value.v, int | float):
                 temp.x.array[dofs] += value.v
             else:
                 raise ValueError(
@@ -613,7 +604,7 @@ def create_j_function(
 
 
 def compute_B_from_Psi(
-    psi: BluemiraFemFunction, eltype: tuple, eltype1: Optional[tuple] = None
+    psi: BluemiraFemFunction, eltype: tuple, eltype1: tuple | None = None
 ) -> BluemiraFemFunction:
     """
     Compute the magnetic flux density given the magnetic flux function
@@ -658,7 +649,7 @@ def compute_B_from_Psi(
 
 def plot_meshtags(
     mesh: Mesh,
-    meshtags: Optional[Union[cpp.mesh.MeshTags_float64, cpp.mesh.MeshTags_int32]] = None,
+    meshtags: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
     filename: str = "meshtags.svg",
 ):
     """

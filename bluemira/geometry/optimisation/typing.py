@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Typing for the geometry optimisation module"""
 
-from typing import Optional, Protocol, TypedDict
+from typing import Protocol, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired
@@ -42,4 +42,4 @@ class GeomConstraintT(TypedDict):
 
     f_constraint: GeomOptimiserCallable
     tolerance: np.ndarray
-    df_constraint: NotRequired[Optional[GeomOptimiserCallable]]
+    df_constraint: NotRequired[GeomOptimiserCallable | None]

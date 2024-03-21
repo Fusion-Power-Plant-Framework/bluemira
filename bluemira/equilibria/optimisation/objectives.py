@@ -27,7 +27,6 @@ Note that the gradient of the objective function is of the form:
 """  # noqa: W505, E501
 
 import abc
-from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -183,7 +182,7 @@ def tikhonov(a_mat: np.ndarray, b_vec: np.ndarray, gamma: float) -> np.ndarray:
 
 def regularised_lsq_fom(
     x: np.ndarray, a_mat: np.ndarray, b_vec: np.ndarray, gamma: float
-) -> Tuple[float, np.ndarray]:
+) -> tuple[float, np.ndarray]:
     """
     Figure of merit for the least squares problem Ax = b, with
     Tikhonov regularisation term. Normalised for the number of

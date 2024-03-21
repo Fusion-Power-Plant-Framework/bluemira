@@ -8,8 +8,6 @@
 Boundary conditions for equilibria.
 """
 
-from typing import Union
-
 import numpy as np
 import numpy.typing as npt
 
@@ -64,9 +62,7 @@ class FreeBoundary:
             psi[j, k] = integrate_dx_dz(self.f_greens[i] * jtor, self.dx, self.dz)
 
 
-def apply_boundary(
-    rhs: npt.NDArray[np.float64], lhs: Union[float, npt.NDArray[np.float64]]
-):
+def apply_boundary(rhs: npt.NDArray[np.float64], lhs: npt.ArrayLike):
     """
     Applies a boundary constraint to the boundaries of an array for use on finite
     difference grids.

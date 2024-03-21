@@ -133,13 +133,13 @@ def test_collocation_points():
     assert colloc4.r.shape[0] == 12
     assert colloc5.r.shape[0] == 64
 
-    for x, z in zip(colloc2.x, colloc2.z):
+    for x, z in zip(colloc2.x, colloc2.z, strict=False):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
-    for x, z in zip(colloc4.x, colloc4.z):
+    for x, z in zip(colloc4.x, colloc4.z, strict=False):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
-    for x, z in zip(colloc5.x, colloc5.z):
+    for x, z in zip(colloc5.x, colloc5.z, strict=False):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
 
@@ -316,6 +316,7 @@ def test_SphericalHarmonicConstraintFunction():
     for fc, res in zip(
         test_f_constraint,
         (test_result - b_vec),
+        strict=False,
     ):
         assert fc == res
 
@@ -365,6 +366,7 @@ def test_SphericalHarmonicConstraint():
             1e-5,
             1e-5,
         ]),
+        strict=False,
     ):
         assert test_tol == ref_tol
 
@@ -378,7 +380,7 @@ def test_SphericalHarmonicConstraint():
 
     assert len(test_constraint_class.tolerance) == len(ref_harmonics)
     for test_name, ref_name in zip(
-        test_constraint_class.control_coil_names, sh_coil_names
+        test_constraint_class.control_coil_names, sh_coil_names, strict=False
     ):
         assert test_name == ref_name
 

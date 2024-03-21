@@ -147,7 +147,9 @@ coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
 
 coils = []
 
-for i, (xi, zi, dxi, dzi) in enumerate(zip(coil_x, coil_z, coil_dx, coil_dz)):
+for i, (xi, zi, dxi, dzi) in enumerate(
+    zip(coil_x, coil_z, coil_dx, coil_dz, strict=False)
+):
     coil = SymmetricCircuit(
         Coil(x=xi, z=zi, dx=dxi, dz=dzi, name=f"PF_{i + 1}", ctype="PF")
     )
