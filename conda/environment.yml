@@ -1,4 +1,4 @@
-name: bluemira-fenicsx
+name: bluemira
 channels:
   - conda-forge
   - nodefaults
