@@ -490,7 +490,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
-    grid_num: str | None = None,
+    grid_num: tuple[int, int] | None = None,
     acceptable_fit_metric: float = 0.01,
     nlevels: int = 50,
     seed: int | None = None,
