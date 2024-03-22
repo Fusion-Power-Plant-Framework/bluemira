@@ -2,7 +2,7 @@ anytree==2.12.1
 asteval==0.9.31
 Babel==2.14.0
 click==8.1.7
-contourpy==1.1.1
+contourpy==1.2.0
 CoolProp==6.6.0
 cycler==0.12.1
 fonttools==4.48.1
