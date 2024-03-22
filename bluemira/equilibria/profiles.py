@@ -145,10 +145,11 @@ def speedy_pressure(
     return pfunc
 
 
-@nb.jit(cache=False, forceobj=True)  # Cannot cache due to "lifted loops"
+# TODO(je-cook) non-precise type pyobject with the below decorator
+# @nb.jit(cache=False, forceobj=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure_mask(
-    ii: npt.NDArray[np.float64],
-    jj: npt.NDArray[np.float64],
+    ii: npt.NDArray[np.int64],
+    jj: npt.NDArray[np.int64],
     psi_norm: npt.NDArray[np.float64],
     psio: float,
     psix: float,
@@ -177,8 +178,7 @@ def speedy_pressure_mask(
     -------
     The pressure on the grid
     """
-    nx, nz = psi_norm.shape
-    pfunc = np.zeros((nx, nz))
+    pfunc = np.zeros_like(psi_norm, dtype=np.float64)
     for i, j in zip(ii, jj, strict=False):
         pfunc[i, j] = pshape(shape, psi_norm[i, j], psio, psix)
     return pfunc
@@ -588,9 +588,7 @@ class BetaIpProfile(Profile):
         else:
             ii, jj = np.nonzero(mask)
             jtorshape *= mask
-            pfunc = speedy_pressure_mask(
-                iter(ii), iter(jj), psi_norm, psio, psix, self.shape
-            )
+            pfunc = speedy_pressure_mask(ii, jj, psi_norm, psio, psix, self.shape)
 
         if x_points != []:  # NOTE: Necessary unpythonic formulation
             # More accurate beta_p constraint calculation
