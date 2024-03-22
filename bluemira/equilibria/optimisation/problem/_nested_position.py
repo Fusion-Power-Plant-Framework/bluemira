@@ -106,11 +106,10 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         """
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
-        x, z = [], []
-        for name in self.position_mapper.interpolators:
-            x.append(self.coilset[name].x)
-            z.append(self.coilset[name].z)
-        return self.position_mapper.to_L(x, z)
+        cs_opt_state = self.coilset.get_optimisation_state(
+            self.position_mapper.interpolator_names
+        )
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
 
     def optimise(self, x0: Optional[npt.NDArray] = None):
         """
@@ -144,8 +143,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function to minimise."""
-        coil_position_map = self.position_mapper.to_xz_dict(vector)
-        self.coilset._set_optimisation_positions(coil_position_map)
+        pos_map = self.position_mapper.to_xz_dict(vector)
+        self.coilset.set_optimisation_state(coil_position_map=pos_map)
 
         self.eq._remap_greens()
         self.eq._clear_OX_points()
@@ -253,7 +252,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
         """Run the sub-optimisations and return the largest figure of merit."""
-        positions = self.position_mapper.to_xz_dict(vector)
+        pos_map = self.position_mapper.to_xz_dict(vector)
 
         if self.debug[0]:
             # Increment debug dictionary
@@ -262,11 +261,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in self.sub_opt_problems:
-            for coil, position in positions.items():
-                sub_opt_prob.coilset[coil].position = position
+            sub_opt_prob.coilset.set_optimisation_state(coil_position_map=pos_map)
 
             # TODO: is this necessary?
-            # this must be done after coils positions are changed
+            # I though this had be done after coils positions are changed
             sub_opt_prob.eq._remap_greens()
             sub_opt_prob.eq._clear_OX_points()
 
@@ -291,11 +289,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         """
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
-        x, z = [], []
-        for name in self.position_mapper.interpolators:
-            x.append(self.coilset[name].x)
-            z.append(self.coilset[name].z)
-        return self.position_mapper.to_L(x, z)
+        cs_opt_state = self.coilset.get_optimisation_state(
+            self.position_mapper.interpolator_names
+        )
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
 
     def optimise(
         self, x0: npt.NDArray | None = None, *, verbose: bool = False

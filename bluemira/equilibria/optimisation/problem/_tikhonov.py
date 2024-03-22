@@ -105,9 +105,8 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         if x0 is None:
-            initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-            _, _, initial_currents = np.array_split(initial_state, n_states)
-            x0 = np.clip(initial_currents, *self.bounds)
+            cs_opt_state = self.coilset.get_optimisation_state()
+            x0 = np.clip(cs_opt_state.currents, *self.bounds)
 
         objective = RegularisedLsqObjective(
             scale=self.scale,
@@ -128,8 +127,13 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        currents = opt_result.x
-        self.coilset.get_control_coils()._optimisation_currents = currents * self.scale
+
+        opt_currents = opt_result.x
+        self.coilset.set_optimisation_state(
+            opt_currents=opt_currents,
+            current_scale=self.scale,
+        )
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
 
@@ -189,12 +193,14 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         )
 
         # Update parameterisation (coilset).
-        current = (
+        opt_currents = (
             self.coilset.get_control_coils()._optimisation_currents + current_adjustment
         )
-        self.coilset.get_control_coils()._optimisation_currents = current
+        self.coilset.set_optimisation_state(
+            opt_currents=opt_currents, current_scale=self.scale
+        )
 
-        currents_full = self.eq.coilset._optimisation_currents_sym_mat @ current
+        currents_full = self.eq.coilset._optimisation_currents_sym_mat @ opt_currents
 
         f_x = float(
             np.linalg.norm(a_mat @ currents_full - b_vec)

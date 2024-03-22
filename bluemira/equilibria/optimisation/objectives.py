@@ -83,22 +83,22 @@ class RegularisedLsqObjective(ObjectiveFunction):
         self.b_vec = b_vec
         self.gamma = gamma
 
-    def f_objective(self, x: npt.NDArray[np.float64]) -> float:
+    def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
-        x = x * self.scale
-        fom, _ = regularised_lsq_fom(x, self.a_mat, self.b_vec, self.gamma)
+        vector = vector * self.scale
+        fom, _ = regularised_lsq_fom(vector, self.a_mat, self.b_vec, self.gamma)
         if fom <= 0:
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
         return fom
 
-    def df_objective(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Gradient of the objective function for an optimisation."""
-        x = x * self.scale
-        jac = 2 * self.a_mat.T @ self.a_mat @ x / float(len(self.b_vec))
+        vector = vector * self.scale
+        jac = 2 * self.a_mat.T @ self.a_mat @ vector / float(len(self.b_vec))
         jac -= 2 * self.a_mat.T @ self.b_vec / float(len(self.b_vec))
-        jac += 2 * self.gamma * self.gamma * x
+        jac += 2 * self.gamma * self.gamma * vector
         return self.scale * jac
 
 
@@ -108,7 +108,7 @@ class CoilCurrentsObjective(ObjectiveFunction):
     @staticmethod
     def f_objective(vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
-        return np.sum(vector**2)
+        return np.sum(np.square(vector))
 
     @staticmethod
     def df_objective(vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:

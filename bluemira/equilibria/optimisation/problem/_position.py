@@ -7,13 +7,14 @@
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
 )
-from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom
+from bluemira.equilibria.optimisation.objectives import (
+    RegularisedLsqObjective,
+)
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
@@ -70,7 +71,6 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        coilset: CoilSet,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
@@ -81,8 +81,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         opt_parameters: dict[str, float] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.coilset = coilset
         self.eq = eq
+        self.coilset = eq.coilset
         self.targets = targets
         self.position_mapper = position_mapper
         self.bounds = self.get_mapped_state_bounds(max_currents)
@@ -94,7 +94,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, **_) -> CoilsetOptimiserResult:
+    def optimise(self, x0: Optional[npt.NDArray] = None, **_) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 
@@ -102,14 +102,22 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         -------
         The result of the optimisation.
         """
-        # Get initial state and apply region mapping to coil positions.
-        initial_state, _ = self.read_coilset_state(self.coilset, self.scale)
-        initial_x, initial_z, initial_currents = np.array_split(initial_state, 3)
-        initial_mapped_positions = self.position_mapper.to_L(initial_x, initial_z)
+        if x0 is None:
+            # Get initial state and apply region mapping to coil positions.
+            cs_opt_state = self.coilset.get_optimisation_state(
+                self.position_mapper.interpolator_names
+            )
+            initial_mapped_positions = self.position_mapper.to_L(
+                cs_opt_state.xs, cs_opt_state.xs
+            )
+
+            len_mapped_pos = len(initial_mapped_positions)
+            x0 = np.concatenate((initial_mapped_positions, cs_opt_state.currents))
+
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
-            f_objective=self.objective,
-            x0=np.concatenate((initial_mapped_positions, initial_currents)),
+            f_objective=lambda x: self.objective(x, len_mapped_pos),
+            x0=x0,
             bounds=self.bounds,
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
@@ -117,10 +125,13 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        self.set_coilset_state(self.coilset, opt_result.x, self.scale)
+
+        # Updates the coilset with the final optimised state vector
+        self.objective(opt_result.x, len_mapped_pos)
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
-    def objective(self, vector: npt.NDArray[np.float64]) -> float:
+    def objective(self, vector: npt.NDArray[np.float64], len_mapped_pos: int) -> float:
         """
         Least-squares objective with Tikhonov regularisation term.
 
@@ -134,11 +145,14 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         The figure of merit being minimised.
         """
         # Update the coilset with the new state vector
-        mapped_x, mapped_z, currents = np.array_split(vector, 3)
-        mapped_positions = np.concatenate((mapped_x, mapped_z))
-        x_vals, z_vals = self.position_mapper.to_xz(mapped_positions)
-        coilset_state = np.concatenate((x_vals, z_vals, currents))
-        self.set_coilset_state(self.coilset, coilset_state, self.scale)
+        opt_mapped_positions, opt_currents = np.array_split(vector, len_mapped_pos)
+        coil_position_map = self.position_mapper.to_xz_dict(opt_mapped_positions)
+
+        self.coilset.set_optimisation_state(
+            opt_currents,
+            coil_position_map,
+            self.scale,
+        )
 
         # Update target
         self.eq._remap_greens()
@@ -147,7 +161,14 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.targets(self.eq, I_not_dI=True, fixed_coils=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
-        return regularised_lsq_fom(currents * self.scale, a_mat, b_vec, self.gamma)[0]
+        objective = RegularisedLsqObjective(
+            scale=self.scale,
+            a_mat=a_mat,
+            b_vec=b_vec,
+            gamma=self.gamma,
+            current_sym_mat=self.coilset._optimisation_currents_sym_mat,
+        )
+        return objective.f_objective(opt_currents)
 
     def get_mapped_state_bounds(
         self, max_currents: npt.ArrayLike | None = None
@@ -158,9 +179,6 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         Parameters
         ----------
-        region_mapper:
-            RegionMapper mapping coil positions within the allowed optimisation
-            regions.
         max_currents:
             Maximum allowed current for each independent coil current in coilset [A].
             If specified as a float, the float will set the maximum allowed current
@@ -172,7 +190,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             Array containing state vectors representing lower and upper bounds
             for coilset state degrees of freedom.
         """
-        # Get mapped position bounds from RegionMapper
+        # Get mapped position bounds from PositionMapper
         opt_dimension = self.position_mapper.dimension
         lower_pos_bounds, upper_pos_bounds = (
             np.zeros(opt_dimension),
