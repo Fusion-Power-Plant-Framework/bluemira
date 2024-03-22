@@ -7,6 +7,7 @@
 import numpy as np
 
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.tools import floatify
 
 
 def f_rosenbrock(x, grad):
@@ -24,7 +25,7 @@ def f_rosenbrock(x, grad):
         grad[0] = -2 * a + 4 * b * x[0] ** 3 - 4 * b * x[0] * x[1] + 2 * x[0]
         grad[1] = 2 * b * (x[1] - x[0] ** 2)
 
-    return float(value)
+    return floatify(value)
 
 
 def f_simple(x, grad):
@@ -32,7 +33,7 @@ def f_simple(x, grad):
     if grad.size > 0:
         grad[:] = np.ones(5)
 
-    return float(value)
+    return floatify(value)
 
 
 def f_ineq_constraint(constraint, x, grad):
