@@ -244,7 +244,6 @@ class CoilsetOptimisationProblem(abc.ABC):
         control_current_limits = np.minimum(
             scaled_input_current_limits, opt_coils_max_currents
         )
-        # todo: shouldn't the first argument be 0'S?
         return (-control_current_limits, control_current_limits)
 
     def set_current_bounds(self, max_currents: npt.NDArray[np.float64]):
