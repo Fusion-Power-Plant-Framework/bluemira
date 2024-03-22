@@ -112,7 +112,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
             z.append(self.coilset[name].z)
         return self.position_mapper.to_L(x, z)
 
-    def optimise(self, x0: Optional[npt.NDArray] = None, verbose: bool = False):
+    def optimise(self, x0: Optional[npt.NDArray] = None):
         """
         Run the optimisation.
 
@@ -151,7 +151,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.eq._clear_OX_points()
 
         # Run the sub-optimisation
-        sub_opt_result = self.sub_opt.optimise()
+        sub_opt_result = self.sub_opt.optimise(fixed_coils=False)
+
         return sub_opt_result.f_x
 
 
@@ -269,7 +270,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             sub_opt_prob.eq._remap_greens()
             sub_opt_prob.eq._clear_OX_points()
 
-            # FIXME: Why would you use the self.initial_currents?
+            # todo: Why would you use the self.initial_currents?
             # And not just the coilset's current currents?
             result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
 
