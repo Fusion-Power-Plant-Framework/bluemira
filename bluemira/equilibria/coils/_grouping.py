@@ -1130,7 +1130,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return self
 
     def get_optimisation_state(
-        self, current_scale: float = 1.0
+        self, position_coil_names: Optional[List[str]] = None, current_scale: float = 1.0
     ) -> CoilSetOptimisationState:
         """
         Get the state of the CoilSet for optimisation
@@ -1146,7 +1146,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             The state of the CoilSet for optimisation
         """
         cc = self.get_control_coils()
-        xs, zs = cc._optimisation_positions
+        xs, zs = cc._get_optimisation_positions(position_coil_names)
         currents = cc._optimisation_currents / current_scale
         return CoilSetOptimisationState(
             currents=currents,
@@ -1155,7 +1155,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         )
 
     def set_optimisation_state(
-        self, optimisation_state: CoilSetOptimisationState, current_scale: float = 1.0
+        self,
+        opt_currents: Optional[np.ndarray] = None,
+        coil_position_map: Optional[Dict[str, np.ndarray]] = None,
+        current_scale: float = 1.0,
     ):
         """
         Set the state of the CoilSet for optimisation
@@ -1173,8 +1176,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             The state of the CoilSet for optimisation
         """
         cc = self.get_control_coils()
-        cc._optimisation_positions = optimisation_state.positions
-        cc._optimisation_currents = optimisation_state.currents * current_scale
+        if opt_currents is not None:
+            cc._optimisation_currents = opt_currents * current_scale
+        if coil_position_map is not None:
+            cc._set_optimisation_positions(coil_position_map)
 
     @property
     def n_current_optimisable_coils(self) -> int:
@@ -1284,32 +1289,29 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ]
         return [*flatten_iterable(optimisable_coil_names)]
 
-    @property
-    def _position_optimisable_coil_inds(self) -> List[int]:
+    def _get_optimisation_positions(
+        self, position_coil_names: Optional[List[str]] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Get the indices (wrt. the self.name array) of the coils
-        that can be position optimised.
+        Get the positions of the position optimisable coils.
+        """
+        # only the position optimisable coils are considered
+        coil_names = set(
+            (position_coil_names or []) + self.position_optimisable_coil_names
+        )
 
-        These indices are used to extract the optimisable positions from the CoilSet
-        and are based on the index of the coils in the name array.
-        """
-        return [self.name.index(cn) for cn in self.position_optimisable_coil_names]
+        x, z = [], []
+        for name in coil_names:
+            x.append(self[name].x)
+            z.append(self[name].z)
+        return np.asarray(x), np.asarray(z)
 
-    @property
-    def _optimisation_positions(self) -> np.ndarray:
-        """
-        Get the positions of position optimisable coils.
-        """
-        opt_x = self.x[self._position_optimisable_coil_inds]
-        opt_z = self.z[self._position_optimisable_coil_inds]
-        return np.array([opt_x, opt_z])
-
-    def _set_optimisation_positions(self, coil_xz_map: Dict[str, np.ndarray]):
+    def _set_optimisation_positions(self, coil_position_map: Dict[str, np.ndarray]):
         """
         Set the positions of the position optimisable coils
         """
         pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
-        for coil_name, position in coil_xz_map.items():
+        for coil_name, position in coil_position_map.items():
             if coil_name in pos_opt_coil_names:
                 c = self.get_coil_or_group_by_primary_coil_name(coil_name)
                 c.position = position

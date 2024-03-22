@@ -80,13 +80,11 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         if x0 is None:
-            initial_state, n_states = self.read_coilset_state(
-                self.eq.coilset, self.scale
-            )
-            _, _, initial_currents = np.array_split(initial_state, n_states)
-            x0 = np.clip(initial_currents, *self.bounds)
+            cs_opt_state = self.coilset.get_optimisation_state()
+            x0 = np.clip(cs_opt_state.currents, *self.bounds)
 
         objective = CoilCurrentsObjective()
+
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             algorithm=self.opt_algorithm,
@@ -99,6 +97,11 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        currents = opt_result.x
-        self.coilset.get_control_coils()._optimisation_currents = currents * self.scale
+
+        opt_currents = opt_result.x
+        self.coilset.set_optimisation_state(
+            opt_currents=opt_currents,
+            current_scale=self.scale,
+        )
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

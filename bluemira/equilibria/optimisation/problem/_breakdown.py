@@ -191,7 +191,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         B_stray_max: float,
         B_stray_con_tol: float,
         n_B_stray_points: int,
-        max_currents: npt.ArrayLike,
+        max_currents: Optional[npt.ArrayLike] = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: dict[str, float | int] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
@@ -200,6 +200,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         self.eq = breakdown
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = opt_conditions
+        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
         self._args = {
             "c_psi_mat": np.array(
@@ -207,11 +208,11 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             ),
             "scale": self.scale,
         }
+
         x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
         stray_field_cons = FieldConstraints(
             x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
         )
-
         self._constraints = constraints
         if self._constraints is not None:
             self._constraints.append(stray_field_cons)
@@ -227,22 +228,27 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         """
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
-        initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, n_states)
-        initial_currents = np.clip(initial_currents, *self.bounds)
+        if x0 is None:
+            cs_opt_state = self.coilset.get_optimisation_state()
+            x0 = np.clip(cs_opt_state.currents, *self.bounds)
 
         objective = MaximiseFluxObjective(**self._args)
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=objective.df_objective,
-            x0=initial_currents,
+            x0=x0,
             algorithm=self.opt_algorithm,
             opt_conditions=self.opt_conditions,
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        currents = opt_result.x
-        self.coilset.get_control_coils()._optimisation_currents = currents * self.scale
+
+        opt_currents = opt_result.x
+        self.coilset.set_optimisation_state(
+            opt_currents=opt_currents,
+            current_scale=self.scale,
+        )
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

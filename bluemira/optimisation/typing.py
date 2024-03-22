@@ -14,7 +14,7 @@ from typing_extensions import NotRequired
 class ObjectiveCallable(Protocol):
     """Form for an optimiser objective function."""
 
-    def __call__(self, x: np.ndarray) -> float:
+    def __call__(self, vector: np.ndarray) -> float:
         """
         Call the objective function.
 
@@ -33,7 +33,7 @@ class OptimiserCallable(Protocol):
     This is the form for a gradient, constraint, or constraint gradient.
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, vector: np.ndarray) -> np.ndarray:
         """
         Call the optimiser function.
 
