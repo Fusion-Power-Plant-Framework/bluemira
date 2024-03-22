@@ -21,7 +21,7 @@ from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import COIL_DISCR, NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import floatify, is_num
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -324,13 +324,13 @@ class Coil(CoilFieldsMixin):
     @x.setter
     def x(self, value: float):
         """Set coil x position"""
-        self._x = np.maximum(float(value), 0)
+        self._x = np.maximum(floatify(value), 0)
         self._re_discretise()
 
     @z.setter
     def z(self, value: float):
         """Set coil z position"""
-        self._z = float(value)
+        self._z = floatify(value)
         self._re_discretise()
 
     @position.setter
@@ -351,7 +351,7 @@ class Coil(CoilFieldsMixin):
     @dx.setter
     def dx(self, value: float):
         """Set coil dx size"""
-        self._dx = None if value is None else float(value)
+        self._dx = None if value is None else floatify(value)
         if isinstance(self._dx, float) and self._x - self._dx < 0:
             bluemira_debug(
                 "Coil extent crossing x=0, "
@@ -365,13 +365,13 @@ class Coil(CoilFieldsMixin):
     @dz.setter
     def dz(self, value: float):
         """Set coil dz size"""
-        self._dz = None if value is None else float(value)
+        self._dz = None if value is None else floatify(value)
         self._re_discretise()
 
     @current.setter
     def current(self, value: float):
         """Set coil current"""
-        self._current = float(value)
+        self._current = floatify(value)
         if None not in {self.dx, self.dz}:
             self.resize()
 
@@ -385,12 +385,12 @@ class Coil(CoilFieldsMixin):
     @b_max.setter
     def b_max(self, value: float):
         """Set coil max field"""
-        self._b_max = float(value)
+        self._b_max = floatify(value)
 
     @discretisation.setter
     def discretisation(self, value: float):
         """Set coil discretisation"""
-        self._discretisation = np.clip(float(value), COIL_DISCR, None)
+        self._discretisation = np.clip(floatify(value), COIL_DISCR, None)
         self._discretise()
 
     def assign_material(

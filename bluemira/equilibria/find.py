@@ -26,6 +26,7 @@ from bluemira.geometry.coordinates import (
     get_area_2d,
     in_polygon,
 )
+from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -149,7 +150,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.flo
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
-    return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
+    return np.asarray([[d, -b], [-c, a]]) / (a * d - b * c)
 
 
 def find_local_Bp_minima_cg(
@@ -187,7 +188,7 @@ def find_local_Bp_minima_cg(
         b = -f_psi(xi, zi, dy=2)[0][0] / xi
         c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
         d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
-        inv_jac = inv_2x2_matrix(float(a), float(b), float(c), float(d))
+        inv_jac = inv_2x2_matrix(floatify(a), floatify(b), floatify(c), floatify(d))
         delta = np.dot(inv_jac, [Bx, Bz])
         xi -= delta[0]
         zi -= delta[1]

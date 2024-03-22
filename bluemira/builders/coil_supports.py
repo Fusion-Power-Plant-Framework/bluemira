@@ -43,6 +43,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import OptimisationProblem
 from bluemira.optimisation.typing import ConstraintT
 from bluemira.utilities.optimiser import Optimiser as _DeprecatedOptimiser
+from bluemira.utilities.tools import floatify
 
 
 @dataclass
@@ -266,11 +267,11 @@ class ITERGravitySupportBuilder(Builder):
         # Next, make the plates in a linear pattern, in y-z, along x
         z_block_lower = connection_block.bounding_box.z_min
         shape_list.extend(
-            self._make_plates(width, float(v1.x), float(v4.x), z_block_lower)
+            self._make_plates(width, floatify(v1.x), floatify(v4.x), z_block_lower)
         )
 
         # Finally, make the floor block
-        shape_list.append(self._make_floor_block(float(v1.x), float(v4.x)))
+        shape_list.append(self._make_floor_block(floatify(v1.x), floatify(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])

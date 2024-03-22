@@ -49,7 +49,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
-from bluemira.utilities.tools import ColourDescriptor
+from bluemira.utilities.tools import ColourDescriptor, floatify
 
 if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
@@ -948,7 +948,7 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
             break
         else:
             new_distance = distance - length
-            parameter = edge.getParameterByLength(new_distance)
+            parameter = edge.getParameterByLength(floatify(new_distance))
             point = edge.valueAt(parameter)
             break
 
