@@ -8,3 +8,4 @@ The ``bluemira`` ``radiation_transport`` module contains a number of different s
     :caption: Solvers:
 
     advection_transport
+    radiation
