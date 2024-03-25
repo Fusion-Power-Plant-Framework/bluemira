@@ -356,6 +356,9 @@ except CodesError as ce:
 # chance of finding a feasible point.
 
 # %%
+
+# TODO actually get to converge
+template_builder.set_run_title("Example that should converge")
 template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
@@ -368,6 +371,7 @@ template_builder.adjust_variable("fstrcond", 0.92007)
 template_builder.adjust_variable("fjprot", 1.0)
 
 # %%
+
 solver = systems_code_solver(
     params={}, build_config={"template_in_dat": template_builder.make_inputs()}
 )
