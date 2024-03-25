@@ -50,7 +50,7 @@ class ProcessInputs:
     # Times
     tburn: Optional[float] = None
     tdwell: Optional[float] = None
-    theat: Optional[float] = None
+    t_fusion_ramp: Optional[float] = None
     tohs: Optional[float] = None
     tqnch: Optional[float] = None
     tramp: Optional[float] = None
