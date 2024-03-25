@@ -16,11 +16,15 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import (
     Coordinates,
+    get_angle_between_points,
+    get_angle_between_vectors,
     in_polygon,
     rotation_matrix,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSource
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
@@ -170,6 +174,120 @@ class PlanarCircuit(SourceGroup):
         # reverse second axis if clockwise
         ind = (slice(None), slice(None, None, -1)) if self._clockwise else slice(None)
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
+
+
+def generate_rect_xs_wire_sources(
+    shape: BluemiraWire, breadth: float, depth: float, current: float, ndiscr: int = 20
+):
+    """
+    Generate a SourceGroup of Rectangular cross-section current sources from
+    a BluemiraWire.
+
+    Parameters
+    ----------
+    shape:
+        BluemiraWire to use when generating the current sources
+    breadth:
+        Breadth of the rectangular cross-section
+    depth:
+        Depth of the rectangular cross-section
+    current:
+        Current flowing in the current source
+    ndiscr:
+        Discretisation to use for BSplines
+
+    Notes
+    -----
+    Experimental feature..
+    Wires must be x-z planar
+    Current is assumed to flow clock-wise about [0, 1, 0]
+    Circle arcs and straight edges are well-handled.
+    Bsplines resort to discretisation
+    Tangency between subsequent sources is not checked for, or corrected for in the
+    case of a straight edge transition to a BSpline.
+    If your wire has Bsplines, consider using `ArbitraryPlanarRectangularXSCircuit`
+    instead.
+    """
+    # Check for planar wire
+    normal = [0, 1, 0]  # extract normal vector
+    # Check for tangency between edges...
+    reference = shape.center_of_mass
+    # Daisy-chain because wire orientation issues
+    reversals = []
+    for i, edge in enumerate(shape.edges):
+        s = edge.start_point().xyz.reshape(-1)
+        e = edge.end_point().xyz.reshape(-1)
+        if i == 0:
+            cw = get_angle_between_vectors(s - reference, e - reference, signed=True) < 0
+            reversals.append(cw)
+        else:
+            rev = np.allclose(e, shape.edges[i - 1].start_point().xyz.reshape(-1))
+            if reversals[i - 1]:
+                reversals.append(not rev)
+            else:
+                reversals.append(rev)
+
+    sources = []
+    for i, edge in enumerate(shape.edges):
+        curve = edge._shape.Edges[0].Curve
+        if curve.TypeId == "Part::GeomLine":
+            ds = edge.end_point().xyz.reshape(-1) - edge.start_point().xyz.reshape(-1)
+            t_vec = np.cross(ds / np.linalg.norm(ds), normal)
+
+            source = [
+                TrapezoidalPrismCurrentSource(
+                    origin=edge.center_of_mass,
+                    ds=ds,
+                    normal=normal,
+                    t_vec=t_vec,
+                    breadth=breadth,
+                    depth=depth,
+                    alpha=0.0,
+                    beta=0.0,
+                    current=current,
+                )
+            ]
+        elif curve.TypeId == "Part::GeomCircle":
+            centroid = np.array([curve.Center.x, curve.Center.y, curve.Center.z])
+            if reversals[i]:
+                start = edge.end_point().xyz.reshape(-1)
+                end = edge.start_point().xyz.reshape(-1)
+
+            else:
+                start = edge.start_point().xyz.reshape(-1)
+                end = edge.end_point().xyz.reshape(-1)
+            angle = np.rad2deg(get_angle_between_points(start, centroid, end))
+            start_angle = -np.rad2deg(
+                np.arctan2(centroid[2] - start[2], centroid[0] - start[0])
+            )
+
+            source = CircularArcCurrentSource(
+                origin=[0, 0, 0],
+                ds=[-1, 0, 0],
+                radius=curve.Radius,
+                dtheta=angle,
+                normal=[0, 0, 1],
+                t_vec=[0, 1, 0],
+                breadth=breadth,
+                depth=depth,
+                current=current,
+            )
+
+            source.rotate(start_angle, axis=normal)
+            source.translate(centroid)
+            source = [source]
+        elif curve.TypeId == "Part::GeomBSplineCurve":
+            source = ArbitraryPlanarRectangularXSCircuit(
+                edge.discretize(ndiscr=ndiscr),
+                breadth=breadth,
+                depth=depth,
+                current=current,
+            ).sources
+        else:
+            raise ValueError(f"Unrecognised curve type {edge._shape.Curve.TypeId}")
+        sources.extend(source)
+
+    return SourceGroup(sources)
 
 
 class ArbitraryPlanarRectangularXSCircuit(PlanarCircuit):
