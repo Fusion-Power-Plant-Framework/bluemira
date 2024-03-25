@@ -168,7 +168,7 @@ class FuelCycleAnalysis:
             ax[1].hist(
                 t_d,
                 bins=bins,
-                color=next(ax[0]._get_lines.prop_cycler)["color"],
+                color=ax[0]._get_lines.get_next_color(),
                 **kwargs,
             )
             ax[1].set_xticks([100 + 0.5 / bins])
@@ -177,7 +177,7 @@ class FuelCycleAnalysis:
             ax[1].hist(
                 self.t_d,
                 bins=bins,
-                color=next(ax[0]._get_lines.prop_cycler)["color"],
+                color=ax[0]._get_lines.get_next_color(),
                 **kwargs,
             )
         ax[1].set_xlabel("$t_{d}$ [yr]")
