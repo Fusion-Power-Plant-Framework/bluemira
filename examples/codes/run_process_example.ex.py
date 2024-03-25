@@ -26,10 +26,17 @@ Run PROCESS using the PROCESSTemplateBuilder
 
 # %% [markdown]
 # # Running PROCESS from "scratch"
+# PROCESS is one of the codes bluemira can use to compliment a reactor design.
+# As with any of the external codes bluemira uses, a solver object is created.
+# The solver object abstracts away most of the complexities of running different
+# programs within bluemira.
+#
 # This example shows how to build a PROCESS template IN.DAT file
 
 # %%
+from bluemira.base.look_and_feel import bluemira_error
 from bluemira.codes import systems_code_solver
+from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
@@ -43,7 +50,6 @@ from bluemira.codes.process.model_mapping import (
     CurrentDriveEfficiencyModel,
     DensityLimitModel,
     EPEDScalingModel,
-    FISPACTSwitchModel,
     OperationModel,
     OutputCostsSwitch,
     PFSuperconductorModel,
@@ -299,7 +305,6 @@ for model_choice in (
     CSSuperconductorModel.NB3SN_WST,
     TFSuperconductorModel.NB3SN_WST,
     TFWindingPackTurnModel.INTEGER_TURN,
-    FISPACTSwitchModel.OFF,
     PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
@@ -339,7 +344,10 @@ solver = systems_code_solver(
     params={}, build_config={"template_in_dat": template_builder.make_inputs()}
 )
 
-result = solver.execute("run")
+try:
+    result = solver.execute("run")
+except CodesError as ce:
+    bluemira_error(ce)
 
 # %%
 # Great, so it runs! All we need to do now is make sure we have properly
@@ -359,4 +367,10 @@ template_builder.adjust_variable("fvdump", 1.0)
 template_builder.adjust_variable("fstrcond", 0.92007)
 template_builder.adjust_variable("fjprot", 1.0)
 
+# %%
+solver = systems_code_solver(
+    params={}, build_config={"template_in_dat": template_builder.make_inputs()}
+)
+
+result = solver.execute("run")
 # %%
