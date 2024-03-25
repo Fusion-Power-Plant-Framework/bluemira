@@ -109,7 +109,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
         cs_opt_state = self.coilset.get_optimisation_state(
-            self.position_mapper.interpolator_names
+            self.position_mapper.interpolator_names, current_scale=self.scale
         )
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
 
@@ -266,8 +266,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
             # TODO: is this necessary?
             # I though this had be done after coils positions are changed
-            sub_opt_prob.eq._remap_greens()
-            sub_opt_prob.eq._clear_OX_points()
+            # sub_opt_prob.eq._remap_greens()
+            # sub_opt_prob.eq._clear_OX_points()
 
             # todo: Why would you use the self.initial_currents?
             # And not just the coilset's current currents?
@@ -289,7 +289,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
         cs_opt_state = self.coilset.get_optimisation_state(
-            self.position_mapper.interpolator_names
+            self.position_mapper.interpolator_names, current_scale=self.scale
         )
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
 
