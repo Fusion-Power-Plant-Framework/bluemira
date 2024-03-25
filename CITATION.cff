@@ -109,6 +109,6 @@ references:
     doi: 10.5445/IR/1000095873
     year: 2019
 title: "bluemira"
-license: LGPL-2.1+
+license: LGPL-2.1-or-later
 repository-code: "https://github.com/Fusion-Power-Plant-Framework/bluemira"
 url: "https://bluemira.readthedocs.io/en/develop"
