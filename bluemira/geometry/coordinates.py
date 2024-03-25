@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from enum import Enum, auto
-from itertools import pairwise, starmap
+from itertools import starmap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -31,6 +31,8 @@ from bluemira.geometry.error import CoordinatesError
 from bluemira.utilities.tools import json_writer
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.geometry.plane import BluemiraPlane
 
 
@@ -848,8 +850,8 @@ def polygon_in_polygon(
     return inside_array
 
 
-@nb.jit(forceobj=True)
-def on_polygon(x: float, z: float, poly: np.ndarray) -> bool:
+@nb.jit(nopython=True)
+def on_polygon(x: float, z: float, poly: npt.NDArray[np.float64]) -> bool:
     """
     Determine if a point (x, z) is on the perimeter of a closed 2-D polygon.
 
@@ -866,13 +868,13 @@ def on_polygon(x: float, z: float, poly: np.ndarray) -> bool:
     -------
     Whether or not the point is on the perimeter of the polygon
     """
-    on_edge = False
-    for _i, (point_a, point_b) in enumerate(pairwise(poly)):
-        c = check_linesegment(np.array(point_a), np.array(point_b), np.array([x, z]))
+    xz = np.array([x, z], dtype=nb.float64)
+    for ind in range(poly.shape[0] - 1):
+        c = check_linesegment(poly[ind], poly[ind + 1], xz)
 
         if c is True:
             return True
-    return on_edge
+    return False
 
 
 def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
