@@ -66,7 +66,6 @@ External Code Examples
     examples/codes/run_plasmod_example
     examples/codes/run_process_example
     examples/codes/equilibrium_plasmod_example
-    examples/codes/solver_example
 
 Other Examples
 ^^^^^^^^^^^^^^
