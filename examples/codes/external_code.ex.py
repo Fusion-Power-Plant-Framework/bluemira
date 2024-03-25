@@ -47,6 +47,20 @@ from bluemira.codes.utilities import ParameterMapping
 # %% [markdown]
 # # External Code Wrapping
 #
+# External programs or codes may be needed to be run during a bluemira reactor
+# design. To abstract away most of this complexity for a general user we create
+# a 'solver' object. Once a solver is created the interface to an external code
+# can be simplified and easily integrated into a design step.
+#
+# In a solver object you can:
+#
+#    - map parameter names between bluemira and the program so a user doesn't need to
+#      know multiple schema
+#    - auto create input files and read output files as needed
+#    - run a program through an API or a File program interface
+#    - map back parameters at a granular level.
+#    - access the full raw output if required.
+#
 # This example goes though the minimal steps taken to wrap an external code and
 # retrieve its outputs.
 #

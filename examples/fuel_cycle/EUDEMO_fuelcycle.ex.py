@@ -25,6 +25,8 @@ A typical fuel cycle result for an EU-DEMO reference point
 """
 
 # %%
+import matplotlib.pyplot as plt
+
 from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -239,3 +241,4 @@ print(f"The 95th percentile start-up inventory is: {m_T_start_95:.2f} kg.")
 print(f"The 95th percentile doubling time is: {t_d_95:.2f} years.")
 print(f"The maximum start-up inventory is: {m_T_start_max:.2f} kg.")
 print(f"The maximum doubling time is: {t_d_max:.2f} years.")
+plt.show()

@@ -585,7 +585,7 @@ class EUDEMOFuelCycleModel:
 
     def _plot_t_d(self, **kwargs):
         ax = kwargs.get("ax", plt.gca())
-        next(ax._get_lines.prop_cycler)
+        ax._get_lines.get_next_color()
         vlinex = [self.t_d, self.t_d]
         vliney = [0, self.m_T[0] + self.params.I_tfv_min]
         (c,) = ax.plot(
@@ -595,7 +595,7 @@ class EUDEMOFuelCycleModel:
 
     def _plot_t_infl(self, arg, **kwargs):
         ax = kwargs.get("ax", plt.gca())
-        next(ax._get_lines.prop_cycler)
+        ax._get_lines.get_next_color()
         vlinex = [self.t[arg], self.t[arg]]
         vliney = [0, self.m_T[arg]]
         (c,) = ax.plot(self.t[arg], self.m_T[arg], marker="o", markersize=10)
