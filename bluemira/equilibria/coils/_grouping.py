@@ -1296,8 +1296,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Get the positions of the position optimisable coils.
         """
         # only the position optimisable coils are considered
-        coil_names = set(
-            (position_coil_names or []) + self.position_optimisable_coil_names
+        # if position_coil_names is given
+        coil_names = (
+            self.position_optimisable_coil_names
+            if position_coil_names is None
+            else set(position_coil_names) & set(self.position_optimisable_coil_names)
         )
 
         x, z = [], []
