@@ -102,9 +102,7 @@ class ConvergenceCriterion(ABC):
         Whether or not convergence has been reached
         """
         self.progress.append(value)
-        if value <= self.limit:
-            return True
-        return False
+        return value <= self.limit
 
     def plot(self, ax: plt.Axes | None = None):
         """

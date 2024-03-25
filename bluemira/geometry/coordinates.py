@@ -1275,11 +1275,9 @@ class Coordinates:
         """
         Whether or not this is a closed set of Coordinates.
         """
-        if len(self) > 2 and np.allclose(  # noqa: PLR2004
+        return len(self) > 2 and np.allclose(  # noqa: PLR2004
             self[:, 0], self[:, -1], rtol=EPS, atol=0
-        ):
-            return True
-        return False
+        )
 
     @property
     def length(self) -> float:

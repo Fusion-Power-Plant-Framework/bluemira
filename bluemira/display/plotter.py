@@ -379,9 +379,7 @@ class PointsPlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.options.show_points:
-            return False
-        return True
+        return bool(self.options.show_points)
 
     def _populate_data(self, points):
         points = _parse_to_xyz_array(points).T
@@ -418,10 +416,7 @@ class WirePlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.options.show_points and not self.options.show_wires:
-            return False
-
-        return True
+        return not (not self.options.show_points and not self.options.show_wires)
 
     def _populate_data(self, wire):
         self._pplotter = PointsPlotter(self.options)
@@ -468,14 +463,11 @@ class FacePlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if (
+        return not (
             not self.options.show_points
             and not self.options.show_wires
             and not self.options.show_faces
-        ):
-            return False
-
-        return True
+        )
 
     def _populate_data(self, face):
         self._data = []
@@ -531,14 +523,11 @@ class ComponentPlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if (
+        return not (
             not self.options.show_points
             and not self.options.show_wires
             and not self.options.show_faces
-        ):
-            return False
-
-        return True
+        )
 
     def _populate_data(self, comp):
         self._cplotters = []
