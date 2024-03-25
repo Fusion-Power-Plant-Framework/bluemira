@@ -105,7 +105,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         if x0 is None:
             # Get initial state and apply region mapping to coil positions.
             cs_opt_state = self.coilset.get_optimisation_state(
-                self.position_mapper.interpolator_names
+                self.position_mapper.interpolator_names, current_scale=self.scale
             )
             initial_mapped_positions = self.position_mapper.to_L(
                 cs_opt_state.xs, cs_opt_state.xs
@@ -116,7 +116,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
-            f_objective=lambda x: self.objective(x, len_mapped_pos),
+            f_objective=lambda vector: self.objective(vector, len_mapped_pos),
             x0=x0,
             bounds=self.bounds,
             opt_conditions=self.opt_conditions,
@@ -149,9 +149,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         coil_position_map = self.position_mapper.to_xz_dict(opt_mapped_positions)
 
         self.coilset.set_optimisation_state(
-            opt_currents,
-            coil_position_map,
-            self.scale,
+            opt_currents, coil_position_map, current_scale=self.scale
         )
 
         # Update target
