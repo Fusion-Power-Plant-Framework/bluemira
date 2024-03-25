@@ -787,39 +787,6 @@ def get_class_from_module(name: str, default_module: str = "") -> Type:
     return output
 
 
-def list_array(list_: Any) -> np.ndarray:
-    """
-    Always returns a numpy array
-    Can handle int, float, list, np.ndarray
-
-    Parameters
-    ----------
-    list_:
-        The value to convert into a numpy array.
-
-    Returns
-    -------
-    he value as a numpy array.
-
-    Raises
-    ------
-    TypeError
-        If the value cannot be converted to a numpy array.
-    """
-    if isinstance(list_, list):
-        return np.array(list_)
-    if isinstance(list_, np.ndarray):
-        try:  # This catches the odd np.array(8) instead of np.array([8])
-            len(list_)
-        except TypeError:
-            return np.array([list_])
-        else:
-            return list_
-    elif is_num(list_):
-        return np.array([list_])
-    raise TypeError("Could not convert input type to list_array to a np.array.")
-
-
 def array_or_num(array: Any) -> Union[np.ndarray, float]:
     """
     Always returns a numpy array or a float

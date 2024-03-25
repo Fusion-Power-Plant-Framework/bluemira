@@ -9,7 +9,7 @@
       "Void": 0.4106041
     },
     "enrichment": 0.6,
-    "temperature_in_K": 673.15
+    "temperature": 673.15
   },
   "Homogenised_HCPB_2015_v3_OB": {
     "material_class": "HomogenisedMixture",
@@ -21,7 +21,7 @@
       "Void": 0.40236
     },
     "enrichment": 0.6,
-    "temperature_in_K": 673.15
+    "temperature": 673.15
   },
   "Homogenised_HCPB_2015_v3_FW": {
     "material_class": "HomogenisedMixture",
@@ -30,7 +30,7 @@
       "Tungsten": 0.074,
       "Void": 0.34
     },
-    "temperature_in_K": 773.15
+    "temperature": 773.15
   },
   "Homogenised_HCPB_2015_v3_BZ": {
     "material_class": "HomogenisedMixture",
@@ -41,7 +41,7 @@
       "Void": 0.3861
     },
     "enrichment": 0.6,
-    "temperature_in_K": 773.15
+    "temperature": 773.15
   },
   "Homogenised_HCPB_2015_v3_MB": {
     "material_class": "HomogenisedMixture",
@@ -49,7 +49,7 @@
       "SS316-LN": 0.4139,
       "Void": 0.5861
     },
-    "temperature_in_K": 773.15
+    "temperature": 773.15
   },
   "Homogenised_HCPB_2015_v3_BSS": {
     "material_class": "HomogenisedMixture",
@@ -57,7 +57,7 @@
       "SS316-LN": 0.6061,
       "Void": 0.3939
     },
-    "temperature_in_K": 773.15
+    "temperature": 773.15
   },
   "Homogenised_Divertor_2015": {
     "material_class": "HomogenisedMixture",
@@ -68,7 +68,7 @@
       "Tungsten": 0.01026,
       "H2O": 0.45604
     },
-    "temperature_in_K": 423.15
+    "temperature": 423.15
   },
   "Toroidal_Field_Coil_2015": {
     "material_class": "HomogenisedMixture",
@@ -81,7 +81,7 @@
       "SS316-LN": 0.4319,
       "Void": 0.00055
     },
-    "temperature_in_K": 293.15
+    "temperature": 293.15
   },
   "Poloidal_Field_Coil": {
     "material_class": "HomogenisedMixture",
@@ -94,7 +94,7 @@
       "SS316-LN": 0.4319,
       "Void": 0.00055
     },
-    "temperature_in_K": 293.15
+    "temperature": 293.15
   },
   "Steel Water 60/40": {
     "material_class": "HomogenisedMixture",
@@ -102,6 +102,6 @@
       "SS316-LN": 0.6,
       "H2O": 0.4
     },
-    "temperature_in_K": 293.15
+    "temperature": 293.15
   }
 }

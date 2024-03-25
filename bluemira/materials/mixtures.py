@@ -11,67 +11,45 @@ Material mixture utility classes
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Optional
-
-if TYPE_CHECKING:
-    from bluemira.materials.cache import MaterialCache
-
-import warnings
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    import neutronics_material_maker as nmm
-
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.materials.constants import T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.material import SerialisedMaterial
+from bluemira.materials.tools import to_openmc_material_mixture
+
+if TYPE_CHECKING:
+    from bluemira.materials.cache import MaterialCache
+    from bluemira.materials.material import MassFractionMaterial
 
 
-class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
+@dataclass
+class MixtureFraction:
+    """Material mixture fraction"""
+
+    material: Union[MassFractionMaterial, HomogenisedMixture]
+    fraction: float
+
+    def __post_init__(self):
+        """Set name"""
+        self.name = self.material.name
+
+
+@dataclass
+class HomogenisedMixture:
     """
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    materials: Dict[str, float]
-    temperature_in_K: float  # noqa: N815
-    enrichment: float
-
-    default_temperature = T_DEFAULT
-    _material_classes = ()
-
-    def __init__(
-        self,
-        name: str,
-        materials: Dict[str, float],
-        temperature_in_K: Optional[float] = None,  # noqa: N803
-        enrichment: Optional[float] = None,
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
-    ):
-        if temperature_in_K is None:
-            temperature_in_K = self.default_temperature  # noqa: N806
-
-        mats = []
-        for mat in materials:
-            mat.temperature = temperature_in_K
-            if "enrichment" in mat.__class__.__annotations__:
-                mat.enrichment = enrichment
-            mats += [mat]
-
-        super().__init__(
-            material_tag=name,
-            materials=mats,
-            fracs=list(materials.values()),
-            percent_type="vo",
-            temperature_in_K=temperature_in_K,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
-
-        self.name = name
+    name: str
+    materials: List[MixtureFraction]
+    material_id: Optional[int] = None
+    percent_type: str = "vo"
+    packing_fraction: float = 1.0
+    enrichment: Optional[float] = None
+    temperature: Optional[float] = None
 
     def __str__(self) -> str:
         """
@@ -79,41 +57,58 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self.name
 
-    def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
+    def to_openmc_material(self, temperature: Optional[float] = None):
+        """
+        Convert the mixture to an openmc material.
+        """
+        temperature = self.temperature if temperature is None else temperature
+        return to_openmc_material_mixture(
+            [mat.material.to_openmc_material(temperature) for mat in self.materials],
+            [mat.fraction for mat in self.materials],
+            self.name,
+            self.material_id,
+            temperature,
+            percent_type=self.percent_type,
+            packing_fraction=self.packing_fraction,
+        )
+
+    def _calc_homogenised_property(
+        self, prop: str, temperature: Optional[float] = None
+    ) -> float:
         """
         Calculate an mass-fraction-averaged property for the homogenised mixture.
         """
+        temperature = self.temperature if temperature is None else temperature
         warn = []
         values, fractions = [], []
         # Calculate property mixtures, ignoring liquids and voids
         # for certain properties
-        for mat, vf in zip(self.materials, self.fracs):
+        for mat in self.materials:
             try:
-                v = getattr(mat, prop)(temperature)
-                values.append(v)
-                fractions.append(vf)
-            except (  # noqa: PERF203
-                NotImplementedError,
-                AttributeError,
-                MaterialsError,
-            ):
-                warn.append([mat, prop])
+                v = getattr(mat.material, prop)(temperature)
+                if v is None:
+                    warn.append([mat.name, prop])
+                else:
+                    values.append(v)
+                    fractions.append(mat.fraction)
+            except AttributeError:  # noqa: PERF203
+                warn.append([mat.name, prop])
 
         f = np.array(fractions) / sum(fractions)  # Normalised
         value = np.dot(values, f)
 
         if warn:
             txt = (
-                f"Materials::{self.__class__.__name__}: The following "
+                f"Materials::{type(self).__name__}: The following "
                 "mat.prop calls failed:\n"
             )
             for w in warn:
-                txt += f"{w[0]}: {w[1]}" + "\n"
+                txt += f"{w[0]}: {w[1]}\n"
             bluemira_warn(txt)
 
         return value
 
-    def E(self, temperature: float) -> float:  # noqa: N802
+    def E(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Young's modulus.
 
@@ -128,7 +123,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self._calc_homogenised_property("E", temperature)
 
-    def mu(self, temperature: float) -> float:
+    def mu(self, temperature: Optional[float] = None) -> float:
         """
         Poisson's ratio.
 
@@ -143,7 +138,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self._calc_homogenised_property("mu", temperature)
 
-    def CTE(self, temperature: float) -> float:  # noqa: N802
+    def CTE(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
 
@@ -158,7 +153,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self._calc_homogenised_property("CTE", temperature)
 
-    def rho(self, temperature: float) -> float:
+    def rho(self, temperature: Optional[float] = None) -> float:
         """
         Density.
 
@@ -173,7 +168,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self._calc_homogenised_property("rho", temperature)
 
-    def Sy(self, temperature: float) -> float:  # noqa: N802
+    def Sy(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Minimum yield stress in MPa
 
@@ -191,7 +186,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     @classmethod
     def from_dict(
         cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
-    ) -> SerialisedMaterial:
+    ) -> HomogenisedMixture:
         """
         Generate an instance of the mixture from a dictionary of materials.
 
@@ -212,11 +207,11 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         if "materials" not in material_dict[name]:
             raise MaterialsError("Mixture must define constituent materials.")
 
+        materials = []
         for mat in material_dict[name]["materials"]:
             if isinstance(mat, str):
-                del mat_dict["materials"][mat]
                 material_inst = material_cache.get_material(mat, False)
                 material_value = material_dict[name]["materials"][mat]
-                mat_dict["materials"][material_inst] = material_value
-
-        return super().from_dict(name, {name: mat_dict})
+                materials.append(MixtureFraction(material_inst, material_value))
+        mat_dict["materials"] = materials
+        return cls(name, **mat_dict)

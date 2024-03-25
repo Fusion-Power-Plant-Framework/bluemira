@@ -26,7 +26,7 @@ dependencies = [
     "imageio",
     "matplotlib>=3.5",
     "meshio",
-    "neutronics-material-maker==0.1.11", # Crash on upgrade
+    "neutronics-material-maker>=1.1.4",
     "nlopt",
     "numba",
     "numba-scipy",
@@ -83,6 +83,7 @@ openmoc = ["OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b"]
 openmc = [
     "OpenMC @git+https://github.com/openmc-dev/openmc.git",
     "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
+    "openmc_data",
 ]
 polyscope = ["polyscope"]
 
@@ -191,7 +192,6 @@ ignore = [
     "FA100", # use future ann everywhere
     "UP006", # type annotations
     "UP007",
-
 ]
 
 [tool.ruff.lint.isort]
@@ -311,6 +311,8 @@ ignore-names = [
     "*_F",
     "*eV",
     "I_not_dI",
+    "*Li*",
+    "*MW*"
 ]
 
 [tool.ruff.lint.per-file-ignores]
