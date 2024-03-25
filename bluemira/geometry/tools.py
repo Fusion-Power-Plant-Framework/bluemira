@@ -842,6 +842,7 @@ def sweep_shape(
     *,
     solid: bool = True,
     frenet: bool = True,
+    transition: int = 0,
     label: str = "",
 ) -> BluemiraSolid | BluemiraShell:
     """
@@ -858,6 +859,8 @@ def sweep_shape(
     frenet:
         If true, the orientation of the profile(s) is calculated based on local curvature
         and tangency. For planar paths, should not make a difference.
+    transition:
+        transition type between sweep sections
 
     Returns
     -------
@@ -868,7 +871,9 @@ def sweep_shape(
 
     profile_shapes = [p.shape for p in profiles]
 
-    result = cadapi.sweep_shape(profile_shapes, path.shape, solid=solid, frenet=frenet)
+    result = cadapi.sweep_shape(
+        profile_shapes, path.shape, solid=solid, frenet=frenet, transition=transition
+    )
 
     return convert(result, label=label)
 
