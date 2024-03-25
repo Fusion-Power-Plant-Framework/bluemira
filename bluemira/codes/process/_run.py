@@ -8,6 +8,8 @@
 PROCESS run functions
 """
 
+from typing import Optional
+
 import numpy as np
 from rich.progress import Progress, TextColumn
 
@@ -42,11 +44,13 @@ class Run(CodesTask):
         params: ProcessSolverParams,
         in_dat_path: str,
         binary: str = PROCESS_BINARY,
+        solver: Optional[str] = None,
     ):
         super().__init__(params, PROCESS_NAME)
 
         self.in_dat_path = in_dat_path
         self.binary = binary
+        self.solver = solver
 
     def run(self):
         """
@@ -95,6 +99,8 @@ class Run(CodesTask):
     def _run_process(self):
         bluemira_print(f"Running '{PROCESS_NAME}' systems code")
         command = [self.binary, "-i", self.in_dat_path]
+        if self.solver is not None:
+            command.extend(["--solver", self.solver])
 
         self._get_epsvmc()
 

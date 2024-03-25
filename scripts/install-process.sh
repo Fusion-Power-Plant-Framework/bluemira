@@ -25,7 +25,7 @@ if [ "$1" ]
   then
     git checkout "$1"
 else
-    git checkout v3.0.2
+    git checkout v3.1.0
 fi
 
 

@@ -1615,7 +1615,7 @@
     "var_mod": "Times",
     "scan01": 50.043
   },
-  "theat": {
+  "t_fusion_ramp": {
     "var_mod": "Times",
     "scan01": 10.0
   },

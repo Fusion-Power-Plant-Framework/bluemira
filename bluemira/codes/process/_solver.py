@@ -129,6 +129,7 @@ class Solver(CodesSolver):
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
         self.template_in_dat = _build_config.pop("template_in_dat", ProcessInputs())
+        self.custom_solver = _build_config.pop("custom_solver", None)
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
@@ -165,7 +166,9 @@ class Solver(CodesSolver):
             self.in_dat_path,
             self.problem_settings,
         )
-        self._run = self.run_cls(self.params, self.in_dat_path, self.binary)
+        self._run = self.run_cls(
+            self.params, self.in_dat_path, self.binary, self.custom_solver
+        )
         self._teardown = self.teardown_cls(
             self.params, self.run_directory, self.read_directory
         )
