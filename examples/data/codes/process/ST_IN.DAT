@@ -60,7 +60,6 @@ ixc = 49 * fstrcond
 ixc = 50 * fiooic
 boundu(50) = 0.5
 ixc = 51 * fvdump
-ixc = 52 * vdalw
 ixc = 53 * fjprot
 ixc = 56 * tdmptf
 *boundl(56) = 30.0
