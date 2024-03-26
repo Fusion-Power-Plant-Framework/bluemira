@@ -11,6 +11,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 if TYPE_CHECKING:
     from bluemira.equilibria.run import Snapshot
 
@@ -48,3 +51,43 @@ class EquilibriumManager:
         Get an equilibrium state from the Equilibrium manager.
         """
         return self.states.get(name, None)
+
+    def plot(self):
+        """
+        Plot the states of the equilibria
+        """
+        f, ax = plt.subplots(1, 3)
+        for i, case in enumerate([self.BREAKDOWN, self.SOF, self.EOF]):
+            state = self.get_state(case)
+            state.eq.plot(ax[i])
+            state.eq.coilset.plot(ax[i], label=True)
+        return f
+
+    def summary(self) -> pd.DataFrame:
+        """
+        Produce a summary dataframe of the coils and currents in different states.
+        """
+        coilset = self.get_state(self.SOF).coilset
+        df = pd.DataFrame(
+            columns=[
+                "Coil name",
+                "x",
+                "z",
+                "dx",
+                "dz",
+                "Breakdown currents [MA]",
+                "SOF currents [MA]",
+                "EOF currents [MA]",
+            ]
+        )
+        df["Coil name"] = coilset.name
+        df["x"] = coilset.x
+        df["z"] = coilset.z
+        df["dx"] = 2.0 * coilset.dx
+        df["dz"] = 2.0 * coilset.dz
+        df["Breakdown currents [MA]"] = (
+            self.get_state(self.BREAKDOWN).coilset.current / 1e6
+        )
+        df["SOF currents [MA]"] = self.get_state(self.SOF).coilset.current / 1e6
+        df["EOF currents [MA]"] = self.get_state(self.EOF).coilset.current / 1e6
+        return df
