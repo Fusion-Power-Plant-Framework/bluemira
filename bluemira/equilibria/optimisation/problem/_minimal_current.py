@@ -84,7 +84,6 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         """
         _plotter = EquilibriumComparisonPlotter(
             equilibrium=self.eq,
-            # ax=self.ax,
             reference_eq=self.reference_eq,
             split_psi_plots=self.diag_ops.split_psi_plots,
             psi_diff=self.diag_ops.psi_diff,
