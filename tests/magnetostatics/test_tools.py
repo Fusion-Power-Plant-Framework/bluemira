@@ -6,7 +6,8 @@
 
 import numpy as np
 
-from bluemira.magnetostatics.tools import process_xyz_array
+from bluemira.geometry.tools import make_polygon
+from bluemira.magnetostatics.tools import process_xyz_array, reduce_coordinates
 
 
 def test_xyz_decorator():
@@ -44,3 +45,10 @@ def test_xyz_decorator():
             result2[:, i, j] = tester.func(x[i, j], x[i, j], x[i, j])
 
     assert np.allclose(result2, result)
+
+
+def test_reduce_coordinates():
+    square = make_polygon({"x": [0, 1, 1, 0], "z": [0, 0, 1, 1]})
+    square_points = square.vertexes
+    disc_points = reduce_coordinates(square.discretize(20, byedges=True))
+    assert np.allclose(square_points, disc_points)

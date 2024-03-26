@@ -10,10 +10,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Iterable, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
@@ -132,7 +129,6 @@ class BluemiraWire(BluemiraGeo):
         ndiscr: int = 100,
         byedges: bool = False,
         dl: float | None = None,
-        reduce: bool = False,
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
@@ -158,18 +154,6 @@ class BluemiraWire(BluemiraGeo):
             points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
         else:
             points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
-        if reduce is True:
-            p0 = points[:-2, :]
-            p1 = points[1:-1, :]
-            p2 = points[2:, :]
-            l1 = (p1 - p0) / np.linalg.norm((p1 - p0)[0, :])
-            l2 = (p2 - p1) / np.linalg.norm((p2 - p1)[0, :])
-            mask = np.ones_like(points[:, 0], dtype=bool)
-            diag_dot = np.around(
-                np.append(np.append(0.0, np.diag(np.inner(l1, l2))), 0.0)
-            ).astype(int)
-            mask[np.equal(diag_dot, 1)] = False
-            return Coordinates(points[mask, :].T)
         return Coordinates(points.T)
 
     def value_at(
