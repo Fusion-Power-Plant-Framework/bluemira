@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
+from dataclasses import dataclass
 from operator import attrgetter
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -94,7 +95,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     __slots__ = ("_coils", "_pad_size")
 
-    def __init__(self, *coils: Union[Coil, CoilGroup[Coil]]):
+    def __init__(self, *coils: Union[Coil, CoilGroup]):
         if any(not isinstance(c, (Coil, CoilGroup)) for c in coils):
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
@@ -209,7 +210,7 @@ class CoilGroup(CoilGroupFieldsMixin):
             for ff, *_args in zip(funclist, *args):
                 ff(*_args, **kwargs)
 
-    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+    def add_coil(self, *coils: Union[Coil, CoilGroup]):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
 
@@ -501,6 +502,10 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.append(c)
         return coils
 
+    def all_coils(self) -> List[Coil]:
+        """Get all coils as a flattened list"""
+        return [self[n] for n in self.name]
+
     def get_coiltype(self, ctype: Union[str, CoilType]) -> Optional[CoilGroup]:
         """Get coils matching coil type"""
         if coiltype := self._get_coiltype(ctype):
@@ -532,6 +537,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return np.where(
             np.isnan(self.j_max) | ~self._flag_sizefix,  # or not
             max_current,
+            # todo: these are np arrays, not floats
             get_max_current(self.dx, self.dz, self.j_max),
         )
 
@@ -539,6 +545,54 @@ class CoilGroup(CoilGroupFieldsMixin):
     def name(self) -> List:
         """Get coil names"""
         return self.__getter("name").tolist()
+
+    @property
+    def primary_coil(self) -> Coil:
+        """Get primary coil, which is arbitrarily taken to
+        be the first coil in the group.
+
+        Will recurse if the first coil itself is a CoilGroup.
+        """
+        c = self._coils[0]
+        if isinstance(c, CoilGroup):
+            return c.primary_coil
+        return c
+
+    @property
+    def primary_coil_names(self) -> List[str]:
+        """Get the names of the primary coils in the group"""
+        return [
+            str(coil.primary_coil.name)
+            if isinstance(coil, CoilGroup)
+            else str(coil.name)
+            for coil in self._coils
+        ]
+
+    def get_coil_or_group_by_primary_coil_name(
+        self, primary_coil_name: str
+    ) -> Union[Coil, CoilGroup]:
+        """
+        Get the coil or coil group with the given primary coil name
+
+        Parameters
+        ----------
+        primary_coil_name:
+            The primary coil name
+
+        Returns
+        -------
+        Coil or CoilGroup
+            The coil or coil group with the given primary coil name
+        """
+        for coil in self._coils:
+            if isinstance(coil, CoilGroup):
+                if coil.primary_coil.name == primary_coil_name:
+                    return coil
+            elif coil.name == primary_coil_name:
+                return coil
+        raise ValueError(
+            f"No coil or coil group with primary coil name {primary_coil_name}"
+        )
 
     @property
     def x(self) -> np.ndarray:
@@ -659,7 +713,14 @@ class CoilGroup(CoilGroupFieldsMixin):
     @property
     def _quad_boundary(self):
         """Get coil quadrature boundaries"""
-        return [*self.__list_getter("_quad_boundary")]
+        n = []
+        qbs = self.__list_getter("_quad_boundary")
+        for qb in qbs:
+            if isinstance(qb, (np.ndarray, list)):  # checking if not a tuple
+                n.extend(qb)
+            else:
+                n.append(qb)
+        return n
 
     @x.setter
     def x(self, values: Union[float, Iterable[float]]):
@@ -733,9 +794,7 @@ class Circuit(CoilGroup):
 
     __slots__ = ()
 
-    def __init__(
-        self, *coils: Union[Coil, CoilGroup[Coil]], current: Optional[float] = None
-    ):
+    def __init__(self, *coils: Union[Coil, CoilGroup], current: Optional[float] = None):
         super().__init__(*coils)
         self.current = self._get_current() if current is None else current
 
@@ -745,7 +804,12 @@ class Circuit(CoilGroup):
             current = current[0]
         return current
 
-    def add_coil(self, *coils: Union[Coil, CoilGroup[Coil]]):
+    @property
+    def primary_group(self) -> Union[Coil, CoilGroup]:
+        """Get the first coil or group in the circuit as the 'primary_group'"""
+        return self._coils[0]
+
+    def add_coil(self, *coils: Union[Coil, CoilGroup]):
         """
         Add coil to circuit forcing the same current
         """
@@ -783,10 +847,7 @@ class SymmetricCircuit(Circuit):
 
     __slots__ = ("_symmetry_line", "_shift", "sym_mat", *CoilGroup.__slots__)
 
-    def __init__(
-        self,
-        *coils: Union[Coil, CoilGroup[Coil]],
-    ):
+    def __init__(self, *coils: Union[Coil, CoilGroup]):
         symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0))
 
         if len(coils) == 1:
@@ -800,10 +861,15 @@ class SymmetricCircuit(Circuit):
 
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
-        self._coils[1].x = self._coils[1].x - diff[0]
-        self._coils[1].z = self._coils[1].z - diff[1]
+        self.symmetric_group.x -= diff[0]
+        self.symmetric_group.z -= diff[1]
 
-    def modify_symmetry(self, symmetry_line: np.ndarray):
+    @property
+    def symmetric_group(self) -> Union[Coil, CoilGroup]:
+        """Get the second coil or group as the 'symmetric_group'"""
+        return self._coils[1]
+
+    def modify_symmetry(self, symmetry_line: Union[np.ndarray, Tuple]):
         """
         Create a unit vector for the symmetry of the circuit
 
@@ -843,9 +909,23 @@ class SymmetricCircuit(Circuit):
         """
         cp = self._get_group_centre()
         cp[1] -= self._shift
+
         mirror = np.dot(self.sym_mat, cp.T)
         mirror[1] += self._shift
-        return np.array([np.mean(self._coils[1].x), np.mean(self._coils[1].z)]) - mirror
+
+        return (
+            np.array([
+                self._get_symmetric_group_x_centre(),
+                self._get_symmetric_group_z_centre(),
+            ])
+            - mirror
+        )
+
+    @Circuit.position.setter
+    def position(self, values: np.ndarray):
+        """Set coil positions"""
+        self.x = values[0]
+        self.z = values[1]
 
     @Circuit.x.setter
     def x(self, new_x: float):
@@ -854,8 +934,8 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_x, np.ndarray):
             new_x = np.mean(new_x[0])
-        self._coils[0].x = self._coils[0].x + new_x - self._get_group_x_centre()
-        self._coils[1].x = self._coils[1].x - self._symmetrise()[0]
+        self.primary_group.x += new_x - self._get_primary_group_x_centre()
+        self.symmetric_group.x -= self._symmetrise()[0]
 
     @Circuit.z.setter
     def z(self, new_z: float):
@@ -864,20 +944,65 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_z, np.ndarray):
             new_z = np.mean(new_z[0])
-        self._coils[0].z = self._coils[0].z + new_z - self._get_group_z_centre()
-        self._coils[1].z = self._coils[1].z + self._symmetrise()[1]
+        self.primary_group.z += new_z - self._get_primary_group_z_centre()
+        self.symmetric_group.z -= self._symmetrise()[1]
 
-    def _get_group_x_centre(self) -> np.ndarray:
+    def _get_primary_group_x_centre(self) -> np.ndarray:
         """Get the x centre of the first coil group"""
-        return np.mean(self._coils[0].x)
+        return np.mean(self.primary_group.x)
 
-    def _get_group_z_centre(self) -> np.ndarray:
+    def _get_primary_group_z_centre(self) -> np.ndarray:
         """Get the z centre of the first coil group"""
-        return np.mean(self._coils[0].z)
+        return np.mean(self.primary_group.z)
+
+    def _get_symmetric_group_x_centre(self) -> np.ndarray:
+        """Get the x centre of the first coil group"""
+        return np.mean(self.symmetric_group.x)
+
+    def _get_symmetric_group_z_centre(self) -> np.ndarray:
+        """Get the z centre of the first coil group"""
+        return np.mean(self.symmetric_group.z)
 
     def _get_group_centre(self) -> np.ndarray:
         """Get the centre of the first coil group"""
-        return np.array([self._get_group_x_centre(), self._get_group_z_centre()])
+        return np.array([
+            self._get_primary_group_x_centre(),
+            self._get_primary_group_z_centre(),
+        ])
+
+
+@dataclass
+class CoilSetOptimisationState:
+    """
+    State of the optimisation of a CoilSet
+
+    Parameters
+    ----------
+    currents:
+        The current values of the coils
+    xs:
+        The x positions of the coils
+    zs:
+        The z positions of the coils
+    """
+
+    currents: np.ndarray
+    xs: np.ndarray
+    zs: np.ndarray
+
+    def __post_init__(self):
+        if self.xs.size != self.zs.size:
+            raise ValueError("Number of xs must match the number of zs in the CoilSet")
+
+    @property
+    def positions(self) -> np.ndarray:
+        """Get the positions as a (2,N) array"""
+        return np.array([self.xs, self.zs])
+
+    @property
+    def positions_flat(self) -> np.ndarray:
+        """Get the positions as an array with xs and zs concatenated (xs then zs)"""
+        return np.concatenate([self.xs, self.zs])
 
 
 class CoilSet(CoilSetFieldsMixin, CoilGroup):
@@ -903,7 +1028,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     def __init__(
         self,
-        *coils: Union[Coil, CoilGroup[Coil]],
+        *coils: Union[Coil, CoilGroup],
         control_names: Optional[Union[List, bool]] = None,
     ):
         super().__init__(*coils)
@@ -917,7 +1042,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self.control = list(set(self.control) & set(self.name))
 
     @property
-    def control(self) -> List:
+    def control(self) -> List[str]:
         """Get control coil names"""
         return self._control
 
@@ -945,14 +1070,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """Get control coils"""
         coils = []
         for c in self._coils:
-            names = c.name
-            if isinstance(names, List):
-                # is subset of list
-                if isinstance(c, Circuit) and any(n in self.control for n in names):
-                    coils.append(c)
-                else:
-                    coils.extend(c.get_control_coils()._coils)
-            elif names in self.control:
+            if isinstance(c, CoilSet):
+                coils.extend(c.get_control_coils()._coils)
+            elif (isinstance(c, Coil) and c.name in self.control) or (
+                isinstance(c, CoilGroup) and any(n in self.control for n in c.name)
+            ):
                 coils.append(c)
         return CoilSet(*coils)
 
@@ -989,9 +1111,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         -------
         Summed response output
         """
-        ind = self._control_ind if control else slice(None)
+        inds = self._control_ind if control else slice(None)
 
-        return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
+        return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
 
     def get_coiltype(self, ctype):
         """Get coils by coils type"""
@@ -1015,3 +1137,197 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             for coil in self._get_coiltype(ctype)
         ]
         return self
+
+    def get_optimisation_state(
+        self, position_coil_names: Optional[List[str]] = None, current_scale: float = 1.0
+    ) -> CoilSetOptimisationState:
+        """
+        Get the state of the CoilSet for optimisation
+
+        Parameters
+        ----------
+        current_scale:
+            The scale of the currents
+
+        Returns
+        -------
+        CoilSetOptimisationState
+            The state of the CoilSet for optimisation
+        """
+        cc = self.get_control_coils()
+        xs, zs = cc._get_optimisation_positions(position_coil_names)
+        currents = cc._optimisation_currents / current_scale
+        return CoilSetOptimisationState(
+            currents=currents,
+            xs=xs,
+            zs=zs,
+        )
+
+    def set_optimisation_state(
+        self,
+        opt_currents: Optional[np.ndarray] = None,
+        coil_position_map: Optional[Dict[str, np.ndarray]] = None,
+        current_scale: float = 1.0,
+    ):
+        """
+        Set the state of the CoilSet for optimisation
+
+        Parameters
+        ----------
+        optimisation_state:
+            The state of the CoilSet for optimisation
+        current_scale:
+            The scale of the currents
+
+        Returns
+        -------
+        CoilSetOptimisationState
+            The state of the CoilSet for optimisation
+        """
+        cc = self.get_control_coils()
+        if opt_currents is not None:
+            cc._optimisation_currents = opt_currents * current_scale
+        if coil_position_map is not None:
+            cc._set_optimisation_positions(coil_position_map)
+
+    @property
+    def n_current_optimisable_coils(self) -> int:
+        """
+        Get the number of coils that can be optimised.
+        """
+        return len(self.current_optimisable_coil_names)
+
+    @property
+    def current_optimisable_coil_names(self) -> List[str]:
+        """
+        Get the names of the coils that can be optimised.
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return [*flatten_iterable(optimisable_coil_names)]
+
+    @property
+    def _optimisation_currents_inds(self) -> List[int]:
+        """
+        Get the indices of the coils that can be optimised.
+
+        These indices are used to extract the optimisable currents from the CoilSet
+        and are based on the index of the coils in the name array.
+        """
+        return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
+
+    @property
+    def _optimisation_currents_sym_mat(self) -> np.ndarray:
+        """
+        Get the symmetry matrix for the current optimisable coils
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+        n_distinct_coils_and_groupings = len(cc._coils)
+
+        # this should be true as, at the top level, the number
+        # of coil or group objects should be the same as the no
+        # of optimisable coils
+        assert n_opt_coils == n_distinct_coils_and_groupings  # noqa: S101
+
+        # you are putting 1's in the col. corresponding
+        # to all coils in the same Circuit
+        sym_mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row_coil = 0
+        for i_col_coil_group, c in enumerate(cc._coils):
+            if isinstance(c, Circuit):
+                n_coils_in_group = c.n_coils()
+                for n in range(n_coils_in_group):
+                    sym_mat[i_row_coil + n, i_col_coil_group] = 1
+                i_row_coil += n
+            else:
+                sym_mat[i_row_coil, i_col_coil_group] = 1
+            i_row_coil += 1
+        return sym_mat
+
+    @property
+    def _optimisation_currents(self) -> np.ndarray:
+        """
+        Get the currents for the optimisable coils
+        """
+        return self.current[self._optimisation_currents_inds]
+
+    @_optimisation_currents.setter
+    def _optimisation_currents(self, values: np.ndarray):
+        """
+        Set the currents for the optimisable coils
+        """
+        n_all_coils = self.n_coils()
+
+        n_vals = values.shape[0]
+        n_curr_opt_coils = self.n_current_optimisable_coils
+
+        if n_vals == 1:
+            c = values[0]
+            self.current = np.ones(n_all_coils) * c
+            return
+
+        if n_vals != n_curr_opt_coils:
+            raise ValueError(
+                f"The number of current elements {n_vals} "
+                "does not match the number of "
+                f"optimisable currents: {n_curr_opt_coils}"
+            )
+
+        self.current = self._optimisation_currents_sym_mat @ values
+
+    @property
+    def n_position_optimisable_coils(self) -> int:
+        """
+        Get the number of coils that can be position optimised.
+        """
+        return len(self.position_optimisable_coil_names)
+
+    @property
+    def position_optimisable_coil_names(self) -> List[str]:
+        """
+        Get the names of the coils that can be position optimised.
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, SymmetricCircuit) else c.name
+            for c in self._coils
+        ]
+        return [*flatten_iterable(optimisable_coil_names)]
+
+    def _get_optimisation_positions(
+        self, position_coil_names: Optional[List[str]] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Get the positions of the position optimisable coils.
+        """
+        # only the position optimisable coils are considered
+        # if position_coil_names is given
+        coil_names = (
+            self.position_optimisable_coil_names
+            if position_coil_names is None
+            else [
+                cn
+                for cn in position_coil_names
+                if cn in self.position_optimisable_coil_names
+            ]
+        )
+
+        x, z = [], []
+        for name in coil_names:
+            x.append(self[name].x)
+            z.append(self[name].z)
+        return np.asarray(x), np.asarray(z)
+
+    def _set_optimisation_positions(self, coil_position_map: Dict[str, np.ndarray]):
+        """
+        Set the positions of the position optimisable coils
+        """
+        pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
+        for coil_name, position in coil_position_map.items():
+            if coil_name in pos_opt_coil_names:
+                c = self.get_coil_or_group_by_primary_coil_name(coil_name)
+                c.position = position

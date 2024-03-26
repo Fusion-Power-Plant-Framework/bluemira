@@ -134,6 +134,7 @@ class FieldConstraints(UpdateableConstraint):
             "bzp_vec": None,
             "B_max": B_max,
             "scale": 1.0,
+            "current_sym_matrix": None,
         }
         self.tolerance = tolerance
         self.f_constraint_type = constraint_type
@@ -156,6 +157,10 @@ class FieldConstraints(UpdateableConstraint):
         bxp_vec, bzp_vec = self.evaluate(equilibrium)
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -236,6 +241,7 @@ class CoilFieldConstraints(FieldConstraints):
 
     @staticmethod
     def _get_constraint_points(coilset):
+        # todo: what about dz?
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(
@@ -258,6 +264,10 @@ class CoilFieldConstraints(FieldConstraints):
         bxp_vec, bzp_vec = self.evaluate(equilibrium)
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
 
 class CoilForceConstraints(UpdateableConstraint):
@@ -309,6 +319,7 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
+            "current_sym_matrix": None,
         }
         self.tolerance = tolerance
 
@@ -326,6 +337,10 @@ class CoilForceConstraints(UpdateableConstraint):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
         self._args["b_vec"] = self.evaluate(equilibrium)
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     @staticmethod
     def control_response(coilset: CoilSet) -> np.ndarray:
@@ -398,6 +413,10 @@ class MagneticConstraint(UpdateableConstraint):
 
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     def update_target(self, equilibrium: Equilibrium):
         """
@@ -725,7 +744,7 @@ class MagneticConstraintSet(ABC):
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
-    __slots__ = ("A", "background", "coilset", "constraints", "eq", "target", "w")
+    __slots__ = ["A", "background", "coilset", "constraints", "eq", "target", "w"]
 
     def __init__(self, constraints: List[MagneticConstraint]):
         self.constraints = constraints
@@ -821,7 +840,7 @@ class MagneticConstraintSet(ABC):
         i = 0
         for constraint in self.constraints:
             n = len(constraint)
-            self.background[i : i + n] = constraint.evaluate(self.eq)
+            self.background[i : i + n] = np.squeeze(constraint.evaluate(self.eq))
             i += n
 
     @property

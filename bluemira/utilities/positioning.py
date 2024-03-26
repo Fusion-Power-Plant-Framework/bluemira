@@ -10,7 +10,7 @@ A collection of tools used for position interpolation.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
@@ -390,7 +390,7 @@ class PositionMapper:
         self._check_length(l_values)
         xz_dict = {}
         for i, (key, tool) in enumerate(self.interpolators.items()):
-            xz_dict[key] = tool.to_xz(l_values[i])
+            xz_dict[key] = np.asarray(tool.to_xz(l_values[i]))
         return xz_dict
 
     def to_L(self, x: np.ndarray, z: np.ndarray) -> np.ndarray:
@@ -422,3 +422,10 @@ class PositionMapper:
         The total dimension of the parametric space
         """
         return sum([interp.dimension for interp in self.interpolators.values()])
+
+    @property
+    def interpolator_names(self) -> List[str]:
+        """
+        The names of the interpolators
+        """
+        return list(self.interpolators.keys())

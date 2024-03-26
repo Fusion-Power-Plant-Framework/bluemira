@@ -30,7 +30,6 @@ from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
-    MagneticConstraintSet,
     UpdateableConstraint,
 )
 from bluemira.equilibria.optimisation.problem.base import (
@@ -57,8 +56,6 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         during the optimisation.
     eq:
         Equilibrium object used to update magnetic field targets.
-    targets:
-        Set of magnetic field targets to use in objective function.
     position_mapper:
         position mapper object of the regions to optimise the coil positions within
     opt_algorithm:
@@ -87,7 +84,6 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self,
         sub_opt: CoilsetOptimisationProblem,
         eq: Equilibrium,
-        targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
         opt_conditions: Optional[Dict[str, float]] = None,
@@ -95,7 +91,6 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.eq = eq
-        self.targets = targets
         self.position_mapper = position_mapper
 
         opt_dimension = self.position_mapper.dimension
@@ -109,12 +104,16 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-        self.initial_state, self.substates = self.read_coilset_state(
-            self.coilset, self.scale
+    def _get_initial_vector(self) -> npt.NDArray:
+        """
+        Get a vector representation of the initial coilset state from the PositionMapper.
+        """
+        cs_opt_state = self.coilset.get_optimisation_state(
+            self.position_mapper.interpolator_names, current_scale=self.scale
         )
-        self.I0 = np.array_split(self.initial_state, self.substates)[2]
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
-    def optimise(self, **_):
+    def optimise(self, x0: Optional[npt.NDArray] = None):
         """
         Run the optimisation.
 
@@ -122,19 +121,13 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         -------
         Optimised CoilSet object.
         """
-        # Get initial currents, and trim to within current bounds.
-        initial_state, substates = self.read_coilset_state(self.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, substates)
-        initial_mapped_positions = self.position_mapper.to_L(
-            self.coilset.x, self.coilset.z
-        )
+        if x0 is None:
+            x0 = self._get_initial_vector()
 
-        # TODO: find more explicit way of passing this to objective?
-        self.I0 = initial_currents
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=self.objective,
-            x0=initial_mapped_positions,
+            x0=x0,
             algorithm=self.opt_algorithm,
             bounds=self.bounds,
             opt_conditions=self.opt_conditions,
@@ -142,20 +135,25 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        self.set_coilset_state(self.coilset, opt_result.x, self.scale)
+
+        optimal_positions = opt_result.x
+        # Call the objective one last time, makes sure the coilset state
+        # is set to the optimum
+        self.objective(optimal_positions)
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
     def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function to minimise."""
-        coilset_state = np.concatenate((self.position_mapper.to_xz(vector), self.I0))
-        self.set_coilset_state(self.coilset, coilset_state, self.scale)
+        pos_map = self.position_mapper.to_xz_dict(vector)
+        self.coilset.set_optimisation_state(coil_position_map=pos_map)
 
-        # Update targets
         self.eq._remap_greens()
-        self.targets(self.eq, I_not_dI=True, fixed_coils=False)
+        self.eq._clear_OX_points()
 
         # Run the sub-optimisation
-        sub_opt_result = self.sub_opt.optimise()
+        sub_opt_result = self.sub_opt.optimise(fixed_coils=False)
+
         return sub_opt_result.f_x
 
 
@@ -255,7 +253,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self, vector: npt.NDArray[np.float64], verbose: bool = False
     ) -> float:
         """Run the sub-optimisations and return the largest figure of merit."""
-        positions = self.position_mapper.to_xz_dict(vector)
+        pos_map = self.position_mapper.to_xz_dict(vector)
 
         if self.debug[0]:
             # Increment debug dictionary
@@ -264,9 +262,17 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         fom_values = []
         for sub_opt_prob in self.sub_opt_problems:
-            for coil, position in positions.items():
-                sub_opt_prob.coilset[coil].position = position
+            sub_opt_prob.coilset.set_optimisation_state(coil_position_map=pos_map)
+
+            # TODO: is this necessary?
+            # I though this had be done after coils positions are changed
+            # sub_opt_prob.eq._remap_greens()
+            # sub_opt_prob.eq._clear_OX_points()
+
+            # todo: Why would you use the self.initial_currents?
+            # And not just the coilset's current currents?
             result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
+
             self._run_diagnostics(self.debug, sub_opt_prob, result)
             fom_values.append(result.f_x)
         max_fom = max(fom_values)
@@ -282,11 +288,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         """
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
-        x, z = [], []
-        for name in self.position_mapper.interpolators:
-            x.append(self.coilset[name].x)
-            z.append(self.coilset[name].z)
-        return self.position_mapper.to_L(x, z)
+        cs_opt_state = self.coilset.get_optimisation_state(
+            self.position_mapper.interpolator_names, current_scale=self.scale
+        )
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
     def optimise(
         self, x0: Optional[npt.NDArray] = None, verbose: bool = False
@@ -321,12 +326,15 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
+
         optimal_positions = opt_result.x
-        # Call the objective one last time
+        # Call the objective one last time, makes sure the coilset state
+        # is set to the optimum
         self.sub_opt_objective(optimal_positions)
 
         # Clean up state of Equilibrium objects
         for sub_opt in self.sub_opt_problems:
             sub_opt.eq._remap_greens()
             sub_opt.eq._clear_OX_points()
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

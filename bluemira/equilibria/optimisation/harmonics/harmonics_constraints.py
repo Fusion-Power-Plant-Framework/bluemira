@@ -25,7 +25,7 @@ from bluemira.equilibria.optimisation.constraints import (
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     coil_harmonic_amplitude_matrix,
 )
-from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_function import (
     SphericalHarmonicConstraintFunction,
 )
 from bluemira.utilities.tools import is_num
@@ -81,6 +81,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             "b_vec": None,
             "value": 0.0,
             "scale": 1,
+            "current_sym_matrix": None,
         }
 
     @property
@@ -110,6 +111,10 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
         self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
