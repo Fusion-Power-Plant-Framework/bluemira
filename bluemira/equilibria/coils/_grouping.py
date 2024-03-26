@@ -704,10 +704,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def _quad_boundary(self):
-        """Get coil quadrature boundaries
-
-        Note: todo - add comment
-        """
+        """Get coil quadrature boundaries"""
         return [*self.__list_getter("_quad_boundary")]
 
     @x.setter

@@ -288,14 +288,14 @@ current_opt_problem = TikhonovCurrentCOP(
     max_currents=coilset.get_max_current(0.0),
     constraints=[x_point, field_constraints, force_constraints],
 )
-# GOING WRONG HERE
+
 program = PicardIterator(
     eq,
     current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
-    plot=True,
+    plot=False,
 )
 program()
 
@@ -330,7 +330,7 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
     relaxation=0.1,
-    plot=True,
+    plot=False,
 )
 program()
 
