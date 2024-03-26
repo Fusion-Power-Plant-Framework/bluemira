@@ -945,7 +945,7 @@ def get_bisection_line(
     p2: npt.NDArray[float],
     p3: npt.NDArray[float],
     p4: npt.NDArray[float],
-):
+) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
     """
     Find the bisection line between two lines.
 

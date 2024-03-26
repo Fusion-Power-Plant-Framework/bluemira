@@ -1068,7 +1068,7 @@ def slice_shape(
 
 def get_wire_plane_intersect(
     convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
-):
+) -> npt.NDArray[float]:
     """
     Cut a wire using a plane.
 
