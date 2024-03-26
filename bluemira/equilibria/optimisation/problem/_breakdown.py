@@ -232,6 +232,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             cs_opt_state = self.coilset.get_optimisation_state(current_scale=self.scale)
             x0 = np.clip(cs_opt_state.currents, *self.bounds)
         else:
+            x0 = x0 / self.scale
             x0 = np.clip(x0, *self.bounds)
 
         objective = MaximiseFluxObjective(**self._args)
