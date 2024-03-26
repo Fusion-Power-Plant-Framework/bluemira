@@ -30,7 +30,7 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable
 
     from bluemira.equilibria import Equilibrium
 
