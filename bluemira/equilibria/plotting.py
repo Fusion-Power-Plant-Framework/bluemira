@@ -122,7 +122,7 @@ class Plotter:
 
         else:
             if ax is None:
-                _f, self.ax = plt.subplots(nrows=1, ncols=2)
+                _f, self.ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
             else:
                 self.ax = ax
             self.ax[0].set_xlabel("$x$ [m]")
