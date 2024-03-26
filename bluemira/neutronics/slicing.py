@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import chain
 from typing import Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -22,7 +23,7 @@ from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_pre_cell import PreCell, PreCellArray
 
-THRESHOLD_DEGREE = 6.0
+TOLERANCE_DEGREES = 6.0
 DISCRETIZATION_LEVEL = 10
 
 
@@ -388,6 +389,8 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
                 add_line(
                     __bmw_edge.boundary[0].OrderedEdges[0], __bmw_edge, _start, _end
                 )
+        elif isinstance(curve_type, (cadapi.Part.ArcOfEllipse, cadapi.Part.Ellipse)):
+            raise NotImplementedError("Conversion for ellipses are not available yet.")
         else:
             raise NotImplementedError(f"Conversion for {curve_type} not available yet.")
 
@@ -478,7 +481,7 @@ def break_wire_into_convex_chunks(
         if output_wire:
             this_wire.append(this_seg.wire)
         if this_chunk and straight_lines_deviate_less_than(
-            this_chunk[-1], this_seg, THRESHOLD_DEGREE
+            this_chunk[-1], this_seg, TOLERANCE_DEGREES
         ):
             # modify the previous line directly
             this_chunk[-1].key_points = StraightLineInfo(
@@ -504,7 +507,7 @@ def break_wire_into_convex_chunks(
         prev_end_tangent = this_chunk[-1].tangents[-1]
         next_start_tangent = wire_segments[0].tangents[0]
         if deviate_less_than(
-            this_chunk[-1].tangents[1], wire_segments[0].tangents[0], THRESHOLD_DEGREE
+            this_chunk[-1].tangents[1], wire_segments[0].tangents[0], TOLERANCE_DEGREES
         ):
             continue
         if turned_morethan_180(
@@ -520,12 +523,26 @@ def break_wire_into_convex_chunks(
 
 
 class DivertorWireAndExteriorCurve:
-    """Pass"""
+    """A class to store a wire with an exterior curve"""
 
-    def __init__(self, divertor_wire: BluemiraWire, exterior_curve: BluemiraWire):
+    def __init__(self, divertor_wire: BluemiraWire, exterior_curve: BluemiraWire):  # noqa: ARG002
         """
         Parameters
         ----------
         divertor_wire:
             A bluemiraWire made of a series of
         """
+        convex_segments = break_wire_into_convex_chunks(divertor_wire)
+        # all_key_points
+        all_key_points = [
+            seg.key_points[0] for seg in chain.from_iterable(convex_segments)
+        ]
+        all_key_points += [convex_segments[-1][-1].key_points[1]]
+        self.key_points = np.array(all_key_points)  # shape = (N+1, 3)
+        self.tangents = [
+            seg.tangents for seg in chain.from_iterable(convex_segments)
+        ]  # shape = (N, 2, 3)
+        self.disappearing_point = (
+            (all_key_points[0, 0] + all_key_points[-1, 0]) / 2,  # mean x
+            all_key_points[:, -1].max(),
+        )  # highest z

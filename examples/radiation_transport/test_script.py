@@ -6,6 +6,7 @@
 """Test script to make the CSG branch work."""
 
 import json
+import sys
 from itertools import chain
 from pathlib import Path
 from time import time
@@ -38,10 +39,13 @@ from bluemira.neutronics.params import (
     get_preset_physical_properties,
 )
 from bluemira.neutronics.radial_wall import CellWalls
-from bluemira.neutronics.slicing import PanelsAndExteriorCurve
+from bluemira.neutronics.slicing import (
+    PanelsAndExteriorCurve,
+    break_wire_into_convex_chunks,
+)
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = Plotting
+CHOSEN_RUNMODE = PlasmaSourceSimulation
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
@@ -53,7 +57,7 @@ _breeder_materials, _tokamak_geometry = get_preset_physical_properties(BlanketTy
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,  # TODO: obsolete
-    particles=100000,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
+    particles=100,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
@@ -167,20 +171,21 @@ if __name__ == "__main__":  # begin computation
         *_all_cells,
         openmc.Cell(region=plasma_void_upper, fill=None, name="Plasma cell"),
     ]
+    infos, wires = break_wire_into_convex_chunks(divertor_bmwire, output_wire=True)
+    sys.exit()
 
     # using openmc
     if Plotting == CHOSEN_RUNMODE:
         with Plotting(
             runtime_variables.cross_section_xml, cells, mat_lib
         ) as chosen_runmode:
-            chosen_runmode.setup(
+            chosen_runmode.run(
                 [
                     outer_boundary.bounding_box.x_max * 2.1,
                     outer_boundary.bounding_box.z_max * 3.1,
                 ],
                 100,
             )
-            chosen_runmode.run()
 
     elif VolumeCalculation == CHOSEN_RUNMODE:
         with VolumeCalculation(
@@ -196,18 +201,21 @@ if __name__ == "__main__":  # begin computation
             min_xyz = (r_min, r_min, z_min)
             max_xyz = (r_max, r_max, z_max)
 
-            chosen_runmode.setup(
-                runtime_variables.volume_calc_particles, min_xyz, max_xyz
+            chosen_runmode.run(
+                runtime_variables.volume_calc_particles,
+                min_xyz,
+                max_xyz,
+                blanket_cell_array,
+                mat_dict,
             )
-            chosen_runmode.run()
 
     elif PlasmaSourceSimulation == CHOSEN_RUNMODE:
         with PlasmaSourceSimulation(
             runtime_variables.cross_section_xml, cells, mat_lib
         ) as chosen_runmode:
-            # create_tallies(cells, mat_lib)  # TODO: improve here
-            chosen_runmode.setup(source_parameters, runtime_variables)
-            chosen_runmode.run()
+            chosen_runmode.run(
+                source_parameters, runtime_variables, blanket_cell_array, mat_dict
+            )
             src_rate = n_DT_reactions(
                 source_parameters.plasma_physics_units.reactor_power  # [MW]
                 # TODO: when issue #2858 is fixed,
