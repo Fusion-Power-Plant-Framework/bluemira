@@ -8,18 +8,22 @@
 # ruff: noqa: PLR2004
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from dataclasses import dataclass
+from typing import Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from numpy import typing as npt
 
+from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.coordinates import get_bisection_line
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_pre_cell import PreCell, PreCellArray
 
-if TYPE_CHECKING:
-    from bluemira.geometry.wire import BluemiraWire
+THRESHOLD_DEGREE = 6.0
+DISCRETIZATION_LEVEL = 10
 
 
 def make_plane_from_2_points(
@@ -242,7 +246,7 @@ class PanelsAndExteriorCurve:
         snap_to_horizontal_angle: float = 30.0,
         starting_cut: Optional[npt.NDArray[float]] = None,
         ending_cut: Optional[npt.NDArray[float]] = None,
-        discretization_level: int = 10,
+        discretization_level: int = DISCRETIZATION_LEVEL,
     ):
         """
         Cut the exterior curve up, so that would act as the exterior side of the
@@ -276,3 +280,263 @@ class PanelsAndExteriorCurve:
             pre_cell_list.append(PreCell(_inner_wire, exterior_curve_wire_segment))
 
         return PreCellArray(pre_cell_list)
+
+
+class StraightLineInfo(NamedTuple):
+    """Key information about a straight line"""
+
+    start_point: Iterable[float]
+    end_point: Iterable[float]
+
+
+class CircleInfo(NamedTuple):
+    """Key information about a circle"""
+
+    start_point: Iterable[float]
+    end_point: Iterable[float]
+    center: Iterable[float]
+    radius: float
+
+
+@dataclass
+class WireInfo:
+    """
+    A tuple to store:
+    1. the key points about this wire (and what kind of wire this is)
+    2. The tangent to that wire at the start and end
+    3. A copy of the wire itself
+    """
+
+    key_points: Union[StraightLineInfo, CircleInfo]  # 2 points of xyz/ CircleInfo
+    tangents: Optional[Sequence[Iterable[float]]]  # 2 normalized directional vectors xyz
+    wire: Optional[BluemiraWire] = None
+
+
+def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
+    """
+    Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
+    Then, get only the key points of each segment of the wire.
+    """
+    wire_container = []
+
+    def add_line(
+        edge: cadapi.apiEdge,
+        wire: BluemiraWire,
+        start_vector: cadapi.apiVector,
+        end_vector: cadapi.apiVector,
+    ):
+        """Function to record a line"""
+        wire_container.append(
+            WireInfo(
+                StraightLineInfo(start_vector, end_vector),
+                [
+                    edge.tangentAt(edge.FirstParameter),
+                    edge.tangentAt(edge.LastParameter),
+                ],
+                wire,
+            )
+        )
+
+    def add_circle(
+        edge: cadapi.apiEdge,
+        wire: BluemiraWire,
+        start_vector: cadapi.apiVector,
+        end_vector: cadapi.apiVector,
+    ):
+        """Function to record the arc of a circle."""
+        wire_container.append(
+            WireInfo(
+                CircleInfo(
+                    start_vector,
+                    end_vector,
+                    np.array(edge.Curve.Center),
+                    np.array(edge.Curve.Radius),
+                ),
+                [
+                    edge.tangentAt(edge.FirstParameter),
+                    edge.tangentAt(edge.LastParameter),
+                ],
+                wire,
+            )
+        )
+
+    prev_end = (
+        bmwire.edges[0].boundary[0].OrderedEdges[0].firstVertex().Point
+    )  # See TODO
+    # TODO: switch to this line when PR #3095 is fixed
+    # prev_end = bmwire.start_point().xyz.flatten()
+    for _bmw_edge in bmwire.edges:
+        if len(_bmw_edge.boundary) != 1 or len(_bmw_edge.boundary[0].OrderedEdges) != 1:
+            raise GeometryError("Expected each boundary to contain only 1 curve!")
+        edge = _bmw_edge.boundary[0].OrderedEdges[0]
+
+        # check that the vertex match
+        current_start, current_end = edge.firstVertex().Point, edge.lastVertex().Point
+        # This check is not needed because BluemiraWire is guaranteed to be continuous.
+        if not np.array_equal(current_start, prev_end):
+            raise GeometryError(
+                "Expected the next wire to start at the end point "
+                "of the previous wire!"
+            )
+        curve_type = edge.Curve
+
+        # Get the info about this segment of wire
+        if isinstance(curve_type, (cadapi.Part.Line, cadapi.Part.LineSegment)):
+            add_line(edge, _bmw_edge, current_start, current_end)
+
+        elif isinstance(curve_type, (cadapi.Part.ArcOfCircle, cadapi.Part.Circle)):
+            add_circle(edge, _bmw_edge, current_start, current_end)
+
+        elif isinstance(curve_type, (cadapi.Part.BSplineCurve, cadapi.Part.BezierCurve)):
+            sample_points = _bmw_edge.discretize(DISCRETIZATION_LEVEL)
+            discretized_wire = make_polygon(sample_points, closed=False)
+            for __bmw_edge, _start, _end in zip(
+                discretized_wire.edges, sample_points.T[:-1], sample_points.T[1:]
+            ):
+                add_line(
+                    __bmw_edge.boundary[0].OrderedEdges[0], __bmw_edge, _start, _end
+                )
+        else:
+            raise NotImplementedError(f"Conversion for {curve_type} not available yet.")
+
+        # next loop
+        # prev_end = current_end
+
+    return wire_container
+
+
+def turned_morethan_180(
+    xyz_vector1: Sequence[float], xyz_vector2: Sequence[float], direction_sign: int
+) -> bool:
+    """
+    Checked if one needs to rotate vector 1 by more than 180° in the specified direction
+    by more than 180° to align with vector 2.
+
+    Parameters
+    ----------
+    xyz_vector1, xyz_vector2: Sequence[float]
+        xyz array of where the vector points.
+    direction_sign: signed integer
+        +1: evaluate rotation required in the anticlockwise direction.
+        -1: evaluate rotation required in the clockwise direction.
+    """
+    if xyz_vector1[1] != 0 or xyz_vector2[1] != 0:
+        raise GeometryError("Tangent vector points out of plane!")
+    angle1 = np.arctan2(xyz_vector1[2], xyz_vector1[0])
+    angle2 = np.arctan2(xyz_vector2[2], xyz_vector2[0])
+    if direction_sign == 1:
+        if angle2 < angle1:
+            angle2 += 2 * np.pi
+        return np.rad2deg(angle2 - angle1) >= 180
+    if angle2 > angle1:
+        angle2 -= 2 * np.pi
+    return np.rad2deg(angle1 - angle2) >= 180
+
+
+def deviate_less_than(
+    xyz_vector1: Sequence[float], xyz_vector2: Sequence[float], threshold_degrees: float
+):
+    """Check if two vector's angles less than a certain threshold angle (in degrees)."""
+    angle1 = np.arctan2(xyz_vector1[2], xyz_vector1[0])
+    angle2 = np.arctan2(xyz_vector2[2], xyz_vector2[0])
+    return np.rad2deg(abs(angle2 - angle1)) < threshold_degrees
+
+
+def straight_lines_deviate_less_than(
+    info1: WireInfo, info2: WireInfo, threshold_degrees: float
+):
+    """
+    Check that both lines are straight lines, then check if deviation is less than
+    threshold_degrees or not
+    """
+    if not (
+        isinstance(info1.key_points, StraightLineInfo)
+        and isinstance(info2.key_points, StraightLineInfo)
+    ):
+        return False
+    return deviate_less_than(info1.tangents[1], info2.tangents[0], threshold_degrees)
+
+
+def break_wire_into_convex_chunks(
+    bmwire, curvature_sign=-1, output_wire: bool = False
+) -> Tuple[List[WireInfo], Optional[BluemiraWire]]:
+    """
+    Break a wire up into several convex wires.
+    Merge if they are almost collinear.
+
+    Parameters
+    ----------
+    bmwire: BluemiraWire
+    curvature_sign: int, [-1, 1]
+        if it's -1: we allow each convex chunk's wire to turn right only.
+        if it's 1: we allow each convex chunk's wire to turn left only.
+
+    Returns
+    -------
+    convex_chunks: only output if True
+    """
+    # TODO: remove convex_wires, this_wire, otuput_wire and the Optional[BluemiraWire]
+    # in the return signature altogether.
+
+    wire_segments = list(check_and_breakdown_bmwire(bmwire))
+    convex_chunks, convex_wires = [], []
+    # initializing the first chunk
+    this_chunk, this_wire = [], []
+    chunk_start_tangent = wire_segments[0].tangents[0]
+
+    def add_to_chunk(this_seg: WireInfo) -> None:
+        """Add the info and wire into the current chunk and current wire."""
+        if output_wire:
+            this_wire.append(this_seg.wire)
+        if this_chunk and straight_lines_deviate_less_than(
+            this_chunk[-1], this_seg, THRESHOLD_DEGREE
+        ):
+            # modify the previous line directly
+            this_chunk[-1].key_points = StraightLineInfo(
+                this_chunk[-1].key_points.start_point, this_seg.key_points.end_point
+            )
+            return
+
+        this_chunk.append(WireInfo(this_seg.key_points, this_seg.tangents))
+
+    def conclude_chunk():
+        """Wrap up the current chunk"""
+        nonlocal chunk_start_tangent
+        convex_chunks.append(this_chunk.copy())
+        this_chunk.clear()
+        if output_wire:
+            convex_wires.append(BluemiraWire(this_wire))
+            this_wire.clear()
+        if wire_segments:  # if there are still segments left
+            chunk_start_tangent = wire_segments[0].tangents[0]
+
+    while len(wire_segments) > 1:
+        add_to_chunk(wire_segments.pop(0))
+        prev_end_tangent = this_chunk[-1].tangents[-1]
+        next_start_tangent = wire_segments[0].tangents[0]
+        if deviate_less_than(
+            this_chunk[-1].tangents[1], wire_segments[0].tangents[0], THRESHOLD_DEGREE
+        ):
+            continue
+        if turned_morethan_180(
+            chunk_start_tangent, next_start_tangent, curvature_sign
+        ) or turned_morethan_180(prev_end_tangent, next_start_tangent, curvature_sign):
+            conclude_chunk()
+    add_to_chunk(wire_segments.pop(0))
+    conclude_chunk()
+
+    if output_wire:
+        return convex_chunks, convex_wires
+    return convex_chunks
+
+
+class DivertorWireAndExteriorCurve:
+    """Pass"""
+
+    def __init__(self, divertor_wire: BluemiraWire, exterior_curve: BluemiraWire):
+        """
+        Parameters
+        ----------
+        divertor_wire:
+            A bluemiraWire made of a series of
+        """
