@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections import abc
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
 import openmc
@@ -23,7 +23,6 @@ from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import CellWalls, Vertices
 
 if TYPE_CHECKING:
-    from bluemira.geometry.wire import BluemiraWire
     from bluemira.neutronics.make_pre_cell import PreCellArray
     from bluemira.neutronics.params import TokamakThicknesses
 
@@ -162,30 +161,35 @@ def torus_from_3points(
     point2 = point2[0], 0, point2[-1]
     point3 = point3[0], 0, point3[-1]
     circle = make_circle_arc_3P(point1, point2, point3)
-    return torus_from_BMWire_circle(circle, surface_id=surface_id, name=name)
+    cad_circle = circle.shape.OrderedEdges[0].Curve
+    center, radius = cad_circle.Center, cad_circle.Radius
+    return torus_from_circle(
+        [center[0], center[-1]], radius, surface_id=surface_id, name=name
+    )
 
 
-def torus_from_BMWire_circle(
-    bmwire_circle: BluemiraWire, surface_id: Optional[int] = None, name: str = ""
+def torus_from_circle(
+    center: Sequence[float],
+    minor_radius: float,
+    surface_id: Optional[int] = None,
+    name: str = "",
 ):
     """
-    Make a circular torus centered on the z-axis matching the circle provided in a
-    bluemirawire.
-    All 3 points should lie on the RZ plane AND the surface of the torus simultaneously.
+    Make a circular torus centered on the z-axis.
+    The circle would lie on the RZ plane AND the surface of the torus simultaneously.
 
     Parameters
     ----------
-    bmwire_circle
-        A BluemiraWire that is made of only a single circle/ arc of circle.
+    minor_radius
+        Radius of the cross-section circle, which forms the minor radius of the torus.
+    center
+        Center of the cross-section circle, which forms the center of the torus.
     surface_id, name:
         See openmc.Surface
     """
-    if len(bmwire_circle.shape.OrderedEdges) != 1:
-        raise ValueError("Expected a BluemiraWire made of only one (1) wire: a circle.")
-    cad_circle = bmwire_circle.shape.OrderedEdges[0].Curve
-    center = cad_circle.Center[0], cad_circle.Center[-1]
-    minor_radius = cad_circle.Radius
-    return z_torus(center, minor_radius, surface_id=surface_id, name=name)
+    return z_torus(
+        [center[0], center[-1]], minor_radius, surface_id=surface_id, name=name
+    )
 
 
 def z_torus(
@@ -258,7 +262,7 @@ def torus_from_5points(
 
 
 def choose_halfspace(
-    surface: openmc.Surface, choice_points: Iterable[Iterable[float]]
+    surface: openmc.Surface, choice_points: npt.NDArray
 ) -> openmc.Halfspace:
     """
     Simply take the centroid point of all of the choice_points, and choose the
@@ -415,6 +419,7 @@ def find_suitable_z_plane(
     z_range: Optional[Iterable[float]] = None,
     surface_id: Optional[int] = None,
     name: str = "",
+    **kwargs,
 ):
     """Find a suitable z from the hangar, or create a new one if no matches are found."""
     if z_range:
@@ -422,7 +427,7 @@ def find_suitable_z_plane(
         for key in hangar:
             if z_min <= key <= z_max:
                 return hangar[key]  # return the first match
-    hangar[z0] = openmc.ZPlane(z0=z0, surface_id=surface_id, name=name)
+    hangar[z0] = openmc.ZPlane(z0=z0, surface_id=surface_id, name=name, **kwargs)
     return hangar[z0]
 
 
@@ -461,7 +466,7 @@ class BlanketCell(openmc.Cell):
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
         interior_surface: Optional[openmc.Surface],
-        vertices: Iterable[Iterable[float]],
+        vertices: Vertices,
         cell_id=None,
         name="",
         fill=None,
@@ -509,8 +514,8 @@ class BlanketCell(openmc.Cell):
 
 class BlanketCellStack(abc.Sequence):
     """
-    A stack of openmc.Cells, stacking from the inboard direction towards the outboard
-    direction. They should all be situated at the same poloidal angle.
+    A stack of openmc.Cells, first cell is closest to the interior and last cell is
+    closest to the exterior. They should all be situated at the same poloidal angle.
     """
 
     def __init__(self, cell_stack: List[BlanketCell]):
@@ -554,7 +559,7 @@ class BlanketCellStack(abc.Sequence):
         return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
 
     @staticmethod
-    def ascribe_iterable_quantity_to_layer(quantity: Iterable) -> Dict:
+    def ascribe_iterable_quantity_to_layer(quantity: Sequence) -> Dict:
         """
         Given an iterable of length 4 or 5, convert it into a dictionary such that
         each of the 4/5 quantities corresponds to a layer.
@@ -659,7 +664,7 @@ class BlanketCellStack(abc.Sequence):
 
 class BlanketCellArray(abc.Sequence):
     """
-    An array of BlanketCellStack
+    An array of BlanketCellStack. Interior and exterior curve are both assumed convex.
 
     Parameters
     ----------
@@ -745,10 +750,26 @@ class BlanketCellArray(abc.Sequence):
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
 
         find_suitable_z_plane(
-            min(cell_walls[:, :, -1].flatten()), surface_id=999, name="Blanket bottom"
+            min(cell_walls[:, :, -1].flatten()) - EPS_FREECAD,
+            surface_id=999,
+            boundary_type="vacuum",
+            name="Blanket bottom",
         )
         find_suitable_z_plane(
-            max(cell_walls[:, :, -1].flatten()), surface_id=1000, name="Blanket top"
+            max(cell_walls[:, :, -1].flatten()) + EPS_FREECAD,
+            surface_id=1000,
+            boundary_type="vacuum",
+            name="Blanket top",
+        )
+        innermost_cyl = openmc.ZCylinder(  # noqa: F841
+            min(abs(cell_walls[:, :, 0].flatten())) - EPS_FREECAD,
+            surface_id=1999,
+            boundary_type="vacuum",
+        )
+        outermost_cyl = openmc.ZCylinder(  # noqa: F841
+            max(abs(cell_walls[:, :, 0].flatten())) + EPS_FREECAD,
+            surface_id=2000,
+            boundary_type="vacuum",
         )
         # left wall
         ccw_surf = surface_from_2points(
@@ -854,3 +875,27 @@ class BlanketCellArray(abc.Sequence):
         )
 
         return flatten_region(plasma_void_upper)
+
+
+class DivertorCell(openmc.Cell):
+    """A generic Divertor cell forming either the inner target's, outer target's, or
+    dome's surface or bulk.
+    """
+
+    pass
+
+
+class DivertorCellStack(abc.Sequence):
+    """
+    A stack of DivertorCells (openmc.Cells), first cell is closest to the interior and
+    last cell is closest to the exterior. They should all be situated on the same
+    poloidal angle.
+    """
+
+    pass
+
+
+class DivertorCellArray(abc.Sequence):
+    """Turn the divertor into a cell array"""
+
+    pass
