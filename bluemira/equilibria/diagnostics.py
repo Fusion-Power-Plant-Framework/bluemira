@@ -23,3 +23,8 @@ class PicardDiagnostic(Enum):
 @dataclass
 class PicardDiagnosticOptions:
     """Diagnostic plotting options for the Picard Iterator"""
+
+
+@dataclass
+class FluxSurfaceDiagnosticOptions:
+    """Diagnostic Options for flux surface finding"""
