@@ -253,10 +253,10 @@ class CoilGroupPlotter(Plotter):
                     linewidth=self.linewidth,
                     **kwargs,
                 )
-                # if subcoil:
-                #     _qx_b, _qz_b = qb[i]
-                #     for ind in range(_qx_b.shape[0]):
-                #         self._plot_coil(_qx_b[ind], _qz_b[ind], ct, fill=False, **kwargs)
+                if subcoil:
+                    _qx_b, _qz_b = qb[i]
+                    for ind in range(_qx_b.shape[0]):
+                        self._plot_coil(_qx_b[ind], _qz_b[ind], ct, fill=False, **kwargs)
                 if label:
                     self._annotate_coil(x, z, dx, n, cur, ct, force=force, centre=centre)
                 if force is not None:
