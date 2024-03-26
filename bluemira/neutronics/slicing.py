@@ -315,7 +315,8 @@ class WireInfo:
 def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
     """
     Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
-    Then, get only the key points of each segment of the wire.
+    Then, get only the key information (start/end points and tangent) of each segment of
+    the wire.
     """
     wire_container = []
 
@@ -360,24 +361,15 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
             )
         )
 
-    prev_end = (
-        bmwire.edges[0].boundary[0].OrderedEdges[0].firstVertex().Point
-    )  # See TODO
-    # TODO: switch to this line when PR #3095 is fixed
-    # prev_end = bmwire.start_point().xyz.flatten()
     for _bmw_edge in bmwire.edges:
         if len(_bmw_edge.boundary) != 1 or len(_bmw_edge.boundary[0].OrderedEdges) != 1:
             raise GeometryError("Expected each boundary to contain only 1 curve!")
         edge = _bmw_edge.boundary[0].OrderedEdges[0]
 
-        # check that the vertex match
+        # Create aliases for easier referring to variables.
+        # The following line may become `edge.start_point(), edge.end_point()`
+        # when PR # 3095 is merged
         current_start, current_end = edge.firstVertex().Point, edge.lastVertex().Point
-        # This check is not needed because BluemiraWire is guaranteed to be continuous.
-        if not np.array_equal(current_start, prev_end):
-            raise GeometryError(
-                "Expected the next wire to start at the end point "
-                "of the previous wire!"
-            )
         curve_type = edge.Curve
 
         # Get the info about this segment of wire
@@ -398,9 +390,6 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
                 )
         else:
             raise NotImplementedError(f"Conversion for {curve_type} not available yet.")
-
-        # next loop
-        prev_end = current_end
 
     return wire_container
 
