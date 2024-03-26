@@ -108,7 +108,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
                 self.position_mapper.interpolator_names, current_scale=self.scale
             )
             initial_mapped_positions = self.position_mapper.to_L(
-                cs_opt_state.xs, cs_opt_state.xs
+                cs_opt_state.xs, cs_opt_state.zs
             )
 
             len_mapped_pos = len(initial_mapped_positions)

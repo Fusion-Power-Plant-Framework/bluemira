@@ -1300,7 +1300,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         coil_names = (
             self.position_optimisable_coil_names
             if position_coil_names is None
-            else set(position_coil_names) & set(self.position_optimisable_coil_names)
+            else [
+                cn
+                for cn in position_coil_names
+                if cn in self.position_optimisable_coil_names
+            ]
         )
 
         x, z = [], []
