@@ -9,6 +9,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
@@ -16,6 +17,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
+from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
@@ -41,6 +43,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         Otherwise, the parameters can be founded by digging through the source code.
     constraints:
         List of optimisation constraints to apply to the optimisation problem
+    reference_equilibrium:
+        TODO
+    plot: bool
     """
 
     def __init__(
@@ -52,6 +57,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         opt_conditions: dict[str, float | int] | None = None,
         opt_parameters: dict[str, float] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
+        plotting_reference_eq: Equilibrium | None = None,
+        plot: bool | None = False,
+        diag_opts: EqDiagnosticOptions | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -60,6 +68,27 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.opt_algorithm = opt_algorithm
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
+
+        self.reference_eq = plotting_reference_eq
+
+        self.plotting_enabled = plot
+
+        if diag_opts is None:
+            self.diag_ops = EqDiagnosticOptions()
+        else:
+            self.diag_ops = diag_opts
+
+    def plot(self):
+        """
+        Plot equilibrium compared to a reference equilibrium
+        """
+        _plotter = EquilibriumComparisonPlotter(
+            equilibrium=self.eq,
+            # ax=self.ax,
+            reference_eq=self.reference_eq,
+            split_psi_plots=self.diag_ops.split_psi_plots,
+            psi_diff=self.diag_ops.psi_diff,
+        )
 
     def optimise(
         self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True
@@ -105,5 +134,8 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             opt_currents=opt_currents,
             current_scale=self.scale,
         )
+
+        if self.plotting_enabled:
+            self.plot()
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

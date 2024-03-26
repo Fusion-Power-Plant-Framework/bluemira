@@ -532,7 +532,12 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         """
         Plot the last closed flux surface
         """
-        x, z = self.eq.get_LCFS().xz
+        try:
+            lcfs = self.eq.get_LCFS()
+        except Exception:
+            bluemira_warn("Unable to plot LCFS")
+            return
+        x, z = lcfs.xz
         self.ax.plot(
             x,
             z,
@@ -686,10 +691,10 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
         equilibrium: Equilibrium,
         reference_eq: Equilibrium,
         ax=None,
-        split_psi_cont=False,
-        plot_diff=False,
+        split_psi_plots=False,
+        psi_diff=False,
     ):
-        if split_psi_cont:
+        if split_psi_plots:
             super().__init__(ax, subplots=True)
         else:
             super().__init__(ax)
@@ -699,8 +704,8 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
 
         self.reference_lcfs = self.reference_eq.get_LCFS()
 
-        self.plot_diff = plot_diff
-        self.split_psi_cont = split_psi_cont
+        self.psi_diff = psi_diff
+        self.split_psi_plots = split_psi_plots
 
         if np.shape(self.eq.grid.x) != np.shape(self.reference_eq.grid.x):
             bluemira_warn("Reference psi must have same grid size as input equilibria.")
@@ -729,48 +734,81 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 " and the input equilibrium."
             )
 
-        if plot_diff:
-            # percentage difference
-            self.coilset_psi = (
-                (
-                    self.reference_eq.coilset.psi(
-                        self.reference_eq.x, self.reference_eq.z
-                    )
-                    - self.eq.coilset.psi(self.eq.x, self.eq.z)
-                )
-                / np.max(
-                    self.reference_eq.coilset.psi(
-                        self.reference_eq.x, self.reference_eq.z
-                    )
-                )
-            ) * 100
-            self.plasma_psi = (
-                (self.reference_eq.plasma.psi() - self.eq.plasma.psi())
-                / np.max(self.reference_eq.plasma.psi())
-            ) * 100
-            self.total_psi = (
-                (self.reference_eq.psi() - self.eq.psi())
-                / np.max(self.reference_eq.psi())
-            ) * 100
+        if self.psi_diff:
+            # Relative difference
+            diff_coilset_psi = np.abs(
+                self.reference_eq.coilset.psi(self.reference_eq.x, self.reference_eq.z)
+                - self.eq.coilset.psi(self.eq.x, self.eq.z)
+            )
+            self.coilset_psi = diff_coilset_psi / np.max(diff_coilset_psi)
+
+            diff_plasma_psi = np.abs(
+                self.reference_eq.plasma.psi() - self.eq.plasma.psi()
+            )
+            # If diff_plasma_psi all 0s, original calculation has error
+            plamsa_psi_zeros = not np.any(diff_plasma_psi)
+            if plamsa_psi_zeros:
+                self.plasma_psi = None
+            else:
+                self.plasma_psi = diff_plasma_psi / np.max(diff_plasma_psi)
+
+            diff_total_psi = np.abs(self.reference_eq.psi() - self.eq.psi())
+            self.total_psi = diff_total_psi / np.max(diff_total_psi)
+
         else:
             self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
             self.plasma_psi = self.eq.plasma.psi()
             self.total_psi = self.eq.psi()
 
-        if split_psi_cont:
+        if split_psi_plots:
             self.plot_psi_coilset()
             self.plot_psi_plasma()
-
         else:
             self.plot_psi()
+        legend = plt.legend()
+        legend.set_zorder(10)
 
-    def plot_reference_LCFS(self):
+    def plot_reference_LCFS(self, ref_lcfs_label=None):
         """
-        Plot the last closed flux surface for the reference equilibria if split_psi_cont
+        Plot the last closed flux surface for the reference equilibria if split_psi_plots
         is True
         """
         x, z = self.reference_lcfs.xz
-        if self.split_psi_cont is True:
+        if self.split_psi_plots is True:
+            for i in range(2):
+                self.ax[i].plot(
+                    x,
+                    z,
+                    color="blue",
+                    linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+                    zorder=9,
+                    linestyle="--",
+                    label=ref_lcfs_label,
+                )
+        else:
+            self.ax.plot(
+                x,
+                z,
+                color="blue",
+                linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+                zorder=9,
+                linestyle="--",
+                label="Reference LCFS",
+            )
+
+    def plot_LCFS(self, lcfs_label=None):
+        """
+        Plot the last closed flux surface
+        """
+
+        try:
+            lcfs = self.eq.get_LCFS()
+        except Exception:
+            bluemira_warn("Unable to plot LCFS")
+            return
+        x, z = lcfs.xz
+
+        if self.split_psi_plots is True:
             for i in range(2):
                 self.ax[i].plot(
                     x,
@@ -778,6 +816,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                     color=PLOT_DEFAULTS["separatrix"]["color"],
                     linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
                     zorder=9,
+                    label=lcfs_label,
                 )
         else:
             self.ax.plot(
@@ -786,11 +825,16 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 color=PLOT_DEFAULTS["separatrix"]["color"],
                 linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
                 zorder=9,
+                label="Current LCFS",
             )
 
     def plot_psi_coilset(self, **kwargs):
         """
         Plot flux surfaces - coilset contribution
+
+        If psi_diff is True then plot the relative difference between the current coilset psi and the reference coilset psi, as calculated by:
+        coilset_psi_diff = |reference_coilset_psi - current_coilset_psi| / max(|reference_coilset_psi - current_coilset_psi|)
+
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
@@ -798,7 +842,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
         levels = np.linspace(
             np.amin(self.coilset_psi), np.amax(self.coilset_psi), nlevels
         )
-        if self.plot_diff:
+        if self.psi_diff:
             im = self.ax[0].contourf(
                 self.eq.x,
                 self.eq.z,
@@ -809,7 +853,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
             )
             plt.colorbar(mappable=im)
             plt.suptitle(
-                "Percentage difference in psi between reference equilibrium"
+                "Relative difference in psi between reference equilibrium"
                 " and current equilibrium, \n split by contribution from"
                 " coilset and plasma"
             )
@@ -828,28 +872,41 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 "Psi split by contribution from coilset and plasma for current"
                 " equilibrium"
             )
-        # Plot lcfs
+        # Plot current and reference lcfs
+        self.plot_LCFS()
         self.plot_reference_LCFS()
 
     def plot_psi_plasma(self, **kwargs):
         """
-        Plot flux surfaces - plamsa contribution
+        Plot flux surfaces - plasma contribution
+
+        If psi_diff is True then plot the relative difference between the current plasma psi and the reference plasma psi, as calculated by:
+        plasma_psi_diff = |reference_plasma_psi - current_plasma_psi| / max(|reference_plasma_psi - current_plasma_psi|)
+
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
-
-        levels = np.linspace(np.amin(self.plasma_psi), np.amax(self.plasma_psi), nlevels)
-        if self.plot_diff:
-            im = self.ax[1].contourf(
-                self.eq.x,
-                self.eq.z,
-                self.plasma_psi,
-                levels=levels,
-                cmap=cmap,
-                zorder=8,
+        if self.plasma_psi is not None:
+            levels = np.linspace(
+                np.amin(self.plasma_psi), np.amax(self.plasma_psi), nlevels
             )
-            plt.colorbar(mappable=im)
-            plt.tight_layout()
+
+        if self.psi_diff:
+            if self.plasma_psi is None:
+                bluemira_warn(
+                    "Plasma_psi all 0s. Will only plot current and reference LCFS"
+                )
+            else:
+                im = self.ax[1].contourf(
+                    self.eq.x,
+                    self.eq.z,
+                    self.plasma_psi,
+                    levels=levels,
+                    cmap=cmap,
+                    zorder=8,
+                )
+                plt.colorbar(mappable=im)
+                plt.tight_layout()
 
         else:
             self.ax[1].contour(
@@ -860,24 +917,29 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 cmap=cmap,
                 zorder=8,
             )
-        # Plot lcfs
-        self.plot_reference_LCFS()
+        # Plot current and reference lcfs
+        self.plot_LCFS(lcfs_label="Current LCFS")
+        self.plot_reference_LCFS(ref_lcfs_label="Reference LCFS")
 
     def plot_psi(self, **kwargs):
         """
         Plot flux surfaces
+
+        If psi_diff is True then plot the relative difference between the current psi and the reference psi, as calculated by:
+        psi_diff = |reference_psi - current_psi| / max(|reference_psi - current_psi|)
+
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
 
         levels = np.linspace(np.amin(self.total_psi), np.amax(self.total_psi), nlevels)
-        if self.plot_diff:
+        if self.psi_diff:
             im = self.ax.contourf(
                 self.eq.x, self.eq.z, self.total_psi, levels=levels, cmap=cmap, zorder=8
             )
             plt.colorbar(mappable=im)
             plt.title(
-                "Percentage difference in total psi between reference equilibrium and"
+                "Relative difference in total psi between reference equilibrium and"
                 " current equilibrium"
             )
             plt.tight_layout()
@@ -887,7 +949,8 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 self.eq.x, self.eq.z, self.total_psi, levels=levels, cmap=cmap, zorder=8
             )
             plt.title("Total psi for current equilibrium")
-        # Plot lcfs
+        # Plot current and reference lcfs
+        self.plot_LCFS()
         self.plot_reference_LCFS()
 
 
