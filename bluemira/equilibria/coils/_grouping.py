@@ -560,6 +560,16 @@ class CoilGroup(CoilGroupFieldsMixin):
             return c.primary_coil
         return c
 
+    @property
+    def primary_coil_names(self) -> List[str]:
+        """Get the names of the primary coils in the group"""
+        return [
+            str(coil.primary_coil.name)
+            if isinstance(coil, CoilGroup)
+            else str(coil.name)
+            for coil in self._coils
+        ]
+
     def get_coil_or_group_by_primary_coil_name(
         self, primary_coil_name: str
     ) -> Union[Coil, CoilGroup]:
@@ -705,7 +715,14 @@ class CoilGroup(CoilGroupFieldsMixin):
     @property
     def _quad_boundary(self):
         """Get coil quadrature boundaries"""
-        return [*self.__list_getter("_quad_boundary")]
+        n = []
+        qbs = self.__list_getter("_quad_boundary")
+        for qb in qbs:
+            if isinstance(qb, (np.ndarray, list)):  # checking if not a tuple
+                n.extend(qb)
+            else:
+                n.append(qb)
+        return n
 
     @x.setter
     def x(self, values: float | Iterable[float]):
