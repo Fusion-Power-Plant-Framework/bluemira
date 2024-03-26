@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import abc
 from dataclasses import dataclass
 from math import fsum
-from typing import TYPE_CHECKING, Callable, Iterable, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Sequence, Union
 
 import numpy as np
 from numpy import typing as npt
@@ -32,10 +32,10 @@ class Vertices:
     have shape (2,) or (3,).
     """
 
-    exterior_end: Iterable[float]
-    interior_start: Iterable[float]
-    interior_end: Iterable[float]
-    exterior_start: Iterable[float]
+    exterior_end: Sequence[float]
+    interior_start: Sequence[float]
+    interior_end: Sequence[float]
+    exterior_start: Sequence[float]
 
     def to_3D(self) -> Vertices:
         """Force the vertices into 3D, stuffing the Y with 0's."""
@@ -127,7 +127,7 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
 
 
 def partial_diff_of_volume(
-    three_vertices: Iterable[Iterable[float]],
+    three_vertices: Sequence[Sequence[float]],
     normalized_direction_vector: Iterable[float],
 ) -> float:
     """
