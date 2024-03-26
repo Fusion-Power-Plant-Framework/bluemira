@@ -27,13 +27,22 @@ Note that the gradient of the objective function is of the form:
 """  # noqa: W505, E501
 
 import abc
-from typing import Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find_legs import (
+    LegFlux,
+    calculate_connection_length,
+    get_legs_length_and_angle,
+)
+from bluemira.equilibria.grid import Grid
+from bluemira.geometry.coordinates import Coordinates
 
 
 class ObjectiveFunction(abc.ABC):
@@ -140,6 +149,112 @@ class MaximiseFluxObjective(ObjectiveFunction):
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Gradient of the objective function for an optimisation."""
         return -self.scale * self.c_psi_mat
+
+
+class MaximiseConnectionLength(ObjectiveFunction):
+    """
+    Objective function to maximise connection length
+    Must be used with symmetric circuits.
+
+    Parameters
+    ----------
+            TODO
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        scale: float,
+        lower: bool = True,
+        psi_n_tol=1e-6,
+        delta_start=0.01,
+        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+        rtol: float = 1e-1,
+        n_turns_max: int = 50,
+        calculation_method: str = "flux_surface_geometry",
+    ) -> None:
+        self.eq = eq
+        self.scale = scale
+        self.lower = lower
+        self.plasma_facing_boundary = plasma_facing_boundary
+        self.psi_n_tol = psi_n_tol
+        self.delta_start = delta_start
+        self.rtol = rtol
+        self.n_turns_max = n_turns_max
+        self.calculation_method = calculation_method
+
+    def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
+        self.eq.coilset.get_control_coils().current = vector * self.scale
+
+        length = calculate_connection_length(
+            eq=self.eq,
+            forward=self.lower,
+            first_wall=self.plasma_facing_boundary,
+            psi_n_tol=self.psi_n_tol,
+            delta_start=self.delta_start,
+            rtol=self.rtol,
+            n_turns_max=self.n_turns_max,
+            calculation_method=self.calculation_method,
+        )
+
+        return -1 * length
+
+
+class MaximiseDivertorLegLength(ObjectiveFunction):
+    """
+    Objective function to maximise divertor leg length
+
+    Parameters
+    ----------
+    eq:
+        Equilibrium object
+    scale:
+        Scaling factor for the vector
+    double_null:
+        Whether or not it is a double null.
+    psi_n_tol:
+        Psi tolerance, default is Bluemira equilibria constant,
+        may need to be adjusted depending on grid.
+    plasma_facing_boundary:
+        Cut-off for divertor legs. Default is grid boundary.
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        scale: float,
+        double_null: bool,
+        outer: Optional[bool] = True,
+        psi_n_tol: float = PSI_NORM_TOL,
+        delta_start: float = 0.01,
+        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+    ) -> None:
+        self.eq = eq
+        self.scale = scale
+        self.double_null = double_null
+        self.outer = outer
+        self.psi_n_tol = psi_n_tol
+        self.delta_start = delta_start
+        self.plasma_facing_boundary = plasma_facing_boundary
+
+    def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
+        self.eq.coilset.get_control_coils().current = vector * self.scale
+
+        legs = LegFlux(self.eq).get_legs(delta=self.delta_start)
+        lengths, _angles = get_legs_length_and_angle(
+            self.eq, legs, self.plasma_facing_boundary
+        )
+
+        length = lengths["lower_outer"][0] if self.outer else lengths["lower_inner"][0]
+        if self.double_null:
+            length_upper = (
+                lengths["upper_outer"][0] if self.outer else lengths["upper_inner"][0]
+            )
+            length += length_upper
+
+        return -length
 
 
 # =============================================================================

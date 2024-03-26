@@ -18,6 +18,7 @@ from matplotlib.axes import Axes
 
 from bluemira.base.constants import EPS
 from bluemira.base.error import BluemiraError
+from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import (
