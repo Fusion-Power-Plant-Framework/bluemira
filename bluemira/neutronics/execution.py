@@ -11,26 +11,28 @@ files created by openmc.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Sequence, Union
 
 import openmc
 
-from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.tools import _timing
+from bluemira.look_and_feel import bluemira_debug
 from bluemira.neutronics.neutronics_axisymmetric import (
     create_parametric_plasma_source,
     create_ring_source,
 )
+from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 
 if TYPE_CHECKING:
     from bluemira.neutronics.make_materials import MaterialsLibrary
+    from bluemira.neutronics.make_pre_cell import BlanketCellArray
     from bluemira.neutronics.params import (
         OpenMCSimulationRuntimeParameters,
         PlasmaSourceParametersPPS,
     )
 
 
-# TODO rewrite this whole module as context managers
+# TODO rewrite this whole module as coarntext managers
 class RunMode:
     """
     Generic run method.
@@ -45,7 +47,8 @@ class RunMode:
     def __init__(
         self,
         cross_section_xml: Union[Path, str],
-        cells: Iterable[openmc.Cell],
+        cells: Iterable[openmc.Cell],  # TODO: turn this into two arguments:
+        # blanket_cell_array and divertor_cell_array
         material_lib: MaterialsLibrary,
     ):
         """Basic set-up to openmc applicable to all run modes."""
@@ -72,25 +75,28 @@ class RunMode:
         self.cells = cells
         self.geometry = openmc.Geometry(self.universe)
         self.material_lib = material_lib
-        self._setup = False
+
+    def _set_tallies(
+        self, blanket_cell_array: BlanketCellArray, bodge_material_dict: Dict
+    ):
+        filter_list = filter_new_cells(bodge_material_dict, blanket_cell_array)
+        _create_tallies_from_filters(*filter_list)
+        self.files_created.add("tallies.xml")
 
     def __enter__(self):  # noqa: D105
         return self
 
-    def setup(self):
+    def _run_setup(self) -> None:
         """
         Set up basic xml files used in every simulation, i.e. settings, geometry and
         materials.
         """
-        if self._setup:
-            raise RuntimeError("Set up should only be done once!")
         self.settings.export_to_xml()
         self.files_created.add("settings.xml")
         self.geometry.export_to_xml()
         self.files_created.add("geometry.xml")
         self.material_lib.export()
         self.files_created.add("materials.xml")
-        self._setup = True
 
     def __exit__(self, exception_type, exception_value, traceback):
         """Remove files generated during the run (mainly .xml files.)"""
@@ -100,10 +106,14 @@ class RunMode:
                 f.unlink()
                 bluemira_debug(f"Removed file {f}.")
 
-    def run(self, *args, output=False, **kwargs) -> None:
+    def run(self, *setup_args, **setup_kwargs):
+        """A generic run method that does both setup and call the openmc executable."""
+        self._run_setup(*setup_args, **setup_kwargs)
+        self._run_openmc_executable(output=True)
+
+    @staticmethod
+    def _run_openmc_executable(*args, output=False, **kwargs) -> None:
         """Complete the run"""
-        if not self._setup:
-            raise RuntimeError("Must first run self.setup()!")
         _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
             *args, output=output, **kwargs
         )
@@ -114,9 +124,9 @@ class Plotting(RunMode):
 
     run_mode_str = "plot"
 
-    def setup(self, plot_widths, pixel_per_meter):
+    def _run_setup(self, plot_widths: Sequence[float], pixel_per_meter: float) -> None:
         """Set up the plot parameters"""
-        super().setup()
+        super()._run_setup()
         self.plot = openmc.Plot()
         self.plot.basis = "xz"
         self.plot.pixels = [
@@ -133,7 +143,6 @@ class Plotting(RunMode):
 class SourceSimulation(RunMode):
     """Generic base class for running a fixed source."""
 
-    "tallies.xml"
     run_mode_str = "fixed source"
 
     @staticmethod
@@ -141,10 +150,12 @@ class SourceSimulation(RunMode):
         """Abstract base class method that returns a dummy openmc source."""
         return openmc.Source(...)
 
-    def setup(
+    def _run_setup(
         self,
         source_parameters: PlasmaSourceParametersPPS,
         runtime_variables: OpenMCSimulationRuntimeParameters,
+        blanket_cell_array: BlanketCellArray,
+        bodge_material_dict: Dict,
     ) -> None:
         """
         Break open the :class:`~bluemira.neutronics.params.PlasmaSourceParametersPPS`
@@ -156,7 +167,8 @@ class SourceSimulation(RunMode):
         self.settings.batches = runtime_variables.batches
         self.settings.photon_transport = runtime_variables.photon_transport
         self.settings.electron_treatment = runtime_variables.electron_treatment
-        super().setup()
+        self._set_tallies(blanket_cell_array, bodge_material_dict)
+        super()._run_setup()
         self.files_created.add("summary.h5")
         self.files_created.add("statepoint.1.h5")
 
@@ -199,21 +211,22 @@ class VolumeCalculation(RunMode):
 
     run_mode_str = "volume"
 
-    def setup(
+    def _run_setup(
         self,
         num_particles: int,
-        min_xyz: Iterable[float],
-        max_xyz: Iterable[float],
-    ):
+        min_xyz: Sequence[float],
+        max_xyz: Sequence[float],
+        blanket_cell_array: BlanketCellArray,
+        bodge_material_dict: Dict,
+    ) -> None:
         """Set up openmc for volume calculation"""
-        Path("summary.h5").unlink(missing_ok=True)
-        Path("statepoint.1.h5").unlink(missing_ok=True)
         self.settings.volume_calculations = openmc.VolumeCalculation(
             self.cells,
             num_particles,
             min_xyz,
             max_xyz,
         )
-        super().setup()
+        self._set_tallies(blanket_cell_array, bodge_material_dict)
+        super()._run_setup()
         self.files_created.add("summary.h5")
         self.files_created.add("statepoint.1.h5")
