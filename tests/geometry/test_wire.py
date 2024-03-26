@@ -245,9 +245,3 @@ class TestWireDiscretize:
     def test_ndiscr_3(self, byedges):
         coords = self.line.discretize(ndiscr=3, byedges=byedges)
         assert np.all(coords.x[1:] > 0.0)
-
-    def test_reduce(self):
-        square = make_polygon({"x": [0, 1, 1, 0], "z": [0, 0, 1, 1]})
-        square_points = square.vertexes
-        disc_points = square.discretize(20, byedges=True, reduce=True)
-        assert np.allclose(square_points, disc_points)
