@@ -111,7 +111,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         cs_opt_state = self.coilset.get_optimisation_state(
             self.position_mapper.interpolator_names, current_scale=self.scale
         )
-        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
     def optimise(self, x0: Optional[npt.NDArray] = None):
         """
@@ -291,7 +291,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         cs_opt_state = self.coilset.get_optimisation_state(
             self.position_mapper.interpolator_names, current_scale=self.scale
         )
-        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.xs)
+        return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
     def optimise(
         self, x0: Optional[npt.NDArray] = None, verbose: bool = False
