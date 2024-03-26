@@ -528,60 +528,60 @@ def save_reactor(reactor, reactor_config, folder_name):
     bluemira_print(f"Saving reactor to {folder_name}")
     config_folder = get_bluemira_path("config", subfolder="eudemo")
     root = make_bluemira_path(folder_name, subfolder="eudemo")
-    process_folder = make_bluemira_path(f"{folder_name}/PROCESS", subfolder="eudemo")
-    cad_folder = make_bluemira_path(f"{folder_name}/CAD", subfolder="eudemo")
+    process_folder = make_bluemira_path(Path(folder_name, "PROCESS"), subfolder="eudemo")
+    cad_folder = make_bluemira_path(Path(folder_name, "CAD"), subfolder="eudemo")
     equilibria_folder = make_bluemira_path(
-        f"{folder_name}/equilibria", subfolder="eudemo"
+        Path(folder_name, "equilibria"), subfolder="eudemo"
     )
-    tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
-
+    tf_folder = make_bluemira_path(Path(folder_name, "TF_coil"), subfolder="eudemo")
     # Copy across PROCESS outputs
-    for fn in ["OUT.DAT", "MFILE.DAT"]:
-        shutil.copyfile(f"{config_folder}/process/{fn}", f"{process_folder}/{fn}")
+    shutil.copyfile(Path(config_folder, "OUT.DAT"), Path(process_folder, "OUT.DAT"))
+    shutil.copyfile(Path(config_folder, "MFILE.DAT"), Path(process_folder, "MFILE.DAT"))
     # Save equilibria
-    try:
-        sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
-        eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
-        sof.to_eqdsk(
-            filename="BLUEMIRA_SOF.eqdsk",
-            filetype="eqdsk",
-            directory=equilibria_folder,
-            qpsi_calcmode=1,
-        )
-        eof.to_eqdsk(
-            filename="BLUEMIRA_not_EOF.eqdsk",
-            filetype="eqdsk",
-            directory=equilibria_folder,
-            qpsi_calcmode=1,
-        )
-    except AttributeError:
-        pass
+    sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
+    eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
+    sof.to_eqdsk(
+        filename="BLUEMIRA_SOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+    eof.to_eqdsk(
+        filename="BLUEMIRA_not_EOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+
+    # TODO this is currently a string
+    # df = reactor.equilibria.summary()
+    # filename = Path(equilibria_folder, "BLUEMIRA_equilibria_summary.xlsx")
+    # df.to_excel(filename, index=False)
 
     # Save TF coils
-    filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
+    filename = Path(tf_folder, "BLUEMIRA_TF_3D_CAD.STP")
     reactor.save_cad(
         n_sectors=1,
         with_components=[reactor.tf_coils, reactor.coil_structures],
         filename=filename,
     )
-    filename = f"{tf_folder}/BLUEMIRA_TF_centreline.STP"
+    filename = Path(tf_folder, "BLUEMIRA_TF_centreline.STP")
     save_cad(
         reactor.tf_coils.centreline.create_shape(), filename=filename, cad_format="stp"
     )
     # Save CAD
-    filename = f"{cad_folder}/BLUEMIRA_full_3D_CAD.STP"
+    filename = Path(cad_folder, "BLUEMIRA_full_3D_CAD.STP")
     reactor.save_cad(n_sectors=2, filename=filename)
     # Save figures
     reactor.plot("xz", show=False)
     f = plt.gcf()
-    filename = f"{root}/BLUEMIRA_reactor_xz.pdf"
+    filename = Path(root, "BLUEMIRA_reactor_xz.pdf")
     f.savefig(filename, dpi=600, format="pdf")
     reactor.plot("xy", show=False)
     f = plt.gcf()
-    filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
+    filename = Path(root, "BLUEMIRA_reactor_xy.pdf")
     f.savefig(filename, dpi=600, format="pdf")
 
-    # Save params
     filename = f"{root}/BLUEMIRA_OUT.json"
     json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
