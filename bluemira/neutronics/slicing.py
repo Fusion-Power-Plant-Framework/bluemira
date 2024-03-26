@@ -400,7 +400,7 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
             raise NotImplementedError(f"Conversion for {curve_type} not available yet.")
 
         # next loop
-        # prev_end = current_end
+        prev_end = current_end
 
     return wire_container
 
