@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Oversees the conversion from bluemira wires into pre-cells, then into csg."""
 
-# ruff: noqa: PLR2004
+# ruff: noqa: PLR2004, D105
 from __future__ import annotations
 
+from collections import abc
 from dataclasses import dataclass
 from itertools import chain
 from typing import Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
@@ -16,12 +17,22 @@ import numpy as np
 from numpy import typing as npt
 
 from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import get_bisection_line
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.tools import (
+    get_wire_plane_intersect,
+    make_circle_arc_3P,
+    make_polygon,
+)
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.make_pre_cell import PreCell, PreCellArray
+from bluemira.neutronics.make_pre_cell import (
+    DivertorPreCell,
+    DivertorPreCellArray,
+    PreCell,
+    PreCellArray,
+)
 
 TOLERANCE_DEGREES = 6.0
 DISCRETIZATION_LEVEL = 10
@@ -63,6 +74,30 @@ def grow_blanket_into_pre_cell_array(
     return
 
 
+def calculate_plane_dir(
+    start_point, end_point
+) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
+    """
+    Calcullate the cutting plane and the direction of the cut from 2 points.
+    Both points must lie on the RZ plane.
+
+    Parameters
+    ----------
+    start_point, end_point:
+        3D arrays of single points (shape = (3,))
+
+    Returns
+    -------
+    plane: BluemiraPlane
+        a 3D object
+    cut_direction: npt.NDArray[float]
+        a 3D array of a single point (shape = (3,))
+    """
+    plane = make_plane_from_2_points(start_point, end_point)
+    cut_direction = end_point - start_point
+    return plane, cut_direction
+
+
 class PanelsAndExteriorCurve:
     """
     A collection of two objects, the first wall panels and the exterior curve.
@@ -80,7 +115,18 @@ class PanelsAndExteriorCurve:
     def __init__(
         self, panel_break_points: npt.NDArray[float], exterior_curve: BluemiraWire
     ):
-        """Instantiate from a break curve and a thing."""
+        """Instantiate from a break point curve and the exterior_curve.
+
+        Parameters
+        ----------
+        panel_break_points
+            A series of 2D coordinate (of shape = (N+1, 2)) representing the N panels
+            of the blanket. It (also) runs clockwise (inboard side to outboard side),
+            same as exterior_curve
+        exterior_curve
+            A BluemiraWire that runs clockwise, showing the vacuum vessel on the RHHP
+            cross-section of the tokamak.
+        """
         self.exterior_curve = exterior_curve
         self.interior_panels = np.insert(
             panel_break_points, 1, 0, axis=-1
@@ -93,20 +139,18 @@ class PanelsAndExteriorCurve:
         self.cut_points = []
         self.exterior_curve_segments = []
 
-    @staticmethod
-    def calculate_plane_dir(
-        start_point, end_point
-    ) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
-        """
-        Calcullate the cutting plane and the direction of the cut from 2 points.
-        Both points must lie on the RZ plane.
-        """
-        plane = make_plane_from_2_points(start_point, end_point)
-        cut_direction = end_point - start_point
-        return plane, cut_direction
+    def get_bisection_line(
+        self, index: int
+    ) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
+        """Calculate the bisection line that separates two panels at breakpoint[i].
 
-    def get_bisection_line(self, index):
-        """Calculate the bisection line that separates two panels at breakpoint[i]."""
+        Parameters
+        ----------
+        index: int
+            the n-th breakpoint that we want the bisection line to project from.
+            (N.B. There are N+1 breakpoints for N panels.)
+            Thus this is the last point of the n-th panel.
+        """
         p1, p2, p3 = self.interior_panels[index - 1 : index + 2, ::2]
         origin_2d, direction_2d = get_bisection_line(p1, p2, p3, p2)
         line_origin = np.insert(origin_2d, 1, 0, axis=-1)
@@ -130,7 +174,7 @@ class PanelsAndExteriorCurve:
         snap_to_horizontal_angle: float,
         starting_cut: Optional[npt.NDArray[float]],
         ending_cut: Optional[npt.NDArray[float]],
-    ) -> PreCellArray:
+    ) -> List[npt.NDArray[float]]:
         """
         Cut the exterior curve according to some specified criteria:
         In general, a line would be drawn from each panel break point outwards towards
@@ -140,7 +184,7 @@ class PanelsAndExteriorCurve:
 
         Usually these cut's angle is the bisection of the normal angles of its
         neighbouring panels, but in special rules applies when snap_to_horizontal_angle
-        is set to >0.
+        is set to a value >0.
 
         Since there is only one neighbouring panel at the start break point and end break
         point, starting_cut and end_cut must be specified. If not, they are chosen to be
@@ -175,11 +219,11 @@ class PanelsAndExteriorCurve:
         """
         threshold_angle = np.deg2rad(snap_to_horizontal_angle)
         if len(self.cut_points) > 0:
-            raise RuntimeError("self.cut_points be cleared first!")
+            raise RuntimeError("self.cut_points be cleared first before reuse!")
 
         # initial cut point
 
-        _plane, _dir = self.calculate_plane_dir(
+        _plane, _dir = calculate_plane_dir(
             self.interior_panels[0], [starting_cut[0], 0, starting_cut[-1]]
         )
         self.add_cut_point(_plane, _dir)
@@ -196,14 +240,16 @@ class PanelsAndExteriorCurve:
             self.add_cut_point(_plane, _dir)
 
         # final cut point
-        _plane, _dir = self.calculate_plane_dir(
+        _plane, _dir = calculate_plane_dir(
             self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
         )
         self.add_cut_point(_plane, _dir)
 
         return self.cut_points
 
-    def execute_exterior_curve_cut(self, discretization_level: int):
+    def execute_exterior_curve_cut(
+        self, discretization_level: int, increasing=True
+    ) -> List[BluemiraWire]:
         """
         Cut the exterior curve into a series and store them in
         self.exterior_curve_segments.
@@ -225,11 +271,14 @@ class PanelsAndExteriorCurve:
         if len(self.exterior_curve_segments) != 0:
             raise RuntimeError("self.exterior_curve_segments must be cleared first!")
 
-        alpha = self.exterior_curve.parameter_at(self.cut_points[0])  # t-start
+        alpha = self.exterior_curve.parameter_at(self.cut_points[0])  # t_start
         for i, cp in enumerate(self.cut_points[1:]):
-            beta = self.exterior_curve.parameter_at(cp)  # t-end
-            if alpha > beta:
-                alpha -= 1.0
+            beta = self.exterior_curve.parameter_at(cp)  # t_end
+            if increasing:
+                if alpha > beta:  # alpha is expected to be smaller than beta
+                    alpha -= 1.0
+            elif alpha < beta:  # alpha is expected to be larger than beta.
+                beta -= 1.0
             param_range = np.linspace(alpha, beta, discretization_level) % 1.0
             self.exterior_curve_segments.append(
                 make_polygon(
@@ -238,8 +287,8 @@ class PanelsAndExteriorCurve:
                     closed=False,
                 )
             )
-            # `make_polygon` here shall be replaced when issue #3038 gets resolved.
-            alpha = beta  # t-end becomes t-start in the next iteration
+            # TODO: `make_polygon` here shall be replaced when issue #3038 gets resolved.
+            alpha = beta  # t_end becomes t_start in the next iteration
         return self.exterior_curve_segments
 
     def make_quadrilateral_pre_cell_array(
@@ -248,7 +297,7 @@ class PanelsAndExteriorCurve:
         starting_cut: Optional[npt.NDArray[float]] = None,
         ending_cut: Optional[npt.NDArray[float]] = None,
         discretization_level: int = DISCRETIZATION_LEVEL,
-    ):
+    ) -> PreCellArray:
         """
         Cut the exterior curve up, so that would act as the exterior side of the
         quadrilateral pre-cell. Then, the panel would act as the interior side of the
@@ -286,17 +335,17 @@ class PanelsAndExteriorCurve:
 class StraightLineInfo(NamedTuple):
     """Key information about a straight line"""
 
-    start_point: Iterable[float]
-    end_point: Iterable[float]
+    start_point: Iterable[float]  # 3D coordinates
+    end_point: Iterable[float]  # 3D coordinates
 
 
 class CircleInfo(NamedTuple):
     """Key information about a circle"""
 
-    start_point: Iterable[float]
-    end_point: Iterable[float]
-    center: Iterable[float]
-    radius: float
+    start_point: Iterable[float]  # 3D coordinates
+    end_point: Iterable[float]  # 3D coordinates
+    center: Iterable[float]  # 3D coordinates
+    radius: float  # scalar
 
 
 @dataclass
@@ -312,8 +361,95 @@ class WireInfo:
     tangents: Optional[Sequence[Iterable[float]]]  # 2 normalized directional vectors xyz
     wire: Optional[BluemiraWire] = None
 
+    @classmethod
+    def from_2P(  # noqa: N802
+        cls, start_point: npt.NDArray[float], end_point: npt.NDArray[float]
+    ) -> WireInfo:
+        """
+        Create the WireInfo for a straight line (i.e. one where the key_points is of
+        instance StraightLineInfo) using only two points.
+        """
+        direction = np.array(end_point) - np.array(start_point)
+        normed_dir = direction / np.linalg.norm(direction)
+        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
 
-def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
+
+class WireInfoList(abc.Sequence):
+    """A class to store info about a series of wires"""
+
+    def __init__(self, info_list: List[WireInfo]):
+        self.info_list = list(info_list)
+        for prev_wire, curr_wire in zip(self[:-1], self[1:]):
+            if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
+                raise GeometryError("Next wire must start where the previous wire stops")
+
+    def __len__(self) -> int:
+        return self.info_list.__len__()
+
+    def __getitem__(self, index_or_slice) -> Union[List[WireInfo], WireInfo]:
+        return self.info_list.__getitem__(index_or_slice)
+
+    def __add__(self, other_info_list) -> WireInfoList:
+        return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
+
+    def __repr__(self) -> str:
+        return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
+
+    def pop(self, index):
+        """Pop one element"""
+        return self.info_list.pop(index)
+
+    @property
+    def start_point(self):
+        """The start_point for the entire series of wires"""
+        return self.info_list[0].key_points[0]
+
+    @start_point.setter
+    def start_point(self, new_start_point: npt.NDArray[float]):
+        """
+        Set the start_point to somewhere new. Note this doesn't change the tangents.
+        """
+        key_points = self.info_list[0].key_points
+        # have to break it open because it's an immutable NamedTuple.
+        new_kp = key_points.__class__(new_start_point, *key_points[1:])
+        self.info_list[0].key_points = new_kp
+
+    @property
+    def end_point(self):
+        """The end_point for the entire series of wires"""
+        return self.info_list[-1].key_points[1]
+
+    @end_point.setter
+    def end_point(self, new_end_point):
+        """Set the end_point to somewhere new. Note this doesn't change the tangents."""
+        key_points = self.info_list[-1].key_points
+        new_kp = key_points.__class__(key_points[0], new_end_point, *key_points[2:])
+        self.info_list[0].key_points = new_kp
+
+    def restore_to_wire(self) -> BluemiraWire:
+        """Re-create a bluemira wire from a series of WireInfo."""
+        wire_list = []
+        for info in self:
+            start_end = np.array(info.key_points[:2])
+            if info.wire:
+                # quick way to get the wire back without doing any computation is by
+                # directly copying.
+                wire_list.append(info.wire)
+                continue
+            if isinstance(info.key_points, StraightLineInfo):
+                wire_list.append(make_polygon(start_end.T, closed=False))
+            else:
+                # given two points on the circumference, only makes the SHORTER of the
+                # two possible arcs of the circle.
+                chord_intersect = start_end.mean(axis=0)
+                direction = chord_intersect - info.key_points.center
+                normed_dir = direction / np.linalg.norm(direction)
+                middle = info.key_points.center + info.key_points.radius * normed_dir
+                wire_list.append(make_circle_arc_3P(start_end[0], middle, start_end[1]))
+        return BluemiraWire(wire_list)
+
+
+def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
     """
     Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
     Then, get only the key information (start/end points and tangent) of each segment of
@@ -391,10 +527,11 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> List[WireInfo]:
                 )
         elif isinstance(curve_type, (cadapi.Part.ArcOfEllipse, cadapi.Part.Ellipse)):
             raise NotImplementedError("Conversion for ellipses are not available yet.")
+            # TODO: implement this feature
         else:
             raise NotImplementedError(f"Conversion for {curve_type} not available yet.")
 
-    return wire_container
+    return WireInfoList(wire_container)
 
 
 def turned_morethan_180(
@@ -409,7 +546,7 @@ def turned_morethan_180(
     xyz_vector1, xyz_vector2: Sequence[float]
         xyz array of where the vector points.
     direction_sign: signed integer
-        +1: evaluate rotation required in the anticlockwise direction.
+        +1: evaluate rotation required in the counter-clockwise direction.
         -1: evaluate rotation required in the clockwise direction.
     """
     if xyz_vector1[1] != 0 or xyz_vector2[1] != 0:
@@ -449,9 +586,7 @@ def straight_lines_deviate_less_than(
     return deviate_less_than(info1.tangents[1], info2.tangents[0], threshold_degrees)
 
 
-def break_wire_into_convex_chunks(
-    bmwire, curvature_sign=-1, output_wire: bool = False
-) -> Tuple[List[WireInfo], Optional[BluemiraWire]]:
+def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> List[WireInfoList]:
     """
     Break a wire up into several convex wires.
     Merge if they are almost collinear.
@@ -465,21 +600,17 @@ def break_wire_into_convex_chunks(
 
     Returns
     -------
-    convex_chunks: only output if True
+    convex_chunks:
+        a list of WireInfos
     """
-    # TODO: remove convex_wires, this_wire, otuput_wire and the Optional[BluemiraWire]
-    # in the return signature altogether.
-
     wire_segments = list(check_and_breakdown_bmwire(bmwire))
-    convex_chunks, convex_wires = [], []
+    convex_chunks = []
     # initializing the first chunk
-    this_chunk, this_wire = [], []
+    this_chunk = []
     chunk_start_tangent = wire_segments[0].tangents[0]
 
     def add_to_chunk(this_seg: WireInfo) -> None:
         """Add the info and wire into the current chunk and current wire."""
-        if output_wire:
-            this_wire.append(this_seg.wire)
         if this_chunk and straight_lines_deviate_less_than(
             this_chunk[-1], this_seg, TOLERANCE_DEGREES
         ):
@@ -494,11 +625,8 @@ def break_wire_into_convex_chunks(
     def conclude_chunk():
         """Wrap up the current chunk"""
         nonlocal chunk_start_tangent
-        convex_chunks.append(this_chunk.copy())
+        convex_chunks.append(WireInfoList(this_chunk.copy()))
         this_chunk.clear()
-        if output_wire:
-            convex_wires.append(BluemiraWire(this_wire))
-            this_wire.clear()
         if wire_segments:  # if there are still segments left
             chunk_start_tangent = wire_segments[0].tangents[0]
 
@@ -517,22 +645,28 @@ def break_wire_into_convex_chunks(
     add_to_chunk(wire_segments.pop(0))
     conclude_chunk()
 
-    if output_wire:
-        return convex_chunks, convex_wires
     return convex_chunks
 
 
 class DivertorWireAndExteriorCurve:
     """A class to store a wire with an exterior curve"""
 
-    def __init__(self, divertor_wire: BluemiraWire, exterior_curve: BluemiraWire):  # noqa: ARG002
+    def __init__(self, divertor_wire: BluemiraWire, exterior_curve: BluemiraWire):
         """
+        Instantiate from a BluemiraWire of the divertor and a BluemiraWire of the
+        exterior (outside of vacuum vessem) curve.
+
         Parameters
         ----------
-        divertor_wire:
-            A bluemiraWire made of a series of
+        divertor_wire
+            A BluemiraWire that runs from the inboard side to the outboard side of the
+            tokamak, representing the plasma facing surface of the divertor.
+        exterior_curve
+            A BluemiraWire that runs clockwise, showing the vacuum vessel on the RHHP
+            cross-section of the tokamak.
         """
         convex_segments = break_wire_into_convex_chunks(divertor_wire)
+        self.convex_segments = convex_segments
         # all_key_points
         all_key_points = [
             seg.key_points[0] for seg in chain.from_iterable(convex_segments)
@@ -542,7 +676,257 @@ class DivertorWireAndExteriorCurve:
         self.tangents = [
             seg.tangents for seg in chain.from_iterable(convex_segments)
         ]  # shape = (N, 2, 3)
-        self.disappearing_point = (
-            (all_key_points[0, 0] + all_key_points[-1, 0]) / 2,  # mean x
-            all_key_points[:, -1].max(),
-        )  # highest z
+        self.center_point = np.array([  # center of the divertor
+            (self.key_points[0, 0] + self.key_points[-1, 0]) / 2,  # mean x
+            self.key_points[:, -1].max(),  # highest z
+        ])
+        self.exterior_curve = exterior_curve
+        self.cut_points = []
+        self.exterior_curve_segments = []
+
+    def get_bisection_line(
+        self, prev_index: int
+    ) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
+        """
+        Get the the line bisecting the x and the y, represented as origin and direction.
+
+        Parameters
+        ----------
+        prev_index
+            two convex chunks are involved when making a bisection line. This index
+            refers to the smaller of these two chunks' indices.
+
+        Returns
+        -------
+        line_origin: a point on this line
+        line_direction: a normal vector pointing in the direction of this line.
+        """
+        # Get the vectors as arrays of shape = (2,)
+        direct1 = np.array(self.convex_segments[prev_index][-1].tangents[1])[::2]
+        anchor1 = np.array(self.convex_segments[prev_index][-1].key_points[1])[::2]
+        direct2 = np.array(self.convex_segments[prev_index + 1][0].tangents[0])[::2]
+        anchor2 = np.array(self.convex_segments[prev_index + 1][0].key_points[0])[::2]
+        # force the directions to point outwards.
+        if (direct1 @ self.center_point) > (direct1 @ anchor1):
+            direct1 = -direct1
+        if (direct2 @ self.center_point) > (direct2 @ anchor2):
+            direct2 = -direct2
+        origin_2d, direction_2d = get_bisection_line(
+            anchor1 - direct1, anchor1, anchor2 - direct2, anchor2
+        )
+        line_origin = np.insert(origin_2d, 1, 0, axis=-1)
+        line_direction = np.insert(direction_2d, 1, 0, axis=-1)
+        return line_origin, line_direction
+
+    def add_cut_point(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
+        """
+        Find a point that lies on the exterior curve, which would be used to cut up the
+        exterior_curve eventually.
+
+        N.B. These cut points must be sequentially added, i.e. they should
+        follow the exterior curve in the clockwise direction.
+
+        TODO: this is identical to :class:`~PanelsAndExteriorCurve.add_cut_point`.
+        Should be refactored away.
+        """
+        self.cut_points.append(
+            get_wire_plane_intersect(self.exterior_curve, cutting_plane, cut_direction)
+        )
+
+    def calculate_exterior_cut_points(
+        self,
+        starting_cut: Optional[npt.NDArray[float]],
+        ending_cut: Optional[npt.NDArray[float]],
+    ) -> List[npt.NDArray[float]]:
+        """
+        Cut the exterior curve up into N segments to match the N convex chunks of the
+        divertor.
+        The space between two neighbouring cut line makes a PreCell.
+
+        Parameters
+        ----------
+        starting_cut, ending_cut:
+            Each is an ndarray with shape (2,), denoting the destination of the cut
+            lines.
+
+            The program cannot deduce what angle to cut the exterior curve at these
+            locations without extra user input. Therefore the user is able to use these
+            options to specify the cut line's destination point for the first and final
+            points respectively.
+
+            For the first cut line,
+                the cut line would start from interior_panels[0] and reach starting_cut;
+            and for the final cut line,
+                the cut line would start from interior_panels[-1] and reach ending_cut.
+            Both arguments have shape (2,) if given, representing the RZ coordinates.
+
+
+        Returns
+        -------
+        None
+            (results are stored in self.cut_points)
+        """
+        if len(self.cut_points) > 0:
+            raise RuntimeError("self.cut_points be cleared first before reuse!")
+
+        # initial cut point
+
+        _plane, _dir = calculate_plane_dir(
+            np.array(self.convex_segments[0][0].key_points[0]),
+            [starting_cut[0], 0, starting_cut[-1]],
+        )
+        self.add_cut_point(_plane, _dir)
+
+        for i in range(len(self.convex_segments) - 1):
+            _origin, _dir = self.get_bisection_line(i)
+            _plane = make_plane_from_2_points(_origin, _origin + _dir)
+            self.add_cut_point(_plane, _dir)
+
+        # final cut point
+        _plane, _dir = calculate_plane_dir(
+            np.array(self.convex_segments[-1][-1].key_points[1]),
+            [ending_cut[0], 0, ending_cut[-1]],
+        )
+        self.add_cut_point(_plane, _dir)
+
+        return self.cut_points
+
+    def execute_exterior_curve_cut(
+        self, discretization_level: int, increasing=False, reverse=True
+    ) -> List[WireInfoList]:
+        """
+        Cut the exterior curve into a series and store them in
+        self.exterior_curve_segments. Use the following table to decide whether the
+        segments run clockwise or counter-clockwise.
+        |                 | increasing = True | increasing = False |
+        ------------------------------------------------------------
+        | reverse = False |     clockwise     | counter-clockwise  |
+        | reverse = False | counter-clockwise |     clockwise      |
+
+        This is the slowest part of the entire csg-creation process, because of the
+        discretization.
+
+        TODO: when refactoring: possibly abstract this away because this is a shared
+        functionality with :class:`~PanelsAndExteriorCurve.execute_exterior_curve_cut`.
+
+        Parameters
+        ----------
+        discretization_level:
+            how many points to use to approximate the curve.
+            TODO: remove this when issue #3038 is fixed. The raw wire can be used
+                without discretization then.
+
+        Returns
+        -------
+        None
+            results are stored in self.exterior_curve_segments
+        """
+        if len(self.exterior_curve_segments) != 0:
+            raise RuntimeError("self.exterior_curve_segments must be cleared first!")
+
+        alpha = self.exterior_curve.parameter_at(self.cut_points[0])  # t_start
+        for i, cp in enumerate(self.cut_points[1:]):
+            beta = self.exterior_curve.parameter_at(cp)  # t_end
+            if increasing:
+                if alpha > beta:  # alpha is expected to be smaller than beta
+                    alpha -= 1.0
+            elif alpha < beta:  # alpha is expected to be larger than beta.
+                beta -= 1.0
+            param_range = np.linspace(alpha, beta, discretization_level) % 1.0
+            if reverse:
+                param_range = param_range[::-1]
+
+            sample_coords_3d = [self.exterior_curve.value_at(i) for i in param_range]
+            this_curve = []
+            for start_point, end_point in zip(
+                sample_coords_3d[:-1], sample_coords_3d[1:]
+            ):
+                this_curve.append(WireInfo.from_2P(start_point, end_point))
+            self.exterior_curve_segments.append(WireInfoList(this_curve))
+            # TODO: `make_polygon` here shall be replaced when issue #3038 gets resolved.
+            alpha = beta  # t_end becomes t_start in the next iteration
+        return self.exterior_curve_segments
+
+    def make_divertor_pre_cell_array(
+        self,
+        starting_cut: Optional[npt.NDArray[float]] = None,
+        ending_cut: Optional[npt.NDArray[float]] = None,
+        discretization_level: int = DISCRETIZATION_LEVEL,
+    ):
+        """
+        Cut the exterior curve up, so that would act as the exterior side of the
+        quadrilateral pre-cell. Then, the panel would act as the interior side of the
+        pre-cell. The two remaining sides are the counter-clockwise and clockwise walls.
+
+        Ordering: The cells should run from inoboard to outboard.
+
+        Parameters
+        ----------
+        starting_cut:
+            shape = (2,)
+        ending_cut:
+            shape = (2,)
+        discretization_level:
+            integer: how many points to use to approximate each exterior curve segment.
+        """
+        # deduced starting_cut and ending_cut from the divertor itself.
+        if not starting_cut:
+            first_point = np.array(self.convex_segments[0][0].key_points[0])[::2]
+            tangent = np.array(self.convex_segments[0][0].tangents[0])[::2]
+            if (tangent @ self.center_point) > (tangent @ first_point):
+                tangent = -tangent
+            starting_cut = first_point + tangent
+        if not ending_cut:
+            last_point = np.array(self.convex_segments[-1][-1].key_points[1])[::2]
+            tangent = np.array(self.convex_segments[-1][-1].tangents[1])[::2]
+            if (tangent @ self.center_point) > (tangent @ last_point):
+                tangent = -tangent
+            ending_cut = last_point + tangent
+
+        self.cut_points = []
+        self.calculate_exterior_cut_points(starting_cut, ending_cut)
+
+        self.exterior_curve_segments = []
+        self.execute_exterior_curve_cut(discretization_level)
+
+        pre_cell_list = []
+        for i, exterior_wire in enumerate(self.exterior_curve_segments):
+            interior_wire = self.convex_segments[i]
+            # make a new line joining the start and end.
+            if np.isclose(
+                exterior_wire.end_point,
+                interior_wire.start_point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            ).all():
+                cw_line = WireInfoList([interior_wire.pop(0)])
+            else:
+                cw_line = WireInfoList([
+                    WireInfo.from_2P(exterior_wire.end_point, interior_wire.start_point)
+                ])
+
+            if np.isclose(
+                interior_wire.end_point,
+                exterior_wire.start_point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            ).all():
+                ccw_line = WireInfoList([interior_wire.pop(-1)])
+            else:
+                ccw_line = WireInfoList([
+                    WireInfo.from_2P(interior_wire.end_point, exterior_wire.start_point)
+                ])
+            # merge lines if collinear
+            while straight_lines_deviate_less_than(cw_line[-1], interior_wire[0], 0.5):
+                cw_line.end_point = interior_wire.start_point
+                interior_wire.pop(0)
+
+            while straight_lines_deviate_less_than(interior_wire[-1], ccw_line[0], 0.5):
+                ccw_line.start_point = interior_wire.end_point
+                interior_wire.pop(-1)
+
+            pre_cell_list.append(
+                DivertorPreCell(interior_wire, exterior_wire, cw_line, ccw_line)
+            )
+
+        return DivertorPreCellArray(pre_cell_list)
