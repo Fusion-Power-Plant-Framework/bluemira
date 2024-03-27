@@ -134,7 +134,7 @@ class FieldConstraints(UpdateableConstraint):
             "bzp_vec": None,
             "B_max": B_max,
             "scale": 1.0,
-            "current_sym_matrix": None,
+            "current_rep_matrix": None,
         }
         self.tolerance = tolerance
         self.f_constraint_type = constraint_type
@@ -162,8 +162,8 @@ class FieldConstraints(UpdateableConstraint):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-        self._args["current_sym_matrix"] = (
-            equilibrium.coilset._optimisation_currents_sym_mat
+        self._args["current_rep_matrix"] = (
+            equilibrium.coilset._optimisation_currents_rep_mat
         )
 
     def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
@@ -273,8 +273,8 @@ class CoilFieldConstraints(FieldConstraints):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-        self._args["current_sym_matrix"] = (
-            equilibrium.coilset._optimisation_currents_sym_mat
+        self._args["current_rep_matrix"] = (
+            equilibrium.coilset._optimisation_currents_rep_mat
         )
 
 
@@ -327,7 +327,7 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
-            "current_sym_matrix": None,
+            "current_rep_matrix": None,
         }
         self.tolerance = tolerance
 
@@ -350,8 +350,8 @@ class CoilForceConstraints(UpdateableConstraint):
 
         self._args["b_vec"] = self.evaluate(equilibrium)
 
-        self._args["current_sym_matrix"] = (
-            equilibrium.coilset._optimisation_currents_sym_mat
+        self._args["current_rep_matrix"] = (
+            equilibrium.coilset._optimisation_currents_rep_mat
         )
 
     @staticmethod
@@ -430,8 +430,8 @@ class MagneticConstraint(UpdateableConstraint):
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
-        self._args["current_sym_matrix"] = (
-            equilibrium.coilset._optimisation_currents_sym_mat
+        self._args["current_rep_matrix"] = (
+            equilibrium.coilset._optimisation_currents_rep_mat
         )
 
     def update_target(self, equilibrium: Equilibrium):
