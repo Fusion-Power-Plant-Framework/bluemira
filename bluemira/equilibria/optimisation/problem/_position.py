@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import CoilSet, Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
@@ -73,6 +73,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
+        coilset: CoilSet,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
@@ -83,8 +84,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         opt_parameters: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
+        self.coilset = coilset
         self.eq = eq
-        self.coilset = eq.coilset
         self.targets = targets
         self.position_mapper = position_mapper
         self.bounds = self.get_mapped_state_bounds(max_currents)

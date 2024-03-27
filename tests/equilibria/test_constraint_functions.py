@@ -94,6 +94,7 @@ class TestEquilibriumInput:
                 bzp_vec=bzp_vec,
                 B_max=b,
                 scale=self.scale,
+                current_rep_matrix=self.coilset._optimisation_currents_rep_mat,
             )
 
             # TODO check df result
@@ -134,6 +135,7 @@ class TestEquilibriumInput:
             CS_Fz_sum_max=2.0,
             CS_Fz_sep_max=2.0,
             scale=self.scale,
+            current_rep_matrix=self.coilset._optimisation_currents_rep_mat,
         )
 
         test_f_constraint = cfc.f_constraint(self.vector)
