@@ -789,11 +789,9 @@ class DivertorWireAndExteriorCurve:
                     WireInfo.from_2P(exterior_wire.end_point, interior_wire.start_point)
                 ])
                 # merge lines if collinear
-                while straight_lines_deviate_less_than(
-                    cw_line[-1], interior_wire[0], 0.5
-                ):
-                    cw_line.end_point = interior_wire.start_point
-                    interior_wire.pop(0)
+            while straight_lines_deviate_less_than(cw_line[-1], interior_wire[0], 0.5):
+                cw_line.end_point = interior_wire.start_point
+                interior_wire.pop(0)
 
             if np.isclose(
                 interior_wire.end_point,
@@ -807,11 +805,9 @@ class DivertorWireAndExteriorCurve:
                     WireInfo.from_2P(interior_wire.end_point, exterior_wire.start_point)
                 ])
                 # merge lines if collinear
-                while straight_lines_deviate_less_than(
-                    interior_wire[-1], ccw_line[0], 0.5
-                ):
-                    ccw_line.start_point = interior_wire.end_point
-                    interior_wire.pop(-1)
+            while straight_lines_deviate_less_than(interior_wire[-1], ccw_line[0], 0.5):
+                ccw_line.start_point = interior_wire.end_point
+                interior_wire.pop(-1)
 
             pre_cell_list.append(DivertorPreCell(interior_wire, exterior_wire))
 
