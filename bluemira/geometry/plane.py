@@ -15,14 +15,16 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from bluemira.geometry.placement import BluemiraPlacement
-
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    
+    from numpy import typing as npt
+
+    from bluemira.geometry.placement import BluemiraPlacement
 
 __all__ = ["BluemiraPlane"]
 
@@ -164,3 +166,57 @@ class BluemiraPlane:
         from bluemira.geometry.placement import BluemiraPlacement  # noqa: PLC0415
 
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
+
+
+def xz_plane_from_2_points(
+    point1: npt.NDArray[float], point2: npt.NDArray[float]
+) -> BluemiraPlane:
+    """
+    Make a plane that is perpendicular to the RZ plane using only 2 points.
+
+    Parameters
+    ----------
+    point1, point2:
+        npt.NDArray of shape (3,)
+    """
+    # Draw an extra leg in the Y-axis direction to make an L shape.
+    point1 = np.array([point1[0], 0, point1[-1]])
+    point2 = np.array([point2[0], 0, point2[-1]])
+    point3 = point1 + np.array([0, 1, 0])
+    return BluemiraPlane.from_3_points(point1, point2, point3)
+
+
+def x_plane(x: float):
+    """Make a vertical plane (perpendicular to X) at a specified value of x."""
+    # Simply draw an L shape in the YZ plane
+    return BluemiraPlane.from_3_points([x, 0, 0], [x, 0, 1], [x, 1, 0])
+
+
+def z_plane(z: float):
+    """Make a horizontal plane (perpendicular to Z) at a specified value of z."""
+    # Simply draw an L shape in the XY plane
+    return BluemiraPlane.from_3_points([0, 0, z], [0, 1, z], [1, 0, z])
+
+
+def calculate_plane_dir(
+    start_point, end_point
+) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
+    """
+    Calculate the cutting plane and the direction of the cut from 2 points.
+    Both points must lie on the RZ plane.
+
+    Parameters
+    ----------
+    start_point, end_point:
+        3D arrays of single points (shape = (3,))
+
+    Returns
+    -------
+    plane: BluemiraPlane
+        A plane in 3D.
+    cut_direction: npt.NDArray[float]
+        A 3D vector (shape = (3,))
+    """
+    plane = xz_plane_from_2_points(start_point, end_point)
+    cut_direction = end_point - start_point
+    return plane, cut_direction

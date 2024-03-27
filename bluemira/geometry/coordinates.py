@@ -1766,3 +1766,18 @@ def join_intersect(
             args.append(coords1.argmin([x, 0, z]))
         return list(set(args))
     return None
+
+
+def choose_direction(
+    vector: npt.NDArray[float],
+    lower_pt: npt.NDArray[float],
+    higher_pt: npt.NDArray[float],
+):
+    """
+    Flip the vector to the correct side (multiply by +1 or -1) so that
+    when lower_pt is projected onto the vector, it has a smaller value than
+    when higher_pt is projected onto the vector.
+    """
+    if (vector @ lower_pt) > (vector @ higher_pt):
+        return -vector
+    return vector
