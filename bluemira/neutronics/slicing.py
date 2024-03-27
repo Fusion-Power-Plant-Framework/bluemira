@@ -12,13 +12,18 @@ from itertools import chain
 from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
 
 import numpy as np
-from numpy import typing as npt
 
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.constants import EPS_FREECAD
-from bluemira.geometry.coordinates import get_bisection_line
+from bluemira.geometry.coordinates import choose_direction, get_bisection_line
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.plane import (
+    BluemiraPlane,
+    calculate_plane_dir,
+    x_plane,
+    xz_plane_from_2_points,
+    z_plane,
+)
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
 from bluemira.neutronics.make_pre_cell import (
     DivertorPreCell,
@@ -34,31 +39,12 @@ from bluemira.neutronics.wires import (
 )
 
 if TYPE_CHECKING:
+    from numpy import typing as npt
+
     from bluemira.geometry.wire import BluemiraWire
 
 TOLERANCE_DEGREES = 6.0
 DISCRETIZATION_LEVEL = 10
-
-
-def make_plane_from_2_points(
-    point1: npt.NDArray[float], point2: npt.NDArray[float]
-) -> BluemiraPlane:
-    """Make a plane that is perpendicular to the RZ plane using only 2 points."""
-    # Draw an extra leg in the Y-axis direction to make an L shape.
-    point3 = point1 + np.array([0, 1, 0])
-    return BluemiraPlane.from_3_points(point1, point2, point3)
-
-
-def x_plane(x: float):
-    """Make a vertical plane (perpendicular to Y)."""
-    # Simply draw an L shape in the YZ plane
-    return BluemiraPlane.from_3_points([x, 0, 0], [x, 0, 1], [x, 1, 0])
-
-
-def z_plane(z: float):
-    """Make a horizontal plane."""
-    # Simply draw an L shape in the XY plane
-    return BluemiraPlane.from_3_points([0, 0, z], [0, 1, z], [1, 0, z])
 
 
 def grow_blanket_into_pre_cell_array(
@@ -74,30 +60,6 @@ def grow_blanket_into_pre_cell_array(
     of making curves that are constant in the inboard and outboard side.
     """
     return
-
-
-def calculate_plane_dir(
-    start_point, end_point
-) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
-    """
-    Calcullate the cutting plane and the direction of the cut from 2 points.
-    Both points must lie on the RZ plane.
-
-    Parameters
-    ----------
-    start_point, end_point:
-        3D arrays of single points (shape = (3,))
-
-    Returns
-    -------
-    plane: BluemiraPlane
-        a 3D object
-    cut_direction: npt.NDArray[float]
-        a 3D array of a single point (shape = (3,))
-    """
-    plane = make_plane_from_2_points(start_point, end_point)
-    cut_direction = end_point - start_point
-    return plane, cut_direction
 
 
 class PanelsAndExteriorCurve:
@@ -238,7 +200,7 @@ class PanelsAndExteriorCurve:
             elif abs(np.arctan(_dir[-1] / _dir[0])) < threshold_angle:
                 _plane = z_plane(self.interior_panels[i][-1])  # horizontal cut plane
             else:
-                _plane = make_plane_from_2_points(_origin, _origin + _dir)
+                _plane = xz_plane_from_2_points(_origin, _origin + _dir)
             self.add_cut_point(_plane, _dir)
 
         # final cut point
@@ -591,10 +553,8 @@ class DivertorWireAndExteriorCurve:
         direct2 = np.array(self.convex_segments[prev_index + 1][0].tangents[0])[::2]
         anchor2 = np.array(self.convex_segments[prev_index + 1][0].key_points[0])[::2]
         # force the directions to point outwards.
-        if (direct1 @ self.center_point) > (direct1 @ anchor1):
-            direct1 = -direct1
-        if (direct2 @ self.center_point) > (direct2 @ anchor2):
-            direct2 = -direct2
+        direct1 = choose_direction(direct1, self.center_point, anchor1)
+        direct2 = choose_direction(direct2, self.center_point, anchor2)
         origin_2d, direction_2d = get_bisection_line(
             anchor1 - direct1, anchor1, anchor2 - direct2, anchor2
         )
@@ -663,7 +623,7 @@ class DivertorWireAndExteriorCurve:
 
         for i in range(len(self.convex_segments) - 1):
             _origin, _dir = self.get_bisection_line(i)
-            _plane = make_plane_from_2_points(_origin, _origin + _dir)
+            _plane = xz_plane_from_2_points(_origin, _origin + _dir)
             self.add_cut_point(_plane, _dir)
 
         # final cut point
@@ -757,14 +717,12 @@ class DivertorWireAndExteriorCurve:
         if not starting_cut:
             first_point = np.array(self.convex_segments[0][0].key_points[0])[::2]
             tangent = np.array(self.convex_segments[0][0].tangents[0])[::2]
-            if (tangent @ self.center_point) > (tangent @ first_point):
-                tangent = -tangent
+            tangent = choose_direction(tangent, self.center_point, first_point)
             starting_cut = first_point + tangent
         if not ending_cut:
             last_point = np.array(self.convex_segments[-1][-1].key_points[1])[::2]
             tangent = np.array(self.convex_segments[-1][-1].tangents[1])[::2]
-            if (tangent @ self.center_point) > (tangent @ last_point):
-                tangent = -tangent
+            tangent = choose_direction(tangent, self.center_point, last_point)
             ending_cut = last_point + tangent
 
         self.cut_points = []
