@@ -1345,22 +1345,8 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the positions of the position optimisable coils.
         """
-        # only the position optimisable coils are considered
-        # if position_coil_names is given
-        coil_names = (
-            self.position_optimisable_coil_names
-            if position_coil_names is None
-            else [
-                cn
-                for cn in position_coil_names
-                if cn in self.position_optimisable_coil_names
-            ]
-        )
-
-        x, z = [], []
-        for name in coil_names:
-            x.append(self[name].x)
-            z.append(self[name].z)
+        coils = self.get_position_optimisable_coils(position_coil_names)
+        x, z = [c.x for c in coils], [c.z for c in coils]
         return np.asarray(x), np.asarray(z)
 
     def _set_optimisation_positions(self, coil_position_map: Dict[str, np.ndarray]):
