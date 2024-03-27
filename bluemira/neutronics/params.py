@@ -6,13 +6,42 @@
 """dataclasses containing parameters used to set up the openmc model."""
 
 from dataclasses import asdict, dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import Literal, Tuple, Union
 
+import numpy as np
 import openmc
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import EPS, raw_uc
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
+
+
+class BlanketLayers(Enum):
+    """
+    The five layers of the blanket as used in the neutronics simulation.
+
+    Variables
+    ---------
+    Surface
+        The surface layer of the first wall.
+    First wall
+        Typically made of tungsten or Eurofer
+    BreedingZone
+        Where tritium is bred
+    Manifold
+        The pipe works and supporting structure
+    VacuumVessel
+        The vacuum vessel keeping out the atmospheric air.
+    """
+
+    Surface = auto()
+    FirstWall = auto()
+    BreedingZone = auto()
+    Manifold = auto()
+    VacuumVessel = auto()
 
 
 @dataclass
@@ -44,7 +73,6 @@ class OpenMCSimulationRuntimeParameters:
     """
 
     # Parameters used outside of setup_openmc()
-    parametric_source: bool  # to use the pps_isotropic module or not.
     particles: int  # number of particles used in the neutronics simulation
     cross_section_xml: Union[str, Path]
     batches: int = 2
@@ -54,6 +82,7 @@ class OpenMCSimulationRuntimeParameters:
     )
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
+    parametric_source: bool = True
     # number of particles used in the volume calculation.
     volume_calc_particles: int = int(4e8)
 
@@ -69,8 +98,9 @@ class BreederTypeParameters:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParametersBase:
-    """Parameters describing how the tokamak is operated,
+class PlasmaSourceParameters:
+    """
+    Parameters describing the plasma source,
     i.e. where the plasma is positioned (and therefore where the power is concentrated),
     and what temperature the plasma is at.
 
@@ -92,28 +122,61 @@ class TokamakOperationParametersBase:
         shifted compared to the geometric center of the poloidal cross-section.
     """
 
+    major_radius: float  # [m]
+    aspect_ratio: float  # [dimensionless]
+    elongation: float  # [dimensionless]
+    triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
     peaking_factor: float  # [dimensionless]
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
 
+    def __post_init__(self):
+        """Check dimensionless variables are sensible."""
+        if self.peaking_factor < 1.0:  # noqa: PLR2004
+            raise ValueError(
+                "Peaking factor (peak heat load/avg. heat load) "
+                "must be larger than 1, by definition."
+            )
+        if self.aspect_ratio < 1.0:  # noqa: PLR2004
+            raise GeometryError(
+                "By construction, tokamak aspect ratio " "can't be smaller than 1."
+            )
+        if self.elongation < 1.0:  # noqa: PLR2004
+            raise GeometryError("Elongation can't be smaller than 1")
+        if abs(self.triangularity) > 1.0:  # noqa: PLR2004
+            # triangularity <0 is known as reversed/ negative triangularity.
+            bluemira_warn(
+                "Triangularity with magnitude >1 implies that the difference"
+                "between the major radius and R_upper is larger than the minor radius."
+            )
+
+    @property
+    def minor_radius(self):
+        """Calculate minor radius from
+        aspect_ratio = major_radius/minor_radius
+        """
+        return self.major_radius / self.aspect_ratio
+
 
 @dataclass(frozen=True)
-class TokamakOperationParameters(TokamakOperationParametersBase):
-    """See TokamakOperationParametersBase
+class PlasmaSourceParametersPPS(PlasmaSourceParameters):
+    """See PlasmaSourceParameters
 
     Addition of plasma_physics_units converted variables
     """
 
-    plasma_physics_units: TokamakOperationParametersBase
+    plasma_physics_units: PlasmaSourceParameters
 
     @classmethod
-    def from_si(cls, op_params: TokamakOperationParametersBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakOperationParametersBase`
+    def from_si(cls, op_params: PlasmaSourceParameters):
+        """
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
         """
         conversion = {
+            "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
             "shaf_shift": ("m", "cm"),
@@ -124,61 +187,7 @@ class TokamakOperationParameters(TokamakOperationParametersBase):
         for k, v in op_pps.items():
             if k in conversion:
                 op_pps[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=TokamakOperationParametersBase(**op_pps))
-
-
-@dataclass(frozen=True)
-class PlasmaGeometryBase:
-    """List of parameters describing the
-
-    Parameters
-    ----------
-    major_r:
-        major radius [m]
-        how far is the origin in the poloidal view from the center of the torus.
-    minor_r:
-        minor radius [m] (R0 in equation referenced below)
-        radius of the poloidal cross-section
-    elong:
-        elongation [dimensionless] (a in equation referenced below)
-        how eccentric the poloidal ellipse is
-    triang:
-        triangularity [dimensionless] (δ in equation referenced below)
-        second order eccentricity (best visualized by plotting R(θ) wrt.θ in eq. below)
-
-    Notes
-    -----
-    R = R0 + a cos(θ + δ sin θ)
-    https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
-    page.239 # noqa: W505
-    """
-
-    major_r: float
-    minor_r: float
-    elong: float
-    triang: float
-
-
-@dataclass(frozen=True)
-class PlasmaGeometry(PlasmaGeometryBase):
-    """See PlasmaGeometryBase
-
-    Addition of cgs converted variables
-    """
-
-    cgs: PlasmaGeometryBase
-
-    @classmethod
-    def from_si(cls, plasma_geometry: PlasmaGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.PlasmaGeometryBase`
-        """
-        pg = asdict(plasma_geometry)
-        pgcgs = pg.copy()
-        for k, v in pgcgs.items():
-            if k.endswith("_r"):  # minor and major radii
-                pgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**pg, cgs=PlasmaGeometryBase(**pgcgs))
+        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
 
 
 @dataclass(frozen=True)
@@ -222,20 +231,125 @@ class TokamakGeometry(TokamakGeometryBase):
     cgs: TokamakGeometryBase
 
     @classmethod
-    def from_si(cls, tokamak_geometry: TokamakGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakGeometryBase`
+    def from_si(cls, tokamak_geometry_base: TokamakGeometryBase):
         """
-        tg = asdict(tokamak_geometry)
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.TokamakGeometryBase`
+        """
+        tg = asdict(tokamak_geometry_base)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
         return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
 
 
+@dataclass
+class WallThicknessFraction:
+    """List of thickness of various sections of the blanket as fractions"""
+
+    first_wall: float  # [dimensionless]
+    breeding_zone: float  # [dimensionless]
+    manifold: float  # [dimensionless]
+    vacuum_vessel: float  # [dimensionless]
+
+    def __post_init__(self):
+        """Check fractions are between 0 and 1 and sums to unity."""
+        for section in ("first_wall", "manifold", "vacuum_vessel"):
+            if getattr(self, section) <= 0:
+                raise GeometryError(f"Thickness fraction of {section} must be non-zero")
+        if self.breeding_zone < 0:  # can be zero, but not negative.
+            raise GeometryError(
+                "Thickness fraction of breeding_zone must be nonnegative"
+            )
+        if not np.isclose(
+            sum([
+                self.first_wall,
+                self.manifold,
+                self.breeding_zone,
+                self.vacuum_vessel,
+            ]),
+            1.0,
+            rtol=0,
+            atol=EPS,
+        ):
+            raise GeometryError(
+                "Thickness fractions of all four sections " "must add up to unity!"
+            )
+
+    def extended_prefix_sums(self):
+        """Return the exclusive and includsive sum"""
+        zone_sequence = ("first_wall", "breeding_zone", "manifold", "vacuum_vessel")
+        _each_thick = [getattr(self, zone) for zone in zone_sequence]
+        return np.insert(np.cumsum(_each_thick).tolist(), 0, 0)
+
+
+class InboardThicknessFraction(WallThicknessFraction):
+    """Thickness fraction list of the inboard wall of the blanket"""
+
+    pass
+
+
+class OutboardThicknessFraction(WallThicknessFraction):
+    """Thickness fraction list of the outboard wall of the blanket"""
+
+    pass
+
+
+@dataclass
+class ThicknessFractions:
+    """
+    A dataclass containing info. on both
+    inboard and outboard blanket thicknesses as fractions.
+    """
+
+    inboard: InboardThicknessFraction
+    outboard: OutboardThicknessFraction
+    inboard_outboard_transition_radius: float
+
+    @classmethod
+    def from_TokamakGeometry(
+        cls, tokamak_geometry: TokamakGeometry, transition_radius: float = 8.0
+    ):
+        """
+        Create this dataclass by
+        translating from our existing tokamak_geometry dataclass.
+        """
+        inb_sum = sum([
+            tokamak_geometry.inb_fw_thick,
+            tokamak_geometry.inb_bz_thick,
+            tokamak_geometry.inb_mnfld_thick,
+            tokamak_geometry.inb_vv_thick,
+        ])
+        inb = InboardThicknessFraction(
+            tokamak_geometry.inb_fw_thick / inb_sum,
+            tokamak_geometry.inb_bz_thick / inb_sum,
+            tokamak_geometry.inb_mnfld_thick / inb_sum,
+            tokamak_geometry.inb_vv_thick / inb_sum,
+        )
+        outb_sum = sum([
+            tokamak_geometry.outb_fw_thick,
+            tokamak_geometry.outb_bz_thick,
+            tokamak_geometry.outb_mnfld_thick,
+            tokamak_geometry.outb_vv_thick,
+        ])
+        outb = OutboardThicknessFraction(
+            tokamak_geometry.outb_fw_thick / outb_sum,
+            tokamak_geometry.outb_bz_thick / outb_sum,
+            tokamak_geometry.outb_mnfld_thick / outb_sum,
+            tokamak_geometry.outb_vv_thick / outb_sum,
+        )
+        return cls(inb, outb, transition_radius)
+
+
+class TokamakThicknesses(ThicknessFractions):
+    """Placeholder class, to be filled in later."""
+
+    pass
+
+
 def get_preset_physical_properties(
     blanket_type: Union[str, BlanketType],
-) -> Tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
+) -> Tuple[BreederTypeParameters, TokamakGeometryBase]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
@@ -269,13 +383,6 @@ def get_preset_physical_properties(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-
-    plasma_geometry = PlasmaGeometryBase(
-        major_r=8.938,  # [m]
-        minor_r=2.883,  # [m]
-        elong=1.65,  # [dimensionless]
-        triang=0.333,  # [m]
-    )
 
     shared_building_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
@@ -315,4 +422,4 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.560,  # [m]
         )
 
-    return breeder_materials, plasma_geometry, tokamak_geometry
+    return breeder_materials, tokamak_geometry
