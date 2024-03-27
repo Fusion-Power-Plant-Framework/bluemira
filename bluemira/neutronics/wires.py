@@ -100,9 +100,9 @@ class WireInfoList(abc.Sequence):
         """
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
-        key_points = self.info_list[0].key_points
+        old_kp = self.info_list[0].key_points
         # have to break it open because it's an immutable NamedTuple.
-        new_kp = key_points.__class__(new_start_point, *key_points[1:])
+        new_kp = old_kp.__class__(new_start_point, *old_kp[1:])
         self.info_list[0].key_points = new_kp
 
     @property
@@ -113,8 +113,8 @@ class WireInfoList(abc.Sequence):
     @end_point.setter
     def end_point(self, new_end_point):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
-        key_points = self.info_list[-1].key_points
-        new_kp = key_points.__class__(key_points[0], new_end_point, *key_points[2:])
+        old_kp = self.info_list[-1].key_points
+        new_kp = old_kp.__class__(old_kp[0], new_end_point, *old_kp[2:])
         self.info_list[0].key_points = new_kp
 
     def restore_to_wire(self) -> BluemiraWire:
