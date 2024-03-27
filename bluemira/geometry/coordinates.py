@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Un
 import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
-from numpy import typing as npt
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from scipy.spatial.distance import cdist
@@ -31,6 +30,8 @@ from bluemira.geometry.error import CoordinatesError
 from bluemira.utilities.tools import json_writer
 
 if TYPE_CHECKING:
+    from numpy import typing as npt
+
     from bluemira.geometry.plane import BluemiraPlane
 
 
@@ -1761,3 +1762,18 @@ def join_intersect(
             args.append(coords1.argmin([x, 0, z]))
         return list(set(args))
     return None
+
+
+def choose_direction(
+    vector: npt.NDArray[float],
+    lower_pt: npt.NDArray[float],
+    higher_pt: npt.NDArray[float],
+):
+    """
+    Flip the vector to the correct side (multiply by +1 or -1) so that
+    when lower_pt is projected onto the vector, it has a smaller value than
+    when higher_pt is projected onto the vector.
+    """
+    if (vector @ lower_pt) > (vector @ higher_pt):
+        return -vector
+    return vector
