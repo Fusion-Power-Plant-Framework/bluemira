@@ -46,7 +46,7 @@ def callable_tester(f_callable, coils=1):
 
     b1 = f_callable(x, z)
 
-    for i, (xi, zi) in enumerate(zip(x, z)):
+    for i, (xi, zi) in enumerate(zip(x, z, strict=False)):
         b[i] = f_callable(xi, zi)
 
     assert np.allclose(b.flat, b1.flat)
@@ -268,7 +268,7 @@ class TestCoilGroup:
         self.group = CoilGroup(
             *(
                 Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max)
-                for _x, _z, _ct, _n in zip(x, z, ctype, name)
+                for _x, _z, _ct, _n in zip(x, z, ctype, name, strict=False)
             )
         )
 

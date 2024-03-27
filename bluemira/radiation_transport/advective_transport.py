@@ -10,7 +10,6 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 from copy import deepcopy
 from dataclasses import dataclass, fields
-from typing import Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,7 +50,7 @@ class ChargedParticleSolver:
 
     def __init__(
         self,
-        config: Dict[str, float],
+        config: dict[str, float],
         equilibrium,
         dx_mp: float = 0.001,
         psi_n_tol: float = 1e-6,

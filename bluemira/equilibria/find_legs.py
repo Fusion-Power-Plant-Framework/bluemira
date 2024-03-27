@@ -9,7 +9,6 @@ Class and Methods for separatrix legs.
 
 import operator
 from enum import Enum, auto
-from typing import Dict, Optional, Union
 
 import numpy as np
 
@@ -153,8 +152,8 @@ class LegFlux:
         self,
         n_layers: int = 1,
         dx_off: float = 0.0,
-        delta: Optional[float] = None,
-        delta_offsets: Optional[float] = None,
+        delta: float | None = None,
+        delta_offsets: float | None = None,
     ):
         """
         Get separatrix legs.
@@ -237,8 +236,8 @@ class LegFlux:
 
 def get_legs_length(
     eq: Equilibrium,
-    leg_dict: Dict,
-    plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+    leg_dict: dict,
+    plasma_facing_boundary: Grid | Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary."""
     length_dict = {}

@@ -11,7 +11,7 @@ Material mixture utility classes
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
@@ -35,7 +35,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    materials: Dict[str, float]
+    materials: dict[str, float]
     temperature_in_K: float  # noqa: N815
     enrichment: float
 
@@ -45,11 +45,11 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     def __init__(
         self,
         name: str,
-        materials: Dict[str, float],
-        temperature_in_K: Optional[float] = None,  # noqa: N803
-        enrichment: Optional[float] = None,
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
+        materials: dict[str, float],
+        temperature_in_K: float | None = None,  # noqa: N803
+        enrichment: float | None = None,
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
     ):
         if temperature_in_K is None:
             temperature_in_K = self.default_temperature  # noqa: N806
@@ -87,7 +87,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         values, fractions = [], []
         # Calculate property mixtures, ignoring liquids and voids
         # for certain properties
-        for mat, vf in zip(self.materials, self.fracs):
+        for mat, vf in zip(self.materials, self.fracs, strict=False):
             try:
                 v = getattr(mat, prop)(temperature)
                 values.append(v)
@@ -190,7 +190,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
     @classmethod
     def from_dict(
-        cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+        cls, name: str, material_dict: dict[str, Any], material_cache: MaterialCache
     ) -> SerialisedMaterial:
         """
         Generate an instance of the mixture from a dictionary of materials.

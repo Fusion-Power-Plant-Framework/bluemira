@@ -6,7 +6,7 @@ description = """An integrated inter-disciplinary design tool for future fusion
  other codes, to carry out a range of typical conceptual fusion
  reactor design activities."""
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dynamic = ['version']
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -24,7 +24,7 @@ dependencies = [
     "fortranformat",
     "gmsh",
     "imageio",
-    "matplotlib>=3.5",
+    "matplotlib>=3.8",
     "meshio",
     "neutronics-material-maker==0.1.11", # Crash on upgrade
     "nlopt",
@@ -35,7 +35,7 @@ dependencies = [
     "periodictable",
     "pyclipper",
     "pypet",
-    "pyquaternion",
+    "pyvista",
     "rich",
     "scikit-learn",
     "seaborn",
@@ -73,10 +73,10 @@ dev = [
 examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.58.1",
+    "numba==0.59.0",
     "numba-scipy @ git+https://github.com/numba/numba-scipy@1e2f244",
-    "numpy==1.23.5",
-    "matplotlib==3.7.3",
+    "numpy==1.26.4",
+    "matplotlib==3.8.3",
     "scipy==1.10.1",
 ]
 openmoc = ["OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b"]
@@ -100,7 +100,7 @@ exclude = ["tests*"]
 "exclude_also" = ["if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_incomplete_defs = true
@@ -130,7 +130,7 @@ filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
 pythonpath = ['.', 'eudemo']
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 89
 
 exclude = [
@@ -189,8 +189,6 @@ ignore = [
     "SLF001", # private method use
     # remove when we move to python3.10
     "FA100", # use future ann everywhere
-    "UP006", # type annotations
-    "UP007",
 
 ]
 

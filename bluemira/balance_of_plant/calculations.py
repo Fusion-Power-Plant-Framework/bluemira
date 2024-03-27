@@ -8,8 +8,6 @@
 Simple relations for power.
 """
 
-from typing import Tuple
-
 import numpy as np
 
 from bluemira.base.constants import raw_uc
@@ -74,7 +72,7 @@ def He_pumping(  # noqa: N802
     blanket_power: float,
     eta_isen: float,
     eta_el: float,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Calculate the pumping power for helium-cooled blankets.
 
@@ -131,7 +129,7 @@ def He_pumping(  # noqa: N802
 
 def H2O_pumping(  # noqa: N802
     p_blanket: float, f_pump: float, eta_isen: float, eta_el: float
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     H20-cooling pumping power calculation strategy
 

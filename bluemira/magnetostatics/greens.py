@@ -8,8 +8,6 @@
 Green's functions mappings for psi, Bx, and Bz
 """
 
-from typing import Tuple, Union
-
 import numba as nb
 import numpy as np
 from scipy.special import ellipe, ellipk
@@ -32,8 +30,8 @@ GREENS_ZERO = 1e-8
 
 @nb.vectorize(nopython=True, cache=True)
 def clip_nb(
-    val: Union[float, np.ndarray], val_min: float, val_max: float
-) -> Union[float, np.ndarray]:
+    val: float | np.ndarray, val_min: float, val_max: float
+) -> float | np.ndarray:
     """
     Clips (limits) val between val_min and val_max. Vectorised for speed and
     compatibility with numba.
@@ -59,7 +57,7 @@ def clip_nb(
 
 
 @nb.vectorize(nopython=True)
-def ellipe_nb(k: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def ellipe_nb(k: float | np.ndarray) -> float | np.ndarray:
     """
     Vectorised scipy ellipe
 
@@ -74,7 +72,7 @@ ellipe_nb.__doc__ += ellipe.__doc__
 
 
 @nb.vectorize(nopython=True)
-def ellipk_nb(k: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def ellipk_nb(k: float | np.ndarray) -> float | np.ndarray:
     """
     Vectorised scipy ellipk
 
@@ -127,13 +125,13 @@ def circular_coil_inductance_kirchhoff(radius: float, rc: float) -> float:
 
 @nb.jit(nopython=True)
 def greens_psi(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float = 0,  # noqa: ARG001
     d_zc: float = 0,  # noqa: ARG001
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate poloidal flux at (x, z) due to a unit current at (xc, zc)
     using a Greens function.
@@ -185,13 +183,13 @@ def greens_psi(
 
 @nb.jit(nopython=True)
 def greens_dpsi_dx(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float = 0,  # noqa: ARG001
     d_zc: float = 0,  # noqa: ARG001
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate the radial derivative of the poloidal flux at (x, z)
     due to a unit current at (xc, zc) using a Greens function.
@@ -243,13 +241,13 @@ def greens_dpsi_dx(
 
 @nb.jit(nopython=True)
 def greens_dpsi_dz(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float = 0,  # noqa: ARG001
     d_zc: float = 0,  # noqa: ARG001
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate the vertical derivative of the poloidal flux at (x, z)
     due to a unit current at (xc, zc) using a Greens function.
@@ -300,13 +298,13 @@ def greens_dpsi_dz(
 
 @nb.jit(nopython=True)
 def greens_Bx(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float = 0,
     d_zc: float = 0,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -346,13 +344,13 @@ def greens_Bx(
 
 @nb.jit(nopython=True)
 def greens_Bz(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     d_xc: float = 0,
     d_zc: float = 0,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -392,11 +390,11 @@ def greens_Bz(
 
 @nb.jit(nopython=True)
 def greens_all(
-    xc: Union[float, np.ndarray],
-    zc: Union[float, np.ndarray],
-    x: Union[float, np.ndarray],
-    z: Union[float, np.ndarray],
-) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
+) -> tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
     """
     Speed optimisation of Green's functions for psi, Bx, and Bz
 

@@ -9,7 +9,6 @@ EU-DEMO Equatorial Port
 """
 
 from dataclasses import dataclass
-from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -67,12 +66,12 @@ class EquatorialPortKOZDesigner(Designer):
     offset out from the equatorial port x-z profile
     """
 
-    param_cls: Type[EquatorialPortKOZDesignerParams] = EquatorialPortKOZDesignerParams
+    param_cls: type[EquatorialPortKOZDesignerParams] = EquatorialPortKOZDesignerParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams],
-        build_config: Union[Dict, None],
+        params: dict | ParameterFrame | EquatorialPortKOZDesignerParams,
+        build_config: dict | None,
         x_ob: float,
     ):
         """
@@ -130,12 +129,12 @@ class EquatorialPortDuctBuilder(Builder):
     """
 
     NAME = "Equatorial Port Duct"
-    param_cls: Type[EquatorialPortDuctBuilderParams] = EquatorialPortDuctBuilderParams
+    param_cls: type[EquatorialPortDuctBuilderParams] = EquatorialPortDuctBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, EquatorialPortDuctBuilderParams],
-        build_config: Union[Dict, None],
+        params: dict | ParameterFrame | EquatorialPortDuctBuilderParams,
+        build_config: dict | None,
         outer_profile: BluemiraWire,
         length: float,
         equatorial_port_wall_thickness: float,

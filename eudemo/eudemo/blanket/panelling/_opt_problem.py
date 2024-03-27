@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Definition of panelling optimisation problem for EUDEMO."""
 
-from typing import List, Tuple
-
 import numpy as np
 
 from bluemira.optimisation import OptimisationProblem
@@ -41,11 +39,11 @@ class PanellingOptProblem(OptimisationProblem):
         """Objective function to minimise the total panel length."""
         return self.paneller.length(x)
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         """The normalized bounds of the parameterisation."""
         return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         """
         The inequality constraints for the optimiser.
 

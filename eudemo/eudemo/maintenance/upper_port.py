@@ -9,7 +9,6 @@ Some crude EU-DEMO remote maintenance considerations.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
@@ -71,13 +70,13 @@ class UpperPortOP(OptimisationProblem):
         """The gradient of the objective function."""
         return self.df_port_size(x)
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         """Inequality constraints for the problem."""
         return [
             {"f_constraint": self.constrain_blanket_cut, "tolerance": np.full(3, 1e-6)}
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         """The bounds for the optimisation parameters."""
         lower = [self.r_ib_min - self.c_rm, self.R_0, self.r_ib_min + self.tk_bb_ib, 0]
         upper = [
@@ -180,7 +179,7 @@ class UpperPortKOZDesignerParams(ParameterFrame):
     """Blanket outboard thickness [m]."""
 
 
-class UpperPortKOZDesigner(Designer[Tuple[BluemiraFace, float, float]]):
+class UpperPortKOZDesigner(Designer[tuple[BluemiraFace, float, float]]):
     """Upper Port keep-out zone designer."""
 
     param_cls = UpperPortKOZDesignerParams
@@ -188,8 +187,8 @@ class UpperPortKOZDesigner(Designer[Tuple[BluemiraFace, float, float]]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
+        params: dict | ParameterFrame,
+        build_config: dict,
         blanket_face: BluemiraFace,
         upper_port_extrema=10,
     ):

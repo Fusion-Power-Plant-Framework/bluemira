@@ -6,7 +6,8 @@
 """Interface for defining a geometry-based optimisation problem."""
 
 import abc
-from typing import Any, List, Mapping, Optional, TypeVar, Union
+from collections.abc import Mapping
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -47,7 +48,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         raise NotImplementedError
 
-    def eq_constraints(self) -> List[GeomConstraintT]:  # noqa: PLR6301
+    def eq_constraints(self) -> list[GeomConstraintT]:  # noqa: PLR6301
         """
         List of equality constraints for the optimisation.
 
@@ -56,7 +57,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def ineq_constraints(self) -> List[GeomConstraintT]:  # noqa: PLR6301
+    def ineq_constraints(self) -> list[GeomConstraintT]:  # noqa: PLR6301
         """
         List of inequality constraints for the optimisation.
 
@@ -65,7 +66,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def keep_out_zones(self) -> List[KeepOutZone]:  # noqa: PLR6301
+    def keep_out_zones(self) -> list[KeepOutZone]:  # noqa: PLR6301
         """
         List of geometric keep-out zones.
 
@@ -79,8 +80,8 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         geom: _GeomT,
         *,
         algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-        opt_parameters: Optional[Mapping[str, Any]] = None,
+        opt_conditions: Mapping[str, int | float] | None = None,
+        opt_parameters: Mapping[str, Any] | None = None,
         keep_history: bool = False,
         check_constraints: bool = True,
         check_constraints_warn: bool = True,

@@ -63,7 +63,7 @@ def _coilset_setup(self, materials=False):
     ]
 
     coils = []
-    for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz):
+    for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz, strict=False):
         ctype = name[:2]
         coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype)
         coils.append(coil)

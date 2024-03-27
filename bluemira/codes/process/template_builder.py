@@ -10,7 +10,7 @@ PROCESS IN.DAT template builder
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._inputs import ProcessInputs
@@ -23,6 +23,8 @@ from bluemira.codes.process.equation_variable_mapping import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.codes.process.equation_variable_mapping import (
         Constraint,
         ConstraintSelection,
@@ -41,13 +43,13 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
-        self._models: Dict[str, PROCESSModel] = {}
-        self._constraints: List[Constraint] = []
-        self.values: Dict[str, Any] = {}
-        self.variables: Dict[str, float] = {}
-        self.bounds: Dict[str, Dict[str, str]] = {}
-        self.ixc: List[int] = []
-        self.fimp: List[float] = 14 * [0.0]
+        self._models: dict[str, PROCESSModel] = {}
+        self._constraints: list[Constraint] = []
+        self.values: dict[str, Any] = {}
+        self.variables: dict[str, float] = {}
+        self.bounds: dict[str, dict[str, str]] = {}
+        self.ixc: list[int] = []
+        self.fimp: list[float] = 14 * [0.0]
 
         self.minmax: int = 0
         self.ioptimiz: int = 0
@@ -119,9 +121,9 @@ class PROCESSTemplateBuilder:
     def add_fvalue_constraint(
         self,
         constraint: Constraint,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Add an f-value constraint to the PROCESS run
@@ -141,9 +143,9 @@ class PROCESSTemplateBuilder:
     def add_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Add an iteration variable to the PROCESS run
@@ -175,9 +177,9 @@ class PROCESSTemplateBuilder:
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Adjust an iteration variable in the PROCESS run
@@ -200,7 +202,7 @@ class PROCESSTemplateBuilder:
             if upper_bound:
                 self.bounds[str(itvar)]["u"] = str(upper_bound)
 
-    def add_input_value(self, name: str, value: Union[float, Iterable[float]]):
+    def add_input_value(self, name: str, value: float | Iterable[float]):
         """
         Add a fixed input value to the PROCESS run
         """
@@ -208,7 +210,7 @@ class PROCESSTemplateBuilder:
             bluemira_warn(f"Over-writing {name} from {self.values[name]} to {value}")
         self._add_to_dict(self.values, name, value)
 
-    def add_input_values(self, mapping: Dict[str, Any]):
+    def add_input_values(self, mapping: dict[str, Any]):
         """
         Add a dictionary of fixed input values to the PROCESS run
         """
@@ -222,7 +224,7 @@ class PROCESSTemplateBuilder:
         idx = impurity.value - 1
         self.fimp[idx] = value
 
-    def _add_to_dict(self, mapping: Dict[str, Any], name: str, value: Any):
+    def _add_to_dict(self, mapping: dict[str, Any], name: str, value: Any):
         if "fimp(" in name:
             num = int(name.strip("fimp(")[:2])
             impurity = Impurities(num)
@@ -245,7 +247,7 @@ class PROCESSTemplateBuilder:
             self._check_missing_iteration_variables(constraint)
             self._check_missing_inputs(constraint)
 
-    def _check_missing_inputs(self, model: Union[PROCESSModel, ConstraintSelection]):
+    def _check_missing_inputs(self, model: PROCESSModel | ConstraintSelection):
         missing_inputs = [
             input_name
             for input_name in model.requires_values

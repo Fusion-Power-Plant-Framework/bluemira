@@ -10,7 +10,8 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple, Union
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Any
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -47,8 +48,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__()
         self.name = name
@@ -77,7 +78,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        component_filter: Optional[Callable[[Component], bool]] = None,
+        component_filter: Callable[[Component], bool] | None = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -125,7 +126,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -185,7 +186,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union[Component, Tuple[Component], None]:
+    ) -> Component | tuple[Component] | None:
         """
         Find the components with the specified name.
 
@@ -215,10 +216,10 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component_properties(
         self,
-        properties: Union[Iterable[str], str],
+        properties: Iterable[str] | str,
         first: bool = True,
         full_tree: bool = False,
-    ) -> Union[Tuple[List[Any]], List[Any], Any]:
+    ) -> tuple[list[Any]] | list[Any] | Any:
         """
         Get properties from a component
 
@@ -262,11 +263,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         node_properties = [
             [getattr(node, prop) for prop in properties] for node in found_nodes
         ]
-        return tuple(map(list, zip(*node_properties)))
+        return tuple(map(list, zip(*node_properties, strict=False)))
 
     def _get_thing(
-        self, filter_: Union[Callable, None], first: bool, full_tree: bool
-    ) -> Union[Component, Tuple[Component], None]:
+        self, filter_: Callable | None, first: bool, full_tree: bool
+    ) -> Component | tuple[Component] | None:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
@@ -298,9 +299,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def add_children(
         self,
-        children: Optional[Union[Component, List[Component]]],
+        children: Component | list[Component] | None,
         merge_trees: bool = False,
-    ) -> Optional[Component]:
+    ) -> Component | None:
         """
         Add multiple children to this node
 
@@ -373,8 +374,8 @@ class PhysicalComponent(Component):
         name: str,
         shape: BluemiraGeo,
         material: Any = None,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, parent, children)
         self.shape = shape
@@ -382,7 +383,7 @@ class PhysicalComponent(Component):
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -440,15 +441,15 @@ class MagneticComponent(PhysicalComponent):
         shape: BluemiraGeo,
         material: Any = None,
         conductor: Any = None,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -487,8 +488,8 @@ class MagneticComponent(PhysicalComponent):
 
 
 def get_properties_from_components(
-    comps: Union[Component, Iterable[Component]], properties: Union[str, Iterable[str]]
-) -> Union[Tuple[List[Any]], List[Any], Any]:
+    comps: Component | Iterable[Component], properties: str | Iterable[str]
+) -> tuple[list[Any]] | list[Any] | Any:
     """
     Get properties from Components
 

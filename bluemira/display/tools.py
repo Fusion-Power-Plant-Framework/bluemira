@@ -10,7 +10,7 @@ tools for display module
 
 import pprint
 from dataclasses import asdict
-from typing import Any, Dict
+from typing import Any
 
 
 class Options:
@@ -53,7 +53,7 @@ class Options:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """
         Returns the instance as a dictionary.
         """

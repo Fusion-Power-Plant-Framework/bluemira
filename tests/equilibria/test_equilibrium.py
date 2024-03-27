@@ -89,7 +89,7 @@ class TestFields:
 
         b_values = np.zeros(len(z_array))
 
-        for i, (x, z) in enumerate(zip(x_array, z_array)):
+        for i, (x, z) in enumerate(zip(x_array, z_array, strict=False)):
             b_values[i] = f_callable(x, z)
 
         b1 = f_callable(x_array, z_array)

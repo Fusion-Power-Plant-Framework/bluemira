@@ -11,7 +11,7 @@ Picard iteration procedures for equilibria (and their infinite variations)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Iterator, Optional
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,6 +28,8 @@ from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.optimisation.problem import CoilsetOptimisationProblem
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
@@ -104,7 +106,7 @@ class ConvergenceCriterion(ABC):
             return True
         return False
 
-    def plot(self, ax: Optional[plt.Axes] = None):
+    def plot(self, ax: plt.Axes | None = None):
         """
         Plot the convergence behaviour.
 
@@ -450,13 +452,13 @@ class PicardIterator:
         self,
         eq: Equilibrium,
         optimisation_problem: CoilsetOptimisationProblem,
-        convergence: Optional[ConvergenceCriterion] = None,
+        convergence: ConvergenceCriterion | None = None,
         fixed_coils: bool = False,
         relaxation: float = 0,
         maxiter: int = 30,
         plot: bool = True,
         gif: bool = False,
-        figure_folder: Optional[str] = None,
+        figure_folder: str | None = None,
         plot_name: str = "default_0",
     ):
         self.eq = eq

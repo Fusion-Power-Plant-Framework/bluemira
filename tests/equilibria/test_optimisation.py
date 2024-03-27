@@ -27,7 +27,7 @@ def coilset_setup(materials=False):
     names = [f"PF_{i + 1}" for i in range(6)] + [f"CS_{i + 1}" for i in range(5)]
 
     coils = []
-    for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz):
+    for name, xc, zc, dxc, dzc in zip(names, x, z, dx, dz, strict=False):
         ctype = name[:2]
         coil = Coil(xc, zc, dx=dxc, dz=dzc, name=name, ctype=ctype)
         coils.append(coil)

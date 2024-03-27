@@ -10,7 +10,7 @@ Symmetry boundary conditions
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.structural.geometry import Geometry
@@ -39,7 +39,7 @@ class CyclicSymmetry:
         The list of left and right DOF ids
     """
 
-    def __init__(self, geometry: Geometry, cycle_sym_ids: List[List[int], List[int]]):
+    def __init__(self, geometry: Geometry, cycle_sym_ids: list[list[int], list[int]]):
         self.geometry = geometry
         self.cycle_sym_ids = cycle_sym_ids
 
@@ -103,7 +103,7 @@ class CyclicSymmetry:
 
     def apply_cyclic_symmetry(
         self, k: np.ndarray, p: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Apply the cyclic symmetry condition to the matrices.
 

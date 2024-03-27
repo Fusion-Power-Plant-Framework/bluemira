@@ -42,7 +42,7 @@ def test_illconditioned():
 
 
 class TestFEModel:
-    @pytest.mark.parametrize(("sup", "dof"), zip([False, True], [5, 6]))
+    @pytest.mark.parametrize(("sup", "dof"), zip([False, True], [5, 6], strict=False))
     def test_errors(self, sup, dof):
         """
         Checks rigid-body motion detection (insufficient constraints)

@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import copy
+from collections.abc import Mapping
 from enum import auto
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple, Type, Union
+from typing import Union
 
 import numpy as np
 
@@ -27,7 +28,7 @@ from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
 
-BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
+BuildConfig = dict[str, Union[float, str, "BuildConfig"]]
 
 
 class RunMode(BaseRunMode):
@@ -108,21 +109,21 @@ class Solver(CodesSolver):
     """
 
     name: str = PROCESS_NAME
-    setup_cls: Type[Setup] = Setup
-    run_cls: Type[Run] = Run
-    teardown_cls: Type[Teardown] = Teardown
-    run_mode_cls: Type[RunMode] = RunMode
+    setup_cls: type[Setup] = Setup
+    run_cls: type[Run] = Run
+    teardown_cls: type[Teardown] = Teardown
+    run_mode_cls: type[RunMode] = RunMode
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Mapping[str, Union[float, str, BuildConfig]],
+        params: dict | ParameterFrame,
+        build_config: Mapping[str, float | str | BuildConfig],
     ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
-        self._setup: Union[Setup, None] = None
-        self._run: Union[Run, None] = None
-        self._teardown: Union[Teardown, None] = None
+        self._setup: Setup | None = None
+        self._run: Run | None = None
+        self._teardown: Teardown | None = None
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
@@ -135,7 +136,7 @@ class Solver(CodesSolver):
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
         )
 
-        if isinstance(self.template_in_dat, (str, Path)):
+        if isinstance(self.template_in_dat, str | Path):
             self.template_in_dat = create_template_from_path(self.template_in_dat)
 
         self.params = ProcessSolverParams.from_defaults(self.template_in_dat)
@@ -148,7 +149,7 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
+    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -182,7 +183,7 @@ class Solver(CodesSolver):
 
         return self.params
 
-    def get_raw_variables(self, params: Union[List, str]) -> List[float]:
+    def get_raw_variables(self, params: list | str) -> list[float]:
         """
         Get raw variables from this solver's associate MFile.
 
@@ -207,7 +208,7 @@ class Solver(CodesSolver):
     @staticmethod
     def get_species_data(
         impurity: str, confinement_time_ms: float
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get species data from PROCESS section of OPEN-ADAS database.
 

@@ -26,6 +26,7 @@ class TestCastellationBuilder:
             [[1.0], [1.0, 1.0], [0.5]],  # y/z castellation_offsets
             [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
             [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
+            strict=False,
         ),
     )
     def test_cst_builder(self, xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v):

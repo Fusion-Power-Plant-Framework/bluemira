@@ -10,7 +10,7 @@ Defines the 'Setup' stage of the plasmod solver.
 import copy
 import dataclasses
 import enum
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
@@ -44,7 +44,7 @@ class Setup(CodesSetup):
     def __init__(
         self,
         params: PlasmodSolverParams,
-        problem_settings: Dict[str, Any],
+        problem_settings: dict[str, Any],
         plasmod_input_file: str,
     ):
         super().__init__(params, PLASMOD_NAME)
@@ -74,9 +74,7 @@ class Setup(CodesSetup):
         file.
         """
 
-    def update_inputs(
-        self, new_inputs: Optional[Dict[str, Union[float, enum.Enum]]] = None
-    ):
+    def update_inputs(self, new_inputs: dict[str, float | enum.Enum] | None = None):
         """
         Update plasmod inputs using the given values.
 
@@ -102,7 +100,7 @@ class Setup(CodesSetup):
         self.inputs = PlasmodInputs(**new)
 
     @staticmethod
-    def _remove_non_plasmod_inputs(_inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def _remove_non_plasmod_inputs(_inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Remove non-plasmod inputs from a dictionary. Warn that the
         removed inputs will be ignored.

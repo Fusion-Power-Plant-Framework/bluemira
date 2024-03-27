@@ -45,7 +45,7 @@ class TestInscribedRectangle:
 
     MIN_AREA = MINIMUM_LENGTH**2
 
-    @pytest.mark.parametrize(("shape", "convex"), zip(shapes, convex))
+    @pytest.mark.parametrize(("shape", "convex"), zip(shapes, convex, strict=False))
     def test_inscribed_rectangle(self, shape, convex):
         x = y = 5
         self.r = False

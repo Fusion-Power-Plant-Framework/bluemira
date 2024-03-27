@@ -9,7 +9,6 @@ Limiter object class
 """
 
 from itertools import cycle
-from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -34,11 +33,7 @@ class Limiter:
 
     __slots__ = ("_i", "x", "xz", "z")
 
-    def __init__(
-        self,
-        x: Union[float, npt.NDArray[np.float64]],
-        z: Union[float, npt.NDArray[np.float64]],
-    ):
+    def __init__(self, x: npt.ArrayLike, z: npt.ArrayLike):
         self.x = x
         self.z = z
         self.xz = cycle(np.array([x, z]).T)
@@ -68,7 +63,7 @@ class Limiter:
         self._i += 1
         return next(self.xz[self._i - 1])
 
-    def plot(self, ax: Optional[Axes] = None) -> LimiterPlotter:
+    def plot(self, ax: Axes | None = None) -> LimiterPlotter:
         """
         Plots the Limiter object
         """

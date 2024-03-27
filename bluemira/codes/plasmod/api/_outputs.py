@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
-from typing import Dict, Optional, TextIO, Union
+from typing import TextIO
 
 import numpy as np
 
@@ -23,104 +23,104 @@ class PlasmodOutputs:
     """
 
     # Scalars
-    amin: Optional[float] = None
-    av_nd: Optional[float] = None
-    av_nhe: Optional[float] = None
-    av_ni: Optional[float] = None
-    av_nz: Optional[float] = None
-    av_Te: Optional[float] = None
-    av_Ten: Optional[float] = None
-    av_Ti: Optional[float] = None
-    betan: Optional[float] = None
-    betapol: Optional[float] = None
-    betator: Optional[float] = None
-    bpolavg: Optional[float] = None
-    car: Optional[float] = None
-    che: Optional[float] = None
-    che3: Optional[float] = None
-    cprotium: Optional[float] = None
-    cwol: Optional[float] = None
-    cxe: Optional[float] = None
-    d: Optional[float] = None
-    f_gwpedtop: Optional[float] = None
-    f_ni: Optional[float] = None
-    fbs: Optional[float] = None
-    fcd: Optional[float] = None
-    Hcorr: Optional[float] = None
-    Hfact: Optional[float] = None
-    i_flag: Optional[int] = None
-    jiter: Optional[int] = None
-    Ip: Optional[float] = None
-    k: Optional[float] = None
-    nped: Optional[float] = None
-    nsep: Optional[float] = None
-    Palpha: Optional[float] = None
-    Paux: Optional[float] = None
-    Pbrehms: Optional[float] = None
-    Peaux: Optional[float] = None
-    perim: Optional[float] = None
-    Pfus: Optional[float] = None
-    Pfusdd: Optional[float] = None
-    Pfusdt: Optional[float] = None
-    Piaux: Optional[float] = None
-    PLH: Optional[float] = None
-    Pline: Optional[float] = None
-    Pneut: Optional[float] = None
-    Pohm: Optional[float] = None
-    Prad: Optional[float] = None
-    Pradcore: Optional[float] = None
-    Pradedge: Optional[float] = None
-    Psep: Optional[float] = None
-    psep_r: Optional[float] = None
-    psepb_q95AR: Optional[float] = None
-    Psync: Optional[float] = None
-    q_sep: Optional[float] = None
-    q95: Optional[float] = None
-    qcd: Optional[float] = None
-    qdivt: Optional[float] = None
-    qfus: Optional[float] = None
-    qheat: Optional[float] = None
-    qstar: Optional[float] = None
-    rli: Optional[float] = None
-    rplas: Optional[float] = None
-    Sp: Optional[float] = None
-    tauee: Optional[float] = None
-    taueff: Optional[float] = None
-    tauei: Optional[float] = None
-    teped: Optional[float] = None
-    torsurf: Optional[float] = None
-    v_loop: Optional[float] = None
-    Vp: Optional[float] = None
-    Wth: Optional[float] = None
-    Zeff: Optional[float] = None
+    amin: float | None = None
+    av_nd: float | None = None
+    av_nhe: float | None = None
+    av_ni: float | None = None
+    av_nz: float | None = None
+    av_Te: float | None = None
+    av_Ten: float | None = None
+    av_Ti: float | None = None
+    betan: float | None = None
+    betapol: float | None = None
+    betator: float | None = None
+    bpolavg: float | None = None
+    car: float | None = None
+    che: float | None = None
+    che3: float | None = None
+    cprotium: float | None = None
+    cwol: float | None = None
+    cxe: float | None = None
+    d: float | None = None
+    f_gwpedtop: float | None = None
+    f_ni: float | None = None
+    fbs: float | None = None
+    fcd: float | None = None
+    Hcorr: float | None = None
+    Hfact: float | None = None
+    i_flag: int | None = None
+    jiter: int | None = None
+    Ip: float | None = None
+    k: float | None = None
+    nped: float | None = None
+    nsep: float | None = None
+    Palpha: float | None = None
+    Paux: float | None = None
+    Pbrehms: float | None = None
+    Peaux: float | None = None
+    perim: float | None = None
+    Pfus: float | None = None
+    Pfusdd: float | None = None
+    Pfusdt: float | None = None
+    Piaux: float | None = None
+    PLH: float | None = None
+    Pline: float | None = None
+    Pneut: float | None = None
+    Pohm: float | None = None
+    Prad: float | None = None
+    Pradcore: float | None = None
+    Pradedge: float | None = None
+    Psep: float | None = None
+    psep_r: float | None = None
+    psepb_q95AR: float | None = None
+    Psync: float | None = None
+    q_sep: float | None = None
+    q95: float | None = None
+    qcd: float | None = None
+    qdivt: float | None = None
+    qfus: float | None = None
+    qheat: float | None = None
+    qstar: float | None = None
+    rli: float | None = None
+    rplas: float | None = None
+    Sp: float | None = None
+    tauee: float | None = None
+    taueff: float | None = None
+    tauei: float | None = None
+    teped: float | None = None
+    torsurf: float | None = None
+    v_loop: float | None = None
+    Vp: float | None = None
+    Wth: float | None = None
+    Zeff: float | None = None
 
     # Profiles
-    dprof: Optional[np.ndarray] = None
-    ffprime: Optional[np.ndarray] = None
-    g2: Optional[np.ndarray] = None
-    g3: Optional[np.ndarray] = None
-    ipol: Optional[np.ndarray] = None
-    jbs: Optional[np.ndarray] = None
-    jcd: Optional[np.ndarray] = None
-    jpar: Optional[np.ndarray] = None
-    kprof: Optional[np.ndarray] = None
-    nalf: Optional[np.ndarray] = None
-    ndeut: Optional[np.ndarray] = None
-    ne: Optional[np.ndarray] = None
-    nfuel: Optional[np.ndarray] = None
-    nions: Optional[np.ndarray] = None
-    ntrit: Optional[np.ndarray] = None
-    phi: Optional[np.ndarray] = None
-    pprime: Optional[np.ndarray] = None
-    press: Optional[np.ndarray] = None
-    psi: Optional[np.ndarray] = None
-    qprof: Optional[np.ndarray] = None
-    shif: Optional[np.ndarray] = None
-    Te: Optional[np.ndarray] = None
-    Ti: Optional[np.ndarray] = None
-    volprof: Optional[np.ndarray] = None
-    vprime: Optional[np.ndarray] = None
-    x: Optional[np.ndarray] = None
+    dprof: np.ndarray | None = None
+    ffprime: np.ndarray | None = None
+    g2: np.ndarray | None = None
+    g3: np.ndarray | None = None
+    ipol: np.ndarray | None = None
+    jbs: np.ndarray | None = None
+    jcd: np.ndarray | None = None
+    jpar: np.ndarray | None = None
+    kprof: np.ndarray | None = None
+    nalf: np.ndarray | None = None
+    ndeut: np.ndarray | None = None
+    ne: np.ndarray | None = None
+    nfuel: np.ndarray | None = None
+    nions: np.ndarray | None = None
+    ntrit: np.ndarray | None = None
+    phi: np.ndarray | None = None
+    pprime: np.ndarray | None = None
+    press: np.ndarray | None = None
+    psi: np.ndarray | None = None
+    qprof: np.ndarray | None = None
+    shif: np.ndarray | None = None
+    Te: np.ndarray | None = None
+    Ti: np.ndarray | None = None
+    volprof: np.ndarray | None = None
+    vprime: np.ndarray | None = None
+    x: np.ndarray | None = None
 
     @classmethod
     def from_files(cls, scalar_stream: TextIO, profile_stream: TextIO) -> PlasmodOutputs:
@@ -132,9 +132,9 @@ class PlasmodOutputs:
         return cls(**scalars, **profiles)
 
 
-def read_plasmod_output(io_stream: TextIO) -> Dict[str, Union[np.ndarray, float]]:
+def read_plasmod_output(io_stream: TextIO) -> dict[str, np.ndarray | float]:
     """Read an output file, generated by plasmod, into a dictionary."""
-    output: Dict[str, Union[np.ndarray, float]] = {}
+    output: dict[str, np.ndarray | float] = {}
     for row in csv.reader(io_stream, delimiter="\t"):
         output_key, *output_value = row[0].split()
         if len(output_value) > 1:

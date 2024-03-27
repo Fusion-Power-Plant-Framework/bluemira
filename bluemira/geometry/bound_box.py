@@ -11,7 +11,6 @@ Bounding box object
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
 
 import numpy as np
 
@@ -76,7 +75,7 @@ class BoundingBox:
         z_max, z_min = np.max(z), np.min(z)
         return cls(x_min, x_max, y_min, y_max, z_min, z_max)
 
-    def get_box_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_box_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get the x, y, z arrays of the BoundingBox in space.
 

@@ -11,11 +11,13 @@ Wrapper for FreeCAD Plane objects
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.geometry.placement import BluemiraPlacement
 
 import bluemira.codes._freecadapi as cadapi
@@ -41,8 +43,8 @@ class BluemiraPlane:
 
     def __init__(
         self,
-        base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-        axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+        base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
         label: str = "",
     ):
         if np.allclose(np.array(axis), np.array([0, 0, 0])):
@@ -125,7 +127,7 @@ class BluemiraPlane:
             f" axis: {self.axis})"
         )
 
-    def copy(self, label: Optional[str] = None) -> BluemiraPlane:
+    def copy(self, label: str | None = None) -> BluemiraPlane:
         """
         Make a copy of the BluemiraGeo.
         """
@@ -136,7 +138,7 @@ class BluemiraPlane:
             plane_copy.label = self.label
         return plane_copy
 
-    def deepcopy(self, label: Optional[str] = None) -> BluemiraPlane:
+    def deepcopy(self, label: str | None = None) -> BluemiraPlane:
         """Make a deepcopy of the BluemiraPlane"""
         plane_copy = BluemiraPlane(self.base, self.axis)
         if label is not None:

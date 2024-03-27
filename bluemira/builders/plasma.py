@@ -8,7 +8,6 @@ Plasma builder.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -51,12 +50,12 @@ class PlasmaBuilder(Builder):
 
     LCFS = "LCFS"
 
-    param_cls: Type[PlasmaBuilderParams] = PlasmaBuilderParams
+    param_cls: type[PlasmaBuilderParams] = PlasmaBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         xz_lcfs: BluemiraWire,
     ):
         super().__init__(params, build_config)

@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from dataclasses import dataclass
-from typing import List, Optional
 
 import numpy as np
 
@@ -33,7 +32,7 @@ class KeepOutZone:
     """Closed wire defining the keep-out zone."""
     byedges: bool = True
     """Whether to discretize the keep-out zone by edges or not."""
-    dl: Optional[float] = None
+    dl: float | None = None
     """
     The discretization length for the keep-out zone.
 
@@ -146,7 +145,7 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
 
 
-def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[ConstraintT]:
+def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[ConstraintT]:
     """
     Retrieve the inequality constraints registered for the given parameterisation.
 

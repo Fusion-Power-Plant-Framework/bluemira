@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -67,10 +66,10 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         targets: MagneticConstraintSet,
         gamma: float,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
-        opt_parameters: Optional[Dict[str, float]] = None,
-        max_currents: Optional[npt.ArrayLike] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        max_currents: npt.ArrayLike | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq

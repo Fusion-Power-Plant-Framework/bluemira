@@ -8,8 +8,6 @@
 Fuel cycle model fundamental building blocks
 """
 
-from typing import List, Optional
-
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -43,7 +41,7 @@ class FuelCycleFlow:
         else:
             self.out_flow = delay_decay(t, in_flow, t_duration)
 
-    def split(self, number: int, fractions: List[float]) -> np.ndarray:
+    def split(self, number: int, fractions: list[float]) -> np.ndarray:
         """
         Divides a flux into number of divisions
 
@@ -103,8 +101,8 @@ class FuelCycleComponent:
         eta: float,
         max_inventory: float,
         retention_model: str = "bathtub",
-        min_inventory: Optional[float] = None,
-        bci: Optional[int] = None,
+        min_inventory: float | None = None,
+        bci: int | None = None,
         summing: bool = False,
         _testing: bool = False,
     ):

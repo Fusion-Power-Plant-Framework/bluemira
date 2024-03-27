@@ -283,7 +283,6 @@ class TestInDatOneForOne:
             "cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
         )
         template_builder.add_variable("tdmptf", 2.5829e01)
-        template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
         template_builder.add_variable("fimp(13)", 3.573e-04)
 
         # Some constraints require multiple f-values, but they are getting
@@ -448,6 +447,7 @@ class TestInDatOneForOne:
             "n_pancake": 20,
             "n_layer": 10,
             "qnuc": 1.292e4,
+            "vdalw": 10.0,
             # Inputs we don't care about but must specify
             "cfactr": 0.75,  # Ha!
             "kappa": 1.848,  # Should be overwritten
@@ -513,7 +513,7 @@ class TestInDatOneForOne:
 
     def test_inputs_same(self):
         for k in self.true_data:
-            if not isinstance(self.true_data[k].get_value, (list, dict)):
+            if not isinstance(self.true_data[k].get_value, list | dict):
                 assert np.allclose(
                     self.true_data[k].get_value, self.template[k].get_value
                 )

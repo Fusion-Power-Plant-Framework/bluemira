@@ -8,10 +8,11 @@
 Plasma MHD equilibrium and state objects
 """
 
+from collections.abc import Iterable
 from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,7 +76,7 @@ class VerticalPositionControlType(Enum):
         except KeyError:
             raise ValueError(
                 f"{cls.__name__} has no strategy {value}"
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -86,12 +87,12 @@ class MHDState:
 
     def __init__(self):
         # Constructors
-        self.x: Union[None, npt.NDArray[np.float64]] = None
-        self.z: Union[None, npt.NDArray[np.float64]] = None
-        self.dx: Union[None, float] = None
-        self.dz: Union[None, float] = None
-        self.grid: Union[None, Grid] = None
-        self.limiter: Union[None, Limiter] = None
+        self.x: None | npt.NDArray[np.float64] = None
+        self.z: None | npt.NDArray[np.float64] = None
+        self.dx: None | float = None
+        self.dz: None | float = None
+        self.grid: None | Grid = None
+        self.limiter: None | Limiter = None
 
     def set_grid(self, grid: Grid):
         """
@@ -111,9 +112,7 @@ class MHDState:
     def _get_eqdsk(
         cls,
         filename: str,
-    ) -> Tuple[
-        EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Optional[Limiter]
-    ]:
+    ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
 
@@ -158,10 +157,10 @@ class MHDState:
 
     def to_eqdsk(
         self,
-        data: Dict[str, Any],
-        filename: Union[Path, str],
+        data: dict[str, Any],
+        filename: Path | str,
         header: str = "bluemira_equilibria",
-        directory: Optional[str] = None,
+        directory: str | None = None,
         filetype: str = "json",
         **kwargs,
     ):
@@ -203,7 +202,7 @@ class FixedPlasmaEquilibrium(MHDState):
         psi: npt.NDArray[np.float64],
         psi_ax: float,
         psi_b: float,
-        filename: Optional[str] = None,
+        filename: str | None = None,
     ):
         super().__init__()
         self.set_grid(grid)
@@ -258,9 +257,9 @@ class FixedPlasmaEquilibrium(MHDState):
 
     def Bx(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils
 
@@ -281,9 +280,9 @@ class FixedPlasmaEquilibrium(MHDState):
 
     def Bz(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils
 
@@ -304,9 +303,9 @@ class FixedPlasmaEquilibrium(MHDState):
 
     def Bp(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point(s) (x, z)
 
@@ -327,9 +326,9 @@ class FixedPlasmaEquilibrium(MHDState):
 
     def psi(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic flux, either for the whole grid, or for
         specified x, z coordinates.
@@ -352,7 +351,7 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: Optional[plt.Axes] = None, field: bool = False):
+    def plot(self, ax: plt.Axes | None = None, field: bool = False):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
         """
@@ -375,11 +374,10 @@ class CoilSetMHDState(MHDState):
     def _get_eqdsk(
         cls,
         filename: str,
+        *,
+        user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
-        user_coils: Optional[CoilSet] = None,
-    ) -> Tuple[
-        EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Optional[Limiter]
-    ]:
+    ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
 
@@ -387,11 +385,11 @@ class CoilSetMHDState(MHDState):
         ----------
         filename:
             Filename
-        force_symmetry:
-            Whether or not to force symmetrisation in the CoilSet
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
 
         Returns
         -------
@@ -479,7 +477,7 @@ class CoilSetMHDState(MHDState):
         """
         return self.Bp(self.coilset.x - self.coilset.dx, self.coilset.z)
 
-    def reset_grid(self, grid: Grid, psi: Optional[npt.NDArray[np.float64]] = None):
+    def reset_grid(self, grid: Grid, psi: npt.NDArray[np.float64] | None = None):
         """
         Reset the grid for the MHDState.
 
@@ -493,9 +491,7 @@ class CoilSetMHDState(MHDState):
         self.set_grid(grid)
         self._set_init_plasma(grid, psi)
 
-    def _set_init_plasma(
-        self, grid: Grid, psi: Optional[npt.NDArray[np.float64]] = None
-    ):
+    def _set_init_plasma(self, grid: Grid, psi: npt.NDArray[np.float64] | None = None):
         zm = 1 - grid.z_max / (grid.z_max - grid.z_min)
         if psi is None:  # Initial psi guess
             # Normed 0-1 grid
@@ -529,8 +525,8 @@ class Breakdown(CoilSetMHDState):
         self,
         coilset: CoilSet,
         grid: Grid,
-        psi: Optional[npt.NDArray[np.float64]] = None,
-        filename: Optional[str] = None,
+        psi: npt.NDArray[np.float64] | None = None,
+        filename: str | None = None,
         **kwargs,
     ):
         super().__init__()
@@ -547,7 +543,7 @@ class Breakdown(CoilSetMHDState):
 
     @classmethod
     def from_eqdsk(
-        cls, filename: str, force_symmetry: bool, user_coils: Optional[CoilSet] = None
+        cls, filename: str, force_symmetry: bool, user_coils: CoilSet | None = None
     ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
@@ -568,7 +564,7 @@ class Breakdown(CoilSetMHDState):
         )
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Creates a dictionary for a Breakdown object
 
@@ -603,7 +599,7 @@ class Breakdown(CoilSetMHDState):
         self,
         filename: str,
         header: str = "bluemira_equilibria",
-        directory: Optional[str] = None,
+        directory: str | None = None,
         filetype: str = "json",
         **kwargs,
     ) -> EQDSKInterface:
@@ -642,9 +638,9 @@ class Breakdown(CoilSetMHDState):
 
     def Bx(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils
 
@@ -668,9 +664,9 @@ class Breakdown(CoilSetMHDState):
 
     def Bz(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils
 
@@ -694,9 +690,9 @@ class Breakdown(CoilSetMHDState):
 
     def Bp(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point (x, z) from coils
 
@@ -723,9 +719,9 @@ class Breakdown(CoilSetMHDState):
 
     def psi(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Returns the poloidal magnetic flux, either for the whole grid, or for
         specified x, z coordinates, including contributions from the coilset.
@@ -764,7 +760,7 @@ class Breakdown(CoilSetMHDState):
         b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
-    def plot(self, ax: Optional[plt.Axes] = None, Bp: bool = False):
+    def plot(self, ax: plt.Axes | None = None, Bp: bool = False):
         """
         Plots the breakdown object onto `ax`
         """
@@ -824,11 +820,11 @@ class Equilibrium(CoilSetMHDState):
         grid: Grid,
         profiles: Profile,
         force_symmetry: bool = False,
-        vcontrol: Optional[str] = None,
-        limiter: Optional[Limiter] = None,
-        psi: Optional[npt.NDArray[np.float64]] = None,
-        jtor: Optional[npt.NDArray[np.float64]] = None,
-        filename: Optional[str] = None,
+        vcontrol: str | None = None,
+        limiter: Limiter | None = None,
+        psi: npt.NDArray[np.float64] | None = None,
+        jtor: npt.NDArray[np.float64] | None = None,
+        filename: str | None = None,
     ):
         super().__init__()
         # Constructors
@@ -866,7 +862,7 @@ class Equilibrium(CoilSetMHDState):
         cls,
         filename: str,
         force_symmetry: bool = False,
-        user_coils: Optional[CoilSet] = None,
+        user_coils: CoilSet | None = None,
     ):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
@@ -910,7 +906,7 @@ class Equilibrium(CoilSetMHDState):
             filename=filename,
         )
 
-    def to_dict(self, qpsi_calcmode: int = 0) -> Dict[str, Any]:
+    def to_dict(self, qpsi_calcmode: int = 0) -> dict[str, Any]:
         """
         Creates dictionary for equilibrium object, in preparation for saving
         to a file format
@@ -993,7 +989,7 @@ class Equilibrium(CoilSetMHDState):
         self,
         filename: str,
         header: str = "BP_equilibria",
-        directory: Optional[str] = None,
+        directory: str | None = None,
         filetype: str = "json",
         qpsi_calcmode: int = 0,
         **kwargs,
@@ -1055,8 +1051,8 @@ class Equilibrium(CoilSetMHDState):
     def _set_init_plasma(
         self,
         grid: Grid,
-        psi: Optional[npt.NDArray[np.float64]] = None,
-        j_tor: Optional[npt.NDArray[np.float64]] = None,
+        psi: npt.NDArray[np.float64] | None = None,
+        j_tor: npt.NDArray[np.float64] | None = None,
     ):
         psi = super()._set_init_plasma(grid, psi)
 
@@ -1065,7 +1061,7 @@ class Equilibrium(CoilSetMHDState):
         psi -= self.coilset.psi(self.x, self.z)
         self._update_plasma(psi, j_tor)
 
-    def set_vcontrol(self, vcontrol_str: Optional[str] = None):
+    def set_vcontrol(self, vcontrol_str: str | None = None):
         """
         Sets the vertical position controller
 
@@ -1083,7 +1079,7 @@ class Equilibrium(CoilSetMHDState):
             else:
                 raise NotImplementedError
 
-    def solve(self, jtor: Optional[np.ndarray] = None, psi: Optional[np.ndarray] = None):
+    def solve(self, jtor: np.ndarray | None = None, psi: np.ndarray | None = None):
         """
         Re-calculates the plasma equilibrium given new profiles
 
@@ -1128,8 +1124,8 @@ class Equilibrium(CoilSetMHDState):
 
     def solve_li(
         self,
-        jtor: Optional[npt.NDArray[np.float64]] = None,  # noqa: ARG002
-        psi: Optional[npt.NDArray[np.float64]] = None,
+        jtor: npt.NDArray[np.float64] | None = None,  # noqa: ARG002
+        psi: npt.NDArray[np.float64] | None = None,
     ):
         """
         Optimises profiles to match input li
@@ -1240,7 +1236,7 @@ class Equilibrium(CoilSetMHDState):
         """
         return integrate_dx_dz(func, self.dx, self.dz)
 
-    def effective_centre(self) -> Tuple[float, float]:
+    def effective_centre(self) -> tuple[float, float]:
         """
         Jeon calculation for the effective current centre of the plasma
 
@@ -1260,9 +1256,9 @@ class Equilibrium(CoilSetMHDState):
 
     def Bx(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils and plasma
 
@@ -1286,9 +1282,9 @@ class Equilibrium(CoilSetMHDState):
 
     def Bz(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils and plasma
 
@@ -1312,9 +1308,9 @@ class Equilibrium(CoilSetMHDState):
 
     def Bp(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point (x, z) from coils and plasma
 
@@ -1333,9 +1329,7 @@ class Equilibrium(CoilSetMHDState):
         """
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def Bt(
-        self, x: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    def Bt(self, x: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         Toroidal magnetic field at point (x, z) from TF coils
 
@@ -1352,9 +1346,9 @@ class Equilibrium(CoilSetMHDState):
 
     def psi(
         self,
-        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Returns the poloidal magnetic flux, either for the whole grid, or for
         specified x, z coordinates, including contributions from: plasma,
@@ -1411,10 +1405,10 @@ class Equilibrium(CoilSetMHDState):
 
     def q(
         self,
-        psinorm: Union[float, Iterable[np.float64]],
-        o_points: Optional[Iterable] = None,
-        x_points: Optional[Iterable] = None,
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        psinorm: float | Iterable[float],
+        o_points: Iterable | None = None,
+        x_points: Iterable | None = None,
+    ) -> float | npt.NDArray[np.float64]:
         """
         Get the safety factor at given psinorm.
         """
@@ -1441,9 +1435,7 @@ class Equilibrium(CoilSetMHDState):
             q = q[0]
         return q
 
-    def fRBpol(
-        self, psinorm: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    def fRBpol(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         Get f = R*Bt at specified values of normalised psi.
         """
@@ -1458,25 +1450,19 @@ class Equilibrium(CoilSetMHDState):
         except AttributeError:  # When loading from eqdsks
             return self._fvac
 
-    def pprime(
-        self, psinorm: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    def pprime(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         Return p' at given normalised psi
         """
         return self.profiles.pprime(psinorm)
 
-    def ffprime(
-        self, psinorm: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    def ffprime(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         Return ff' at given normalised psi
         """
         return self.profiles.ffprime(psinorm)
 
-    def pressure(
-        self, psinorm: Union[float, npt.NDArray[np.float64]]
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         Returns plasma pressure at specified values of normalised psi
         """
@@ -1485,9 +1471,9 @@ class Equilibrium(CoilSetMHDState):
     def get_flux_surface(
         self,
         psi_n: float,
-        psi: Optional[npt.NDArray[np.float64]] = None,
-        o_points: Optional[Iterable] = None,
-        x_points: Optional[Iterable] = None,
+        psi: npt.NDArray[np.float64] | None = None,
+        o_points: Iterable | None = None,
+        x_points: Iterable | None = None,
     ) -> Coordinates:
         """
         Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
@@ -1511,7 +1497,7 @@ class Equilibrium(CoilSetMHDState):
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
-        self, psi: Optional[np.ndarray] = None, psi_n_tol: float = 1e-6, delta_start=0.01
+        self, psi: np.ndarray | None = None, psi_n_tol: float = 1e-6, delta_start=0.01
     ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
@@ -1542,8 +1528,8 @@ class Equilibrium(CoilSetMHDState):
         )[0]
 
     def get_separatrix(
-        self, psi: Optional[npt.NDArray[np.float64]] = None, psi_n_tol: float = 1e-6
-    ) -> Union[Coordinates, List[Coordinates]]:
+        self, psi: npt.NDArray[np.float64] | None = None, psi_n_tol: float = 1e-6
+    ) -> Coordinates | list[Coordinates]:
         """
         Get the plasma separatrix(-ices).
 
@@ -1580,8 +1566,8 @@ class Equilibrium(CoilSetMHDState):
         self._x_points = None
 
     def get_OX_points(
-        self, psi: Optional[npt.NDArray[np.float64]] = None, force_update: bool = False
-    ) -> Tuple[Iterable, Iterable]:
+        self, psi: npt.NDArray[np.float64] | None = None, force_update: bool = False
+    ) -> tuple[Iterable, Iterable]:
         """
         Returns list of [[O-points], [X-points]]
         """
@@ -1597,8 +1583,8 @@ class Equilibrium(CoilSetMHDState):
         return self._o_points, self._x_points
 
     def get_OX_psis(
-        self, psi: Optional[npt.NDArray[np.float64]] = None
-    ) -> Tuple[float, float]:
+        self, psi: npt.NDArray[np.float64] | None = None
+    ) -> tuple[float, float]:
         """
         Returns psi at the.base.O-point and X-point
         """
@@ -1607,7 +1593,7 @@ class Equilibrium(CoilSetMHDState):
         o_points, x_points = self.get_OX_points(psi)
         return o_points[0][2], x_points[0][2]
 
-    def get_midplane(self, x: float, z: float, x_psi: float) -> Tuple[float, float]:
+    def get_midplane(self, x: float, z: float, x_psi: float) -> tuple[float, float]:
         """
         Get the position at the midplane for a given psi value.
 
@@ -1663,7 +1649,7 @@ class Equilibrium(CoilSetMHDState):
             CorePlotter(results)
         return results
 
-    def analyse_plasma(self) -> Dict[str, float]:
+    def analyse_plasma(self) -> dict[str, float]:
         """
         Analyse the energetic and magnetic characteristics of the plasma.
         """
@@ -1691,7 +1677,7 @@ class Equilibrium(CoilSetMHDState):
         d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
         return d
 
-    def analyse_coils(self) -> Tuple[Dict[str, Any], float, float]:
+    def analyse_coils(self) -> tuple[dict[str, Any], float, float]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilibrium and coilset.
@@ -1738,14 +1724,14 @@ class Equilibrium(CoilSetMHDState):
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: Optional[plt.Axes] = None, plasma: bool = False, show_ox: bool = True
+        self, ax: plt.Axes | None = None, plasma: bool = False, show_ox: bool = True
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
         return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
-    def plot_field(self, ax: Optional[plt.Axes] = None, show_ox: bool = True):
+    def plot_field(self, ax: plt.Axes | None = None, show_ox: bool = True):
         """
         Plot the equilibrium field structure onto `ax`.
         """

@@ -28,7 +28,7 @@ class TestSnapshot:
         classes = [self.Emptyclass() for _ in range(7)]
         snapshot = Snapshot(*classes)
 
-        for cl, sn in zip(classes, fields(type(snapshot))):
+        for cl, sn in zip(classes, fields(type(snapshot)), strict=False):
             if sn.name not in {"constraints", "tfcoil"}:
                 assert cl != getattr(snapshot, sn.name)
             else:

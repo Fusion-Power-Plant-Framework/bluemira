@@ -13,7 +13,7 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.geometry.optimisation.typing import GeomConstraintT
@@ -136,10 +136,10 @@ class ParameterisedRippleSolver:
 
     def ripple(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> Union[float, np.ndarray]:
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
+    ) -> float | np.ndarray:
         """
         Get the toroidal field ripple at points.
 
@@ -227,7 +227,7 @@ class EquispacedSelector(RipplePointSelector):
         If unspecified, the points will be selected on the full wire
     """
 
-    def __init__(self, n_rip_points: int, x_frac: Optional[float] = None):
+    def __init__(self, n_rip_points: int, x_frac: float | None = None):
         self.n_rip_points = n_rip_points
         self.x_frac = x_frac
 
@@ -437,20 +437,20 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self,
         parameterisation: GeometryParameterisation,
         algorithm: str,
-        opt_conditions: Dict[str, float],
-        opt_parameters: Dict[str, float],
+        opt_conditions: dict[str, float],
+        opt_parameters: dict[str, float],
         params: ParameterFrame,
         wp_cross_section: BluemiraWire,
-        ripple_wire: Optional[BluemiraWire] = None,
-        keep_out_zone: Optional[BluemiraWire] = None,
+        ripple_wire: BluemiraWire | None = None,
+        keep_out_zone: BluemiraWire | None = None,
         rip_con_tol: float = 1e-3,
         koz_con_tol: float = 1e-3,
         nx: int = 1,
         ny: int = 1,
         n_rip_points: int = 100,
         n_koz_points: int = 100,
-        ripple_selector: Optional[RipplePointSelector] = None,
-        separatrix: Optional[BluemiraWire] = None,
+        ripple_selector: RipplePointSelector | None = None,
+        separatrix: BluemiraWire | None = None,
     ):
         self.parameterisation = parameterisation
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
@@ -551,7 +551,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             self.ripple_values = np.array([self.ripple_values])
         return self.parameterisation
 
-    def plot(self, ax: Optional[plt.Axes] = None):
+    def plot(self, ax: plt.Axes | None = None):
         """
         Plot the optimisation problem.
 

@@ -15,15 +15,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
-
-if TYPE_CHECKING:
-    from bluemira.codes.interface import BaseRunMode, CodesSolver
-    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-        FemGradShafranovFixedBoundary,
-    )
-    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
-    from bluemira.geometry.parameterisations import GeometryParameterisation
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,6 +41,16 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.optimisation._tools import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from bluemira.codes.interface import BaseRunMode, CodesSolver
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+        FemGradShafranovFixedBoundary,
+    )
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -78,7 +80,7 @@ class PlasmaFixedBoundaryParams:
         )
 
     @classmethod
-    def fields(cls) -> List:
+    def fields(cls) -> list:
         """List of fields in the dataclass"""
         if cls._fields is None:
             cls._fields = [k.name for k in fields(cls)]
@@ -109,7 +111,7 @@ def create_plasma_xz_cross_section(
     params: PlasmaFixedBoundaryParams,
     kappa_95: float,
     delta_95: float,
-    lcfs_options: Dict[str, Dict],
+    lcfs_options: dict[str, dict],
     source: str,
 ) -> PhysicalComponent:
     """
@@ -146,8 +148,8 @@ def create_plasma_xz_cross_section(
 def _run_transport_solver(
     transport_solver: CodesSolver,
     transport_params: ParameterFrame,
-    transport_run_mode: Union[str, BaseRunMode],
-) -> Tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
+    transport_run_mode: str | BaseRunMode,
+) -> tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
     transp_out_params = transport_solver.execute(transport_run_mode)
@@ -212,7 +214,7 @@ def solve_transport_fixed_boundary(
     max_inner_iter: int = 20,
     inner_iter_err_max: float = 1e-4,
     relaxation: float = 0.2,
-    transport_run_mode: Union[str, BaseRunMode] = "run",
+    transport_run_mode: str | BaseRunMode = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
     plot: bool = False,
     debug: bool = False,
@@ -282,7 +284,9 @@ def solve_transport_fixed_boundary(
     paramet_params = PlasmaFixedBoundaryParams(**{
         k: v
         for k, v in zip(
-            parameterisation.variables.names, parameterisation.variables.values
+            parameterisation.variables.names,
+            parameterisation.variables.values,
+            strict=False,
         )
         if k in PlasmaFixedBoundaryParams.fields()
     })
@@ -344,10 +348,9 @@ def solve_transport_fixed_boundary(
             f"from equilibrium iteration {n_iter}",
         )
 
-        mesh = create_mesh(
+        (mesh, _ct, _ft), _labels = create_mesh(
             plasma,
             directory,
-            mesh_filename,
             mesh_name_msh,
         )
 
@@ -356,7 +359,7 @@ def solve_transport_fixed_boundary(
 
         gs_solver.set_mesh(mesh)
 
-        points = gs_solver.mesh.coordinates()
+        points = gs_solver.mesh.geometry.x
         psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_inner_iter):
@@ -407,7 +410,7 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
-            psi2d = np.array([gs_solver.psi(p) for p in points])
+            psi2d = gs_solver.psi(points)
 
             eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
                 psi2d, ord=2
@@ -476,11 +479,11 @@ def solve_transport_fixed_boundary(
 
 
 def calc_metric_coefficients(
-    flux_surfaces: List[ClosedFluxSurface],
+    flux_surfaces: list[ClosedFluxSurface],
     grad_psi_2D_func: Callable[[np.ndarray], np.ndarray],
     psi_norm_1D: np.ndarray,
     psi_ax: float,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate metric coefficients of a set of flux surfaces.
 
@@ -579,7 +582,7 @@ def calc_curr_dens_profiles(
     R_0: float,
     psi_ax: float,
     psi_b: float,
-) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate pprime and ffprime from metric coefficients, emulating behaviour
     in PLASMOD.
