@@ -5,13 +5,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Oversees the conversion from bluemira wires into pre-cells, then into csg."""
 
-# ruff: noqa: PLR2004, D105
+# ruff: noqa: PLR2004
 from __future__ import annotations
 
-from collections import abc
-from dataclasses import dataclass
 from itertools import chain
-from typing import Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
 
 import numpy as np
 from numpy import typing as npt
@@ -21,18 +19,22 @@ from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import get_bisection_line
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import (
-    get_wire_plane_intersect,
-    make_circle_arc_3P,
-    make_polygon,
-)
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
 from bluemira.neutronics.make_pre_cell import (
     DivertorPreCell,
     DivertorPreCellArray,
     PreCell,
     PreCellArray,
 )
+from bluemira.neutronics.wires import (
+    CircleInfo,
+    StraightLineInfo,
+    WireInfo,
+    WireInfoList,
+)
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 TOLERANCE_DEGREES = 6.0
 DISCRETIZATION_LEVEL = 10
@@ -332,123 +334,6 @@ class PanelsAndExteriorCurve:
         return PreCellArray(pre_cell_list)
 
 
-class StraightLineInfo(NamedTuple):
-    """Key information about a straight line"""
-
-    start_point: Iterable[float]  # 3D coordinates
-    end_point: Iterable[float]  # 3D coordinates
-
-
-class CircleInfo(NamedTuple):
-    """Key information about a circle"""
-
-    start_point: Iterable[float]  # 3D coordinates
-    end_point: Iterable[float]  # 3D coordinates
-    center: Iterable[float]  # 3D coordinates
-    radius: float  # scalar
-
-
-@dataclass
-class WireInfo:
-    """
-    A tuple to store:
-    1. the key points about this wire (and what kind of wire this is)
-    2. The tangent to that wire at the start and end
-    3. A copy of the wire itself
-    """
-
-    key_points: Union[StraightLineInfo, CircleInfo]  # 2 points of xyz/ CircleInfo
-    tangents: Optional[Sequence[Iterable[float]]]  # 2 normalized directional vectors xyz
-    wire: Optional[BluemiraWire] = None
-
-    @classmethod
-    def from_2P(  # noqa: N802
-        cls, start_point: npt.NDArray[float], end_point: npt.NDArray[float]
-    ) -> WireInfo:
-        """
-        Create the WireInfo for a straight line (i.e. one where the key_points is of
-        instance StraightLineInfo) using only two points.
-        """
-        direction = np.array(end_point) - np.array(start_point)
-        normed_dir = direction / np.linalg.norm(direction)
-        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
-
-
-class WireInfoList(abc.Sequence):
-    """A class to store info about a series of wires"""
-
-    def __init__(self, info_list: List[WireInfo]):
-        self.info_list = list(info_list)
-        for prev_wire, curr_wire in zip(self[:-1], self[1:]):
-            if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
-                raise GeometryError("Next wire must start where the previous wire stops")
-
-    def __len__(self) -> int:
-        return self.info_list.__len__()
-
-    def __getitem__(self, index_or_slice) -> Union[List[WireInfo], WireInfo]:
-        return self.info_list.__getitem__(index_or_slice)
-
-    def __add__(self, other_info_list) -> WireInfoList:
-        return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
-
-    def __repr__(self) -> str:
-        return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
-
-    def pop(self, index):
-        """Pop one element"""
-        return self.info_list.pop(index)
-
-    @property
-    def start_point(self):
-        """The start_point for the entire series of wires"""
-        return self.info_list[0].key_points[0]
-
-    @start_point.setter
-    def start_point(self, new_start_point: npt.NDArray[float]):
-        """
-        Set the start_point to somewhere new. Note this doesn't change the tangents.
-        """
-        key_points = self.info_list[0].key_points
-        # have to break it open because it's an immutable NamedTuple.
-        new_kp = key_points.__class__(new_start_point, *key_points[1:])
-        self.info_list[0].key_points = new_kp
-
-    @property
-    def end_point(self):
-        """The end_point for the entire series of wires"""
-        return self.info_list[-1].key_points[1]
-
-    @end_point.setter
-    def end_point(self, new_end_point):
-        """Set the end_point to somewhere new. Note this doesn't change the tangents."""
-        key_points = self.info_list[-1].key_points
-        new_kp = key_points.__class__(key_points[0], new_end_point, *key_points[2:])
-        self.info_list[0].key_points = new_kp
-
-    def restore_to_wire(self) -> BluemiraWire:
-        """Re-create a bluemira wire from a series of WireInfo."""
-        wire_list = []
-        for info in self:
-            start_end = np.array(info.key_points[:2])
-            if info.wire:
-                # quick way to get the wire back without doing any computation is by
-                # directly copying.
-                wire_list.append(info.wire)
-                continue
-            if isinstance(info.key_points, StraightLineInfo):
-                wire_list.append(make_polygon(start_end.T, closed=False))
-            else:
-                # given two points on the circumference, only makes the SHORTER of the
-                # two possible arcs of the circle.
-                chord_intersect = start_end.mean(axis=0)
-                direction = chord_intersect - info.key_points.center
-                normed_dir = direction / np.linalg.norm(direction)
-                middle = info.key_points.center + info.key_points.radius * normed_dir
-                wire_list.append(make_circle_arc_3P(start_end[0], middle, start_end[1]))
-        return BluemiraWire(wire_list)
-
-
 def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
     """
     Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
@@ -667,11 +552,10 @@ class DivertorWireAndExteriorCurve:
         """
         convex_segments = break_wire_into_convex_chunks(divertor_wire)
         self.convex_segments = convex_segments
-        # all_key_points
         all_key_points = [
             seg.key_points[0] for seg in chain.from_iterable(convex_segments)
         ]
-        all_key_points += [convex_segments[-1][-1].key_points[1]]
+        all_key_points.append(convex_segments[-1][-1].key_points[1])
         self.key_points = np.array(all_key_points)  # shape = (N+1, 3)
         self.tangents = [
             seg.tangents for seg in chain.from_iterable(convex_segments)
@@ -904,6 +788,12 @@ class DivertorWireAndExteriorCurve:
                 cw_line = WireInfoList([
                     WireInfo.from_2P(exterior_wire.end_point, interior_wire.start_point)
                 ])
+                # merge lines if collinear
+                while straight_lines_deviate_less_than(
+                    cw_line[-1], interior_wire[0], 0.5
+                ):
+                    cw_line.end_point = interior_wire.start_point
+                    interior_wire.pop(0)
 
             if np.isclose(
                 interior_wire.end_point,
@@ -916,17 +806,13 @@ class DivertorWireAndExteriorCurve:
                 ccw_line = WireInfoList([
                     WireInfo.from_2P(interior_wire.end_point, exterior_wire.start_point)
                 ])
-            # merge lines if collinear
-            while straight_lines_deviate_less_than(cw_line[-1], interior_wire[0], 0.5):
-                cw_line.end_point = interior_wire.start_point
-                interior_wire.pop(0)
+                # merge lines if collinear
+                while straight_lines_deviate_less_than(
+                    interior_wire[-1], ccw_line[0], 0.5
+                ):
+                    ccw_line.start_point = interior_wire.end_point
+                    interior_wire.pop(-1)
 
-            while straight_lines_deviate_less_than(interior_wire[-1], ccw_line[0], 0.5):
-                ccw_line.start_point = interior_wire.end_point
-                interior_wire.pop(-1)
-
-            pre_cell_list.append(
-                DivertorPreCell(interior_wire, exterior_wire, cw_line, ccw_line)
-            )
+            pre_cell_list.append(DivertorPreCell(interior_wire, exterior_wire))
 
         return DivertorPreCellArray(pre_cell_list)
