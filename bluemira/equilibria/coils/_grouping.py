@@ -505,7 +505,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return coils
 
     def all_coils(self) -> list[Coil]:
-        """Get all coils as a flattened list"""
+        """Get all coils as a flattened list (no CoilGroups)"""
         return [self[n] for n in self.name]
 
     def get_coiltype(self, ctype: str | CoilType) -> CoilGroup | None:
@@ -560,41 +560,38 @@ class CoilGroup(CoilGroupFieldsMixin):
             return c.primary_coil
         return c
 
-    @property
-    def primary_coil_names(self) -> List[str]:
-        """Get the names of the primary coils in the group"""
-        return [
-            str(coil.primary_coil.name)
-            if isinstance(coil, CoilGroup)
-            else str(coil.name)
-            for coil in self._coils
-        ]
-
-    def get_coil_or_group_by_primary_coil_name(
-        self, primary_coil_name: str
-    ) -> Union[Coil, CoilGroup]:
+    def get_coil_or_group_with_coil_name(self, coil_name: str) -> Union[Coil, CoilGroup]:
         """
-        Get the coil or coil group with the given primary coil name
+        Get the coil or coil group with the coil with `coil_name` in it.
+
+        This will be the lowest level group that contains the coil.
 
         Parameters
         ----------
-        primary_coil_name:
-            The primary coil name
+        coil_name:
+            The coil name to search for
 
         Returns
         -------
         Coil or CoilGroup
-            The coil or coil group with the given primary coil name
+            The coil or coil group with the given coil name in it
         """
-        for coil in self._coils:
-            if isinstance(coil, CoilGroup):
-                if coil.primary_coil.name == primary_coil_name:
-                    return coil
-            elif coil.name == primary_coil_name:
-                return coil
-        raise ValueError(
-            f"No coil or coil group with primary coil name {primary_coil_name}"
-        )
+        for coil_or_group in self._coils:
+            if isinstance(coil_or_group, CoilGroup):
+                try:
+                    c_rtn = coil_or_group.get_coil_or_group_with_coil_name(coil_name)
+                    # if it's a CoilGroup, return it
+                    # (we want the lowest level group that contains the coil)
+                    if isinstance(c_rtn, CoilGroup):
+                        return c_rtn
+                    # otherwise it's a coil,
+                    # so return the group it's in
+                    return coil_or_group  # noqa: TRY300
+                except ValueError:
+                    continue
+            elif coil_or_group.name == coil_name:
+                return coil_or_group
+        raise ValueError(f"No coil or coil group with primary coil name {coil_name}")
 
     @property
     def x(self) -> np.ndarray:
@@ -1214,6 +1211,24 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return [*flatten_iterable(optimisable_coil_names)]
 
     @property
+    def all_current_optimisable_coils(self) -> List[Coil]:
+        """
+        Get the names of all coils that can be current optimised.
+        """
+        return [self[cn] for cn in self.current_optimisable_coil_names]
+
+    def get_current_optimisable_coils(
+        self, coil_names: Optional[List[str]] = None
+    ) -> List[Coil]:
+        """
+        Get the coils that can be current optimised.
+        """
+        optimisable_coils = self.all_current_optimisable_coils
+        if coil_names is None:
+            return optimisable_coils
+        return [c for c in optimisable_coils if c.name in coil_names]
+
+    @property
     def _optimisation_currents_inds(self) -> List[int]:
         """
         Get the indices of the coils that can be optimised.
@@ -1303,6 +1318,24 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ]
         return [*flatten_iterable(optimisable_coil_names)]
 
+    @property
+    def all_position_optimisable_coils(self) -> List[Coil]:
+        """
+        Get the names of all coils that can be position optimised.
+        """
+        return [self[cn] for cn in self.position_optimisable_coil_names]
+
+    def get_position_optimisable_coils(
+        self, coil_names: Optional[List[str]] = None
+    ) -> List[Coil]:
+        """
+        Get the coils that can be position optimised.
+        """
+        optimisable_coils = self.all_position_optimisable_coils
+        if coil_names is None:
+            return optimisable_coils
+        return [c for c in optimisable_coils if c.name in coil_names]
+
     def _get_optimisation_positions(
         self, position_coil_names: Optional[List[str]] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -1334,5 +1367,5 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
         for coil_name, position in coil_position_map.items():
             if coil_name in pos_opt_coil_names:
-                c = self.get_coil_or_group_by_primary_coil_name(coil_name)
+                c = self.get_coil_or_group_with_coil_name(coil_name)
                 c.position = position
