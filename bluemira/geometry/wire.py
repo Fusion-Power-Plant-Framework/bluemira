@@ -125,7 +125,10 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float | None = None
+        self,
+        ndiscr: int = 100,
+        byedges: bool = False,
+        dl: float | None = None,
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
