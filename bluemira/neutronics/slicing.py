@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import choose_direction, get_bisection_line
@@ -485,9 +486,20 @@ def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> List[WireInfoLis
             this_chunk[-1].tangents[1], wire_segments[0].tangents[0], TOLERANCE_DEGREES
         ):
             continue
-        if turned_morethan_180(
+        interior_curve_turned_over_180 = turned_morethan_180(
             chunk_start_tangent, next_start_tangent, curvature_sign
-        ) or turned_morethan_180(prev_end_tangent, next_start_tangent, curvature_sign):
+        )
+        concave_turning_point = turned_morethan_180(
+            prev_end_tangent, next_start_tangent, curvature_sign
+        )
+        if interior_curve_turned_over_180 or concave_turning_point:
+            if interior_curve_turned_over_180:
+                # curled in on itself too much.
+                bluemira_warn(
+                    "Divertor wire geometry possibly too extreme for program "
+                    "to handle. Check pre-cell visually by using the .plot_2d() methods "
+                    "on the relevant DivertorPreCell and DivertorPreCellArray."
+                )
             conclude_chunk()
     add_to_chunk(wire_segments.pop(0))
     conclude_chunk()
@@ -585,7 +597,7 @@ class DivertorWireAndExteriorCurve:
         """
         Cut the exterior curve up into N segments to match the N convex chunks of the
         divertor.
-        The space between two neighbouring cut line makes a PreCell.
+        The space between two neighbouring cut line makes a DivertorPreCell.
 
         Parameters
         ----------
@@ -633,6 +645,12 @@ class DivertorWireAndExteriorCurve:
         )
         self.add_cut_point(_plane, _dir)
 
+        # TODO: @ocean Add:
+        # 1. a check to make sure that the cut points are all monotonically decreasing
+        #    along the exterior curve.
+        # 2. When this check fails, allow a backup method of slicing up the divertor by
+        #    radiating lines out of the self.center_point to the break-points between
+        #    convex chunks, reaching the exterior_wire.
         return self.cut_points
 
     def execute_exterior_curve_cut(
