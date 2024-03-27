@@ -266,3 +266,30 @@ def n_integrate(
     The value of the integral of the function between the bounds
     """
     return nquad(func, bounds, args=args)[0]
+
+
+def reduce_coordinates(coordinates: np.ndarray) -> Coordinates:
+    """
+    Function to reduce the number of discretised points for a shape
+    for use in magnetostatics calculations where accuracy is dependent
+    upon shape not discretisation.
+
+    Parameters
+    ----------
+    points:
+        The coordinates of the shape to reduce
+
+    Returns
+    -------
+        A reduced array of points
+    """
+    points = coordinates.T
+    p0 = points[:-2]
+    p1 = points[1:-1]
+    p2 = points[2:]
+    l1 = (p1 - p0) / np.linalg.norm((p1 - p0), axis=1)[:, None]
+    l2 = (p2 - p1) / np.linalg.norm((p2 - p1), axis=1)[:, None]
+    mask = np.ones_like(points[:, 0], dtype=bool)
+    diag_dot = np.hstack([0, np.einsum("ij, ij -> i", l1, l2), 0])
+    mask[np.isclose(diag_dot, 1)] = False
+    return Coordinates(points[mask, :].T)
