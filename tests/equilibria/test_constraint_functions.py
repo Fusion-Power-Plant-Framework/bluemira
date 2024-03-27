@@ -39,6 +39,7 @@ class TestSimpleABConstraintFuntions:
             b_vec=self.b_vec,
             value=v,
             scale=s,
+            current_rep_matrix=np.eye(2),
         )
         print(v, s)
         return con_setup
