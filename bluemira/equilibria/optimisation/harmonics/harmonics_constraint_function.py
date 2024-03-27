@@ -38,19 +38,19 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         b_vec: np.ndarray,
         value: float,
         scale: float,
-        current_sym_matrix: np.ndarray,
+        current_rep_matrix: np.ndarray,
         debug=False,
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
-        self.current_sym_matrix = current_sym_matrix
+        self.current_rep_matrix = current_rep_matrix
         self.debug = debug
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""
-        currents = self.current_sym_matrix @ (self.scale * vector)
+        currents = self.current_rep_matrix @ (self.scale * vector)
 
         result = self.a_mat[1:,] @ currents
         residual = result - self.b_vec - self.value
@@ -67,4 +67,4 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""
-        return (self.scale * self.a_mat[1:,]) @ self.current_sym_matrix
+        return (self.scale * self.a_mat[1:,]) @ self.current_rep_matrix

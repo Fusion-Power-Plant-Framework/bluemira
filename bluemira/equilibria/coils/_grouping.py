@@ -1239,9 +1239,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
 
     @property
-    def _optimisation_currents_sym_mat(self) -> np.ndarray:
+    def _optimisation_currents_rep_mat(self) -> np.ndarray:
         """
-        Get the symmetry matrix for the current optimisable coils
+        Get the optimisation currents representation matrix.
+
+        This matrix is used to convert the optimisable currents to the full set of
+        currents in the CoilSet.
         """
         cc = self.get_control_coils()
 
@@ -1256,18 +1259,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         # you are putting 1's in the col. corresponding
         # to all coils in the same Circuit
-        sym_mat = np.zeros((n_all_coils, n_opt_coils))
+        rep_mat = np.zeros((n_all_coils, n_opt_coils))
         i_row_coil = 0
         for i_col_coil_group, c in enumerate(cc._coils):
             if isinstance(c, Circuit):
                 n_coils_in_group = c.n_coils()
                 for n in range(n_coils_in_group):
-                    sym_mat[i_row_coil + n, i_col_coil_group] = 1
+                    rep_mat[i_row_coil + n, i_col_coil_group] = 1
                 i_row_coil += n
             else:
-                sym_mat[i_row_coil, i_col_coil_group] = 1
+                rep_mat[i_row_coil, i_col_coil_group] = 1
             i_row_coil += 1
-        return sym_mat
+        return rep_mat
 
     @property
     def _optimisation_currents(self) -> np.ndarray:
@@ -1298,7 +1301,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 f"optimisable currents: {n_curr_opt_coils}"
             )
 
-        self.current = self._optimisation_currents_sym_mat @ values
+        self.current = self._optimisation_currents_rep_mat @ values
 
     @property
     def n_position_optimisable_coils(self) -> int:
