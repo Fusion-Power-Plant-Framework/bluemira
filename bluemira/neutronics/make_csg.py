@@ -23,7 +23,12 @@ from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import CellWalls, Vertices
 
 if TYPE_CHECKING:
-    from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
+    from bluemira.neutronics.make_pre_cell import (
+        DivertorPreCell,
+        DivertorPreCellArray,
+        PreCell,
+        PreCellArray,
+    )
     from bluemira.neutronics.params import TokamakThicknesses
 
 
@@ -355,6 +360,7 @@ def choose_region_cone(
         plane = find_suitable_z_plane(  # the highest we can cut is at the lowest z.
             surface.z0,
             [surface.z0 - EPS_FREECAD, min(z) - EPS_FREECAD],
+            # surface_id = 1000 + surface.id,
             name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & +plane
@@ -363,6 +369,7 @@ def choose_region_cone(
         plane = find_suitable_z_plane(  # the lowest we can cut is at the highest z.
             surface.z0,
             [max(z) + EPS_FREECAD, surface.z0 + EPS_FREECAD],
+            # surface_id = 1000 + surface.id,
             name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & -plane
@@ -374,6 +381,7 @@ def choose_region_cone(
     plane = find_suitable_z_plane(  # In this rare case, make its own plane.
         surface.z0,
         [surface.z0 + EPS_FREECAD, surface.z0 - EPS_FREECAD],
+        # surface_id = 1000 + surface.id,
         name=f"Ambiguity plane for cone {surface.id}",
     )
     if all(np.logical_or(upper_cone, middle)):
@@ -583,6 +591,25 @@ class BlanketCellStack(abc.Sequence):
             " and the breeding zone is optional."
         )
 
+    @staticmethod
+    def check_cut_point_ordering(
+        cut_point_series: npt.NDArray[float], direction_vector: npt.NDArray[float]
+    ):
+        """
+        Parameters
+        ----------
+        cut_point_series: np.ndarray of shape (M+1, 2)
+            where M = number of cells in the blanket cell stack (i.e. number of layers
+            in the blanket). Each point has two dimensions
+        direction_vector:
+            direction that these points are all supposed to go towards.
+        """
+        projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction_vector)
+        if not is_strictly_monotonically_increasing(projections):
+            raise GeometryError(
+                "Some surfaces crosses over each other within the cell stack!"
+            )
+
     @property
     def interior_surface(self):  # noqa: D102
         return self.sf_cell.interior_surface
@@ -610,52 +637,111 @@ class BlanketCellStack(abc.Sequence):
         return self._interfaces
 
     @classmethod
-    def from_surfaces(
+    def from_pre_cell_and_shared_surfaces(
         cls,
-        ccw_surf: openmc.Surface,
-        cw_surf: openmc.Surface,
-        layer_interfaces: List[openmc.Surface],
-        vertices: Iterable[Iterable[float]],
-        fill_dict: dict[str, openmc.Material],
-        cell_ids: Optional[Iterable[int]] = None,
-        cell_names: Optional[Iterable[int]] = None,
+        pre_cell: PreCell,
+        ccw_surface: openmc.Surface,
+        cw_surface: openmc.Surface,
+        thickness_series: Sequence,
+        fill_dict: Dict[str, openmc.Material],
+        blanket_stack_num: Optional[int] = None,
     ):
-        """Create a stack of cells from a collection of openmc.Surfaces."""
-        num_cell_in_stack = len(vertices)
-        if not cell_ids:
-            cell_ids = [None] * num_cell_in_stack
-        if not cell_names:
-            cell_names = [""] * num_cell_in_stack
+        """
+        Create a CellStack using a precell and TWO surfaces (ccw_surface and cw_surface).
+        """
+        # modify thicknesses
+        # TODO: Make this PRETTIER without the manual insertion! I.e. fix it in params.py
+        thickness_specification = [(t, "frac") for t in thickness_series]
+        thickness_specification.insert(0, (0.005, "thick"))
 
-        cell_type_at_num = {
-            v: k
-            for k, v in cls.ascribe_iterable_quantity_to_layer(
-                range(num_cell_in_stack)
-            ).items()
-        }
+        if blanket_stack_num is not None:
+            i = blanket_stack_num
+            # can't have id=0, hence offset by 1
+            cell_ids = [
+                1 + 10 * i + j for j, _ in enumerate(thickness_specification[:-1])
+            ]
+            # first two surfaces (ccw_surface and cw_surface) had already been created,
+            # hence +2 in the following.
+            surface_ids = [
+                1 + 10 * i + j + 2 for j, _ in enumerate(thickness_specification)
+            ]
+        else:
+            i = "(unspecified)"
+            cell_ids = [None] * (len(thickness_specification) - 1)
+            surface_ids = [None] * len(thickness_specification)
+
+        # calculate the radial cutting surfaces.
+        # 1. initialize containers
+        interior_wire = pre_cell.cell_walls.starts
+        ccw_wall_cuts = [interior_wire[0]]
+        cw_wall_cuts = [interior_wire[1]]
+        surf_stack = [
+            surface_from_2points(
+                *interior_wire,
+                surface_id=surface_ids[0],
+                name=f"plasma-facing surface of stack {i}",
+            )
+        ]
+        vertices = []
+        # 2. for calculation happens inside for-loop.
+        for interface_depth, _depth_type in thickness_specification:
+            # TODO: functionalize here!
+            if _depth_type == "thick":
+                points = pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
+            else:
+                points = pre_cell.get_cell_wall_cut_points_by_fraction(interface_depth)
+            surf_stack.append(surface_from_2points(*points))
+            vertices.append(
+                Vertices(
+                    points[1],
+                    cw_wall_cuts[-1],
+                    ccw_wall_cuts[-1],
+                    points[0],
+                )
+            )
+            ccw_wall_cuts.append(points[0])
+            cw_wall_cuts.append(points[1])
+        surf_stack[-1].name = f"vacuum vessel outer surface of stack {i}"
+
+        # perform sanity check
+        cls.check_cut_point_ordering(ccw_wall_cuts, pre_cell.normal_to_interior)
+        cls.check_cut_point_ordering(cw_wall_cuts, pre_cell.normal_to_interior)
+
+        ext_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
+        if len(ext_curve_comp) != 1:
+            raise TypeError("Incorrect type of BluemiraWire parsed in.")
+        if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
+            raise NotImplementedError("Not ready to make curved-line cross-section yet!")
+
+        # create cells
+        cell_type_idx_map = cls.ascribe_iterable_quantity_to_layer(range(len(vertices)))
+        index_to_cell_type_lookup = {v: k for k, v in cell_type_idx_map.items()}
         cell_stack = []
-        for _cell_num, (int_surf, ext_surf, verts, _id, _name) in enumerate(
+        for _cell_num, (int_surf, ext_surf, verts, _id) in enumerate(
             zip(
-                layer_interfaces[:-1],
-                layer_interfaces[1:],
+                surf_stack[:-1],
+                surf_stack[1:],
                 vertices,
                 cell_ids,
-                cell_names,
-                # strict=True # TODO: uncomment when we move to Python 3.10
+                # strict=True  # TODO: uncomment when we move to Python 3.10
             )
         ):
+            cell_type = index_to_cell_type_lookup[_cell_num]
+            _name = cell_type + " in CellStack "
+            _name += _id if _id else "(unspecified)"
             cell_stack.append(
                 BlanketCell(
                     ext_surf,
-                    ccw_surf,
-                    cw_surf,
+                    ccw_surface,
+                    cw_surface,
                     int_surf,
                     verts,
                     _id,
                     _name,
-                    fill_dict[cell_type_at_num[_cell_num]],
+                    fill_dict[cell_type],
                 )
             )
+
         return cls(cell_stack)
 
 
@@ -712,25 +798,6 @@ class BlanketCellArray(abc.Sequence):
             super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
         )
 
-    @staticmethod
-    def check_cut_point_ordering(
-        cut_point_series: npt.NDArray[float], direction_vector: npt.NDArray[float]
-    ):
-        """
-        Parameters
-        ----------
-        cut_point_series: np.ndarray of shape (M+1, 2)
-            where M = number of cells in the blanket cell stack (i.e. number of layers
-            in the blanket). Each point has two dimensions
-        direction_vector:
-            direction that these points are all supposed to go towards.
-        """
-        projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction_vector)
-        if not is_strictly_monotonically_increasing(projections):
-            raise GeometryError(
-                "Some surfaces crosses over each other within the cell stack!"
-            )
-
     @classmethod
     def from_pre_cell_array(
         cls,
@@ -756,10 +823,6 @@ class BlanketCellArray(abc.Sequence):
             boundary_type="vacuum",
             name="Blanket top",
         )
-        # innermost_cyl = openmc.ZCylinder(
-        #     min(abs(cell_walls[:, :, 0].flatten())) - EPS_FREECAD,
-        #     boundary_type="vacuum",
-        # )
         outermost_cyl = openmc.ZCylinder(  # noqa: F841
             max(abs(cell_walls[:, :, 0].flatten())) + EPS_FREECAD,
             boundary_type="vacuum",
@@ -774,81 +837,21 @@ class BlanketCellArray(abc.Sequence):
         for i, (pre_cell, cw_wall) in enumerate(zip(pre_cell_array, cell_walls[1:])):
             # right wall
             cw_surf = surface_from_2points(*cw_wall, name=f"Blanket cell wall {i + 1}")
-            # if cw_wall[0,0] < thicknesses.inboard_outboard_transition_radius:
-            #     thicknesses = thicknesses.inboard.extended_prefix_sums()[1:]
-            # else:
-            #     thicknesses = thicknesses.outboard.extended_prefix_sums()[1:]
-
-            # stack = BlanketCellStack.from_pre_cell_and_shared_surfaces(
-            #     pre_cell, ccw_surf, cw_surf,
-            #     thicknesses.outboard.extended_prefix_sums()[1:],
-            #     fill_dict=material_dict,
-            #     blanket_stack_num=i, # can potentially use this for labelling/numbering
-            # )
-            # cell_array.append(stack)
-            # ccw_surf = cw_surf
-
-            # getting the interfaces between layers.
-            interior_wire = pre_cell.cell_walls.starts
-            cw_wall_cuts, ccw_wall_cuts = [interior_wire[0]], [interior_wire[1]]
-            vertices = []
-            surf_stack = [
-                surface_from_2points(
-                    *interior_wire,
-                    name=f"plasma-facing inner surface {i}",
-                )
-            ]
-            # switching logic to choose inboard vs outboard. TODO: functionalize
             if cw_wall[0, 0] < thicknesses.inboard_outboard_transition_radius:
-                thickness_here = thicknesses.inboard.extended_prefix_sums()[1:]
+                thicknesses_series = thicknesses.inboard.extended_prefix_sums()[1:]
             else:
-                thickness_here = thicknesses.outboard.extended_prefix_sums()[1:]
+                thicknesses_series = thicknesses.outboard.extended_prefix_sums()[1:]
 
-            # Put all of this into classmethod of BlanketCellStack
-            for j, (interface_height, _height_type) in enumerate([
-                (0.005, "thick"),
-                *[(value, "frac") for value in thickness_here],
-            ]):
-                # switching logic to choose thickness vs fraction. TODO: functionalize or
-                # make prettier in params.py
-                if _height_type == "thick":
-                    points = pre_cell.get_cell_wall_cut_points_by_thickness(
-                        interface_height
-                    )
-                elif _height_type == "frac":
-                    points = pre_cell.get_cell_wall_cut_points_by_fraction(
-                        interface_height
-                    )
-                else:
-                    raise RuntimeError
-                surf_stack.append(surface_from_2points(*points))
-                vertices.append(
-                    Vertices(points[0], points[1], cw_wall_cuts[-1], ccw_wall_cuts[-1])
-                )
-                cw_wall_cuts.append(points[0]), ccw_wall_cuts.append(points[1])
-            surf_stack[-1].name = f"vacuum vessel outer surface {i}"
-
-            cls.check_cut_point_ordering(cw_wall_cuts, pre_cell.normal_to_interior)
-            cls.check_cut_point_ordering(ccw_wall_cuts, pre_cell.normal_to_interior)
-
-            # TODO: implement curved exterior in the future.
-            exterior_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
-            if len(exterior_curve_comp) != 1 or not exterior_curve_comp[
-                0
-            ].Curve.TypeId.startswith("Part::GeomLine"):
-                raise NotImplementedError(
-                    "Not ready to make curved-line cross-sections yet!"
-                )
-
-            stack = BlanketCellStack.from_surfaces(
-                ccw_surf=ccw_surf,
-                cw_surf=cw_surf,
-                layer_interfaces=surf_stack,
-                vertices=vertices,
+            stack = BlanketCellStack.from_pre_cell_and_shared_surfaces(
+                pre_cell,
+                ccw_surf,
+                cw_surf,
+                thicknesses_series,
                 fill_dict=material_dict,
+                # blanket_stack_num=i,
             )
             cell_array.append(stack)
-            ccw_surf = cw_surf  # right wall -> left wall, as we shift right.
+            ccw_surf = cw_surf
 
         return cls(cell_array)
 
@@ -891,8 +894,8 @@ class DivertorCellStack(abc.Sequence):
     poloidal angle.
     """
 
-    def __init__(self):
-        cell_stack
+    def __init__(self, divertor_cell_stack: List[DivertorCell]):
+        self.cell_stack = divertor_cell_stack
 
     def __len__(self) -> int:
         return self.cell_stack.__len__()
@@ -909,9 +912,16 @@ class DivertorCellStack(abc.Sequence):
         divertor_pre_cell: DivertorPreCell,
         cw_surf: openmc.Surface,
         ccw_surf: openmc.Surface,
+        material_dict: Dict[str, openmc.Material],
         thickness: float = 0,
     ) -> DivertorCellStack:
-        return
+        """
+        Create a stack from a single pre-cell and two poloidal surfaces sandwiching it.
+        """
+        cell_stack = []
+        if thickness > 0:
+            return divertor_pre_cell, cw_surf, ccw_surf, material_dict, thickness
+        return cls(cell_stack)
 
 
 class DivertorCellArray(abc.Sequence):
@@ -941,15 +951,18 @@ class DivertorCellArray(abc.Sequence):
 
     @classmethod
     def from_divertor_pre_cell_array(
-        cls, divertor_pre_cell_array: DivertorPreCellArray,
-        thickness: TokamakThicknesses, material_dict: Dict[str, openmc.Material],
+        cls,
+        divertor_pre_cell_array: DivertorPreCellArray,
+        thicknesses: TokamakThicknesses,
+        material_dict: Dict[str, openmc.Material],
     ):
-        """Create the entire from divertor """
+        """Create the entire from divertor"""
         stack_list = []
         for dpc in divertor_pre_cell_array:
+            cw_surf, ccw_surf = ...
             stack_list.append(
                 DivertorCellStack.from_divertor_pre_cell(
-                    dpc, cw_surf, ccw_surf, thickness, material_dict
+                    dpc, cw_surf, ccw_surf, thicknesses.divertor.surface, material_dict
                 )
             )
         return cls(stack_list)
