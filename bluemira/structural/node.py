@@ -8,8 +8,6 @@
 Finite element Node object
 """
 
-from typing import Dict, Tuple
-
 import numpy as np
 
 from bluemira.structural.constants import D_TOLERANCE
@@ -99,7 +97,7 @@ class Node:
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load: Dict[str, float]):
+    def add_load(self, load: dict[str, float]):
         """
         Applies a load to the Node object.
 
@@ -200,7 +198,7 @@ class Node:
     __hash__ = None
 
 
-def get_midpoint(node1: Node, node2: Node) -> Tuple[float, float, float]:
+def get_midpoint(node1: Node, node2: Node) -> tuple[float, float, float]:
     """
     Calculates the mid-point between two 3-D nodes
 

@@ -1,10 +1,14 @@
-# NOTE: It appears that we currently get a segfault if we build PROCESS directly against
-# the bluemira conda environment, so this script currently build PROCESS in a second
-# environment and then installs the resulting package into the bluemira environment.
-# This is clearly not idea, but works for now. Ideally there would be a manylinux wheel
+# NOTE: Ideally there would be a manylinux wheel
 # containing PROCESS and the required dependencies (see commented section at the end).
 
 set -e
+
+REQUIRED_PKG="build-essential ninja-build"
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep -zoP "install ok installed\ninstall ok installed")
+if [ "" = "$PKG_OK" ]; then
+  echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+  sudo apt --yes install $REQUIRED_PKG
+fi
 
 # Ensure we are working in the (bluemira) conda environment
 source ~/.mambaforge-init.sh && conda activate bluemira
@@ -28,7 +32,6 @@ else
     git checkout v3.1.0
 fi
 
-
 # Make sure we always perform a fresh install of PROCESS
 # Takes longer but ensures we avoid leaving old environment references in cmake
 if [ -d build ]; then
@@ -36,7 +39,7 @@ if [ -d build ]; then
 fi
 
 # Do the PROCESS build
-cmake -S . -B build -DRELEASE=TRUE
+cmake -G Ninja -S . -B build -DRELEASE=TRUE
 cmake --build build
 
 # The following suggests how to install PROCESS via a manylinux wheel, if you have docker

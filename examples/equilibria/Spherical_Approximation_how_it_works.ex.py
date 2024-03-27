@@ -418,7 +418,7 @@ for degree in np.arange(min_degree, max_degree):  # + 1):
     coil_current_harmonic_amplitudes = currents2harmonics[1:, :] @ currents
 
     # Set currents in coilset
-    for n, i in zip(sh_coil_names, currents):
+    for n, i in zip(sh_coil_names, currents, strict=False):
         eq.coilset[n].current = i
 
     # Calculate the approximate Psi contribution from the coils

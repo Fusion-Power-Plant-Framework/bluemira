@@ -6,7 +6,8 @@
 """Interface for defining an optimisation problem."""
 
 import abc
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Type, TypeVar, Union
+from collections.abc import Callable, Mapping
+from typing import Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -27,8 +28,8 @@ class OptimisationProblemBase:
     __AnyT = TypeVar("__AnyT")
 
     def _overridden_or_default(
-        self, f: __MethodT, cls: Type[Any], default: __AnyT
-    ) -> Union[__MethodT, __AnyT]:
+        self, f: __MethodT, cls: type[Any], default: __AnyT
+    ) -> __MethodT | __AnyT:
         """
         If the given object is not a member of this class return a default.
 
@@ -43,7 +44,7 @@ class OptimisationProblemBase:
         return default
 
     @staticmethod
-    def __is_method(f: __MethodT, cls: Type[Any]) -> bool:
+    def __is_method(f: __MethodT, cls: type[Any]) -> bool:
         """
         Determine if the given method is a member of this base class or not.
 
@@ -81,15 +82,15 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
     def df_objective(self, x: np.ndarray) -> np.ndarray:
         """The gradient of the objective function at ``x``."""
 
-    def eq_constraints(self) -> List[ConstraintT]:  # noqa: PLR6301
+    def eq_constraints(self) -> list[ConstraintT]:  # noqa: PLR6301
         """The equality constraints on the optimisation."""
         return []
 
-    def ineq_constraints(self) -> List[ConstraintT]:  # noqa: PLR6301
+    def ineq_constraints(self) -> list[ConstraintT]:  # noqa: PLR6301
         """The inequality constraints on the optimisation."""
         return []
 
-    def bounds(self) -> Tuple[npt.ArrayLike, npt.ArrayLike]:  # noqa: PLR6301
+    def bounds(self) -> tuple[npt.ArrayLike, npt.ArrayLike]:  # noqa: PLR6301
         """
         The lower and upper bounds of the optimisation parameters.
 
@@ -105,8 +106,8 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         x0: np.ndarray,
         *,
         algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-        opt_parameters: Optional[Mapping[str, Any]] = None,
+        opt_conditions: Mapping[str, int | float] | None = None,
+        opt_parameters: Mapping[str, Any] | None = None,
         keep_history: bool = False,
         check_constraints: bool = True,
         check_constraints_warn: bool = True,

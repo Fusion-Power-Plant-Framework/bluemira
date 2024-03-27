@@ -256,7 +256,9 @@ class TestRegionMapper:
         zup = control_coils.z + max_coil_shifts["z_shifts_upper"]
         zlo = control_coils.z + max_coil_shifts["z_shifts_lower"]
 
-        for name, xl, xu, zl, zu in zip(self.coilset.name, xup, xlo, zup, zlo):
+        for name, xl, xu, zl, zu in zip(
+            self.coilset.name, xup, xlo, zup, zlo, strict=False
+        ):
             rect = Coordinates({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
             pfregions[name] = rect
 

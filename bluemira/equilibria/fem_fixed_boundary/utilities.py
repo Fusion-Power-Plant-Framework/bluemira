@@ -6,28 +6,36 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
-from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from __future__ import annotations
 
-import dolfin
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator  # noqa: PLC2701
-from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
+from mpi4py import MPI
 from scipy.interpolate import interp1d
 
-from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.magnetostatics.fem_utils import read_from_msh
 from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+    from os import PathLike
+
+    from matplotlib.pyplot import Axes
+
+    from bluemira.base.components import PhysicalComponent
 
 
 def plot_scalar_field(
@@ -35,11 +43,11 @@ def plot_scalar_field(
     y: np.ndarray,
     data: np.ndarray,
     levels: int = 20,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> Tuple[Axes, Union[Axes, None], Union[Axes, None]]:
+) -> tuple[Axes, Axes | None, Axes | None]:
     """
     Plot a scalar field
 
@@ -94,7 +102,7 @@ def plot_profile(
     prof: np.ndarray,
     var_name: str,
     var_unit: str,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     show: bool = True,
 ):
     """
@@ -111,8 +119,8 @@ def plot_profile(
 
 
 def get_tricontours(
-    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: Union[float, Iterable]
-) -> List[Union[np.ndarray, None]]:
+    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float | Iterable
+) -> list[np.ndarray | None]:
     """
     Get the contours of a value in a triangular set of points.
 
@@ -151,7 +159,7 @@ def get_tricontours(
 def find_flux_surface(
     psi_norm_func: Callable[[np.ndarray], float],
     psi_norm: float,
-    mesh: Optional[dolfin.Mesh] = None,
+    mesh: dolfinx.mesh.Mesh | None = None,
     n_points: int = 100,
 ) -> np.ndarray:
     """
@@ -172,13 +180,28 @@ def find_flux_surface(
     Returns
     -------
     x, z coordinates of the flux surface
+
+    Notes
+    -----
+    Since it is not possible anymore to extrapolate dolfinx function data outside the
+    mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to
+    the boundary). Not sure how to solve this problem.
+    Moreover, this procedure seems to be slow now.
     """
     x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
 
     if mesh:
-        search_range = mesh.hmax()
-        mpoints = mesh.coordinates()
-        psi_norm_array = [psi_norm_func(x) for x in mpoints]
+        tdim = mesh.topology.dim
+        num_cells = (
+            mesh.topology.index_map(tdim).size_local
+            + mesh.topology.index_map(tdim).num_ghosts
+        )
+        h = dolfinx.cpp.mesh.h(mesh, tdim, range(num_cells))
+        search_range = max(h)
+
+        mpoints = mesh.geometry.x
+
+        psi_norm_array = psi_norm_func(mpoints)
         contour = get_tricontours(
             mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
         )[0]
@@ -203,10 +226,12 @@ def find_flux_surface(
         return abs(psi_norm_func(x) - psi_norm)
 
     def theta_line(d, theta_i):
-        return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
+        return (x_axis + d * np.cos(theta_i)).item(), (
+            z_axis + d * np.sin(theta_i)
+        ).item()
 
     def psi_line_match(d, theta):
-        return psi_norm_match(theta_line(d, theta))
+        return psi_norm_match(np.array(theta_line(d, theta)))
 
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
     points = np.zeros((2, n_points), dtype=float)
@@ -214,7 +239,7 @@ def find_flux_surface(
 
     for i in range(len(theta)):
         result = optimise(
-            f_objective=lambda d, i=i: psi_line_match(d, theta[i]),
+            f_objective=lambda d, j=i: psi_line_match(d, theta[j]),
             x0=d_guess,
             dimensions=1,
             algorithm="SLSQP",
@@ -222,7 +247,7 @@ def find_flux_surface(
             bounds=(lower_bound(d_guess), upper_bound(d_guess)),
         )
         points[:, i] = theta_line(result.x, theta[i])
-        distances[i] = result.x
+        distances[i] = result.x.item()
         d_guess = result.x
 
     points[:, -1] = points[:, 0]
@@ -230,7 +255,7 @@ def find_flux_surface(
     return points
 
 
-def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
+def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
 
@@ -246,33 +271,51 @@ def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     zbdry:
         z coordinates of the boundary
     """
-    boundary = BoundaryMesh(mesh, "exterior")
-    edges = boundary.cells()
-    check_edge = np.ones(boundary.num_edges())
+    mesh.topology.create_entities(mesh.topology.dim - 1)
+    mesh.topology.create_entities(mesh.topology.dim - 2)
 
-    index = 0
-    temp_edge = edges[index]
-    sorted_v = [temp_edge[0]]
+    mesh.topology.create_connectivity(0, mesh.topology.dim)
+    mesh.topology.create_connectivity(0, mesh.topology.dim - 1)
 
-    for _i in range(len(edges) - 1):
-        temp_v = next(v for v in temp_edge if v not in sorted_v)
-        sorted_v.append(temp_v)
-        check_edge[index] = 0
-        connected = np.nonzero(edges == temp_v)[0]
-        index = next(e for e in connected if check_edge[e] == 1)
-        temp_edge = edges[index]
+    facet_map = mesh.topology.index_map(mesh.topology.dim - 1)
+    vertex_map = mesh.topology.index_map(0)
 
-    points_sorted = np.array([Vertex(boundary, v).point().array() for v in sorted_v])
+    # select all the facet on the boundary
+    boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+    f_to_v = mesh.topology.connectivity(mesh.topology.dim - 1, 0)
+    v_to_f = mesh.topology.connectivity(0, mesh.topology.dim - 1)
+
+    facet_marker = np.zeros(facet_map.size_local + facet_map.num_ghosts, dtype=np.int32)
+    vertex_marker = np.zeros(
+        vertex_map.size_local + vertex_map.num_ghosts, dtype=np.int32
+    )
+
+    sorted_vertex = f_to_v.links(boundary_facets[0]).tolist()
+    facet_marker[boundary_facets[0]] = 1
+    vertex_marker[sorted_vertex] = 1
+
+    for _ in range(len(boundary_facets) - 1):
+        facets = v_to_f.links(sorted_vertex[-1])
+        for f in facets:
+            if f in boundary_facets and facet_marker[f] == 0:
+                vertexes = f_to_v.links(f).tolist()
+                for v in vertexes:
+                    if vertex_marker[v] == 0:
+                        sorted_vertex += [v]
+                        vertex_marker[v] = 1
+
+    points = mesh.geometry.x
+    points_sorted = points[sorted_vertex]
     return points_sorted[:, 0], points_sorted[:, 1]
 
 
 def get_flux_surfaces_from_mesh(
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     psi_norm_func: Callable[[float, float], float],
-    x_1d: Optional[np.ndarray] = None,
-    nx: Optional[int] = None,
+    x_1d: np.ndarray | None = None,
+    nx: int | None = None,
     ny_fs_min: int = 40,
-) -> Tuple[np.ndarray, List[ClosedFluxSurface]]:
+) -> tuple[np.ndarray, list[ClosedFluxSurface]]:
     """
     Get a list of flux surfaces from a mesh and normalised psi callable.
 
@@ -315,10 +358,10 @@ def get_flux_surfaces_from_mesh(
     elif nx is not None:
         bluemira_warn("x_1d and nx specified, discarding nx.")
 
-    mesh_points = mesh.coordinates()
+    mesh_points = mesh.geometry.x
     x = mesh_points[:, 0]
     z = mesh_points[:, 1]
-    psi_norm_data = np.array([psi_norm_func(p) for p in mesh_points])
+    psi_norm_data = psi_norm_func(mesh_points)
 
     index = []
     flux_surfaces = []
@@ -328,15 +371,15 @@ def get_flux_surfaces_from_mesh(
             fs = Coordinates({"x": path[0], "z": path[1]})
             fs.close()
             flux_surfaces.append(ClosedFluxSurface(fs))
+        elif (path := get_tricontours(x, z, psi_norm_data, xi)[0]) is not None and len(
+            path.T[0]
+        ) > ny_fs_min:
+            # Only capture flux surfaces with sufficient points
+            fs = Coordinates({"x": path.T[0], "z": path.T[1]})
+            fs.close()
+            flux_surfaces.append(ClosedFluxSurface(fs))
         else:
-            path = get_tricontours(x, z, psi_norm_data, xi)[0]
-            if path is not None and len(path.T[0]) > ny_fs_min:
-                # Only capture flux surfaces with sufficient points
-                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
-                fs.close()
-                flux_surfaces.append(ClosedFluxSurface(fs))
-            else:
-                index.append(i)
+            index.append(i)
 
     mask = np.ones_like(x_1d, dtype=bool)
     mask[index] = False
@@ -345,10 +388,10 @@ def get_flux_surfaces_from_mesh(
 
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     psi_norm: float,
     plot: bool = False,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux from the mesh.
@@ -373,10 +416,14 @@ def calculate_plasma_shape_params(
     delta:
         Triangularity of the flux surface at psi_norm
     """
-    points = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(x) for x in points]
+    points = mesh.geometry.x
+    psi_norm_array = psi_norm_func(points)
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
+    if contour is None:
+        # zero division protection
+        return 0.5, 1, EPS
+
     x, z = contour.T
 
     pu = contour[np.argmax(z)]
@@ -386,7 +433,7 @@ def calculate_plasma_shape_params(
 
     if plot:
         _, ax = plt.subplots()
-        dolfin.plot(mesh)
+        # TODO(je-cook) plot dolfinx mesh
         ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")
@@ -408,13 +455,14 @@ def calculate_plasma_shape_params(
     # triangularity
     c = r_geo - pl[0]
     d = r_geo - pu[0]
-    delta = 0 if a == 0 else 0.5 * (c + d) / a
+    # zero division protection
+    delta = EPS if a == 0 else 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
 
 
 def find_magnetic_axis(
-    psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfin.Mesh] = None
+    psi_func: Callable[[np.ndarray], float], mesh: dolfinx.mesh.Mesh | None = None
 ) -> np.ndarray:
     """
     Find the magnetic axis in the poloidal flux map.
@@ -432,12 +480,22 @@ def find_magnetic_axis(
     Position vector (2) of the magnetic axis [m]
     """
     if mesh:
-        points = mesh.coordinates()
-        psi_array = [psi_func(x) for x in points]
+        points = mesh.geometry.x
+        psi_array = psi_func(points)
         psi_max_arg = np.argmax(psi_array)
 
-        x0 = points[psi_max_arg]
-        search_range = mesh.hmax()
+        x0 = points[psi_max_arg][:2]
+
+        tdim = mesh.topology.dim
+        num_cells = (
+            mesh.topology.index_map(tdim).size_local
+            + mesh.topology.index_map(tdim).num_ghosts
+        )
+        h = dolfinx.cpp.mesh.h(
+            mesh._cpp_object, tdim, np.arange(num_cells, dtype=np.int32)
+        )
+
+        search_range = max(h)
         lower_bounds = x0 - search_range
         upper_bounds = x0 + search_range
     else:
@@ -467,35 +525,12 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float) -> bool:
-    """
-    Determine whether or not a cell is in the vicinity of a point.
-
-    Parameters
-    ----------
-    cell:
-        Cell to check for vicintiy to a point
-    refine_point:
-        Point from which to determine vicinity to a cell
-    distance:
-        Distance away from the midpoint of the cell to determine vicinity
-
-    Returns
-    -------
-    Whether or not the cell is in the vicinity of a point
-    """
-    # Get the center of the cell
-    # Calculate the distance between the cell center and the refinement point
-    # Refine the cell if it is close to the refinement point
-    return np.linalg.norm(cell.midpoint()[:] - np.array(refine_point)) < distance
-
-
 def refine_mesh(
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     refine_point: Iterable[float],
     distance: float,
     num_levels: int = 1,
-) -> dolfin.Mesh:
+) -> dolfinx.mesh.Mesh:
     """
     Refine the mesh around a reference point.
 
@@ -514,26 +549,30 @@ def refine_mesh(
     -------
     Refined mesh
     """
+
+    def inside_delta(xs):
+        return np.linalg.norm(xs[:2, :].T - refine_point[:2], axis=1) < distance
+
     for _ in range(num_levels):
-        cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
-        cell_markers.set_all(False)
-        for cell in dolfin.cells(mesh):
-            if _cell_near_point(cell, refine_point, distance):
-                cell_markers[cell.index()] = True
-        mesh = dolfin.refine(mesh, cell_markers)
+        dim = mesh.topology.dim
+        edges = dolfinx.mesh.locate_entities(mesh, dim - 1, inside_delta)
+        mesh.topology.create_entities(1)
+        mesh = dolfinx.mesh.refine(mesh, edges, redistribute=False)
 
     return mesh
 
 
 def create_mesh(
     plasma: PhysicalComponent,
-    directory: str,
-    mesh_filename: str,
+    directory: str | PathLike,
     mesh_name_msh: str,
-) -> Mesh:
+    gdim: int | tuple = (0, 2),
+    comm=MPI.COMM_WORLD,
+    rank: int = 0,
+) -> dolfinx.mesh.Mesh:
     """
     Create mesh
     """
-    meshing.Mesh(meshfile=Path(directory, mesh_name_msh).as_posix())(plasma)
-    msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
-    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
+    meshfile = Path(directory, mesh_name_msh).as_posix()
+    meshing.Mesh(meshfile=meshfile)(plasma)
+    return read_from_msh(meshfile, comm, rank, gdim=gdim)

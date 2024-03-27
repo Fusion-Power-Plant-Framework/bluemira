@@ -66,13 +66,13 @@ class TestCyclicSymmetry:
         right = model.cycle_sym.right_nodes
 
         # Checks that the single sector model symmetry node displacements are identical
-        for i, j in zip(left, right):
+        for i, j in zip(left, right, strict=False):
             n_left = model.geometry.nodes[i]
             n_right = model.geometry.nodes[j]
             assert np.isclose(n_left.displacements[2], n_right.displacements[2])
 
         # Check that the full model symmetry node displacements are identical
-        for i, j in zip(left, right):
+        for i, j in zip(left, right, strict=False):
             n_left = fullmodel.geometry.nodes[i]
             n_right = fullmodel.geometry.nodes[j]
             assert np.isclose(n_left.displacements[2], n_right.displacements[2])

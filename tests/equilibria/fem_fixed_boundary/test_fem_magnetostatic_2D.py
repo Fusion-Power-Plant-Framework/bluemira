@@ -41,8 +41,9 @@ class TestFemGradShafranovFixedBoundary:
         plasma = PhysicalComponent("plasma", lcfs_face)
         plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
         plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
-        self.mesh = create_mesh(
-            plasma, tmp_path, "fixed_boundary_example", "fixed_boundary_example.msh"
+
+        (self.mesh, ct, ft), labels = create_mesh(
+            plasma, tmp_path, "fixed_boundary_example.msh"
         )
 
         self.p_prime = LaoPolynomialFunc([2, 3, 1])

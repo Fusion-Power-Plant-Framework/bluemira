@@ -9,7 +9,6 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
-from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -34,7 +33,7 @@ class PlanarCircuit(SourceGroup):
     Base class for a planar current loop
     """
 
-    shape: Union[np.ndarray, Coordinates]
+    shape: np.ndarray | Coordinates
     current: float
 
     def _generate_sources(self, shape, current, source_class, xs_args):
@@ -52,7 +51,9 @@ class PlanarCircuit(SourceGroup):
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
 
-        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
+        for midpoint, d_l, beta, alpha in zip(
+            self.midpoints, self.d_l, betas, alphas, strict=False
+        ):
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
 
@@ -69,9 +70,7 @@ class PlanarCircuit(SourceGroup):
             sources.append(source)
         return sources
 
-    def _process_planar_shape(
-        self, shape: Union[np.ndarray, Coordinates]
-    ) -> Coordinates:
+    def _process_planar_shape(self, shape: np.ndarray | Coordinates) -> Coordinates:
         """
         Checks that the shape is planar
         """
@@ -83,8 +82,8 @@ class PlanarCircuit(SourceGroup):
         return shape
 
     def _get_betas_alphas(
-        self, shape: Union[np.ndarray, Coordinates]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, shape: np.ndarray | Coordinates
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get the first and second half-angles (transformed to the x-z plane)
         """
@@ -198,7 +197,7 @@ class ArbitraryPlanarRectangularXSCircuit(PlanarCircuit):
 
     def __init__(
         self,
-        shape: Union[np.ndarray, Coordinates],
+        shape: np.ndarray | Coordinates,
         breadth: float,
         depth: float,
         current: float,
@@ -231,7 +230,7 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
 
     def __init__(
         self,
-        shape: Union[np.ndarray, Coordinates],
+        shape: np.ndarray | Coordinates,
         xs_coordinates: Coordinates,
         current: float,
     ):
@@ -264,7 +263,7 @@ class HelmholtzCage(SourceGroup):
 
         super().__init__(sources)
 
-    def _pattern(self, circuit: CurrentSource) -> List[CurrentSource]:
+    def _pattern(self, circuit: CurrentSource) -> list[CurrentSource]:
         """
         Pattern the CurrentSource axisymmetrically.
         """
@@ -278,9 +277,9 @@ class HelmholtzCage(SourceGroup):
     @process_xyz_array
     def ripple(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> float:
         """
         Get the toroidal field ripple at a point.

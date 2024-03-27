@@ -9,7 +9,6 @@
 File saving for fixed boundary equilibrium
 """
 
-from typing import Dict, Optional
 from warnings import warn
 
 import numpy as np
@@ -54,7 +53,7 @@ def save_fixed_boundary_to_file(
     nx: int,
     nz: int,
     file_format: str = "json",
-    json_kwargs: Optional[Dict] = None,
+    json_kwargs: dict | None = None,
     **kwargs,
 ) -> EQDSKInterface:
     """
@@ -91,7 +90,7 @@ def save_fixed_boundary_to_file(
     nbdry = len(xbdry)
 
     x_mag, z_mag = find_magnetic_axis(equilibrium.psi, equilibrium.mesh)
-    psi_mag = equilibrium.psi(x_mag, z_mag)
+    psi_mag = equilibrium.psi(np.array([x_mag, z_mag]))
 
     # Make a minimum grid
     x_min = np.min(xbdry)

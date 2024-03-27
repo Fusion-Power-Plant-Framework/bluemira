@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,7 +122,7 @@ class TestMixedFaces:
     working correctly.
     """
 
-    def assert_properties(self, true_props: Dict[str, Any], part: BluemiraGeo):
+    def assert_properties(self, true_props: dict[str, Any], part: BluemiraGeo):
         """
         Helper function to pull out the properties to be compared, and to make the
         comparison in an output-friendly way.
@@ -140,7 +140,7 @@ class TestMixedFaces:
                 expected.append(value)
                 actual.append(result)
         if error:
-            raise AssertionError(list(zip(keys, expected, actual)))
+            raise AssertionError(list(zip(keys, expected, actual, strict=False)))
 
     @pytest.mark.parametrize(
         ("filename", "degree", "true_props"),

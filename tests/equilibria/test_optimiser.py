@@ -77,7 +77,9 @@ class TestCoilsetOptimiser:
         zup = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_upper"]
         zlo = cls.coilset.z[cls.coilset._control_ind] + max_coil_shifts["z_shifts_lower"]
 
-        for name, xl, xu, zl, zu in zip(cls.coilset.name, xup, xlo, zup, zlo):
+        for name, xl, xu, zl, zu in zip(
+            cls.coilset.name, xup, xlo, zup, zlo, strict=False
+        ):
             cls.pfregions[name] = RegionInterpolator(
                 make_polygon({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
             )

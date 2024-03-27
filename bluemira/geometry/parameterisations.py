@@ -20,14 +20,10 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Generic,
-    Iterable,
-    List,
-    Optional,
     TextIO,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 import matplotlib.pyplot as plt
@@ -48,6 +44,9 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 from bluemira.utilities.plot_tools import str_to_latex
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 __all__ = [
     "GeometryParameterisation",
@@ -103,9 +102,9 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Adjust a variable in the GeometryParameterisation.
@@ -123,7 +122,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         """
         self.variables.adjust_variable(name, value, lower_bound, upper_bound)
 
-    def fix_variable(self, name: str, value: Optional[float] = None):
+    def fix_variable(self, name: str, value: float | None = None):
         """
         Fix a variable in the GeometryParameterisation, removing it from optimisation
         but preserving a constant value.
@@ -220,7 +219,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 count += 1
         return idx_actual - count
 
-    def process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
+    def process_x_norm_fixed(self, x_norm: np.ndarray) -> list[float]:
         """
         Utility for processing a set of free, normalised variables, and folding the fixed
         un-normalised variables back into a single list of all actual values.
@@ -274,7 +273,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.to_json(file)
 
     @classmethod
-    def from_json(cls, file: Union[Path, str, TextIO]) -> GeometryParameterisation:
+    def from_json(cls, file: Path | str | TextIO) -> GeometryParameterisation:
         """
         Create the GeometryParameterisation from a json file.
 
@@ -283,7 +282,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         file:
             The path to the file, or an open file handle that supports reading.
         """
-        if isinstance(file, (Path, str)):
+        if isinstance(file, Path | str):
             with open(file) as fh:
                 return cls.from_json(fh)
 
@@ -291,7 +290,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return cls(var_dict)
 
     @staticmethod
-    def _annotator(ax, key: str, xy1: Tuple, xy2: Tuple, xy3: Tuple):
+    def _annotator(ax, key: str, xy1: tuple, xy2: tuple, xy3: tuple):
         """
         Create annotation arrow with label
 
@@ -484,7 +483,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = PrincetonDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -583,7 +582,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     @staticmethod
     def _princeton_d(
         x1: float, x2: float, dz: float, npoints: int = 2000
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
         File, Mills, and Sheffield, 1971)
@@ -730,7 +729,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -999,7 +998,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1081,7 +1080,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         centres = []
         angles = []
         radii = []
-        for i, (ai, ri) in enumerate(zip(a_values, r_values)):
+        for i, (ai, ri) in enumerate(zip(a_values, r_values, strict=False)):
             if i > 0:
                 xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
             a = np.pi - a_start - ai
@@ -1131,7 +1130,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(*self._get_centres(a_values, r_values, x1, z1))
+            zip(*self._get_centres(a_values, r_values, x1, z1), strict=False)
         ):
             arc = make_circle(
                 ri,
@@ -1171,7 +1170,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         )
 
         for r_no, (centre, s_f_angles, radius) in enumerate(
-            zip(centres, angles, radii), start=1
+            zip(centres, angles, radii, strict=False), start=1
         ):
             if r_no == 6:  # noqa: PLR2004
                 centre_angle = min(s_f_angles) + (0.5 * np.ptp(s_f_angles) + 180)
@@ -1377,7 +1376,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1437,7 +1436,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         ]
 
         wires = []
-        for i, j in zip([0, 1, 2, 3], [0, 1, 3, 4]):
+        for i, j in zip([0, 1, 2, 3], [0, 1, 3, 4], strict=False):
             k = j + 1
             p0 = [x[j], 0, z[j]]
             p3 = [x[k], 0, z[k]]
@@ -1466,7 +1465,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         p1, p2 = np.zeros(3), np.zeros(3)
         for point, control_point, angle, tension in zip(
-            [p0, p3], [p1, p2], [theta0, theta3], [l_start, l_end]
+            [p0, p3], [p1, p2], [theta0, theta3], [l_start, l_end], strict=False
         ):
             d_tension = 0.5 * dl * tension
             control_point[0] = point[0] + d_tension * np.cos(angle)
@@ -1939,9 +1938,9 @@ class PictureFrameOptVariables(OptVariablesFrame):
 
     def configure(
         self,
-        upper: Union[str, PFrameSection],
-        lower: Union[str, PFrameSection],
-        inner: Optional[Union[str, PFrameSection]],
+        upper: str | PFrameSection,
+        lower: str | PFrameSection,
+        inner: str | PFrameSection | None,
     ):
         """Fix variables based on the upper, lower and inner limbs."""
         if upper is PFrameSection.CURVED and lower is PFrameSection.CURVED:
@@ -2020,11 +2019,11 @@ class PictureFrame(
 
     def __init__(
         self,
-        var_dict: Optional[VarDictT] = None,
+        var_dict: VarDictT | None = None,
         *,
-        upper: Union[str, PFrameSection] = PFrameSection.FLAT,
-        lower: Union[str, PFrameSection] = PFrameSection.FLAT,
-        inner: Optional[Union[str, PFrameSection]] = None,
+        upper: str | PFrameSection = PFrameSection.FLAT,
+        lower: str | PFrameSection = PFrameSection.FLAT,
+        inner: str | PFrameSection | None = None,
     ):
         self.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
         self.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]

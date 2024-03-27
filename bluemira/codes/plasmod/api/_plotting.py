@@ -9,7 +9,7 @@ Plotting for PLASMOD.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.codes.plasmod import Solver
@@ -26,9 +26,9 @@ __all__ = ["plot_default_profiles"]
 def plot_default_profiles(
     plasmod_solver: Solver,
     show: bool = True,
-    f: Optional[plt.Figure] = None,
-    ax: Optional[plt.Axes] = None,
-) -> Tuple[plt.Figure, plt.Axes]:
+    f: plt.Figure | None = None,
+    ax: plt.Axes | None = None,
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Plot a default set of profiles from a PLASMOD solver.
 

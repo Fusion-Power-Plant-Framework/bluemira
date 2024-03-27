@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -15,19 +14,19 @@ from bluemira.optimisation.error import OptimisationConditionsError
 class NLOptConditions:
     """Hold and validate optimiser stopping conditions."""
 
-    ftol_abs: Optional[float] = None
-    ftol_rel: Optional[float] = None
-    xtol_abs: Optional[float] = None
-    xtol_rel: Optional[float] = None
-    max_eval: Optional[int] = None
-    max_time: Optional[float] = None
-    stop_val: Optional[float] = None
+    ftol_abs: float | None = None
+    ftol_rel: float | None = None
+    xtol_abs: float | None = None
+    xtol_rel: float | None = None
+    max_eval: int | None = None
+    max_time: float | None = None
+    stop_val: float | None = None
 
     def __post_init__(self):
         """Validate initialised values."""
         self._validate()
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Return the data in dictionary form."""
         return asdict(self)
 

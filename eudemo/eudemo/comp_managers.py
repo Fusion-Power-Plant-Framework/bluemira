@@ -10,7 +10,8 @@ EUDEMO component manager classes
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Iterable, List, Tuple
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -110,7 +111,7 @@ class PlugManagerMixin(OrphanerMixin):
         plug_component: Component,
         n_TF: int,
         name: str,
-        color_list: List[Tuple[float, float, float]],
+        color_list: list[tuple[float, float, float]],
     ):
         comp = plug_component.get_component("xyz")
         void_shapes = []
@@ -184,7 +185,7 @@ class PortManagerMixin(OrphanerMixin, abc.ABC):
             Component(view, children=view_comps, parent=parent)
 
     @abc.abstractmethod
-    def add_ports(self, ports: List[Component], n_TF: int):
+    def add_ports(self, ports: list[Component], n_TF: int):
         """Add ports to Component"""
 
 
@@ -207,10 +208,10 @@ class ThermalShield(PortManagerMixin, ComponentManager):
 
     @staticmethod
     def _join_ports_to_vvts(
-        ports: List[Component],
+        ports: list[Component],
         vvts_target_shape: BluemiraSolid,
         vvts_target_void: BluemiraSolid,
-    ) -> Tuple[BluemiraSolid, BluemiraSolid, List[BluemiraSolid]]:
+    ) -> tuple[BluemiraSolid, BluemiraSolid, list[BluemiraSolid]]:
         if isinstance(ports, Component):
             ports = [ports]
 
@@ -233,7 +234,7 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         final_void = boolean_fuse([vvts_target_void, *tool_voids])
         return final_shape, final_void, tool_voids
 
-    def add_ports(self, ports: List[Component], n_TF: int):
+    def add_ports(self, ports: list[Component], n_TF: int):
         """
         Add ports to the thermal shield
         """

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, TypedDict, Union
+from typing import Any, Generic, TypeVar, TypedDict
 
 import numpy as np
 import pint
@@ -82,7 +82,7 @@ class Parameter(Generic[ParameterValueType]):
         source: str = "",
         description: str = "",
         long_name: str = "",
-        _value_types: Optional[Tuple[Type, ...]] = None,
+        _value_types: tuple[type, ...] | None = None,
     ):
         value = self._type_check(name, value, _value_types)
         self._name = name
@@ -92,12 +92,12 @@ class Parameter(Generic[ParameterValueType]):
         self._description = description
         self._long_name = long_name
 
-        self._history: List[ParameterValue[ParameterValueType]] = []
+        self._history: list[ParameterValue[ParameterValueType]] = []
         self._add_history_record()
 
     @staticmethod
     def _type_check(
-        name: str, value: ParameterValueType, value_types: Optional[Tuple[Type, ...]]
+        name: str, value: ParameterValueType, value_types: tuple[type, ...] | None
     ) -> ParameterValueType:
         if value_types and value is not None:
             if float in value_types and isinstance(value, int):
@@ -138,7 +138,7 @@ class Parameter(Generic[ParameterValueType]):
     def __hash__(self) -> int:
         return hash((self._name, self._description, self._long_name))
 
-    def history(self) -> List[ParameterValue[ParameterValueType]]:
+    def history(self) -> list[ParameterValue[ParameterValueType]]:
         """Return the history of this parameter's value."""
         return copy.deepcopy(self._history)
 
@@ -175,7 +175,7 @@ class Parameter(Generic[ParameterValueType]):
     def value(self, new_value: ParameterValueType):
         self.set_value(new_value, source="")
 
-    def value_as(self, unit: Union[str, pint.Unit]) -> Union[ParameterValueType, None]:
+    def value_as(self, unit: str | pint.Unit) -> ParameterValueType | None:
         """
         Return the current value in a given unit
 

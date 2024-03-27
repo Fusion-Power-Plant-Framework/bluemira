@@ -11,7 +11,6 @@ A collection of plotting tools.
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
 from warnings import warn
 
 import imageio
@@ -168,7 +167,7 @@ def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path_mpl:
     return Path_mpl(vertices, codes)
 
 
-def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
+def set_component_view(comp: Component, placement: str | BluemiraPlacement):
     if placement not in {"xy", "xz", "yz"} and not isinstance(
         placement, BluemiraPlacement
     ):
@@ -219,7 +218,7 @@ class BluemiraPathPatch3D(PathPatch3D):
         self,
         path: Path_mpl,
         normal: np.ndarray,
-        translation: Optional[np.ndarray] = None,
+        translation: np.ndarray | None = None,
         color: str = "b",
         **kwargs,
     ):

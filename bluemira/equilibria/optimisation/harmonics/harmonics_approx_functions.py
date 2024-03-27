@@ -11,7 +11,6 @@ Spherical harmonics classes and calculations.
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -195,8 +194,8 @@ def collocation_points(
     plasma_boundary: Coordinates,
     point_type: PointType,
     n_points: int = 10,
-    seed: Optional[int] = None,
-    grid_num: Optional[Tuple[int, int]] = None,
+    seed: int | None = None,
+    grid_num: tuple[int, int] | None = None,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -406,7 +405,7 @@ def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     )
 
 
-def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[list, float]:
+def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
     """
     Find the coils located outside of the sphere containing the core plasma,
     i.e., LCFS of the equilibrium state.
@@ -491,12 +490,12 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
-    grid_num: Optional[str] = None,
+    grid_num: str | None = None,
     acceptable_fit_metric: float = 0.01,
     plot: bool = False,
     nlevels: int = 50,
-    seed: Optional[int] = None,
-) -> Tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
+    seed: int | None = None,
+) -> tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
     needed as a reference value for the 'spherical_harmonics_constraint'
@@ -623,7 +622,7 @@ def spherical_harmonic_approximation(
         coil_current_harmonic_amplitudes = currents2harmonics[1:, :] @ currents
 
         # Set currents in coilset
-        for n, i in zip(sh_coil_names, currents):
+        for n, i in zip(sh_coil_names, currents, strict=False):
             sh_eq.coilset[n].current = i
 
         # Calculate the approximate Psi contribution from the coils
@@ -684,10 +683,10 @@ def plot_psi_comparision(
     grid: Grid,
     eq: Equilibrium,
     vac_psi_app: np.ndarray,
-    axes: Optional[List[plt.Axes]] = None,
+    axes: list[plt.Axes] | None = None,
     nlevels: int = 50,
     show: bool = True,
-) -> Tuple[plt.Axes, ...]:
+) -> tuple[plt.Axes, ...]:
     """
     Create plot comparing an original psi to psi obtained from harmonic approximation.
 

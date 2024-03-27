@@ -11,7 +11,7 @@ Full fuel cycle model object
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from bluemira.fuel_cycle.timeline import Timeline
@@ -60,8 +60,8 @@ class EUDEMOFuelCycleModel:
 
     def __init__(
         self,
-        params: Optional[Union[EDFCMParams, Dict[str, float]]] = None,
-        build_config: Optional[Dict[str, Any]] = None,
+        params: EDFCMParams | dict[str, float] | None = None,
+        build_config: dict[str, Any] | None = None,
     ):
         # Handle parameters
         if isinstance(params, EDFCMParams):
@@ -198,7 +198,7 @@ class EUDEMOFuelCycleModel:
         self,
         eta_iv: float,
         max_inventory: float,
-        flows: Optional[List[np.ndarray]] = None,
+        flows: list[np.ndarray] | None = None,
     ) -> np.ndarray:
         """
         In-vessel environment
@@ -258,7 +258,7 @@ class EUDEMOFuelCycleModel:
         self.I_blanket = blanket.inventory
         return blanket.m_out
 
-    def tfv(self, eta_tfv: float, flows: List[np.ndarray]) -> np.ndarray:
+    def tfv(self, eta_tfv: float, flows: list[np.ndarray]) -> np.ndarray:
         """
         The TFV system where the tritium flows from the BB and plasma are combined.
 
@@ -298,7 +298,7 @@ class EUDEMOFuelCycleModel:
         m_exh_stor, m_ex_stack = m_in_exhaust_det.split(2, [self.params.f_detrit_split])
         return m_in_isotope_re + m_exh_stor, m_ex_stack
 
-    def stack(self, flows: List[np.ndarray]):
+    def stack(self, flows: list[np.ndarray]):
         """
         Exhaust to environment
         """
@@ -312,7 +312,7 @@ class EUDEMOFuelCycleModel:
         # Total release to the environment
         self.M_T_stack = stack.sum_in
 
-    def injector(self, flows: List[np.ndarray]) -> np.ndarray:
+    def injector(self, flows: list[np.ndarray]) -> np.ndarray:
         """
         Pellet injection system assumed
         """
@@ -576,7 +576,7 @@ class EUDEMOFuelCycleModel:
         except IndexError:
             return arg_t_d - 1, self.t[-1]
 
-    def calc_t_infl(self) -> Tuple[int, float]:
+    def calc_t_infl(self) -> tuple[int, float]:
         """
         Calculate the inflection time of the reactor tritium inventory
         """

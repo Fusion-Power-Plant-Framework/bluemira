@@ -28,7 +28,7 @@ from dataclasses import asdict, dataclass, fields
 from enum import auto
 from pathlib import Path
 from pprint import pprint
-from typing import ClassVar, Dict, List, Union
+from typing import ClassVar
 
 from ext_code_script import get_filename
 
@@ -97,7 +97,7 @@ class ECOpts:
     add_header: bool = False
     number: bool = False
 
-    def to_list(self) -> List:
+    def to_list(self) -> list:
         """Options list"""
         return [f"--{k.replace('_', '-')}" for k, v in asdict(self).items() if v]
 
@@ -156,7 +156,7 @@ class ECParameterFrame(MappedParameterFrame):
     }
 
     @property
-    def mappings(self) -> Dict:
+    def mappings(self) -> dict:
         """Code Mappings"""
         return self._mappings
 
@@ -192,12 +192,12 @@ class Setup(CodesSetup):
 
     params: ECParameterFrame
 
-    def __init__(self, params: ParameterFrame, problem_settings: Dict, infile: str):
+    def __init__(self, params: ParameterFrame, problem_settings: dict, infile: str):
         super().__init__(params, PRG_NAME)
         self.problem_settings = problem_settings
         self.infile = infile
 
-    def update_inputs(self) -> Dict:
+    def update_inputs(self) -> dict:
         """Update inputs from bluemira"""
         self.inputs = ECInputs()
         self.options = ECOpts()
@@ -218,7 +218,7 @@ class Setup(CodesSetup):
         # Protects against writing default values if unset
         return {k: v for k, v in asdict(self.inputs).items() if v}
 
-    def run(self) -> List:
+    def run(self) -> list:
         """Run mode"""
         inp = self.update_inputs()
         with open(self.infile, "w") as input_file:
@@ -236,14 +236,14 @@ class Run(CodesTask):
     """Run task"""
 
     def __init__(
-        self, params: ParameterFrame, infile: str, outfile: str, binary: List = BINARY
+        self, params: ParameterFrame, infile: str, outfile: str, binary: list = BINARY
     ):
         super().__init__(params, PRG_NAME)
         self.binary = binary
         self.infile = infile
         self.outfile = outfile
 
-    def run(self, options: List):
+    def run(self, options: list):
         """Run mode"""
         self._run_subprocess([*self.binary, *options, self.infile, self.outfile])
 
@@ -305,7 +305,7 @@ class Solver(CodesSolver):
     teardown_cls = Teardown
     run_mode_cls = RunMode
 
-    def __init__(self, params: Union[ParameterFrame, Dict], build_config: Dict):
+    def __init__(self, params: ParameterFrame | dict, build_config: dict):
         self.params = ECParameterFrame.from_defaults()
         self.params.update(params)
 
@@ -320,7 +320,7 @@ class Solver(CodesSolver):
         )
         self._teardown = self.teardown_cls(self.params, build_config["outfile"])
 
-    def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
+    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
         """Execute the solver"""
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)

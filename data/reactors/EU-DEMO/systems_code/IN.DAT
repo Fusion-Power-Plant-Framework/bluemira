@@ -58,7 +58,6 @@ ixc = 49 * fstrcond
 ixc = 50 * fiooic
 boundu(50) = 0.5
 ixc = 51 * fvdump
-ixc = 52 * vdalw
 ixc = 53 * fjprot
 ixc = 56 * tdmptf
 boundl(56) = 30.0
@@ -539,7 +538,7 @@ thkcas   = 4.9102e-01 * inboard TF coil case outer (non-plasma side) thickness (
 thwcndut = 4.0000e-03 * TF coil conduit case thickness (m) (`iteration variable 58`)
 tinstf   = 0.013, * Thickness of the ground insulation layer surrounding (m)
 tmargmin = 1.7, * minimum allowable temperature margin ; TFC AND CS (K)
-vdalw    = 1.2650e+01 * max voltage across TF coil during quench (kV) (`iteration variable 52`)
+vdalw    = 1.2650e+01 * max voltage across TF coil during quench (kV)
 vftf     = 0.33, * coolant fraction of TFC 'cable' (`i_tf_sup=1`); or of TFC leg (`i_tf_ssup=0`)
 
 *-----------------Times Variables------------------*

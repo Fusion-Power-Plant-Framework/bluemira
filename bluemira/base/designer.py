@@ -8,7 +8,8 @@ Interface for designer classes.
 """
 
 import abc
-from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
+from collections.abc import Callable
+from typing import Generic, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
@@ -41,10 +42,10 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
-        build_config: Optional[Dict] = None,
+        params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict | None = None,
         *,
-        verbose=True,
+        verbose: bool = True,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
@@ -86,7 +87,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         raise NotImplementedError
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[ParameterFrame]:
+    def param_cls(self) -> type[ParameterFrame]:
         """The ParameterFrame class defining this designer's parameters."""
         ...
 
@@ -106,9 +107,9 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
 
 def run_designer(
-    designer_cls: Type[Designer[_DesignerReturnT]],
-    params: Union[ParameterFrame, Dict],
-    build_config: Dict,
+    designer_cls: type[Designer[_DesignerReturnT]],
+    params: ParameterFrame | dict,
+    build_config: dict,
     **kwargs,
 ) -> _DesignerReturnT:
     """Make and run a designer, returning the result."""

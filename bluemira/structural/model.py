@@ -10,15 +10,9 @@ Finite element model
 
 from __future__ import annotations
 
-from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from bluemira.geometry.coordinates import Coordinates
-    from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
-
 from copy import deepcopy
+from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.sparse.linalg import spsolve
@@ -33,6 +27,13 @@ from bluemira.structural.loads import LoadCase
 from bluemira.structural.result import Result
 from bluemira.structural.symmetry import CyclicSymmetry
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.structural.material import StructuralMaterial
+
 
 class BoundaryConditionMethod(Enum):
     """Enumeration of Boundary Condition Methods."""
@@ -41,15 +42,13 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(
-        cls, value: Union[str, BoundaryConditionMethod]
-    ) -> BoundaryConditionMethod:
+    def _missing_(cls, value: str | BoundaryConditionMethod) -> BoundaryConditionMethod:
         try:
             return cls[value.upper()]
         except KeyError:
             raise StructuralError(
                 f"{cls.__name__} has no method {value}"
-                f"please select from {*cls._member_names_, }"
+                f"please select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -165,7 +164,7 @@ class FiniteElementModel:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ) -> int:
         """
         Adds an Element to the FiniteElementModel
@@ -191,7 +190,7 @@ class FiniteElementModel:
         self,
         coords: Coordinates,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         """
         Adds a Coordinates object to the FiniteElementModel
@@ -255,10 +254,10 @@ class FiniteElementModel:
 
     def apply_cyclic_symmetry(
         self,
-        left_node_ids: List[int],
-        right_node_ids: List[int],
-        p1: Optional[np.ndarray] = None,
-        p2: Optional[np.ndarray] = None,
+        left_node_ids: list[int],
+        right_node_ids: list[int],
+        p1: npt.NDArray[np.float64] | None = None,
+        p2: npt.NDArray[np.float64] | None = None,
     ):
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
@@ -505,7 +504,7 @@ class FiniteElementModel:
 
     def _apply_boundary_conditions(
         self, k: np.ndarray, p: np.ndarray, method: str = "Przemieniecki"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Applies the boundary conditions to the matrices to make the problem
         solvable. This is creation of the "reduced" stiffness matrix and
@@ -575,9 +574,7 @@ class FiniteElementModel:
         """
         return self.geometry.plot(ax=ax, **kwargs)
 
-    def solve(
-        self, load_case: Optional[LoadCase] = None, sparse: bool = False
-    ) -> Result:
+    def solve(self, load_case: LoadCase | None = None, sparse: bool = False) -> Result:
         """
         Solves the system of linear equations for deflection and applies the
         deflections to the nodes and elements of the geometry

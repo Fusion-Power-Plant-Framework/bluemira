@@ -310,6 +310,7 @@ class TestCADFiletype:
 
     # Commented out CADFileTypes dont work with basic shapes tested or needed more
     # FreeCAD imported, should be reviewed in future
+    @pytest.mark.longrun  # TODO(je-cook) some of these crash on CI (?)
     @pytest.mark.parametrize(
         "name",
         [
@@ -337,7 +338,7 @@ class TestCADFiletype:
             "STEP_2",
             "STEP_ZIP",  # Case sensitive extension
             "STL",
-            # "THREED_MANUFACTURING",  #segfault
+            # "THREED_MANUFACTURING",  # segfault
             pytest.param("IFC_BIM", marks=[skipif_import_error("ifcopenshell")]),
             pytest.param(
                 "IFC_BIM_JSON",  # github.com/buildingSMART/ifcJSON

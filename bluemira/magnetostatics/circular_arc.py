@@ -10,8 +10,6 @@ rectangular cross-section, following equations as described in:
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
 
-from typing import Optional, Tuple, Union
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -700,7 +698,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         theta = np.arctan2(y, x)
         return np.array([rho, theta, z])
 
-    def _cylindrical_to_working(self, zp: float) -> Tuple[float, float, float, float]:
+    def _cylindrical_to_working(self, zp: float) -> tuple[float, float, float, float]:
         """
         Convert from local cylindrical coordinates to working coordinates.
         """
@@ -720,9 +718,9 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     @process_xyz_array
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the magnetic field at a point due to the current source.
@@ -781,7 +779,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
 
-    def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax: plt.Axes | None = None, show_coord_sys: bool = False):
         """
         Plot the CircularArcCurrentSource.
 

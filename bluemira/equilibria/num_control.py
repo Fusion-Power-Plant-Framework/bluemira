@@ -10,15 +10,15 @@ Numerical vertical stability control - still not quite there!
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
-
-if TYPE_CHECKING:
-    from bluemira.equilibria.equilibrium import Equilibrium
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import Coil, CoilGroup
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 __all__ = ["DummyController", "VirtualController"]
 
@@ -47,9 +47,9 @@ class DummyController:
 
     @staticmethod
     def Bx(
-        x: Union[float, npt.NDArray[np.float64]],
-        z: Union[float, npt.NDArray[np.float64]],  # noqa: ARG004
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,  # noqa: ARG004
+    ) -> float | npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -62,9 +62,9 @@ class DummyController:
 
     @staticmethod
     def Bz(
-        x: Union[float, npt.NDArray[np.float64]],
-        z: Union[float, npt.NDArray[np.float64]],  # noqa: ARG004
-    ) -> Union[float, npt.NDArray[np.float64]]:
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,  # noqa: ARG004
+    ) -> float | npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """

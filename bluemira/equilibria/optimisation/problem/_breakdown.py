@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import abc
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -43,7 +42,7 @@ class BreakdownZoneStrategy(abc.ABC):
         self.tk_sol = tk_sol
 
     @abc.abstractproperty
-    def breakdown_point(self) -> Tuple[float, float]:
+    def breakdown_point(self) -> tuple[float, float]:
         """
         The location of the breakdown point.
 
@@ -62,7 +61,7 @@ class BreakdownZoneStrategy(abc.ABC):
         """
 
     @abc.abstractmethod
-    def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray, np.ndarray]:
+    def calculate_zone_points(self, n_points: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the discretised set of points representing the breakdown zone.
         """
@@ -73,7 +72,7 @@ class CircularZoneStrategy(BreakdownZoneStrategy):
     Circular breakdown zone strategy.
     """
 
-    def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray, np.ndarray]:
+    def calculate_zone_points(self, n_points: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the discretised set of points representing the breakdown zone.
         """
@@ -93,7 +92,7 @@ class InboardBreakdownZoneStrategy(CircularZoneStrategy):
     """
 
     @property
-    def breakdown_point(self) -> Tuple[float, float]:
+    def breakdown_point(self) -> tuple[float, float]:
         """
         The location of the breakdown point.
 
@@ -123,7 +122,7 @@ class OutboardBreakdownZoneStrategy(CircularZoneStrategy):
     """
 
     @property
-    def breakdown_point(self) -> Tuple[float, float]:
+    def breakdown_point(self) -> tuple[float, float]:
         """
         The location of the breakdown point.
 
@@ -158,7 +157,7 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
         self.r_c = r_c
 
     @property
-    def breakdown_point(self) -> Tuple[float, float]:
+    def breakdown_point(self) -> tuple[float, float]:
         """
         The location of the breakdown point.
 
@@ -194,8 +193,8 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         n_B_stray_points: int,
         max_currents: npt.ArrayLike,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = breakdown

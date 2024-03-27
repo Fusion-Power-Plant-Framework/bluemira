@@ -10,7 +10,6 @@ Coil support builders
 
 import warnings
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -44,6 +43,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import OptimisationProblem
 from bluemira.optimisation.typing import ConstraintT
 from bluemira.utilities.optimiser import Optimiser as _DeprecatedOptimiser
+from bluemira.utilities.tools import floatify
 
 
 @dataclass
@@ -77,12 +77,12 @@ class ITERGravitySupportBuilder(Builder):
         Note that this should be on the y=0 plane.
     """
 
-    param_cls: Type[ITERGravitySupportBuilderParams] = ITERGravitySupportBuilderParams
+    param_cls: type[ITERGravitySupportBuilderParams] = ITERGravitySupportBuilderParams
 
     def __init__(
         self,
-        params: Union[ITERGravitySupportBuilderParams, Dict],
-        build_config: Dict,
+        params: ITERGravitySupportBuilderParams | dict,
+        build_config: dict,
         tf_xz_keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -267,11 +267,11 @@ class ITERGravitySupportBuilder(Builder):
         # Next, make the plates in a linear pattern, in y-z, along x
         z_block_lower = connection_block.bounding_box.z_min
         shape_list.extend(
-            self._make_plates(width, float(v1.x), float(v4.x), z_block_lower)
+            self._make_plates(width, floatify(v1.x), floatify(v4.x), z_block_lower)
         )
 
         # Finally, make the floor block
-        shape_list.append(self._make_floor_block(float(v1.x), float(v4.x)))
+        shape_list.append(self._make_floor_block(floatify(v1.x), floatify(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
@@ -297,12 +297,12 @@ class PFCoilSupportBuilder(Builder):
     PF coil support builder
     """
 
-    param_cls: Type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
+    param_cls: type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
 
     def __init__(
         self,
-        params: Union[PFCoilSupportBuilderParams, Dict],
-        build_config: Dict,
+        params: PFCoilSupportBuilderParams | dict,
+        build_config: dict,
         tf_xz_keep_out_zone: BluemiraWire,
         pf_coil_xz: BluemiraWire,
     ):
@@ -407,7 +407,7 @@ class PFCoilSupportBuilder(Builder):
         distance = np.inf
         best_angle = None
         v1, v2, v3, v4 = None, None, None, None
-        for z, sign in zip([z_up, z_down], [1, -1]):
+        for z, sign in zip([z_up, z_down], [1, -1], strict=False):
             for angle in [0.5 * np.pi, 2 / 3 * np.pi, 1 / 3 * np.pi]:
                 p_inters = []
                 distances = []
@@ -563,7 +563,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self,
         wire: BluemiraWire,
         keep_out_zone: BluemiraFace,
-        optimiser: Optional[_DeprecatedOptimiser] = None,
+        optimiser: _DeprecatedOptimiser | None = None,
         n_koz_discr: int = 100,
     ):
         self.wire = wire
@@ -587,7 +587,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         """Objective function to maximise length."""
         return self.negative_length(x)
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         """The inequality constraints for the problem."""
         return [
             {
@@ -602,13 +602,13 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         ]
 
     @staticmethod
-    def bounds() -> Tuple[np.ndarray, np.ndarray]:
+    def bounds() -> tuple[np.ndarray, np.ndarray]:
         """The optimisation parameter bounds."""
         return np.array([0, 0]), np.array([1, 1])
 
     @staticmethod
     def f_L_to_wire(  # noqa: N802
-        wire: BluemiraWire, x_norm: Union[List[float], npt.NDArray]
+        wire: BluemiraWire, x_norm: list[float] | npt.NDArray
     ) -> BluemiraWire:
         """
         Convert a pair of normalised L values to a wire
@@ -688,7 +688,7 @@ class StraightOISDesignerParams(ParameterFrame):
     min_OIS_length: Parameter[float]
 
 
-class StraightOISDesigner(Designer[List[BluemiraWire]]):
+class StraightOISDesigner(Designer[list[BluemiraWire]]):
     """
     Design a set of straight length outer inter-coil structures.
 
@@ -708,16 +708,16 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
+        params: dict | ParameterFrame,
+        build_config: dict,
         tf_coil_xz_face: BluemiraFace,
-        keep_out_zones: List[BluemiraFace],
+        keep_out_zones: list[BluemiraFace],
     ):
         super().__init__(params, build_config)
         self.tf_face = tf_coil_xz_face
         self.keep_out_zones = keep_out_zones
 
-    def run(self) -> List[BluemiraWire]:
+    def run(self) -> list[BluemiraWire]:
         """
         Create and run the design optimisation problem.
 
@@ -834,16 +834,16 @@ class OISBuilder(Builder):
     RIGHT_OIS = "TF OIS right"
     LEFT_OIS = "TF OIS left"
     OIS_XZ = "TF OIS"
-    param_cls: Type[OISBuilderParams] = OISBuilderParams
+    param_cls: type[OISBuilderParams] = OISBuilderParams
 
     def __init__(
         self,
-        params: Union[OISBuilderParams, Dict],
-        build_config: Dict,
-        ois_xz_profiles: Union[BluemiraWire, List[BluemiraWire]],
+        params: OISBuilderParams | dict,
+        build_config: dict,
+        ois_xz_profiles: BluemiraWire | list[BluemiraWire],
     ):
         super().__init__(params, build_config)
-        if not isinstance(ois_xz_profiles, List):
+        if not isinstance(ois_xz_profiles, list):
             ois_xz_profiles = [ois_xz_profiles]
         self.ois_xz_profiles = ois_xz_profiles
 

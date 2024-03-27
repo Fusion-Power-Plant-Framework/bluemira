@@ -19,9 +19,10 @@ variables:
   PYTHONIOENCODING: 'utf-8'
 
 dependencies:
-  - python=3.8
+  - python=3.10
+  - fenics-dolfinx=0.7.3
   - freecad=0.21.2
-  - fenics=2019.1.0
+  - h5py
   - graphviz
   - pip
   - pip:

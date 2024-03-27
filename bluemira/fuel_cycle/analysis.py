@@ -10,7 +10,8 @@ Fuel cycle analysis class for Monte Carlo statistics
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Union
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -35,14 +36,14 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: Union[str, QueryType]) -> QueryType:
+    def _missing_(cls, value: str | QueryType) -> QueryType:
         try:
             if value.upper() == "95TH":
                 return cls.P95TH
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid query: {value}. Choose from: {*cls._member_names_, }"
+                f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
 
 
@@ -76,7 +77,7 @@ class FuelCycleAnalysis:
         self.t_d = []
         self.m_dot_release = []
 
-    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):
+    def run_model(self, timelines: Iterable[dict[str, np.ndarray | int]]):
         """
         Run the tritium fuel cycle model for each timeline.
 

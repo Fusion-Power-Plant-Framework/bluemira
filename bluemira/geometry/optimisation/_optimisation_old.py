@@ -9,7 +9,6 @@ Geometry optimisation classes and tools
 """
 
 import warnings
-from typing import List, Optional
 
 import numpy as np
 
@@ -123,7 +122,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         geometry_parameterisation: GeometryParameterisation,
         optimiser: Optimiser = None,
         objective: OptimisationObjective = None,
-        constraints: Optional[List[OptimisationConstraint]] = None,
+        constraints: list[OptimisationConstraint] | None = None,
     ):
         super().__init__(geometry_parameterisation, optimiser, objective, constraints)
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -37,14 +37,14 @@ class CoilsetOptimiserResult:
     """The evaluation of the optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
-    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    history: list[tuple[np.ndarray, float]] = field(repr=False)
     """
     The history of the parametrisation at each iteration.
 
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).
     """
-    constraints_satisfied: Union[bool, None] = None
+    constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
 
@@ -75,8 +75,8 @@ class CoilsetOptimisationProblem(abc.ABC):
     """
 
     def _opt_condition_defaults(
-        self, default_cond=Dict[str, Union[float, int]]
-    ) -> Dict[str, Union[float, int]]:
+        self, default_cond=dict[str, float | int]
+    ) -> dict[str, float | int]:
         algorithm = (
             Algorithm[self.opt_algorithm]
             if not isinstance(self.opt_algorithm, Algorithm)
@@ -104,7 +104,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     @staticmethod
     def read_coilset_state(
         coilset: CoilSet, current_scale: float
-    ) -> Tuple[npt.NDArray[np.float64], int]:
+    ) -> tuple[npt.NDArray[np.float64], int]:
         """
         Reads the input coilset and generates the state vector as an array to represent
         it.
@@ -160,10 +160,10 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @staticmethod
     def get_state_bounds(
-        x_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
-        z_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
-        current_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
-    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray]:
+        x_bounds: tuple[npt.NDArray, npt.NDArray],
+        z_bounds: tuple[npt.NDArray, npt.NDArray],
+        current_bounds: tuple[npt.NDArray, npt.NDArray],
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray]:
         """
         Get bounds on the state vector from provided bounds on the substates.
 
@@ -188,7 +188,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     @staticmethod
     def get_current_bounds(
         coilset: CoilSet, max_currents: npt.ArrayLike, current_scale: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.
 
@@ -274,7 +274,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     def _make_numerical_constraints(
         self,
-    ) -> Tuple[List[ConstraintT], List[ConstraintT]]:
+    ) -> tuple[list[ConstraintT], list[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries."""
         if (constraints := getattr(self, "_constraints", None)) is None:
             return [], []

@@ -11,13 +11,17 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Callable, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 from periodictable import elements
 from pint import Context, Quantity, Unit, UnitRegistry, set_application_registry
 from pint.errors import PintError
 from pint.util import UnitsContainer
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class CoilType(Enum):
@@ -31,7 +35,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: Union[str, CoilType]) -> CoilType:
+    def _missing_(cls, value: str | CoilType) -> CoilType:
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:
@@ -39,7 +43,7 @@ class CoilType(Enum):
         except KeyError:
             raise ValueError(
                 f"{cls.__name__} has no type {value}."
-                f" Select from {*cls._member_names_, }"
+                f" Select from {(*cls._member_names_,)}"
             ) from None
 
 
@@ -83,7 +87,7 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    def _add_contexts(self, contexts: Optional[List[Context]] = None):
+    def _add_contexts(self, contexts: list[Context] | None = None):
         """
         Add new contexts to registry
         """
@@ -103,7 +107,7 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts: List[Context], **kwargs):
+    def enable_contexts(self, *contexts: Context, **kwargs):
         """
         Enable contexts
         """
@@ -179,7 +183,7 @@ class BMUnitRegistry(UnitRegistry):
         return self._gas_flow_temperature
 
     @gas_flow_temperature.setter
-    def gas_flow_temperature(self, value: Union[float, None, Quantity]):
+    def gas_flow_temperature(self, value: float | None | Quantity):
         self._gas_flow_temperature = (
             value.to("kelvin")
             if isinstance(value, Quantity)
@@ -219,12 +223,8 @@ class BMUnitRegistry(UnitRegistry):
         context: Context,
         units_from: str,
         units_to: str,
-        forward_transform: Callable[
-            [UnitRegistry, Union[float, complex, Quantity]], float
-        ],
-        reverse_transform: Callable[
-            [UnitRegistry, Union[float, complex, Quantity]], float
-        ],
+        forward_transform: Callable[[UnitRegistry, complex | Quantity], float],
+        reverse_transform: Callable[[UnitRegistry, complex | Quantity], float],
     ) -> Context:
         formatters = ["{}", "{} / [time]"]
 
@@ -414,10 +414,10 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
 
 
 def raw_uc(
-    value: Union[float, np.ndarray, List[float]],
-    unit_from: Union[str, ureg.Unit],
-    unit_to: Union[str, ureg.Unit],
-) -> Union[float, np.ndarray]:
+    value: npt.ArrayLike,
+    unit_from: str | ureg.Unit,
+    unit_to: str | ureg.Unit,
+) -> float | np.ndarray:
     """
     Raw unit converter
 
@@ -451,11 +451,11 @@ def raw_uc(
 
 
 def gas_flow_uc(
-    value: Union[float, np.ndarray],
-    unit_from: Union[str, ureg.Unit],
-    unit_to: Union[str, ureg.Unit],
-    gas_flow_temperature: Optional[Union[float, Quantity]] = None,
-) -> Union[int, float, np.ndarray]:
+    value: npt.ArrayLike,
+    unit_from: str | ureg.Unit,
+    unit_to: str | ureg.Unit,
+    gas_flow_temperature: float | Quantity | None = None,
+) -> int | float | np.ndarray:
     """
     Converts around Standard temperature and pressure for gas unit conversion.
     Accurate for Ideal gases.
@@ -487,8 +487,8 @@ def gas_flow_uc(
 
 
 def to_celsius(
-    temp: Union[float, np.ndarray, List[float]], unit: Union[str, Unit] = ureg.kelvin
-) -> Union[float, np.ndarray]:
+    temp: npt.ArrayLike, unit: str | Unit = ureg.kelvin
+) -> float | np.ndarray:
     """
     Convert a temperature in Kelvin to Celsius.
 
@@ -509,8 +509,8 @@ def to_celsius(
 
 
 def to_kelvin(
-    temp: Union[float, np.ndarray, List[float]], unit: Union[str, Unit] = ureg.celsius
-) -> Union[float, np.ndarray]:
+    temp: npt.ArrayLike, unit: str | Unit = ureg.celsius
+) -> float | np.ndarray:
     """
     Convert a temperature in Celsius to Kelvin.
 
@@ -531,7 +531,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: Union[complex, Quantity]):
+def _temp_check(unit: Unit, val: complex | Quantity):
     """
     Check temperature is above absolute zero
 
@@ -557,8 +557,8 @@ def _temp_check(unit: Unit, val: Union[complex, Quantity]):
 
 
 def kgm3_to_gcm3(
-    density: Union[float, np.ndarray, List[float]],
-) -> Union[float, np.ndarray]:
+    density: npt.ArrayLike,
+) -> float | np.ndarray:
     """
     Convert a density in kg/m3 to g/cm3
 
@@ -575,8 +575,8 @@ def kgm3_to_gcm3(
 
 
 def gcm3_to_kgm3(
-    density: Union[float, np.ndarray, List[float]],
-) -> Union[float, np.ndarray]:
+    density: npt.ArrayLike,
+) -> float | np.ndarray:
     """
     Convert a density in g/cm3 to kg/m3
 

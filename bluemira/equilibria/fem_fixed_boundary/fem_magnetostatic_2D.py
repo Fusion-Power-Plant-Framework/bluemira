@@ -9,37 +9,34 @@ Bluemira module for the solution of a 2D magnetostatic problem with cylindrical 
 and toroidal current source using fenics FEM solver
 """
 
-from dataclasses import dataclass
-from typing import Callable, Iterable, Optional, Tuple, Union
+from __future__ import annotations
 
-import dolfin
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.figure import Figure
+from dolfinx.fem import Expression
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from ufl import as_vector
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    _interpolate_profile,
-    find_magnetic_axis,
-)
+from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, integrate_f
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
-
-def _parse_to_callable(profile_data: Union[None, np.ndarray]):
-    if isinstance(profile_data, np.ndarray):
-        x = np.linspace(0, 1, len(profile_data))
-        return _interpolate_profile(x, profile_data)
-    if profile_data is None:
-        return None
-    return None
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.figure import Figure
 
 
 @dataclass
@@ -49,8 +46,8 @@ class FixedBoundaryEquilibrium:
     """
 
     # Solver information
-    mesh: dolfin.Mesh
-    psi: Callable[[float, float], float]
+    mesh: dolfinx.mesh.Mesh
+    psi: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]
 
     # Profile information
     p_prime: np.ndarray
@@ -95,12 +92,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def __init__(
         self,
-        p_prime: Optional[Callable[[float], float]] = None,
-        ff_prime: Optional[Callable[[float], float]] = None,
-        mesh: Optional[Union[dolfin.Mesh, str]] = None,
-        I_p: Optional[float] = None,
-        R_0: Optional[float] = None,
-        B_0: Optional[float] = None,
+        p_prime: Callable[[float], float] | None = None,
+        ff_prime: Callable[[float], float] | None = None,
+        mesh: dolfinx.mesh.Mesh | str | None = None,
+        I_p: float | None = None,
+        R_0: float | None = None,
+        B_0: float | None = None,
         p_order: int = 2,
         max_iter: int = 10,
         iter_err_max: float = 1e-5,
@@ -148,21 +145,32 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """
         if self._grad_psi is None:
-            w = dolfin.VectorFunctionSpace(self.mesh, "CG", 1)
-            dpsi_dx = self.psi.dx(0)
-            dpsi_dz = self.psi.dx(1)
-            self._grad_psi = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
-            self._grad_psi.set_allow_extrapolation(True)
+            w = dolfinx.fem.functionspace(self.mesh, ("P", 1, (self.mesh.geometry.dim,)))
+
+            self._grad_psi = BluemiraFemFunction(w)
+            grad_psi_expr = Expression(
+                as_vector((
+                    self.psi.dx(0),
+                    self.psi.dx(1),
+                )),
+                w.element.interpolation_points(),
+            )
+            self._grad_psi.interpolate(grad_psi_expr)
+
         return self._grad_psi(point)
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
         """Normalized flux function in 2-D"""
-        return lambda x: np.sqrt(
-            np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
-        )
 
-    def set_mesh(self, mesh: Union[dolfin.Mesh, str]):
+        def func(x):
+            if (denom := self.psi_b - self.psi_ax) == 0:
+                denom = EPS
+            return np.sqrt(np.abs((self.psi(x) - self.psi_ax) / denom))
+
+        return func
+
+    def set_mesh(self, mesh: dolfinx.mesh.Mesh | str):
         """
         Set the mesh for the solver
 
@@ -176,9 +184,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _create_g_func(
         self,
-        pprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        ffprime: Union[Callable[[np.ndarray], np.ndarray], float],
-        curr_target: Optional[float] = None,
+        pprime: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]] | float,
+        ffprime: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]] | float,
+        curr_target: float | None = None,
     ) -> Callable[[np.ndarray], float]:
         """
         Return the density current function given pprime and ffprime.
@@ -197,16 +205,32 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
-        area = dolfin.assemble(
-            dolfin.Constant(1) * dolfin.Measure("dx", domain=self.mesh)()
-        )
+        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
+
+        area = calculate_area(self.mesh, None, None)
 
         j_target = curr_target / area if curr_target else 1.0
+
+        if not isinstance(pprime, Callable):
+            _pprime = pprime
+
+            def _noop_return(_: npt.ArrayLike):
+                return _pprime
+
+            pprime = _noop_return
+
+        if not isinstance(ffprime, Callable):
+            _ffprime = ffprime
+
+            def _noop_return(_: npt.ArrayLike):
+                return _ffprime
+
+            ffprime = _noop_return
 
         def g(x):
             if self.psi_ax == 0:
                 return j_target
-            r = x[0]
+            r = x[:, 0]
             x_psi = self.psi_norm_2d(x)
 
             a = r * pprime(x_psi)
@@ -226,18 +250,19 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         # # This instruction seems to slow the calculation
         # super().define_g(ScalarSubFunc(self._g_func))
+        super().define_g()
 
         # it has been replaced by this code
         dof_points = self.V.tabulate_dof_coordinates()
-        self.g.vector()[:] = np.array([self._g_func(p) for p in dof_points])
+        self.g.x.array[:] = self._g_func(dof_points)
 
     def set_profiles(
         self,
         p_prime: Callable[[float], float],
         ff_prime: Callable[[float], float],
-        I_p: Optional[float] = None,
-        B_0: Optional[float] = None,
-        R_0: Optional[float] = None,
+        I_p: float | None = None,
+        B_0: float | None = None,
+        R_0: float | None = None,
     ):
         """
         Set the profies for the FEM G-S solver.
@@ -279,7 +304,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
-        return dolfin.assemble(self.g * dolfin.Measure("dx", domain=self.mesh)())
+        return integrate_f(self.g, self.mesh)
 
     def _update_curr(self):
         self.k = 1
@@ -314,7 +339,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         plot: bool = False,
         debug: bool = False,
         gif: bool = False,
-        figname: Optional[str] = None,
+        figname: str | None = None,
         *,
         autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
@@ -339,7 +364,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._check_all_inputs_ready_error()
         self.define_g()
 
-        points = self.mesh.coordinates()
+        points = self.mesh.geometry.x
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(
             "", subfolder="generated_data", allow_missing=False
@@ -357,8 +382,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
-            prev_psi = self.psi.vector()[:]
-            prev = np.array([self.psi_norm_2d(p) for p in points])
+            prev_psi = self.psi.x.array[:]
+            prev = self.psi_norm_2d(points)
 
             if plot:
                 self._plot_current_iteration(ax, cax, i, points, prev, diff, debug)
@@ -374,7 +399,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             super().solve()
             self._reset_psi_cache()
 
-            new = np.array([self.psi_norm_2d(p) for p in points])
+            new = self.psi_norm_2d(points)
             diff = new - prev
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
@@ -384,7 +409,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
 
             # Update psi in-place (Fenics handles this with the below syntax)
-            self.psi.vector()[:] = (1 - self.relaxation) * self.psi.vector()[
+            self.psi.x.array[:] = (1 - self.relaxation) * self.psi.x.array[
                 :
             ] + self.relaxation * prev_psi
 
@@ -413,7 +438,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     @staticmethod
-    def _setup_plot(debug: bool) -> Tuple[Figure, np.ndarray, list]:
+    def _setup_plot(debug: bool) -> tuple[Figure, np.ndarray, list]:
         n_col = 3 if debug else 2
         fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)
@@ -444,7 +469,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         cm = self._plot_array(
             ax[0],
             points,
-            np.array([self._g_func(p) for p in points]),
+            self._g_func(points),
             f"({i_iter}) " + "$J_{tor}$",
             PLOT_DEFAULTS["current"]["cmap"],
         )
@@ -480,7 +505,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         array: np.ndarray,
         title: str,
         cmap: str,
-        levels: Optional[np.ndarray] = None,
+        levels: np.ndarray | None = None,
     ):
         cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
         ax.tricontour(

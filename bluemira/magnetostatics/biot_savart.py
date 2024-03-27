@@ -10,16 +10,11 @@ Biot-Savart filament object
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-
-    from bluemira.geometry.coordinates import Coordinates
-
-from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
+from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
@@ -27,6 +22,12 @@ from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.pyplot import Axes
+
+    from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BiotSavartFilament"]
 
@@ -49,7 +50,7 @@ class BiotSavartFilament(CurrentSource):
 
     def __init__(
         self,
-        arrays: Union[Coordinates, np.ndarray, List[Coordinates], List[np.ndarray]],
+        arrays: Coordinates | np.ndarray | list[Coordinates] | list[np.ndarray],
         radius: float,
         current: float = 1.0,
     ):
@@ -102,9 +103,9 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def potential(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the vector potential of an arbitrarily shaped Coordinates.
@@ -139,9 +140,9 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the field due to the arbitrarily shaped Coordinates.
@@ -201,7 +202,9 @@ class BiotSavartFilament(CurrentSource):
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0
-        for _i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
+        for _i, (x1, dx1) in enumerate(
+            zip(self.ref_mid_points, self.ref_d_l, strict=False)
+        ):
             # We create a mask to drop the point where x1 == x2
             r = x1 - self._mid_points
             mask = np.sum(r**2, axis=1) > 0.5 * self.length_scale
@@ -220,7 +223,7 @@ class BiotSavartFilament(CurrentSource):
 
         return MU_0_4PI * (inductance + l_hat_0)
 
-    def rotate(self, angle: float, axis: Union[str, np.ndarray]):
+    def rotate(self, angle: float, axis: str | np.ndarray):
         """
         Rotate the CurrentSource about an axis.
 
@@ -239,7 +242,7 @@ class BiotSavartFilament(CurrentSource):
         self.ref_mid_points = self.ref_mid_points @ r
         self._arrays = [array @ r for array in self._arrays]
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax: Axes | None = None, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
@@ -269,3 +272,34 @@ class BiotSavartFilament(CurrentSource):
             ax.quiver(*origin, *dcm[0], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[1], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[2], length=self.length_scale, color="r")
+
+
+def Bz_coil_axis(
+    r: float, z: float = 0, pz: npt.ArrayLike = 0, current: float = 1
+) -> float | npt.NDArray[np.float64]:
+    """
+    Calculate the theoretical vertical magnetic field of a filament coil
+    (of radius r and centred in (0, z)) on a point on the coil axis at
+    a distance pz from the axis origin.
+
+    Parameters
+    ----------
+    r:
+        Coil radius [m]
+    z:
+        Vertical position of the coil centroid [m]
+    pz:
+        Vertical position of the point on the axis on which the magnetic field
+        shall be calculated [m]
+    current:
+        Current of the coil [A]
+
+    Returns
+    -------
+    Vertical magnetic field on the axis [T]
+
+    Notes
+    -----
+    \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
+    """
+    return 0.5 * MU_0 * current * r**2 / (r**2 + (np.asarray(pz) - z) ** 2) ** 1.5
