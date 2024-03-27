@@ -100,9 +100,9 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     plot_defaults()
     f, ax = plt.subplots(3, 4)
     ax[0, 0].contourf(x, z, Bx)
-    ax[0, 0].set_title("$B_{x}$ Green's function")
+    ax[0, 0].set_title("$B_{x}$ Green's function")  # noqa: RUF027
     ax[0, 1].contourf(x, z, Bx2)
-    ax[0, 1].set_title("$B_{x}$ Biot-Savart differential function")
+    ax[0, 1].set_title("$B_{x}$ Biot-Savart differential function")  # noqa: RUF027
     cm = ax[0, 2].contourf(x, z, 100 * (Bx - Bx2) / Bx)
     f.colorbar(cm, ax[0, 3])
     ax[0, 2].set_title("Relative error [%]")
@@ -112,9 +112,9 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     ax[0, 3].set_aspect(20)
 
     ax[1, 0].contourf(x, z, Bx)
-    ax[1, 0].set_title("$B_{z}$ Green's function")
+    ax[1, 0].set_title("$B_{z}$ Green's function")  # noqa: RUF027
     ax[1, 1].contourf(x, z, Bx2)
-    ax[1, 1].set_title("$B_{z}$ Biot-Savart differential function")
+    ax[1, 1].set_title("$B_{z}$ Biot-Savart differential function")  # noqa: RUF027
     cm = ax[1, 2].contourf(x, z, 100 * (Bz - Bz2) / Bz)
     f.colorbar(cm, ax[1, 3])
     ax[1, 2].set_title("Relative error [%]")

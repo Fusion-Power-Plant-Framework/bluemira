@@ -188,8 +188,9 @@ class OperationPhase(Phase):
         ax.set_xlabel("$t_{interpulse}$ [s]")
         ax.set_ylabel(r"$n_{outages}$")
         ax.annotate(
-            "$n_{{pulse}}$ = {} \n$T_{{out}}$ = {} years        \n $t_{{out_{{max}}}}$ ="
-            " {} days".format(self.n_pulse, round(t_down_check, 2), max_down),
+            f"$n_{{pulse}}$ = {self.n_pulse} \n$T_{{out}}$ = "
+            f"{round(t_down_check, 2)} years\n"
+            f" $t_{{out_{{max}}}}$ = {max_down} days",
             xy=(0.5, 0.5),
             xycoords="figure fraction",
         )

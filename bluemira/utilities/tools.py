@@ -361,7 +361,7 @@ def is_num(thing: Any) -> bool:
 
     Parameters
     ----------
-    thing: unknown type
+    thing:
         The input which we need to determine is a number or not
 
     Returns
@@ -370,14 +370,12 @@ def is_num(thing: Any) -> bool:
     """
     if thing is True or thing is False:
         return False
-    if thing is np.nan:
-        return False
     try:
-        floatify(thing)
+        thing = floatify(thing)
     except (ValueError, TypeError):
         return False
     else:
-        return True
+        return not np.isnan(thing)
 
 
 def is_num_array(thing: Any) -> bool:

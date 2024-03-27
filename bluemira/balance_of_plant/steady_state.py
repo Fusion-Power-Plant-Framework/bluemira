@@ -281,11 +281,11 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         self.f_divertor = f_divertor
         self.f_vessel = f_vessel
         self.f_other = f_other
-        if energy_multiplication < 1.0:  # noqa: PLR2004
+        if energy_multiplication < 1.0:
             raise BalanceOfPlantError(
                 "Energy multiplication factor cannot be less than 1.0"
             )
-        if decay_multiplication < 1.0:  # noqa: PLR2004
+        if decay_multiplication < 1.0:
             raise BalanceOfPlantError(
                 "Decay multiplication factor cannot be less than 1.0"
             )

@@ -145,7 +145,7 @@ def print_outputs(solver):
     """
     outputs = solver.plasmod_outputs()
     print(f"Fusion power [MW]: {solver.params.P_fus.value_as('MW')}")
-    print(f"Additional heating power [MW]: {outputs.Paux / 1E6}")
+    print(f"Additional heating power [MW]: {outputs.Paux / 1e6}")
     print(f"Radiation power [MW]: {solver.params.P_rad.value_as('MW')}")
     print(
         f"Transport power across separatrix [MW]: {solver.params.P_sep.value_as('MW')}"
