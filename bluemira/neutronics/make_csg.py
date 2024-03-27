@@ -23,7 +23,7 @@ from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import CellWalls, Vertices
 
 if TYPE_CHECKING:
-    from bluemira.neutronics.make_pre_cell import PreCellArray
+    from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
     from bluemira.neutronics.params import TokamakThicknesses
 
 
@@ -355,8 +355,7 @@ def choose_region_cone(
         plane = find_suitable_z_plane(  # the highest we can cut is at the lowest z.
             surface.z0,
             [surface.z0 - EPS_FREECAD, min(z) - EPS_FREECAD],
-            1000 + surface.id,
-            f"Ambiguity plane for cone {surface.id}",
+            name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & +plane
     if all(lower_cone):
@@ -364,8 +363,7 @@ def choose_region_cone(
         plane = find_suitable_z_plane(  # the lowest we can cut is at the highest z.
             surface.z0,
             [max(z) + EPS_FREECAD, surface.z0 + EPS_FREECAD],
-            1000 + surface.id,
-            f"Ambiguity plane for cone {surface.id}",
+            name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & -plane
     if all(np.logical_or(upper_cone, lower_cone)):
@@ -376,8 +374,7 @@ def choose_region_cone(
     plane = find_suitable_z_plane(  # In this rare case, make its own plane.
         surface.z0,
         [surface.z0 + EPS_FREECAD, surface.z0 - EPS_FREECAD],
-        1000 + surface.id,
-        f"Ambiguity plane for cone {surface.id}",
+        name=f"Ambiguity plane for cone {surface.id}",
     )
     if all(np.logical_or(upper_cone, middle)):
         return +surface | +plane
@@ -751,49 +748,53 @@ class BlanketCellArray(abc.Sequence):
 
         find_suitable_z_plane(
             min(cell_walls[:, :, -1].flatten()) - EPS_FREECAD,
-            surface_id=999,
             boundary_type="vacuum",
             name="Blanket bottom",
         )
         find_suitable_z_plane(
             max(cell_walls[:, :, -1].flatten()) + EPS_FREECAD,
-            surface_id=1000,
             boundary_type="vacuum",
             name="Blanket top",
         )
-        innermost_cyl = openmc.ZCylinder(  # noqa: F841
-            min(abs(cell_walls[:, :, 0].flatten())) - EPS_FREECAD,
-            surface_id=1999,
-            boundary_type="vacuum",
-        )
+        # innermost_cyl = openmc.ZCylinder(
+        #     min(abs(cell_walls[:, :, 0].flatten())) - EPS_FREECAD,
+        #     boundary_type="vacuum",
+        # )
         outermost_cyl = openmc.ZCylinder(  # noqa: F841
             max(abs(cell_walls[:, :, 0].flatten())) + EPS_FREECAD,
-            surface_id=2000,
             boundary_type="vacuum",
         )
         # left wall
         ccw_surf = surface_from_2points(
             *cell_walls[0],
-            surface_id=9,
-            name="Blanket cell wall 0 (renamed 9 as openmc does not support 0"
-            "indexing).",
+            name="Blanket cell wall 0" "indexing).",
         )
 
         cell_array = []
         for i, (pre_cell, cw_wall) in enumerate(zip(pre_cell_array, cell_walls[1:])):
             # right wall
-            cw_surf = surface_from_2points(
-                *cw_wall, surface_id=10 * (i + 1), name=f"Blanket cell wall {i + 1}"
-            )
+            cw_surf = surface_from_2points(*cw_wall, name=f"Blanket cell wall {i + 1}")
+            # if cw_wall[0,0] < thicknesses.inboard_outboard_transition_radius:
+            #     thicknesses = thicknesses.inboard.extended_prefix_sums()[1:]
+            # else:
+            #     thicknesses = thicknesses.outboard.extended_prefix_sums()[1:]
+
+            # stack = BlanketCellStack.from_pre_cell_and_shared_surfaces(
+            #     pre_cell, ccw_surf, cw_surf,
+            #     thicknesses.outboard.extended_prefix_sums()[1:],
+            #     fill_dict=material_dict,
+            #     blanket_stack_num=i, # can potentially use this for labelling/numbering
+            # )
+            # cell_array.append(stack)
+            # ccw_surf = cw_surf
 
             # getting the interfaces between layers.
             interior_wire = pre_cell.cell_walls.starts
             cw_wall_cuts, ccw_wall_cuts = [interior_wire[0]], [interior_wire[1]]
-            vertices, cell_ids = [], []
+            vertices = []
             surf_stack = [
                 surface_from_2points(
                     *interior_wire,
-                    surface_id=10 * i + 1,
                     name=f"plasma-facing inner surface {i}",
                 )
             ]
@@ -803,6 +804,7 @@ class BlanketCellArray(abc.Sequence):
             else:
                 thickness_here = thicknesses.outboard.extended_prefix_sums()[1:]
 
+            # Put all of this into classmethod of BlanketCellStack
             for j, (interface_height, _height_type) in enumerate([
                 (0.005, "thick"),
                 *[(value, "frac") for value in thickness_here],
@@ -819,13 +821,10 @@ class BlanketCellArray(abc.Sequence):
                     )
                 else:
                     raise RuntimeError
-                surf_stack.append(
-                    surface_from_2points(*points, surface_id=10 * i + (j + 2))
-                )
+                surf_stack.append(surface_from_2points(*points))
                 vertices.append(
                     Vertices(points[0], points[1], cw_wall_cuts[-1], ccw_wall_cuts[-1])
                 )
-                cell_ids.append(10 * i + j)
                 cw_wall_cuts.append(points[0]), ccw_wall_cuts.append(points[1])
             surf_stack[-1].name = f"vacuum vessel outer surface {i}"
 
@@ -847,7 +846,6 @@ class BlanketCellArray(abc.Sequence):
                 layer_interfaces=surf_stack,
                 vertices=vertices,
                 fill_dict=material_dict,
-                cell_ids=cell_ids,
             )
             cell_array.append(stack)
             ccw_surf = cw_surf  # right wall -> left wall, as we shift right.
@@ -879,8 +877,8 @@ class BlanketCellArray(abc.Sequence):
 
 class DivertorCell(openmc.Cell):
     """
-    A generic Divertor cell forming either the inner target's, outer target's, or
-    dome's surface or bulk.
+    A generic Divertor cell forming either the (inner target's/outer target's/
+    dome's) (surface/ bulk).
     """
 
     pass
@@ -893,10 +891,65 @@ class DivertorCellStack(abc.Sequence):
     poloidal angle.
     """
 
-    pass
+    def __init__(self):
+        cell_stack
+
+    def __len__(self) -> int:
+        return self.cell_stack.__len__()
+
+    def __getitem__(self, index_or_slice) -> Union[List[DivertorCell], DivertorCell]:
+        return self.cell_stack.__getitem__(index_or_slice)
+
+    def __repr__(self) -> str:
+        return super().__repr__().replace(" at ", f" of {len(self)} DivertorCells at ")
+
+    @classmethod
+    def from_divertor_pre_cell(
+        cls,
+        divertor_pre_cell: DivertorPreCell,
+        cw_surf: openmc.Surface,
+        ccw_surf: openmc.Surface,
+        thickness: float = 0,
+    ) -> DivertorCellStack:
+        return
 
 
 class DivertorCellArray(abc.Sequence):
     """Turn the divertor into a cell array"""
 
-    pass
+    def __init__(self, divertor_cell_array: List[DivertorCellStack]):
+        self.divertor_cell_array = divertor_cell_array
+        # check neighbouring cells have the same cell stack.
+
+    def __len__(self) -> int:
+        return self.divertor_cell_array.__len__()
+
+    def __getitem__(
+        self, index_or_slice
+    ) -> Union[List[DivertorCellStack], DivertorCellStack]:
+        return self.divertor_cell_array.__getitem__(index_or_slice)
+
+    def __add__(self, other_array: DivertorCellArray) -> DivertorCellArray:
+        return DivertorCellArray(
+            self.divertor_cell_array + other_array.divertor_cell_array
+        )
+
+    def __repr__(self) -> str:
+        return (
+            super().__repr__().replace(" at ", f" of {len(self)} DivertorCellStacks at")
+        )
+
+    @classmethod
+    def from_divertor_pre_cell_array(
+        cls, divertor_pre_cell_array: DivertorPreCellArray,
+        thickness: TokamakThicknesses, material_dict: Dict[str, openmc.Material],
+    ):
+        """Create the entire from divertor """
+        stack_list = []
+        for dpc in divertor_pre_cell_array:
+            stack_list.append(
+                DivertorCellStack.from_divertor_pre_cell(
+                    dpc, cw_surf, ccw_surf, thickness, material_dict
+                )
+            )
+        return cls(stack_list)
