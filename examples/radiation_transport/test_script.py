@@ -40,12 +40,12 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.radial_wall import CellWalls
 from bluemira.neutronics.slicing import (
+    DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
-    break_wire_into_convex_chunks,
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = PlasmaSourceSimulation
+CHOSEN_RUNMODE = Plotting
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
@@ -57,7 +57,7 @@ _breeder_materials, _tokamak_geometry = get_preset_physical_properties(BlanketTy
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,  # TODO: obsolete
-    particles=100,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
+    particles=10,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
@@ -115,7 +115,9 @@ panel_breakpoint_t[-1] = vector_intersect(
     divertor_bmwire.edges[-1].end_point()[::2].flatten(),
 )
 
-last_point = divertor_bmwire.edges[-1].end_point()
+last_point = divertor_bmwire.edges[
+    -1
+].end_point()  # gonna need to extend it by 1 unit vector.
 
 blanket_panels_bmwire = make_polygon(
     np.insert(panel_breakpoint_t, 1, 0, axis=1).T,
@@ -171,7 +173,10 @@ if __name__ == "__main__":  # begin computation
         *_all_cells,
         openmc.Cell(region=plasma_void_upper, fill=None, name="Plasma cell"),
     ]
-    infos, wires = break_wire_into_convex_chunks(divertor_bmwire, output_wire=True)
+    divertor_wire_and_ext = DivertorWireAndExteriorCurve(divertor_bmwire, outer_boundary)
+    div_pca = (
+        divertor_wire_and_ext.make_divertor_pre_cell_array()
+    )  # DivertorPreCellArray
     sys.exit()
 
     # using openmc
