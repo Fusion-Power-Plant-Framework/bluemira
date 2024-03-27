@@ -223,7 +223,7 @@ class CellWalls(abc.Sequence):
         The number of cells that this represents.
     """
 
-    def __init__(self, cell_walls: npt.NDArray[float]):
+    def __init__(self, cell_walls: npt.NDArray):
         """
         Parameters
         ----------
@@ -250,13 +250,11 @@ class CellWalls(abc.Sequence):
     def __len__(self) -> int:
         return self.cell_walls.__len__()
 
-    def __getitem__(self, index_or_slice) -> Union[npt.NDArray[float], float]:
+    def __getitem__(self, index_or_slice) -> Union[npt.NDArray, float]:
         """self[:] will return a copy of the index."""
         return self.cell_walls.__getitem__(index_or_slice)
 
-    def __setitem__(
-        self, index_or_slice, new_coordinates: Union[npt.NDArray[float], float]
-    ):
+    def __setitem__(self, index_or_slice, new_coordinates: Union[npt.NDArray, float]):
         """
         self[:, :, :] = ... can completely reset some coordinates.
         However, a full-reset should be avoided because we don't want to mess with the
@@ -306,7 +304,7 @@ class CellWalls(abc.Sequence):
 
     def calculate_new_end_points(
         self, lengths: Union[float, npt.NDArray[float]]
-    ) -> npt.NDArray[float]:
+    ) -> npt.NDArray:
         """
         Get the end points of each cell wall if they were changed to have the specified
         lengths. This is different to set_length in that the new end points are returned,
