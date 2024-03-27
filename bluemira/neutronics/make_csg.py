@@ -225,11 +225,11 @@ def z_torus(
 
 
 def torus_from_5points(
-    point1: npt.NDArray,
-    point2: npt.NDArray,
-    point3: npt.NDArray,
-    point4: npt.NDArray,
-    point5: npt.NDArray,
+    point1: npt.NDArray[float],
+    point2: npt.NDArray[float],
+    point3: npt.NDArray[float],
+    point4: npt.NDArray[float],
+    point5: npt.NDArray[float],
     surface_id: Optional[int] = None,
     name: str = "",
 ) -> openmc.ZTorus:
@@ -878,7 +878,8 @@ class BlanketCellArray(abc.Sequence):
 
 
 class DivertorCell(openmc.Cell):
-    """A generic Divertor cell forming either the inner target's, outer target's, or
+    """
+    A generic Divertor cell forming either the inner target's, outer target's, or
     dome's surface or bulk.
     """
 
