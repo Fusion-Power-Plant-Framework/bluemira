@@ -34,7 +34,7 @@ class GeoMeshable(meshing.Meshable):
     Extended Meshable class for BluemiraGeo objects.
     """
 
-    def remove_mesh_options(self, recursive: bool = False):  # noqa: ARG002
+    def remove_mesh_options(self, *, recursive: bool = False):  # noqa: ARG002
         """
         Remove mesh options for this object.
         """
@@ -44,7 +44,7 @@ class GeoMeshable(meshing.Meshable):
                 if isinstance(obj, GeoMeshable):
                     obj.remove_mesh_options(recursive=True)
 
-    def print_mesh_options(self, recursive: bool = True) -> list:  # noqa: ARG002
+    def print_mesh_options(self, *, recursive: bool = True) -> list:  # noqa: ARG002
         """
         Print the mesh options for this object.
         """
@@ -53,7 +53,7 @@ class GeoMeshable(meshing.Meshable):
         output.append(self.mesh_options)
         if hasattr(self, "boundary"):
             output.extend([
-                obj.print_mesh_options(True)
+                obj.print_mesh_options(recursive=True)
                 for obj in self.boundary
                 if isinstance(obj, GeoMeshable)
             ])
@@ -143,7 +143,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return tuple(self._boundary)
 
-    def _set_boundary(self, objs, replace_shape: bool = True):
+    def _set_boundary(self, objs, *, replace_shape: bool = True):
         self._boundary = self._check_boundary(objs)
         if replace_shape:
             if self._boundary is None:

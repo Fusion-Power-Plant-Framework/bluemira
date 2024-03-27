@@ -81,7 +81,7 @@ class BluemiraWire(BluemiraGeo):
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
-    def _create_wire(self, check_reverse: bool = True):
+    def _create_wire(self, *, check_reverse: bool = True):
         wire = cadapi.apiWire(self._get_wires())
         if check_reverse:
             return self._check_reverse(wire)
@@ -124,23 +124,20 @@ class BluemiraWire(BluemiraGeo):
         if not self.is_closed():
             raise NotClosedWireError("The open boundary has not been closed.")
 
-    def discretize(
-        self,
-        ndiscr: int = 100,
-        byedges: bool = False,
-        dl: float | None = None,
+    def discretise(
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> Coordinates:
         """
-        Discretize the wire in ndiscr equidistant points or with a reference dl
+        Discretise the wire in ndiscr equidistant points or with a reference dl
         segment step.
 
         Parameters
         ----------
         ndiscr:
-            Number of points to discretize to
+            Number of points to discretise to
         byedges:
             Whether or not to discretise by edges. If True, each edge is
-            discretized separately using an approximated distance
+            discretised separately using an approximated distance
             (wire.Length/ndiscr) or the specified dl. If True, it is
             possible that ndiscr is larger than specified.
         dl:
@@ -148,12 +145,12 @@ class BluemiraWire(BluemiraGeo):
 
         Returns
         -------
-        Coordinates of the discretized points.
+        Coordinates of the discretised points.
         """
         if byedges:
-            points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretise_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
         else:
-            points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
+            points = cadapi.discretise(self.shape, ndiscr=ndiscr, dl=dl)
         return Coordinates(points.T)
 
     def value_at(

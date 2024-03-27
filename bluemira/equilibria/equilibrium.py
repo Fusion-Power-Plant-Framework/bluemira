@@ -351,7 +351,7 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: plt.Axes | None = None, field: bool = False):
+    def plot(self, ax: plt.Axes | None = None, *, field: bool = False):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
         """
@@ -543,7 +543,7 @@ class Breakdown(CoilSetMHDState):
 
     @classmethod
     def from_eqdsk(
-        cls, filename: str, force_symmetry: bool, user_coils: CoilSet | None = None
+        cls, filename: str, *, force_symmetry: bool, user_coils: CoilSet | None = None
     ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
@@ -760,7 +760,7 @@ class Breakdown(CoilSetMHDState):
         b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
-    def plot(self, ax: plt.Axes | None = None, Bp: bool = False):
+    def plot(self, ax: plt.Axes | None = None, *, Bp: bool = False):
         """
         Plots the breakdown object onto `ax`
         """
@@ -819,6 +819,7 @@ class Equilibrium(CoilSetMHDState):
         coilset: CoilSet,
         grid: Grid,
         profiles: Profile,
+        *,
         force_symmetry: bool = False,
         vcontrol: str | None = None,
         limiter: Limiter | None = None,
@@ -861,6 +862,7 @@ class Equilibrium(CoilSetMHDState):
     def from_eqdsk(
         cls,
         filename: str,
+        *,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
     ):
@@ -1566,7 +1568,7 @@ class Equilibrium(CoilSetMHDState):
         self._x_points = None
 
     def get_OX_points(
-        self, psi: npt.NDArray[np.float64] | None = None, force_update: bool = False
+        self, psi: npt.NDArray[np.float64] | None = None, *, force_update: bool = False
     ) -> tuple[Iterable, Iterable]:
         """
         Returns list of [[O-points], [X-points]]
@@ -1631,7 +1633,7 @@ class Equilibrium(CoilSetMHDState):
         )
         return res.x[0], z
 
-    def analyse_core(self, n_points: int = 50, plot: bool = True) -> CoreResults:
+    def analyse_core(self, n_points: int = 50, *, plot: bool = True) -> CoreResults:
         """
         Analyse the shape and characteristics of the plasma core.
 
@@ -1724,14 +1726,14 @@ class Equilibrium(CoilSetMHDState):
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: plt.Axes | None = None, plasma: bool = False, show_ox: bool = True
+        self, ax: plt.Axes | None = None, *, plasma: bool = False, show_ox: bool = True
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
         return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
-    def plot_field(self, ax: plt.Axes | None = None, show_ox: bool = True):
+    def plot_field(self, ax: plt.Axes | None = None, *, show_ox: bool = True):
         """
         Plot the equilibrium field structure onto `ax`.
         """

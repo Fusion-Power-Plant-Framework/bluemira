@@ -108,7 +108,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         The coordinates of the panel end points (or joints). Has
         shape (2, N).
         """
-        boundary = self.wall_boundary.discretize(
+        boundary = self.wall_boundary.discretise(
             ndiscr=self._n_boundary_discr, byedges=True
         ).xz
         opt_problem = self._set_up_opt_problem(boundary)
@@ -140,7 +140,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary, but does not guarantee the maximum angle and minimum
         length constraints are honoured.
         """
-        boundary = self.wall_boundary.discretize(
+        boundary = self.wall_boundary.discretise(
             ndiscr=self._n_boundary_discr, byedges=True
         ).xz
         paneller = Paneller(

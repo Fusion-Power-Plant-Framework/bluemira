@@ -10,15 +10,9 @@ Built-in build steps for making parameterised TF coils.
 
 from __future__ import annotations
 
-import warnings
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from bluemira.geometry.optimisation.typing import GeomConstraintT
-    from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.geometry.wire import BluemiraWire
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -35,6 +29,11 @@ from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import optimise
+
+if TYPE_CHECKING:
+    from bluemira.geometry.optimisation.typing import GeomConstraintT
+    from bluemira.geometry.parameterisations import GeometryParameterisation
+    from bluemira.geometry.wire import BluemiraWire
 
 
 class ParameterisedRippleSolver:
@@ -123,7 +122,7 @@ class ParameterisedRippleSolver:
                 current_wires.append(c_w)
 
         current_arrays = [
-            w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
+            w.discretise(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
 
         for c in current_arrays:
@@ -259,7 +258,7 @@ class EquispacedSelector(RipplePointSelector):
                 )
             )
             wire = boolean_cut(wire, cut_face)[0]
-        self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
+        self.points = wire.discretise(byedges=True, ndiscr=self.n_rip_points)
 
 
 class ExtremaSelector(RipplePointSelector):
@@ -277,7 +276,7 @@ class ExtremaSelector(RipplePointSelector):
             Wire along which the points will be selected
         """
         super().set_wire(wire)
-        coords = wire.discretize(byedges=True, ndiscr=2000)
+        coords = wire.discretise(byedges=True, ndiscr=2000)
         self.points = Coordinates([
             coords.points[np.argmin(coords.x)],
             coords.points[np.argmax(coords.x)],
@@ -320,7 +319,7 @@ class MaximiseSelector(RipplePointSelector):
             Wire along which the points will be selected
         """
         super().set_wire(wire)
-        points = wire.discretize(byedges=True, ndiscr=200)
+        points = wire.discretise(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
         x_max_point = points[:, arg_x_max]
         self._alpha_0 = wire.parameter_at(x_max_point, tolerance=EPS_FREECAD)
@@ -407,6 +406,8 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         Geometry of the TF coil winding pack cross-section
     separatrix:
         Separatrix shape at which the TF ripple is to be constrained
+    ripple_selector: RipplePointSelector
+        Selection strategy for the poitns at which to calculate ripple.
     keep_out_zone:
         Zone boundary which the WP may not enter
     rip_con_tol:
@@ -419,9 +420,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         Number of toroidal Biot-Savart filaments to use
     n_koz_points:
         Number of discretised points to use when enforcing the keep-out-zone constraint
-    ripple_selector:
-        Selection strategy for the points at which to calculate ripple. Defaults to
-        an equi-spaced set of points along the separatrix
 
     Notes
     -----
@@ -441,16 +439,14 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         opt_parameters: dict[str, float],
         params: ParameterFrame,
         wp_cross_section: BluemiraWire,
-        ripple_wire: BluemiraWire | None = None,
+        ripple_wire: BluemiraWire,
+        ripple_selector: RipplePointSelector | None = None,
         keep_out_zone: BluemiraWire | None = None,
         rip_con_tol: float = 1e-3,
         koz_con_tol: float = 1e-3,
         nx: int = 1,
         ny: int = 1,
-        n_rip_points: int = 100,
         n_koz_points: int = 100,
-        ripple_selector: RipplePointSelector | None = None,
-        separatrix: BluemiraWire | None = None,
     ):
         self.parameterisation = parameterisation
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
@@ -458,17 +454,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self.algorithm = algorithm
         self.opt_parameters = opt_parameters
         self.opt_conditions = opt_conditions
-        if separatrix is not None:
-            if ripple_wire is None:
-                ripple_wire = separatrix
-            warnings.warn(
-                "Argument 'separatrix' is deprecated, "
-                "argument 'ripple_wire' is used instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-        elif ripple_wire is None:
-            raise ValueError("No value for ripple_wire found!")
         self.ripple_wire = ripple_wire
         if keep_out_zone:
             self._keep_out_zone = [
@@ -482,17 +467,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             ]
         else:
             self._keep_out_zone = []
-
-        if ripple_selector is None:
-            warnings.warn(
-                "RippleConstrainedLengthGOP API has changed, please specify how you"
-                " want to constrain TF ripple by using one of the available"
-                " RipplePointSelector classes. Defaulting to an EquispacedSelector with"
-                f" {n_rip_points=} for now.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            ripple_selector = EquispacedSelector(n_rip_points)
 
         ripple_selector.set_wire(self.ripple_wire)
         self.ripple_values = None

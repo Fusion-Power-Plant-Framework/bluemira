@@ -189,9 +189,9 @@ class SkipAlreadyDocumented:
         skip_list = [
             "bluemira.codes.process.api.ENABLED",
             "bluemira.codes.process.api.PROCESS_DICT",
-            "bluemira.codes._nlopt_api.NLOPTOptimiser._opt_inputs_ready",
             "bluemira.codes._polyscope.DefaultDisplayOptions.colour",
             "bluemira.codes._freecadapi.DefaultDisplayOptions.colour",
+            "bluemira.geometry.optimisation._optimise.optimise_geometry",
         ]
 
         self.skip_dict = {i: 0 for i in skip_list}

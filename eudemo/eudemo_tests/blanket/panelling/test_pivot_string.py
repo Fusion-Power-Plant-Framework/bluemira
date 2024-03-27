@@ -31,7 +31,7 @@ class TestMakePivotedString:
             from bluemira.geometry.parameterisations import PrincetonD
 
             shape = PrincetonD().create_shape()
-            points = shape.discretize()
+            points = shape.discretise()
             s = String(points, angle=20, dx_min=0.5, dx_max=2.5)
 
             np.save("panelling_ref_data.npy", s.new_points)
@@ -43,7 +43,7 @@ class TestMakePivotedString:
             "x2": {"value": 14},
             "dz": {"value": 0},
         }).create_shape()
-        boundary_points = boundary.discretize().T
+        boundary_points = boundary.discretise().T
 
         new_points, _ = make_pivoted_string(
             boundary_points, max_angle=20, dx_min=0.5, dx_max=2.5
@@ -59,7 +59,7 @@ class TestMakePivotedString:
             "x2": {"value": 14},
             "dz": {"value": 0},
         }).create_shape()
-        boundary_points = boundary.discretize().T
+        boundary_points = boundary.discretise().T
 
         with pytest.raises(ValueError):  # noqa: PT011
             make_pivoted_string(boundary_points, max_angle=20, dx_min=1, dx_max=dx_max)

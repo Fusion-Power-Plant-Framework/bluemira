@@ -253,6 +253,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         div_l_ob: float,
         psibval: float,
         psibtol: float = 1e-3,
+        *,
         lower: float = True,
         n: int = 100,
     ):
@@ -362,7 +363,7 @@ class ReferenceConstraints(MagneticConstraintSet):
     """
 
     def __init__(self, shape: BluemiraWire, n_points: int):
-        coords = shape.discretize(byedges=True, ndiscr=n_points)
+        coords = shape.discretise(byedges=True, ndiscr=n_points)
         z_min = np.min(coords.z)
         z_max = np.max(coords.z)
         arg_xl = np.argmin(coords.z)

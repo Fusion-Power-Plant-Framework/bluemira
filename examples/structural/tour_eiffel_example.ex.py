@@ -40,7 +40,7 @@ model = FiniteElementModel()
 
 
 # %%
-def make_platform(width, elevation, cross_section, elements=True, internodes=False):
+def make_platform(width, elevation, cross_section, *, elements=True, internodes=False):
     """
     Make a square platform at a certain elevation.
     """
@@ -80,7 +80,7 @@ cs4 = RectangularBeam(1, 1)
 # %%
 make_platform(100, 0, cs1, elements=False)
 for i in range(4):
-    model.add_support(i, *6 * [True])
+    model.add_support(i, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
 # %%
 make_platform(60, 56, cs2, internodes=True)

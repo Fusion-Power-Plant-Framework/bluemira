@@ -27,7 +27,7 @@ Constrained Rosenbrock Optimisation Problem
 
 # %% [markdown]
 # # Eggholder Optimisation Problem
-# Let's solve the unconstrained minimization problem:
+# Let's solve the unconstrained minimisation problem:
 #
 # $$ \min_{x \in \mathbb{R}^2} -(x_2 + 47) \sin{\sqrt{\lvert\frac{x_2}{2}+x_1+47\rvert}}
 # -x_1 \sin{\sqrt{\lvert x_1-x_2-47\rvert}} \tag{1}$$

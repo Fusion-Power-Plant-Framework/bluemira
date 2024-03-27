@@ -123,7 +123,7 @@ display.plot_2d(wire, **my_options)
 # Discretise the wire to an array of points.
 
 # %%
-points = wire.discretize(ndiscr=10, byedges=True)
+points = wire.discretise(ndiscr=10, byedges=True)
 
 # %% [markdown]
 # ## Points Plot

@@ -114,7 +114,7 @@ c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
 
 # %% [markdown]
 #
-# Initialize and create the mesh
+# Initialise and create the mesh
 
 # %%
 directory = get_bluemira_path("", subfolder="generated_data")

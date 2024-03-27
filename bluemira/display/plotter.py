@@ -182,7 +182,7 @@ class DefaultPlotOptions:
     face_options: DictOptionsDescriptor = DictOptionsDescriptor(
         lambda: {"color": "blue", "zorder": 10}
     )
-    # discretization properties for plotting wires (and faces)
+    # discretisation properties for plotting wires (and faces)
     ndiscr: int = 100
     byedges: bool = True
     # View of object
@@ -223,9 +223,9 @@ class BasePlotter(ABC):
     _CLASS_PLOT_OPTIONS: ClassVar = {}
 
     def __init__(self, options: PlotOptions | None = None, **kwargs):
-        # discretization points representing the shape in global coordinate system
+        # discretisation points representing the shape in global coordinate system
         self._data = []
-        # modified discretization points for plotting (e.g. after view transformation)
+        # modified discretisation points for plotting (e.g. after view transformation)
         self._data_to_plot = []
         self.ax = None
         self.options = (
@@ -249,8 +249,8 @@ class BasePlotter(ABC):
     def _check_options(self):
         """Internal function that check if it is needed to plot something"""
 
-    def initialize_plot_2d(self, ax=None):
-        """Initialize the plot environment"""
+    def initialise_plot_2d(self, ax=None):
+        """Initialise the plot environment"""
         if ax is None:
             fig = plt.figure()
             self.ax = fig.add_subplot()
@@ -307,14 +307,14 @@ class BasePlotter(ABC):
         self.ax.set_ylabel(offset + Y_LABEL)
         self.ax.set_zlabel(offset + Z_LABEL)
 
-    def plot_2d(self, obj, ax=None, show: bool = True):
+    def plot_2d(self, obj, ax=None, *, show: bool = True):
         """2D plotting method"""
         self._check_obj(obj)
 
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot_2d(ax)
+            self.initialise_plot_2d(ax)
             self._populate_data(obj)
             self._make_plot_2d()
             self._set_aspect_2d()
@@ -327,8 +327,8 @@ class BasePlotter(ABC):
     # # =================================================================================
     # # 3-D functions
     # # =================================================================================
-    def initialize_plot_3d(self, ax=None):
-        """Initialize the plot environment"""
+    def initialise_plot_3d(self, ax=None):
+        """Initialise the plot environment"""
         if ax is None:
             fig = plt.figure()
             self.ax = fig.add_subplot(projection="3d")
@@ -341,14 +341,14 @@ class BasePlotter(ABC):
         self._data_to_plot, so _populate_data should be called before.
         """
 
-    def plot_3d(self, obj, ax=None, show: bool = True):
+    def plot_3d(self, obj, ax=None, *, show: bool = True):
         """3D plotting method"""
         self._check_obj(obj)
 
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot_3d(ax=ax)
+            self.initialise_plot_3d(ax=ax)
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
             # self._data_to_plot is used for 2D plot
@@ -423,7 +423,7 @@ class WirePlotter(BasePlotter):
         new_wire = wire.deepcopy()
         # # change of view integrated in PointsPlotter2D. Not necessary here.
         # new_wire.change_placement(self.options._options['view'])
-        pointsw = new_wire.discretize(
+        pointsw = new_wire.discretise(
             ndiscr=self.options._options.ndiscr,
             byedges=self.options._options.byedges,
         ).T
@@ -617,6 +617,7 @@ def plot_2d(
     parts: BluemiraGeo | list[BluemiraGeo],
     options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
+    *,
     show: bool = True,
     **kwargs,
 ):
@@ -652,6 +653,7 @@ def plot_3d(
     parts: BluemiraGeo | list[BluemiraGeo],
     options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
+    *,
     show: bool = True,
     **kwargs,
 ):
@@ -719,7 +721,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax=None, show: bool = True) -> None:
+    def plot_2d(self, ax=None, *, show: bool = True) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -731,7 +733,7 @@ class Plottable:
         """
         return self._plotter.plot_2d(self, ax=ax, show=show)
 
-    def plot_3d(self, ax=None, show: bool = True) -> None:
+    def plot_3d(self, ax=None, *, show: bool = True) -> None:
         """
         Function to 3D plot a component.
 
@@ -782,7 +784,7 @@ def _get_plan_dims(array):
     return sorted(dims)
 
 
-def plot_coordinates(coords, ax=None, points=False, **kwargs):
+def plot_coordinates(coords, ax=None, *, points=False, **kwargs):
     """
     Plot Coordinates.
 

@@ -13,7 +13,6 @@ from __future__ import annotations
 import abc
 import copy
 import json
-import warnings
 from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
@@ -135,42 +134,6 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             Value at which to fix the variable (will default to present value)
         """
         self.variables.fix_variable(name, value)
-
-    def shape_ineq_constraints(
-        self,
-        constraint: np.ndarray,  # noqa: ARG002
-        x: np.ndarray,  # noqa: ARG002
-        grad: np.ndarray,  # noqa: ARG002
-    ):
-        """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation. This is used when internal consistency between different
-        un-fixed variables is required.
-
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
-
-        Notes
-        -----
-        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
-        """
-        warnings.warn(
-            "Use of 'shape_ineq_constraints' method is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.f_ineq_constraint()
 
     def f_ineq_constraint(self):
         """
@@ -408,7 +371,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 offset_ar_z += 1.5
         return offset_ar_x, offset_ar_z
 
-    def plot(self, ax=None, labels=False, **kwargs):
+    def plot(self, ax=None, *, labels=False, **kwargs):
         """
         Plot the geometry parameterisation
 
@@ -522,45 +485,6 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         # TODO: The real irony is that tangencies don't solve the problem..
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
-
-    def shape_ineq_constraints(
-        self,
-        constraint: np.ndarray,
-        x_norm: np.ndarray,  # noqa: ARG002
-        grad: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation. This is used when internal consistency between different
-        un-fixed variables is required.
-
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
-
-        Notes
-        -----
-        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
-        """
-        warnings.warn(
-            "Use of 'shape_ineq_constraints' method is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        constraint[:] = self.f_ineq_constraint()
-        grad[:] = self.df_ineq_constraint()
-
-        return constraint
 
     def f_ineq_constraint(self) -> np.ndarray:
         """Inequality constraint for PrincetonD."""
@@ -733,45 +657,6 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
-
-    def shape_ineq_constraints(
-        self,
-        constraint: np.ndarray,
-        x_norm: np.ndarray,  # noqa: ARG002
-        grad: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation. This is used when internal consistency between different
-        un-fixed variables is required.
-
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
-
-        Notes
-        -----
-        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
-        """
-        warnings.warn(
-            "Use of 'shape_ineq_constraints' method is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        constraint[:] = self.f_ineq_constraint()
-        grad[:] = self.df_ineq_constraint()
-
-        return constraint
 
     def f_ineq_constraint(self) -> np.ndarray:
         """
@@ -1002,45 +887,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
-
-    def shape_ineq_constraints(
-        self,
-        constraint: np.ndarray,
-        x_norm: np.ndarray,  # noqa: ARG002
-        grad: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation. This is used when internal consistency between different
-        un-fixed variables is required.
-
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
-
-        Notes
-        -----
-        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
-        """
-        warnings.warn(
-            "Use of 'shape_ineq_constraints' method is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        constraint[:] = self.f_ineq_constraint()
-        grad[:] = self.df_ineq_constraint()
-
-        return constraint
 
     def f_ineq_constraint(self) -> np.ndarray:
         """
@@ -1505,6 +1351,7 @@ class PictureFrameTools:
         z_mid: float,
         ri: float,
         axis: Iterable[float] = (0, -1, 0),
+        *,
         flip: bool = False,
     ) -> BluemiraWire:
         """
@@ -1658,6 +1505,7 @@ class PictureFrameTools:
         r_i: float,
         r_o: float,
         axis: Iterable[float] = (0, 1, 0),
+        *,
         flip: bool = False,
     ) -> BluemiraWire:
         """
@@ -1822,10 +1670,10 @@ class PictureFrameTools:
             [bot_straight, bot_curve, taper, top_curve, top_straight], label="inner_limb"
         )
 
-    def _connect_to_outer_limb(self, top, bottom, top_curve=False, bot_curve=False):
+    def _connect_to_outer_limb(self, top, bottom, *, top_curve=False, bot_curve=False):
         return self._outer_limb(
-            top.discretize(100, byedges=True)[:, -1] if top_curve else top,
-            bottom.discretize(100, byedges=True)[:, 0] if bot_curve else bottom,
+            top.discretise(100, byedges=True)[:, -1] if top_curve else top,
+            bottom.discretise(100, byedges=True)[:, 0] if bot_curve else bottom,
         )
 
     def _connect_straight_to_inner_limb(self, top, bottom):
@@ -2093,7 +1941,7 @@ class PictureFrame(
         return None
 
     def _make_upper_lower_leg(
-        self, make_upper_section: bool, flip: bool
+        self, *, make_upper_section: bool, flip: bool
     ) -> PFrameSection:
         v = self.variables
         section_func: PFrameSection = self.upper if make_upper_section else self.lower
@@ -2131,8 +1979,8 @@ class PictureFrame(
                 if self.lower is PFrameSection.CURVED
                 else [v.x2.value, 0, v.z2 + v.ro]
             ),
-            self.upper is PFrameSection.CURVED,
-            self.lower is PFrameSection.CURVED,
+            top_curve=self.upper is PFrameSection.CURVED,
+            bot_curve=self.lower is PFrameSection.CURVED,
         )
 
     def _label_function(self, ax, shape):

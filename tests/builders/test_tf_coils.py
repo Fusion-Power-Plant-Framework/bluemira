@@ -53,7 +53,7 @@ class TestRippleConstrainedLengthGOP:
             self.lcfs,
             keep_out_zone=None,
             rip_con_tol=1e-3,
-            n_rip_points=3,
+            ripple_selector=EquispacedSelector(3),
         )
         problem.optimise()
         problem.plot()

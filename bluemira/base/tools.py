@@ -16,7 +16,7 @@ from typing import TypeVar
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import serialize_shape
+from bluemira.geometry.tools import serialise_shape
 
 _T = TypeVar("_T")
 
@@ -25,6 +25,7 @@ def _timing(
     func: Callable[..., _T],
     timing_prefix: str,
     info_str: str = "",
+    *,
     debug_info_str: bool = False,
 ) -> Callable[..., _T]:
     """
@@ -71,18 +72,18 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 
 
 # # =============================================================================
-# # Serialize and Deserialize
+# # Serialise and Deserialise
 # # =============================================================================
-def serialize_component(comp: Component) -> dict:
+def serialise_component(comp: Component) -> dict:
     """
-    Serialize a Component object.
+    Serialise a Component object.
     """
     type_ = type(comp)
 
     if isinstance(comp, Component):
-        output = [serialize_component(child) for child in comp.children]
+        output = [serialise_component(child) for child in comp.children]
         cdict = {"label": comp.name, "children": output}
         if isinstance(comp, PhysicalComponent):
-            cdict["shape"] = serialize_shape(comp.shape)
+            cdict["shape"] = serialise_shape(comp.shape)
         return {str(type(comp).__name__): cdict}
-    raise NotImplementedError(f"Serialization non implemented for {type_}")
+    raise NotImplementedError(f"Serialisation non implemented for {type_}")

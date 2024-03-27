@@ -11,10 +11,9 @@ from unittest.mock import patch
 
 import pytest
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.base.reactor import Reactor
+from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 from bluemira.materials.material import Void
@@ -75,7 +74,7 @@ class TestReactor:
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
         with pytest.raises(ComponentError):
-            self.reactor.show_cad(dim=bad_dim)
+            self.reactor.show_cad(bad_dim)
 
     @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
     def test_plot_displays_all_components(self, dim):

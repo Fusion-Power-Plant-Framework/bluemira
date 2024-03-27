@@ -155,7 +155,7 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _get_sep_out_intersection(self, outboard=True):
+    def _get_sep_out_intersection(self, *, outboard=True):
         """
         Find the middle and maximum outboard mid-plane psi norm values
         """
@@ -448,7 +448,7 @@ class ChargedParticleSolver:
             ]),
         )
 
-    def _q_par(self, x, dx, B, Bp, outboard=True):
+    def _q_par(self, x, dx, B, Bp, *, outboard=True):
         """
         Calculate the parallel power at the midplane.
         """
@@ -469,7 +469,7 @@ class ChargedParticleSolver:
             / (Bp * 2 * np.pi * x)
         )
 
-    def plot(self, ax: Axes = None, show=False) -> Axes:
+    def plot(self, ax: Axes = None, *, show=False) -> Axes:
         """
         Plot the ChargedParticleSolver results.
         """

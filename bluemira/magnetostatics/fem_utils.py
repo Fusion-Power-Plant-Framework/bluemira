@@ -190,7 +190,10 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     closest_entities = geometry.compute_closest_entity(tree, midpoint_tree, mesh, points)
     # _colliding_entity_bboxes = geometry.compute_collisions_points(tree, points)
     geom_dofs = cpp.mesh.entities_to_geometry(
-        mesh._cpp_object, tdim, np.atleast_2d(closest_entities), False
+        mesh._cpp_object,
+        tdim,
+        np.atleast_2d(closest_entities),
+        False,  # noqa: FBT003
     )
 
     dist = []

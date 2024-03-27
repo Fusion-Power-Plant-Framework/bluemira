@@ -25,6 +25,7 @@ __all__ = ["plot_default_profiles"]
 
 def plot_default_profiles(
     plasmod_solver: Solver,
+    *,
     show: bool = True,
     f: plt.Figure | None = None,
     ax: plt.Axes | None = None,

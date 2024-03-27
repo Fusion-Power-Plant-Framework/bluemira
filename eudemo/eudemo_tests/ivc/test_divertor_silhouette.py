@@ -109,7 +109,7 @@ class TestDivertorSilhouetteDesigner:
 
         _, _, dome, _, _ = designer.execute()
 
-        dome_coords = dome.discretize()
+        dome_coords = dome.discretise()
         turning_points = get_turning_point_idxs(dome_coords[2, :])
         assert len(turning_points) == 1
         assert dome_coords[2, turning_points[0]] < x_points[0].z

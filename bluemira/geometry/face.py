@@ -91,7 +91,7 @@ class BluemiraFace(BluemiraGeo):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _create_face(self, check_reverse: bool = True):
+    def _create_face(self, *, check_reverse: bool = True):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
@@ -133,8 +133,8 @@ class BluemiraFace(BluemiraGeo):
 
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
-    def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float | None = None
+    def discretise(
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> np.ndarray:
         """
         Make an array of the geometry.
@@ -143,22 +143,22 @@ class BluemiraFace(BluemiraGeo):
         ----------
         ndiscr:
             Number of points in the array
-        byedges:
-            Whether or not to discretise by edges
         dl:
             Optional length discretisation (overrides ndiscr)
+        byedges:
+            Whether or not to discretise by edges
 
         Returns
         -------
         (M, (3, N)) array of point coordinates where M is the number of boundaries
-        and N the number of discretization points.
+        and N the number of discretisation points.
         """
         points = []
         for w in self.shape.Wires:
             if byedges:
-                points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretise_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:
-                points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretise(w, ndiscr=ndiscr, dl=dl))
         return points
 
     def normal_at(self, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:

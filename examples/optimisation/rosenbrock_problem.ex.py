@@ -27,7 +27,7 @@ Constrained Rosenbrock Optimisation Problem
 
 # %% [markdown]
 # # Constrained Rosenbrock Optimisation Problem
-# Let's solve the unconstrained minimization problem:
+# Let's solve the unconstrained minimisation problem:
 #
 # $$ \min_{x \in \mathbb{R}^2} (a-x_1)^2 + b(x_2-x_1^2)^2 \tag{1}$$
 #

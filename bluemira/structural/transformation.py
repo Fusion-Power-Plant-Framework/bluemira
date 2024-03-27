@@ -67,7 +67,7 @@ def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
     return dcm
 
 
-def _direction_cosine_matrix_debugging(dx, dy, dz, debug=False):
+def _direction_cosine_matrix_debugging(dx, dy, dz, *, debug=False):
     """
     Slow, ugly, safe
     """
@@ -178,6 +178,7 @@ def cyclic_pattern(
     axis: np.ndarray,
     angle: float,
     n: int,
+    *,
     include_first: bool = True,
 ) -> list[Geometry | DeformedGeometry]:
     """

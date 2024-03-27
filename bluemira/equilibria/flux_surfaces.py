@@ -686,6 +686,7 @@ class FieldLineTracer:
         x: float,
         z: float,
         n_points: int = 200,
+        *,
         forward: bool = True,
         n_turns_max: int = 20,
     ) -> FieldLine:
@@ -764,6 +765,7 @@ def calculate_connection_length_flt(
     eq: Equilibrium,
     x: float,
     z: float,
+    *,
     forward: bool = True,
     first_wall=Coordinates | Grid | None,
     n_turns_max: int = 50,
@@ -811,6 +813,7 @@ def calculate_connection_length_fs(
     eq: Equilibrium,
     x: float,
     z: float,
+    *,
     forward: bool = True,
     first_wall=Coordinates | Grid | None,
 ) -> float:

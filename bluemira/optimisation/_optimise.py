@@ -180,7 +180,7 @@ def optimise(
         bounds,
         eq_constraints,
         ineq_constraints,
-        keep_history,
+        keep_history=keep_history,
     )
     result = optimiser.optimise(x0)
     if check_constraints:
@@ -194,6 +194,7 @@ def validate_constraints(
     x_star: np.ndarray,
     eq_constraints: list[ConstraintT],
     ineq_constraints: list[ConstraintT],
+    *,
     warn: bool = True,
 ) -> bool:
     """
@@ -241,6 +242,7 @@ def _make_optimiser(
     bounds: tuple[np.ndarray, np.ndarray] | None = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
+    *,
     keep_history: bool = False,
 ) -> Optimiser:
     """Make a new optimiser object."""

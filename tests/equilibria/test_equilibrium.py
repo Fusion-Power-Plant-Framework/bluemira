@@ -17,12 +17,14 @@ from bluemira.equilibria.coils import CoilGroup, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
 )
-from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.optimisation.problem import (
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
 from bluemira.equilibria.physics import calc_li3
 from bluemira.equilibria.profiles import (
     BetaIpProfile,
