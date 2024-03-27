@@ -95,8 +95,8 @@ def plot_coords(surface: openmc.Surface, color_num: int):
 
 
 def surface_from_2points(
-    point1: npt.NDArray,
-    point2: npt.NDArray,
+    point1: npt.NDArray[float],
+    point2: npt.NDArray[float],
     surface_id: Optional[int] = None,
     name: str = "",
 ) -> Optional[Union[openmc.Surface, openmc.model.ZConeOneSided]]:
@@ -140,9 +140,9 @@ def surface_from_2points(
 
 
 def torus_from_3points(
-    point1: npt.NDArray,
-    point2: npt.NDArray,
-    point3: npt.NDArray,
+    point1: npt.NDArray[float],
+    point2: npt.NDArray[float],
+    point3: npt.NDArray[float],
     surface_id: Optional[int] = None,
     name: str = "",
 ) -> openmc.ZTorus:
@@ -193,7 +193,7 @@ def torus_from_circle(
 
 
 def z_torus(
-    center: npt.NDArray,
+    center: npt.NDArray[float],
     minor_radius: float,
     surface_id: Optional[int] = None,
     name: str = "",
