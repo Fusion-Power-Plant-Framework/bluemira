@@ -539,7 +539,7 @@ def offset_wire(
     -------
     Offset wire
     """
-    if thickness == 0.0:  # noqa: PLR2004
+    if thickness == 0.0:
         return wire.copy()
 
     if _wire_is_straight(wire):
@@ -690,7 +690,7 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
     Once tesselated an object's properties may change. Tesselation cannot be reverted
     to a previous lower value, but can be increased (irreversibly).
     """
-    if tolerance <= 0.0:  # noqa: PLR2004
+    if tolerance <= 0.0:
         raise ValueError("Cannot have a tolerance that is less than or equal to 0.0")
 
     vectors, indices = obj.tessellate(tolerance)
@@ -817,7 +817,7 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
     if dl is None:
         if ndiscr < 2:  # noqa: PLR2004
             raise ValueError("ndiscr must be greater than 2.")
-    elif dl <= 0.0:  # noqa: PLR2004
+    elif dl <= 0.0:
         raise ValueError("dl must be > 0.")
     else:
         # a dl is calculated for the discretisation of the different edges
@@ -864,7 +864,7 @@ def discretize_by_edges(
     if dl is None:
         # dl is calculated for the discretisation of the different edges
         dl = w.Length / float(ndiscr)
-    elif dl <= 0.0:  # noqa: PLR2004
+    elif dl <= 0.0:
         raise ValueError("dl must be > 0.")
 
     # edges are discretised taking into account their orientation
@@ -926,11 +926,11 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     -------
     Wire point value at distance
     """
-    if distance == 0.0:  # noqa: PLR2004
+    if distance == 0.0:
         return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)
-    if distance < 0.0:  # noqa: PLR2004
+    if distance < 0.0:
         bluemira_warn("Distance must be greater than 0; returning start point.")
         return start_point(wire)
     if distance > wire.Length:
