@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections import abc
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 from numpy import typing as npt
@@ -21,10 +21,13 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.radial_wall import CellWalls, VerticesCoordinates
+from bluemira.neutronics.radial_wall import CellWalls, Vertices, VerticesCoordinates
+
+if TYPE_CHECKING:
+    from bluemira.neutronics.slicing import WireInfoList
 
 
-class PreCell:
+class PreCell:  # TODO: Rename this as BlanketPreCell
     """
     A pre-cell is the BluemiraWire outlining the reactor cross-section
     BEFORE they have been simplified into straight-lines.
@@ -258,7 +261,98 @@ class PreCellArray(abc.Sequence):
 
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
-        return PreCellArray(self.pre_cells + other_array)
+        if isinstance(other_array, PreCellArray):
+            return PreCellArray(self.pre_cells + other_array)
+        raise TypeError(
+            "Addition not implemented between PreCellArray and "
+            f"{other_array.__class__}"
+        )
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
+
+
+class DivertorPreCell:
+    """
+    An intermediate class between the bluemira wire and the final csg product.
+    A divertor pre-cell is the equivalent of a blanket's pre-cell, but for the divertor.
+    """
+
+    def __init__(
+        self,
+        interior_wire: WireInfoList,
+        exterior_wire: WireInfoList,
+        cw_wall: WireInfoList,
+        ccw_wall: WireInfoList,
+    ):
+        self.interior_wire = interior_wire
+        self.exterior_wire = exterior_wire
+        self.cw_wall = cw_wall
+        self.ccw_wall = ccw_wall
+        for wall in (self.cw_wall, self.ccw_wall):
+            # TODO: uncomment the check below once the code is refactored.
+            if len(wall) != 1:  # or not isinstance(wall.key_points, StraightLineInfo):
+                raise GeometryError(
+                    "Expected only a single straight line in cw_wall and" " ccw_wall."
+                )
+        self.vertex = Vertices(
+            self.cw_wall.start_point,
+            self.cw_wall.end_point,
+            self.ccw_wall.start_point,
+            self.ccw_wall.end_point,
+        )
+
+    @property
+    def outline(self):
+        """
+        We don't need the volume value, so we're only going to generate the outline
+        when the user wants to plot it.
+        """
+        if not hasattr(self, "_outline"):
+            self._outline = BluemiraWire([
+                self.cw_wall.restore_to_wire(),
+                self.interior_wire.restore_to_wire(),
+                self.ccw_wall.restore_to_wire(),
+                self.exterior_wire.restore_to_wire(),
+            ])
+        return self._outline
+
+
+class DivertorPreCellArray(abc.Sequence):
+    """An array of Divertor pre-cells"""
+
+    def __init__(self, list_of_div_pc: List[DivertorPreCell]):
+        self.pre_cells = list(list_of_div_pc)
+        # confirm that they are adjacent
+        for prev_cell, curr_cell in zip(self[:-1], self[1:]):
+            if not np.allclose(
+                prev_cell.vertex.exterior_start,
+                curr_cell.vertex.exterior_end,
+                atol=0,
+                rtol=EPS_FREECAD,
+            ):
+                # and np.allclose(prev_cell.vertex.interior_end,
+                #                 curr_cell.vertex.interior_start,
+                #                 atol=0, rtol=EPS_FREECAD)
+                raise GeometryError("Expect neighbouring cells to share corners!")
+
+    def __len__(self) -> int:
+        return self.pre_cells.__len__()
+
+    def __getitem__(
+        self, index_or_slice
+    ) -> Union[List[DivertorPreCell], DivertorPreCell]:
+        return self.pre_cells.__getitem__(index_or_slice)
+
+    def __add__(self, other_array) -> DivertorPreCellArray:
+        if isinstance(other_array, DivertorPreCellArray):
+            return DivertorPreCellArray(self.pre_cell + self.pre_cell)
+        raise TypeError(
+            "Addition not implemented between DivertorPreCellArray and "
+            f"{other_array.__class__}"
+        )
+
+    def __repr__(self) -> str:
+        return (
+            super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
+        )
