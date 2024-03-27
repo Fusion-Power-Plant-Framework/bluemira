@@ -144,7 +144,7 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
     Parameters
     ----------
     Z_eff:
-        Effective charge [a.m.u.]
+        Effective charge [e]
     T_e:
         Electron temperature on axis [eV]
     ln_lambda:
