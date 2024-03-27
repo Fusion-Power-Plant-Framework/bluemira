@@ -8,9 +8,11 @@
 A collection of simple 0-D rules of thumb for tokamak plasmas.
 """
 
+from typing import Optional
+
 import numpy as np
 
-from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0
+from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0, MU_0_4PI
 from bluemira.plasma_physics.collisions import coulomb_logarithm, spitzer_conductivity
 
 
@@ -282,3 +284,41 @@ def estimate_li_wesson(
     """
     nu = q_star / q_0 - 1.0
     return np.log(1.65 + 0.89 * nu)
+
+
+def estimate_vertical_field(
+    R_0: float,
+    A: float,
+    I_p: float,
+    beta_p_th: float,
+    l_i: float,
+    kappa_95: Optional[float] = None,
+) -> float:
+    """
+    Estimate the vertical field to keep the plasma in equilibrium.
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    I_p:
+        Plasma current [A]
+    beta_p_th:
+        Thermal poloidal beta
+    l_i:
+        Normalised internal inductance
+    kappa:
+        Plasma elongation at the 95th percentile flux surface
+
+    Notes
+    -----
+    See e.g. Ferrara et al., "Alcasim simulation code for Alcator C-Mod"
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4178094
+
+    The kappa term is not always present in textbooks and the like, and
+    is almost certainly irrelevant at the end of breakdown.
+    """
+    k_term = 1.0 if kappa_95 is None else np.sqrt(2.0 / (1.0 + kappa_95**2))
+    return -MU_0_4PI * I_p / R_0 * (beta_p_th + 0.5 * l_i - 1.5 + np.log(8 * A * k_term))
