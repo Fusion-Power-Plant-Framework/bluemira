@@ -15,8 +15,12 @@ import numpy as np
 from numpy import typing as npt
 
 from bluemira.display import plot_2d, show_cad
-from bluemira.geometry.constants import EPS_FREECAD, choose_direction
-from bluemira.geometry.coordinates import Coordinates, get_bisection_line
+from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    choose_direction,
+    get_bisection_line,
+)
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
@@ -376,9 +380,8 @@ def calculate_new_circle(
     center1, center2 = (np.insert(possible_centers, 1, 0, axis=1),)
 
     old_chord_mid_point = np.mean(old_circle_info[:2], axis=0)
-    old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
-    # assuming the transformation is not too dramatic, then the new radius_vector would
-    # point in pretty much the same direction.
+    old_radius_vector = old_chord_mid_point - np.array(old_circle_info.center)
+    # chord should stay on the same side of the center after transformation.
     new_center = pick_higher_point(center1, center2, old_radius_vector)
 
     return CircleInfo(*new_points, new_center, new_radius)
