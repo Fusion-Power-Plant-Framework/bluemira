@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Dict, Iterable, Sequence, Union
 
 import openmc
 
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.tools import _timing
-from bluemira.look_and_feel import bluemira_debug
 from bluemira.neutronics.neutronics_axisymmetric import (
     create_parametric_plasma_source,
     create_ring_source,
