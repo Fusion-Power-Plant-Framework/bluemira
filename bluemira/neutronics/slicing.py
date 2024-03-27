@@ -492,15 +492,18 @@ def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> List[WireInfoLis
         concave_turning_point = turned_morethan_180(
             prev_end_tangent, next_start_tangent, curvature_sign
         )
-        if interior_curve_turned_over_180 or concave_turning_point:
-            if interior_curve_turned_over_180:
-                # curled in on itself too much.
-                bluemira_warn(
-                    "Divertor wire geometry possibly too extreme for program "
-                    "to handle. Check pre-cell visually by using the .plot_2d() methods "
-                    "on the relevant DivertorPreCell and DivertorPreCellArray."
-                )
+        if concave_turning_point:
             conclude_chunk()
+            continue
+        if interior_curve_turned_over_180:
+            # curled in on itself too much.
+            bluemira_warn(
+                "Divertor wire geometry possibly too extreme for program "
+                "to handle. Check pre-cell visually by using the .plot_2d() methods "
+                "on the relevant DivertorPreCell and DivertorPreCellArray."
+            )
+            # TODO: delete this warning (and the associated checks) when the TODO in
+            # DivertorWireAndExteriorCurve.calculate_exterior_cut_points is done.
     add_to_chunk(wire_segments.pop(0))
     conclude_chunk()
 
