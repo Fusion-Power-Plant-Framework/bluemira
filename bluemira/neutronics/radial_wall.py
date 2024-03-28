@@ -47,7 +47,9 @@ class Vertices:
         )
 
     def to_2D(self) -> Vertices:
-        """Put the vertices back into the XZ plane, with only 2 coordinates."""
+        """Put the vertices back into the XZ plane, with only 2 coordinates.
+        Basically unused.
+        """
         return Vertices(
             np.array([self.exterior_end[0], self.exterior_end[-1]]),
             np.array([self.interior_start[0], self.interior_start[-1]]),
@@ -78,7 +80,7 @@ class VerticesCoordinates:
     exterior_start: Coordinates
 
     def to_2D(self) -> Vertices:
-        """Convert itself to a list of 2D vertices"""
+        """Convert itself to a list of 2D vertices. Mainly used for pre-cells."""
         return Vertices(
             self.exterior_end[::2, 0],
             self.interior_start[::2, 0],

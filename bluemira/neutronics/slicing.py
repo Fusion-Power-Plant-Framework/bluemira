@@ -583,7 +583,7 @@ class DivertorWireAndExteriorCurve:
         N.B. These cut points must be sequentially added, i.e. they should
         follow the exterior curve in the clockwise direction.
 
-        TODO: this is identical to :class:`~PanelsAndExteriorCurve.add_cut_point`.
+        TODO: this is identical to :meth:`~PanelsAndExteriorCurve.add_cut_point`.
         Should be refactored away.
         """
         self.cut_points.append(
@@ -670,7 +670,7 @@ class DivertorWireAndExteriorCurve:
         discretization.
 
         TODO: when refactoring: possibly abstract this away because this is a shared
-        functionality with :class:`~PanelsAndExteriorCurve.execute_exterior_curve_cut`.
+        functionality with :meth:`~PanelsAndExteriorCurve.execute_exterior_curve_cut`.
 
         Parameters
         ----------
