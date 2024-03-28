@@ -28,6 +28,12 @@ dt_neutron_energy = energy_per_dt * (
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
+# how many degrees misalignment tolerated while merging almost-parallel wires into one.
+TOLERANCE_DEGREES = 6.0
+# Default value to discretize the BluemiraWire.
+# Set to 10 to preserve speed without too much loss in precision.
+DISCRETIZATION_LEVEL = 10
+
 
 # The following material science constants are in cgs.
 Fe_molar_mass_g = elements.isotope("Fe").mass

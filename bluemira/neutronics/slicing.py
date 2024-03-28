@@ -26,6 +26,7 @@ from bluemira.geometry.plane import (
     z_plane,
 )
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.neutronics.constants import DISCRETIZATION_LEVEL, TOLERANCE_DEGREES
 from bluemira.neutronics.make_pre_cell import (
     DivertorPreCell,
     DivertorPreCellArray,
@@ -43,9 +44,6 @@ if TYPE_CHECKING:
     from numpy import typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
-
-TOLERANCE_DEGREES = 6.0
-DISCRETIZATION_LEVEL = 10
 
 
 def grow_blanket_into_pre_cell_array(
