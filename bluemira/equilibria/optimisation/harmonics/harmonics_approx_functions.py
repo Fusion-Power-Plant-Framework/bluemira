@@ -662,11 +662,11 @@ def spherical_harmonic_approximation(
         if fit_metric_value <= acceptable_fit_metric:
             break
         if degree == degree_limit_opt_coils:
-            bluemira_print("Uh oh, you cannot use more degrees than optimisable coils.")
+            bluemira_warn("You cannot use more degrees than optimisable coils.")
             break
         if degree == degree_limit_collocation:
-            bluemira_print(
-                "Uh oh, you may need to use more degrees for a fit metric of"
+            bluemira_warn(
+                "You may need to use more degrees for a fit metric of"
                 f" {acceptable_fit_metric}! Use a greater number of collocation points"
                 " please."
             )
