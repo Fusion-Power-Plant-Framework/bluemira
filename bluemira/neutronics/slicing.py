@@ -336,7 +336,7 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
                     start_vector,
                     end_vector,
                     np.array(edge.Curve.Center),
-                    np.array(edge.Curve.Radius),
+                    edge.Curve.Radius,
                 ),
                 [
                     edge.tangentAt(edge.FirstParameter),

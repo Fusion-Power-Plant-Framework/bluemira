@@ -90,6 +90,16 @@ class WireInfoList(abc.Sequence):
         """Pop one element"""
         return self.info_list.pop(index)
 
+    def get_3D_coordinates(self) -> npt.NDArray:
+        """
+        Get of the entire wire.
+        """
+        # assume continuity, which is already enforced during initialization, so we
+        # should be fine.
+        coords = [self[0].key_points[0]]
+        coords.extend(seg.key_points[1] for seg in self)
+        return np.array(coords, dtype=float)  # shape = (N+1, 3)
+
     @property
     def start_point(self):
         """The start_point for the entire series of wires"""
@@ -128,7 +138,8 @@ class WireInfoList(abc.Sequence):
                 wire_list.append(info.wire)
                 continue
             if isinstance(info.key_points, StraightLineInfo):
-                wire_list.append(make_polygon(start_end.T, closed=False))
+                info.wire = make_polygon(start_end.T, closed=False)
+                wire_list.append(info.wire)
             else:
                 # given two points on the circumference, only makes the SHORTER of the
                 # two possible arcs of the circle.
@@ -136,5 +147,6 @@ class WireInfoList(abc.Sequence):
                 direction = chord_intersect - info.key_points.center
                 normed_dir = direction / np.linalg.norm(direction)
                 middle = info.key_points.center + info.key_points.radius * normed_dir
-                wire_list.append(make_circle_arc_3P(start_end[0], middle, start_end[1]))
+                info.wire = make_circle_arc_3P(start_end[0], middle, start_end[1])
+                wire_list.append(info.wire)
         return BluemiraWire(wire_list)
