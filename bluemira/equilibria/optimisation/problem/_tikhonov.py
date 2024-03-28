@@ -108,8 +108,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             cs_opt_state = self.coilset.get_optimisation_state(current_scale=self.scale)
             x0 = np.clip(cs_opt_state.currents, *self.bounds)
         else:
-            x0 = x0 / self.scale
-            x0 = np.clip(x0, *self.bounds)
+            x0 = np.clip(x0 / self.scale, *self.bounds)
 
         objective = RegularisedLsqObjective(
             scale=self.scale,
@@ -203,7 +202,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
 
         currents_full = self.eq.coilset._optimisation_currents_rep_mat @ opt_currents
 
-        f_x = float(
+        f_x = floatify(
             np.linalg.norm(a_mat @ currents_full - b_vec)
             + np.linalg.norm(self.gamma * currents_full)
         )

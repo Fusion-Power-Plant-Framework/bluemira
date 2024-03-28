@@ -65,6 +65,6 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
             """)
         return residual
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
+    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Constraint derivative"""
         return (self.scale * self.a_mat[1:,]) @ self.current_rep_matrix
