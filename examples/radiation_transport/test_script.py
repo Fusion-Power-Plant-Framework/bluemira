@@ -38,7 +38,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = Plotting
+CHOSEN_RUNMODE = VolumeCalculation
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
