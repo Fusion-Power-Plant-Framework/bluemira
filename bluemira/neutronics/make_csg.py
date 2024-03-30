@@ -525,7 +525,6 @@ def union_dictionary(region: openmc.Region) -> Dict[str, openmc.Region]:
     if isinstance(region, openmc.Halfspace):  # termination condition
         return {region.side + str(region.surface.id): region}
     if isinstance(region, openmc.Union):
-        # return {reg_name: __r for _r in region for reg_name, __r in union_dictionary(_r).items()} # terrible one-line expansion of dict, I've forfeited this. # noqa: E501, W505
         final_intersection = {}
         for _r in region:
             final_intersection.update(union_dictionary(_r))

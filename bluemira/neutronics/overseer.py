@@ -40,8 +40,6 @@ if TYPE_CHECKING:
 class StageOfComputation:
     """Abstract base class of all of the stage of computations classes below."""
 
-    pass
-
 
 @dataclass
 class RawData(StageOfComputation):
