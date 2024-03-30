@@ -11,6 +11,7 @@ Separated from slicing.py to prevent import errors
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import chain
 from typing import TYPE_CHECKING, Tuple
 
 import numpy as np
@@ -73,6 +74,18 @@ class CellStage(StageOfComputation):
     blanket: BlanketCellArray = None
     divertor: DivertorCellArray = None
     plasma: openmc.Cell = None
+
+    @property
+    def cells(self):
+        """Get the list of all cells."""
+        return (*chain.from_iterable((*self.blanket, *self.divertor)), self.plasma)
+
+    def get_all_hollow_merged_cells(self):
+        """Blanket and divertor cells"""
+        return [
+            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.blanket],
+            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
+        ]
 
 
 @dataclass
@@ -214,10 +227,26 @@ class OpenMCModelGenerator:
         )
 
     def make_cell_arrays(
-        self, material_dict, thickness: TokamakThicknesses, control_id: bool = True
-    ) -> Tuple[BlanketCellArray, DivertorCellArray]:
-        """Make pre-cell arrays for the blanket and the divertor."""
+        self, material_dict, thickness: TokamakThicknesses, control_id: bool = False
+    ) -> Tuple[BlanketCellArray, DivertorCellArray, openmc.Cell]:
+        """Make pre-cell arrays for the blanket and the divertor.
+
+        Parameters
+        ----------
+        material_dict:
+            TODO: fill in later
+        thickness:
+            TODO: fill in later
+        control_id: bool
+            Whether to set the blanket Cells and surface IDs by force or not.
+            With this set to True, it will be easier to understand where each cell came
+            from. However, it will lead to warnings and errors if a cell/surface is
+            generated to use a cell/surface ID that has already been used respectively.
+            Keep this as False if you're running openmc simulations multiple times in one
+            session.
+        """
         BODGED_THICKNESS = 0.10  # TODO: fix this
+
         # determine universe_box
         all_ext_vertices = self.get_coordinates_from_pre_cell_arrays(
             self.pre_cell_array.blanket, self.pre_cell_array.divertor
@@ -232,7 +261,9 @@ class OpenMCModelGenerator:
         self.cell_array.blanket = BlanketCellArray.from_pre_cell_array(
             self.pre_cell_array.blanket, material_dict, thickness, control_id=control_id
         )
-        # change the id register. (It will only count up from here.)
+
+        # change the cell and surface id register before making the divertor.
+        # (ids will only count up from here.)
         openmc.Surface.next_id = int(max(openmc.Surface.used_ids) / 1000 + 1) * 1000 + 1
         openmc.Cell.next_id = int(max(openmc.Cell.used_ids) / 100 + 1) * 100 + 1
         self.cell_array.divertor = DivertorCellArray.from_divertor_pre_cell_array(
@@ -244,9 +275,15 @@ class OpenMCModelGenerator:
                 self.cell_array.blanket[-1].cw_surface,
             ),
         )
-        return self.cell_array.blanket, self.cell_array.divertor
 
-    def get_full_tokamak_region(self, control_id: bool = True) -> openmc.Regoin:
+        # make hte plasma cell.
+        self.make_plasma_cell(control_id)
+
+        # self.make_cs_coils()
+
+        return self.cell_array.blanket, self.cell_array.divertor, self.cell_array.plasma
+
+    def get_full_tokamak_region(self, control_id: bool = False) -> openmc.Regoin:
         """
         Get the entire tokamak's poloidal cross-section (everything inside
         self.data.outer_boundary) as an openmc.Region.
@@ -260,7 +297,7 @@ class OpenMCModelGenerator:
             _surfaces.extend(div_pre_cell_bottom)
         return region_from_surface_series(_surfaces, vertices_array, control_id)
 
-    def make_plasma_cell(self, control_id: bool = True):
+    def make_plasma_cell(self, control_id: bool = False):
         """Make the plasma chamber."""
         region = flat_intersection([
             self.get_full_tokamak_region(control_id),

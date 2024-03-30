@@ -6,11 +6,11 @@
 """Test script to make the CSG branch work."""
 
 import json
-from itertools import chain
 from pathlib import Path
 from time import time
 
 import numpy as np
+import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
@@ -38,7 +38,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = VolumeCalculation
+CHOSEN_RUNMODE = Plotting
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
@@ -46,11 +46,12 @@ CROSS_SECTION_XML = str(
         "~/Others/cross_section_data/cross_section_data/cross_sections.xml"
     ).expanduser()
 )
+print(getattr(openmc.config, "config", openmc.config))
 _breeder_materials, _tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,  # TODO: obsolete
-    particles=10,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
+    particles=16800,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
@@ -140,25 +141,20 @@ if __name__ == "__main__":  # begin computation
         "Divertor": mat_lib.div_fw_mat,
         "DivertorSurface": mat_lib.div_fw_mat,
     }
-    blanket_cell_array, div_cell_array = generator.make_cell_arrays(
+    blanket_cell_array, div_cell_array, plasma = generator.make_cell_arrays(
         mat_dict, thickness_fractions, True
     )
 
-    # plasma_void_upper = blanket_cell_array.make_plasma_void_region()
-    cells = [
-        *list(chain.from_iterable(blanket_cell_array)),
-        *list(chain.from_iterable(div_cell_array)),
-        generator.make_plasma_cell(),
-    ]
-    # plot_2d([*[pc.outline for pc in pca2], *[pc.outline for pc in div_pca]])
+    cells = generator.cell_array.cells
+    # plot_2d([   *[pc.outline for pc in generator.pre_cell_array.blanket],
+    #             *[pc.outline for pc in generator.pre_cell_array.divertor]])
 
     # using openmc
     if Plotting == CHOSEN_RUNMODE:
         with Plotting(
             runtime_variables.cross_section_xml,
             cells,
-            # [openmc.Cell(region=s.get_overall_region()) for s in blanket_cell_array]
-            # [openmc.Cell(region=s.get_overall_region()) for s in div_cell_array]
+            # generator.cell_array.get_all_hollow_merged_cells(),
             mat_lib,
         ) as plotting:
             plotting.run(

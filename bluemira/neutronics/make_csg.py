@@ -1471,3 +1471,7 @@ class DivertorCellArray(abc.Sequence):
             )
             cw_surf = ccw_surf
         return cls(stack_list)
+
+    def get_hollow_merged_cells(self):
+        """Turn the list of cells into a nameless list of cells"""
+        return [openmc.Cell(region=stack.get_overall_region()) for stack in self]
