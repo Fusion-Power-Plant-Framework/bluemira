@@ -214,9 +214,7 @@ class OpenMCModelGenerator:
         )
 
     def make_cell_arrays(
-        self,
-        material_dict,
-        thickness: TokamakThicknesses,
+        self, material_dict, thickness: TokamakThicknesses, control_id: bool = True
     ) -> Tuple[BlanketCellArray, DivertorCellArray]:
         """Make pre-cell arrays for the blanket and the divertor."""
         BODGED_THICKNESS = 0.10  # TODO: fix this
@@ -232,10 +230,11 @@ class OpenMCModelGenerator:
         self.cell_array = CellStage()
 
         self.cell_array.blanket = BlanketCellArray.from_pre_cell_array(
-            self.pre_cell_array.blanket, material_dict, thickness, id_control=True
+            self.pre_cell_array.blanket, material_dict, thickness, control_id=control_id
         )
         # change the id register. (It will only count up from here.)
-        openmc.Surface.next_id = int(max(openmc.Surface.used_ids) / 100 + 1) * 100
+        openmc.Surface.next_id = int(max(openmc.Surface.used_ids) / 1000 + 1) * 1000 + 1
+        openmc.Cell.next_id = int(max(openmc.Cell.used_ids) / 100 + 1) * 100 + 1
         self.cell_array.divertor = DivertorCellArray.from_divertor_pre_cell_array(
             self.pre_cell_array.divertor,
             material_dict,
@@ -247,7 +246,7 @@ class OpenMCModelGenerator:
         )
         return self.cell_array.blanket, self.cell_array.divertor
 
-    def get_full_tokamak_region(self) -> openmc.Regoin:
+    def get_full_tokamak_region(self, control_id: bool = True) -> openmc.Regoin:
         """
         Get the entire tokamak's poloidal cross-section (everything inside
         self.data.outer_boundary) as an openmc.Region.
@@ -259,14 +258,14 @@ class OpenMCModelGenerator:
         _surfaces = list(self.cell_array.blanket.get_exterior_surfaces())
         for div_pre_cell_bottom in self.cell_array.divertor.get_exterior_surfaces():
             _surfaces.extend(div_pre_cell_bottom)
-        return region_from_surface_series(_surfaces, vertices_array, True)
+        return region_from_surface_series(_surfaces, vertices_array, control_id)
 
-    def make_plasma_cell(self):
+    def make_plasma_cell(self, control_id: bool = True):
         """Make the plasma chamber."""
         region = flat_intersection([
-            self.get_full_tokamak_region(),
-            ~self.cell_array.blanket.get_exclusion_zone(True),
-            ~self.cell_array.divertor.get_exclusion_zone(True),
+            self.get_full_tokamak_region(control_id),
+            ~self.cell_array.blanket.get_exclusion_zone(control_id),
+            ~self.cell_array.divertor.get_exclusion_zone(control_id),
         ])
 
         self.cell_array.plasma = openmc.Cell(

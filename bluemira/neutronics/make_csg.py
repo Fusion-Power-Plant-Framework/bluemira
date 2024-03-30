@@ -361,7 +361,7 @@ def choose_plane_cylinders(
 
 def choose_region_cone(
     surface: openmc.ZCone, choice_points: npt.NDArray, control_id: bool = False
-) -> Union[openmc.Halfspace, openmc.Union]:
+) -> openmc.Region:
     """
     choose the region for a ZCone.
     When reading this function's code, bear in mind that a Z cone can be separated into
@@ -944,7 +944,7 @@ class BlanketCellArray(abc.Sequence):
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exclusion_zone(self, control_id: bool = False):
+    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
         Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
@@ -976,7 +976,7 @@ class BlanketCellArray(abc.Sequence):
         pre_cell_array: PreCellArray,
         material_dict: Dict[str, openmc.Material],
         thicknesses: TokamakThicknesses,
-        id_control=False,
+        control_id: bool = False,
     ) -> BlanketCellArray:
         """
         Create a BlanketCellArray from a
@@ -989,7 +989,7 @@ class BlanketCellArray(abc.Sequence):
         # left wall
         ccw_surf = surface_from_2points(
             *cell_walls[0],
-            surface_id=1 if id_control else None,
+            surface_id=1 if control_id else None,
             name="Blanket cell wall 0",
         )
         cell_array = []
@@ -997,7 +997,7 @@ class BlanketCellArray(abc.Sequence):
             # right wall
             cw_surf = surface_from_2points(
                 *cw_wall,
-                surface_id=1 + 10 * (i + 1) if id_control else None,
+                surface_id=1 + 10 * (i + 1) if control_id else None,
                 name=f"Blanket cell wall of stack {i + 1}",
             )
             if cw_wall[0, 0] < thicknesses.inboard_outboard_transition_radius:
@@ -1011,7 +1011,7 @@ class BlanketCellArray(abc.Sequence):
                 cw_surf,
                 thicknesses_series,
                 fill_dict=material_dict,
-                blanket_stack_num=i if id_control else None,
+                blanket_stack_num=i if control_id else None,
             )
             cell_array.append(stack)
             ccw_surf = cw_surf
@@ -1023,7 +1023,7 @@ def choose_region(
     surface: Union[openmc.Surface, Tuple[openmc.Surface, Optional[openmc.ZTorus]]],
     vertices_array: npt.NDArray,
     control_id: bool = False,
-) -> Union[openmc.Halfspace, openmc.Union]:  # could be a union of 2-3 openmc.Halfspaces
+) -> openmc.Region:
     """
     Pick the correct region of the surface that includes all of the points in
     vertices_array.
@@ -1152,6 +1152,20 @@ class DivertorCell(openmc.Cell):
             self.exterior_wire.get_3D_coordinates(),
             self.interior_wire.get_3D_coordinates(),
         ])
+
+    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
+        """
+        Get the exclusion zone AWAY from the plasma.
+        Usage: next_cell_region = flat_intersection(..., ~this_cell.get_exclusion_zone())
+
+        Parameters
+        ----------
+        control_id
+            Passed as argument onto
+            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+        """
+        _surfaces = [self.cw_surface, self.ccw_surface, *self.interior_surfaces]
+        return region_from_surface_series(_surfaces, self.get_all_vertices(), control_id)
 
 
 class DivertorCellStack(abc.Sequence):
@@ -1298,10 +1312,12 @@ class DivertorCellStack(abc.Sequence):
                 bulk_cell_int_wire,
                 face_int_wire,
                 # subtract away everything in the first cell.
-                subtractive_region=cell_stack[0].region,
+                subtractive_region=cell_stack[0].get_exclusion_zone(),
                 fill=material_dict["DivertorSurface"],
             )
             cell_stack.insert(0, face_cell)
+            # UNFORTUNATELY this does mean that in this cell stack, the INTERIOR cell
+            # would have the smaller of the 2 IDs. (They should differ by 1 only.)
         return cls(cell_stack)
 
 
@@ -1387,11 +1403,12 @@ class DivertorCellArray(abc.Sequence):
         interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
         return np.concatenate(interior_vertices)
 
-    def get_exclusion_zone(self, control_id: bool = False):
+    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
         Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
         Assumes every single cell-stack is made of an interior surface which itself forms
+        a convex hull.
 
         Parameters
         ----------
@@ -1399,15 +1416,7 @@ class DivertorCellArray(abc.Sequence):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        union_zone = []
-        for stack in self:
-            _surfaces = [stack.cw_surface, stack.ccw_surface, *stack.interior_surfaces]
-            union_zone.append(
-                region_from_surface_series(
-                    _surfaces, stack.get_all_vertices(), control_id
-                )
-            )
-        return openmc.Union(union_zone)
+        return openmc.Union([stack[0].get_exclusion_zone(control_id) for stack in self])
 
     @classmethod
     def from_divertor_pre_cell_array(

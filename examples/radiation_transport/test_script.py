@@ -38,7 +38,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = VolumeCalculation
+CHOSEN_RUNMODE = Plotting
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
@@ -141,7 +141,7 @@ if __name__ == "__main__":  # begin computation
         "DivertorSurface": mat_lib.div_fw_mat,
     }
     blanket_cell_array, div_cell_array = generator.make_cell_arrays(
-        mat_dict, thickness_fractions
+        mat_dict, thickness_fractions, True
     )
 
     # plasma_void_upper = blanket_cell_array.make_plasma_void_region()
