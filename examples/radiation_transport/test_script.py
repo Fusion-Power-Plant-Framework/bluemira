@@ -22,13 +22,13 @@ from bluemira.neutronics.execution import (
     Plotting,
     VolumeCalculation,
 )
+from bluemira.neutronics.full_tokamak import OpenMCModelGenerator
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
     TokamakGeometry,
     create_materials,
 )
-from bluemira.neutronics.overseer import OpenMCModelGenerator
 from bluemira.neutronics.params import (
     BlanketLayers,
     OpenMCSimulationRuntimeParameters,
@@ -38,7 +38,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
-CHOSEN_RUNMODE = Plotting
+CHOSEN_RUNMODE = VolumeCalculation
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
