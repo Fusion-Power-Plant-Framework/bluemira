@@ -14,6 +14,7 @@ from typing import List, Tuple, Union
 import numpy as np
 from numpy import typing as npt
 
+from bluemira.base.constants import EPS
 from bluemira.display import plot_2d, show_cad
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
@@ -120,10 +121,12 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
         show_cad(self.half_solid, *args, **kwargs)
 
     @property
-    def cell_walls(self):
+    def cell_walls(self) -> CellWalls:
         """
         The side (clockwise side and counter-clockwise) walls of this cell.
         Only create it when called, because some instances of PreCell will never use it.
+
+        it is of type :class:`~bluemira.neutronics.radial_wall.CellWalls`.
         """
         if not hasattr(self, "_cell_walls"):
             self._cell_walls = CellWalls([
@@ -261,6 +264,30 @@ class PreCellArray(abc.Sequence):
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
         show_cad([pc.half_solid for pc in self], *args, **kwargs)
 
+    def get_exterior_vertices(self) -> npt.NDArray:
+        """
+        Returns all of the vertices on the exterior side of the pre-cell array.
+
+        Returns
+        -------
+        exterior_vertices: npt.NDArray of shape (N+1, 3)
+            Arranged clockwise.
+        """
+        cell_walls = CellWalls.from_pre_cell_array(self)
+        return np.insert(cell_walls[:, 1], 1, 0, axis=-1)
+
+    def get_interior_vertices(self) -> npt.NDArray:
+        """
+        Returns all of the vertices on the interior side of the pre-cell array.
+
+        Returns
+        -------
+        interior_vertices: npt.NDArray of shape (N+1, 3)
+            Arranged clockwise.
+        """
+        cell_walls = CellWalls.from_pre_cell_array(self)
+        return np.insert(cell_walls[:, 0], 1, 0, axis=-1)
+
     def __len__(self) -> int:
         return self.pre_cells.__len__()
 
@@ -309,9 +336,9 @@ def ratio_of_distances(
     """
     dist_to_1 = (point_of_interest - anchor1) @ normal1
     dist_to_2 = (point_of_interest - anchor2) @ normal2
-    if dist_to_1 <= 0 or dist_to_2 <= 0:
+    if dist_to_1 < -EPS or dist_to_2 < -EPS:
         raise GeometryError(
-            "Expecting point_of_interest to lie on the positive side of " "both lines!"
+            "Expecting point_of_interest to lie on the positive side of both lines!"
         )
     total_dist = dist_to_1 + dist_to_2
     return np.array([dist_to_1, dist_to_2]) / total_dist
@@ -335,11 +362,12 @@ def find_equidistant_point(
         The two intersection points of circle1 and circle2.
     """
     mid_point = (point1 + point2) / 2
-    half_sep = np.linalg.norm(mid_point - point1)  # scalar
+    sep = point2 - point1
+    half_sep = np.linalg.norm(sep) / 2  # scalar
     if half_sep > distance:
         raise GeometryError("The two points are separated by > 2 * distance!")
     orth_length = np.sqrt(distance**2 - half_sep**2)
-    orth_dir = np.array([-half_sep[1], half_sep[0]])
+    orth_dir = np.array([-sep[1], sep[0]])
     orth_dir /= np.linalg.norm(orth_dir)
     return mid_point + (orth_dir * orth_length), mid_point - (orth_dir * orth_length)
 
@@ -377,7 +405,7 @@ def calculate_new_circle(
     scale_factor = np.linalg.norm(new_chord_vector) / np.linalg.norm(old_chord_vector)
     new_radius = old_circle_info.radius * scale_factor
     possible_centers = find_equidistant_point(*new_points[:, ::2], new_radius)
-    center1, center2 = (np.insert(possible_centers, 1, 0, axis=1),)
+    center1, center2 = np.insert(possible_centers, 1, 0, axis=1)
 
     old_chord_mid_point = np.mean(old_circle_info[:2], axis=0)
     old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
@@ -398,8 +426,29 @@ class DivertorPreCell:
         interior_wire: WireInfoList,
         exterior_wire: WireInfoList,
     ):
+        """
+        Parameters
+        ----------
+        interior_wire
+            WireInfoList of a wire on the interior side of the cell running
+            counter-clockwise
+        exterior_wire
+            WireInfoList of a wire on the exterior side of the cell running clockwise
+
+        Variables
+        ---------
+        cw_wall
+            a WireInfoList of len==1, representing the straight line cut on the clockwise
+            side of the divertor pre-cell
+        ccw_wall
+            a WireInfoList of len==1, representing the straight line cut on the
+            counter-clockwise side of the divertor pre-cell
+        vertex
+            Vertices[cadapi.apiVector] denoting the four corners of the divertor pre-cell
+        """
         self.interior_wire = interior_wire
         self.exterior_wire = exterior_wire
+        # cw_wall and ccw_wall are of type WireInfoLists!!
         self.cw_wall = WireInfoList([
             WireInfo.from_2P(
                 self.exterior_wire.end_point, self.interior_wire.start_point
@@ -435,7 +484,7 @@ class DivertorPreCell:
             ])
         return self._outline
 
-    def interior_wire_offset(self, thickness: float) -> WireInfoList:
+    def offset_interior_wire(self, thickness: float) -> WireInfoList:
         """
         Offset the interior wire towards the exterior_wire.
         The true problem of expanding/shrinking a wire is a much more difficult one, so
@@ -459,8 +508,8 @@ class DivertorPreCell:
         ccw_anchor = self.ccw_wall.end_point
 
         shifted_pts = []
-        for pt in zip(int_wire_pts):
-            weights = ratio_of_distances(pt, cw_norm, cw_anchor, ccw_norm, ccw_anchor)[
+        for pt in int_wire_pts:
+            weights = ratio_of_distances(pt, cw_anchor, cw_norm, ccw_anchor, ccw_norm)[
                 ::-1
             ]
             new_dir = np.array([cw_dir, ccw_dir]).T @ weights
@@ -489,7 +538,7 @@ class DivertorPreCellArray(abc.Sequence):
 
     def __init__(self, list_of_div_pc: List[DivertorPreCell]):
         self.pre_cells = list(list_of_div_pc)
-        # confirm that they are adjacent
+        # Perform check that they are adjacent
         for prev_cell, curr_cell in zip(self[:-1], self[1:]):
             if not np.allclose(
                 prev_cell.vertex.exterior_start,
@@ -502,6 +551,38 @@ class DivertorPreCellArray(abc.Sequence):
                 #                 curr_cell.vertex.interior_start,
                 #                 atol=0, rtol=EPS_FREECAD)
                 raise GeometryError("Expect neighbouring cells to share corners!")
+
+    def get_exterior_vertices(self) -> npt.NDArray:
+        """
+        Returns all of the tokamak's poloidal cross-section's outside corners'
+        coordinates, in 3D.
+
+        Returns
+        -------
+        exterior_vertices: npt.NDArray of shape (N+1, 3)
+            Arranged counter-clockwise.
+        """
+        exterior_vertices = [
+            stack.exterior_wire.get_3D_coordinates()[::-1]
+            for stack in self
+            # Because cells run counter-clockwise but the exterior_wire themselves runs
+            # clockwise, we have to invert the wire during extraction to make it run
+            # without double-backing onto itself.
+        ]
+        return np.concatenate(exterior_vertices)
+
+    def get_interior_vertices(self) -> npt.NDArray:
+        """
+        Returns all of the tokamak's poloidal cross-section's inside corners'
+        coordinates, in 3D.
+
+        Parameters
+        ----------
+        interior_vertices: npt.NDArray of shape (N+1, 3)
+            Arranged from inboard to outboard.
+        """
+        interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
+        return np.concatenate(interior_vertices)
 
     def __len__(self) -> int:
         return self.pre_cells.__len__()
