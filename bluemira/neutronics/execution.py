@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, Sequence, Union
 
 import openmc
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.tools import _timing
 from bluemira.neutronics.neutronics_axisymmetric import (
@@ -32,7 +33,6 @@ if TYPE_CHECKING:
     )
 
 
-# TODO rewrite this whole module as coarntext managers
 class RunMode:
     """
     Generic run method.
@@ -47,11 +47,19 @@ class RunMode:
     def __init__(
         self,
         cross_section_xml: Union[Path, str],
-        cells: Iterable[openmc.Cell],  # TODO: turn this into two arguments:
-        # blanket_cell_array and divertor_cell_array
+        cells: Iterable[openmc.Cell],
         material_lib: MaterialsLibrary,
+        debug_mode: bool = False,
     ):
-        """Basic set-up to openmc applicable to all run modes."""
+        """Basic set-up to openmc applicable to all run modes.
+
+        Parameters
+        ----------
+        cross_section_xml
+        debug_mode
+            Run in debug mode
+            All outputs would be printed, and no files will be deleted
+        """
         self.files_created = set()
         if type(self) == RunMode:
             raise TypeError(
@@ -75,6 +83,9 @@ class RunMode:
         self.cells = cells
         self.geometry = openmc.Geometry(self.universe)
         self.material_lib = material_lib
+        self._debug_mode = debug_mode
+        if self._debug_mode:
+            self.settings.verbosity = 9
 
     def _set_tallies(
         self, blanket_cell_array: BlanketCellArray, bodge_material_dict: Dict
@@ -100,22 +111,38 @@ class RunMode:
 
     def __exit__(self, exception_type, exception_value, traceback):
         """Remove files generated during the run (mainly .xml files.)"""
+        if self._debug_mode:
+            bluemira_debug("No files removed as debug mode is turned on.")
+            return  # skip this entire method if we want to keep the files.
+
         base_path = Path.cwd()
+        removed_files, failed_to_remove_files = [], []
         for file_name in self.files_created:
             if (f := Path(base_path, file_name)).exists():
                 f.unlink()
-                bluemira_debug(f"Removed file {f}.")
+                removed_files.append(file_name)
+            else:
+                failed_to_remove_files.append(file_name)
+
+        if removed_files:
+            bluemira_debug(f"Removed files {removed_files}")
+        if failed_to_remove_files:
+            bluemira_debug(
+                f"Attempted to remove files {failed_to_remove_files} but "
+                "they don't exists."
+            )
+
+        self.files_created = set()  # clear the set
 
     def run(self, *setup_args, **setup_kwargs):
         """A generic run method that does both setup and call the openmc executable."""
         self._run_setup(*setup_args, **setup_kwargs)
-        self._run_openmc_executable(output=True)
+        self._run_openmc_executable(output=False)
 
-    @staticmethod
-    def _run_openmc_executable(*args, output=False, **kwargs) -> None:
+    def _run_openmc_executable(self, *args, output=False, **kwargs) -> None:
         """Complete the run"""
         _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
-            *args, output=output, **kwargs
+            *args, output or self._debug_mode, **kwargs
         )
 
 
@@ -133,7 +160,7 @@ class Plotting(RunMode):
             int(plot_widths[0] * pixel_per_meter),
             int(plot_widths[1] * pixel_per_meter),
         ]
-        self.plot.width = plot_widths
+        self.plot.width = raw_uc(plot_widths, "m", "cm")
         self.plot_list = openmc.Plots([self.plot])
 
         self.plot_list.export_to_xml()
@@ -223,8 +250,8 @@ class VolumeCalculation(RunMode):
         self.settings.volume_calculations = openmc.VolumeCalculation(
             self.cells,
             num_particles,
-            min_xyz,
-            max_xyz,
+            raw_uc(min_xyz, "m", "cm"),
+            raw_uc(max_xyz, "m", "cm"),
         )
         self._set_tallies(blanket_cell_array, bodge_material_dict)
         super()._run_setup()

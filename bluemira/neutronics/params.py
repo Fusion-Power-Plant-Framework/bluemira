@@ -5,10 +5,12 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """dataclasses containing parameters used to set up the openmc model."""
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass
 from enum import Enum, auto
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import openmc
@@ -17,6 +19,9 @@ from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class BlanketLayers(Enum):
@@ -174,6 +179,9 @@ class PlasmaSourceParametersPPS(PlasmaSourceParameters):
         """
         Convert from si units dataclass
         :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
+
+        This gives the illusion that self.cgs.x = scale_factor*self.x
+        We rely on the 'frozen' nature of this dataclass so these links don't break.
         """
         conversion = {
             "major_radius": ("m", "cm"),
@@ -190,7 +198,172 @@ class PlasmaSourceParametersPPS(PlasmaSourceParameters):
         return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
 
 
-@dataclass(frozen=True)
+@dataclass
+class BlanketThickness:
+    """
+    Give the depth of the interfaces between blanket layers.
+
+    Parameters
+    ----------
+    surface
+        Thickness of the surface layer of the blanket. Can be zero.
+        Only used for tallying purpose, i.e. not a physical component.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    first_wall
+        Thickness of the first wall.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    breeding_zone
+        Thickness of the breedng zone. Could be zero if the breeding zone is absent.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    manifold
+        Thickness of the manifold layer (i.e. pipings etc.).
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+
+    Note
+    ----
+    Thickness of the vacuum vessel is not required because we we assume it fills up the
+    remaining space between the manifold's end and the outer_boundary.
+    """
+
+    surface: float
+    first_wall: float
+    breeding_zone: float
+    manifold: float
+
+    def get_interface_depths(self):
+        """Return the depth of the interface layers"""
+        return np.cumsum([
+            self.surface,
+            self.first_wall,
+            self.breeding_zone,
+            self.manifold,
+        ])
+
+
+@dataclass
+class DivertorThickness:
+    """
+    Divertor dimensions.
+    For now it only has 1 value: the surface layer thickness.
+
+    Parameters
+    ----------
+    surface
+        The surface layer of the divertor, which we expect to be made of a different
+        material (e.g. Tungsten or alloy of Tungsten) from the bulk support & cooling
+        structures of the divertor.
+    """
+
+    surface: float
+
+
+@dataclass
+class ToroidalFieldCoilDimension:
+    """
+    Gives the toroidal field coil diameters. Working with the simplest assumption, we
+    assume that the tf coil is circular for now.
+
+    Parameters
+    ----------
+    inner_diameter
+        (i.e. inner diameter of the windings.)
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    outer_diameter
+        Outer diameter of the windings.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    """
+
+    inner_diameter: float
+    outer_diameter: float
+
+
+@dataclass
+class TokamakDimensions:
+    """
+    The dimensions of the simplest axis-symmetric case of the tokamak.
+
+    Parameters
+    ----------
+    inboard
+        thicknesses of the inboard blanket
+    outboard
+        thicknesses of the outboard blanket
+    divertor
+        thicknesses of the divertor components
+    central_solenoid
+        diameters of the toroidal field coil in the
+    """
+
+    inboard: BlanketThickness
+    inboard_outboard_transition_radius: float
+    outboard: BlanketThickness
+    divertor: DivertorThickness
+    central_solenoid: ToroidalFieldCoilDimension
+
+    @classmethod
+    def from_tokamak_geometry_base(
+        cls, tokamak_geometry_base: TokamakGeometry, major_radius, divertor_thickness
+    ):
+        """Bodge method that can be deleted later once
+        :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
+        """
+        return cls(
+            BlanketThickness(
+                0.05,
+                tokamak_geometry_base.inb_fw_thick,
+                tokamak_geometry_base.inb_bz_thick,
+                tokamak_geometry_base.inb_mnfld_thick,
+            ),
+            major_radius,
+            BlanketThickness(
+                0.05,
+                tokamak_geometry_base.outb_fw_thick,
+                tokamak_geometry_base.outb_bz_thick,
+                tokamak_geometry_base.outb_mnfld_thick,
+            ),
+            DivertorThickness(divertor_thickness),
+            ToroidalFieldCoilDimension(0, 0),
+        )
+
+
+@dataclass  # obsolete: TODO: remove!
+class TokamakDimensionsWithCGS(TokamakDimensions):
+    """See TokamakDimensions
+
+    Addition of cgs converted variables.
+    """
+
+    cgs: TokamakDimensions
+
+    @classmethod
+    def from_si(cls, tokamak_dimensions_base: TokamakDimensions):
+        """
+        Make a new instance of TokamakDimensionsWithCGS such that we can access variables
+        by self.cgs.x.
+        This gives the illusion that self.cgs.x.y is linked to self.x.y by a factor of
+        100. We rely on the fact that all of the underlying dataclasses are 'frozen' so
+        this link doesn't break.
+        """
+        tok = tokamak_dimensions_base
+        cgs_copy = TokamakDimensions(
+            BlanketThickness(**{
+                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.inboard).items()
+            }),
+            raw_uc(tok.inboard_outboard_transition_radius, "m", "cm"),
+            BlanketThickness(**{
+                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.outboard).items()
+            }),
+            DivertorThickness(**{
+                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.divertor).items()
+            }),
+            ToroidalFieldCoilDimension(**{
+                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.central_solenoid).items()
+            }),
+        )
+        return cls(**asdict(tokamak_dimensions_base), cgs=cgs_copy)
+
+
+@dataclass(frozen=True)  # obsolete: TODO: remove.
 class TokamakGeometryBase:
     """
     The thickness measurements for all of the generic components of the tokamak.
@@ -201,7 +374,7 @@ class TokamakGeometryBase:
     inb_bz_thick:     inboard breeding zone thickness [m]
     inb_mnfld_thick:  inboard manifold thickness [m]
     inb_vv_thick:     inboard vacuum vessel thickness [m]
-    tf_thick:         toroidal field thickness [m]
+    tf_thick:         toroidal field coil thickness [m]
     outb_fw_thick:    outboard first wall thickness [m]
     outb_bz_thick:    outboard breeding zone thickness [m]
     outb_mnfld_thick: outboard manifold thickness [m]
@@ -221,7 +394,7 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True)  # obsolete: TODO: remove.
 class TokamakGeometry(TokamakGeometryBase):
     """See TokamakGeometryBase
 
@@ -235,6 +408,8 @@ class TokamakGeometry(TokamakGeometryBase):
         """
         Convert from si units dataclass
         :class:`~bluemira.neutronics.params.TokamakGeometryBase`
+        This gives the illusion that self.cgs.x = 100*self.x. We rely on the 'frozen'
+        nature of this dataclass so these links don't break.
         """
         tg = asdict(tokamak_geometry_base)
         tgcgs = tg.copy()
@@ -243,6 +418,7 @@ class TokamakGeometry(TokamakGeometryBase):
         return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
 
 
+# TODO: remove: Delete the following hundred lines of commented out code
 @dataclass
 class WallThicknessFraction:
     """List of thickness of various sections of the blanket as fractions"""

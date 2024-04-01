@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Tuple
 import numpy as np
 import openmc
 
+from bluemira.base.constants import raw_uc
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
-    from bluemira.neutronics.params import TokamakThicknesses
+    from bluemira.neutronics.params import TokamakDimensions
 
 
 class StageOfComputation:
@@ -78,7 +79,11 @@ class CellStage(StageOfComputation):
     @property
     def cells(self):
         """Get the list of all cells."""
-        return (*chain.from_iterable((*self.blanket, *self.divertor)), self.plasma)
+        return (
+            *chain.from_iterable((*self.blanket, *self.divertor)),
+            self.plasma,
+            self.air,
+        )
 
     def get_all_hollow_merged_cells(self):
         """Blanket and divertor cells"""
@@ -88,7 +93,19 @@ class CellStage(StageOfComputation):
         ]
 
 
-@dataclass
+def reset_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
+    """
+    Make openmc's surfaces' and cells' next IDs to be incremented to a pre-determined
+    levels
+    """
+    openmc.Surface.next_id = (
+        int(max(openmc.Surface.used_ids) / surface_step_size + 1) * surface_step_size + 1
+    )
+    openmc.Cell.next_id = (
+        int(max(openmc.Cell.used_ids) / cell_step_size + 1) * cell_step_size + 1
+    )
+
+
 class OpenMCModelGenerator:
     """
     Convert 3 things: panel_break_points, divertor_wire, and outer_boundary_wire into
@@ -141,10 +158,10 @@ class OpenMCModelGenerator:
         # blanket
         first_point = self.data.divertor_wire.edges[
             0
-        ].start_point()  # TODO: extend this further.
+        ].start_point()  # TODO: Shall I extend this further outwards?
         last_point = self.data.divertor_wire.edges[
             -1
-        ].end_point()  # TODO: extend this further.
+        ].end_point()  # TODO: Shall I extend this further outwards?
         self.pre_cell_array.blanket = (
             self.cutting.blanket.make_quadrilateral_pre_cell_array(
                 snap_to_horizontal_angle=snap_to_horizontal_angle,
@@ -206,28 +223,35 @@ class OpenMCModelGenerator:
             divertor_cell_array.get_exterior_vertices(),
         ])
 
-    def set_universe_box(self, z_min: float, z_max: float, r_max: float):
+    def set_universe_box(
+        self, z_min: float, z_max: float, r_max: float, control_id: bool = False
+    ):
         """Box up the universe in a cylinder (including top and bottom)."""
-        find_suitable_z_plane(
+        bottom = find_suitable_z_plane(
             z_min,
             boundary_type="vacuum",
-            surface_id=999,
-            name="Blanket bottom",
+            surface_id=999 if control_id else None,
+            name="Universe bottom",
         )
-        find_suitable_z_plane(
+        top = find_suitable_z_plane(
             z_max,
             boundary_type="vacuum",
-            surface_id=1000,
-            name="Blanket top",
+            surface_id=1000 if control_id else None,
+            name="Universe top",
         )
-        self.universe_cylinder = openmc.ZCylinder(
-            r_max,
-            surface_id=1001,
+        outer_cylinder = openmc.ZCylinder(
+            r=raw_uc(r_max, "m", "cm"),
+            surface_id=1001 if control_id else None,
             boundary_type="vacuum",
+            name="Max radius of Universe",
         )
+        self.universe_region = -top & +bottom & -outer_cylinder
 
     def make_cell_arrays(
-        self, material_dict, thickness: TokamakThicknesses, control_id: bool = False
+        self,
+        material_dict,
+        tokamak_dimensions: TokamakDimensions,
+        control_id: bool = False,
     ) -> Tuple[BlanketCellArray, DivertorCellArray, openmc.Cell]:
         """Make pre-cell arrays for the blanket and the divertor.
 
@@ -235,8 +259,10 @@ class OpenMCModelGenerator:
         ----------
         material_dict:
             TODO: fill in later
-        thickness:
-            TODO: fill in later
+        tokamak_dimensions:
+            A parameter :class:`bluemira.neutronics.params.TokamakDimensions`,
+            Specifying the dimensions of various layers in the blanket, divertor, and
+            central solenoid.
         control_id: bool
             Whether to set the blanket Cells and surface IDs by force or not.
             With this set to True, it will be easier to understand where each cell came
@@ -245,8 +271,6 @@ class OpenMCModelGenerator:
             Keep this as False if you're running openmc simulations multiple times in one
             session.
         """
-        BODGED_THICKNESS = 0.10  # TODO: fix this
-
         # determine universe_box
         all_ext_vertices = self.get_coordinates_from_pre_cell_arrays(
             self.pre_cell_array.blanket, self.pre_cell_array.divertor
@@ -254,34 +278,65 @@ class OpenMCModelGenerator:
         z_min = all_ext_vertices[:, -1].min()
         z_max = all_ext_vertices[:, -1].max()
         r_max = max(abs(all_ext_vertices[:, 0]))
-        self.set_universe_box(z_min - EPS_FREECAD, z_max, r_max)
+        self.set_universe_box(
+            z_min - EPS_FREECAD,
+            z_max + EPS_FREECAD,
+            r_max + EPS_FREECAD,
+            control_id=control_id,
+        )
 
         self.cell_array = CellStage()
 
         self.cell_array.blanket = BlanketCellArray.from_pre_cell_array(
-            self.pre_cell_array.blanket, material_dict, thickness, control_id=control_id
+            self.pre_cell_array.blanket,
+            material_dict,
+            tokamak_dimensions,
+            control_id=control_id,
         )
 
         # change the cell and surface id register before making the divertor.
         # (ids will only count up from here.)
-        openmc.Surface.next_id = int(max(openmc.Surface.used_ids) / 1000 + 1) * 1000 + 1
-        openmc.Cell.next_id = int(max(openmc.Cell.used_ids) / 100 + 1) * 100 + 1
+        if control_id:
+            reset_openmc_ids()
+
         self.cell_array.divertor = DivertorCellArray.from_divertor_pre_cell_array(
             self.pre_cell_array.divertor,
             material_dict,
-            BODGED_THICKNESS,
+            tokamak_dimensions.divertor,
             override_start_end_surfaces=(
                 self.cell_array.blanket[0].ccw_surface,
                 self.cell_array.blanket[-1].cw_surface,
             ),
+            # ID cannot be controlled at this point.
         )
 
         # make hte plasma cell.
-        self.make_plasma_cell(control_id)
+        self.make_plasma_air_cells(control_id)
 
         # self.make_cs_coils()
+        # self.make_container()
 
-        return self.cell_array.blanket, self.cell_array.divertor, self.cell_array.plasma
+        return (
+            self.cell_array.blanket,
+            self.cell_array.divertor,
+            self.cell_array.plasma,
+            self.cell_array.air,
+        )
+
+    def make_cs_coils(
+        self, solenoid_inner_diameter: float, solenoid_outer_diameter: float
+    ):
+        """Make central solenoid cell."""
+        self.cell_array.central_solenoid = (
+            solenoid_inner_diameter,
+            solenoid_outer_diameter,
+        )
+        raise NotImplementedError("Method incomplete.")
+
+    def make_container(self):
+        """Make container"""
+        self.cell_array.container = ...
+        raise NotImplementedError("Method incomplete.")
 
     def get_full_tokamak_region(self, control_id: bool = False) -> openmc.Regoin:
         """
@@ -297,17 +352,39 @@ class OpenMCModelGenerator:
             _surfaces.extend(div_pre_cell_bottom)
         return region_from_surface_series(_surfaces, vertices_array, control_id)
 
-    def make_plasma_cell(self, control_id: bool = False):
-        """Make the plasma chamber."""
-        region = flat_intersection([
-            self.get_full_tokamak_region(control_id),
+    def make_plasma_air_cells(self, control_id: bool = False):
+        """Make the plasma chamber and the outside air."""
+        full_tokamak_region = self.get_full_tokamak_region(control_id)
+        self.cell_array.air = openmc.Cell(
+            region=self.universe_region & ~full_tokamak_region,
+            fill=None,
+            name="Air void",
+        )
+
+        plasma_region = flat_intersection([
+            full_tokamak_region,
             ~self.cell_array.blanket.get_exclusion_zone(control_id),
             ~self.cell_array.divertor.get_exclusion_zone(control_id),
         ])
 
         self.cell_array.plasma = openmc.Cell(
-            region=region,
+            region=plasma_region,
             fill=None,
             name="Plasma void",
         )
         return self.cell_array.plasma
+
+    def __repr__(self):
+        """
+        Make the name display what stage had been instantiated: pre-cell-array and
+        cell-array.
+        """
+        has_pca = (
+            "pre-cell-array generated"
+            if hasattr(self, "pre_cell_array")
+            else "no pre-cell-array"
+        )
+        has_ca = (
+            "cell-array generated" if hasattr(self, "cell_array") else "no cell-array"
+        )
+        super().__repr__().replace(" at ", f" with {has_pca}, {has_ca} at ")
