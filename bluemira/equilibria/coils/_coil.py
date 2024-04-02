@@ -144,6 +144,8 @@ class Coil(CoilFieldsMixin):
         discretisation: float = np.nan,
         n_turns: int = 1,
     ):
+        self._dx = None
+        self._dz = None
         self._discretisation = np.nan
         self._flag_sizefix = None not in {dx, dz}
 
