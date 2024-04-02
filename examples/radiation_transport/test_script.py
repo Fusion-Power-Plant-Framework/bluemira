@@ -75,7 +75,7 @@ _source_parameters = PlasmaSourceParameters(
 tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
     _tokamak_geometry, _source_parameters.major_radius, 0.1
 )
-tokamak_dimensions.inboard.manifold = 0.0
+tokamak_dimensions.inboard.manifold = 0.02
 tokamak_dimensions.outboard.manifold = 0.2
 
 source_parameters = PlasmaSourceParametersPPS.from_si(_source_parameters)
