@@ -47,6 +47,7 @@ class RunMode:
         cross_section_xml: Union[Path, str],
         cells: Iterable[openmc.Cell],
         material_lib: MaterialsLibrary,
+        *,
         debug_mode: bool = False,
     ):
         """Basic set-up to openmc applicable to all run modes.
@@ -84,6 +85,8 @@ class RunMode:
         self._debug_mode = debug_mode
         if self._debug_mode:
             self.settings.verbosity = 10
+        else:
+            self.settings.verbosity = 6
 
     def _set_tallies(
         self, blanket_cell_array: BlanketCellArray, bodge_material_dict: Dict
@@ -194,8 +197,7 @@ class SourceSimulation(RunMode):
         self.settings.electron_treatment = runtime_variables.electron_treatment
         self._set_tallies(blanket_cell_array, bodge_material_dict)
         super()._run_setup()
-        self.files_created.add("summary.h5")
-        self.files_created.add("statepoint.1.h5")
+        self.files_created.add("statepoint.2.h5")
 
 
 class PlasmaSourceSimulation(SourceSimulation):

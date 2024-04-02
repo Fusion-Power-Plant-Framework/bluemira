@@ -19,10 +19,10 @@ import openmc
 from matplotlib import pyplot as plt  # for debugging
 from numpy import typing as npt
 
-from bluemira.base.constants import raw_uc
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P
+from bluemira.neutronics.constants import DTOL_CM, to_cm, to_m
 from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import CellWalls, Vertices
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
@@ -36,21 +36,11 @@ if TYPE_CHECKING:
     )
     from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
 
-DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
-
-
-def to_cm(m):  # noqa: D103
-    return raw_uc(m, "m", "cm")
-
-
-def to_m(cm):  # noqa: D103
-    return raw_uc(cm, "cm", "m")
-
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
     diff = np.diff(series)
-    return all(diff >= 0)  # or all(diff<0)
+    return all(diff >= -EPS_FREECAD)  # or all(diff<0)
 
 
 # VERY ugly solution of global dictionary.
@@ -672,7 +662,8 @@ class BlanketCellStack(abc.Sequence):
         direction_vector:
             direction that these points are all supposed to go towards.
         """
-        projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction_vector)
+        direction = direction_vector / np.linalg.norm(direction_vector)
+        projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction)
         if not is_monotonically_increasing(projections):
             raise GeometryError(f"Some surfaces crosses over each other! {location_msg}")
 

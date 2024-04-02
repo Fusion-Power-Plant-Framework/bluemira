@@ -14,7 +14,10 @@ from bluemira.base.constants import (
     N_AVOGADRO,
     raw_uc,
 )
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.plasma_physics.reactions import E_DT_fusion
+
+DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")

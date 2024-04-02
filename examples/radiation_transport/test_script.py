@@ -201,7 +201,7 @@ if __name__ == "__main__":  # begin computation
 
         # warnings.showwarning = warn_with_traceback
         with PlasmaSourceSimulation(
-            runtime_variables.cross_section_xml, cells, mat_lib, False
+            runtime_variables.cross_section_xml, cells, mat_lib, debug_mode=False
         ) as pss:
             pss.run(source_parameters, runtime_variables, blanket_cell_array, mat_dict)
             src_rate = n_DT_reactions(

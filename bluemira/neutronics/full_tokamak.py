@@ -17,8 +17,7 @@ from typing import TYPE_CHECKING, Tuple
 import numpy as np
 import openmc
 
-from bluemira.base.constants import raw_uc
-from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.neutronics.constants import DTOL_CM, to_cm
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     DivertorCellArray,
@@ -240,7 +239,7 @@ class OpenMCModelGenerator:
             name="Universe top",
         )
         outer_cylinder = openmc.ZCylinder(
-            r=raw_uc(r_max, "m", "cm"),
+            r=to_cm(r_max),
             surface_id=1001 if control_id else None,
             boundary_type="vacuum",
             name="Max radius of Universe",
@@ -279,9 +278,9 @@ class OpenMCModelGenerator:
         z_max = all_ext_vertices[:, -1].max()
         r_max = max(abs(all_ext_vertices[:, 0]))
         self.set_universe_box(
-            z_min - EPS_FREECAD,
-            z_max + EPS_FREECAD,
-            r_max + EPS_FREECAD,
+            z_min - DTOL_CM,
+            z_max + DTOL_CM,
+            r_max + DTOL_CM,
             control_id=control_id,
         )
 
