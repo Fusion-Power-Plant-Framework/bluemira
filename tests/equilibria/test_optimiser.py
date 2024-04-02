@@ -84,8 +84,6 @@ class TestCoilsetOptimiser:
                 make_polygon({"x": [xl, xu, xu, xl, xl], "z": [zl, zl, zu, zu, zl]})
             )
 
-        # TODO, change the stuff here
-
         cls.optimiser = CoilsetPositionCOP(
             cls.coilset, None, None, PositionMapper(cls.pfregions)
         )
