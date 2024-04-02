@@ -118,7 +118,6 @@ class Constraint(_NloptFunction):
         tolerance: np.ndarray,
         df: OptimiserCallable | None = None,
         bounds: tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
-        reflection_matrix: np.ndarray | None = None,
     ):
         super().__init__(f, bounds)
         self.constraint_type = constraint_type

@@ -20,6 +20,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+from bluemira.utilities.tools import floatify
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):

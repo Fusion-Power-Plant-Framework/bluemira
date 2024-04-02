@@ -111,7 +111,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         )
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
-    def optimise(self, x0: Optional[npt.NDArray] = None):
+    def optimise(self, x0: npt.NDArray | None = None):
         """
         Run the optimisation.
 
@@ -310,7 +310,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
 
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
-            f_objective=lambda x: self.objective(x, verbose=verbose),
+            f_objective=lambda vector: self.objective(vector, verbose=verbose),
             x0=x0,
             df_objective=None,  # use a numerical approximation if needed
             algorithm=self.opt_algorithm,

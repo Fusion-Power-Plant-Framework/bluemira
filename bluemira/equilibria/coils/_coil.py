@@ -26,7 +26,7 @@ from bluemira.utilities.tools import floatify, is_num
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from matplotlib.pyplot import Axes
+    from matplotlib.axes import Axes
 
 __all__ = ["Coil"]
 
@@ -144,8 +144,6 @@ class Coil(CoilFieldsMixin):
         discretisation: float = np.nan,
         n_turns: int = 1,
     ):
-        self._dx = None
-        self._dz = None
         self._discretisation = np.nan
         self._flag_sizefix = None not in {dx, dz}
 
@@ -154,8 +152,8 @@ class Coil(CoilFieldsMixin):
 
         self.x = x
         self.z = z
-        self.dx = dx
-        self.dz = dz
+        self._dx = dx
+        self._dz = dz
         self.discretisation = discretisation
         self.current = current
         self.j_max = j_max
@@ -280,7 +278,7 @@ class Coil(CoilFieldsMixin):
         return self._discretisation
 
     @property
-    def area(self) -> np.ndarray:
+    def area(self) -> float:
         """
         The cross-sectional area of the coil
 
@@ -291,7 +289,7 @@ class Coil(CoilFieldsMixin):
         return 4 * self.dx * self.dz
 
     @property
-    def volume(self) -> np.ndarray:
+    def volume(self) -> float:
         """
         The volume of the coil
 

@@ -166,7 +166,7 @@ class FieldConstraints(UpdateableConstraint):
             equilibrium.coilset._optimisation_currents_rep_mat
         )
 
-    def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
+    def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
         """

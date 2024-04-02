@@ -103,7 +103,6 @@ class NloptOptimiser(Optimiser):
         opt_parameters: Mapping[str, Any] | None = None,
         *,
         keep_history: bool = False,
-        reflection_matrix: np.ndarray | None = None,
     ):
         opt_conditions = {} if opt_conditions is None else opt_conditions
         opt_parameters = {} if opt_parameters is None else opt_parameters
@@ -116,7 +115,6 @@ class NloptOptimiser(Optimiser):
         self._set_algorithm_parameters(opt_parameters)
         self._eq_constraints: list[Constraint] = []
         self._ineq_constraints: list[Constraint] = []
-        self._reflection_matrix = reflection_matrix
 
     @property
     def algorithm(self) -> Algorithm:

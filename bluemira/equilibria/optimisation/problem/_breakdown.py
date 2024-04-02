@@ -191,7 +191,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         B_stray_max: float,
         B_stray_con_tol: float,
         n_B_stray_points: int,
-        max_currents: Optional[npt.ArrayLike] = None,
+        max_currents: npt.ArrayLike | None = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: dict[str, float | int] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
