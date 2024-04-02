@@ -1629,21 +1629,13 @@ def _split_wire(wire):
     return apiWire(edges_1), apiWire(edges_2)
 
 
-class SweepShapeTransition(enum.IntEnum):
-    """Sweep shape corner transition options"""
-
-    DEFAULT = 0
-    RIGHT_CORNER = 1
-    ROUND_CORNER = 2
-
-
 def sweep_shape(
     profiles: Iterable[apiWire],
     path: apiWire,
     *,
     solid: bool = True,
     frenet: bool = True,
-    transition: SweepShapeTransition | int = SweepShapeTransition.DEFAULT,
+    transition: int = 0,
 ) -> apiShell | apiSolid:
     """
     Sweep a a set of profiles along a path.
@@ -1686,9 +1678,7 @@ def sweep_shape(
             " produce unexpected results."
         )
 
-    result = path.makePipeShell(
-        profiles, solid, frenet, SweepShapeTransition(transition)
-    )
+    result = path.makePipeShell(profiles, solid, frenet, transition)
 
     solid_result = apiSolid(result)
     if solid:

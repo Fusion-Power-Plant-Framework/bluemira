@@ -9,6 +9,7 @@ Useful functions for bluemira geometries.
 """
 
 import datetime
+import enum
 import functools
 import inspect
 import json
@@ -836,13 +837,21 @@ def extrude_shape(
     return convert(cadapi.extrude_shape(shape.shape, vec), label)
 
 
+class SweepShapeTransition(enum.IntEnum):
+    """Sweep shape corner transition options"""
+
+    DEFAULT = 0
+    RIGHT_CORNER = 1
+    ROUND_CORNER = 2
+
+
 def sweep_shape(
     profiles: BluemiraWire | Iterable[BluemiraWire],
     path: BluemiraWire,
     *,
     solid: bool = True,
     frenet: bool = True,
-    transition: int = 0,
+    transition: SweepShapeTransition | int = SweepShapeTransition.DEFAULT,
     label: str = "",
 ) -> BluemiraSolid | BluemiraShell:
     """
@@ -872,7 +881,11 @@ def sweep_shape(
     profile_shapes = [p.shape for p in profiles]
 
     result = cadapi.sweep_shape(
-        profile_shapes, path.shape, solid=solid, frenet=frenet, transition=transition
+        profile_shapes,
+        path.shape,
+        solid=solid,
+        frenet=frenet,
+        transition=SweepShapeTransition(transition),
     )
 
     return convert(result, label=label)
