@@ -12,7 +12,7 @@ defusedxml==0.7.1
 executing==2.0.1
 fastjsonschema==2.19.1
 importlib-resources==6.4.0
-ipykernel==6.29.3
+ipykernel==6.29.4
 ipython==8.23.0
 jedi==0.19.1
 jsonschema==4.21.1
