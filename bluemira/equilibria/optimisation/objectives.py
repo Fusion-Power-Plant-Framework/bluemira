@@ -76,7 +76,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
         a_mat: npt.NDArray[np.float64],
         b_vec: npt.NDArray[np.float64],
         gamma: float,
-        currents_rep_mat: Optional[npt.NDArray] = None,
+        currents_rep_mat: npt.NDArray | None = None,
     ) -> None:
         self.scale = scale
         self.a_mat = a_mat if currents_rep_mat is None else a_mat @ currents_rep_mat
@@ -151,7 +151,7 @@ def tikhonov(
     a_mat: np.ndarray,
     b_vec: np.ndarray,
     gamma: float,
-    currents_rep_mat: Optional[np.ndarray] = None,
+    currents_rep_mat: np.ndarray | None = None,
 ) -> np.ndarray:
     """
     Tikhonov regularisation of Ax-b problem.

@@ -106,7 +106,9 @@ def check_coilset_symmetric(coilset: CoilSet) -> bool:
     return True
 
 
-def get_max_current(dx: float, dz: float, j_max: float) -> float:
+def get_max_current(
+    dx: float | np.ndarray, dz: float | np.ndarray, j_max: float | np.ndarray
+) -> np.float64 | np.ndarray:
     """
     Get the maximum current in a rectangular coil cross-sectional area
 
@@ -123,4 +125,4 @@ def get_max_current(dx: float, dz: float, j_max: float) -> float:
     -------
     Maximum current [A]
     """
-    return abs(j_max * (4 * dx * dz))
+    return np.abs(j_max * (4 * dx * dz))

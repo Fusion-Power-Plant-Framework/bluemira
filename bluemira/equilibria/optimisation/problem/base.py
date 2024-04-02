@@ -101,6 +101,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     def coilset(self, value: CoilSet):
         self._coilset = value
 
+    # todo: remove these after deprecations
     @staticmethod
     def read_coilset_state(
         coilset: CoilSet, current_scale: float
@@ -126,7 +127,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         substates = 3
         cc = coilset.get_control_coils()
-        x, z = cc._optimisation_positions
+        x, z = cc._get_optimisation_positions()
         currents = cc._optimisation_currents / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
@@ -163,7 +164,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         x_bounds: tuple[npt.NDArray, npt.NDArray],
         z_bounds: tuple[npt.NDArray, npt.NDArray],
         current_bounds: tuple[npt.NDArray, npt.NDArray],
-    ) -> tuple[npt.NDArray[np.float64], npt.NDArray]:
+    ) -> npt.NDArray[np.float64]:
         """
         Get bounds on the state vector from provided bounds on the substates.
 
@@ -187,7 +188,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @staticmethod
     def get_current_bounds(
-        coilset: CoilSet, max_currents: npt.ArrayLike, current_scale: float
+        coilset: CoilSet, max_currents: npt.ArrayLike | None, current_scale: float
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.

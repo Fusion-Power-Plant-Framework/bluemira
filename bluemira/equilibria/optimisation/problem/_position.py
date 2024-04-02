@@ -95,7 +95,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, x0: Optional[npt.NDArray] = None, **_) -> CoilsetOptimiserResult:
+    def optimise(self, x0: npt.NDArray | None = None, **_) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 

@@ -421,7 +421,7 @@ class PositionMapper:
         return sum([interp.dimension for interp in self.interpolators.values()])
 
     @property
-    def interpolator_names(self) -> List[str]:
+    def interpolator_names(self) -> list[str]:
         """
         The names of the interpolators
         """

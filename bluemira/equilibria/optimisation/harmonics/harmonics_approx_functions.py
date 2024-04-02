@@ -19,7 +19,7 @@ from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.error import BluemiraError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
