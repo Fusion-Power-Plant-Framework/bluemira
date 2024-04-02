@@ -85,7 +85,7 @@ class RunMode:
         self.material_lib = material_lib
         self._debug_mode = debug_mode
         if self._debug_mode:
-            self.settings.verbosity = 9
+            self.settings.verbosity = 10
 
     def _set_tallies(
         self, blanket_cell_array: BlanketCellArray, bodge_material_dict: Dict

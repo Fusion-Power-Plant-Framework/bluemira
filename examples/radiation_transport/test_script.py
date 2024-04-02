@@ -6,6 +6,7 @@
 """Test script to make the CSG branch work."""
 
 import json
+import sys
 from pathlib import Path
 from time import time
 
@@ -26,19 +27,16 @@ from bluemira.neutronics.full_tokamak import OpenMCModelGenerator
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
-    TokamakGeometry,
     create_materials,
 )
 from bluemira.neutronics.params import (
     BlanketLayers,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
-    ThicknessFractions,
+    TokamakDimensions,
     get_preset_physical_properties,
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
-
-CHOSEN_RUNMODE = Plotting
 
 # Parameters initialization
 CROSS_SECTION_XML = str(
@@ -64,7 +62,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
 
 _source_parameters = PlasmaSourceParameters(
     major_radius=8.938,  # [m]
-    aspect_ratio=8.938 / 2.883,  # [m]
+    aspect_ratio=8.938 / 2.8938,  # [m]
     elongation=1.65,  # [dimensionless]
     triangularity=0.333,  # [dimensionless]
     reactor_power=1998e6,  # [W]
@@ -74,11 +72,14 @@ _source_parameters = PlasmaSourceParameters(
     vertical_shift=0.0,  # [m]
 )
 
-tokamak_geometry = TokamakGeometry.from_si(_tokamak_geometry)
+tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
+    _tokamak_geometry, _source_parameters.major_radius, 0.1
+)
+tokamak_dimensions.inboard.manifold = 0.0
+tokamak_dimensions.outboard.manifold = 0.2
+
 source_parameters = PlasmaSourceParametersPPS.from_si(_source_parameters)
 mat_lib = create_materials(_breeder_materials)
-
-thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 
 # Loading data
 with open("data/inner_boundary") as j:
@@ -130,7 +131,7 @@ if __name__ == "__main__":  # begin computation
     elapsed("Before creating pre-cells")
 
     generator = OpenMCModelGenerator(panel_breakpoint_t, divertor_bmwire, outer_boundary)
-    generator.make_pre_cell_arrays(preserve_volume=False)
+    generator.make_pre_cell_arrays(preserve_volume=True, snap_to_horizontal_angle=45)
     mat_dict = {
         BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
         BlanketLayers.FirstWall.name: mat_lib.outb_fw_mat,
@@ -141,16 +142,17 @@ if __name__ == "__main__":  # begin computation
         "Divertor": mat_lib.div_fw_mat,
         "DivertorSurface": mat_lib.div_fw_mat,
     }
-    blanket_cell_array, div_cell_array, plasma = generator.make_cell_arrays(
-        mat_dict, thickness_fractions, True
+    blanket_cell_array, div_cell_array, plasma, air = generator.make_cell_arrays(
+        mat_dict, tokamak_dimensions, control_id=True
     )
 
     cells = generator.cell_array.cells
-    # plot_2d([   *[pc.outline for pc in generator.pre_cell_array.blanket],
-    #             *[pc.outline for pc in generator.pre_cell_array.divertor]])
+    # plot_2d([*[pc.outline for pc in generator.pre_cell_array.blanket],
+    #         *[dpc.outline for dpc in generator.pre_cell_array.divertor]
+    # ])
 
     # using openmc
-    if Plotting == CHOSEN_RUNMODE:
+    if sys.argv[1].upper() == "PLOT":
         with Plotting(
             runtime_variables.cross_section_xml,
             cells,
@@ -159,13 +161,13 @@ if __name__ == "__main__":  # begin computation
         ) as plotting:
             plotting.run(
                 [
-                    outer_boundary.bounding_box.x_max * 2.1,
-                    outer_boundary.bounding_box.z_max * 3.1,
+                    generator.data.outer_boundary.bounding_box.x_max * 2.1,
+                    generator.data.outer_boundary.bounding_box.z_max * 3.1,
                 ],
                 100,
             )
 
-    elif VolumeCalculation == CHOSEN_RUNMODE:
+    elif sys.argv[1].upper() == "VOLUME":
         with VolumeCalculation(
             runtime_variables.cross_section_xml, cells, mat_lib
         ) as vol_calc:
@@ -188,9 +190,18 @@ if __name__ == "__main__":  # begin computation
                 mat_dict,
             )
 
-    elif PlasmaSourceSimulation == CHOSEN_RUNMODE:
+    elif sys.argv[1].upper() == "SOURCE":
+        # import traceback
+        # import warnings
+        # def warn_with_traceback(message, category, filename, lineno, file=None, line=None): # noqa: E501, W505
+        #     """Bodge Warn"""
+        #     log = file if hasattr(file,'write') else sys.stderr
+        #     traceback.print_stack(file=log)
+        #     log.write(warnings.formatwarning(message, category, filename, lineno, line)) # noqa: E501, W505
+
+        # warnings.showwarning = warn_with_traceback
         with PlasmaSourceSimulation(
-            runtime_variables.cross_section_xml, cells, mat_lib
+            runtime_variables.cross_section_xml, cells, mat_lib, True
         ) as pss:
             pss.run(source_parameters, runtime_variables, blanket_cell_array, mat_dict)
             src_rate = n_DT_reactions(

@@ -108,7 +108,8 @@ def filter_new_cells(
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
     mat_filter = openmc.MaterialFilter(list(material_dict.values()))
     neutron_filter = openmc.ParticleFilter(["neutron"])
-    photon_filter = openmc.ParticleFilter(["neutron"])
+    photon_filter = openmc.ParticleFilter(["photon"])
+
     return (
         cell_filter,
         mat_filter,
