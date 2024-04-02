@@ -14,14 +14,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Iterable, Sequence, Union
 
 import openmc
+from pps_isotropic.source import create_parametric_plasma_source
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.tools import _timing
-from bluemira.neutronics.neutronics_axisymmetric import (
-    create_parametric_plasma_source,
-    create_ring_source,
-)
+from bluemira.neutronics.neutronics_axisymmetric import create_ring_source
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 
 if TYPE_CHECKING:
@@ -208,15 +206,15 @@ class PlasmaSourceSimulation(SourceSimulation):
         """Make a plasma source"""
         return create_parametric_plasma_source(
             # tokamak geometry
-            major_r=source_parameters.major_radius,
-            minor_r=source_parameters.minor_radius,
-            elongation=source_parameters.elongation,
-            triangularity=source_parameters.triangularity,
+            major_r=source_parameters.plasma_physics_units.major_radius,
+            minor_r=source_parameters.plasma_physics_units.minor_radius,
+            elongation=source_parameters.plasma_physics_units.elongation,
+            triangularity=source_parameters.plasma_physics_units.triangularity,
             # plasma geometry
-            peaking_factor=source_parameters.peaking_factor,
-            temperature=source_parameters.temperature,
-            radial_shift=source_parameters.shaf_shift,
-            vertical_shift=source_parameters.vertical_shift,
+            peaking_factor=source_parameters.plasma_physics_units.peaking_factor,
+            temperature=source_parameters.plasma_physics_units.temperature,
+            radial_shift=source_parameters.plasma_physics_units.shaf_shift,
+            vertical_shift=source_parameters.plasma_physics_units.vertical_shift,
             # plasma type
             mode="DT",
         )
