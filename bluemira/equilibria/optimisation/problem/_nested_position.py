@@ -263,13 +263,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         for sub_opt_prob in self.sub_opt_problems:
             sub_opt_prob.coilset.set_optimisation_state(coil_position_map=pos_map)
 
-            # TODO: is this necessary?
-            # I though this had be done after coils positions are changed
-            # sub_opt_prob.eq._remap_greens()
-            # sub_opt_prob.eq._clear_OX_points()
-
-            # todo: Why would you use the self.initial_currents?
-            # And not just the coilset's current currents?
             result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
 
             self._run_diagnostics(self.debug, sub_opt_prob, result)
