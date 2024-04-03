@@ -11,6 +11,8 @@ A collection of plotting tools.
 import os
 import re
 from pathlib import Path
+from typing import Dict, Optional, Union
+from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
@@ -23,7 +25,7 @@ from mpl_toolkits.mplot3d.art3d import PathPatch3D
 import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
@@ -109,6 +111,43 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
             fp.unlink()
     kwargs = {"duration": 0.5, "loop": 3}
     imageio.mimsave(Path(folder, f"{figname}.gif"), images, "GIF-FI", **kwargs)
+
+
+def xz_plot_setup(
+    pname,
+    folder,
+    save=False,
+    split_psi_plots: Optional[bool] = False,
+) -> Dict:
+    """Set up for an xz plot (poloidal slice)."""
+    if folder is None:
+        folder = try_get_bluemira_path(
+            "", subfolder="generated_data", allow_missing=not save
+        )
+
+    if split_psi_plots:
+        f, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
+        ax[0].set_xlabel("$x$ [m]")
+        ax[0].set_ylabel("$z$ [m]")
+        ax[0].set_title("Coilset")
+        ax[0].set_aspect("equal")
+        ax[1].set_xlabel("$x$ [m]")
+        ax[1].set_ylabel("$z$ [m]")
+        ax[1].set_title("Plasma")
+        ax[1].set_aspect("equal")
+
+    else:
+        f, ax = plt.subplots()
+        ax.set_xlabel("$x$ [m]")
+        ax.set_ylabel("$z$ [m]")
+        ax.set_aspect("equal")
+    return {
+        "f": f,
+        "ax": ax,
+        "pname": pname,
+        "folder": folder,
+        "save": save,
+    }
 
 
 def save_figure(
