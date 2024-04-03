@@ -8,100 +8,54 @@ on:
       - main
 
 jobs:
-  build-and-test:
-
+  linter:
     runs-on: ubuntu-latest
-
-    # FreeCAD and click do not play nicely together, so make sure we're using the
-    # environment variables that are set in the conda env (this is needed because
-    # GitHub Actions run in their own shell so conda environment variables don't appear
-    # to be picked up.
-    env:
-      LANG: 'C'
-      LC_ALL: 'C'
-      PYTHONIOENCODING: 'utf-8'
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Checkout bluemira-private-data
-      uses: actions/checkout@v4
-      if: ${{ !github.event.pull_request.head.repo.fork }}
+    - uses: actions/setup-python@v5
       with:
-        repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
-        ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-        path: './bluemira-private-data'
-
-    - name: Move bluemira-private-data
-      working-directory: "/home/runner/work/"
-      if: ${{ !github.event.pull_request.head.repo.fork }}
-      run: |
-          mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
-
-    - name: Cache pip
-      uses: actions/cache@v4
-      env:
-        # Increase this value to reset cache if requirements.txt has not changed
-        PIP_CACHE_NUMBER: 1
-      with:
-        path: ~/.cache/pip
-        key:
-          ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
-          hashFiles('requirements.txt', 'requirements-develop.txt', 'setup.py') }}
-
-
-    - name: Cache conda
-      uses: actions/cache@v4
-      env:
-        # Increase this value to reset cache if conda/environment.yml has not changed
-        CONDA_CACHE_NUMBER: 1
-      with:
-        path: ~/conda_pkgs_dir
-        key:
-          ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
-          hashFiles(
-            'conda/environment.yml',
-            'requirements.txt',
-            'requirements-develop.txt',
-            'requirements-conda.txt',
-            'setup.py'
-          ) }}
-
-    - name: Install Environment
-      uses: conda-incubator/setup-miniconda@v3
-      with:
-        activate-environment: bluemira
-        environment-file: conda/environment.yml
-        miniforge-version: "latest"
-        use-only-tar-bz2: false
-        miniforge-variant: Mambaforge
-        use-mamba: true
-
-    - name: Install bluemira
-      shell: bash -l {0}
-      run: pip install -U -e .
-
-    - name: Freeze conda env
-      shell: bash -l {0}
-      run: |
-        conda env export -n bluemira > bluemira.yml
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: bluemira.yml
-        path: bluemira.yml
-
+          python-version: '3.10'
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
+        pip install pre-commit
         pre-commit run --all-files
 
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build
+      uses: ./.github/workflows/build
+      with:
+        os: ubuntu-latest
+        python-version: "3.10"
+        bm-private-data: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+        with-artifact: false
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
         sphinx-build -j auto -W documentation/source documentation/build
 
+  test:
+    strategy:
+      matrix:
+          os: ["ubuntu-latest"]
+          python-version: ["3.10", "3.11"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Build
+      uses: ./.github/workflows/build
+      with:
+        os: ${{ matrix.os }}
+        python-version: ${{ matrix.python-version }}
+        bm-private-data: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
     - name: Run pytest bluemira
       shell: bash -l {0}
       env:
@@ -115,14 +69,17 @@ jobs:
                --cov-report xml \
                --json-report \
                --json-report-indent=3 \
-               tests eudemo/eudemo_tests --reactor ${PYTEST_PRIVATE} ${PYTEST_LONGRUN}
+               --reactor \
+               ${PYTEST_PRIVATE} \
+               ${PYTEST_LONGRUN} \
+               tests eudemo/eudemo_tests
 
     - name: Upload test report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: report-json
+        name: report-json_${{ matrix.python-version }}_${{ matrix.os }}
         path: .report.json
 
     - name: "Upload coverage to Codecov"
