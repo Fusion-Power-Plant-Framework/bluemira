@@ -74,8 +74,8 @@ class PlanarCircuit(SourceGroup):
                     alpha=alpha,
                     beta=beta,
                     current=current,
-                    bypass_error=True,
-                    angle_warning=False,
+                    bypass_endcap_error=True,
+                    endcap_warning=False,
                 )
 
                 if source.warning is str and (warning_called is False):
