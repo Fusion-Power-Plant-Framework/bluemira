@@ -47,15 +47,16 @@ CROSS_SECTION_XML = str(
 print(getattr(openmc.config, "config", openmc.config))
 _breeder_materials, _tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
 
+# TODO: move most of the following parameters into PlasmaSourceSimulation.__init__?
 runtime_variables = OpenMCSimulationRuntimeParameters(
-    cross_section_xml=CROSS_SECTION_XML,  # TODO: obsolete
-    particles=16800,  # TODO: obsolete # 16800 takes 5 seconds,  1000000 takes 280 seconds. # noqa: E501
-    batches=2,
+    cross_section_xml=CROSS_SECTION_XML,
+    particles=16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
+    batches=8,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="plot",  # TODO: obsolete
-    openmc_write_summary=False,  # TODO: obsolete
-    parametric_source=True,  # TODO: obsolete
+    run_mode="plot",
+    openmc_write_summary=False,
+    parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
     volume_calc_particles=int(4e8),  # TODO: obsolete
 )
@@ -96,7 +97,7 @@ fw_panel_bp_list = [
     np.load("data/fw_panels_50_0.5.npy"),
 ]
 panel_breakpoint_t = fw_panel_bp_list[0].T
-# TODO: MANUAL FIX of the coordinates
+# TODO: MANUAL FIX of the coordinates. How to make this better?
 panel_breakpoint_t[0] = vector_intersect(
     panel_breakpoint_t[0],
     panel_breakpoint_t[1],
@@ -191,15 +192,6 @@ if __name__ == "__main__":  # begin computation
             )
 
     elif sys.argv[1].upper() == "SOURCE":
-        # import traceback
-        # import warnings
-        # def warn_with_traceback(message, category, filename, lineno, file=None, line=None): # noqa: E501, W505
-        #     """Bodge Warn"""
-        #     log = file if hasattr(file,'write') else sys.stderr
-        #     traceback.print_stack(file=log)
-        #     log.write(warnings.formatwarning(message, category, filename, lineno, line)) # noqa: E501, W505
-
-        # warnings.showwarning = warn_with_traceback
         with PlasmaSourceSimulation(
             runtime_variables.cross_section_xml, cells, mat_lib, debug_mode=False
         ) as pss:
@@ -210,5 +202,7 @@ if __name__ == "__main__":  # begin computation
                 # it will change the definition of n_DT_reactions from [MW] to [W].
                 # in which which case, we use source_parameters.reactor_power.
             )
-            results = present.OpenMCResult.from_run(pss.universe, src_rate)
+            results = present.OpenMCResult.from_run(
+                pss.universe, src_rate, pss.statepoint_file
+            )
             print(results)
