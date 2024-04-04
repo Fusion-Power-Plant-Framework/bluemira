@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 import openmc
 
-from bluemira.base.constants import EPS, raw_uc
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
@@ -300,70 +300,8 @@ class TokamakDimensions:
     divertor: DivertorThickness
     central_solenoid: ToroidalFieldCoilDimension
 
-    @classmethod
-    def from_tokamak_geometry_base(
-        cls, tokamak_geometry_base: TokamakGeometry, major_radius, divertor_thickness
-    ):
-        """Bodge method that can be deleted later once
-        :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
-        """
-        return cls(
-            BlanketThickness(
-                0.05,
-                tokamak_geometry_base.inb_fw_thick,
-                tokamak_geometry_base.inb_bz_thick,
-                tokamak_geometry_base.inb_mnfld_thick,
-            ),
-            major_radius,
-            BlanketThickness(
-                0.05,
-                tokamak_geometry_base.outb_fw_thick,
-                tokamak_geometry_base.outb_bz_thick,
-                tokamak_geometry_base.outb_mnfld_thick,
-            ),
-            DivertorThickness(divertor_thickness),
-            ToroidalFieldCoilDimension(0, 0),
-        )
 
-
-@dataclass  # obsolete: TODO: remove!
-class TokamakDimensionsWithCGS(TokamakDimensions):
-    """See TokamakDimensions
-
-    Addition of cgs converted variables.
-    """
-
-    cgs: TokamakDimensions
-
-    @classmethod
-    def from_si(cls, tokamak_dimensions_base: TokamakDimensions):
-        """
-        Make a new instance of TokamakDimensionsWithCGS such that we can access variables
-        by self.cgs.x.
-        This gives the illusion that self.cgs.x.y is linked to self.x.y by a factor of
-        100. We rely on the fact that all of the underlying dataclasses are 'frozen' so
-        this link doesn't break.
-        """
-        tok = tokamak_dimensions_base
-        cgs_copy = TokamakDimensions(
-            BlanketThickness(**{
-                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.inboard).items()
-            }),
-            raw_uc(tok.inboard_outboard_transition_radius, "m", "cm"),
-            BlanketThickness(**{
-                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.outboard).items()
-            }),
-            DivertorThickness(**{
-                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.divertor).items()
-            }),
-            ToroidalFieldCoilDimension(**{
-                k: raw_uc(v, "m", "cm") for k, v in asdict(tok.central_solenoid).items()
-            }),
-        )
-        return cls(**asdict(tokamak_dimensions_base), cgs=cgs_copy)
-
-
-@dataclass(frozen=True)  # obsolete: TODO: remove.
+@dataclass(frozen=True)  # obsolete: remove when feature/neutronics is updated.
 class TokamakGeometryBase:
     """
     The thickness measurements for all of the generic components of the tokamak.
@@ -394,7 +332,7 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)  # obsolete: TODO: remove.
+@dataclass(frozen=True)  # obsolete: remove when feature/neutronics is updated.
 class TokamakGeometry(TokamakGeometryBase):
     """See TokamakGeometryBase
 
@@ -416,111 +354,6 @@ class TokamakGeometry(TokamakGeometryBase):
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
         return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
-
-
-# TODO: remove: Delete the following hundred lines of commented out code
-@dataclass
-class WallThicknessFraction:
-    """List of thickness of various sections of the blanket as fractions"""
-
-    first_wall: float  # [dimensionless]
-    breeding_zone: float  # [dimensionless]
-    manifold: float  # [dimensionless]
-    vacuum_vessel: float  # [dimensionless]
-
-    def __post_init__(self):
-        """Check fractions are between 0 and 1 and sums to unity."""
-        for section in ("first_wall", "manifold", "vacuum_vessel"):
-            if getattr(self, section) <= 0:
-                raise GeometryError(f"Thickness fraction of {section} must be non-zero")
-        if self.breeding_zone < 0:  # can be zero, but not negative.
-            raise GeometryError(
-                "Thickness fraction of breeding_zone must be nonnegative"
-            )
-        if not np.isclose(
-            sum([
-                self.first_wall,
-                self.manifold,
-                self.breeding_zone,
-                self.vacuum_vessel,
-            ]),
-            1.0,
-            rtol=0,
-            atol=EPS,
-        ):
-            raise GeometryError(
-                "Thickness fractions of all four sections " "must add up to unity!"
-            )
-
-    def extended_prefix_sums(self):
-        """Return the exclusive and includsive sum"""
-        zone_sequence = ("first_wall", "breeding_zone", "manifold", "vacuum_vessel")
-        _each_thick = [getattr(self, zone) for zone in zone_sequence]
-        return np.insert(np.cumsum(_each_thick).tolist(), 0, 0)
-
-
-class InboardThicknessFraction(WallThicknessFraction):
-    """Thickness fraction list of the inboard wall of the blanket"""
-
-    pass
-
-
-class OutboardThicknessFraction(WallThicknessFraction):
-    """Thickness fraction list of the outboard wall of the blanket"""
-
-    pass
-
-
-@dataclass
-class ThicknessFractions:
-    """
-    A dataclass containing info. on both
-    inboard and outboard blanket thicknesses as fractions.
-    """
-
-    inboard: InboardThicknessFraction
-    outboard: OutboardThicknessFraction
-    inboard_outboard_transition_radius: float
-
-    @classmethod
-    def from_TokamakGeometry(
-        cls, tokamak_geometry: TokamakGeometry, transition_radius: float = 8.0
-    ):
-        """
-        Create this dataclass by
-        translating from our existing tokamak_geometry dataclass.
-        """
-        inb_sum = sum([
-            tokamak_geometry.inb_fw_thick,
-            tokamak_geometry.inb_bz_thick,
-            tokamak_geometry.inb_mnfld_thick,
-            tokamak_geometry.inb_vv_thick,
-        ])
-        inb = InboardThicknessFraction(
-            tokamak_geometry.inb_fw_thick / inb_sum,
-            tokamak_geometry.inb_bz_thick / inb_sum,
-            tokamak_geometry.inb_mnfld_thick / inb_sum,
-            tokamak_geometry.inb_vv_thick / inb_sum,
-        )
-        outb_sum = sum([
-            tokamak_geometry.outb_fw_thick,
-            tokamak_geometry.outb_bz_thick,
-            tokamak_geometry.outb_mnfld_thick,
-            tokamak_geometry.outb_vv_thick,
-        ])
-        outb = OutboardThicknessFraction(
-            tokamak_geometry.outb_fw_thick / outb_sum,
-            tokamak_geometry.outb_bz_thick / outb_sum,
-            tokamak_geometry.outb_mnfld_thick / outb_sum,
-            tokamak_geometry.outb_vv_thick / outb_sum,
-        )
-        return cls(inb, outb, transition_radius)
-
-
-class TokamakThicknesses(ThicknessFractions):
-    """Placeholder class, to be filled in later."""
-
-    pass
 
 
 def get_preset_physical_properties(
