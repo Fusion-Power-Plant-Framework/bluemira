@@ -123,7 +123,6 @@ class OpenMCResult:
     cell_vols: dict  # [m^3]
     mat_names: dict
 
-    volume_file: str
     stochastic_cell_volumes: dict[int, float] | None = None
     volume_state: openmc.VolumeCalculation | None = None
 
@@ -132,8 +131,8 @@ class OpenMCResult:
         cls,
         universe: openmc.Universe,
         src_rate: float,
-        statepoint_file: str = "statepoint.2.h5",
-        volume_file: str = "volume_1.h5",
+        statepoint_file: str,
+        volume_file_name: str = "",
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -157,9 +156,13 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
-        volume_state, st_cell_volumes = cls._load_volume_calculation(
-            volume_file, cell_names
-        )
+        # TODO: fix here
+        if volume_file_name:
+            volume_state, st_cell_volumes = cls._load_volume_calculation(
+                Path(volume_file_name), cell_names
+            )
+        else:
+            volume_state, st_cell_volumes = None, None
 
         return cls(
             universe=universe,
@@ -178,15 +181,14 @@ class OpenMCResult:
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
             ),
-            stochastic_cell_volumes=st_cell_volumes,
             volume_state=volume_state,
-            volume_file=volume_file,
+            stochastic_cell_volumes=st_cell_volumes,
         )
 
     @staticmethod
-    def _load_volume_calculation(volume_file, cell_names):
-        if Path(volume_file).is_file():
-            vol_results = openmc.VolumeCalculation.from_hdf5("volume_1.h5")
+    def _load_volume_calculation(volume_file_path, cell_names):
+        if volume_file_path.is_file():
+            vol_results = openmc.VolumeCalculation.from_hdf5(volume_file_path)
             vols = vol_results.volumes
             ids = list(vols.keys())
             cell_volumes = {

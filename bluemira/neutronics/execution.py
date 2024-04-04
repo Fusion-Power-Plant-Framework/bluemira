@@ -192,12 +192,14 @@ class SourceSimulation(RunMode):
         """
         self.settings.particles = runtime_variables.particles
         self.settings.source = self.make_source(source_parameters)
-        self.settings.batches = runtime_variables.batches
+        self.settings.batches = int(runtime_variables.batches)
         self.settings.photon_transport = runtime_variables.photon_transport
         self.settings.electron_treatment = runtime_variables.electron_treatment
         self._set_tallies(blanket_cell_array, bodge_material_dict)
         super()._run_setup()
-        self.files_created.add("statepoint.2.h5")
+        self.statepoint_file = f"statepoint.{self.settings.batches}.h5"
+        self.files_created.add(self.statepoint_file)
+        self.files_created.add("tallies.out")
 
 
 class PlasmaSourceSimulation(SourceSimulation):
@@ -256,4 +258,4 @@ class VolumeCalculation(RunMode):
         self._set_tallies(blanket_cell_array, bodge_material_dict)
         super()._run_setup()
         self.files_created.add("summary.h5")
-        self.files_created.add("statepoint.1.h5")
+        self.files_created.add("statepoint.1.h5")  # single batch
