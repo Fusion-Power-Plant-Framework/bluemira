@@ -154,8 +154,8 @@ class Coil(CoilFieldsMixin):
 
         self.x = x
         self.z = z
-        self._dx = dx
-        self._dz = dz
+        self.dx = dx
+        self.dz = dz
         self.discretisation = discretisation
         self.current = current
         self.j_max = j_max
@@ -250,12 +250,12 @@ class Coil(CoilFieldsMixin):
         return self._ctype
 
     @property
-    def dx(self) -> float:
+    def dx(self) -> float | None:
         """Get coil width (half)"""
         return self._dx
 
     @property
-    def dz(self) -> float:
+    def dz(self) -> float | None:
         """Get coil height (half)"""
         return self._dz
 
@@ -350,7 +350,7 @@ class Coil(CoilFieldsMixin):
         )
 
     @dx.setter
-    def dx(self, value: float):
+    def dx(self, value: float | None):
         """Set coil dx size"""
         self._dx = None if value is None else floatify(value)
         if isinstance(self._dx, float) and self._x - self._dx < 0:
@@ -364,7 +364,7 @@ class Coil(CoilFieldsMixin):
         self._re_discretise()
 
     @dz.setter
-    def dz(self, value: float):
+    def dz(self, value: float | None):
         """Set coil dz size"""
         self._dz = None if value is None else floatify(value)
         self._re_discretise()

@@ -245,7 +245,6 @@ class CoilFieldConstraints(FieldConstraints):
 
     @staticmethod
     def _get_constraint_points(coilset):
-        # todo: what about dz?
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(

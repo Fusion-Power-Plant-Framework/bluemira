@@ -1220,10 +1220,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the coils that can be current optimised.
         """
-        optimisable_coils = self.all_current_optimisable_coils
         if coil_names is None:
-            return optimisable_coils
-        return [c for c in optimisable_coils if c.name in coil_names]
+            return self.all_current_optimisable_coils
+
+        opt_coils_map = {c.name: c for c in self.all_current_optimisable_coils}
+        rtn = []
+        for cn in coil_names:
+            c = opt_coils_map.get(cn)
+            if c is not None:
+                rtn.append(c)
+            else:
+                raise ValueError(f"Coil {cn} is not a current optimisable coil")
+        return rtn
 
     @property
     def _optimisation_currents_inds(self) -> list[int]:
@@ -1331,10 +1339,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the coils that can be position optimised.
         """
-        optimisable_coils = self.all_position_optimisable_coils
         if coil_names is None:
-            return optimisable_coils
-        return [c for c in optimisable_coils if c.name in coil_names]
+            return self.all_position_optimisable_coils
+
+        opt_coils_map = {c.name: c for c in self.all_position_optimisable_coils}
+        rtn = []
+        for cn in coil_names:
+            c = opt_coils_map.get(cn)
+            if c is not None:
+                rtn.append(c)
+            else:
+                raise ValueError(f"Coil {cn} is not a position optimisable coil")
+        return rtn
 
     def _get_optimisation_positions(
         self, position_coil_names: list[str] | None = None

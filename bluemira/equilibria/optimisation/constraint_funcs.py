@@ -221,8 +221,8 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
 
-        Bx = Bx_a * (Bx_a @ currents + self.bxp_vec)
-        Bz = Bz_a * (Bz_a @ currents + self.bzp_vec)
+        Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
+        Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
         dB = (Bx + Bz) / (B * self.scale**2)  # noqa: N806
 
         return dB @ self.current_rep_matrix

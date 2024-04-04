@@ -82,7 +82,35 @@ class TestEquilibriumInput:
         z_test = [8.0, 6.0]
         B_max = [5.0, 5.0]
         const = [-2.0, -2.0]
-        for x, z, b, c in zip(x_test, z_test, B_max, const, strict=False):
+        d_const = [
+            np.array([
+                5834431.996,
+                -3833054.841,
+                -6667793.621,
+                -10377812.829,
+                -3071010.298,
+                24746454.269,
+                13498903.551,
+                -17725218.609,
+                -32366687.970,
+                -18253227.419,
+                -31213733.164,
+            ]),
+            np.array([
+                4946354.550,
+                -3249613.188,
+                -5652867.309,
+                -8798172.624,
+                -2603561.882,
+                20979717.412,
+                11444192.371,
+                -15027206.266,
+                -27440050.735,
+                -15474845.165,
+                -26462590.869,
+            ]),
+        ]
+        for x, z, b, c, d_c in zip(x_test, z_test, B_max, const, d_const, strict=False):
             ax_mat = self.coilset.Bx_response(x, z, control=True)
             az_mat = self.coilset.Bz_response(x, z, control=True)
             bxp_vec = np.atleast_1d(self.eq.Bx(x, z))
@@ -97,9 +125,9 @@ class TestEquilibriumInput:
                 current_rep_matrix=self.coilset._optimisation_currents_rep_mat,
             )
 
-            # TODO check df result
             assert len(fcf.f_constraint(self.vector)) == 1
             assert fcf.f_constraint(self.vector) == pytest.approx(c, 0.1)
+            assert fcf.df_constraint(self.vector) == pytest.approx(d_c, 0.1)
 
     def test_current_midplane_constraint(self):
         ib_bool = [True, True, False, False]
