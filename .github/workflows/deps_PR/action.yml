@@ -1,0 +1,31 @@
+name: Build
+
+inputs:
+  token:
+    required: true
+    type: string
+  tag:
+    required: true
+    type: string
+
+runs:
+  using: "composite"
+  env:
+    GITHUB_TOKEN: ${{ inputs.token }}
+  steps:
+    - name: Rebase develop_dependencies
+      run: |
+        # Rebase develop_dependencies on develop, so that it's up-to-date and
+        # we don't run into conflicts next time we merge.
+        git fetch origin develop_dependencies
+        git switch develop_dependencies --force
+        git rebase origin/develop
+        git push --force-with-lease origin develop_dependencies:develop_dependencies
+
+    - name: Create PR to update dependencies
+      run: |
+        PR_URL=$(gh pr create \
+          --head develop_dependencies \
+          --base develop \
+          --title "Dependency update after ${{ inputs.tag }}" \
+          --body "Update develop's dependencies for the next development cycle.")

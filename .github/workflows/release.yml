@@ -14,6 +14,14 @@ on:
         type: string
         description: "New semantic version string"
         required: true
+      draft:
+        type: bool
+        description: "Create draft release"
+        default: false
+      open_dependencies_pr:
+        type: bool
+
+        default: false
 
 jobs:
   release:
@@ -66,26 +74,16 @@ jobs:
         id: create-release
         env:
           GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+          DRAFT: ${{ inputs.draft && '--draft' || '' }}
         run: |
           gh release create "${{ steps.validate.outputs.tag }}" \
             --generate-notes \
-            --target main
+            --target main \
+            ${DRAFT}
 
-      - name: Rebase develop_dependencies
-        run: |
-          # Rebase develop_dependencies on develop, so that it's up-to-date and
-          # we don't run into conflicts next time we merge.
-          git fetch origin develop_dependencies
-          git switch develop_dependencies --force
-          git rebase origin/develop
-          git push --force-with-lease origin develop_dependencies:develop_dependencies
-
-      - name: Create PR to update dependencies
-        run: |
-          PR_URL=$(gh pr create \
-            --head develop_dependencies \
-            --base develop \
-            --title "Dependency update after ${{ steps.validate.outputs.tag }}" \
-            --body "Update develop's dependencies for the next development cycle.")
-          gh pr comment "${PR_URL}" \
-            --body "**Reminder that this PR must be merged using a merge commit!**"
+      - name: Open develop_dependencies PR
+        if: ${{ inputs.open_dependencies_pr && !inputs.draft }}
+        uses: ./.github/workflows/deps_PR
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+          tag: ${{ steps.validate.outputs.tag }}

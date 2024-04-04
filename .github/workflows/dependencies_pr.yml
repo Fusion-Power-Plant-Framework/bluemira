@@ -1,0 +1,31 @@
+name: Open dependencies PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "New semantic version string"
+        required: true
+
+jobs:
+  release:
+    if: >
+      github.actor == 'CoronelBuendia' ||
+      github.actor == 'DanShort12' ||
+      github.actor == 'hsaunders1904' ||
+      github.actor == 'ivanmaione' ||
+      github.actor == 'je-cook'
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+      - name: Open develop_dependencies PR
+        if: ${{ inputs.open_dependencies_pr && !inputs.draft }}
+        uses: ./.github/workflows/deps_PR
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+          tag: ${{ inputs.version }}
