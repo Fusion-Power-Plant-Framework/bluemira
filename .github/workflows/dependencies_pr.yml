@@ -9,16 +9,12 @@ on:
         required: true
 
 jobs:
-  release:
-    if: >
-      github.actor == 'CoronelBuendia' ||
-      github.actor == 'DanShort12' ||
-      github.actor == 'hsaunders1904' ||
-      github.actor == 'ivanmaione' ||
-      github.actor == 'je-cook'
-
-    runs-on: ubuntu-latest
+  dep_pr:
     steps:
+      - name: Permissions Check
+        uses: ./.github/workflows/perm
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       - name: Checkout
         uses: actions/checkout@v4
         with:

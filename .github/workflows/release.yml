@@ -20,22 +20,19 @@ on:
         default: false
       open_dependencies_pr:
         type: bool
-
         default: false
 
 jobs:
   release:
-    if: >
-      github.actor == 'CoronelBuendia' ||
-      github.actor == 'DanShort12' ||
-      github.actor == 'hsaunders1904' ||
-      github.actor == 'ivanmaione' ||
-      github.actor == 'je-cook'
-
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Permissions Check
+        uses: ./.github/workflows/perm
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v4
         with:

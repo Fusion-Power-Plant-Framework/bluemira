@@ -1,0 +1,21 @@
+name: Permissions Check
+
+inputs:
+  token:
+    required: true
+    type: string
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Permissions Test
+        env:
+          GITHUB_TOKEN: ${{ inputs.token }}
+        shell: bash
+        run: |
+          role_type="$(gh api /orgs/${{ github.repository_owner }}/memberships/${{ github.actor }} --jq '.role')"
+          if [[ $role_type != 'admin' ]]; then
+            exit 1
+          fi
