@@ -78,9 +78,12 @@ class PlanarCircuit(SourceGroup):
                     endcap_warning=False,
                 )
 
-                if source.warning is str and (warning_called is False):
-                    bluemira_warn(source.warning)
-                    warning_called = True
+                if warning_called is False:
+                    try:
+                        bluemira_warn(source.warning)
+                        warning_called = True
+                    except AttributeError:
+                        continue
             else:
                 source = source_class(
                     midpoint,
