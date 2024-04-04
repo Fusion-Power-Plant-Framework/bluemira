@@ -63,17 +63,30 @@ class PlanarCircuit(SourceGroup):
         ):
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
-
-            source = source_class(
-                midpoint,
-                d_l,
-                normal,
-                t_vec,
-                *xs_args,
-                alpha=alpha,
-                beta=beta,
-                current=current,
-            )
+            if source_class is PolyhedralPrismCurrentSource:
+                source = source_class(
+                    midpoint,
+                    d_l,
+                    normal,
+                    t_vec,
+                    *xs_args,
+                    alpha=alpha,
+                    beta=beta,
+                    current=current,
+                    bypass_error=True,
+                    angle_warning=False,
+                )
+            else:
+                source = source_class(
+                    midpoint,
+                    d_l,
+                    normal,
+                    t_vec,
+                    *xs_args,
+                    alpha=alpha,
+                    beta=beta,
+                    current=current,
+                )
             sources.append(source)
         return sources
 
