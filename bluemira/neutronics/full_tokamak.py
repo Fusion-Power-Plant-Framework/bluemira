@@ -257,7 +257,7 @@ class OpenMCModelGenerator:
         Parameters
         ----------
         material_dict:
-            TODO: fill in later
+            TODO: fill in later: Change this to MaterialsLibrary directly later.
         tokamak_dimensions:
             A parameter :class:`bluemira.neutronics.params.TokamakDimensions`,
             Specifying the dimensions of various layers in the blanket, divertor, and

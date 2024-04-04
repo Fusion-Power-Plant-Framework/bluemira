@@ -87,6 +87,8 @@ with open("data/inner_boundary") as j:
     inner_boundary = deserialize_shape(json.load(j))
 with open("data/outer_boundary") as j:
     outer_boundary = deserialize_shape(json.load(j))
+    # TODO: need to add method of scaling BluemiraWire (issue #3038 /
+    # TODO: raise new issue about needing method to scale BluemiraWire)
 with open("data/divertor_face.correct.json") as j:
     divertor_bmwire = deserialize_shape(json.load(j))
 fw_panel_bp_list = [
@@ -97,7 +99,7 @@ fw_panel_bp_list = [
     np.load("data/fw_panels_50_0.5.npy"),
 ]
 panel_breakpoint_t = fw_panel_bp_list[0].T
-# TODO: MANUAL FIX of the coordinates. How to make this better?
+# MANUAL FIX of the coordinates, because the data we're given is not perfect.
 panel_breakpoint_t[0] = vector_intersect(
     panel_breakpoint_t[0],
     panel_breakpoint_t[1],

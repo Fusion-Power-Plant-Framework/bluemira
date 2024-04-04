@@ -301,7 +301,7 @@ class TokamakDimensions:
     central_solenoid: ToroidalFieldCoilDimension
 
 
-@dataclass(frozen=True)  # obsolete: remove when feature/neutronics is updated.
+@dataclass(frozen=True)  # TODO: obsolete: remove when feature/neutronics is updated.
 class TokamakGeometryBase:
     """
     The thickness measurements for all of the generic components of the tokamak.
@@ -332,7 +332,7 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)  # obsolete: remove when feature/neutronics is updated.
+@dataclass(frozen=True)  # TODO: obsolete: remove when feature/neutronics is updated.
 class TokamakGeometry(TokamakGeometryBase):
     """See TokamakGeometryBase
 
