@@ -58,6 +58,7 @@ class PlanarCircuit(SourceGroup):
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
+        warning_called = False
         for midpoint, d_l, beta, alpha in zip(
             self.midpoints, self.d_l, betas, alphas, strict=False
         ):
@@ -76,6 +77,10 @@ class PlanarCircuit(SourceGroup):
                     bypass_error=True,
                     angle_warning=False,
                 )
+
+                if source.warning is str and (warning_called is False):
+                    bluemira_warn(source.warning)
+                    warning_called = True
             else:
                 source = source_class(
                     midpoint,

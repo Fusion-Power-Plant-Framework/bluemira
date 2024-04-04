@@ -466,6 +466,12 @@ class PolyhedralPrismCurrentSource(
                     "This inaccuracy will increase as the end cap angle"
                     " discrepency increases."
                 )
+            elif (endcap_warning is False) and (not np.isclose(alpha, beta)):
+                self.warning = str(
+                    "Unequal end cap angles will result in result not being"
+                    "precise. This inaccuracy will increase as the end cap angle"
+                    " discrepency increases."
+                )
             if not (0 <= abs(alpha) < 0.5 * np.pi):
                 raise MagnetostaticsError(
                     f"{self.__class__.__name__} instantiation error: {alpha=:.3f}"
