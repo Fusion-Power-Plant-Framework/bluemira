@@ -8,8 +8,8 @@ inputs:
     required: true
     type: string
   bm-private-data:
-    required: true
     type: string
+    default: ""
   with-artifact:
     required: false
     type: bool
@@ -23,7 +23,7 @@ runs:
 
   - name: Checkout bluemira-private-data
     uses: actions/checkout@v4
-    if: ${{ !github.event.pull_request.head.repo.fork }}
+    if: ${{ !github.event.pull_request.head.repo.fork }} && inputs.bm-private-data != ""
     with:
       repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
       ssh-key: ${{ inputs.bm-private-data }}
@@ -31,7 +31,7 @@ runs:
 
   - name: Move bluemira-private-data
     working-directory: "/home/runner/work/"
-    if: ${{ !github.event.pull_request.head.repo.fork }}
+    if: ${{ !github.event.pull_request.head.repo.fork }} && inputs.bm-private-data != ""
     shell: bash -l {0}
     run: |
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
