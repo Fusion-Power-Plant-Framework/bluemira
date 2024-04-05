@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -26,6 +26,8 @@ from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
@@ -53,7 +55,7 @@ def upstream_temperature(
     z_mp: float,
     k_0: float,
     firstwall_geom: Grid,
-    connection_length: Optional[float] = None,
+    connection_length: float | None = None,
 ) -> float:
     """
     Calculate the upstream temperature, as suggested from "Pitcher, 1997".
@@ -197,7 +199,7 @@ def target_temperature(
     # Finding roots of the target temperature quadratic equation
     roots = np.roots([1, 2 * (eps_cool / gamma) - f_ev, (eps_cool**2) / (gamma**2)])
 
-    if roots.dtype == complex:  # noqa: E721
+    if roots.dtype == complex:
         t_tar = f_ion_t
     else:
         # Excluding unstable solution
@@ -221,7 +223,7 @@ def specific_point_temperature(
     k_0: float,
     sep_corrector: float,
     firstwall_geom: Grid,
-    connection_length: Optional[float] = None,
+    connection_length: float | None = None,
     *,
     lfs=True,
 ) -> float:
@@ -316,7 +318,7 @@ def electron_density_and_temperature_sol_decay(
     dx_mp: float,
     f_exp: float = 1,
     near_sol_gradient: float = 0.99,
-) -> Tuple[np.ndarray, ...]:
+) -> tuple[np.ndarray, ...]:
     """
     Generic radial esponential decay to be applied from a generic starting point
     at the separatrix (not only at the mid-plane).
@@ -470,11 +472,11 @@ def ion_front_distance(
     z_strike: float,
     eq: Equilibrium,
     x_pt_z: float,
-    t_tar: Optional[float] = None,
-    avg_ion_rate: Optional[float] = None,
-    avg_momentum_rate: Optional[float] = None,
-    n_r: Optional[float] = None,
-    rec_ext: Optional[float] = None,
+    t_tar: float | None = None,
+    avg_ion_rate: float | None = None,
+    avg_momentum_rate: float | None = None,
+    n_r: float | None = None,
+    rec_ext: float | None = None,
 ) -> float:
     """
     Manual definition of ion penetration depth.
@@ -600,7 +602,10 @@ def radiative_loss_function_plot(
     plt.xlabel(r"$T_e~[keV]$")
     plt.ylabel(r"$L_z~[W.m^{3}]$")
 
-    [ax.plot(t_ref, lz_specie, label=name) for lz_specie, name in zip(lz_val, species)]
+    [
+        ax.plot(t_ref, lz_specie, label=name)
+        for lz_specie, name in zip(lz_val, species, strict=False)
+    ]
     plt.xscale("log")
     plt.xlim(None, 10)
     plt.yscale("log")
@@ -654,7 +659,7 @@ def linear_interpolator(
     interpolated_function:
         LinearNDInterpolator object
     """
-    return LinearNDInterpolator(list(zip(x, z)), field, fill_value=0)
+    return LinearNDInterpolator(list(zip(x, z, strict=False)), field, fill_value=0)
 
 
 def interpolated_field_values(
@@ -711,8 +716,8 @@ def grid_interpolator(
 
 
 def pfr_filter(
-    separatrix: Union[Iterable[Coordinates], Coordinates], x_point_z: float
-) -> Tuple[np.ndarray, ...]:
+    separatrix: Iterable[Coordinates] | Coordinates, x_point_z: float
+) -> tuple[np.ndarray, ...]:
     """
     To filter out from the radiation interpolation domain the private flux regions
 
@@ -739,8 +744,12 @@ def pfr_filter(
     z_ind = [
         np.where((halves.z * fact) < (x_point_z * fact - 0.01)) for halves in separatrix
     ]
-    domains_x = [halves.x[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
-    domains_z = [halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
+    domains_x = [
+        halves.x[list_ind] for list_ind, halves in zip(z_ind, separatrix, strict=False)
+    ]
+    domains_z = [
+        halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix, strict=False)
+    ]
 
     if len(domains_x) != 1:
         # Closing the domain

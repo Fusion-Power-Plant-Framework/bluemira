@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
 
 import numpy as np
 
@@ -91,7 +90,7 @@ class MidplaneProfiles:
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
+        params: dict | ParameterFrame,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
 
@@ -134,7 +133,7 @@ class MidplaneProfiles:
 
     def core_electron_density_temperature_profile(
         self, rho_core: np.ndarray
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature,
         as function of rho, from the magnetic axis to the separatrix,
