@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Tuple
 import numpy as np
 import openmc
 
-from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3
+from bluemira.neutronics.constants import DTOL_CM, to_cm
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     DivertorCellArray,
@@ -25,7 +25,6 @@ from bluemira.neutronics.make_csg import (
     flat_intersection,
     region_from_surface_series,
 )
-from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -380,28 +379,28 @@ class SingleNullTokamak:
         )
 
         # # set the volume as well. Not necessary/ used anywhere yet.
-        exterior_vertices = self.get_exterior_vertices()
-        universe_height = (
-            self.cell_array.universe_region[0].surface.z0
-            - self.cell_array.universe_region[1].surface.z0
-        )
-        universe_radius = self.cell_array.universe_region[2].surface.r
-        universe_volume = universe_height * np.pi * universe_radius**2  # already in cm^3
-        self.cell_array.universe_region.volume = universe_volume
-        outer_boundary_volume = to_cm3(
-            polygon_revolve_signed_volume(exterior_vertices[:, ::2])
-        )
-        air_volume = universe_volume - outer_boundary_volume
-        self.cell_array.air.volume = air_volume
-        blanket_volumes = sum(
-            cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
-        )
-        divertor_volumes = sum(
-            cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
-        )
-        self.cell_array.plasma.volume = (
-            universe_volume - air_volume - blanket_volumes - divertor_volumes
-        )
+        # exterior_vertices = self.get_exterior_vertices()
+        # universe_height = (
+        #     self.cell_array.universe_region[0].surface.z0
+        #     - self.cell_array.universe_region[1].surface.z0
+        # )
+        # universe_radius = self.cell_array.universe_region[2].surface.r
+        # universe_volume = universe_height * np.pi * universe_radius**2  # cm^3
+        # self.cell_array.universe_region.volume = universe_volume
+        # outer_boundary_volume = to_cm3(
+        #     polygon_revolve_signed_volume(exterior_vertices[:, ::2])
+        # )
+        # air_volume = universe_volume - outer_boundary_volume
+        # self.cell_array.air.volume = air_volume
+        # blanket_volumes = sum(
+        #     cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
+        # )
+        # divertor_volumes = sum(
+        #     cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
+        # )
+        # self.cell_array.plasma.volume = (
+        #     universe_volume - air_volume - blanket_volumes - divertor_volumes
+        # )
         return self.cell_array.plasma, self.cell_array.air
 
     def __repr__(self):

@@ -183,6 +183,8 @@ class SourceSimulation(RunMode):
         source_parameters: PlasmaSourceParametersPPS,
         runtime_variables: OpenMCSimulationRuntimeParameters,
         blanket_cell_array: BlanketCellArray,
+        # We don't need the divertor cell array yet because
+        # we aren't setting up tallies there.
         bodge_material_dict: Dict,
     ) -> None:
         """
@@ -245,8 +247,6 @@ class VolumeCalculation(RunMode):
         num_particles: int,
         min_xyz: Sequence[float],
         max_xyz: Sequence[float],
-        blanket_cell_array: BlanketCellArray,
-        bodge_material_dict: Dict,
     ) -> None:
         """Set up openmc for volume calculation"""
         self.settings.volume_calculations = openmc.VolumeCalculation(
@@ -255,7 +255,6 @@ class VolumeCalculation(RunMode):
             raw_uc(min_xyz, "m", "cm"),
             raw_uc(max_xyz, "m", "cm"),
         )
-        self._set_tallies(blanket_cell_array, bodge_material_dict)
         super()._run_setup()
         self.files_created.add("summary.h5")
         self.files_created.add("statepoint.1.h5")  # single batch
