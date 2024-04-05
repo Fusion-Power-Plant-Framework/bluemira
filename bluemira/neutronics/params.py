@@ -300,6 +300,31 @@ class TokamakDimensions:
     divertor: DivertorThickness
     central_solenoid: ToroidalFieldCoilDimension
 
+    @classmethod
+    def from_tokamak_geometry_base(
+        cls, tokamak_geometry_base: TokamakGeometry, major_radius, divertor_thickness
+    ):
+        """Bodge method that can be deleted later once
+        :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
+        """
+        return cls(
+            BlanketThickness(
+                0.05,
+                tokamak_geometry_base.inb_fw_thick,
+                tokamak_geometry_base.inb_bz_thick,
+                tokamak_geometry_base.inb_mnfld_thick,
+            ),
+            major_radius,
+            BlanketThickness(
+                0.05,
+                tokamak_geometry_base.outb_fw_thick,
+                tokamak_geometry_base.outb_bz_thick,
+                tokamak_geometry_base.outb_mnfld_thick,
+            ),
+            DivertorThickness(divertor_thickness),
+            ToroidalFieldCoilDimension(0, 0),
+        )
+
 
 @dataclass(frozen=True)  # TODO: obsolete: remove when feature/neutronics is updated.
 class TokamakGeometryBase:
