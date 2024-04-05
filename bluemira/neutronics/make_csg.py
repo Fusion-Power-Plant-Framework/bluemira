@@ -21,10 +21,16 @@ from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import make_circle_arc_3P
-from bluemira.neutronics.constants import DTOL_CM, to_cm, to_m
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
 from bluemira.neutronics.params import BlanketLayers
-from bluemira.neutronics.radial_wall import CellWalls, Vertices
+from bluemira.neutronics.radial_wall import (
+    CellWalls,
+    Vertices,
+    polygon_revolve_signed_volume,
+)
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
 
 if TYPE_CHECKING:
@@ -607,6 +613,13 @@ class BlanketCell(openmc.Cell):
         )
 
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
+        vertices = [
+            getattr(self.vertex, p)[[0, -1]]
+            for p in ("exterior_end", "interior_start", "interior_end", "exterior_start")
+        ]
+        self.volume = to_cm3(polygon_revolve_signed_volume(vertices))
+        if self.volume <= 0:
+            raise GeometryError("Wrong ordering of vertices!")
 
 
 class BlanketCellStack(abc.Sequence):
@@ -919,7 +932,7 @@ class BlanketCellArray(abc.Sequence):
         Returns
         -------
         exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise.
+            Arranged clockwise (inboard to outboard).
         """
         exterior_vertices = [self[0][-1].vertex.exterior_start]
         exterior_vertices.extend(stack[-1].vertex.exterior_end for stack in self)
@@ -933,7 +946,7 @@ class BlanketCellArray(abc.Sequence):
         Parameters
         ----------
         interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise
+            Arranged clockwise (inboard to outboard).
         """
         interior_vertices = [self[0][0].vertex.interior_end]
         interior_vertices.extend(stack[0].vertex.interior_start for stack in self)
@@ -1187,6 +1200,49 @@ class DivertorCell(openmc.Cell):
         if subtractive_region:
             region = region & ~subtractive_region
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
+        self.volume = self.get_volume()
+
+    @property
+    def outline(self):
+        """
+        Make the outline into a BluemiraWire. This method is created solely for the
+        purpose of calculating the volume.
+
+        There are computationally less intensive methods and more reliable methods of
+        getting the volume, but it will involve a lot more development time. So I've
+        settled on this one for now.
+        """
+        if not hasattr(self, "_outline"):
+            e = self.exterior_wire.get_3D_coordinates()
+            i = self.interior_wire.get_3D_coordinates()
+            # draw the side walls
+            cw_int, ccw_int = i[0], i[-1]
+            cw_ext, ccw_ext = e[0], e[-1]
+            # if cw_ext is closer to cw_int than ccw_ext is to to cw_int, flip.
+            if np.linalg.norm(ccw_ext - cw_int) < np.linalg.norm(cw_ext - cw_int):
+                cw_ext, ccw_ext = ccw_ext, cw_ext
+            wire_list = [
+                self.interior_wire.restore_to_wire(),
+                self.exterior_wire.restore_to_wire(),
+            ]
+            # make the connecting wires so that BluemiraWire doesn't moan about
+            # having a discontinuous wire.
+            if not np.array_equal(e[0], i[0]):
+                wire_list.insert(0, make_polygon([cw_ext, cw_int]))
+            if not np.array_equal(i[-1], e[-1]):
+                wire_list.insert(-1, make_polygon([ccw_int, ccw_ext]))
+            self._outline = BluemiraWire(wire_list)
+        return self._outline
+
+    def get_volume(self):
+        """
+        Get the volume using the BluemiraWire of its own outline.
+        """
+        half_solid = BluemiraSolid(revolve_shape(self.outline))
+        cm3_volume = to_cm3(half_solid.volume * 2)
+        if cm3_volume <= 0:
+            raise GeometryError("Volume (as calculated by FreeCAD) is negative!")
+        return cm3_volume
 
     def get_all_vertices(self) -> npt.NDArray:
         """
@@ -1428,7 +1484,7 @@ class DivertorCellArray(abc.Sequence):
         Returns
         -------
         exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged counter-clockwise.
+            Arranged counter-clockwise (inboard to outboard).
         """
         exterior_vertices = [
             stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self
@@ -1443,7 +1499,7 @@ class DivertorCellArray(abc.Sequence):
         Parameters
         ----------
         interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged from inboard to outboard.
+            Arranged counter-clockwise (inboard to outboard).
         """
         interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
         return np.concatenate(interior_vertices)
