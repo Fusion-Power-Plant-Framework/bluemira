@@ -23,7 +23,7 @@ from bluemira.neutronics.execution import (
     Plotting,
     VolumeCalculation,
 )
-from bluemira.neutronics.full_tokamak import OpenMCModelGenerator
+from bluemira.neutronics.full_tokamak import SingleNullTokamak
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
@@ -51,7 +51,7 @@ _breeder_materials, _tokamak_geometry = get_preset_physical_properties(BlanketTy
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
     particles=16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
-    batches=8,
+    batches=3,
     photon_transport=True,
     electron_treatment="ttb",
     run_mode="plot",
@@ -133,7 +133,7 @@ if __name__ == "__main__":  # begin computation
 
     elapsed("Before creating pre-cells")
 
-    generator = OpenMCModelGenerator(panel_breakpoint_t, divertor_bmwire, outer_boundary)
+    generator = SingleNullTokamak(panel_breakpoint_t, divertor_bmwire, outer_boundary)
     generator.make_pre_cell_arrays(preserve_volume=True, snap_to_horizontal_angle=45)
     mat_dict = {
         BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
@@ -171,6 +171,11 @@ if __name__ == "__main__":  # begin computation
             )
 
     elif sys.argv[1].upper() == "VOLUME":
+
+        def format_cell_volume(cell: openmc.Cell):
+            """Write the volume in the format that openmc usually prints it as."""
+            return f"   Cell {cell.id}: {cell.volume} cm^3"
+
         with VolumeCalculation(
             runtime_variables.cross_section_xml, cells, mat_lib
         ) as vol_calc:
@@ -185,13 +190,10 @@ if __name__ == "__main__":  # begin computation
             min_xyz = (r_min, r_min, z_min)
             max_xyz = (r_max, r_max, z_max)
 
-            vol_calc.run(
-                runtime_variables.volume_calc_particles,
-                min_xyz,
-                max_xyz,
-                blanket_cell_array,
-                mat_dict,
-            )
+            vol_calc.run(int(4e8), min_xyz, max_xyz)
+            print("Compare this with the analytically obtained volumes:")
+            for cell in cells:
+                print(format_cell_volume(cell))
 
     elif sys.argv[1].upper() == "SOURCE":
         with PlasmaSourceSimulation(
