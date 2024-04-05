@@ -94,10 +94,10 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
     Revolve a polygon along the z axis, and return the volume.
 
     A polgyon placed in the RHS of the z-xis in the xz plane would have positive volume
-    if it runs clockwise, and negative volume if it runs anticlockwise.
+    if it runs clockwise, and negative volume if it runs counter-clockwise.
 
     Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
-    negative volume if it runs clockwise, positive volume if it runs anti-clockwise.
+    negative volume if it runs clockwise, positive volume if it runs counter-clockwise.
 
     Parameters
     ----------

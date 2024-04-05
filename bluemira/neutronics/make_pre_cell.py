@@ -56,7 +56,7 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
         interior_wire
 
             Either: A wire representing the interior-boundary (i.e. plasma-facing side)
-                of a blanket's pre-cell, running in the anti-clockwise direction when
+                of a blanket's pre-cell, running in the counter-clockwise direction when
                 viewing the right hand side poloidal cross-section,
                 i.e. downwards if inboard, upwards if outboard.
             or: a single Coordinates point, representing a point on the interior-boundary
