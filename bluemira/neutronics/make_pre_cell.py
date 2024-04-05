@@ -271,7 +271,7 @@ class PreCellArray(abc.Sequence):
         Returns
         -------
         exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise.
+            Arranged clockwise (inboard to outboard).
         """
         cell_walls = CellWalls.from_pre_cell_array(self)
         return np.insert(cell_walls[:, 1], 1, 0, axis=-1)
@@ -283,7 +283,7 @@ class PreCellArray(abc.Sequence):
         Returns
         -------
         interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise.
+            Arranged clockwise (inboard to outboard).
         """
         cell_walls = CellWalls.from_pre_cell_array(self)
         return np.insert(cell_walls[:, 0], 1, 0, axis=-1)
@@ -575,7 +575,7 @@ class DivertorPreCellArray(abc.Sequence):
         Returns
         -------
         exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged counter-clockwise.
+            Arranged counter-clockwise (inboard to outboard).
         """
         exterior_vertices = [
             stack.exterior_wire.get_3D_coordinates()[::-1]
@@ -594,7 +594,7 @@ class DivertorPreCellArray(abc.Sequence):
         Parameters
         ----------
         interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged from inboard to outboard.
+            Arranged counter-clockwise (inboard to outboard).
         """
         interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
         return np.concatenate(interior_vertices)
