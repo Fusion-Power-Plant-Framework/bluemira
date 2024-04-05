@@ -326,7 +326,8 @@ class TokamakDimensions:
         )
 
 
-@dataclass(frozen=True)  # TODO: obsolete: remove when feature/neutronics is updated.
+@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
+# feature/neutronics.
 class TokamakGeometryBase:
     """
     The thickness measurements for all of the generic components of the tokamak.
@@ -357,7 +358,8 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)  # TODO: obsolete: remove when feature/neutronics is updated.
+@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
+# feature/neutronics.
 class TokamakGeometry(TokamakGeometryBase):
     """See TokamakGeometryBase
 
