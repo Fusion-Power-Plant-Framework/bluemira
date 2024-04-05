@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Tuple
 import numpy as np
 import openmc
 
-from bluemira.neutronics.constants import DTOL_CM, to_cm
+from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     DivertorCellArray,
@@ -25,6 +25,7 @@ from bluemira.neutronics.make_csg import (
     flat_intersection,
     region_from_surface_series,
 )
+from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -74,6 +75,8 @@ class CellStage(StageOfComputation):
     blanket: BlanketCellArray = None
     divertor: DivertorCellArray = None
     plasma: openmc.Cell = None
+    air: openmc.Cell = None
+    universe_region: openmc.Region = None
 
     @property
     def cells(self):
@@ -105,7 +108,7 @@ def reset_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
     )
 
 
-class OpenMCModelGenerator:
+class SingleNullTokamak:
     """
     Convert 3 things: panel_break_points, divertor_wire, and outer_boundary_wire into
     pre-cell array, then cell-arrays.
@@ -193,21 +196,10 @@ class OpenMCModelGenerator:
             divertor_pre_cell_array.get_exterior_vertices()[::-1],
         ])
 
-    @staticmethod
-    def get_coordinates_from_cell_arrays(
-        blanket_cell_array: BlanketCellArray,
-        divertor_cell_array: DivertorCellArray,
-    ) -> npt.NDArray:
+    def get_exterior_vertices(self) -> npt.NDArray:
         """
         Get the 2D coordinates of every point at the outer boundary of the tokamak's
         poloidal cross-section.
-
-        Parameters
-        ----------
-        blanket_cell_array:
-            BlanketCellArray
-        divertor_cell_array:
-            DivertorCellArray
 
         Returns
         -------
@@ -218,8 +210,24 @@ class OpenMCModelGenerator:
             :meth:`bluemira.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
         """
         return np.concatenate([
-            blanket_cell_array.get_exterior_vertices(),
-            divertor_cell_array.get_exterior_vertices(),
+            self.cell_array.blanket.get_exterior_vertices(),
+            self.cell_array.divertor.get_exterior_vertices()[::-1],
+        ])
+
+    def get_interior_vertices(self) -> npt.NDArray:
+        """
+        Get the 2D coordinates of every point at the interior boundary of the tokamak's
+        poloidal cross-section
+
+        Returns
+        -------
+        coordinates
+            array of shape (N+1+sum(number of interior points of the divertor), 2),
+            where N = number of blanket pre-cells, M = number of divertor pre-cells.
+        """
+        return np.concatenate([
+            self.cell_array.blanket.get_interior_vertices(),
+            self.cell_array.divertor.get_interior_vertices()[::-1],
         ])
 
     def set_universe_box(
@@ -244,7 +252,7 @@ class OpenMCModelGenerator:
             boundary_type="vacuum",
             name="Max radius of Universe",
         )
-        self.universe_region = -top & +bottom & -outer_cylinder
+        self.cell_array.universe_region = -top & +bottom & -outer_cylinder
 
     def make_cell_arrays(
         self,
@@ -277,14 +285,14 @@ class OpenMCModelGenerator:
         z_min = all_ext_vertices[:, -1].min()
         z_max = all_ext_vertices[:, -1].max()
         r_max = max(abs(all_ext_vertices[:, 0]))
+
+        self.cell_array = CellStage()
         self.set_universe_box(
             z_min - DTOL_CM,
             z_max + DTOL_CM,
             r_max + DTOL_CM,
             control_id=control_id,
         )
-
-        self.cell_array = CellStage()
 
         self.cell_array.blanket = BlanketCellArray.from_pre_cell_array(
             self.pre_cell_array.blanket,
@@ -342,20 +350,19 @@ class OpenMCModelGenerator:
         Get the entire tokamak's poloidal cross-section (everything inside
         self.data.outer_boundary) as an openmc.Region.
         """
-        vertices_array = self.get_coordinates_from_cell_arrays(
-            self.cell_array.blanket,
-            self.cell_array.divertor,
-        )
+        exterior_vertices = self.get_exterior_vertices()
         _surfaces = list(self.cell_array.blanket.get_exterior_surfaces())
         for div_pre_cell_bottom in self.cell_array.divertor.get_exterior_surfaces():
             _surfaces.extend(div_pre_cell_bottom)
-        return region_from_surface_series(_surfaces, vertices_array, control_id)
+        return region_from_surface_series(_surfaces, exterior_vertices, control_id)
 
     def make_plasma_air_cells(self, control_id: bool = False):
-        """Make the plasma chamber and the outside air."""
+        """Make the plasma chamber and the outside air. This should be called AFTER
+        the blanket and divertor cells are created.
+        """
         full_tokamak_region = self.get_full_tokamak_region(control_id)
         self.cell_array.air = openmc.Cell(
-            region=self.universe_region & ~full_tokamak_region,
+            region=self.cell_array.universe_region & ~full_tokamak_region,
             fill=None,
             name="Air void",
         )
@@ -371,7 +378,31 @@ class OpenMCModelGenerator:
             fill=None,
             name="Plasma void",
         )
-        return self.cell_array.plasma
+
+        # # set the volume as well. Not necessary/ used anywhere yet.
+        exterior_vertices = self.get_exterior_vertices()
+        universe_height = (
+            self.cell_array.universe_region[0].surface.z0
+            - self.cell_array.universe_region[1].surface.z0
+        )
+        universe_radius = self.cell_array.universe_region[2].surface.r
+        universe_volume = universe_height * np.pi * universe_radius**2  # already in cm^3
+        self.cell_array.universe_region.volume = universe_volume
+        outer_boundary_volume = to_cm3(
+            polygon_revolve_signed_volume(exterior_vertices[:, ::2])
+        )
+        air_volume = universe_volume - outer_boundary_volume
+        self.cell_array.air.volume = air_volume
+        blanket_volumes = sum(
+            cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
+        )
+        divertor_volumes = sum(
+            cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
+        )
+        self.cell_array.plasma.volume = (
+            universe_volume - air_volume - blanket_volumes - divertor_volumes
+        )
+        return self.cell_array.plasma, self.cell_array.air
 
     def __repr__(self):
         """

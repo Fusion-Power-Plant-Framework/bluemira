@@ -28,6 +28,11 @@ def to_m(cm):  # noqa: D103
     return raw_uc(cm, "cm", "m")
 
 
+def to_cm3(m3):  # noqa: D103
+    # for some reason raw_uc(m3, "m^3", "cm^3") returns 999999.9999999999 instead.
+    return m3 * 1_000_000
+
+
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
 # Amount of energy carried away by the neutron, which is about 4/5 of that.
