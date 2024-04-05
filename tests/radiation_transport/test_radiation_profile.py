@@ -106,6 +106,12 @@ class TestCoreRadiation:
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
+    def test_calculate_mp_radiation_profile(self):
+        self.source.core_rad.calculate_mp_radiation_profile()
+        rad_tot = np.sum(np.array(self.source.core_rad.rad_mp, dtype=object), axis=0)
+        assert len(self.source.core_rad.rad_mp) == 4
+        assert rad_tot[0] > rad_tot[-1]
+
     def test_core_flux_tube_pol_t(self):
         flux_tube = self.source.eq.get_flux_surface(0.99)
         te = self.source.core_rad.flux_tube_pol_t(flux_tube, 100, True)
@@ -118,6 +124,18 @@ class TestCoreRadiation:
         ne = self.source.core_rad.flux_tube_pol_n(flux_tube, ne_mp, True)
         assert ne[0] == ne[-1]
         assert len(ne) == len(flux_tube)
+
+    def test_mp_electon_density_temperature_profiles(self):
+        te_sol_omp, ne_sol_omp = (
+            self.source.sol_rad.mp_electron_density_temperature_profiles()
+        )
+        te_sol_imp, ne_sol_imp = (
+            self.source.sol_rad.mp_electron_density_temperature_profiles(omp=False)
+        )
+        assert te_sol_omp[0] > te_sol_omp[-1]
+        assert ne_sol_omp[0] > ne_sol_omp[-1]
+        assert te_sol_imp[0] > te_sol_imp[-1]
+        assert ne_sol_imp[0] > ne_sol_imp[-1]
 
     def test_key_temperatures(self):
         t_u = upstream_temperature(
@@ -226,8 +244,18 @@ class TestCoreRadiation:
         te_att, ne_att = self.source.sol_rad.tar_electron_densitiy_temperature_profiles(
             ne_array, te_array, detachment=False
         )
-        assert all(t_d < t_a for t_d, t_a in zip(te_det, te_att))
-        assert all(n_d < n_a for n_d, n_a in zip(ne_det, ne_att))
+        assert all(t_d < t_a for t_d, t_a in zip(te_det, te_att, strict=False))
+        assert all(n_d < n_a for n_d, n_a in zip(ne_det, ne_att, strict=False))
+
+    def test_rad_core_by_psi_n(self):
+        rad_centre = self.source.rad_core_by_psi_n(0.1)
+        rad_edge = self.source.rad_core_by_psi_n(0.9)
+        assert rad_centre > rad_edge
+
+    def test_rad_core_by_points(self):
+        rad_centre = self.source.rad_core_by_points(10.5, -1)
+        rad_edge = self.source.rad_core_by_points(12, -1)
+        assert rad_centre > rad_edge
 
 
 def test_gaussian_decay():

@@ -13,7 +13,7 @@ from __future__ import annotations
 import functools
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -117,7 +117,7 @@ class Radiation:
     to calculate radiation source within the flux tubes.
     """
 
-    def __init__(self, eq: Equilibrium, params: Union[Dict, ParameterFrame]):
+    def __init__(self, eq: Equilibrium, params: dict | ParameterFrame):
         self.params = params
         self.eq = eq
 
@@ -146,8 +146,8 @@ class Radiation:
         te_mp: float,
         t_rad_in: float = 0,
         t_rad_out: float = 0,
-        rad_i: Optional[np.ndarray] = None,
-        rec_i: Optional[np.ndarray] = None,
+        rad_i: np.ndarray | None = None,
+        rec_i: np.ndarray | None = None,
         t_tar: float = 0,
         *,
         core: bool = False,
@@ -220,11 +220,11 @@ class Radiation:
     def flux_tube_pol_n(
         flux_tube: Coordinates,
         ne_mp: float,
-        n_rad_in: Optional[float] = None,
-        n_rad_out: Optional[float] = None,
-        rad_i: Optional[np.ndarray] = None,
-        rec_i: Optional[np.ndarray] = None,
-        n_tar: Optional[float] = None,
+        n_rad_in: float | None = None,
+        n_rad_out: float | None = None,
+        rad_i: np.ndarray | None = None,
+        rec_i: np.ndarray | None = None,
+        n_tar: float | None = None,
         *,
         core: bool = False,
         main_chamber_rad: bool = False,
@@ -289,7 +289,7 @@ class Radiation:
 
     @staticmethod
     def mp_profile_plot(
-        rho: np.ndarray, rad_power: np.ndarray, imp_name: Union[str, list[str]], ax=None
+        rho: np.ndarray, rad_power: np.ndarray, imp_name: str | list[str], ax=None
     ):
         """
         1D plot of the radiation power distribution along the midplane.
@@ -319,7 +319,7 @@ class Radiation:
                 rho, rad_power, imp_name if isinstance(imp_name, str) else imp_name[0]
             )
         else:
-            for rad_part, name in zip(rad_power, imp_name):
+            for rad_part, name in zip(rad_power, imp_name, strict=False):
                 ax.plot(rho, rad_part, label=name)
             plt.title("Core radiated power density")
             ax.plot(
@@ -371,18 +371,20 @@ class CoreRadiation(Radiation):
     def calculate_mp_radiation_profile(self):
         """
         1D profile of the line radiation loss at the mid-plane
-        through the scrape-off layer
+        from the magnetic axis to the separatrix
         """
         # Radiative loss function values for each impurity species
         loss_f = [
             radiative_loss_function_values(self.te_mp, t_ref, l_ref)
-            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+            for t_ref, l_ref in zip(
+                self.imp_data_t_ref, self.imp_data_l_ref, strict=False
+            )
         ]
 
         # Line radiation loss. Mid-plane distribution through the SoL
         self.rad_mp = [
             calculate_line_radiation_loss(self.ne_mp, loss, fi)
-            for loss, fi in zip(loss_f, self.impurities_content)
+            for loss, fi in zip(loss_f, self.impurities_content, strict=False)
         ]
 
     def plot_mp_radiation_profile(self):
@@ -409,20 +411,22 @@ class CoreRadiation(Radiation):
         # For each flux tube, poloidal density profile.
         self.ne_pol = [
             self.flux_tube_pol_n(ft, n, core=True)
-            for ft, n in zip(self.flux_tubes, self.ne_mp)
+            for ft, n in zip(self.flux_tubes, self.ne_mp, strict=False)
         ]
 
         # For each flux tube, poloidal temperature profile.
         self.te_pol = [
             self.flux_tube_pol_t(ft, t, core=True)
-            for ft, t in zip(self.flux_tubes, self.te_mp)
+            for ft, t in zip(self.flux_tubes, self.te_mp, strict=False)
         ]
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
         self.loss_f = [
             [radiative_loss_function_values(t, t_ref, l_ref) for t in self.te_pol]
-            for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+            for t_ref, l_ref in zip(
+                self.imp_data_t_ref, self.imp_data_l_ref, strict=False
+            )
         ]
 
         # For each impurity species and for each flux tube,
@@ -430,9 +434,9 @@ class CoreRadiation(Radiation):
         self.rad = [
             [
                 calculate_line_radiation_loss(n, l_f, fi)
-                for n, l_f in zip(self.ne_pol, ft)
+                for n, l_f in zip(self.ne_pol, ft, strict=False)
             ]
-            for ft, fi in zip(self.loss_f, self.impurities_content)
+            for ft, fi in zip(self.loss_f, self.impurities_content, strict=False)
         ]
 
         return self.rad
@@ -476,7 +480,7 @@ class CoreRadiation(Radiation):
 
         for sep in separatrix:
             plot_coordinates(sep, ax=ax, linewidth=0.2)
-        for flux_tube, p in zip(flux_tubes, power_density):
+        for flux_tube, p in zip(flux_tubes, power_density, strict=False):
             cm = ax.scatter(
                 flux_tube.x,
                 flux_tube.z,
@@ -593,11 +597,11 @@ class ScrapeOffLayerRadiation(Radiation):
 
     def x_point_radiation_z_ext(
         self,
-        main_ext: Optional[float] = None,
+        main_ext: float | None = None,
         pfr_ext: float = 0.3,
         *,
         low_div: bool = True,
-    ) -> Tuple[float, ...]:
+    ) -> tuple[float, ...]:
         """
         Simple definition of a radiation region around the x-point.
         The region is supposed to extend from an arbitrary z coordinate on the
@@ -635,7 +639,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
     def radiation_region_ends(
         self, z_main: float, z_pfr: float, *, lfs: bool = True
-    ) -> Tuple[float, ...]:
+    ) -> tuple[float, ...]:
         """
         Entering and exiting points (x, z) of the radiation region
         detected on the separatrix.
@@ -682,7 +686,7 @@ class ScrapeOffLayerRadiation(Radiation):
     @staticmethod
     def radiation_region_points(
         flux_tube: Coordinates, z_main: float, z_pfr: float, *, lower: bool = True
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> tuple[np.ndarray, ...]:
         """
         For a given flux tube, indexes of points which fall respectively
         into the radiation and recycling region
@@ -719,8 +723,8 @@ class ScrapeOffLayerRadiation(Radiation):
         return rad_i, rec_i
 
     def mp_electron_density_temperature_profiles(
-        self, te_sep: Optional[float] = None, *, omp: bool = True
-    ) -> Tuple[np.ndarray, ...]:
+        self, te_sep: float | None = None, *, omp: bool = True
+    ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at midplane.
@@ -772,7 +776,7 @@ class ScrapeOffLayerRadiation(Radiation):
         t_u: float,
         *,
         lfs: bool = True,
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL, starting from any point on the separatrix.
@@ -845,7 +849,7 @@ class ScrapeOffLayerRadiation(Radiation):
         f_m: float = 1,
         *,
         detachment: bool = False,
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at the target.
@@ -886,15 +890,15 @@ class ScrapeOffLayerRadiation(Radiation):
         z_strike: float,
         main_ext: float,
         firstwall_geom: Coordinates,
-        pfr_ext: Optional[float] = None,
-        rec_ext: Optional[float] = None,
+        pfr_ext: float | None = None,
+        rec_ext: float | None = None,
         *,
         x_point_rad: bool = False,
         detachment: bool = False,
         lfs: bool = True,
         low_div: bool = True,
         main_chamber_rad: bool = False,
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> tuple[np.ndarray, ...]:
         """
         Temperature and density profiles calculation.
         Within the scrape-off layer sector, it gives temperature
@@ -1038,7 +1042,7 @@ class ScrapeOffLayerRadiation(Radiation):
         # exit of radiation region
         t_rad_out = (
             f_ion_t_eV
-            if (x_point_rad and pfr_ext is not None) or detachment  # noqa: PLR1706
+            if (x_point_rad and pfr_ext is not None) or detachment
             else target_temperature(
                 p_sol,
                 t_u_ev,
@@ -1102,6 +1106,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 t_out_prof,
                 reg_i,
                 t_tar_prof,
+                strict=False,
             )
         ]
         # density poloidal distribution
@@ -1123,6 +1128,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 n_out_prof,
                 reg_i,
                 n_tar_prof,
+                strict=False,
             )
         ]
 
@@ -1165,7 +1171,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         for sep in separatrix:
             plot_coordinates(sep, ax=ax, linewidth=0.2)
-        for flux_tube, p in zip(tubes, power):
+        for flux_tube, p in zip(tubes, power, strict=False):
             cm = ax.scatter(
                 flux_tube.coords.x,
                 flux_tube.coords.z,
@@ -1213,7 +1219,7 @@ class ScrapeOffLayerRadiation(Radiation):
             plt.title("Density along flux surfaces")
             plt.ylabel(r"$n_e~[m^{-3}]$")
 
-        for flux_tube, val in zip(flux_tubes, flux_property):
+        for flux_tube, val in zip(flux_tubes, flux_property, strict=False):
             ax.plot(
                 np.linspace(0, len(flux_tube.coords.x), len(flux_tube.coords.x)), val
             )
@@ -1453,7 +1459,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             # print(t_pol)
             loss[side] = [
                 [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
-                for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+                for t_ref, l_ref in zip(
+                    self.imp_data_t_ref, self.imp_data_l_ref, strict=False
+                )
             ]
 
         # For each impurity species and for each flux tube,
@@ -1470,9 +1478,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.rad[side] = [
                 [
                     calculate_line_radiation_loss(n, l_f, fi)
-                    for n, l_f in zip(ft["density"], f)
+                    for n, l_f in zip(ft["density"], f, strict=False)
                 ]
-                for f, fi in zip(ft["loss"], self.impurities_content)
+                for f, fi in zip(ft["loss"], self.impurities_content, strict=False)
             ]
 
         return self.rad
@@ -1684,7 +1692,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self,
         t_and_n_pol_lfs: np.ndarray,
         t_and_n_pol_hfs: np.ndarray,
-    ) -> Dict[str, List[List[np.ndarray]]]:
+    ) -> dict[str, list[list[np.ndarray]]]:
         """
         Radiation profiles calculation.
         For each scrape-off layer sector, it gives the
@@ -1725,7 +1733,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         for side, t_pol in loss.items():
             loss[side] = [
                 [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
-                for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
+                for t_ref, l_ref in zip(
+                    self.imp_data_t_ref, self.imp_data_l_ref, strict=False
+                )
             ]
 
         # For each impurity species and for each flux tube,
@@ -1740,9 +1750,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.rad[side] = [
                 [
                     calculate_line_radiation_loss(n, l_f, fi)
-                    for n, l_f in zip(ft["density"], f)
+                    for n, l_f in zip(ft["density"], f, strict=False)
                 ]
-                for f, fi in zip(ft["loss"], self.impurities_content)
+                for f, fi in zip(ft["loss"], self.impurities_content, strict=False)
             ]
         return self.rad
 
@@ -1805,8 +1815,8 @@ class RadiationSource:
         psi_n,
         ne_mp,
         te_mp,
-        core_impurities: Dict[str, float],
-        sol_impurities: Dict[str, float],
+        core_impurities: dict[str, float],
+        sol_impurities: dict[str, float],
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -1970,7 +1980,8 @@ class RadiationSource:
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         fs = self.eq.get_flux_surface(psi_n)
         return np.concatenate([
-            interpolated_field_values(x, z, f_sol) for x, z in zip(fs.x, fs.z)
+            interpolated_field_values(x, z, f_sol)
+            for x, z in zip(fs.x, fs.z, strict=False)
         ])
 
     def rad_sol_by_points(self, x_lst, z_lst):
@@ -1991,7 +2002,8 @@ class RadiationSource:
         """
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return np.concatenate([
-            interpolated_field_values(x, z, f_sol) for x, z in zip(x_lst, z_lst)
+            interpolated_field_values(x, z, f_sol)
+            for x, z in zip(x_lst, z_lst, strict=False)
         ])
 
     def rad_by_psi_n(self, psi_n):
