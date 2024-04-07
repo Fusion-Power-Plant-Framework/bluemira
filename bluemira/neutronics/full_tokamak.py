@@ -368,6 +368,8 @@ class SingleNullTokamak:
 
         plasma_region = flat_intersection([
             full_tokamak_region,
+            # TODO: Can reduce the number of negations (the following ~blanket) by
+            # Choosing the interior surfaces instead.
             ~self.cell_array.blanket.get_exclusion_zone(control_id),
             ~self.cell_array.divertor.get_exclusion_zone(control_id),
         ])
