@@ -9,7 +9,12 @@ on:
 
 jobs:
   examples:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+          os: ["ubuntu-latest"]
+          python-version: ["3.10", "3.11"]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,6 +28,8 @@ jobs:
           use-only-tar-bz2: false
           miniforge-variant: Mambaforge
           use-mamba: true
+          python-version: ${{ matrix.python-version }}
+
 
       - name: Install bluemira
         shell: bash -l {0}
