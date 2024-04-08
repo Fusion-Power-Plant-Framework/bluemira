@@ -1,5 +1,12 @@
 set -e
 
+if [ "$1" ]
+  then
+    PYTHON_VERSION="$1"
+else
+    PYTHON_VERSION="3.10"
+fi
+
 # Get and install mambaforge
 if [ ! -d "$HOME/mambaforge" ]; then
   curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh
@@ -13,7 +20,8 @@ envsubst '$HOME' < conda/mambaforge-init.sh > ~/.mambaforge-init.sh
 source ~/.mambaforge-init.sh
 
 # Create the bluemira conda environment
-mamba env create -f conda/environment.yml
+sed s/".*python.*"/"  - python="$PYTHON_VERSION/g ../conda/environment.yml > tmp_env.yml
+mamba env create -f tmp_env.yml
 conda activate bluemira
 
 # Install bluemira
