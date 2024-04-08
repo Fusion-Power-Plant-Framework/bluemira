@@ -33,7 +33,7 @@ pyparsing==3.1.2
 pypet==0.6.1
 python-dateutil==2.9.0.post0
 pytz==2024.1
-pyvista==0.43.4
+pyvista==0.43.5
 rich==13.7.1
 scikit-learn==1.4.1.post1
 scipy==1.10.1
