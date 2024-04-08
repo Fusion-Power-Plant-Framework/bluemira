@@ -7,11 +7,11 @@ import json
 import sys
 import tarfile
 import zipfile
+from collections.abc import Callable, Iterable
 from os import chdir
 from pathlib import Path
 from shutil import rmtree
 from types import ModuleType
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 from unittest.mock import patch
 from xml.etree import cElementTree  # noqa: S405
 
@@ -35,7 +35,7 @@ def state_download_size(download_size: int, uncompressed_size: int, units: str):
 
 
 def extractor(
-    compressed_files: List[Path], extraction_dir: Path, del_compressed_file: bool
+    compressed_files: list[Path], extraction_dir: Path, del_compressed_file: bool
 ):
     """Customisable extractor"""
     Path.mkdir(extraction_dir, parents=True, exist_ok=True)
@@ -80,8 +80,8 @@ def _filter_members(
     file: str,
     isotope_file: str,
     filename: str,
-    members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]],
-) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
+    members: dict[str, tarfile.TarInfo | zipfile.ZipInfo],
+) -> list[tarfile.TarInfo] | list[zipfile.ZipInfo]:
     """Filter archive contents to only extract wanted files"""
     import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
     from openmc_data import all_release_details as ard  # noqa: PLC0415
@@ -110,10 +110,10 @@ def _filter_members(
 
 def _filter(
     filename: str,
-    members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]],
-    datakeys: List[str],
+    members: dict[str, tarfile.TarInfo | zipfile.ZipInfo],
+    datakeys: list[str],
     filt: Callable,
-) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
+) -> list[tarfile.TarInfo] | list[zipfile.ZipInfo]:
     """Filter archive members"""
     filtered_members = []
     mem_keys = members.keys()
@@ -133,8 +133,8 @@ def _convertion_progress(*string, **_kwargs):
 
 
 def combine_xml(
-    lib_names: Tuple[str, ...],
-    thermal_files: Tuple[str, ...],
+    lib_names: tuple[str, ...],
+    thermal_files: tuple[str, ...],
     thermal_prefix: Path,
 ):
     """Combine xml files"""
@@ -149,7 +149,7 @@ def combine_xml(
         cElementTree.parse(Path(name, "cross_sections.xml"))  # noqa: S313
         for name in lib_names
     ]
-    for name, xml in zip(lib_names, xml_handle):
+    for name, xml in zip(lib_names, xml_handle, strict=False):
         data = xml.getroot()
         remove_list = []
         for elem in data.iter():
@@ -170,11 +170,11 @@ def combine_xml(
 
 def download_data(
     download: Callable,
-    libs: Tuple[ModuleType, ...],
-    lib_names: Tuple[str, ...],
+    libs: tuple[ModuleType, ...],
+    lib_names: tuple[str, ...],
 ):
     """Download neutronics data"""
-    for name, lib in zip(lib_names, libs):
+    for name, lib in zip(lib_names, libs, strict=False):
         bluemira_print(f"Downloading {name} cross section data")
         lib.state_download_size = state_download_size
         lib.download = download
@@ -185,7 +185,7 @@ def download_data(
         print()
 
 
-def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
     """Parse arguments"""
     parser = argparse.ArgumentParser("Bluemira Neutronics data downloader")
 

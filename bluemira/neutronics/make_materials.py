@@ -11,7 +11,7 @@ import dataclasses
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from openmc import Materials
 
@@ -27,10 +27,10 @@ if TYPE_CHECKING:
 
 
 def duplicate_mat_as(
-    mat_to_clone: Union[MassFractionMaterial, HomogenisedMixture],
+    mat_to_clone: MassFractionMaterial | HomogenisedMixture,
     new_id: int,
     new_name: str,
-) -> Union[MassFractionMaterial, HomogenisedMixture]:
+) -> MassFractionMaterial | HomogenisedMixture:
     """Clones and renames an OpenMC material"""
     new_mat = deepcopy(mat_to_clone)
     new_mat.material_id = new_id
@@ -377,7 +377,7 @@ class MaterialsLibrary:
             ).to_openmc_material(),
         )
 
-    def export(self, path: Union[str, Path] = "materials.xml"):
+    def export(self, path: str | Path = "materials.xml"):
         """Exports material defintions to xml"""
         material_list = Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)
