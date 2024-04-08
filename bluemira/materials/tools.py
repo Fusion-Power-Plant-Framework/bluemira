@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import warnings
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -91,28 +91,29 @@ def patch_nmm_openmc():
 
 
 def to_openmc_material(
-    name: Optional[str] = None,
+    name: str | None = None,
     packing_fraction: float = 1.0,
-    enrichment: Optional[float] = None,
-    enrichment_target: Optional[str] = None,
-    temperature: Optional[float] = None,
-    temperature_to_neutronics_code: bool = True,
-    pressure: Optional[float] = None,
-    elements: Optional[Dict[str, float]] = None,
-    chemical_equation: Optional[str] = None,
-    isotopes: Optional[Dict[str, float]] = None,
-    percent_type: Optional[str] = None,
-    density: Optional[float] = None,
-    density_unit: Optional[str] = None,
-    atoms_per_unit_cell: Optional[int] = None,
-    volume_of_unit_cell_cm3: Optional[float] = None,
-    enrichment_type: Optional[str] = None,
-    comment: Optional[str] = None,
-    zaid_suffix: Optional[str] = None,
-    material_id: Optional[int] = None,
+    enrichment: float | None = None,
+    enrichment_target: str | None = None,
+    temperature: float | None = None,
+    pressure: float | None = None,
+    elements: dict[str, float] | None = None,
+    chemical_equation: str | None = None,
+    isotopes: dict[str, float] | None = None,
+    percent_type: str | None = None,
+    density: float | None = None,
+    density_unit: str | None = None,
+    atoms_per_unit_cell: int | None = None,
+    volume_of_unit_cell_cm3: float | None = None,
+    enrichment_type: str | None = None,
+    comment: str | None = None,
+    zaid_suffix: str | None = None,
+    material_id: int | None = None,
     decimal_places: int = 8,
-    volume_in_cm3: Optional[float] = None,
-    additional_end_lines: Optional[Dict[str, List[str]]] = None,
+    volume_in_cm3: float | None = None,
+    additional_end_lines: dict[str, list[str]] | None = None,
+    *,
+    temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
     """Convert Bluemira material to OpenMC material"""
     with patch_nmm_openmc() as nmm:
@@ -143,20 +144,21 @@ def to_openmc_material(
 
 
 def to_openmc_material_mixture(
-    materials: List[openmc.Material],
-    fracs: List[float],
-    name: Optional[str] = None,
-    material_id: Optional[int] = None,
-    temperature: Optional[float] = None,
-    temperature_to_neutronics_code: bool = True,
+    materials: list[openmc.Material],
+    fracs: list[float],
+    name: str | None = None,
+    material_id: int | None = None,
+    temperature: float | None = None,
     percent_type: str = "vo",
     packing_fraction: float = 1.0,
-    pressure: Optional[float] = None,
-    comment: Optional[str] = None,
-    zaid_suffix: Optional[str] = None,
+    pressure: float | None = None,
+    comment: str | None = None,
+    zaid_suffix: str | None = None,
     decimal_places: int = 8,
-    volume_in_cm3: Optional[float] = None,
-    additional_end_lines: Optional[Dict[str, List[str]]] = None,
+    volume_in_cm3: float | None = None,
+    additional_end_lines: dict[str, list[str]] | None = None,
+    *,
+    temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
     """Convert Bluemira material mixture to OpenMC material mixture"""
     with patch_nmm_openmc() as nmm:

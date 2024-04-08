@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class MixtureFraction:
     """Material mixture fraction"""
 
-    material: Union[MassFractionMaterial, HomogenisedMixture]
+    material: MassFractionMaterial | HomogenisedMixture
     fraction: float
 
     def __post_init__(self):
@@ -44,12 +44,12 @@ class HomogenisedMixture:
     """
 
     name: str
-    materials: List[MixtureFraction]
-    material_id: Optional[int] = None
+    materials: list[MixtureFraction]
+    material_id: int | None = None
     percent_type: str = "vo"
     packing_fraction: float = 1.0
-    enrichment: Optional[float] = None
-    temperature: Optional[float] = None
+    enrichment: float | None = None
+    temperature: float | None = None
 
     def __str__(self) -> str:
         """
@@ -57,7 +57,7 @@ class HomogenisedMixture:
         """
         return self.name
 
-    def to_openmc_material(self, temperature: Optional[float] = None):
+    def to_openmc_material(self, temperature: float | None = None):
         """
         Convert the mixture to an openmc material.
         """
@@ -73,7 +73,7 @@ class HomogenisedMixture:
         )
 
     def _calc_homogenised_property(
-        self, prop: str, temperature: Optional[float] = None
+        self, prop: str, temperature: float | None = None
     ) -> float:
         """
         Calculate an mass-fraction-averaged property for the homogenised mixture.
@@ -108,7 +108,7 @@ class HomogenisedMixture:
 
         return value
 
-    def E(self, temperature: Optional[float] = None) -> float:  # noqa: N802
+    def E(self, temperature: float | None = None) -> float:  # noqa: N802
         """
         Young's modulus.
 
@@ -123,7 +123,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("E", temperature)
 
-    def mu(self, temperature: Optional[float] = None) -> float:
+    def mu(self, temperature: float | None = None) -> float:
         """
         Poisson's ratio.
 
@@ -138,7 +138,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("mu", temperature)
 
-    def CTE(self, temperature: Optional[float] = None) -> float:  # noqa: N802
+    def CTE(self, temperature: float | None = None) -> float:  # noqa: N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
 
@@ -153,7 +153,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("CTE", temperature)
 
-    def rho(self, temperature: Optional[float] = None) -> float:
+    def rho(self, temperature: float | None = None) -> float:
         """
         Density.
 
@@ -168,7 +168,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("rho", temperature)
 
-    def Sy(self, temperature: Optional[float] = None) -> float:  # noqa: N802
+    def Sy(self, temperature: float | None = None) -> float:  # noqa: N802
         """
         Minimum yield stress in MPa
 
@@ -185,7 +185,7 @@ class HomogenisedMixture:
 
     @classmethod
     def from_dict(
-        cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+        cls, name: str, material_dict: dict[str, Any], material_cache: MaterialCache
     ) -> HomogenisedMixture:
         """
         Generate an instance of the mixture from a dictionary of materials.
@@ -210,7 +210,7 @@ class HomogenisedMixture:
         materials = []
         for mat in material_dict[name]["materials"]:
             if isinstance(mat, str):
-                material_inst = material_cache.get_material(mat, False)
+                material_inst = material_cache.get_material(mat, clone=False)
                 material_value = material_dict[name]["materials"][mat]
                 materials.append(MixtureFraction(material_inst, material_value))
         mat_dict["materials"] = materials

@@ -817,7 +817,7 @@ def get_class_from_module(name: str, default_module: str = "") -> type:
     return output
 
 
-def array_or_num(array: Any) -> Union[np.ndarray, float]:
+def array_or_num(array: Any) -> np.ndarray | float:
     """
     Always returns a numpy array or a float
 

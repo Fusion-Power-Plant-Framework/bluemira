@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Protocol
 
 import asteval
 import matplotlib.pyplot as plt
@@ -45,7 +45,7 @@ class Material(Protocol):
     percent_type: str
     temperature: float
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """Convert bluemira material to openmc material"""
         ...
 
@@ -71,18 +71,18 @@ class MaterialProperty:
         The optional reference e.g. paper/database/website for the property.
     """
 
-    value: Union[float, str]
-    temp_max: Optional[float] = None
-    temp_min: Optional[float] = None
+    value: float | str
+    temp_max: float | None = None
+    temp_min: float | None = None
     reference: str = ""
     obj: Any = field(default=None, repr=False)
 
     def __call__(
         self,
-        temperature: Optional[float] = None,
-        pressure: Optional[float] = None,
+        temperature: float | None = None,
+        pressure: float | None = None,
         eps_vol: float = 0.0,
-    ) -> Union[float, ArrayLike]:
+    ) -> float | ArrayLike:
         """
         Evaluates the property at a given temperature, pressure, and/or eps_vol.
 
@@ -131,14 +131,12 @@ class MaterialProperty:
         return asdict(self)
 
     @staticmethod
-    def _validate_pressure(pressure: Union[float, ArrayLike]):
+    def _validate_pressure(pressure: float | ArrayLike):
         if pressure is None:
             raise ValueError("Pressure is not set")
         return pressure
 
-    def _validate_temperature(
-        self, temperature: Union[float, ArrayLike]
-    ) -> Union[float, ArrayLike]:
+    def _validate_temperature(self, temperature: float | ArrayLike) -> float | ArrayLike:
         """
         Check that the property is valid for the requested temperature range.
 
@@ -192,9 +190,7 @@ class MaterialPropertyDescriptor:
 
     def _mutate_value(
         self,
-        value: Union[
-            Union[Dict[str, Union[float, str, None]], float, str, None], MaterialProperty
-        ],
+        value: dict[str, float | str | None] | float | str | None | MaterialProperty,
         obj=None,
     ) -> MaterialProperty:
         if isinstance(value, dict):
@@ -208,7 +204,7 @@ class MaterialPropertyDescriptor:
             # empty dictionary
             value = MaterialProperty(**value, obj=obj) if value else self._default
 
-        elif isinstance(value, (float, int, str, type(None))):
+        elif isinstance(value, float | int | str | type(None)):
             value = MaterialProperty(value=value, obj=obj)
         elif not isinstance(value, MaterialProperty):
             raise TypeError("Can't convert value to MaterialProperty")
@@ -217,9 +213,7 @@ class MaterialPropertyDescriptor:
     def __set__(
         self,
         obj: Any,
-        value: Union[
-            Union[Dict[str, Union[float, str, None]], float, str, None], MaterialProperty
-        ],
+        value: dict[str, float | str | None] | float | str | None | MaterialProperty,
     ):
         """
         Set the MaterialProperty of the dataclass entry
@@ -238,9 +232,9 @@ class Void:
     density_unit: str = "atom/cm3"
     temperature: float = T_DEFAULT
     percent_type: str = "ao"
-    elements: Dict[str, float] = field(default_factory=lambda: {"H": 1})
-    zaid_suffix: Optional[str] = None
-    material_id: Optional[int] = None
+    elements: dict[str, float] = field(default_factory=lambda: {"H": 1})
+    zaid_suffix: str | None = None
+    material_id: int | None = None
 
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
@@ -263,7 +257,7 @@ class Void:
         """
         return 0.0
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
         """
@@ -351,17 +345,17 @@ class MassFractionMaterial:
 
     # Properties to interface with neutronics material maker
     name: str
-    elements: Optional[Dict[str, float]] = None
-    nuclides: Optional[Dict[str, float]] = None
+    elements: dict[str, float] | None = None
+    nuclides: dict[str, float] | None = None
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
     density_unit: str = "kg/m3"
     temperature: float = T_DEFAULT
-    zaid_suffix: Optional[str] = None
-    material_id: Optional[int] = None
+    zaid_suffix: str | None = None
+    material_id: int | None = None
     percent_type: str = "wo"
     enrichment: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
-    enrichment_target: Optional[str] = None
-    enrichment_type: Optional[str] = None
+    enrichment_target: str | None = None
+    enrichment_type: str | None = None
 
     # Engineering properties
     poissons_ratio: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
@@ -402,7 +396,7 @@ class MassFractionMaterial:
         """
         return self.name
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -560,12 +554,12 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
     Niobium-Titanium superconductor class.
     """
 
-    c_0: Optional[float] = None
-    bc_20: Optional[float] = None
-    tc_0: Optional[float] = None
-    alpha: Optional[float] = None
-    beta: Optional[float] = None
-    gamma: Optional[float] = None
+    c_0: float | None = None
+    bc_20: float | None = None
+    tc_0: float | None = None
+    alpha: float | None = None
+    beta: float | None = None
+    gamma: float | None = None
 
     def __post_init__(self):
         """Value checking for required args marked as optional
@@ -609,7 +603,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         c = (1 - ii) ** self.beta if 1 - ii > 0 else 0
         return a * b * c
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -643,15 +637,15 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     Niobium-Tin Superconductor class.
     """
 
-    c_a1: Optional[float] = None
-    c_a2: Optional[float] = None
-    eps_0a: Optional[float] = None
-    eps_m: Optional[float] = None
-    b_c20m: Optional[float] = None
-    t_c0max: Optional[float] = None
-    c: Optional[float] = None
-    p: Optional[float] = None
-    q: Optional[float] = None
+    c_a1: float | None = None
+    c_a2: float | None = None
+    eps_0a: float | None = None
+    eps_m: float | None = None
+    b_c20m: float | None = None
+    t_c0max: float | None = None
+    c: float | None = None
+    p: float | None = None
+    q: float | None = None
 
     def __post_init__(self):
         """Value checking for required args marked as optional
@@ -756,7 +750,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             - self.c_a2 * eps
         )
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -795,8 +789,8 @@ class Liquid:
     density_unit: str = "kg/m3"
     temperature: float = T_DEFAULT
     pressure: float = P_DEFAULT
-    zaid_suffix: Optional[str] = None
-    material_id: Optional[int] = None
+    zaid_suffix: str | None = None
+    material_id: int | None = None
     percent_type: str = "ao"
 
     def __str__(self) -> str:
@@ -830,7 +824,7 @@ class Liquid:
         """
         return 0
 
-    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -868,8 +862,8 @@ class UnitCellCompound:
     atoms_per_unit_cell: int
     packing_fraction: float = 1.0
     temperature: float = T_DEFAULT
-    zaid_suffix: Optional[str] = None
-    material_id: Optional[int] = None
+    zaid_suffix: str | None = None
+    material_id: int | None = None
     percent_type: str = "ao"
     density_unit: str = "g/cm3"
     enrichment: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
@@ -977,12 +971,12 @@ class Plasma:
     """
 
     name: str
-    isotopes: Dict[str, float]
+    isotopes: dict[str, float]
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor(1e-6)
     density_unit: str = "g/cm3"
     temperature: float = T_DEFAULT
-    zaid_suffix: Optional[str] = None
-    material_id: Optional[int] = None
+    zaid_suffix: str | None = None
+    material_id: int | None = None
     percent_type: str = "ao"
 
     def __str__(self) -> str:
