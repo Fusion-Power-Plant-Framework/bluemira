@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
-from typing import Tuple
-
 import numpy as np
 import openmc
 
@@ -17,7 +15,7 @@ from bluemira.neutronics.make_materials import MaterialsLibrary
 def filter_cells(
     cells: Cells,
     material_lib: MaterialsLibrary,
-) -> Tuple[
+) -> tuple[
     openmc.CellFilter,
     openmc.MaterialFilter,
     openmc.CellFilter,

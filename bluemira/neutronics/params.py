@@ -7,7 +7,7 @@
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Literal, Tuple, Union
+from typing import Literal
 
 import openmc
 
@@ -46,7 +46,7 @@ class OpenMCSimulationRuntimeParameters:
     # Parameters used outside of setup_openmc()
     parametric_source: bool  # to use the pps_isotropic module or not.
     particles: int  # number of particles used in the neutronics simulation
-    cross_section_xml: Union[str, Path]
+    cross_section_xml: str | Path
     batches: int = 2
     photon_transport: bool = True
     electron_treatment: Literal["ttb", "led"] = (
@@ -234,8 +234,8 @@ class TokamakGeometry(TokamakGeometryBase):
 
 
 def get_preset_physical_properties(
-    blanket_type: Union[str, BlanketType],
-) -> Tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
+    blanket_type: str | BlanketType,
+) -> tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.

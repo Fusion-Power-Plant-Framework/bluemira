@@ -11,7 +11,6 @@ All units used in this file are either [cm] or dimensionless.
 import copy
 import itertools
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -44,7 +43,7 @@ def check_geometry(plasma_geometry, tokamak_geometry) -> None:
     tokamak_geometry:
         dataclass with various thickness attributes. (See TokamakGeometry for details.)
     """
-    if plasma_geometry.elong < 1.0:  # noqa: PLR2004
+    if plasma_geometry.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
     inboard_build = (
@@ -203,8 +202,8 @@ def _join_lists(lists):
 class Surface:
     """Suface CSG sections"""
 
-    cones: List = field(default_factory=list)
-    planes: List = field(default_factory=list)
+    cones: list = field(default_factory=list)
+    planes: list = field(default_factory=list)
 
 
 @dataclass
@@ -214,17 +213,17 @@ class DivertorSurface:
     top: openmc.ZCone
     chop: openmc.ZPlane
     outer_cone: openmc.ZCone
-    bottom: Optional[openmc.ZPlane] = None
-    inner_r: Optional[openmc.ZCylinder] = None
-    r_chop_in: Optional[openmc.ZCylinder] = None
-    r_chop_out: Optional[openmc.ZCylinder] = None
-    outer_r: Optional[openmc.ZCylinder] = None
-    fw: Optional[List[openmc.ZCone]] = None
+    bottom: openmc.ZPlane | None = None
+    inner_r: openmc.ZCylinder | None = None
+    r_chop_in: openmc.ZCylinder | None = None
+    r_chop_out: openmc.ZCylinder | None = None
+    outer_r: openmc.ZCylinder | None = None
+    fw: list[openmc.ZCone] | None = None
     # Divertor surface
-    fw_back: Optional[List[openmc.ZCone]] = None
+    fw_back: list[openmc.ZCone] | None = None
     # Div first wall back
-    scoring: Optional[List[openmc.ZCone]] = None
-    fw_back_mid_z: Optional[openmc.ZPlane] = None
+    scoring: list[openmc.ZCone] | None = None
+    fw_back_mid_z: openmc.ZPlane | None = None
 
 
 @dataclass
@@ -241,11 +240,11 @@ class SurfaceZones:
     """Section of CSG model"""
 
     end: Surface
-    vv: Optional[Surface] = None
-    mani: Optional[Surface] = None
-    bz: Optional[Surface] = None
-    fw: Optional[Surface] = None
-    sf: Optional[Surface] = None
+    vv: Surface | None = None
+    mani: Surface | None = None
+    bz: Surface | None = None
+    fw: Surface | None = None
+    sf: Surface | None = None
 
 
 @dataclass
@@ -270,16 +269,16 @@ class LayerPoints:
 class Surfaces:
     """CGS surfaces"""
 
-    bore: Optional[openmc.ZCylinder] = None
-    div: Optional[DivertorSurface] = None
-    graveyard: Optional[GraveyardSurface] = None
-    inb: Optional[SurfaceZones] = None
-    inb_bot: Optional[openmc.ZPlane] = None
-    inb_top: Optional[openmc.ZPlane] = None
-    meeting: Optional[MeetingPoint] = None
-    outb: Optional[SurfaceZones] = None
-    outer_surface_cyl: Optional[openmc.ZCylinder] = None
-    tf_coil: Optional[openmc.ZCylinder] = None
+    bore: openmc.ZCylinder | None = None
+    div: DivertorSurface | None = None
+    graveyard: GraveyardSurface | None = None
+    inb: SurfaceZones | None = None
+    inb_bot: openmc.ZPlane | None = None
+    inb_top: openmc.ZPlane | None = None
+    meeting: MeetingPoint | None = None
+    outb: SurfaceZones | None = None
+    outer_surface_cyl: openmc.ZCylinder | None = None
+    tf_coil: openmc.ZCylinder | None = None
 
 
 @dataclass
@@ -300,7 +299,7 @@ class PlasmaCells:
 class DivertorCells:
     """Divertor CSG cells"""
 
-    regions: List[openmc.Cell]
+    regions: list[openmc.Cell]
     fw: openmc.Cell
     fw_sf: openmc.Cell
     inner1: openmc.Cell
@@ -315,11 +314,11 @@ class DivertorCells:
 class LayerCells:
     """Reactor layer CSG cells"""
 
-    bz: Optional[List[openmc.Cell]] = None
-    fw: Optional[List[openmc.Cell]] = None
-    mani: Optional[List[openmc.Cell]] = None
-    sf: Optional[List[openmc.Cell]] = None
-    vv: Optional[List[openmc.Cell]] = None
+    bz: list[openmc.Cell] | None = None
+    fw: list[openmc.Cell] | None = None
+    mani: list[openmc.Cell] | None = None
+    sf: list[openmc.Cell] | None = None
+    vv: list[openmc.Cell] | None = None
 
     def get_cells(self):
         """Get cells from dataclass"""
@@ -616,7 +615,7 @@ def make_geometry(
     clear_div_to_shell=5.0,  # [cm]
     div_fw_thick=2.5,  # [cm] # Divertor first wall thickness
     div_sf_thick=0.01,  # [cm]
-) -> Tuple[Cells, openmc.Universe]:
+) -> tuple[Cells, openmc.Universe]:
     """
     Creates an OpenMC CSG geometry for a reactor
 
@@ -728,6 +727,7 @@ def make_geometry(
         (num_inboard_points, num_outboard_points),
         (("Inboard", "inb", True), ("Outboard", "outb", False)),
         (inb_points, outb_points),
+        strict=False,
     ):
         setattr(
             surfaces,
@@ -854,7 +854,7 @@ def load_fw_points(
     new_aspect_ratio: float,
     new_elong: float,
     save_plots: bool = True,
-) -> Tuple[npt.NDArray, npt.NDArray, int]:
+) -> tuple[npt.NDArray, npt.NDArray, int]:
     """
     Load given first wall points,
     scale them according to the given major and minor radii,

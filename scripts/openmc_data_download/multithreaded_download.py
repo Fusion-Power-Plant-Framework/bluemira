@@ -6,8 +6,8 @@ import functools
 import hashlib
 import os
 import signal
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import requests
 from rich.progress import Progress
@@ -90,10 +90,10 @@ async def _download(
 
 def downloader(
     url: str,
-    checksum: Optional[int] = None,
+    checksum: int | None = None,
     as_browser: bool = False,  # noqa: ARG001
-    output_path: Optional[os.PathLike] = None,
-    output_filename: Optional[os.PathLike] = None,
+    output_path: os.PathLike | None = None,
+    output_filename: os.PathLike | None = None,
     *,
     max_workers: int = 5,
     timeout: int = 10,

@@ -9,7 +9,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -109,24 +108,24 @@ class OpenMCResult:
 
     tbr: float
     tbr_err: float
-    heating: Dict
-    neutron_wall_load: Dict
+    heating: dict
+    neutron_wall_load: dict
     """Neutron wall load (eV)"""
 
-    photon_heat_flux: Dict
+    photon_heat_flux: dict
     """Photon heat flux"""
 
     universe: openmc.Universe
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: str
-    cell_names: Dict
-    cell_vols: Dict  # [m^3]
-    mat_names: Dict
+    cell_names: dict
+    cell_vols: dict  # [m^3]
+    mat_names: dict
 
     volume_file: str
-    stochastic_cell_volumes: Optional[Dict[int, float]] = None
-    volume_state: Optional[openmc.VolumeCalculation] = None
+    stochastic_cell_volumes: dict[int, float] | None = None
+    volume_state: openmc.VolumeCalculation | None = None
 
     @classmethod
     def from_run(
@@ -208,7 +207,7 @@ class OpenMCResult:
         return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
-    def _convert_dict_contents(dataset: Dict[str, Dict[int, List[Union[str, float]]]]):
+    def _convert_dict_contents(dataset: dict[str, dict[int, list[str | float]]]):
         for k, v in dataset.items():
             vals = list(v.values()) if isinstance(v, dict) else v
             dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
@@ -375,6 +374,7 @@ class OpenMCResult:
                 self.neutron_wall_load,
                 self.photon_heat_flux,
             ),
+            strict=False,
         ):
             ret_str = f"{ret_str}\n{title}\n{self._tabulate(data)}"
 
@@ -387,12 +387,12 @@ class OpenMCResult:
 
     @staticmethod
     def _tabulate(
-        records: Dict[str, Union[str, float]],
+        records: dict[str, str | float],
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".3g",
     ) -> str:
         return tabulate(
-            zip(*records.values()),
+            zip(*records.values(), strict=False),
             headers=records.keys(),
             tablefmt=tablefmt,
             showindex=False,
@@ -402,7 +402,7 @@ class OpenMCResult:
 
 
 def geometry_plotter(
-    cells: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
+    cells: dict[str, list[openmc.Cell] | openmc.Cell],
     plasma_geometry: PlasmaGeometry,
     tokamak_geometry: TokamakGeometry,
 ) -> None:
