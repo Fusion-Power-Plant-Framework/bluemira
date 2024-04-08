@@ -3,7 +3,7 @@ asteval==0.9.32
 Babel==2.14.0
 cherab==1.4.0
 click==8.1.7
-contourpy==1.2.0
+contourpy==1.2.1
 CoolProp==6.6.0
 cycler==0.12.1
 fonttools==4.50.0
