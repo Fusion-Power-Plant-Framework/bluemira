@@ -1,0 +1,26 @@
+name: Open dependencies PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: "New semantic version string"
+        required: true
+
+jobs:
+  dep_pr:
+    steps:
+      - name: Permissions Check
+        uses: ./.github/workflows/actions/permission_check
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+      - name: Open develop_dependencies PR
+        uses: ./.github/workflows/actions/dependencies_PR
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+          tag: ${{ inputs.version }}
