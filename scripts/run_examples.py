@@ -107,7 +107,7 @@ def run_examples(
     failed = []
     for example in example_files:
         display_path = Path(example).relative_to(args.examples_dir)
-        print(BANNER.format(display_path))
+        print(BANNER.format(display_path), flush=True)
         result = run_example(example)
         # Flush stdout so we don't get un-flushed output from previous
         # examples under this example's banner
