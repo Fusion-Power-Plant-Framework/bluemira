@@ -37,6 +37,7 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # Import necessary module definitions.
 
 # %%
+import warnings
 from pathlib import Path
 
 import gmsh
@@ -50,6 +51,7 @@ from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_error
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
@@ -171,13 +173,19 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_meshtags(ft, mesh.geometry)
     xdmf.write_meshtags(ct, mesh.geometry)
 
-with pyvista_plot_show_save("cell_tags.png") as plotter:
-    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
-    num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
-    grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
-    grid.set_active_scalars("Marker")
-    actor = plotter.add_mesh(grid, show_edges=True)
-    plotter.view_xy()
+with warnings.catch_warnings() as w:
+    warnings.simplefilter("error")
+    try:
+        with pyvista_plot_show_save("cell_tags.png") as plotter:
+            grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
+            num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+            grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
+            grid.set_active_scalars("Marker")
+            actor = plotter.add_mesh(grid, show_edges=True)
+            plotter.view_xy()
+    except UserWarning:
+        # Pyvista segfaults if a screen is not available
+        bluemira_error("Can't view with pyvista, no framebuffer found")
 
 # %%
 em_solver = FemMagnetostatic2d(2)
