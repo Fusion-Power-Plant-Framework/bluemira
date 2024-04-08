@@ -29,7 +29,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Permissions Check
-        uses: ./.github/workflows/perm
+        uses: ./.github/workflows/actions/permission_check
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
@@ -80,7 +80,7 @@ jobs:
 
       - name: Open develop_dependencies PR
         if: ${{ inputs.open_dependencies_pr && !inputs.draft }}
-        uses: ./.github/workflows/deps_PR
+        uses: ./.github/workflows/actions/dependencies_PR
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
           tag: ${{ steps.validate.outputs.tag }}
