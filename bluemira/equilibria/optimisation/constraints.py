@@ -105,7 +105,7 @@ class FieldConstraints(UpdateableConstraint):
         x: float | np.ndarray,
         z: float | np.ndarray,
         B_max: float | np.ndarray,
-        tolerance: float | np.ndarray = 1.0e-6,
+        tolerance: float | np.ndarray = None,
         constraint_type: str = "inequality",
     ):
         if is_num(x):
@@ -120,6 +120,8 @@ class FieldConstraints(UpdateableConstraint):
                 "Maximum field vector length not equal to the number of points."
             )
 
+        if tolerance is None:
+            tolerance = 1e-3 * B_max
         if is_num(tolerance):
             tolerance = tolerance * np.ones(len(x))
         if len(tolerance) != len(x):
@@ -219,7 +221,7 @@ class CoilFieldConstraints(FieldConstraints):
         self,
         coilset: CoilSet,
         B_max: float | np.ndarray,
-        tolerance: float | np.ndarray = 1.0e-6,
+        tolerance: float | np.ndarray = None,
     ):
         n_coils = coilset.n_coils()
         if is_num(B_max):
@@ -228,11 +230,6 @@ class CoilFieldConstraints(FieldConstraints):
             raise ValueError(
                 "Maximum field vector length not equal to the number of coils."
             )
-
-        if is_num(tolerance):
-            tolerance = tolerance * np.ones(n_coils)
-        if len(tolerance) != n_coils:
-            raise ValueError("Tolerance vector length not equal to the number of coils.")
 
         x, z = self._get_constraint_points(coilset)
 
@@ -297,12 +294,21 @@ class CoilForceConstraints(UpdateableConstraint):
         PF_Fz_max: float,
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
-        tolerance: float | np.ndarray = 1.0e-6,
+        tolerance: float | np.ndarray = None,
     ):
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
         n_f_constraints = n_PF + n_CS
 
+        if tolerance is None:
+            if n_CS == 0:
+                tolerance = 1e-6 * PF_Fz_max * np.ones(n_f_constraints)
+            else:
+                tolerance = (
+                    1e-6
+                    * min([PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max])
+                    * np.ones(n_f_constraints)
+                )
         if is_num(tolerance):
             tolerance = tolerance * np.ones(n_f_constraints)
         elif len(tolerance) != n_f_constraints:
@@ -379,11 +385,13 @@ class MagneticConstraint(UpdateableConstraint):
         self,
         target_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = 1e-6,
+        tolerance: float | np.ndarray = None,
         f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
+        if tolerance is None:
+            tolerance = 1e-3 if target_value == 0.0 else 1e-3 * target_value
         if is_num(tolerance):
             if f_constraint == L2NormConstraint:
                 tolerance = tolerance * np.ones(1)
@@ -455,7 +463,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = 1e-6,
+        tolerance: float | np.ndarray = None,
         f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "equality",
     ):
@@ -484,7 +492,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         ref_z: float,
         constraint_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = 1e-6,
+        tolerance: float | np.ndarray = None,
         f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
@@ -519,7 +527,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         x: float | np.ndarray,
         z: float | np.ndarray,
         weights: float | np.ndarray = 1.0,
-        tolerance: float = 1e-6,
+        tolerance: float | None = None,
     ):
         super().__init__(
             x,
@@ -577,7 +585,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = 1e-6,
+        tolerance: float | np.ndarray = None,
     ):
         super().__init__(
             x,
@@ -622,7 +630,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         ref_z: float,
         constraint_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
-        tolerance: float = 1e-6,
+        tolerance: float | None = None,
     ):
         super().__init__(
             x,
@@ -686,7 +694,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = 1e-6,
+        tolerance: float | np.ndarray = None,
     ):
         super().__init__(
             x,
