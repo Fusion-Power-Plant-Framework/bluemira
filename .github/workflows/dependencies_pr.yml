@@ -20,7 +20,6 @@ jobs:
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       - name: Open develop_dependencies PR
-        if: ${{ inputs.open_dependencies_pr && !inputs.draft }}
         uses: ./.github/workflows/actions/dependencies_PR
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
