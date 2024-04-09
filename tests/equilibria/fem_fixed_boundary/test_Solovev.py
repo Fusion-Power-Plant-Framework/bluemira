@@ -98,7 +98,7 @@ class Solovev:
 
         return np.squeeze(2 * np.pi * np.sum(psi_func * self._m, axis=0))
 
-    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, *, tofill=True):
         """
         Plot psi
         """
@@ -135,7 +135,7 @@ class Solovev:
 
     @property
     def psi_norm_2d(self):
-        """Normalized flux function in 2-D"""
+        """Normalised flux function in 2-D"""
 
         def myfunc(x):
             return np.sqrt(
@@ -254,7 +254,7 @@ class TestSolovevZheng:
         # boundary conditions
         tdim = mesh.topology.dim
         facets = dmesh.locate_entities_boundary(
-            mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+            mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
         )
         dirichlet_bcs = fem.dirichletbc(
             psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)

@@ -176,10 +176,10 @@ class TestPanellingDesigner:
         ids=["mock", "run"],
     )
     def test_panels_fully_enclose_wall_boundary(self, panel_edges):
-        poly_panels = coords_xz_to_polygon(panel_edges).discretize()
+        poly_panels = coords_xz_to_polygon(panel_edges).discretise()
         boundary = make_cut_johner()
         signed_dists = signed_distance_2D_polygon(
-            poly_panels.xz.T, boundary.discretize().xz.T
+            poly_panels.xz.T, boundary.discretise().xz.T
         )
         np.testing.assert_array_less(signed_dists, 0 + 1e-6)
 
@@ -211,9 +211,9 @@ class TestPanellingDesigner:
         ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
 
         # test that we at least get a solution that encloses the boundary
-        poly_panels = coords_xz_to_polygon(panel_edges).discretize()
+        poly_panels = coords_xz_to_polygon(panel_edges).discretise()
         signed_dists = signed_distance_2D_polygon(
-            poly_panels.xz.T, shape.discretize().xz.T
+            poly_panels.xz.T, shape.discretise().xz.T
         )
         np.testing.assert_array_less(signed_dists, 0 + 1e-6)
         # expect at least one warning that the problem was not solvable

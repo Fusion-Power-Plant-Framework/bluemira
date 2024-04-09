@@ -60,8 +60,8 @@ class NumpyJSONEncoder(JSONEncoder):
 def json_writer(
     data: dict[str, Any],
     file: PathLike | str | None = None,
-    return_output: bool = False,
     *,
+    return_output: bool = False,
     cls: JSONEncoder = NumpyJSONEncoder,
     **kwargs,
 ) -> str | None:
@@ -424,6 +424,7 @@ def set_random_seed(seed_number: int):
 def compare_dicts(
     d1: dict[str, Any],
     d2: dict[str, Any],
+    *,
     almost_equal: bool = False,
     verbose: bool = True,
     rtol: float = 1e-5,
@@ -464,7 +465,14 @@ def compare_dicts(
     # Define functions to use for comparison in either the array, dict, or
     # numeric cases.
     def dict_eq(value_1, value_2):
-        return compare_dicts(value_1, value_2, almost_equal, verbose, rtol, atol)
+        return compare_dicts(
+            value_1,
+            value_2,
+            almost_equal=almost_equal,
+            verbose=verbose,
+            rtol=rtol,
+            atol=atol,
+        )
 
     def array_almost_eq(val1, val2):
         return np.allclose(val1, val2, rtol, atol)

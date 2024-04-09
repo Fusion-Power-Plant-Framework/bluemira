@@ -195,6 +195,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         opt_parameters: dict[str, float] | None = None,
         constraints=None,
         initial_currents=None,
+        *,
         debug: bool = False,
     ):
         self.coilset = coilset
@@ -250,7 +251,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             debug[entry].append([lcfs, value])
 
     def sub_opt_objective(
-        self, vector: npt.NDArray[np.float64], verbose: bool = False
+        self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
         """Run the sub-optimisations and return the largest figure of merit."""
         positions = self.position_mapper.to_xz_dict(vector)
@@ -272,7 +273,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self._run_reporting(self.iter, max_fom, verbose)
         return max_fom
 
-    def objective(self, vector: npt.NDArray[np.float64], verbose: bool = False) -> float:
+    def objective(
+        self, vector: npt.NDArray[np.float64], *, verbose: bool = False
+    ) -> float:
         """The objective function of the parent optimisation."""
         return self.sub_opt_objective(vector, verbose=verbose)
 
@@ -287,7 +290,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return self.position_mapper.to_L(x, z)
 
     def optimise(
-        self, x0: npt.NDArray | None = None, verbose: bool = False
+        self, x0: npt.NDArray | None = None, *, verbose: bool = False
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP

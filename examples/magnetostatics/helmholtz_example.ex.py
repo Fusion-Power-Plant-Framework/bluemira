@@ -75,7 +75,7 @@ for dx in dx_offsets:
     for dy in dy_offsets:
         new_loop = offset_wire(circle, dx)
         new_loop.translate(vector=(0, dy, 0))
-        coordinates = new_loop.discretize(ndiscr=50)
+        coordinates = new_loop.discretise(ndiscr=50)
         coordinates.close()
         filaments.append(coordinates)
 
@@ -88,7 +88,7 @@ biotsavart_circuit = BiotSavartFilament(
 # of several trapezoidal prism elements
 
 # %%
-coordinates = circle.discretize(ndiscr=100, byedges=True)
+coordinates = circle.discretise(ndiscr=100, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     coordinates, breadth=breadth, depth=depth, current=current
 )

@@ -203,7 +203,7 @@ class TestReactorConfigClass:
         assert len(cf_comp_a_des) == 0
         assert len(cf_comp_a_des_dne) == 0
 
-    def test_invalid_rc_initialization(self):
+    def test_invalid_rc_initialisation(self):
         with pytest.raises(ReactorConfigError):
             ReactorConfig(
                 ["wrong"],

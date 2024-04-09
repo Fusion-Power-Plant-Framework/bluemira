@@ -216,6 +216,7 @@ def solve_transport_fixed_boundary(
     relaxation: float = 0.2,
     transport_run_mode: str | BaseRunMode = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
+    *,
     plot: bool = False,
     debug: bool = False,
     gif: bool = False,

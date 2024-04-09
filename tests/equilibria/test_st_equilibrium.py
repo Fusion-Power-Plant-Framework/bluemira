@@ -22,13 +22,17 @@ from bluemira.equilibria import (
     CustomProfile,
     Equilibrium,
     Grid,
-    IsofluxConstraint,
-    MagneticConstraintSet,
     PicardIterator,
     SymmetricCircuit,
 )
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.optimisation.constraints import (
+    IsofluxConstraint,
+    MagneticConstraintSet,
+)
+from bluemira.equilibria.optimisation.problem import (
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
 from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.coordinates import get_area_2d
 

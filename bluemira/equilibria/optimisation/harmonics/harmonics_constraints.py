@@ -89,7 +89,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """
         return self.sh_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """

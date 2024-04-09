@@ -32,7 +32,6 @@ Geometry Examples
 .. toctree::
     :maxdepth: 1
 
-    examples/geometry/optimisation_tutorial
     examples/geometry/plane_placement_tutorial
 
 Magnetostatics Examples

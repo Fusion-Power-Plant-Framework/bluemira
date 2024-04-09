@@ -55,15 +55,15 @@ class TestPulsedCoilSetDesign:
 
     def test_breakdown_settings(self):
         mypcs = self.MyPulsedCoilset(self.params, *[None] * 4)
-        assert isinstance(mypcs._bd_settings, BreakdownCOPSettings)
-        mypcs._bd_settings.n_B_stray_points = 9
-        assert mypcs._bd_settings.n_B_stray_points == 9
+        assert isinstance(mypcs.bd_settings, BreakdownCOPSettings)
+        mypcs.bd_settings.n_B_stray_points = 9
+        assert mypcs.bd_settings.n_B_stray_points == 9
 
         mypcs = self.MyPulsedCoilset(
             self.params, *[None] * 4, breakdown_settings={"n_B_stray_points": 10}
         )
-        assert isinstance(mypcs._bd_settings, BreakdownCOPSettings)
-        assert mypcs._bd_settings.n_B_stray_points == 10
+        assert isinstance(mypcs.bd_settings, BreakdownCOPSettings)
+        assert mypcs.bd_settings.n_B_stray_points == 10
 
         with pytest.raises(TypeError):
             mypcs = self.MyPulsedCoilset(
@@ -71,16 +71,16 @@ class TestPulsedCoilSetDesign:
             )
 
     def test_equilibrium_settings(self):
-        mypcs = self.MyPulsedCoilset(self.params, *[None] * 4)
-        assert isinstance(mypcs._eq_settings, EQSettings)
-        mypcs._eq_settings.gamma = 9
-        assert mypcs._eq_settings.gamma == 9
+        mypcs = self.MyPulsedCoilset(self.params, *[None] * 6)
+        assert isinstance(mypcs.eq_settings, EQSettings)
+        mypcs.eq_settings.gamma = 9
+        assert mypcs.eq_settings.gamma == 9
 
         mypcs = self.MyPulsedCoilset(
             self.params, *[None] * 4, equilibrium_settings={"gamma": 1e-5}
         )
         assert isinstance(mypcs._eq_settings, EQSettings)
-        assert mypcs._eq_settings.gamma == pytest.approx(1e-5, rel=0, abs=EPS)
+        assert mypcs.eq_settings.gamma == pytest.approx(1e-5, rel=0, abs=EPS)
 
         with pytest.raises(TypeError):
             mypcs = self.MyPulsedCoilset(

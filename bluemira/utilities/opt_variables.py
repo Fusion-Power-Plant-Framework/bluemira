@@ -50,7 +50,7 @@ class OptVarDictT(TypedDict):
     description: str
 
 
-class OptVarSerializedT(TypedDict):
+class OptVarSerialisedT(TypedDict):
     """Typed dictionary for a serialised OptVariable."""
 
     value: float
@@ -88,6 +88,7 @@ class OptVariable:
         value: float,
         lower_bound: float,
         upper_bound: float,
+        *,
         fixed: bool = False,
         description: str | None = None,
     ):
@@ -151,6 +152,7 @@ class OptVariable:
         value: float | None = None,
         lower_bound: float | None = None,
         upper_bound: float | None = None,
+        *,
         strict_bounds: bool = True,
     ):
         """
@@ -195,7 +197,7 @@ class OptVariable:
             "description": self.description or "",
         }
 
-    def as_serializable(self) -> OptVarSerializedT:
+    def as_serialisable(self) -> OptVarSerialisedT:
         """Dictionary representation of OptVariable"""
         return {
             "value": self.value,
@@ -206,7 +208,7 @@ class OptVariable:
         }
 
     @classmethod
-    def from_serialized(cls, name: str, data: OptVarSerializedT) -> OptVariable:
+    def from_serialised(cls, name: str, data: OptVarSerialisedT) -> OptVariable:
         """Create an OptVariable from a dictionary"""
         return cls(
             name=name,
@@ -308,13 +310,14 @@ def ov(
     value: float,
     lower_bound: float,
     upper_bound: float,
+    *,
     fixed: bool = False,
     description: str | None = None,
 ) -> field:
     """Field factory for OptVariable"""
     return field(
         default_factory=lambda: OptVariable(
-            name, value, lower_bound, upper_bound, fixed, description
+            name, value, lower_bound, upper_bound, fixed=fixed, description=description
         )
     )
 
@@ -382,6 +385,7 @@ class OptVariablesFrame:
         value: float | None = None,
         lower_bound: float | None = None,
         upper_bound: float | None = None,
+        *,
         fixed: bool = False,
         strict_bounds: bool = True,
     ):
@@ -414,11 +418,12 @@ class OptVariablesFrame:
             )
             opt_var.fix(value)
         else:
-            opt_var.adjust(value, lower_bound, upper_bound, strict_bounds)
+            opt_var.adjust(value, lower_bound, upper_bound, strict_bounds=strict_bounds)
 
     def adjust_variables(
         self,
         var_dict: VarDictT | None = None,
+        *,
         strict_bounds=True,
     ):
         """
@@ -435,19 +440,19 @@ class OptVariablesFrame:
         """
         if var_dict is not None:
             for k, v in var_dict.items():
-                args = [
-                    v.get("value", None),
-                    v.get("lower_bound", None),
-                    v.get("upper_bound", None),
-                    v.get("fixed", None),
-                ]
-                if all(i is None for i in args):
+                kwargs = {
+                    "value": v.get("value", None),
+                    "lower_bound": v.get("lower_bound", None),
+                    "upper_bound": v.get("upper_bound", None),
+                    "fixed": v.get("fixed", None),
+                }
+                if all(i is None for i in kwargs.values()):
                     raise OptVariablesError(
                         "When adjusting variables in an OptVariableFrame instance, the"
                         " dictionary must be of the form: {'var_name': {'value': v,"
                         " 'lower_bound': lb, 'upper_bound': ub}, ...}"
                     )
-                self.adjust_variable(k, *args, strict_bounds=strict_bounds)
+                self.adjust_variable(k, **kwargs, strict_bounds=strict_bounds)
 
     def fix_variable(self, name: str, value: float | None = None):
         """
@@ -555,11 +560,11 @@ class OptVariablesFrame:
         """
         return {opv.name: opv.as_dict() for opv in self}
 
-    def as_serializable(self) -> dict[str, OptVarSerializedT]:
+    def as_serialisable(self) -> dict[str, OptVarSerialisedT]:
         """
         Dictionary Representation of the frame
         """
-        return {opv.name: opv.as_serializable() for opv in self}
+        return {opv.name: opv.as_serialisable() for opv in self}
 
     def to_json(self, file: str, **kwargs):
         """
@@ -570,7 +575,7 @@ class OptVariablesFrame:
         path: str
             Path to save the json file to.
         """
-        json_writer(self.as_serializable(), file, **kwargs)
+        json_writer(self.as_serialisable(), file, **kwargs)
 
     @classmethod
     def from_json(cls, file: Path | str | TextIO) -> OptVariablesFrame:
@@ -588,7 +593,7 @@ class OptVariablesFrame:
 
         d = json.load(file)
         opt_vars = {
-            name: OptVariable.from_serialized(name, val) for name, val in d.items()
+            name: OptVariable.from_serialised(name, val) for name, val in d.items()
         }
         return cls(**opt_vars)
 

@@ -9,9 +9,10 @@ Plasma builder.
 
 from dataclasses import dataclass
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import ComponentManager
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace

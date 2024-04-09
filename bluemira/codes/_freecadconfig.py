@@ -71,4 +71,4 @@ def _freecad_save_config(
 
     import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
     import_prefs.SetInt("ImportMode", 0)
-    import_prefs.SetBool("ExportLegacy", False)
+    import_prefs.SetBool("ExportLegacy", False)  # noqa: FBT003

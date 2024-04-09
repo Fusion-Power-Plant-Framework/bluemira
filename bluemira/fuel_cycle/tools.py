@@ -201,7 +201,7 @@ def piecewise_sqrt_threshold(
 
 
 def fit_sink_data(
-    x: np.ndarray, y: np.ndarray, method: str = "sqrt", plot: bool = True
+    x: np.ndarray, y: np.ndarray, method: str = "sqrt", *, plot: bool = True
 ) -> tuple[float, float]:
     """
     Function used to determine simplified tritium sink model parameters, from
@@ -834,6 +834,7 @@ def _sqrt_thresh_sink(
     max_inventory: float,
     sum_in: float,
     decayed: float,
+    *,
     _testing: bool,
 ) -> tuple[float, float, float, float]:
     """
@@ -997,6 +998,7 @@ def sqrt_bathtub(
     factor: float,
     bci: int,
     max_inventory: float,
+    *,
     _testing: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """

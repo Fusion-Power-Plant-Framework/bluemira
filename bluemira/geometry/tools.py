@@ -16,7 +16,6 @@ from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any
-from warnings import warn
 
 import numba as nb
 import numpy as np
@@ -88,7 +87,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
         if isinstance(obj, BluemiraGeo):
-            return serialize_shape(obj)
+            return serialise_shape(obj)
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
@@ -213,14 +212,14 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(drop_closure_point: bool) -> BluemiraWire:
+def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
 
     def decorator(func: Callable) -> BluemiraWire:
         def wrapper(
-            points: list | np.ndarray | dict, label: str = "", closed: bool = False
+            points: list | np.ndarray | dict, label: str = "", *, closed: bool = False
         ) -> BluemiraWire:
             points = Coordinates(points)
             if points.closed:
@@ -247,6 +246,7 @@ def closed_wire_wrapper(drop_closure_point: bool) -> BluemiraWire:
 def make_polygon(
     points: list | np.ndarray,
     label: str = "",  # noqa: ARG001
+    *,
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """
@@ -279,6 +279,7 @@ def make_polygon(
 def make_bezier(
     points: list | np.ndarray,
     label: str = "",  # noqa: ARG001
+    *,
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
@@ -310,6 +311,7 @@ def make_bspline(
     poles: list | np.ndarray,
     mults: list | np.ndarray,
     knots: list | np.ndarray,
+    *,
     periodic: bool,
     degree: int,
     weights: list | np.ndarray,
@@ -342,7 +344,13 @@ def make_bspline(
     """
     return BluemiraWire(
         cadapi.make_bspline(
-            poles, mults, knots, periodic, degree, weights, check_rational
+            poles,
+            mults,
+            knots,
+            periodic=periodic,
+            degree=degree,
+            weights=weights,
+            check_rational=check_rational,
         ),
         label=label,
     )
@@ -351,13 +359,14 @@ def make_bspline(
 def _make_polygon_fallback(
     points,
     label="",
+    *,
     closed=False,
     **kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
     """
-    return make_polygon(points, label, closed)
+    return make_polygon(points, label, closed=closed)
 
 
 @fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
@@ -365,6 +374,7 @@ def _make_polygon_fallback(
 def interpolate_bspline(
     points: list | np.ndarray,
     label: str = "",
+    *,
     closed: bool = False,
     start_tangent: Iterable | None = None,
     end_tangent: Iterable | None = None,
@@ -393,7 +403,9 @@ def interpolate_bspline(
     """
     points = Coordinates(points)
     return BluemiraWire(
-        cadapi.interpolate_bspline(points.T, closed, start_tangent, end_tangent),
+        cadapi.interpolate_bspline(
+            points.T, closed=closed, start_tangent=start_tangent, end_tangent=end_tangent
+        ),
         label=label,
     )
 
@@ -435,10 +447,10 @@ def force_wire_to_spline(
         )
         return wire
 
-    original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
+    original_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
 
     for n_discr in np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int):
-        points = wire.discretize(ndiscr=int(n_discr), byedges=False)
+        points = wire.discretise(ndiscr=int(n_discr), byedges=False)
         try:
             wire = BluemiraWire(
                 cadapi.interpolate_bspline(points.T, closed=wire.is_closed()),
@@ -448,7 +460,7 @@ def force_wire_to_spline(
         except cadapi.FreeCADError:
             continue
 
-    new_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
+    new_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
 
     delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
     if delta > l2_tolerance:
@@ -597,9 +609,9 @@ def _offset_wire_discretised(
     thickness,
     /,
     join: str = "intersect",  # noqa: ARG001
+    *,
     open_wire: bool = True,
     label="",
-    *,
     fallback_method="square",
     fallback_force_spline=False,
     byedges=True,
@@ -626,7 +638,7 @@ def _offset_wire_discretised(
             "Fallback function _offset_wire_discretised cannot handle open wires."
         )
 
-    coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
+    coordinates = wire.discretise(byedges=byedges, ndiscr=ndiscr)
 
     wire = make_polygon(
         offset_clipper(
@@ -647,9 +659,9 @@ def offset_wire(
     thickness: float,
     /,
     join: str = "intersect",
+    *,
     open_wire: bool = True,
     label: str = "",
-    *,
     fallback_method="square",  # noqa: ARG001
     byedges=True,  # noqa: ARG001
     ndiscr=400,  # noqa: ARG001
@@ -692,7 +704,7 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
     )
 
 
@@ -733,11 +745,11 @@ def convex_hull_wires_2d(
     else:
         raise NotImplementedError
 
-    shape_discretizations = []
+    shape_discretisations = []
     for wire in wires:
-        discretized_points = wire.discretize(byedges=True, ndiscr=ndiscr)
-        shape_discretizations.append(getattr(discretized_points, plane))
-    coords = np.hstack(shape_discretizations)
+        discretised_points = wire.discretise(byedges=True, ndiscr=ndiscr)
+        shape_discretisations.append(getattr(discretised_points, plane))
+    coords = np.hstack(shape_discretisations)
 
     hull = ConvexHull(coords.T)
     hull_coords = np.zeros((3, len(hull.vertices)))
@@ -827,6 +839,7 @@ def extrude_shape(
 def sweep_shape(
     profiles: BluemiraWire | Iterable[BluemiraWire],
     path: BluemiraWire,
+    *,
     solid: bool = True,
     frenet: bool = True,
     label: str = "",
@@ -855,12 +868,12 @@ def sweep_shape(
 
     profile_shapes = [p.shape for p in profiles]
 
-    result = cadapi.sweep_shape(profile_shapes, path.shape, solid, frenet)
+    result = cadapi.sweep_shape(profile_shapes, path.shape, solid=solid, frenet=frenet)
 
     return convert(result, label=label)
 
 
-def fillet_chamfer_decorator(chamfer: bool):
+def fillet_chamfer_decorator(*, chamfer: bool):
     """
     Decorator for fillet and chamfer operations, checking for validity of wire
     and radius.
@@ -888,7 +901,7 @@ def fillet_chamfer_decorator(chamfer: bool):
     return decorator
 
 
-@fillet_chamfer_decorator(False)
+@fillet_chamfer_decorator(chamfer=False)
 def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     """
     Fillet all edges of a wire
@@ -907,7 +920,7 @@ def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius))
 
 
-@fillet_chamfer_decorator(True)
+@fillet_chamfer_decorator(chamfer=True)
 def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     """
     Chamfer all edges of a wire
@@ -1144,14 +1157,6 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        cad_format = kw_formatt
-
     if not isinstance(shapes, list):
         shapes = [shapes]
     if names is not None and not isinstance(names, list):
@@ -1480,11 +1485,11 @@ def point_on_plane(
 
 
 # # =============================================================================
-# # Serialize and Deserialize
+# # Serialise and Deserialise
 # # =============================================================================
-def serialize_shape(shape: BluemiraGeo):
+def serialise_shape(shape: BluemiraGeo):
     """
-    Serialize a BluemiraGeo object.
+    Serialise a BluemiraGeo object.
     """
     type_ = type(shape)
 
@@ -1492,7 +1497,7 @@ def serialize_shape(shape: BluemiraGeo):
     if isinstance(shape, BluemiraGeo):
         sdict = {"label": shape.label, "boundary": output}
         for obj in shape.boundary:
-            output.append(serialize_shape(obj))
+            output.append(serialise_shape(obj))
             if isinstance(shape, GeoMeshable) and shape.mesh_options is not None:
                 if shape.mesh_options.lcar is not None:
                     sdict["lcar"] = shape.mesh_options.lcar
@@ -1500,22 +1505,22 @@ def serialize_shape(shape: BluemiraGeo):
                     sdict["physical_group"] = shape.mesh_options.physical_group
         return {str(type(shape).__name__): sdict}
     if isinstance(shape, cadapi.apiWire):
-        return cadapi.serialize_shape(shape)
-    raise NotImplementedError(f"Serialization non implemented for {type_}")
+        return cadapi.serialise_shape(shape)
+    raise NotImplementedError(f"Serialisation non implemented for {type_}")
 
 
-def deserialize_shape(buffer: dict) -> BluemiraGeo | None:
+def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
     """
-    Deserialize a BluemiraGeo object obtained from serialize_shape.
+    Deserialise a BluemiraGeo object obtained from serialise_shape.
 
     Parameters
     ----------
     buffer:
-        Object serialization as stored by serialize_shape
+        Object serialisation as stored by serialise_shape
 
     Returns
     -------
-    The deserialized BluemiraGeo object.
+    The deserialised BluemiraGeo object.
     """
     supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
@@ -1538,12 +1543,12 @@ def deserialize_shape(buffer: dict) -> BluemiraGeo | None:
             if issubclass(shape_type, BluemiraWire):
                 for k in item:
                     if k == shape_type.__name__:
-                        shape = deserialize_shape(item)
+                        shape = deserialise_shape(item)
                     else:
-                        shape = cadapi.deserialize_shape(item)
+                        shape = cadapi.deserialise_shape(item)
                     temp_list.append(shape)
             else:
-                temp_list.append(deserialize_shape(item))
+                temp_list.append(deserialise_shape(item))
 
         mesh_options = _extract_mesh_options(shape_dict)
 
@@ -1557,7 +1562,7 @@ def deserialize_shape(buffer: dict) -> BluemiraGeo | None:
             if type_ == supported_type.__name__:
                 return _extract_shape(v, BluemiraWire)
 
-        raise NotImplementedError(f"Deserialization non implemented for {type_}")
+        raise NotImplementedError(f"Deserialisation non implemented for {type_}")
     return None
 
 

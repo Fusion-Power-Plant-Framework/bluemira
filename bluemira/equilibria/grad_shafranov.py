@@ -52,6 +52,7 @@ class GSOperator:
         x_max: float,
         z_min: float,
         z_max: float,
+        *,
         force_symmetry: bool = False,
     ):
         self.x_min = x_min
@@ -165,7 +166,7 @@ class GSSolver(DirectSolver):
         at Z=0.
     """
 
-    def __init__(self, grid: Grid, force_symmetry: bool = False):
+    def __init__(self, grid: Grid, *, force_symmetry: bool = False):
         self.grid = grid
         self.force_symmetry = force_symmetry
 

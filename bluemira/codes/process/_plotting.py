@@ -147,7 +147,7 @@ def setup_radial_build(run: dict[str, Any], width: float = 1.0):
     ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
     ax.set_ylim([-width * 0.5, width * 0.5])
     ax.set_xticks([*list(ax.get_xticks()), R_0])
-    ax.axes.set_axisbelow(False)
+    ax.axes.set_axisbelow(b=False)
 
     def tick_format(value, n):  # noqa: ARG001
         if value == R_0:
@@ -223,7 +223,7 @@ def process_RB_fromOUT(f):
 
 
 def plot_radial_build(
-    sys_code_dir: str, width: float = 1.0, show: bool = True
+    sys_code_dir: str, width: float = 1.0, *, show: bool = True
 ) -> plt.Axes:
     """
     Plot PROCESS radial build.

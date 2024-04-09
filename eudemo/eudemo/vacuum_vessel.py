@@ -13,9 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import ComponentManager
 from bluemira.builders.tools import (
     apply_component_display_options,
     build_sectioned_xy,

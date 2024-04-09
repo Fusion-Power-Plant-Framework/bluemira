@@ -17,7 +17,7 @@ from bluemira.display.auto_config import plot_defaults
 
 class TestSuperSankey:
     def test_sankey_ring(self):
-        plot_defaults(True)
+        plot_defaults(force=True)
 
         scale = 0.001
         gap = 0.25

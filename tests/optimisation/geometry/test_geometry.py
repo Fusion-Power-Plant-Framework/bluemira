@@ -180,11 +180,11 @@ class TestGeometry:
         # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-2)
 
-    def test_dict_koz_settings_passed_to_discretize(self):
+    def test_dict_koz_settings_passed_to_discretise(self):
         parameterisation = PictureFrame()
         zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
 
-        with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
+        with mock.patch.object(zone, "discretise", wraps=zone.discretise) as discr_mock:
             optimise_geometry(
                 parameterisation,
                 lambda _: 1.0,
@@ -201,7 +201,7 @@ class TestGeometry:
 
         discr_mock.assert_called_once_with(20, byedges=False, dl=None)
 
-    def test_koz_settings_passed_to_discretize(self):
+    def test_koz_settings_passed_to_discretise(self):
         parameterisation = PictureFrame()
         pf = parameterisation.create_shape()
         zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
@@ -210,9 +210,9 @@ class TestGeometry:
         )
 
         with (
-            mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock,
+            mock.patch.object(zone, "discretise", wraps=zone.discretise) as discr_mock,
             mock.patch.object(parameterisation, "create_shape", return_value=pf),
-            mock.patch.object(pf, "discretize", wraps=pf.discretize) as shape_discr_mock,
+            mock.patch.object(pf, "discretise", wraps=pf.discretise) as shape_discr_mock,
         ):
             optimise_geometry(
                 parameterisation,
@@ -222,9 +222,9 @@ class TestGeometry:
             )
 
         discr_mock.assert_called_once_with(20, byedges=False, dl=None)
-        # Note we expect more than one call to 'geom.discretize' due to
+        # Note we expect more than one call to 'geom.discretise' due to
         # gradient approximation of objective and constraints. They
-        # should all be using the same discretization.
+        # should all be using the same discretisation.
         assert all(
             call == mock.call(30, byedges=False)
             for call in shape_discr_mock.call_args_list

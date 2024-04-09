@@ -134,6 +134,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     def plot(
         self,
         ax: Axes | None = None,
+        *,
         subcoil: bool = True,
         label: bool = False,
         force: Iterable | None = None,
@@ -251,7 +252,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         to_remove = [names.index(c_n) for c_n in c_names]
 
         coils = np.array(self._coils, dtype=object)
-        mask = np.full(coils.size, True, dtype=bool)
+        mask = np.full(coils.size, fill_value=True, dtype=bool)
         mask[to_remove] = False
 
         for no, c in enumerate(self._coils):
@@ -970,7 +971,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return np.sum(super().volume)
 
     def _sum(
-        self, output: np.ndarray, sum_coils: bool = False, control: bool = False
+        self, output: np.ndarray, *, sum_coils: bool = False, control: bool = False
     ) -> np.ndarray:
         """
         Get responses of coils optionally only control and/or sum over the responses
