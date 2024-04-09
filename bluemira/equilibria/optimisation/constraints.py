@@ -134,7 +134,6 @@ class FieldConstraints(UpdateableConstraint):
             "bzp_vec": None,
             "B_max": B_max,
             "scale": 1.0,
-            "current_rep_matrix": None,
         }
         self.tolerance = tolerance
         self.f_constraint_type = constraint_type
@@ -161,10 +160,6 @@ class FieldConstraints(UpdateableConstraint):
         bxp_vec, bzp_vec = self.evaluate(equilibrium)
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
-
-        self._args["current_rep_matrix"] = (
-            equilibrium.coilset._optimisation_currents_rep_mat
-        )
 
     def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -214,8 +209,6 @@ class CoilFieldConstraints(FieldConstraints):
     -----
     This is a fast approximation constraint, and does not solve for the peak field
     at all points in the coils. Use with caution.
-    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
-    supported)
     TODO: Presently only accounts for poloidal field contributions from PF coils and
     plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
@@ -272,10 +265,6 @@ class CoilFieldConstraints(FieldConstraints):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-        self._args["current_rep_matrix"] = (
-            equilibrium.coilset._optimisation_currents_rep_mat
-        )
-
 
 class CoilForceConstraints(UpdateableConstraint):
     """
@@ -293,11 +282,6 @@ class CoilForceConstraints(UpdateableConstraint):
         Maximum separation vertical force between two CS modules [MN]
     tolerance:
         Tolerance with which the inequality constraints will be met
-
-    Notes
-    -----
-    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
-    supported)
     """
 
     def __init__(
@@ -326,7 +310,6 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
-            "current_rep_matrix": None,
         }
         self.tolerance = tolerance
 
@@ -348,10 +331,6 @@ class CoilForceConstraints(UpdateableConstraint):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
         self._args["b_vec"] = self.evaluate(equilibrium)
-
-        self._args["current_rep_matrix"] = (
-            equilibrium.coilset._optimisation_currents_rep_mat
-        )
 
     @staticmethod
     def control_response(coilset: CoilSet) -> np.ndarray:
@@ -428,10 +407,6 @@ class MagneticConstraint(UpdateableConstraint):
 
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
-
-        self._args["current_rep_matrix"] = (
-            equilibrium.coilset._optimisation_currents_rep_mat
-        )
 
     def update_target(self, equilibrium: Equilibrium):
         """

@@ -537,11 +537,11 @@ class TestCoilSet:
             self.coilset.get_position_optimisable_coils(["PF_3"])
 
     def test_set_optimisation_currents(self):
-        self.coilset._optimisation_currents = np.array([1.0])
-        assert np.allclose(self.coilset._optimisation_currents, np.array([1.0]))
+        self.coilset._opt_currents = np.array([1.0])
+        assert np.allclose(self.coilset._opt_currents, np.array([1.0]))
 
-        self.coilset._optimisation_currents = np.array([1.0, 2.0])
-        assert np.allclose(self.coilset._optimisation_currents, np.array([1.0, 2.0]))
+        self.coilset._opt_currents = np.array([1.0, 2.0])
+        assert np.allclose(self.coilset._opt_currents, np.array([1.0, 2.0]))
         assert np.allclose(self.coilset.current, np.array([1.0, 2.0, 2.0]))
 
         assert self.coilset.n_current_optimisable_coils == 2
@@ -549,12 +549,11 @@ class TestCoilSet:
         with pytest.raises(ValueError):  # noqa: PT011
             # attempting to set more currents than there are
             # current optimisable coils
-            self.coilset._optimisation_currents = np.array([1.0, 2.0, 3.0])
+            self.coilset._opt_currents = np.array([1.0, 2.0, 3.0])
 
-    def test_currents_rep_matrix(self):
+    def test_cur_repetition_matrix(self):
         opt_curs_post_rep = (
-            self.coilset._optimisation_currents_rep_mat
-            @ self.coilset._optimisation_currents
+            self.coilset._opt_currents_repetition_mat @ self.coilset._opt_currents
         )
         assert np.allclose(opt_curs_post_rep, self.coilset.current)
 

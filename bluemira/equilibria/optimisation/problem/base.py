@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.equilibria.coils import CoilSetSymmetryStatus
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
@@ -127,8 +128,8 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         substates = 3
         cc = coilset.get_control_coils()
-        x, z = cc._get_optimisation_positions()
-        currents = cc._optimisation_currents / current_scale
+        x, z = cc._get_opt_positions()
+        currents = cc._opt_currents / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -239,7 +240,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         # if a coil is not fixed (sized) and it has jmax, then the current is limited
         # by the max current provided or defaults to inf
 
-        opt_coils_max_currents = cc.get_max_current()[cc._optimisation_currents_inds]
+        opt_coils_max_currents = cc.get_max_current()[cc._opt_currents_inds]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
@@ -283,7 +284,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 constraint._args["scale"] = self.scale
 
     def _make_numerical_constraints(
-        self,
+        self, coilset: CoilSet
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries."""
         if (constraints := getattr(self, "_constraints", None)) is None:
@@ -291,10 +292,36 @@ class CoilsetOptimisationProblem(abc.ABC):
         equality = []
         inequality = []
         for constraint in constraints:
-            f_constraint = constraint.f_constraint()
+            f = constraint.f_constraint()
+
+            f_c = f.f_constraint
+            df_c = getattr(f, "df_constraint", None)
+
+            if coilset._opt_currents_symmetry_status in {
+                CoilSetSymmetryStatus.FULL,
+                CoilSetSymmetryStatus.PARTIAL,
+            }:
+                f_c = lambda x, f=f: f.f_constraint(  # noqa: E731
+                    coilset._opt_currents_repetition_mat @ x
+                )
+                # wrap the derivative function
+                if (
+                    coilset._opt_currents_symmetry_status
+                    is CoilSetSymmetryStatus.PARTIAL
+                ):
+                    df_c = None
+                else:
+                    df_c = (  # noqa: E731
+                        lambda x, f=f: (
+                            f.df_constraint(coilset._opt_currents_repetition_mat @ x)
+                            @ coilset._opt_currents_repetition_mat
+                        )
+                        / 2
+                    )
+
             d: ConstraintT = {
-                "f_constraint": f_constraint.f_constraint,
-                "df_constraint": getattr(f_constraint, "df_constraint", None),
+                "f_constraint": f_c,
+                "df_constraint": df_c,
                 "tolerance": constraint.tolerance,
             }
             # TODO: tidy this up, so the interface guarantees this works!
@@ -302,6 +329,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 equality.append(d)
             else:
                 inequality.append(d)
+
         return equality, inequality
 
     @property

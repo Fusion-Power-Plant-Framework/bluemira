@@ -138,11 +138,11 @@ class TestCoilsetOptimiser:
         )
         assert np.allclose(
             bounds[0],
-            self.coilset._optimisation_currents_rep_mat @ optimiser_current_bounds[0],
+            self.coilset._opt_currents_repetition_mat @ optimiser_current_bounds[0],
         )
         assert np.allclose(
             bounds[1],
-            self.coilset._optimisation_currents_rep_mat @ optimiser_current_bounds[1],
+            self.coilset._opt_currents_repetition_mat @ optimiser_current_bounds[1],
         )
 
         # print(self.optimiser.coilset.get_max_currents(0.0))
