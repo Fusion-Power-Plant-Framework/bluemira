@@ -116,7 +116,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
-            cur_repetition_mat=self.eq.coilset._opt_currents_repetition_mat,
+            cur_expand_mat=self.eq.coilset._opt_currents_expand_mat,
         )
         eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
@@ -192,7 +192,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
             a_mat,
             b_vec,
             self.gamma,
-            cur_repetition_mat=self.eq.coilset._opt_currents_repetition_mat,
+            cur_expand_mat=self.eq.coilset._opt_currents_expand_mat,
         )
 
         # Update parameterisation (coilset).
@@ -201,7 +201,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         )
         self.coilset.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
 
-        currents_full = self.eq.coilset._opt_currents_repetition_mat @ opt_currents
+        currents_full = self.eq.coilset._opt_currents_expand_mat @ opt_currents
 
         f_x = floatify(
             np.linalg.norm(a_mat @ currents_full - b_vec)

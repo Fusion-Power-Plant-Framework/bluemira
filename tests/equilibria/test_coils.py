@@ -551,9 +551,9 @@ class TestCoilSet:
             # current optimisable coils
             self.coilset._opt_currents = np.array([1.0, 2.0, 3.0])
 
-    def test_cur_repetition_matrix(self):
+    def test_cur_expand_matrix(self):
         opt_curs_post_rep = (
-            self.coilset._opt_currents_repetition_mat @ self.coilset._opt_currents
+            self.coilset._opt_currents_expand_mat @ self.coilset._opt_currents
         )
         assert np.allclose(opt_curs_post_rep, self.coilset.current)
 
