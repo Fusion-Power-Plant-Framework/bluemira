@@ -39,7 +39,6 @@ class TestSimpleABConstraintFuntions:
             b_vec=self.b_vec,
             value=v,
             scale=s,
-            cur_repetition_mat=np.eye(2),
         )
 
     def test_AxBConstraint(self):
