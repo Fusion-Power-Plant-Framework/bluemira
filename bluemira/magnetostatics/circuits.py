@@ -58,7 +58,7 @@ class PlanarCircuit(SourceGroup):
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
-        # warning_called = False
+        warning_called = False
         for midpoint, d_l, beta, alpha in zip(
             self.midpoints, self.d_l, betas, alphas, strict=False
         ):
@@ -78,12 +78,13 @@ class PlanarCircuit(SourceGroup):
                     endcap_warning=False,
                 )
 
-                """ if warning_called is False:
-                    try:
-                        bluemira_warn(source.warning)
-                        warning_called = True
-                    except AttributeError:
-                        continue """
+                if warning_called is False and source._warning is True:
+                    bluemira_warn(
+                        "Unequal end cap angles will result in result not"
+                        " being precise. This inaccuracy will increase as the"
+                        " end cap angle discrepency increases."
+                    )
+                    warning_called = True
             else:
                 source = source_class(
                     midpoint,
