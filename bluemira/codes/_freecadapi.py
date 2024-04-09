@@ -1635,6 +1635,7 @@ def sweep_shape(
     *,
     solid: bool = True,
     frenet: bool = True,
+    transition: int = 0,
 ) -> apiShell | apiSolid:
     """
     Sweep a a set of profiles along a path.
@@ -1677,7 +1678,7 @@ def sweep_shape(
             " produce unexpected results."
         )
 
-    result = path.makePipeShell(profiles, True, frenet)  # noqa: FBT003
+    result = path.makePipeShell(profiles, solid, frenet, transition)
 
     solid_result = apiSolid(result)
     if solid:
