@@ -1,3 +1,11 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""Conductor class"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
@@ -25,11 +33,13 @@ class Conductor:
             name: str = "",
     ):
         """
+        A generic conductor consisting of a cable surrounded by a jacket and an
+        insulator.
 
         Parameters
         ----------
         cable:
-            the conductor cable
+            the conductor's cable
         mat_jacket:
             jacket's material
         mat_ins:
@@ -66,6 +76,7 @@ class Conductor:
 
     @property
     def dx_jacket(self):
+        """Thickness in the x-direction of the jacket [m]"""
         return self._dx_jacket
 
     @dx_jacket.setter
@@ -74,6 +85,7 @@ class Conductor:
 
     @property
     def dy_jacket(self):
+        """Thickness in the y-direction of the jacket [m]"""
         return self._dy_jacket
 
     @dy_jacket.setter
@@ -82,6 +94,7 @@ class Conductor:
 
     @property
     def dx_ins(self):
+        """Thickness in the x-direction of the insulator [m]"""
         return self._dx_ins
 
     @dx_ins.setter
@@ -90,6 +103,7 @@ class Conductor:
 
     @property
     def dy_ins(self):
+        """Thickness in the y-direction of the jacket [m]"""
         return self._dy_ins
 
     @dy_ins.setter
@@ -103,26 +117,33 @@ class Conductor:
 
     @property
     def area_jacket(self):
-        """Area of the jacket"""
+        """Area of the jacket [m^2]"""
         return (self.dx - 2 * self.dx_ins) * (
                 self.dy - 2 * self.dy_ins
         ) - self.cable.area
 
     @property
     def area_ins(self):
-        """Area of the insulator"""
+        """Area of the insulator [m^2]"""
         return self.area - self.area_jacket - self.cable.area
 
     def res(self, **kwargs):
         """
-        Cable's equivalent resistivity, computed as the parallel
-        between strands' resistivity
+        Computes the conductor's equivalent resistivity considering the resistance
+        of its strands in parallel.
 
         Parameters
         ----------
+        **kwargs: dict
+            Additional parameters for resistance calculations.
+
         Return
         ------
             float [Ohm m]
+
+        Notes
+        -----
+        The insulator in not considered into the calculation.
         """
         resistances = np.array([
             self.cable.res(**kwargs) / self.cable.area,
@@ -133,13 +154,21 @@ class Conductor:
 
     def cp_v(self, **kwargs):
         """
-        Strand's equivalent Specific Heat, compute the series between strand's components
+        Computes the conductor's equivalent specific heat considering the specific heats
+        of its components in series.
 
         Parameters
         ----------
+        **kwargs: dict
+            Additional parameters for resistance calculations.
+
         Return
         ------
             float [J/K/m]
+
+        Notes
+        -----
+        The insulator in not considered into the calculation.
 
         TODO: decide if also the insulator should be considered
         """
@@ -149,6 +178,8 @@ class Conductor:
         ])
         return serie_r(weighted_specific_heat) / self.area
 
+    # TODO: add a description of the 0D structural model, otherwise the following
+    # function cannot be undestood
     def Kx_topbot_ins(self, **kwargs):
         return self.mat_ins.ym(**kwargs) * self.dy / self.dx_ins
 
@@ -165,7 +196,7 @@ class Conductor:
         return self.mat_jacket.ym(**kwargs) * self.cable.dy / self.dx_jacket
 
     def Kx_cable(self, **kwargs):
-        return self.cable.ym(**kwargs) * self.cable.dy / self.cable.dx
+        return self.cable.Kx(**kwargs)
 
     def Kx(self, **kwargs):
         return (serie_k([self.Kx_topbot_ins(**kwargs) / 2,
@@ -194,7 +225,7 @@ class Conductor:
         return self.mat_jacket.ym(**kwargs) * self.cable.dx / self.dy_jacket
 
     def Ky_cable(self, **kwargs):
-        return self.cable.ym(**kwargs) * self.cable.dx / self.cable.dy
+        return self.cable.Ky(**kwargs)
 
     def Ky(self, **kwargs):
         return (serie_k([self.Ky_topbot_ins(**kwargs) / 2,
@@ -208,6 +239,21 @@ class Conductor:
                 )
 
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
+        """
+        Schematic plot of the cable cross-section.
+
+        Parameters
+        ----------
+        xc:
+            x coordinate of the cable center in the considered coordinate system
+        yc:
+            y coordinate of the cable center in the considered coordinate system
+        show:
+            if True, the plot is displayed
+        ax:
+            Matplotlib Axis on which the plot shall be displayed. If None,
+            a new figure is created
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -252,6 +298,25 @@ class SquareConductor(Conductor):
             dx_ins: float,
             name: str = "",
     ):
+        """
+        Representation of a square conductor
+
+        Parameters
+        ----------
+        cable:
+            the conductor's cable
+        mat_jacket:
+            jacket's material
+        mat_ins:
+            insulator's material
+        dx_jacket:
+            x(y)-thickness of the jacket
+        dx_ins:
+            x(y)-thickness of the insulator
+        name:
+            string identifier
+
+        """
         dy_jacket = dx_jacket
         dy_ins = dx_ins
         super().__init__(

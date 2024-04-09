@@ -26,7 +26,7 @@ class Strand:
             d_strand: float = 0.82e-3,
     ):
         """
-        Class that represents a strand
+        Class that represents a strand with a circular cross-section.
 
         Parameters
         ----------
@@ -43,7 +43,7 @@ class Strand:
 
     @property
     def area(self) -> float:
-        """Area of the strand cross section"""
+        """Area of the strand cross-section"""
         return np.pi * self.d_strand ** 2 / 4
 
     def ym(self, **kwargs) -> float:
@@ -68,10 +68,14 @@ class Strand:
 
     def res(self, **kwargs) -> float:
         """
-        Strand's equivalent resistivity, compute the parallel between strand's components
+        Calculates the equivalent resistivity based on the parallel connection
+        of strand components.
 
         Parameters
         ----------
+        **kwargs: dict
+            Additional parameters for calculating resistivity.
+
         Return
         ------
             float [Ohm m]
@@ -85,10 +89,14 @@ class Strand:
 
     def cp_v(self, **kwargs) -> float:
         """
-        Strand's equivalent Specific Heat, compute the series between strand's components
+        Calculates the equivalent specific heat based on the series connection
+        of strand components.
 
         Parameters
         ----------
+        **kwargs: dict
+            Additional parameters for calculating specific heat.
+
         Return
         ------
             float [J/K/m]
@@ -99,10 +107,11 @@ class Strand:
         return serie_r(specific_heat)
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
+            **kwargs
     ) -> float:
         """
-        Critical current from Jc(B,T,strain)
+        Critical current
 
         Parameters
         ----------
@@ -114,6 +123,8 @@ class Strand:
             total applied measured strain [%]
         T_margin:
             Strand temperature margin in operation [K]
+        **kwargs: dict
+            Additional parameters
 
         Return
         ------
@@ -139,7 +150,8 @@ class Wire_Nb3Sn(Strand):
         super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
+            **kwargs
     ) -> float:
         """
         Nb3Sn critical current from Jc(B,T,strain).
@@ -258,6 +270,7 @@ class Wire_NbTi(Strand):
             Operating magnetic field [T]
         T_margin:
             Strand temperature margin in operation [K]
+
         Return
         ------
             float [A]
@@ -298,7 +311,7 @@ class Wire_NbTi(Strand):
         Parameters
         ----------
         Ic:
-            Critical current [A]
+            strand current [A]
 
         Return
         ------

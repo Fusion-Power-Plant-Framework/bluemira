@@ -5,7 +5,8 @@ from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.magnets.cable import DummyRoundCableLTS, DummyRoundCableHTS
 from bluemira.magnets.case import CaseTF
 from bluemira.magnets.conductor import SquareConductor, optimize_jacket_conductor
-from bluemira.magnets.materials import Copper300, Material, AISI_316LN
+from bluemira.magnets.materials import (OperationalPoint, Copper300, AISI_316LN,
+                                        DummyInsulator)
 from bluemira.magnets.strand import Strand, Wire_Nb3Sn
 from bluemira.magnets.utils import (
     delayed_exp_func,
@@ -19,27 +20,18 @@ Note: in this example the conductor operational current is given as input (no ch
 or optimization that takes into account the conductor critical current). 
 """
 
-
-class DummyInsulator(Material):
-    def res(self, **kwargs):
-        return 1e6
-
-    def ym(self, **kwargs):
-        return 12e9
-
-
 # plot options
 show = True
 homogenized = False  # if True plot the WP as a homogenized block
 
 # input values
-A = 4.6
-R0 = 2.53  # [m] major machine radius
-B0 = 5.0  # [T] magnetic field @R0
-n_TF = 12  # number of TF coils
-d = 0.8
-a = R0 / A
+B0 = 4.39  # [T] magnetic field @R0
+R0 = 8.6  # [m] major machine radius
+A = 2.8
+n_TF = 16  # number of TF coils
+d = 1.9
 ripple = 6e-3
+a = R0 / A
 Ri = R0 - a - d  # [m] max external radius of the internal TF leg
 Re = (R0 + a) * (1 / ripple) ** (
         1 / n_TF)  # [m] max internal radius of the external TF part
@@ -55,7 +47,7 @@ pm = B_TF_i ** 2 / (2 * MU_0)  # magnetic pressure on the inner TF leg
 # i.e. half of the whole F_Z
 t_z = (0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2)
 
-Iop = 40.0e3  # operational current in each conductor
+Iop = 70.0e3  # operational current in each conductor
 n_cond = int(np.ceil(I_TF / Iop))  # number of necessary conductors
 
 n_spire = np.floor(I_TF / Iop)
@@ -86,8 +78,9 @@ B = delayed_exp_func(B_TF_i, Tau_discharge, t_delay)
 sc_strand = Wire_Nb3Sn(d_strand=1e-3)
 copper300 = Copper300()
 insulator = DummyInsulator()
-stab_strand = Strand([copper300], [1], d_strand=1e-3)
+stab_strand = Strand([copper300], [1], d_strand=1.0e-3)
 
+# Calculate number of superconducting strands considering the strand critical current
 Ic_sc = sc_strand.Ic(B=B_TF_i, T=T_sc, T_margin=T_margin)
 n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
@@ -112,8 +105,13 @@ result = cable.optimize_n_stab_ths(
 )
 print(f"after optimization: conductor dx_cable = {cable.dx}")
 
+op = OperationalPoint(B=B_TF_i, T=T0)
+
 show = False
-for i in range(5):
+
+# Some iterations to optimize case vault and cable jacket consistently. This should go
+# in a kind of "optimization" or "convergence" loop.
+for i in range(10):
     print(f"Internal optimazion - iteration {i}")
     # optimize the cable jacket thickness considering 0D stress model for the single cable
     print(f"before optimization: conductor dx_jacket = {conductor.dx_jacket}")
@@ -129,10 +127,6 @@ for i in range(5):
         S_Y, bounds=[1e-5, 0.2]
     )
     print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
-
-    from bluemira.magnets.materials import OperationalPoint
-
-    op = OperationalPoint(B=B_TF_i, T=T0)
 
     # creation of case
     wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case

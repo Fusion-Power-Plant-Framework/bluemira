@@ -150,7 +150,6 @@ class Copper100(Material):
         ------
             float  [Ohm m]
         """
-        # print(f"parameters T: {T}, B: {B}")
         rho1 = (1.171 * (10 ** -17) * (T ** 4.49)) / (
                 1 + (4.5 * (10 ** -7) * (T ** 3.35) * (math.exp(-((50. / T) ** 6.428))))
         )
@@ -181,8 +180,8 @@ class Copper100(Material):
 
         Note
         ----
-        The specific heat over the whole temperature range is obtained through fitting the function to the
-        known low temperature and high temperature data.
+        The specific heat over the whole temperature range is obtained through
+        fitting the function to the known low temperature and high temperature data.
 
         Parameters
         ----------
@@ -433,3 +432,13 @@ class NbTi(Material):
             float  [Ohm m]
         """
         return (0.0558 * T + 55.668) * 1e-8
+
+
+class DummyInsulator(Material):
+    """A dummy insulator"""
+
+    def res(self, **kwargs):
+        return 1e6
+
+    def ym(self, **kwargs):
+        return 12e9

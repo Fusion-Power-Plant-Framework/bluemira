@@ -91,7 +91,7 @@ def parall_k(arr: Union[List, np.array]):
 
 
 class StructuralModelHooke(ABC):
-    """Abstract base class for a structural component"""
+    """Abstract base class for a """
 
     @abstractmethod
     def Kx(self, *args, **kwargs) -> float:
@@ -101,6 +101,17 @@ class StructuralModelHooke(ABC):
     @abstractmethod
     def Ky(self, *args, **kwargs) -> float:
         """Total equivalent stiffness along y-axis"""
+        pass
+
+
+class StructuralComponent(ABC):
+    """Abstract base class for a structural component"""
+
+    @property
+    @abstractmethod
+    def structural_model(self, *args, **kwargs):
+        """Structural model used evaluate stress/strain into the component"""
+        pass
 
 
 def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
