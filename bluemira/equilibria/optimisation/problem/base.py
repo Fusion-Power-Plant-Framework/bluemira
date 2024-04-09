@@ -302,13 +302,15 @@ class CoilsetOptimisationProblem(abc.ABC):
                 CoilSetSymmetryStatus.PARTIAL,
             }:
                 # wrap the constraint function
-                f_c = lambda x, f=f: f.f_constraint(  # noqa: E731
-                    coilset._opt_currents_repetition_mat @ x
-                )
+                def wrapped_f_c(x, f=f):
+                    return f.f_constraint(coilset._opt_currents_expand_mat @ x)
+
+                f_c = wrapped_f_c
 
                 # wrap the derivative function
                 if (
-                    coilset._opt_currents_symmetry_status
+                    df_c is None
+                    or coilset._opt_currents_symmetry_status
                     is CoilSetSymmetryStatus.PARTIAL
                 ):
                     # if partially symmetric, the derivative function
@@ -320,13 +322,11 @@ class CoilsetOptimisationProblem(abc.ABC):
                     # (to reduce the shape to the number of current optimisable coils)
                     # by multiplying the result with the repetition matrix
                     # and dividing by 2 (as the values are added together)
-                    df_c = (  # noqa: E731
-                        lambda x, f=f: (
-                            f.df_constraint(coilset._opt_currents_repetition_mat @ x)
-                            @ coilset._opt_currents_repetition_mat
-                        )
-                        / 2
-                    )
+                    def wrapped_df_c(x, f=f):
+                        df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
+                        return df_res @ coilset._opt_currents_sym_reduce_mat
+
+                    df_c = wrapped_df_c
 
             d: ConstraintT = {
                 "f_constraint": f_c,

@@ -1283,9 +1283,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return CoilSetSymmetryStatus.NONE
 
     @property
-    def _opt_currents_repetition_mat(self) -> np.ndarray:
+    def _opt_currents_expand_mat(self) -> np.ndarray:
         """
-        Get the optimisation currents repetition matrix.
+        Get the optimisation currents expansion matrix.
 
         This matrix is used to convert the optimisable currents to the full set of
         currents in the CoilSet.
@@ -1306,18 +1306,46 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         # you are putting 1's in the col. corresponding
         # to all coils in the same Circuit
-        rep_mat = np.zeros((n_all_coils, n_opt_coils))
-        i_row_coil = 0
-        for i_col_coil_group, c in enumerate(cc._coils):
+        mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row = 0
+        for i_col, c in enumerate(cc._coils):
             if isinstance(c, Circuit):
                 n_coils_in_group = c.n_coils()
                 for n in range(n_coils_in_group):
-                    rep_mat[i_row_coil + n, i_col_coil_group] = 1
-                i_row_coil += n
+                    mat[i_row + n, i_col] = 1
+                i_row += n
             else:
-                rep_mat[i_row_coil, i_col_coil_group] = 1
-            i_row_coil += 1
-        return rep_mat
+                mat[i_row, i_col] = 1
+            i_row += 1
+        return mat
+
+    @property
+    def _opt_currents_sym_reduce_mat(self) -> np.ndarray:
+        """
+        Get the optimisation currents symmetry reduce matrix.
+
+        This matrix is used to convert a full set of optimisation currents
+        into a reduced set be filtering out all non-primary symmetric circuit
+        coil currents.
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+
+        if cc._opt_currents_symmetry_status != CoilSetSymmetryStatus.FULL:
+            raise ValueError(
+                "Symmetry reduce matrix can only be used with a CoilSet "
+                "that only has SymmetricCircuits"
+            )
+
+        mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row = 0
+        for i_col in range(n_opt_coils):
+            mat[i_row, i_col] = 1
+            mat[i_row + 1, i_col] = 0
+            i_row += 2
+        return mat
 
     @property
     def _opt_currents(self) -> np.ndarray:
@@ -1348,7 +1376,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 f"optimisable currents: {n_curr_opt_coils}"
             )
 
-        self.current = self._opt_currents_repetition_mat @ values
+        self.current = self._opt_currents_expand_mat @ values
 
     @property
     def n_position_optimisable_coils(self) -> int:
