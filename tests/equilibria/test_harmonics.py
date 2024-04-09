@@ -306,13 +306,9 @@ def test_SphericalHarmonicConstraintFunction():
     cur_repetition_mat = coilset._opt_currents_repetition_mat
     a_mat = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
     b_vec = np.array([1e-2, 1e-18])
-    test_vector = np.array([1, 1, 1])
-    test_result = a_mat[1:,] @ (cur_repetition_mat @ test_vector)
-    print(test_result)
-
-    test_constraint = SphericalHarmonicConstraintFunction(
-        a_mat, b_vec, 0.0, 1, cur_repetition_mat
-    )
+    test_vector = cur_repetition_mat @ np.array([1, 1, 1])
+    test_result = a_mat[1:,] @ test_vector
+    test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 

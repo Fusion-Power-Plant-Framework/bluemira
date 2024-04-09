@@ -33,22 +33,20 @@ class TestSimpleABConstraintFuntions:
         cls.value = [2.0, 0.2]
         cls.scale = [1.0, 0.1]
 
-    def constrint_setup(self, v, s, constraint):
-        con_setup = constraint(
+    def constraint_setup(self, v, s, constraint):
+        return constraint(
             a_mat=self.a_mat,
             b_vec=self.b_vec,
             value=v,
             scale=s,
             cur_repetition_mat=np.eye(2),
         )
-        print(v, s)
-        return con_setup
 
     def test_AxBConstraint(self):
         f_res = [-1.0, -1.0]
         df_res = [1.0, 0.1]
         for v, s, f, df in zip(self.value, self.scale, f_res, df_res, strict=False):
-            axb = self.constrint_setup(v, s, AxBConstraint)
+            axb = self.constraint_setup(v, s, AxBConstraint)
             test_f = axb.f_constraint(self.vector)
             test_df = axb.df_constraint(self.vector)
             assert isinstance(test_f, np.ndarray)
@@ -60,7 +58,7 @@ class TestSimpleABConstraintFuntions:
         f_res = [0.0, 1.08]
         # df_res = [2.0, -0.16]
         for v, s, f in zip(self.value, self.scale, f_res, strict=False):
-            axb = self.constrint_setup(v, s, L2NormConstraint)
+            axb = self.constraint_setup(v, s, L2NormConstraint)
             test_f = axb.f_constraint(self.vector)
             test_df = axb.df_constraint(self.vector)
             assert isinstance(test_f, float)
@@ -122,7 +120,6 @@ class TestEquilibriumInput:
                 bzp_vec=bzp_vec,
                 B_max=b,
                 scale=self.scale,
-                cur_repetition_mat=self.coilset._opt_currents_repetition_mat,
             )
 
             assert len(fcf.f_constraint(self.vector)) == 1
@@ -163,7 +160,6 @@ class TestEquilibriumInput:
             CS_Fz_sum_max=2.0,
             CS_Fz_sep_max=2.0,
             scale=self.scale,
-            cur_repetition_mat=self.coilset._opt_currents_repetition_mat,
         )
 
         test_f_constraint = cfc.f_constraint(self.vector)
