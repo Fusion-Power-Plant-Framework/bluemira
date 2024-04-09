@@ -118,7 +118,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             gamma=self.gamma,
             cur_repetition_mat=self.eq.coilset._opt_currents_repetition_mat,
         )
-        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=getattr(objective, "df_objective", None),
