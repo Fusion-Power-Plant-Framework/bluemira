@@ -39,7 +39,7 @@ class TestSimpleABConstraintFuntions:
             b_vec=self.b_vec,
             value=v,
             scale=s,
-            current_rep_matrix=np.eye(2),
+            cur_repetition_mat=np.eye(2),
         )
         print(v, s)
         return con_setup
@@ -122,7 +122,7 @@ class TestEquilibriumInput:
                 bzp_vec=bzp_vec,
                 B_max=b,
                 scale=self.scale,
-                current_rep_matrix=self.coilset._optimisation_currents_rep_mat,
+                cur_repetition_mat=self.coilset._opt_currents_repetition_mat,
             )
 
             assert len(fcf.f_constraint(self.vector)) == 1
@@ -163,7 +163,7 @@ class TestEquilibriumInput:
             CS_Fz_sum_max=2.0,
             CS_Fz_sep_max=2.0,
             scale=self.scale,
-            current_rep_matrix=self.coilset._optimisation_currents_rep_mat,
+            cur_repetition_mat=self.coilset._opt_currents_repetition_mat,
         )
 
         test_f_constraint = cfc.f_constraint(self.vector)

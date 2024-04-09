@@ -84,7 +84,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             "b_vec": None,
             "value": 0.0,
             "scale": 1,
-            "current_rep_matrix": None,
+            "cur_repetition_mat": None,
         }
 
     @property
@@ -118,8 +118,8 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             self._args["a_mat"] *= -1
             self._args["b_vec"] *= -1
 
-        self._args["current_rep_matrix"] = (
-            equilibrium.coilset._optimisation_currents_rep_mat
+        self._args["cur_repetition_mat"] = (
+            equilibrium.coilset._opt_currents_repetition_mat
         )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
