@@ -26,6 +26,8 @@ from bluemira.materials.tools import _try_calc_property, matproperty, to_openmc_
 from bluemira.utilities.tools import array_or_num, is_num
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import openmc
     from numpy.typing import ArrayLike
 
@@ -179,10 +181,10 @@ class MaterialPropertyDescriptor:
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(self, obj: Any, _) -> MaterialProperty:
+    def __get__(self, obj: Any, _) -> Callable[[], MaterialProperty] | MaterialProperty:
         """Get the MaterialProperty of the dataclass entry"""
         if obj is None:
-            return self._default
+            return lambda: self._default
         if self._default.obj is None:
             self._default.obj = obj
 
@@ -213,11 +215,18 @@ class MaterialPropertyDescriptor:
     def __set__(
         self,
         obj: Any,
-        value: dict[str, float | str | None] | float | str | None | MaterialProperty,
+        value: dict[str, float | str | None]
+        | float
+        | str
+        | None
+        | Callable[[], MaterialProperty]
+        | MaterialProperty,
     ):
         """
         Set the MaterialProperty of the dataclass entry
         """
+        if callable(value):
+            value = value()
         setattr(obj, self._name, self._mutate_value(value, obj))
 
 
