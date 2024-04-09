@@ -420,8 +420,8 @@ class PolyhedralPrismCurrentSource(
         alpha: float,
         beta: float,
         current: float,
-        bypass_endcap_error: bool = False,
-        endcap_warning: bool = True,
+        bypass_endcap_error: bool | None = False,
+        endcap_warning: bool | None = True,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
         self._origin = origin
