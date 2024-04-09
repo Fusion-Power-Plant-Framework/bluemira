@@ -185,7 +185,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         return [] if len(self.children) == 0 else [c.copy(parent) for c in self.children]
 
     def get_component(
-        self, name: str, first: bool = True, full_tree: bool = False
+        self, name: str, *, first: bool = True, full_tree: bool = False
     ) -> Component | tuple[Component] | None:
         """
         Find the components with the specified name.
@@ -211,12 +211,15 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             function.
         """
         return self._get_thing(
-            lambda n: anytree.search._filter_by_name(n, "name", name), first, full_tree
+            lambda n: anytree.search._filter_by_name(n, "name", name),
+            first=first,
+            full_tree=full_tree,
         )
 
     def get_component_properties(
         self,
         properties: Iterable[str] | str,
+        *,
         first: bool = True,
         full_tree: bool = False,
     ) -> tuple[list[Any]] | list[Any] | Any:
@@ -250,7 +253,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         def filter_(node, properties):
             return all(hasattr(node, prop) for prop in properties)
 
-        found_nodes = self._get_thing(lambda n: filter_(n, properties), first, full_tree)
+        found_nodes = self._get_thing(
+            lambda n: filter_(n, properties), first=first, full_tree=full_tree
+        )
 
         if found_nodes is None:
             return tuple([] for _ in properties)
@@ -266,7 +271,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         return tuple(map(list, zip(*node_properties, strict=False)))
 
     def _get_thing(
-        self, filter_: Callable | None, first: bool, full_tree: bool
+        self, filter_: Callable | None, *, first: bool, full_tree: bool
     ) -> Component | tuple[Component] | None:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
@@ -300,6 +305,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def add_children(
         self,
         children: Component | list[Component] | None,
+        *,
         merge_trees: bool = False,
     ) -> Component | None:
         """

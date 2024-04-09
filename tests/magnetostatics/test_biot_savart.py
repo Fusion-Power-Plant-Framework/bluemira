@@ -40,7 +40,7 @@ def test_biot_savart_loop():
     _, Bx, Bz = greens_all(x_coil, z_coil, x_2d, z_2d)
 
     circle = make_circle(radius=x_coil, center=(0, z_coil, 0), axis=(0, 0, 1))
-    filament = circle.discretize(ndiscr=2000)
+    filament = circle.discretise(ndiscr=2000)
     bsf = BiotSavartFilament(filament, radius)
     bsf.plot()
 
@@ -148,7 +148,7 @@ class TestSelfInductance:
 
         for i, r in enumerate(radii):
             circle = make_circle(r, center=(0, 0, 0), axis=(0, 1, 0))
-            filament = circle.discretize(dl=circle.length / 50)
+            filament = circle.discretise(dl=circle.length / 50)
             for j, rc in enumerate(rci):
                 bsf = BiotSavartFilament(filament, rc)
                 ind[i, j] = circular_coil_inductance_elliptic(r, rc)
@@ -192,7 +192,12 @@ class TestSelfInductance:
         ],
     )
     def test_rectangular_inductance(
-        self, discr: bool, a: float, c: float, d: float, f_error: float
+        self,
+        discr: bool,  # noqa: FBT001
+        a: float,
+        c: float,
+        d: float,
+        f_error: float,
     ):
         """
         Attempt at replicating results from https://arxiv.org/pdf/1204.1486.pdf
@@ -206,7 +211,7 @@ class TestSelfInductance:
         })
         poly.close()
         if discr:
-            poly = make_polygon(poly, closed=True).discretize(dl=12 * a, byedges=True)
+            poly = make_polygon(poly, closed=True).discretise(dl=12 * a, byedges=True)
         filament = BiotSavartFilament(poly, radius=a)
         inductance = filament.inductance()
         exact = (

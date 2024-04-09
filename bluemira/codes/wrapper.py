@@ -52,7 +52,7 @@ def systems_code_solver(
 
 
 def plot_radial_build(
-    filename: str, width: float = 1.0, show: bool = True, module: str = "PROCESS"
+    filename: str, width: float = 1.0, *, show: bool = True, module: str = "PROCESS"
 ):
     """
     Systems code radial build
@@ -71,7 +71,7 @@ def plot_radial_build(
     """
     syscode = get_code_interface(module)
 
-    return syscode.plot_radial_build(filename, width, show)
+    return syscode.plot_radial_build(filename, width, show=show)
 
 
 def transport_code_solver(

@@ -47,7 +47,7 @@ class XZGeometryInterpolator(abc.ABC):
         """
         Get discretised x-z coordinates of the geometry.
         """
-        coordinates = self.geometry.discretize(
+        coordinates = self.geometry.discretise(
             byedges=True, dl=self.geometry.length / num_pts
         )
         coordinates.set_ccw([0, 1, 0])
@@ -179,7 +179,7 @@ class RegionInterpolator(XZGeometryInterpolator):
                 f"{hull.area} - {geometry.length} ="
                 f"{hull.area - geometry.length}\n"
                 "This suggests that the shape is"
-                "too complex to be discretized accurately."
+                "too complex to be discretised accurately."
             )
 
     def to_xz(

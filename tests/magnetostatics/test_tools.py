@@ -50,5 +50,5 @@ def test_xyz_decorator():
 def test_reduce_coordinates():
     square = make_polygon({"x": [0, 1, 1, 0], "z": [0, 0, 1, 1]})
     square_points = square.vertexes
-    disc_points = reduce_coordinates(square.discretize(20, byedges=True))
+    disc_points = reduce_coordinates(square.discretise(20, byedges=True))
     assert np.allclose(square_points, disc_points)

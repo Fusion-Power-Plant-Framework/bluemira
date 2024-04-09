@@ -10,12 +10,12 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
-from bluemira.equilibria.opt_problems import TikhonovCurrentCOP
+from bluemira.equilibria.optimisation.problem import TikhonovCurrentCOP
 
 
 # @pytest.mark.longrun
@@ -77,11 +77,6 @@ class TestWeightedConstraints:
             )
             problem.optimise(fixed_coils=True)
 
-            assert np.allclose(
-                problem._objective._args["b_vec"], weights * constraint_set.b
-            )
-            for i, weight in enumerate(weights):
-                assert np.allclose(
-                    problem._objective._args["a_mat"][i, :],
-                    weight * constraint_set.A[i, :],
-                )
+            _, w_a_mat, w_b_vec = problem.targets.get_weighted_arrays()
+            assert np.allclose(w_b_vec, weights * constraint_set.b)
+            assert np.allclose(w_a_mat, weights[:, None] * constraint_set.A)

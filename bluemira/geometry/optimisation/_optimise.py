@@ -65,10 +65,10 @@ class KeepOutZoneDict(TypedDict):
     wire: BluemiraWire
     """Closed wire defining the keep-out zone."""
     byedges: NotRequired[bool]
-    """Whether to discretize the keep-out zone by edges or not."""
+    """Whether to discretise the keep-out zone by edges or not."""
     dl: NotRequired[float | None]
     """
-    The discretization length for the keep-out zone.
+    The discretisation length for the keep-out zone.
 
     This overrides ``n_discr`` if given.
     """

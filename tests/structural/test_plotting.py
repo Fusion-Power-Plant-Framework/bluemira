@@ -57,9 +57,9 @@ class TestPlotting:
             geometry.add_coordinates(letter, rect_beam, SS316)
 
         fem.set_geometry(geometry)
-        fem.add_support(0, True, True, True, True, True, True)
+        fem.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
-        fem.add_support(44, False, False, False, True, True, True)
+        fem.add_support(44, dx=False, dy=False, dz=False, rx=True, ry=True, rz=True)
         load_case = LoadCase()
         load_case.add_node_load(4, 1000, "Fx")
 

@@ -18,7 +18,7 @@ from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 
 
-def coilset_setup(materials=False):
+def coilset_setup(*, materials=False):
     # EU DEMO 2015
     x = [5.4, 14.0, 17.0, 17.01, 14.4, 7.0, 2.9, 2.9, 2.9, 2.9, 2.9]
     z = [8.82, 7.0, 2.5, -2.5, -8.4, -10.45, 6.6574, 3.7503, -0.6105, -4.9713, -7.8784]

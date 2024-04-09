@@ -11,7 +11,6 @@ A collection of plotting tools.
 import os
 import re
 from pathlib import Path
-from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
@@ -77,9 +76,7 @@ def str_to_latex(string: str) -> str:
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(
-    folder: str, figname: str, file_format: str = "png", clean: bool = True, **kwargs
-):
+def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool = True):
     """
     Make a GIF image from a set of images with similar names in a folder.
     Figures are sorted in increasing order based on a trailing number, e.g.
@@ -98,14 +95,6 @@ def make_gif(
     clean:
         Delete figures after completion?
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        file_format = kw_formatt
-
     ims = []
     for filename in os.listdir(folder):
         if filename.startswith(figname) and filename.endswith(file_format):
@@ -123,19 +112,11 @@ def make_gif(
 
 
 def save_figure(
-    fig, name, save=False, folder=None, dpi=600, file_format="png", **kwargs
+    fig, name, *, save=False, folder=None, dpi=600, file_format="png", **kwargs
 ):
     """
     Saves a figure to the directory if save flag active
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        file_format = kw_formatt
-
     if save is True:
         if folder is None:
             folder = get_bluemira_path("plots", subfolder="data")

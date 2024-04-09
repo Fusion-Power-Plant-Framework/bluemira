@@ -220,7 +220,7 @@ def _make_tf_boundary(
     if delta_95 < 0:  # Negative triangularity
         tf_boundary.rotate(tf_boundary.center_of_mass, direction=(0, 1, 0), degree=180)
     tf_boundary = offset_wire(tf_boundary, -0.5)
-    x, z = _flatten_shape(*tf_boundary.discretize(200, byedges=True).xz)
+    x, z = _flatten_shape(*tf_boundary.discretise(200, byedges=True).xz)
     return make_polygon({"x": x, "z": z})
 
 
@@ -485,7 +485,7 @@ class DummyFixedEquilibriumDesigner(Designer[tuple[Coordinates, Profile]]):
         }
         settings = self.build_config.get("settings", {})
         settings = {**default_settings, **settings}
-        lcfs_coords = lcfs_parameterisation.create_shape().discretize(
+        lcfs_coords = lcfs_parameterisation.create_shape().discretise(
             byedges=True, ndiscr=settings["n_points"]
         )
 
@@ -660,7 +660,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         self,
         lcfs_shape: BluemiraWire,
     ) -> BluemiraWire:
-        coords = lcfs_shape.discretize(byedges=True, ndiscr=200)
+        coords = lcfs_shape.discretise(byedges=True, ndiscr=200)
         xu_arg = np.argmax(coords.z)
         xl_arg = np.argmin(coords.z)
         xz_min, z_min = coords.x[xl_arg], coords.z[xl_arg]

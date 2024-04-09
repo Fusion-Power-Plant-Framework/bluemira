@@ -38,7 +38,7 @@ class BluemiraShell(BluemiraGeo):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_shell(self, check_reverse: bool = True):
+    def _create_shell(self, *, check_reverse: bool = True):
         """Creation of the shell"""
         faces = [f._create_face(check_reverse=True) for f in self.boundary]
         shell = cadapi.apiShell(faces)
@@ -59,7 +59,7 @@ class BluemiraShell(BluemiraGeo):
 
             bmshell = BluemiraShell(None, label=label)
             bmshell._set_shape(obj)
-            bmshell._set_boundary(bmfaces, False)
+            bmshell._set_boundary(bmfaces, replace_shape=False)
             bmshell._orientation = obj.Orientation
             return bmshell
         raise TypeError(

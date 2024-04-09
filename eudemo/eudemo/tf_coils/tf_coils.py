@@ -17,13 +17,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import ComponentManager
 from bluemira.builders.tf_coils import EquispacedSelector
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -337,6 +338,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.problem_settings["ripple_selector"] = ripple_selector(
                 **rs_config.get("args", {})
             )
+
         design_problem = self.problem_class(
             parameterisation,
             self.algorithm_name,
@@ -344,7 +346,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.opt_parameters,
             self.params,
             wp_cross_section=wp_cross_section,
-            separatrix=self.separatrix,
+            ripple_wire=self.separatrix,
             keep_out_zone=(
                 None
                 if self.keep_out_zone is None
@@ -679,7 +681,7 @@ class TFCoilBuilder(Builder):
         """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
-        centreline_points = self.centreline.discretize(byedges=True, ndiscr=2000)
+        centreline_points = self.centreline.discretise(byedges=True, ndiscr=2000)
 
         solid = self._make_casing_sweep_shape(
             y_in, inner_xs, outer_xs, centreline_points
@@ -854,7 +856,7 @@ class TFCoilBuilder(Builder):
         z_max = outer_wire.bounding_box.z_max
         # Should do this by optimisation, but parameter_at is fragile for circle arcs
         # Also cannot trust bounding boxes, ffs.
-        points = outer_wire.discretize(ndiscr=1000, byedges=True)
+        points = outer_wire.discretise(ndiscr=1000, byedges=True)
         idx_max = np.argmax(points.z)
         idx_min = np.argmin(points.z)
         x_max, z_max = points.x[idx_max], points.z[idx_max]
@@ -900,7 +902,7 @@ class TFCoilBuilder(Builder):
         Make a magnetostatics solver for the field from the TF coils.
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
-            self.centreline.discretize(byedges=True, ndiscr=100),
+            self.centreline.discretise(byedges=True, ndiscr=100),
             breadth=0.5 * self.wp_x_size,
             depth=0.5 * self.wp_y_size,
             current=1,

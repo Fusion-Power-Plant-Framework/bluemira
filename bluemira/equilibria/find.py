@@ -657,6 +657,7 @@ def find_LCFS_separatrix(
     psi: npt.NDArray[np.float64],
     o_points: list[Opoint] | None = None,
     x_points: list[Xpoint] | None = None,
+    *,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
@@ -838,13 +839,14 @@ def in_plasma(
     """
     mask = np.zeros_like(psi)
     lcfs, _ = find_LCFS_separatrix(x, z, psi, o_points=o_points, x_points=x_points)
-    return _in_plasma(x, z, mask, lcfs.xz.T, include_edges)
+    return _in_plasma(x, z, mask, lcfs.xz.T, include_edges=include_edges)
 
 
 def in_zone(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     zone: npt.NDArray[np.float64],
+    *,
     include_edges: bool = False,
 ):
     """
@@ -864,7 +866,7 @@ def in_zone(
     The masking array where 1 denotes inside the zone, and 0 outside
     """
     mask = np.zeros_like(x)
-    return _in_plasma(x, z, mask, zone, include_edges)
+    return _in_plasma(x, z, mask, zone, include_edges=include_edges)
 
 
 @nb.jit(nopython=True, cache=True)
@@ -873,6 +875,7 @@ def _in_plasma(
     z: npt.NDArray[np.float64],
     mask: npt.NDArray[np.float64],
     sep: npt.NDArray[np.float64],
+    *,
     include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
     """

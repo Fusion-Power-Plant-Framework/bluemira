@@ -76,7 +76,7 @@ class Setup(CodesSetup):
         """
         self._write_in_dat(use_bp_inputs=False)
 
-    def _write_in_dat(self, use_bp_inputs: bool = True):
+    def _write_in_dat(self, *, use_bp_inputs: bool = True):
         """
         Write the IN.DAT file and stores in the main PROCESS folder.
 

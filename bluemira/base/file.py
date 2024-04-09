@@ -86,7 +86,7 @@ def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
 
 
 def try_get_bluemira_path(
-    path: str = "", subfolder: str = "bluemira", allow_missing: bool = True
+    path: str = "", subfolder: str = "bluemira", *, allow_missing: bool = True
 ) -> str | None:
     """
     Try to get the bluemira path of a module subfolder.
@@ -187,7 +187,7 @@ def get_files_by_ext(folder: str, extension: str) -> list[str]:
     return files
 
 
-def file_name_maker(filename: os.PathLike, lowercase: bool = False) -> str:
+def file_name_maker(filename: str | os.PathLike, *, lowercase: bool = False) -> str:
     """
     Ensure the file name is acceptable.
 
@@ -334,7 +334,7 @@ class FileManager:
         Path(self._generated_data_root).mkdir(parents=True, exist_ok=True)
         self.generated_data_dirs = self.make_reactor_folder(self._generated_data_root)
 
-    def build_dirs(self, create_reference_data_paths: bool = False):
+    def build_dirs(self, *, create_reference_data_paths: bool = False):
         """
         Create the directory structures for this instance and sets the path references.
         """
@@ -345,7 +345,7 @@ class FileManager:
         self.create_generated_data_paths()
 
     def get_path(
-        self, sub_dir_name: str, path: os.PathLike, make_dir: bool = False
+        self, sub_dir_name: str, path: str | os.PathLike, *, make_dir: bool = False
     ) -> str:
         """
         Get a path within the generated data sub-sdirectories.

@@ -60,8 +60,8 @@ class TestFEModel:
 
         model.add_element(0, 1, i_beam, SS316)
         model.add_element(1, 2, i_beam, SS316)
-        model.add_support(0, True, True, True, False, False, False)
-        model.add_support(2, sup, True, True, False, False, False)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
+        model.add_support(2, dx=sup, dy=True, dz=True, rx=False, ry=False, rz=False)
         model.find_supports()
         assert model.n_fixed_dofs == dof
         assert model.geometry.n_nodes == 3
@@ -91,8 +91,8 @@ class TestFEModel:
         model.add_node(2 * length, 0, 0)
         model.add_element(0, 1, i_beam, SS316)
         model.add_element(1, 2, i_beam, SS316)
-        model.add_support(0, True, True, True, True, True, True)
-        model.add_support(2, False, True, True, False, False, False)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
+        model.add_support(2, dx=False, dy=True, dz=True, rx=False, ry=False, rz=False)
 
         e_mat, i_xs = SS316.E, i_beam.i_zz
         # Check element lengths
@@ -177,7 +177,7 @@ class TestCantilever:
         dummy_material = deepcopy(SS316)
         dummy_material.E = 10e9
         model.add_element(0, 1, rect_beam, dummy_material)
-        model.add_support(0, True, True, True, True, True, True)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         self.model = model
         self.material = dummy_material
 
@@ -214,7 +214,7 @@ class TestCantilever:
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
             model.add_element(0, 1, self.cross_section, self.material)
-            model.add_support(0, True, True, True, True, True, True)
+            model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
             load_case.add_node_load(1, load, "Fz")
@@ -242,7 +242,7 @@ class TestCantilever:
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
             model.add_element(0, 1, self.cross_section, self.material)
-            model.add_support(0, True, True, True, True, True, True)
+            model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
             load_case.add_node_load(1, load, "My")
@@ -297,7 +297,7 @@ class TestCantilever:
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
             model.add_element(0, 1, rect_beam, dummy_material)
-            model.add_support(0, True, True, True, True, True, True)
+            model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
             load_case.add_element_load(0, load, b / length, "Fz")
@@ -374,8 +374,8 @@ class TestDistributedLoads:
 
             model.add_element(0, 1, rect_beam, dummy_material)
             model.add_element(1, 2, rect_beam, dummy_material)
-            model.add_support(0, True, True, True, True, True, True)
-            model.add_support(2, True, True, True, True, True, True)
+            model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
+            model.add_support(2, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
             load_case = LoadCase()
             load_case.add_distributed_load(0, w, "Fz")
@@ -421,7 +421,7 @@ class TestDistributedLoads:
             model.add_node(*node_coords)
 
             model.add_element(0, 1, rect_beam, SS316)
-            model.add_support(0, True, True, True, True, True, True)
+            model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
             load_case = LoadCase()
             load_case.add_distributed_load(0, w, "Fz")
@@ -440,7 +440,7 @@ class TestLFrame:
         model.add_node(0, 0, 0)
         model.add_node(0, 0, height)
         model.add_node(length, 0, height)
-        model.add_support(0, *[True] * 6)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         rect_beam = RectangularBeam(0.5, 0.5)
         model.add_element(0, 1, rect_beam, SS316)
@@ -486,8 +486,8 @@ class TestCompoundDeflection:
         model.add_node(2 * length, 0, 0)
         model.add_node(3 * length, 0, 0)
         model.add_node(4 * length, 0, 0)
-        model.add_support(0, *[True] * 6)
-        model.add_support(4, *[True] * 6)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
+        model.add_support(4, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_element(0, 1, rect_beam, SS316)
         model.add_element(1, 2, rect_beam, SS316)
         model.add_element(2, 3, rect_beam, SS316)
@@ -520,7 +520,7 @@ class TestCompoundDeflection:
         model.add_node(2 * length, 0, 0)
         model.add_node(3 * length, 0, 0)
         model.add_node(4 * length, 0, 0)
-        model.add_support(0, *[True] * 6)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_element(0, 1, rect_beam, SS316)
         model.add_element(1, 2, rect_beam, SS316)
         model.add_element(2, 3, rect_beam, SS316)
@@ -546,7 +546,7 @@ class TestGravityLoads:
     def test_angled_cantilever(self):
         model = FiniteElementModel()
         model.add_node(0, 0, 0)
-        model.add_support(0, *[True] * 6)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         rect_beam = RectangularBeam(1, 1)
 
@@ -581,9 +581,9 @@ class TestFixedFixedStress:
         model.add_element(0, 1, rect_beam, SS316)
         model.add_element(1, 2, rect_beam, SS316)
         model.add_element(2, 3, rect_beam, SS316)
-        model.add_support(0, True, True, True, False, False, False)
-        model.add_support(2, True, True, True, False, False, False)
-        model.add_support(3, True, True, True, True, True, True)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
+        model.add_support(2, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
+        model.add_support(3, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_distributed_load(0, -w, "Fz")
         model.add_distributed_load(1, -w, "Fz")
         result = model.solve()
@@ -597,7 +597,7 @@ class TestMiniEiffelTower:
         model = FiniteElementModel()
 
         def make_platform(
-            width, elevation, cross_section, elements=True, internodes=False
+            width, elevation, cross_section, *, elements=True, internodes=False
         ):
             if not internodes:
                 model.add_node(-width / 2, -width / 2, elevation)
@@ -633,7 +633,7 @@ class TestMiniEiffelTower:
 
         make_platform(124.9, 0, cs1, elements=False)
         for i in range(4):
-            model.add_support(i, *6 * [True])
+            model.add_support(i, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         make_platform(70.69, 57.64, cs2, internodes=True)
         cs1_array = np.array([
@@ -700,9 +700,9 @@ class TestInterpolation:
         model.add_element(2, 5, xsection, SS316)
         model.add_element(5, 6, xsection, SS316)
 
-        model.add_support(0, *[True] * 6)
-        model.add_support(4, *[True] * 6)
-        model.add_support(6, *[True] * 6)
+        model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
+        model.add_support(4, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
+        model.add_support(6, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         model.add_distributed_load(1, -1000000, "Fz")
         model.add_gravity_loads()

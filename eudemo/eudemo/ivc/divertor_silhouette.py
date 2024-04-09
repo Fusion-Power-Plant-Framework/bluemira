@@ -16,9 +16,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import ComponentManager
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux

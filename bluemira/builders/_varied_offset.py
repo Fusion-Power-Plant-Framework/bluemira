@@ -48,7 +48,7 @@ def varied_offset(
     outboard_offset_degree:
         The angle at which the variable offset should end, in degrees.
     num_points:
-        The number of points to use in the discretization of the input
+        The number of points to use in the discretisation of the input
         wire.
 
     Returns
@@ -56,7 +56,7 @@ def varied_offset(
     New wire at a variable offset to the input.
     """
     _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
-    coordinates = wire.discretize(num_points, byedges=True)
+    coordinates = wire.discretise(num_points, byedges=True)
     if not np.all(coordinates.normal_vector == [0, 1, 0]):
         raise GeometryError(
             "Cannot create a variable offset from a wire that is not xz planar."

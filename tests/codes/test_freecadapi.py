@@ -198,38 +198,38 @@ class TestFreecadapi:
         assert cadapi.length(scaled_face) == cadapi.length(face)
         assert cadapi.area(scaled_face) == cadapi.area(face)
 
-    def test_discretize(self):
+    def test_discretise(self):
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
-        points = cadapi.discretize(wire, ndiscr)
+        points = cadapi.discretise(wire, ndiscr)
         assert len(points) == ndiscr
         length_w = wire.Length
         dl = length_w / float(ndiscr - 1)
-        points = cadapi.discretize(wire, dl=dl)
+        points = cadapi.discretise(wire, dl=dl)
         assert len(points) == ndiscr
 
-    def test_discretize_by_edges(self):
+    def test_discretise_by_edges(self):
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
-        points = cadapi.discretize_by_edges(wire, ndiscr)
+        points = cadapi.discretise_by_edges(wire, ndiscr)
 
         dl = 0.4
-        points1 = cadapi.discretize_by_edges(wire, dl=dl)
+        points1 = cadapi.discretise_by_edges(wire, dl=dl)
 
         dl = 0.4
-        points2 = cadapi.discretize_by_edges(wire, ndiscr=100, dl=dl)
+        points2 = cadapi.discretise_by_edges(wire, ndiscr=100, dl=dl)
         assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
 
-    def test_discretize_vs_discretize_by_edges(self):
+    def test_discretise_vs_discretise_by_edges(self):
         wire1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
         wire2 = cadapi.make_polygon([[0, 0, 0], [0, 1, 0], [1, 1, 0]])
         wire2.reverse()
         wire = Part.Wire([wire1, wire2])
 
-        # ndiscr is chosen in such a way that both discretize and discretize_by_edges
+        # ndiscr is chosen in such a way that both discretise and discretise_by_edges
         # give the same points (so that a direct comparison is possible).
-        points1 = cadapi.discretize(wire, ndiscr=5)
-        points2 = cadapi.discretize_by_edges(wire, ndiscr=4)
+        points1 = cadapi.discretise(wire, ndiscr=5)
+        points2 = cadapi.discretise_by_edges(wire, ndiscr=4)
 
         # assert that points1 and points2 are the same
         assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)

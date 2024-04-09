@@ -40,7 +40,7 @@ class PanellingOptProblem(OptimisationProblem):
         return self.paneller.length(x)
 
     def bounds(self) -> tuple[np.ndarray, np.ndarray]:
-        """The normalized bounds of the parameterisation."""
+        """The normalised bounds of the parameterisation."""
         return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
 
     def ineq_constraints(self) -> list[ConstraintT]:
@@ -63,7 +63,7 @@ class PanellingOptProblem(OptimisationProblem):
         The number of optimisation parameters.
 
         The optimisation parameters are how far along the boundary's
-        length each panel tangents the boundary (normalized to between
+        length each panel tangents the boundary (normalised to between
         0 and 1). We exclude the panel's start and end points, which are
         fixed.
         """

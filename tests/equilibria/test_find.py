@@ -119,7 +119,7 @@ class TestInPlasma:
         result = np.array(data["result"])
         mask = np.zeros_like(x)
 
-        result2 = _in_plasma(x, z, mask, lcfs)
+        result2 = _in_plasma(x, z, mask, lcfs, include_edges=False)
         assert np.allclose(result, result2)
 
 

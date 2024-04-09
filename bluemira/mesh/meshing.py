@@ -256,7 +256,7 @@ class Mesh:
                 _FreeCADGmsh._save_mesh(file)
 
             # close gmsh
-            _FreeCADGmsh._finalize_mesh(self.logfile)
+            _FreeCADGmsh._finalise_mesh(self.logfile)
         else:
             raise TypeError("Only Meshable objects can be meshed")
 
@@ -268,7 +268,7 @@ class Mesh:
         """
         Function to mesh the object.
         """
-        from bluemira.geometry.tools import serialize_shape  # noqa: PLC0415
+        from bluemira.geometry.tools import serialise_shape  # noqa: PLC0415
 
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             if type(obj).__name__ not in SUPPORTED_GEOS:
@@ -277,7 +277,7 @@ class Mesh:
                 )
 
             # object is serialised into a dictionary
-            buffer = serialize_shape(obj)
+            buffer = serialise_shape(obj)
 
             # Each object is recreated into gmsh. Here there is a trick: in order to
             # allow the correct mesh in case of intersection, the procedure
@@ -357,6 +357,7 @@ class Mesh:
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
         tools: list | None = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -364,7 +365,11 @@ class Mesh:
         Apply the boolean fragment operation.
         """
         all_ent, _oo, oov = _FreeCADGmsh._fragment(
-            dim, all_ent, [] if tools is None else tools, remove_object, remove_tool
+            dim,
+            all_ent,
+            [] if tools is None else tools,
+            remove_object=remove_object,
+            remove_tool=remove_tool,
         )
         self.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
@@ -399,7 +404,7 @@ class Mesh:
                     self.__iterate_gmsh_dict(item, function, *args)
 
     @staticmethod
-    def __buffer_loop(buffer: dict, type_check: str, raise_error=False):
+    def __buffer_loop(buffer: dict, type_check: str, *, raise_error=False):
         for type_, value in buffer.items():
             if type_ != type_check:
                 if raise_error:
@@ -441,8 +446,8 @@ class Mesh:
                 buffer,
                 dict_gmsh[MeshTags.POINTS] + dict_gmsh[MeshTags.CURVE],
                 [],
-                False,
-                False,
+                remove_object=False,
+                remove_tool=False,
             )
 
     def __convert_face_to_gmsh(self, buffer: dict, dim: int):
@@ -579,7 +584,7 @@ class _FreeCADGmsh:
         gmsh.write(meshfile)
 
     @staticmethod
-    def _finalize_mesh(logfile: str = "gmsh.log"):
+    def _finalise_mesh(logfile: str = "gmsh.log"):
         with open(logfile, "w") as file_handler:
             file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
 
@@ -590,14 +595,14 @@ class _FreeCADGmsh:
     @staticmethod
     def _generate_mesh(mesh_dim: int = 3):
         # Before it can be meshed, the internal CAD representation must
-        # be synchronized with the Gmsh model, which will create the
+        # be synchronised with the Gmsh model, which will create the
         # relevant Gmsh data structures. This is achieved by the
         # gmsh.model.occ.synchronize() API call for the built-in
-        # geometry kernel. Synchronizations can be called at any time,
+        # geometry kernel. Synchronisations can be called at any time,
         # but they involve a non trivial amount of processing;
-        # so while you could synchronize the internal CAD data after
-        # every CAD command, it is usually better to minimize
-        # the number of synchronization points.
+        # so while you could synchronise the internal CAD data after
+        # every CAD command, it is usually better to minimise
+        # the number of synchronisation points.
         gmsh.model.occ.synchronize()
 
         # We can then generate a mesh...
@@ -668,6 +673,7 @@ class _FreeCADGmsh:
         dim: int | Iterable[int] = (2, 1, 0),
         all_ent: list[int] | None = None,
         tools: list | None = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ) -> tuple[list[int], list[tuple], list[list[tuple]]]:
@@ -730,7 +736,7 @@ class _FreeCADGmsh:
         gmsh.model.mesh.setSize(dim_tags, size)
 
     @staticmethod
-    def _get_boundary(dimtags, combined=False, recursive=False):
+    def _get_boundary(dimtags, *, combined=False, recursive=False):
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 

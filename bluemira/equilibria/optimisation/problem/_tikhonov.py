@@ -85,7 +85,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         )
         self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, x0=None, fixed_coils=True) -> CoilsetOptimiserResult:
+    def optimise(self, x0=None, *, fixed_coils=True) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem
 

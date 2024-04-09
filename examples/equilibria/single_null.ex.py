@@ -201,7 +201,7 @@ lcfs_parameterisation = JohnerLCFS({
     "phi_l_pos": {"value": 30.0},
 })
 
-lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
+lcfs = lcfs_parameterisation.create_shape().discretise(byedges=True, ndiscr=50)
 
 x_bdry, z_bdry = lcfs.x, lcfs.z
 arg_inner = np.argmin(x_bdry)

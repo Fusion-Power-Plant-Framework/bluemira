@@ -228,20 +228,20 @@ class TestWireParameterAt(ValueParameterBase):
             )
 
 
-class TestWireDiscretize:
+class TestWireDiscretise:
     line = make_polygon({"x": [0, 1], "z": [0, 0]})
 
     @pytest.mark.parametrize("n", [-1, 0, 1])
     def test_low_ndiscr(self, n):
         with pytest.raises(ValueError):  # noqa: PT011
-            self.line.discretize(n, byedges=False)
+            self.line.discretise(n, byedges=False)
 
     @pytest.mark.parametrize("dl", [-10.0, 0])
     def test_low_dl(self, dl):
         with pytest.raises(ValueError):  # noqa: PT011
-            self.line.discretize(ndiscr=3, dl=dl, byedges=False)
+            self.line.discretise(ndiscr=3, dl=dl, byedges=False)
 
     @pytest.mark.parametrize("byedges", [True, False])
     def test_ndiscr_3(self, byedges):
-        coords = self.line.discretize(ndiscr=3, byedges=byedges)
+        coords = self.line.discretise(ndiscr=3, byedges=byedges)
         assert np.all(coords.x[1:] > 0.0)

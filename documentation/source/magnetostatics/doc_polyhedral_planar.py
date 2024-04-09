@@ -10,7 +10,7 @@ ring = make_circle(
 )
 xs = Coordinates({"x": [-1, 1, 1, -1], "z": [0, 1, -1, 0]})
 xs.translate(xs.center_of_mass)
-source = ArbitraryPlanarPolyhedralXSCircuit(ring.discretize(ndiscr=9), xs, current=1e6)
+source = ArbitraryPlanarPolyhedralXSCircuit(ring.discretise(ndiscr=9), xs, current=1e6)
 
 x = np.linspace(0, 6, 100)
 z = np.linspace(-6, 6, 100)
