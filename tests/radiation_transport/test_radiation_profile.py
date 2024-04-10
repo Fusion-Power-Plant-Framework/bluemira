@@ -7,9 +7,11 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from bluemira.base import constants
 from bluemira.base.file import get_bluemira_path
+from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
@@ -29,6 +31,7 @@ TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests"
 EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 
+@pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
 class TestCoreRadiation:
     @classmethod
     def setup_class(cls):
@@ -212,7 +215,7 @@ class TestCoreRadiation:
             2e20,
         )
         assert distance is not None
-        assert np.round(distance, 1) == 2.6
+        assert distance == pytest.approx(2.619, rel=1e-3)
 
     def test_radiation_region_boundary(self):
         low_z_main, low_z_pfr = self.source.sol_rad.x_point_radiation_z_ext()
@@ -280,7 +283,7 @@ def test_calculate_z_species():
     frac = 0.1
     t_test = 5
     z = calculate_z_species(t_ref, z_ref, frac, t_test)
-    assert z == 22.5
+    assert z == pytest.approx(22.5)
 
 
 def test_calculate_line_radiation_loss():
@@ -288,4 +291,4 @@ def test_calculate_line_radiation_loss():
     p_loss = 1e-31
     frac = 0.01
     rad = calculate_line_radiation_loss(ne, p_loss, frac)
-    assert round(rad, 1) == 0.8
+    assert rad == pytest.approx(0.796, abs=1e-3)

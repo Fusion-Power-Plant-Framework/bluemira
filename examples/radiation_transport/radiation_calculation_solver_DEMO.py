@@ -104,9 +104,6 @@ params = {
     "theta_outer_target": {"value": 5.0, "unit": "deg"},
 }
 
-# if SINGLE_NULL:
-#     params["f_p_sol_near"] = {"value": 0.65, "unit": "dimensionless"}
-
 # %%
 config = {
     "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": tungsten_fraction},
@@ -150,73 +147,65 @@ source.rad_map(fw_shape)
 
 
 # %%
-def main(only_source=False):  # noqa: D103
-    if only_source:
-        source.plot()
-        plt.show()
+only_source = False
+if only_source:
+    source.plot()
+    plt.show()
 
-    else:
-        # Core and SOL source: coordinates and radiation values
-        x_core = source.core_rad.x_tot
-        z_core = source.core_rad.z_tot
-        x_sol = source.sol_rad.x_tot
-        z_sol = source.sol_rad.z_tot
+else:
+    # Core and SOL source: coordinates and radiation values
+    x_core = source.core_rad.x_tot
+    z_core = source.core_rad.z_tot
+    x_sol = source.sol_rad.x_tot
+    z_sol = source.sol_rad.z_tot
 
-        # Coversion required for CHERAB
-        # Core and SOL interpolating function
-        f_core = linear_interpolator(
-            x_core, z_core, raw_uc(source.core_rad.rad_tot, "MW", "W")
+    # Coversion required for CHERAB
+    # Core and SOL interpolating function
+    f_core = linear_interpolator(
+        x_core, z_core, raw_uc(source.core_rad.rad_tot, "MW", "W")
+    )
+    f_sol = linear_interpolator(x_sol, z_sol, raw_uc(source.sol_rad.rad_tot, "MW", "W"))
+
+    # SOL radiation grid
+    x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 1000)
+    z_sol = np.linspace(min(fw_shape.z), max(fw_shape.z), 1500)
+    rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
+
+    # Filter in/out zones
+    wall_filter = filtering_in_or_out(fw_shape.x, fw_shape.z)
+    pfr_x_down, pfr_z_down = pfr_filter(
+        source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_low"]
+    )
+
+    pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, include_points=False)
+
+    if not SINGLE_NULL:
+        pfr_x_up, pfr_z_up = pfr_filter(
+            source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
         )
-        f_sol = linear_interpolator(
-            x_sol, z_sol, raw_uc(source.sol_rad.rad_tot, "MW", "W")
-        )
+        pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, include_points=False)
 
-        # SOL radiation grid
-        x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 1000)
-        z_sol = np.linspace(min(fw_shape.z), max(fw_shape.z), 1500)
-        rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
+    # Fetch lcfs
+    lcfs = source.lcfs
+    core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
+    core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, include_points=False)
+    for i in range(len(x_sol)):
+        for j in range(len(z_sol)):
+            point = x_sol[i], z_sol[j]
+            if core_filter_in(point):
+                rad_sol_grid[j, i] = interpolated_field_values(
+                    x_sol[i], z_sol[j], f_core
+                )
+            else:
+                rad_sol_grid[j, i] = (
+                    rad_sol_grid[j, i]
+                    * (wall_filter(point) * 1.0)
+                    * (pfr_down_filter(point) * 1.0)
+                    * (pfr_up_filter(point) * 1.0)
+                    * (core_filter_out(point) * 1.0)
+                )
 
-        # Filter in/out zones
-        wall_filter = filtering_in_or_out(fw_shape.x, fw_shape.z)
-        pfr_x_down, pfr_z_down = pfr_filter(
-            source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_low"]
-        )
-
-        pfr_down_filter = filtering_in_or_out(
-            pfr_x_down, pfr_z_down, include_points=False
-        )
-
-        if not SINGLE_NULL:
-            pfr_x_up, pfr_z_up = pfr_filter(
-                source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
-            )
-            pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, include_points=False)
-
-        # Fetch lcfs
-        lcfs = source.lcfs
-        core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
-        core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, include_points=False)
-        for i in range(len(x_sol)):
-            for j in range(len(z_sol)):
-                point = x_sol[i], z_sol[j]
-                if core_filter_in(point):
-                    rad_sol_grid[j, i] = interpolated_field_values(
-                        x_sol[i], z_sol[j], f_core
-                    )
-                else:
-                    rad_sol_grid[j, i] = (
-                        rad_sol_grid[j, i]
-                        * (wall_filter(point) * 1.0)
-                        * (pfr_down_filter(point) * 1.0)
-                        * (pfr_up_filter(point) * 1.0)
-                        * (core_filter_out(point) * 1.0)
-                    )
-
-        func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
-        # Calculate radiation of FW points
-        solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
-        solver.solve()
-
-
-if __name__ == "__main__":
-    main()
+    func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
+    # Calculate radiation of FW points
+    solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
+    wall_loads = solver.solve()

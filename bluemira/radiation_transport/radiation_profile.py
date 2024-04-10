@@ -275,9 +275,12 @@ class Radiation:
             ne[rec_i] = n_tar
         elif rec_i is not None and len(rec_i) > 0:
             ne[rec_i] = gaussian_decay(n_rad_out, n_tar, len(rec_i))
-        if rec_i is not None and len(rec_i) > 0 and len(rad_i) > 1:
-            gap = ne[rad_i[-1]] - ne[rad_i[-2]]
-            ne[rec_i] = gaussian_decay(n_rad_out - gap, n_tar, len(rec_i))
+        if rec_i is not None and len(rec_i) > 0:
+            if rad_i is None:
+                raise ValueError("'rad_i' not specified with 'rec_i'")
+            if len(rad_i) > 1:
+                gap = ne[rad_i[-1]] - ne[rad_i[-2]]
+                ne[rec_i] = gaussian_decay(n_rad_out - gap, n_tar, len(rec_i))
 
         if main_chamber_rad:
             mask = np.ones_like(ne, dtype=bool)

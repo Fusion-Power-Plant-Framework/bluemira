@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import matplotlib as mpl
@@ -17,16 +18,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 from rich.progress import track
-from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
+from scipy.interpolate import (
+    LinearNDInterpolator,
+    interp1d,
+    interp2d,
+)
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
 from bluemira.base.error import BluemiraError
-from bluemira.codes import process
+from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    import numpy.typing as npt
 
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
@@ -712,7 +719,12 @@ def grid_interpolator(
         calculate the field values for a new set of points
         or to be provided to a tracing code such as CHEARAB
     """
-    return interp2d(x, z, field_grid)
+    # scipy deprecation of interp2d ~3x slower:
+    # grid = RegularGridInterpolator(
+    #     (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
+    # )
+    # return lambda xx, zz: grid((xx, zz))
+    return interp2d(x, z, field_grid, kind="cubic")
 
 
 def pfr_filter(
@@ -796,7 +808,7 @@ def get_impurity_data(
     Function getting the PROCESS impurity data
     """
     # This is a function
-    imp_data_getter = process.Solver.get_species_data
+    imp_data_getter = get_code_interface("PROCESS").Solver.get_species_data
 
     impurity_data = {}
     for imp in impurities_list:
@@ -808,6 +820,20 @@ def get_impurity_data(
     return impurity_data
 
 
+@dataclass(repr=False)
+class DetectedRadiation:
+    """Detected radiation data"""
+
+    power_density: npt.NDArray[np.float64]
+    power_density_stdev: npt.NDArray[np.float64]
+    detected_power: npt.NDArray[np.float64]
+    detected_power_stdev: npt.NDArray[np.float64]
+    detector_area: npt.NDArray[np.float64]
+    detector_numbers: npt.NDArray[np.float64]
+    distance: npt.NDArray[np.float64]
+    total_power: float
+
+
 # Adapted functions from Stuart
 def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False):
     """
@@ -815,7 +841,6 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     """
     # Storage lists for results
     power_density = []
-    detector_numbers = []
     distance = []
     detected_power = []
     detected_power_stdev = []
@@ -865,12 +890,12 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
         power_density.append(
             power_data.value.mean / pixel_area
         )  # convert to W/m^2 !!!!!!!!!!!!!!!!!!!
+
         power_density_stdev.append(np.sqrt(power_data.value.variance) / pixel_area)
         detected_power.append(
             power_data.value.mean / pixel_area * (y_width * 2 * np.pi * detector_radius)
         )
         detected_power_stdev.append(np.sqrt(power_data.value.variance))
-        detector_numbers.append(i)
 
         running_distance += 0.5 * y_width  # with Y_WIDTH instead of y_width
         distance.append(running_distance)
@@ -884,16 +909,16 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
             y_width * 2 * np.pi * detector_radius
         )
 
-    return {
-        "power_density": power_density,
-        "power_density_stdev": power_density_stdev,
-        "detected_power": detected_power,
-        "detected_power_stdev": detected_power_stdev,
-        "detector_area": detector_area,
-        "detector_numbers": detector_numbers,
-        "distance": distance,
-        "total_power": cherab_total_power,
-    }
+    return DetectedRadiation(
+        np.asarray(power_density),
+        np.asarray(power_density_stdev),
+        np.asarray(detected_power),
+        np.asarray(detected_power_stdev),
+        np.asarray(detector_area),
+        np.arange(len(wall_detectors), dtype=int),
+        np.asarray(distance),
+        cherab_total_power,
+    )
 
 
 def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
@@ -1005,7 +1030,7 @@ def plot_radiation_loads(
     )
 
     # Plot the wall and radiation distribution
-    fig, _ax = plt.subplots(figsize=(12, 6))
+    fig = plt.figure()
 
     gs = plt.GridSpec(2, 2, top=0.93, wspace=0.23)
 
@@ -1025,7 +1050,7 @@ def plot_radiation_loads(
 
         segs.append([[end1.x, end1.z], [end2.x, end2.z]])
 
-    wall_powerload = np.array(wall_loads["power_density"])
+    wall_powerload = np.array(wall_loads.power_density)
 
     line_segments = LineCollection(segs, cmap="hot")
     line_segments.set_array(wall_powerload)
@@ -1045,20 +1070,20 @@ def plot_radiation_loads(
 
     ax2 = plt.subplot(gs[0, 1])
     ax2.plot(
-        np.array(wall_loads["distance"]),
-        raw_uc(np.array(wall_loads["power_density"]), "W", "MW"),
+        np.array(wall_loads.distance),
+        raw_uc(np.array(wall_loads.power_density), "W", "MW"),
     )
     ax2.set_ylim([
         0.0,
-        raw_uc(1.1 * np.max(np.array(wall_loads["power_density"])), "W", "MW"),
+        raw_uc(1.1 * np.max(np.array(wall_loads.power_density)), "W", "MW"),
     ])
     ax2.grid(True)
     ax2.set_ylabel(r"Radiation Load ($MW.m^{-2}$)")
 
     ax3 = plt.subplot(gs[1, 1])
     ax3.plot(
-        np.array(wall_loads["distance"]),
-        np.cumsum(np.array(wall_loads["detected_power"]) * 1.0e-6),
+        np.array(wall_loads.distance),
+        np.cumsum(np.array(wall_loads.detected_power) * 1.0e-6),
     )
 
     ax3.set_ylabel(r"Total Power $[MW]$")
