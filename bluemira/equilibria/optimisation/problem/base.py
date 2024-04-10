@@ -76,7 +76,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     """
 
     def _opt_condition_defaults(
-        self, default_cond=dict[str, float | int]
+        self, default_cond: dict[str, float | int]
     ) -> dict[str, float | int]:
         algorithm = (
             Algorithm[self.opt_algorithm]
@@ -101,91 +101,6 @@ class CoilsetOptimisationProblem(abc.ABC):
     @coilset.setter
     def coilset(self, value: CoilSet):
         self._coilset = value
-
-    # todo: remove these after deprecations
-    @staticmethod
-    def read_coilset_state(
-        coilset: CoilSet, current_scale: float
-    ) -> tuple[npt.NDArray[np.float64], int]:
-        """
-        Reads the input coilset and generates the state vector as an array to represent
-        it.
-
-        Parameters
-        ----------
-        coilset: Coilset
-            Coilset to be read into the state vector.
-        current_scale: float
-            Factor to scale coilset currents down by for population of coilset_state.
-            Used to minimise round-off errors in optimisation.
-
-        Returns
-        -------
-        State vector containing substate (position and current)
-        information for each coil.
-
-        Number of substates (blocks) in the state vector.
-        """
-        substates = 3
-        cc = coilset.get_control_coils()
-        x, z = cc._get_opt_positions()
-        currents = cc._opt_currents / current_scale
-
-        coilset_state = np.concatenate((x, z, currents))
-        return coilset_state, substates
-
-    @staticmethod
-    def set_coilset_state(
-        coilset: CoilSet, coilset_state: npt.NDArray[np.float64], current_scale: float
-    ):
-        """
-        Set the optimiser coilset from a provided state vector.
-
-        Parameters
-        ----------
-        coilset:
-            Coilset to set from state vector.
-        coilset_state:
-            State vector representing degrees of freedom of the coilset,
-            to be used to update the coilset.
-        current_scale:
-            Factor to scale state vector currents up by when setting
-            coilset currents.
-            Used to minimise round-off errors in optimisation.
-        """
-        x, z, currents = np.array_split(coilset_state, 3)
-
-        cc = coilset.get_control_coils()
-        cc.x = x
-        cc.z = z
-        cc.current = currents * current_scale
-
-    @staticmethod
-    def get_state_bounds(
-        x_bounds: tuple[npt.NDArray, npt.NDArray],
-        z_bounds: tuple[npt.NDArray, npt.NDArray],
-        current_bounds: tuple[npt.NDArray, npt.NDArray],
-    ) -> npt.NDArray[np.float64]:
-        """
-        Get bounds on the state vector from provided bounds on the substates.
-
-        Parameters
-        ----------
-        x_bounds:
-            Tuple containing lower and upper bounds on the radial coil positions.
-        z_bounds:
-            Tuple containing lower and upper bounds on the vertical coil positions.
-        current_bounds:
-            Tuple containing bounds on the coil currents.
-
-        Returns
-        -------
-        Array containing state vectors representing lower and upper bounds
-        for coilset state degrees of freedom.
-        """
-        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
-        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
-        return np.array([lower_bounds, upper_bounds])
 
     @staticmethod
     def get_current_bounds(
