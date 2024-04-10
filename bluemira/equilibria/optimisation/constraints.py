@@ -391,7 +391,7 @@ class MagneticConstraint(UpdateableConstraint):
     ):
         self.target_value = target_value * np.ones(len(self))
         if tolerance is None:
-            tolerance = 1e-3 if target_value == 0.0 else 1e-3 * target_value
+            tolerance = 1e-3 if target_value == 0 else 1e-3 * target_value
         if is_num(tolerance):
             if f_constraint == L2NormConstraint:
                 tolerance = tolerance * np.ones(1)
