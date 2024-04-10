@@ -38,7 +38,8 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         b_vec: np.ndarray,
         value: float,
         scale: float,
-        debug=False,
+        *,
+        debug: bool = False,
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
