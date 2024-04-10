@@ -23,7 +23,7 @@ from bluemira.equilibria.optimisation.constraints import (
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     coil_harmonic_amplitude_matrix,
 )
-from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_function import (
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
 )
 from bluemira.utilities.tools import is_num

@@ -24,7 +24,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     lcfs_fit_metric,
     spherical_harmonic_approximation,
 )
-from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_function import (
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
