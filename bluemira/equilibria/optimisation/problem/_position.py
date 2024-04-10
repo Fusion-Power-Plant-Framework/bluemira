@@ -103,6 +103,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         -------
         The result of the optimisation.
         """
+        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=False)
+
         if x0 is None:
             # Get initial state and apply region mapping to coil positions.
             cs_opt_state = self.coilset.get_optimisation_state(
