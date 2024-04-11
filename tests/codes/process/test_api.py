@@ -6,6 +6,7 @@
 
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 
 from bluemira.codes.process import api
@@ -37,6 +38,27 @@ def test_impurities(imp_data_mock):
     assert api.Impurities(1).files()["z"].parts[-1] == "H__z_tau.dat"
     assert api.Impurities(1).files()["z2"].parts[-1] == "H__z2_tau.dat"
     assert api.Impurities(10).files()["lz"].parts[-1] == "Fe_lz_tau.dat"
+
+
+@pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
+def test_impurity_datafiles():
+    confinement_time_ms = 0.1
+    lz, z = api.Impurities["H"].read_impurity_files(("lz", "z"))
+    z2, lz2 = api.Impurities["H"].read_impurity_files(("z", "lz"))
+
+    lz_ref = filter(lambda _lz: f"{confinement_time_ms:.1f}" in _lz.content, lz)
+    lz2_ref = filter(lambda _lz: f"{confinement_time_ms:.1f}" in _lz.content, lz2)
+
+    z_ref = filter(lambda _z: f"{confinement_time_ms:.1f}" in _z.content, z)
+    z2_ref = filter(lambda _z: f"{confinement_time_ms:.1f}" in _z.content, z2)
+
+    np.testing.assert_allclose(
+        np.array(next(lz_ref).data, dtype=float),
+        np.array(next(lz2_ref).data, dtype=float),
+    )
+    np.testing.assert_allclose(
+        np.array(next(z_ref).data, dtype=float), np.array(next(z2_ref).data, dtype=float)
+    )
 
 
 def test_INVariable_works_with_floats():
