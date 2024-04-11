@@ -162,7 +162,8 @@ class Impurities(Enum):
         """Get contents of impurity data files"""
         files = self.files()
         return tuple(
-            read_impurity_file(files[file]) for file in set(filetype).intersection(files)
+            read_impurity_file(files[file])
+            for file in sorted(set(filetype).intersection(files), key=filetype.index)
         )
 
 
