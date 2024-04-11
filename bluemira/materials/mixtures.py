@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -37,10 +38,21 @@ class MixtureFraction:
         self.name = self.material.name
 
 
+class MixtureConnectionType(Enum):
+    """Customisation of material mixing"""
+
+    SERIES = auto()
+    PARALLEL = auto()
+
+
 @dataclass
 class HomogenisedMixture:
     """
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
+
+    Notes
+    -----
+    Properties currently assume adiabatic conditions
     """
 
     name: str
@@ -73,7 +85,10 @@ class HomogenisedMixture:
         )
 
     def _calc_homogenised_property(
-        self, prop: str, temperature: float | None = None
+        self,
+        prop: str,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
     ) -> float:
         """
         Calculate an mass-fraction-averaged property for the homogenised mixture.
@@ -94,8 +109,11 @@ class HomogenisedMixture:
             except AttributeError:  # noqa: PERF203
                 warn.append([mat.name, prop])
 
-        f = np.array(fractions) / sum(fractions)  # Normalised
-        value = np.dot(values, f)
+        if mix_type is MixtureConnectionType.SERIES:
+            f = np.array(fractions) / sum(fractions)  # Normalised
+            value = np.dot(values, f)
+        else:
+            raise NotImplementedError(f"{mix_type=} not implemented")
 
         if warn:
             txt = (
@@ -108,7 +126,11 @@ class HomogenisedMixture:
 
         return value
 
-    def E(self, temperature: float | None = None) -> float:  # noqa: N802
+    def E(  # noqa: N802
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+    ) -> float:
         """
         Young's modulus.
 
@@ -121,9 +143,13 @@ class HomogenisedMixture:
         -------
         The Young's modulus of the material at the given temperature.
         """
-        return self._calc_homogenised_property("E", temperature)
+        return self._calc_homogenised_property("E", temperature, mix_type=mix_type)
 
-    def mu(self, temperature: float | None = None) -> float:
+    def mu(
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+    ) -> float:
         """
         Poisson's ratio.
 
@@ -136,9 +162,13 @@ class HomogenisedMixture:
         -------
         Poisson's ratio for the material at the given temperature.
         """
-        return self._calc_homogenised_property("mu", temperature)
+        return self._calc_homogenised_property("mu", temperature, mix_type=mix_type)
 
-    def CTE(self, temperature: float | None = None) -> float:  # noqa: N802
+    def CTE(  # noqa: N802
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+    ) -> float:
         """
         Mean coefficient of thermal expansion in 10**-6/T
 
@@ -151,9 +181,13 @@ class HomogenisedMixture:
         -------
         Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
         """
-        return self._calc_homogenised_property("CTE", temperature)
+        return self._calc_homogenised_property("CTE", temperature, mix_type=mix_type)
 
-    def rho(self, temperature: float | None = None) -> float:
+    def rho(
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+    ) -> float:
         """
         Density.
 
@@ -166,9 +200,13 @@ class HomogenisedMixture:
         -------
         The density of the material at the given temperature.
         """
-        return self._calc_homogenised_property("rho", temperature)
+        return self._calc_homogenised_property("rho", temperature, mix_type=mix_type)
 
-    def Sy(self, temperature: float | None = None) -> float:  # noqa: N802
+    def Sy(  # noqa: N802
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+    ) -> float:
         """
         Minimum yield stress in MPa
 
@@ -181,7 +219,7 @@ class HomogenisedMixture:
         -------
         Minimum yield stress in MPa at the given temperature.
         """
-        return self._calc_homogenised_property("Sy", temperature)
+        return self._calc_homogenised_property("Sy", temperature, mix_type=mix_type)
 
     @classmethod
     def from_dict(
