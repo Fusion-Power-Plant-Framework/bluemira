@@ -83,6 +83,7 @@ class MaterialProperty:
         self,
         temperature: float | None = None,
         pressure: float | None = None,
+        B: float | None = None,
         eps_vol: float = 0.0,
     ) -> float | ArrayLike:
         """
@@ -117,6 +118,11 @@ class MaterialProperty:
                 pressure = self._validate_pressure(pressure)
                 aeval.symtable["pressure"] = pressure
 
+            if "magfield" in self.value:
+                if B is None and hasattr(self.obj, "B"):
+                    B = self.obj.B
+                B = self._validate_B(B)
+                aeval.symtable["B"] = B
             prop_val = array_or_num(aeval.eval(self.value))
 
             if len(aeval.error) > 0:
@@ -131,6 +137,12 @@ class MaterialProperty:
         Serialise the material property to a dictionary.
         """
         return asdict(self)
+
+    @staticmethod
+    def _validate_B(B: float | ArrayLike):  # noqa: N802
+        if B is None:
+            raise ValueError("Magnetic Field is not set")
+        return B
 
     @staticmethod
     def _validate_pressure(pressure: float | ArrayLike):
