@@ -117,14 +117,14 @@ class TestCoreRadiation:
 
     def test_core_flux_tube_pol_t(self):
         flux_tube = self.source.eq.get_flux_surface(0.99)
-        te = self.source.core_rad.flux_tube_pol_t(flux_tube, 100, True)
+        te = self.source.core_rad.flux_tube_pol_t(flux_tube, 100, core=True)
         assert te[0] == te[-1]
         assert len(te) == len(flux_tube)
 
     def test_core_flux_tube_pol_n(self):
         flux_tube = self.source.eq.get_flux_surface(0.99)
         ne_mp = 2e20
-        ne = self.source.core_rad.flux_tube_pol_n(flux_tube, ne_mp, True)
+        ne = self.source.core_rad.flux_tube_pol_n(flux_tube, ne_mp, core=True)
         assert ne[0] == ne[-1]
         assert len(ne) == len(flux_tube)
 

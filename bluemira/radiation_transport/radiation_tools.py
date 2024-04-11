@@ -921,7 +921,7 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     )
 
 
-def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
+def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, *, debug=False):
     """
     To make the detectors on the wall
     """
@@ -1077,7 +1077,7 @@ def plot_radiation_loads(
         0.0,
         raw_uc(1.1 * np.max(np.array(wall_loads.power_density)), "W", "MW"),
     ])
-    ax2.grid(True)
+    ax2.grid(visible=True)
     ax2.set_ylabel(r"Radiation Load ($MW.m^{-2}$)")
 
     ax3 = plt.subplot(gs[1, 1])
@@ -1088,7 +1088,7 @@ def plot_radiation_loads(
 
     ax3.set_ylabel(r"Total Power $[MW]$")
     ax3.set_xlabel(r"Poloidal Distance $[m]$")
-    ax3.grid(True)
+    ax3.grid(visible=True)
 
     plt.suptitle(plot_title)
     plt.show()
@@ -1103,7 +1103,7 @@ class FirstWallRadiationSolver:
         self.rad_source = source_func
         self.fw_shape = firstwall_shape
 
-    def solve(self, plot=True):
+    def solve(self, *, plot=True):
         """Solve first wall radiation problem"""
         rad_3d = AxisymmetricMapper(self.rad_source)
         ray_stepsize = 1.0  # 2.0e-4
