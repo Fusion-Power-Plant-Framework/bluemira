@@ -237,7 +237,7 @@ class MaterialPropertyDescriptor:
         """
         Set the MaterialProperty of the dataclass entry
         """
-        if callable(value):
+        if callable(value) and not isinstance(value, MaterialProperty):
             value = value()
         setattr(obj, self._name, self._mutate_value(value, obj))
 
