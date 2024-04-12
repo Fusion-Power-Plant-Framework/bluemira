@@ -217,6 +217,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 CoilSetSymmetryStatus.PARTIAL,
             }:
                 # wrap the constraint function
+                @functools.wraps(f.f_constraint)
                 def wrapped_f_c(x, f=f):
                     return f.f_constraint(coilset._opt_currents_expand_mat @ x)
 
