@@ -964,7 +964,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=2,
+                rec_ext=25,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -974,7 +974,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=0.4,
+                rec_ext=1,
             )
             pfr_ext = abs(ion_front_z)
 
