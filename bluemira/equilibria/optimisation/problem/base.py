@@ -11,6 +11,7 @@ Equilibria Optimisation base module
 from __future__ import annotations
 
 import abc
+import functools
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
