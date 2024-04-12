@@ -568,6 +568,9 @@ def spherical_harmonic_approximation(
     # Starting LCFS
     original_LCFS = eq.get_LCFS()
 
+    if eq.grid is None or eq.plasma is None:
+        raise BluemiraError("eq not setup for SH approximation.")
+
     # Grid keep the same as input equilibrium
     grid = eq.grid
 
@@ -610,14 +613,13 @@ def spherical_harmonic_approximation(
     # Can't have more degrees then sampled psi
     degree_limit_collocation = len(collocation.x) - 1
 
-    sh_eq = deepcopy(eq)
     # Set min to save some time
     min_degree = 2
     # Max degree is smallest of the limits
-    max_degree = np.min([degree_limit_opt_coils, degree_limit_collocation])
+    max_degree = np.min([degree_limit_collocation])
 
     sh_eq = deepcopy(eq)
-    for degree in np.arange(min_degree, max_degree):
+    for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
             eq.coilset, degree, r_t, sh_coil_names
@@ -662,8 +664,11 @@ def spherical_harmonic_approximation(
         if fit_metric_value <= acceptable_fit_metric:
             break
         if degree == degree_limit_opt_coils:
-            bluemira_warn("You cannot use more degrees than optimisable coils.")
-            break
+            bluemira_warn(
+                f"You cannot use more degrees ({degree}) "
+                f"than optimisable coils ({degree_limit_opt_coils}). But we are ;)"
+            )
+            # break
         if degree == degree_limit_collocation:
             bluemira_warn(
                 "You may need to use more degrees for a fit metric of"
