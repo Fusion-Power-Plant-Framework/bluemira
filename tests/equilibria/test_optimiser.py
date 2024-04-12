@@ -63,6 +63,7 @@ class TestCoilsetOptimiser:
             j_max=5.0e-6,
             b_max=50.0,
             name="PF_1",
+            ctype="PF",
         )
 
         coil3 = Coil(
@@ -74,6 +75,7 @@ class TestCoilsetOptimiser:
             j_max=np.nan,
             b_max=50.0,
             name="PF_3",
+            ctype="PF",
         )
         cls.coilset_none = CoilSet(coil2, coil3)
         cls.coilset_partial = CoilSet(circuit, coil2, coil3)
@@ -288,17 +290,28 @@ class TestCoilsetOptimiser:
         f_c_part = ineq_constraints_part[0]["f_constraint"]
         f_c_sym = ineq_constraints_sym[0]["f_constraint"]
 
-        # todo: figure out why the commented out lines below are not working
-
-        # f_c_none_res = f_c_none(self.optimiser_none.coilset._opt_currents)
-        # f_c_part_res = f_c_part(self.optimiser_partial.coilset._opt_currents)
+        f_c_none_res = f_c_none(self.optimiser_none.coilset._opt_currents)
+        f_c_part_res = f_c_part(self.optimiser_partial.coilset._opt_currents)
         f_c_sym_res = f_c_sym(self.optimiser_sym.coilset._opt_currents)
 
         df_c_none = ineq_constraints_none[0]["df_constraint"]
         df_c_sym = ineq_constraints_sym[0]["df_constraint"]
 
-        # df_c_res = df_c_none(self.optimiser_none.coilset._opt_currents)
+        df_c_none_res = df_c_none(self.optimiser_none.coilset._opt_currents)
         df_c_sym_res = df_c_sym(self.optimiser_sym.coilset._opt_currents)
 
+        # none sym. should have an f_c res shape of 2 (as there are two coils)
+        # and a df_c res shape of 2x2 (2 forces x 2 coils)
+        assert f_c_none_res.shape == (2,)
+        assert df_c_none_res.shape == (2, 2)
+
+        # partial sym. should have an f_c res shape of 2 (as there are two coils)
+        # and can't test the df_c res shape as it will be numerical approximated
+        # but would have a shape of 2x2 (2 forces x 3), the two coils
+        # and the primary one from the SymmetricCircuit
+        assert f_c_part_res.shape == (2,)
+
+        # fully sym. should have an f_c res shape of 2 (as there are two coils)
+        # but df_c  a shape of 2x1 (2 forces x 1 coil (the primary one))
         assert f_c_sym_res.shape == (2,)
         assert df_c_sym_res.shape == (2, 1)
