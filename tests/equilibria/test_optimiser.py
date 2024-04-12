@@ -305,11 +305,11 @@ class TestCoilsetOptimiser:
         assert f_c_none_res.shape == (2,)
         assert df_c_none_res.shape == (2, 2)
 
-        # partial sym. should have an f_c res shape of 2 (as there are two coils)
+        # partial sym. should have an f_c res shape of 4 (as there are four coils)
         # and can't test the df_c res shape as it will be numerical approximated
-        # but would have a shape of 2x2 (2 forces x 3), the two coils
-        # and the primary one from the SymmetricCircuit
-        assert f_c_part_res.shape == (2,)
+        # but would have a shape of 3x3 (3 forces per coil, and there are 3 coils,
+        # the two coils and the primary one from the SymmetricCircuit
+        assert f_c_part_res.shape == (4,)
 
         # fully sym. should have an f_c res shape of 2 (as there are two coils)
         # but df_c  a shape of 2x1 (2 forces x 1 coil (the primary one))
