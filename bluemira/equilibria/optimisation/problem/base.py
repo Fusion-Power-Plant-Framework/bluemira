@@ -238,6 +238,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                     # (to reduce the shape to the number of current optimisable coils)
                     # by multiplying the result with the repetition matrix
                     # and dividing by 2 (as the values are added together)
+                    @functools.wraps(f.df_constraint)
                     def wrapped_df_c(x, f=f):
                         df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
                         return df_res @ coilset._opt_currents_sym_reduce_mat
