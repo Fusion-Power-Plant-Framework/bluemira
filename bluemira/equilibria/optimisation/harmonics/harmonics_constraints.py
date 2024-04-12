@@ -56,7 +56,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         sh_coil_names: list,
         tolerance: float | npt.NDArray | None = None,
         smallest_tol: float = 1e-6,
-        constraint_type: str = "inequality",
+        constraint_type: str = "equality",
         *,
         invert: bool = False,
     ):
