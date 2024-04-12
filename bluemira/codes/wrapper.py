@@ -24,6 +24,7 @@ def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
     module: str = "PROCESS",
+    params_cls=None,
 ) -> CodesSolver:
     """
     Runs, reads or mocks systems code according to the build configuration dictionary.
@@ -48,6 +49,8 @@ def systems_code_solver(
         there is a problem running the system code.
     """
     syscode = get_code_interface(module)
+    if params_cls is not None:
+        syscode.Solver.params_cls = params_cls
     return syscode.Solver(params, build_config)
 
 
