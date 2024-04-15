@@ -24,7 +24,7 @@ def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
     module: str = "PROCESS",
-    params_cls=None,
+    params_cls: type[MappedParameterFrame] | None =None,
 ) -> CodesSolver:
     """
     Runs, reads or mocks systems code according to the build configuration dictionary.
