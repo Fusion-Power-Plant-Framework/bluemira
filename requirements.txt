@@ -23,7 +23,7 @@ numexpr==2.10.0
 numpy==1.26.4
 openmc_data==0.2.2
 packaging==24.0
-pandas==2.2.1
+pandas==2.2.2
 periodictable==1.7.0
 Pillow==10.3.0
 Pint==0.23
