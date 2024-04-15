@@ -244,23 +244,25 @@ class Geometry:
         """
         # Check if there is already an Element specified between the Nodes
         new_element_nodes = sorted([node_id1, node_id2])
+        element = None
         for elem in self.elements:
             e_nodes = sorted([elem.node_1.id_number, elem.node_2.id_number])
 
             if e_nodes == new_element_nodes:
                 # An element already exists here, update properties
-                elem_id = elem.id_number
-
                 element = Element(
                     self.nodes[node_id1],
                     self.nodes[node_id2],
-                    elem_id,
+                    elem.id_number,
                     cross_section,
                     material,
                 )
+                break
 
-                self.elements[elem_id] = element
-                return elem_id
+        if element is not None:
+            # Update the Element in the Geometry
+            self.elements[element.id_number] = element
+            return element.id_number
 
         # There is no such Element; add a new one to the model
         element = Element(
@@ -418,11 +420,11 @@ class Geometry:
         """
         for node in self.nodes:
             # Move all the nodes
-            node.xyz = t_matrix @ node.xyz
+            node.xyz @= t_matrix
 
             # Update their displacements
-            node.displacements[:3] = t_matrix @ node.displacements[:3]
-            node.displacements[3:] = t_matrix @ node.displacements[3:]
+            node.displacements[:3] @= t_matrix
+            node.displacements[3:] @= t_matrix
 
         # Reset all the cached lambda matrices in the elements so that they are
         # re-calculated to account for new node positions
