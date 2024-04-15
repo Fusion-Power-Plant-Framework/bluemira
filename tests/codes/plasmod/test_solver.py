@@ -462,8 +462,7 @@ class TestPlasmodSolver:
         """
 
         def write_file(file_path: str, content: str):
-            with open(file_path, "w") as f:
-                f.write(content)
+            Path(file_path).write_text(content)
 
         output_file = command[2]
         output_file_content = TestPlasmodSolver.read_data_file("sample_output.dat")
