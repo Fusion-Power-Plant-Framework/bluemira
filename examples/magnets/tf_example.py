@@ -47,7 +47,7 @@ pm = B_TF_i ** 2 / (2 * MU_0)  # magnetic pressure on the inner TF leg
 # i.e. half of the whole F_Z
 t_z = (0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2)
 
-Iop = 70.0e3  # operational current in each conductor
+Iop = 90.0e3  # operational current in each conductor
 n_cond = int(np.ceil(I_TF / Iop))  # number of necessary conductors
 
 n_spire = np.floor(I_TF / Iop)

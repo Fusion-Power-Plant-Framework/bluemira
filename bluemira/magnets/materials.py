@@ -15,9 +15,9 @@ class OperationalPoint(dict):
     def __init__(self, *args, **kwargs):
         # Set default values {'T': 0, 'B': 0}
         if "T" not in kwargs:
-            kwargs["T"] = 0
+            kwargs["T"] = None
         if "B" not in kwargs:
-            kwargs["B"] = 0
+            kwargs["B"] = None
         super().__init__(*args, **kwargs)
 
 

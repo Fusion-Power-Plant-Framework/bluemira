@@ -274,7 +274,8 @@ class CaseTF:
             n_layers_reduction: int,
     ):
         """
-        Rearrange the total number of conductors into the TF coil case considering a specific conductor
+        Rearrange the total number of conductors into the TF coil case considering
+        a specific conductor
 
         Parameters
         ----------
