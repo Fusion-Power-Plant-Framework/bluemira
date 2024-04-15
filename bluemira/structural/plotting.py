@@ -391,7 +391,7 @@ class BasePlotter:
         load = arrow_scale(load, 10 * self.unit_length, self.force_size)
 
         dcm = element.lambda_matrix[0:3, 0:3]
-        load = load @ dcm
+        load @= dcm
         point = np.array(
             [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
@@ -406,13 +406,13 @@ class BasePlotter:
 
         load = arrow_scale(load, 10 * self.unit_length, self.force_size)
 
-        load = load @ dcm
-        load = load * np.ones((3, n)).T
+        load @= dcm
+        load *= np.ones((3, n)).T
         load = load.T
         point = np.array(
             [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
-        point = point * np.ones((3, n)).T
+        point *= np.ones((3, n)).T
         point += (
             np.array([x * np.array([1.0, 0.0, 0.0]) for x in np.linspace(0, length, n)])
             @ dcm

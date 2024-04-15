@@ -150,7 +150,7 @@ def _calculate_variable_offset_magnitudes(
     The offset increases linearly between start_angle and end_angle,
     between inboard_offset and outboard_offset.
     """
-    angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
+    angles[angles > np.pi] -= 2 * np.pi
     angle_fraction = (angles - start_angle) / (end_angle - start_angle)
     return inboard_offset + angle_fraction * (outboard_offset - inboard_offset)
 

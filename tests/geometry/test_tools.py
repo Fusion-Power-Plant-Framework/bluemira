@@ -668,7 +668,7 @@ class TestSavingCAD:
 
     def _save_and_check(self, obj, save_func, tmp_path):
         # Can't mock out as written by freecad not python
-        self.generated_file = tmp_path / self.generated_file
+        self.generated_file /= tmp_path
         save_func(obj, filename=str(self.generated_file).split(".")[0])
 
         with open(self.test_file) as tf:
@@ -752,7 +752,7 @@ class TestFilletChamfer2D:
         n = 4 if wire.is_closed() else 2
         # I'll be honest, I don't understand why this modified radius happens...
         # I worry about what happens at other angles...
-        radius = 0.5 * np.sqrt(2) * radius
+        radius *= 0.5 * np.sqrt(2)
         correct_length = wire.length - n * 2 * radius
         correct_length += n * np.sqrt(2 * radius**2)
 

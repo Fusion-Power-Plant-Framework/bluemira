@@ -100,7 +100,7 @@ class TestNormalAt:
 
     @pytest.mark.parametrize("normal", normals)
     def test_circle_normal(self, normal):
-        normal = normal / np.linalg.norm(normal)
+        normal /= np.linalg.norm(normal)
         circle = BluemiraFace(make_circle(axis=normal))
         np.testing.assert_allclose(circle.normal_at(), normal)
 

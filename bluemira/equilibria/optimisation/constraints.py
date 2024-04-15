@@ -114,14 +114,14 @@ class FieldConstraints(UpdateableConstraint):
             z = np.array([z])
 
         if is_num(B_max):
-            B_max = B_max * np.ones(len(x))
+            B_max *= np.ones(len(x))
         if len(B_max) != len(x):
             raise ValueError(
                 "Maximum field vector length not equal to the number of points."
             )
 
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(len(x))
+            tolerance *= np.ones(len(x))
         if len(tolerance) != len(x):
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
@@ -223,14 +223,14 @@ class CoilFieldConstraints(FieldConstraints):
     ):
         n_coils = coilset.n_coils()
         if is_num(B_max):
-            B_max = B_max * np.ones(n_coils)
+            B_max *= np.ones(n_coils)
         if len(B_max) != n_coils:
             raise ValueError(
                 "Maximum field vector length not equal to the number of coils."
             )
 
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(n_coils)
+            tolerance *= np.ones(n_coils)
         if len(tolerance) != n_coils:
             raise ValueError("Tolerance vector length not equal to the number of coils.")
 
@@ -304,7 +304,7 @@ class CoilForceConstraints(UpdateableConstraint):
         n_f_constraints = n_PF + n_CS
 
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(n_f_constraints)
+            tolerance *= np.ones(n_f_constraints)
         elif len(tolerance) != n_f_constraints:
             raise ValueError(f"Tolerance vector not of length {n_f_constraints}")
 
@@ -386,9 +386,9 @@ class MagneticConstraint(UpdateableConstraint):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
             if f_constraint == L2NormConstraint:
-                tolerance = tolerance * np.ones(1)
+                tolerance *= np.ones(1)
             else:
-                tolerance = tolerance * np.ones(len(self))
+                tolerance *= np.ones(len(self))
         self.weights = weights
         self._f_constraint = f_constraint
         self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1.0}
@@ -783,7 +783,7 @@ class MagneticConstraintSet(ABC):
         """
         The mathematical size of the constraint set.
         """
-        return sum([len(c) for c in self.constraints])
+        return sum(len(c) for c in self.constraints)
 
     def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

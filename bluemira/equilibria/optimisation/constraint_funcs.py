@@ -149,13 +149,13 @@ class L2NormConstraint(ConstraintFunction):
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        vector = self.scale * vector
+        vector *= self.scale
         residual = self.a_mat @ vector - self.b_vec
         return residual.T @ residual - self.value
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
-        vector = self.scale * vector
+        vector *= self.scale
         df = 2 * (self.a_mat.T @ self.a_mat @ vector - self.a_mat.T @ self.b_vec)
         return df * self.scale
 
