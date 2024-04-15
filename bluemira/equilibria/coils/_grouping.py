@@ -1302,7 +1302,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         # this should be true as, at the top level, the number
         # of coil or group objects should be the same as the no
         # of optimisable coils
-        assert n_opt_coils == n_distinct_coils_and_groupings  # noqa: S101
+        if n_opt_coils != n_distinct_coils_and_groupings:
+            raise ValueError(
+                "The number of optimisable coils does not match the number "
+                "of distinct coils and groupings. Something's gone wrong."
+            )
 
         # you are putting 1's in the col. corresponding
         # to all coils in the same Circuit
@@ -1325,7 +1329,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Get the optimisation currents symmetry reduce matrix.
 
         This matrix is used to convert a full set of optimisation currents
-        into a reduced set be filtering out all non-primary symmetric circuit
+        into a reduced set, for filtering out all non-primary symmetric circuit
         coil currents.
         """
         cc = self.get_control_coils()
@@ -1342,6 +1346,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         mat = np.zeros((n_all_coils, n_opt_coils))
         i_row = 0
         for i_col in range(n_opt_coils):
+            # we have check that all coils are SymmetricCircuits
+            # we just need alternative 1's & 0's
+            # per column (per SymmetricCircuit)
             mat[i_row, i_col] = 1
             mat[i_row + 1, i_col] = 0
             i_row += 2
