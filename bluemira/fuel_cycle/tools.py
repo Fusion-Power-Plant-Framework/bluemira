@@ -397,7 +397,7 @@ def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
     """
     _t, rt = discretise_1d(time_years, time_fpy, int(np.ceil(time_years[-1])))
     try:
-        a = max([x - x1 for x1, x in pairwise(rt)])
+        a = max(x - x1 for x1, x in pairwise(rt))
     except ValueError:
         # Shortened time overflow error (only happens when debugging)
         a = 1
@@ -663,8 +663,7 @@ def _fountain_linear_sink(
                 inventory = min_inventory
                 topup = min_inventory * (1 - np.exp(-T_LAMBDA * (t_out - t_in - t15)))
                 m_out_temp = mass_in - m_in * t15 - topup
-                if m_out_temp < 0:
-                    m_out_temp = 0
+                m_out_temp = max(m_out_temp, 0)
                 m_out = m_out_temp / dts  # spread evenly over timestep
 
         elif i_mdot >= max_inventory:

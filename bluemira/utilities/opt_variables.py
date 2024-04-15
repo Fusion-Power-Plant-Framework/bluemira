@@ -11,6 +11,7 @@ Optimisation variable class.
 from __future__ import annotations
 
 import json
+import operator
 from dataclasses import MISSING, Field, field
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, TypedDict
@@ -612,7 +613,9 @@ class OptVariablesFrame:
         tabulated:
             The tabulated data
         """
-        records = sorted([val.as_dict() for val in self], key=lambda x: x["name"])
+        records = sorted(
+            [val.as_dict() for val in self], key=operator.itemgetter("name")
+        )
 
         return f"{self.__class__.__name__}\n" + tabulate(
             records,
