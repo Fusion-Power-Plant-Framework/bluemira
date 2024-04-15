@@ -114,8 +114,9 @@ strawberries_and_cream = material_cache.get_material("StrawberriesAndCream")
 another_strawberry = material_cache.get_material("Strawberry")
 summer_time = material_cache.get_material("StrawberriesAndCream")
 
-print(another_strawberry.elements)
-print(summer_time.materials, summer_time.fracs)
+print("Elements: ", another_strawberry.elements)
+print(summer_time.materials)
+print(summer_time.fractions)
 
 # %% [markdown]
 # It may be important to note that the default way to retrieve a material is through
@@ -127,12 +128,13 @@ print(summer_time.materials, summer_time.fracs)
 
 # %%
 # Attributes are the same
-print(another_strawberry == strawberry)
-print(summer_time == strawberries_and_cream)
+# TODO do we want to do this?
+# print(another_strawberry == strawberry)
+# print(summer_time == strawberries_and_cream)
 
-# But they are distinct objects
-print(id(another_strawberry) == id(strawberry))
-print(id(summer_time) == id(strawberries_and_cream))
+# # But they are distinct objects
+# print(id(another_strawberry) == id(strawberry))
+# print(id(summer_time) == id(strawberries_and_cream))
 
 # We can get the object as it is in the cache by setting clone=False
 cached_strawberry = material_cache.get_material("Strawberry", clone=False)
@@ -140,6 +142,6 @@ cached_strawberry = material_cache.get_material("Strawberry", clone=False)
 # But beware that any changes to the cached object will affect the original object and
 # any future retrievals.
 print(cached_strawberry.temperature)
-cached_strawberry.temperature = 273.15
-print(another_strawberry == cached_strawberry)
-print(material_cache.get_material("Strawberry") == another_strawberry)
+# cached_strawberry.temperature = 273.15
+# print(another_strawberry == cached_strawberry)
+# print(material_cache.get_material("Strawberry") == another_strawberry)

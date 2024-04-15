@@ -69,6 +69,11 @@ class HomogenisedMixture:
         """
         return self.name
 
+    @property
+    def fractions(self) -> dict[str, float]:
+        """Show fractions of materials"""
+        return {mat.material.name: mat.fraction for mat in self.materials}
+
     def to_openmc_material(self, temperature: float | None = None):
         """
         Convert the mixture to an openmc material.
