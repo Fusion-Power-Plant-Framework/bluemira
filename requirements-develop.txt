@@ -19,7 +19,7 @@ jupyter-cache==1.0.0
 jupytext==1.16.1
 MarkupSafe==2.1.5
 mypy-extensions==1.0.0
-myst-nb==1.0.0
+myst-nb==1.1.0
 myst-parser==2.0.0
 nbclient==0.10.0
 nodeenv==1.8.0
