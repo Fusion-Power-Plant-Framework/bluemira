@@ -5,10 +5,12 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
@@ -19,6 +21,7 @@ from bluemira.equilibria.optimisation.problem.base import (
 )
 from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+from bluemira.utilities.plot_tools import save_figure, xz_plot_setup
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -60,6 +63,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         plotting_reference_eq: Equilibrium | None = None,
         plot: bool | None = False,
         diag_opts: EqDiagnosticOptions | None = None,
+        plot_name: str | None = "default_0",
+        figure_folder: str | None = None,
+        gif: bool | None = False,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -72,21 +78,51 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.reference_eq = plotting_reference_eq
 
         self.plotting_enabled = plot
+        self.plot_name = plot_name
+        self.figure_folder = figure_folder
+        self.gif = gif
 
         if diag_opts is None:
             self.diag_ops = EqDiagnosticOptions()
         else:
             self.diag_ops = diag_opts
 
-    def plot(self):
+        if self.plotting_enabled:
+            self.plot_dict = xz_plot_setup(
+                self.plot_name,
+                self.figure_folder,
+                self.gif,
+                self.diag_ops.split_psi_plots,
+            )
+
+    def update_plot(self, i: int, plot_dict: Dict):
         """
         Plot equilibrium compared to a reference equilibrium
         """
-        _plotter = EquilibriumComparisonPlotter(
+        # Clear plot
+        # TODO find better way to do this?
+        if self.diag_ops.split_psi_plots is True:
+            for axs in plot_dict["ax"]:
+                axs.clear()
+        else:
+            ax = plot_dict["ax"]
+            ax.clear()
+
+        EquilibriumComparisonPlotter(
             equilibrium=self.eq,
             reference_eq=self.reference_eq,
+            ax=plot_dict["ax"],
             split_psi_plots=self.diag_ops.split_psi_plots,
             psi_diff=self.diag_ops.psi_diff,
+        )
+        plt.pause(PLT_PAUSE)
+
+        save_figure(
+            plot_dict["f"],
+            plot_dict["pname"] + str(i),
+            save=plot_dict["save"],
+            folder=plot_dict["folder"],
+            dpi=DPI_GIF,
         )
 
     def optimise(
@@ -133,8 +169,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             opt_currents=opt_currents,
             current_scale=self.scale,
         )
-
+        i = 0
         if self.plotting_enabled:
-            self.plot()
+            self.update_plot(i, self.plot_dict)
+            i += 1
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
