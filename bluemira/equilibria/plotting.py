@@ -809,8 +809,10 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 levels=levels,
                 cmap=cmap,
                 zorder=8,
+                vmin=0,
+                vmax=1,
             )
-            plt.colorbar(mappable=im)
+            plt.colorbar(mappable=im, ticks=np.linspace(0, 1, 10))
             plt.suptitle(
                 "Relative difference in psi between reference equilibrium"
                 " and current equilibrium, \n split by contribution from"
@@ -863,8 +865,10 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                     levels=levels,
                     cmap=cmap,
                     zorder=8,
+                    vmin=0,
+                    vmax=1,
                 )
-                plt.colorbar(mappable=im)
+                plt.colorbar(mappable=im, ticks=np.linspace(0, 1, 10))
                 plt.tight_layout()
 
         else:
@@ -894,9 +898,16 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
         levels = np.linspace(np.amin(self.total_psi), np.amax(self.total_psi), nlevels)
         if self.psi_diff:
             im = self.ax.contourf(
-                self.eq.x, self.eq.z, self.total_psi, levels=levels, cmap=cmap, zorder=8
+                self.eq.x,
+                self.eq.z,
+                self.total_psi,
+                levels=levels,
+                cmap=cmap,
+                zorder=8,
+                vmin=0,
+                vmax=1,
             )
-            plt.colorbar(mappable=im)
+            plt.colorbar(mappable=im, ticks=np.linspace(0, 1, 10))
             plt.title(
                 "Relative difference in total psi between reference equilibrium and"
                 " current equilibrium"

@@ -66,6 +66,7 @@ from bluemira.equilibria.profiles import (
     DoublePowerFunc,
 )
 from bluemira.equilibria.solve import PicardIterator
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 
 # %% [markdown]
 #
@@ -287,9 +288,11 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     gamma=1e-7,
 )
 
-program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(
+    reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2, plot=False
+)
 program()
-
+# TODO save reference_eq here
 
 sof_psi_boundary = PsiBoundaryConstraint(
     sof_xbdry,
@@ -300,6 +303,7 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
+diag_opts = EqDiagnosticOptions(psi_diff=True, split_psi_plots=True)
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
@@ -307,10 +311,13 @@ sof_opt_problem = MinimalCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     constraints=[sof_psi_boundary, x_point],
+    plotting_reference_eq=reference_eq,
+    plot=True,
+    diag_opts=diag_opts,
 )
 
 iterator = PicardIterator(
-    sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
+    sof, sof_opt_problem, plot=False, fixed_coils=True, relaxation=0.2
 )
 iterator()
 
