@@ -23,7 +23,7 @@ from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup, create_template_from_path
 from bluemira.codes.process._teardown import Teardown
-from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
@@ -162,6 +162,12 @@ class Solver(CodesSolver):
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
+        if not ENABLED and run_mode not in {
+            self.run_mode_cls.MOCK,
+            self.run_mode_cls.NONE,
+        }:
+            raise CodesError(f"{self.name} installation not found")
+
         self._setup = self.setup_cls(
             self.params,
             self.in_dat_path,
