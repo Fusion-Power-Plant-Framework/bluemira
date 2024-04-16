@@ -29,7 +29,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0_4PI
-from bluemira.geometry.coordinates import Coordinates, get_area_2d
+from bluemira.geometry.coordinates import Coordinates, get_area_2d, get_centroid_3d
 from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
     PrismEndCapMixin,
@@ -471,7 +471,11 @@ class PolyhedralPrismCurrentSource(
         xs_coordinates = deepcopy(xs_coordinates)
         xs_coordinates.close()
         self._area = get_area_2d(*xs_coordinates.xz)
+        origin = [0.0, 0.0, 0.0]
         self._xs = xs_coordinates
+        if not np.allclose(origin, get_centroid_3d(*xs_coordinates.xyz)):
+            dx, dy, dz = get_centroid_3d(*xs_coordinates.xyz)
+            self._xs.translate((-dx, -dy, -dz))
         self._xs.set_ccw([0, 1, 0])
 
     @process_xyz_array
