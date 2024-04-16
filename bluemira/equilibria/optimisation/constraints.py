@@ -105,7 +105,7 @@ class FieldConstraints(UpdateableConstraint):
         x: float | np.ndarray,
         z: float | np.ndarray,
         B_max: float | np.ndarray,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
         constraint_type: str = "inequality",
     ):
         if is_num(x):
@@ -221,7 +221,7 @@ class CoilFieldConstraints(FieldConstraints):
         self,
         coilset: CoilSet,
         B_max: float | np.ndarray,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
     ):
         n_coils = coilset.n_coils()
         if is_num(B_max):
@@ -294,7 +294,7 @@ class CoilForceConstraints(UpdateableConstraint):
         PF_Fz_max: float,
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
     ):
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
@@ -385,7 +385,7 @@ class MagneticConstraint(UpdateableConstraint):
         self,
         target_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
         f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
@@ -463,7 +463,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
         f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "equality",
     ):
@@ -492,7 +492,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         ref_z: float,
         constraint_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
         f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
@@ -585,7 +585,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
     ):
         super().__init__(
             x,
@@ -694,7 +694,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         z: float | np.ndarray,
         target_value: float,
         weights: float | np.ndarray = 1.0,
-        tolerance: float | np.ndarray = None,
+        tolerance: float | np.ndarray | None = None,
     ):
         super().__init__(
             x,
