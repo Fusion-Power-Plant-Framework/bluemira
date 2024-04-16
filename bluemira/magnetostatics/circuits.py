@@ -9,8 +9,10 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import (
@@ -33,10 +35,16 @@ class PlanarCircuit(SourceGroup):
     Base class for a planar current loop
     """
 
-    shape: np.ndarray | Coordinates
+    shape: npt.NDArray[np.float64] | Coordinates
     current: float
 
-    def _generate_sources(self, shape, current, source_class, xs_args):
+    def _generate_sources(
+        self,
+        shape: npt.NDArray[np.float64] | Coordinates,
+        current: float,
+        source_class: Any,
+        xs_args: npt.NDArray[np.float64],
+    ) -> list[Any]:
         """
         Generate the sources of a given class along the discretised shape
         """
@@ -50,7 +58,6 @@ class PlanarCircuit(SourceGroup):
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
-
         for midpoint, d_l, beta, alpha in zip(
             self.midpoints, self.d_l, betas, alphas, strict=False
         ):
@@ -70,7 +77,9 @@ class PlanarCircuit(SourceGroup):
             sources.append(source)
         return sources
 
-    def _process_planar_shape(self, shape: np.ndarray | Coordinates) -> Coordinates:
+    def _process_planar_shape(
+        self, shape: npt.NDArray[np.float64] | Coordinates
+    ) -> Coordinates:
         """
         Checks that the shape is planar
         """
@@ -82,8 +91,8 @@ class PlanarCircuit(SourceGroup):
         return shape
 
     def _get_betas_alphas(
-        self, shape: np.ndarray | Coordinates
-    ) -> tuple[np.ndarray, np.ndarray]:
+        self, shape: npt.NDArray[np.float64] | Coordinates
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Get the first and second half-angles (transformed to the x-z plane)
         """
@@ -116,7 +125,7 @@ class PlanarCircuit(SourceGroup):
         return np.rad2deg(betas), np.rad2deg(alphas)
 
     @staticmethod
-    def _transform_to_xz(shape):
+    def _transform_to_xz(shape: npt.NDArray[np.float64] | Coordinates) -> Coordinates:
         normal_vector = shape.normal_vector
         if abs(normal_vector[1]) == 1.0:
             return shape
@@ -125,7 +134,12 @@ class PlanarCircuit(SourceGroup):
         rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
         return Coordinates(rot_mat @ shape._array)
 
-    def _get_half_angle(self, p0, p1, p2):
+    def _get_half_angle(
+        self,
+        p0: npt.NDArray[np.float64],
+        p1: npt.NDArray[np.float64],
+        p2: npt.NDArray[np.float64],
+    ) -> float:
         """
         Get the half angle between three points, respecting winding direction.
         """
@@ -165,7 +179,7 @@ class PlanarCircuit(SourceGroup):
             )
         return angle
 
-    def _point_inside_xz(self, point):
+    def _point_inside_xz(self, point: npt.NDArray[np.float64]) -> bool:
         # reverse second axis if clockwise
         ind = (slice(None), slice(None, None, -1)) if self._clockwise else slice(None)
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
@@ -197,7 +211,7 @@ class ArbitraryPlanarRectangularXSCircuit(PlanarCircuit):
 
     def __init__(
         self,
-        shape: np.ndarray | Coordinates,
+        shape: npt.NDArray[np.float64] | Coordinates,
         breadth: float,
         depth: float,
         current: float,
@@ -230,8 +244,8 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
 
     def __init__(
         self,
-        shape: np.ndarray | Coordinates,
-        xs_coordinates: Coordinates,
+        shape: npt.NDArray[np.float64] | Coordinates,
+        xs_coordinates: npt.NDArray[np.float64] | Coordinates,
         current: float,
     ):
         super().__init__(
@@ -277,9 +291,9 @@ class HelmholtzCage(SourceGroup):
     @process_xyz_array
     def ripple(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
     ) -> float:
         """
         Get the toroidal field ripple at a point.

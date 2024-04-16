@@ -15,6 +15,7 @@ https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 
 import numba as nb
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import (
@@ -326,10 +327,10 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
 
     def __init__(
         self,
-        origin: np.ndarray,
-        ds: np.ndarray,
-        normal: np.ndarray,
-        t_vec: np.ndarray,
+        origin: npt.NDArray[np.float64],
+        ds: npt.NDArray[np.float64],
+        normal: npt.NDArray[np.float64],
+        t_vec: npt.NDArray[np.float64],
         breadth: float,
         depth: float,
         alpha: float,
@@ -355,7 +356,9 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         self.set_current(current)
         self._points = self._calculate_points()
 
-    def _xyzlocal_to_rql(self, x_local, y_local, z_local):
+    def _xyzlocal_to_rql(
+        self, x_local: float, y_local: float, z_local: float
+    ) -> tuple[float, float, float, float, float, float]:
         """
         Convert local x, y, z coordinates to working coordinates.
         """
@@ -371,7 +374,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         r2 = (d + x_local) * np.tan(self._beta) + b + y_local
         return l1, l2, q1, q2, r1, r2
 
-    def _BxByBz(self, point):
+    def _BxByBz(self, point: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
         """
@@ -383,10 +386,10 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     @process_xyz_array
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> float | np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> float | npt.NDArray[np.float64]:
         """
         Calculate the magnetic field at a point due to the current source.
 
@@ -411,7 +414,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         # Convert vector back to global coordinates
         return self._dcm.T @ b_local
 
-    def _calculate_points(self) -> np.ndarray:
+    def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Calculate extrema points of the current source for plotting and debugging.
         """
