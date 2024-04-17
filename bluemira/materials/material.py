@@ -416,6 +416,14 @@ class MassFractionMaterial:
         """
         return self.name
 
+    def __eq__(self, other: object):
+        """Equality Check"""
+        raise NotImplementedError("Material equality not implemented")
+
+    def __hash__(self):
+        """Hash of class"""
+        return hash(self.elements)
+
     def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.

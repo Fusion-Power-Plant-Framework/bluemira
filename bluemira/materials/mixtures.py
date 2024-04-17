@@ -19,11 +19,11 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.error import MaterialsError
+from bluemira.materials.material import MassFractionMaterial
 from bluemira.materials.tools import to_openmc_material_mixture
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
-    from bluemira.materials.material import MassFractionMaterial
 
 
 @dataclass
@@ -36,6 +36,22 @@ class MixtureFraction:
     def __post_init__(self):
         """Set name"""
         self.name = self.material.name
+
+    def __hash__(self):
+        """Hash of class"""
+        return hash(self.name)
+
+    def __eq__(self, other: object):
+        """Material equality"""
+        if (
+            isinstance(other, type(self))
+            and other.fraction == self.fraction
+            and other.material == self.material
+        ):
+            return True
+        if isinstance(other, MassFractionMaterial) and self.fraction == 1:
+            return other == self.material
+        return False
 
 
 class MixtureConnectionType(Enum):
@@ -258,3 +274,27 @@ class HomogenisedMixture:
                 materials.append(MixtureFraction(material_inst, material_value))
         mat_dict["materials"] = materials
         return cls(name, **mat_dict)
+
+    def __eq__(self, other: object):
+        """Equality check"""
+        if (not isinstance(other, type(self)) and len(self.fractions) > 1) or (
+            len(other.materials) != len(self.materials)
+        ):
+            return False
+
+        if isinstance(other, type(self)):
+            for selfmat in self.materials:
+                for othmat in other.materials:
+                    if othmat == selfmat:
+                        break
+                else:
+                    return False
+        elif isinstance(other, MassFractionMaterial):
+            return self.materials[0] == other
+        else:
+            return False
+        return True
+
+    def __hash__(self):
+        """Hash of class"""
+        return hash(self.name)
