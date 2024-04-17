@@ -9,7 +9,7 @@ inputs:
     type: string
   bm-private-data-key:
     type: string
-    default: ""
+    default: ''
   with-artifact:
     required: false
     type: bool
