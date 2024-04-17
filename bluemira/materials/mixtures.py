@@ -48,7 +48,7 @@ class MixtureConnectionType(Enum):
 @dataclass
 class HomogenisedMixture:
     """
-    Inherits and does some dropping of 0 fractions (avoid touching nmm)
+    Homogenised mixture of materials
 
     Notes
     -----

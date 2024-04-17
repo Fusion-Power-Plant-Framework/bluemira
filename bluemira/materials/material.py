@@ -11,7 +11,7 @@ The home of base material objects. Use classes in here to make new materials.
 from __future__ import annotations
 
 import abc
-from dataclasses import asdict, dataclass, field
+from dataclasses import KW_ONLY, asdict, dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
 import asteval
@@ -306,6 +306,8 @@ class MassFractionMaterial:
         The material's name.
     elements:
         The constituent elements and their corresponding mass fractions.
+    nuclides:
+        The constituent nuclides and their corresponding mass fractions.
     density:
         The density. If supplied as a string then this will define a
         temperature-dependent calculation, otherwise it will define a constant value.
@@ -404,10 +406,7 @@ class MassFractionMaterial:
     def __post_init__(
         self,
     ):
-        """Value checking for required args marked as optional
-
-        dataclass limitation py3.8
-        """
+        """Value checking for required args marked as optional"""
         if not (self.elements or self.nuclides):
             raise MaterialsError("No elements or nuclides specified.")
 
@@ -575,29 +574,13 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
     Niobium-Titanium superconductor class.
     """
 
-    c_0: float | None = None
-    bc_20: float | None = None
-    tc_0: float | None = None
-    alpha: float | None = None
-    beta: float | None = None
-    gamma: float | None = None
-
-    def __post_init__(self):
-        """Value checking for required args marked as optional
-
-        dataclass limitation py3.8
-        """
-        if None in {
-            self.c_0,
-            self.bc_20,
-            self.tc_0,
-            self.alpha,
-            self.beta,
-            self.gamma,
-        }:
-            raise ValueError(
-                "Not all required values set TODO(je-cook) kwargs in dataclasses"
-            )
+    _: KW_ONLY
+    c_0: float
+    bc_20: float
+    tc_0: float
+    alpha: float
+    beta: float
+    gamma: float
 
     def Bc2(self, temperature: float) -> float:
         """
@@ -658,36 +641,21 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     Niobium-Tin Superconductor class.
     """
 
-    c_a1: float | None = None
-    c_a2: float | None = None
-    eps_0a: float | None = None
-    eps_m: float | None = None
-    b_c20m: float | None = None
-    t_c0max: float | None = None
-    c: float | None = None
-    p: float | None = None
-    q: float | None = None
+    _: KW_ONLY
+    c_a1: float
+    c_a2: float
+    eps_0a: float
+    eps_m: float
+    b_c20m: float
+    t_c0max: float
+    c: float
+    p: float
+    q: float
 
-    def __post_init__(self):
-        """Value checking for required args marked as optional
-
-        dataclass limitation py3.8
-        """
-        if None in {
-            self.c_a1,
-            self.c_a2,
-            self.eps_0a,
-            self.eps_m,
-            self.b_c20m,
-            self.t_c0max,
-            self.c,
-            self.p,
-            self.q,
-        }:
-            raise ValueError(
-                "Not all required values set TODO(je-cook) kwargs in dataclasses"
-            )
-        self.eps_sh = self.c_a2 * self.eps_0a / np.sqrt(self.c_a1**2 - self.c_a2**2)
+    @property
+    def eps_sh(self):
+        """EPS_sh"""
+        return self.c_a2 * self.eps_0a / np.sqrt(self.c_a1**2 - self.c_a2**2)
 
     def Tc_star(self, B: float, eps: float) -> float:  # noqa: N802
         """
@@ -970,7 +938,7 @@ class BePebbleBed(UnitCellCompound):
 
             eps_vol = np.vectorize(calc_eps_vol)(temperature)
         if is_num(eps_vol):
-            eps_vol = eps_vol * np.ones_like(temperature)
+            eps_vol *= np.ones_like(temperature)
         return (
             1.81
             + 0.0012 * temperature
