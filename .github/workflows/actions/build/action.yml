@@ -23,7 +23,7 @@ runs:
 
   - name: Checkout bluemira-private-data
     uses: actions/checkout@v4
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} && inputs.bm-private-data-key != ""
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && inputs.bm-private-data-key != "" }}
     with:
       repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
       ssh-key: ${{ inputs.bm-private-data-key }}
@@ -31,7 +31,7 @@ runs:
 
   - name: Move bluemira-private-data
     working-directory: "/home/runner/work/"
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }} && inputs.bm-private-data-key != ""
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && inputs.bm-private-data-key != "" }}
     shell: bash -l {0}
     run: |
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
