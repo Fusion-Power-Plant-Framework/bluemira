@@ -800,7 +800,6 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
         """
         Plot the last closed flux surface
         """
-
         try:
             lcfs = self.eq.get_LCFS()
         except Exception:
