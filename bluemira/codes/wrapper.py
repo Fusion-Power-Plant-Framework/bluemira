@@ -40,7 +40,7 @@ def systems_code_solver(
         Module to use
     params_cls:
         A custom :class:`~bluemira.codes.params.MappedParameterFrame`
-        to be used by the systems code solver. If not provided, the default 
+        to be used by the systems code solver. If not provided, the default
         one will be used.
 
     Returns
