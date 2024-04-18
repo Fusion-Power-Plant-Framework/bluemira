@@ -113,6 +113,7 @@ class Solver(CodesSolver):
     run_cls: type[Run] = Run
     teardown_cls: type[Teardown] = Teardown
     run_mode_cls: type[RunMode] = RunMode
+    params_cls: type[ProcessSolverParams] = ProcessSolverParams
 
     def __init__(
         self,
@@ -139,7 +140,8 @@ class Solver(CodesSolver):
         if isinstance(self.template_in_dat, str | Path):
             self.template_in_dat = create_template_from_path(self.template_in_dat)
 
-        self.params = ProcessSolverParams.from_defaults(self.template_in_dat)
+        self.params = self.params_cls.from_defaults(self.template_in_dat)
+
         self.params.update(params)
 
         if len(_build_config) > 0:
