@@ -15,8 +15,10 @@ from dataclasses import MISSING, Field, field
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, TypedDict
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
 import numpy as np
-import numpy.typing as npt
 from tabulate import tabulate
 from typing_extensions import NotRequired
 

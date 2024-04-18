@@ -9,7 +9,6 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
-from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -42,9 +41,10 @@ class PlanarCircuit(SourceGroup):
         self,
         shape: npt.NDArray[np.float64] | Coordinates,
         current: float,
-        source_class: Any,
+        source_class: type[TrapezoidalPrismCurrentSource]
+        | type[PolyhedralPrismCurrentSource],
         xs_args: npt.NDArray[np.float64],
-    ) -> list[Any]:
+    ) -> list[TrapezoidalPrismCurrentSource | PolyhedralPrismCurrentSource]:
         """
         Generate the sources of a given class along the discretised shape
         """
