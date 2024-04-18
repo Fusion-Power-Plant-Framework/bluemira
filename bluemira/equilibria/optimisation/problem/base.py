@@ -242,9 +242,11 @@ class CoilsetOptimisationProblem(abc.ABC):
                     @functools.wraps(f.df_constraint)
                     def wrapped_df_c(x, f=f):
                         df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
-                        return df_res @ coilset._opt_currents_sym_reduce_mat
+                        return df_res @ coilset._opt_currents_expand_mat
 
                     df_c = wrapped_df_c
+
+                # df_c = None
 
             d: ConstraintT = {
                 "f_constraint": f_c,
