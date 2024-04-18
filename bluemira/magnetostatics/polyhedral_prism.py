@@ -26,6 +26,7 @@ from copy import deepcopy
 
 import numba as nb
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.geometry.coordinates import Coordinates, get_area_2d
@@ -47,13 +48,13 @@ class PolyhedralKernel(abc.ABC):
     """
 
     @abc.abstractstaticmethod
-    def field(*args) -> np.ndarray:
+    def field(*args) -> npt.NDArray[np.float64]:
         """
         Magnetic field
         """
 
     @abc.abstractstaticmethod
-    def vector_potential(*args) -> np.ndarray:
+    def vector_potential(*args) -> npt.NDArray[np.float64]:
         """
         Vector potential
         """
@@ -67,14 +68,14 @@ class Fabbri(PolyhedralKernel):
     """
 
     @staticmethod
-    def field(*args) -> np.ndarray:
+    def field(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Magnetic field
         """
         return _field_fabbri(*args)
 
     @staticmethod
-    def vector_potential(*args) -> np.ndarray:
+    def vector_potential(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Vector potential
         """
@@ -89,14 +90,14 @@ class Bottura(PolyhedralKernel):
     """
 
     @staticmethod
-    def field(*args) -> np.ndarray:
+    def field(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Magnetic field
         """
         return _field_bottura(*args)
 
     @staticmethod
-    def vector_potential(*args) -> np.ndarray:
+    def vector_potential(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Vector potential
         """
@@ -104,7 +105,7 @@ class Bottura(PolyhedralKernel):
 
 
 @nb.jit(nopython=True, cache=True)
-def _vector_norm_eps(r: np.ndarray) -> float:
+def _vector_norm_eps(r: npt.NDArray[np.float64]) -> float:
     """
     Dodge singularities in omega_t and line_integral when field point
     lies on an edge.
@@ -131,7 +132,12 @@ def _vector_norm_eps(r: np.ndarray) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def _omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
+def _omega_t(
+    r: npt.NDArray[np.float64],
+    r1: npt.NDArray[np.float64],
+    r2: npt.NDArray[np.float64],
+    r3: npt.NDArray[np.float64],
+) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
@@ -184,7 +190,9 @@ def _omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> f
 
 
 @nb.jit(nopython=True, cache=True)
-def _edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
+def _edge_integral_fabbri(
+    r: npt.NDArray[np.float64], r1: npt.NDArray[np.float64], r2: npt.NDArray[np.float64]
+) -> float:
     """
     Evaluate the edge integral w_e(r) of the W function at a point
 
@@ -214,7 +222,7 @@ def _edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> floa
 
 
 @nb.jit(nopython=True, cache=True)
-def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
+def _get_face_midpoint(face_points: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Get an arbitrary point on the face
     """
@@ -222,7 +230,7 @@ def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 
 @nb.jit(nopython=True, cache=True)
-def _get_face_normal(face_points: np.ndarray) -> np.ndarray:
+def _get_face_normal(face_points: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Get the normal of a face
     """
@@ -232,11 +240,11 @@ def _get_face_normal(face_points: np.ndarray) -> np.ndarray:
 
 @nb.jit(nopython=True, cache=True)
 def _surface_integral_fabbri(
-    face_points: np.ndarray,
-    face_normal: np.ndarray,
-    mid_point: np.ndarray,
+    face_points: npt.NDArray[np.float64],
+    face_normal: npt.NDArray[np.float64],
+    mid_point: npt.NDArray[np.float64],
     n_sides: int,
-    point: np.ndarray,
+    point: npt.NDArray[np.float64],
 ) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face
@@ -282,13 +290,13 @@ def _surface_integral_fabbri(
 
 @nb.jit(nopython=True, cache=True)
 def _vector_potential_fabbri(
-    current_direction: np.ndarray,
-    face_points: np.ndarray,
-    face_normals: np.ndarray,
-    mid_points: np.ndarray,
-    n_sides: np.ndarray,
-    point: np.ndarray,
-) -> np.ndarray:
+    current_direction: npt.NDArray[np.float64],
+    face_points: npt.NDArray[np.float64],
+    face_normals: npt.NDArray[np.float64],
+    mid_points: npt.NDArray[np.float64],
+    n_sides: npt.NDArray[np.float64],
+    point: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Calculate the vector potential
 
@@ -327,13 +335,13 @@ def _vector_potential_fabbri(
 
 @nb.jit(nopython=True, cache=True)
 def _field_fabbri(
-    current_direction: np.ndarray,
-    face_points: np.ndarray,
-    face_normals: np.ndarray,
-    mid_points: np.ndarray,
-    n_sides: np.ndarray,
-    point: np.ndarray,
-) -> np.ndarray:
+    current_direction: npt.NDArray[np.float64],
+    face_points: npt.NDArray[np.float64],
+    face_normals: npt.NDArray[np.float64],
+    mid_points: npt.NDArray[np.float64],
+    n_sides: npt.NDArray[np.float64],
+    point: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Calculate the magnetic field
 
@@ -403,10 +411,10 @@ class PolyhedralPrismCurrentSource(
 
     def __init__(
         self,
-        origin: np.ndarray,
-        ds: np.ndarray,
-        normal: np.ndarray,
-        t_vec: np.ndarray,
+        origin: npt.NDArray[np.float64],
+        ds: npt.NDArray[np.float64],
+        normal: npt.NDArray[np.float64],
+        t_vec: npt.NDArray[np.float64],
         xs_coordinates: Coordinates,
         alpha: float,
         beta: float,
@@ -444,7 +452,7 @@ class PolyhedralPrismCurrentSource(
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
 
-    def _check_angle_values(self, alpha, beta):
+    def _check_angle_values(self, alpha: float, beta: float):
         """
         Check that end-cap angles are acceptable.
         """
@@ -469,10 +477,10 @@ class PolyhedralPrismCurrentSource(
     @process_xyz_array
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field at a point due to the current source.
 
@@ -502,10 +510,10 @@ class PolyhedralPrismCurrentSource(
     @process_xyz_array
     def vector_potential(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the vector potential at a point due to the current source.
 
@@ -532,7 +540,7 @@ class PolyhedralPrismCurrentSource(
             point,
         )
 
-    def _calculate_points(self) -> np.ndarray:
+    def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Calculate extrema points of the current source for integration and plotting
         purposes
@@ -568,8 +576,13 @@ class PolyhedralPrismCurrentSource(
 
 @nb.jit(nopython=True, cache=True)
 def _generate_source_geometry(
-    lower_points: np.ndarray, upper_points: np.ndarray
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    lower_points: npt.NDArray[np.float64], upper_points: npt.NDArray[np.float64]
+) -> tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+]:
     """
     Generate the polyhedral prism source geometry - faster
 
@@ -624,13 +637,13 @@ def _generate_source_geometry(
 
 @nb.jit(nopython=True, cache=True)
 def _vector_potential_bottura(
-    current_direction: np.ndarray,
-    face_points: np.ndarray,
-    face_normals: np.ndarray,
-    mid_points: np.ndarray,
-    n_sides: np.ndarray,
-    point: np.ndarray,
-) -> np.ndarray:
+    current_direction: npt.NDArray[np.float64],
+    face_points: npt.NDArray[np.float64],
+    face_normals: npt.NDArray[np.float64],
+    mid_points: npt.NDArray[np.float64],
+    n_sides: npt.NDArray[np.float64],
+    point: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Calculate the vector potential
 
@@ -667,13 +680,13 @@ def _vector_potential_bottura(
 
 @nb.jit(nopython=True, cache=True)
 def _field_bottura(
-    current_direction: np.ndarray,
-    face_points: np.ndarray,
-    face_normals: np.ndarray,
-    mid_points: np.ndarray,  # noqa: ARG001
-    n_sides: np.ndarray,
-    point: np.ndarray,
-) -> np.ndarray:
+    current_direction: npt.NDArray[np.float64],
+    face_points: npt.NDArray[np.float64],
+    face_normals: npt.NDArray[np.float64],
+    mid_points: npt.NDArray[np.float64],  # noqa: ARG001
+    n_sides: npt.NDArray[np.float64],
+    point: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Calculate the magnetic field
 
@@ -709,7 +722,10 @@ def _field_bottura(
 
 @nb.jit(nopython=True, cache=True)
 def _surface_integral_bottura(
-    face_normal: np.ndarray, face_points: np.ndarray, n_sides: int, point: np.ndarray
+    face_normal: npt.NDArray[np.float64],
+    face_points: npt.NDArray[np.float64],
+    n_sides: int,
+    point: npt.NDArray[np.float64],
 ) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face

@@ -15,6 +15,9 @@ from dataclasses import MISSING, Field, field
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, TypedDict
 
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
 import numpy as np
 from tabulate import tabulate
 from typing_extensions import NotRequired
@@ -468,7 +471,7 @@ class OptVariablesFrame:
         """
         self[name].fix(value)
 
-    def get_normalised_values(self):
+    def get_normalised_values(self) -> npt.NDArray[np.float64]:
         """
         Get the normalised values of all free variables.
 
@@ -492,7 +495,7 @@ class OptVariablesFrame:
         for opv, value in zip(self._opt_vars, true_values, strict=False):
             opv.value = value
 
-    def get_values_from_norm(self, x_norm):
+    def get_values_from_norm(self, x_norm: npt.NDArray[np.float64]) -> list[float]:
         """
         Get actual values from a normalised vector.
 

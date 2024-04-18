@@ -12,6 +12,7 @@ https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.geometry._private_tools import make_circle_arc
@@ -619,10 +620,10 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
     def __init__(
         self,
-        origin: np.ndarray,
-        ds: np.ndarray,
-        normal: np.ndarray,
-        t_vec: np.ndarray,
+        origin: npt.NDArray[np.float64],
+        ds: npt.NDArray[np.float64],
+        normal: npt.NDArray[np.float64],
+        t_vec: npt.NDArray[np.float64],
         breadth: float,
         depth: float,
         radius: float,
@@ -689,7 +690,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         self._r2 = self.radius + self.breadth
 
     @staticmethod
-    def _local_to_cylindrical(point: np.ndarray) -> np.ndarray:
+    def _local_to_cylindrical(point: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Convert from local to cylindrical coordinates.
         """
@@ -706,7 +707,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         z2 = zp - self._depth
         return self._r1, self._r2, z1, z2
 
-    def _BxByBz(self, rp: float, tp: float, zp: float) -> np.ndarray:
+    def _BxByBz(self, rp: float, tp: float, zp: float) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
         """
@@ -718,10 +719,10 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     @process_xyz_array
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field at a point due to the current source.
 
@@ -747,7 +748,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         # Convert field to global coordinates
         return self._dcm.T @ b_local
 
-    def _calculate_points(self):
+    def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Calculate extrema points of the current source for plotting and debugging.
         """

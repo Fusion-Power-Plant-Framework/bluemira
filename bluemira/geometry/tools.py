@@ -478,7 +478,7 @@ def make_circle(
     center: tuple[float, float, float] = (0.0, 0.0, 0.0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
-    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
+    axis: Iterable[float] = (0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
