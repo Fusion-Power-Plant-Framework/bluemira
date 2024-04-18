@@ -39,11 +39,9 @@ def systems_code_solver(
     module:
         Module to use
     params_cls:
-        Optional custom ParameterFrame class
-        that contains a set of parameter mapping to be used
-        in :class:`bluemira.codes.process._solver.Solver`.
-        If not provided, the default one will be used:
-        `bluemira.codes.process.params.ProcessSolverParams
+        A custom :class:`~bluemira.codes.params.MappedParameterFrame`
+        to be used by the systems code solver. If not provided, the default 
+        one will be used.
 
     Returns
     -------
