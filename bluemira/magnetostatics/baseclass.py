@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
@@ -48,10 +49,10 @@ class CurrentSource(ABC):
     @abstractmethod
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field at a set of coordinates.
 
@@ -139,13 +140,17 @@ class CrossSectionCurrentSource(CurrentSource):
         self._points = np.array([p @ r for p in self._points], dtype=object)
         self._dcm = self._dcm @ r
 
-    def _local_to_global(self, points: np.ndarray) -> np.ndarray:
+    def _local_to_global(
+        self, points: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
         """
         Convert local x', y', z' point coordinates to global x, y, z point coordinates.
         """
         return np.array([self._origin + self._dcm.T @ p for p in points])
 
-    def _global_to_local(self, points: np.ndarray) -> np.ndarray:
+    def _global_to_local(
+        self, points: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
         """
         Convert global x, y, z point coordinates to local x', y', z' point coordinates.
         """
@@ -188,9 +193,9 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
     Abstract base class for a current source with a polyhedral cross-section.
     """
 
-    _face_points: np.ndarray
-    _face_normals: np.ndarray
-    _mid_points: np.ndarray
+    _face_points: npt.NDArray[np.float64]
+    _face_normals: npt.NDArray[np.float64]
+    _mid_points: npt.NDArray[np.float64]
 
     def rotate(self, angle: float, axis: np.ndarray | str):
         """
@@ -211,7 +216,7 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
 
 
 class PrismEndCapMixin:
-    def _check_angle_values(self, alpha, beta):
+    def _check_angle_values(self, alpha: float, beta: float):
         """
         Check that end-cap angles are acceptable.
         """
@@ -275,10 +280,10 @@ class SourceGroup(ABC):
 
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field at a point.
 

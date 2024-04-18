@@ -50,7 +50,10 @@ class BiotSavartFilament(CurrentSource):
 
     def __init__(
         self,
-        arrays: Coordinates | np.ndarray | list[Coordinates] | list[np.ndarray],
+        arrays: Coordinates
+        | npt.NDArray[np.float64]
+        | list[Coordinates]
+        | list[npt.NDArray[np.float64]],
         radius: float,
         current: float = 1.0,
     ):
@@ -89,7 +92,7 @@ class BiotSavartFilament(CurrentSource):
         self.current = current
 
     @staticmethod
-    def _check_discretisation(d_l: np.ndarray):
+    def _check_discretisation(d_l: npt.NDArray[np.float64]):
         """
         Check the discretisation of the array.
         """
@@ -103,10 +106,10 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def potential(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the vector potential of an arbitrarily shaped Coordinates.
 
@@ -140,10 +143,10 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def field(
         self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> np.ndarray:
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Calculate the field due to the arbitrarily shaped Coordinates.
 

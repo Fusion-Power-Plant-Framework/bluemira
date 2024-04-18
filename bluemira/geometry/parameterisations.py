@@ -18,12 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    TextIO,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -61,7 +56,9 @@ __all__ = [
 OptVariablesFrameT = TypeVar("OptVariablesFrameT", bound=OptVariablesFrame)
 
 
-def _get_rotated_point(origin, radius, degrees):
+def _get_rotated_point(
+    origin: tuple[float, float], radius: float, degrees: float
+) -> tuple[float, float]:
     rad = np.deg2rad(degrees)
     return (origin[0] + radius * np.cos(rad), origin[1] + radius * np.sin(rad))
 
@@ -182,7 +179,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 count += 1
         return idx_actual - count
 
-    def process_x_norm_fixed(self, x_norm: np.ndarray) -> list[float]:
+    def process_x_norm_fixed(self, x_norm: npt.NDArray[np.float64]) -> list[float]:
         """
         Utility for processing a set of free, normalised variables, and folding the fixed
         un-normalised variables back into a single list of all actual values.
@@ -253,7 +250,13 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return cls(var_dict)
 
     @staticmethod
-    def _annotator(ax, key: str, xy1: tuple, xy2: tuple, xy3: tuple):
+    def _annotator(
+        ax: plt.Axes,
+        key: str,
+        xy1: tuple[float, float],
+        xy2: tuple[float, float],
+        xy3: tuple[float, float],
+    ):
         """
         Create annotation arrow with label
 
@@ -294,7 +297,14 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         )
 
     @staticmethod
-    def _angle_annotator(ax, key: str, radius, centre, angles, centre_angle):
+    def _angle_annotator(
+        ax: plt.Axes,
+        key: str,
+        radius: float,
+        centre: tuple[float, float],
+        angles: tuple[float, float],
+        centre_angle: float,
+    ):
         """
         Create annotation arrow with label
 
@@ -327,7 +337,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             textcoords="offset points",
         )
 
-    def _label_function(self, ax, shape: BluemiraWire) -> tuple[float, float]:
+    def _label_function(self, ax: plt.Axes, shape: BluemiraWire) -> tuple[float, float]:
         """
         Adds labels to parameterisation plots
 
@@ -340,7 +350,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         """
         offset_ar_x = 0
-        offset_ar_z = 0
+        offset_ar_z: float = 0
         for v in self.variables:
             if v.name.startswith("x"):
                 self._annotator(
@@ -486,13 +496,13 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
-    def f_ineq_constraint(self) -> np.ndarray:
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """Inequality constraint for PrincetonD."""
         free_vars = self.variables.get_normalised_values()
         x1, x2, _ = self.process_x_norm_fixed(free_vars)
         return np.array([x1 - x2])
 
-    def df_ineq_constraint(self) -> np.ndarray:
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """Inequality constraint gradient for PrincetonD."""
         opt_vars = self.variables
         free_vars = opt_vars.get_normalised_values()
@@ -506,7 +516,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     @staticmethod
     def _princeton_d(
         x1: float, x2: float, dz: float, npoints: int = 2000
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
         File, Mills, and Sheffield, 1971)
@@ -658,7 +668,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def f_ineq_constraint(self) -> np.ndarray:
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
         Inequality constraint for TripleArc.
 
@@ -669,7 +679,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         _, _, _, _, _, a1, a2 = x_actual
         return np.array([a1 + a2 - 180])
 
-    def df_ineq_constraint(self) -> np.ndarray:
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """Inequality constraint gradient for TripleArc."""
         free_vars = self.variables.get_normalised_values()
         g = np.zeros((1, len(free_vars)))
@@ -757,7 +767,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         wire.translate((0, 0, dz))
         return wire
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax: plt.Axes, shape: BluemiraWire) -> tuple[float, float]:
         """
         Adds labels to parameterisation plots
 
@@ -888,7 +898,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def f_ineq_constraint(self) -> np.ndarray:
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
         Inequality constraint for TripleArc.
 
@@ -900,7 +910,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         _, _, _, _, _, _, _, a1, a2, a3, a4, a5 = x_actual
         return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
-    def df_ineq_constraint(self) -> np.ndarray:
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """Inequality constraint gradient for TripleArc."""
         x_norm = self.variables.get_normalised_values()
         gradient = np.zeros((1, len(x_norm)))
@@ -911,15 +921,19 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         return gradient
 
     @staticmethod
-    def _project_centroid(xc, zc, xi, zi, ri):
+    def _project_centroid(
+        xc: float, zc: float, xi: float, zi: float, ri: float
+    ) -> tuple[float, float, npt.NDArray[np.float64]]:
         vec = np.array([xi - xc, zi - zc])
         vec /= np.linalg.norm(vec)
         xc = xi - vec[0] * ri
         zc = zi - vec[1] * ri
         return xc, zc, vec
 
-    def _get_centres(self, a_values, r_values, x1, z1):
-        a_start = 0
+    def _get_centres(
+        self, a_values: list[float], r_values: list[float], x1: float, z1: float
+    ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
+        a_start: float = 0
         xi, zi = x1, z1
         xc = x1 + r_values[0]
         zc = z1
@@ -980,10 +994,10 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         ):
             arc = make_circle(
                 ri,
-                center=[xc, 0, zc],
+                center=(xc, 0, zc),
                 start_angle=end_angle,
                 end_angle=start_angle,
-                axis=[0, -1, 0],
+                axis=(0, -1, 0),
                 label=f"arc_{i + 1}",
             )
 
@@ -997,7 +1011,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         return BluemiraWire(wires, label=label)
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax: plt.Axes, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1303,7 +1317,14 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         return BluemiraWire(wires, label=label)
 
     @staticmethod
-    def _make_control_points(p0, p3, theta0, theta3, l_start, l_end):
+    def _make_control_points(
+        p0: list[float],
+        p3: list[float],
+        theta0: list[float],
+        theta3: list[float],
+        l_start: float,
+        l_end: float,
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Make 2 Bézier spline control points between two vertices.
         """
@@ -1319,7 +1340,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax: plt.Axes, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1450,10 +1471,10 @@ class PictureFrameTools:
         # Inner Corner
         corner_in = make_circle(
             ri,
-            [x_mid + ri, 0.0, z_corner],
+            (x_mid + ri, 0.0, z_corner),
             start_angle=corner_angle_s,
             end_angle=corner_angle_e,
-            axis=[0, 1, 0],
+            axis=(0, 1, 0),
             label=f"inner_{label}_corner",
         )
 
@@ -1478,17 +1499,17 @@ class PictureFrameTools:
             center=leg_centre,
             start_angle=leg_angle_s,
             end_angle=leg_angle_e,
-            axis=[0, 1, 0],
+            axis=(0, 1, 0),
             label=f"{label}_limb_dome",
         )
 
         # Outboard corner transition curve
         transition_curve = make_circle(
             radius=r_j,
-            center=[x_trans, 0, z_trans],
+            center=(x_trans, 0, z_trans),
             start_angle=tc_angle_s,
             end_angle=tc_angle_e,
-            axis=[0, 1, 0],
+            axis=(0, 1, 0),
             label=f"{label}_limb_corner",
         )
 
@@ -1536,8 +1557,8 @@ class PictureFrameTools:
         label = "bottom" if flip else "top"
 
         # Set corner radius centres
-        c_i = [x_mid + r_i, 0.0, z + r_i if flip else z - r_i]
-        c_o = [x_out - r_o, 0.0, z + r_o if flip else z - r_o]
+        c_i = (x_mid + r_i, 0.0, z + r_i if flip else z - r_i)
+        c_o = (x_out - r_o, 0.0, z + r_o if flip else z - r_o)
 
         # Inner Corner
         if r_i != 0.0:
@@ -1582,7 +1603,7 @@ class PictureFrameTools:
         z_taper: float,
         z_top: float,
         r_min: float,
-        axis: Iterable[float] = (0, 1, 0),
+        axis: tuple[float, float, float] = (0, 1, 0),
     ) -> BluemiraWire:
         """
         Makes a tapered inboard leg using a circle arc taper, symmetric about the
@@ -1670,21 +1691,29 @@ class PictureFrameTools:
             [bot_straight, bot_curve, taper, top_curve, top_straight], label="inner_limb"
         )
 
-    def _connect_to_outer_limb(self, top, bottom, *, top_curve=False, bot_curve=False):
+    def _connect_to_outer_limb(
+        self, top, bottom, *, top_curve: bool = False, bot_curve: bool = False
+    ) -> BluemiraWire:
         return self._outer_limb(
             top.discretise(100, byedges=True)[:, -1] if top_curve else top,
             bottom.discretise(100, byedges=True)[:, 0] if bot_curve else bottom,
         )
 
-    def _connect_straight_to_inner_limb(self, top, bottom):
+    def _connect_straight_to_inner_limb(
+        self, top: npt.NDArray[np.float64], bottom: npt.NDArray[np.float64]
+    ) -> BluemiraWire:
         return self._inner_limb(top, bottom)
 
     @staticmethod
-    def _inner_limb(p1, p2):
+    def _inner_limb(
+        p1: npt.NDArray[np.float64], p2: npt.NDArray[np.float64]
+    ) -> BluemiraWire:
         return make_polygon([p1, p2], label="inner_limb")
 
     @staticmethod
-    def _outer_limb(p1, p2):
+    def _outer_limb(
+        p1: npt.NDArray[np.float64], p2: npt.NDArray[np.float64]
+    ) -> BluemiraWire:
         return make_polygon([p1, p2], label="outer_limb")
 
 
@@ -1920,7 +1949,7 @@ class PictureFrame(
 
         return BluemiraWire([inb_leg, top_leg, out_leg, bot_leg], label=label)
 
-    def _make_inb_leg(self):
+    def _make_inb_leg(self) -> BluemiraWire:
         v = self.variables
         if isinstance(self.inner, PFrameSection):
             if self.inner is not PFrameSection.TAPERED_INNER:
@@ -1966,7 +1995,9 @@ class PictureFrame(
             )
         raise ValueError(f"The leg cannot be {section_func}")
 
-    def _make_out_leg(self, top_leg, bot_leg):
+    def _make_out_leg(
+        self, top_leg: PFrameSection, bot_leg: PFrameSection
+    ) -> BluemiraWire:
         v = self.variables
         return self._connect_to_outer_limb(
             (
