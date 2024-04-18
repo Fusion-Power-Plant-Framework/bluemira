@@ -18,11 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import (
-    Generic,
-    TextIO,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,6 +38,9 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 from bluemira.utilities.plot_tools import str_to_latex
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 __all__ = [
     "GeometryParameterisation",
@@ -1372,7 +1371,7 @@ class PictureFrameTools:
         z_top: float,
         z_mid: float,
         ri: float,
-        axis: tuple[float, float, float] = (0, -1, 0),
+        axis: Iterable[float] = (0, -1, 0),
         *,
         flip: bool = False,
     ) -> BluemiraWire:
@@ -1526,7 +1525,7 @@ class PictureFrameTools:
         z: float,
         r_i: float,
         r_o: float,
-        axis: tuple[float, float, float] = (0, 1, 0),
+        axis: Iterable[float] = (0, 1, 0),
         *,
         flip: bool = False,
     ) -> BluemiraWire:

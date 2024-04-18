@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
