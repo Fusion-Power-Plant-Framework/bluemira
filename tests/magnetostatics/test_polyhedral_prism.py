@@ -290,7 +290,7 @@ class TestCombinedShapes:
         )
         coords = Coordinates({"x": [-1, -1, 1], "z": [1, -1, -1]})
         cls.triangle1 = PolyhedralPrismCurrentSource(
-            [0, 0, 0],
+            [0, -1 / 3, -1 / 3],
             [10, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
@@ -301,7 +301,7 @@ class TestCombinedShapes:
         )
         coords = Coordinates({"x": [-1, 1, 1], "z": [1, -1, 1]})
         cls.triangle2 = PolyhedralPrismCurrentSource(
-            [0, 0, 0],
+            [0, 1 / 3, 1 / 3],
             [10, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
@@ -343,3 +343,37 @@ class TestCombinedShapes:
         cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
         f.colorbar(cm)
         np.testing.assert_allclose(B_new, B)
+
+
+class TestXSCoordinateInputting:
+    @classmethod
+    def setup_class(cls):
+        current = 1e6
+        xs = Coordinates({"x": [-1, -1, 1, 1], "z": [1, -1, -1, 1]})
+        xs2 = Coordinates({"x": [1, 1, 3, 3], "z": [3, 1, 1, 3]})
+        cls.source1 = PolyhedralPrismCurrentSource(
+            [0, 2, 2],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            xs,
+            10,
+            10,
+            current,
+        )
+        cls.source2 = PolyhedralPrismCurrentSource(
+            [0, 2, 2],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            xs2,
+            10,
+            10,
+            current,
+        )
+
+    def test_coords(self):
+        for face_source1, face_source2 in zip(
+            self.source1._points, self.source2._points, strict=False
+        ):
+            np.testing.assert_allclose(face_source1, face_source2)
