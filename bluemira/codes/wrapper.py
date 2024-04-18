@@ -18,12 +18,14 @@ if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame import Parameter as ParameterFrame
     from bluemira.codes.interface import CodesSolver
+    from bluemira.codes.params import MappedParameterFrame
 
 
 def systems_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
     module: str = "PROCESS",
+    params_cls: type[MappedParameterFrame] | None = None,
 ) -> CodesSolver:
     """
     Runs, reads or mocks systems code according to the build configuration dictionary.
@@ -36,6 +38,10 @@ def systems_code_solver(
         build configuration dictionary
     module:
         Module to use
+    params_cls:
+        A custom :class:`~bluemira.codes.params.MappedParameterFrame`
+        to be used by the systems code solver. If not provided, the default
+        one will be used.
 
     Returns
     -------
@@ -48,6 +54,8 @@ def systems_code_solver(
         there is a problem running the system code.
     """
     syscode = get_code_interface(module)
+    if params_cls is not None:
+        syscode.Solver.params_cls = params_cls
     return syscode.Solver(params, build_config)
 
 
