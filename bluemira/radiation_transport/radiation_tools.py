@@ -25,7 +25,7 @@ from scipy.interpolate import (
 )
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
-from bluemira.base.error import BluemiraError
+from bluemira.base.look_and_feel import bluemira_error
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -49,7 +49,7 @@ try:
     from raysect.optical.observer.nonimaging.pixel import Pixel
     from raysect.primitive import Cylinder
 except ImportError:
-    BluemiraError("Cherab not installed")
+    bluemira_error("Cherab not installed")
 
 
 def upstream_temperature(
