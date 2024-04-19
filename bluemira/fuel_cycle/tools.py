@@ -621,9 +621,8 @@ def _fountain_linear_sink(
 
                 inventory = min_inventory
                 topup = min_inventory * (1 - np.exp(-T_LAMBDA * (t_out - t_in - t15)))
-                m_out_temp = mass_in - m_in * t15 - topup
-                m_out_temp = max(m_out_temp, 0)
-                m_out = m_out_temp / dts  # spread evenly over timestep
+                # spread evenly over timestep
+                m_out = max(mass_in - m_in * t15 - topup, 0) / dts
             elif i_mdot2 >= max_inventory:
                 # Case (unlikely) where massive overshoot occurs
                 # TODO: Handle properly
@@ -634,9 +633,9 @@ def _fountain_linear_sink(
                 topup = max_inventory * (
                     1 - np.exp(-T_LAMBDA * (t_out - t_in - t175 - t15))
                 )
-                m_out_temp = mass_in - topup - m_in * t15 - (1 - fs) * m_in * t175
-                m_out_temp = max(m_out_temp, 0)
-                m_out = m_out_temp / dts
+                m_out = (
+                    max(mass_in - topup - m_in * t15 - (1 - fs) * m_in * t175, 0) / dts
+                )
             else:
                 # Case where successfully crosses up
                 dt2 = t_out - t_in - t15
@@ -662,9 +661,8 @@ def _fountain_linear_sink(
 
                 inventory = min_inventory
                 topup = min_inventory * (1 - np.exp(-T_LAMBDA * (t_out - t_in - t15)))
-                m_out_temp = mass_in - m_in * t15 - topup
-                m_out_temp = max(m_out_temp, 0)
-                m_out = m_out_temp / dts  # spread evenly over timestep
+                # spread evenly over timestep
+                m_out = max(mass_in - m_in * t15 - topup, 0) / dts
 
         elif i_mdot >= max_inventory:
             t15 = _find_t15(inventory, 1 - fs, m_in, t_in, t_out, max_inventory)
