@@ -235,7 +235,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             x0 = np.clip(x0 / self.scale, *self.bounds)
 
         objective = MaximiseFluxObjective(**self._args)
-        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=objective.df_objective,

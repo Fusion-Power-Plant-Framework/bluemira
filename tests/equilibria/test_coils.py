@@ -512,17 +512,6 @@ class TestCoilSet:
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 10, 10])
         np.testing.assert_allclose(coilset.get_max_current(), [np.inf, np.inf, np.inf])
 
-    def test_get_current_optimisable_coils(self):
-        all_c_opt_coils = [c.name for c in self.coilset.get_current_optimisable_coils()]
-        pf1_c_opt_coils = [
-            c.name for c in self.coilset.get_current_optimisable_coils(["PF_1"])
-        ]
-        assert all_c_opt_coils == ["PF_1", "PF_2"]
-        assert pf1_c_opt_coils == ["PF_1"]
-
-        with pytest.raises(ValueError):  # noqa: PT011
-            self.coilset.get_current_optimisable_coils(["PF_3"])
-
     def test_get_position_optimisable_coils(self):
         all_c_opt_coils = [c.name for c in self.coilset.get_position_optimisable_coils()]
         pf1_c_opt_coils = [
@@ -535,27 +524,6 @@ class TestCoilSet:
 
         with pytest.raises(ValueError):  # noqa: PT011
             self.coilset.get_position_optimisable_coils(["PF_3"])
-
-    def test_set_optimisation_currents(self):
-        self.coilset._opt_currents = np.array([1.0])
-        assert np.allclose(self.coilset._opt_currents, np.array([1.0]))
-
-        self.coilset._opt_currents = np.array([1.0, 2.0])
-        assert np.allclose(self.coilset._opt_currents, np.array([1.0, 2.0]))
-        assert np.allclose(self.coilset.current, np.array([1.0, 2.0, 2.0]))
-
-        assert self.coilset.n_current_optimisable_coils == 2
-
-        with pytest.raises(ValueError):  # noqa: PT011
-            # attempting to set more currents than there are
-            # current optimisable coils
-            self.coilset._opt_currents = np.array([1.0, 2.0, 3.0])
-
-    def test_cur_expand_matrix(self):
-        opt_curs_post_rep = (
-            self.coilset._opt_currents_expand_mat @ self.coilset._opt_currents
-        )
-        assert np.allclose(opt_curs_post_rep, self.coilset.current)
 
 
 class TestCoilSetSymmetry:

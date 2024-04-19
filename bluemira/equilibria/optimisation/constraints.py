@@ -209,6 +209,8 @@ class CoilFieldConstraints(FieldConstraints):
     -----
     This is a fast approximation constraint, and does not solve for the peak field
     at all points in the coils. Use with caution.
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
     TODO: Presently only accounts for poloidal field contributions from PF coils and
     plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
@@ -282,6 +284,11 @@ class CoilForceConstraints(UpdateableConstraint):
         Maximum separation vertical force between two CS modules [MN]
     tolerance:
         Tolerance with which the inequality constraints will be met
+
+    Notes
+    -----
+    TODO: Presently only handles CoilSets with Coils (SymmetricCircuits not yet
+    supported)
     """
 
     def __init__(

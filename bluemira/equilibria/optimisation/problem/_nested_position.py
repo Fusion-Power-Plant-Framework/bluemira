@@ -147,7 +147,6 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset.set_optimisation_state(coil_position_map=pos_map)
 
         self.eq._remap_greens()
-        self.eq._clear_OX_points()
 
         # Run the sub-optimisation
         sub_opt_result = self.sub_opt.optimise(fixed_coils=False)

@@ -76,10 +76,9 @@ class RegularisedLsqObjective(ObjectiveFunction):
         a_mat: npt.NDArray[np.float64],
         b_vec: npt.NDArray[np.float64],
         gamma: float,
-        cur_expand_mat: npt.NDArray | None = None,
     ) -> None:
         self.scale = scale
-        self.a_mat = a_mat if cur_expand_mat is None else a_mat @ cur_expand_mat
+        self.a_mat = a_mat
         self.b_vec = b_vec
         self.gamma = gamma
 
@@ -147,12 +146,7 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 
 
-def tikhonov(
-    a_mat: np.ndarray,
-    b_vec: np.ndarray,
-    gamma: float,
-    cur_expand_mat: np.ndarray | None = None,
-) -> np.ndarray:
+def tikhonov(a_mat: np.ndarray, b_vec: np.ndarray, gamma: float) -> np.ndarray:
     """
     Tikhonov regularisation of Ax-b problem.
 
@@ -173,8 +167,6 @@ def tikhonov(
     x:
         The result vector
     """
-    if cur_expand_mat is not None:
-        a_mat = a_mat @ cur_expand_mat
     try:
         return np.dot(
             np.linalg.inv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),

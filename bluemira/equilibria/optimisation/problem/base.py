@@ -11,14 +11,12 @@ Equilibria Optimisation base module
 from __future__ import annotations
 
 import abc
-import functools
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSetSymmetryStatus
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
@@ -130,37 +128,28 @@ class CoilsetOptimisationProblem(abc.ABC):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        cc = coilset.get_control_coils()
-
-        n_cc_opt_currents = cc.n_current_optimisable_coils
-        scaled_input_current_limits = np.inf * np.ones(n_cc_opt_currents)
+        n_control_currents = len(coilset.current[coilset._control_ind])
+        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
-            input_size = np.size(input_current_limits)
-            if input_size in {1, n_cc_opt_currents}:
+            input_size = np.size(np.asarray(input_current_limits))
+            if input_size in {1, n_control_currents}:
                 scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
-                    f"Length of max_currents {input_size} array provided to "
-                    "the optimiser is not equal to the number of "
-                    f"optimisable control currents present {n_cc_opt_currents}."
+                    "Length of max_currents array provided to optimiser is not"
+                    "equal to the number of control currents present."
                 )
 
         # Get the current limits from coil current densities
-
-        # if a coil has no jmax, then the current is limited by the max current provided
-        # or default to inf
-        # if a coil has jmax and is fixed (sized), then the current is limited by
-        # jmax * area
-        # if a coil is not fixed (sized) and it has jmax, then the current is limited
-        # by the max current provided or defaults to inf
-
-        opt_coils_max_currents = cc.get_max_current()[cc._opt_currents_inds]
+        coilset_current_limits = np.inf * np.ones(n_control_currents)
+        cc = coilset.get_control_coils()
+        coilset_current_limits[cc._flag_sizefix] = cc.get_max_current()[cc._flag_sizefix]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
-            scaled_input_current_limits, opt_coils_max_currents
+            scaled_input_current_limits, coilset_current_limits
         )
         return (-control_current_limits, control_current_limits)
 
@@ -200,7 +189,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 constraint._args["scale"] = self.scale
 
     def _make_numerical_constraints(
-        self, coilset: CoilSet
+        self,
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries."""
         if (constraints := getattr(self, "_constraints", None)) is None:
@@ -208,49 +197,10 @@ class CoilsetOptimisationProblem(abc.ABC):
         equality = []
         inequality = []
         for constraint in constraints:
-            f = constraint.f_constraint()
-
-            f_c = f.f_constraint
-            df_c = getattr(f, "df_constraint", None)
-
-            if coilset._opt_currents_symmetry_status in {
-                CoilSetSymmetryStatus.FULL,
-                CoilSetSymmetryStatus.PARTIAL,
-            }:
-                # wrap the constraint function
-                @functools.wraps(f.f_constraint)
-                def wrapped_f_c(x, f=f):
-                    return f.f_constraint(coilset._opt_currents_expand_mat @ x)
-
-                f_c = wrapped_f_c
-
-                # wrap the derivative function
-                if (
-                    df_c is None
-                    or coilset._opt_currents_symmetry_status
-                    is CoilSetSymmetryStatus.PARTIAL
-                ):
-                    # if partially symmetric, the derivative function
-                    # is set to None as there is no analytical solution
-                    df_c = None
-                else:
-                    # if fully symmetric, the result of the derivative
-                    # function is multiplied by the repetition matrix
-                    # (to reduce the shape to the number of current optimisable coils)
-                    # by multiplying the result with the repetition matrix
-                    # and dividing by 2 (as the values are added together)
-                    @functools.wraps(f.df_constraint)
-                    def wrapped_df_c(x, f=f):
-                        df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
-                        return df_res @ coilset._opt_currents_expand_mat
-
-                    df_c = wrapped_df_c
-
-                # df_c = None
-
+            f_constraint = constraint.f_constraint()
             d: ConstraintT = {
-                "f_constraint": f_c,
-                "df_constraint": df_c,
+                "f_constraint": f_constraint.f_constraint,
+                "df_constraint": getattr(f_constraint, "df_constraint", None),
                 "tolerance": constraint.tolerance,
             }
             # TODO: tidy this up, so the interface guarantees this works!
@@ -258,7 +208,6 @@ class CoilsetOptimisationProblem(abc.ABC):
                 equality.append(d)
             else:
                 inequality.append(d)
-
         return equality, inequality
 
     @property
