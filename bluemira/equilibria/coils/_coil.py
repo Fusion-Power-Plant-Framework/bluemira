@@ -379,7 +379,7 @@ class Coil(CoilFieldsMixin):
     @j_max.setter
     def j_max(self, value: float):
         """Set coil max current density"""
-        self._j_max = float(value)
+        self._j_max = floatify(value)
         if None not in {self.dx, self.dz}:
             self.resize()
 

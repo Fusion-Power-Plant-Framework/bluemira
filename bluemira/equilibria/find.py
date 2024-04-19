@@ -497,7 +497,7 @@ def find_flux_surfs(
     _xo, _zo, psio = o_points[0]
     __, __, psix = x_points[0]
     psinormed = psio - psinorm * (psio - psix)
-    return get_contours(x, z, psi, psinormed)
+    return get_contours(x, z, psi, floatify(psinormed))
 
 
 def find_flux_surf(
@@ -563,7 +563,7 @@ def find_field_surf(
     z: npt.NDArray[np.float64],
     Bp: npt.NDArray[np.float64],
     field: float,
-) -> npt.NDArray[np.float64]:
+) -> npt.NDArray[np.float64] | None:
     """
     Picks a field surface most likely to be the desired breakdown region
 

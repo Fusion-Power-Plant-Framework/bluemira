@@ -12,9 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from bluemira.equilibria.grid import Grid
-
 import numpy as np
 import numpy.typing as npt
 from scipy.interpolate import RectBivariateSpline
@@ -23,6 +20,10 @@ from bluemira.equilibria.constants import J_TOR_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import PlasmaCoilPlotter
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.utilities.tools import floatify
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.grid import Grid
 
 
 def treat_xz_array(func):
@@ -44,7 +45,7 @@ def treat_xz_array(func):
         values = np.zeros(x.size)
 
         for i, (xx, zz) in enumerate(zip(x.flat, z.flat, strict=False)):
-            values[i] = func(self, xx, zz)
+            values[i] = floatify(func(self, xx, zz))
 
         return values.reshape(x.shape)
 

@@ -21,7 +21,7 @@ from bluemira.magnetostatics.tools import (
     jit_llc7,
     n_integrate,
 )
-from bluemira.utilities.tools import is_num
+from bluemira.utilities.tools import floatify, is_num
 
 __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]
 
@@ -149,20 +149,20 @@ def _array_dispatcher(func):
             if not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
                 result = np.zeros(len(x))
                 for i in range(len(x)):
-                    result[i] = func(xc, zc, x[i], z[i], d_xc, d_zc)
+                    result[i] = floatify(func(xc, zc, x[i], z[i], d_xc, d_zc))
             else:
                 result = np.zeros((len(x), len(xc)))
                 for j in range(xc.shape[1]):
                     for i in range(len(x)):
-                        result[i, j] = func(
-                            xc[:, j], zc[:, j], x[i], z[i], d_xc[:, j], d_zc[:, j]
+                        result[i, j] = floatify(
+                            func(xc[:, j], zc[:, j], x[i], z[i], d_xc[:, j], d_zc[:, j])
                         )
         # 2-D arrays
         elif not isinstance(xc, np.ndarray) or len(xc.shape) == 1:
             result = np.zeros(x.shape)
             for i in range(x.shape[0]):
                 for j in range(z.shape[1]):
-                    result[i, j] = func(xc, zc, x[i, j], z[i, j], d_xc, d_zc)
+                    result[i, j] = floatify(func(xc, zc, x[i, j], z[i, j], d_xc, d_zc))
         else:
             result = np.zeros([*list(x.shape), xc.shape[1]])
             for k in range(xc.shape[1]):
@@ -225,7 +225,9 @@ def semianalytic_Bx(
     """
     r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
 
-    Bx = integrate(_full_x_integrand, (r1, r2, z1, z2), 0, np.pi)
+    Bx = integrate(
+        _full_x_integrand, tuple(np.asarray((r1, r2, z1, z2)).ravel()), 0, np.pi
+    )
 
     fac = 2e-7 * j_tor * x  # MU_0/(2*np.pi)
     return fac * Bx
@@ -276,7 +278,9 @@ def semianalytic_Bz(
     r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
 
     try:
-        Bz = integrate(_full_z_integrand, (r1, r2, z1, z2), 0, np.pi)
+        Bz = integrate(
+            _full_z_integrand, tuple(np.asarray((r1, r2, z1, z2)).ravel()), 0, np.pi
+        )
     except MagnetostaticsIntegrationError:
         # If all else fails, fall back to integration by parts
         Bz = _integrate_z_by_parts(r1, r2, z1, z2)
