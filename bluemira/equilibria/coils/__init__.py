@@ -14,7 +14,6 @@ from bluemira.equilibria.coils._grouping import (
     Circuit,
     CoilGroup,
     CoilSet,
-    CoilSetSymmetryStatus,
     SymmetricCircuit,
     symmetrise_coilset,
 )
@@ -29,7 +28,6 @@ __all__ = [
     "Coil",
     "CoilGroup",
     "CoilSet",
-    "CoilSetSymmetryStatus",
     "CoilType",
     "SymmetricCircuit",
     "check_coilset_symmetric",
