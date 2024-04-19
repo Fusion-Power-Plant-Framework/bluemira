@@ -80,6 +80,6 @@ class TestFemUtils:
         V = FunctionSpace(self.mesh, ("Lagrange", 1))  # noqa: N806
         dofs_points = V.tabulate_dof_coordinates()
         func = BluemiraFemFunction(V)
-        func.x.array[:] = np.array([operator.itemgetter(0) for x in dofs_points])
+        func.x.array[:] = np.array([operator.itemgetter(0)(x) for x in dofs_points])
         area = integrate_f(func, self.mesh, self.ct, 1)
         assert np.allclose(area, 0.5 * self.l**2 * self.l)

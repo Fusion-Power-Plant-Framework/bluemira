@@ -235,11 +235,11 @@ class BiotSavartFilament(CurrentSource):
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self._points = self._points @ r
-        self._d_l = self._d_l @ r
-        self._mid_points = self._mid_points @ r
-        self.ref_d_l = self.ref_d_l @ r
-        self.ref_mid_points = self.ref_mid_points @ r
+        self._points @= r
+        self._d_l @= r
+        self._mid_points @= r
+        self.ref_d_l @= r
+        self.ref_mid_points @= r
         self._arrays = [array @ r for array in self._arrays]
 
     def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
