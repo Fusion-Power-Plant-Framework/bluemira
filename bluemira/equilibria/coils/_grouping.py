@@ -19,7 +19,7 @@ from operator import attrgetter
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
+    from matplotlib.axes import Axes
 
     from bluemira.equilibria.file import EQDSKInterface
 
