@@ -32,37 +32,28 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         Current scale with which to calculate the constraints
     """
 
-    def __init__(
-        self,
-        a_mat: np.ndarray,
-        b_vec: np.ndarray,
-        value: float,
-        scale: float,
-        *,
-        debug: bool = False,
-    ) -> None:
+    def __init__(self, a_mat: np.ndarray, b_vec: np.ndarray, value: float, scale: float):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
-        self.debug = debug
+        self.debug = False
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         currents = self.scale * vector
-
         result = self.a_mat[1:,] @ currents
         residual = result - self.b_vec - self.value
-
         if self.debug:
-            bluemira_print(f"""
+            bluemira_print(
+                f"""
             refs: {self.b_vec}
             currents: {currents}
             currents_sum: {np.sum(currents)}
             result {result}
             residual: {residual}
-            """)
-
+            """
+            )
         return residual
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
