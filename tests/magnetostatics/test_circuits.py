@@ -155,7 +155,7 @@ class TestArbitraryPlanarXSCircuit:
 
     p_inputs = (pd_inputs, ta_inputs, pf_inputs)
     clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
-    p_inputs = p_inputs * 2
+    p_inputs *= 2
     parameterisations = tuple(
         [
             PrincetonD,

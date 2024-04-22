@@ -171,7 +171,7 @@ def count_slocs(
                         continue
 
     lines[".py"] += LOCAL_LINES
-    lines["total"] = sum([lines[k] for k in lines])
+    lines["total"] = sum(lines[k] for k in lines)
     return lines
 
 

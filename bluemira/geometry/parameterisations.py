@@ -1272,7 +1272,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         l_end = variables[15:]
 
         tilt = np.deg2rad(tilt)
-        height = 0.5 * height
+        height *= 0.5
         ds_z = flat * height * np.cos(tilt)
         ds_x = flat * height * np.sin(tilt)
 

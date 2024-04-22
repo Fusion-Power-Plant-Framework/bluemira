@@ -498,8 +498,8 @@ def make_ellipse(
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
-    start_angle = start_angle % 360.0
-    end_angle = end_angle % 360.0
+    start_angle %= 360.0
+    end_angle %= 360.0
 
     if start_angle != end_angle:
         output = Part.ArcOfEllipse(

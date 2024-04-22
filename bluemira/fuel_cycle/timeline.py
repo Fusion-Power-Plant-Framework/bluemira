@@ -376,7 +376,7 @@ class Timeline:
 
         for key in ["t", "inventory", "DT_rate", "DD_rate"]:
             setattr(self, key, concatenate(phases, key))
-        self.t_unplanned_m = sum([p.t_unplanned_down for p in phases])
+        self.t_unplanned_m = sum(p.t_unplanned_down for p in phases)
         t = [p.t for p in phases]
         lens = np.array([len(i) for i in t])
         self.mci = np.cumsum(lens)

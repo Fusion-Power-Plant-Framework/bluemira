@@ -400,7 +400,7 @@ def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     result2 = boolean_cut(c2_face, c1_face)
 
     #  Calculate metric
-    return (sum([f.area for f in result1]) + sum([f.area for f in result2])) / (
+    return (sum(f.area for f in result1) + sum(f.area for f in result2)) / (
         c1_face.area + c2_face.area
     )
 
