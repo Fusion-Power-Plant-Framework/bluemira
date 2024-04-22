@@ -418,7 +418,7 @@ class PositionMapper:
         """
         The total dimension of the parametric space
         """
-        return sum([interp.dimension for interp in self.interpolators.values()])
+        return sum(interp.dimension for interp in self.interpolators.values())
 
     @property
     def interpolator_names(self) -> list[str]:

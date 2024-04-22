@@ -588,7 +588,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                 # otherwise it's a coil,
                 # so return the group it's in
                 return coil_or_group
-            elif coil_or_group.name == coil_name:
+
+            if coil_or_group.name == coil_name:
                 return coil_or_group
         raise ValueError(f"No coil or coil group with primary coil name {coil_name}")
 

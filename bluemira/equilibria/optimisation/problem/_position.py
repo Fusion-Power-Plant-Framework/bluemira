@@ -113,13 +113,11 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             initial_mapped_positions = self.position_mapper.to_L(
                 cs_opt_state.xs, cs_opt_state.zs
             )
-
-            len_mapped_pos = len(initial_mapped_positions)
             x0 = np.concatenate((initial_mapped_positions, cs_opt_state.currents))
 
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
-            f_objective=lambda vector: self.objective(vector, len_mapped_pos),
+            f_objective=self.objective,
             x0=x0,
             bounds=self.bounds,
             opt_conditions=self.opt_conditions,
@@ -130,11 +128,11 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         )
 
         # Updates the coilset with the final optimised state vector
-        self.objective(opt_result.x, len_mapped_pos)
+        self.objective(opt_result.x)
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
-    def objective(self, vector: npt.NDArray[np.float64], len_mapped_pos: int) -> float:
+    def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """
         Least-squares objective with Tikhonov regularisation term.
 
@@ -147,6 +145,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         -------
         The figure of merit being minimised.
         """
+        len_mapped_pos = self.position_mapper.dimension
+
         # Update the coilset with the new state vector
         opt_mapped_positions, opt_currents = np.array_split(vector, len_mapped_pos)
         coil_position_map = self.position_mapper.to_xz_dict(opt_mapped_positions)

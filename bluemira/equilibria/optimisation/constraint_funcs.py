@@ -304,6 +304,12 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
 
+        if self.n_CS == 0 and self.n_PF == 0:
+            raise ValueError(
+                "n_PF and n_CS are both 0. Make sure the coils in the coilset "
+                "have the correct ctype set."
+            )
+
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         currents = self.scale * vector
