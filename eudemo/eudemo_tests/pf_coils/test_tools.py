@@ -60,11 +60,11 @@ class TestMakeCoilMapper:
     @pytest.mark.parametrize("track", tracks)
     def test_cuts(self, track):
         segments = boolean_cut(track, self.exclusions)
-        actual_length = sum([seg.length for seg in segments])
+        actual_length = sum(seg.length for seg in segments)
         mapper = make_coil_mapper(track, self.exclusions, self.coils)
-        interp_length = sum([
+        interp_length = sum(
             tool.geometry.length for tool in mapper.interpolators.values()
-        ])
+        )
         assert np.isclose(actual_length, interp_length, rtol=1e-2)
 
     @pytest.mark.parametrize("track", tracks)

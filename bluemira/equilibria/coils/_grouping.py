@@ -800,8 +800,8 @@ class SymmetricCircuit(Circuit):
 
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
-        self._coils[1].x = self._coils[1].x - diff[0]
-        self._coils[1].z = self._coils[1].z - diff[1]
+        self._coils[1].x -= diff[0]
+        self._coils[1].z -= diff[1]
 
     def modify_symmetry(self, symmetry_line: np.ndarray):
         """
@@ -855,7 +855,7 @@ class SymmetricCircuit(Circuit):
         if isinstance(new_x, np.ndarray):
             new_x = np.mean(new_x[0])
         self._coils[0].x = self._coils[0].x + new_x - self._get_group_x_centre()
-        self._coils[1].x = self._coils[1].x - self._symmetrise()[0]
+        self._coils[1].x -= self._symmetrise()[0]
 
     @Circuit.z.setter
     def z(self, new_z: float):
@@ -865,7 +865,7 @@ class SymmetricCircuit(Circuit):
         if isinstance(new_z, np.ndarray):
             new_z = np.mean(new_z[0])
         self._coils[0].z = self._coils[0].z + new_z - self._get_group_z_centre()
-        self._coils[1].z = self._coils[1].z + self._symmetrise()[1]
+        self._coils[1].z += self._symmetrise()[1]
 
     def _get_group_x_centre(self) -> np.ndarray:
         """Get the x centre of the first coil group"""

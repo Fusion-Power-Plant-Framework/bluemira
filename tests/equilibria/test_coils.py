@@ -346,15 +346,11 @@ class TestSymmetricCircuit:
         ]
 
         for point in points:
-            coil_psi = sum([
+            coil_psi = sum(
                 getattr(coil, f"psi{fieldtype}")(*point) for coil in self.coils
-            ])
-            coil_Bx = sum([
-                getattr(coil, f"Bx{fieldtype}")(*point) for coil in self.coils
-            ])
-            coil_Bz = sum([
-                getattr(coil, f"Bz{fieldtype}")(*point) for coil in self.coils
-            ])
+            )
+            coil_Bx = sum(getattr(coil, f"Bx{fieldtype}")(*point) for coil in self.coils)
+            coil_Bz = sum(getattr(coil, f"Bz{fieldtype}")(*point) for coil in self.coils)
 
             circuit_psi = getattr(self.circuit, f"psi{fieldtype}")(*point)
             circuit_Bx = getattr(self.circuit, f"Bx{fieldtype}")(*point)
@@ -385,7 +381,7 @@ class TestSymmetricCircuit:
     def test_position(self):
         circ = copy.deepcopy(self.circuit)
         before = circ.x.copy()
-        circ.x = circ.x + 1
+        circ.x = circ.x + 1  # immuatble array # noqa: PLR6104
         assert np.allclose(before + 1, circ.x)
 
 
@@ -630,7 +626,7 @@ class TestMutualInductances:
 
         test_m = np.zeros((3, 3))
         test_m[idxs] = tri_upper
-        test_m = test_m + test_m.T
+        test_m += test_m.T
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)

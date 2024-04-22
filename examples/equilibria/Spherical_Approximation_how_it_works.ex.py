@@ -303,7 +303,7 @@ theta = np.arctan2(eq.x, eq.z)
 approx_psi_vac_data = psi_harmonic_amplitudes[0] * np.ones(np.shape(total_psi))
 
 for degree in np.arange(1, plot_max_degree + 1):
-    approx_psi_vac_data = approx_psi_vac_data + (
+    approx_psi_vac_data += (
         psi_harmonic_amplitudes[degree]
         * eq.x
         * (r / r_t) ** degree

@@ -113,7 +113,7 @@ class VirtualController(CoilGroup):
         """
         Adjust the currents in the virtual control coils.
         """
-        self.current = self.current + d_current
+        self.current += d_current
 
     def stabilise(self):
         """

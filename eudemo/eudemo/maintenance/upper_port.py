@@ -8,6 +8,7 @@
 Some crude EU-DEMO remote maintenance considerations.
 """
 
+import operator
 from dataclasses import dataclass
 
 import numpy as np
@@ -148,7 +149,7 @@ class UpperPortOP(OptimisationProblem):
         # Get the last intersection with the angled cut plane and the outer
         intersections = slice_shape(self.bb.boundary[0], angled_cut_plane)
         intersections = intersections[intersections[:, -1] > z + EPS]
-        return min(intersections, key=lambda x: x[-1])
+        return min(intersections, key=operator.itemgetter(-1))
 
 
 @dataclass
