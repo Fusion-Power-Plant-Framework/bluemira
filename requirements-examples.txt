@@ -39,7 +39,7 @@ ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.22
 Pygments==2.17.2
-pyzmq==26.0.0
+pyzmq==26.0.2
 Send2Trash==1.8.3
 soupsieve==2.5
 stack-data==0.6.3
