@@ -579,15 +579,15 @@ class CoilGroup(CoilGroupFieldsMixin):
             if isinstance(coil_or_group, CoilGroup):
                 try:
                     c_rtn = coil_or_group.get_coil_or_group_with_coil_name(coil_name)
-                    # if it's a CoilGroup, return it
-                    # (we want the lowest level group that contains the coil)
-                    if isinstance(c_rtn, CoilGroup):
-                        return c_rtn
-                    # otherwise it's a coil,
-                    # so return the group it's in
-                    return coil_or_group  # noqa: TRY300
                 except ValueError:
                     continue
+                # if it's a CoilGroup, return it
+                # (we want the lowest level group that contains the coil)
+                if isinstance(c_rtn, CoilGroup):
+                    return c_rtn
+                # otherwise it's a coil,
+                # so return the group it's in
+                return coil_or_group
             elif coil_or_group.name == coil_name:
                 return coil_or_group
         raise ValueError(f"No coil or coil group with primary coil name {coil_name}")
@@ -1200,10 +1200,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the names of the coils that can be position optimised.
         """
-        optimisable_coil_names = [
+        optimisable_coil_names = (
             c.primary_coil.name if isinstance(c, SymmetricCircuit) else c.name
             for c in self._coils
-        ]
+        )
         return [*flatten_iterable(optimisable_coil_names)]
 
     @property
