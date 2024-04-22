@@ -18,7 +18,7 @@ neutronics-material-maker==1.1.4
 nlopt==2.7.1
 meshio==5.3.5
 numba==0.59.1
-numba-scipy @ git+https://github.com/numba/numba-scipy@1e2f244
+numba-scipy==0.4.0
 numexpr==2.10.0
 numpy==1.26.4
 openmc_data==0.2.2
