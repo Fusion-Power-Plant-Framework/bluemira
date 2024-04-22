@@ -108,8 +108,7 @@ def get_figure_scale_factor(figsize):
     for ds, ss in zip(dpi_size, screen_size, strict=False):
         if ds > ss:
             scale_temp = ss / ds
-            if scale_temp < sf:
-                sf = scale_temp
+            sf = min(scale_temp, sf)
     return sf
 
 

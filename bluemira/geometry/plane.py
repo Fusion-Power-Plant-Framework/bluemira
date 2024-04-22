@@ -117,7 +117,7 @@ class BluemiraPlane:
 
     def move(self, vector: Iterable[float]):
         """Moves the Plane along the given vector"""
-        self.base = self.base + np.array(vector)
+        self.base += np.array(vector)
 
     def __repr__(self) -> str:
         """
