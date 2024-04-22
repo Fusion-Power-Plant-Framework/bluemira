@@ -63,7 +63,8 @@ class TestSolver:
 
     def test_get_raw_variables_retrieves_parameters(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
-        solver.execute(RunMode.READ)
+        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+            solver.execute(RunMode.READ)
 
         assert solver.get_raw_variables("kappa_95") == [1.65]
 
@@ -75,7 +76,8 @@ class TestSolver:
 
     def test_get_species_fraction_retrieves_parameter_value(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
-        solver.execute(RunMode.READ)
+        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+            solver.execute(RunMode.READ)
 
         assert solver.get_species_fraction("H") == pytest.approx(0.74267)
         assert solver.get_species_fraction("W") == pytest.approx(5e-5)
