@@ -54,13 +54,16 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         ref_harmonics: npt.NDArray[np.float64],
         r_t: float,
         sh_coil_names: list,
-        tolerance: float | npt.NDArray = None,
+        tolerance: float | npt.NDArray | None = None,
+        smallest_tol: float = 1e-6,
         constraint_type: str = "equality",
+        *,
+        invert: bool = False,
     ):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
-            tolerance = [10**x for x in ord_mag]
-        if is_num(tolerance):
+            tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
+        elif is_num(tolerance):
             tolerance = tolerance * np.ones(len(ref_harmonics))
         elif len(tolerance) != len(ref_harmonics):
             raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
@@ -70,6 +73,8 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self.target_harmonics = ref_harmonics
         self.max_degree = len(ref_harmonics) + 1
+
+        self.invert = invert
 
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
@@ -108,6 +113,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
         self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
+        if self.invert:
+            self._args["a_mat"] *= -1
+            self._args["b_vec"] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
