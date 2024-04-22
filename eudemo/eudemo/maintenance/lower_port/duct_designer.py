@@ -8,6 +8,7 @@
 EU-DEMO Lower Port Duct KOZ Designer
 """
 
+import operator
 from dataclasses import dataclass
 
 import numpy as np
@@ -154,7 +155,7 @@ class LowerPortKOZDesigner(Designer):
 
         closest_pts = self._closest_points(search_wire, self.divertor_face)
         # just take the point with the highest z, if there's more than one
-        z_highest_pt = max(closest_pts, key=lambda p: p[2])
+        z_highest_pt = max(closest_pts, key=operator.itemgetter(2))
 
         return (z_highest_pt[0], z_highest_pt[2]), self.div_wall_join_pt
 
@@ -340,8 +341,8 @@ class LowerPortKOZDesigner(Designer):
             )
 
         # find the top and bottom itc points
-        itc_top_ob_pt = max(itc_pts, key=lambda p: p[2])
-        itc_bot_ib_pt = min(itc_pts, key=lambda p: p[2])
+        itc_top_ob_pt = max(itc_pts, key=operator.itemgetter(2))
+        itc_bot_ib_pt = min(itc_pts, key=operator.itemgetter(2))
 
         # remap to 2D point
         itc_top_ob_pt = (itc_top_ob_pt[0], itc_top_ob_pt[2])

@@ -199,8 +199,7 @@ def main():
         for vv in param_classes.values():
             add_to_dict(vv, output, params)
 
-        with open(Path(args.directory, "params.py"), "w") as fh:
-            fh.write(create_parameterframe(params))
+        Path(args.directory, "params.py").write_text(create_parameterframe(params))
         json_writer(output, file=Path(args.directory, "params.json"))
 
     else:

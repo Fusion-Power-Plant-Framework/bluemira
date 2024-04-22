@@ -155,8 +155,8 @@ class TestSTEquilibrium:
 
         # Scale up Agnieszka isoflux constraints
         size_scaling = R_0 / 2.5
-        x_div = size_scaling * x_div
-        z_div = size_scaling * z_div
+        x_div *= size_scaling
+        z_div *= size_scaling
 
         xx = np.concatenate([x_core, x_div])
         zz = np.concatenate([z_core, z_div])
