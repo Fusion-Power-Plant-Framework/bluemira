@@ -81,7 +81,7 @@ def _partial_z_integrand_nojit(phi: float, rr: float, zz: float) -> float:
     result = result - 0.5 * rr if rr - 1 < EPS else result - 0.5 / rr
     # F3
     if 0.5 * np.pi * sin_phi > 1e-9:  # noqa: PLR2004
-        result = result - sin_phi * np.arctan(zz * (rr - cos_phi) / (r0 * sin_phi))
+        result -= sin_phi * np.arctan(zz * (rr - cos_phi) / (r0 * sin_phi))
     return result
 
 
@@ -127,7 +127,7 @@ def _get_working_coords(
     """
     Convert coil and global coordinates to working coordinates.
     """
-    z = z - zc
+    z = z - zc  # numba issue # noqa: PLR6104
     r1, r2 = (xc - d_xc) / x, (xc + d_xc) / x
     z1, z2 = (-d_zc - z) / x, (d_zc - z) / x
     j_tor = 1 / (4 * d_xc * d_zc)  # Keep current out of the equation
@@ -289,7 +289,7 @@ def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
     """
     Integrand for psi = xBz
     """
-    z = z - zc
+    z = z - zc  # numba issue # noqa: PLR6104
     r1, r2 = (xc - d_xc) / x, (xc + d_xc) / x
     z1, z2 = (-d_zc - z) / x, (d_zc - z) / x
     return x**2 * (

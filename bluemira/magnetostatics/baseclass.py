@@ -136,9 +136,9 @@ class CrossSectionCurrentSource(CurrentSource):
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self._origin = self._origin @ r
+        self._origin @= r
         self._points = np.array([p @ r for p in self._points], dtype=object)
-        self._dcm = self._dcm @ r
+        self._dcm @= r
 
     def _local_to_global(
         self, points: npt.NDArray[np.float64]
@@ -315,7 +315,7 @@ class SourceGroup(ABC):
         """
         for source in self.sources:
             source.rotate(angle, axis)
-        self._points = self._points @ rotation_matrix(angle, axis)
+        self._points @= rotation_matrix(angle, axis)
 
     def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
         """

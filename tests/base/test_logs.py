@@ -31,7 +31,7 @@ class TestLoggingLevel:
             cls.orig_log.handlers or cls.orig_log.parent.handlers
         )
         cls.original_level = LogLevel(
-            max([handler.level for handler in cls.original_handlers])
+            max(handler.level for handler in cls.original_handlers)
         )
 
     @classmethod

@@ -61,7 +61,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
             tolerance = [10**x for x in ord_mag]
         if is_num(tolerance):
-            tolerance = tolerance * np.ones(len(ref_harmonics))
+            tolerance *= np.ones(len(ref_harmonics))
         elif len(tolerance) != len(ref_harmonics):
             raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
 

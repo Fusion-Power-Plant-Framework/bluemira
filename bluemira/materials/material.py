@@ -1374,7 +1374,7 @@ class BePebbleBed(UnitCellCompound):
 
             eps_vol = np.vectorize(calc_eps_vol)(temperature)
         if is_num(eps_vol):
-            eps_vol = eps_vol * np.ones_like(temperature)
+            eps_vol *= np.ones_like(temperature)
         return (
             1.81
             + 0.0012 * temperature
