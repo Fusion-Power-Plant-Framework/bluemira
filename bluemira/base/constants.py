@@ -339,6 +339,9 @@ K_BOLTZMANN = ureg.Quantity("k_B").to_base_units().magnitude  # [J/K]
 # Plank constant
 H_PLANCK = ureg.Quantity("hbar").to_base_units().magnitude
 
+# Electron charge, [C]
+E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
+
 # neutron molar mass, [u] or [g/mol]
 NEUTRON_MOLAR_MASS = (
     ureg.Quantity("m_n").to("g") * ureg.Quantity("avogadro_constant").to_base_units()

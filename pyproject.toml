@@ -85,6 +85,7 @@ openmc = [
     "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
 ]
 polyscope = ["polyscope"]
+radiation = ["cherab"]
 
 [build-system]
 requires = ["setuptools>=62", "setuptools_scm[toml]>=7.0"]
