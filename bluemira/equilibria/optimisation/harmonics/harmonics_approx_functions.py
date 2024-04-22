@@ -19,7 +19,7 @@ from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.error import BluemiraError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -490,7 +490,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
-    grid_num: str | None = None,
+    grid_num: tuple[int, int] | None = None,
     acceptable_fit_metric: float = 0.01,
     nlevels: int = 50,
     seed: int | None = None,
@@ -568,6 +568,9 @@ def spherical_harmonic_approximation(
     # Starting LCFS
     original_LCFS = eq.get_LCFS()
 
+    if eq.grid is None or eq.plasma is None:
+        raise BluemiraError("eq not setup for SH approximation.")
+
     # Grid keep the same as input equilibrium
     grid = eq.grid
 
@@ -604,10 +607,11 @@ def spherical_harmonic_approximation(
 
     # Set min to save some time
     min_degree = 2
+    # Can't have more degrees then sampled psi
     max_degree = len(collocation.x) - 1
 
     sh_eq = deepcopy(eq)
-    for degree in np.arange(min_degree, max_degree):
+    for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
             eq.coilset, degree, r_t, sh_coil_names
@@ -646,15 +650,14 @@ def spherical_harmonic_approximation(
         # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
 
+        bluemira_print(
+            f"Fit metric value = {fit_metric_value} using" f" {degree} degrees."
+        )
         if fit_metric_value <= acceptable_fit_metric:
-            bluemira_print(
-                f"The fit metric value acheived is {fit_metric_value} using"
-                f" {degree} degrees."
-            )
             break
         if degree == max_degree:
-            raise BluemiraError(
-                "Uh oh, you may need to use more degrees for a fit metric of"
+            bluemira_warn(
+                "You may need to use more degrees for a fit metric of"
                 f" {acceptable_fit_metric}! Use a greater number of collocation points"
                 " please."
             )
