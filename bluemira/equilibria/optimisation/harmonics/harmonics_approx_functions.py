@@ -617,7 +617,9 @@ def spherical_harmonic_approximation(
     # for a flux surface that wraps around the divertor coils and thereby affects
     # the result of the LCFS finding function used in the fit metric calculaton.
     clipped_eq = deepcopy(sh_eq)
-    clip = (grid.z[0, :] > np.min(sh_eq.coilset.z)) & (grid.z[0, :] < np.max(sh_eq.coilset.z))
+    clip = (grid.z[0, :] > np.min(sh_eq.coilset.z)) & (
+        grid.z[0, :] < np.max(sh_eq.coilset.z)
+    )
     clipped_eq.grid.x, clipped_eq.grid.z = grid.x[:, clip], grid.z[:, clip]
     clipped_eq.x, clipped_eq.z = grid.x[:, clip], grid.z[:, clip]
 
