@@ -611,6 +611,16 @@ def spherical_harmonic_approximation(
     max_degree = len(collocation.x) - 1
 
     sh_eq = deepcopy(eq)
+
+    # Clip the grid in the z-direction to remove area below upper/lower-most coil
+    # This prevents us from creating an approximation with more degrees than is needed
+    # for a flux surface that wraps around the divertor coils and thereby affects
+    # the result of the LCFS finding function used in the fit metric calculaton.
+    clipped_eq = deepcopy(sh_eq)
+    clip = (grid.z[0, :] > np.min(sh_eq.coilset.z)) & (grid.z[0, :] < np.max(sh_eq.coilset.z))
+    clipped_eq.grid.x, clipped_eq.grid.z = grid.x[:, clip], grid.z[:, clip]
+    clipped_eq.x, clipped_eq.z = grid.x[:, clip], grid.z[:, clip]
+
     for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
@@ -634,12 +644,15 @@ def spherical_harmonic_approximation(
 
         # Total
         approx_total_psi = coilset_approx_psi + plasma_psi
-
         sh_eq.get_OX_points(approx_total_psi, force_update=True)
+
+        # Clip the grid in the z direction to remove area below upper/lower-most coil
+        clip_psi = approx_total_psi[:, clip]
+        clipped_eq.get_OX_points(clip_psi, force_update=True)
 
         try:
             # Get plasma boundary for comparison to starting equilibrium using fit metric
-            approx_LCFS = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
+            approx_LCFS = clipped_eq.get_LCFS(psi=clip_psi, delta_start=0.015)
         except EquilibriaError:
             bluemira_print(
                 "Could not find LCFS in the approximate psi field. "
