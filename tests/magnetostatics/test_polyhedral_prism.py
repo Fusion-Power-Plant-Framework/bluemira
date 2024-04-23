@@ -289,9 +289,11 @@ class TestCombinedShapes:
             current,
         )
         coords = Coordinates({"x": [-1, -1, 1], "z": [1, -1, -1]})
+        offset_yz = 1 / 3
+        offset_x = offset_yz * np.tan(10 * np.pi / 180)
         cls.triangle1 = PolyhedralPrismCurrentSource(
-            [0, -1 / 3, -1 / 3],
-            [10, 0, 0],
+            [0, -offset_yz, -offset_yz],
+            [10 - 2 * offset_x, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
             coords,
@@ -301,8 +303,8 @@ class TestCombinedShapes:
         )
         coords = Coordinates({"x": [-1, 1, 1], "z": [1, -1, 1]})
         cls.triangle2 = PolyhedralPrismCurrentSource(
-            [0, 1 / 3, 1 / 3],
-            [10, 0, 0],
+            [0, offset_yz, offset_yz],
+            [10 + 2 * offset_x, 0, 0],
             [0, 1, 0],
             [0, 0, 1],
             coords,
