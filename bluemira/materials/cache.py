@@ -56,6 +56,15 @@ class MaterialCache:
             mat_class.__name__: mat_class for mat_class in self.default_classes
         }
 
+    def __getattr__(self, value: str):
+        """Allow attribute access to cached materials"""
+        try:
+            super().__getattribute__(value)
+        except AttributeError:
+            if value in self._material_dict:
+                return self._material_dict[value]
+            raise
+
     def load_from_file(self, path: str) -> dict[str, Any]:
         """
         Load materials from a file.

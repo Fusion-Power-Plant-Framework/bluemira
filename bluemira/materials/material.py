@@ -416,8 +416,11 @@ class MassFractionMaterial:
         """
         return self.name
 
-    def __eq__(self, other: object):
+    def __eq__(self, other: object) -> bool:
         """Equality Check"""
+        if not isinstance(other, type(self)):
+            # TODO a mixutre with only one component could be the same
+            return False
         raise NotImplementedError("Material equality not implemented")
 
     def __hash__(self):
