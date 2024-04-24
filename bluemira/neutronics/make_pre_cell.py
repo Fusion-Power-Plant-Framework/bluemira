@@ -62,7 +62,7 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
 
         exterior_wire
 
-            A wire representing the exterior-boundary (i.e. air-facing side) of a
+            A wire representing the exterior-boundary of a
                 blanket's pre-cell, running in the clockwise direction when viewing the
                 right hand side poloidal cross-section,
                 i.e. upwards if inboard, downwards if outboard.

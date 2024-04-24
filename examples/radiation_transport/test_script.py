@@ -16,7 +16,7 @@ import openmc
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import vector_intersect
-from bluemira.geometry.tools import deserialize_shape, make_polygon
+from bluemira.geometry.tools import deserialise_shape, make_polygon
 from bluemira.neutronics import result_presentation as present
 from bluemira.neutronics.execution import (
     PlasmaSourceSimulation,
@@ -54,7 +54,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     batches=3,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="plot",
+    run_mode="dummy",  # no longer needed
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
@@ -84,13 +84,13 @@ mat_lib = create_materials(_breeder_materials)
 
 # Loading data
 with open("data/inner_boundary") as j:
-    inner_boundary = deserialize_shape(json.load(j))
+    inner_boundary = deserialise_shape(json.load(j))
 with open("data/outer_boundary") as j:
-    outer_boundary = deserialize_shape(json.load(j))
+    outer_boundary = deserialise_shape(json.load(j))
     # TODO: need to add method of scaling BluemiraWire (issue #3038 /
     # TODO: raise new issue about needing method to scale BluemiraWire)
 with open("data/divertor_face.correct.json") as j:
-    divertor_bmwire = deserialize_shape(json.load(j))
+    divertor_bmwire = deserialise_shape(json.load(j))
 fw_panel_bp_list = [
     np.load("data/fw_panels_10_0.1.npy"),
     np.load("data/fw_panels_25_0.1.npy"),
@@ -144,9 +144,11 @@ if __name__ == "__main__":  # begin computation
         # TODO: make these two Divertor names into Enum
         "Divertor": mat_lib.div_fw_mat,
         "DivertorSurface": mat_lib.div_fw_mat,
+        "CentralSolenoid": mat_lib.tf_coil_mat,
+        "TFCoil": mat_lib.tf_coil_mat,
     }
-    blanket_cell_array, div_cell_array, plasma, air = generator.make_cell_arrays(
-        mat_dict, tokamak_dimensions, control_id=True
+    blanket_cell_array, div_cell_array, tf_coils, cs, plasma, void = (
+        generator.make_cell_arrays(mat_dict, tokamak_dimensions, control_id=True)
     )
 
     cells = generator.cell_array.cells
@@ -159,7 +161,6 @@ if __name__ == "__main__":  # begin computation
         with Plotting(
             runtime_variables.cross_section_xml,
             cells,
-            # generator.cell_array.get_all_hollow_merged_cells(),
             mat_lib,
         ) as plotting:
             plotting.run(

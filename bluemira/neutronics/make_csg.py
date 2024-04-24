@@ -19,6 +19,7 @@ import openmc
 from matplotlib import pyplot as plt  # for debugging
 from numpy import typing as npt
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
@@ -65,24 +66,24 @@ def plot_surfaces(surfaces_list: list[openmc.Surface]):
     for i, surface in enumerate(surfaces_list):
         plot_coords(surface, color_num=i)
     ax.legend()
-    ax.set_ylim([-10, 10])
-    ax.set_xlim([-10, 10])
+    ax.set_ylim([-1000, 1000])
+    ax.set_xlim([-1000, 1000])
 
 
 def plot_coords(surface: openmc.Surface, color_num: int):
     """
-    In the range [-10, 10], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
+    In the range [-1000, 1000], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
     """
     if isinstance(surface, openmc.ZCylinder):
         plt.plot(
             [surface.x0, surface.x0],
-            [-10, 10],
+            [-1000, 1000],
             label=f"{surface.id}: {surface.name}",
             color=f"C{color_num}",
         )
     elif isinstance(surface, openmc.ZPlane):
         plt.plot(
-            [-10, 10],
+            [-1000, 1000],
             [surface.z0, surface.z0],
             label=f"{surface.id}: {surface.name}",
             color=f"C{color_num}",
@@ -97,15 +98,15 @@ def plot_coords(surface: openmc.Surface, color_num: int):
         def equation_neg(x):
             return -slope * np.array(x) + intercept
 
-        y_pos, y_neg = equation_pos([-10, 10]), equation_neg([-10, 10])
+        y_pos, y_neg = equation_pos([-1000, 1000]), equation_neg([-1000, 1000])
         plt.plot(
-            [-10, 10],
+            [-1000, 1000],
             y_pos,
             label=f"{surface.id}: {surface.name} (upper)",
             color=f"C{color_num}",
         )
         plt.plot(
-            [-10, 10],
+            [-1000, 1000],
             y_neg,
             label=f"{surface.id}: {surface.name} (lower)",
             linestyle="--",
@@ -157,7 +158,12 @@ def surface_from_2points(
         return hangar[_z]
     slope = dz / dr
     z_intercept = -slope * point1[0] + point1[-1]
-    return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
+    cone = openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
+    if abs(slope) < 0.00033:
+        bluemira_warn(
+            f"cone:{cone.id} slope too shallow, might cause particles to leak!"
+        )
+    return cone
 
 
 def surface_from_straight_line(
@@ -424,7 +430,12 @@ def choose_region_cone(
     """
     # shrink to avoid floating point number comparison imprecision issues
     centroid = np.mean(choice_points, axis=0)
-    choice_points = (choice_points + 0.01 * centroid) / 1.01
+    # choice_points = (choice_points + 0.01 * centroid) / 1.01
+    # take one step towards the centroid = 0.1 cm
+    step_dir = centroid - choice_points
+    unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
+    step_size = 0.0005
+    choice_points += step_size * unit_step_dir
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
     middle = values > 0
@@ -434,6 +445,8 @@ def choose_region_cone(
     z_dist = z - surface.z0
     upper_cone = np.logical_and(~middle, z_dist > 0)
     lower_cone = np.logical_and(~middle, z_dist < 0)
+    if surface.id == 2050 and input("Detected 2050!") != "Pass":
+        raise RuntimeError
     # upper_not_cone = np.logical_and(middle, z_dist > 0)
     # lower_not_cone = np.logical_and(middle, z_dist < 0)
 
@@ -702,7 +715,8 @@ class BlanketCellStack(abc.Sequence):
     def interfaces(self):
         """
         All of the radial surfaces, including the innermost (exposed to plasma) and
-        outermost exposed to air; arranged in that order (from innermost to outermost).
+        outermost (facing vacuum vessel); arranged in that order (from innermost to
+        outermost).
         """
         if not hasattr(self, "_interfaces"):
             self._interfaces = [cell.interior_surface for cell in self.cell_stack]
@@ -867,7 +881,7 @@ class BlanketCellStack(abc.Sequence):
                 )
             )
             int_surf = ext_surf
-        int_surf.name = "air-facing surface"
+        int_surf.name = "vacuum-vessel-facing surface"
 
         return cls(cell_stack)
 
@@ -963,7 +977,7 @@ class BlanketCellArray(abc.Sequence):
 
     def get_exterior_surfaces(self) -> list[openmc.Surface]:
         """
-        Get all of the outermost (air-facing) surface.
+        Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
@@ -1316,8 +1330,8 @@ class DivertorCellStack(abc.Sequence):
     def interfaces(self):
         """
         All of the radial surfaces, including the innermost (exposed to plasma) and
-        outermost exposed to air; arranged in that order (from innermost to outermost).
-        List of openmc.Surface.
+        outermost (facing the vacuum vessel); arranged in that order (from innermost to
+        outermost).
         """
         if not hasattr(self, "_interfaces"):
             self._interfaces = [cell.interior_surfaces for cell in self.cell_stack]
@@ -1473,7 +1487,7 @@ class DivertorCellArray(abc.Sequence):
 
     def get_exterior_surfaces(self) -> list[openmc.Surface]:
         """
-        Get all of the outermost (air-facing) surface.
+        Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
@@ -1488,10 +1502,9 @@ class DivertorCellArray(abc.Sequence):
         exterior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged counter-clockwise (inboard to outboard).
         """
-        exterior_vertices = [
+        return np.concatenate([
             stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self
-        ]
-        return np.concatenate(exterior_vertices)
+        ])
 
     def get_interior_vertices(self) -> npt.NDArray:
         """
@@ -1503,8 +1516,9 @@ class DivertorCellArray(abc.Sequence):
         interior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged counter-clockwise (inboard to outboard).
         """
-        interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
-        return np.concatenate(interior_vertices)
+        return np.concatenate([
+            stack.interior_wire.get_3D_coordinates() for stack in self
+        ])
 
     def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
         """
@@ -1535,7 +1549,7 @@ class DivertorCellArray(abc.Sequence):
         Parameters
         ----------
         divertor_pre_cell_array
-            The array that
+            The array of divertor pre-cells.
         material_dict
             container of openmc.Material
         divertor_thickness
@@ -1580,3 +1594,27 @@ class DivertorCellArray(abc.Sequence):
         cell-stack.
         """
         return [openmc.Cell(region=stack.get_overall_region()) for stack in self]
+
+
+class TFCoils(abc.Sequence):
+    """Turn the divertor into a cell array"""
+
+    def __init__(self, tf_coils: list[openmc.Cell]):
+        """Create array from a list of openmc.Cell."""
+        self.tf_coils = tf_coils
+
+    def __len__(self) -> int:
+        return self.tf_coils.__len__()
+
+    def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
+        return self.tf_coils.__getitem__(index_or_slice)
+
+    def __add__(self, other_array: TFCoils) -> TFCoils:
+        return TFCoils(self.tf_coils + other_array.tf_coils)
+
+    def __repr__(self) -> str:
+        return (
+            super()
+            .__repr__()
+            .replace(" at ", f" of {len(self)} openmc.Cells of tf-coils at")
+        )

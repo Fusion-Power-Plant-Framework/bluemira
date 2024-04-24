@@ -39,7 +39,7 @@ class BlanketLayers(Enum):
     Manifold
         The pipe works and supporting structure
     VacuumVessel
-        The vacuum vessel keeping out the atmospheric air.
+        The vacuum vessel keeping the plasma from mixing with outside air.
     """
 
     Surface = auto()

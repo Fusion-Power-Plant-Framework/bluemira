@@ -25,7 +25,9 @@ from bluemira.neutronics.make_csg import (
     TFCoils,
     find_suitable_z_plane,
     flat_intersection,
+    flat_union,
     region_from_surface_series,
+    surface_from_2points,
 )
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
@@ -354,9 +356,9 @@ class SingleNullTokamak:
         Parameters
         ----------
         solenoid_radius:
-            Central solenoid radius
+            Central solenoid radius [m]
         tf_coil_thick:
-            Thickness of the tf-coil, wrapped around the central solenoid
+            Thickness of the tf-coil, wrapped around the central solenoid [m]
         z_max:
             z-coordinate of the the top z-plane shared by both cylinders
             (cs and tf coil)
@@ -414,19 +416,24 @@ class SingleNullTokamak:
         """Get the plasma chamber's poloidal cross-section"""
         _blanket_interior_pts = self.cell_array.blanket.get_interior_vertices()
         dividing_surface = surface_from_2points(
-            _blanket_interior_pts[0], _blanket_interior_pts[-1]
+            _blanket_interior_pts[0][::2], _blanket_interior_pts[-1][::2]
         )
         _blanket_surfaces = self.cell_array.blanket.get_interior_surfaces()
-        _blanket_surfaces.append(_blanket_interior_pts)
-        upper_region = region_from_surface_series(
+        _blanket_surfaces.append(dividing_surface)
+        plasma = region_from_surface_series(
             _blanket_surfaces, _blanket_interior_pts, control_id
         )
 
-        div_surfaces = np.concatenate(self.cell_array.divertor.get_exterior_surfaces())
-        div_surfaces.insert(0, self.cell_array.divertor.poloidal_surfaces[0])
-        div_surfaces.append(self.cell_array.divertor.poloidal_surfaces[-1])
+        _div_surfaces = []
+        for surf_list in self.cell_array.divertor.get_exterior_surfaces():
+            _div_surfaces.extend(surf_list)
+        _div_surfaces.append(dividing_surface)
+        exhaust_including_divertor = region_from_surface_series(
+            _div_surfaces, self.cell_array.divertor.get_exterior_vertices(), control_id
+        )
+
         divertor_zone = self.cell_array.divertor.get_exclusion_zone(control_id)
-        return blanket_interior_region | divertor_outer_region & ~divertor_zone
+        return flat_union([plasma, exhaust_including_divertor]) & ~divertor_zone
 
     def make_void_cells(self, control_id: bool = False):
         """Make the plasma chamber and the outside ext_void. This should be called AFTER
@@ -444,17 +451,8 @@ class SingleNullTokamak:
             name="Exterior void",
         )
 
-        # plasma_region = self.cell_array.blanket.get_interior_surfaces()
-        plasma_region = flat_intersection([
-            full_tokamak_region,
-            # TODO: Can reduce the number of negations (the following ~blanket) by
-            # Choosing the interior surfaces instead.
-            ~self.cell_array.blanket.get_exclusion_zone(control_id),
-            ~self.cell_array.divertor.get_exclusion_zone(control_id),
-        ])
-
         self.cell_array.plasma = openmc.Cell(
-            region=plasma_region,
+            region=self.get_blanket_and_divertor_inner_region(control_id),
             fill=None,
             name="Plasma void",
         )
@@ -499,4 +497,4 @@ class SingleNullTokamak:
         has_ca = (
             "cell-array generated" if hasattr(self, "cell_array") else "no cell-array"
         )
-        super().__repr__().replace(" at ", f" with {has_pca}, {has_ca} at ")
+        return super().__repr__().replace(" at ", f" with {has_pca}, {has_ca} at ")
