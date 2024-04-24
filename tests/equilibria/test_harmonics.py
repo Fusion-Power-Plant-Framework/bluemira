@@ -242,7 +242,7 @@ def test_spherical_harmonic_approximation():
         -107953.36722597,
         -127015.41959899,
         -21793.83849537,
-        ])
+    ])
 
     harmonic_amps = np.array([
         0.11582153,
