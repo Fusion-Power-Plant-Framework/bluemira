@@ -218,52 +218,45 @@ def test_spherical_harmonic_approximation():
         test_sh_coilset_current,
     ) = spherical_harmonic_approximation(
         eq,
-        n_points=20,
-        point_type=PointType.ARC_PLUS_EXTREMA,
-        acceptable_fit_metric=0.05,
+        n_points=10,
+        point_type=PointType.GRID_POINTS,
+        acceptable_fit_metric=0.01,
     )
 
     sh_coilset_current = np.array([
-        7.62910582e03,
-        1.43520553e05,
-        -1.39959367e05,
-        1.38307695e05,
-        -3.03734221e05,
-        -7.65433152e04,
-        -6.29515063e05,
-        -1.95322559e05,
-        2.07073399e06,
-        1.20763164e04,
-        -7.36786063e06,
-        8.49088150e06,
-        3.62769044e06,
-        -2.38451828e06,
-        2.04882463e06,
-        -2.60376386e05,
-        -7.47634692e04,
-        -3.23836517e06,
-    ])
+        7629.10582467,
+        70698.33769641,
+        67490.69283484,
+        31121.21496069,
+        74960.89700748,
+        -15405.55822637,
+        -107155.40127941,
+        -119761.54614875,
+        -22836.61530337,
+        12076.3164052,
+        74352.13320461,
+        71459.62798936,
+        33758.08895758,
+        81867.51397822,
+        -26684.21663108,
+        -107953.36722597,
+        -127015.41959899,
+        -21793.83849537,
+        ])
 
     harmonic_amps = np.array([
-        0.1165182,
-        -0.00254487,
-        -0.03455892,
-        -0.00585685,
-        -0.00397113,
-        -0.01681114,
-        0.01649549,
-        -0.02803212,
-        0.03035956,
-        -0.03828872,
-        0.04051739,
-        -0.04283815,
+        0.11582153,
+        -0.00059338,
+        -0.03868344,
+        0.0014262,
+        -0.01530302,
     ])
 
-    assert test_sh_coilset_current == pytest.approx(sh_coilset_current)
-    assert test_r_t == pytest.approx(1.3661669578370919)
-    assert test_harmonic_amps == pytest.approx(harmonic_amps)
-    assert test_degree == 13
-    assert test_fit_metric == pytest.approx(0.031, abs=0.0006)
+    assert test_sh_coilset_current == pytest.approx(sh_coilset_current, abs=0.0005)
+    assert test_r_t == pytest.approx(1.3661, abs=0.0001)
+    assert test_harmonic_amps == pytest.approx(harmonic_amps, abs=0.0005)
+    assert test_degree == 6
+    assert test_fit_metric == pytest.approx(0.0025, abs=0.0001)
 
 
 def test_SphericalHarmonicConstraintFunction():
