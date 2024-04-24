@@ -420,13 +420,13 @@ class PolyhedralPrismCurrentSource(
         alpha: float,
         beta: float,
         current: float,
+        *,
         bypass_endcap_error: bool | None = False,
         endcap_warning: bool | None = True,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
         self._origin = origin
-        if endcap_warning is False:
-            self._warning = False
+        self._warning = False
         length = np.linalg.norm(ds)
         self._halflength = 0.5 * length
         self._check_angle_values(alpha, beta, bypass_endcap_error, endcap_warning)
@@ -461,14 +461,6 @@ class PolyhedralPrismCurrentSource(
         Check that end-cap angles are acceptable.
         """
         if bypass_endcap_error is True:
-            if (endcap_warning is True) and (not np.isclose(alpha, beta)):
-                bluemira_warn(
-                    "Unequal end cap angles will result in result not being precise."
-                    " This inaccuracy will increase as the end cap angle"
-                    " discrepency increases."
-                )
-            elif (endcap_warning is False) and (not np.isclose(alpha, beta)):
-                self._warning = True
             if not (0 <= abs(alpha) < 0.5 * np.pi):
                 raise MagnetostaticsError(
                     f"{self.__class__.__name__} instantiation error: {alpha=:.3f}"
@@ -479,6 +471,14 @@ class PolyhedralPrismCurrentSource(
                     f"{self.__class__.__name__} instantiation error: {beta=:.3f}"
                     " is outside bounds of [0, 180°)."
                 )
+            if (endcap_warning is True) and (not np.isclose(alpha, beta)):
+                bluemira_warn(
+                    "Unequal end cap angles will result in result not being precise."
+                    " This inaccuracy will increase as the end cap angle"
+                    " discrepency increases."
+                )
+            elif (endcap_warning is False) and (not np.isclose(alpha, beta)):
+                self._warning = True
         else:
             if not np.isclose(alpha, beta):
                 raise MagnetostaticsError(

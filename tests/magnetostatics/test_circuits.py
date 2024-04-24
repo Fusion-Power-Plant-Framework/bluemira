@@ -441,6 +441,14 @@ class TestPolyhedral2DRing:
         np.testing.assert_allclose(Bz, Bz_coil, rtol=1e-3)
 
 
+class TestPolyhedralSourceGeneration:
+    def test_polyhedralprism_endcapwarning(self, caplog):
+        shape = PrincetonD().create_shape()
+        xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
+        circuit = ArbitraryPlanarPolyhedralXSCircuit(shape.discretize(30), xs, current=1)
+        assert len(caplog.records) == 1
+
+
 class TestArbitraryPlanarPolyhedralPFCoil:
     coordinates = make_circle(10).discretise(31)
     xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})

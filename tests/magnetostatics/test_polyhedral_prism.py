@@ -33,6 +33,49 @@ class TestPolyhedralInstantiation:
                 current=1,
             )
 
+    def test_diff_angle_warning(self, caplog):
+        PolyhedralPrismCurrentSource(
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            40,
+            35,
+            current=1,
+            bypass_endcap_error=True,
+        )
+        assert len(caplog.records) == 1
+
+    @pytest.mark.parametrize("angle", [54, 45.0001])
+    def test_angle_bounds(self, angle):
+        with pytest.raises(MagnetostaticsError):
+            PolyhedralPrismCurrentSource(
+                [10, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+                make_xs_from_bd(0.5, 0.5),
+                angle,
+                angle,
+                current=1,
+            )
+
+    @pytest.mark.parametrize(("angle1", "angle2"), [(10, 100), (100, 20)])
+    def test_angle_bounds_bypass(self, angle1, angle2):
+        with pytest.raises(MagnetostaticsError):
+            PolyhedralPrismCurrentSource(
+                [10, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+                make_xs_from_bd(0.5, 0.5),
+                angle1,
+                angle2,
+                current=1,
+                bypass_endcap_error=True,
+            )
+
 
 class TestPolyhedralMaths:
     same_angle_1 = (
