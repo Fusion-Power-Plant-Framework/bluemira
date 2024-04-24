@@ -21,7 +21,7 @@ from bluemira.geometry.face import BluemiraFace
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    
+
     from numpy import typing as npt
 
     from bluemira.geometry.placement import BluemiraPlacement
@@ -200,7 +200,7 @@ def z_plane(z: float):
 
 def calculate_plane_dir(
     start_point, end_point
-) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
+) -> tuple[BluemiraPlane, npt.NDArray[float]]:
     """
     Calculate the cutting plane and the direction of the cut from 2 points.
     Both points must lie on the RZ plane.

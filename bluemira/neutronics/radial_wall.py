@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import abc
 from dataclasses import dataclass
 from math import fsum
-from typing import TYPE_CHECKING, Callable, Iterable, Sequence, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy import typing as npt
@@ -21,6 +21,8 @@ from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
+
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.neutronics.make_pre_cell import PreCellArray
 
@@ -252,11 +254,11 @@ class CellWalls(abc.Sequence):
     def __len__(self) -> int:
         return self.cell_walls.__len__()
 
-    def __getitem__(self, index_or_slice) -> Union[npt.NDArray, float]:
+    def __getitem__(self, index_or_slice) -> npt.NDArray | float:
         """self[:] will return a copy of the index."""
         return self.cell_walls.__getitem__(index_or_slice)
 
-    def __setitem__(self, index_or_slice, new_coordinates: Union[npt.NDArray, float]):
+    def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
         """
         self[:, :, :] = ... can completely reset some coordinates.
         However, a full-reset should be avoided because we don't want to mess with the
@@ -305,7 +307,7 @@ class CellWalls(abc.Sequence):
         return self.cell_walls[:, 1]  # shape = (N+1, 2)
 
     def calculate_new_end_points(
-        self, lengths: Union[float, npt.NDArray[float]]
+        self, lengths: float | npt.NDArray[float]
     ) -> npt.NDArray:
         """
         Get the end points of each cell wall if they were changed to have the specified

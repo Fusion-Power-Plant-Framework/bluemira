@@ -11,7 +11,7 @@ files created by openmc.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterable, Sequence, Union
+from typing import TYPE_CHECKING
 
 import openmc
 from pps_isotropic.source import create_parametric_plasma_source
@@ -23,6 +23,8 @@ from bluemira.neutronics.neutronics_axisymmetric import create_ring_source
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import BlanketCellArray
     from bluemira.neutronics.params import (
@@ -44,7 +46,7 @@ class RunMode:
 
     def __init__(
         self,
-        cross_section_xml: Union[Path, str],
+        cross_section_xml: Path | str,
         cells: Iterable[openmc.Cell],
         material_lib: MaterialsLibrary,
         *,
@@ -89,7 +91,7 @@ class RunMode:
             self.settings.verbosity = 6
 
     def _set_tallies(
-        self, blanket_cell_array: BlanketCellArray, bodge_material_dict: Dict
+        self, blanket_cell_array: BlanketCellArray, bodge_material_dict: dict
     ):
         filter_list = filter_new_cells(bodge_material_dict, blanket_cell_array)
         _create_tallies_from_filters(*filter_list)
@@ -185,7 +187,7 @@ class SourceSimulation(RunMode):
         blanket_cell_array: BlanketCellArray,
         # We don't need the divertor cell array yet because
         # we aren't setting up tallies there.
-        bodge_material_dict: Dict,
+        bodge_material_dict: dict,
     ) -> None:
         """
         Break open the :class:`~bluemira.neutronics.params.PlasmaSourceParametersPPS`

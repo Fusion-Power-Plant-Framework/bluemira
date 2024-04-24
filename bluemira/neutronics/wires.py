@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections import abc
 from dataclasses import dataclass
-from typing import Iterable, List, NamedTuple, Optional, Sequence, Union
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from numpy import typing as npt
@@ -21,6 +21,9 @@ from numpy import typing as npt
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 
 class StraightLineInfo(NamedTuple):
@@ -48,9 +51,9 @@ class WireInfo:
     3. A copy of the wire itself
     """
 
-    key_points: Union[StraightLineInfo, CircleInfo]  # 2 points of xyz/ CircleInfo
-    tangents: Optional[Sequence[Iterable[float]]]  # 2 normalized directional vectors xyz
-    wire: Optional[BluemiraWire] = None
+    key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
+    tangents: Sequence[Iterable[float]] | None  # 2 normalized directional vectors xyz
+    wire: BluemiraWire | None = None
 
     @classmethod
     def from_2P(  # noqa: N802
@@ -68,16 +71,16 @@ class WireInfo:
 class WireInfoList(abc.Sequence):
     """A class to store info about a series of wires"""
 
-    def __init__(self, info_list: List[WireInfo]):
+    def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in zip(self[:-1], self[1:]):
+        for prev_wire, curr_wire in zip(self[:-1], self[1:], strict=False):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
                 raise GeometryError("Next wire must start where the previous wire stops")
 
     def __len__(self) -> int:
         return self.info_list.__len__()
 
-    def __getitem__(self, index_or_slice) -> Union[List[WireInfo], WireInfo]:
+    def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
         return self.info_list.__getitem__(index_or_slice)
 
     def __add__(self, other_info_list) -> WireInfoList:

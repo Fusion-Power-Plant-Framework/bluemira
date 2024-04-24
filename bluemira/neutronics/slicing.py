@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from itertools import chain
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -41,6 +41,8 @@ from bluemira.neutronics.wires import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from numpy import typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
@@ -104,7 +106,7 @@ class PanelsAndExteriorCurve:
 
     def get_bisection_line(
         self, index: int
-    ) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
+    ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         """Calculate the bisection line that separates two panels at breakpoint[i].
 
         Parameters
@@ -135,9 +137,9 @@ class PanelsAndExteriorCurve:
     def calculate_exterior_cut_points(
         self,
         snap_to_horizontal_angle: float,
-        starting_cut: Optional[npt.NDArray[float]],
-        ending_cut: Optional[npt.NDArray[float]],
-    ) -> List[npt.NDArray[float]]:
+        starting_cut: npt.NDArray[float] | None,
+        ending_cut: npt.NDArray[float] | None,
+    ) -> list[npt.NDArray[float]]:
         """
         Cut the exterior curve according to some specified criteria:
         In general, a line would be drawn from each panel break point outwards towards
@@ -212,7 +214,7 @@ class PanelsAndExteriorCurve:
 
     def execute_exterior_curve_cut(
         self, discretization_level: int, increasing=True
-    ) -> List[BluemiraWire]:
+    ) -> list[BluemiraWire]:
         """
         Cut the exterior curve into a series and store them in
         self.exterior_curve_segments.
@@ -257,8 +259,8 @@ class PanelsAndExteriorCurve:
     def make_quadrilateral_pre_cell_array(
         self,
         snap_to_horizontal_angle: float = 30.0,
-        starting_cut: Optional[npt.NDArray[float]] = None,
-        ending_cut: Optional[npt.NDArray[float]] = None,
+        starting_cut: npt.NDArray[float] | None = None,
+        ending_cut: npt.NDArray[float] | None = None,
         discretization_level: int = DISCRETIZATION_LEVEL,
     ) -> PreCellArray:
         """
@@ -356,22 +358,25 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
         curve_type = edge.Curve
 
         # Get the info about this segment of wire
-        if isinstance(curve_type, (cadapi.Part.Line, cadapi.Part.LineSegment)):
+        if isinstance(curve_type, cadapi.Part.Line | cadapi.Part.LineSegment):
             add_line(edge, _bmw_edge, current_start, current_end)
 
-        elif isinstance(curve_type, (cadapi.Part.ArcOfCircle, cadapi.Part.Circle)):
+        elif isinstance(curve_type, cadapi.Part.ArcOfCircle | cadapi.Part.Circle):
             add_circle(edge, _bmw_edge, current_start, current_end)
 
-        elif isinstance(curve_type, (cadapi.Part.BSplineCurve, cadapi.Part.BezierCurve)):
+        elif isinstance(curve_type, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
             sample_points = _bmw_edge.discretize(DISCRETIZATION_LEVEL)
             discretized_wire = make_polygon(sample_points, closed=False)
             for __bmw_edge, _start, _end in zip(
-                discretized_wire.edges, sample_points.T[:-1], sample_points.T[1:]
+                discretized_wire.edges,
+                sample_points.T[:-1],
+                sample_points.T[1:],
+                strict=False,
             ):
                 add_line(
                     __bmw_edge.boundary[0].OrderedEdges[0], __bmw_edge, _start, _end
                 )
-        elif isinstance(curve_type, (cadapi.Part.ArcOfEllipse, cadapi.Part.Ellipse)):
+        elif isinstance(curve_type, cadapi.Part.ArcOfEllipse | cadapi.Part.Ellipse):
             raise NotImplementedError("Conversion for ellipses are not available yet.")
             # TODO: implement this feature
         else:
@@ -432,7 +437,7 @@ def straight_lines_deviate_less_than(
     return deviate_less_than(info1.tangents[1], info2.tangents[0], threshold_degrees)
 
 
-def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> List[WireInfoList]:
+def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> list[WireInfoList]:
     """
     Break a wire up into several convex wires.
     Merge if they are almost collinear.
@@ -545,7 +550,7 @@ class DivertorWireAndExteriorCurve:
 
     def get_bisection_line(
         self, prev_index: int
-    ) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
+    ) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
         """
         Get the the line bisecting the x and the y, represented as origin and direction.
 
@@ -592,9 +597,9 @@ class DivertorWireAndExteriorCurve:
 
     def calculate_exterior_cut_points(
         self,
-        starting_cut: Optional[npt.NDArray[float]],
-        ending_cut: Optional[npt.NDArray[float]],
-    ) -> List[npt.NDArray[float]]:
+        starting_cut: npt.NDArray[float] | None,
+        ending_cut: npt.NDArray[float] | None,
+    ) -> list[npt.NDArray[float]]:
         """
         Cut the exterior curve up into N segments to match the N convex chunks of the
         divertor.
@@ -656,7 +661,7 @@ class DivertorWireAndExteriorCurve:
 
     def execute_exterior_curve_cut(
         self, discretization_level: int, increasing=False, reverse=True
-    ) -> List[WireInfoList]:
+    ) -> list[WireInfoList]:
         """
         Cut the exterior curve into a series and store them in
         self.exterior_curve_segments. Use the following table to decide whether the
@@ -702,7 +707,7 @@ class DivertorWireAndExteriorCurve:
             sample_coords_3d = [self.exterior_curve.value_at(i) for i in param_range]
             this_curve = []
             for start_point, end_point in zip(
-                sample_coords_3d[:-1], sample_coords_3d[1:]
+                sample_coords_3d[:-1], sample_coords_3d[1:], strict=False
             ):
                 this_curve.append(WireInfo.from_2P(start_point, end_point))
             self.exterior_curve_segments.append(WireInfoList(this_curve))
@@ -712,8 +717,8 @@ class DivertorWireAndExteriorCurve:
 
     def make_divertor_pre_cell_array(
         self,
-        starting_cut: Optional[npt.NDArray[float]] = None,
-        ending_cut: Optional[npt.NDArray[float]] = None,
+        starting_cut: npt.NDArray[float] | None = None,
+        ending_cut: npt.NDArray[float] | None = None,
         discretization_level: int = DISCRETIZATION_LEVEL,
     ):
         """

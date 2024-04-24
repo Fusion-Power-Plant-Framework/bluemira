@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import chain
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 import openmc
@@ -144,8 +144,8 @@ class SingleNullTokamak:
         self,
         preserve_volume: bool,
         snap_to_horizontal_angle: float = 45,
-        discretization_combo: Tuple[float, float] = (20, 4),
-    ) -> Tuple[PreCellArray, DivertorPreCellArray]:
+        discretization_combo: tuple[float, float] = (20, 4),
+    ) -> tuple[PreCellArray, DivertorPreCellArray]:
         """
         Parameters
         ----------
@@ -258,7 +258,7 @@ class SingleNullTokamak:
         material_dict,
         tokamak_dimensions: TokamakDimensions,
         control_id: bool = False,
-    ) -> Tuple[BlanketCellArray, DivertorCellArray, openmc.Cell]:
+    ) -> tuple[BlanketCellArray, DivertorCellArray, openmc.Cell]:
         """Make pre-cell arrays for the blanket and the divertor.
 
         Parameters

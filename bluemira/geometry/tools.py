@@ -1337,7 +1337,7 @@ def signed_distance_2D_polygon(
 
 
 def signed_distance(
-    origin: Union[BluemiraWire, Coordinates], target: Union[BluemiraWire, Coordinates]
+    origin: BluemiraWire | Coordinates, target: BluemiraWire | Coordinates
 ) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
@@ -1390,8 +1390,8 @@ def signed_distance(
 
 
 def raise_error_if_overlap(
-    origin: Union[BluemiraWire, Coordinates],
-    target: Union[BluemiraWire, Coordinates],
+    origin: BluemiraWire | Coordinates,
+    target: BluemiraWire | Coordinates,
     origin_name: str = "",
     target_name: str = "",
 ):

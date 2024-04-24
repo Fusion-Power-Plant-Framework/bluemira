@@ -139,18 +139,18 @@ class PlasmaSourceParameters:
 
     def __post_init__(self):
         """Check dimensionless variables are sensible."""
-        if self.peaking_factor < 1.0:  # noqa: PLR2004
+        if self.peaking_factor < 1.0:
             raise ValueError(
                 "Peaking factor (peak heat load/avg. heat load) "
                 "must be larger than 1, by definition."
             )
-        if self.aspect_ratio < 1.0:  # noqa: PLR2004
+        if self.aspect_ratio < 1.0:
             raise GeometryError(
                 "By construction, tokamak aspect ratio " "can't be smaller than 1."
             )
-        if self.elongation < 1.0:  # noqa: PLR2004
+        if self.elongation < 1.0:
             raise GeometryError("Elongation can't be smaller than 1")
-        if abs(self.triangularity) > 1.0:  # noqa: PLR2004
+        if abs(self.triangularity) > 1.0:
             # triangularity <0 is known as reversed/ negative triangularity.
             bluemira_warn(
                 "Triangularity with magnitude >1 implies that the difference"

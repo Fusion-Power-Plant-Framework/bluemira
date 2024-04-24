@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 from collections import abc
-from typing import List, Tuple, Union
 
 import numpy as np
 from numpy import typing as npt
@@ -47,7 +46,7 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
 
     def __init__(
         self,
-        interior_wire: Union[BluemiraWire, Coordinates],
+        interior_wire: BluemiraWire | Coordinates,
         exterior_wire: BluemiraWire,
     ):
         """
@@ -210,10 +209,10 @@ class PreCellArray(abc.Sequence):
         Volume of each pre-cell
     """
 
-    def __init__(self, list_of_pre_cells: List[PreCell]):
+    def __init__(self, list_of_pre_cells: list[PreCell]):
         """The list of pre-cells must be ajacent to each other."""
         self.pre_cells = list(list_of_pre_cells)
-        for this_cell, next_cell in zip(self[:-1], self[1:]):
+        for this_cell, next_cell in zip(self[:-1], self[1:], strict=False):
             # perform check that they are actually adjacent
             this_wall = (this_cell.vertex.exterior_end, this_cell.vertex.interior_start)
             next_wall = (next_cell.vertex.exterior_start, next_cell.vertex.interior_end)
@@ -245,7 +244,9 @@ class PreCellArray(abc.Sequence):
         if preserve_volume:
             cell_walls.optimize_to_match_individual_volumes(self.volumes)
         new_pre_cells = []
-        for i, (this_wall, next_wall) in enumerate(zip(cell_walls[:-1], cell_walls[1:])):
+        for i, (this_wall, next_wall) in enumerate(
+            zip(cell_walls[:-1], cell_walls[1:], strict=False)
+        ):
             exterior = make_polygon(
                 [
                     [this_wall[1, 0], next_wall[1, 0]],
@@ -291,7 +292,7 @@ class PreCellArray(abc.Sequence):
     def __len__(self) -> int:
         return self.pre_cells.__len__()
 
-    def __getitem__(self, index_or_slice) -> Union[List[PreCell], PreCell]:
+    def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
         return self.pre_cells.__getitem__(index_or_slice)
 
     def __add__(self, other_array) -> PreCellArray:
@@ -346,7 +347,7 @@ def ratio_of_distances(
 
 def find_equidistant_point(
     point1: npt.NDArray[float], point2: npt.NDArray[float], distance: float
-) -> Tuple[npt.NDArray[float], npt.NDArray[float]]:
+) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
     """Find the two (or 0) points on a 2D plane that are equidistant to each other.
 
     Parameters
@@ -532,7 +533,9 @@ class DivertorPreCell:
             shifted_pts.append(pt + step)
 
         info_list = []
-        for i, (new_start, new_end) in enumerate(zip(shifted_pts[:-1], shifted_pts[1:])):
+        for i, (new_start, new_end) in enumerate(
+            zip(shifted_pts[:-1], shifted_pts[1:], strict=False)
+        ):
             old_kp = self.interior_wire[i].key_points
             if isinstance(old_kp, StraightLineInfo):
                 info_list.append(WireInfo.from_2P(new_start, new_end))
@@ -551,10 +554,10 @@ class DivertorPreCell:
 class DivertorPreCellArray(abc.Sequence):
     """An array of Divertor pre-cells"""
 
-    def __init__(self, list_of_div_pc: List[DivertorPreCell]):
+    def __init__(self, list_of_div_pc: list[DivertorPreCell]):
         self.pre_cells = list(list_of_div_pc)
         # Perform check that they are adjacent
-        for prev_cell, curr_cell in zip(self[:-1], self[1:]):
+        for prev_cell, curr_cell in zip(self[:-1], self[1:], strict=False):
             if not np.allclose(
                 prev_cell.vertex.exterior_start,
                 curr_cell.vertex.exterior_end,
@@ -602,9 +605,7 @@ class DivertorPreCellArray(abc.Sequence):
     def __len__(self) -> int:
         return self.pre_cells.__len__()
 
-    def __getitem__(
-        self, index_or_slice
-    ) -> Union[List[DivertorPreCell], DivertorPreCell]:
+    def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
         return self.pre_cells.__getitem__(index_or_slice)
 
     def __add__(self, other_array) -> DivertorPreCellArray:
