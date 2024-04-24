@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -17,6 +17,7 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
@@ -132,6 +133,8 @@ class PlasmaSourceParameters:
     vertical_shift:
         how far (upwards) in the z direction is the centre of the plasma
         shifted compared to the geometric center of the poloidal cross-section.
+    plasma_physics_units:
+        Plasma_physics_units converted variables
     """
 
     major_radius: float  # [m]
@@ -143,6 +146,7 @@ class PlasmaSourceParameters:
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
+    plasma_physics_units: PlasmaSourceParameters | None = None
 
     def __post_init__(self):
         """Check dimensionless variables are sensible."""
@@ -171,18 +175,8 @@ class PlasmaSourceParameters:
         """
         return self.major_radius / self.aspect_ratio
 
-
-@dataclass(frozen=True)
-class PlasmaSourceParametersPPS(PlasmaSourceParameters):
-    """See PlasmaSourceParameters
-
-    Addition of plasma_physics_units converted variables
-    """
-
-    plasma_physics_units: PlasmaSourceParameters
-
     @classmethod
-    def from_si(cls, op_params: PlasmaSourceParameters):
+    def from_parameterframe(cls, params: ParameterFrame):
         """
         Convert from si units dataclass
         :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
@@ -197,12 +191,19 @@ class PlasmaSourceParametersPPS(PlasmaSourceParameters):
             "shaf_shift": ("m", "cm"),
             "vertical_shift": ("m", "cm"),
         }
-        op = asdict(op_params)
-        op_pps = op.copy()
-        for k, v in op_pps.items():
-            if k in conversion:
-                op_pps[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
+        param_convert_dict = {}
+        param_dict = {}
+        for k in fields(cls):
+            if k.name == "plasma_physics_units":
+                continue
+            val = getattr(params, k.name).value
+            param_dict[k.name] = val
+            if k.name in conversion:
+                param_convert_dict[k.name] = raw_uc(val, *conversion[k.name])
+            else:
+                param_convert_dict[k.name] = val
+
+        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))
 
 
 @dataclass

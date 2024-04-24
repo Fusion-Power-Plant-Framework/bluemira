@@ -25,7 +25,6 @@ from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
-    PlasmaSourceParametersPPS,
     TokamakGeometry,
     TokamakGeometryBase,
 )
@@ -153,7 +152,7 @@ class TBRHeatingSimulation:
         tokamak_geometry: TokamakGeometryBase,
     ):
         self.runtime_variables = runtime_variables
-        self.source_parameters = PlasmaSourceParametersPPS.from_si(source_parameters)
+        self.source_parameters = PlasmaSourceParameters.from_si(source_parameters)
         self.breeder_materials = breeder_materials
         self.tokamak_geometry = TokamakGeometry.from_si(tokamak_geometry)
 
