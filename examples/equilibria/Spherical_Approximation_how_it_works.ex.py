@@ -50,6 +50,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # ### Imports
 
 # %%
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.patches as patch
@@ -400,7 +401,6 @@ min_degree = 2
 acceptable = 0.05
 
 # Clip the grid in the z-direction to remove area below upper/lower-most coil
-from copy import deepcopy
 clipped_eq = deepcopy(eq)
 clip = (eq.grid.z[0, :] > np.min(eq.coilset.z)) & (
     eq.grid.z[0, :] < np.max(eq.coilset.z)

@@ -109,7 +109,7 @@ plt.show()
 # ### Always output
 #
 # - "sh_coil_names", names of the coils that can be used with SH approximation
-# - "coil_current_harmonic_amplitudes", SH coefficients/amplitudes for required number of degrees
+# - "coil_current_harmonic_amplitudes", SH amplitudes for required number of degrees
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 # - "fit_metric_value", fit metric achieved
 # - "approx_total_psi", the total psi obtained using the SH approximation
