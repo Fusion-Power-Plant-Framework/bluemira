@@ -33,8 +33,8 @@ from bluemira.neutronics.params import (
 
 
 def check_geometry(
-    plasma_source_params: Union[PlasmaSourceParameters, PlasmaSourceParametersPPS],
-    tokamak_geometry: Union[TokamakGeometryBase, TokamakGeometry],
+    plasma_source_params: PlasmaSourceParameters | PlasmaSourceParametersPPS,
+    tokamak_geometry: TokamakGeometryBase | TokamakGeometry,
 ) -> None:
     """Some basic geometry checks.
 

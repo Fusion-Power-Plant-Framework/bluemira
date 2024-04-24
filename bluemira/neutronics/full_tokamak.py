@@ -17,10 +17,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import openmc
 
-from bluemira.neutronics.constants import DTOL_CM, to_cm
+from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.neutronics.constants import to_cm
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     DivertorCellArray,
+    TFCoils,
     find_suitable_z_plane,
     flat_intersection,
     region_from_surface_series,
@@ -73,8 +75,10 @@ class CellStage(StageOfComputation):
 
     blanket: BlanketCellArray = None
     divertor: DivertorCellArray = None
+    tf_coils: TFCoils = None
+    central_solenoid: openmc.Cell = None
     plasma: openmc.Cell = None
-    air: openmc.Cell = None
+    ext_void: openmc.Cell = None
     universe_region: openmc.Region = None
 
     @property
@@ -82,8 +86,10 @@ class CellStage(StageOfComputation):
         """Get the list of all cells."""
         return (
             *chain.from_iterable((*self.blanket, *self.divertor)),
+            *self.tf_coils,
+            self.central_solenoid,
             self.plasma,
-            self.air,
+            self.ext_void,
         )
 
     def get_all_hollow_merged_cells(self):
@@ -189,6 +195,7 @@ class SingleNullTokamak:
         """
         Get the outermost coordinates of the tokamak cross-section from pre-cell array
         and divertor pre-cell array.
+        Runs clockwise, beginning at the inboard blanket-divertor joint.
         """
         return np.concatenate([
             pre_cell_array.get_exterior_vertices(),
@@ -197,13 +204,13 @@ class SingleNullTokamak:
 
     def get_exterior_vertices(self) -> npt.NDArray:
         """
-        Get the 2D coordinates of every point at the outer boundary of the tokamak's
+        Get the 3D coordinates of every point at the outer boundary of the tokamak's
         poloidal cross-section.
 
         Returns
         -------
         coordinates
-            array of shape (N+1+n*M, 2), where N = number of blanket pre-cells,
+            array of shape (N+1+n*M, 3), where N = number of blanket pre-cells,
             M = number of divertor pre-cells, n = discretization_level used when chopping
             up the divertor in
             :meth:`bluemira.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
@@ -215,14 +222,15 @@ class SingleNullTokamak:
 
     def get_interior_vertices(self) -> npt.NDArray:
         """
-        Get the 2D coordinates of every point at the interior boundary of the tokamak's
+        Get the 3D coordinates of every point at the interior boundary of the tokamak's
         poloidal cross-section
 
         Returns
         -------
         coordinates
-            array of shape (N+1+sum(number of interior points of the divertor), 2),
+            array of shape ((N+1)+sum(number of interior points of the divertor), 3),
             where N = number of blanket pre-cells, M = number of divertor pre-cells.
+            Runs clockwise, beginning at the inboard blanket-divertor joining point.
         """
         return np.concatenate([
             self.cell_array.blanket.get_interior_vertices(),
@@ -287,9 +295,9 @@ class SingleNullTokamak:
 
         self.cell_array = CellStage()
         self.set_universe_box(
-            z_min - DTOL_CM,
-            z_max + DTOL_CM,
-            r_max + DTOL_CM,
+            z_min - D_TOLERANCE,
+            z_max + D_TOLERANCE,
+            r_max + D_TOLERANCE,
             control_id=control_id,
         )
 
@@ -317,34 +325,79 @@ class SingleNullTokamak:
         )
 
         # make hte plasma cell.
-        self.make_plasma_air_cells(control_id)
+        self.material_dict = material_dict
+        self.make_cs_coils(
+            2,
+            1,
+            z_min - D_TOLERANCE,
+            z_max + D_TOLERANCE,
+        )
+        self.make_void_cells(control_id)
 
-        # self.make_cs_coils()
         # self.make_container()
 
         return (
             self.cell_array.blanket,
             self.cell_array.divertor,
+            self.cell_array.tf_coils,
+            self.cell_array.central_solenoid,
             self.cell_array.plasma,
-            self.cell_array.air,
+            self.cell_array.ext_void,
         )
 
     def make_cs_coils(
-        self, solenoid_inner_diameter: float, solenoid_outer_diameter: float
+        self, solenoid_radius: float, tf_coil_thick: float, z_min: float, z_max: float
     ):
-        """Make central solenoid cell."""
-        self.cell_array.central_solenoid = (
-            solenoid_inner_diameter,
-            solenoid_outer_diameter,
+        """
+        Make tf coil and the central solenoid. The former wraps around the latter.
+
+        Parameters
+        ----------
+        solenoid_radius:
+            Central solenoid radius
+        tf_coil_thick:
+            Thickness of the tf-coil, wrapped around the central solenoid
+        z_max:
+            z-coordinate of the the top z-plane shared by both cylinders
+            (cs and tf coil)
+        z_min
+            z-coordinate of the the bottom z-plane shared by both cylinders
+            (cs and tf coil)
+        """
+        solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
+        central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
+        bottom = find_suitable_z_plane(
+            z_min,
+            [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
+            name="Bottom of central solenoid",
         )
-        raise NotImplementedError("Method incomplete.")
+        top = find_suitable_z_plane(
+            z_max,
+            [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
+            name="Top of central solenoid",
+        )
+        self.cell_array.central_solenoid = openmc.Cell(
+            name="Central solenoid",
+            fill=self.material_dict["CentralSolenoid"],
+            region=+bottom & -top & -solenoid,
+        )
+        self.cell_array.tf_coils = TFCoils([
+            openmc.Cell(
+                name="TF coil (sheath around central solenoid)",
+                fill=self.material_dict["TFCoil"],
+                region=+bottom & -top & +solenoid & -central_tf_coil,
+            )
+        ])
+        return self.cell_array.central_solenoid, self.cell_array.tf_coils
 
     def make_container(self):
         """Make container"""
         self.cell_array.container = ...
         raise NotImplementedError("Method incomplete.")
 
-    def get_full_tokamak_region(self, control_id: bool = False) -> openmc.Regoin:
+    def get_blanket_and_divertor_outer_region(
+        self, control_id: bool = False
+    ) -> openmc.Regoin:
         """
         Get the entire tokamak's poloidal cross-section (everything inside
         self.data.outer_boundary) as an openmc.Region.
@@ -355,17 +408,43 @@ class SingleNullTokamak:
             _surfaces.extend(div_pre_cell_bottom)
         return region_from_surface_series(_surfaces, exterior_vertices, control_id)
 
-    def make_plasma_air_cells(self, control_id: bool = False):
-        """Make the plasma chamber and the outside air. This should be called AFTER
-        the blanket and divertor cells are created.
-        """
-        full_tokamak_region = self.get_full_tokamak_region(control_id)
-        self.cell_array.air = openmc.Cell(
-            region=self.cell_array.universe_region & ~full_tokamak_region,
-            fill=None,
-            name="Air void",
+    def get_blanket_and_divertor_inner_region(
+        self, control_id: bool = False
+    ) -> openmc.Region:
+        """Get the plasma chamber's poloidal cross-section"""
+        _blanket_interior_pts = self.cell_array.blanket.get_interior_vertices()
+        dividing_surface = surface_from_2points(
+            _blanket_interior_pts[0], _blanket_interior_pts[-1]
+        )
+        _blanket_surfaces = self.cell_array.blanket.get_interior_surfaces()
+        _blanket_surfaces.append(_blanket_interior_pts)
+        upper_region = region_from_surface_series(
+            _blanket_surfaces, _blanket_interior_pts, control_id
         )
 
+        div_surfaces = np.concatenate(self.cell_array.divertor.get_exterior_surfaces())
+        div_surfaces.insert(0, self.cell_array.divertor.poloidal_surfaces[0])
+        div_surfaces.append(self.cell_array.divertor.poloidal_surfaces[-1])
+        divertor_zone = self.cell_array.divertor.get_exclusion_zone(control_id)
+        return blanket_interior_region | divertor_outer_region & ~divertor_zone
+
+    def make_void_cells(self, control_id: bool = False):
+        """Make the plasma chamber and the outside ext_void. This should be called AFTER
+        the blanket and divertor cells are created.
+        """
+        full_tokamak_region = self.get_blanket_and_divertor_outer_region(control_id)
+        void_region = self.cell_array.universe_region & ~full_tokamak_region
+        if self.cell_array.tf_coils:
+            void_region = void_region & ~self.cell_array.tf_coils[0].region
+        if self.cell_array.central_solenoid:
+            void_region = void_region & ~self.cell_array.central_solenoid.region
+        self.cell_array.ext_void = openmc.Cell(
+            region=flat_intersection(void_region),
+            fill=None,
+            name="Exterior void",
+        )
+
+        # plasma_region = self.cell_array.blanket.get_interior_surfaces()
         plasma_region = flat_intersection([
             full_tokamak_region,
             # TODO: Can reduce the number of negations (the following ~blanket) by
@@ -392,8 +471,10 @@ class SingleNullTokamak:
         # outer_boundary_volume = to_cm3(
         #     polygon_revolve_signed_volume(exterior_vertices[:, ::2])
         # )
-        # air_volume = universe_volume - outer_boundary_volume
-        # self.cell_array.air.volume = air_volume
+        # tf_radius = self.cell_array.tf_coils[0].r
+        # tf_ext_volume = universe_height * np.pi * tf_radius**2  # cm^3
+        # ext_void_volume = universe_volume - outer_boundary_volume - tf_ext_volume
+        # self.cell_array.ext_void.volume = ext_void_volume
         # blanket_volumes = sum(
         #     cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
         # )
@@ -401,9 +482,9 @@ class SingleNullTokamak:
         #     cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
         # )
         # self.cell_array.plasma.volume = (
-        #     universe_volume - air_volume - blanket_volumes - divertor_volumes
+        #     universe_volume - ext_void_volume - blanket_volumes - divertor_volumes
         # )
-        return self.cell_array.plasma, self.cell_array.air
+        return self.cell_array.plasma, self.cell_array.ext_void
 
     def __repr__(self):
         """
