@@ -14,7 +14,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.error import ExternalOptError
+from bluemira.optimisation.error import OptimisationError
 from eudemo.blanket.panelling._opt_problem import PanellingOptProblem
 from eudemo.blanket.panelling._paneller import Paneller
 
@@ -171,7 +171,7 @@ class PanellingDesigner(Designer[np.ndarray]):
                 algorithm=self.opt_algorithm,
                 opt_conditions=self.opt_conditions,
             ).x
-        except ExternalOptError:
+        except OptimisationError:
             # Avoid 'more than iter SQP iterations' errors stopping the
             # design.
             # Ignoring the error here is OK, as the optimiser prints a
@@ -196,7 +196,7 @@ class PanellingDesigner(Designer[np.ndarray]):
                     algorithm=self.opt_algorithm,
                     opt_conditions=self.opt_conditions,
                 ).x
-            except ExternalOptError:
+            except OptimisationError:
                 x_opt = None
             iter_num += 1
         return x_opt, opt_problem, iter_num

@@ -24,7 +24,7 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
 )
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
-from bluemira.utilities.error import ExternalOptError
+from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
 if TYPE_CHECKING:
@@ -501,7 +501,7 @@ class PicardIterator:
         try:
             self.result = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
             self.coilset = self.result.coilset
-        except ExternalOptError:
+        except OptimisationError:
             self.coilset = self.store[-1]
 
     @property

@@ -33,16 +33,3 @@ class OptVariablesError(OptUtilitiesError):
     """
     Error for optimisation utilities.
     """
-
-
-class InternalOptError(OptUtilitiesError):
-    """
-    Error class for errors inside the optimisation algorithms.
-    """
-
-
-class ExternalOptError(OptUtilitiesError):
-    """
-    Error class for errors relating to the optimisation, but not originating
-    inside the optimisers.
-    """
