@@ -445,7 +445,7 @@ class TestPolyhedralSourceGeneration:
     def test_polyhedralprism_endcapwarning(self, caplog):
         shape = PrincetonD().create_shape()
         xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
-        circuit = ArbitraryPlanarPolyhedralXSCircuit(shape.discretize(30), xs, current=1)
+        circuit = ArbitraryPlanarPolyhedralXSCircuit(shape.discretise(30), xs, current=1)
         assert len(caplog.records) == 1
 
 
