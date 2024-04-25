@@ -12,7 +12,7 @@ inputs:
     default: ''
   with-artifact:
     required: false
-    type: bool
+    type: boolean
     default: true
 
 runs:
