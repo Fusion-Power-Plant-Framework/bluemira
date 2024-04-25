@@ -380,7 +380,7 @@ class OpenMCResult:
                 self.neutron_wall_load,
                 self.photon_heat_flux,
             ),
-            strict=False,
+            strict=True,
         ):
             ret_str = ret_str + f"\n{title}\n{self._tabulate(data)}"
 

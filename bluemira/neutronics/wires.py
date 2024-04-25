@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections import abc
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
@@ -73,7 +74,7 @@ class WireInfoList(abc.Sequence):
 
     def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in zip(self[:-1], self[1:], strict=False):
+        for prev_wire, curr_wire in pairwise(self):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
                 raise GeometryError("Next wire must start where the previous wire stops")
 

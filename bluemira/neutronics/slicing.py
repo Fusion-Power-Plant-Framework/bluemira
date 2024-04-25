@@ -8,7 +8,7 @@
 # ruff: noqa: PLR2004
 from __future__ import annotations
 
-from itertools import chain
+from itertools import chain, pairwise
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -371,7 +371,7 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
                 discretized_wire.edges,
                 sample_points.T[:-1],
                 sample_points.T[1:],
-                strict=False,
+                strict=True,
             ):
                 add_line(
                     __bmw_edge.boundary[0].OrderedEdges[0], __bmw_edge, _start, _end
@@ -705,10 +705,9 @@ class DivertorWireAndExteriorCurve:
                 param_range = param_range[::-1]
 
             sample_coords_3d = [self.exterior_curve.value_at(i) for i in param_range]
+
             this_curve = []
-            for start_point, end_point in zip(
-                sample_coords_3d[:-1], sample_coords_3d[1:], strict=False
-            ):
+            for start_point, end_point in pairwise(sample_coords_3d):
                 this_curve.append(WireInfo.from_2P(start_point, end_point))
             self.exterior_curve_segments.append(WireInfoList(this_curve))
             # TODO: `make_polygon` here shall be replaced when issue #3038 gets resolved.

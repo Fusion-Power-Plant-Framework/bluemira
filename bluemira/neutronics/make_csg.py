@@ -12,6 +12,7 @@ in this module are in SI (distrance:[m]) unless otherwise specified by the docst
 from __future__ import annotations
 
 from collections import abc
+from itertools import pairwise
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -19,7 +20,6 @@ import openmc
 from matplotlib import pyplot as plt  # for debugging
 from numpy import typing as npt
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
@@ -44,6 +44,8 @@ if TYPE_CHECKING:
         PreCellArray,
     )
     from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
+
+SHRINK_DISTANCE = 0.0005
 
 
 def is_monotonically_increasing(series):
@@ -158,12 +160,7 @@ def surface_from_2points(
         return hangar[_z]
     slope = dz / dr
     z_intercept = -slope * point1[0] + point1[-1]
-    cone = openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
-    if abs(slope) < 0.00033:
-        bluemira_warn(
-            f"cone:{cone.id} slope too shallow, might cause particles to leak!"
-        )
-    return cone
+    return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
 
 
 def surface_from_straight_line(
@@ -434,8 +431,7 @@ def choose_region_cone(
     # take one step towards the centroid = 0.1 cm
     step_dir = centroid - choice_points
     unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
-    step_size = 0.0005
-    choice_points += step_size * unit_step_dir
+    choice_points += SHRINK_DISTANCE * unit_step_dir
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
     middle = values > 0
@@ -445,8 +441,6 @@ def choose_region_cone(
     z_dist = z - surface.z0
     upper_cone = np.logical_and(~middle, z_dist > 0)
     lower_cone = np.logical_and(~middle, z_dist < 0)
-    if surface.id == 2050 and input("Detected 2050!") != "Pass":
-        raise RuntimeError
     # upper_not_cone = np.logical_and(middle, z_dist > 0)
     # lower_not_cone = np.logical_and(middle, z_dist < 0)
 
@@ -662,7 +656,7 @@ class BlanketCellStack(abc.Sequence):
         vv_cell: VacuumVesselCell
         """
         self.cell_stack = cell_stack
-        for int_cell, ext_cell in zip(cell_stack[:-1], cell_stack[1:], strict=False):
+        for int_cell, ext_cell in pairwise(cell_stack):
             if int_cell.exterior_surface is not ext_cell.interior_surface:
                 raise ValueError("Expected a contiguous stack of cells!")
 
@@ -814,9 +808,7 @@ class BlanketCellStack(abc.Sequence):
         # 2. Accumulate the corners of each cell.
         vertices = [
             Vertices(outer_pt[1], inner_pt[1], inner_pt[0], outer_pt[0]).to_3D()
-            for inner_pt, outer_pt in zip(
-                wall_cut_pts[:-1], wall_cut_pts[1:], strict=False
-            )
+            for inner_pt, outer_pt in pairwise(wall_cut_pts)
         ]
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
@@ -824,7 +816,7 @@ class BlanketCellStack(abc.Sequence):
         layer_too_thin = [
             (ccw_depth <= DTOL_CM and cw_depth <= DTOL_CM)
             for (ccw_depth, cw_depth) in zip(
-                np.diff(projection_ccw), np.diff(projection_cw), strict=False
+                np.diff(projection_ccw), np.diff(projection_cw), strict=True
             )
         ]  # shape (M,)
 
@@ -855,8 +847,6 @@ class BlanketCellStack(abc.Sequence):
         for k, points in enumerate(wall_cut_pts[1:]):  # k = range(0, M)
             if layer_too_thin[k]:
                 continue  # don't make any surface or cells.
-            # TODO: when writing test case: make sure I can create a stack with breeding
-            # zone thickness = 0 and it should still work.
             j = k + 1  # = range(1, M+1)
             if j > 1:
                 int_surf.name = (
@@ -1047,7 +1037,7 @@ class BlanketCellArray(abc.Sequence):
         )
         cell_array = []
         for i, (pre_cell, cw_wall) in enumerate(
-            zip(pre_cell_array, cell_walls[1:], strict=False)
+            zip(pre_cell_array, cell_walls[1:], strict=True)
         ):
             # right wall
             cw_surf = surface_from_2points(
@@ -1296,7 +1286,7 @@ class DivertorCellStack(abc.Sequence):
     def __init__(self, divertor_cell_stack: list[DivertorCell]):
         self.cell_stack = divertor_cell_stack
         # This check below is invalid because of how we subtract region instead.
-        # for int_cell, ext_cell in zip(self.cell_stack[:-1], self.cell_stack[1:]):
+        # for int_cell, ext_cell in pairwise(self.cell_stack):
         #     if int_cell.exterior_surfaces is not ext_cell.interior_surfaces:
         #         raise ValueError("Expected a contiguous stack of cells!")
 

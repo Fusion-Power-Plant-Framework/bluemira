@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from collections import abc
+from itertools import pairwise
 
 import numpy as np
 from numpy import typing as npt
@@ -212,7 +213,7 @@ class PreCellArray(abc.Sequence):
     def __init__(self, list_of_pre_cells: list[PreCell]):
         """The list of pre-cells must be ajacent to each other."""
         self.pre_cells = list(list_of_pre_cells)
-        for this_cell, next_cell in zip(self[:-1], self[1:], strict=False):
+        for this_cell, next_cell in pairwise(self):
             # perform check that they are actually adjacent
             this_wall = (this_cell.vertex.exterior_end, this_cell.vertex.interior_start)
             next_wall = (next_cell.vertex.exterior_start, next_cell.vertex.interior_end)
@@ -244,9 +245,7 @@ class PreCellArray(abc.Sequence):
         if preserve_volume:
             cell_walls.optimize_to_match_individual_volumes(self.volumes)
         new_pre_cells = []
-        for i, (this_wall, next_wall) in enumerate(
-            zip(cell_walls[:-1], cell_walls[1:], strict=False)
-        ):
+        for i, (this_wall, next_wall) in enumerate(pairwise(cell_walls)):
             exterior = make_polygon(
                 [
                     [this_wall[1, 0], next_wall[1, 0]],
@@ -533,9 +532,7 @@ class DivertorPreCell:
             shifted_pts.append(pt + step)
 
         info_list = []
-        for i, (new_start, new_end) in enumerate(
-            zip(shifted_pts[:-1], shifted_pts[1:], strict=False)
-        ):
+        for i, (new_start, new_end) in enumerate(pairwise(shifted_pts)):
             old_kp = self.interior_wire[i].key_points
             if isinstance(old_kp, StraightLineInfo):
                 info_list.append(WireInfo.from_2P(new_start, new_end))
@@ -557,7 +554,7 @@ class DivertorPreCellArray(abc.Sequence):
     def __init__(self, list_of_div_pc: list[DivertorPreCell]):
         self.pre_cells = list(list_of_div_pc)
         # Perform check that they are adjacent
-        for prev_cell, curr_cell in zip(self[:-1], self[1:], strict=False):
+        for prev_cell, curr_cell in pairwise(self):
             if not np.allclose(
                 prev_cell.vertex.exterior_start,
                 curr_cell.vertex.exterior_end,

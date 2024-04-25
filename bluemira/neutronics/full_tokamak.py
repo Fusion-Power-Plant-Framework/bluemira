@@ -18,7 +18,7 @@ import numpy as np
 import openmc
 
 from bluemira.geometry.constants import D_TOLERANCE
-from bluemira.neutronics.constants import to_cm
+from bluemira.neutronics.constants import to_cm, to_cm3
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     DivertorCellArray,
@@ -102,10 +102,10 @@ class CellStage(StageOfComputation):
         ]
 
 
-def reset_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
+def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
     """
-    Make openmc's surfaces' and cells' next IDs to be incremented to a pre-determined
-    levels
+    Make openmc's surfaces' and cells' next IDs to be incremented to the next
+    pre-determined interval.
     """
     openmc.Surface.next_id = (
         int(max(openmc.Surface.used_ids) / surface_step_size + 1) * surface_step_size + 1
@@ -313,7 +313,7 @@ class SingleNullTokamak:
         # change the cell and surface id register before making the divertor.
         # (ids will only count up from here.)
         if control_id:
-            reset_openmc_ids()
+            round_up_next_openmc_ids()
 
         self.cell_array.divertor = DivertorCellArray.from_divertor_pre_cell_array(
             self.pre_cell_array.divertor,
@@ -326,7 +326,9 @@ class SingleNullTokamak:
             # ID cannot be controlled at this point.
         )
 
-        # make hte plasma cell.
+        # make the plasma cell and the exterior void.
+        if control_id:
+            round_up_next_openmc_ids()
         self.material_dict = material_dict
         self.make_cs_coils(
             2,
@@ -335,7 +337,6 @@ class SingleNullTokamak:
             z_max + D_TOLERANCE,
         )
         self.make_void_cells(control_id)
-
         # self.make_container()
 
         return (
@@ -368,15 +369,15 @@ class SingleNullTokamak:
         """
         solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
         central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
-        bottom = find_suitable_z_plane(
-            z_min,
-            [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
-            name="Bottom of central solenoid",
-        )
         top = find_suitable_z_plane(
             z_max,
             [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
             name="Top of central solenoid",
+        )
+        bottom = find_suitable_z_plane(
+            z_min,
+            [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
+            name="Bottom of central solenoid",
         )
         self.cell_array.central_solenoid = openmc.Cell(
             name="Central solenoid",
@@ -390,6 +391,12 @@ class SingleNullTokamak:
                 region=+bottom & -top & +solenoid & -central_tf_coil,
             )
         ])
+        self.cell_array.central_solenoid.volume = (
+            (top.z0 - bottom.z0) * np.pi * solenoid.r**2
+        )
+        self.cell_array.tf_coils.volume = (
+            (top.z0 - bottom.z0) * np.pi * (central_tf_coil.r**2 - solenoid.r**2)
+        )
         return self.cell_array.central_solenoid, self.cell_array.tf_coils
 
     def make_container(self):
@@ -456,33 +463,44 @@ class SingleNullTokamak:
             fill=None,
             name="Plasma void",
         )
+        self.set_void_volumes()
 
-        # # set the volume as well. Not necessary/ used anywhere yet.
-        # exterior_vertices = self.get_exterior_vertices()
-        # universe_height = (
-        #     self.cell_array.universe_region[0].surface.z0
-        #     - self.cell_array.universe_region[1].surface.z0
-        # )
-        # universe_radius = self.cell_array.universe_region[2].surface.r
-        # universe_volume = universe_height * np.pi * universe_radius**2  # cm^3
-        # self.cell_array.universe_region.volume = universe_volume
-        # outer_boundary_volume = to_cm3(
-        #     polygon_revolve_signed_volume(exterior_vertices[:, ::2])
-        # )
-        # tf_radius = self.cell_array.tf_coils[0].r
-        # tf_ext_volume = universe_height * np.pi * tf_radius**2  # cm^3
-        # ext_void_volume = universe_volume - outer_boundary_volume - tf_ext_volume
-        # self.cell_array.ext_void.volume = ext_void_volume
-        # blanket_volumes = sum(
-        #     cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
-        # )
-        # divertor_volumes = sum(
-        #     cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
-        # )
-        # self.cell_array.plasma.volume = (
-        #     universe_volume - ext_void_volume - blanket_volumes - divertor_volumes
-        # )
         return self.cell_array.plasma, self.cell_array.ext_void
+
+    def set_void_volumes(self):
+        """
+        Sets the volume of the voids. Not necessary/ used anywhere yet.
+        """
+        exterior_vertices = self.get_exterior_vertices()
+        total_universe_volume = (
+            (
+                self.cell_array.universe_region[0].surface.z0  # top
+                - self.cell_array.universe_region[1].surface.z0
+            )  # bottom
+            * np.pi
+            * self.cell_array.universe_region[2].surface.r ** 2  # cylinder
+        )  # cm^3
+        self.cell_array.universe_region.volume = total_universe_volume
+
+        outer_boundary_volume = to_cm3(
+            polygon_revolve_signed_volume(exterior_vertices[:, ::2])
+        )
+        ext_void_volume = total_universe_volume - outer_boundary_volume
+        if self.cell_array.tf_coils:
+            for coil in self.cell_array.tf_coils:
+                ext_void_volume -= coil.volume
+        if self.cell_array.central_solenoid:
+            ext_void_volume -= self.cell_array.central_solenoid.volume
+        self.cell_array.ext_void.volume = ext_void_volume
+        blanket_volumes = sum(
+            cell.volume for cell in chain.from_iterable(self.cell_array.blanket)
+        )
+        divertor_volumes = sum(
+            cell.volume for cell in chain.from_iterable(self.cell_array.divertor)
+        )
+        self.cell_array.plasma.volume = (
+            outer_boundary_volume - blanket_volumes - divertor_volumes
+        )
 
     def __repr__(self):
         """

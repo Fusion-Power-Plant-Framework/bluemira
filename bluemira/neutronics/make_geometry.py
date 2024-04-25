@@ -738,7 +738,7 @@ def make_neutronics_geometry(
         (num_inboard_points, num_outboard_points),
         (("Inboard", "inb", True), ("Outboard", "outb", False)),
         (inb_points, outb_points),
-        strict=False,
+        strict=True,
     ):
         setattr(
             surfaces,
