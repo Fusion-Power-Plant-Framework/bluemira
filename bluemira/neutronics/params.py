@@ -302,7 +302,12 @@ class TokamakDimensions:
 
     @classmethod
     def from_tokamak_geometry_base(
-        cls, tokamak_geometry_base: TokamakGeometry, major_radius, divertor_thickness
+        cls,
+        tokamak_geometry_base: TokamakGeometry,
+        major_radius,
+        divertor_thickness,
+        tf_inner_radius,
+        tf_outer_radius,
     ):
         """Bodge method that can be deleted later once
         :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
@@ -322,7 +327,7 @@ class TokamakDimensions:
                 tokamak_geometry_base.outb_mnfld_thick,
             ),
             DivertorThickness(divertor_thickness),
-            ToroidalFieldCoilDimension(0, 0),
+            ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
         )
 
 

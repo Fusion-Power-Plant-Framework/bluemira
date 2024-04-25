@@ -74,10 +74,8 @@ _source_parameters = PlasmaSourceParameters(
 )
 
 tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
-    _tokamak_geometry, _source_parameters.major_radius, 0.1
+    _tokamak_geometry, _source_parameters.major_radius, 0.1, 4, 1
 )
-tokamak_dimensions.inboard.manifold = 0.02
-tokamak_dimensions.outboard.manifold = 0.2
 
 source_parameters = PlasmaSourceParametersPPS.from_si(_source_parameters)
 mat_lib = create_materials(_breeder_materials)
@@ -98,6 +96,9 @@ fw_panel_bp_list = [
     np.load("data/fw_panels_50_0.3.npy"),
     np.load("data/fw_panels_50_0.5.npy"),
 ]
+with open("data/vv_bndry_outer.json") as j:
+    vacuum_vessel_bmwire = deserialise_shape(json.load(j))
+
 panel_breakpoint_t = fw_panel_bp_list[0].T
 # MANUAL FIX of the coordinates, because the data we're given is not perfect.
 panel_breakpoint_t[0] = vector_intersect(
@@ -133,7 +134,9 @@ if __name__ == "__main__":  # begin computation
 
     elapsed("Before creating pre-cells")
 
-    generator = SingleNullTokamak(panel_breakpoint_t, divertor_bmwire, outer_boundary)
+    generator = SingleNullTokamak(
+        panel_breakpoint_t, divertor_bmwire, outer_boundary, vacuum_vessel_bmwire
+    )
     generator.make_pre_cell_arrays(preserve_volume=True, snap_to_horizontal_angle=45)
     mat_dict = {
         BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
