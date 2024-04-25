@@ -243,7 +243,7 @@ class PreCellArray(abc.Sequence):
                 )
         self.volumes = [pre_cell.half_solid.volume * 2 for pre_cell in self]
 
-    def straighten_exterior(self, preserve_volume: bool = False) -> PreCellArray:
+    def straighten_exterior(self, *, preserve_volume: bool = False) -> PreCellArray:
         """
         Turn the exterior curves of each cell into a straight edge.
         This is done at the PreCellArray level instead of the PreCell level to allow

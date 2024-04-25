@@ -8,7 +8,7 @@
 # ruff: noqa: PLR2004
 from __future__ import annotations
 
-from itertools import chain, pairwise
+from itertools import chain, pairwise, starmap
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -41,7 +41,7 @@ from bluemira.neutronics.wires import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence, Generator
+    from collections.abc import Generator, Sequence
 
     from numpy import typing as npt
 
@@ -200,7 +200,6 @@ class PanelsAndExteriorCurve:
         self.exterior_cut_points.append(
             get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
         )
-        return
 
     def calculate_cut_points(
         self,
@@ -258,8 +257,6 @@ class PanelsAndExteriorCurve:
         self.vv_cut_points, self.exterior_cut_points = [], []
 
         threshold_angle = np.deg2rad(snap_to_horizontal_angle)
-        if len(self.cut_points) > 0:
-            raise RuntimeError("self.cut_points be cleared first before reuse!")
 
         # initial cut point
 
@@ -328,7 +325,9 @@ class PanelsAndExteriorCurve:
         )
 
         for i, t_range in enumerate(
-            cut_curve(vv_cut_points, discretization_level, reverse=False)
+            cut_curve(
+                vv_cut_points, self.vv_interior, discretization_level, reverse=False
+            )
         ):
             vv_curve_segments.append(
                 self.approximate_curve(
@@ -339,7 +338,12 @@ class PanelsAndExteriorCurve:
             )
 
         for i, t_range in enumerate(
-            cut_curve(exterior_cut_points, discretization_level, reverse=False)
+            cut_curve(
+                exterior_cut_points,
+                self.vv_exterior,
+                discretization_level,
+                reverse=False,
+            )
         ):
             exterior_curve_segments.append(
                 self.approximate_curve(
@@ -392,7 +396,7 @@ class PanelsAndExteriorCurve:
             ending_cut = np.array([_end_r, self.interior_panels[-1][-1]])
 
         pre_cell_list = []
-        for i, exterior_curve_wire_segment in enumerate(
+        for i, (vv_segment, exterior_segment) in enumerate(
             zip(
                 self.execute_curve_cut(
                     discretization_level,
@@ -406,7 +410,7 @@ class PanelsAndExteriorCurve:
             _inner_wire = make_polygon(
                 self.interior_panels[i : i + 2][::-1].T, closed=False
             )
-            pre_cell_list.append(PreCell(_inner_wire, exterior_curve_wire_segment))
+            pre_cell_list.append(PreCell(_inner_wire, vv_segment, exterior_segment))
 
         return PreCellArray(pre_cell_list)
 
@@ -713,7 +717,6 @@ class DivertorWireAndExteriorCurve:
         self.exterior_cut_points.append(
             get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
         )
-        return
 
     def calculate_cut_points(
         self,
@@ -833,11 +836,13 @@ class DivertorWireAndExteriorCurve:
             starting_cut, ending_cut
         )
 
-        for t_range in cut_curve(vv_cut_points, discretization_level, reverse=True):
+        for t_range in cut_curve(
+            vv_cut_points, self.vv_interior, discretization_level, reverse=True
+        ):
             vv_curve_segments.append(self.approximate_curve(self.vv_interior, t_range))
 
         for t_range in cut_curve(
-            exterior_cut_points, discretization_level, reverse=True
+            exterior_cut_points, self.vv_exterior, discretization_level, reverse=True
         ):
             exterior_curve_segments.append(
                 self.approximate_curve(self.vv_exterior, t_range)
@@ -857,7 +862,7 @@ class DivertorWireAndExteriorCurve:
         This implementation shall be updated/replaced when issue #3038 gets resolved.
         """
         sample_coords_3d = [curve.value_at(t) for t in param_range]
-        this_curve = [WireInfo.from_2P(s, e) for s, e in pairwise(sample_coords_3d)]
+        this_curve = list(starmap(WireInfo.from_2P, pairwise(sample_coords_3d)))
         return WireInfoList(this_curve)
 
     def make_divertor_pre_cell_array(
@@ -895,7 +900,7 @@ class DivertorWireAndExteriorCurve:
             ending_cut = last_point + tangent
 
         pre_cell_list = []
-        for i, vv_wire_segment, exterior_wire_segment in enumerate(
+        for i, (vv_segment, exterior_segment) in enumerate(
             zip(
                 self.execute_curve_cut(discretization_level, starting_cut, ending_cut),
                 strict=True,
@@ -935,6 +940,8 @@ class DivertorWireAndExteriorCurve:
                 ccw_line.start_point = interior_wire.end_point
                 interior_wire.pop(-1)
 
-            pre_cell_list.append(DivertorPreCell(interior_wire, exterior_wire))
+            pre_cell_list.append(
+                DivertorPreCell(interior_wire, vv_segment, exterior_wire)
+            )
 
         return DivertorPreCellArray(pre_cell_list)

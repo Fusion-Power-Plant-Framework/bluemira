@@ -67,6 +67,7 @@ class RawData(StageOfComputation):
     panel_break_points: npt.NDArray
     divertor_wire: BluemiraWire
     boundary: BluemiraWire
+    vacuum_vessel_wire: BluemiraWire
 
 
 @dataclass
@@ -167,15 +168,12 @@ class SingleNullTokamak:
 
     def make_pre_cell_arrays(
         self,
-        preserve_volume: bool,
         snap_to_horizontal_angle: float = 45,
         discretization_combo: tuple[float, float] = (20, 4),
     ) -> tuple[PreCellArray, DivertorPreCellArray]:
         """
         Parameters
         ----------
-        preserve_volume:
-            see :meth:`~PreCellArray.straighten_exterior`
         snap_to_horizontal_angle:
             see :meth:`~PanelsAndExteriorCurve.make_quadrilateral_pre_cell_array`
         """
@@ -197,7 +195,7 @@ class SingleNullTokamak:
             )
         )
         self.pre_cell_array.blanket = self.pre_cell_array.blanket.straighten_exterior(
-            preserve_volume
+            preserve_volume=False
         )
         # divertor
         self.pre_cell_array.divertor = (
