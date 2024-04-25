@@ -33,23 +33,31 @@ jobs:
       run: echo base_sha=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
     - name: Download reference test report
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+      env:
+          FILE_NAME: "report-json_3.10_ubuntu-latest"
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir ref_report
           unzip report-json.zip -d ref_report
+        else
+            exit 1
         fi
     - name: Download PR test report
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+      env:
+          FILE_NAME: "report-json_3.10_ubuntu-latest"
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir PR_report
           unzip report-json.zip -d PR_report
+        else
+            exit 1
         fi
     - name: Generate warning report
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
