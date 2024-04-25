@@ -17,11 +17,12 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from bluemira.base.parameter_frame import ParameterFrame
 
 
 class BlanketLayers(Enum):
@@ -88,8 +89,6 @@ class OpenMCSimulationRuntimeParameters:
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
     parametric_source: bool = True
-    # number of particles used in the volume calculation.
-    volume_calc_particles: int = int(4e8)
 
 
 class BlanketType(Enum):

@@ -7,6 +7,7 @@
 
 import json
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from enum import Enum, auto
 from pathlib import Path
@@ -122,7 +123,7 @@ class OpenMCNeutronicsDesignerParams(ParameterFrame):
 
 # TODO add designer return type Designer[...]
 class OpenMCNeutronicsDesigner(Designer):
-    param_cls = OpenMCNeutronicsDesignerParams
+    param_cls: type[OpenMCNeutronicsDesignerParams] = OpenMCNeutronicsDesignerParams
     params: OpenMCNeutronicsDesignerParams
 
     def __init__(
@@ -188,24 +189,74 @@ class OpenMCNeutronicsDesigner(Designer):
 
         self.cells = self.generator.cell_array.cells
 
-    def _openmc_setup(self, run_mode, cross_section_xml, *, debug_mode: bool = False):
+    @property
+    def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
+        return self._source
+
+    @source.setter
+    def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
+        self._source = value
+
+    @contextmanager
+    def _setup(self, run_mode: OpenMCRunModes, *, debug_mode: bool = False):
         self.files_created = set()
+
         from openmc.config import config
 
-        config["cross_sections"] = cross_section_xml
+        config["cross_sections"] = self.build_config["cross_section_xml"]
 
-        self.settings = openmc.Settings(run_mode=run_mode, output={"summary": False})
+        self.settings = openmc.Settings(
+            run_mode=run_mode.value, output={"summary": False}
+        )
         self.universe = openmc.Universe(cells=self.cells)
         self.geometry = openmc.Geometry(self.universe)
         self.settings.verbosity = 10 if debug_mode else 6
+        try:
+            yield
+        finally:
+            self.settings.export_to_xml()
+            self.files_created.add("settings.xml")
+            self.geometry.export_to_xml()
+            self.files_created.add("geometry.xml")
+            self.mat_lib.export()
+            self.files_created.add("materials.xml")
 
-    def _run(
-        self, run_mode, cross_section_xml, *args, debug_mode: bool = False, **kwargs
-    ):
-        """Complete the run"""
-        # self._openmc_setup(run_mode, cross_section_xml, debug_mode=debug_mode)
+    def plot(self):
+        with self._setup(OpenMCRunModes.PLOT):
+            plot_width_0 = self.generator.data.outer_boundary.bounding_box.x_max * 2.1
+            plot_width_1 = self.generator.data.outer_boundary.bounding_box.z_max * 3.1
+            pixel_per_metre = 100
+            self.plot = openmc.Plot()
+            self.plot.basis = "xz"
+            self.plot.pixels = [
+                int(plot_width_0 * pixel_per_metre),
+                int(plot_width_1 * pixel_per_metre),
+            ]
+            self.plot.width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
+            self.plot_list = openmc.Plots([self.plot])
+
+            self.plot_list.export_to_xml()
+            self.files_created.add("plots.xml")
+        self._run()
+        self._cleanup()
+
+    def _run_setup(self):
+        with self._setup(OpenMCRunModes.RUN):
+            self.settings.particles = self.runtime_params.particles
+            self.settings.source = self.source(self.source_params)
+            self.settings.batches = int(self.runtime_params.batches)
+            self.settings.photon_transport = self.runtime_params.photon_transport
+            self.settings.electron_treatment = self.runtime_params.electron_treatment
+            self._set_tallies(self.blanket_cell_array, self.mat_dict)
+
+        self.statepoint_file = f"statepoint.{self.settings.batches}.h5"
+        self.files_created.add(self.statepoint_file)
+        self.files_created.add("tallies.out")
+
+    def _run(self, *args, debug_mode: bool = False, **kwargs):
+        """Run openmc"""
         _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
-            *args, debug_mode, **kwargs
+            *args, output=debug_mode, **kwargs
         )
 
     def _cleanup(self, *, debug_mode: bool = False):
@@ -233,65 +284,24 @@ class OpenMCNeutronicsDesigner(Designer):
 
         self.files_created = set()  # clear the set
 
-    @property
-    def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
-        return self._source
-
-    @source.setter
-    def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
-        self._source = value
-
     def run(self) -> OpenMCResult:
-        self._openmc_setup(
-            OpenMCRunModes.RUN.value, self.build_config["cross_section_xml"]
-        )
-
-        self.settings.particles = self.runtime_params.particles
-        self.settings.source = self.source(self.source_params)
-        self.settings.batches = int(self.runtime_params.batches)
-        self.settings.photon_transport = self.runtime_params.photon_transport
-        self.settings.electron_treatment = self.runtime_params.electron_treatment
-        self._set_tallies(self.blanket_cell_array, self.mat_dict)
-        self.statepoint_file = f"statepoint.{self.settings.batches}.h5"
-        self.files_created.add(self.statepoint_file)
-        self.files_created.add("tallies.out")
-        self.settings.export_to_xml()
-        self.files_created.add("settings.xml")
-        self.geometry.export_to_xml()
-        self.files_created.add("geometry.xml")
-        self.mat_lib.export()
-        self.files_created.add("materials.xml")
-        self._run(OpenMCRunModes.RUN.value, self.build_config["cross_section_xml"])
+        self._run_setup()
+        self._run()
         # src_rate [MW]
         # TODO: when issue #2858 is fixed,
         # it will change the definition of n_DT_reactions from [MW] to [W].
         # in which which case, we use source_parameters.reactor_power.
-        return OpenMCResult.from_run(
+        result = OpenMCResult.from_run(
             self.universe,
             n_DT_reactions(self.source_params.plasma_physics_units.reactor_power),
             self.statepoint_file,
         )
+        self._cleanup()
+        return result
 
     def run_and_plot(self) -> OpenMCResult:
         self.plot()
         return self.run()
-
-    def plot(self):
-        plot_width_0 = self.generator.data.outer_boundary.bounding_box.x_max * 2.1
-        plot_width_1 = self.generator.data.outer_boundary.bounding_box.z_max * 3.1
-        pixel_per_metre = 100
-        self.plot = openmc.Plot()
-        self.plot.basis = "xz"
-        self.plot.pixels = [
-            int(plot_width_0 * pixel_per_metre),
-            int(plot_width_1 * pixel_per_metre),
-        ]
-        self.plot.width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
-        self.plot_list = openmc.Plots([self.plot])
-
-        self.plot_list.export_to_xml()
-        self.files_created.add("plots.xml")
-        self._run(OpenMCRunModes.PLOT.value, self.build_config["cross_section_xml"])
 
     def _set_tallies(
         self, blanket_cell_array: BlanketCellArray, bodge_material_dict: dict
@@ -313,14 +323,21 @@ class OpenMCNeutronicsDesigner(Designer):
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
 
-        self.settings.volume_calculations = openmc.VolumeCalculation(
-            self.cells,
-            self.runtime_params.volume_calc_particles,
-            raw_uc(min_xyz, "m", "cm"),
-            raw_uc(max_xyz, "m", "cm"),
-        )
+        with self._setup(OpenMCRunModes.VOLUME):
+            self.settings.volume_calculations = openmc.VolumeCalculation(
+                self.cells,
+                self.runtime_params.particles,
+                raw_uc(min_xyz, "m", "cm"),
+                raw_uc(max_xyz, "m", "cm"),
+            )
+
         self.files_created.add("summary.h5")
         self.files_created.add("statepoint.1.h5")  # single batch
         self._run(OpenMCRunModes.VOLUME.value, self.build_config["cross_section_xml"])
-
-        return {cell.id: raw_uc(cell.volume, "cm^3", "m^3") for cell in self.cells}
+        self._cleanup()
+        return {
+            cell.id: raw_uc(
+                np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
+            )
+            for cell in self.cells
+        }

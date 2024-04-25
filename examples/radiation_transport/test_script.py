@@ -41,11 +41,9 @@ build_config = {
     "batches": 3,
     "photon_transport": True,
     "electron_treatment": "ttb",
-    "run_mode": "run",
+    "run_mode": "run_and_plot",
     "openmc_write_summary": False,
     "parametric_source": True,
-    # only used if stochastic_volume_calculation is turned on.
-    "volume_calc_particles": int(4e8),
     "blanket_type": BlanketType.HCPB,
 }
 
