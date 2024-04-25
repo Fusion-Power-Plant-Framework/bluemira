@@ -48,6 +48,7 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
     def __init__(
         self,
         interior_wire: BluemiraWire | Coordinates,
+        vv_wire: BluemiraWire,
         exterior_wire: BluemiraWire,
     ):
         """
@@ -60,6 +61,10 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
                 viewing the right hand side poloidal cross-section,
                 i.e. downwards if inboard, upwards if outboard.
             or: a single Coordinates point, representing a point on the interior-boundary
+
+        vv_wire
+
+            A wire representing the interface between the vacuum vessel and the blanket.
 
         exterior_wire
 
@@ -82,9 +87,16 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
             The solid created by revolving the outline around the z-axis by 180°.
         """
         self.interior_wire = interior_wire
+        self.vv_wire = vv_wire
         self.exterior_wire = exterior_wire
         raise_error_if_overlap(
-            self.exterior_wire, self.interior_wire, "interior wire", "exterior wire"
+            self.interior_wire, self.vv_wire, "interior wire", "vacuum vessel wire"
+        )
+        raise_error_if_overlap(
+            self.vv_wire, self.exterior_wire, "vacuum vessel wire", "exterior wire"
+        )
+        raise_error_if_overlap(
+            self.interior_wire, self.exterior_wire, "exterior wire", "interior wire"
         )
         ext_start, ext_end = exterior_wire.start_point(), exterior_wire.end_point()
         if isinstance(interior_wire, Coordinates):
@@ -108,13 +120,17 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
                 "cell-end cutting plane",
             )
         self.vertex = VerticesCoordinates(ext_end, int_start, int_end, ext_start).to_2D()
+        self.vv_points = np.array([
+            self.vv_wire.start_point(),
+            self.vv_wire.end_point(),
+        ])[:, ::2, 0]
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
         # Revolve only up to 180° for easier viewing
         self.half_solid = BluemiraSolid(revolve_shape(self.outline))
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot the outline in 2D"""
-        plot_2d(self.outline, *args, **kwargs)
+        plot_2d(self.outline, self.vv_wire, *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:
         """Plot the outline in 3D"""
@@ -259,7 +275,9 @@ class PreCellArray(abc.Sequence):
         return PreCellArray(new_pre_cells)
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d([pc.outline for pc in self], *args, **kwargs)
+        plot_2d(
+            [pc.outline for pc in self] + [pc.vv_wire for pc in self], *args, **kwargs
+        )
 
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
         show_cad([pc.half_solid for pc in self], *args, **kwargs)
@@ -424,6 +442,7 @@ class DivertorPreCell:
     def __init__(
         self,
         interior_wire: WireInfoList,
+        vv_wire: WireInfoList,
         exterior_wire: WireInfoList,
     ):
         """
@@ -447,6 +466,7 @@ class DivertorPreCell:
             Vertices[cadapi.apiVector] denoting the four corners of the divertor pre-cell
         """
         self.interior_wire = interior_wire
+        self.vv_wire = vv_wire
         self.exterior_wire = exterior_wire
         # cw_wall and ccw_wall are of type WireInfoLists!!
         self.cw_wall = WireInfoList([
@@ -467,7 +487,7 @@ class DivertorPreCell:
         )
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d([self.outline], *args, **kwargs)
+        plot_2d(self.outline, *args, **kwargs)
 
     @property
     def outline(self):
@@ -619,4 +639,8 @@ class DivertorPreCellArray(abc.Sequence):
         )
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d([dpc.outline for dpc in self], *args, **kwargs)
+        plot_2d(
+            [dpc.outline for dpc in self] + [dpc.vv_wire for dpc in self],
+            *args,
+            **kwargs,
+        )

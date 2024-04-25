@@ -48,11 +48,25 @@ class StageOfComputation:
 
 @dataclass
 class RawData(StageOfComputation):
-    """Data storage stage"""
+    """
+    Data storage stage
+
+    Parameters
+    ----------
+    panel_break_points:
+        The start and end points for each first-wall panel
+        (for N panels, the shape is (N+1, 2)).
+    divertor_wire:
+        The plasma-facing side of the divertor.
+    boundary:
+        interface between the inside of the vacuum vessel and the outside of the blanket
+    vacuum_vessel_wire:
+        The outer-boundary of the vacuum vessel
+    """
 
     panel_break_points: npt.NDArray
     divertor_wire: BluemiraWire
-    outer_boundary: BluemiraWire
+    boundary: BluemiraWire
 
 
 @dataclass
@@ -117,7 +131,7 @@ def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int 
 
 class SingleNullTokamak:
     """
-    Convert 3 things: panel_break_points, divertor_wire, and outer_boundary_wire into
+    Convert 3 things: panel_break_points, divertor_wire, and boundary_wire into
     pre-cell array, then cell-arrays.
     """
 
@@ -125,7 +139,8 @@ class SingleNullTokamak:
         self,
         panel_break_points: npt.NDArray,
         divertor_wire: BluemiraWire,
-        outer_boundary: BluemiraWire,
+        boundary: BluemiraWire,
+        vacuum_vessel_wire: BluemiraWire,
     ):
         """
         Parameters
@@ -135,17 +150,19 @@ class SingleNullTokamak:
         divertor_wire
             BluemiraWire (3D object) outlining the top (plasma facing side) of the
             divertor.
-        outer_boundary
+        boundary
             BluemiraWire (3D object) outlining the outside boundary of the vacuum vessel.
         """
-        self.data = RawData(panel_break_points, divertor_wire, outer_boundary)
+        self.data = RawData(
+            panel_break_points, divertor_wire, boundary, vacuum_vessel_wire
+        )
 
         self.cutting = CuttingStage()
         self.cutting.blanket = PanelsAndExteriorCurve(
-            self.data.panel_break_points, self.data.outer_boundary
+            self.data.panel_break_points, self.data.boundary, vacuum_vessel_wire
         )
         self.cutting.divertor = DivertorWireAndExteriorCurve(
-            self.data.divertor_wire, self.data.outer_boundary
+            self.data.divertor_wire, self.data.boundary, vacuum_vessel_wire
         )
 
     def make_pre_cell_arrays(
@@ -173,10 +190,10 @@ class SingleNullTokamak:
         ].end_point()  # TODO: Shall I extend this further outwards?
         self.pre_cell_array.blanket = (
             self.cutting.blanket.make_quadrilateral_pre_cell_array(
-                snap_to_horizontal_angle=snap_to_horizontal_angle,
+                discretization_level=discretization_combo[0],
                 starting_cut=first_point.xz.flatten(),
                 ending_cut=last_point.xz.flatten(),
-                discretization_level=discretization_combo[0],
+                snap_to_horizontal_angle=snap_to_horizontal_angle,
             )
         )
         self.pre_cell_array.blanket = self.pre_cell_array.blanket.straighten_exterior(
@@ -255,13 +272,13 @@ class SingleNullTokamak:
             surface_id=1000 if control_id else None,
             name="Universe top",
         )
-        outer_cylinder = openmc.ZCylinder(
+        universe_cylinder = openmc.ZCylinder(
             r=to_cm(r_max),
             surface_id=1001 if control_id else None,
             boundary_type="vacuum",
             name="Max radius of Universe",
         )
-        self.cell_array.universe_region = -top & +bottom & -outer_cylinder
+        self.cell_array.universe_region = -top & +bottom & -universe_cylinder
 
     def make_cell_arrays(
         self,
@@ -331,8 +348,14 @@ class SingleNullTokamak:
             round_up_next_openmc_ids()
         self.material_dict = material_dict
         self.make_cs_coils(
-            2,
-            1,
+            tokamak_dimensions.central_solenoid.inner_diameter / 2,
+            (
+                (
+                    tokamak_dimensions.central_solenoid.outer_diameter
+                    - tokamak_dimensions.central_solenoid.inner_diameter
+                )
+                / 2
+            ),
             z_min - D_TOLERANCE,
             z_max + D_TOLERANCE,
         )
@@ -409,7 +432,7 @@ class SingleNullTokamak:
     ) -> openmc.Regoin:
         """
         Get the entire tokamak's poloidal cross-section (everything inside
-        self.data.outer_boundary) as an openmc.Region.
+        self.data.boundary) as an openmc.Region.
         """
         exterior_vertices = self.get_exterior_vertices()
         _surfaces = list(self.cell_array.blanket.get_exterior_surfaces())
