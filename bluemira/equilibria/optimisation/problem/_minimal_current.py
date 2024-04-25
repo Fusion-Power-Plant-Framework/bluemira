@@ -10,7 +10,6 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
@@ -21,7 +20,7 @@ from bluemira.equilibria.optimisation.problem.base import (
 )
 from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
-from bluemira.utilities.plot_tools import save_figure, xz_plot_setup
+from bluemira.utilities.plot_tools import xz_plot_setup
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -92,38 +91,13 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
                 self.plot_name,
                 self.figure_folder,
                 self.gif,
-                self.diag_ops.split_psi_plots,
             )
-
-    def update_plot(self, i: int, plot_dict: Dict):
-        """
-        Plot equilibrium compared to a reference equilibrium
-        """
-        # Clear plot
-        # TODO find better way to do this?
-        if self.diag_ops.split_psi_plots is True:
-            for axs in plot_dict["ax"]:
-                axs.clear()
-        else:
-            ax = plot_dict["ax"]
-            ax.clear()
-
-        EquilibriumComparisonPlotter(
-            equilibrium=self.eq,
-            reference_eq=self.reference_eq,
-            ax=plot_dict["ax"],
-            split_psi_plots=self.diag_ops.split_psi_plots,
-            psi_diff=self.diag_ops.psi_diff,
-        )
-        plt.pause(PLT_PAUSE)
-
-        save_figure(
-            plot_dict["f"],
-            plot_dict["pname"] + str(i),
-            save=plot_dict["save"],
-            folder=plot_dict["folder"],
-            dpi=DPI_GIF,
-        )
+            self.comp_plot = EquilibriumComparisonPlotter(
+                equilibrium=self.eq,
+                reference_eq=self.reference_eq,
+                split_psi_plots=self.diag_ops.split_psi_plots,
+                psi_diff=self.diag_ops.psi_diff,
+            )
 
     def optimise(
         self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True
@@ -169,9 +143,17 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             opt_currents=opt_currents,
             current_scale=self.scale,
         )
+
         i = 0
         if self.plotting_enabled:
-            self.update_plot(i, self.plot_dict)
+            self.comp_plot.update_plot(
+                # equilibrium=self.eq,
+                # reference_eq=self.reference_eq,
+                split_psi_plots=self.diag_ops.split_psi_plots,
+                psi_diff=self.diag_ops.psi_diff,
+                i=i,
+                plot_dict=self.plot_dict,
+            )
             i += 1
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

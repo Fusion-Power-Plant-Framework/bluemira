@@ -171,25 +171,7 @@ def xz_plot_setup(
             "", subfolder="generated_data", allow_missing=not save
         )
 
-    if split_psi_plots:
-        f, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
-        ax[0].set_xlabel("$x$ [m]")
-        ax[0].set_ylabel("$z$ [m]")
-        ax[0].set_title("Coilset")
-        ax[0].set_aspect("equal")
-        ax[1].set_xlabel("$x$ [m]")
-        ax[1].set_ylabel("$z$ [m]")
-        ax[1].set_title("Plasma")
-        ax[1].set_aspect("equal")
-
-    else:
-        f, ax = plt.subplots()
-        ax.set_xlabel("$x$ [m]")
-        ax.set_ylabel("$z$ [m]")
-        ax.set_aspect("equal")
     return {
-        "f": f,
-        "ax": ax,
         "pname": pname,
         "folder": folder,
         "save": save,
