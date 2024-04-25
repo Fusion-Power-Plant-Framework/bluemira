@@ -45,7 +45,8 @@ if TYPE_CHECKING:
     )
     from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
 
-SHRINK_DISTANCE = 0.0005
+# Found to work by trial and error. I'm sorry.
+SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
 
 
 def is_monotonically_increasing(series):
@@ -425,13 +426,17 @@ def choose_region_cone(
         openmc.Region, specifically (openmc.Halfspace) or
         (openmc.Union of 2 openmc.Halfspaces), i.e. (openmc.Halfspace | openmc.Halfspace)
     """
-    # shrink to avoid floating point number comparison imprecision issues
+    # shrink to avoid floating point number comparison imprecision issues.
+    # Especially important when the choice point sits exactly on the surface.
     centroid = np.mean(choice_points, axis=0)
-    # choice_points = (choice_points + 0.01 * centroid) / 1.01
-    # take one step towards the centroid = 0.1 cm
     step_dir = centroid - choice_points
     unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
     choice_points += SHRINK_DISTANCE * unit_step_dir
+
+    # # Alternative
+    # choice_points = (choice_points + 0.01 * centroid) / 1.01
+    # take one step towards the centroid = 0.1 cm
+
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
     middle = values > 0
@@ -846,7 +851,8 @@ class BlanketCellStack(abc.Sequence):
 
         for k, points in enumerate(wall_cut_pts[1:]):  # k = range(0, M)
             if layer_too_thin[k]:
-                continue  # don't make any surface or cells.
+                # don't make any surface (or cell) if this cell has thickness == 0.
+                continue
             j = k + 1  # = range(1, M+1)
             if j > 1:
                 int_surf.name = (
