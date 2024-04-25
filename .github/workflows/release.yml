@@ -15,11 +15,11 @@ on:
         description: "New semantic version string"
         required: true
       draft:
-        type: bool
+        type: boolean
         description: "Create draft release"
         default: false
       open_dependencies_pr:
-        type: bool
+        type: boolean
         default: false
 
 jobs:
