@@ -183,12 +183,8 @@ class SingleNullTokamak:
         self.pre_cell_array = PreCellStage()
 
         # blanket
-        first_point = self.data.divertor_wire.edges[
-            0
-        ].start_point()  # TODO: Shall I extend this further outwards?
-        last_point = self.data.divertor_wire.edges[
-            -1
-        ].end_point()  # TODO: Shall I extend this further outwards?
+        first_point = self.data.divertor_wire.edges[0].start_point()
+        last_point = self.data.divertor_wire.edges[-1].end_point()
         self.pre_cell_array.blanket = (
             self.cutting.blanket.make_quadrilateral_pre_cell_array(
                 discretization_level=blanket_discretization,

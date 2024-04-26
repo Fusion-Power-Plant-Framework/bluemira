@@ -90,10 +90,20 @@ def cut_curve(
     # [0, 1] for an open wire, [0, 1) for a closed wire.
 
     # determine whether we're going up or down in parameter (t) space.
-    increasing_or_decreasing = np.sign(np.diff(cut_params))
-    if increasing_or_decreasing.sum() == 0:
-        raise GeometryError("Too few points/ points are too disordered!")
-    increasing = increasing_or_decreasing.sum() > 0
+    finite_difference = np.diff(cut_params)
+    if len(finite_difference) <= 2:
+        raise GeometryError(
+            "Too few points! I.e. discretization_level parameter too low. "
+            "Can't determine the cut direction!"
+        )
+    if (finite_difference <= 0).sum() <= 1:
+        # strictly monotonically increasing except for 1 wrap-around point
+        increasing = True
+    elif (finite_difference >= 0).sum() <= 1:
+        # strictly monotonically decreasing except for 1 wrap-around point
+        increasing = False
+    else:  # no discrenable pattern in the increase/decrease
+        raise GeometryError("Points are too disordered!")
 
     # generator function
     for alpha, beta in pairwise(cut_params):
@@ -774,14 +784,6 @@ class DivertorWireAndExteriorCurve:
         )
         self.add_cut_points(_plane, _dir)
 
-        # TODO: @ocean Add:
-        # 1. a check to make sure that the cut points are all monotonically decreasing
-        #    along the vacuum vessel curves.
-        # 2. When this check fails, allow a backup method of slicing up the divertor by
-        #    radiating lines out of the self.center_point to the break-points between
-        #    convex chunks, reaching the vv_interior and vv_exterior.
-        #    (after that method is added, we can delete the
-        #    interior_curve_turned_over_180 warning in break_wire_into_convex_chunks)
         return self.vv_cut_points, self.exterior_cut_points
 
     def execute_curve_cut(

@@ -173,11 +173,11 @@ class PreCell:
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot the outline in 2D"""
-        plot_2d([self.outline, self.vv_wire], *args, **kwargs)
+        return plot_2d([self.outline, self.vv_wire], *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:
         """Plot the outline in 3D"""
-        show_cad(self.half_solid, *args, **kwargs)
+        return show_cad(self.half_solid, *args, **kwargs)
 
     @property
     def cell_walls(self) -> CellWalls:
@@ -352,14 +352,16 @@ class PreCellArray(abc.Sequence):
                 )
             )
         return PreCellArray(new_pre_cells)
+        # ax = self.plot_2d(show=False)
+        # new_pca.plot_2d(ax=ax, show=True)
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d(
+        return plot_2d(
             [pc.outline for pc in self] + [pc.vv_wire for pc in self], *args, **kwargs
         )
 
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        show_cad([pc.half_solid for pc in self], *args, **kwargs)
+        return show_cad([pc.half_solid for pc in self], *args, **kwargs)
 
     def get_exterior_vertices(self) -> npt.NDArray:
         """
@@ -564,10 +566,10 @@ class DivertorPreCell:
         )
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d(self.outline, *args, **kwargs)
+        return plot_2d(self.outline, *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        show_cad(self.half_solid, *args, **kwargs)
+        return show_cad(self.half_solid, *args, **kwargs)
 
     @property
     def outline(self) -> BluemiraWire:
@@ -729,7 +731,7 @@ class DivertorPreCellArray(abc.Sequence):
         )
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        plot_2d(
+        return plot_2d(
             [dpc.outline for dpc in self]
             + [dpc.vv_wire.restore_to_wire() for dpc in self],
             *args,
@@ -737,4 +739,4 @@ class DivertorPreCellArray(abc.Sequence):
         )
 
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        show_cad([dpc.half_solid for dpc in self], *args, **kwargs)
+        return show_cad([dpc.half_solid for dpc in self], *args, **kwargs)
