@@ -449,12 +449,16 @@ def choose_region_cone(
     # upper_not_cone = np.logical_and(middle, z_dist > 0)
     # lower_not_cone = np.logical_and(middle, z_dist < 0)
 
+    # all of the following cases requires a plane to be made.
+    surface_id = 1000 + surface.id if control_id else None
+    while surface_id in openmc.Surface.used_ids:
+        surface_id += 1000
     if all(upper_cone):
         # everything in the upper cone.
         plane = find_suitable_z_plane(  # the highest we can cut is at the lowest z.
             to_m(surface.z0),
             to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
-            surface_id=1000 + surface.id if control_id else None,
+            surface_id=surface_id,
             name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & +plane
@@ -463,7 +467,7 @@ def choose_region_cone(
         plane = find_suitable_z_plane(  # the lowest we can cut is at the highest z.
             to_m(surface.z0),
             to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
-            surface_id=1000 + surface.id if control_id else None,
+            surface_id=surface_id,
             name=f"Ambiguity plane for cone {surface.id}",
         )
         return -surface & -plane
@@ -475,7 +479,7 @@ def choose_region_cone(
     plane = find_suitable_z_plane(  # In this rare case, make its own plane.
         to_m(surface.z0),
         to_m([surface.z0 + DTOL_CM, surface.z0 - DTOL_CM]),
-        surface_id=1000 + surface.id if control_id else None,
+        surface_id=surface_id,
         name=f"Ambiguity plane for cone {surface.id}",
     )
     if all(np.logical_or(upper_cone, middle)):
@@ -653,12 +657,13 @@ class BlanketCellStack(abc.Sequence):
         bounding box to confirm that the stack is linearly increasing/decreasing in xyz
         bounds.
 
-        Variables
+        Series of cells
         ---------
-        fw_cell: FirstWallCell
-        bz_cell: Optional[BreedingZoneCell]
-        mnfd_cell: ManifoldCell
-        vv_cell: VacuumVesselCell
+        SurfaceCell
+        FirstWallCell
+        BreedingZoneCell
+        ManifoldCell
+        VacuumVesselCell
         """
         self.cell_stack = cell_stack
         for int_cell, ext_cell in pairwise(cell_stack):
@@ -769,7 +774,9 @@ class BlanketCellStack(abc.Sequence):
         cw_surf
             An instance of :class:`openmc.surface.Surface`
         depth_series
-            a series of floats corresponding to the N-1 interfaces between the N layers.
+            a series of floats corresponding to the N-2 interfaces between the N-1
+            layers, whereas the N-th layer is the vacuum vessel (and the pre-cell has
+            already stored the thickness for that).
             Each float represents how deep into the blanket (i.e. how many [cm] into the
             first wall we need to drill, from the plasma facing surface) to hit that
             interface layer.
@@ -794,6 +801,7 @@ class BlanketCellStack(abc.Sequence):
             pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
             for interface_depth in depth_series
         )
+        wall_cut_pts.append(np.array([pre_cell.vv_point.start, pre_cell.vv_point.end]))  # noqa: FURB113
         wall_cut_pts.append(pre_cell.cell_walls.ends)
         wall_cut_pts = np.array(wall_cut_pts)  # shape (M+1, 2, 2)
         # 1.1 perform sanity check
@@ -843,7 +851,7 @@ class BlanketCellStack(abc.Sequence):
             surface_from_2points(
                 *wall_cut_pts[0],
                 surface_id=surface_ids[0],
-                name=f"plasma-facing surface of stack {i}",
+                name=f"plasma-facing surface of blanket cell stack {i}",
             )
             if pre_cell.interior_wire
             else None
@@ -857,7 +865,7 @@ class BlanketCellStack(abc.Sequence):
             if j > 1:
                 int_surf.name = (
                     f"{cell_type}-{BlanketLayers(j).name} "  # noqa: F821
-                    f"interface boundary of stack {i}"
+                    f"interface boundary of blanket cell stack {i}"
                 )
             cell_type = BlanketLayers(j).name
             ext_surf = surface_from_2points(
@@ -872,7 +880,7 @@ class BlanketCellStack(abc.Sequence):
                     int_surf,
                     vertices[k],  # up to M
                     cell_id=cell_ids[k],  # up to M
-                    name=cell_type + f" of stack {i}",
+                    name=cell_type + f" of blanket cell stack {i}",
                     fill=fill_dict[cell_type],
                 )
             )
@@ -978,7 +986,7 @@ class BlanketCellArray(abc.Sequence):
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
+    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
         Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
@@ -1049,7 +1057,7 @@ class BlanketCellArray(abc.Sequence):
             cw_surf = surface_from_2points(
                 *cw_wall,
                 surface_id=1 + 10 * (i + 1) if control_id else None,
-                name=f"Blanket cell wall of stack {i + 1}",
+                name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
             depth_series = get_depth_values(blanket_dimensions, cw_wall[0][0])
 
@@ -1222,29 +1230,21 @@ class DivertorCell(openmc.Cell):
         Make the outline into a BluemiraWire. This method is created solely for the
         purpose of calculating the volume.
 
-        There are computationally less intensive methods and more reliable methods of
-        getting the volume, but it will involve a lot more development time. So I've
-        settled on this one for now.
+        This is slow but it is accurate and works well.
         """
         if not hasattr(self, "_outline"):
-            e = self.exterior_wire.get_3D_coordinates()
-            i = self.interior_wire.get_3D_coordinates()
-            # draw the side walls
-            cw_int, ccw_int = i[0], i[-1]
-            cw_ext, ccw_ext = e[0], e[-1]
-            # if cw_ext is closer to cw_int than ccw_ext is to to cw_int, flip.
-            if np.linalg.norm(ccw_ext - cw_int) < np.linalg.norm(cw_ext - cw_int):
-                cw_ext, ccw_ext = ccw_ext, cw_ext
             wire_list = [
                 self.interior_wire.restore_to_wire(),
                 self.exterior_wire.restore_to_wire(),
             ]
             # make the connecting wires so that BluemiraWire doesn't moan about
-            # having a discontinuous wire.
-            if not np.array_equal(e[0], i[0]):
-                wire_list.insert(0, make_polygon([cw_ext, cw_int]))
-            if not np.array_equal(i[-1], e[-1]):
-                wire_list.insert(-1, make_polygon([ccw_int, ccw_ext]))
+            # having a discontinuous wires.
+            i = self.interior_wire.get_3D_coordinates()
+            e = self.exterior_wire.get_3D_coordinates()
+            if not np.array_equal(e[-1], i[0]):
+                wire_list.insert(0, make_polygon([e[-1], i[0]]))
+            if not np.array_equal(i[-1], e[0]):
+                wire_list.insert(-1, make_polygon([i[-1], e[0]]))
             self._outline = BluemiraWire(wire_list)
         return self._outline
 
@@ -1267,9 +1267,15 @@ class DivertorCell(openmc.Cell):
             self.interior_wire.get_3D_coordinates(),
         ])
 
-    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
+    def get_exclusion_zone(
+        self, *, away_from_plasma: bool = True, control_id: bool = False
+    ) -> openmc.Region:
         """
-        Get the exclusion zone AWAY from the plasma.
+        Get the exclusion zone of a semi-CONVEX cell.
+
+        This can only be validly used:
+            If away_from_plasma=True, then the interior side of the cell must be convex.
+            If away_from_plasma=False, then the exterior_side of the cell must be convex.
         Usage: next_cell_region = flat_intersection(..., ~this_cell.get_exclusion_zone())
 
         Parameters
@@ -1278,8 +1284,14 @@ class DivertorCell(openmc.Cell):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        _surfaces = [self.cw_surface, self.ccw_surface, *self.interior_surfaces]
-        return region_from_surface_series(_surfaces, self.get_all_vertices(), control_id)
+        _surfaces = [self.cw_surface, self.ccw_surface]
+        if away_from_plasma:
+            _surfaces.extend(self.interior_surfaces)
+        else:
+            _surfaces.extend(self.exterior_surfaces)
+        return region_from_surface_series(
+            _surfaces, self.get_all_vertices(), control_id=control_id
+        )
 
 
 class DivertorCellStack(abc.Sequence):
@@ -1381,58 +1393,93 @@ class DivertorCellStack(abc.Sequence):
         ccw_surface: openmc.Surface,
         material_dict: dict[str, openmc.Material],
         armour_thickness: float = 0,
+        stack_num: str | int = "",
     ) -> DivertorCellStack:
         """
         Create a stack from a single pre-cell and two poloidal surfaces sandwiching it.
+
+        Parameters
+        ----------
+        stack_num:
+            A string or number to identify the cell stack by.
         """
-        # this is horrible to read and I'm sorry.
-        # I'm trying to make cell_stack a 2-element list if armour_thickness>0,
-        # but a 1-element list if armour_thickness==0.
+        # I apologize that this is still hard to read.
+        # I'm trying to make cell_stack a 3-element list if armour_thickness>0,
+        # but a 2-element list if armour_thickness==0.
 
-        bulk_cell_ext_wire = divertor_pre_cell.exterior_wire
-        if armour_thickness > 0:
-            bulk_cell_int_wire = divertor_pre_cell.offset_interior_wire(armour_thickness)
-            face_int_wire = divertor_pre_cell.interior_wire
+        outermost_wire = divertor_pre_cell.exterior_wire
+        outermost_surf = surfaces_from_info_list(outermost_wire)
+        outer_wire = divertor_pre_cell.vv_wire
+        outer_surf = surfaces_from_info_list(outer_wire)
+        if armour_thickness == 0:
+            inner_wire = divertor_pre_cell.interior_wire
+            inner_surf = surfaces_from_info_list(inner_wire)
         else:
-            bulk_cell_int_wire = divertor_pre_cell.interior_wire
-
-        bulk_ext_surfaces = surfaces_from_info_list(bulk_cell_ext_wire)
-        bulk_int_surfaces = surfaces_from_info_list(bulk_cell_int_wire)
+            inner_wire = divertor_pre_cell.offset_interior_wire(armour_thickness)
+            inner_surf = surfaces_from_info_list(inner_wire)
+            innermost_wire = divertor_pre_cell.interior_wire
+            innermost_surf = surfaces_from_info_list(innermost_wire)
         cell_stack = [
+            # The middle cell is the only cell guaranteed to be convex.
+            # Therefore it is the first cell to be made.
             DivertorCell(
                 # surfaces: ext, cw, ccw, int.
-                bulk_ext_surfaces,
+                outer_surf,
                 cw_surface,
                 ccw_surface,
-                bulk_int_surfaces,
+                inner_surf,
                 # wires: ext, int.
-                bulk_cell_ext_wire,
-                bulk_cell_int_wire,
+                outer_wire,
+                inner_wire,
+                name=f"Bulk of divertor in diver cell stack {stack_num}",
                 fill=material_dict["Divertor"],
-            )
+            ),
         ]
-        if armour_thickness > 0:
-            face_int_surfaces = surfaces_from_info_list(face_int_wire)
-            # exterior of bulk becomes the interior of surface cell.
-            face_cell = DivertorCell(
+        cell_stack.append(
+            DivertorCell(
                 # surfaces: ext, cw, ccw, int.
-                # Same ext surfaces as before.
-                # It'll be handled by subtractive_region later.
-                bulk_ext_surfaces,
+                outermost_surf,
                 cw_surface,
                 ccw_surface,
-                face_int_surfaces,
+                inner_surf,
                 # wires: ext, int.
-                bulk_cell_int_wire,
-                face_int_wire,
-                # subtract away everything in the first cell.
-                subtractive_region=cell_stack[0].get_exclusion_zone(),
-                fill=material_dict["DivertorSurface"],
+                outermost_wire,
+                outer_wire.reverse(),
+                subtractive_region=cell_stack[0].get_exclusion_zone(
+                    away_from_plasma=False
+                ),
+                name="Vacuum Vessel behind the divertor in divertor cell stack"
+                f"{stack_num}",
+                fill=material_dict["VacuumVessel"],
             )
-            cell_stack.insert(0, face_cell)
-            # UNFORTUNATELY this does mean that in this cell stack, the INTERIOR cell
-            # would have the smaller of the 2 IDs. (id.cell[1] - id.cell[0] = -1
-            # instead of 1.)
+        )
+        # Unfortunately, this does mean that the vacuum vessel has a larger ID than the
+        # divertor cassette.
+        if armour_thickness > 0:
+            # exterior of bulk becomes the interior of surface cell.
+            cell_stack.insert(
+                0,
+                DivertorCell(
+                    # surfaces: ext, cw, ccw, int.
+                    # Same ext surfaces as before.
+                    # It'll be handled by subtractive_region later.
+                    outer_surf,
+                    cw_surface,
+                    ccw_surface,
+                    innermost_surf,
+                    # wires: ext, int.
+                    inner_wire.reverse(),
+                    innermost_wire,
+                    # subtract away everything in the first cell.
+                    name=f"Divertor armour in divertor cell stack {stack_num}",
+                    subtractive_region=cell_stack[0].get_exclusion_zone(
+                        away_from_plasma=True
+                    ),
+                    fill=material_dict["DivertorSurface"],
+                ),
+            )
+            # again, unfortunately, this does mean that the surface armour cell has the
+            # largest ID.
         return cls(cell_stack)
 
 
@@ -1516,7 +1563,7 @@ class DivertorCellArray(abc.Sequence):
             stack.interior_wire.get_3D_coordinates() for stack in self
         ])
 
-    def get_exclusion_zone(self, control_id: bool = False) -> openmc.Region:
+    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
         Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
@@ -1529,7 +1576,10 @@ class DivertorCellArray(abc.Sequence):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        return openmc.Union([stack[0].get_exclusion_zone(control_id) for stack in self])
+        return openmc.Union([
+            stack[0].get_exclusion_zone(away_from_plasma=True, control_id=control_id)
+            for stack in self
+        ])
 
     @classmethod
     def from_divertor_pre_cell_array(
@@ -1578,7 +1628,12 @@ class DivertorCellArray(abc.Sequence):
                 ccw_surf = surface_from_straight_line(dpc.ccw_wall[-1].key_points)
             stack_list.append(
                 DivertorCellStack.from_divertor_pre_cell(
-                    dpc, cw_surf, ccw_surf, material_dict, divertor_thickness.surface
+                    dpc,
+                    cw_surf,
+                    ccw_surf,
+                    material_dict,
+                    divertor_thickness.surface,
+                    i + 1,
                 )
             )
             cw_surf = ccw_surf

@@ -29,6 +29,7 @@ from bluemira.neutronics.make_csg import (
     region_from_surface_series,
     surface_from_2points,
 )
+from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -169,7 +170,8 @@ class SingleNullTokamak:
     def make_pre_cell_arrays(
         self,
         snap_to_horizontal_angle: float = 45,
-        discretization_combo: tuple[float, float] = (20, 4),
+        blanket_discretization: int = 10,
+        divertor_discretization: int = 5,
     ) -> tuple[PreCellArray, DivertorPreCellArray]:
         """
         Parameters
@@ -188,7 +190,7 @@ class SingleNullTokamak:
         ].end_point()  # TODO: Shall I extend this further outwards?
         self.pre_cell_array.blanket = (
             self.cutting.blanket.make_quadrilateral_pre_cell_array(
-                discretization_level=discretization_combo[0],
+                discretization_level=blanket_discretization,
                 starting_cut=first_point.xz.flatten(),
                 ending_cut=last_point.xz.flatten(),
                 snap_to_horizontal_angle=snap_to_horizontal_angle,
@@ -200,7 +202,7 @@ class SingleNullTokamak:
         # divertor
         self.pre_cell_array.divertor = (
             self.cutting.divertor.make_divertor_pre_cell_array(
-                discretization_level=discretization_combo[1]
+                discretization_level=divertor_discretization
             )
         )
         return self.pre_cell_array.blanket, self.pre_cell_array.divertor
@@ -357,7 +359,7 @@ class SingleNullTokamak:
             z_min - D_TOLERANCE,
             z_max + D_TOLERANCE,
         )
-        self.make_void_cells(control_id)
+        self.make_void_cells(control_id=control_id)
         # self.make_container()
 
         return (
@@ -415,7 +417,7 @@ class SingleNullTokamak:
         self.cell_array.central_solenoid.volume = (
             (top.z0 - bottom.z0) * np.pi * solenoid.r**2
         )
-        self.cell_array.tf_coils.volume = (
+        self.cell_array.tf_coils[0].volume = (
             (top.z0 - bottom.z0) * np.pi * (central_tf_coil.r**2 - solenoid.r**2)
         )
         return self.cell_array.central_solenoid, self.cell_array.tf_coils
@@ -426,8 +428,8 @@ class SingleNullTokamak:
         raise NotImplementedError("Method incomplete.")
 
     def get_blanket_and_divertor_outer_region(
-        self, control_id: bool = False
-    ) -> openmc.Regoin:
+        self, *, control_id: bool = False
+    ) -> openmc.Region:
         """
         Get the entire tokamak's poloidal cross-section (everything inside
         self.data.boundary) as an openmc.Region.
@@ -439,7 +441,7 @@ class SingleNullTokamak:
         return region_from_surface_series(_surfaces, exterior_vertices, control_id)
 
     def get_blanket_and_divertor_inner_region(
-        self, control_id: bool = False
+        self, *, control_id: bool = False
     ) -> openmc.Region:
         """Get the plasma chamber's poloidal cross-section"""
         _blanket_interior_pts = self.cell_array.blanket.get_interior_vertices()
@@ -460,14 +462,18 @@ class SingleNullTokamak:
             _div_surfaces, self.cell_array.divertor.get_exterior_vertices(), control_id
         )
 
-        divertor_zone = self.cell_array.divertor.get_exclusion_zone(control_id)
+        divertor_zone = self.cell_array.divertor.get_exclusion_zone(
+            control_id=control_id
+        )
         return flat_union([plasma, exhaust_including_divertor]) & ~divertor_zone
 
-    def make_void_cells(self, control_id: bool = False):
+    def make_void_cells(self, *, control_id: bool = False):
         """Make the plasma chamber and the outside ext_void. This should be called AFTER
         the blanket and divertor cells are created.
         """
-        full_tokamak_region = self.get_blanket_and_divertor_outer_region(control_id)
+        full_tokamak_region = self.get_blanket_and_divertor_outer_region(
+            control_id=control_id
+        )
         void_region = self.cell_array.universe_region & ~full_tokamak_region
         if self.cell_array.tf_coils:
             void_region = void_region & ~self.cell_array.tf_coils[0].region
@@ -480,7 +486,7 @@ class SingleNullTokamak:
         )
 
         self.cell_array.plasma = openmc.Cell(
-            region=self.get_blanket_and_divertor_inner_region(control_id),
+            region=self.get_blanket_and_divertor_inner_region(control_id=control_id),
             fill=None,
             name="Plasma void",
         )

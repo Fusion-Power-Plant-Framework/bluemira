@@ -26,7 +26,12 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.radial_wall import CellWalls, Vertices, VerticesCoordinates
+from bluemira.neutronics.radial_wall import (
+    CellWalls,
+    VacuumVesselPointsCoordinates,
+    Vertices,
+    VerticesCoordinates,
+)
 from bluemira.neutronics.wires import (
     CircleInfo,
     StraightLineInfo,
@@ -38,7 +43,7 @@ CCW_90 = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
 CW_90 = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
 
 
-class PreCell:  # TODO: Rename this as BlanketPreCell
+class PreCell:
     """
     A pre-cell is the BluemiraWire outlining the reactor cross-section
     BEFORE they have been simplified into straight-lines.
@@ -99,6 +104,7 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
             self.interior_wire, self.exterior_wire, "exterior wire", "interior wire"
         )
         ext_start, ext_end = exterior_wire.start_point(), exterior_wire.end_point()
+        vv_start, vv_end = vv_wire.start_point(), vv_wire.end_point()
         if isinstance(interior_wire, Coordinates):
             int_start = int_end = interior_wire
             self._inner_curve = make_polygon(
@@ -120,17 +126,54 @@ class PreCell:  # TODO: Rename this as BlanketPreCell
                 "cell-end cutting plane",
             )
         self.vertex = VerticesCoordinates(ext_end, int_start, int_end, ext_start).to_2D()
-        self.vv_points = np.array([
-            self.vv_wire.start_point(),
-            self.vv_wire.end_point(),
-        ])[:, ::2, 0]
+        self.vv_point = VacuumVesselPointsCoordinates(vv_start, vv_end).to_2D()
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
-        # Revolve only up to 180° for easier viewing
-        self.half_solid = BluemiraSolid(revolve_shape(self.outline))
+
+    @property
+    def half_solid(self) -> BluemiraSolid:
+        """
+        Create the 180° revolved shape on demand only.
+        Revolved 180° instead of 360° for easier viewing
+        """
+        if not hasattr(self, "_half_solid"):
+            self._half_solid = BluemiraSolid(revolve_shape(self.outline))
+        return self._half_solid
+
+    @property
+    def blanket_outline(self) -> BluemiraWire:
+        """
+        Create the outline of the blanket, i.e. the part excluding the vacuum vessel.
+        """
+        if not hasattr(self, "_blanket_outline"):
+            vv_start, vv_end = self.vv_wire.start_point(), self.vv_wire.end_point()
+            if isinstance(self.interior_wire, Coordinates):
+                in_start = in_end = self.interior_wire
+                _inner_curve = make_polygon(
+                    np.array([vv_end, self.interior_wire, vv_start]).T, closed=False
+                )
+            else:
+                in_start = self.interior_wire.start_point()
+                in_end = self.interior_wire.end_point()
+                _out2in = make_polygon(np.array([vv_end, in_start]).T, closed=False)
+                _in2out = make_polygon(np.array([in_end, vv_start]).T, closed=False)
+                _inner_curve = BluemiraWire([
+                    _out2in,
+                    self.interior_wire,
+                    _in2out,
+                ])
+            self._blanket_outline = BluemiraWire([self.vv_wire, _inner_curve])
+        return self._blanket_outline
+
+    @property
+    def blanket_half_solid(self) -> float:
+        """Get the volume of the blanket"""
+        if not hasattr(self, "_blanket_half_solid"):
+            self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
+        return self._blanket_half_solid
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot the outline in 2D"""
-        plot_2d(self.outline, self.vv_wire, *args, **kwargs)
+        plot_2d([self.outline, self.vv_wire], *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:
         """Plot the outline in 3D"""
@@ -241,7 +284,22 @@ class PreCellArray(abc.Sequence):
                     "Adjacent pre-cells are expected to have matching"
                     f"corners; but instead we have {this_wall}!={next_wall}."
                 )
-        self.volumes = [pre_cell.half_solid.volume * 2 for pre_cell in self]
+        self.cell_walls = CellWalls.from_pre_cell_array(self)
+        # TODO: assert inside and outside are both convex hulls. Useful candidate classes
+        # /functions: bluemira.geometry.tools::ConvexHull/scipy.spatial::ConvexHull
+
+    @property
+    def volumes(self) -> tuple[float]:
+        """Create the iterable of volumes on demand."""
+        if not hasattr(self, "_volumes"):
+            # Immutable property, hence wrapped in tuple.
+            volume_list = []
+            for pre_cell in self:
+                blanket_volume = pre_cell.blanket_half_solid.volume * 2
+                vv_volume = pre_cell.half_solid.volume * 2 - blanket_volume
+                volume_list.append((blanket_volume, vv_volume))
+            self._volumes = tuple(volume_list)
+        return self._volumes
 
     def straighten_exterior(self, *, preserve_volume: bool = False) -> PreCellArray:
         """
@@ -257,21 +315,42 @@ class PreCellArray(abc.Sequence):
             If True, increase the length of the cut lines appropriately to compensate for
             the volume loss due to the straight line approximation.
         """
-        cell_walls = CellWalls.from_pre_cell_array(self)
+        exterior_walls_copy = self.cell_walls.copy()
+        interior_walls_copy = CellWalls.from_pre_cell_array_vv(self)
         if preserve_volume:
-            cell_walls.optimize_to_match_individual_volumes(self.volumes)
+            blanket_volumes, vv_volumes = np.array(self.volumes).T
+            total_volumes = blanket_volumes + vv_volumes
+            interior_walls_copy.optimize_to_match_individual_volumes(blanket_volumes)
+            exterior_walls_copy.optimize_to_match_individual_volumes(total_volumes)
         new_pre_cells = []
-        for i, (this_wall, next_wall) in enumerate(pairwise(cell_walls)):
-            exterior = make_polygon(
+        for i in range(len(self)):
+            j = i + 1
+            straightened_vv_interior = make_polygon(
                 [
-                    [this_wall[1, 0], next_wall[1, 0]],
+                    [interior_walls_copy[i][1, 0], interior_walls_copy[j][1, 0]],
                     [0, 0],
-                    [this_wall[1, 1], next_wall[1, 1]],
+                    [interior_walls_copy[i][1, 1], interior_walls_copy[j][1, 1]],
+                ],  # fill it back up to 3D to make the polygon
+                label="Straight edge approximation of the interior of the vacuum vessel "
+                f"at pre-cell {i}",
+                closed=False,
+            )
+            straightened_exterior = make_polygon(
+                [
+                    [exterior_walls_copy[i][1, 0], exterior_walls_copy[j][1, 0]],
+                    [0, 0],
+                    [exterior_walls_copy[i][1, 1], exterior_walls_copy[j][1, 1]],
                 ],  # fill it back up to 3D to make the polygon
                 label=f"straight edge approximation of the exterior of pre-cell {i}",
                 closed=False,
             )
-            new_pre_cells.append(PreCell(self[i].interior_wire, exterior))
+            new_pre_cells.append(
+                PreCell(
+                    self[i].interior_wire,
+                    straightened_vv_interior,
+                    straightened_exterior,
+                )
+            )
         return PreCellArray(new_pre_cells)
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
@@ -291,8 +370,7 @@ class PreCellArray(abc.Sequence):
         exterior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged clockwise (inboard to outboard).
         """
-        cell_walls = CellWalls.from_pre_cell_array(self)
-        return np.insert(cell_walls[:, 1], 1, 0, axis=-1)
+        return np.insert(self.cell_walls[:, 1], 1, 0, axis=-1)
 
     def get_interior_vertices(self) -> npt.NDArray:
         """
@@ -303,8 +381,7 @@ class PreCellArray(abc.Sequence):
         interior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged clockwise (inboard to outboard).
         """
-        cell_walls = CellWalls.from_pre_cell_array(self)
-        return np.insert(cell_walls[:, 0], 1, 0, axis=-1)
+        return np.insert(self.cell_walls[:, 0], 1, 0, axis=-1)
 
     def __len__(self) -> int:
         return self.pre_cells.__len__()
@@ -392,7 +469,7 @@ def find_equidistant_point(
 
 def pick_higher_point(
     point1: npt.NDArray[float], point2: npt.NDArray[float], vector: npt.NDArray[float]
-):
+) -> npt.NDArray[float]:
     """Pick the point that, when projected onto `vector`, gives a higher value."""
     if (vector @ point1) > (vector @ point2):
         return point1
@@ -489,8 +566,11 @@ class DivertorPreCell:
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
         plot_2d(self.outline, *args, **kwargs)
 
+    def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
+        show_cad(self.half_solid, *args, **kwargs)
+
     @property
-    def outline(self):
+    def outline(self) -> BluemiraWire:
         """
         We don't need the volume value, so we're only going to generate the outline
         when the user wants to plot it.
@@ -503,6 +583,16 @@ class DivertorPreCell:
                 self.exterior_wire.restore_to_wire(),
             ])
         return self._outline
+
+    @property
+    def half_solid(self) -> BluemiraSolid:
+        """
+        Create the 180° revolved shape on demand only.
+        Revolved 180° instead of 360° for easier viewing
+        """
+        if not hasattr(self, "_half_solid"):
+            self._half_solid = BluemiraSolid(revolve_shape(self.outline))
+        return self._half_solid
 
     def offset_interior_wire(self, thickness: float) -> WireInfoList:
         """
@@ -640,7 +730,11 @@ class DivertorPreCellArray(abc.Sequence):
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
         plot_2d(
-            [dpc.outline for dpc in self] + [dpc.vv_wire for dpc in self],
+            [dpc.outline for dpc in self]
+            + [dpc.vv_wire.restore_to_wire() for dpc in self],
             *args,
             **kwargs,
         )
+
+    def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
+        show_cad([dpc.half_solid for dpc in self], *args, **kwargs)

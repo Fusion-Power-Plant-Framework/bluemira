@@ -74,7 +74,7 @@ _source_parameters = PlasmaSourceParameters(
 )
 
 tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
-    _tokamak_geometry, _source_parameters.major_radius, 0.1, 4, 1
+    _tokamak_geometry, _source_parameters.major_radius, 0.1, 2, 4
 )
 
 source_parameters = PlasmaSourceParametersPPS.from_si(_source_parameters)
@@ -137,7 +137,7 @@ if __name__ == "__main__":  # begin computation
     generator = SingleNullTokamak(
         panel_breakpoint_t, divertor_bmwire, outer_boundary, vacuum_vessel_bmwire
     )
-    generator.make_pre_cell_arrays(preserve_volume=True, snap_to_horizontal_angle=45)
+    generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
     mat_dict = {
         BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
         BlanketLayers.FirstWall.name: mat_lib.outb_fw_mat,
@@ -168,10 +168,10 @@ if __name__ == "__main__":  # begin computation
         ) as plotting:
             plotting.run(
                 [
-                    generator.data.outer_boundary.bounding_box.x_max * 2.1,
-                    generator.data.outer_boundary.bounding_box.z_max * 3.1,
+                    generator.data.vacuum_vessel_wire.bounding_box.x_max * 2.1,
+                    generator.data.vacuum_vessel_wire.bounding_box.z_max * 3.1,
                 ],
-                100,
+                pixel_per_meter=200,
             )
 
     elif sys.argv[1].upper() == "VOLUME":

@@ -215,9 +215,6 @@ class BlanketThickness:
     breeding_zone
         Thickness of the breedng zone. Could be zero if the breeding zone is absent.
         Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
-    manifold
-        Thickness of the manifold layer (i.e. pipings etc.).
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
 
     Note
     ----
@@ -228,7 +225,6 @@ class BlanketThickness:
     surface: float
     first_wall: float
     breeding_zone: float
-    manifold: float
 
     def get_interface_depths(self):
         """Return the depth of the interface layers"""
@@ -236,7 +232,6 @@ class BlanketThickness:
             self.surface,
             self.first_wall,
             self.breeding_zone,
-            self.manifold,
         ])
 
 
@@ -314,17 +309,15 @@ class TokamakDimensions:
         """
         return cls(
             BlanketThickness(
-                0.05,
+                0.01,
                 tokamak_geometry_base.inb_fw_thick,
                 tokamak_geometry_base.inb_bz_thick,
-                tokamak_geometry_base.inb_mnfld_thick,
             ),
             major_radius,
             BlanketThickness(
-                0.05,
+                0.01,
                 tokamak_geometry_base.outb_fw_thick,
                 tokamak_geometry_base.outb_bz_thick,
-                tokamak_geometry_base.outb_mnfld_thick,
             ),
             DivertorThickness(divertor_thickness),
             ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),

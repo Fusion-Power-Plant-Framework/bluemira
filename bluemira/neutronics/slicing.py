@@ -89,7 +89,8 @@ def cut_curve(
         wire made of (discretization_level-1) straight lines to approximate each segment.
 
     reversed:
-    Whether we want the neutron spectrum to go in the increasing or the decreasing direction.
+        Whether we want the neutron spectrum to go in the increasing or the decreasing
+        direction.
 
     Yields
     ------
@@ -107,18 +108,15 @@ def cut_curve(
     increasing_or_decreasing = np.sign(np.diff(cut_params))
     if increasing_or_decreasing.sum() == 0:
         raise GeometryError("Too few points/ points are too disordered!")
-    if increasing_or_decreasing.sum() > 0:
-        INCREASING = True
-    else:
-        INCREASING = False
+    increasing = increasing_or_decreasing.sum() > 0
 
     # generator function
     for alpha, beta in pairwise(cut_params):
-        if INCREASING:
+        if increasing:
             if alpha > beta:  # alpha is expected to be smaller than beta
-                alpha -= 1.0
+                alpha -= 1.0  # noqa: PLW2901
         elif alpha < beta:  # alpha is expected to be larger than beta.
-            alpha += 1.0
+            alpha += 1.0  # noqa: PLW2901
         param_range = np.linspace(alpha, beta, discretization_level) % 1.0
         if reverse:
             param_range = param_range[::-1]
@@ -127,7 +125,8 @@ def cut_curve(
 
 class PanelsAndExteriorCurve:
     """
-    A collection of three objects, the first wall panels and the exterior curve.
+    A collection of three objects, the first wall panels, the vacuum vessel interior
+    curve, and the exterior curve.
 
     Parameters
     ----------
@@ -135,7 +134,9 @@ class PanelsAndExteriorCurve:
         numpy array of shape==(N, 2), showing the RZ coordinates of joining points
         between adjacent first wall panels, running in the clockwise direction,
         from the inboard divertor to the top, then down to the outboard divertor.
-    exterior_curve:
+    vv_interior:
+        The BluemiraWire representing the inside surface of the vacuum vessel.
+    vv_exterior:
         The BluemiraWire representing the outside surface of the vacuum vessel.
     """
 
@@ -188,11 +189,12 @@ class PanelsAndExteriorCurve:
 
     def add_cut_points(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
         """
-        Find a point that lies on the exterior curve, which would be used to cut up the
-        exterior_curve eventually.
+        Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
+        these points will eventually be used to cut up self.vv_interior and
+        self.vv_exterior.
 
         N.B. These cut points must be sequentially added, i.e. they should
-        follow the exterior curve in the clockwise direction.
+        follow the curves in the clockwise direction.
         """
         self.vv_cut_points.append(
             get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
@@ -208,9 +210,9 @@ class PanelsAndExteriorCurve:
         snap_to_horizontal_angle: float,
     ) -> list[npt.NDArray[float]]:
         """
-        Cut the exterior curve according to some specified criteria:
+        Cut the curves according to some specified criteria:
         In general, a line would be drawn from each panel break point outwards towards
-        the exterior curve. This would form the cut line.
+        the curves. This would form the cut line.
 
         The space between two neighbouring cut line makes a PreCell.
 
@@ -232,7 +234,7 @@ class PanelsAndExteriorCurve:
             Each is an ndarray with shape (2,), denoting the destination of the cut
             lines.
 
-            The program cannot deduce what angle to cut the exterior curve at these
+            The program cannot deduce what angle to cut the curves at these
             locations without extra user input. Therefore the user is able to use these
             options to specify the cut line's destination point for the first and final
             points respectively.
@@ -380,9 +382,11 @@ class PanelsAndExteriorCurve:
         snap_to_horizontal_angle: float = 30.0,
     ) -> PreCellArray:
         """
-        Cut the exterior curve up, so that would act as the exterior side of the
+        Cut the exterior curve up, so that it would act as the exterior side of the
         quadrilateral pre-cell. Then, the panel would act as the interior side of the
         pre-cell. The two remaining sides are the counter-clockwise and clockwise walls.
+
+        The vacuum vessel interior surface is sandwiched between them.
         """
         _start_r = 0  # starting cut's final destination's r value
         _end_r = (
@@ -398,7 +402,7 @@ class PanelsAndExteriorCurve:
         pre_cell_list = []
         for i, (vv_segment, exterior_segment) in enumerate(
             zip(
-                self.execute_curve_cut(
+                *self.execute_curve_cut(
                     discretization_level,
                     starting_cut,
                     ending_cut,
@@ -630,7 +634,9 @@ def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> list[WireInfoLis
 
 
 class DivertorWireAndExteriorCurve:
-    """A class to store a wire with an exterior curve"""
+    """
+    A class to store a wire with a vacuum vessel interior curve and an exterior curve.
+    """
 
     def __init__(
         self,
@@ -640,7 +646,8 @@ class DivertorWireAndExteriorCurve:
     ):
         """
         Instantiate from a BluemiraWire of the divertor and a BluemiraWire of the
-        exterior (outside of vacuum vessem) curve.
+        exterior (outside of vacuum vessem) curve. Also save the BluemiraWire that goes
+        between these two (inside of vacuum vessel).
 
         Parameters
         ----------
@@ -648,8 +655,11 @@ class DivertorWireAndExteriorCurve:
             A BluemiraWire that runs from the inboard side to the outboard side of the
             tokamak, representing the plasma facing surface of the divertor.
         vv_interior
-            A BluemiraWire that runs clockwise, showing the vacuum vessel on the RHHP
-            cross-section of the tokamak.
+            A BluemiraWire that runs clockwise, showing the inside of the vacuum vessel
+            on the RHHP cross-section of the tokamak.
+        vv_exterior
+            A BluemiraWire that runs clockwise, showing the outside of the vacuum vessel
+            on the RHHP cross-section of the tokamak.
         """
         convex_segments = break_wire_into_convex_chunks(divertor_wire)
         self.convex_segments = convex_segments
@@ -702,11 +712,12 @@ class DivertorWireAndExteriorCurve:
 
     def add_cut_points(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
         """
-        Find a point that lies on the exterior curve, which would be used to cut up the
-        exterior_curve eventually.
+        Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
+        these points will eventually be used to cut up self.vv_interior and
+        self.vv_exterior.
 
         N.B. These cut points must be sequentially added, i.e. they should
-        follow the exterior curve in the clockwise direction.
+        follow the curves in the clockwise direction.
 
         While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`, this can't be
         refactored away because they're specific to the class.
@@ -724,7 +735,7 @@ class DivertorWireAndExteriorCurve:
         ending_cut: npt.NDArray[float] | None,
     ) -> list[npt.NDArray[float]]:
         """
-        Cut the exterior curve up into N segments to match the N convex chunks of the
+        Cut the curves up into N segments to match the N convex chunks of the
         divertor.
         The space between two neighbouring cut line makes a DivertorPreCell.
 
@@ -734,7 +745,7 @@ class DivertorWireAndExteriorCurve:
             Each is an ndarray with shape (2,), denoting the destination of the cut
             lines.
 
-            The program cannot deduce what angle to cut the exterior curve at these
+            The program cannot deduce what angle to cut the curves at these
             locations without extra user input. Therefore the user is able to use these
             options to specify the cut line's destination point for the first and final
             points respectively.
@@ -839,12 +850,12 @@ class DivertorWireAndExteriorCurve:
         for t_range in cut_curve(
             vv_cut_points, self.vv_interior, discretization_level, reverse=True
         ):
-            vv_curve_segments.append(self.approximate_curve(self.vv_interior, t_range))
+            vv_curve_segments.append(self.approximate_curve(self.vv_interior, t_range))  # noqa: PERF401
 
         for t_range in cut_curve(
             exterior_cut_points, self.vv_exterior, discretization_level, reverse=True
         ):
-            exterior_curve_segments.append(
+            exterior_curve_segments.append(  # noqa: PERF401
                 self.approximate_curve(self.vv_exterior, t_range)
             )
 
@@ -875,6 +886,7 @@ class DivertorWireAndExteriorCurve:
         Cut the exterior curve up, so that would act as the exterior side of the
         quadrilateral pre-cell. Then, the panel would act as the interior side of the
         pre-cell. The two remaining sides are the counter-clockwise and clockwise walls.
+        The vv_interior curve would be sandwiched between these two.
 
         Ordering: The cells should run from inoboard to outboard.
 
@@ -885,7 +897,7 @@ class DivertorWireAndExteriorCurve:
         ending_cut:
             shape = (2,)
         discretization_level:
-            integer: how many points to use to approximate each exterior curve segment.
+            integer: how many points to use to approximate each curve segment.
         """
         # deduced starting_cut and ending_cut from the divertor itself.
         if not starting_cut:
@@ -902,14 +914,14 @@ class DivertorWireAndExteriorCurve:
         pre_cell_list = []
         for i, (vv_segment, exterior_segment) in enumerate(
             zip(
-                self.execute_curve_cut(discretization_level, starting_cut, ending_cut),
+                *self.execute_curve_cut(discretization_level, starting_cut, ending_cut),
                 strict=True,
             )
         ):
             interior_wire = self.convex_segments[i]
             # make a new line joining the start and end.
             if np.isclose(
-                exterior_wire.end_point,
+                exterior_segment.end_point,
                 interior_wire.start_point,
                 rtol=0,
                 atol=EPS_FREECAD,
@@ -917,7 +929,9 @@ class DivertorWireAndExteriorCurve:
                 cw_line = WireInfoList([interior_wire.pop(0)])
             else:
                 cw_line = WireInfoList([
-                    WireInfo.from_2P(exterior_wire.end_point, interior_wire.start_point)
+                    WireInfo.from_2P(
+                        exterior_segment.end_point, interior_wire.start_point
+                    )
                 ])
                 # merge lines if collinear
             while straight_lines_deviate_less_than(cw_line[-1], interior_wire[0], 0.5):
@@ -926,14 +940,16 @@ class DivertorWireAndExteriorCurve:
 
             if np.isclose(
                 interior_wire.end_point,
-                exterior_wire.start_point,
+                exterior_segment.start_point,
                 rtol=0,
                 atol=EPS_FREECAD,
             ).all():
                 ccw_line = WireInfoList([interior_wire.pop(-1)])
             else:
                 ccw_line = WireInfoList([
-                    WireInfo.from_2P(interior_wire.end_point, exterior_wire.start_point)
+                    WireInfo.from_2P(
+                        interior_wire.end_point, exterior_segment.start_point
+                    )
                 ])
                 # merge lines if collinear
             while straight_lines_deviate_less_than(interior_wire[-1], ccw_line[0], 0.5):
@@ -941,7 +957,7 @@ class DivertorWireAndExteriorCurve:
                 interior_wire.pop(-1)
 
             pre_cell_list.append(
-                DivertorPreCell(interior_wire, vv_segment, exterior_wire)
+                DivertorPreCell(interior_wire, vv_segment, exterior_segment)
             )
 
         return DivertorPreCellArray(pre_cell_list)

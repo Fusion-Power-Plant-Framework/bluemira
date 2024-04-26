@@ -33,14 +33,22 @@ class StraightLineInfo(NamedTuple):
     start_point: Iterable[float]  # 3D coordinates
     end_point: Iterable[float]  # 3D coordinates
 
+    def reverse(self) -> StraightLineInfo:
+        """Flip the wire"""
+        return StraightLineInfo(self.end_point, self.start_point)
+
 
 class CircleInfo(NamedTuple):
-    """Key information about a circle"""
+    """Arc of a Circle, LESS THAN 180°"""
 
     start_point: Iterable[float]  # 3D coordinates
     end_point: Iterable[float]  # 3D coordinates
     center: Iterable[float]  # 3D coordinates
     radius: float  # scalar
+
+    def reverse(self) -> CircleInfo:
+        """Flip the wire"""
+        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)
 
 
 @dataclass
@@ -52,9 +60,16 @@ class WireInfo:
     3. A copy of the wire itself
     """
 
+    # TODO: Perhaps implement more classes so it also work with splines? Or justify why
+    # we don't need to. Or merge this invention into an existing issue?
+
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
     tangents: Sequence[Iterable[float]] | None  # 2 normalized directional vectors xyz
     wire: BluemiraWire | None = None
+
+    def reverse(self):
+        """Flip the wire"""
+        return WireInfo(self.key_points.reverse(), self.tangents[::-1], None)
 
     @classmethod
     def from_2P(  # noqa: N802
@@ -130,6 +145,10 @@ class WireInfoList(abc.Sequence):
         old_kp = self.info_list[-1].key_points
         new_kp = old_kp.__class__(old_kp[0], new_end_point, *old_kp[2:])
         self.info_list[0].key_points = new_kp
+
+    def reverse(self) -> WireInfoList:
+        """Flip this list of wires"""
+        return WireInfoList([info.reverse() for info in self.info_list[::-1]])
 
     def restore_to_wire(self) -> BluemiraWire:
         """Re-create a bluemira wire from a series of WireInfo."""
