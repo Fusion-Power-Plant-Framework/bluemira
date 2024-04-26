@@ -48,21 +48,6 @@ if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
 
 
-def grow_blanket_into_pre_cell_array(
-    interior_panels: npt.NDArray[float],  # noqa: ARG001
-    inboard_thickness: float,  # noqa: ARG001
-    outboard_thickness: float,  # noqa: ARG001
-    in_out_board_transition_radius: float,  # noqa: ARG001
-):
-    """
-    Simply grow a shell around the interior panels according to specified thicknesses.
-    The thicknesses of these shells in the inboard side are constant, and the thicknesses
-    of these shells in the outboard side are also constant. This would be the equivalent
-    of making curves that are constant in the inboard and outboard side.
-    """
-    return
-
-
 def cut_curve(
     cut_points: list[npt.NDArray],
     wire: BluemiraWire,

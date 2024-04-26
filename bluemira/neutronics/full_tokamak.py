@@ -197,7 +197,7 @@ class SingleNullTokamak:
             )
         )
         self.pre_cell_array.blanket = self.pre_cell_array.blanket.straighten_exterior(
-            preserve_volume=False
+            preserve_volume=True
         )
         # divertor
         self.pre_cell_array.divertor = (

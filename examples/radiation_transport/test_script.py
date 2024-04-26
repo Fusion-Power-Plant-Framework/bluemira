@@ -137,7 +137,7 @@ if __name__ == "__main__":  # begin computation
     generator = SingleNullTokamak(
         panel_breakpoint_t, divertor_bmwire, outer_boundary, vacuum_vessel_bmwire
     )
-    generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
+    generator.make_pre_cell_arrays(snap_to_horizontal_angle=25)
     mat_dict = {
         BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
         BlanketLayers.FirstWall.name: mat_lib.outb_fw_mat,
