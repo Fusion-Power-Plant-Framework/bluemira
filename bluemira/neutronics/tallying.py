@@ -5,11 +5,13 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
+from dataclasses import asdict
 from itertools import chain
 
 import numpy as np
 import openmc
 
+from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_geometry import Cells
 from bluemira.neutronics.make_materials import MaterialsLibrary
 
@@ -93,8 +95,8 @@ def filter_cells(
 
 
 def filter_new_cells(
-    material_dict,
-    blanket_cell_array,
+    material_library: MaterialsLibrary,
+    blanket_cell_array: BlanketCellArray,
     divertor_cells=None,  # noqa: ARG001
     plasma_void=None,  # noqa: ARG001
 ):
@@ -106,7 +108,7 @@ def filter_new_cells(
     ]
     cell_filter = openmc.CellFilter(list(cells))
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
-    mat_filter = openmc.MaterialFilter(list(material_dict.values()))
+    mat_filter = openmc.MaterialFilter(list(asdict(material_library).values()))
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
 

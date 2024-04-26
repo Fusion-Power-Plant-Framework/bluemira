@@ -91,9 +91,9 @@ class RunMode:
             self.settings.verbosity = 6
 
     def _set_tallies(
-        self, blanket_cell_array: BlanketCellArray, bodge_material_dict: dict
+        self, blanket_cell_array: BlanketCellArray, material_lib: MaterialsLibrary
     ):
-        filter_list = filter_new_cells(bodge_material_dict, blanket_cell_array)
+        filter_list = filter_new_cells(material_lib, blanket_cell_array)
         _create_tallies_from_filters(*filter_list)
         self.files_created.add("tallies.xml")
 
@@ -187,7 +187,7 @@ class SourceSimulation(RunMode):
         blanket_cell_array: BlanketCellArray,
         # We don't need the divertor cell array yet because
         # we aren't setting up tallies there.
-        bodge_material_dict: dict,
+        material_lib: MaterialsLibrary,
     ) -> None:
         """
         Break open the :class:`~bluemira.neutronics.params.PlasmaSourceParametersPPS`
@@ -199,7 +199,7 @@ class SourceSimulation(RunMode):
         self.settings.batches = int(runtime_variables.batches)
         self.settings.photon_transport = runtime_variables.photon_transport
         self.settings.electron_treatment = runtime_variables.electron_treatment
-        self._set_tallies(blanket_cell_array, bodge_material_dict)
+        self._set_tallies(blanket_cell_array, material_lib)
         super()._run_setup()
         self.statepoint_file = f"statepoint.{self.settings.batches}.h5"
         self.files_created.add(self.statepoint_file)

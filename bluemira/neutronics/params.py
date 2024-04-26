@@ -18,7 +18,6 @@ import openmc
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
-from bluemira.neutronics.make_materials import BlanketType
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -90,6 +89,14 @@ class OpenMCSimulationRuntimeParameters:
     parametric_source: bool = True
     # number of particles used in the volume calculation.
     volume_calc_particles: int = int(4e8)
+
+
+class BlanketType(Enum):
+    """Types of allowed blankets, named by their acronyms."""
+
+    DCLL = auto()
+    HCPB = auto()
+    WCLL = auto()
 
 
 @dataclass

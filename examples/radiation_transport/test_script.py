@@ -151,7 +151,7 @@ if __name__ == "__main__":  # begin computation
         "TFCoil": mat_lib.tf_coil_mat,
     }
     blanket_cell_array, div_cell_array, tf_coils, cs, plasma, void = (
-        generator.make_cell_arrays(mat_dict, tokamak_dimensions, control_id=True)
+        generator.make_cell_arrays(mat_lib, tokamak_dimensions, control_id=True)
     )
 
     cells = generator.cell_array.cells
@@ -203,7 +203,7 @@ if __name__ == "__main__":  # begin computation
         with PlasmaSourceSimulation(
             runtime_variables.cross_section_xml, cells, mat_lib, debug_mode=False
         ) as pss:
-            pss.run(source_parameters, runtime_variables, blanket_cell_array, mat_dict)
+            pss.run(source_parameters, runtime_variables, blanket_cell_array, mat_lib)
             src_rate = n_DT_reactions(
                 source_parameters.plasma_physics_units.reactor_power  # [MW]
                 # TODO: when issue #2858 is fixed,

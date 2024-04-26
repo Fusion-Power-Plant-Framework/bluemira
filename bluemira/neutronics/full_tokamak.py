@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from numpy import typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
+    from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
     from bluemira.neutronics.params import TokamakDimensions
 
@@ -282,7 +283,7 @@ class SingleNullTokamak:
 
     def make_cell_arrays(
         self,
-        material_dict,
+        material_library: MaterialsLibrary,
         tokamak_dimensions: TokamakDimensions,
         control_id: bool = False,
     ) -> tuple[BlanketCellArray, DivertorCellArray, openmc.Cell]:
@@ -290,8 +291,8 @@ class SingleNullTokamak:
 
         Parameters
         ----------
-        material_dict:
-            TODO: fill in later: Change this to MaterialsLibrary directly later.
+        material_library:
+            library containing information about the materials
         tokamak_dimensions:
             A parameter :class:`bluemira.neutronics.params.TokamakDimensions`,
             Specifying the dimensions of various layers in the blanket, divertor, and
@@ -322,7 +323,7 @@ class SingleNullTokamak:
 
         self.cell_array.blanket = BlanketCellArray.from_pre_cell_array(
             self.pre_cell_array.blanket,
-            material_dict,
+            material_library,
             tokamak_dimensions,
             control_id=control_id,
         )
@@ -334,7 +335,7 @@ class SingleNullTokamak:
 
         self.cell_array.divertor = DivertorCellArray.from_divertor_pre_cell_array(
             self.pre_cell_array.divertor,
-            material_dict,
+            material_library,
             tokamak_dimensions.divertor,
             override_start_end_surfaces=(
                 self.cell_array.blanket[0].ccw_surface,
@@ -346,7 +347,7 @@ class SingleNullTokamak:
         # make the plasma cell and the exterior void.
         if control_id:
             round_up_next_openmc_ids()
-        self.material_dict = material_dict
+        self.material_library = material_library
         self.make_cs_coils(
             tokamak_dimensions.central_solenoid.inner_diameter / 2,
             (
@@ -404,13 +405,13 @@ class SingleNullTokamak:
         )
         self.cell_array.central_solenoid = openmc.Cell(
             name="Central solenoid",
-            fill=self.material_dict["CentralSolenoid"],
+            fill=self.material_library.container_mat,
             region=+bottom & -top & -solenoid,
         )
         self.cell_array.tf_coils = TFCoils([
             openmc.Cell(
                 name="TF coil (sheath around central solenoid)",
-                fill=self.material_dict["TFCoil"],
+                fill=self.material_library.tf_coil_mat,
                 region=+bottom & -top & +solenoid & -central_tf_coil,
             )
         ])

@@ -37,6 +37,7 @@ from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
+    from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import (
         DivertorPreCell,
         DivertorPreCellArray,
@@ -759,7 +760,9 @@ class BlanketCellStack(abc.Sequence):
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
         depth_series: Sequence,
-        fill_dict: dict[str, openmc.Material],
+        fill_lib: dict[str, openmc.Material],
+        *,
+        inboard: bool,
         blanket_stack_num: int | None = None,
     ):
         """
@@ -780,10 +783,13 @@ class BlanketCellStack(abc.Sequence):
             Each float represents how deep into the blanket (i.e. how many [cm] into the
             first wall we need to drill, from the plasma facing surface) to hit that
             interface layer.
-        fill_dict
-            TODO: fill this out further later after refactoring
+        fill_lib
             :class:`~MaterialsLibrary` so that it separates into .inboard, .outboard,
             .divertor, .tf_coil_windings, etc.
+        inboard
+            boolean denoting whether this cell is inboard or outboard
+        blanket_stack_num
+            An optional number indexing the current stack. Used for labelling.
 
         """
         # check exterior wire is correct
@@ -867,7 +873,7 @@ class BlanketCellStack(abc.Sequence):
                     f"{cell_type}-{BlanketLayers(j).name} "  # noqa: F821
                     f"interface boundary of blanket cell stack {i}"
                 )
-            cell_type = BlanketLayers(j).name
+            cell_type = BlanketLayers(j)
             ext_surf = surface_from_2points(
                 *points,
                 surface_id=surface_ids[j],  # up to M+1
@@ -880,8 +886,8 @@ class BlanketCellStack(abc.Sequence):
                     int_surf,
                     vertices[k],  # up to M
                     cell_id=cell_ids[k],  # up to M
-                    name=cell_type + f" of blanket cell stack {i}",
-                    fill=fill_dict[cell_type],
+                    name=cell_type.name + f" of blanket cell stack {i}",
+                    fill=fill_lib.match_blanket_material(cell_type, inboard=inboard),
                 )
             )
             int_surf = ext_surf
@@ -1016,7 +1022,7 @@ class BlanketCellArray(abc.Sequence):
     def from_pre_cell_array(
         cls,
         pre_cell_array: PreCellArray,
-        material_dict: dict[str, openmc.Material],
+        material_library: MaterialsLibrary,
         blanket_dimensions: TokamakDimensions,
         control_id: bool = False,
     ) -> BlanketCellArray:
@@ -1030,8 +1036,7 @@ class BlanketCellArray(abc.Sequence):
         ----------
         pre_cell_array
             PreCellArray
-        material_dict
-            TODO: fill this out further later after refactoring
+        material_library
             :class:`~MaterialsLibrary` so that it separates into .inboard, .outboard,
             .divertor, .tf_coil_windings, etc.
         blanket_dimensions
@@ -1059,14 +1064,15 @@ class BlanketCellArray(abc.Sequence):
                 surface_id=1 + 10 * (i + 1) if control_id else None,
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
-            depth_series = get_depth_values(blanket_dimensions, cw_wall[0][0])
+            depth_series = get_depth_values(pre_cell, blanket_dimensions)
 
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
                 ccw_surf,
                 cw_surf,
                 depth_series,
-                fill_dict=material_dict,
+                fill_lib=material_library,
+                inboard=check_inboard_outboard(pre_cell, blanket_dimensions),
                 blanket_stack_num=i if control_id else None,
             )
             cell_array.append(stack)
@@ -1076,11 +1082,16 @@ class BlanketCellArray(abc.Sequence):
 
 
 def get_depth_values(
-    blanket_dimensions: TokamakDimensions, cell_reference_radius: float
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
 ) -> npt.NDArray[float]:
     """
+    Choose the depth values that this pre-cell is suppose to use, according to where it
+    is physically positioned (hence is classified as inboard or outboard).
+
     Parameters
     ----------
+    pre_cell
+        :class:`~PreCell` to be classified as either inboard or outboard
     blanket_dimensions
         :class:`bluemira.neutronics.params.TokamakDimensions` recording the
         dimensions of the blanket in SI units (unit: [m]).
@@ -1093,9 +1104,19 @@ def get_depth_values(
         first wall we need to drill, from the plasma facing surface) to hit that
         interface layer.
     """
-    if cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius:
+    if check_inboard_outboard(pre_cell, blanket_dimensions):
         return blanket_dimensions.inboard.get_interface_depths()
     return blanket_dimensions.outboard.get_interface_depths()
+
+
+def check_inboard_outboard(
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+) -> bool:
+    """If this pre-cell is an inboard, return True.
+    Otherwise, this pre-cell belongs to outboard, return False
+    """
+    cell_reference_radius = pre_cell.vertex.to_array()[:, 0].mean()
+    return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
 
 
 def choose_region(
@@ -1391,7 +1412,7 @@ class DivertorCellStack(abc.Sequence):
         divertor_pre_cell: DivertorPreCell,
         cw_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
-        material_dict: dict[str, openmc.Material],
+        material_library: MaterialsLibrary,
         armour_thickness: float = 0,
         stack_num: str | int = "",
     ) -> DivertorCellStack:
@@ -1432,7 +1453,7 @@ class DivertorCellStack(abc.Sequence):
                 outer_wire,
                 inner_wire,
                 name=f"Bulk of divertor in diver cell stack {stack_num}",
-                fill=material_dict["Divertor"],
+                fill=material_library.divertor_mat,
             ),
         ]
         cell_stack.append(
@@ -1450,7 +1471,7 @@ class DivertorCellStack(abc.Sequence):
                 ),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
-                fill=material_dict["VacuumVessel"],
+                fill=material_library.div_fw_mat,
             )
         )
         # Unfortunately, this does mean that the vacuum vessel has a larger ID than the
@@ -1475,7 +1496,7 @@ class DivertorCellStack(abc.Sequence):
                     subtractive_region=cell_stack[0].get_exclusion_zone(
                         away_from_plasma=True
                     ),
-                    fill=material_dict["DivertorSurface"],
+                    fill=material_library.div_sf_mat,
                 ),
             )
             # again, unfortunately, this does mean that the surface armour cell has the
@@ -1585,7 +1606,7 @@ class DivertorCellArray(abc.Sequence):
     def from_divertor_pre_cell_array(
         cls,
         divertor_pre_cell_array: DivertorPreCellArray,
-        material_dict: dict[str, openmc.Material],
+        material_library: MaterialsLibrary,
         divertor_thickness: DivertorThickness,
         override_start_end_surfaces: tuple[openmc.Surface, openmc.Surface] | None = None,
     ) -> DivertorCellArray:
@@ -1596,7 +1617,7 @@ class DivertorCellArray(abc.Sequence):
         ----------
         divertor_pre_cell_array
             The array of divertor pre-cells.
-        material_dict
+        material_library
             container of openmc.Material
         divertor_thickness
             A parameter :class:`bluemira.neutronics.params.DivertorThickness`. For now it
@@ -1631,7 +1652,7 @@ class DivertorCellArray(abc.Sequence):
                     dpc,
                     cw_surf,
                     ccw_surf,
-                    material_dict,
+                    material_library,
                     divertor_thickness.surface,
                     i + 1,
                 )
