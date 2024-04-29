@@ -379,7 +379,7 @@ def choose_plane_cylinders(
 
 
 def choose_region_cone(
-    surface: openmc.ZCone, choice_points: npt.NDArray, control_id: bool = False
+    surface: openmc.ZCone, choice_points: npt.NDArray, *, control_id: bool = False
 ) -> openmc.Region:
     """
     choose the region for a ZCone.
@@ -728,7 +728,7 @@ class BlanketCellStack(abc.Sequence):
             self._interfaces.append(self.cell_stack[-1].exterior_surface)
         return self._interfaces
 
-    def get_overall_region(self, control_id: bool = False) -> openmc.Region:
+    def get_overall_region(self, *, control_id: bool = False) -> openmc.Region:
         """
         Calculate the region covering the entire cell stack.
 
@@ -980,7 +980,7 @@ class BlanketCellArray(abc.Sequence):
         interior_vertices.extend(stack[0].vertex.interior_start for stack in self)
         return np.array(interior_vertices)
 
-    def get_interior_surfaces(self) -> list[openmc.Surface]:
+    def interior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
@@ -1028,6 +1028,7 @@ class BlanketCellArray(abc.Sequence):
         pre_cell_array: PreCellArray,
         material_library: MaterialsLibrary,
         blanket_dimensions: TokamakDimensions,
+        *,
         control_id: bool = False,
     ) -> BlanketCellArray:
         """
@@ -1126,6 +1127,7 @@ def check_inboard_outboard(
 def choose_region(
     surface: openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None],
     vertices_array: npt.NDArray,
+    *,
     control_id: bool = False,
 ) -> openmc.Region:
     """
@@ -1153,10 +1155,12 @@ def choose_region(
         return choose_plane_cylinders(surface, vertices_array)
 
     if isinstance(surface, openmc.ZCone):
-        return choose_region_cone(surface, vertices_array, control_id)
+        return choose_region_cone(surface, vertices_array, control_id=control_id)
 
     if isinstance(surface, tuple):
-        chosen_first_region = choose_region(surface[0], vertices_array, control_id)
+        chosen_first_region = choose_region(
+            surface[0], vertices_array, control_id=control_id
+        )
         # = cone, or cylinder, or plane, or (cone | ambiguity_surface)
         if len(surface) == 1:
             return chosen_first_region
@@ -1204,7 +1208,9 @@ def region_from_surface_series(
     for surface in series_of_surfaces:
         if surface is None:
             continue
-        intersection_regions.append(choose_region(surface, vertices_array, control_id))
+        intersection_regions.append(
+            choose_region(surface, vertices_array, control_id=control_id)
+        )
     return flat_intersection(intersection_regions)
 
 
@@ -1248,7 +1254,7 @@ class DivertorCell(openmc.Cell):
         )
 
         if subtractive_region:
-            region = region & ~subtractive_region
+            region &= ~subtractive_region
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
         self.volume = self.get_volume()
 
@@ -1396,7 +1402,7 @@ class DivertorCellStack(abc.Sequence):
             self.exterior_wire.get_3D_coordinates(),
         ])
 
-    def get_overall_region(self, control_id: bool = False) -> openmc.Region:
+    def get_overall_region(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the region that this cell-stack encompasses.
 
@@ -1548,7 +1554,7 @@ class DivertorCellArray(abc.Sequence):
             super().__repr__().replace(" at ", f" of {len(self)} DivertorCellStacks at")
         )
 
-    def get_interior_surfaces(self) -> list[openmc.Surface]:
+    def interior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
