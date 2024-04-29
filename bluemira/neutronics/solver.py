@@ -236,7 +236,7 @@ class Setup(CodesSetup):
             self.files_created.add(plot_pth)
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
-        all_ext_vertices = self.generator.get_coordinates_from_pre_cell_arrays(
+        all_ext_vertices = self.generator.pre_cell_array_coordinates(
             self.generator.pre_cell_array.blanket, self.generator.pre_cell_array.divertor
         )
         z_min = all_ext_vertices[:, -1].min()
@@ -298,12 +298,14 @@ class Run(CodesTask):
 class Teardown(CodesTeardown):
     def __init__(
         self,
+        cells,
         out_path: str,
         codes_name: str,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
+        self.cells = cells
 
     @staticmethod
     def _cleanup(files_created, *, delete_files: bool = False):
@@ -328,7 +330,7 @@ class Teardown(CodesTeardown):
                 "they don't exists."
             )
 
-    def run(self, universe, files_created, source_params, statepoint_file, _cells):
+    def run(self, universe, files_created, source_params, statepoint_file):
         result = OpenMCResult.from_run(
             universe,
             n_DT_reactions(source_params.plasma_physics_units.reactor_power),
@@ -341,14 +343,14 @@ class Teardown(CodesTeardown):
         self._cleanup(files_created)
 
     def volume(
-        self, _universe, files_created, _source_params, _statepoint_file, cells
+        self, _universe, files_created, _source_params, _statepoint_file
     ) -> dict[int, float]:
         self._cleanup(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
             )
-            for cell in cells
+            for cell in self.cells
         }
 
 
@@ -411,13 +413,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
         )
 
         self.generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
-        self.blanket_cell_array, _div_cell_array, _tf_coils, _cs, _plasma, _void = (
-            self.generator.make_cell_arrays(
-                self.mat_lib, self.tokamak_dimensions, control_id=True
-            )
+        self.cell_arrays = self.generator.make_cell_arrays(
+            self.mat_lib, self.tokamak_dimensions, control_id=True
         )
-
-        self.cells = self.generator.cell_array.cells
 
     @property
     def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
@@ -459,14 +457,16 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.out_path,
             self.name,
             str(self.build_config["cross_section_xml"]),
-            self.cells,
+            self.cell_arrays.cells,
             self.source,
-            self.blanket_cell_array,
+            self.cell_arrays.blanket,
             self.generator,
             self.mat_lib,
         )
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(
+            self.cell_arrays.cells, self.out_path, self.name
+        )
 
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
@@ -483,6 +483,5 @@ class OpenMCNeutronicsSolver(CodesSolver):
                     run_mode.name.lower(),
                     f"statepoint.{runtime_params.batches}.h5",
                 ),
-                self.cells,
             )
         return result

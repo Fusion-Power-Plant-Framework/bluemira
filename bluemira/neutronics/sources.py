@@ -3,7 +3,6 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import dt_neutron_energy
-from bluemira.neutronics.neutronics_axisymmetric import create_ring_source
 from bluemira.neutronics.params import PlasmaSourceParameters
 from bluemira.radiation_transport.error import SourceError
 

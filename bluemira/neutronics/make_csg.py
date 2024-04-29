@@ -628,7 +628,7 @@ class BlanketCell(openmc.Cell):
         _surfaces_list = [exterior_surface, ccw_surface, cw_surface, interior_surface]
 
         final_region = region_from_surface_series(
-            _surfaces_list, vertices.to_array(), bool(cell_id)
+            _surfaces_list, vertices.to_array(), control_id=bool(cell_id)
         )
 
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
@@ -751,7 +751,9 @@ class BlanketCellStack(abc.Sequence):
             self[-1].vertex.exterior_start,
             self[-1].vertex.exterior_end,
         ])
-        return region_from_surface_series(_surfaces_list, vertices_array, control_id)
+        return region_from_surface_series(
+            _surfaces_list, vertices_array, control_id=control_id
+        )
 
     @classmethod
     def from_pre_cell(
@@ -950,7 +952,7 @@ class BlanketCellArray(abc.Sequence):
             super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
         )
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's outside corners'
         coordinates, in 3D.
@@ -964,7 +966,7 @@ class BlanketCellArray(abc.Sequence):
         exterior_vertices.extend(stack[-1].vertex.exterior_end for stack in self)
         return np.array(exterior_vertices)
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
@@ -985,17 +987,17 @@ class BlanketCellArray(abc.Sequence):
         """
         return [surf_stack[0] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_surfaces(self) -> list[openmc.Surface]:
+    def exterior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
+    def exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
-        Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
+        Usage: plasma_region = openmc.Union(..., ~self.exclusion_zone(), ...)
         Assumes that all of the panels (interior surfaces) together forms a convex hull.
 
         Parameters
@@ -1014,7 +1016,9 @@ class BlanketCellArray(abc.Sequence):
             ])
             _surfaces = [stack.cw_surface, stack.ccw_surface, stack.interior_surface]
             union_zone.append(
-                region_from_surface_series(_surfaces, vertices_array, control_id)
+                region_from_surface_series(
+                    _surfaces, vertices_array, control_id=control_id
+                )
             )
         return openmc.Union(union_zone)
 
@@ -1170,6 +1174,7 @@ def region_from_surface_series(
         openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None] | None
     ],
     vertices_array: npt.NDArray,
+    *,
     control_id: bool = False,
 ) -> openmc.Intersection:
     """
@@ -1238,7 +1243,9 @@ class DivertorCell(openmc.Cell):
             *self.exterior_surfaces,
             *self.interior_surfaces,
         ]
-        region = region_from_surface_series(_surfaces, vertices_array, bool(cell_id))
+        region = region_from_surface_series(
+            _surfaces, vertices_array, control_id=bool(cell_id)
+        )
 
         if subtractive_region:
             region = region & ~subtractive_region
@@ -1288,7 +1295,7 @@ class DivertorCell(openmc.Cell):
             self.interior_wire.get_3D_coordinates(),
         ])
 
-    def get_exclusion_zone(
+    def exclusion_zone(
         self, *, away_from_plasma: bool = True, control_id: bool = False
     ) -> openmc.Region:
         """
@@ -1297,7 +1304,7 @@ class DivertorCell(openmc.Cell):
         This can only be validly used:
             If away_from_plasma=True, then the interior side of the cell must be convex.
             If away_from_plasma=False, then the exterior_side of the cell must be convex.
-        Usage: next_cell_region = flat_intersection(..., ~this_cell.get_exclusion_zone())
+        Usage: next_cell_region = flat_intersection(..., ~this_cell.exclusion_zone())
 
         Parameters
         ----------
@@ -1405,7 +1412,9 @@ class DivertorCellStack(abc.Sequence):
             *self.interior_surfaces,
             *self.exterior_surfaces,
         ]
-        return region_from_surface_series(_surfaces, self.get_all_vertices(), control_id)
+        return region_from_surface_series(
+            _surfaces, self.get_all_vertices(), control_id=control_id
+        )
 
     @classmethod
     def from_divertor_pre_cell(
@@ -1467,9 +1476,7 @@ class DivertorCellStack(abc.Sequence):
                 # wires: ext, int.
                 outermost_wire,
                 outer_wire.reverse(),
-                subtractive_region=cell_stack[0].get_exclusion_zone(
-                    away_from_plasma=False
-                ),
+                subtractive_region=cell_stack[0].exclusion_zone(away_from_plasma=False),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
                 fill=material_library.div_fw_mat,
@@ -1494,7 +1501,7 @@ class DivertorCellStack(abc.Sequence):
                     innermost_wire,
                     # subtract away everything in the first cell.
                     name=f"Divertor armour in divertor cell stack {stack_num}",
-                    subtractive_region=cell_stack[0].get_exclusion_zone(
+                    subtractive_region=cell_stack[0].exclusion_zone(
                         away_from_plasma=True
                     ),
                     fill=material_library.div_sf_mat,
@@ -1508,9 +1515,9 @@ class DivertorCellStack(abc.Sequence):
 class DivertorCellArray(abc.Sequence):
     """Turn the divertor into a cell array"""
 
-    def __init__(self, divertor_cell_array: list[DivertorCellStack]):
+    def __init__(self, cell_array: list[DivertorCellStack]):
         """Create array from a list of DivertorCellStack."""
-        self.divertor_cell_array = divertor_cell_array
+        self.cell_array = cell_array
         self.poloidal_surfaces = [self[0].cw_surface]
         self.radial_surfaces = []
         # check neighbouring cells have the same cell stack.
@@ -1528,15 +1535,13 @@ class DivertorCellArray(abc.Sequence):
                     )
 
     def __len__(self) -> int:
-        return self.divertor_cell_array.__len__()
+        return self.cell_array.__len__()
 
     def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
-        return self.divertor_cell_array.__getitem__(index_or_slice)
+        return self.cell_array.__getitem__(index_or_slice)
 
     def __add__(self, other_array: DivertorCellArray) -> DivertorCellArray:
-        return DivertorCellArray(
-            self.divertor_cell_array + other_array.divertor_cell_array
-        )
+        return DivertorCellArray(self.cell_array + other_array.cell_array)
 
     def __repr__(self) -> str:
         return (
@@ -1550,14 +1555,14 @@ class DivertorCellArray(abc.Sequence):
         """
         return [surf_stack[0] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_surfaces(self) -> list[openmc.Surface]:
+    def exterior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's outside corners'
         coordinates, in 3D.
@@ -1571,7 +1576,7 @@ class DivertorCellArray(abc.Sequence):
             stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self
         ])
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
@@ -1585,10 +1590,10 @@ class DivertorCellArray(abc.Sequence):
             stack.interior_wire.get_3D_coordinates() for stack in self
         ])
 
-    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
+    def exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
-        Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
+        Usage: plasma_region = openmc.Union(..., ~self.exclusion_zone(), ...)
         Assumes every single cell-stack is made of an interior surface which itself forms
         a convex hull.
 
@@ -1599,14 +1604,14 @@ class DivertorCellArray(abc.Sequence):
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
         return openmc.Union([
-            stack[0].get_exclusion_zone(away_from_plasma=True, control_id=control_id)
+            stack[0].exclusion_zone(away_from_plasma=True, control_id=control_id)
             for stack in self
         ])
 
     @classmethod
-    def from_divertor_pre_cell_array(
+    def from_pre_cell_array(
         cls,
-        divertor_pre_cell_array: DivertorPreCellArray,
+        pre_cell_array: DivertorPreCellArray,
         material_library: MaterialsLibrary,
         divertor_thickness: DivertorThickness,
         override_start_end_surfaces: tuple[openmc.Surface, openmc.Surface] | None = None,
@@ -1616,7 +1621,7 @@ class DivertorCellArray(abc.Sequence):
 
         Parameters
         ----------
-        divertor_pre_cell_array
+        pre_cell_array
             The array of divertor pre-cells.
         material_library
             container of openmc.Material
@@ -1633,18 +1638,14 @@ class DivertorCellArray(abc.Sequence):
             """Generate the final surface on-the-fly so that it gets the correct id."""
             if override_start_end_surfaces:
                 return override_start_end_surfaces[-1]
-            return surface_from_straight_line(
-                divertor_pre_cell_array[-1].ccw_wall[-1].key_points
-            )
+            return surface_from_straight_line(pre_cell_array[-1].ccw_wall[-1].key_points)
 
         if override_start_end_surfaces:
             cw_surf = override_start_end_surfaces[0]
         else:
-            cw_surf = surface_from_straight_line(
-                divertor_pre_cell_array[0].cw_wall[0].key_points
-            )
-        for i, dpc in enumerate(divertor_pre_cell_array):
-            if i == (len(divertor_pre_cell_array) - 1):
+            cw_surf = surface_from_straight_line(pre_cell_array[0].cw_wall[0].key_points)
+        for i, dpc in enumerate(pre_cell_array):
+            if i == (len(pre_cell_array) - 1):
                 ccw_surf = get_final_surface()
             else:
                 ccw_surf = surface_from_straight_line(dpc.ccw_wall[-1].key_points)

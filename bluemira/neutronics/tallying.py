@@ -5,95 +5,13 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
-from dataclasses import asdict
 import os
 from itertools import chain
 from pathlib import Path
 
-import numpy as np
 import openmc
 
 from bluemira.neutronics.make_csg import BlanketCellArray
-from bluemira.neutronics.make_geometry import Cells
-from bluemira.neutronics.make_materials import MaterialsLibrary
-
-
-def filter_cells(
-    cells: Cells,
-    material_lib: MaterialsLibrary,
-) -> tuple[
-    openmc.CellFilter,
-    openmc.MaterialFilter,
-    openmc.CellFilter,
-    openmc.ParticleFilter,
-    openmc.ParticleFilter,
-    openmc.MeshFilter,
-]:
-    """
-    Requests cells for scoring.
-
-    Parameters
-    ----------
-    cells_and_cell_lists:
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-    material_lib:
-        A dataclass with all of the material definitions stored.
-    """
-    mats = (
-        "inb_fw_mat",
-        "outb_fw_mat",
-        "inb_bz_mat",
-        "outb_bz_mat",
-        "inb_mani_mat",
-        "outb_mani_mat",
-        "inb_vv_mat",
-        "outb_vv_mat",
-        "divertor_mat",
-        "div_fw_mat",
-        "tf_coil_mat",
-        "inb_sf_mat",
-        "outb_sf_mat",
-        "div_sf_mat",
-    )
-
-    cell_filter = openmc.CellFilter((
-        cells.tf_coil,
-        *cells.plasma.get_cells(),
-        cells.divertor.fw,
-        cells.divertor.fw_sf,
-        *cells.inboard.get_cells(),
-        *cells.outboard.get_cells(),
-        *cells.divertor.regions,
-    ))
-
-    mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])
-
-    fw_surf_filter = openmc.CellFilter((
-        *cells.inboard.sf,
-        *cells.outboard.sf,
-        cells.divertor.fw_sf,
-        *cells.inboard.fw,
-        *cells.outboard.fw,
-        cells.divertor.fw,
-    ))
-
-    neutron_filter = openmc.ParticleFilter(["neutron"])
-    photon_filter = openmc.ParticleFilter(["photon"])
-
-    cyl_mesh = openmc.CylindricalMesh(mesh_id=1)
-    cyl_mesh.r_grid = np.linspace(400, 1400, 100 + 1)
-    cyl_mesh.z_grid = np.linspace(-800.0, 800.0, 160 + 1)
-    cyl_mesh_filter = openmc.MeshFilter(cyl_mesh)
-
-    return (
-        cell_filter,
-        mat_filter,
-        fw_surf_filter,
-        neutron_filter,
-        photon_filter,
-        cyl_mesh_filter,
-    )
 
 
 def filter_new_cells(
@@ -177,13 +95,3 @@ def _create_tallies_from_filters(
 
     tallies = openmc.Tallies(tallies_list)
     tallies.export_to_xml(Path(out_path, "tallies.xml"))
-
-
-def create_tallies(
-    cells: Cells,
-    material_lib: MaterialsLibrary,
-) -> None:
-    """First create the filters (list of cells to be tallied),
-    then create create the tallies from those filters.
-    """
-    _create_tallies_from_filters(*filter_cells(cells, material_lib))

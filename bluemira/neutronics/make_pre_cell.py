@@ -363,7 +363,7 @@ class PreCellArray(abc.Sequence):
     def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
         return show_cad([pc.half_solid for pc in self], *args, **kwargs)
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the vertices on the exterior side of the pre-cell array.
 
@@ -374,7 +374,7 @@ class PreCellArray(abc.Sequence):
         """
         return np.insert(self.cell_walls[:, 1], 1, 0, axis=-1)
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the vertices on the interior side of the pre-cell array.
 
@@ -679,7 +679,7 @@ class DivertorPreCellArray(abc.Sequence):
                 #                 atol=0, rtol=EPS_FREECAD)
                 raise GeometryError("Expect neighbouring cells to share corners!")
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's outside corners'
         coordinates, in 3D.
@@ -698,7 +698,7 @@ class DivertorPreCellArray(abc.Sequence):
         ]
         return np.concatenate(exterior_vertices)
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
