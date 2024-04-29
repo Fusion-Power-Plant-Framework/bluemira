@@ -55,6 +55,9 @@ def some_function_on_blanket_wire(*_args):
         # TODO: raise new issue about needing method to scale BluemiraWire)
     with open("data/divertor_face.correct.json") as j:
         divertor_bmwire = deserialise_shape(json.load(j))
+    with open("data/vv_bndry_outer.json") as j:
+        vacuum_vessel_bmwire = deserialise_shape(json.load(j))
+
     fw_panel_bp_list = [
         np.load("data/fw_panels_10_0.1.npy"),
         np.load("data/fw_panels_25_0.1.npy"),
@@ -76,7 +79,7 @@ def some_function_on_blanket_wire(*_args):
         divertor_bmwire.edges[-1].start_point()[::2].flatten(),
         divertor_bmwire.edges[-1].end_point()[::2].flatten(),
     )
-    return panel_breakpoint_t, outer_boundary, divertor_bmwire
+    return panel_breakpoint_t, outer_boundary, divertor_bmwire, vacuum_vessel_bmwire
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -212,8 +215,12 @@ class Setup(CodesSetup):
 
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         with self._base_setup(run_mode, debug=debug):
-            plot_width_0 = self.generator.data.outer_boundary.bounding_box.x_max * 2.1
-            plot_width_1 = self.generator.data.outer_boundary.bounding_box.z_max * 3.1
+            plot_width_0 = (
+                self.generator.data.vacuum_vessel_wire.bounding_box.x_max * 2.1
+            )
+            plot_width_1 = (
+                self.generator.data.vacuum_vessel_wire.bounding_box.z_max * 3.1
+            )
             plot = openmc.Plot()
             plot.basis = runtime_params.plot_axis
             plot.pixels = [
@@ -297,9 +304,9 @@ class Teardown(CodesTeardown):
         self.out_path = out_path
 
     @staticmethod
-    def _cleanup(files_created, *, debug_mode: bool = False):
+    def _cleanup(files_created, *, delete_files: bool = False):
         """Remove files generated during the run (mainly .xml files.)"""
-        if debug_mode:
+        if not delete_files:
             bluemira_debug("No files removed as debug mode is turned on.")
             return  # skip this entire method if we want to keep the files.
 
@@ -373,7 +380,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self.source = source
 
         self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
-            _tokamak_geometry, self.params.major_radius.value, 0.1
+            _tokamak_geometry, self.params.major_radius.value, 0.1, 2, 4
         )
         self.tokamak_dimensions.inboard.manifold = 0.02  # why modified?
         self.tokamak_dimensions.outboard.manifold = 0.2
@@ -389,21 +396,22 @@ class OpenMCNeutronicsSolver(CodesSolver):
             # TODO: make these two Divertor names into Enum
             "Divertor": self.mat_lib.div_fw_mat,
             "DivertorSurface": self.mat_lib.div_fw_mat,
+            "CentralSolenoid": self.mat_lib.tf_coil_mat,
+            "TFCoil": self.mat_lib.tf_coil_mat,
         }
 
-        panel_breakpoint_t, outer_boundary, divertor_wire = (
+        panel_breakpoint_t, outer_boundary, divertor_wire, vacuum_vessel_wire = (
             some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)
         )
 
         self.generator = SingleNullTokamak(
-            panel_breakpoint_t, divertor_wire, outer_boundary
+            panel_breakpoint_t, divertor_wire, outer_boundary, vacuum_vessel_wire
         )
-        self.generator.make_pre_cell_arrays(
-            preserve_volume=True, snap_to_horizontal_angle=45
-        )
-        self.blanket_cell_array, _div_cell_array, _plasma, _air = (
+
+        self.generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
+        self.blanket_cell_array, _div_cell_array, _tf_coils, _cs, _plasma, _void = (
             self.generator.make_cell_arrays(
-                self.mat_dict, self.tokamak_dimensions, control_id=True
+                self.mat_lib, self.tokamak_dimensions, control_id=True
             )
         )
 
@@ -448,7 +456,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self._setup = self.setup_cls(
             self.out_path,
             self.name,
-            self.build_config["cross_section_xml"],
+            str(self.build_config["cross_section_xml"]),
             self.cells,
             self.source,
             self.blanket_cell_array,

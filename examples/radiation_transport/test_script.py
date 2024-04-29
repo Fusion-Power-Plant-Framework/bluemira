@@ -7,18 +7,8 @@
 
 from pathlib import Path
 
-import openmc
-
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
-from bluemira.geometry.coordinates import vector_intersect
-from bluemira.geometry.tools import deserialise_shape, make_polygon
-from bluemira.neutronics import result_presentation as present
-from bluemira.neutronics.execution import (
-    PlasmaSourceSimulation,
-    Plotting,
-    VolumeCalculation,
-)
 from bluemira.neutronics.designer import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
@@ -26,17 +16,10 @@ from bluemira.neutronics.designer import (
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.sources import make_pps_source
 
-# Parameters initialization
-CROSS_SECTION_XML = str(
-    Path(
-        "~/Documents/BLUEPRINT/cross_section_data/cross_section_data/cross_sections.xml"
-    ).expanduser()
-)
-print(getattr(openmc.config, "config", openmc.config))
-
-# TODO: move most of the following parameters into PlasmaSourceSimulation.__init__?
 build_config = {
-    "cross_section_xml": CROSS_SECTION_XML,
+    "cross_section_xml": Path(
+        "~/Documents/BLUEPRINT/cross_section_data/cross_section_data/cross_sections.xml"
+    ).expanduser(),
     "particles": 16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
     "batches": 3,
     "photon_transport": True,
