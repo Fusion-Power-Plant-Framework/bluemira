@@ -143,6 +143,7 @@ class Setup(CodesSetup):
         source,
         blanket_cell_array,
         generator,
+        outer_wire,
         mat_lib,
     ):
         super().__init__(None, codes_name)
@@ -153,6 +154,7 @@ class Setup(CodesSetup):
         self.source = source
         self.blanket_cell_array = blanket_cell_array
         self.generator = generator
+        self.outer_wire = outer_wire
         self.mat_lib = mat_lib
         self.matlist = attrgetter(
             "outb_sf_mat",
@@ -217,12 +219,8 @@ class Setup(CodesSetup):
 
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         with self._base_setup(run_mode, debug=debug):
-            plot_width_0 = (
-                self.generator.data.vacuum_vessel_wire.bounding_box.x_max * 2.1
-            )
-            plot_width_1 = (
-                self.generator.data.vacuum_vessel_wire.bounding_box.z_max * 3.1
-            )
+            plot_width_0 = self.outer_wire.bounding_box.x_max * 2.1
+            plot_width_1 = self.outer_wire.bounding_box.z_max * 3.1
             plot = openmc.Plot()
             plot.basis = runtime_params.plot_axis
             plot.pixels = [
@@ -236,13 +234,7 @@ class Setup(CodesSetup):
             self.files_created.add(plot_pth)
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
-        all_ext_vertices = self.generator.pre_cell_array_coordinates(
-            self.generator.pre_cell_array.blanket, self.generator.pre_cell_array.divertor
-        )
-        z_min = all_ext_vertices[:, -1].min()
-        z_max = all_ext_vertices[:, -1].max()
-        r_max = max(abs(all_ext_vertices[:, 0]))
-        r_min = -r_max
+        z_max, z_min, r_max, r_min = self.generator.pre_cell_arrays.bounding_box()
 
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
@@ -404,12 +396,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
             "TFCoil": self.mat_lib.tf_coil_mat,
         }
 
-        panel_breakpoint_t, outer_boundary, divertor_wire, vacuum_vessel_wire = (
+        panel_breakpoint_t, outer_boundary, divertor_wire, self.vacuum_vessel_wire = (
             some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)
         )
 
         self.generator = SingleNullTokamak(
-            panel_breakpoint_t, divertor_wire, outer_boundary, vacuum_vessel_wire
+            panel_breakpoint_t, divertor_wire, outer_boundary, self.vacuum_vessel_wire
         )
 
         self.generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
@@ -461,6 +453,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.source,
             self.cell_arrays.blanket,
             self.generator,
+            self.vacuum_vessel_wire,
             self.mat_lib,
         )
         self._run = self.run_cls(self.out_path, self.name)

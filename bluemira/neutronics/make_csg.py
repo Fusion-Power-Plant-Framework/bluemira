@@ -682,8 +682,8 @@ class BlanketCellStack(abc.Sequence):
 
     @staticmethod
     def check_cut_point_ordering(
-        cut_point_series: npt.NDArray[float],
-        direction_vector: npt.NDArray[float],
+        cut_point_series: npt.NDArray[np.float64],
+        direction_vector: npt.NDArray[np.float64],
         location_msg: str = "",
     ):
         """

@@ -83,6 +83,24 @@ class PreCellStage:
     blanket: PreCellArray
     divertor: DivertorPreCellArray
 
+    def external_coordinates(self):
+        """
+        Get the outermost coordinates of the tokamak cross-section from pre-cell array
+        and divertor pre-cell array.
+        Runs clockwise, beginning at the inboard blanket-divertor joint.
+        """
+        return np.concatenate([
+            self.blanket.exterior_vertices(),
+            self.divertor.exterior_vertices()[::-1],
+        ])
+
+    def bounding_box(self):
+        all_ext_vertices = self.external_coordinates()
+        z_min = all_ext_vertices[:, -1].min()
+        z_max = all_ext_vertices[:, -1].max()
+        r_max = max(abs(all_ext_vertices[:, 0]))
+        return z_max, z_min, r_max, -r_max
+
 
 @dataclass
 class CellStage:
@@ -187,26 +205,12 @@ class SingleNullTokamak:
             snap_to_horizontal_angle=snap_to_horizontal_angle,
         )
 
-        self.pre_cell_array = PreCellStage(
+        self.pre_cell_arrays = PreCellStage(
             blanket=blanket.straighten_exterior(preserve_volume=True),
             divertor=self.cutting.divertor.make_divertor_pre_cell_array(
                 discretisation_level=divertor_discretisation
             ),
         )
-
-    @staticmethod
-    def pre_cell_array_coordinates(
-        pre_cell_array: PreCellArray, divertor_pre_cell_array: DivertorPreCellArray
-    ):
-        """
-        Get the outermost coordinates of the tokamak cross-section from pre-cell array
-        and divertor pre-cell array.
-        Runs clockwise, beginning at the inboard blanket-divertor joint.
-        """
-        return np.concatenate([
-            pre_cell_array.exterior_vertices(),
-            divertor_pre_cell_array.exterior_vertices()[::-1],
-        ])
 
     @staticmethod
     def exterior_vertices(blanket, divertor) -> npt.NDArray:
@@ -296,13 +300,7 @@ class SingleNullTokamak:
             session.
         """
         # determine universe_box
-        all_ext_vertices = self.pre_cell_array_coordinates(
-            self.pre_cell_array.blanket, self.pre_cell_array.divertor
-        )
-        z_min = all_ext_vertices[:, -1].min()
-        z_max = all_ext_vertices[:, -1].max()
-        r_max = max(abs(all_ext_vertices[:, 0]))
-
+        z_max, z_min, r_max, _r_min = self.pre_cell_arrays.bounding_box()
         universe = self.make_universe_box(
             z_min - D_TOLERANCE,
             z_max + D_TOLERANCE,
@@ -311,7 +309,7 @@ class SingleNullTokamak:
         )
 
         blanket = BlanketCellArray.from_pre_cell_array(
-            self.pre_cell_array.blanket,
+            self.pre_cell_arrays.blanket,
             material_library,
             tokamak_dimensions,
             control_id=control_id,
@@ -323,7 +321,7 @@ class SingleNullTokamak:
             round_up_next_openmc_ids()
 
         divertor = DivertorCellArray.from_pre_cell_array(
-            self.pre_cell_array.divertor,
+            self.pre_cell_arrays.divertor,
             material_library,
             tokamak_dimensions.divertor,
             override_start_end_surfaces=(blanket[0].ccw_surface, blanket[-1].cw_surface),
