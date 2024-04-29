@@ -9,11 +9,11 @@ from pathlib import Path
 
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
-from bluemira.neutronics.designer import (
+from bluemira.neutronics.make_materials import BlanketType
+from bluemira.neutronics.solver import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
 )
-from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.sources import make_pps_source
 
 build_config = {

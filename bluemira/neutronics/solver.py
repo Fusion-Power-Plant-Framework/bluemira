@@ -212,6 +212,8 @@ class Setup(CodesSetup):
             self._set_tallies(
                 run_mode, self.blanket_cell_array, self.matlist(self.mat_lib)
             )
+        self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
+        self.files_created.add("tallies.out")
 
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         with self._base_setup(run_mode, debug=debug):
@@ -476,7 +478,11 @@ class OpenMCNeutronicsSolver(CodesSolver):
                 self._setup.universe,
                 self._setup.files_created,
                 source_params,
-                Path(self.out_path, run_mode.name.lower(), "statepoint.3.h5"),
+                Path(
+                    self.out_path,
+                    run_mode.name.lower(),
+                    f"statepoint.{runtime_params.batches}.h5",
+                ),
                 self.cells,
             )
         return result
