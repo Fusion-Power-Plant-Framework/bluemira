@@ -152,7 +152,7 @@ class ITERGravitySupportBuilder(Builder):
                 "Boolean cutting returned nothing... check your geometry please."
             )
 
-        return sorted(cut_result, key=lambda wire: wire.length)[0]
+        return min(cut_result, key=lambda wire: wire.length)
 
     def _make_connection_block(self, width, v1, v4, intersection_wire):
         """
@@ -442,9 +442,9 @@ class PFCoilSupportBuilder(Builder):
 
         cut_box = make_polygon([v1, v2, v3, v4], closed=True)
 
-        return sorted(
+        return min(
             boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
-        )[0]
+        )
 
     def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
