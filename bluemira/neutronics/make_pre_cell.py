@@ -558,12 +558,19 @@ class DivertorPreCell:
                 self.interior_wire.end_point, self.exterior_wire.start_point
             )
         ])
-        self.vertex = Vertices(
+        self._vertex = Vertices(
             self.cw_wall.start_point,
             self.cw_wall.end_point,
             self.ccw_wall.start_point,
             self.ccw_wall.end_point,
         )
+
+    @property
+    def vertex(self):
+        import ipdb
+
+        ipdb.set_trace()
+        return self._vertex
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
         return plot_2d(self.outline, *args, **kwargs)

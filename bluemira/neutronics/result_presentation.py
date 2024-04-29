@@ -10,7 +10,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 from tabulate import tabulate
@@ -42,60 +41,11 @@ def get_percent_err(row):
     dataframe.apply(get_percent_err),
     where dataframe must have one row named "std. dev." and another named "mean".
     """
-    # if percentage error > 1E7:
+    # if percentage error > 1E7:)
     if np.isclose(row["mean"], 0.0, rtol=0.0, atol=row["std. dev."] / 100000):
         return np.nan
     # else: normal mode of operation: divide std by mean, then multiply by 100.
     return row["std. dev."] / row["mean"] * 100.0
-
-
-class PoloidalXSPlot:
-    """Context manager so that we can save the plot as soon as we exit.
-    Using the 'with' statement (i.e. in the syntax of context manager in python)
-    also improves readability, as the save_name is written at the top of the indented
-    block, so it's obvious what's the indented block plotting.
-
-    Usage
-    -----
-    ```with PoloidalXSPlot(file_name, plot_title_text) as ax:
-        ax.plot(...)```
-    """
-
-    def __init__(self, save_name, title=None):
-        self.save_name = save_name
-        self.ax = plt.subplot()
-        self.ax.axis("equal")
-        self.ax.set_xlabel("r (m)")
-        self.ax.set_ylabel("z (m)")
-        if title:
-            self.ax.set_title(title)
-
-        # monkey patch on two methods that automatically convert the coordinates to [m].
-        def _monkey_patch_plot_cm(x, y, *arg, **kwargs):
-            """Line plot coodinates (given in cm) in meters."""
-            return self.ax.plot(
-                raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs
-            )
-
-        def _monkey_patch_scatter_cm(x, y, *arg, **kwargs):
-            """Scatter plot coodinates (given in cm) in meters."""
-            return self.ax.scatter(
-                raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs
-            )
-
-        self.ax.plot_cm = _monkey_patch_plot_cm
-        self.ax.scatter_cm = _monkey_patch_scatter_cm
-
-    def __enter__(self):
-        """Return the initialized matplotlib axes object"""
-        return self.ax
-
-    def __exit__(self, exception_type, value, traceback):
-        """Save and close upon exit."""
-        plt.savefig(self.save_name)
-        # self.ax.cla() # not necessary to clear axes or clear figure
-        # self.ax.figure.clf()
-        plt.close()
 
 
 @dataclass

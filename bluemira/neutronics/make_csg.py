@@ -15,12 +15,12 @@ from collections import abc
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import openmc
-from matplotlib import pyplot as plt  # for debugging
-from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
@@ -29,13 +29,14 @@ from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
 from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import (
     CellWalls,
-    Vertices,
     polygon_revolve_signed_volume,
 )
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
+
+    import numpy.typing as npt
 
     from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import (
@@ -52,8 +53,7 @@ SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
-    diff = np.diff(series)
-    return all(diff >= -EPS_FREECAD)  # or all(diff<0)
+    return all(np.diff(series) >= -EPS_FREECAD)  # or all(diff<0)
 
 
 # VERY ugly solution of global dictionary.
@@ -592,7 +592,7 @@ class BlanketCell(openmc.Cell):
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
         interior_surface: openmc.Surface | None,
-        vertices: Vertices,
+        vertices: Coordinates,
         cell_id: int | None = None,
         name: str = "",
         fill: openmc.Material | None = None,
@@ -628,15 +628,12 @@ class BlanketCell(openmc.Cell):
         _surfaces_list = [exterior_surface, ccw_surface, cw_surface, interior_surface]
 
         final_region = region_from_surface_series(
-            _surfaces_list, vertices.to_array(), control_id=bool(cell_id)
+            _surfaces_list, vertices.xyz.T, control_id=bool(cell_id)
         )
 
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
-        vertices = [
-            getattr(self.vertex, p)[[0, -1]]
-            for p in ("exterior_end", "interior_start", "interior_end", "exterior_start")
-        ]
-        self.volume = to_cm3(polygon_revolve_signed_volume(vertices))
+
+        self.volume = to_cm3(polygon_revolve_signed_volume(vertices.xz.T))
         if self.volume <= 0:
             raise GeometryError("Wrong ordering of vertices!")
 
@@ -828,9 +825,13 @@ class BlanketCellStack(abc.Sequence):
 
         # 2. Accumulate the corners of each cell.
         vertices = [
-            Vertices(outer_pt[1], inner_pt[1], inner_pt[0], outer_pt[0]).to_3D()
-            for inner_pt, outer_pt in pairwise(wall_cut_pts)
+            Coordinates({
+                "x": np.asarray([out[1, 0], inn[1, 0], inn[0, 0], out[0, 0]]),
+                "z": np.asarray([out[1, 1], inn[1, 1], inn[0, 1], out[0, 1]]),
+            })
+            for inn, out in pairwise(wall_cut_pts)
         ]
+
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
         projection_cw = wall_cut_pts[:, 1] @ dirs[1] / np.linalg.norm(dirs[1])
@@ -962,8 +963,8 @@ class BlanketCellArray(abc.Sequence):
         exterior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged clockwise (inboard to outboard).
         """
-        exterior_vertices = [self[0][-1].vertex.exterior_start]
-        exterior_vertices.extend(stack[-1].vertex.exterior_end for stack in self)
+        exterior_vertices = [self[0][-1].vertex.xyz[:, 3]]
+        exterior_vertices.extend(stack[-1].vertex.xyz[:, 0] for stack in self)
         return np.array(exterior_vertices)
 
     def interior_vertices(self) -> npt.NDArray:
@@ -976,9 +977,10 @@ class BlanketCellArray(abc.Sequence):
         interior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged clockwise (inboard to outboard).
         """
-        interior_vertices = [self[0][0].vertex.interior_end]
-        interior_vertices.extend(stack[0].vertex.interior_start for stack in self)
-        return np.array(interior_vertices)
+        return np.asarray([
+            self[0][0].vertex.xyz[:, 2],
+            *(stack[0].vertex.xyz[:, 1] for stack in self),
+        ])
 
     def interior_surfaces(self) -> list[openmc.Surface]:
         """
@@ -1006,21 +1008,17 @@ class BlanketCellArray(abc.Sequence):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`.
         """
-        union_zone = []
-        for stack in self:
-            vertices_array = np.array([
-                stack[0].vertex.interior_start,
-                stack[0].vertex.interior_end,
-                stack[-1].vertex.exterior_start,
-                stack[-1].vertex.exterior_end,
-            ])
-            _surfaces = [stack.cw_surface, stack.ccw_surface, stack.interior_surface]
-            union_zone.append(
-                region_from_surface_series(
-                    _surfaces, vertices_array, control_id=control_id
-                )
+        return openmc.Union([
+            region_from_surface_series(
+                [stack.cw_surface, stack.ccw_surface, stack.interior_surface],
+                np.vstack((
+                    stack[0].vertex.xz.T[(1, 2),],
+                    stack[-1].vertex.xz.T[(3, 0),],
+                )),
+                control_id=control_id,
             )
-        return openmc.Union(union_zone)
+            for stack in self
+        ])
 
     @classmethod
     def from_pre_cell_array(
@@ -1241,16 +1239,15 @@ class DivertorCell(openmc.Cell):
         self.exterior_wire = exterior_wire
         self.interior_wire = interior_wire
 
-        vertices_array = self.get_all_vertices()
-
-        _surfaces = [
-            self.cw_surface,
-            self.ccw_surface,
-            *self.exterior_surfaces,
-            *self.interior_surfaces,
-        ]
         region = region_from_surface_series(
-            _surfaces, vertices_array, control_id=bool(cell_id)
+            [
+                self.cw_surface,
+                self.ccw_surface,
+                *self.exterior_surfaces,
+                *self.interior_surfaces,
+            ],
+            self.get_all_vertices(),
+            control_id=bool(cell_id),
         )
 
         if subtractive_region:
