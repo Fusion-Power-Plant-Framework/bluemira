@@ -866,7 +866,10 @@ def calculate_connection_length_fs(
         xfs, zfs = find_flux_surface_through_point(
             eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
         )
-        f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
+        f_s = Coordinates({"x": xfs, "z": zfs})
+    if f_s.closed:
+        return 0.0
+    f_s = OpenFluxSurface(f_s)
 
     class Point:
         def __init__(self, x, z):

@@ -3,15 +3,13 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-from typing import Dict, List, Optional, Union
-
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import UpdateableConstraint
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import MaximiseDivertorLegLength
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
@@ -42,28 +40,33 @@ class MaximiseDivertorLegLengthCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         eq: Equilibrium,
-        double_null: bool,
-        outer: bool,
+        double_null: bool = True,
+        outer: bool = True,
+        plasma_facing_boundary: Grid | Coordinates | None = None,
         psi_n_tol: float = 1e-6,
         delta_start: float = 0.01,
-        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
-        max_currents: Optional[npt.ArrayLike] = None,
         opt_algorithm: str = "SLSQP",
-        opt_conditions: Optional[Dict[str, float]] = None,
-        opt_parameters: Optional[Dict[str, float]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        max_currents: npt.ArrayLike | None = None,
+        opt_conditions: dict[str, float] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
         self.double_null = double_null
         self.outer = outer
+        self.plasma_facing_boundary = plasma_facing_boundary
         self.psi_n_tol = psi_n_tol
         self.delta_start = delta_start
-        self.plasma_facing_boundary = plasma_facing_boundary
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        self.opt_conditions = opt_conditions
         self.opt_algorithm = opt_algorithm
-        self.opt_parameters = opt_parameters
+        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
+            "max_eval": 100
+        })
+        self.opt_parameters = (
+            {"initial_step": 0.03} if opt_parameters is None else opt_parameters
+        )
+        self._constraints = [] if constraints is None else constraints
         self._args = {
             "eq": self.eq,
             "scale": self.scale,
@@ -73,9 +76,10 @@ class MaximiseDivertorLegLengthCOP(CoilsetOptimisationProblem):
             "delta_start": self.delta_start,
             "plasma_facing_boundary": self.plasma_facing_boundary,
         }
-        self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True):
+    def optimise(
+        self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True
+    ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem
 

@@ -55,7 +55,7 @@ import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.find_legs import LegFlux, get_legs_length_and_angle
+from bluemira.equilibria.find_legs import LegFlux, NumNull, get_legs_length_and_angle
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -309,7 +309,7 @@ class GrazingAngleConstraintFunction(ConstraintFunction):
         min_angles: npt.NDArray,
         double_null: bool,
         psi_n_tol: float = PSI_NORM_TOL,
-        plasma_facing_boundary: Optional[Union[Grid, Coordinates, BluemiraWire]] = None,
+        plasma_facing_boundary: Grid | Coordinates | BluemiraWire | None = None,
     ) -> None:
         self.eq = eq
         self.scale = scale
@@ -327,7 +327,7 @@ class GrazingAngleConstraintFunction(ConstraintFunction):
             self.eq, legs, self.plasma_facing_boundary
         )
 
-        if LegFlux(self.eq).n_null == "SN":
+        if LegFlux(self.eq).n_null == NumNull.SN:
             location = "lower" if any("lower" in name for name in angles) else "upper"
             return (
                 np.array(

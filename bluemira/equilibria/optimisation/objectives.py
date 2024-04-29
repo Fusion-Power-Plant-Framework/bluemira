@@ -31,7 +31,7 @@ import abc
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
@@ -167,10 +167,10 @@ class MaximiseConnectionLength(ObjectiveFunction):
         self,
         eq: Equilibrium,
         scale: float,
+        plasma_facing_boundary: Grid | Coordinates | None,
         lower: bool = True,
         psi_n_tol=1e-6,
         delta_start=0.01,
-        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
         rtol: float = 1e-1,
         n_turns_max: int = 50,
         calculation_method: str = "flux_surface_geometry",
@@ -227,10 +227,11 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         eq: Equilibrium,
         scale: float,
         double_null: bool,
-        outer: Optional[bool] = True,
+        plasma_facing_boundary: Grid | Coordinates | None,
+        calculation_method: str = "field_line_tracer",
+        outer: bool = True,
         psi_n_tol: float = PSI_NORM_TOL,
         delta_start: float = 0.01,
-        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
     ) -> None:
         self.eq = eq
         self.scale = scale
@@ -239,6 +240,7 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         self.psi_n_tol = psi_n_tol
         self.delta_start = delta_start
         self.plasma_facing_boundary = plasma_facing_boundary
+        self.calculation_method = calculation_method
 
     def f_objective(self, vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""

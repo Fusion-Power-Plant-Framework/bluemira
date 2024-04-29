@@ -108,8 +108,7 @@ class LegFlux:
         Determine how to find and sort legs.
         For a double null this function:
         - sorts the x-points by lower then upper
-        - sorts the separatrix list by inner then outer for sort_split="X"
-        - keeps the separatrix list sorted by longest then shortest for sort_split="Z"
+        - keeps the separatrix list sorted by longest then shortest
 
         Returns
         -------
@@ -257,10 +256,10 @@ def get_legs_length_and_angle(
     """Calculates the length of all the divertor legs in a dictionary."""
     length_dict = {}
     angle_dict = {}
-    for n, leg_list in leg_dict.items():
-        if not isinstance(leg_list[0], Coordinates):
+    for name, leg_list in leg_dict.items():
+        if not leg_list:
             lengths = [0.0]
-            angles = [None]
+            angles = [180.0]
         else:
             lengths = []
             angles = []
@@ -277,8 +276,8 @@ def get_legs_length_and_angle(
                     grazing_ang = 2 * np.pi - alpha
                 lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
                 angles.append(grazing_ang)
-        length_dict.update({n: lengths})
-        angle_dict.update({n: angles})
+        length_dict.update({name: lengths})
+        angle_dict.update({name: angles})
     return length_dict, angle_dict
 
 
@@ -509,10 +508,10 @@ class CalcMethod(Enum):
 
 def calculate_connection_length(
     eq: Equilibrium,
-    x: Optional[float] = None,
-    z: Optional[float] = None,
+    x: float | None = None,
+    z: float | None = None,
+    first_wall: Coordinates | Grid | None = None,
     forward: bool = True,
-    first_wall: Optional[Union[Coordinates, Grid]] = None,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
     rtol: float = 1e-1,
@@ -535,16 +534,16 @@ def calculate_connection_length(
             rtol=rtol,
         )
 
-        if legflux.n_null == "DN":
-            if legflux.sort_split == "X":
-                legflux.seperatrix.sort(key=lambda leg: leg.x[0])
-            f_s = legflux.seperatrix[0]
+        if legflux.n_null == NumNull.DN:
+            if legflux.sort_split == SortSplit.X:
+                legflux.separatrix.sort(key=lambda leg: -leg.x[0])
+            f_s = legflux.separatrix[0]
         else:
-            f_s = legflux.seperatrix
+            f_s = legflux.separatrix
 
-        z_abs = np.abs(f_s.coords.z)
+        z_abs = np.abs(f_s.z)
         z = np.min(z_abs)
-        x = np.max(f_s.coords.x[z_abs == np.min(z_abs)])
+        x = np.max(f_s.x[z_abs == np.min(z_abs)])
 
     if calculation_method == CalcMethod.FIELD_LINE_TRACER:
         return calculate_connection_length_flt(
