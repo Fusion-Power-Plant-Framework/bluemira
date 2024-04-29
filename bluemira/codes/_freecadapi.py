@@ -1797,7 +1797,7 @@ def boolean_fuse(
         raise ValueError(  # noqa: TRY301
             f"Fuse function still not implemented for {_type} instances."
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise FreeCADError(str(e)) from e
 
 
