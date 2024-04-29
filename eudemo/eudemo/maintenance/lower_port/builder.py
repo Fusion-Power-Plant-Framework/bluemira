@@ -250,11 +250,11 @@ def build_lower_port_xyz(
     straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
     angled_pieces = boolean_cut(angled_duct, [straight_duct])
-    angled_top = sorted(
+    angled_top = min(
         angled_pieces, key=lambda s: np.hypot(s.center_of_mass[0], s.center_of_mass[2])
-    )[0]
+    )
     angled_void_pieces = boolean_cut(angled_void, [straight_duct_void])
-    angled_void_piece = sorted(angled_void_pieces, key=lambda s: -s.center_of_mass[2])[0]
+    angled_void_piece = min(angled_void_pieces, key=lambda s: -s.center_of_mass[2])
     void = boolean_fuse([angled_void_piece, straight_duct_void])
 
     straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
