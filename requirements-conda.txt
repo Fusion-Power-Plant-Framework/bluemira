@@ -1,4 +1,4 @@
-gmsh-interop==2021.1.1
+gmsh-interop==2024.1
 h5py==3.11.0
 importlib-metadata==7.1.0
 pybind11==2.12.0
