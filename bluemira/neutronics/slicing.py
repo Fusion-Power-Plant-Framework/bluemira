@@ -26,7 +26,7 @@ from bluemira.geometry.plane import (
     z_plane,
 )
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
-from bluemira.neutronics.constants import DISCRETIZATION_LEVEL, TOLERANCE_DEGREES
+from bluemira.neutronics.constants import DISCRETISATION_LEVEL, TOLERANCE_DEGREES
 from bluemira.neutronics.make_pre_cell import (
     DivertorPreCell,
     DivertorPreCellArray,
@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 def cut_curve(
     cut_points: list[npt.NDArray],
     wire: BluemiraWire,
-    discretization_level: int,
+    discretisation_level: int,
     *,
     reverse: bool = False,
 ) -> Generator[npt.NDArray[float]]:
@@ -69,9 +69,9 @@ def cut_curve(
     wire
         The wire that we want to cut up.
 
-    discretization_level [current implementation]
-        We yield a list of points of len==discretization_level, such that we can build a
-        wire made of (discretization_level-1) straight lines to approximate each segment.
+    discretisation_level [current implementation]
+        We yield a list of points of len==discretisation_level, such that we can build a
+        wire made of (discretisation_level-1) straight lines to approximate each segment.
 
     reversed:
         Whether we want the neutron spectrum to go in the increasing or the decreasing
@@ -82,7 +82,7 @@ def cut_curve(
     params_range [current implementation]
         For each segment, yield the values of the parametric variable t such that
         `[wire.value_at(t) for t in params_range]`
-        is a list of points (sufficient to built up a series of (discretization_level-1)
+        is a list of points (sufficient to built up a series of (discretisation_level-1)
         straight lines that approximate that segment)
     """
     cut_params = [wire.parameter_at(cp) for cp in cut_points]
@@ -112,7 +112,7 @@ def cut_curve(
                 alpha -= 1.0  # noqa: PLW2901
         elif alpha < beta:  # alpha is expected to be larger than beta.
             alpha += 1.0  # noqa: PLW2901
-        param_range = np.linspace(alpha, beta, discretization_level) % 1.0
+        param_range = np.linspace(alpha, beta, discretisation_level) % 1.0
         if reverse:
             param_range = param_range[::-1]
         yield param_range
@@ -283,7 +283,7 @@ class PanelsAndExteriorCurve:
 
     def execute_curve_cut(
         self,
-        discretization_level: int,
+        discretisation_level: int,
         starting_cut: npt.NDArray[float] | None = None,
         ending_cut: npt.NDArray[float] | None = None,
         snap_to_horizontal_angle: float = 30.0,
@@ -291,7 +291,7 @@ class PanelsAndExteriorCurve:
         """
         Cut the exterior curve into a series and return them.
         This is the slowest part of the entire csg-creation process, because of the
-        discretization.
+        discretisation.
 
         Parameters
         ----------
@@ -299,10 +299,10 @@ class PanelsAndExteriorCurve:
             See
             :meth:`~bluemira.neutronics.slicing.PanelsAndExteriorCurve.calculate_cut_points`
 
-        discretization_level:
+        discretisation_level:
             how many points to use to approximate the curve.
             TODO: remove this when issue #3038 is fixed. The raw wire can be used
-                without discretization then.
+                without discretisation then.
 
         Returns
         -------
@@ -323,7 +323,7 @@ class PanelsAndExteriorCurve:
 
         for i, t_range in enumerate(
             cut_curve(
-                vv_cut_points, self.vv_interior, discretization_level, reverse=False
+                vv_cut_points, self.vv_interior, discretisation_level, reverse=False
             )
         ):
             vv_curve_segments.append(
@@ -338,7 +338,7 @@ class PanelsAndExteriorCurve:
             cut_curve(
                 exterior_cut_points,
                 self.vv_exterior,
-                discretization_level,
+                discretisation_level,
                 reverse=False,
             )
         ):
@@ -371,7 +371,7 @@ class PanelsAndExteriorCurve:
 
     def make_quadrilateral_pre_cell_array(
         self,
-        discretization_level: int = DISCRETIZATION_LEVEL,
+        discretisation_level: int = DISCRETISATION_LEVEL,
         starting_cut: npt.NDArray[float] | None = None,
         ending_cut: npt.NDArray[float] | None = None,
         snap_to_horizontal_angle: float = 30.0,
@@ -398,7 +398,7 @@ class PanelsAndExteriorCurve:
         for i, (vv_segment, exterior_segment) in enumerate(
             zip(
                 *self.execute_curve_cut(
-                    discretization_level,
+                    discretisation_level,
                     starting_cut,
                     ending_cut,
                     snap_to_horizontal_angle,
@@ -482,10 +482,10 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
             add_circle(edge, _bmw_edge, current_start, current_end)
 
         elif isinstance(curve_type, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
-            sample_points = _bmw_edge.discretize(DISCRETIZATION_LEVEL)
-            discretized_wire = make_polygon(sample_points, closed=False)
+            sample_points = _bmw_edge.discretise(DISCRETISATION_LEVEL)
+            discretised_wire = make_polygon(sample_points, closed=False)
             for __bmw_edge, _start, _end in zip(
-                discretized_wire.edges,
+                discretised_wire.edges,
                 sample_points.T[:-1],
                 sample_points.T[1:],
                 strict=True,
@@ -788,7 +788,7 @@ class DivertorWireAndExteriorCurve:
 
     def execute_curve_cut(
         self,
-        discretization_level: int,
+        discretisation_level: int,
         starting_cut: npt.NDArray[float] | None,
         ending_cut: npt.NDArray[float] | None,
     ) -> list[WireInfoList]:
@@ -805,17 +805,17 @@ class DivertorWireAndExteriorCurve:
         | reverse = False | counter-clockwise |     clockwise      |
 
         This is the slowest part of the entire csg-creation process, because of the
-        discretization.
+        discretisation.
 
         Parameters
         ----------
         starting_cut, ending_cut:
             See
             :meth:`~bluemira.neutronics.slicing.DivertorWireAndExteriorCurve.calculate_cut_points`
-        discretization_level:
+        discretisation_level:
             how many points to use to approximate the curve.
             TODO: remove this when issue #3038 is fixed. The raw wire can be used
-                without discretization then.
+                without discretisation then.
 
         Returns
         -------
@@ -835,12 +835,12 @@ class DivertorWireAndExteriorCurve:
         )
 
         for t_range in cut_curve(
-            vv_cut_points, self.vv_interior, discretization_level, reverse=True
+            vv_cut_points, self.vv_interior, discretisation_level, reverse=True
         ):
             vv_curve_segments.append(self.approximate_curve(self.vv_interior, t_range))  # noqa: PERF401
 
         for t_range in cut_curve(
-            exterior_cut_points, self.vv_exterior, discretization_level, reverse=True
+            exterior_cut_points, self.vv_exterior, discretisation_level, reverse=True
         ):
             exterior_curve_segments.append(  # noqa: PERF401
                 self.approximate_curve(self.vv_exterior, t_range)
@@ -867,7 +867,7 @@ class DivertorWireAndExteriorCurve:
         self,
         starting_cut: npt.NDArray[float] | None = None,
         ending_cut: npt.NDArray[float] | None = None,
-        discretization_level: int = DISCRETIZATION_LEVEL,
+        discretisation_level: int = DISCRETISATION_LEVEL,
     ):
         """
         Cut the exterior curve up, so that would act as the exterior side of the
@@ -883,7 +883,7 @@ class DivertorWireAndExteriorCurve:
             shape = (2,)
         ending_cut:
             shape = (2,)
-        discretization_level:
+        discretisation_level:
             integer: how many points to use to approximate each curve segment.
         """
         # deduced starting_cut and ending_cut from the divertor itself.
@@ -901,7 +901,7 @@ class DivertorWireAndExteriorCurve:
         pre_cell_list = []
         for i, (vv_segment, exterior_segment) in enumerate(
             zip(
-                *self.execute_curve_cut(discretization_level, starting_cut, ending_cut),
+                *self.execute_curve_cut(discretisation_level, starting_cut, ending_cut),
                 strict=True,
             )
         ):
