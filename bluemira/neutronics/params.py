@@ -89,6 +89,8 @@ class OpenMCSimulationRuntimeParameters:
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
     parametric_source: bool = True
+    plot_axis: str = "xz"
+    plot_pixel_per_metre: int = 100
 
 
 class BlanketType(Enum):

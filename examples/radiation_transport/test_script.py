@@ -20,8 +20,8 @@ from bluemira.neutronics.execution import (
     VolumeCalculation,
 )
 from bluemira.neutronics.designer import (
-    OpenMCNeutronicsDesigner,
-    OpenMCNeutronicsDesignerParams,
+    OpenMCNeutronicsSolver,
+    OpenMCNeutronicsSolverParams,
 )
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.sources import make_pps_source
@@ -45,9 +45,11 @@ build_config = {
     "openmc_write_summary": False,
     "parametric_source": True,
     "blanket_type": BlanketType.HCPB,
+    "plot_axis": "xz",
+    "plot_pixel_per_metre": 100,
 }
 
-params = OpenMCNeutronicsDesignerParams.from_dict({
+params = OpenMCNeutronicsSolverParams.from_dict({
     "major_radius": {"value": 8.938, "unit": "m"},
     "aspect_ratio": {"value": 8.938 / 2.8938, "unit": "m"},
     "elongation": {"value": 1.65, "unit": ""},
@@ -59,7 +61,7 @@ params = OpenMCNeutronicsDesignerParams.from_dict({
     "vertical_shift": {"value": 0, "unit": "m"},
 })
 
-obj = OpenMCNeutronicsDesigner(
+obj = OpenMCNeutronicsSolver(
     params, None, None, None, source=make_pps_source, build_config=build_config
 )
 
