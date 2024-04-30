@@ -48,55 +48,55 @@
     },
     "poissons_ratio": 0.33,
     "coefficient_thermal_expansion": {
-      "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(temperature_in_C)",
+      "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 40"
     },
     "youngs_modulus": {
-      "value": "0.001 * (201660 - 84.8 * temperature_in_C)",
+      "value": "0.001 * (201660 - 84.8 * to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 41"
     },
     "density": {
-      "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
+      "value": "interp(to_celsius(temperature), [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Table A.S03.2.4-1"
     },
     "thermal_conductivity": {
-      "value": "13.98 + 1.502e-2 * temperature_in_C",
+      "value": "13.98 + 1.502e-2 * to_celsius(temperature)",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 42"
     },
     "specific_heat": {
-      "value": "polynomial.Polynomial([462.69, 0.520265, -1.7117e-3, 3.3658e-6, -2.1958e-9])(temperature_in_C)",
+      "value": "polynomial.Polynomial([462.69, 0.520265, -1.7117e-3, 3.3658e-6, -2.1958e-9])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 43"
     },
     "minimum_yield_stress": {
-      "value": "polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
+      "value": "polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 44"
     },
     "average_yield_stress": {
-      "value": "1.28 * polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
+      "value": "1.28 * polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 44"
     },
     "minimum_ultimate_tensile_stress": {
-      "value": "polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
+      "value": "polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(to_celsius(temperature))",
       "temp_min_celsius": 50,
       "temp_max_celsius": 650,
       "reference": "ITER_D_222RLN v3.3 Equation 47"
     },
     "average_ultimate_tensile_stress": {
-      "value": "1.112 * polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
+      "value": "1.112 * polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(to_celsius(temperature))",
       "temp_min_celsius": 50,
       "temp_max_celsius": 650,
       "reference": "ITER_D_222RLN v3.3 Equation 47"
@@ -124,44 +124,44 @@
       "Zn": 1e-6
     },
     "coefficient_thermal_expansion": {
-      "value": "polynomial.Polynomial([16.73, 5.26e-3, -5.53e-6, 4.2e-9])(temperature_in_C)",
+      "value": "polynomial.Polynomial([16.73, 5.26e-3, -5.53e-6, 4.2e-9])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 900,
       "reference": "ITER_D_222RLN v3.3 Equation 83"
     },
     "youngs_modulus": {
-      "value": "polynomial.Polynomial([117, -2.17e-2, -6.29e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([117, -2.17e-2, -6.29e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 400,
       "reference": "ITER_D_222RLN v3.3 Equation 84"
     },
     "poissons_ratio": 0.33,
     "density": {
-      "value": "8940 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.8, 3.16e-3, 8.18e-6, -2.49e-9])(temperature_in_C))",
+      "value": "8940 * (1 - 3e-6 * (to_celsius(temperature) - 20) * polynomial.Polynomial([16.8, 3.16e-3, 8.18e-6, -2.49e-9])(to_celsius(temperature)))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 900,
       "reference": "ITER_D_222RLN v3.3 Equation 85"
     },
     "thermal_conductivity": {
-      "value": "polynomial.Polynomial([402, -7.08e-2, 2.46e-6])(temperature_in_C)",
+      "value": "polynomial.Polynomial([402, -7.08e-2, 2.46e-6])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 86"
     },
     "specific_heat": {
-      "value": "polynomial.Polynomial([387, 6.35e-2, 4.36e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([387, 6.35e-2, 4.36e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 87"
     },
     "minimum_yield_stress": {
-      "value": "polynomial.Polynomial([584, -5.04e-2, -5e-6])(temperature_in_C)",
+      "value": "polynomial.Polynomial([584, -5.04e-2, -5e-6])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 950,
       "reference": "ITER_D_222RLN v3.3 Equation 91"
     },
     "minimum_ultimate_tensile_stress": {
-      "value": "polynomial.Polynomial([212, -2.94e-1, 8.17e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([212, -2.94e-1, 8.17e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 950,
       "reference": "ITER_D_222RLN v3.3 Equation 92"
@@ -195,25 +195,25 @@
     },
     "poissons_ratio": 0.33,
     "youngs_modulus": {
-      "value": "polynomial.Polynomial([128, -2.59e-2, -4.87e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([128, -2.59e-2, -4.87e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 96"
     },
     "coefficient_thermal_expansion": {
-      "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 400, 450, 500, 550, 600], [16.7, 17, 17.3, 17.5, 17.7, 17.8, 18, 18.1, 18.2, 18.4, 18.5, 18.6])",
+      "value": "interp(to_celsius(temperature), [20, 50, 100, 150, 200, 250, 300, 400, 450, 500, 550, 600], [16.7, 17, 17.3, 17.5, 17.7, 17.8, 18, 18.1, 18.2, 18.4, 18.5, 18.6])",
       "temp_min_celsius": 20,
       "temp_max_celsius": 600,
       "reference": "ITER_D_222RLN v3.3 Table A.S31.2.1-1"
     },
     "density": {
-      "value": "8900 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.6, 6.24e-3, -9.05e-6, 7.2e-9])(temperature_in_C))",
+      "value": "8900 * (1 - 3e-6 * (to_celsius(temperature) - 20) * polynomial.Polynomial([16.6, 6.24e-3, -9.05e-6, 7.2e-9])(to_celsius(temperature)))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 97"
     },
     "thermal_conductivity": {
-      "value": "polynomial.Polynomial([323, -1.38e-1, -2.83e-4, 2.11e-7])(temperature_in_C)",
+      "value": "polynomial.Polynomial([323, -1.38e-1, -2.83e-4, 2.11e-7])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 700,
       "reference": "ITER_D_222RLN v3.3 Equation 98"
@@ -255,31 +255,31 @@
     },
     "poissons_ratio": 0.33,
     "coefficient_thermal_expansion": {
-      "value": "polynomial.Polynomial([3.9225, 5.8352e-4, 5.7054e-11, -2.0463e-14])(temperature_in_C)",
+      "value": "polynomial.Polynomial([3.9225, 5.8352e-4, 5.7054e-11, -2.0463e-14])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1200,
       "reference": "ITER_D_222RLN v3.3 Equation 135"
     },
     "youngs_modulus": {
-      "value": "polynomial.Polynomial([397.903, -2.3066e-3, -2.7162e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([397.903, -2.3066e-3, -2.7162e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 136"
     },
     "density": {
-      "value": "1000 * polynomial.Polynomial([19.3027, -2.3786e-4, -2.2448e-8])(temperature_in_C)",
+      "value": "1000 * polynomial.Polynomial([19.3027, -2.3786e-4, -2.2448e-8])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1200,
       "reference": "ITER_D_222RLN v3.3 Equation 137"
     },
     "thermal_conductivity": {
-      "value": "polynomial.Polynomial([174.9274, -0.1067, 5.0067e-5, -7.8349e-9])(temperature_in_C)",
+      "value": "polynomial.Polynomial([174.9274, -0.1067, 5.0067e-5, -7.8349e-9])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 138"
     },
     "specific_heat": {
-      "value": "polynomial.Polynomial([128.308, 3.2797e-2, -3.4097e-6])(temperature_in_C)",
+      "value": "polynomial.Polynomial([128.308, 3.2797e-2, -3.4097e-6])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 139"
@@ -298,43 +298,43 @@
     },
     "poissons_ratio": 0.1,
     "coefficient_thermal_expansion": {
-      "value": "polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C)",
+      "value": "polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 1000,
       "reference": "ITER_D_222RLN v3.3 Equation 127"
     },
     "youngs_modulus": {
-      "value": "polynomial.Polynomial([306.78, -2.9281e-2, -4.5069e-5])(temperature_in_C)",
+      "value": "polynomial.Polynomial([306.78, -2.9281e-2, -4.5069e-5])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 128"
     },
     "density": {
-      "value": "1830 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C))",
+      "value": "1830 * (1 - 3e-6 * (to_celsius(temperature) - 20) * polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(to_celsius(temperature)))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 129"
     },
     "thermal_conductivity": {
-      "value": "polynomial.Polynomial([209, -4.8e-1, 9.38e-4, -9.37e-7, 3.34e-10])(temperature_in_C)",
+      "value": "polynomial.Polynomial([209, -4.8e-1, 9.38e-4, -9.37e-7, 3.34e-10])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 800,
       "reference": "ITER_D_222RLN v3.3 Equation 130"
     },
     "specific_heat": {
-      "value": "interp(temperature_in_C, [20, 100, 200, 300, 400, 500, 600, 700, 800], [1807, 2046, 2295, 2497, 2660, 2791, 2998, 2989, 3071])",
+      "value": "interp(to_celsius(temperature), [20, 100, 200, 300, 400, 500, 600, 700, 800], [1807, 2046, 2295, 2497, 2660, 2791, 2998, 2989, 3071])",
       "temp_min_celsius": 20,
       "temp_max_celsius": 500,
       "reference": "ITER_D_222RLN v3.3 Table A.A01.2.6-1"
     },
     "minimum_yield_stress": {
-      "value": "polynomial.Polynomial([252.2, -1.524e-1, -1.45e-4])(temperature_in_C)",
+      "value": "polynomial.Polynomial([252.2, -1.524e-1, -1.45e-4])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 650,
       "reference": "ITER_D_222RLN v3.3 Equation 131"
     },
     "minimum_ultimate_tensile_stress": {
-      "value": "polynomial.Polynomial([392.8, -3.023e-1, -2.011e-4])(temperature_in_C)",
+      "value": "polynomial.Polynomial([392.8, -3.023e-1, -2.011e-4])(to_celsius(temperature))",
       "temp_min_celsius": 20,
       "temp_max_celsius": 950,
       "reference": "ITER_D_222RLN v3.3 Equation 132"
@@ -463,14 +463,14 @@
   "H2O": {
     "material_class": "Liquid",
     "symbol": "H2O",
-    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+    "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Water')"
   },
   "He": {
     "material_class": "Liquid",
     "symbol": "He",
-    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Helium')",
-    "temperature_in_K": 4.5,
-    "pressure_in_Pa": 6e5
+    "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Helium')",
+    "temperature": 4.5,
+    "pressure": 6e5
   },
   "Li4SiO4": {
     "material_class": "UnitCellCompound",
@@ -478,13 +478,13 @@
     "volume_of_unit_cell_cm3": 1.1543e-21,
     "atoms_per_unit_cell": 14,
     "specific_heat": {
-      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
+      "value": "interp(to_celsius(temperature), [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
       "temp_min_celsius": 0,
       "temp_max_celsius": 1000,
       "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
     },
     "coefficient_thermal_expansion": {
-      "value": "0.768 + 4.96e-4 * temperature_in_C + 0.045 * eps_vol",
+      "value": "0.768 + 4.96e-4 * to_celsius(temperature) + 0.045 * eps_vol",
       "temp_min_celsius": 25,
       "temp_max_celsius": 800,
       "reference": "https://www.sciencedirect.com/science/article/pii/S0920379602001655"
@@ -520,7 +520,7 @@
     "volume_of_unit_cell_cm3": 0.01622e-21,
     "atoms_per_unit_cell": 8,
     "specific_heat": {
-      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
+      "value": "interp(to_celsius(temperature), [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
       "temp_min_celsius": 0,
       "temp_max_celsius": 1000,
       "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
