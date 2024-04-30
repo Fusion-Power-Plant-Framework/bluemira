@@ -42,6 +42,8 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.constants import PLT_PAUSE
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -66,7 +68,6 @@ from bluemira.equilibria.profiles import (
     DoublePowerFunc,
 )
 from bluemira.equilibria.solve import PicardIterator
-from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 
 # %% [markdown]
 #
@@ -124,6 +125,7 @@ coilset.fix_sizes()
 coilset.discretisation = 0.3
 
 coilset.plot()
+plt.pause(PLT_PAUSE)
 
 # %% [markdown]
 #
@@ -292,7 +294,6 @@ program = PicardIterator(
     reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2, plot=False
 )
 program()
-# TODO save reference_eq here
 
 sof_psi_boundary = PsiBoundaryConstraint(
     sof_xbdry,
@@ -303,7 +304,9 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
-diag_opts = EqDiagnosticOptions(psi_diff=True, split_psi_plots=True)
+diag_ops = EqDiagnosticOptions(
+    psi_diff=False, split_psi_plots=False, reference_eq=reference_eq
+)
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
@@ -311,9 +314,8 @@ sof_opt_problem = MinimalCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     constraints=[sof_psi_boundary, x_point],
-    plotting_reference_eq=reference_eq,
     plot=True,
-    diag_opts=diag_opts,
+    diag_ops=diag_ops,
 )
 
 iterator = PicardIterator(
@@ -360,10 +362,10 @@ eof.coilset.plot(ax[2])
 sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
 eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
-ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+plt.pause(PLT_PAUSE)
 
 
 bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
 bluemira_print(f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}")
 
-plt.show()
+plt.show(block=True)

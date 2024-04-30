@@ -4,8 +4,9 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
+from typing import Dict, List, Optional, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
@@ -20,7 +21,6 @@ from bluemira.equilibria.optimisation.problem.base import (
 )
 from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
-from bluemira.utilities.plot_tools import xz_plot_setup
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -45,9 +45,10 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         Otherwise, the parameters can be founded by digging through the source code.
     constraints:
         List of optimisation constraints to apply to the optimisation problem
-    reference_equilibrium:
-        TODO
-    plot: bool
+    plot:
+        Whether or not to plot
+    diag_ops:
+        Diagnostic plotting options for Equilibrium
     """
 
     def __init__(
@@ -59,12 +60,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         opt_conditions: dict[str, float | int] | None = None,
         opt_parameters: dict[str, float] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
-        plotting_reference_eq: Equilibrium | None = None,
+        *,
         plot: bool | None = False,
-        diag_opts: EqDiagnosticOptions | None = None,
-        plot_name: str | None = "default_0",
-        figure_folder: str | None = None,
-        gif: bool | None = False,
+        diag_ops: EqDiagnosticOptions | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -74,29 +72,14 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-        self.reference_eq = plotting_reference_eq
-
         self.plotting_enabled = plot
-        self.plot_name = plot_name
-        self.figure_folder = figure_folder
-        self.gif = gif
-
-        if diag_opts is None:
-            self.diag_ops = EqDiagnosticOptions()
-        else:
-            self.diag_ops = diag_opts
 
         if self.plotting_enabled:
-            self.plot_dict = xz_plot_setup(
-                self.plot_name,
-                self.figure_folder,
-                self.gif,
-            )
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
-                reference_eq=self.reference_eq,
-                split_psi_plots=self.diag_ops.split_psi_plots,
-                psi_diff=self.diag_ops.psi_diff,
+                diag_ops=EqDiagnosticOptions(reference_eq=deepcopy(self.eq))
+                if diag_ops is None
+                else diag_ops,
             )
 
     def optimise(
@@ -137,23 +120,13 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-
         opt_currents = opt_result.x
         self.coilset.set_optimisation_state(
             opt_currents=opt_currents,
             current_scale=self.scale,
         )
 
-        i = 0
         if self.plotting_enabled:
-            self.comp_plot.update_plot(
-                # equilibrium=self.eq,
-                # reference_eq=self.reference_eq,
-                split_psi_plots=self.diag_ops.split_psi_plots,
-                psi_diff=self.diag_ops.psi_diff,
-                i=i,
-                plot_dict=self.plot_dict,
-            )
-            i += 1
+            self.comp_plot.update_plot()
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

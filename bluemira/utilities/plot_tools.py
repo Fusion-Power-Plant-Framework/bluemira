@@ -25,7 +25,7 @@ from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
@@ -159,27 +159,8 @@ def xz_plot_setup(
     }
 
 
-def xz_plot_setup(
-    pname,
-    folder,
-    save=False,
-    split_psi_plots: bool | None = False,
-) -> dict:
-    """Set up for an xz plot (poloidal slice)."""
-    if folder is None:
-        folder = try_get_bluemira_path(
-            "", subfolder="generated_data", allow_missing=not save
-        )
-
-    return {
-        "pname": pname,
-        "folder": folder,
-        "save": save,
-    }
-
-
 def save_figure(
-    fig, name, *, save=False, folder=None, dpi=600, file_format="png", **kwargs
+    fig, name, *, save=False, folder=None, dpi=600, file_format="svg", **kwargs
 ):
     """
     Saves a figure to the directory if save flag active

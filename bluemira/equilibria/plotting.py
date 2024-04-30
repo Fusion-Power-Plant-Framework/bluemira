@@ -687,41 +687,29 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
 class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
     """
     Utility class for Equilibrium plotting and comparing to a reference equilibrium
+
+    Notes
+    -----
+    If diag_ops.psi_diff is True then plot the relative difference between the current
+    plasma psi and the reference plasma psi, as calculated by:
+    .. math::
+        plasma_psi_diff = |reference_plasma_psi - current_plasma_psi| /
+                                max(|reference_plasma_psi - current_plasma_psi|)
     """
 
     def __init__(
         self,
-        equilibrium: Equilibrium,
-        reference_eq: Equilibrium,
+        equilibrium,
+        diag_ops: EqDiagnosticOptions,
         ax=None,
-        split_psi_plots=False,
-        psi_diff=False,
     ):
-        if split_psi_plots:
-            super().__init__(ax, subplots=True)
-        else:
-            super().__init__(ax)
-
+        self.diag_ops = diag_ops
         self.eq = equilibrium
-        self.reference_eq = reference_eq
+        self.reference_eq = diag_ops.reference_eq
+
+        super().__init__(ax, subplots=self.diag_ops.split_psi_plots)
 
         self.reference_lcfs = self.reference_eq.get_LCFS()
-
-        self.psi_diff = psi_diff
-        self.split_psi_plots = split_psi_plots
-
-        if self.psi_diff:
-            if self.split_psi_plots:
-                self.cax1 = make_axes_locatable(self.ax[0]).append_axes(
-                    "right", size="5%", pad="2%"
-                )
-                self.cax2 = make_axes_locatable(self.ax[1]).append_axes(
-                    "right", size="5%", pad="2%"
-                )
-            else:
-                self.cax = make_axes_locatable(self.ax).append_axes(
-                    "right", size="5%", pad="2%"
-                )
 
         if np.shape(self.eq.grid.x) != np.shape(self.reference_eq.grid.x):
             bluemira_warn("Reference psi must have same grid size as input equilibria.")
@@ -750,118 +738,129 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 " and the input equilibrium."
             )
 
-        if self.psi_diff:
+        self._calculate_diff()
+
+        self.i = 0
+
+    def _calculate_diff(self):
+        if self.diag_ops.psi_diff:
             # Relative difference
             diff_coilset_psi = np.abs(
                 self.reference_eq.coilset.psi(self.reference_eq.x, self.reference_eq.z)
                 - self.eq.coilset.psi(self.eq.x, self.eq.z)
             )
 
-            coilset_psi_zeros = not np.any(diff_coilset_psi)
+            # if all zeros
+            self.coilset_psi = (
+                None
+                if not np.all(diff_coilset_psi)
+                else (diff_coilset_psi / np.max(diff_coilset_psi))
+            )
 
-            if coilset_psi_zeros:
-                self.coilset_psi = None
-            else:
-                self.coilset_psi = diff_coilset_psi / np.max(diff_coilset_psi)
-
+            # Relative difference
             diff_plasma_psi = np.abs(
                 self.reference_eq.plasma.psi() - self.eq.plasma.psi()
             )
 
-            plamsa_psi_zeros = not np.any(diff_plasma_psi)
+            # if all zeros
+            self.plasma_psi = (
+                None
+                if not np.all(diff_plasma_psi)
+                else diff_plasma_psi / np.max(diff_plasma_psi)
+            )
 
-            if plamsa_psi_zeros:
-                self.plasma_psi = None
-            else:
-                self.plasma_psi = diff_plasma_psi / np.max(diff_plasma_psi)
-
+            # Relative difference
             diff_total_psi = np.abs(self.reference_eq.psi() - self.eq.psi())
 
-            total_psi_zeros = not np.any(diff_total_psi)
-
-            if total_psi_zeros:
-                self.total_psi = None
-            else:
-                self.total_psi = diff_total_psi / np.max(diff_total_psi)
+            # if all zeros
+            self.total_psi = (
+                None
+                if not np.all(diff_total_psi)
+                else diff_total_psi / np.max(diff_total_psi)
+            )
 
         else:
             self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
             self.plasma_psi = self.eq.plasma.psi()
             self.total_psi = self.eq.psi()
 
-        # if split_psi_plots:
-        #     self.plot_psi_coilset()
-        #     self.plot_psi_plasma()
-        # else:
-        #     self.plot_psi()
-        # legend = plt.legend()
-        # legend.set_zorder(10)
-
-    def update_plot(self, split_psi_plots, psi_diff, i, plot_dict):
-        # clear axes
-        # if split_psi_plots:
-        #     self.ax[0].get_legend().remove()
-        #     self.ax[1].get_legend().remove()
-        # else:
-        #     self.ax.get_legend().remove()
-        if i != 0:
-            if psi_diff:
-                if split_psi_plots:
+    def _clean_plots(self):
+        if self.i == 0 and self.diag_ops.psi_diff:
+            if self.diag_ops.split_psi_plots:
+                self.cax1 = make_axes_locatable(self.ax[0]).append_axes(
+                    "right", size="5%", pad="2%"
+                )
+                self.cax2 = make_axes_locatable(self.ax[1]).append_axes(
+                    "right", size="5%", pad="2%"
+                )
+            else:
+                self.cax = make_axes_locatable(self.ax).append_axes(
+                    "right", size="5%", pad="2%"
+                )
+        else:
+            if self.diag_ops.psi_diff:
+                if self.diag_ops.split_psi_plots:
                     self.cax1.clear()
                     self.cax2.clear()
 
                 else:
                     self.cax.clear()
 
-            if split_psi_plots:
-                self.ax[0].clear()
-                self.ax[1].clear()
-                # self.ax[0].get_legend().remove()
-                # self.ax[1].get_legend().remove()
+            if self.diag_ops.split_psi_plots:
+                for _ax in self.ax:
+                    _ax.clear()
+                    if legend := _ax.get_legend():
+                        legend.remove()
             else:
                 self.ax.clear()
-                # self.ax.get_legend().remove()
-        if split_psi_plots:
-            for _ax in self.ax:
-                if legend := _ax.get_legend():
+                if legend := self.ax.get_legend():
                     legend.remove()
-        else:
-            self.ax.get_legend().remove()
 
-        # update the plot (plot the data)
-        if split_psi_plots:
+    def update_plot(self):
+        self._calculate_diff()
+        self._clean_plots()
+
+        # update the plot
+        if self.diag_ops.split_psi_plots:
             self.plot_psi_coilset()
             self.plot_psi_plasma()
-            legend1 = self.ax[0].legend()
-            legend2 = self.ax[1].legend()
-            legend1.set_zorder(10)
-            legend2.set_zorder(10)
+            legend = self.ax[0].legend()
+            legend.set_zorder(10)
+            legend = self.ax[1].legend()
+            legend.set_zorder(10)
+            self.ax[0].set_xlabel("$x$ [m]")
+            self.ax[0].set_ylabel("$z$ [m]")
+            self.ax[0].set_title("Coilset")
+            self.ax[0].set_aspect("equal")
+            self.ax[1].set_xlabel("$x$ [m]")
+            self.ax[1].set_ylabel("$z$ [m]")
+            self.ax[1].set_title("Plasma")
+            self.ax[1].set_aspect("equal")
         else:
             self.plot_psi()
             legend = self.ax.legend()
             legend.set_zorder(10)
+            self.ax.set_xlabel("$x$ [m]")
+            self.ax.set_ylabel("$z$ [m]")
+            self.ax.set_aspect("equal")
 
-        # legend = plt.legend()
-        # legend.set_zorder(10)
-
-        # # pause and save?
         plt.pause(PLT_PAUSE)
 
         save_figure(
             fig=self.f,
-            name=plot_dict["pname"] + str(i),
-            save=plot_dict["save"],
-            folder=plot_dict["folder"],
+            name=f"{self.diag_ops.plot_name}{self.i}",
+            save=self.diag_ops.save,
+            folder=self.diag_ops.folder,
             dpi=DPI_GIF,
         )
+        self.i += 1
 
     def plot_reference_LCFS(self, ref_lcfs_label=None):
         """
-        Plot the last closed flux surface for the reference equilibria if split_psi_plots
-        is True
+        Plot the last closed flux surface for the reference equilibria
         """
         x, z = self.reference_lcfs.xz
-        if self.split_psi_plots is True:
+        if self.diag_ops.split_psi_plots:
             for i in range(2):
                 self.ax[i].plot(
                     x,
@@ -894,7 +893,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
             return
         x, z = lcfs.xz
 
-        if self.split_psi_plots is True:
+        if self.diag_ops.split_psi_plots:
             for i in range(2):
                 self.ax[i].plot(
                     x,
@@ -917,10 +916,6 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
     def plot_psi_coilset(self, **kwargs):
         """
         Plot flux surfaces - coilset contribution
-
-        If psi_diff is True then plot the relative difference between the current coilset psi and the reference coilset psi, as calculated by:
-        coilset_psi_diff = |reference_coilset_psi - current_coilset_psi| / max(|reference_coilset_psi - current_coilset_psi|)
-
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
@@ -929,7 +924,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
             levels = np.linspace(
                 np.amin(self.coilset_psi), np.amax(self.coilset_psi), nlevels
             )
-        if self.psi_diff:
+        if self.diag_ops.psi_diff:
             if self.coilset_psi is None:
                 bluemira_warn(
                     "Coilset_psi all 0s. Will only plot current and reference LCFS"
@@ -946,8 +941,6 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                     vmax=1,
                 )
                 plt.colorbar(mappable=im, cax=self.cax1, ticks=np.linspace(0, 1, 10))
-                # if i == 0:
-                #     cbar = plt.colorbar(mappable=im, ticks=np.linspace(0, 1, 10))
                 plt.suptitle(
                     "Relative difference in psi between reference equilibrium"
                     " and current equilibrium, \n split by contribution from"
@@ -975,10 +968,6 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
     def plot_psi_plasma(self, **kwargs):
         """
         Plot flux surfaces - plasma contribution
-
-        If psi_diff is True then plot the relative difference between the current plasma psi and the reference plasma psi, as calculated by:
-        plasma_psi_diff = |reference_plasma_psi - current_plasma_psi| / max(|reference_plasma_psi - current_plasma_psi|)
-
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
@@ -987,7 +976,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 np.amin(self.plasma_psi), np.amax(self.plasma_psi), nlevels
             )
 
-        if self.psi_diff:
+        if self.diag_ops.psi_diff:
             if self.plasma_psi is None:
                 bluemira_warn(
                     "Plasma_psi all 0s. Will only plot current and reference LCFS"
@@ -1022,10 +1011,6 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
     def plot_psi(self, **kwargs):
         """
         Plot flux surfaces
-
-        If psi_diff is True then plot the relative difference between the current psi and the reference psi, as calculated by:
-        psi_diff = |reference_psi - current_psi| / max(|reference_psi - current_psi|)
-
         """
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
@@ -1035,7 +1020,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                 np.amin(self.total_psi), np.amax(self.total_psi), nlevels
             )
 
-        if self.psi_diff:
+        if self.diag_ops.psi_diff:
             if self.total_psi is None:
                 bluemira_warn(
                     "Total_psi all 0s. Will only plot current and reference LCFS"
@@ -1052,7 +1037,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
                     vmax=1,
                 )
                 plt.colorbar(mappable=im, cax=self.cax, ticks=np.linspace(0, 1, 10))
-                plt.title(
+                plt.suptitle(
                     "Relative difference in total psi between reference equilibrium and"
                     " current equilibrium"
                 )
