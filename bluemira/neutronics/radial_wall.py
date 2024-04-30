@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections import abc
-from dataclasses import dataclass
+from enum import IntEnum
 from math import fsum
 from typing import TYPE_CHECKING
 
@@ -23,123 +23,14 @@ from bluemira.geometry.error import GeometryError
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
-    from bluemira.geometry.coordinates import Coordinates
     from bluemira.neutronics.make_pre_cell import PreCellArray
 
 
-@dataclass
-class Vertices:
-    """
-    A dataclass of numpy arrays, each denoting the XZ or XYZ coordinates, thus they all
-    have shape (2,) or (3,).
-    """
-
-    exterior_end: Sequence[float]
-    interior_start: Sequence[float]
-    interior_end: Sequence[float]
-    exterior_start: Sequence[float]
-
-    def to_3D(self) -> Vertices:
-        """Force the vertices into 3D, stuffing the Y with 0's."""
-        return Vertices(
-            np.array([self.exterior_end[0], 0, self.exterior_end[-1]]),
-            np.array([self.interior_start[0], 0, self.interior_start[-1]]),
-            np.array([self.interior_end[0], 0, self.interior_end[-1]]),
-            np.array([self.exterior_start[0], 0, self.exterior_start[-1]]),
-        )
-
-    def to_2D(self) -> Vertices:
-        """Put the vertices back into the XZ plane, with only 2 coordinates.
-        Basically unused.
-        """
-        return Vertices(
-            np.array([self.exterior_end[0], self.exterior_end[-1]]),
-            np.array([self.interior_start[0], self.interior_start[-1]]),
-            np.array([self.interior_end[0], self.interior_end[-1]]),
-            np.array([self.exterior_start[0], self.exterior_start[-1]]),
-        )
-
-    def to_array(self) -> npt.NDArray:
-        """Convert to numpy array"""
-        return np.array([
-            self.exterior_end,
-            self.interior_start,
-            self.interior_end,
-            self.exterior_start,
-        ])
-
-
-@dataclass
-class VerticesCoordinates:
-    """
-    A dataclass of :class:`bluemira.geometry.coordinates.Coordinates` objects, each
-    containing only one point denoting the set of vertices of a pre-cell or a cell.
-    """
-
-    exterior_end: Coordinates
-    interior_start: Coordinates
-    interior_end: Coordinates
-    exterior_start: Coordinates
-
-    def to_2D(self) -> Vertices:
-        """Convert itself to a list of 2D vertices. Mainly used for pre-cells."""
-        return Vertices(
-            self.exterior_end[::2, 0],
-            self.interior_start[::2, 0],
-            self.interior_end[::2, 0],
-            self.exterior_start[::2, 0],
-        )
-
-
-@dataclass
-class VacuumVesselPoints:
-    """
-    A dataclass of numpy arrays, each denoting the XZ or XYZ coordinates, thus they all
-    have shape (2,) or (3,).
-    This particular class concerns the vacuum vessel interior curve's start and end point
-    in a pre-cell only.
-    """
-
-    start: Sequence[float]
-    end: Sequence[float]
-
-    def to_3D(self) -> VacuumVesselPoints:
-        """Force the vertices into 3D, stuffing the Y with 0's."""
-        return VacuumVesselPoints(
-            np.array([self.start[0], 0, self.start[-1]]),
-            np.array([self.end[0], 0, self.end[-1]]),
-        )
-
-    def to_2D(self) -> VacuumVesselPoints:
-        """Put the vertices back into the XZ plane, with only 2 coordinates.
-        Basically unused.
-        """
-        return VacuumVesselPoints(
-            np.array([self.start[0], self.start[-1]]),
-            np.array([self.end[0], self.end[-1]]),
-        )
-
-    def to_array(self) -> npt.NDArray:
-        """Convert to numpy array"""
-        return np.array([self.start, self.end])
-
-
-@dataclass
-class VacuumVesselPointsCoordinates:
-    """
-    A dataclass of :class:`bluemira.geometry.coordinates.Coordinates` objects, each
-    containing only one point denoting the set of vertices of a pre-cell or a cell.
-
-    This particular class concerns the vacuum vessel interior curve's start and end point
-    in a pre-cell only.
-    """
-
-    end: Coordinates
-    start: Coordinates
-
-    def to_2D(self) -> VacuumVesselPoints:
-        """Convert itself to a list of 2D vertices. Mainly used for pre-cells."""
-        return VacuumVesselPoints(self.end[::2, 0], self.start[::2, 0])
+class Vert(IntEnum):
+    ext_end = 0
+    int_start = 1
+    int_end = 2
+    ext_start = 3
 
 
 def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> float:
@@ -337,15 +228,17 @@ class CellWalls(abc.Sequence):
     @classmethod
     def from_pre_cell_array(cls, pre_cell_array: PreCellArray) -> CellWalls:
         """Use the corner vertices in an array of pre-cells to make a CellWalls."""
-        cell_walls = [
-            (c.vertex.interior_end, c.vertex.exterior_start) for c in pre_cell_array
-        ]
-        cell_walls.append((
-            pre_cell_array[-1].vertex.interior_start,
-            pre_cell_array[-1].vertex.exterior_end,
-        ))
         # cut each coordinates down from having shape (3, 1) down to (2,)
-        return cls(cell_walls)
+        return cls([
+            *(
+                (c.vertex[:, Vert.int_end], c.vertex[:, Vert.ext_start])
+                for c in pre_cell_array
+            ),
+            (
+                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vertex[:, Vert.ext_end],
+            ),
+        ])
 
     @classmethod
     def from_pre_cell_array_vv(cls, pre_cell_array: PreCellArray) -> CellWalls:
@@ -353,12 +246,13 @@ class CellWalls(abc.Sequence):
         Use the corner vertices and the vacuum vessel vertices of the pre-cell array to
         make a CellWall.
         """
-        cell_walls = [(c.vertex.interior_end, c.vv_point.start) for c in pre_cell_array]
-        cell_walls.append((
-            pre_cell_array[-1].vertex.interior_start,
-            pre_cell_array[-1].vv_point.end,
-        ))
-        return cls(cell_walls)
+        return cls([
+            *((c.vertex[:, Vert.int_end], c.vv_point[:, 0]) for c in pre_cell_array),
+            (
+                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vv_point[:, 1],
+            ),
+        ])
 
     @property
     def starts(self) -> npt.NDArray:

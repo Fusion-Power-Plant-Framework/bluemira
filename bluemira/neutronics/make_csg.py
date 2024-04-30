@@ -801,14 +801,16 @@ class BlanketCellStack(abc.Sequence):
         i = blanket_stack_num if blanket_stack_num is not None else "(unspecified)"
         # 1. Calculate cut points required to make the surface stack, without actually
         #    creating the surfaces.
-        wall_cut_pts = [pre_cell.cell_walls.starts]
-        wall_cut_pts.extend(
-            pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
-            for interface_depth in depth_series
-        )
-        wall_cut_pts.append(np.array([pre_cell.vv_point.start, pre_cell.vv_point.end]))  # noqa: FURB113
-        wall_cut_pts.append(pre_cell.cell_walls.ends)
-        wall_cut_pts = np.array(wall_cut_pts)  # shape (M+1, 2, 2)
+        # shape (M+1, 2, 2)
+        wall_cut_pts = np.asarray([
+            pre_cell.cell_walls.starts,
+            *(
+                pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
+                for interface_depth in depth_series
+            ),
+            np.array([pre_cell.vv_point[:, 0], pre_cell.vv_point[:, 1]]),
+            pre_cell.cell_walls.ends,
+        ])
         # 1.1 perform sanity check
         directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
@@ -1118,7 +1120,7 @@ def check_inboard_outboard(
     """If this pre-cell is an inboard, return True.
     Otherwise, this pre-cell belongs to outboard, return False
     """
-    cell_reference_radius = pre_cell.vertex.to_array()[:, 0].mean()
+    cell_reference_radius = pre_cell.vertex[0].mean()
     return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
 
 

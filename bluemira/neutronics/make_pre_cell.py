@@ -28,9 +28,7 @@ from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolv
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.radial_wall import (
     CellWalls,
-    VacuumVesselPointsCoordinates,
-    Vertices,
-    VerticesCoordinates,
+    Vert,
 )
 from bluemira.neutronics.wires import (
     CircleInfo,
@@ -125,8 +123,9 @@ class PreCell:
                 "cell-start cutting plane",
                 "cell-end cutting plane",
             )
-        self.vertex = VerticesCoordinates(ext_end, int_start, int_end, ext_start).to_2D()
-        self.vv_point = VacuumVesselPointsCoordinates(vv_start, vv_end).to_2D()
+
+        self.vertex = Coordinates([ext_end, int_start, int_end, ext_start]).xz
+        self.vv_point = Coordinates([vv_start, vv_end]).xz
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
 
     @property
@@ -148,20 +147,18 @@ class PreCell:
             vv_start, vv_end = self.vv_wire.start_point(), self.vv_wire.end_point()
             if isinstance(self.interior_wire, Coordinates):
                 in_start = in_end = self.interior_wire
-                _inner_curve = make_polygon(
+                inner_curve = make_polygon(
                     np.array([vv_end, self.interior_wire, vv_start]).T, closed=False
                 )
             else:
                 in_start = self.interior_wire.start_point()
                 in_end = self.interior_wire.end_point()
-                _out2in = make_polygon(np.array([vv_end, in_start]).T, closed=False)
-                _in2out = make_polygon(np.array([in_end, vv_start]).T, closed=False)
-                _inner_curve = BluemiraWire([
-                    _out2in,
+                inner_curve = BluemiraWire([
+                    make_polygon(np.array([vv_end, in_start]).T, closed=False),
                     self.interior_wire,
-                    _in2out,
+                    make_polygon(np.array([in_end, vv_start]).T, closed=False),
                 ])
-            self._blanket_outline = BluemiraWire([self.vv_wire, _inner_curve])
+            self._blanket_outline = BluemiraWire([self.vv_wire, inner_curve])
         return self._blanket_outline
 
     @property
@@ -188,10 +185,13 @@ class PreCell:
         it is of type :class:`~bluemira.neutronics.radial_wall.CellWalls`.
         """
         if not hasattr(self, "_cell_walls"):
-            self._cell_walls = CellWalls([
-                [self.vertex.interior_end, self.vertex.exterior_start],
-                [self.vertex.interior_start, self.vertex.exterior_end],
-            ])
+            self._cell_walls = CellWalls(
+                np.asarray((
+                    self.vertex.T[(Vert.int_end, Vert.ext_start),],
+                    self.vertex.T[(Vert.int_start, Vert.ext_end),],
+                ))
+            )
+
         return self._cell_walls
 
     @property
@@ -229,8 +229,9 @@ class PreCell:
             The position of the pre-cell wall end points at the required fraction, array
             of shape (2, 2) [[cw_wall x, cw_wall z], [ccw_wall x, ccw_wall z]].
         """
-        new_lengths = self.cell_walls.lengths * fraction
-        return self.cell_walls.calculate_new_end_points(new_lengths)
+        return self.cell_walls.calculate_new_end_points(
+            self.cell_walls.lengths * fraction
+        )
 
     def get_cell_wall_cut_points_by_thickness(self, thickness):
         """
@@ -248,10 +249,9 @@ class PreCell:
             The position of the pre-cell wall end points at the required thickness, array
             of shape (2, 2) [[cw_wall x, cw_wall z], [ccw_wall x, ccw_wall z]].
         """
-        projection_weight = self.cell_walls.directions @ self.normal_to_interior
-        length_increases = thickness / projection_weight
-
-        return self.cell_walls.calculate_new_end_points(length_increases)
+        return self.cell_walls.calculate_new_end_points(
+            thickness / (self.cell_walls.directions @ self.normal_to_interior)
+        )
 
 
 class PreCellArray(abc.Sequence):
@@ -274,8 +274,14 @@ class PreCellArray(abc.Sequence):
         self.pre_cells = list(list_of_pre_cells)
         for this_cell, next_cell in pairwise(self):
             # perform check that they are actually adjacent
-            this_wall = (this_cell.vertex.exterior_end, this_cell.vertex.interior_start)
-            next_wall = (next_cell.vertex.exterior_start, next_cell.vertex.interior_end)
+            this_wall = (
+                this_cell.vertex[:, Vert.ext_end],
+                this_cell.vertex[:, Vert.int_start],
+            )
+            next_wall = (
+                next_cell.vertex[:, Vert.ext_start],
+                next_cell.vertex[:, Vert.int_end],
+            )
             if not (
                 np.allclose(this_wall[0], next_wall[0], atol=0, rtol=EPS_FREECAD)
                 and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=EPS_FREECAD)
@@ -405,12 +411,12 @@ class PreCellArray(abc.Sequence):
 
 
 def ratio_of_distances(
-    point_of_interest: npt.NDArray[float],
-    anchor1: npt.NDArray[float],
-    normal1: npt.NDArray[float],
-    anchor2: npt.NDArray[float],
-    normal2: npt.NDArray[float],
-) -> npt.NDArray[float]:
+    point_of_interest: npt.NDArray[np.float64],
+    anchor1: npt.NDArray[np.float64],
+    normal1: npt.NDArray[np.float64],
+    anchor2: npt.NDArray[np.float64],
+    normal2: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Find how close a point is to line 1 and line 2, and then express that ratio as a
     tuple of floats that sums up to unit.
@@ -442,8 +448,8 @@ def ratio_of_distances(
 
 
 def find_equidistant_point(
-    point1: npt.NDArray[float], point2: npt.NDArray[float], distance: float
-) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    point1: npt.NDArray[np.float64], point2: npt.NDArray[np.float64], distance: float
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Find the two (or 0) points on a 2D plane that are equidistant to each other.
 
     Parameters
@@ -470,8 +476,10 @@ def find_equidistant_point(
 
 
 def pick_higher_point(
-    point1: npt.NDArray[float], point2: npt.NDArray[float], vector: npt.NDArray[float]
-) -> npt.NDArray[float]:
+    point1: npt.NDArray[np.float64],
+    point2: npt.NDArray[np.float64],
+    vector: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """Pick the point that, when projected onto `vector`, gives a higher value."""
     if (vector @ point1) > (vector @ point2):
         return point1
@@ -558,19 +566,14 @@ class DivertorPreCell:
                 self.interior_wire.end_point, self.exterior_wire.start_point
             )
         ])
-        self._vertex = Vertices(
-            self.cw_wall.start_point,
-            self.cw_wall.end_point,
-            self.ccw_wall.start_point,
-            self.ccw_wall.end_point,
+        self.vertex = Coordinates(
+            np.asarray([
+                self.cw_wall.start_point,
+                self.cw_wall.end_point,
+                self.ccw_wall.start_point,
+                self.ccw_wall.end_point,
+            ])
         )
-
-    @property
-    def vertex(self):
-        import ipdb
-
-        ipdb.set_trace()
-        return self._vertex
 
     def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
         return plot_2d(self.outline, *args, **kwargs)
@@ -675,8 +678,8 @@ class DivertorPreCellArray(abc.Sequence):
         # Perform check that they are adjacent
         for prev_cell, curr_cell in pairwise(self):
             if not np.allclose(
-                prev_cell.vertex.exterior_start,
-                curr_cell.vertex.exterior_end,
+                prev_cell.vertex.xyz[:, Vert.ext_start],
+                curr_cell.vertex.xyz[:, Vert.ext_end],
                 atol=0,
                 rtol=EPS_FREECAD,
             ):

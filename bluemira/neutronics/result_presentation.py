@@ -148,7 +148,7 @@ class OpenMCResult:
             cell_volumes = {
                 "cell": ids,
                 "cell_names": [cell_names[i] for i in ids],
-                "Stochasitic Volumes": list(raw_uc(list(vols.values()), "cm^3", "m^3")),
+                "Stochastic Volumes": list(raw_uc(list(vols.values()), "cm^3", "m^3")),
             }
 
         else:
