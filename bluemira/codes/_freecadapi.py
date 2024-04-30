@@ -1135,12 +1135,19 @@ def _slice_solid(obj, normal_plane, shift):
 # FreeCAD Configuration
 # ======================================================================================
 def _setup_document(
-    parts: Iterable[apiShape], labels: Iterable[str] | None = None
+    parts: Iterable[apiShape],
+    labels: Iterable[str] | None = None,
+    *,
+    rotate: bool = False,
 ) -> Iterable[Part.Feature]:
     """
     Setup FreeCAD document.
 
     Converts shapes to FreeCAD Part.Features to enable saving and viewing
+
+    Notes
+    -----
+    TODO the rotate flag should be removed. We should fix it in the camera of the viewer
     """
     if not hasattr(FreeCADGui, "subgraphFromObject"):
         FreeCADGui.setupWithoutGUI()
@@ -1158,7 +1165,8 @@ def _setup_document(
 
     for part, label in zip(parts, labels, strict=False):
         new_part = part.copy()
-        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+        if rotate:
+            new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
         obj = doc.addObject("Part::FeaturePython", label)
         obj.Shape = new_part
         doc.recompute()
@@ -1421,7 +1429,7 @@ def save_cad(
         for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
     })
 
-    objs = list(_setup_document(shapes, labels))
+    objs = list(_setup_document(shapes, labels, rotate=False))
 
     # Part is always built in mm but some formats are unitless
     if cad_format not in CADFileType.unitless_formats():
@@ -2386,7 +2394,9 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for obj, option in zip(_setup_document(parts, labels), options, strict=False):
+    for obj, option in zip(
+        _setup_document(parts, labels, rotate=True), options, strict=False
+    ):
         subgraph = FreeCADGui.subgraphFromObject(obj)
         _colourise(subgraph, option)
         root.addChild(subgraph)
