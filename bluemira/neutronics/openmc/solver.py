@@ -339,9 +339,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def __init__(
         self,
         params: dict | ParameterFrame,
+        build_config: dict | None,
         neutronics_pre_cell_model,
-        source: Callable[[PlasmaSourceParameters], openmc.Source],
-        build_config: dict,
+        source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config

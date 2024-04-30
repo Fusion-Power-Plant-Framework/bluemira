@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import Component
+from bluemira.base.constants import raw_uc
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter_frame import ParameterFrame
@@ -78,6 +79,7 @@ from eudemo.maintenance.port_plug import (
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
+from eudemo.neutronics.run import run_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -477,6 +479,38 @@ if __name__ == "__main__":
         ivc_shapes.blanket_face,
         r_inner_cut,
         cut_angle,
+    )
+
+    run_neutronics(
+        {
+            "major_radius": {"value": 8.938, "unit": "m"},
+            "aspect_ratio": {"value": 8.938 / 2.8938, "unit": "m"},
+            "elongation": {"value": 1.65, "unit": ""},
+            "triangularity": {"value": 0.333, "unit": ""},
+            "reactor_power": {"value": 1998, "unit": "MW"},
+            "peaking_factor": {"value": 1.508, "unit": ""},
+            "temperature": {"value": raw_uc(15.4, "keV", "K"), "unit": "K"},
+            "shaf_shift": {"value": 0, "unit": "m"},
+            "vertical_shift": {"value": 0, "unit": "m"},
+        },
+        {
+            "cross_section_xml": Path(
+                "/home/oliver/bluemira_openmc_data/cross_sections.xml"
+            ).expanduser(),
+            "particles": 16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
+            "batches": 3,
+            "photon_transport": True,
+            "electron_treatment": "ttb",
+            "run_mode": "run_and_plot",
+            "openmc_write_summary": False,
+            "parametric_source": True,
+            "blanket_type": "HCPB",
+            "plot_axis": "xz",
+            "plot_pixel_per_metre": 100,
+        },
+        blanket_wire=reactor.blanket.inboard_xz_silhouette().boundary[0],
+        divertor_wire=reactor.divertor.silhouette(),
+        vv_wire=reactor.vacuum_vessel.xz_boundary(),
     )
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
