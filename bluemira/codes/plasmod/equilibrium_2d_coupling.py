@@ -45,9 +45,11 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from bluemira.codes.interface import BaseRunMode, CodesSolver
+    from bluemira.codes.interface import BaseRunMode
+    from bluemira.codes.plasmod.typing import TransportSolver
     from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
         FemGradShafranovFixedBoundary,
+        FixedBoundaryEquilibrium,
     )
     from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
     from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -146,7 +148,7 @@ def create_plasma_xz_cross_section(
 
 
 def _run_transport_solver(
-    transport_solver: CodesSolver,
+    transport_solver: TransportSolver,
     transport_params: ParameterFrame,
     transport_run_mode: str | BaseRunMode,
 ) -> tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
@@ -204,7 +206,7 @@ def _update_delta_kappa(
 
 def solve_transport_fixed_boundary(
     parameterisation: GeometryParameterisation,
-    transport_solver: CodesSolver,
+    transport_solver: TransportSolver,
     gs_solver: FemGradShafranovFixedBoundary,
     kappa95_t: float,
     delta95_t: float,
@@ -225,7 +227,7 @@ def solve_transport_fixed_boundary(
     distance: float = 1.0,
     ny_fs_min: int = 40,
     directory: str = "",
-):
+) -> FixedBoundaryEquilibrium:
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
     values and iterating on a transport solver to have consistency with pprime
