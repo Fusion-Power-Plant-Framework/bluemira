@@ -1317,6 +1317,7 @@ class DivertorCell(openmc.Cell):
 
 class DivertorCellStack(abc.Sequence):
     """
+    A CONVEX object! i.e. all its exterior points together should make a convex hull.
     A stack of DivertorCells (openmc.Cells), first cell is closest to the interior and
     last cell is closest to the exterior. They should all be situated on the same
     poloidal angle.
