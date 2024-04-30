@@ -17,7 +17,6 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import PlasmaSourceParameters, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -90,11 +89,6 @@ class OpenMCResult:
                 mat_names[_cell.fill.id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
-        # TODO: obsolete: remove this if statement when neutronics.ex.py is
-        # deleted from feature/neutronics.
-        if not statepoint_file:
-            # backwards compatible with neutronics.ex.py.
-            statepoint_file = "statepoint.2.h5"
         cell_vols = {}
         for cell_id in universe.cells:
             if isinstance(universe.cells[cell_id].volume, float):
@@ -332,7 +326,7 @@ class OpenMCResult:
             ),
             strict=True,
         ):
-            ret_str = ret_str + f"\n{title}\n{self._tabulate(data)}"
+            ret_str += f"\n{title}\n{self._tabulate(data)}"
 
         return ret_str
 
@@ -350,104 +344,3 @@ class OpenMCResult:
             numalign="right",
             floatfmt=floatfmt,
         )
-
-
-def geometry_plotter(
-    cells: dict[str, list[openmc.Cell] | openmc.Cell],
-    plasma_source_params: PlasmaSourceParameters,
-    tokamak_geometry: TokamakGeometry,
-) -> None:
-    """
-    Uses the OpenMC plotter to produce an image of the modelled geometry
-
-    Parameters
-    ----------
-    cells:
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-
-    tokamak_geometry:
-        dataclass containing the tokamak geometry.
-        See :class:`~bluemira.neutronics.params.TokamakGeometry` for details.
-
-    Returns
-    -------
-    Saves the plots to png files.
-    Saves the plots to xml files.
-
-    """
-    # Assigning colours for plots
-    cell_color_assignment = {
-        cells.tf_coil: "brown",
-        cells.plasma.inner1: "dimgrey",
-        cells.plasma.inner2: "grey",
-        cells.plasma.outer1: "darkgrey",
-        cells.plasma.outer2: "dimgrey",
-        cells.divertor.inner1: "grey",
-        cells.divertor.inner2: "dimgrey",
-        cells.outer_vessel: "white",
-        cells.inboard.vv[0]: "red",
-        cells.outboard.vv[1]: "orange",
-        cells.outboard.vv[2]: "yellow",
-    }
-
-    mat_color_assignment = {
-        cells.bore: "blue",
-        cells.tf_coil: "brown",
-        cells.plasma.inner1: "white",
-        cells.plasma.inner2: "white",
-        cells.plasma.outer1: "white",
-        cells.plasma.outer2: "white",
-        cells.divertor.inner1: "white",
-        cells.divertor.inner2: "white",
-        cells.divertor.fw: "red",
-        cells.outer_vessel: "white",
-        cells.outer_container: "darkgrey",
-    }
-
-    def color_cells(cell, ctype, color):
-        for c in getattr(getattr(cells, cell), ctype):
-            mat_color_assignment[c] = color
-
-    # first wall: red
-    color_cells("outboard", "fw", "red")
-    color_cells("inboard", "fw", "red")
-    # breeding zone: yellow
-    color_cells("outboard", "bz", "yellow")
-    color_cells("inboard", "bz", "yellow")
-    # manifold: green
-    color_cells("outboard", "mani", "green")
-    color_cells("inboard", "mani", "green")
-    # vacuum vessel: grey
-    color_cells("outboard", "vv", "grey")
-    color_cells("inboard", "vv", "grey")
-    # divertor: cyan
-    color_cells("divertor", "regions", "cyan")
-
-    plot_width = 2 * (
-        plasma_source_params.plasma_physics_units.major_radius
-        + plasma_source_params.plasma_physics_units.minor_radius
-        * plasma_source_params.plasma_physics_units.elongation
-        + tokamak_geometry.cgs.outb_fw_thick
-        + tokamak_geometry.cgs.outb_bz_thick
-        + tokamak_geometry.cgs.outb_mnfld_thick
-        + tokamak_geometry.cgs.outb_vv_thick
-        + 200.0  # margin
-    )
-
-    plot_list = []
-    for _, basis in enumerate(("xz", "xy", "yz")):
-        plot = openmc.Plot()
-        plot.basis = basis
-        plot.pixels = [400, 400]
-        plot.width = (plot_width, plot_width)
-        if basis == "yz":
-            plot.colors = cell_color_assignment
-        else:
-            plot.colors = mat_color_assignment
-        plot.filename = f"./out_plots_{basis}"
-
-        plot_list.append(plot)
-
-    openmc.Plots(plot_list).export_to_xml()
-    openmc.plot_geometry(output=False)  # ignore OpenMC stdout printed during plotting.

@@ -31,17 +31,3 @@ def create_materials(
         breeder_materials.blanket_type,
         raw_uc(breeder_materials.enrichment_fraction_Li6, "", "%"),
     )
-
-
-def create_and_export_materials(
-    breeder_materials: BreederTypeParameters,
-) -> MaterialsLibrary:
-    """
-    Parameters
-    ----------
-    breeder_materials:
-        dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
-    """
-    material_lib = create_materials(breeder_materials)
-    material_lib.export()
-    return material_lib

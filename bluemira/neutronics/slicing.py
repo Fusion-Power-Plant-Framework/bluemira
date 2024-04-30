@@ -262,14 +262,14 @@ class PanelsAndExteriorCurve:
         self.add_cut_points(plane, c_dir)
 
         for i in range(1, len(self.interior_panels) - 1):
-            _origin, c_dir = self.get_bisection_line(i)
+            origin, c_dir = self.get_bisection_line(i)
 
             if c_dir[0] == 0:
                 plane = x_plane(self.interior_panels[i][0])  # vertical cut plane
             elif abs(np.arctan(c_dir[-1] / c_dir[0])) < threshold_angle:
                 plane = z_plane(self.interior_panels[i][-1])  # horizontal cut plane
             else:
-                plane = xz_plane_from_2_points(_origin, _origin + c_dir)
+                plane = xz_plane_from_2_points(origin, origin + c_dir)
             self.add_cut_points(plane, c_dir)
 
         # final cut point

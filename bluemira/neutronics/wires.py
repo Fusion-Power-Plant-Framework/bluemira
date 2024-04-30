@@ -73,7 +73,7 @@ class WireInfo:
 
     @classmethod
     def from_2P(  # noqa: N802
-        cls, start_point: npt.NDArray[float], end_point: npt.NDArray[float]
+        cls, start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
     ) -> WireInfo:
         """
         Create the WireInfo for a straight line (i.e. one where the key_points is of
@@ -125,7 +125,7 @@ class WireInfoList(abc.Sequence):
         return self.info_list[0].key_points[0]
 
     @start_point.setter
-    def start_point(self, new_start_point: npt.NDArray[float]):
+    def start_point(self, new_start_point: npt.NDArray[np.float64]):
         """
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
