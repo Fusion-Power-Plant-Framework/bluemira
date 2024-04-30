@@ -27,7 +27,7 @@ def estimate_loop_voltage(
     B_t:
         Toroidal field on axis [T]
     Z_eff:
-        Effective charge [a.m.u.]
+        Effective charge [dimensionless]
     T_e:
         Electron temperature on axis [keV]
     n_e:

@@ -149,7 +149,7 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
     Parameters
     ----------
     Z_eff:
-        Effective charge [a.m.u.]
+        Effective charge [dimensionless]
     T_e:
         Electron temperature on axis [keV]
         The equation takes in temperature as [eV], so an in-line conversion is used here.
