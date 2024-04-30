@@ -46,7 +46,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from bluemira.codes.interface import BaseRunMode
-    from bluemira.codes.plasmod.typing import TransportSolver
+    from bluemira.codes.typing import TransportSolver
     from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
         FemGradShafranovFixedBoundary,
         FixedBoundaryEquilibrium,
