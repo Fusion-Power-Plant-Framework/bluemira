@@ -537,7 +537,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             lcfs = self.eq.get_LCFS()
-        except Exception:
+        except Exception:  # noqa: BLE001
             bluemira_warn("Unable to plot LCFS")
             return
         x, z = lcfs.xz
@@ -888,7 +888,7 @@ class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             lcfs = self.eq.get_LCFS()
-        except Exception:
+        except Exception:  # noqa: BLE001
             bluemira_warn("Unable to plot LCFS")
             return
         x, z = lcfs.xz
