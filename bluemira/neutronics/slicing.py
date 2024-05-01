@@ -231,21 +231,18 @@ class PanelsAndExteriorCurve:
             options to specify the cut line's destination point for the first and final
             points respectively.
 
-            For the first cut line,
-                the cut line would start from interior_panels[0] and reach starting_cut;
-            and for the final cut line,
-                the cut line would start from interior_panels[-1] and reach ending_cut.
+            For the first cut line, the cut line would start from interior_panels[0]
+            and reach starting_cut.
+            For the final cut line, the cut line would start from interior_panels[-1]
+            and reach ending_cut.
             Both arguments have shape (2,) if given, representing the RZ coordinates.
 
 
         Returns
         -------
-        self.vv_cut_points
-
+        self.vv_cut_points:
             cut points where the vacuum vessel interior wire is split
-
-        self.exterior_cut_points
-
+        self.exterior_cut_points:
             cut points where the vacuum vessel exterior wire is split
         """
         self.vv_cut_points, self.exterior_cut_points = [], []
@@ -297,8 +294,6 @@ class PanelsAndExteriorCurve:
 
         discretisation_level:
             how many points to use to approximate the curve.
-            TODO: remove this when issue #3038 is fixed. The raw wire can be used
-                without discretisation then.
 
         Returns
         -------
@@ -312,6 +307,8 @@ class PanelsAndExteriorCurve:
             segments of the vacuum vessl exterior curve forming each pre-cell's exterior
             curve.
         """
+        # TODO: remove discretisation level when issue #3038 is fixed. The raw wire can
+        # be used without discretisation then.
         vv_cut_points, exterior_cut_points = self.calculate_cut_points(
             starting_cut, ending_cut, snap_to_horizontal_angle
         )
@@ -726,10 +723,10 @@ class DivertorWireAndExteriorCurve:
             options to specify the cut line's destination point for the first and final
             points respectively.
 
-            For the first cut line,
-                the cut line would start from interior_panels[0] and reach starting_cut;
-            and for the final cut line,
-                the cut line would start from interior_panels[-1] and reach ending_cut.
+            For the first cut line, the cut line would start from interior_panels[0] and
+            reach starting_cut.
+            For the final cut line, the cut line would start from interior_panels[-1] and
+            reach ending_cut.
             Both arguments have shape (2,) if given, representing the RZ coordinates.
 
 
@@ -795,8 +792,6 @@ class DivertorWireAndExteriorCurve:
             :meth:`~bluemira.neutronics.slicing.DivertorWireAndExteriorCurve.calculate_cut_points`
         discretisation_level:
             how many points to use to approximate the curve.
-            TODO: remove this when issue #3038 is fixed. The raw wire can be used
-                without discretisation then.
 
         Returns
         -------
@@ -810,6 +805,8 @@ class DivertorWireAndExteriorCurve:
             list of WireInfoList describing the each pre-cell's vacuum vessel exterior
             curve
         """
+        # TODO: remove discretisation level when issue #3038 is fixed. The raw wire can
+        # be used without discretisation then.
         vv_cut_points, exterior_cut_points = self.calculate_cut_points(
             starting_cut, ending_cut
         )

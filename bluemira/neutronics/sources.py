@@ -51,8 +51,8 @@ def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source
 def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source:
     """
     Creating simple line ring source lying on the Z=0 plane,
-        at r = major radius + shafranov shift,
-        producing 14.1 MeV neutrons with no variation in energy.
+    at r = major radius + shafranov shift,
+    producing 14.1 MeV neutrons with no variation in energy.
     A more accurate source will slightly affect the wall loadings and dpa profiles.
 
     Parameters

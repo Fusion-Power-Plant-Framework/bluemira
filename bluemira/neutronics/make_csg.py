@@ -515,25 +515,33 @@ class BluemiraNeutronicsCSG:
         choose the region for a ZCone.
         When reading this function's code, bear in mind that a Z cone can be separated
         into 3 parts:
+
             A. the upper cone (evaluates to negative),
             B. outside of the cone (evaluates to positive),
             C. the lower cone (evaluates to negative).
+
         We have to account for the following cases:
-        -------------------------------------
+
+        +------------+---------+------------+
         | upper cone | outside | lower cone |
-        -------------------------------------
-        |    Y      |     N    |      N     |
-        |    Y      |     Y    |      N     |
-        |    N      |     Y    |      N     |
-        |    N      |     Y    |      Y     |
-        |    N      |     N    |      Y     |
-        -------------------------------------
+        +============+=========+============+
+        |    Y       |     N   |      N     |
+        +------------+---------+------------+
+        |    Y       |     Y   |      N     |
+        +------------+---------+------------+
+        |    N       |     Y   |      N     |
+        +------------+---------+------------+
+        |    N       |     Y   |      Y     |
+        +------------+---------+------------+
+        |    N       |     N   |      Y     |
+        +------------+---------+------------+
+
         All other cases should raise an error.
-        The tricky part to handle is the floating point precision problem:
-            it's possible that th every point used to create the cone does not lie on the
-            cone/ lies on the wrong side of the cone.
-            Hence the first step is to shink the choice_points by 0.5%
-            towards the centroid.
+        The tricky part to handle is the floating point precision problem.
+        It's possible that th every point used to create the cone does not lie on the
+        cone/ lies on the wrong side of the cone.
+        Hence the first step is to shink the choice_points by 0.5%
+        towards the centroid.
 
         Parameters
         ----------
@@ -1356,9 +1364,13 @@ class DivertorCell(openmc.Cell):
         Get the exclusion zone of a semi-CONVEX cell.
 
         This can only be validly used:
+
             If away_from_plasma=True, then the interior side of the cell must be convex.
             If away_from_plasma=False, then the exterior_side of the cell must be convex.
-        Usage: next_cell_region = flat_intersection(..., ~this_cell.exclusion_zone())
+
+        Usage:
+
+            next_cell_region = flat_intersection(..., ~this_cell.exclusion_zone())
 
         Parameters
         ----------

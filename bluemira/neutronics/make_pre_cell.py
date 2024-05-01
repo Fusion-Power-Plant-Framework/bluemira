@@ -623,17 +623,19 @@ class DivertorPreCell:
         TODO: Re-write this method, as it currently do weird things to circles.
 
         New method should do the following:
-        1. Find a point to be our new origin. (Name that point "p")
-            This is likely to be a point near exterior_vertices.
-        2. Scale down the interior_wire by x%.
+
+            1. Find a point to be our new origin. (Name that point "p")
+               This is likely to be a point near exterior_vertices.
+            2. Scale down the interior_wire by x%.
 
         We should give more thought of how to derive/search for the optimal vector
         (p[0], p[-1], x), such that all lines are displaced by
 
         This proposed method has several new benefits:
-        1. The circles will be scaled correctly (center moves towards the new origin
-            by x%, radius scaled down by x%).
-        2. All tangents are preserved, so no need to change them.
+
+            1. The circles will be scaled correctly (center moves towards the new origin
+               by x%, radius scaled down by x%).
+            2. All tangents are preserved, so no need to change them.
         """
         int_wire_pts = [w.key_points[0] for w in self.interior_wire]
         int_wire_pts.append(self.interior_wire[-1].key_points[1])
