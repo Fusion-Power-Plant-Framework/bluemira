@@ -11,8 +11,6 @@ A collection of plotting tools.
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
-from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
