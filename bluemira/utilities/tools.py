@@ -29,7 +29,7 @@ import numpy.typing as npt
 from matplotlib import colors
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -99,6 +99,73 @@ def json_writer(
     if return_output:
         return the_json
     return None
+
+
+# =====================================================
+# csv writer utilities
+# =====================================================
+def write_csv(
+    data: np.ndarray,
+    base_name: str,
+    col_names: list[str],
+    metadata: str | None = "",
+    ext: str = ".csv",
+    comment_char: str = "#",
+):
+    """
+    Write data in comma-separated value format.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Array of data to be written to csv file. Will raise an error if the
+        dimensionality of the data is not two
+    base_name : str
+        Name of file to write to, minus the extension.
+    col_names : list(str)
+        List of strings for column headings for each data field provided.
+    metadata: str
+        Optional argument for metadata to be written as a header.
+    ext : str
+        Optional argument for file extension, defaults to ".csv".
+    comment_char : str
+        Optional argument to specify character(s) to prepend to metadata lines
+        as a comment character (defaults to "#").
+
+    """
+    # Fetch number of cols
+    shape = data.shape
+    # replacing `2` with a constant variable to avoid PLR2004
+    min_shape_length = 2
+    n_cols = 1 if len(shape) < min_shape_length else shape[1]
+
+    # Write file name
+    filename = base_name + ext
+
+    # Write column names
+    if not len(col_names) == n_cols:
+        raise RuntimeError("Column names must be provided for all data fields")
+
+    # Add comment characters and newline to existing metadata
+    if metadata:
+        comment_prefix = comment_char + " "
+        metadata = (
+            "\n".join([comment_prefix + line for line in metadata.split("\n")]) + "\n"
+        )
+
+    # Add column headings
+    metadata += ",".join(col_names)
+
+    np.savetxt(
+        filename,
+        data,
+        fmt="%.5e",
+        delimiter=",",
+        header=metadata,
+        footer="",
+        comments="",
+    )
+    bluemira_print("Wrote to " + filename)
 
 
 # =====================================================
