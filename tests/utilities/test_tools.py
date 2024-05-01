@@ -88,9 +88,7 @@ class TestCSVWriter:
         write_csv(data, test_output_base, col_names, header)
 
         # Retrieve data file to compare
-        expected_csv_output = (
-            get_bluemira_root() + "/tests/utilities/test_data/test_csv_writer.csv"
-        )
+        expected_csv_output =Path(__file__, "test_data","test_csv_writer.csv")
 
         # Compare
         test_csv_output = test_output_base + ".csv"
