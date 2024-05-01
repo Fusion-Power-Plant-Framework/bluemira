@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import copy
+import filecmp
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -29,6 +30,7 @@ from bluemira.utilities.tools import (
     levi_civita_tensor,
     norm,
     polar_to_cartesian,
+    write_csv,
 )
 
 
@@ -67,6 +69,30 @@ class TestAsciiStr:
 
         with pytest.raises(ValueError):  # noqa: PT011
             asciistr(53)
+
+
+class TestCSVWriter:
+    @pytest.mark.parametrize(("ext", "comment_char"), [(".csv", "#"), (".txt", "!")])
+    def test_csv_writer(self, tmp_path, ext, comment_char):
+        # Some dummy data to write to file
+        x_vals = [0, 1, 2]
+        z_vals = [-1, 0, 1]
+        flux_vals = [10, 15, 20]
+        data = np.array([x_vals, z_vals, flux_vals]).T
+        header = "This is a test\nThis is a second line"
+        col_names = ["x", "z", "heat_flux"]
+
+        # Write the data to csv, using default extension and comment style
+        expected_file = f"test_csv_writer{ext}"
+
+        expected_path = Path(tmp_path, expected_file).as_posix()
+        write_csv(data, expected_path, col_names, header, ext, comment_char)
+
+        # Retrieve data file to compare
+        test_output_path = Path(Path(__file__).parent, "test_data", f"{expected_file}")
+
+        # Compare
+        assert filecmp.cmp(expected_path, test_output_path)
 
 
 class TestLeviCivitaTensor:
