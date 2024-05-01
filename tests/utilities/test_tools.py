@@ -91,7 +91,7 @@ class TestCSVWriter:
         expected_csv_output =Path(__file__, "test_data","test_csv_writer.csv")
 
         # Compare
-        test_csv_output = test_output_base + ".csv"
+        test_csv_output = f"{test_output_base}.csv"
 
         assert filecmp.cmp(test_csv_output, expected_csv_output)
 
