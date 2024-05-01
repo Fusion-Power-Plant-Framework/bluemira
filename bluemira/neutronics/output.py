@@ -259,43 +259,37 @@ class OpenMCResult:
 
         # Scaling first wall results by factor to surface results
         surface_total = p_hf_df.loc[
-            p_hf_df["cell_name"].str.contains("FW Surface"), "heating (W)"
+            p_hf_df["cell_name"].str.contains("Surface"), "heating (W)"
         ].sum()
         cell_total = p_hf_df.loc[
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "heating (W)"
+            ~p_hf_df["cell_name"].str.contains("Surface"), "heating (W)"
         ].sum()
-        _surface_factor = surface_total / cell_total
+
+        surface_factor = surface_total / cell_total
         # in-place modification
         p_hf_df["vol. heating (W/m3)"] = np.where(
             ~p_hf_df["cell_name"].str.contains(
-                "FW Surface|PFC"
+                "Surface"
             ),  # modify the matching entries,
-            p_hf_df["heating (W)"] * _surface_factor,
+            p_hf_df["heating (W)"] * surface_factor,
             p_hf_df["heating (W)"],  # otherwise leave it unchanged.
         )
         p_hf_df["vol. heating (W/m3)"] = np.where(
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["heating std.dev."] * _surface_factor,
+            ~p_hf_df["cell_name"].str.contains("Surface"),
+            p_hf_df["heating std.dev."] * surface_factor,
             p_hf_df["heating std.dev."],
         )
         p_hf_df["vol. heating (W/m3)"] = np.where(
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["vol. heating (W/m3)"] * _surface_factor,
+            ~p_hf_df["cell_name"].str.contains("Surface"),
+            p_hf_df["vol. heating (W/m3)"] * surface_factor,
             p_hf_df["vol. heating (W/m3)"],
         )
         p_hf_df["vol. heating (W/m3)"] = np.where(
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["vol. heating std.dev."] * _surface_factor,
+            ~p_hf_df["cell_name"].str.contains("Surface"),
+            p_hf_df["vol. heating std.dev."] * surface_factor,
             p_hf_df["vol. heating std.dev."],
         )
         # DataFrame columns rearrangement
-        p_hf_df = p_hf_df.drop(
-            p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index
-        )
-        p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
-        p_hf_df = p_hf_df.replace(
-            "FW", "FW Surface", regex=True
-        )  # expand the word again
         p_hf_df = p_hf_df[
             [
                 "cell",
