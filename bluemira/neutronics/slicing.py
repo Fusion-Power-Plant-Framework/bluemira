@@ -203,7 +203,7 @@ class PanelsAndExteriorCurve:
         starting_cut: npt.NDArray[np.float64] | None,
         ending_cut: npt.NDArray[np.float64] | None,
         snap_to_horizontal_angle: float,
-    ) -> list[npt.NDArray[np.float64]]:
+    ) -> tuple[list[npt.NDArray[np.float64]], ...]:
         """
         Cut the curves according to some specified criteria:
         In general, a line would be drawn from each panel break point outwards towards
@@ -286,7 +286,7 @@ class PanelsAndExteriorCurve:
         starting_cut: npt.NDArray[np.float64] | None = None,
         ending_cut: npt.NDArray[np.float64] | None = None,
         snap_to_horizontal_angle: float = 30.0,
-    ) -> list[BluemiraWire]:
+    ) -> tuple[list[BluemiraWire], ...]:
         """
         Cut the exterior curve into a series and return them.
         This is the slowest part of the entire csg-creation process, because of the
@@ -410,7 +410,7 @@ class PanelsAndExteriorCurve:
         return PreCellArray(pre_cell_list)
 
 
-def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
+def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     """
     Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
     Then, get only the key information (start/end points and tangent) of each segment of
@@ -446,7 +446,7 @@ def check_and_breakdown_bmwire(bmwire: BluemiraWire) -> WireInfoList:
             wire,
         )
 
-    for bmw_edge in bmwire.edges:
+    for bmw_edge in wire.edges:
         if len(bmw_edge.boundary) != 1 or len(bmw_edge.boundary[0].OrderedEdges) != 1:
             raise GeometryError("Expected each boundary to contain only 1 curve!")
         edge = bmw_edge.boundary[0].OrderedEdges[0]
@@ -533,15 +533,17 @@ def straight_lines_deviate_less_than(
     return deviate_less_than(info1.tangents[1], info2.tangents[0], threshold_degrees)
 
 
-def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> list[WireInfoList]:
+def break_wire_into_convex_chunks(
+    wire: BluemiraWire, curvature_sign: int = -1
+) -> list[WireInfoList]:
     """
     Break a wire up into several convex wires.
     Merge if they are almost collinear.
 
     Parameters
     ----------
-    bmwire: BluemiraWire
-    curvature_sign: int, [-1, 1]
+    wire:
+    curvature_sign:
         if it's -1: we allow each convex chunk's wire to turn right only.
         if it's 1: we allow each convex chunk's wire to turn left only.
 
@@ -550,7 +552,7 @@ def break_wire_into_convex_chunks(bmwire, curvature_sign=-1) -> list[WireInfoLis
     convex_chunks:
         a list of WireInfos
     """
-    wire_segments = list(check_and_breakdown_bmwire(bmwire))
+    wire_segments = list(check_and_breakdown_wire(wire))
     convex_chunks = []
     # initializing the first chunk
     this_chunk = []

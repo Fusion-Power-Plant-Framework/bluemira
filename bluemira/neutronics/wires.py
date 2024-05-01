@@ -63,12 +63,12 @@ class WireInfo:
     # we don't need to. Or merge this invention into an existing issue?
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[Iterable[float]] | None  # 2 normalized directional vectors xyz
+    tangents: Sequence[Iterable[float]]  # 2 normalized directional vectors xyz
     wire: BluemiraWire | None = None
 
-    def reverse(self):
+    def reverse(self) -> WireInfo:
         """Flip the wire"""
-        return WireInfo(self.key_points.reverse(), self.tangents[::-1], None)
+        return type(self)(self.key_points.reverse(), self.tangents[::-1], None)
 
     @classmethod
     def from_2P(  # noqa: N802
@@ -114,9 +114,14 @@ class WireInfoList:
         """
         # assume continuity, which is already enforced during initialization, so we
         # should be fine.
-        coords = [self[0].key_points[0]]
-        coords.extend(seg.key_points[1] for seg in self.info_list)
-        return np.array(coords, dtype=float)  # shape = (N+1, 3)
+        # shape = (N+1, 3)
+        return np.array(
+            [
+                self.info_list[0].key_points[0],
+                *(seg.key_points[1] for seg in self.info_list),
+            ],
+            dtype=float,
+        )
 
     @property
     def start_point(self):
