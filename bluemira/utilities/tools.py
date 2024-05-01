@@ -135,9 +135,7 @@ def write_csv(
     """
     # Fetch number of cols
     shape = data.shape
-    # replacing `2` with a constant variable to avoid PLR2004
-    min_shape_length = 2
-    n_cols = 1 if len(shape) < min_shape_length else shape[1]
+    n_cols = 1 if len(shape) <  2 else shape[1]  # noqa: PLR2004
 
     # Write file name
     filename = base_name + ext
