@@ -360,6 +360,7 @@ class PreCellArray:
         # new_pca.plot_2d(ax=ax, show=True)
 
     def plot_2d(self, *args, **kwargs) -> None:
+        """Plot pre cells in 2d"""
         plot_2d(
             [pc.outline for pc in self.pre_cells]
             + [pc.vv_wire for pc in self.pre_cells],
@@ -368,6 +369,7 @@ class PreCellArray:
         )
 
     def show_cad(self, *args, **kwargs) -> None:
+        """Show pre cell CAD"""
         show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
 
     def exterior_vertices(self) -> npt.NDArray:
@@ -393,9 +395,11 @@ class PreCellArray:
         return np.insert(self.cell_walls[:, 0], 1, 0, axis=-1)
 
     def __len__(self) -> int:
+        """Number of pre cells"""
         return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
+        """Get pre cell"""
         return self.pre_cells[index_or_slice]
 
     def __add__(self, other_array) -> PreCellArray:
@@ -407,6 +411,7 @@ class PreCellArray:
         )
 
     def __repr__(self) -> str:
+        """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
 
 
@@ -576,9 +581,11 @@ class DivertorPreCell:
         )
 
     def plot_2d(self, *args, **kwargs) -> None:
+        """Plot 2d precell"""
         plot_2d(self.outline, *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:
+        """Show precell CAD"""
         show_cad(self.half_solid, *args, **kwargs)
 
     @property
@@ -725,25 +732,21 @@ class DivertorPreCellArray:
         ])
 
     def __len__(self) -> int:
+        """Number of pre cells"""
         return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
+        """Get pre cell"""
         return self.pre_cells[index_or_slice]
 
-    def __add__(self, other_array) -> DivertorPreCellArray:
-        if isinstance(other_array, DivertorPreCellArray):
-            return DivertorPreCellArray(self.pre_cells + self.pre_cells)
-        raise TypeError(
-            "Addition not implemented between DivertorPreCellArray and "
-            f"{other_array.__class__}"
-        )
-
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
     def plot_2d(self, *args, **kwargs) -> None:
+        """Plot precell array cad in 2d"""
         plot_2d(
             [dpc.outline for dpc in self.pre_cells]
             + [dpc.vv_wire.restore_to_wire() for dpc in self.pre_cells],
@@ -752,4 +755,5 @@ class DivertorPreCellArray:
         )
 
     def show_cad(self, *args, **kwargs) -> None:
+        """Show precell array CAD"""
         show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)

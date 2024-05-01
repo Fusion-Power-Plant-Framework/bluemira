@@ -92,15 +92,15 @@ class WireInfoList:
                 raise GeometryError("Next wire must start where the previous wire stops")
 
     def __len__(self) -> int:
+        """Number of wire infos"""
         return len(self.info_list)
 
     def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
+        """Get a WireInfo"""
         return self.info_list[index_or_slice]
 
-    def __add__(self, other_info_list) -> WireInfoList:
-        return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
-
     def __repr__(self) -> str:
+        """String reprensentation"""
         return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
 
     def pop(self, index):

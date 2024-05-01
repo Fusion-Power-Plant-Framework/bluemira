@@ -91,7 +91,7 @@ async def _download(
 def downloader(
     url: str,
     checksum: int | None = None,
-    as_browser: bool = False,  # noqa: ARG001
+    as_browser: bool = False,  # noqa: ARG001, FBT001, FBT002
     output_path: os.PathLike | None = None,
     output_filename: os.PathLike | None = None,
     *,

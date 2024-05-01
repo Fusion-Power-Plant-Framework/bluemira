@@ -26,6 +26,8 @@ if TYPE_CHECKING:
 
 
 class Vert(IntEnum):
+    """Vertices index for cells"""
+
     ext_end = 0
     int_start = 1
     int_end = 2
@@ -62,7 +64,7 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[np.float64]) -> float:
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
     polygon = np.array(polygon)
-    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:
+    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
         raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
     previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
     px, pz = previous_points[:, 0], previous_points[:, -1]
@@ -158,10 +160,11 @@ class CellWalls:
         self.check_volumes_and_lengths()
 
     def __len__(self) -> int:
+        """Number of cell wall panels"""
         return len(self.cell_walls)
 
     def __getitem__(self, index_or_slice) -> npt.NDArray | float:
-        """self[:] will return a copy of the index."""
+        """Get cell wall panel"""
         return self.cell_walls[index_or_slice]
 
     def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
@@ -184,11 +187,13 @@ class CellWalls:
         raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super().__repr__().replace(" at ", f" of {len(self.cell_walls)} walls at ")
         )
 
     def copy(self) -> CellWalls:
+        """Copy cell wall"""
         return CellWalls(self.cell_walls.copy())
 
     @classmethod

@@ -46,6 +46,7 @@ from bluemira.plasma_physics.reactions import n_DT_reactions
 
 
 def some_function_on_blanket_wire(*_args):
+    """DELETE ME"""
     # Loading data
     with open("data/inner_boundary") as j:
         deserialise_shape(json.load(j))
@@ -83,6 +84,8 @@ def some_function_on_blanket_wire(*_args):
 
 
 class OpenMCRunModes(BaseRunMode):
+    """OpenMC run modes"""
+
     RUN = "fixed source"
     RUN_AND_PLOT = auto()
     PLOT = "plot"
@@ -134,6 +137,8 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
 
 
 class Setup(CodesSetup):
+    """Setup task for OpenMC solver"""
+
     def __init__(
         self,
         out_path: str,
@@ -204,6 +209,7 @@ class Setup(CodesSetup):
         self.files_created.add(Path(self.out_path, run_mode.name.lower(), "tallies.xml"))
 
     def run(self, run_mode, runtime_params, source_params, *, debug: bool = False):
+        """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
             self.settings.source = self.source(source_params)
@@ -218,6 +224,7 @@ class Setup(CodesSetup):
         self.files_created.add("tallies.out")
 
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
+        """Plot stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             plot_width_0 = self.outer_wire.bounding_box.x_max * 2.1
             plot_width_1 = self.outer_wire.bounding_box.z_max * 3.1
@@ -234,6 +241,7 @@ class Setup(CodesSetup):
             self.files_created.add(plot_pth)
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
+        """Stochastic volume stage for setup openmc"""
         z_max, z_min, r_max, r_min = self.generator.pre_cell_arrays.bounding_box()
 
         min_xyz = (r_min, r_min, z_min)
@@ -254,6 +262,8 @@ class Setup(CodesSetup):
 
 
 class Run(CodesTask):
+    """Run task for OpenMC solver"""
+
     def __init__(self, out_path: Path, codes_name: str):
         super().__init__(None, codes_name)
 
@@ -278,16 +288,21 @@ class Run(CodesTask):
         )
 
     def run(self, run_mode, *, debug: bool = False):
+        """Run stage for run task"""
         self._run(run_mode, debug=debug)
 
     def plot(self, run_mode, *, debug: bool = False):
+        """Plot stage for run task"""
         self._run(run_mode, debug=debug)
 
     def volume(self, run_mode, *, debug: bool = False):
+        """Stochastic volume stage for run task"""
         self._run(run_mode, debug=debug)
 
 
 class Teardown(CodesTeardown):
+    """Teardown task for OpenMC solver"""
+
     def __init__(
         self,
         cells,
@@ -323,6 +338,7 @@ class Teardown(CodesTeardown):
             )
 
     def run(self, universe, files_created, source_params, statepoint_file):
+        """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
             n_DT_reactions(source_params.plasma_physics_units.reactor_power),
@@ -332,11 +348,13 @@ class Teardown(CodesTeardown):
         return result
 
     def plot(self, _universe, files_created, *_args):
+        """Plot stage for Teardown task"""
         self._cleanup(files_created)
 
     def volume(
         self, _universe, files_created, _source_params, _statepoint_file
     ) -> dict[int, float]:
+        """Stochastic volume stage for teardown task"""
         self._cleanup(files_created)
         return {
             cell.id: raw_uc(
@@ -347,6 +365,8 @@ class Teardown(CodesTeardown):
 
 
 class OpenMCNeutronicsSolver(CodesSolver):
+    """OpenMC 2D neutronics solver"""
+
     name: str = OPENMC_NAME
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
     params: OpenMCNeutronicsSolverParams
@@ -411,6 +431,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
     @property
     def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
+        """Source term for OpenMC"""
         return self._source
 
     @source.setter

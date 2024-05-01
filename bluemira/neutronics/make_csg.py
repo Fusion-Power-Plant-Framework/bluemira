@@ -385,6 +385,8 @@ def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
 
 
 class BluemiraNeutronicsCSG:
+    """Container for CSG planes to enable reuse of planes, very eco friendly"""
+
     def __init__(self):
         # it's called a hangar because it's where the planes are parked ;)
         self.hangar = {}
@@ -484,9 +486,9 @@ class BluemiraNeutronicsCSG:
 
         Parameters
         ----------
-        z0
+        z0:
             The height of the plane, if we need to create it. Unit: [m]
-        z_range
+        z_range:
             If we a suitable z-plane already exists, then we only accept it if it lies
             within this range of z. Unit: [m]
         surface_id, name:
@@ -819,12 +821,15 @@ class BlanketCellStack:
                 raise ValueError("Expected a contiguous stack of cells!")
 
     def __len__(self) -> int:
+        """Number of cells in stack"""
         return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCell] | BlanketCell:
+        """Get cell from stack"""
         return self.cell_stack[index_or_slice]
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super()
             .__repr__()
@@ -853,18 +858,22 @@ class BlanketCellStack:
 
     @property
     def interior_surface(self):
+        """Get interior surface"""
         return self.cell_stack[0].interior_surface
 
     @property
     def exterior_surface(self):
+        """Get exterior surface"""
         return self.cell_stack[-1].exterior_surface
 
     @property
     def ccw_surface(self):
+        """Get counter clockwise surface"""
         return self.cell_stack[0].ccw_surface
 
     @property
     def cw_surface(self):
+        """Get clockwise surface"""
         return self.cell_stack[0].cw_surface
 
     @property
@@ -1084,9 +1093,6 @@ class BlanketCellArray:
     ):
         """
         Create array from a list of BlanketCellStack
-        Variables
-        ---------
-        blanket_cell_array
         """
         self.blanket_cell_array = blanket_cell_array
         self.poloidal_surfaces = [self.blanket_cell_array[0].ccw_surface]
@@ -1106,12 +1112,15 @@ class BlanketCellArray:
                     )
 
     def __len__(self) -> int:
+        """Number of cell stacks"""
         return len(self.blanket_cell_array)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCellStack] | BlanketCellStack:
+        """Get cell stack"""
         return self.blanket_cell_array[index_or_slice]
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super()
             .__repr__()
@@ -1387,18 +1396,22 @@ class DivertorCellStack:
 
     @property
     def interior_surfaces(self):
+        """Get interior surfaces"""
         return self.cell_stack[0].interior_surfaces
 
     @property
     def exterior_surfaces(self):
+        """Get exterior surfaces"""
         return self.cell_stack[-1].exterior_surfaces
 
     @property
     def ccw_surface(self):
+        """Get counter clockwise surface"""
         return self.cell_stack[-1].ccw_surface
 
     @property
     def cw_surface(self):
+        """Get clockwise surface"""
         return self.cell_stack[-1].cw_surface
 
     @property
@@ -1424,12 +1437,15 @@ class DivertorCellStack:
         return self._interfaces  # list of list of (1- or 2-tuple of) surfaces.
 
     def __len__(self) -> int:
+        """Length of DivertorCellStack"""
         return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCell] | DivertorCell:
+        """Get item for DivertorCellStack"""
         return self.cell_stack[index_or_slice]
 
     def __repr__(self) -> str:
+        """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} DivertorCells at ")
 
     def get_all_vertices(self) -> npt.NDArray:
@@ -1454,14 +1470,15 @@ class DivertorCellStack:
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        _surfaces = [
-            self.cw_surface,
-            self.ccw_surface,
-            *self.interior_surfaces,
-            *self.exterior_surfaces,
-        ]
         return self.csg.region_from_surface_series(
-            _surfaces, self.get_all_vertices(), control_id=control_id
+            [
+                self.cw_surface,
+                self.ccw_surface,
+                *self.interior_surfaces,
+                *self.exterior_surfaces,
+            ],
+            self.get_all_vertices(),
+            control_id=control_id,
         )
 
     @classmethod
@@ -1587,12 +1604,15 @@ class DivertorCellArray:
                     )
 
     def __len__(self) -> int:
+        """Length of DivertorCellArray"""
         return len(self.cell_array)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
+        """Get item for DivertorCellArray"""
         return self.cell_array[index_or_slice]
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super().__repr__().replace(" at ", f" of {len(self)} DivertorCellStacks at")
         )
@@ -1735,12 +1755,15 @@ class TFCoils:
         self.tf_coils = tf_coils
 
     def __len__(self) -> int:
+        """Get number of tf coil cells"""
         return len(self.tf_coils)
 
     def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
+        """Get tf coil cell"""
         return self.tf_coils[index_or_slice]
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super()
             .__repr__()

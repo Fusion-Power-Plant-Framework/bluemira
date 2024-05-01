@@ -93,6 +93,7 @@ class PreCellStage:
         ])
 
     def bounding_box(self):
+        """Get bounding box of pre cell stage"""
         all_ext_vertices = self.external_coordinates()
         z_min = all_ext_vertices[:, -1].min()
         z_max = all_ext_vertices[:, -1].max()

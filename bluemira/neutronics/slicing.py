@@ -90,7 +90,7 @@ def cut_curve(
 
     # determine whether we're going up or down in parameter (t) space.
     finite_difference = np.diff(cut_params)
-    if len(finite_difference) <= 2:
+    if len(finite_difference) <= 2:  # noqa: PLR2004
         raise GeometryError(
             "Too few points! I.e. discretization_level parameter too low. "
             "Can't determine the cut direction!"
@@ -155,7 +155,7 @@ class PanelsAndExteriorCurve:
         self.vv_exterior = vv_exterior
         # shape = (N+1, 3)
         self.interior_panels = np.insert(panel_break_points, 1, 0, axis=-1)
-        if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:
+        if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:  # noqa: PLR2004
             raise ValueError(
                 "Expected an input np.ndarray of breakpoints of shape = "
                 f"(N+1, 2). Instead received shape = {np.shape(panel_break_points)}."
