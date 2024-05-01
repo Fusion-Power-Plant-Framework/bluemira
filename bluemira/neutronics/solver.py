@@ -32,7 +32,7 @@ from bluemira.geometry.tools import deserialise_shape
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_materials import create_materials
-from bluemira.neutronics.neutronics_axisymmetric import SingleNullTokamak
+from bluemira.neutronics.neutronics_axisymmetric import csg_tokamak
 from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
     BlanketLayers,
@@ -147,7 +147,7 @@ class Setup(CodesSetup):
         cells,
         source,
         blanket_cell_array,
-        generator,
+        pre_cell_arrays,
         outer_wire,
         mat_lib,
     ):
@@ -158,7 +158,7 @@ class Setup(CodesSetup):
         self.cross_section_xml = cross_section_xml
         self.source = source
         self.blanket_cell_array = blanket_cell_array
-        self.generator = generator
+        self.pre_cell_arrays = pre_cell_arrays
         self.outer_wire = outer_wire
         self.mat_lib = mat_lib
         self.matlist = attrgetter(
@@ -241,7 +241,7 @@ class Setup(CodesSetup):
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         """Stochastic volume stage for setup openmc"""
-        z_max, z_min, r_max, r_min = self.generator.pre_cell_arrays.bounding_box()
+        z_max, z_min, r_max, r_min = self.pre_cell_arrays.bounding_box()
 
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
@@ -394,7 +394,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         self.source = source
 
-        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
+        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
             _tokamak_geometry, self.params.major_radius.value, 0.1, 2, 4
         )
         self.tokamak_dimensions.inboard.manifold = 0.02  # why modified?
@@ -419,13 +419,15 @@ class OpenMCNeutronicsSolver(CodesSolver):
             some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)
         )
 
-        self.generator = SingleNullTokamak(
-            panel_breakpoint_t, divertor_wire, outer_boundary, self.vacuum_vessel_wire
-        )
-
-        self.generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
-        self.cell_arrays = self.generator.make_cell_arrays(
-            self.mat_lib, self.tokamak_dimensions, control_id=True
+        self.pre_cell_arrays, self.cell_arrays = csg_tokamak(
+            panel_breakpoint_t,
+            divertor_wire,
+            outer_boundary,
+            self.vacuum_vessel_wire,
+            self.mat_lib,
+            self.tokamak_dimensions,
+            snap_to_horizontal_angle=45,
+            control_id=True,
         )
 
     @property
@@ -472,7 +474,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.cell_arrays.cells,
             self.source,
             self.cell_arrays.blanket,
-            self.generator,
+            self.pre_cell_arrays,
             self.vacuum_vessel_wire,
             self.mat_lib,
         )
