@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Defining (and changing) the radial (side) walls of PreCell in PreCellArrays."""
-# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
@@ -222,7 +221,7 @@ class CellWalls:
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} walls at ")
 
-    def copy(self) -> CellWalls:  # noqa: D102
+    def copy(self) -> CellWalls:
         return CellWalls(self.cell_walls.copy())
 
     @classmethod
@@ -412,7 +411,7 @@ class CellWalls:
                     target_volumes[i - 1 : i + 1]
                 )
 
-            def dV_dl(test_length, i=i):  # noqa: N802
+            def dV_dl(test_length, i=i):
                 return self.volume_derivative_of_cells_neighbouring(i, test_length)
 
             # do not allow length to decrease beyond their original value.

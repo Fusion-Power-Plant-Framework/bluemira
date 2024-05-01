@@ -7,7 +7,6 @@
 Create csg geometry by converting from bluemira geometry objects made of wires. All units
 in this module are in SI (distrance:[m]) unless otherwise specified by the docstring.
 """
-# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
@@ -697,19 +696,19 @@ class BlanketCellStack:
             raise GeometryError(f"Some surfaces crosses over each other! {location_msg}")
 
     @property
-    def interior_surface(self):  # noqa: D102
+    def interior_surface(self):
         return self[0].interior_surface
 
     @property
-    def exterior_surface(self):  # noqa: D102
+    def exterior_surface(self):
         return self[-1].exterior_surface
 
     @property
-    def ccw_surface(self):  # noqa: D102
+    def ccw_surface(self):
         return self[0].ccw_surface
 
     @property
-    def cw_surface(self):  # noqa: D102
+    def cw_surface(self):
         return self[0].cw_surface
 
     @property
@@ -871,7 +870,7 @@ class BlanketCellStack:
             j = k + 1  # = range(1, M+1)
             if j > 1:
                 int_surf.name = (
-                    f"{cell_type}-{BlanketLayers(j).name} "  # noqa: F821
+                    f"{cell_type}-{BlanketLayers(j).name} "
                     f"interface boundary of blanket cell stack {i}"
                 )
             cell_type = BlanketLayers(j)
@@ -1338,19 +1337,19 @@ class DivertorCellStack:
         #         raise ValueError("Expected a contiguous stack of cells!")
 
     @property
-    def interior_surfaces(self):  # noqa: D102
+    def interior_surfaces(self):
         return self[0].interior_surfaces
 
     @property
-    def exterior_surfaces(self):  # noqa: D102
+    def exterior_surfaces(self):
         return self[-1].exterior_surfaces
 
     @property
-    def ccw_surface(self):  # noqa: D102
+    def ccw_surface(self):
         return self[-1].ccw_surface
 
     @property
-    def cw_surface(self):  # noqa: D102
+    def cw_surface(self):
         return self[-1].cw_surface
 
     @property

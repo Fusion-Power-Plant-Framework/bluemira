@@ -127,7 +127,7 @@ lined_euro_mat = HomogenisedMixture(
 # Lithium-containing material that is also a mixture of existing materials
 def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
     """Ref: Current status and future perspectives of EU ceramic breeder development"""
-    KALOS_ACB_mat = HomogenisedMixture(
+    return HomogenisedMixture(
         name="kalos_acb",  # optional name of homogeneous material
         materials=[  # molar combination adjusted to atom fractions
             MixtureFraction(
@@ -142,4 +142,3 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
     )  # combination fraction type is by atom fraction
     # todo: check if this packing fraction is correct (as set above)
     # KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  # applying packing fraction
-    return KALOS_ACB_mat  # noqa: RET504 for now

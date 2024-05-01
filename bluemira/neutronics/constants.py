@@ -20,15 +20,15 @@ from bluemira.plasma_physics.reactions import E_DT_fusion
 DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
 
 
-def to_cm(m):  # noqa: D103
+def to_cm(m):
     return raw_uc(m, "m", "cm")
 
 
-def to_m(cm):  # noqa: D103
+def to_m(cm):
     return raw_uc(cm, "cm", "m")
 
 
-def to_cm3(m3):  # noqa: D103
+def to_cm3(m3):
     return raw_uc(m3, "m^3", "cm^3")
 
 

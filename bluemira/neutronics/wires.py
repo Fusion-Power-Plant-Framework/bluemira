@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-# ruff: noqa: D105
 """
 Info about straight line wires and circles. Made to be simpler to modify than a whole
 BluemiraWire.

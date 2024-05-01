@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Make pre-cells using bluemira wires."""
-# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
@@ -360,13 +359,13 @@ class PreCellArray:
         # ax = self.plot_2d(show=False)
         # new_pca.plot_2d(ax=ax, show=True)
 
-    def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        return plot_2d(
+    def plot_2d(self, *args, **kwargs) -> None:
+        plot_2d(
             [pc.outline for pc in self] + [pc.vv_wire for pc in self], *args, **kwargs
         )
 
-    def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        return show_cad([pc.half_solid for pc in self], *args, **kwargs)
+    def show_cad(self, *args, **kwargs) -> None:
+        show_cad([pc.half_solid for pc in self], *args, **kwargs)
 
     def exterior_vertices(self) -> npt.NDArray:
         """
@@ -574,11 +573,11 @@ class DivertorPreCell:
             ])
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        return plot_2d(self.outline, *args, **kwargs)
+    def plot_2d(self, *args, **kwargs) -> None:
+        plot_2d(self.outline, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        return show_cad(self.half_solid, *args, **kwargs)
+    def show_cad(self, *args, **kwargs) -> None:
+        show_cad(self.half_solid, *args, **kwargs)
 
     @property
     def outline(self) -> BluemiraWire:
@@ -740,13 +739,13 @@ class DivertorPreCellArray:
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:  # noqa: D102
-        return plot_2d(
+    def plot_2d(self, *args, **kwargs) -> None:
+        plot_2d(
             [dpc.outline for dpc in self]
             + [dpc.vv_wire.restore_to_wire() for dpc in self],
             *args,
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs) -> None:  # noqa: D102
-        return show_cad([dpc.half_solid for dpc in self], *args, **kwargs)
+    def show_cad(self, *args, **kwargs) -> None:
+        show_cad([dpc.half_solid for dpc in self], *args, **kwargs)
