@@ -26,7 +26,7 @@ from bluemira.utilities.tools import floatify, is_num
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from matplotlib.pyplot import Axes
+    from matplotlib.axes import Axes
 
 __all__ = ["Coil"]
 
@@ -250,12 +250,12 @@ class Coil(CoilFieldsMixin):
         return self._ctype
 
     @property
-    def dx(self) -> float:
+    def dx(self) -> float | None:
         """Get coil width (half)"""
         return self._dx
 
     @property
-    def dz(self) -> float:
+    def dz(self) -> float | None:
         """Get coil height (half)"""
         return self._dz
 
@@ -280,7 +280,7 @@ class Coil(CoilFieldsMixin):
         return self._discretisation
 
     @property
-    def area(self) -> np.ndarray:
+    def area(self) -> float:
         """
         The cross-sectional area of the coil
 
@@ -291,7 +291,7 @@ class Coil(CoilFieldsMixin):
         return 4 * self.dx * self.dz
 
     @property
-    def volume(self) -> np.ndarray:
+    def volume(self) -> float:
         """
         The volume of the coil
 
@@ -350,7 +350,7 @@ class Coil(CoilFieldsMixin):
         )
 
     @dx.setter
-    def dx(self, value: float):
+    def dx(self, value: float | None):
         """Set coil dx size"""
         self._dx = None if value is None else floatify(value)
         if isinstance(self._dx, float) and self._x - self._dx < 0:
@@ -364,7 +364,7 @@ class Coil(CoilFieldsMixin):
         self._re_discretise()
 
     @dz.setter
-    def dz(self, value: float):
+    def dz(self, value: float | None):
         """Set coil dz size"""
         self._dz = None if value is None else floatify(value)
         self._re_discretise()

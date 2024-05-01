@@ -90,27 +90,34 @@ class TestCoilsetOptimiser:
 
     def test_modify_coilset(self):
         # Read
-        coilset_state, substates = self.optimiser.read_coilset_state(
-            self.coilset, self.optimiser.scale
+        coilset_opt_state = self.optimiser.coilset.get_optimisation_state(
+            current_scale=self.optimiser.scale
         )
         # Modify vectors
-        x, z, currents = np.array_split(coilset_state, substates)
+        x, z, currents = (
+            coilset_opt_state.xs,
+            coilset_opt_state.zs,
+            coilset_opt_state.currents,
+        )
         x += 1.1
         z += 0.6
         currents += 0.99
-
-        updated_coilset_state = np.concatenate((x, z, currents))
-        self.optimiser.set_coilset_state(
-            self.optimiser.coilset, updated_coilset_state, self.optimiser.scale
+        # Update
+        self.optimiser.coilset.set_optimisation_state(
+            currents,
+            coil_position_map={
+                "PF_2": np.asarray([x[0], z[0]]),
+                "PF_1": np.asarray([x[1], z[1]]),
+                "PF_3": np.asarray([x[2], z[2]]),
+            },
+            current_scale=self.optimiser.scale,
         )
-
-        coilset_state, substates = self.optimiser.read_coilset_state(
-            self.coilset, self.optimiser.scale
+        post_coilset_opt_state = self.optimiser.coilset.get_optimisation_state()
+        assert np.allclose(post_coilset_opt_state.xs, x)
+        assert np.allclose(post_coilset_opt_state.zs, z)
+        assert np.allclose(
+            post_coilset_opt_state.currents, currents * self.optimiser.scale
         )
-        state_x, state_z, state_i = np.array_split(coilset_state, substates)
-        assert np.allclose(state_x, x)
-        assert np.allclose(state_z, z)
-        assert np.allclose(state_i, currents)
 
     def test_current_bounds(self):
         n_control_currents = len(self.coilset.current[self.coilset._control_ind])
@@ -131,11 +138,3 @@ class TestCoilsetOptimiser:
         )
         assert np.allclose(bounds[0], optimiser_current_bounds[0])
         assert np.allclose(bounds[1], optimiser_current_bounds[1])
-
-        # print(self.optimiser.coilset.get_max_currents(0.0))
-        # print(self.optimiser.get_current_bounds(10.0) / self.optimiser.scale)
-
-        # self.optimiser.get_current_bounds()
-
-        # optimiser_maxima = 0.9
-        # i_max = self.coilset.get_max_currents(max_currents)
