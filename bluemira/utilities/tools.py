@@ -168,6 +168,29 @@ def write_csv(
     bluemira_print("Wrote to " + filename)
 
 
+def write_geometry_to_csv(loop, filename, metadata=""):
+    """
+    Write the loop data as csv format to the specified file.
+
+    Parameters
+    ----------
+    loop : Loop
+        The loop whose points (i.e. xyz coords) should be written as csv
+    filename : str
+        Name of file to write to, minus the extension
+    metadata: str
+        Optional argument for string holding metadata to be written as a header
+    """
+    # Get the loop data
+    data = loop.xyz.T
+
+    # Create a list of column names
+    col_names = ["x", "y", "z"]
+
+    # Write
+    write_csv(data, filename, col_names, metadata)
+
+
 # =====================================================
 # Einsum utilities
 # =====================================================

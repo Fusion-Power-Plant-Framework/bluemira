@@ -13,7 +13,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.utilities.tools import (
     NumpyJSONEncoder,
     asciistr,
@@ -72,7 +72,7 @@ class TestAsciiStr:
 
 
 class TestCSVWriter:
-    def test_csv_writer(self):
+    def test_csv_writer(self, tmp_path):
         # Some dummy data to write to file
         x_vals = [0, 1, 2]
         z_vals = [-1, 0, 1]
@@ -82,11 +82,13 @@ class TestCSVWriter:
         col_names = ["x", "z", "heat_flux"]
 
         # Write the data to csv, using default extension and comment style
-        test_output_base = "csv_write_dummy_data"
+        test_output_base = tmp_path.as_posix() + "csv_write_dummy_data"
         write_csv(data, test_output_base, col_names, header)
 
         # Retrieve data file to compare
-        expected_csv_output = Path.cwd().as_posix() + "/test_data/test_csv_writer.csv"
+        expected_csv_output = (
+            get_bluemira_root() + "/tests/utilities/test_data/test_csv_writer.csv"
+        )
 
         # Compare
         test_csv_output = test_output_base + ".csv"
@@ -102,7 +104,9 @@ class TestCSVWriter:
         write_csv(data, test_output_base, col_names, header, ext, comment_char)
 
         # Retrieve data file to compare
-        expected_txt_output = Path.cwd().as_posix() + "/test_data/test_csv_writer.txt"
+        expected_txt_output = (
+            get_bluemira_root() + "/tests/utilities/test_data/test_csv_writer.txt"
+        )
 
         # Compare
         test_txt_output = test_output_base + ".txt"
