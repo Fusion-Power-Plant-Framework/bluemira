@@ -807,19 +807,19 @@ class BlanketCellStack:
 
     @property
     def interior_surface(self):
-        return self[0].interior_surface
+        return self.cell_stack[0].interior_surface
 
     @property
     def exterior_surface(self):
-        return self[-1].exterior_surface
+        return self.cell_stack[-1].exterior_surface
 
     @property
     def ccw_surface(self):
-        return self[0].ccw_surface
+        return self.cell_stack[0].ccw_surface
 
     @property
     def cw_surface(self):
-        return self[0].cw_surface
+        return self.cell_stack[0].cw_surface
 
     @property
     def interfaces(self):
@@ -853,8 +853,8 @@ class BlanketCellStack:
                 self.interior_surface,
             ],
             np.vstack((
-                self[0].vertex.xz.T[(1, 2),],
-                self[-1].vertex.xz.T[(3, 0),],
+                self.cell_stack[0].vertex.xz.T[(1, 2),],
+                self.cell_stack[-1].vertex.xz.T[(3, 0),],
             )),
             control_id=control_id,
         )
@@ -906,7 +906,6 @@ class BlanketCellStack:
         if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
             raise NotImplementedError("Not ready to make curved-line cross-section yet!")
 
-        i = blanket_stack_num if blanket_stack_num is not None else "(unspecified)"
         # 1. Calculate cut points required to make the surface stack, without actually
         #    creating the surfaces.
         # shape (M+1, 2, 2)
@@ -922,6 +921,7 @@ class BlanketCellStack:
         # 1.1 perform sanity check
         directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
+        i = blanket_stack_num or "(unspecified)"
         cls.check_cut_point_ordering(
             wall_cut_pts[:, 0],
             dirs[0],
@@ -945,27 +945,33 @@ class BlanketCellStack:
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
         projection_cw = wall_cut_pts[:, 1] @ dirs[1] / np.linalg.norm(dirs[1])
-        layer_too_thin = [
-            (ccw_depth <= DTOL_CM and cw_depth <= DTOL_CM)
-            for (ccw_depth, cw_depth) in zip(
-                np.diff(projection_ccw), np.diff(projection_cw), strict=True
-            )
-        ]  # shape (M,)
+        layer_mask = np.array(
+            [
+                not (ccw_depth <= DTOL_CM and cw_depth <= DTOL_CM)
+                for (ccw_depth, cw_depth) in zip(
+                    np.diff(projection_ccw), np.diff(projection_cw), strict=True
+                )
+            ],
+            dtype=bool,
+        )  # shape (M,)
 
         # 3. Choose the ID of the stack's surfaces and cells.
         if blanket_stack_num is not None:
             # Note: all IDs must be natural number, i.e. integer > 0.
             # So we're using an indexing scheme that starts from 1.
-            cell_ids = [10 * i + j + 1 for j in range(len(vertices))]  # len=M
+            # len=M
+            cell_ids = [10 * blanket_stack_num + v + 1 for v in range(len(vertices))]
             # left (ccw_surface) surface had already been created, and since our indexing
             # scheme starts from 1, therefore we're using +2 in the following line.
-            surface_ids = [10 * i + j + 2 for j in range(len(wall_cut_pts))]  # len=M+1
+            # len=M+1
+            surface_ids = [
+                10 * blanket_stack_num + v + 2 for v in range(len(wall_cut_pts))
+            ]
         else:
             cell_ids = [None] * len(vertices)  # len=M
             surface_ids = [None] * len(wall_cut_pts)  # len=M+1
 
         # 4. create the actual openmc.Surfaces and Cells.
-        cell_stack = []
         int_surf = (
             csg.surface_from_2points(
                 *wall_cut_pts[0],
@@ -976,10 +982,9 @@ class BlanketCellStack:
             else None
         )  # account for the case.
 
-        for k, points in enumerate(wall_cut_pts[1:]):  # k = range(0, M)
-            if layer_too_thin[k]:
-                # don't make any surface (or cell) if this cell has thickness == 0.
-                continue
+        cell_stack = []
+        # k = range(0, M - layer_mask == False)
+        for k, points in enumerate(wall_cut_pts[1:][layer_mask]):
             j = k + 1  # = range(1, M+1)
             cell_type = BlanketLayers(j)
             if j > 1:
@@ -991,16 +996,17 @@ class BlanketCellStack:
                 *points,
                 surface_id=surface_ids[j],  # up to M+1
             )
+
             cell_stack.append(
                 BlanketCell(
-                    ext_surf,
-                    ccw_surface,
-                    cw_surface,
-                    int_surf,
-                    vertices[k],  # up to M
+                    exterior_surface=ext_surf,
+                    ccw_surface=ccw_surface,
+                    cw_surface=cw_surface,
+                    interior_surface=int_surf,
+                    vertices=vertices[k],  # up to M
                     csg=csg,
                     cell_id=cell_ids[k],  # up to M
-                    name=cell_type.name + f" of blanket cell stack {i}",
+                    name=f"{cell_type.name} of blanket cell stack {i}",
                     fill=fill_lib.match_blanket_material(cell_type, inboard=inboard),
                 )
             )
@@ -1037,7 +1043,7 @@ class BlanketCellArray:
         blanket_cell_array
         """
         self.blanket_cell_array = blanket_cell_array
-        self.poloidal_surfaces = [self[0].ccw_surface]
+        self.poloidal_surfaces = [self.blanket_cell_array[0].ccw_surface]
         self.radial_surfaces = []
         self.csg = csg
         for i, this_stack in enumerate(self.blanket_cell_array):
@@ -1046,7 +1052,7 @@ class BlanketCellArray:
 
             # check neighbouring cells share the same lateral surface
             if i != len(self) - 1:
-                next_stack = self[i + 1]
+                next_stack = self.blanket_cell_array[i + 1]
                 if this_stack.cw_surface is not next_stack.ccw_surface:
                     raise GeometryError(
                         f"Neighbouring BlanketCellStack [{i}] and "
@@ -1077,8 +1083,10 @@ class BlanketCellArray:
         exterior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged clockwise (inboard to outboard).
         """
-        exterior_vertices = [self[0][-1].vertex.xyz[:, 3]]
-        exterior_vertices.extend(stack[-1].vertex.xyz[:, 0] for stack in self)
+        exterior_vertices = [self.blanket_cell_array[0][-1].vertex.xyz[:, 3]]
+        exterior_vertices.extend(
+            stack[-1].vertex.xyz[:, 0] for stack in self.blanket_cell_array
+        )
         return np.array(exterior_vertices)
 
     def interior_vertices(self) -> npt.NDArray:
@@ -1092,8 +1100,8 @@ class BlanketCellArray:
             Arranged clockwise (inboard to outboard).
         """
         return np.asarray([
-            self[0][0].vertex.xyz[:, 2],
-            *(stack[0].vertex.xyz[:, 1] for stack in self),
+            self.blanket_cell_array[0][0].vertex.xyz[:, 2],
+            *(stack[0].vertex.xyz[:, 1] for stack in self.blanket_cell_array),
         ])
 
     def interior_surfaces(self) -> list[openmc.Surface]:
@@ -1131,7 +1139,7 @@ class BlanketCellArray:
                 )),
                 control_id=control_id,
             )
-            for stack in self
+            for stack in self.blanket_cell_array
         ])
 
     @classmethod
