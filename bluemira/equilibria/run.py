@@ -308,7 +308,7 @@ class PulsedCoilsetDesign(ABC):
                 opt_conditions=self.bd_settings.opt_conditions,
                 constraints=constraints,
             )
-            result = problem.optimise(x0=max_currents, fixed_coils=False)
+            result = problem.optimise(fixed_coils=False)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
 
