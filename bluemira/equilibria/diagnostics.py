@@ -27,7 +27,7 @@ class EqDiagnosticOptions:
     psi_diff: bool = False
     split_psi_plots: bool = False
     plot_name: str = "default_0"
-    folder: Union[str, PathLike, None] = None
+    folder: str | PathLike | None = None
     save: bool = False
 
     def __post_init__(self):
