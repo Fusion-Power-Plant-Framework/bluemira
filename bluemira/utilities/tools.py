@@ -135,10 +135,10 @@ def write_csv(
     """
     # Fetch number of cols
     shape = data.shape
-    n_cols = 1 if len(shape) <  2 else shape[1]  # noqa: PLR2004
+    n_cols = 1 if len(shape) < 2 else shape[1]  # noqa: PLR2004
 
     # Write file name
-    filename = f"{base_name} {ext}"
+    filename = f"{base_name}{ext}"
 
     # Write column names
     if len(col_names) != n_cols:
