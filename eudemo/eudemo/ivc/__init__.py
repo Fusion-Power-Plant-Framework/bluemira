@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from bluemira.base.designer import run_designer
 from bluemira.equilibria import find_OX_points
+from bluemira.geometry.tools import boolean_cut
 from eudemo.ivc.divertor_silhouette import DivertorSilhouetteDesigner
 from eudemo.ivc.ivc_boundary import IVCBoundaryDesigner
 from eudemo.ivc.plasma_face import PlasmaFaceDesigner
@@ -32,6 +33,7 @@ class IVCShapes:
     """Collection of geometries used to design/build in-vessel components."""
 
     blanket_face: BluemiraFace
+    blanket_outer_boundary: BluemiraWire
     divertor_face: BluemiraFace
     outer_boundary: BluemiraWire
     inner_boundary: BluemiraWire
@@ -81,8 +83,12 @@ def design_ivc(
     # We want the boundary wire and face to start and end at the same
     # place, so we cut the wire again here.
     wall_boundary = cut_wall_below_x_point(wall_boundary, plasma_face.bounding_box.z_min)
+
+    blanket_outer_boundary = boolean_cut(wall_boundary, divertor_face)[0]
+
     return IVCShapes(
         blanket_face=plasma_face,
+        blanket_outer_boundary=blanket_outer_boundary,
         divertor_face=divertor_face,
         outer_boundary=ivc_boundary,
         inner_boundary=wall_boundary,

@@ -5,7 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Builders, designers, and components for an EUDEMO blanket."""
 
+from bluemira.base.components import Component
 from bluemira.base.reactor import ComponentManager
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket.builder import BlanketBuilder
@@ -16,6 +18,14 @@ __all__ = ["Blanket", "BlanketBuilder", "BlanketDesigner"]
 
 class Blanket(ComponentManager):
     """Wrapper around a Blanket component tree."""
+
+    def __init__(self, comp: Component, panel_points: Coordinates):
+        self._panel_points = panel_points
+        super().__init__(comp)
+
+    def panel_points(self) -> Coordinates:
+        """The panel points of the blanket."""
+        return self._panel_points
 
     def inboard_xz_face(self) -> BluemiraFace:
         """The poloidal plane face of the inboard blanket segment."""

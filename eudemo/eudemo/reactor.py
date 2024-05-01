@@ -44,7 +44,6 @@ from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -210,9 +209,9 @@ def build_blanket(
     designer = BlanketDesigner(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
-    ib_silhouette, ob_silhouette = designer.execute()
+    ib_silhouette, ob_silhouette, panel_points = designer.execute()
     builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
-    return Blanket(builder.build())
+    return Blanket(builder.build(), panel_points)
 
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
@@ -509,8 +508,8 @@ if __name__ == "__main__":
             "plot_axis": "xz",
             "plot_pixel_per_metre": 100,
         },
-        blanket_panel_points=reactor.blanket.inboard_xz_boundary(),
-        blanket_ob_boundary=reactor.blanket.outboard_xz_boundary(),
+        blanket_panel_points=reactor.blanket.panel_points(),
+        blanket_outer_boundary=ivc_shapes.blanket_outer_boundary,
         divertor_wire=reactor.divertor.silhouette(),
         vv_wire=reactor.vacuum_vessel.xz_boundary(),
     )

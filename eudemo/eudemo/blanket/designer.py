@@ -9,12 +9,14 @@ from dataclasses import dataclass
 from typing import TypeVar
 
 import numpy as np
+from scipy.spatial.distance import euclidean
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
@@ -50,7 +52,7 @@ class BlanketSegments:
     outboard_boundary: BluemiraWire
 
 
-class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace]]):
+class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
     """
     Designer for an EUDEMO-style blanket.
 
@@ -103,7 +105,33 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace]]):
             )
         self.cut_angle = cut_angle
 
-    def run(self) -> tuple[BluemiraFace, BluemiraFace]:
+    @staticmethod
+    def _remove_gap_and_merge(
+        ib_panels: Coordinates, ob_panels: Coordinates
+    ) -> Coordinates:
+        """Merge two sets of coordinates."""
+        sm_dist = np.inf
+        closest_points = None
+        for ib_pt in ib_panels.points:
+            dists = [euclidean(ib_pt, ob_pt) for ob_pt in ob_panels.points]
+            sm_dist_idx = np.argmin(dists)
+            d = dists[sm_dist_idx]
+            if d < sm_dist:
+                sm_dist = d
+                ob_pt = ob_panels.points[sm_dist_idx]
+                closest_points = (ib_pt, ob_pt)
+
+        new_coords = [
+            p
+            for p in ib_panels.points + ob_panels.points
+            if not (
+                np.array_equal(p, closest_points[0])
+                or np.array_equal(p, closest_points[1])
+            )
+        ]
+        return Coordinates(new_coords)
+
+    def run(self) -> tuple[BluemiraFace, BluemiraFace, Coordinates]:
         """Run the blanket design problem."""
         segments = self.segment_blanket()
         # Inboard
@@ -115,9 +143,11 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace]]):
         ob_panels_face = BluemiraFace(ob_panels)
         cut_ob = boolean_cut(segments.outboard, [ob_panels_face])[0]
 
-        # to get the panel points, we must
+        # to get the panel points, we must remove the gap points
+        # introduced in the ib <-> ob slice
+        panel_points = self._remove_gap_and_merge(ib_panels.vertexes, ob_panels.vertexes)
 
-        return cut_ib, cut_ob
+        return cut_ib, cut_ob, panel_points
 
     def segment_blanket(self) -> BlanketSegments:
         """
