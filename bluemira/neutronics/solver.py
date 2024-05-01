@@ -30,9 +30,10 @@ from bluemira.codes.interface import (
 from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialise_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.full_tokamak import SingleNullTokamak
 from bluemira.neutronics.make_csg import BlanketCellArray
-from bluemira.neutronics.neutronics_axisymmetric import create_materials
+from bluemira.neutronics.make_materials import create_materials
+from bluemira.neutronics.neutronics_axisymmetric import SingleNullTokamak
+from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
     BlanketLayers,
     OpenMCSimulationRuntimeParameters,
@@ -40,7 +41,6 @@ from bluemira.neutronics.params import (
     TokamakDimensions,
     get_preset_physical_properties,
 )
-from bluemira.neutronics.result_presentation import OpenMCResult
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 from bluemira.plasma_physics.reactions import n_DT_reactions
 

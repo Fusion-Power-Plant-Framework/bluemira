@@ -32,7 +32,7 @@ class Vert(IntEnum):
     ext_start = 3
 
 
-def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> float:
+def polygon_revolve_signed_volume(polygon: npt.NDArray[np.float64]) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
 
@@ -151,10 +151,10 @@ class CellWalls:
             )
         self._starts = self.cell_walls[:, 0]  # shape = (N+1, 2)
         self._init_ends = self.cell_walls[:, 1]  # shape = (N+1, 2)
-        _vector = self._init_ends - self._starts  # shape = (N+1, 2)
-        self.original_lengths = np.linalg.norm(_vector, axis=-1)
-        self.directions = (_vector.T / self.original_lengths).T
-        self.num_cells = len(self) - 1
+        vector = self._init_ends - self._starts  # shape = (N+1, 2)
+        self.original_lengths = np.linalg.norm(vector, axis=-1)
+        self.directions = (vector.T / self.original_lengths).T
+        self.num_cells: int = len(self) - 1
         self.check_volumes_and_lengths()
 
     def __len__(self) -> int:
@@ -184,7 +184,9 @@ class CellWalls:
         raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
     def __repr__(self) -> str:
-        return super().__repr__().replace(" at ", f" of {len(self)} walls at ")
+        return (
+            super().__repr__().replace(" at ", f" of {len(self.cell_walls)} walls at ")
+        )
 
     def copy(self) -> CellWalls:
         return CellWalls(self.cell_walls.copy())
@@ -229,7 +231,7 @@ class CellWalls:
         return self.cell_walls[:, 1]  # shape = (N+1, 2)
 
     def calculate_new_end_points(
-        self, lengths: float | npt.NDArray[float]
+        self, lengths: float | npt.NDArray[np.float64]
     ) -> npt.NDArray:
         """
         Get the end points of each cell wall if they were changed to have the specified
@@ -257,7 +259,7 @@ class CellWalls:
         -------
         length: float
         """
-        _end_i, _start_i = self[i]
+        _end_i, _start_i = self.cell_walls[i]
         return np.linalg.norm(_end_i - _start_i)
 
     def set_length(self, i, new_length):
@@ -278,7 +280,7 @@ class CellWalls:
         volume: float
         """
         return polygon_revolve_signed_volume(
-            np.concatenate([self[i], self[i + 1][::-1]])
+            np.concatenate([self.cell_walls[i], self.cell_walls[i + 1][::-1]])
         )
 
     @property
@@ -310,7 +312,7 @@ class CellWalls:
         """
         _start_i, _dir_i = self.starts[i], self.directions[i]
         new_end = _start_i + _dir_i * test_length
-        prev_wall, next_wall = self[i - 1 : i + 2 : 2]
+        prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
         prev_outline = [prev_wall[0], prev_wall[1], new_end, _start_i]
         next_outline = [_start_i, new_end, next_wall[1], next_wall[0]]
         return polygon_revolve_signed_volume(
@@ -348,7 +350,7 @@ class CellWalls:
             return
 
         target_volumes = np.array(list(volume_list))
-        if self.num_cells == 2:
+        if self.num_cells == 2:  # noqa: PLR2004
             # only one single step is required for the optimization
             def volume_excess(new_length):
                 return self.volume_of_cells_neighbouring(1, new_length) - sum(
@@ -363,11 +365,10 @@ class CellWalls:
             return
 
         # if more than 3 walls (more than 2 cells)
-        i_min, i_max = 1, self.num_cells - 1
+        i, i_min, i_max = 1, 1, self.num_cells - 1
 
         num_passes_counter = -1
         step_direction = +1
-        i = 1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
         while num_passes_counter < max_iter:

@@ -111,6 +111,44 @@ def plot_coords(surface: openmc.Surface, color_num: int):
         )
 
 
+def get_depth_values(
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+) -> npt.NDArray[np.float64]:
+    """
+    Choose the depth values that this pre-cell is suppose to use, according to where it
+    is physically positioned (hence is classified as inboard or outboard).
+
+    Parameters
+    ----------
+    pre_cell
+        :class:`~PreCell` to be classified as either inboard or outboard
+    blanket_dimensions
+        :class:`bluemira.neutronics.params.TokamakDimensions` recording the
+        dimensions of the blanket in SI units (unit: [m]).
+
+    Returns
+    -------
+    depth_series
+        a series of floats corresponding to the N-1 interfaces between the N layers.
+        Each float represents how deep into the blanket (i.e. how many [m] into the
+        first wall we need to drill, from the plasma facing surface) to hit that
+        interface layer.
+    """
+    if check_inboard_outboard(pre_cell, blanket_dimensions):
+        return blanket_dimensions.inboard.get_interface_depths()
+    return blanket_dimensions.outboard.get_interface_depths()
+
+
+def check_inboard_outboard(
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+) -> bool:
+    """If this pre-cell is an inboard, return True.
+    Otherwise, this pre-cell belongs to outboard, return False
+    """
+    cell_reference_radius = pre_cell.vertex[0].mean()
+    return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
+
+
 def torus_from_3points(
     point1: npt.NDArray[np.float64],
     point2: npt.NDArray[np.float64],
@@ -543,9 +581,12 @@ class BluemiraNeutronicsCSG:
         # lower_not_cone = np.logical_and(middle, z_dist < 0)
 
         # all of the following cases requires a plane to be made.
-        surface_id = 1000 + surface.id if control_id else None
-        while surface_id in openmc.Surface.used_ids:
-            surface_id += 1000
+        if control_id:
+            surface_id = 1000 + surface.id
+        else:
+            surface_id = max(openmc.Surface.used_ids)
+            surface_id += 1000 + surface_id % 1000
+
         if all(upper_cone):
             # everything in the upper cone.
             plane = (
@@ -626,13 +667,11 @@ class BluemiraNeutronicsCSG:
             chosen_first_region = self.choose_region(
                 surface[0], vertices_array, control_id=control_id
             )
-            # = cone, or cylinder, or plane, or (cone | ambiguity_surface)
+            # cone, or cylinder, or plane, or (cone | ambiguity_surface)
             if len(surface) == 1:
                 return chosen_first_region
-            return flat_union((
-                chosen_first_region,
-                -surface[1],  # -surface[1] = inside of torus
-            ))
+            # -surface[1] = inside of torus
+            return flat_union((chosen_first_region, -surface[1]))
         raise NotImplementedError(
             f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
         )
@@ -733,13 +772,16 @@ class BlanketCell(openmc.Cell):
         self.vertex = vertices
         self.csg = csg
 
-        _surfaces_list = [exterior_surface, ccw_surface, cw_surface, interior_surface]
-
-        final_region = self.csg.region_from_surface_series(
-            _surfaces_list, vertices.xyz.T, control_id=bool(cell_id)
+        super().__init__(
+            cell_id=cell_id,
+            name=name,
+            fill=fill,
+            region=self.csg.region_from_surface_series(
+                [exterior_surface, ccw_surface, cw_surface, interior_surface],
+                self.vertex.xyz.T,
+                control_id=bool(cell_id),
+            ),
         )
-
-        super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
 
         self.volume = to_cm3(polygon_revolve_signed_volume(vertices.xz.T))
         if self.volume <= 0:
@@ -783,7 +825,11 @@ class BlanketCellStack:
         return self.cell_stack[index_or_slice]
 
     def __repr__(self) -> str:
-        return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
+        return (
+            super()
+            .__repr__()
+            .replace(" at ", f" of {len(self.cell_stack)} BlanketCells at ")
+        )
 
     @staticmethod
     def check_cut_point_ordering(
@@ -1051,7 +1097,7 @@ class BlanketCellArray:
             self.radial_surfaces.append(this_stack.interfaces)
 
             # check neighbouring cells share the same lateral surface
-            if i != len(self) - 1:
+            if i != len(self.blanket_cell_array) - 1:
                 next_stack = self.blanket_cell_array[i + 1]
                 if this_stack.cw_surface is not next_stack.ccw_surface:
                     raise GeometryError(
@@ -1065,12 +1111,11 @@ class BlanketCellArray:
     def __getitem__(self, index_or_slice) -> list[BlanketCellStack] | BlanketCellStack:
         return self.blanket_cell_array[index_or_slice]
 
-    def __add__(self, other_array) -> BlanketCellArray:
-        return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
-
     def __repr__(self) -> str:
         return (
-            super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
+            super()
+            .__repr__()
+            .replace(" at ", f" of {len(self.blanket_cell_array)} BlanketCellStacks at ")
         )
 
     def exterior_vertices(self) -> npt.NDArray:
@@ -1205,44 +1250,6 @@ class BlanketCellArray:
             ccw_surf = cw_surf
 
         return cls(cell_array, csg)
-
-
-def get_depth_values(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
-) -> npt.NDArray[np.float64]:
-    """
-    Choose the depth values that this pre-cell is suppose to use, according to where it
-    is physically positioned (hence is classified as inboard or outboard).
-
-    Parameters
-    ----------
-    pre_cell
-        :class:`~PreCell` to be classified as either inboard or outboard
-    blanket_dimensions
-        :class:`bluemira.neutronics.params.TokamakDimensions` recording the
-        dimensions of the blanket in SI units (unit: [m]).
-
-    Returns
-    -------
-    depth_series
-        a series of floats corresponding to the N-1 interfaces between the N layers.
-        Each float represents how deep into the blanket (i.e. how many [m] into the
-        first wall we need to drill, from the plasma facing surface) to hit that
-        interface layer.
-    """
-    if check_inboard_outboard(pre_cell, blanket_dimensions):
-        return blanket_dimensions.inboard.get_interface_depths()
-    return blanket_dimensions.outboard.get_interface_depths()
-
-
-def check_inboard_outboard(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
-) -> bool:
-    """If this pre-cell is an inboard, return True.
-    Otherwise, this pre-cell belongs to outboard, return False
-    """
-    cell_reference_radius = pre_cell.vertex[0].mean()
-    return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
 
 
 class DivertorCell(openmc.Cell):
@@ -1380,29 +1387,29 @@ class DivertorCellStack:
 
     @property
     def interior_surfaces(self):
-        return self[0].interior_surfaces
+        return self.cell_stack[0].interior_surfaces
 
     @property
     def exterior_surfaces(self):
-        return self[-1].exterior_surfaces
+        return self.cell_stack[-1].exterior_surfaces
 
     @property
     def ccw_surface(self):
-        return self[-1].ccw_surface
+        return self.cell_stack[-1].ccw_surface
 
     @property
     def cw_surface(self):
-        return self[-1].cw_surface
+        return self.cell_stack[-1].cw_surface
 
     @property
     def exterior_wire(self):
         """Alias to find the outermost cell's exterior_wire"""
-        return self[-1].exterior_wire
+        return self.cell_stack[-1].exterior_wire
 
     @property
     def interior_wire(self):
         """Alias to find the innermost cell's interior_wire"""
-        return self[0].interior_wire
+        return self.cell_stack[0].interior_wire
 
     @property
     def interfaces(self):
@@ -1563,7 +1570,7 @@ class DivertorCellArray:
     def __init__(self, cell_array: list[DivertorCellStack]):
         """Create array from a list of DivertorCellStack."""
         self.cell_array = cell_array
-        self.poloidal_surfaces = [self[0].cw_surface]
+        self.poloidal_surfaces = [self.cell_array[0].cw_surface]
         self.radial_surfaces = []
         # check neighbouring cells have the same cell stack.
         for i, this_stack in enumerate(self.cell_array):
@@ -1571,8 +1578,8 @@ class DivertorCellArray:
             self.radial_surfaces.append(this_stack.interfaces)
 
             # check neighbouring cells share the same lateral surface
-            if i != len(self) - 1:
-                next_stack = self[i + 1]
+            if i != len(self.cell_array) - 1:
+                next_stack = self.cell_array[i + 1]
                 if this_stack.ccw_surface is not next_stack.cw_surface:
                     raise GeometryError(
                         f"Neighbouring DivertorCellStack {i} and {i + 1} are expected to"
@@ -1584,9 +1591,6 @@ class DivertorCellArray:
 
     def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
         return self.cell_array[index_or_slice]
-
-    def __add__(self, other_array: DivertorCellArray) -> DivertorCellArray:
-        return DivertorCellArray(self.cell_array + other_array.cell_array)
 
     def __repr__(self) -> str:
         return (
@@ -1618,7 +1622,7 @@ class DivertorCellArray:
             Arranged counter-clockwise (inboard to outboard).
         """
         return np.concatenate([
-            stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self
+            stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self.cell_array
         ])
 
     def interior_vertices(self) -> npt.NDArray:
@@ -1736,12 +1740,9 @@ class TFCoils:
     def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
         return self.tf_coils[index_or_slice]
 
-    def __add__(self, other_array: TFCoils) -> TFCoils:
-        return TFCoils(self.tf_coils + other_array.tf_coils)
-
     def __repr__(self) -> str:
         return (
             super()
             .__repr__()
-            .replace(" at ", f" of {len(self)} openmc.Cells of tf-coils at")
+            .replace(" at ", f" of {len(self.tf_coils)} openmc.Cells of tf-coils at")
         )

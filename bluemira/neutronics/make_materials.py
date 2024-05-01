@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from openmc import Materials
 
 import bluemira.neutronics.materials_definition as md
+from bluemira.base.constants import raw_uc
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 from bluemira.neutronics.params import BlanketLayers, BlanketType
 
@@ -24,6 +25,22 @@ if TYPE_CHECKING:
     from openmc import Material
 
     from bluemira.materials.material import MassFractionMaterial
+    from bluemira.neutronics.params import BreederTypeParameters
+
+
+def create_materials(
+    breeder_materials: BreederTypeParameters,
+) -> MaterialsLibrary:
+    """
+    Parameters
+    ----------
+    breeder_materials:
+        dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
+    """
+    return MaterialsLibrary.create_from_blanket_type(
+        breeder_materials.blanket_type,
+        raw_uc(breeder_materials.enrichment_fraction_Li6, "", "%"),
+    )
 
 
 def duplicate_mat_as(

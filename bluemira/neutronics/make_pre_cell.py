@@ -202,7 +202,7 @@ class PreCell:
         if not hasattr(self, "_normal_to_interior"):
             if isinstance(self.interior_wire, Coordinates):
                 self._normal_to_interior = get_bisection_line(
-                    *self.cell_walls[:].reshape([4, 2])
+                    *self.cell_walls.reshape([4, 2])
                 )[1]
             else:
                 interior_vector = self.cell_walls.starts[0] - self.cell_walls.starts[1]
@@ -298,7 +298,7 @@ class PreCellArray:
         if not hasattr(self, "_volumes"):
             # Immutable property, hence wrapped in tuple.
             volume_list = []
-            for pre_cell in self:
+            for pre_cell in self.pre_cells:
                 blanket_volume = pre_cell.blanket_half_solid.volume * 2
                 vv_volume = pre_cell.half_solid.volume * 2 - blanket_volume
                 volume_list.append((blanket_volume, vv_volume))
@@ -327,7 +327,7 @@ class PreCellArray:
             interior_walls_copy.optimize_to_match_individual_volumes(blanket_volumes)
             exterior_walls_copy.optimize_to_match_individual_volumes(total_volumes)
         new_pre_cells = []
-        for i in range(len(self)):
+        for i in range(len(self.pre_cells)):
             j = i + 1
             straightened_vv_interior = make_polygon(
                 [
@@ -361,11 +361,14 @@ class PreCellArray:
 
     def plot_2d(self, *args, **kwargs) -> None:
         plot_2d(
-            [pc.outline for pc in self] + [pc.vv_wire for pc in self], *args, **kwargs
+            [pc.outline for pc in self.pre_cells]
+            + [pc.vv_wire for pc in self.pre_cells],
+            *args,
+            **kwargs,
         )
 
     def show_cad(self, *args, **kwargs) -> None:
-        show_cad([pc.half_solid for pc in self], *args, **kwargs)
+        show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
 
     def exterior_vertices(self) -> npt.NDArray:
         """
@@ -398,10 +401,9 @@ class PreCellArray:
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
         if isinstance(other_array, PreCellArray):
-            return PreCellArray(self.pre_cells + other_array)
+            return PreCellArray(self.pre_cells + other_array.pre_cells)
         raise TypeError(
-            "Addition not implemented between PreCellArray and "
-            f"{other_array.__class__}"
+            f"Addition not implemented between PreCellArray and {type(other_array)}"
         )
 
     def __repr__(self) -> str:
@@ -642,14 +644,18 @@ class DivertorPreCell:
         ccw_norm = CW_90 @ ccw_dir
         ccw_anchor = self.ccw_wall.end_point
 
-        shifted_pts = []
-        for pt in int_wire_pts:
-            weights = ratio_of_distances(pt, cw_anchor, cw_norm, ccw_anchor, ccw_norm)[
-                ::-1
-            ]
-            new_dir = np.array([cw_dir, ccw_dir]).T @ weights
-            step = new_dir / np.linalg.norm(new_dir) * thickness
-            shifted_pts.append(pt + step)
+        def unit(new_dir: npt.NDArray[np.float64]):
+            return new_dir / np.linalg.norm(new_dir)
+
+        shifted_pts = [
+            pt
+            + unit(
+                np.array([cw_dir, ccw_dir]).T
+                @ ratio_of_distances(pt, cw_anchor, cw_norm, ccw_anchor, ccw_norm)[::-1]
+            )
+            * thickness
+            for pt in int_wire_pts
+        ]
 
         info_list = []
         for i, (new_start, new_end) in enumerate(pairwise(shifted_pts)):
@@ -697,14 +703,12 @@ class DivertorPreCellArray:
         exterior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged counter-clockwise (inboard to outboard).
         """
-        exterior_vertices = [
-            stack.exterior_wire.get_3D_coordinates()[::-1]
-            for stack in self.pre_cells
-            # Because cells run counter-clockwise but the exterior_wire themselves runs
-            # clockwise, we have to invert the wire during extraction to make it run
-            # without double-backing onto itself.
-        ]
-        return np.concatenate(exterior_vertices)
+        # Because cells run counter-clockwise but the exterior_wire themselves runs
+        # clockwise, we have to invert the wire during extraction to make it run
+        # without double-backing onto itself.
+        return np.concatenate([
+            stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self.pre_cells
+        ])
 
     def interior_vertices(self) -> npt.NDArray:
         """
@@ -741,11 +745,11 @@ class DivertorPreCellArray:
 
     def plot_2d(self, *args, **kwargs) -> None:
         plot_2d(
-            [dpc.outline for dpc in self]
-            + [dpc.vv_wire.restore_to_wire() for dpc in self],
+            [dpc.outline for dpc in self.pre_cells]
+            + [dpc.vv_wire.restore_to_wire() for dpc in self.pre_cells],
             *args,
             **kwargs,
         )
 
     def show_cad(self, *args, **kwargs) -> None:
-        show_cad([dpc.half_solid for dpc in self], *args, **kwargs)
+        show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
