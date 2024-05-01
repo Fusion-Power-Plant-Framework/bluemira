@@ -20,6 +20,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+from bluemira.utilities.tools import floatify
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
@@ -105,9 +106,10 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         if x0 is None:
-            initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-            _, _, initial_currents = np.array_split(initial_state, n_states)
-            x0 = np.clip(initial_currents, *self.bounds)
+            cs_opt_state = self.coilset.get_optimisation_state(current_scale=self.scale)
+            x0 = np.clip(cs_opt_state.currents, *self.bounds)
+        else:
+            x0 = np.clip(x0 / self.scale, *self.bounds)
 
         objective = RegularisedLsqObjective(
             scale=self.scale,
@@ -127,8 +129,13 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
-        currents = opt_result.x
-        self.coilset.get_control_coils().current = currents * self.scale
+
+        opt_currents = opt_result.x
+        self.coilset.set_optimisation_state(
+            opt_currents=opt_currents,
+            current_scale=self.scale,
+        )
+
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
 
@@ -183,10 +190,14 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         # Update parameterisation (coilset).
-        current = self.coilset.get_control_coils().current + current_adjustment
-        self.coilset.get_control_coils().current = current
-        f_x = np.linalg.norm(a_mat @ current - b_vec) + np.linalg.norm(
-            self.gamma * current
+        opt_currents = self.coilset.get_control_coils().current + current_adjustment
+        self.coilset.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
+
+        currents = self.coilset.current
+
+        f_x = floatify(
+            np.linalg.norm(a_mat @ currents - b_vec)
+            + np.linalg.norm(self.gamma * currents)
         )
         return CoilsetOptimiserResult(
             coilset=self.coilset,

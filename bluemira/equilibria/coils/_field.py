@@ -643,7 +643,7 @@ class CoilGroupFieldsMixin:
             -multiplier * eqcoil.Bx(self.x, self.z),
         ]).T
 
-    def control_F(self, coil: CoilGroup) -> np.ndarray:
+    def control_F(self, coil_grp: CoilGroup) -> np.ndarray:
         """
         Returns the Green's matrix element for the coil mutual force.
 
@@ -652,11 +652,10 @@ class CoilGroupFieldsMixin:
         # TODO Vectorise
         x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
         pos = np.array([x, z])
-        response = np.zeros((x.size, coil.x.size, 2))
-        coils = coil._coils
-        for j, coil2 in enumerate(coils):
-            xw = np.nonzero(x == coil2.x)[0]
-            zw = np.nonzero(z == coil2.z)[0]
+        response = np.zeros((x.size, coil_grp.x.size, 2))
+        for j, coil in enumerate(coil_grp.all_coils()):
+            xw = np.nonzero(x == coil.x)[0]
+            zw = np.nonzero(z == coil.z)[0]
             same_pos = np.nonzero(xw == zw)[0]
             if same_pos.size > 0:
                 # self inductance
@@ -680,12 +679,13 @@ class CoilGroupFieldsMixin:
                         * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
                     )
                 if False in mask:
-                    Bz[~mask] = coil2.Bz_response(*pos[:, ~mask[:, 0]])
-                    Bx[~mask] = coil2.Bx_response(*pos[:, ~mask[:, 0]])
+                    Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
+                    Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
 
             else:
-                Bz = coil2.Bz_response(x, z)
-                Bx = coil2.Bx_response(x, z)
+                Bz = coil.Bz_response(x, z)
+                Bx = coil.Bx_response(x, z)
+
             # 1 cross B
             response[:, j, :] = (
                 2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)

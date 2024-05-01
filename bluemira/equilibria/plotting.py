@@ -228,6 +228,7 @@ class CoilGroupPlotter(Plotter):
 
         if subcoil:
             qb = self._cg._quad_boundary
+
             if isinstance(qb, tuple):
                 qb = [qb]
 

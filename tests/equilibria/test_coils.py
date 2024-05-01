@@ -512,6 +512,19 @@ class TestCoilSet:
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 10, 10])
         np.testing.assert_allclose(coilset.get_max_current(), [np.inf, np.inf, np.inf])
 
+    def test_get_position_optimisable_coils(self):
+        all_c_opt_coils = [c.name for c in self.coilset.get_position_optimisable_coils()]
+        pf1_c_opt_coils = [
+            c.name for c in self.coilset.get_position_optimisable_coils(["PF_1"])
+        ]
+        assert all_c_opt_coils == ["PF_1", "PF_2"]
+        assert pf1_c_opt_coils == ["PF_1"]
+
+        assert self.coilset.n_position_optimisable_coils == 2
+
+        with pytest.raises(ValueError):  # noqa: PT011
+            self.coilset.get_position_optimisable_coils(["PF_3"])
+
 
 class TestCoilSetSymmetry:
     def test_symmetry_check(self):
