@@ -168,7 +168,6 @@ class Setup(CodesSetup):
             "outb_mani_mat",
             "outb_vv_mat",
             "div_fw_mat",
-            "div_fw_mat",
         )
 
     @contextmanager
