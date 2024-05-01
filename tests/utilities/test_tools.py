@@ -95,9 +95,6 @@ class TestCSVWriter:
 
         assert filecmp.cmp(test_csv_output, expected_csv_output)
 
-        # Clean up
-        Path(test_csv_output).unlink()
-
         # Write the data to csv, using modified extension and comment style
         ext = ".txt"
         comment_char = "!"
