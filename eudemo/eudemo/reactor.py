@@ -44,6 +44,7 @@ from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -508,7 +509,8 @@ if __name__ == "__main__":
             "plot_axis": "xz",
             "plot_pixel_per_metre": 100,
         },
-        blanket_wire=reactor.blanket.inboard_xz_silhouette().boundary[0],
+        blanket_panel_points=reactor.blanket.inboard_xz_boundary(),
+        blanket_ob_boundary=reactor.blanket.outboard_xz_boundary(),
         divertor_wire=reactor.divertor.silhouette(),
         vv_wire=reactor.vacuum_vessel.xz_boundary(),
     )

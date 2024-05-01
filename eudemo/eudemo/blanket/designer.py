@@ -114,6 +114,9 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace]]):
         ob_panels = self.panel_boundary(segments.outboard_boundary)
         ob_panels_face = BluemiraFace(ob_panels)
         cut_ob = boolean_cut(segments.outboard, [ob_panels_face])[0]
+
+        # to get the panel points, we must
+
         return cut_ib, cut_ob
 
     def segment_blanket(self) -> BlanketSegments:
