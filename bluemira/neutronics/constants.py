@@ -21,14 +21,17 @@ DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
 
 
 def to_cm(m):
+    """Converter for m to cm"""
     return raw_uc(m, "m", "cm")
 
 
 def to_m(cm):
+    """Converter for cm to m"""
     return raw_uc(cm, "cm", "m")
 
 
 def to_cm3(m3):
+    """Converter for m3 to cm3"""
     return raw_uc(m3, "m^3", "cm^3")
 
 

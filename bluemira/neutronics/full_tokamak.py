@@ -21,13 +21,11 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.neutronics.constants import to_cm, to_cm3
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
+    BluemiraNeutronicsCSG,
     DivertorCellArray,
     TFCoils,
-    find_suitable_z_plane,
     flat_intersection,
     flat_union,
-    region_from_surface_series,
-    surface_from_2points,
 )
 from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.slicing import (
@@ -170,6 +168,7 @@ class SingleNullTokamak:
         boundary
             BluemiraWire (3D object) outlining the outside boundary of the vacuum vessel.
         """
+        self.csg = BluemiraNeutronicsCSG()
         self.geom = ReactorGeometry(
             panel_break_points, divertor_wire, boundary, vacuum_vessel_wire
         )
@@ -222,7 +221,7 @@ class SingleNullTokamak:
         -------
         coordinates
             array of shape (N+1+n*M, 3), where N = number of blanket pre-cells,
-            M = number of divertor pre-cells, n = discretization_level used when chopping
+            M = number of divertor pre-cells, n = discretisation_level used when chopping
             up the divertor in
             :meth:`bluemira.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
         """
@@ -249,18 +248,17 @@ class SingleNullTokamak:
             divertor.interior_vertices()[::-1],
         ])
 
-    @staticmethod
     def make_universe_box(
-        z_min: float, z_max: float, r_max: float, *, control_id: bool = False
+        self, z_min: float, z_max: float, r_max: float, *, control_id: bool = False
     ):
         """Box up the universe in a cylinder (including top and bottom)."""
-        bottom = find_suitable_z_plane(
+        bottom = self.csg.find_suitable_z_plane(
             z_min,
             boundary_type="vacuum",
             surface_id=999 if control_id else None,
             name="Universe bottom",
         )
-        top = find_suitable_z_plane(
+        top = self.csg.find_suitable_z_plane(
             z_max,
             boundary_type="vacuum",
             surface_id=1000 if control_id else None,
@@ -312,6 +310,7 @@ class SingleNullTokamak:
             self.pre_cell_arrays.blanket,
             material_library,
             tokamak_dimensions,
+            self.csg,
             control_id=control_id,
         )
 
@@ -324,6 +323,7 @@ class SingleNullTokamak:
             self.pre_cell_arrays.divertor,
             material_library,
             tokamak_dimensions.divertor,
+            csg=self.csg,
             override_start_end_surfaces=(blanket[0].ccw_surface, blanket[-1].cw_surface),
             # ID cannot be controlled at this point.
         )
@@ -370,8 +370,8 @@ class SingleNullTokamak:
 
         return self.cell_array
 
-    @staticmethod
     def make_coils(
+        self,
         solenoid_radius: float,
         tf_coil_thick: float,
         z_min: float,
@@ -396,12 +396,12 @@ class SingleNullTokamak:
         """
         solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
         central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
-        top = find_suitable_z_plane(
+        top = self.csg.find_suitable_z_plane(
             z_max,
             [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
             name="Top of central solenoid",
         )
-        bottom = find_suitable_z_plane(
+        bottom = self.csg.find_suitable_z_plane(
             z_min,
             [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
             name="Bottom of central solenoid",
@@ -435,19 +435,20 @@ class SingleNullTokamak:
             *blanket.exterior_surfaces(),
             *chain.from_iterable(divertor.exterior_surfaces()),
         ]
-        return region_from_surface_series(
+        return self.csg.region_from_surface_series(
             surfaces, self.exterior_vertices(blanket, divertor), control_id=control_id
         )
 
-    @staticmethod
-    def plasma_void(blanket, divertor, *, control_id: bool = False) -> openmc.Region:
+    def plasma_void(
+        self, blanket, divertor, *, control_id: bool = False
+    ) -> openmc.Region:
         """Get the plasma chamber's poloidal cross-section"""
         blanket_interior_pts = blanket.interior_vertices()
-        dividing_surface = surface_from_2points(
+        dividing_surface = self.csg.surface_from_2points(
             blanket_interior_pts[0][::2], blanket_interior_pts[-1][::2]
         )
         blanket_surfaces = [*blanket.interior_surfaces(), dividing_surface]
-        plasma = region_from_surface_series(
+        plasma = self.csg.region_from_surface_series(
             blanket_surfaces, blanket_interior_pts, control_id=control_id
         )
 
@@ -455,7 +456,7 @@ class SingleNullTokamak:
             *chain.from_iterable(divertor.exterior_surfaces()),
             dividing_surface,
         ]
-        exhaust_including_divertor = region_from_surface_series(
+        exhaust_including_divertor = self.csg.region_from_surface_series(
             div_surfaces,
             divertor.exterior_vertices(),
             control_id=control_id,

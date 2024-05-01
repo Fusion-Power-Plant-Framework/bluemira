@@ -13,13 +13,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy import typing as npt
+from scipy.optimize import newton
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Iterable, Sequence
 
     from bluemira.neutronics.make_pre_cell import PreCellArray
 
@@ -109,42 +110,6 @@ def partial_diff_of_volume(
     z_component = (qx + rx + sx) * (sx - qx)
     xz_derivatives = np.array([x_component, z_component]).T
     return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
-
-
-def newtons_method_1d(
-    objective: Callable[[float], float],
-    x_guess: float,
-    dobjective_dx: Callable[[float], float],
-    atol: float = EPS_FREECAD,
-) -> float:
-    """
-    Try to find the root of a strictly monotonic 1D function.
-
-    Writing our own since we don't want to use scipy.
-
-    Parameters
-    ----------
-    objective:
-        Objective function to be minimized. Takes in float x.
-    x_guess:
-        Starting guess.
-    dobjective_dx:
-        Derivative of objective function w.r.t. x.
-    atol:
-        Absolute value of objective function must be smaller than this to terminate
-        optimization successfully.
-    """
-    deviation, x, dy_dx = objective, x_guess, dobjective_dx
-    rng = 100
-    for _ in range(rng):
-        x -= deviation(x) / dy_dx(x)
-        if np.isclose(objective(x), 0, rtol=0, atol=atol):
-            return x
-    bluemira_warn(
-        "Optimization failed: Newton's method did not converge after"
-        f"{rng} iterations!"
-    )
-    return x
 
 
 class CellWalls:
@@ -370,7 +335,9 @@ class CellWalls:
             next_curve, _dir_i
         )
 
-    def optimize_to_match_individual_volumes(self, volume_list: Iterable[float]):
+    def optimize_to_match_individual_volumes(
+        self, volume_list: Iterable[float], *, max_iter=1000
+    ):
         """
         Allow the lengths of each wall to increase, so that the overall volumes are
         preserved as much as possible. Assuming the entire exterior curve is convex,
@@ -391,9 +358,7 @@ class CellWalls:
             def derivative(new_length):
                 return self.volume_derivative_of_cells_neighbouring(1, new_length)
 
-            self.set_length(
-                1, newtons_method_1d(volume_excess, self.get_length(1), derivative)
-            )
+            self.set_length(1, newton(volume_excess, self.get_length(1), derivative))
             self.check_volumes_and_lengths()
             return
 
@@ -405,7 +370,7 @@ class CellWalls:
         i = 1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
-        while num_passes_counter < 1000:
+        while num_passes_counter < max_iter:
             # do not allow length to decrease beyond their original value.
 
             def excess_volume(test_length, i=i):
@@ -413,15 +378,15 @@ class CellWalls:
                     target_volumes[i - 1 : i + 1]
                 )
 
-            def dV_dl(test_length, i=i):
+            def dV_dl(test_length, i=i):  # noqa: N802
                 return self.volume_derivative_of_cells_neighbouring(i, test_length)
 
-            optimal_length = (
-                newtons_method_1d(excess_volume, self.get_length(i), dV_dl)
+            self.set_length(
+                i,
+                newton(excess_volume, self.get_length(i), dV_dl)
                 if excess_volume(self.original_lengths[i]) < 0
-                else self.original_lengths[i]
+                else self.original_lengths[i],
             )
-            self.set_length(i, optimal_length)
             if i == i_min:
                 # hitting the left end: bounce to the right
                 step_direction = +1
@@ -445,7 +410,6 @@ class CellWalls:
                 forward_pass_result = self.lengths.copy()
             i += step_direction
         bluemira_warn(
-            "Optimization failed: Did not converge within"
+            "Optimisation failed: Did not converge within"
             f"{num_passes_counter} iterations!"
         )
-        return
