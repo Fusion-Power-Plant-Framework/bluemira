@@ -82,19 +82,34 @@ class TestCSVWriter:
         col_names = ["x", "z", "heat_flux"]
 
         # Write the data to csv, using default extension and comment style
-        test_file_base = "csv_write_dummy_data"
-        write_csv(data, test_file_base, col_names, header)
+        test_output_base = "csv_write_dummy_data"
+        write_csv(data, test_output_base, col_names, header)
 
         # Retrieve data file to compare
-        test_data = Path.cwd().as_posix() + "/test_data/test_csv_writer.csv"
+        expected_csv_output = Path.cwd().as_posix() + "/test_data/test_csv_writer.csv"
 
         # Compare
-        test_file = test_file_base + ".csv"
+        test_csv_output = test_output_base + ".csv"
 
-        assert filecmp.cmp(test_file, test_data)
+        assert filecmp.cmp(test_csv_output, expected_csv_output)
 
         # Clean up
-        Path(test_file).unlink()
+        Path(test_csv_output).unlink()
+
+        # Write the data to csv, using modified extension and comment style
+        ext = ".txt"
+        comment_char = "!"
+        write_csv(data, test_output_base, col_names, header, ext, comment_char)
+
+        # Retrieve data file to compare
+        expected_txt_output = Path.cwd().as_posix() + "/test_data/test_csv_writer.txt"
+
+        # Compare
+        test_txt_output = test_output_base + ".txt"
+        assert filecmp.cmp(test_txt_output, expected_txt_output)
+
+        # Clean up
+        Path(test_txt_output).unlink()
 
 
 class TestLeviCivitaTensor:
