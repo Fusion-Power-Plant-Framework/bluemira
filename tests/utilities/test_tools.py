@@ -79,7 +79,9 @@ class TestCSVWriter:
             (".txt", "!", "test_csv_writer.txt"),
         ],
     )
-    def test_csv_writer(self, tmp_path, ext, comment_char, expected_output):
+class TestCSVWriter:
+    @pytest.mark.parametrize(("ext", "comment_char"), [(".csv", "#"), (".txt", "!")])
+    def test_csv_writer(self, tmp_path, ext, comment_char):
         # Some dummy data to write to file
         x_vals = [0, 1, 2]
         z_vals = [-1, 0, 1]
@@ -89,18 +91,16 @@ class TestCSVWriter:
         col_names = ["x", "z", "heat_flux"]
 
         # Write the data to csv, using default extension and comment style
-        test_output_base = tmp_path.as_posix() + "/csv_write_dummy_data"
-        write_csv(data, test_output_base, col_names, header, ext, comment_char)
+        expected_file = f"test_csv_writer{ext}"
+
+        expected_path = Path(tmp_path, expected_file).as_posix()
+        write_csv(data, expected_path, col_names, header, ext, comment_char)
 
         # Retrieve data file to compare
-        expected_output_path = (
-            get_bluemira_root() + f"/tests/utilities/test_data/{expected_output}"
-        )
+        test_output_path = Path(Path(__file__).parent, "test_data", f"{expected_file}")
 
         # Compare
-        test_output = test_output_base + f"{ext}"
-        print(expected_output_path)
-        assert filecmp.cmp(test_output, expected_output_path)
+        assert filecmp.cmp(expected_path, test_output_path)
 
 
 class TestLeviCivitaTensor:

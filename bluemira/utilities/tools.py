@@ -29,6 +29,7 @@ import numpy.typing as npt
 from matplotlib import colors
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 
 if TYPE_CHECKING:
@@ -138,7 +139,7 @@ def write_csv(
     n_cols = 1 if len(shape) < 2 else shape[1]  # noqa: PLR2004
 
     # Write file name
-    filename = f"{base_name}{ext}"
+    filename = force_file_extension(base_name, ext)
 
     # Write column names
     if len(col_names) != n_cols:
