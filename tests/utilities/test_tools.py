@@ -13,7 +13,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
     NumpyJSONEncoder,
     asciistr,
