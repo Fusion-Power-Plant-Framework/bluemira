@@ -182,7 +182,7 @@ def write_geometry_to_csv(loop, filename, metadata=""):
         Optional argument for string holding metadata to be written as a header
     """
     # Get the loop data
-    data = loop.xyz.T
+    data = loop.vertexes.xyz.T
 
     # Create a list of column names
     col_names = ["x", "y", "z"]

@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.tools import (
     NumpyJSONEncoder,
     asciistr,
@@ -31,6 +32,7 @@ from bluemira.utilities.tools import (
     norm,
     polar_to_cartesian,
     write_csv,
+    write_geometry_to_csv,
 )
 
 
@@ -112,8 +114,23 @@ class TestCSVWriter:
         test_txt_output = test_output_base + ".txt"
         assert filecmp.cmp(test_txt_output, expected_txt_output)
 
-        # Clean up
-        Path(test_txt_output).unlink()
+    def test_write_geometry_to_csv(self, tmp_path):
+        # Define simple loop
+        loop = make_polygon([[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True)
+
+        # Write out the loop
+        test_output_base = tmp_path.as_posix() + "loop_test_write"
+        metadata = "Metadata string"
+        write_geometry_to_csv(loop, test_output_base, metadata)
+
+        # Fetch comparison data file
+        expected_csv_output = (
+            get_bluemira_root() + "/tests/utilities/test_data/loop_test_data.csv"
+        )
+
+        # Compare generated data to data file
+        test_file = test_output_base + ".csv"
+        assert filecmp.cmp(test_file, expected_csv_output)
 
 
 class TestLeviCivitaTensor:
