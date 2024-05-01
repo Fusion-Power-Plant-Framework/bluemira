@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from copy import deepcopy
-from typing import Dict, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
