@@ -146,7 +146,7 @@ def write_csv(
 
     # Add comment characters and newline to existing metadata
     if metadata:
-        comment_prefix = comment_char + " "
+        comment_prefix = f"{comment_char} "
         metadata = (
             "\n".join([comment_prefix + line for line in metadata.split("\n")]) + "\n"
         )
