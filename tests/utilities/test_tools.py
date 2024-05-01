@@ -74,7 +74,8 @@ class TestAsciiStr:
 
 
 class TestCSVWriter:
-    def test_csv_writer(self, tmp_path):
+    @pytest.parametrize(('ext', 'comment), [('.csv', '#'), ('.txt','!')]) 
+    def test_csv_writer(self, ext, comment, tmp_path):
         # Some dummy data to write to file
         x_vals = [0, 1, 2]
         z_vals = [-1, 0, 1]
