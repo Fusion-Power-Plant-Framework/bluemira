@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-from collections import abc
 from itertools import pairwise
 
 import numpy as np
@@ -254,7 +253,7 @@ class PreCell:
         )
 
 
-class PreCellArray(abc.Sequence):
+class PreCellArray:
     """
     A list of pre-cells materials
 
@@ -272,7 +271,7 @@ class PreCellArray(abc.Sequence):
     def __init__(self, list_of_pre_cells: list[PreCell]):
         """The list of pre-cells must be ajacent to each other."""
         self.pre_cells = list(list_of_pre_cells)
-        for this_cell, next_cell in pairwise(self):
+        for this_cell, next_cell in pairwise(self.pre_cells):
             # perform check that they are actually adjacent
             this_wall = (
                 this_cell.vertex[:, Vert.ext_end],
@@ -392,10 +391,10 @@ class PreCellArray(abc.Sequence):
         return np.insert(self.cell_walls[:, 0], 1, 0, axis=-1)
 
     def __len__(self) -> int:
-        return self.pre_cells.__len__()
+        return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
-        return self.pre_cells.__getitem__(index_or_slice)
+        return self.pre_cells[index_or_slice]
 
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
@@ -670,13 +669,13 @@ class DivertorPreCell:
         return WireInfoList(info_list)
 
 
-class DivertorPreCellArray(abc.Sequence):
+class DivertorPreCellArray:
     """An array of Divertor pre-cells"""
 
     def __init__(self, list_of_div_pc: list[DivertorPreCell]):
         self.pre_cells = list(list_of_div_pc)
         # Perform check that they are adjacent
-        for prev_cell, curr_cell in pairwise(self):
+        for prev_cell, curr_cell in pairwise(self.pre_cells):
             if not np.allclose(
                 prev_cell.vertex.xyz[:, Vert.ext_start],
                 curr_cell.vertex.xyz[:, Vert.ext_end],
@@ -701,7 +700,7 @@ class DivertorPreCellArray(abc.Sequence):
         """
         exterior_vertices = [
             stack.exterior_wire.get_3D_coordinates()[::-1]
-            for stack in self
+            for stack in self.pre_cells
             # Because cells run counter-clockwise but the exterior_wire themselves runs
             # clockwise, we have to invert the wire during extraction to make it run
             # without double-backing onto itself.
@@ -718,18 +717,19 @@ class DivertorPreCellArray(abc.Sequence):
         interior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged counter-clockwise (inboard to outboard).
         """
-        interior_vertices = [stack.interior_wire.get_3D_coordinates() for stack in self]
-        return np.concatenate(interior_vertices)
+        return np.concatenate([
+            stack.interior_wire.get_3D_coordinates() for stack in self.pre_cells
+        ])
 
     def __len__(self) -> int:
-        return self.pre_cells.__len__()
+        return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
-        return self.pre_cells.__getitem__(index_or_slice)
+        return self.pre_cells[index_or_slice]
 
     def __add__(self, other_array) -> DivertorPreCellArray:
         if isinstance(other_array, DivertorPreCellArray):
-            return DivertorPreCellArray(self.pre_cell + self.pre_cell)
+            return DivertorPreCellArray(self.pre_cells + self.pre_cells)
         raise TypeError(
             "Addition not implemented between DivertorPreCellArray and "
             f"{other_array.__class__}"

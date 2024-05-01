@@ -11,7 +11,6 @@ in this module are in SI (distrance:[m]) unless otherwise specified by the docst
 
 from __future__ import annotations
 
-from collections import abc
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
@@ -638,7 +637,7 @@ class BlanketCell(openmc.Cell):
             raise GeometryError("Wrong ordering of vertices!")
 
 
-class BlanketCellStack(abc.Sequence):
+class BlanketCellStack:
     """
     A stack of openmc.Cells, first cell is closest to the interior and last cell is
     closest to the exterior. They should all be situated at the same poloidal angle.
@@ -669,10 +668,10 @@ class BlanketCellStack(abc.Sequence):
                 raise ValueError("Expected a contiguous stack of cells!")
 
     def __len__(self) -> int:
-        return self.cell_stack.__len__()
+        return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCell] | BlanketCell:
-        return self.cell_stack.__getitem__(index_or_slice)
+        return self.cell_stack[index_or_slice]
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
@@ -735,21 +734,18 @@ class BlanketCellStack(abc.Sequence):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        _surfaces_list = [
-            self.exterior_surface,
-            self.ccw_surface,
-            self.cw_surface,
-            self.interior_surface,
-        ]
-
-        vertices_array = np.array([
-            self[0].vertex.interior_start,
-            self[0].vertex.interior_end,
-            self[-1].vertex.exterior_start,
-            self[-1].vertex.exterior_end,
-        ])
         return region_from_surface_series(
-            _surfaces_list, vertices_array, control_id=control_id
+            [
+                self.exterior_surface,
+                self.ccw_surface,
+                self.cw_surface,
+                self.interior_surface,
+            ],
+            np.vstack((
+                self[0].vertex.xz.T[(1, 2),],
+                self[-1].vertex.xz.T[(3, 0),],
+            )),
+            control_id=control_id,
         )
 
     @classmethod
@@ -901,7 +897,7 @@ class BlanketCellStack(abc.Sequence):
         return cls(cell_stack)
 
 
-class BlanketCellArray(abc.Sequence):
+class BlanketCellArray:
     """
     An array of BlanketCellStack. Interior and exterior curve are both assumed convex.
 
@@ -928,7 +924,7 @@ class BlanketCellArray(abc.Sequence):
         self.blanket_cell_array = blanket_cell_array
         self.poloidal_surfaces = [self[0].ccw_surface]
         self.radial_surfaces = []
-        for i, this_stack in enumerate(self):
+        for i, this_stack in enumerate(self.blanket_cell_array):
             self.poloidal_surfaces.append(this_stack.cw_surface)
             self.radial_surfaces.append(this_stack.interfaces)
 
@@ -942,10 +938,10 @@ class BlanketCellArray(abc.Sequence):
                     )
 
     def __len__(self) -> int:
-        return self.blanket_cell_array.__len__()
+        return len(self.blanket_cell_array)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCellStack] | BlanketCellStack:
-        return self.blanket_cell_array.__getitem__(index_or_slice)
+        return self.blanket_cell_array[index_or_slice]
 
     def __add__(self, other_array) -> BlanketCellArray:
         return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
@@ -1061,7 +1057,7 @@ class BlanketCellArray(abc.Sequence):
         )
         cell_array = []
         for i, (pre_cell, cw_wall) in enumerate(
-            zip(pre_cell_array, cell_walls[1:], strict=True)
+            zip(pre_cell_array.pre_cells, cell_walls[1:], strict=True)
         ):
             # right wall
             cw_surf = surface_from_2points(
@@ -1069,13 +1065,12 @@ class BlanketCellArray(abc.Sequence):
                 surface_id=1 + 10 * (i + 1) if control_id else None,
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
-            depth_series = get_depth_values(pre_cell, blanket_dimensions)
 
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
                 ccw_surf,
                 cw_surf,
-                depth_series,
+                get_depth_values(pre_cell, blanket_dimensions),
                 fill_lib=material_library,
                 inboard=check_inboard_outboard(pre_cell, blanket_dimensions),
                 blanket_stack_num=i if control_id else None,
@@ -1327,7 +1322,7 @@ class DivertorCell(openmc.Cell):
         )
 
 
-class DivertorCellStack(abc.Sequence):
+class DivertorCellStack:
     """
     A CONVEX object! i.e. all its exterior points together should make a convex hull.
     A stack of DivertorCells (openmc.Cells), first cell is closest to the interior and
@@ -1381,10 +1376,10 @@ class DivertorCellStack(abc.Sequence):
         return self._interfaces  # list of list of (1- or 2-tuple of) surfaces.
 
     def __len__(self) -> int:
-        return self.cell_stack.__len__()
+        return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCell] | DivertorCell:
-        return self.cell_stack.__getitem__(index_or_slice)
+        return self.cell_stack[index_or_slice]
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f" of {len(self)} DivertorCells at ")
@@ -1517,7 +1512,7 @@ class DivertorCellStack(abc.Sequence):
         return cls(cell_stack)
 
 
-class DivertorCellArray(abc.Sequence):
+class DivertorCellArray:
     """Turn the divertor into a cell array"""
 
     def __init__(self, cell_array: list[DivertorCellStack]):
@@ -1526,7 +1521,7 @@ class DivertorCellArray(abc.Sequence):
         self.poloidal_surfaces = [self[0].cw_surface]
         self.radial_surfaces = []
         # check neighbouring cells have the same cell stack.
-        for i, this_stack in enumerate(self):
+        for i, this_stack in enumerate(self.cell_array):
             self.poloidal_surfaces.append(this_stack.ccw_surface)
             self.radial_surfaces.append(this_stack.interfaces)
 
@@ -1540,10 +1535,10 @@ class DivertorCellArray(abc.Sequence):
                     )
 
     def __len__(self) -> int:
-        return self.cell_array.__len__()
+        return len(self.cell_array)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
-        return self.cell_array.__getitem__(index_or_slice)
+        return self.cell_array[index_or_slice]
 
     def __add__(self, other_array: DivertorCellArray) -> DivertorCellArray:
         return DivertorCellArray(self.cell_array + other_array.cell_array)
@@ -1592,7 +1587,7 @@ class DivertorCellArray(abc.Sequence):
             Arranged counter-clockwise (inboard to outboard).
         """
         return np.concatenate([
-            stack.interior_wire.get_3D_coordinates() for stack in self
+            stack.interior_wire.get_3D_coordinates() for stack in self.cell_array
         ])
 
     def exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
@@ -1610,7 +1605,7 @@ class DivertorCellArray(abc.Sequence):
         """
         return openmc.Union([
             stack[0].exclusion_zone(away_from_plasma=True, control_id=control_id)
-            for stack in self
+            for stack in self.cell_array
         ])
 
     @classmethod
@@ -1672,10 +1667,12 @@ class DivertorCellArray(abc.Sequence):
         Returns a list of cells (unnamed, unspecified-ID) where each corresponds to a
         cell-stack.
         """
-        return [openmc.Cell(region=stack.get_overall_region()) for stack in self]
+        return [
+            openmc.Cell(region=stack.get_overall_region()) for stack in self.cell_array
+        ]
 
 
-class TFCoils(abc.Sequence):
+class TFCoils:
     """Turn the divertor into a cell array"""
 
     def __init__(self, tf_coils: list[openmc.Cell]):
@@ -1683,10 +1680,10 @@ class TFCoils(abc.Sequence):
         self.tf_coils = tf_coils
 
     def __len__(self) -> int:
-        return self.tf_coils.__len__()
+        return len(self.tf_coils)
 
     def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
-        return self.tf_coils.__getitem__(index_or_slice)
+        return self.tf_coils[index_or_slice]
 
     def __add__(self, other_array: TFCoils) -> TFCoils:
         return TFCoils(self.tf_coils + other_array.tf_coils)

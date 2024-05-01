@@ -11,7 +11,6 @@ BluemiraWire.
 
 from __future__ import annotations
 
-from collections import abc
 from dataclasses import dataclass
 from itertools import pairwise
 from typing import TYPE_CHECKING, NamedTuple
@@ -84,20 +83,20 @@ class WireInfo:
         return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
 
 
-class WireInfoList(abc.Sequence):
+class WireInfoList:
     """A class to store info about a series of wires"""
 
     def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in pairwise(self):
+        for prev_wire, curr_wire in pairwise(self.info_list):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
                 raise GeometryError("Next wire must start where the previous wire stops")
 
     def __len__(self) -> int:
-        return self.info_list.__len__()
+        return len(self.info_list)
 
     def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
-        return self.info_list.__getitem__(index_or_slice)
+        return self.info_list[index_or_slice]
 
     def __add__(self, other_info_list) -> WireInfoList:
         return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
@@ -116,7 +115,7 @@ class WireInfoList(abc.Sequence):
         # assume continuity, which is already enforced during initialization, so we
         # should be fine.
         coords = [self[0].key_points[0]]
-        coords.extend(seg.key_points[1] for seg in self)
+        coords.extend(seg.key_points[1] for seg in self.info_list)
         return np.array(coords, dtype=float)  # shape = (N+1, 3)
 
     @property

@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-from collections import abc
 from enum import IntEnum
 from math import fsum
 from typing import TYPE_CHECKING
@@ -74,7 +73,7 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
 
 def partial_diff_of_volume(
     three_vertices: Sequence[Sequence[float]],
-    normalized_direction_vector: Iterable[float],
+    normalised_direction_vector: Iterable[float],
 ) -> float:
     """
     Gives the relationship between how the the solid volume varies with the position of
@@ -110,7 +109,7 @@ def partial_diff_of_volume(
     x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
     z_component = (qx + rx + sx) * (sx - qx)
     xz_derivatives = np.array([x_component, z_component]).T
-    return np.pi / 3 * np.dot(normalized_direction_vector, xz_derivatives)
+    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
 
 
 def newtons_method_1d(
@@ -137,18 +136,19 @@ def newtons_method_1d(
         optimization successfully.
     """
     deviation, x, dy_dx = objective, x_guess, dobjective_dx
-    for i in range(100):  # noqa: B007
+    rng = 100
+    for _ in range(rng):
         x -= deviation(x) / dy_dx(x)
         if np.isclose(objective(x), 0, rtol=0, atol=atol):
             return x
     bluemira_warn(
         "Optimization failed: Newton's method did not converge after"
-        f"{i + 1} iterations!"
+        f"{rng} iterations!"
     )
     return x
 
 
-class CellWalls(abc.Sequence):
+class CellWalls:
     """
     A list of start- and end-location vectors of all of the walls dividing neighbouring
     pre-cells.
@@ -180,7 +180,7 @@ class CellWalls(abc.Sequence):
             axis=2 describes the r and z coordinates.
         """
         self.cell_walls = np.array(cell_walls)
-        if np.shape(self)[1:] != (2, 2):
+        if np.shape(self.cell_walls)[1:] != (2, 2):
             raise ValueError(
                 "Expected N values of start and end xz coordinates, i.e. "
                 f"shape = (N+1, 2, 2); got {np.shape(self)}."
@@ -194,11 +194,11 @@ class CellWalls(abc.Sequence):
         self.check_volumes_and_lengths()
 
     def __len__(self) -> int:
-        return self.cell_walls.__len__()
+        return len(self.cell_walls)
 
     def __getitem__(self, index_or_slice) -> npt.NDArray | float:
         """self[:] will return a copy of the index."""
-        return self.cell_walls.__getitem__(index_or_slice)
+        return self.cell_walls[index_or_slice]
 
     def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
         """
@@ -206,7 +206,7 @@ class CellWalls(abc.Sequence):
         However, a full-reset should be avoided because we don't want to mess with the
         start rz coordinates.
         """
-        self.cell_walls.__setitem__(index_or_slice, new_coordinates)
+        self.cell_walls[index_or_slice] = new_coordinates
 
     def __add__(self, other_cell_walls: CellWalls):
         """
@@ -313,8 +313,9 @@ class CellWalls(abc.Sequence):
         -------
         volume: float
         """
-        outline = np.concatenate([self[i], self[i + 1][::-1]])
-        return polygon_revolve_signed_volume(outline)
+        return polygon_revolve_signed_volume(
+            np.concatenate([self[i], self[i + 1][::-1]])
+        )
 
     @property
     def volumes(self):
@@ -322,7 +323,7 @@ class CellWalls(abc.Sequence):
         Current volumes of the (simplified) cells created by joining straight lines
         between neighbouring cell walls.
         """
-        return np.array([
+        return np.asarray([
             self.get_volume(i) for i in range(self.num_cells)
         ])  # shape = (N+1,)
 
