@@ -57,8 +57,10 @@ def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source
 
     Parameters
     ----------
-    major_r_cm: major radius [cm]
-    shaf_shift_cm: shafranov shift [cm]
+    major_r_cm:
+        major radius [cm]
+    shaf_shift_cm:
+        shafranov shift [cm]
     """
     ring_source = openmc.Source()
     source_radii_cm = openmc.stats.Discrete([major_r_cm + shaf_shift_cm], [1])

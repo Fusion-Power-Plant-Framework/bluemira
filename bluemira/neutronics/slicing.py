@@ -61,24 +61,21 @@ def cut_curve(
 
     Parameters
     ----------
-    cut_points
+    cut_points:
         A list of at least 3 points, presumed to be lying on the wire, that we want to
         cut the wire at.
-
-    wire
+    wire:
         The wire that we want to cut up.
-
-    discretisation_level [current implementation]
+    discretisation_level:
         We yield a list of points of len==discretisation_level, such that we can build a
         wire made of (discretisation_level-1) straight lines to approximate each segment.
-
     reversed:
         Whether we want the neutron spectrum to go in the increasing or the decreasing
         direction.
 
     Yields
     ------
-    params_range [current implementation]
+    params_range:
         For each segment, yield the values of the parametric variable t such that
         `[wire.value_at(t) for t in params_range]`
         is a list of points (sufficient to built up a series of (discretisation_level-1)
@@ -143,11 +140,11 @@ class PanelsAndExteriorCurve:
 
         Parameters
         ----------
-        panel_break_points
+        panel_break_points:
             A series of 2D coordinate (of shape = (N+1, 2)) representing the N panels
             of the blanket. It (also) runs clockwise (inboard side to outboard side),
             same as vv_interior
-        vv_interior
+        vv_interior:
             A BluemiraWire that runs clockwise, showing the vacuum vessel on the RHHP
             cross-section of the tokamak.
         """
@@ -168,7 +165,7 @@ class PanelsAndExteriorCurve:
 
         Parameters
         ----------
-        index: int
+        index:
             the n-th breakpoint that we want the bisection line to project from.
             (N.B. There are N+1 breakpoints for N panels.)
             Thus this is the last point of the n-th panel.
@@ -240,9 +237,9 @@ class PanelsAndExteriorCurve:
 
         Returns
         -------
-        self.vv_cut_points:
+        vv_cut_points:
             cut points where the vacuum vessel interior wire is split
-        self.exterior_cut_points:
+        exterior_cut_points:
             cut points where the vacuum vessel exterior wire is split
         """
         self.vv_cut_points, self.exterior_cut_points = [], []
@@ -288,23 +285,19 @@ class PanelsAndExteriorCurve:
 
         Parameters
         ----------
-        snap_to_horizontal_angle, starting_cut, ending_cut
+        snap_to_horizontal_angle, starting_cut, ending_cut:
             See
             :meth:`~bluemira.neutronics.slicing.PanelsAndExteriorCurve.calculate_cut_points`
-
         discretisation_level:
             how many points to use to approximate the curve.
 
         Returns
         -------
-        vv_curve_segments
-
-            segments of the vacuum vessl interior curve forming each pre-cell's interior
+        vv_curve_segments:
+            segments of the vacuum vessel interior curve forming each pre-cell's interior
             curve.
-
-        exterior_curve_segments
-
-            segments of the vacuum vessl exterior curve forming each pre-cell's exterior
+        exterior_curve_segments:
+            segments of the vacuum vessel exterior curve forming each pre-cell's exterior
             curve.
         """
         # TODO: remove discretisation level when issue #3038 is fixed. The raw wire can
@@ -659,8 +652,10 @@ class DivertorWireAndExteriorCurve:
 
         Returns
         -------
-        line_origin: a point on this line
-        line_direction: a normal vector pointing in the direction of this line.
+        line_origin:
+            a point on this line
+        line_direction:
+            a normal vector pointing in the direction of this line.
         """
         # Get the vectors as arrays of shape = (2,)
         anchor1 = np.array(self.convex_segments[prev_idx][-1].key_points[1])[::2]
@@ -733,11 +728,8 @@ class DivertorWireAndExteriorCurve:
         Returns
         -------
         self.vv_cut_points
-
             cut points where the vacuum vessel interior wire is split
-
         self.exterior_cut_points
-
             cut points where the vacuum vessel exterior wire is split
         """
         self.vv_cut_points, self.exterior_cut_points = [], []

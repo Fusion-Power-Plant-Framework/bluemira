@@ -118,21 +118,6 @@ class CellWalls:
     """
     A list of start- and end-location vectors of all of the walls dividing neighbouring
     pre-cells.
-
-    Variables
-    ---------
-    _starts
-        Initial rz locations of the start points of the cell wall.
-        This should remain unchanged throughout any optimization operations.
-    _init_ends
-        Initial rz locations of the end points of the cell wall.
-    original_lengths
-        The lengths of the cell wall when initialized.
-    directions
-        The direction that each cell wall is pointed in, from the start point to the end
-        point. This should remain unchanged throughout any optimization operations.
-    num_cells
-        The number of cells that this represents.
     """
 
     def __init__(self, cell_walls: npt.NDArray):

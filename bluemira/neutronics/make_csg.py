@@ -120,15 +120,15 @@ def get_depth_values(
 
     Parameters
     ----------
-    pre_cell
+    pre_cell:
         :class:`~PreCell` to be classified as either inboard or outboard
-    blanket_dimensions
+    blanket_dimensions:
         :class:`bluemira.neutronics.params.TokamakDimensions` recording the
         dimensions of the blanket in SI units (unit: [m]).
 
     Returns
     -------
-    depth_series
+    depth_series:
         a series of floats corresponding to the N-1 interfaces between the N layers.
         Each float represents how deep into the blanket (i.e. how many [m] into the
         first wall we need to drill, from the plasma facing surface) to hit that
@@ -162,7 +162,7 @@ def torus_from_3points(
 
     Parameters
     ----------
-    point1, point2, point3: ndarray of shape (2,)
+    point1, point2, point3:
         RZ coordinates of the 3 points on the surface of the torus.
     surface_id, name:
         See openmc.Surface
@@ -190,9 +190,9 @@ def torus_from_circle(
 
     Parameters
     ----------
-    minor_radius
+    minor_radius:
         Radius of the cross-section circle, which forms the minor radius of the torus.
-    center
+    center:
         Center of the cross-section circle, which forms the center of the torus.
     surface_id, name:
         See openmc.Surface
@@ -214,14 +214,11 @@ def z_torus(
 
     Parameters
     ----------
-    center: ndarray of shape (2,)
+    center:
         The center of the torus' RZ plane cross-section
-    minor_radius: ndarray of shape (2,)
+    minor_radius:
         minor radius of the torus
 
-    Returns
-    -------
-    openmc.ZTorus
     """
     major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
     return openmc.ZTorus(
@@ -250,7 +247,7 @@ def torus_from_5points(
 
     Parameters
     ----------
-    point1, point2, point3: ndarray of shape (2,)
+    point1, point2, point3:
         RZ coordinates of the 3 points on the surface of the torus.
     surface_id, name:
         See openmc.Surface
@@ -280,12 +277,9 @@ def choose_halfspace(
 
     Parameters
     ----------
-    surface
+    surface:
         an openmc surface
 
-    Returns
-    -------
-    openmc.Halfspace
     """
     pt = np.mean(to_cm(choice_points), axis=0)
     value = surface.evaluate(pt)
@@ -309,10 +303,6 @@ def choose_plane_cylinders(
     choice_points: np.ndarray of shape (N, 3)
         a list of points representing the vertices of a convex polygon in RZ plane
 
-    Returns
-    -------
-    region: openmc.Halfspace
-        a Halfspace of the provided surface that the points exists on.
     """
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
@@ -413,7 +403,7 @@ class BluemiraNeutronicsCSG:
 
         Returns
         -------
-        surface: openmc.surface.Surface, None
+        surface:
             if the two points provided are redundant: don't return anything, as this is a
             single point pretending to be a surface. This will come in handy for handling
             the creation of BlanketCells made with 3 surfaces rather than 4.
@@ -545,7 +535,7 @@ class BluemiraNeutronicsCSG:
 
         Parameters
         ----------
-        surface: opnemc.ZCone
+        surface:
             where all points are expected to be excluded from at least one of its two
             one-sided cones.
         choice_points:
@@ -815,13 +805,13 @@ class BlanketCellStack:
         bounding box to confirm that the stack is linearly increasing/decreasing in xyz
         bounds.
 
-        Series of cells
-        ---------
-        SurfaceCell
-        FirstWallCell
-        BreedingZoneCell
-        ManifoldCell
-        VacuumVesselCell
+        Series of cells:
+
+            SurfaceCell
+            FirstWallCell
+            BreedingZoneCell
+            ManifoldCell
+            VacuumVesselCell
         """
         self.cell_stack = cell_stack
         for int_cell, ext_cell in pairwise(cell_stack):
@@ -853,9 +843,9 @@ class BlanketCellStack:
         """
         Parameters
         ----------
-        cut_point_series: np.ndarray of shape (M+1, 2)
-            where M = number of cells in the blanket cell stack (i.e. number of layers
-            in the blanket). Each point has two dimensions
+        cut_point_series:
+            array of shape (M+1, 2) where M = number of cells in the blanket cell stack
+            (i.e. number of layers in the blanket). Each point has two dimensions
         direction_vector:
             direction that these points are all supposed to go towards.
         """
@@ -1088,12 +1078,6 @@ class BlanketCellArray:
     blanket_cell_array
         a list of BlanketCellStack
 
-    Variables
-    ---------
-    poloidal_surfaces: List[openmc.Surface]
-        a list of surfaces radiating from (approximately) the gyrocenter to the entrance.
-    radial_surfaces: List[List[openmc.Surface]]
-        a list of lists of surfaces. Each list is the layer interface of a a stack's
     """
 
     def __init__(
@@ -1142,8 +1126,8 @@ class BlanketCellArray:
 
         Returns
         -------
-        exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        exterior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         exterior_vertices = [self.blanket_cell_array[0][-1].vertex.xyz[:, 3]]
         exterior_vertices.extend(
@@ -1158,8 +1142,8 @@ class BlanketCellArray:
 
         Parameters
         ----------
-        interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        interior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.asarray([
             self.blanket_cell_array[0][0].vertex.xyz[:, 2],
@@ -1190,7 +1174,7 @@ class BlanketCellArray:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`.
+            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         return openmc.Union([
             self.csg.region_from_surface_series(
@@ -1232,7 +1216,7 @@ class BlanketCellArray:
             dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`.
+            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
 

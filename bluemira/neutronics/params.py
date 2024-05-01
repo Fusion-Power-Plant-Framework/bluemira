@@ -83,9 +83,8 @@ class OpenMCSimulationRuntimeParameters:
     cross_section_xml: str | Path
     batches: int = 2
     photon_transport: bool = True
-    electron_treatment: Literal["ttb", "led"] = (
-        "led"  # Bremsstrahlung only matters for very thin objects
-    )
+    # Bremsstrahlung only matters for very thin objects
+    electron_treatment: Literal["ttb", "led"] = "led"
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
     parametric_source: bool = True

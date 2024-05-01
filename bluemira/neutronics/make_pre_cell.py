@@ -55,37 +55,19 @@ class PreCell:
         """
         Parameters
         ----------
-        interior_wire
-
-            Either: A wire representing the interior-boundary (i.e. plasma-facing side)
-                of a blanket's pre-cell, running in the counter-clockwise direction when
-                viewing the right hand side poloidal cross-section,
-                i.e. downwards if inboard, upwards if outboard.
-            or: a single Coordinates point, representing a point on the interior-boundary
-
-        vv_wire
-
+        interior_wire:
+            Either a wire representing the interior-boundary (i.e. plasma-facing side)
+            of a blanket's pre-cell, running in the counter-clockwise direction when
+            viewing the right hand side poloidal cross-section,
+            i.e. downwards if inboard, upwards if outboard.
+            or a single Coordinates point, representing a point on the interior-boundary
+        vv_wire:
             A wire representing the interface between the vacuum vessel and the blanket.
-
-        exterior_wire
-
+        exterior_wire:
             A wire representing the exterior-boundary of a
-                blanket's pre-cell, running in the clockwise direction when viewing the
-                right hand side poloidal cross-section,
-                i.e. upwards if inboard, downwards if outboard.
-
-        Variables
-        ---------
-        _inner_curve
-            A wire starting the end of the exterior_wire, and ending at the start of the
-            exterior_wire. This should pass through the interior_wire.
-        vertex
-            :class:`~bluemira.neutronics.radial_wall.Vertices` of vertices, for
-            convenient retrieval later.
-        outline
-            The wire outlining the PreCell
-        half_solid
-            The solid created by revolving the outline around the z-axis by 180°.
+            blanket's pre-cell, running in the clockwise direction when viewing the
+            right hand side poloidal cross-section,
+            i.e. upwards if inboard, downwards if outboard.
         """
         self.interior_wire = interior_wire
         self.vv_wire = vv_wire
@@ -124,6 +106,7 @@ class PreCell:
 
         self.vertex = Coordinates([ext_end, int_start, int_end, ext_start]).xz
         self.vv_point = Coordinates([vv_start, vv_end]).xz
+        # The wire outlining the PreCell
         self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
 
     @property
@@ -160,7 +143,7 @@ class PreCell:
         return self._blanket_outline
 
     @property
-    def blanket_half_solid(self) -> float:
+    def blanket_half_solid(self) -> BluemiraSolid:
         """Get the volume of the blanket"""
         if not hasattr(self, "_blanket_half_solid"):
             self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
@@ -218,7 +201,7 @@ class PreCell:
 
         Parameters
         ----------
-        fraction: float
+        fraction:
             A scalar value
 
         Returns
@@ -231,14 +214,14 @@ class PreCell:
             self.cell_walls.lengths * fraction
         )
 
-    def get_cell_wall_cut_points_by_thickness(self, thickness):
+    def get_cell_wall_cut_points_by_thickness(self, thickness: float):
         """
         Offset a line parallel to the interior_wire towards the exterior direction.
         Then, find where this line intersect the cell's side walls.
 
         Parameters
         ----------
-        fraction: float
+        thickness:
             A scalar value
 
         Returns
@@ -260,11 +243,6 @@ class PreCellArray:
     ----------
     list_of_pre_cells:
         An adjacent list of pre-cells
-
-    Variables
-    ---------
-    volumes: List[float]
-        Volume of each pre-cell
     """
 
     def __init__(self, list_of_pre_cells: list[PreCell]):
@@ -313,7 +291,7 @@ class PreCellArray:
 
         Parameters
         ----------
-        preserve_volume: bool
+        preserve_volume:
             Whether to preserve the volume of each cell during the transformation from
             pre-cell with curved-edge to pre-cell with straight edges.
             If True, increase the length of the cut lines appropriately to compensate for
@@ -378,8 +356,8 @@ class PreCellArray:
 
         Returns
         -------
-        exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        exterior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.insert(self.cell_walls[:, 1], 1, 0, axis=-1)
 
@@ -389,8 +367,8 @@ class PreCellArray:
 
         Returns
         -------
-        interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        interior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.insert(self.cell_walls[:, 0], 1, 0, axis=-1)
 
@@ -430,7 +408,7 @@ def ratio_of_distances(
 
     Parameters
     ----------
-    point_of_interest
+    point_of_interest:
         point to which we want to calculate the ratio of distances.
     anchor1, anchor2:
         Any point on line 1 and line 2 respectively.
@@ -502,12 +480,12 @@ def calculate_new_circle(
     old_circle_info:
         an object accessed by WireInfoList[i].key_points.
         info on circle where the start_point and end_point are each of shape (3,).
-    new_points
+    new_points:
         array of shape (2, 3)
 
     Returns
     -------
-    new_circle_info
+    new_circle_info:
         An instance of CircleInfo representing the new (scaled) arc of circle.
     """
     new_chord_vector = np.diff(new_points, axis=0)
@@ -540,22 +518,13 @@ class DivertorPreCell:
         """
         Parameters
         ----------
-        interior_wire
+        interior_wire:
             WireInfoList of a wire on the interior side of the cell running
             counter-clockwise
-        exterior_wire
+        vv_wire:
+            WireInfoList of the external surface of the vacuum vessel
+        exterior_wire:
             WireInfoList of a wire on the exterior side of the cell running clockwise
-
-        Variables
-        ---------
-        cw_wall
-            a WireInfoList of len==1, representing the straight line cut on the clockwise
-            side of the divertor pre-cell
-        ccw_wall
-            a WireInfoList of len==1, representing the straight line cut on the
-            counter-clockwise side of the divertor pre-cell
-        vertex
-            Vertices[cadapi.apiVector] denoting the four corners of the divertor pre-cell
         """
         self.interior_wire = interior_wire
         self.vv_wire = vv_wire
@@ -709,8 +678,8 @@ class DivertorPreCellArray:
 
         Returns
         -------
-        exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged counter-clockwise (inboard to outboard).
+        exterior_vertices:
+            aray of shape (N+1, 3) arranged counter-clockwise (inboard to outboard).
         """
         # Because cells run counter-clockwise but the exterior_wire themselves runs
         # clockwise, we have to invert the wire during extraction to make it run
@@ -726,8 +695,8 @@ class DivertorPreCellArray:
 
         Parameters
         ----------
-        interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged counter-clockwise (inboard to outboard).
+        interior_vertices:
+            aray of shape (N+1, 3) arranged counter-clockwise (inboard to outboard).
         """
         return np.concatenate([
             stack.interior_wire.get_3D_coordinates() for stack in self.pre_cells
