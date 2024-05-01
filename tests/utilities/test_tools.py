@@ -72,14 +72,6 @@ class TestAsciiStr:
 
 
 class TestCSVWriter:
-    @pytest.mark.parametrize(
-        ("ext", "comment_char", "expected_output"),
-        [
-            (".csv", "#", "test_csv_writer.csv"),
-            (".txt", "!", "test_csv_writer.txt"),
-        ],
-    )
-class TestCSVWriter:
     @pytest.mark.parametrize(("ext", "comment_char"), [(".csv", "#"), (".txt", "!")])
     def test_csv_writer(self, tmp_path, ext, comment_char):
         # Some dummy data to write to file
