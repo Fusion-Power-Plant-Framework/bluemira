@@ -143,7 +143,7 @@ def write_csv(
     filename = base_name + ext
 
     # Write column names
-    if not len(col_names) == n_cols:
+    if len(col_names) != n_cols:
         raise RuntimeError("Column names must be provided for all data fields")
 
     # Add comment characters and newline to existing metadata
