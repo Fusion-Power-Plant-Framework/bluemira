@@ -182,7 +182,7 @@ class CellWalls:
         if np.shape(self.cell_walls)[1:] != (2, 2):
             raise ValueError(
                 "Expected N values of start and end xz coordinates, i.e. "
-                f"shape = (N+1, 2, 2); got {np.shape(self)}."
+                f"shape = (N+1, 2, 2); got {np.shape(self.cell_walls)}."
             )
         self._starts = self.cell_walls[:, 0]  # shape = (N+1, 2)
         self._init_ends = self.cell_walls[:, 1]  # shape = (N+1, 2)
@@ -388,23 +388,25 @@ class CellWalls:
                     target_volumes
                 )
 
-            length_1 = self.get_length(1)
-
             def derivative(new_length):
                 return self.volume_derivative_of_cells_neighbouring(1, new_length)
 
-            self.set_length(1, newtons_method_1d(volume_excess, length_1, derivative))
+            self.set_length(
+                1, newtons_method_1d(volume_excess, self.get_length(1), derivative)
+            )
             self.check_volumes_and_lengths()
             return
 
         # if more than 3 walls (more than 2 cells)
-        i_range = range(1, self.num_cells)
+        i_min, i_max = 1, self.num_cells - 1
+
         num_passes_counter = -1
         step_direction = +1
         i = 1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
         while num_passes_counter < 1000:
+            # do not allow length to decrease beyond their original value.
 
             def excess_volume(test_length, i=i):
                 return self.volume_of_cells_neighbouring(i, test_length) - sum(
@@ -414,16 +416,13 @@ class CellWalls:
             def dV_dl(test_length, i=i):
                 return self.volume_derivative_of_cells_neighbouring(i, test_length)
 
-            # do not allow length to decrease beyond their original value.
-            if excess_volume(self.original_lengths[i]) < 0:
-                optimal_length = newtons_method_1d(
-                    excess_volume, self.get_length(i), dV_dl
-                )
-                self.set_length(i, optimal_length)
-            else:
-                self.set_length(i, self.original_lengths[i])
-
-            if i == min(i_range):
+            optimal_length = (
+                newtons_method_1d(excess_volume, self.get_length(i), dV_dl)
+                if excess_volume(self.original_lengths[i]) < 0
+                else self.original_lengths[i]
+            )
+            self.set_length(i, optimal_length)
+            if i == i_min:
                 # hitting the left end: bounce to the right
                 step_direction = +1
                 num_passes_counter += 1
@@ -439,7 +438,7 @@ class CellWalls:
                     )
                     self.check_volumes_and_lengths()
                     return
-            elif i == max(i_range):
+            elif i == i_max:
                 # hitting the right end: bounce to the left
                 step_direction = -1
                 num_passes_counter += 1

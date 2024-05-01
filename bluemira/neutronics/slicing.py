@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Oversees the conversion from bluemira wires into pre-cells, then into csg."""
 
-# ruff: noqa: PLR2004
 from __future__ import annotations
 
 from itertools import chain, pairwise, starmap
@@ -107,15 +106,14 @@ def cut_curve(
 
     # generator function
     for alpha, beta in pairwise(cut_params):
+        used_alpha = alpha
         if increasing:
             if alpha > beta:  # alpha is expected to be smaller than beta
-                alpha -= 1.0  # noqa: PLW2901
+                used_alpha -= 1.0
         elif alpha < beta:  # alpha is expected to be larger than beta.
-            alpha += 1.0  # noqa: PLW2901
-        param_range = np.linspace(alpha, beta, discretisation_level) % 1.0
-        if reverse:
-            param_range = param_range[::-1]
-        yield param_range
+            used_alpha += 1.0
+        param_range = np.linspace(used_alpha, beta, discretisation_level) % 1.0
+        yield param_range[::-1] if reverse else param_range
 
 
 class PanelsAndExteriorCurve:
@@ -155,9 +153,8 @@ class PanelsAndExteriorCurve:
         """
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior
-        self.interior_panels = np.insert(
-            panel_break_points, 1, 0, axis=-1
-        )  # shape = (N+1, 3)
+        # shape = (N+1, 3)
+        self.interior_panels = np.insert(panel_break_points, 1, 0, axis=-1)
         if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:
             raise ValueError(
                 "Expected an input np.ndarray of breakpoints of shape = "
@@ -390,24 +387,24 @@ class PanelsAndExteriorCurve:
             end_r = self.interior_panels[-1, 0] * 2
             ending_cut = np.array([end_r, self.interior_panels[-1][-1]])
 
-        pre_cell_list = []
-        for i, (vv_segment, exterior_segment) in enumerate(
-            zip(
-                *self.execute_curve_cut(
-                    discretisation_level,
-                    starting_cut,
-                    ending_cut,
-                    snap_to_horizontal_angle,
-                ),
-                strict=True,
+        return PreCellArray([
+            PreCell(
+                make_polygon(self.interior_panels[i : i + 2][::-1].T, closed=False),
+                vv_segment,
+                exterior_segment,
             )
-        ):
-            inner_wire = make_polygon(
-                self.interior_panels[i : i + 2][::-1].T, closed=False
+            for i, (vv_segment, exterior_segment) in enumerate(
+                zip(
+                    *self.execute_curve_cut(
+                        discretisation_level,
+                        starting_cut,
+                        ending_cut,
+                        snap_to_horizontal_angle,
+                    ),
+                    strict=True,
+                )
             )
-            pre_cell_list.append(PreCell(inner_wire, vv_segment, exterior_segment))
-
-        return PreCellArray(pre_cell_list)
+        ])
 
 
 def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:

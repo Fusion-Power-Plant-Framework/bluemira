@@ -133,9 +133,7 @@ class WireInfoList:
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
         old_kp = self.info_list[0].key_points
-        # have to break it open because it's an immutable NamedTuple.
-        new_kp = old_kp.__class__(new_start_point, *old_kp[1:])
-        self.info_list[0].key_points = new_kp
+        self.info_list[0].key_points = type(old_kp)(new_start_point, *old_kp[1:])
 
     @property
     def end_point(self):
@@ -146,8 +144,9 @@ class WireInfoList:
     def end_point(self, new_end_point):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
         old_kp = self.info_list[-1].key_points
-        new_kp = old_kp.__class__(old_kp[0], new_end_point, *old_kp[2:])
-        self.info_list[0].key_points = new_kp
+        self.info_list[0].key_points = type(old_kp)(
+            old_kp[0], new_end_point, *old_kp[2:]
+        )
 
     def reverse(self) -> WireInfoList:
         """Flip this list of wires"""
