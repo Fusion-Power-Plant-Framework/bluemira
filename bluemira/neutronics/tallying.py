@@ -5,9 +5,13 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
+from dataclasses import asdict
+from itertools import chain
+
 import numpy as np
 import openmc
 
+from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_geometry import Cells
 from bluemira.neutronics.make_materials import MaterialsLibrary
 
@@ -21,8 +25,6 @@ def filter_cells(
     openmc.CellFilter,
     openmc.ParticleFilter,
     openmc.ParticleFilter,
-    openmc.EnergyFunctionFilter,
-    openmc.EnergyFunctionFilter,
     openmc.MeshFilter,
 ]:
     """
@@ -92,13 +94,41 @@ def filter_cells(
     )
 
 
+def filter_new_cells(
+    material_library: MaterialsLibrary,
+    blanket_cell_array: BlanketCellArray,
+    divertor_cells=None,  # noqa: ARG001
+    plasma_void=None,  # noqa: ARG001
+):
+    """Bodge method to filter new cells. To be fixed later."""
+    # TODO: make prettier! Delete unwanted parts.
+    cells = chain.from_iterable(blanket_cell_array)
+    fw_surf_cells = [stack[0] for stack in blanket_cell_array] + [
+        stack[1] for stack in blanket_cell_array
+    ]
+    cell_filter = openmc.CellFilter(list(cells))
+    fw_surf_filter = openmc.CellFilter(fw_surf_cells)
+    mat_filter = openmc.MaterialFilter(list(asdict(material_library).values()))
+    neutron_filter = openmc.ParticleFilter(["neutron"])
+    photon_filter = openmc.ParticleFilter(["photon"])
+
+    return (
+        cell_filter,
+        mat_filter,
+        fw_surf_filter,
+        neutron_filter,
+        photon_filter,
+        None,
+    )
+
+
 def _create_tallies_from_filters(
     cell_filter: openmc.CellFilter,  # noqa: ARG001
     mat_filter: openmc.MaterialFilter,
     fw_surf_filter: openmc.CellFilter,
     neutron_filter: openmc.ParticleFilter,
     photon_filter: openmc.ParticleFilter,
-    cyl_mesh_filter: openmc.MeshFilter,  # noqa: ARG001
+    cyl_mesh_filter: openmc.MeshFilter | None = None,  # noqa: ARG001
 ) -> None:
     """
     Produces tallies for OpenMC scoring.

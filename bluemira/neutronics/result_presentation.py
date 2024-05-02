@@ -18,7 +18,7 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import PlasmaGeometry, TokamakGeometry
+from bluemira.neutronics.params import PlasmaSourceParametersPPS, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -123,17 +123,12 @@ class OpenMCResult:
     cell_vols: dict  # [m^3]
     mat_names: dict
 
-    volume_file: str
-    stochastic_cell_volumes: dict[int, float] | None = None
-    volume_state: openmc.VolumeCalculation | None = None
-
     @classmethod
     def from_run(
         cls,
         universe: openmc.Universe,
         src_rate: float,
-        statepoint_file: str = "statepoint.2.h5",
-        volume_file: str = "volume_1.h5",
+        statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -145,9 +140,14 @@ class OpenMCResult:
                 mat_names[_cell.fill.id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
+        # TODO: obsolete: remove this if statement when neutronics.ex.py is
+        # deleted from feature/neutronics.
+        if not statepoint_file:
+            # backwards compatible with neutronics.ex.py.
+            statepoint_file = "statepoint.2.h5"
         cell_vols = {}
         for cell_id in universe.cells:
-            if isinstance(cell_vols, float):
+            if isinstance(universe.cells[cell_id].volume, float):
                 cell_vols[cell_id] = raw_uc(
                     universe.cells[cell_id].volume, "cm^3", "m^3"
                 )
@@ -157,9 +157,6 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
-        volume_state, st_cell_volumes = cls._load_volume_calculation(
-            volume_file, cell_names
-        )
 
         return cls(
             universe=universe,
@@ -178,15 +175,24 @@ class OpenMCResult:
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
             ),
-            stochastic_cell_volumes=st_cell_volumes,
-            volume_state=volume_state,
-            volume_file=volume_file,
         )
 
     @staticmethod
-    def _load_volume_calculation(volume_file, cell_names):
-        if Path(volume_file).is_file():
-            vol_results = openmc.VolumeCalculation.from_hdf5("volume_1.h5")
+    def _load_volume_calculation_from_file(
+        volume_file_path: Path, cell_names: list[str]
+    ):
+        """
+        Load the volume file to record as volume information.
+
+        Parameters
+        ----------
+        volume_file_path
+
+        Cell_names
+            indicative names to print.
+        """
+        if volume_file_path.is_file():
+            vol_results = openmc.VolumeCalculation.from_hdf5(volume_file_path)
             vols = vol_results.volumes
             ids = list(vols.keys())
             cell_volumes = {
@@ -374,15 +380,10 @@ class OpenMCResult:
                 self.neutron_wall_load,
                 self.photon_heat_flux,
             ),
-            strict=False,
+            strict=True,
         ):
-            ret_str = f"{ret_str}\n{title}\n{self._tabulate(data)}"
+            ret_str = ret_str + f"\n{title}\n{self._tabulate(data)}"
 
-        if self.stochastic_cell_volumes is not None:
-            ret_str += (
-                "\nStochastic Cell Volumes (m^3) \n"
-                f"{self._tabulate(self.stochastic_cell_volumes)}"
-            )
         return ret_str
 
     @staticmethod
@@ -403,7 +404,7 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells: dict[str, list[openmc.Cell] | openmc.Cell],
-    plasma_geometry: PlasmaGeometry,
+    plasma_source_params: PlasmaSourceParametersPPS,
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
@@ -415,11 +416,9 @@ def geometry_plotter(
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
 
-    plasma_geometry:
-        dataclass containing the plasma geometry, including major_r, minor_r, elong.
-
     tokamak_geometry:
-        dataclass containing the tokamak geometry. See TokamakGeometry for details.
+        dataclass containing the tokamak geometry.
+        See :class:`~bluemira.neutronics.params.TokamakGeometry` for details.
 
     Returns
     -------
@@ -476,8 +475,9 @@ def geometry_plotter(
     color_cells("divertor", "regions", "cyan")
 
     plot_width = 2 * (
-        plasma_geometry.cgs.major_r
-        + plasma_geometry.cgs.minor_r * plasma_geometry.cgs.elong
+        plasma_source_params.plasma_physics_units.major_radius
+        + plasma_source_params.plasma_physics_units.minor_radius
+        * plasma_source_params.plasma_physics_units.elongation
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
         + tokamak_geometry.cgs.outb_mnfld_thick

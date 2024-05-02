@@ -10,13 +10,13 @@ from __future__ import annotations
 import dataclasses
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from openmc import Materials
 
 import bluemira.neutronics.materials_definition as md
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
+from bluemira.neutronics.params import BlanketLayers, BlanketType
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -43,7 +43,7 @@ def duplicate_mat_as(
 class ReactorBaseMaterials:
     """Minimum set of materials that can create a tokamak.
     The rest can be populated by duplication using a priori knowledge,
-    e.g. inobard material = outboard material etc.
+    e.g. inboard material = outboard material etc.
     """
 
     inb_vv_mat: HomogenisedMixture
@@ -293,14 +293,6 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     )
 
 
-class BlanketType(Enum):
-    """Types of allowed blankets, named by their acronyms."""
-
-    DCLL = auto()
-    HCPB = auto()
-    WCLL = auto()
-
-
 @dataclass
 class MaterialsLibrary:
     """A dictionary of materials according to the type of blanket used"""
@@ -381,3 +373,17 @@ class MaterialsLibrary:
         """Exports material defintions to xml"""
         material_list = Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)
+
+    def match_blanket_material(self, blanket_cell_type: BlanketLayers, *, inboard: bool):
+        """Choose the appropriate blanket material for the given blanket cell type."""
+        if blanket_cell_type == BlanketLayers.Surface:
+            return self.inb_sf_mat if inboard else self.outb_sf_mat
+        if blanket_cell_type == BlanketLayers.FirstWall:
+            return self.inb_fw_mat if inboard else self.outb_fw_mat
+        if blanket_cell_type == BlanketLayers.BreedingZone:
+            return self.inb_bz_mat if inboard else self.outb_bz_mat
+        if blanket_cell_type == BlanketLayers.Manifold:
+            return self.inb_mani_mat if inboard else self.outb_mani_mat
+        if blanket_cell_type == BlanketLayers.VacuumVessel:
+            return self.inb_vv_mat if inboard else self.outb_vv_mat
+        raise TypeError("Accepted cell_types are in BlanketLayers.")

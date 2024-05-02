@@ -5,14 +5,47 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """dataclasses containing parameters used to set up the openmc model."""
 
-from dataclasses import asdict, dataclass
-from pathlib import Path
-from typing import Literal
+from __future__ import annotations
 
+from dataclasses import asdict, dataclass
+from enum import Enum, auto
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
+
+import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
-from bluemira.neutronics.make_materials import BlanketType
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.error import GeometryError
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+class BlanketLayers(Enum):
+    """
+    The five layers of the blanket as used in the neutronics simulation.
+
+    Variables
+    ---------
+    Surface
+        The surface layer of the first wall.
+    First wall
+        Typically made of tungsten or Eurofer
+    BreedingZone
+        Where tritium is bred
+    Manifold
+        The pipe works and supporting structure
+    VacuumVessel
+        The vacuum vessel keeping the plasma from mixing with outside air.
+    """
+
+    Surface = auto()
+    FirstWall = auto()
+    BreedingZone = auto()
+    Manifold = auto()
+    VacuumVessel = auto()
 
 
 @dataclass
@@ -44,7 +77,6 @@ class OpenMCSimulationRuntimeParameters:
     """
 
     # Parameters used outside of setup_openmc()
-    parametric_source: bool  # to use the pps_isotropic module or not.
     particles: int  # number of particles used in the neutronics simulation
     cross_section_xml: str | Path
     batches: int = 2
@@ -54,8 +86,17 @@ class OpenMCSimulationRuntimeParameters:
     )
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
+    parametric_source: bool = True
     # number of particles used in the volume calculation.
     volume_calc_particles: int = int(4e8)
+
+
+class BlanketType(Enum):
+    """Types of allowed blankets, named by their acronyms."""
+
+    DCLL = auto()
+    HCPB = auto()
+    WCLL = auto()
 
 
 @dataclass
@@ -69,8 +110,9 @@ class BreederTypeParameters:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParametersBase:
-    """Parameters describing how the tokamak is operated,
+class PlasmaSourceParameters:
+    """
+    Parameters describing the plasma source,
     i.e. where the plasma is positioned (and therefore where the power is concentrated),
     and what temperature the plasma is at.
 
@@ -92,28 +134,64 @@ class TokamakOperationParametersBase:
         shifted compared to the geometric center of the poloidal cross-section.
     """
 
+    major_radius: float  # [m]
+    aspect_ratio: float  # [dimensionless]
+    elongation: float  # [dimensionless]
+    triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
     peaking_factor: float  # [dimensionless]
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
 
+    def __post_init__(self):
+        """Check dimensionless variables are sensible."""
+        if self.peaking_factor < 1.0:
+            raise ValueError(
+                "Peaking factor (peak heat load/avg. heat load) "
+                "must be larger than 1, by definition."
+            )
+        if self.aspect_ratio < 1.0:
+            raise GeometryError(
+                "By construction, tokamak aspect ratio " "can't be smaller than 1."
+            )
+        if self.elongation < 1.0:
+            raise GeometryError("Elongation can't be smaller than 1")
+        if abs(self.triangularity) > 1.0:
+            # triangularity <0 is known as reversed/ negative triangularity.
+            bluemira_warn(
+                "Triangularity with magnitude >1 implies that the difference"
+                "between the major radius and R_upper is larger than the minor radius."
+            )
+
+    @property
+    def minor_radius(self):
+        """Calculate minor radius from
+        aspect_ratio = major_radius/minor_radius
+        """
+        return self.major_radius / self.aspect_ratio
+
 
 @dataclass(frozen=True)
-class TokamakOperationParameters(TokamakOperationParametersBase):
-    """See TokamakOperationParametersBase
+class PlasmaSourceParametersPPS(PlasmaSourceParameters):
+    """See PlasmaSourceParameters
 
     Addition of plasma_physics_units converted variables
     """
 
-    plasma_physics_units: TokamakOperationParametersBase
+    plasma_physics_units: PlasmaSourceParameters
 
     @classmethod
-    def from_si(cls, op_params: TokamakOperationParametersBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakOperationParametersBase`
+    def from_si(cls, op_params: PlasmaSourceParameters):
+        """
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
+
+        This gives the illusion that self.cgs.x = scale_factor*self.x
+        We rely on the 'frozen' nature of this dataclass so these links don't break.
         """
         conversion = {
+            "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
             "shaf_shift": ("m", "cm"),
@@ -124,64 +202,137 @@ class TokamakOperationParameters(TokamakOperationParametersBase):
         for k, v in op_pps.items():
             if k in conversion:
                 op_pps[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=TokamakOperationParametersBase(**op_pps))
+        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
 
 
-@dataclass(frozen=True)
-class PlasmaGeometryBase:
-    """List of parameters describing the
+@dataclass
+class BlanketThickness:
+    """
+    Give the depth of the interfaces between blanket layers.
 
     Parameters
     ----------
-    major_r:
-        major radius [m]
-        how far is the origin in the poloidal view from the center of the torus.
-    minor_r:
-        minor radius [m] (R0 in equation referenced below)
-        radius of the poloidal cross-section
-    elong:
-        elongation [dimensionless] (a in equation referenced below)
-        how eccentric the poloidal ellipse is
-    triang:
-        triangularity [dimensionless] (δ in equation referenced below)
-        second order eccentricity (best visualized by plotting R(θ) wrt.θ in eq. below)
+    surface
+        Thickness of the surface layer of the blanket. Can be zero.
+        Only used for tallying purpose, i.e. not a physical component.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    first_wall
+        Thickness of the first wall.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    breeding_zone
+        Thickness of the breedng zone. Could be zero if the breeding zone is absent.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
 
-    Notes
-    -----
-    R = R0 + a cos(θ + δ sin θ)
-    https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
-    page.239 # noqa: W505
+    Note
+    ----
+    Thickness of the vacuum vessel is not required because we we assume it fills up the
+    remaining space between the manifold's end and the outer_boundary.
     """
 
-    major_r: float
-    minor_r: float
-    elong: float
-    triang: float
+    surface: float
+    first_wall: float
+    breeding_zone: float
+
+    def get_interface_depths(self):
+        """Return the depth of the interface layers"""
+        return np.cumsum([
+            self.surface,
+            self.first_wall,
+            self.breeding_zone,
+        ])
 
 
-@dataclass(frozen=True)
-class PlasmaGeometry(PlasmaGeometryBase):
-    """See PlasmaGeometryBase
+@dataclass
+class DivertorThickness:
+    """
+    Divertor dimensions.
+    For now it only has 1 value: the surface layer thickness.
 
-    Addition of cgs converted variables
+    Parameters
+    ----------
+    surface
+        The surface layer of the divertor, which we expect to be made of a different
+        material (e.g. Tungsten or alloy of Tungsten) from the bulk support & cooling
+        structures of the divertor.
     """
 
-    cgs: PlasmaGeometryBase
+    surface: float
+
+
+@dataclass
+class ToroidalFieldCoilDimension:
+    """
+    Gives the toroidal field coil diameters. Working with the simplest assumption, we
+    assume that the tf coil is circular for now.
+
+    Parameters
+    ----------
+    inner_diameter
+        (i.e. inner diameter of the windings.)
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    outer_diameter
+        Outer diameter of the windings.
+        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
+    """
+
+    inner_diameter: float
+    outer_diameter: float
+
+
+@dataclass
+class TokamakDimensions:
+    """
+    The dimensions of the simplest axis-symmetric case of the tokamak.
+
+    Parameters
+    ----------
+    inboard
+        thicknesses of the inboard blanket
+    outboard
+        thicknesses of the outboard blanket
+    divertor
+        thicknesses of the divertor components
+    central_solenoid
+        diameters of the toroidal field coil in the
+    """
+
+    inboard: BlanketThickness
+    inboard_outboard_transition_radius: float
+    outboard: BlanketThickness
+    divertor: DivertorThickness
+    central_solenoid: ToroidalFieldCoilDimension
 
     @classmethod
-    def from_si(cls, plasma_geometry: PlasmaGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.PlasmaGeometryBase`
+    def from_tokamak_geometry_base(
+        cls,
+        tokamak_geometry_base: TokamakGeometry,
+        major_radius,
+        divertor_thickness,
+        tf_inner_radius,
+        tf_outer_radius,
+    ):
+        """Bodge method that can be deleted later once
+        :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
         """
-        pg = asdict(plasma_geometry)
-        pgcgs = pg.copy()
-        for k, v in pgcgs.items():
-            if k.endswith("_r"):  # minor and major radii
-                pgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**pg, cgs=PlasmaGeometryBase(**pgcgs))
+        return cls(
+            BlanketThickness(
+                0.01,
+                tokamak_geometry_base.inb_fw_thick,
+                tokamak_geometry_base.inb_bz_thick,
+            ),
+            major_radius,
+            BlanketThickness(
+                0.01,
+                tokamak_geometry_base.outb_fw_thick,
+                tokamak_geometry_base.outb_bz_thick,
+            ),
+            DivertorThickness(divertor_thickness),
+            ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
+        )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
+# feature/neutronics.
 class TokamakGeometryBase:
     """
     The thickness measurements for all of the generic components of the tokamak.
@@ -192,7 +343,7 @@ class TokamakGeometryBase:
     inb_bz_thick:     inboard breeding zone thickness [m]
     inb_mnfld_thick:  inboard manifold thickness [m]
     inb_vv_thick:     inboard vacuum vessel thickness [m]
-    tf_thick:         toroidal field thickness [m]
+    tf_thick:         toroidal field coil thickness [m]
     outb_fw_thick:    outboard first wall thickness [m]
     outb_bz_thick:    outboard breeding zone thickness [m]
     outb_mnfld_thick: outboard manifold thickness [m]
@@ -212,7 +363,8 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
+# feature/neutronics.
 class TokamakGeometry(TokamakGeometryBase):
     """See TokamakGeometryBase
 
@@ -222,11 +374,14 @@ class TokamakGeometry(TokamakGeometryBase):
     cgs: TokamakGeometryBase
 
     @classmethod
-    def from_si(cls, tokamak_geometry: TokamakGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakGeometryBase`
+    def from_si(cls, tokamak_geometry_base: TokamakGeometryBase):
         """
-        tg = asdict(tokamak_geometry)
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.TokamakGeometryBase`
+        This gives the illusion that self.cgs.x = 100*self.x. We rely on the 'frozen'
+        nature of this dataclass so these links don't break.
+        """
+        tg = asdict(tokamak_geometry_base)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
@@ -235,7 +390,7 @@ class TokamakGeometry(TokamakGeometryBase):
 
 def get_preset_physical_properties(
     blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
+) -> tuple[BreederTypeParameters, TokamakGeometryBase]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
@@ -269,13 +424,6 @@ def get_preset_physical_properties(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-
-    plasma_geometry = PlasmaGeometryBase(
-        major_r=8.938,  # [m]
-        minor_r=2.883,  # [m]
-        elong=1.65,  # [dimensionless]
-        triang=0.333,  # [m]
-    )
 
     shared_building_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
@@ -315,4 +463,4 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.560,  # [m]
         )
 
-    return breeder_materials, plasma_geometry, tokamak_geometry
+    return breeder_materials, tokamak_geometry

@@ -14,7 +14,24 @@ from bluemira.base.constants import (
     N_AVOGADRO,
     raw_uc,
 )
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.plasma_physics.reactions import E_DT_fusion
+
+DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
+
+
+def to_cm(m):  # noqa: D103
+    return raw_uc(m, "m", "cm")
+
+
+def to_m(cm):  # noqa: D103
+    return raw_uc(cm, "cm", "m")
+
+
+def to_cm3(m3):  # noqa: D103
+    # for some reason raw_uc(m3, "m^3", "cm^3") returns 999999.9999999999 instead.
+    return m3 * 1_000_000
+
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
@@ -27,6 +44,12 @@ dt_neutron_energy = energy_per_dt * (
 
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
+
+# how many degrees misalignment tolerated while merging almost-parallel wires into one.
+TOLERANCE_DEGREES = 6.0
+# Default value to discretize the BluemiraWire.
+# Set to 10 to preserve speed without too much loss in precision.
+DISCRETIZATION_LEVEL = 10
 
 
 # The following material science constants are in cgs.

@@ -1,0 +1,175 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# ruff: noqa: D105
+"""
+Info about straight line wires and circles. Made to be simpler to modify than a whole
+BluemiraWire.
+"""
+
+from __future__ import annotations
+
+from collections import abc
+from dataclasses import dataclass
+from itertools import pairwise
+from typing import TYPE_CHECKING, NamedTuple
+
+import numpy as np
+from numpy import typing as npt
+
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
+from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+
+class StraightLineInfo(NamedTuple):
+    """Key information about a straight line"""
+
+    start_point: Iterable[float]  # 3D coordinates
+    end_point: Iterable[float]  # 3D coordinates
+
+    def reverse(self) -> StraightLineInfo:
+        """Flip the wire"""
+        return StraightLineInfo(self.end_point, self.start_point)
+
+
+class CircleInfo(NamedTuple):
+    """Arc of a Circle, LESS THAN 180°"""
+
+    start_point: Iterable[float]  # 3D coordinates
+    end_point: Iterable[float]  # 3D coordinates
+    center: Iterable[float]  # 3D coordinates
+    radius: float  # scalar
+
+    def reverse(self) -> CircleInfo:
+        """Flip the wire"""
+        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)
+
+
+@dataclass
+class WireInfo:
+    """
+    A tuple to store:
+    1. the key points about this wire (and what kind of wire this is)
+    2. The tangent to that wire at the start and end
+    3. A copy of the wire itself
+    """
+
+    # TODO: Perhaps implement more classes so it also work with splines? Or justify why
+    # we don't need to. Or merge this invention into an existing issue?
+
+    key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
+    tangents: Sequence[Iterable[float]] | None  # 2 normalized directional vectors xyz
+    wire: BluemiraWire | None = None
+
+    def reverse(self):
+        """Flip the wire"""
+        return WireInfo(self.key_points.reverse(), self.tangents[::-1], None)
+
+    @classmethod
+    def from_2P(  # noqa: N802
+        cls, start_point: npt.NDArray[float], end_point: npt.NDArray[float]
+    ) -> WireInfo:
+        """
+        Create the WireInfo for a straight line (i.e. one where the key_points is of
+        instance StraightLineInfo) using only two points.
+        """
+        direction = np.array(end_point) - np.array(start_point)
+        normed_dir = direction / np.linalg.norm(direction)
+        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
+
+
+class WireInfoList(abc.Sequence):
+    """A class to store info about a series of wires"""
+
+    def __init__(self, info_list: list[WireInfo]):
+        self.info_list = list(info_list)
+        for prev_wire, curr_wire in pairwise(self):
+            if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
+                raise GeometryError("Next wire must start where the previous wire stops")
+
+    def __len__(self) -> int:
+        return self.info_list.__len__()
+
+    def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
+        return self.info_list.__getitem__(index_or_slice)
+
+    def __add__(self, other_info_list) -> WireInfoList:
+        return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
+
+    def __repr__(self) -> str:
+        return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
+
+    def pop(self, index):
+        """Pop one element"""
+        return self.info_list.pop(index)
+
+    def get_3D_coordinates(self) -> npt.NDArray:
+        """
+        Get of the entire wire.
+        """
+        # assume continuity, which is already enforced during initialization, so we
+        # should be fine.
+        coords = [self[0].key_points[0]]
+        coords.extend(seg.key_points[1] for seg in self)
+        return np.array(coords, dtype=float)  # shape = (N+1, 3)
+
+    @property
+    def start_point(self):
+        """The start_point for the entire series of wires"""
+        return self.info_list[0].key_points[0]
+
+    @start_point.setter
+    def start_point(self, new_start_point: npt.NDArray[float]):
+        """
+        Set the start_point to somewhere new. Note this doesn't change the tangents.
+        """
+        old_kp = self.info_list[0].key_points
+        # have to break it open because it's an immutable NamedTuple.
+        new_kp = old_kp.__class__(new_start_point, *old_kp[1:])
+        self.info_list[0].key_points = new_kp
+
+    @property
+    def end_point(self):
+        """The end_point for the entire series of wires"""
+        return self.info_list[-1].key_points[1]
+
+    @end_point.setter
+    def end_point(self, new_end_point):
+        """Set the end_point to somewhere new. Note this doesn't change the tangents."""
+        old_kp = self.info_list[-1].key_points
+        new_kp = old_kp.__class__(old_kp[0], new_end_point, *old_kp[2:])
+        self.info_list[0].key_points = new_kp
+
+    def reverse(self) -> WireInfoList:
+        """Flip this list of wires"""
+        return WireInfoList([info.reverse() for info in self.info_list[::-1]])
+
+    def restore_to_wire(self) -> BluemiraWire:
+        """Re-create a bluemira wire from a series of WireInfo."""
+        wire_list = []
+        for info in self:
+            start_end = np.array(info.key_points[:2])
+            if info.wire:
+                # quick way to get the wire back without doing any computation is by
+                # directly copying.
+                wire_list.append(info.wire)
+                continue
+            if isinstance(info.key_points, StraightLineInfo):
+                info.wire = make_polygon(start_end.T, closed=False)
+                wire_list.append(info.wire)
+            else:
+                # given two points on the circumference, only makes the SHORTER of the
+                # two possible arcs of the circle.
+                chord_intersect = start_end.mean(axis=0)
+                direction = chord_intersect - info.key_points.center
+                normed_dir = direction / np.linalg.norm(direction)
+                middle = info.key_points.center + info.key_points.radius * normed_dir
+                info.wire = make_circle_arc_3P(start_end[0], middle, start_end[1])
+                wire_list.append(info.wire)
+        return BluemiraWire(wire_list)
