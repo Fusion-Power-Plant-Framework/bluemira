@@ -23,7 +23,6 @@ from bluemira.neutronics.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
     DivertorCellArray,
-    TFCoils,
     flat_intersection,
     flat_union,
 )
@@ -107,7 +106,7 @@ class CellStage:
 
     blanket: BlanketCellArray
     divertor: DivertorCellArray
-    tf_coils: TFCoils
+    tf_coils: list[openmc.Cell]
     central_solenoid: openmc.Cell
     plasma: openmc.Cell
     ext_void: openmc.Cell
@@ -245,7 +244,7 @@ def make_coils(
     z_min: float,
     z_max: float,
     material_library,
-) -> tuple[openmc.Cell, TFCoils]:
+) -> tuple[openmc.Cell, list[openmc.Cell]]:
     """
     Make tf coil and the central solenoid. The former wraps around the latter.
 
@@ -279,13 +278,13 @@ def make_coils(
         fill=material_library.container_mat,
         region=+bottom & -top & -solenoid,
     )
-    tf_coils = TFCoils([
+    tf_coils = [
         openmc.Cell(
             name="TF coil (sheath around central solenoid)",
             fill=material_library.tf_coil_mat,
             region=+bottom & -top & +solenoid & -central_tf_coil,
         )
-    ])
+    ]
     central_solenoid.volume = (top.z0 - bottom.z0) * np.pi * solenoid.r**2
     tf_coils[0].volume = (
         (top.z0 - bottom.z0) * np.pi * (central_tf_coil.r**2 - solenoid.r**2)
@@ -371,7 +370,13 @@ def make_void_cells(
 
 
 def set_volumes(
-    universe, tf_coils, central_solenoid, ext_void, blanket, divertor, plasma
+    universe: openmc.Universe,
+    tf_coils: list[openmc.Cell],
+    central_solenoid: openmc.Cell,
+    ext_void: openmc.Cell,
+    blanket: BlanketCellArray,
+    divertor: DivertorCellArray,
+    plasma: openmc.Cell,
 ):
     """
     Sets the volume of the voids. Not necessary/ used anywhere yet.
@@ -405,7 +410,7 @@ def make_cell_arrays(
     csg: BluemiraNeutronicsCSG,
     *,
     control_id: bool = False,
-) -> tuple[CellStage, PreCellStage]:
+) -> CellStage:
     """Make pre-cell arrays for the blanket and the divertor.
 
     Parameters
@@ -538,26 +543,25 @@ def csg_tokamak(
         panel_break_points, divertor_wire, boundary, vacuum_vessel_wire
     )
 
-    cutting = CuttingStage(
-        blanket=PanelsAndExteriorCurve(
-            geom.panel_break_points, geom.boundary, vacuum_vessel_wire
-        ),
-        divertor=DivertorWireAndExteriorCurve(
-            geom.divertor_wire, geom.boundary, vacuum_vessel_wire
-        ),
-    )
     pre_cell_arrays = make_pre_cell_arrays(
         geom,
-        cutting,
+        CuttingStage(
+            blanket=PanelsAndExteriorCurve(
+                geom.panel_break_points, geom.boundary, vacuum_vessel_wire
+            ),
+            divertor=DivertorWireAndExteriorCurve(
+                geom.divertor_wire, geom.boundary, vacuum_vessel_wire
+            ),
+        ),
         snap_to_horizontal_angle=snap_to_horizontal_angle,
         blanket_discretisation=blanket_discretisation,
         divertor_discretisation=divertor_discretisation,
     )
 
-    csg = BluemiraNeutronicsCSG()
-
-    cell_arrays = make_cell_arrays(
-        mat_lib, tokamak_dimensions, pre_cell_arrays, csg, control_id=control_id
+    return pre_cell_arrays, make_cell_arrays(
+        mat_lib,
+        tokamak_dimensions,
+        pre_cell_arrays,
+        BluemiraNeutronicsCSG(),
+        control_id=control_id,
     )
-
-    return pre_cell_arrays, cell_arrays

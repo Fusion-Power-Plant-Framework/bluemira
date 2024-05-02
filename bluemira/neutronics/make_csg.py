@@ -32,7 +32,7 @@ from bluemira.neutronics.radial_wall import (
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     import numpy.typing as npt
 
@@ -145,8 +145,10 @@ def check_inboard_outboard(
     """If this pre-cell is an inboard, return True.
     Otherwise, this pre-cell belongs to outboard, return False
     """
-    cell_reference_radius = pre_cell.vertex[0].mean()
-    return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
+    # reference radius
+    return (
+        pre_cell.vertex[0].mean() < blanket_dimensions.inboard_outboard_transition_radius
+    )
 
 
 def torus_from_3points(
@@ -183,7 +185,7 @@ def torus_from_circle(
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
-):
+) -> openmc.ZTorus:
     """
     Make a circular torus centered on the z-axis.
     The circle would lie on the RZ plane AND the surface of the torus simultaneously.
@@ -203,7 +205,7 @@ def torus_from_circle(
 
 
 def z_torus(
-    center: npt.NDArray[np.float64],
+    center: npt.ArrayLike,
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
@@ -515,22 +517,22 @@ class BluemiraNeutronicsCSG:
         +------------+---------+------------+
         | upper cone | outside | lower cone |
         +============+=========+============+
-        |    Y       |     N   |      N     |
+        |      Y     |    N    |      N     |
         +------------+---------+------------+
-        |    Y       |     Y   |      N     |
+        |      Y     |    Y    |      N     |
         +------------+---------+------------+
-        |    N       |     Y   |      N     |
+        |      N     |    Y    |      N     |
         +------------+---------+------------+
-        |    N       |     Y   |      Y     |
+        |      N     |    Y    |      Y     |
         +------------+---------+------------+
-        |    N       |     N   |      Y     |
+        |      N     |    N    |      Y     |
         +------------+---------+------------+
 
         All other cases should raise an error.
         The tricky part to handle is the floating point precision problem.
         It's possible that th every point used to create the cone does not lie on the
         cone/ lies on the wrong side of the cone.
-        Hence the first step is to shink the choice_points by 0.5%
+        Hence the first step is to shrink the choice_points by 0.5%
         towards the centroid.
 
         Parameters
@@ -589,24 +591,22 @@ class BluemiraNeutronicsCSG:
 
         if all(upper_cone):
             # everything in the upper cone.
-            plane = (
-                self.find_suitable_z_plane(  # the highest we can cut is at the lowest z.
-                    to_m(surface.z0),
-                    to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
-                    surface_id=surface_id,
-                    name=f"Ambiguity plane for cone {surface.id}",
-                )
+            # the highest we can cut is at the lowest z.
+            plane = self.find_suitable_z_plane(
+                to_m(surface.z0),
+                to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
+                surface_id=surface_id,
+                name=f"Ambiguity plane for cone {surface.id}",
             )
             return -surface & +plane
         if all(lower_cone):
             # everything in the lower cone
-            plane = (
-                self.find_suitable_z_plane(  # the lowest we can cut is at the highest z.
-                    to_m(surface.z0),
-                    to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
-                    surface_id=surface_id,
-                    name=f"Ambiguity plane for cone {surface.id}",
-                )
+            # the lowest we can cut is at the highest z.
+            plane = self.find_suitable_z_plane(
+                to_m(surface.z0),
+                to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
+                surface_id=surface_id,
+                name=f"Ambiguity plane for cone {surface.id}",
             )
             return -surface & -plane
         if all(np.logical_or(upper_cone, lower_cone)):
@@ -614,7 +614,8 @@ class BluemiraNeutronicsCSG:
                 "Both cones have vertices lying inside! Cannot compute a contiguous "
                 "region that works for both. Check if polygon is convex?"
             )
-        plane = self.find_suitable_z_plane(  # In this rare case, make its own plane.
+        # In this rare case, make its own plane.
+        plane = self.find_suitable_z_plane(
             to_m(surface.z0),
             to_m([surface.z0 + DTOL_CM, surface.z0 - DTOL_CM]),
             surface_id=surface_id,
@@ -628,7 +629,9 @@ class BluemiraNeutronicsCSG:
 
     def choose_region(
         self,
-        surface: openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None],
+        surface: openmc.Surface
+        | tuple[openmc.Surface]
+        | tuple[openmc.Surface | openmc.ZTorus],
         vertices_array: npt.NDArray,
         *,
         control_id: bool = False,
@@ -648,7 +651,7 @@ class BluemiraNeutronicsCSG:
             array of shape (?, 3), that the final region should include.
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.choose_region_cone`
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
 
         Returns
         -------
@@ -701,7 +704,7 @@ class BluemiraNeutronicsCSG:
             least on the edge of the returned Region.
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.choose_region_cone`
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
 
         Returns
         -------
@@ -709,14 +712,11 @@ class BluemiraNeutronicsCSG:
             openmc.Intersection of a list of
             [(openmc.Halfspace) or (openmc.Union of openmc.Halfspace)]
         """
-        intersection_regions = []
-        for surface in series_of_surfaces:
-            if surface is None:
-                continue
-            intersection_regions.append(
-                self.choose_region(surface, vertices_array, control_id=control_id)
-            )
-        return flat_intersection(intersection_regions)
+        return flat_intersection([
+            self.choose_region(surface, vertices_array, control_id=control_id)
+            for surface in series_of_surfaces
+            if surface is not None
+        ])
 
 
 class BlanketCell(openmc.Cell):
@@ -826,6 +826,10 @@ class BlanketCellStack:
         """Get cell from stack"""
         return self.cell_stack[index_or_slice]
 
+    def __iter__(self) -> Iterator[BlanketCell]:
+        """Iterator for BlanketCellStack"""
+        return iter(self.cell_stack)
+
     def __repr__(self) -> str:
         """String representation"""
         return (
@@ -896,7 +900,7 @@ class BlanketCellStack:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
         """
         return csg.region_from_surface_series(
             [
@@ -918,9 +922,9 @@ class BlanketCellStack:
         pre_cell: PreCell,
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
-        depth_series: Sequence,
+        depth_series: npt.NDArray,
         csg: BluemiraNeutronicsCSG,
-        fill_lib: dict[str, openmc.Material],
+        fill_lib: MaterialsLibrary,
         *,
         inboard: bool,
         blanket_stack_num: int | None = None,
@@ -1111,6 +1115,10 @@ class BlanketCellArray:
         """Get cell stack"""
         return self.blanket_cell_array[index_or_slice]
 
+    def __iter__(self) -> Iterator[BlanketCellStack]:
+        """Iterator for BlanketCellArray"""
+        return iter(self.blanket_cell_array)
+
     def __repr__(self) -> str:
         """String representation"""
         return (
@@ -1174,7 +1182,7 @@ class BlanketCellArray:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         return openmc.Union([
             self.csg.region_from_surface_series(
@@ -1216,7 +1224,7 @@ class BlanketCellArray:
             dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
 
@@ -1440,6 +1448,10 @@ class DivertorCellStack:
         """Get item for DivertorCellStack"""
         return self.cell_stack[index_or_slice]
 
+    def __iter__(self) -> Iterator[DivertorCell]:
+        """Iterator for DivertorCellStack"""
+        return iter(self.cell_stack)
+
     def __repr__(self) -> str:
         """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} DivertorCells at ")
@@ -1607,6 +1619,10 @@ class DivertorCellArray:
         """Get item for DivertorCellArray"""
         return self.cell_array[index_or_slice]
 
+    def __iter__(self) -> Iterator[DivertorCellStack]:
+        """Iterator for DivertorCellArray"""
+        return iter(self.cell_array)
+
     def __repr__(self) -> str:
         """String representation"""
         return (
@@ -1741,27 +1757,3 @@ class DivertorCellArray:
         return [
             openmc.Cell(region=stack.get_overall_region()) for stack in self.cell_array
         ]
-
-
-class TFCoils:
-    """Turn the divertor into a cell array"""
-
-    def __init__(self, tf_coils: list[openmc.Cell]):
-        """Create array from a list of openmc.Cell."""
-        self.tf_coils = tf_coils
-
-    def __len__(self) -> int:
-        """Get number of tf coil cells"""
-        return len(self.tf_coils)
-
-    def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
-        """Get tf coil cell"""
-        return self.tf_coils[index_or_slice]
-
-    def __repr__(self) -> str:
-        """String representation"""
-        return (
-            super()
-            .__repr__()
-            .replace(" at ", f" of {len(self.tf_coils)} openmc.Cells of tf-coils at")
-        )

@@ -167,6 +167,7 @@ class Setup(CodesSetup):
             "outb_bz_mat",
             "outb_mani_mat",
             "outb_vv_mat",
+            "divertor_mat",
             "div_fw_mat",
         )
 

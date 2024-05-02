@@ -34,7 +34,7 @@ class Vert(IntEnum):
     ext_start = 3
 
 
-def polygon_revolve_signed_volume(polygon: npt.NDArray[np.float64]) -> float:
+def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
 
@@ -120,7 +120,7 @@ class CellWalls:
     pre-cells.
     """
 
-    def __init__(self, cell_walls: npt.NDArray):
+    def __init__(self, cell_walls: npt.ArrayLike):
         """
         Parameters
         ----------
