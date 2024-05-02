@@ -38,7 +38,8 @@ def run_neutronics(
     obj = OpenMCNeutronicsSolver(
         params,
         build_config,
-        blanket_wire=blanket_outer_boundary,
+        blanket_panel_points=blanket_panel_points,
+        blanket_outer_boundary=blanket_outer_boundary,
         divertor_wire=divertor_wire,
         vv_wire=vv_wire,
         source=source or make_pps_source,
