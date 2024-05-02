@@ -7,10 +7,11 @@
 
 from collections.abc import Callable
 from contextlib import contextmanager
-from dataclasses import fields
+from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import openmc
@@ -34,7 +35,6 @@ from bluemira.neutronics.make_csg import (
 from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
     OpenMCNeutronicsSolverParams,
-    OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
 )
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
@@ -51,6 +51,48 @@ class OpenMCRunModes(BaseRunMode):
 
 
 OPENMC_NAME = "OpenMC"
+
+
+@dataclass
+class OpenMCSimulationRuntimeParameters:
+    """Parameters used in the actual simulation
+
+    Parameters
+    ----------
+    particles:
+        Number of neutrons emitted by the plasma source per batch.
+    batches:
+        How many batches to simulate.
+    photon_transport:
+        Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
+    electron_treatment:
+        The way in which OpenMC handles secondary charged particles.
+        'thick-target bremsstrahlung' or 'local energy deposition'
+        'thick-target bremsstrahlung' accounts for the energy carried away by
+        bremsstrahlung photons and deposited elsewhere, whereas 'local energy
+        deposition' assumes electrons deposit all energies locally.
+        (the latter is expected to be computationally faster.)
+    run_mode:
+        see below for details:
+        https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
+    openmc_write_summary:
+        whether openmc should write a 'summary.h5' file or not.
+    cross_section_xml:
+        Where the xml file for cross-section is stored locally.
+    """
+
+    # Parameters used outside of setup_openmc()
+    particles: int  # number of particles used in the neutronics simulation
+    cross_section_xml: str | Path
+    batches: int = 2
+    photon_transport: bool = True
+    # Bremsstrahlung only matters for very thin objects
+    electron_treatment: Literal["ttb", "led"] = "led"
+    run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
+    openmc_write_summary: bool = False
+    parametric_source: bool = True
+    plot_axis: str = "xz"
+    plot_pixel_per_metre: int = 100
 
 
 class Setup(CodesSetup):

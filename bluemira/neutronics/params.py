@@ -9,19 +9,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from enum import Enum, auto
-from pathlib import Path
-from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.error import GeometryError
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @dataclass
@@ -88,48 +82,6 @@ class BlanketLayers(Enum):
     BreedingZone = auto()
     Manifold = auto()
     VacuumVessel = auto()
-
-
-@dataclass
-class OpenMCSimulationRuntimeParameters:
-    """Parameters used in the actual simulation
-
-    Parameters
-    ----------
-    particles:
-        Number of neutrons emitted by the plasma source per batch.
-    batches:
-        How many batches to simulate.
-    photon_transport:
-        Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
-    electron_treatment:
-        The way in which OpenMC handles secondary charged particles.
-        'thick-target bremsstrahlung' or 'local energy deposition'
-        'thick-target bremsstrahlung' accounts for the energy carried away by
-        bremsstrahlung photons and deposited elsewhere, whereas 'local energy
-        deposition' assumes electrons deposit all energies locally.
-        (the latter is expected to be computationally faster.)
-    run_mode:
-        see below for details:
-        https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
-    openmc_write_summary:
-        whether openmc should write a 'summary.h5' file or not.
-    cross_section_xml:
-        Where the xml file for cross-section is stored locally.
-    """
-
-    # Parameters used outside of setup_openmc()
-    particles: int  # number of particles used in the neutronics simulation
-    cross_section_xml: str | Path
-    batches: int = 2
-    photon_transport: bool = True
-    # Bremsstrahlung only matters for very thin objects
-    electron_treatment: Literal["ttb", "led"] = "led"
-    run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
-    openmc_write_summary: bool = False
-    parametric_source: bool = True
-    plot_axis: str = "xz"
-    plot_pixel_per_metre: int = 100
 
 
 class BlanketType(Enum):
