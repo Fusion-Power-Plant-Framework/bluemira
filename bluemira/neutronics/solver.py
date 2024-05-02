@@ -26,8 +26,11 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.neutronics.make_csg import BlanketCellArray, BluemiraNeutronicsCSG
-from bluemira.neutronics.neutronics_axisymmetric import make_cell_arrays
+from bluemira.neutronics.make_csg import (
+    BlanketCellArray,
+    BluemiraNeutronicsCSG,
+    make_cell_arrays,
+)
 from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
     OpenMCNeutronicsSolverParams,
