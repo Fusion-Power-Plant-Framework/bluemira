@@ -56,9 +56,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         sh_coil_names: list,
         tolerance: float | npt.NDArray | None = None,
         smallest_tol: float = 1e-6,
-        constraint_type: str = "equality",
-        *,
-        invert: bool = False,
+        constraint_type: str = "inequality",
     ):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
@@ -73,8 +71,6 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self.target_harmonics = ref_harmonics
         self.max_degree = len(ref_harmonics) + 1
-
-        self.invert = invert
 
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
@@ -113,7 +109,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
         self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
-        if self.invert:
+        if self.constraint_type == "inequality":
             self._args["a_mat"] *= -1
             self._args["b_vec"] *= -1
 
