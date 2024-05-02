@@ -21,3 +21,11 @@ class AdvectionTransportError(RadiationTransportError):
     """
     Error class for advective transport solver.
     """
+
+
+class NeutronicsError(RadiationTransportError):
+    """Error for neutronics"""
+
+
+class SourceError(NeutronicsError):
+    """Error for sources"""

@@ -26,14 +26,13 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     PlasmaSourceParameters,
-    PlasmaSourceParametersPPS,
     TokamakGeometry,
     TokamakGeometryBase,
 )
 
 
 def check_geometry(
-    plasma_source_params: PlasmaSourceParameters | PlasmaSourceParametersPPS,
+    plasma_source_params: PlasmaSourceParameters,
     tokamak_geometry: TokamakGeometryBase | TokamakGeometry,
 ) -> None:
     """Some basic geometry checks.
@@ -166,14 +165,14 @@ def elongate(points, adjust_elong):
 
 
 def stretch_r(
-    points, plasma_source_params: PlasmaSourceParametersPPS, stretch_r_val
+    points, plasma_source_params: PlasmaSourceParameters, stretch_r_val
 ) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm
 
     Parameters
     ----------
     points: np.array of 2D or 3D points (coordinates provided in [cm])
-    plasma_source_params: PlasmaSourceParametersPPS
+    plasma_source_params: PlasmaSourceParameters
         The values that we want is actually in plasma_source_params.plasma_physics_units.
         See :class:`~bluemira.neutronics.params.PlasmaParametersPPS`
     stretch_r_val: float
@@ -858,7 +857,7 @@ def make_neutronics_geometry(
 
 
 def load_fw_points(
-    plasma_source_params: PlasmaSourceParametersPPS,
+    plasma_source_params: PlasmaSourceParameters,
     blanket_wire: BluemiraWire,
     divertor_wire: BluemiraWire,
     new_major_radius: float,
@@ -876,7 +875,7 @@ def load_fw_points(
 
     Parameters
     ----------
-    plasma_source_params: PlasmaSourceParametersPPS
+    plasma_source_params: PlasmaSourceParameters
         a dataclass containing plasma geometry parameters:
         major_radius, minor_radius, elongation, triangularity
         See :class:`~bluemira.neutronics.params.PlasmaParametersPPS` for details.

@@ -6,7 +6,9 @@
 """Functions for creating the openmc tallies."""
 
 from dataclasses import asdict
+import os
 from itertools import chain
+from pathlib import Path
 
 import numpy as np
 import openmc
@@ -95,7 +97,7 @@ def filter_cells(
 
 
 def filter_new_cells(
-    material_library: MaterialsLibrary,
+    material_list,
     blanket_cell_array: BlanketCellArray,
     divertor_cells=None,  # noqa: ARG001
     plasma_void=None,  # noqa: ARG001
@@ -108,7 +110,7 @@ def filter_new_cells(
     ]
     cell_filter = openmc.CellFilter(list(cells))
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
-    mat_filter = openmc.MaterialFilter(list(asdict(material_library).values()))
+    mat_filter = openmc.MaterialFilter(material_list)
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
 
@@ -129,6 +131,7 @@ def _create_tallies_from_filters(
     neutron_filter: openmc.ParticleFilter,
     photon_filter: openmc.ParticleFilter,
     cyl_mesh_filter: openmc.MeshFilter | None = None,  # noqa: ARG001
+    out_path: str | os.PathLike = "",
 ) -> None:
     """
     Produces tallies for OpenMC scoring.
@@ -173,7 +176,7 @@ def _create_tallies_from_filters(
         tallies_list.append(tally)
 
     tallies = openmc.Tallies(tallies_list)
-    tallies.export_to_xml()
+    tallies.export_to_xml(Path(out_path, "tallies.xml"))
 
 
 def create_tallies(
