@@ -198,6 +198,8 @@ class TestEQDSKInterface:
 
         assert eq2.nz == 151
         assert eq2.nbdry == 72
+        assert eq2.coil_names is None
+        assert eq2.coil_types is None
 
     def test_derived_field_is_calculated_if_not_given(self):
         data = copy.deepcopy(self.eudemo_sof_data)
