@@ -369,7 +369,7 @@ class MaterialsLibrary:
             ).to_openmc_material(),
         )
 
-    def export(self, path: str | Path = "materials.xml"):
+    def export_to_xml(self, path: str | Path = "materials.xml"):
         """Exports material defintions to xml"""
         material_list = Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)

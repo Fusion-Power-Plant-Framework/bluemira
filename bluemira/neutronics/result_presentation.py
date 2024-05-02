@@ -18,7 +18,7 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import PlasmaSourceParametersPPS, TokamakGeometry
+from bluemira.neutronics.params import PlasmaSourceParameters, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -404,7 +404,7 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells: dict[str, list[openmc.Cell] | openmc.Cell],
-    plasma_source_params: PlasmaSourceParametersPPS,
+    plasma_source_params: PlasmaSourceParameters,
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
