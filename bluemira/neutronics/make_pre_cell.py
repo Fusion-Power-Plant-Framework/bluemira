@@ -39,6 +39,116 @@ CCW_90 = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
 CW_90 = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
 
 
+def ratio_of_distances(
+    point_of_interest: npt.NDArray[np.float64],
+    anchor1: npt.NDArray[np.float64],
+    normal1: npt.NDArray[np.float64],
+    anchor2: npt.NDArray[np.float64],
+    normal2: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """
+    Find how close a point is to line 1 and line 2, and then express that ratio as a
+    tuple of floats that sums up to unit.
+    Each line is given by the user by specifying any point on that line, and a direction
+    NORMAL to that line. The point_of_interest must lie on the positive side of the line.
+
+    Parameters
+    ----------
+    point_of_interest:
+        point to which we want to calculate the ratio of distances.
+    anchor1, anchor2:
+        Any point on line 1 and line 2 respectively.
+    normal1, normal2:
+        The positive distance direction of line 1 and line 2 respectively.
+
+    Returns
+    -------
+    dist_to_1, dist_to_2:
+        ratio of distances. Sum of these two numbers should yield unity (1.0).
+    """
+    dist_to_1 = (point_of_interest - anchor1) @ normal1
+    dist_to_2 = (point_of_interest - anchor2) @ normal2
+    if dist_to_1 < -EPS or dist_to_2 < -EPS:
+        raise GeometryError(
+            "Expecting point_of_interest to lie on the positive side of both lines!"
+        )
+    total_dist = dist_to_1 + dist_to_2
+    return np.array([dist_to_1, dist_to_2]) / total_dist
+
+
+def find_equidistant_point(
+    point1: npt.NDArray[np.float64], point2: npt.NDArray[np.float64], distance: float
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Find the two (or 0) points on a 2D plane that are equidistant to each other.
+
+    Parameters
+    ----------
+    point1, point2:
+        2D points, each with shape (2,)
+    distance:
+        the distance that both points must obey by.
+
+    Returns
+    -------
+    intersection1, intersection2:
+        The two intersection points of circle1 and circle2.
+    """
+    mid_point = (point1 + point2) / 2
+    sep = point2 - point1
+    half_sep = np.linalg.norm(sep) / 2  # scalar
+    if half_sep > distance:
+        raise GeometryError("The two points are separated by > 2 * distance!")
+    orth_length = np.sqrt(distance**2 - half_sep**2)
+    orth_dir = np.array([-sep[1], sep[0]])
+    orth_dir /= np.linalg.norm(orth_dir)
+    return mid_point + (orth_dir * orth_length), mid_point - (orth_dir * orth_length)
+
+
+def pick_higher_point(
+    point1: npt.NDArray[np.float64],
+    point2: npt.NDArray[np.float64],
+    vector: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Pick the point that, when projected onto `vector`, gives a higher value."""
+    if (vector @ point1) > (vector @ point2):
+        return point1
+    return point2
+
+
+def calculate_new_circle(
+    old_circle_info: CircleInfo, new_points: npt.NDArray
+) -> CircleInfo:
+    """
+    Calculate how far does the new circle get shifted.
+
+    Parameters
+    ----------
+    old_circle_info:
+        an object accessed by WireInfoList[i].key_points.
+        info on circle where the start_point and end_point are each of shape (3,).
+    new_points:
+        array of shape (2, 3)
+
+    Returns
+    -------
+    new_circle_info:
+        An instance of CircleInfo representing the new (scaled) arc of circle.
+    """
+    new_chord_vector = np.diff(new_points, axis=0)
+    old_chord_vector = np.diff(old_circle_info[:2], axis=0)
+    scale_factor = np.linalg.norm(new_chord_vector) / np.linalg.norm(old_chord_vector)
+    new_radius = old_circle_info.radius * scale_factor
+    possible_centers = find_equidistant_point(*new_points[:, ::2], new_radius)
+    center1, center2 = np.insert(possible_centers, 1, 0, axis=1)
+
+    old_chord_mid_point = np.mean(old_circle_info[:2], axis=0)
+    old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
+    # chord should stay on the same side of the center after transformation.
+    new_center = pick_higher_point(center1, center2, old_radius_vector)
+
+    return CircleInfo(*new_points, new_center, new_radius)
+
+
 class PreCell:
     """
     A pre-cell is the BluemiraWire outlining the reactor cross-section
@@ -393,116 +503,6 @@ class PreCellArray:
     def __repr__(self) -> str:
         """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
-
-
-def ratio_of_distances(
-    point_of_interest: npt.NDArray[np.float64],
-    anchor1: npt.NDArray[np.float64],
-    normal1: npt.NDArray[np.float64],
-    anchor2: npt.NDArray[np.float64],
-    normal2: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
-    """
-    Find how close a point is to line 1 and line 2, and then express that ratio as a
-    tuple of floats that sums up to unit.
-    Each line is given by the user by specifying any point on that line, and a direction
-    NORMAL to that line. The point_of_interest must lie on the positive side of the line.
-
-    Parameters
-    ----------
-    point_of_interest:
-        point to which we want to calculate the ratio of distances.
-    anchor1, anchor2:
-        Any point on line 1 and line 2 respectively.
-    normal1, normal2:
-        The positive distance direction of line 1 and line 2 respectively.
-
-    Returns
-    -------
-    dist_to_1, dist_to_2:
-        ratio of distances. Sum of these two numbers should yield unity (1.0).
-    """
-    dist_to_1 = (point_of_interest - anchor1) @ normal1
-    dist_to_2 = (point_of_interest - anchor2) @ normal2
-    if dist_to_1 < -EPS or dist_to_2 < -EPS:
-        raise GeometryError(
-            "Expecting point_of_interest to lie on the positive side of both lines!"
-        )
-    total_dist = dist_to_1 + dist_to_2
-    return np.array([dist_to_1, dist_to_2]) / total_dist
-
-
-def find_equidistant_point(
-    point1: npt.NDArray[np.float64], point2: npt.NDArray[np.float64], distance: float
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Find the two (or 0) points on a 2D plane that are equidistant to each other.
-
-    Parameters
-    ----------
-    point1, point2:
-        2D points, each with shape (2,)
-    distance:
-        the distance that both points must obey by.
-
-    Returns
-    -------
-    intersection1, intersection2:
-        The two intersection points of circle1 and circle2.
-    """
-    mid_point = (point1 + point2) / 2
-    sep = point2 - point1
-    half_sep = np.linalg.norm(sep) / 2  # scalar
-    if half_sep > distance:
-        raise GeometryError("The two points are separated by > 2 * distance!")
-    orth_length = np.sqrt(distance**2 - half_sep**2)
-    orth_dir = np.array([-sep[1], sep[0]])
-    orth_dir /= np.linalg.norm(orth_dir)
-    return mid_point + (orth_dir * orth_length), mid_point - (orth_dir * orth_length)
-
-
-def pick_higher_point(
-    point1: npt.NDArray[np.float64],
-    point2: npt.NDArray[np.float64],
-    vector: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
-    """Pick the point that, when projected onto `vector`, gives a higher value."""
-    if (vector @ point1) > (vector @ point2):
-        return point1
-    return point2
-
-
-def calculate_new_circle(
-    old_circle_info: CircleInfo, new_points: npt.NDArray
-) -> CircleInfo:
-    """
-    Calculate how far does the new circle get shifted.
-
-    Parameters
-    ----------
-    old_circle_info:
-        an object accessed by WireInfoList[i].key_points.
-        info on circle where the start_point and end_point are each of shape (3,).
-    new_points:
-        array of shape (2, 3)
-
-    Returns
-    -------
-    new_circle_info:
-        An instance of CircleInfo representing the new (scaled) arc of circle.
-    """
-    new_chord_vector = np.diff(new_points, axis=0)
-    old_chord_vector = np.diff(old_circle_info[:2], axis=0)
-    scale_factor = np.linalg.norm(new_chord_vector) / np.linalg.norm(old_chord_vector)
-    new_radius = old_circle_info.radius * scale_factor
-    possible_centers = find_equidistant_point(*new_points[:, ::2], new_radius)
-    center1, center2 = np.insert(possible_centers, 1, 0, axis=1)
-
-    old_chord_mid_point = np.mean(old_circle_info[:2], axis=0)
-    old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
-    # chord should stay on the same side of the center after transformation.
-    new_center = pick_higher_point(center1, center2, old_radius_vector)
-
-    return CircleInfo(*new_points, new_center, new_radius)
 
 
 class DivertorPreCell:
