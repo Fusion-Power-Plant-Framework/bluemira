@@ -107,7 +107,7 @@ class Plotter:
     Utility plotter abstract object
     """
 
-    def __init__(self, ax=None, subplots=False, **kwargs):
+    def __init__(self, ax=None, *, subplots=False, **kwargs):
         for kwarg in kwargs:
             if kwarg not in PLOT_DEFAULTS:
                 bluemira_warn(f"Unrecognised plot kwarg: {kwarg}")
