@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-# ruff: noqa: D105
 """
 Info about straight line wires and circles. Made to be simpler to modify than a whole
 BluemiraWire.
@@ -11,7 +10,6 @@ BluemiraWire.
 
 from __future__ import annotations
 
-from collections import abc
 from dataclasses import dataclass
 from itertools import pairwise
 from typing import TYPE_CHECKING, NamedTuple
@@ -64,16 +62,16 @@ class WireInfo:
     # we don't need to. Or merge this invention into an existing issue?
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[Iterable[float]] | None  # 2 normalized directional vectors xyz
+    tangents: Sequence[Iterable[float]]  # 2 normalized directional vectors xyz
     wire: BluemiraWire | None = None
 
-    def reverse(self):
+    def reverse(self) -> WireInfo:
         """Flip the wire"""
-        return WireInfo(self.key_points.reverse(), self.tangents[::-1], None)
+        return type(self)(self.key_points.reverse(), self.tangents[::-1], None)
 
     @classmethod
     def from_2P(  # noqa: N802
-        cls, start_point: npt.NDArray[float], end_point: npt.NDArray[float]
+        cls, start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
     ) -> WireInfo:
         """
         Create the WireInfo for a straight line (i.e. one where the key_points is of
@@ -84,25 +82,25 @@ class WireInfo:
         return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
 
 
-class WireInfoList(abc.Sequence):
+class WireInfoList:
     """A class to store info about a series of wires"""
 
     def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in pairwise(self):
+        for prev_wire, curr_wire in pairwise(self.info_list):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
                 raise GeometryError("Next wire must start where the previous wire stops")
 
     def __len__(self) -> int:
-        return self.info_list.__len__()
+        """Number of wire infos"""
+        return len(self.info_list)
 
     def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
-        return self.info_list.__getitem__(index_or_slice)
-
-    def __add__(self, other_info_list) -> WireInfoList:
-        return WireInfoList([*self.info_list.copy(), *other_info_list.info_list.copy()])
+        """Get a WireInfo"""
+        return self.info_list[index_or_slice]
 
     def __repr__(self) -> str:
+        """String reprensentation"""
         return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
 
     def pop(self, index):
@@ -115,9 +113,14 @@ class WireInfoList(abc.Sequence):
         """
         # assume continuity, which is already enforced during initialization, so we
         # should be fine.
-        coords = [self[0].key_points[0]]
-        coords.extend(seg.key_points[1] for seg in self)
-        return np.array(coords, dtype=float)  # shape = (N+1, 3)
+        # shape = (N+1, 3)
+        return np.array(
+            [
+                self.info_list[0].key_points[0],
+                *(seg.key_points[1] for seg in self.info_list),
+            ],
+            dtype=float,
+        )
 
     @property
     def start_point(self):
@@ -125,14 +128,12 @@ class WireInfoList(abc.Sequence):
         return self.info_list[0].key_points[0]
 
     @start_point.setter
-    def start_point(self, new_start_point: npt.NDArray[float]):
+    def start_point(self, new_start_point: npt.NDArray[np.float64]):
         """
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
         old_kp = self.info_list[0].key_points
-        # have to break it open because it's an immutable NamedTuple.
-        new_kp = old_kp.__class__(new_start_point, *old_kp[1:])
-        self.info_list[0].key_points = new_kp
+        self.info_list[0].key_points = type(old_kp)(new_start_point, *old_kp[1:])
 
     @property
     def end_point(self):
@@ -143,8 +144,9 @@ class WireInfoList(abc.Sequence):
     def end_point(self, new_end_point):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
         old_kp = self.info_list[-1].key_points
-        new_kp = old_kp.__class__(old_kp[0], new_end_point, *old_kp[2:])
-        self.info_list[0].key_points = new_kp
+        self.info_list[0].key_points = type(old_kp)(
+            old_kp[0], new_end_point, *old_kp[2:]
+        )
 
     def reverse(self) -> WireInfoList:
         """Flip this list of wires"""

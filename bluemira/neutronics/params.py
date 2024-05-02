@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass, fields
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -83,9 +83,8 @@ class OpenMCSimulationRuntimeParameters:
     cross_section_xml: str | Path
     batches: int = 2
     photon_transport: bool = True
-    electron_treatment: Literal["ttb", "led"] = (
-        "led"  # Bremsstrahlung only matters for very thin objects
-    )
+    # Bremsstrahlung only matters for very thin objects
+    electron_treatment: Literal["ttb", "led"] = "led"
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
     parametric_source: bool = True
@@ -217,13 +216,10 @@ class BlanketThickness:
     surface
         Thickness of the surface layer of the blanket. Can be zero.
         Only used for tallying purpose, i.e. not a physical component.
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
     first_wall
         Thickness of the first wall.
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
     breeding_zone
         Thickness of the breedng zone. Could be zero if the breeding zone is absent.
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
 
     Note
     ----
@@ -234,6 +230,7 @@ class BlanketThickness:
     surface: float
     first_wall: float
     breeding_zone: float
+    manifold: float
 
     def get_interface_depths(self):
         """Return the depth of the interface layers"""
@@ -271,10 +268,8 @@ class ToroidalFieldCoilDimension:
     ----------
     inner_diameter
         (i.e. inner diameter of the windings.)
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
     outer_diameter
         Outer diameter of the windings.
-        Unit = [m (if in TokamakGeometryBase) /cm (if in TokamakGeometry)]
     """
 
     inner_diameter: float
@@ -305,52 +300,65 @@ class TokamakDimensions:
     central_solenoid: ToroidalFieldCoilDimension
 
     @classmethod
-    def from_tokamak_geometry_base(
+    def from_tokamak_geometry(
         cls,
-        tokamak_geometry_base: TokamakGeometry,
-        major_radius,
-        divertor_thickness,
-        tf_inner_radius,
-        tf_outer_radius,
+        tokamak_geometry: TokamakGeometry,
+        blanket_io_cut: float,
+        tf_inner_radius: float,
+        tf_outer_radius: float,
+        divertor_surface_tk: float = 0.1,
+        blanket_surface_tk: float = 0.01,
+        blk_ib_manifold: float = 0.02,
+        blk_ob_manifold: float = 0.2,
     ):
         """Bodge method that can be deleted later once
         :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
         """
         return cls(
             BlanketThickness(
-                0.01,
-                tokamak_geometry_base.inb_fw_thick,
-                tokamak_geometry_base.inb_bz_thick,
+                blanket_surface_tk,
+                tokamak_geometry.inb_fw_thick,
+                tokamak_geometry.inb_bz_thick,
+                blk_ib_manifold,
             ),
-            major_radius,
+            blanket_io_cut,
             BlanketThickness(
-                0.01,
-                tokamak_geometry_base.outb_fw_thick,
-                tokamak_geometry_base.outb_bz_thick,
+                blanket_surface_tk,
+                tokamak_geometry.outb_fw_thick,
+                tokamak_geometry.outb_bz_thick,
+                blk_ob_manifold,
             ),
-            DivertorThickness(divertor_thickness),
+            DivertorThickness(divertor_surface_tk),
             ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
         )
 
 
-@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
-# feature/neutronics.
-class TokamakGeometryBase:
-    """
-    The thickness measurements for all of the generic components of the tokamak.
+@dataclass(frozen=True)
+class TokamakGeometry:
+    """The thickness measurements for all of the generic components of the tokamak.
 
     Parameters
     ----------
-    inb_fw_thick:     inboard first wall thickness [m]
-    inb_bz_thick:     inboard breeding zone thickness [m]
-    inb_mnfld_thick:  inboard manifold thickness [m]
-    inb_vv_thick:     inboard vacuum vessel thickness [m]
-    tf_thick:         toroidal field coil thickness [m]
-    outb_fw_thick:    outboard first wall thickness [m]
-    outb_bz_thick:    outboard breeding zone thickness [m]
-    outb_mnfld_thick: outboard manifold thickness [m]
-    outb_vv_thick:    outboard vacuum vessel thickness [m]
-    inb_gap:          inboard gap [m]
+    inb_fw_thick:
+        inboard first wall thickness [m]
+    inb_bz_thick:
+        inboard breeding zone thickness [m]
+    inb_mnfld_thick:
+        inboard manifold thickness [m]
+    inb_vv_thick:
+        inboard vacuum vessel thickness [m]
+    tf_thick:
+        toroidal field coil thickness [m]
+    outb_fw_thick:
+        outboard first wall thickness [m]
+    outb_bz_thick:
+        outboard breeding zone thickness [m]
+    outb_mnfld_thick:
+        outboard manifold thickness [m]
+    outb_vv_thick:
+        outboard vacuum vessel thickness [m]
+    inb_gap:
+        inboard gap [m]
     """
 
     inb_fw_thick: float
@@ -365,34 +373,9 @@ class TokamakGeometryBase:
     inb_gap: float
 
 
-@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
-# feature/neutronics.
-class TokamakGeometry(TokamakGeometryBase):
-    """See TokamakGeometryBase
-
-    Addition of cgs converted variables
-    """
-
-    cgs: TokamakGeometryBase
-
-    @classmethod
-    def from_si(cls, tokamak_geometry_base: TokamakGeometryBase):
-        """
-        Convert from si units dataclass
-        :class:`~bluemira.neutronics.params.TokamakGeometryBase`
-        This gives the illusion that self.cgs.x = 100*self.x. We rely on the 'frozen'
-        nature of this dataclass so these links don't break.
-        """
-        tg = asdict(tokamak_geometry_base)
-        tgcgs = tg.copy()
-        for k, v in tgcgs.items():
-            tgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
-
-
 def get_preset_physical_properties(
     blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, TokamakGeometryBase]:
+) -> tuple[BreederTypeParameters, TokamakGeometry]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
@@ -434,7 +417,7 @@ def get_preset_physical_properties(
         "outb_vv_thick": 0.6,  # [m]
     }
     if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
@@ -444,7 +427,7 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.429,  # [m]
         )
     elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
@@ -455,7 +438,7 @@ def get_preset_physical_properties(
         )
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
@@ -464,5 +447,4 @@ def get_preset_physical_properties(
             outb_bz_thick=0.460,  # [m]
             outb_mnfld_thick=0.560,  # [m]
         )
-
     return breeder_materials, tokamak_geometry

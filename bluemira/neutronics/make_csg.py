@@ -7,20 +7,18 @@
 Create csg geometry by converting from bluemira geometry objects made of wires. All units
 in this module are in SI (distrance:[m]) unless otherwise specified by the docstring.
 """
-# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
-from collections import abc
 from itertools import pairwise
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numpy as np
 import openmc
-from matplotlib import pyplot as plt  # for debugging
-from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
@@ -29,13 +27,14 @@ from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
 from bluemira.neutronics.params import BlanketLayers
 from bluemira.neutronics.radial_wall import (
     CellWalls,
-    Vertices,
     polygon_revolve_signed_volume,
 )
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
+
+    import numpy.typing as npt
 
     from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import (
@@ -52,13 +51,7 @@ SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
-    diff = np.diff(series)
-    return all(diff >= -EPS_FREECAD)  # or all(diff<0)
-
-
-# VERY ugly solution of global dictionary.
-# Maybe somehow get this from the openmc universe instead?
-hangar = {}  # it's called a hangar because it's where the planes are parked ;)
+    return all(np.diff(series) >= -EPS_FREECAD)  # or all(diff<0)
 
 
 def plot_surfaces(surfaces_list: list[openmc.Surface]):
@@ -118,91 +111,50 @@ def plot_coords(surface: openmc.Surface, color_num: int):
         )
 
 
-def surface_from_2points(
-    point1: npt.NDArray[float],
-    point2: npt.NDArray[float],
-    surface_id: int | None = None,
-    name: str = "",
-) -> openmc.Surface | openmc.model.ZConeOneSided | None:
+def get_depth_values(
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+) -> npt.NDArray[np.float64]:
     """
-    Create either a cylinder, a cone, or a surface from 2 points using only the
-    rz coordinates of any two points on it.
+    Choose the depth values that this pre-cell is suppose to use, according to where it
+    is physically positioned (hence is classified as inboard or outboard).
 
     Parameters
     ----------
-    point1, point2: ndarray of shape (2,)
-        any two non-trivial (i.e. cannot be the same) points on the rz cross-section of
-        the surface, each containing the r and z coordinates
-        Units: [m]
-    surface_id, name:
-        see openmc.Surface
+    pre_cell:
+        :class:`~PreCell` to be classified as either inboard or outboard
+    blanket_dimensions:
+        :class:`bluemira.neutronics.params.TokamakDimensions` recording the
+        dimensions of the blanket in SI units (unit: [m]).
 
     Returns
     -------
-    surface: openmc.surface.Surface, None
-        if the two points provided are redundant: don't return anything, as this is a
-        single point pretending to be a surface. This will come in handy for handling the
-        creation of BlanketCells made with 3 surfaces rather than 4.
+    depth_series:
+        a series of floats corresponding to the N-1 interfaces between the N layers.
+        Each float represents how deep into the blanket (i.e. how many [m] into the
+        first wall we need to drill, from the plasma facing surface) to hit that
+        interface layer.
     """
-    point1, point2 = to_cm(point1), to_cm(point2)
-    dr, dz = point2 - point1
-    if np.isclose(dr, 0, rtol=0, atol=DTOL_CM):
-        _r = point1[0]
-        if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
-            return None
-            # raise GeometryError(
-            #     "The two points provided aren't distinct enough to "
-            #     "uniquely identify a surface!"
-            # )
-        return openmc.ZCylinder(r=_r, surface_id=surface_id, name=name)
-    if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
-        _z = point1[-1]
-        z_plane = openmc.ZPlane(z0=_z, surface_id=surface_id, name=name)
-        hangar[_z] = z_plane
-        return hangar[_z]
-    slope = dz / dr
-    z_intercept = -slope * point1[0] + point1[-1]
-    return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
+    if check_inboard_outboard(pre_cell, blanket_dimensions):
+        return blanket_dimensions.inboard.get_interface_depths()
+    return blanket_dimensions.outboard.get_interface_depths()
 
 
-def surface_from_straight_line(
-    straight_line_info: StraightLineInfo,
-    surface_id: int | None = None,
-    name: str = "",
-):
-    """Create a surface to match the straight line info provided."""
-    start_end = np.array(straight_line_info[:2])[:, ::2]
-    return surface_from_2points(*start_end, surface_id=surface_id, name=name)
-
-
-def surfaces_from_info_list(wire_info_list: WireInfoList, name: str = ""):
+def check_inboard_outboard(
+    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+) -> bool:
+    """If this pre-cell is an inboard, return True.
+    Otherwise, this pre-cell belongs to outboard, return False
     """
-    Create a list of surfaces using a list of wire infos.
-
-    Parameters
-    ----------
-    wire_info_list
-        List of wires
-    name
-        This name will be *reused* across all of the surfaces created in this list.
-    """
-    surface_list = []
-    for wire in wire_info_list:
-        info = wire.key_points
-        plane_cone_cylinder = surface_from_straight_line(info, name=name)
-        if isinstance(info, CircleInfo):
-            torus = torus_from_circle(info.center, info.radius, name=name)
-            # will need the openmc.Union of these two objects later.
-            surface_list.append((plane_cone_cylinder, torus))
-        else:
-            surface_list.append((plane_cone_cylinder,))
-    return tuple(surface_list)
+    # reference radius
+    return (
+        pre_cell.vertex[0].mean() < blanket_dimensions.inboard_outboard_transition_radius
+    )
 
 
 def torus_from_3points(
-    point1: npt.NDArray[float],
-    point2: npt.NDArray[float],
-    point3: npt.NDArray[float],
+    point1: npt.NDArray[np.float64],
+    point2: npt.NDArray[np.float64],
+    point3: npt.NDArray[np.float64],
     surface_id: int | None = None,
     name: str = "",
 ) -> openmc.ZTorus:
@@ -212,7 +164,7 @@ def torus_from_3points(
 
     Parameters
     ----------
-    point1, point2, point3: ndarray of shape (2,)
+    point1, point2, point3:
         RZ coordinates of the 3 points on the surface of the torus.
     surface_id, name:
         See openmc.Surface
@@ -233,16 +185,16 @@ def torus_from_circle(
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
-):
+) -> openmc.ZTorus:
     """
     Make a circular torus centered on the z-axis.
     The circle would lie on the RZ plane AND the surface of the torus simultaneously.
 
     Parameters
     ----------
-    minor_radius
+    minor_radius:
         Radius of the cross-section circle, which forms the minor radius of the torus.
-    center
+    center:
         Center of the cross-section circle, which forms the center of the torus.
     surface_id, name:
         See openmc.Surface
@@ -253,7 +205,7 @@ def torus_from_circle(
 
 
 def z_torus(
-    center: npt.NDArray[float],
+    center: npt.ArrayLike,
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
@@ -264,14 +216,11 @@ def z_torus(
 
     Parameters
     ----------
-    center: ndarray of shape (2,)
+    center:
         The center of the torus' RZ plane cross-section
-    minor_radius: ndarray of shape (2,)
+    minor_radius:
         minor radius of the torus
 
-    Returns
-    -------
-    openmc.ZTorus
     """
     major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
     return openmc.ZTorus(
@@ -285,11 +234,11 @@ def z_torus(
 
 
 def torus_from_5points(
-    point1: npt.NDArray[float],
-    point2: npt.NDArray[float],
-    point3: npt.NDArray[float],
-    point4: npt.NDArray[float],
-    point5: npt.NDArray[float],
+    point1: npt.NDArray[np.float64],
+    point2: npt.NDArray[np.float64],
+    point3: npt.NDArray[np.float64],
+    point4: npt.NDArray[np.float64],
+    point5: npt.NDArray[np.float64],
     surface_id: int | None = None,
     name: str = "",
 ) -> openmc.ZTorus:
@@ -300,7 +249,7 @@ def torus_from_5points(
 
     Parameters
     ----------
-    point1, point2, point3: ndarray of shape (2,)
+    point1, point2, point3:
         RZ coordinates of the 3 points on the surface of the torus.
     surface_id, name:
         See openmc.Surface
@@ -330,12 +279,9 @@ def choose_halfspace(
 
     Parameters
     ----------
-    surface
+    surface:
         an openmc surface
 
-    Returns
-    -------
-    openmc.Halfspace
     """
     pt = np.mean(to_cm(choice_points), axis=0)
     value = surface.evaluate(pt)
@@ -359,10 +305,6 @@ def choose_plane_cylinders(
     choice_points: np.ndarray of shape (N, 3)
         a list of points representing the vertices of a convex polygon in RZ plane
 
-    Returns
-    -------
-    region: openmc.Halfspace
-        a Halfspace of the provided surface that the points exists on.
     """
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
@@ -376,146 +318,6 @@ def choose_plane_cylinders(
         return -surface
 
     raise GeometryError(f"There are points on both sides of this {type(surface)}!")
-
-
-def choose_region_cone(
-    surface: openmc.ZCone, choice_points: npt.NDArray, control_id: bool = False
-) -> openmc.Region:
-    """
-    choose the region for a ZCone.
-    When reading this function's code, bear in mind that a Z cone can be separated into
-    3 parts:
-        A. the upper cone (evaluates to negative),
-        B. outside of the cone (evaluates to positive),
-        C. the lower cone (evaluates to negative).
-    We have to account for the following cases:
-    -------------------------------------
-    | upper cone | outside | lower cone |
-    -------------------------------------
-    |    Y      |     N    |      N     |
-    |    Y      |     Y    |      N     |
-    |    N      |     Y    |      N     |
-    |    N      |     Y    |      Y     |
-    |    N      |     N    |      Y     |
-    -------------------------------------
-    All other cases should raise an error.
-    The tricky part to handle is the floating point precision problem:
-        it's possible that th every point used to create the cone does not lie on the
-        cone/ lies on the wrong side of the cone.
-        Hence the first step is to shink the choice_points by 0.5% towards the centroid.
-
-    Parameters
-    ----------
-    surface: opnemc.ZCone
-        where all points are expected to be excluded from at least one of its two
-        one-sided cones.
-    choice_points:
-        An array of points that, after choosing the appropriate region, should all lie in
-        the chosen region.
-    control_id:
-        When an ambiguity plane is needed, we ned to create a surface. if
-        control_id = True, then this would force the surface to be created with
-        id = 1000 + the id of the cone. This is typically only used so that we have full
-        control of (and easily understandable records of) every surfaces' ID.
-        Thus elsewhere in the code, most other classes/methods turns control_id on when
-        cell_ids are also provided (proving intention on controlling IDs of OpenMC
-        objects).
-
-    Returns
-    -------
-    region
-        openmc.Region, specifically (openmc.Halfspace) or
-        (openmc.Union of 2 openmc.Halfspaces), i.e. (openmc.Halfspace | openmc.Halfspace)
-    """
-    # shrink to avoid floating point number comparison imprecision issues.
-    # Especially important when the choice point sits exactly on the surface.
-    centroid = np.mean(choice_points, axis=0)
-    step_dir = centroid - choice_points
-    unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
-    choice_points += SHRINK_DISTANCE * unit_step_dir
-
-    # # Alternative
-    # choice_points = (choice_points + 0.01 * centroid) / 1.01
-    # take one step towards the centroid = 0.1 cm
-
-    x, y, z = np.array(to_cm(choice_points)).T
-    values = surface.evaluate([x, y, z])
-    middle = values > 0
-    if all(middle):  # exist outside of cone
-        return +surface
-
-    z_dist = z - surface.z0
-    upper_cone = np.logical_and(~middle, z_dist > 0)
-    lower_cone = np.logical_and(~middle, z_dist < 0)
-    # upper_not_cone = np.logical_and(middle, z_dist > 0)
-    # lower_not_cone = np.logical_and(middle, z_dist < 0)
-
-    # all of the following cases requires a plane to be made.
-    surface_id = 1000 + surface.id if control_id else None
-    while surface_id in openmc.Surface.used_ids:
-        surface_id += 1000
-    if all(upper_cone):
-        # everything in the upper cone.
-        plane = find_suitable_z_plane(  # the highest we can cut is at the lowest z.
-            to_m(surface.z0),
-            to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
-            surface_id=surface_id,
-            name=f"Ambiguity plane for cone {surface.id}",
-        )
-        return -surface & +plane
-    if all(lower_cone):
-        # everything in the lower cone
-        plane = find_suitable_z_plane(  # the lowest we can cut is at the highest z.
-            to_m(surface.z0),
-            to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
-            surface_id=surface_id,
-            name=f"Ambiguity plane for cone {surface.id}",
-        )
-        return -surface & -plane
-    if all(np.logical_or(upper_cone, lower_cone)):
-        raise GeometryError(
-            "Both cones have vertices lying inside! Cannot compute a contiguous "
-            "region that works for both. Check if polygon is convex?"
-        )
-    plane = find_suitable_z_plane(  # In this rare case, make its own plane.
-        to_m(surface.z0),
-        to_m([surface.z0 + DTOL_CM, surface.z0 - DTOL_CM]),
-        surface_id=surface_id,
-        name=f"Ambiguity plane for cone {surface.id}",
-    )
-    if all(np.logical_or(upper_cone, middle)):
-        return +surface | +plane
-    if all(np.logical_or(lower_cone, middle)):
-        return +surface | -plane
-    raise GeometryError("Can't have points in upper cone, lower cone AND outside!")
-
-
-def find_suitable_z_plane(
-    z0: float,
-    z_range: Iterable[float] | None = None,
-    surface_id: int | None = None,
-    name: str = "",
-    **kwargs,
-):
-    """Find a suitable z from the hangar, or create a new one if no matches are found.
-
-    Parameters
-    ----------
-    z0
-        The height of the plane, if we need to create it. Unit: [m]
-    z_range
-        If we a suitable z-plane already exists, then we only accept it if it lies within
-        this range of z. Unit: [m]
-    surface_id, name:
-        See openmc.Surface
-    """
-    if z_range is not None:
-        z_min, z_max = min(z_range), max(z_range)
-        for key in hangar:
-            if z_min <= key <= z_max:
-                return hangar[key]  # return the first match
-    hangar[z0] = openmc.ZPlane(z0=to_cm(z0), surface_id=surface_id, name=name, **kwargs)
-    return hangar[z0]
 
 
 # simplfying openmc.Intersection by associativity
@@ -574,6 +376,349 @@ def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
     return {str(region): region}
 
 
+class BluemiraNeutronicsCSG:
+    """Container for CSG planes to enable reuse of planes, very eco friendly"""
+
+    def __init__(self):
+        # it's called a hangar because it's where the planes are parked ;)
+        self.hangar = {}
+
+    def surface_from_2points(
+        self,
+        point1: npt.NDArray[np.float64],
+        point2: npt.NDArray[np.float64],
+        surface_id: int | None = None,
+        name: str = "",
+    ) -> openmc.Surface | openmc.model.ZConeOneSided | None:
+        """
+        Create either a cylinder, a cone, or a surface from 2 points using only the
+        rz coordinates of any two points on it.
+
+        Parameters
+        ----------
+        point1, point2:
+            any two non-trivial (i.e. cannot be the same) points on the rz cross-section
+            of the surface, each containing the r and z coordinates
+            Units: [m]
+        surface_id, name:
+            see openmc.Surface
+
+        Returns
+        -------
+        surface:
+            if the two points provided are redundant: don't return anything, as this is a
+            single point pretending to be a surface. This will come in handy for handling
+            the creation of BlanketCells made with 3 surfaces rather than 4.
+        """
+        point1, point2 = to_cm((point1, point2))
+        dr, dz = point2 - point1
+        if np.isclose(dr, 0, rtol=0, atol=DTOL_CM):
+            _r = point1[0]
+            if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
+                return None
+                # raise GeometryError(
+                #     "The two points provided aren't distinct enough to "
+                #     "uniquely identify a surface!"
+                # )
+            return openmc.ZCylinder(r=_r, surface_id=surface_id, name=name)
+        if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
+            _z = point1[-1]
+            z_plane = openmc.ZPlane(z0=_z, surface_id=surface_id, name=name)
+            self.hangar[_z] = z_plane
+            return self.hangar[_z]
+        slope = dz / dr
+        z_intercept = -slope * point1[0] + point1[-1]
+        return openmc.ZCone(
+            z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name
+        )
+
+    def surface_from_straight_line(
+        self,
+        straight_line_info: StraightLineInfo,
+        surface_id: int | None = None,
+        name: str = "",
+    ):
+        """Create a surface to match the straight line info provided."""
+        start_end = np.array(straight_line_info[:2])[:, ::2]
+        return self.surface_from_2points(*start_end, surface_id=surface_id, name=name)
+
+    def surfaces_from_info_list(self, wire_info_list: WireInfoList, name: str = ""):
+        """
+        Create a list of surfaces using a list of wire infos.
+
+        Parameters
+        ----------
+        wire_info_list
+            List of wires
+        name
+            This name will be *reused* across all of the surfaces created in this list.
+        """
+        surface_list = []
+        for wire in wire_info_list.info_list:
+            info = wire.key_points
+            plane_cone_cylinder = self.surface_from_straight_line(info, name=name)
+            if isinstance(info, CircleInfo):
+                torus = torus_from_circle(info.center, info.radius, name=name)
+                # will need the openmc.Union of these two objects later.
+                surface_list.append((plane_cone_cylinder, torus))
+            else:
+                surface_list.append((plane_cone_cylinder,))
+        return tuple(surface_list)
+
+    def find_suitable_z_plane(
+        self,
+        z0: float,
+        z_range: Iterable[float] | None = None,
+        surface_id: int | None = None,
+        name: str = "",
+        **kwargs,
+    ):
+        """
+        Find a suitable z from the hangar, or create a new one if no matches are found.
+
+        Parameters
+        ----------
+        z0:
+            The height of the plane, if we need to create it. Unit: [m]
+        z_range:
+            If we a suitable z-plane already exists, then we only accept it if it lies
+            within this range of z. Unit: [m]
+        surface_id, name:
+            See openmc.Surface
+        """
+        if z_range is not None:
+            z_min, z_max = min(z_range), max(z_range)
+            for key in self.hangar:
+                if z_min <= key <= z_max:
+                    return self.hangar[key]  # return the first match
+        self.hangar[z0] = openmc.ZPlane(
+            z0=to_cm(z0), surface_id=surface_id, name=name, **kwargs
+        )
+        return self.hangar[z0]
+
+    def choose_region_cone(
+        self,
+        surface: openmc.ZCone,
+        choice_points: npt.NDArray,
+        *,
+        control_id: bool = False,
+    ) -> openmc.Region:
+        """
+        choose the region for a ZCone.
+        When reading this function's code, bear in mind that a Z cone can be separated
+        into 3 parts:
+
+            A. the upper cone (evaluates to negative),
+            B. outside of the cone (evaluates to positive),
+            C. the lower cone (evaluates to negative).
+
+        We have to account for the following cases:
+
+        +------------+---------+------------+
+        | upper cone | outside | lower cone |
+        +============+=========+============+
+        |      Y     |    N    |      N     |
+        +------------+---------+------------+
+        |      Y     |    Y    |      N     |
+        +------------+---------+------------+
+        |      N     |    Y    |      N     |
+        +------------+---------+------------+
+        |      N     |    Y    |      Y     |
+        +------------+---------+------------+
+        |      N     |    N    |      Y     |
+        +------------+---------+------------+
+
+        All other cases should raise an error.
+        The tricky part to handle is the floating point precision problem.
+        It's possible that th every point used to create the cone does not lie on the
+        cone/ lies on the wrong side of the cone.
+        Hence the first step is to shrink the choice_points by 0.5%
+        towards the centroid.
+
+        Parameters
+        ----------
+        surface:
+            where all points are expected to be excluded from at least one of its two
+            one-sided cones.
+        choice_points:
+            An array of points that, after choosing the appropriate region,
+            should all lie in the chosen region.
+        control_id:
+            When an ambiguity plane is needed, we ned to create a surface. if
+            control_id = True, then this would force the surface to be created with
+            id = 1000 + the id of the cone. This is typically only used so that
+            we have full control of (and easily understandable records of)
+            every surfaces' ID.
+            Thus elsewhere in the code, most other classes/methods turns control_id
+            on when cell_ids are also provided (proving intention on controlling IDs
+            of OpenMC objects).
+
+        Returns
+        -------
+        region
+            openmc.Region, specifically (openmc.Halfspace) or
+            (openmc.Union of 2 openmc.Halfspaces)
+        """
+        # shrink to avoid floating point number comparison imprecision issues.
+        # Especially important when the choice point sits exactly on the surface.
+        centroid = np.mean(choice_points, axis=0)
+        step_dir = centroid - choice_points
+        unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
+        choice_points += SHRINK_DISTANCE * unit_step_dir
+
+        # # Alternative
+        # choice_points = (choice_points + 0.01 * centroid) / 1.01
+        # take one step towards the centroid = 0.1 cm
+
+        x, y, z = np.array(to_cm(choice_points)).T
+        values = surface.evaluate([x, y, z])
+        middle = values > 0
+        if all(middle):  # exist outside of cone
+            return +surface
+
+        z_dist = z - surface.z0
+        upper_cone = np.logical_and(~middle, z_dist > 0)
+        lower_cone = np.logical_and(~middle, z_dist < 0)
+        # upper_not_cone = np.logical_and(middle, z_dist > 0)
+        # lower_not_cone = np.logical_and(middle, z_dist < 0)
+
+        # all of the following cases requires a plane to be made.
+        if control_id:
+            surface_id = 1000 + surface.id
+        else:
+            surface_id = max(openmc.Surface.used_ids)
+            surface_id += 1000 + surface_id % 1000
+
+        if all(upper_cone):
+            # everything in the upper cone.
+            # the highest we can cut is at the lowest z.
+            plane = self.find_suitable_z_plane(
+                to_m(surface.z0),
+                to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
+                surface_id=surface_id,
+                name=f"Ambiguity plane for cone {surface.id}",
+            )
+            return -surface & +plane
+        if all(lower_cone):
+            # everything in the lower cone
+            # the lowest we can cut is at the highest z.
+            plane = self.find_suitable_z_plane(
+                to_m(surface.z0),
+                to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
+                surface_id=surface_id,
+                name=f"Ambiguity plane for cone {surface.id}",
+            )
+            return -surface & -plane
+        if all(np.logical_or(upper_cone, lower_cone)):
+            raise GeometryError(
+                "Both cones have vertices lying inside! Cannot compute a contiguous "
+                "region that works for both. Check if polygon is convex?"
+            )
+        # In this rare case, make its own plane.
+        plane = self.find_suitable_z_plane(
+            to_m(surface.z0),
+            to_m([surface.z0 + DTOL_CM, surface.z0 - DTOL_CM]),
+            surface_id=surface_id,
+            name=f"Ambiguity plane for cone {surface.id}",
+        )
+        if all(np.logical_or(upper_cone, middle)):
+            return +surface | +plane
+        if all(np.logical_or(lower_cone, middle)):
+            return +surface | -plane
+        raise GeometryError("Can't have points in upper cone, lower cone AND outside!")
+
+    def choose_region(
+        self,
+        surface: openmc.Surface
+        | tuple[openmc.Surface]
+        | tuple[openmc.Surface | openmc.ZTorus],
+        vertices_array: npt.NDArray,
+        *,
+        control_id: bool = False,
+    ) -> openmc.Region:
+        """
+        Pick the correct region of the surface that includes all of the points in
+        vertices_array.
+
+        Parameters
+        ----------
+        surface
+            Either a :class:`openmc.Surface`, or a 1-tuple or 2-tuple of
+            :class:`openmc.Surface`. If it is a tuple, the first element is always a
+            :class:`openmc.ZPlane`/:class:`openmc.ZCone`/:class:`openmc.ZCylinder`;
+            the second element (if present) is always :class:`openmc.ZTorus`.
+        vertices_array
+            array of shape (?, 3), that the final region should include.
+        control_id
+            Passed as argument onto
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+
+        Returns
+        -------
+            An openmc.Region built from surface provided and includes all of these
+        """
+        # switch case: blue
+        if isinstance(surface, openmc.ZPlane | openmc.ZCylinder):
+            return choose_plane_cylinders(surface, vertices_array)
+
+        if isinstance(surface, openmc.ZCone):
+            return self.choose_region_cone(
+                surface, vertices_array, control_id=control_id
+            )
+
+        if isinstance(surface, tuple):
+            chosen_first_region = self.choose_region(
+                surface[0], vertices_array, control_id=control_id
+            )
+            # cone, or cylinder, or plane, or (cone | ambiguity_surface)
+            if len(surface) == 1:
+                return chosen_first_region
+            # -surface[1] = inside of torus
+            return flat_union((chosen_first_region, -surface[1]))
+        raise NotImplementedError(
+            f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
+        )
+
+    def region_from_surface_series(
+        self,
+        series_of_surfaces: Sequence[
+            openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None] | None
+        ],
+        vertices_array: npt.NDArray,
+        *,
+        control_id: bool = False,
+    ) -> openmc.Intersection:
+        """
+        Switch between choose_region() and choose_region_from_tuple_of_surfaces()
+        depending on the type of each element in the series_of_surfaces.
+
+        Parameters
+        ----------
+        series_of_surfaces
+            Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
+            surface. For the last 3 options, see
+            :func:`~bluemira.neutronics.make_csg.choose_region` for more.
+
+        vertices_array
+            array of shape (?, 3), where every single point should be included by, or at
+            least on the edge of the returned Region.
+        control_id
+            Passed as argument onto
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+
+        Returns
+        -------
+        intersection_region: openmc.Region
+            openmc.Intersection of a list of
+            [(openmc.Halfspace) or (openmc.Union of openmc.Halfspace)]
+        """
+        return flat_intersection([
+            self.choose_region(surface, vertices_array, control_id=control_id)
+            for surface in series_of_surfaces
+            if surface is not None
+        ])
+
+
 class BlanketCell(openmc.Cell):
     """
     A generic blanket cell that forms the base class for the five specialized types of
@@ -592,7 +737,8 @@ class BlanketCell(openmc.Cell):
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
         interior_surface: openmc.Surface | None,
-        vertices: Vertices,
+        vertices: Coordinates,
+        csg: BluemiraNeutronicsCSG,
         cell_id: int | None = None,
         name: str = "",
         fill: openmc.Material | None = None,
@@ -624,24 +770,25 @@ class BlanketCell(openmc.Cell):
         self.cw_surface = cw_surface
         self.interior_surface = interior_surface
         self.vertex = vertices
+        self.csg = csg
 
-        _surfaces_list = [exterior_surface, ccw_surface, cw_surface, interior_surface]
-
-        final_region = region_from_surface_series(
-            _surfaces_list, vertices.to_array(), bool(cell_id)
+        super().__init__(
+            cell_id=cell_id,
+            name=name,
+            fill=fill,
+            region=self.csg.region_from_surface_series(
+                [exterior_surface, ccw_surface, cw_surface, interior_surface],
+                self.vertex.xyz.T,
+                control_id=bool(cell_id),
+            ),
         )
 
-        super().__init__(cell_id=cell_id, name=name, fill=fill, region=final_region)
-        vertices = [
-            getattr(self.vertex, p)[[0, -1]]
-            for p in ("exterior_end", "interior_start", "interior_end", "exterior_start")
-        ]
-        self.volume = to_cm3(polygon_revolve_signed_volume(vertices))
+        self.volume = to_cm3(polygon_revolve_signed_volume(vertices.xz.T))
         if self.volume <= 0:
             raise GeometryError("Wrong ordering of vertices!")
 
 
-class BlanketCellStack(abc.Sequence):
+class BlanketCellStack:
     """
     A stack of openmc.Cells, first cell is closest to the interior and last cell is
     closest to the exterior. They should all be situated at the same poloidal angle.
@@ -658,13 +805,13 @@ class BlanketCellStack(abc.Sequence):
         bounding box to confirm that the stack is linearly increasing/decreasing in xyz
         bounds.
 
-        Series of cells
-        ---------
-        SurfaceCell
-        FirstWallCell
-        BreedingZoneCell
-        ManifoldCell
-        VacuumVesselCell
+        Series of cells:
+
+            SurfaceCell
+            FirstWallCell
+            BreedingZoneCell
+            ManifoldCell
+            VacuumVesselCell
         """
         self.cell_stack = cell_stack
         for int_cell, ext_cell in pairwise(cell_stack):
@@ -672,26 +819,37 @@ class BlanketCellStack(abc.Sequence):
                 raise ValueError("Expected a contiguous stack of cells!")
 
     def __len__(self) -> int:
-        return self.cell_stack.__len__()
+        """Number of cells in stack"""
+        return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCell] | BlanketCell:
-        return self.cell_stack.__getitem__(index_or_slice)
+        """Get cell from stack"""
+        return self.cell_stack[index_or_slice]
+
+    def __iter__(self) -> Iterator[BlanketCell]:
+        """Iterator for BlanketCellStack"""
+        return iter(self.cell_stack)
 
     def __repr__(self) -> str:
-        return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
+        """String representation"""
+        return (
+            super()
+            .__repr__()
+            .replace(" at ", f" of {len(self.cell_stack)} BlanketCells at ")
+        )
 
     @staticmethod
     def check_cut_point_ordering(
-        cut_point_series: npt.NDArray[float],
-        direction_vector: npt.NDArray[float],
+        cut_point_series: npt.NDArray[np.float64],
+        direction_vector: npt.NDArray[np.float64],
         location_msg: str = "",
     ):
         """
         Parameters
         ----------
-        cut_point_series: np.ndarray of shape (M+1, 2)
-            where M = number of cells in the blanket cell stack (i.e. number of layers
-            in the blanket). Each point has two dimensions
+        cut_point_series:
+            array of shape (M+1, 2) where M = number of cells in the blanket cell stack
+            (i.e. number of layers in the blanket). Each point has two dimensions
         direction_vector:
             direction that these points are all supposed to go towards.
         """
@@ -701,20 +859,24 @@ class BlanketCellStack(abc.Sequence):
             raise GeometryError(f"Some surfaces crosses over each other! {location_msg}")
 
     @property
-    def interior_surface(self):  # noqa: D102
-        return self[0].interior_surface
+    def interior_surface(self):
+        """Get interior surface"""
+        return self.cell_stack[0].interior_surface
 
     @property
-    def exterior_surface(self):  # noqa: D102
-        return self[-1].exterior_surface
+    def exterior_surface(self):
+        """Get exterior surface"""
+        return self.cell_stack[-1].exterior_surface
 
     @property
-    def ccw_surface(self):  # noqa: D102
-        return self[0].ccw_surface
+    def ccw_surface(self):
+        """Get counter clockwise surface"""
+        return self.cell_stack[0].ccw_surface
 
     @property
-    def cw_surface(self):  # noqa: D102
-        return self[0].cw_surface
+    def cw_surface(self):
+        """Get clockwise surface"""
+        return self.cell_stack[0].cw_surface
 
     @property
     def interfaces(self):
@@ -728,7 +890,9 @@ class BlanketCellStack(abc.Sequence):
             self._interfaces.append(self.cell_stack[-1].exterior_surface)
         return self._interfaces
 
-    def get_overall_region(self, control_id: bool = False) -> openmc.Region:
+    def get_overall_region(
+        self, csg: BluemiraNeutronicsCSG, *, control_id: bool = False
+    ) -> openmc.Region:
         """
         Calculate the region covering the entire cell stack.
 
@@ -736,22 +900,21 @@ class BlanketCellStack(abc.Sequence):
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
         """
-        _surfaces_list = [
-            self.exterior_surface,
-            self.ccw_surface,
-            self.cw_surface,
-            self.interior_surface,
-        ]
-
-        vertices_array = np.array([
-            self[0].vertex.interior_start,
-            self[0].vertex.interior_end,
-            self[-1].vertex.exterior_start,
-            self[-1].vertex.exterior_end,
-        ])
-        return region_from_surface_series(_surfaces_list, vertices_array, control_id)
+        return csg.region_from_surface_series(
+            [
+                self.exterior_surface,
+                self.ccw_surface,
+                self.cw_surface,
+                self.interior_surface,
+            ],
+            np.vstack((
+                self.cell_stack[0].vertex.xz.T[(1, 2),],
+                self.cell_stack[-1].vertex.xz.T[(3, 0),],
+            )),
+            control_id=control_id,
+        )
 
     @classmethod
     def from_pre_cell(
@@ -759,8 +922,9 @@ class BlanketCellStack(abc.Sequence):
         pre_cell: PreCell,
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
-        depth_series: Sequence,
-        fill_lib: dict[str, openmc.Material],
+        depth_series: npt.NDArray,
+        csg: BluemiraNeutronicsCSG,
+        fill_lib: MaterialsLibrary,
         *,
         inboard: bool,
         blanket_stack_num: int | None = None,
@@ -799,20 +963,22 @@ class BlanketCellStack(abc.Sequence):
         if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
             raise NotImplementedError("Not ready to make curved-line cross-section yet!")
 
-        i = blanket_stack_num if blanket_stack_num is not None else "(unspecified)"
         # 1. Calculate cut points required to make the surface stack, without actually
         #    creating the surfaces.
-        wall_cut_pts = [pre_cell.cell_walls.starts]
-        wall_cut_pts.extend(
-            pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
-            for interface_depth in depth_series
-        )
-        wall_cut_pts.append(np.array([pre_cell.vv_point.start, pre_cell.vv_point.end]))  # noqa: FURB113
-        wall_cut_pts.append(pre_cell.cell_walls.ends)
-        wall_cut_pts = np.array(wall_cut_pts)  # shape (M+1, 2, 2)
+        # shape (M+1, 2, 2)
+        wall_cut_pts = np.asarray([
+            pre_cell.cell_walls.starts,
+            *(
+                pre_cell.get_cell_wall_cut_points_by_thickness(interface_depth)
+                for interface_depth in depth_series
+            ),
+            np.array([pre_cell.vv_point[:, 0], pre_cell.vv_point[:, 1]]),
+            pre_cell.cell_walls.ends,
+        ])
         # 1.1 perform sanity check
         directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
+        i = blanket_stack_num or "(unspecified)"
         cls.check_cut_point_ordering(
             wall_cut_pts[:, 0],
             dirs[0],
@@ -826,35 +992,45 @@ class BlanketCellStack(abc.Sequence):
 
         # 2. Accumulate the corners of each cell.
         vertices = [
-            Vertices(outer_pt[1], inner_pt[1], inner_pt[0], outer_pt[0]).to_3D()
-            for inner_pt, outer_pt in pairwise(wall_cut_pts)
+            Coordinates({
+                "x": np.asarray([out[1, 0], inn[1, 0], inn[0, 0], out[0, 0]]),
+                "z": np.asarray([out[1, 1], inn[1, 1], inn[0, 1], out[0, 1]]),
+            })
+            for inn, out in pairwise(wall_cut_pts)
         ]
+
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
         projection_cw = wall_cut_pts[:, 1] @ dirs[1] / np.linalg.norm(dirs[1])
-        layer_too_thin = [
-            (ccw_depth <= DTOL_CM and cw_depth <= DTOL_CM)
-            for (ccw_depth, cw_depth) in zip(
-                np.diff(projection_ccw), np.diff(projection_cw), strict=True
-            )
-        ]  # shape (M,)
+        layer_mask = np.array(
+            [
+                not (ccw_depth <= DTOL_CM and cw_depth <= DTOL_CM)
+                for (ccw_depth, cw_depth) in zip(
+                    np.diff(projection_ccw), np.diff(projection_cw), strict=True
+                )
+            ],
+            dtype=bool,
+        )  # shape (M,)
 
         # 3. Choose the ID of the stack's surfaces and cells.
         if blanket_stack_num is not None:
             # Note: all IDs must be natural number, i.e. integer > 0.
             # So we're using an indexing scheme that starts from 1.
-            cell_ids = [10 * i + j + 1 for j in range(len(vertices))]  # len=M
+            # len=M
+            cell_ids = [10 * blanket_stack_num + v + 1 for v in range(len(vertices))]
             # left (ccw_surface) surface had already been created, and since our indexing
             # scheme starts from 1, therefore we're using +2 in the following line.
-            surface_ids = [10 * i + j + 2 for j in range(len(wall_cut_pts))]  # len=M+1
+            # len=M+1
+            surface_ids = [
+                10 * blanket_stack_num + v + 2 for v in range(len(wall_cut_pts))
+            ]
         else:
             cell_ids = [None] * len(vertices)  # len=M
             surface_ids = [None] * len(wall_cut_pts)  # len=M+1
 
         # 4. create the actual openmc.Surfaces and Cells.
-        cell_stack = []
         int_surf = (
-            surface_from_2points(
+            csg.surface_from_2points(
                 *wall_cut_pts[0],
                 surface_id=surface_ids[0],
                 name=f"plasma-facing surface of blanket cell stack {i}",
@@ -863,30 +1039,31 @@ class BlanketCellStack(abc.Sequence):
             else None
         )  # account for the case.
 
-        for k, points in enumerate(wall_cut_pts[1:]):  # k = range(0, M)
-            if layer_too_thin[k]:
-                # don't make any surface (or cell) if this cell has thickness == 0.
-                continue
+        cell_stack = []
+        # k = range(0, M - layer_mask == False)
+        for k, points in enumerate(wall_cut_pts[1:][layer_mask]):
             j = k + 1  # = range(1, M+1)
+            cell_type = BlanketLayers(j)
             if j > 1:
                 int_surf.name = (
-                    f"{cell_type}-{BlanketLayers(j).name} "  # noqa: F821
+                    f"{cell_type}-{cell_type.name} "
                     f"interface boundary of blanket cell stack {i}"
                 )
-            cell_type = BlanketLayers(j)
-            ext_surf = surface_from_2points(
+            ext_surf = csg.surface_from_2points(
                 *points,
                 surface_id=surface_ids[j],  # up to M+1
             )
+
             cell_stack.append(
                 BlanketCell(
-                    ext_surf,
-                    ccw_surface,
-                    cw_surface,
-                    int_surf,
-                    vertices[k],  # up to M
+                    exterior_surface=ext_surf,
+                    ccw_surface=ccw_surface,
+                    cw_surface=cw_surface,
+                    interior_surface=int_surf,
+                    vertices=vertices[k],  # up to M
+                    csg=csg,
                     cell_id=cell_ids[k],  # up to M
-                    name=cell_type.name + f" of blanket cell stack {i}",
+                    name=f"{cell_type.name} of blanket cell stack {i}",
                     fill=fill_lib.match_blanket_material(cell_type, inboard=inboard),
                 )
             )
@@ -896,7 +1073,7 @@ class BlanketCellStack(abc.Sequence):
         return cls(cell_stack)
 
 
-class BlanketCellArray(abc.Sequence):
+class BlanketCellArray:
     """
     An array of BlanketCellStack. Interior and exterior curve are both assumed convex.
 
@@ -905,31 +1082,25 @@ class BlanketCellArray(abc.Sequence):
     blanket_cell_array
         a list of BlanketCellStack
 
-    Variables
-    ---------
-    poloidal_surfaces: List[openmc.Surface]
-        a list of surfaces radiating from (approximately) the gyrocenter to the entrance.
-    radial_surfaces: List[List[openmc.Surface]]
-        a list of lists of surfaces. Each list is the layer interface of a a stack's
     """
 
-    def __init__(self, blanket_cell_array: list[BlanketCellStack]):
+    def __init__(
+        self, blanket_cell_array: list[BlanketCellStack], csg: BluemiraNeutronicsCSG
+    ):
         """
         Create array from a list of BlanketCellStack
-        Variables
-        ---------
-        blanket_cell_array
         """
         self.blanket_cell_array = blanket_cell_array
-        self.poloidal_surfaces = [self[0].ccw_surface]
+        self.poloidal_surfaces = [self.blanket_cell_array[0].ccw_surface]
         self.radial_surfaces = []
-        for i, this_stack in enumerate(self):
+        self.csg = csg
+        for i, this_stack in enumerate(self.blanket_cell_array):
             self.poloidal_surfaces.append(this_stack.cw_surface)
             self.radial_surfaces.append(this_stack.interfaces)
 
             # check neighbouring cells share the same lateral surface
-            if i != len(self) - 1:
-                next_stack = self[i + 1]
+            if i != len(self.blanket_cell_array) - 1:
+                next_stack = self.blanket_cell_array[i + 1]
                 if this_stack.cw_surface is not next_stack.ccw_surface:
                     raise GeometryError(
                         f"Neighbouring BlanketCellStack [{i}] and "
@@ -937,86 +1108,93 @@ class BlanketCellArray(abc.Sequence):
                     )
 
     def __len__(self) -> int:
-        return self.blanket_cell_array.__len__()
+        """Number of cell stacks"""
+        return len(self.blanket_cell_array)
 
     def __getitem__(self, index_or_slice) -> list[BlanketCellStack] | BlanketCellStack:
-        return self.blanket_cell_array.__getitem__(index_or_slice)
+        """Get cell stack"""
+        return self.blanket_cell_array[index_or_slice]
 
-    def __add__(self, other_array) -> BlanketCellArray:
-        return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
+    def __iter__(self) -> Iterator[BlanketCellStack]:
+        """Iterator for BlanketCellArray"""
+        return iter(self.blanket_cell_array)
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
-            super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
+            super()
+            .__repr__()
+            .replace(" at ", f" of {len(self.blanket_cell_array)} BlanketCellStacks at ")
         )
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's outside corners'
         coordinates, in 3D.
 
         Returns
         -------
-        exterior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        exterior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
-        exterior_vertices = [self[0][-1].vertex.exterior_start]
-        exterior_vertices.extend(stack[-1].vertex.exterior_end for stack in self)
+        exterior_vertices = [self.blanket_cell_array[0][-1].vertex.xyz[:, 3]]
+        exterior_vertices.extend(
+            stack[-1].vertex.xyz[:, 0] for stack in self.blanket_cell_array
+        )
         return np.array(exterior_vertices)
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
 
         Parameters
         ----------
-        interior_vertices: npt.NDArray of shape (N+1, 3)
-            Arranged clockwise (inboard to outboard).
+        interior_vertices:
+            array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
-        interior_vertices = [self[0][0].vertex.interior_end]
-        interior_vertices.extend(stack[0].vertex.interior_start for stack in self)
-        return np.array(interior_vertices)
+        return np.asarray([
+            self.blanket_cell_array[0][0].vertex.xyz[:, 2],
+            *(stack[0].vertex.xyz[:, 1] for stack in self.blanket_cell_array),
+        ])
 
-    def get_interior_surfaces(self) -> list[openmc.Surface]:
+    def interior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[0] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_surfaces(self) -> list[openmc.Surface]:
+    def exterior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
+    def exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
-        Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
+        Usage: plasma_region = openmc.Union(..., ~self.exclusion_zone(), ...)
         Assumes that all of the panels (interior surfaces) together forms a convex hull.
 
         Parameters
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`.
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
-        union_zone = []
-        for stack in self:
-            vertices_array = np.array([
-                stack[0].vertex.interior_start,
-                stack[0].vertex.interior_end,
-                stack[-1].vertex.exterior_start,
-                stack[-1].vertex.exterior_end,
-            ])
-            _surfaces = [stack.cw_surface, stack.ccw_surface, stack.interior_surface]
-            union_zone.append(
-                region_from_surface_series(_surfaces, vertices_array, control_id)
+        return openmc.Union([
+            self.csg.region_from_surface_series(
+                [stack.cw_surface, stack.ccw_surface, stack.interior_surface],
+                np.vstack((
+                    stack[0].vertex.xz.T[(1, 2),],
+                    stack[-1].vertex.xz.T[(3, 0),],
+                )),
+                control_id=control_id,
             )
-        return openmc.Union(union_zone)
+            for stack in self.blanket_cell_array
+        ])
 
     @classmethod
     def from_pre_cell_array(
@@ -1024,6 +1202,8 @@ class BlanketCellArray(abc.Sequence):
         pre_cell_array: PreCellArray,
         material_library: MaterialsLibrary,
         blanket_dimensions: TokamakDimensions,
+        csg: BluemiraNeutronicsCSG,
+        *,
         control_id: bool = False,
     ) -> BlanketCellArray:
         """
@@ -1044,33 +1224,33 @@ class BlanketCellArray(abc.Sequence):
             dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`.
+            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
 
         # left wall
-        ccw_surf = surface_from_2points(
+        ccw_surf = csg.surface_from_2points(
             *cell_walls[0],
             surface_id=1 if control_id else None,
             name="Blanket cell wall 0",
         )
         cell_array = []
         for i, (pre_cell, cw_wall) in enumerate(
-            zip(pre_cell_array, cell_walls[1:], strict=True)
+            zip(pre_cell_array.pre_cells, cell_walls[1:], strict=True)
         ):
             # right wall
-            cw_surf = surface_from_2points(
+            cw_surf = csg.surface_from_2points(
                 *cw_wall,
                 surface_id=1 + 10 * (i + 1) if control_id else None,
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
-            depth_series = get_depth_values(pre_cell, blanket_dimensions)
 
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
                 ccw_surf,
                 cw_surf,
-                depth_series,
+                get_depth_values(pre_cell, blanket_dimensions),
+                csg=csg,
                 fill_lib=material_library,
                 inboard=check_inboard_outboard(pre_cell, blanket_dimensions),
                 blanket_stack_num=i if control_id else None,
@@ -1078,129 +1258,7 @@ class BlanketCellArray(abc.Sequence):
             cell_array.append(stack)
             ccw_surf = cw_surf
 
-        return cls(cell_array)
-
-
-def get_depth_values(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
-) -> npt.NDArray[float]:
-    """
-    Choose the depth values that this pre-cell is suppose to use, according to where it
-    is physically positioned (hence is classified as inboard or outboard).
-
-    Parameters
-    ----------
-    pre_cell
-        :class:`~PreCell` to be classified as either inboard or outboard
-    blanket_dimensions
-        :class:`bluemira.neutronics.params.TokamakDimensions` recording the
-        dimensions of the blanket in SI units (unit: [m]).
-
-    Returns
-    -------
-    depth_series
-        a series of floats corresponding to the N-1 interfaces between the N layers.
-        Each float represents how deep into the blanket (i.e. how many [m] into the
-        first wall we need to drill, from the plasma facing surface) to hit that
-        interface layer.
-    """
-    if check_inboard_outboard(pre_cell, blanket_dimensions):
-        return blanket_dimensions.inboard.get_interface_depths()
-    return blanket_dimensions.outboard.get_interface_depths()
-
-
-def check_inboard_outboard(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
-) -> bool:
-    """If this pre-cell is an inboard, return True.
-    Otherwise, this pre-cell belongs to outboard, return False
-    """
-    cell_reference_radius = pre_cell.vertex.to_array()[:, 0].mean()
-    return cell_reference_radius < blanket_dimensions.inboard_outboard_transition_radius
-
-
-def choose_region(
-    surface: openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None],
-    vertices_array: npt.NDArray,
-    control_id: bool = False,
-) -> openmc.Region:
-    """
-    Pick the correct region of the surface that includes all of the points in
-    vertices_array.
-
-    Parameters
-    ----------
-    surface
-        Either a :class:`openmc.Surface`, or a 1-tuple or 2-tuple of
-        :class:`openmc.Surface`. If it is a tuple, the first element is always a
-        :class:`openmc.ZPlane`/:class:`openmc.ZCone`/:class:`openmc.ZCylinder`;
-        the second element (if present) is always :class:`openmc.ZTorus`.
-    vertices_array
-        array of shape (?, 3), that the final region should include.
-    control_id
-        Passed as argument onto :func:`~bluemira.neutronics.make_csg.choose_region_cone`
-
-    Returns
-    -------
-        An openmc.Region built from surface provided and includes all of these
-    """
-    # switch case: blue
-    if isinstance(surface, openmc.ZPlane | openmc.ZCylinder):
-        return choose_plane_cylinders(surface, vertices_array)
-
-    if isinstance(surface, openmc.ZCone):
-        return choose_region_cone(surface, vertices_array, control_id)
-
-    if isinstance(surface, tuple):
-        chosen_first_region = choose_region(surface[0], vertices_array, control_id)
-        # = cone, or cylinder, or plane, or (cone | ambiguity_surface)
-        if len(surface) == 1:
-            return chosen_first_region
-        return flat_union((
-            chosen_first_region,
-            -surface[1],  # -surface[1] = inside of torus
-        ))
-    raise NotImplementedError(
-        f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
-    )
-
-
-def region_from_surface_series(
-    series_of_surfaces: Sequence[
-        openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None] | None
-    ],
-    vertices_array: npt.NDArray,
-    control_id: bool = False,
-) -> openmc.Intersection:
-    """
-    Switch between choose_region() and choose_region_from_tuple_of_surfaces() depending
-    on the type of each element in the series_of_surfaces.
-
-    Parameters
-    ----------
-    series_of_surfaces
-        Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
-        surface. For the last 3 options, see
-        :func:`~bluemira.neutronics.make_csg.choose_region` for more.
-
-    vertices_array
-        array of shape (?, 3), where every single point should be included by, or at
-        least on the edge of the returned Region.
-    control_id
-        Passed as argument onto :func:`~bluemira.neutronics.make_csg.choose_region_cone`
-
-    Returns
-    -------
-    intersection_region: openmc.Region
-        openmc.Intersection of a list of
-        [(openmc.Halfspace) or (openmc.Union of openmc.Halfspace)]
-    """
-    intersection_regions = []
-    for surface in series_of_surfaces:
-        if surface is None:
-            continue
-        intersection_regions.append(choose_region(surface, vertices_array, control_id))
-    return flat_intersection(intersection_regions)
+        return cls(cell_array, csg)
 
 
 class DivertorCell(openmc.Cell):
@@ -1217,6 +1275,7 @@ class DivertorCell(openmc.Cell):
         interior_surfaces: list[tuple[openmc.Surface]],
         exterior_wire: WireInfoList,
         interior_wire: WireInfoList,
+        csg: BluemiraNeutronicsCSG,
         subtractive_region: openmc.Region | None = None,
         cell_id: int | None = None,
         name: str = "",
@@ -1229,19 +1288,21 @@ class DivertorCell(openmc.Cell):
         self.interior_surfaces = interior_surfaces
         self.exterior_wire = exterior_wire
         self.interior_wire = interior_wire
+        self.csg = csg
 
-        vertices_array = self.get_all_vertices()
-
-        _surfaces = [
-            self.cw_surface,
-            self.ccw_surface,
-            *self.exterior_surfaces,
-            *self.interior_surfaces,
-        ]
-        region = region_from_surface_series(_surfaces, vertices_array, bool(cell_id))
+        region = self.csg.region_from_surface_series(
+            [
+                self.cw_surface,
+                self.ccw_surface,
+                *self.exterior_surfaces,
+                *self.interior_surfaces,
+            ],
+            self.get_all_vertices(),
+            control_id=bool(cell_id),
+        )
 
         if subtractive_region:
-            region = region & ~subtractive_region
+            region &= ~subtractive_region
         super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
         self.volume = self.get_volume()
 
@@ -1288,16 +1349,20 @@ class DivertorCell(openmc.Cell):
             self.interior_wire.get_3D_coordinates(),
         ])
 
-    def get_exclusion_zone(
+    def exclusion_zone(
         self, *, away_from_plasma: bool = True, control_id: bool = False
     ) -> openmc.Region:
         """
         Get the exclusion zone of a semi-CONVEX cell.
 
         This can only be validly used:
+
             If away_from_plasma=True, then the interior side of the cell must be convex.
             If away_from_plasma=False, then the exterior_side of the cell must be convex.
-        Usage: next_cell_region = flat_intersection(..., ~this_cell.get_exclusion_zone())
+
+        Usage:
+
+            next_cell_region = flat_intersection(..., ~this_cell.exclusion_zone())
 
         Parameters
         ----------
@@ -1310,12 +1375,12 @@ class DivertorCell(openmc.Cell):
             _surfaces.extend(self.interior_surfaces)
         else:
             _surfaces.extend(self.exterior_surfaces)
-        return region_from_surface_series(
+        return self.csg.region_from_surface_series(
             _surfaces, self.get_all_vertices(), control_id=control_id
         )
 
 
-class DivertorCellStack(abc.Sequence):
+class DivertorCellStack:
     """
     A CONVEX object! i.e. all its exterior points together should make a convex hull.
     A stack of DivertorCells (openmc.Cells), first cell is closest to the interior and
@@ -1323,38 +1388,45 @@ class DivertorCellStack(abc.Sequence):
     poloidal angle.
     """
 
-    def __init__(self, divertor_cell_stack: list[DivertorCell]):
+    def __init__(
+        self, divertor_cell_stack: list[DivertorCell], csg: BluemiraNeutronicsCSG
+    ):
         self.cell_stack = divertor_cell_stack
+        self.csg = csg
         # This check below is invalid because of how we subtract region instead.
         # for int_cell, ext_cell in pairwise(self.cell_stack):
         #     if int_cell.exterior_surfaces is not ext_cell.interior_surfaces:
         #         raise ValueError("Expected a contiguous stack of cells!")
 
     @property
-    def interior_surfaces(self):  # noqa: D102
-        return self[0].interior_surfaces
+    def interior_surfaces(self):
+        """Get interior surfaces"""
+        return self.cell_stack[0].interior_surfaces
 
     @property
-    def exterior_surfaces(self):  # noqa: D102
-        return self[-1].exterior_surfaces
+    def exterior_surfaces(self):
+        """Get exterior surfaces"""
+        return self.cell_stack[-1].exterior_surfaces
 
     @property
-    def ccw_surface(self):  # noqa: D102
-        return self[-1].ccw_surface
+    def ccw_surface(self):
+        """Get counter clockwise surface"""
+        return self.cell_stack[-1].ccw_surface
 
     @property
-    def cw_surface(self):  # noqa: D102
-        return self[-1].cw_surface
+    def cw_surface(self):
+        """Get clockwise surface"""
+        return self.cell_stack[-1].cw_surface
 
     @property
     def exterior_wire(self):
         """Alias to find the outermost cell's exterior_wire"""
-        return self[-1].exterior_wire
+        return self.cell_stack[-1].exterior_wire
 
     @property
     def interior_wire(self):
         """Alias to find the innermost cell's interior_wire"""
-        return self[0].interior_wire
+        return self.cell_stack[0].interior_wire
 
     @property
     def interfaces(self):
@@ -1369,12 +1441,19 @@ class DivertorCellStack(abc.Sequence):
         return self._interfaces  # list of list of (1- or 2-tuple of) surfaces.
 
     def __len__(self) -> int:
-        return self.cell_stack.__len__()
+        """Length of DivertorCellStack"""
+        return len(self.cell_stack)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCell] | DivertorCell:
-        return self.cell_stack.__getitem__(index_or_slice)
+        """Get item for DivertorCellStack"""
+        return self.cell_stack[index_or_slice]
+
+    def __iter__(self) -> Iterator[DivertorCell]:
+        """Iterator for DivertorCellStack"""
+        return iter(self.cell_stack)
 
     def __repr__(self) -> str:
+        """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} DivertorCells at ")
 
     def get_all_vertices(self) -> npt.NDArray:
@@ -1389,7 +1468,7 @@ class DivertorCellStack(abc.Sequence):
             self.exterior_wire.get_3D_coordinates(),
         ])
 
-    def get_overall_region(self, control_id: bool = False) -> openmc.Region:
+    def get_overall_region(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the region that this cell-stack encompasses.
 
@@ -1399,13 +1478,16 @@ class DivertorCellStack(abc.Sequence):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        _surfaces = [
-            self.cw_surface,
-            self.ccw_surface,
-            *self.interior_surfaces,
-            *self.exterior_surfaces,
-        ]
-        return region_from_surface_series(_surfaces, self.get_all_vertices(), control_id)
+        return self.csg.region_from_surface_series(
+            [
+                self.cw_surface,
+                self.ccw_surface,
+                *self.interior_surfaces,
+                *self.exterior_surfaces,
+            ],
+            self.get_all_vertices(),
+            control_id=control_id,
+        )
 
     @classmethod
     def from_divertor_pre_cell(
@@ -1414,6 +1496,7 @@ class DivertorCellStack(abc.Sequence):
         cw_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
         material_library: MaterialsLibrary,
+        csg: BluemiraNeutronicsCSG,
         armour_thickness: float = 0,
         stack_num: str | int = "",
     ) -> DivertorCellStack:
@@ -1430,17 +1513,17 @@ class DivertorCellStack(abc.Sequence):
         # but a 2-element list if armour_thickness==0.
 
         outermost_wire = divertor_pre_cell.exterior_wire
-        outermost_surf = surfaces_from_info_list(outermost_wire)
+        outermost_surf = csg.surfaces_from_info_list(outermost_wire)
         outer_wire = divertor_pre_cell.vv_wire
-        outer_surf = surfaces_from_info_list(outer_wire)
+        outer_surf = csg.surfaces_from_info_list(outer_wire)
         if armour_thickness == 0:
             inner_wire = divertor_pre_cell.interior_wire
-            inner_surf = surfaces_from_info_list(inner_wire)
+            inner_surf = csg.surfaces_from_info_list(inner_wire)
         else:
             inner_wire = divertor_pre_cell.offset_interior_wire(armour_thickness)
-            inner_surf = surfaces_from_info_list(inner_wire)
+            inner_surf = csg.surfaces_from_info_list(inner_wire)
             innermost_wire = divertor_pre_cell.interior_wire
-            innermost_surf = surfaces_from_info_list(innermost_wire)
+            innermost_surf = csg.surfaces_from_info_list(innermost_wire)
         cell_stack = [
             # The middle cell is the only cell guaranteed to be convex.
             # Therefore it is the first cell to be made.
@@ -1453,6 +1536,7 @@ class DivertorCellStack(abc.Sequence):
                 # wires: ext, int.
                 outer_wire,
                 inner_wire,
+                csg=csg,
                 name=f"Bulk of divertor in diver cell stack {stack_num}",
                 fill=material_library.divertor_mat,
             ),
@@ -1467,9 +1551,8 @@ class DivertorCellStack(abc.Sequence):
                 # wires: ext, int.
                 outermost_wire,
                 outer_wire.reverse(),
-                subtractive_region=cell_stack[0].get_exclusion_zone(
-                    away_from_plasma=False
-                ),
+                csg=csg,
+                subtractive_region=cell_stack[0].exclusion_zone(away_from_plasma=False),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
                 fill=material_library.div_fw_mat,
@@ -1492,9 +1575,10 @@ class DivertorCellStack(abc.Sequence):
                     # wires: ext, int.
                     inner_wire.reverse(),
                     innermost_wire,
-                    # subtract away everything in the first cell.
+                    csg=csg,
                     name=f"Divertor armour in divertor cell stack {stack_num}",
-                    subtractive_region=cell_stack[0].get_exclusion_zone(
+                    # subtract away everything in the first cell.
+                    subtractive_region=cell_stack[0].exclusion_zone(
                         away_from_plasma=True
                     ),
                     fill=material_library.div_sf_mat,
@@ -1502,25 +1586,25 @@ class DivertorCellStack(abc.Sequence):
             )
             # again, unfortunately, this does mean that the surface armour cell has the
             # largest ID.
-        return cls(cell_stack)
+        return cls(cell_stack, csg)
 
 
-class DivertorCellArray(abc.Sequence):
+class DivertorCellArray:
     """Turn the divertor into a cell array"""
 
-    def __init__(self, divertor_cell_array: list[DivertorCellStack]):
+    def __init__(self, cell_array: list[DivertorCellStack]):
         """Create array from a list of DivertorCellStack."""
-        self.divertor_cell_array = divertor_cell_array
-        self.poloidal_surfaces = [self[0].cw_surface]
+        self.cell_array = cell_array
+        self.poloidal_surfaces = [self.cell_array[0].cw_surface]
         self.radial_surfaces = []
         # check neighbouring cells have the same cell stack.
-        for i, this_stack in enumerate(self):
+        for i, this_stack in enumerate(self.cell_array):
             self.poloidal_surfaces.append(this_stack.ccw_surface)
             self.radial_surfaces.append(this_stack.interfaces)
 
             # check neighbouring cells share the same lateral surface
-            if i != len(self) - 1:
-                next_stack = self[i + 1]
+            if i != len(self.cell_array) - 1:
+                next_stack = self.cell_array[i + 1]
                 if this_stack.ccw_surface is not next_stack.cw_surface:
                     raise GeometryError(
                         f"Neighbouring DivertorCellStack {i} and {i + 1} are expected to"
@@ -1528,36 +1612,38 @@ class DivertorCellArray(abc.Sequence):
                     )
 
     def __len__(self) -> int:
-        return self.divertor_cell_array.__len__()
+        """Length of DivertorCellArray"""
+        return len(self.cell_array)
 
     def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
-        return self.divertor_cell_array.__getitem__(index_or_slice)
+        """Get item for DivertorCellArray"""
+        return self.cell_array[index_or_slice]
 
-    def __add__(self, other_array: DivertorCellArray) -> DivertorCellArray:
-        return DivertorCellArray(
-            self.divertor_cell_array + other_array.divertor_cell_array
-        )
+    def __iter__(self) -> Iterator[DivertorCellStack]:
+        """Iterator for DivertorCellArray"""
+        return iter(self.cell_array)
 
     def __repr__(self) -> str:
+        """String representation"""
         return (
             super().__repr__().replace(" at ", f" of {len(self)} DivertorCellStacks at")
         )
 
-    def get_interior_surfaces(self) -> list[openmc.Surface]:
+    def interior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[0] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_surfaces(self) -> list[openmc.Surface]:
+    def exterior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
         return [surf_stack[-1] for surf_stack in self.radial_surfaces]
 
-    def get_exterior_vertices(self) -> npt.NDArray:
+    def exterior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's outside corners'
         coordinates, in 3D.
@@ -1568,10 +1654,10 @@ class DivertorCellArray(abc.Sequence):
             Arranged counter-clockwise (inboard to outboard).
         """
         return np.concatenate([
-            stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self
+            stack.exterior_wire.get_3D_coordinates()[::-1] for stack in self.cell_array
         ])
 
-    def get_interior_vertices(self) -> npt.NDArray:
+    def interior_vertices(self) -> npt.NDArray:
         """
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
@@ -1582,13 +1668,13 @@ class DivertorCellArray(abc.Sequence):
             Arranged counter-clockwise (inboard to outboard).
         """
         return np.concatenate([
-            stack.interior_wire.get_3D_coordinates() for stack in self
+            stack.interior_wire.get_3D_coordinates() for stack in self.cell_array
         ])
 
-    def get_exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
+    def exclusion_zone(self, *, control_id: bool = False) -> openmc.Region:
         """
         Get the exclusion zone AWAY from the plasma.
-        Usage: plasma_region = openmc.Union(..., ~self.get_exclusion_zone(), ...)
+        Usage: plasma_region = openmc.Union(..., ~self.exclusion_zone(), ...)
         Assumes every single cell-stack is made of an interior surface which itself forms
         a convex hull.
 
@@ -1599,16 +1685,17 @@ class DivertorCellArray(abc.Sequence):
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
         return openmc.Union([
-            stack[0].get_exclusion_zone(away_from_plasma=True, control_id=control_id)
-            for stack in self
+            stack[0].exclusion_zone(away_from_plasma=True, control_id=control_id)
+            for stack in self.cell_array
         ])
 
     @classmethod
-    def from_divertor_pre_cell_array(
+    def from_pre_cell_array(
         cls,
-        divertor_pre_cell_array: DivertorPreCellArray,
+        pre_cell_array: DivertorPreCellArray,
         material_library: MaterialsLibrary,
         divertor_thickness: DivertorThickness,
+        csg: BluemiraNeutronicsCSG,
         override_start_end_surfaces: tuple[openmc.Surface, openmc.Surface] | None = None,
     ) -> DivertorCellArray:
         """
@@ -1616,7 +1703,7 @@ class DivertorCellArray(abc.Sequence):
 
         Parameters
         ----------
-        divertor_pre_cell_array
+        pre_cell_array
             The array of divertor pre-cells.
         material_library
             container of openmc.Material
@@ -1633,27 +1720,28 @@ class DivertorCellArray(abc.Sequence):
             """Generate the final surface on-the-fly so that it gets the correct id."""
             if override_start_end_surfaces:
                 return override_start_end_surfaces[-1]
-            return surface_from_straight_line(
-                divertor_pre_cell_array[-1].ccw_wall[-1].key_points
+            return csg.surface_from_straight_line(
+                pre_cell_array[-1].ccw_wall[-1].key_points
             )
 
         if override_start_end_surfaces:
             cw_surf = override_start_end_surfaces[0]
         else:
-            cw_surf = surface_from_straight_line(
-                divertor_pre_cell_array[0].cw_wall[0].key_points
+            cw_surf = csg.surface_from_straight_line(
+                pre_cell_array[0].cw_wall[0].key_points
             )
-        for i, dpc in enumerate(divertor_pre_cell_array):
-            if i == (len(divertor_pre_cell_array) - 1):
+        for i, dpc in enumerate(pre_cell_array):
+            if i == (len(pre_cell_array) - 1):
                 ccw_surf = get_final_surface()
             else:
-                ccw_surf = surface_from_straight_line(dpc.ccw_wall[-1].key_points)
+                ccw_surf = csg.surface_from_straight_line(dpc.ccw_wall[-1].key_points)
             stack_list.append(
                 DivertorCellStack.from_divertor_pre_cell(
                     dpc,
                     cw_surf,
                     ccw_surf,
                     material_library,
+                    csg,
                     divertor_thickness.surface,
                     i + 1,
                 )
@@ -1666,28 +1754,6 @@ class DivertorCellArray(abc.Sequence):
         Returns a list of cells (unnamed, unspecified-ID) where each corresponds to a
         cell-stack.
         """
-        return [openmc.Cell(region=stack.get_overall_region()) for stack in self]
-
-
-class TFCoils(abc.Sequence):
-    """Turn the divertor into a cell array"""
-
-    def __init__(self, tf_coils: list[openmc.Cell]):
-        """Create array from a list of openmc.Cell."""
-        self.tf_coils = tf_coils
-
-    def __len__(self) -> int:
-        return self.tf_coils.__len__()
-
-    def __getitem__(self, index_or_slice) -> list[openmc.Cell] | openmc.Cell:
-        return self.tf_coils.__getitem__(index_or_slice)
-
-    def __add__(self, other_array: TFCoils) -> TFCoils:
-        return TFCoils(self.tf_coils + other_array.tf_coils)
-
-    def __repr__(self) -> str:
-        return (
-            super()
-            .__repr__()
-            .replace(" at ", f" of {len(self)} openmc.Cells of tf-coils at")
-        )
+        return [
+            openmc.Cell(region=stack.get_overall_region()) for stack in self.cell_array
+        ]

@@ -20,24 +20,28 @@ from bluemira.plasma_physics.reactions import E_DT_fusion
 DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
 
 
-def to_cm(m):  # noqa: D103
+def to_cm(m):
+    """Converter for m to cm"""
     return raw_uc(m, "m", "cm")
 
 
-def to_m(cm):  # noqa: D103
+def to_m(cm):
+    """Converter for cm to m"""
     return raw_uc(cm, "cm", "m")
 
 
-def to_cm3(m3):  # noqa: D103
-    # for some reason raw_uc(m3, "m^3", "cm^3") returns 999999.9999999999 instead.
-    return m3 * 1_000_000
+def to_cm3(m3):
+    """Converter for m3 to cm3"""
+    return raw_uc(m3, "m^3", "cm^3")
 
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
+
 # Amount of energy carried away by the neutron, which is about 4/5 of that.
 ALHPA_MOLAR_MASS = HE_MOLAR_MASS - ELECTRON_MOLAR_MASS
-# (ignoring the binding energy of the electron, but that's too minute for us to care anyways.) # noqa: W505, E501
+
+# ignoring the binding energy of the electron, too minute.
 dt_neutron_energy = energy_per_dt * (
     ALHPA_MOLAR_MASS / (ALHPA_MOLAR_MASS + NEUTRON_MOLAR_MASS)
 )  # [J]
@@ -47,9 +51,10 @@ dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
 # how many degrees misalignment tolerated while merging almost-parallel wires into one.
 TOLERANCE_DEGREES = 6.0
-# Default value to discretize the BluemiraWire.
+
+# Default value to discretise the BluemiraWire.
 # Set to 10 to preserve speed without too much loss in precision.
-DISCRETIZATION_LEVEL = 10
+DISCRETISATION_LEVEL = 10
 
 
 # The following material science constants are in cgs.

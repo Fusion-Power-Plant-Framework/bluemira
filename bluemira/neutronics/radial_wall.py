@@ -4,145 +4,37 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Defining (and changing) the radial (side) walls of PreCell in PreCellArrays."""
-# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
-from collections import abc
-from dataclasses import dataclass
+from enum import IntEnum
 from math import fsum
 from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy import typing as npt
+from scipy.optimize import newton
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Iterable, Sequence
 
-    from bluemira.geometry.coordinates import Coordinates
     from bluemira.neutronics.make_pre_cell import PreCellArray
 
 
-@dataclass
-class Vertices:
-    """
-    A dataclass of numpy arrays, each denoting the XZ or XYZ coordinates, thus they all
-    have shape (2,) or (3,).
-    """
+class Vert(IntEnum):
+    """Vertices index for cells"""
 
-    exterior_end: Sequence[float]
-    interior_start: Sequence[float]
-    interior_end: Sequence[float]
-    exterior_start: Sequence[float]
-
-    def to_3D(self) -> Vertices:
-        """Force the vertices into 3D, stuffing the Y with 0's."""
-        return Vertices(
-            np.array([self.exterior_end[0], 0, self.exterior_end[-1]]),
-            np.array([self.interior_start[0], 0, self.interior_start[-1]]),
-            np.array([self.interior_end[0], 0, self.interior_end[-1]]),
-            np.array([self.exterior_start[0], 0, self.exterior_start[-1]]),
-        )
-
-    def to_2D(self) -> Vertices:
-        """Put the vertices back into the XZ plane, with only 2 coordinates.
-        Basically unused.
-        """
-        return Vertices(
-            np.array([self.exterior_end[0], self.exterior_end[-1]]),
-            np.array([self.interior_start[0], self.interior_start[-1]]),
-            np.array([self.interior_end[0], self.interior_end[-1]]),
-            np.array([self.exterior_start[0], self.exterior_start[-1]]),
-        )
-
-    def to_array(self) -> npt.NDArray:
-        """Convert to numpy array"""
-        return np.array([
-            self.exterior_end,
-            self.interior_start,
-            self.interior_end,
-            self.exterior_start,
-        ])
+    ext_end = 0
+    int_start = 1
+    int_end = 2
+    ext_start = 3
 
 
-@dataclass
-class VerticesCoordinates:
-    """
-    A dataclass of :class:`bluemira.geometry.coordinates.Coordinates` objects, each
-    containing only one point denoting the set of vertices of a pre-cell or a cell.
-    """
-
-    exterior_end: Coordinates
-    interior_start: Coordinates
-    interior_end: Coordinates
-    exterior_start: Coordinates
-
-    def to_2D(self) -> Vertices:
-        """Convert itself to a list of 2D vertices. Mainly used for pre-cells."""
-        return Vertices(
-            self.exterior_end[::2, 0],
-            self.interior_start[::2, 0],
-            self.interior_end[::2, 0],
-            self.exterior_start[::2, 0],
-        )
-
-
-@dataclass
-class VacuumVesselPoints:
-    """
-    A dataclass of numpy arrays, each denoting the XZ or XYZ coordinates, thus they all
-    have shape (2,) or (3,).
-    This particular class concerns the vacuum vessel interior curve's start and end point
-    in a pre-cell only.
-    """
-
-    start: Sequence[float]
-    end: Sequence[float]
-
-    def to_3D(self) -> VacuumVesselPoints:
-        """Force the vertices into 3D, stuffing the Y with 0's."""
-        return VacuumVesselPoints(
-            np.array([self.start[0], 0, self.start[-1]]),
-            np.array([self.end[0], 0, self.end[-1]]),
-        )
-
-    def to_2D(self) -> VacuumVesselPoints:
-        """Put the vertices back into the XZ plane, with only 2 coordinates.
-        Basically unused.
-        """
-        return VacuumVesselPoints(
-            np.array([self.start[0], self.start[-1]]),
-            np.array([self.end[0], self.end[-1]]),
-        )
-
-    def to_array(self) -> npt.NDArray:
-        """Convert to numpy array"""
-        return np.array([self.start, self.end])
-
-
-@dataclass
-class VacuumVesselPointsCoordinates:
-    """
-    A dataclass of :class:`bluemira.geometry.coordinates.Coordinates` objects, each
-    containing only one point denoting the set of vertices of a pre-cell or a cell.
-
-    This particular class concerns the vacuum vessel interior curve's start and end point
-    in a pre-cell only.
-    """
-
-    end: Coordinates
-    start: Coordinates
-
-    def to_2D(self) -> VacuumVesselPoints:
-        """Convert itself to a list of 2D vertices. Mainly used for pre-cells."""
-        return VacuumVesselPoints(self.end[::2, 0], self.start[::2, 0])
-
-
-def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> float:
+def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
 
@@ -172,7 +64,7 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
     polygon = np.array(polygon)
-    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:
+    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
         raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
     previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
     px, pz = previous_points[:, 0], previous_points[:, -1]
@@ -183,7 +75,7 @@ def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> f
 
 def partial_diff_of_volume(
     three_vertices: Sequence[Sequence[float]],
-    normalized_direction_vector: Iterable[float],
+    normalised_direction_vector: Iterable[float],
 ) -> float:
     """
     Gives the relationship between how the the solid volume varies with the position of
@@ -219,66 +111,16 @@ def partial_diff_of_volume(
     x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
     z_component = (qx + rx + sx) * (sx - qx)
     xz_derivatives = np.array([x_component, z_component]).T
-    return np.pi / 3 * np.dot(normalized_direction_vector, xz_derivatives)
+    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
 
 
-def newtons_method_1d(
-    objective: Callable[[float], float],
-    x_guess: float,
-    dobjective_dx: Callable[[float], float],
-    atol: float = EPS_FREECAD,
-) -> float:
-    """
-    Try to find the root of a strictly monotonic 1D function.
-
-    Writing our own since we don't want to use scipy.
-
-    Parameters
-    ----------
-    objective:
-        Objective function to be minimized. Takes in float x.
-    x_guess:
-        Starting guess.
-    dobjective_dx:
-        Derivative of objective function w.r.t. x.
-    atol:
-        Absolute value of objective function must be smaller than this to terminate
-        optimization successfully.
-    """
-    deviation, x, dy_dx = objective, x_guess, dobjective_dx
-    for i in range(100):  # noqa: B007
-        x -= deviation(x) / dy_dx(x)
-        if np.isclose(objective(x), 0, rtol=0, atol=atol):
-            return x
-    bluemira_warn(
-        "Optimization failed: Newton's method did not converge after"
-        f"{i + 1} iterations!"
-    )
-    return x
-
-
-class CellWalls(abc.Sequence):
+class CellWalls:
     """
     A list of start- and end-location vectors of all of the walls dividing neighbouring
     pre-cells.
-
-    Variables
-    ---------
-    _starts
-        Initial rz locations of the start points of the cell wall.
-        This should remain unchanged throughout any optimization operations.
-    _init_ends
-        Initial rz locations of the end points of the cell wall.
-    original_lengths
-        The lengths of the cell wall when initialized.
-    directions
-        The direction that each cell wall is pointed in, from the start point to the end
-        point. This should remain unchanged throughout any optimization operations.
-    num_cells
-        The number of cells that this represents.
     """
 
-    def __init__(self, cell_walls: npt.NDArray):
+    def __init__(self, cell_walls: npt.ArrayLike):
         """
         Parameters
         ----------
@@ -289,25 +131,26 @@ class CellWalls(abc.Sequence):
             axis=2 describes the r and z coordinates.
         """
         self.cell_walls = np.array(cell_walls)
-        if np.shape(self)[1:] != (2, 2):
+        if np.shape(self.cell_walls)[1:] != (2, 2):
             raise ValueError(
                 "Expected N values of start and end xz coordinates, i.e. "
-                f"shape = (N+1, 2, 2); got {np.shape(self)}."
+                f"shape = (N+1, 2, 2); got {np.shape(self.cell_walls)}."
             )
         self._starts = self.cell_walls[:, 0]  # shape = (N+1, 2)
         self._init_ends = self.cell_walls[:, 1]  # shape = (N+1, 2)
-        _vector = self._init_ends - self._starts  # shape = (N+1, 2)
-        self.original_lengths = np.linalg.norm(_vector, axis=-1)
-        self.directions = (_vector.T / self.original_lengths).T
-        self.num_cells = len(self) - 1
+        vector = self._init_ends - self._starts  # shape = (N+1, 2)
+        self.original_lengths = np.linalg.norm(vector, axis=-1)
+        self.directions = (vector.T / self.original_lengths).T
+        self.num_cells: int = len(self) - 1
         self.check_volumes_and_lengths()
 
     def __len__(self) -> int:
-        return self.cell_walls.__len__()
+        """Number of cell wall panels"""
+        return len(self.cell_walls)
 
     def __getitem__(self, index_or_slice) -> npt.NDArray | float:
-        """self[:] will return a copy of the index."""
-        return self.cell_walls.__getitem__(index_or_slice)
+        """Get cell wall panel"""
+        return self.cell_walls[index_or_slice]
 
     def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
         """
@@ -315,7 +158,7 @@ class CellWalls(abc.Sequence):
         However, a full-reset should be avoided because we don't want to mess with the
         start rz coordinates.
         """
-        self.cell_walls.__setitem__(index_or_slice, new_coordinates)
+        self.cell_walls[index_or_slice] = new_coordinates
 
     def __add__(self, other_cell_walls: CellWalls):
         """
@@ -329,23 +172,29 @@ class CellWalls(abc.Sequence):
         raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
     def __repr__(self) -> str:
-        return super().__repr__().replace(" at ", f" of {len(self)} walls at ")
+        """String representation"""
+        return (
+            super().__repr__().replace(" at ", f" of {len(self.cell_walls)} walls at ")
+        )
 
-    def copy(self) -> CellWalls:  # noqa: D102
+    def copy(self) -> CellWalls:
+        """Copy cell wall"""
         return CellWalls(self.cell_walls.copy())
 
     @classmethod
     def from_pre_cell_array(cls, pre_cell_array: PreCellArray) -> CellWalls:
         """Use the corner vertices in an array of pre-cells to make a CellWalls."""
-        cell_walls = [
-            (c.vertex.interior_end, c.vertex.exterior_start) for c in pre_cell_array
-        ]
-        cell_walls.append((
-            pre_cell_array[-1].vertex.interior_start,
-            pre_cell_array[-1].vertex.exterior_end,
-        ))
         # cut each coordinates down from having shape (3, 1) down to (2,)
-        return cls(cell_walls)
+        return cls([
+            *(
+                (c.vertex[:, Vert.int_end], c.vertex[:, Vert.ext_start])
+                for c in pre_cell_array
+            ),
+            (
+                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vertex[:, Vert.ext_end],
+            ),
+        ])
 
     @classmethod
     def from_pre_cell_array_vv(cls, pre_cell_array: PreCellArray) -> CellWalls:
@@ -353,12 +202,13 @@ class CellWalls(abc.Sequence):
         Use the corner vertices and the vacuum vessel vertices of the pre-cell array to
         make a CellWall.
         """
-        cell_walls = [(c.vertex.interior_end, c.vv_point.start) for c in pre_cell_array]
-        cell_walls.append((
-            pre_cell_array[-1].vertex.interior_start,
-            pre_cell_array[-1].vv_point.end,
-        ))
-        return cls(cell_walls)
+        return cls([
+            *((c.vertex[:, Vert.int_end], c.vv_point[:, 0]) for c in pre_cell_array),
+            (
+                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vv_point[:, 1],
+            ),
+        ])
 
     @property
     def starts(self) -> npt.NDArray:
@@ -371,7 +221,7 @@ class CellWalls(abc.Sequence):
         return self.cell_walls[:, 1]  # shape = (N+1, 2)
 
     def calculate_new_end_points(
-        self, lengths: float | npt.NDArray[float]
+        self, lengths: float | npt.NDArray[np.float64]
     ) -> npt.NDArray:
         """
         Get the end points of each cell wall if they were changed to have the specified
@@ -399,7 +249,7 @@ class CellWalls(abc.Sequence):
         -------
         length: float
         """
-        _end_i, _start_i = self[i]
+        _end_i, _start_i = self.cell_walls[i]
         return np.linalg.norm(_end_i - _start_i)
 
     def set_length(self, i, new_length):
@@ -419,8 +269,9 @@ class CellWalls(abc.Sequence):
         -------
         volume: float
         """
-        outline = np.concatenate([self[i], self[i + 1][::-1]])
-        return polygon_revolve_signed_volume(outline)
+        return polygon_revolve_signed_volume(
+            np.concatenate([self.cell_walls[i], self.cell_walls[i + 1][::-1]])
+        )
 
     @property
     def volumes(self):
@@ -428,7 +279,7 @@ class CellWalls(abc.Sequence):
         Current volumes of the (simplified) cells created by joining straight lines
         between neighbouring cell walls.
         """
-        return np.array([
+        return np.asarray([
             self.get_volume(i) for i in range(self.num_cells)
         ])  # shape = (N+1,)
 
@@ -451,7 +302,7 @@ class CellWalls(abc.Sequence):
         """
         _start_i, _dir_i = self.starts[i], self.directions[i]
         new_end = _start_i + _dir_i * test_length
-        prev_wall, next_wall = self[i - 1 : i + 2 : 2]
+        prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
         prev_outline = [prev_wall[0], prev_wall[1], new_end, _start_i]
         next_outline = [_start_i, new_end, next_wall[1], next_wall[0]]
         return polygon_revolve_signed_volume(
@@ -476,7 +327,9 @@ class CellWalls(abc.Sequence):
             next_curve, _dir_i
         )
 
-    def optimize_to_match_individual_volumes(self, volume_list: Iterable[float]):
+    def optimize_to_match_individual_volumes(
+        self, volume_list: Iterable[float], *, max_iter=1000
+    ):
         """
         Allow the lengths of each wall to increase, so that the overall volumes are
         preserved as much as possible. Assuming the entire exterior curve is convex,
@@ -487,30 +340,29 @@ class CellWalls(abc.Sequence):
             return
 
         target_volumes = np.array(list(volume_list))
-        if self.num_cells == 2:
+        if self.num_cells == 2:  # noqa: PLR2004
             # only one single step is required for the optimization
             def volume_excess(new_length):
                 return self.volume_of_cells_neighbouring(1, new_length) - sum(
                     target_volumes
                 )
 
-            length_1 = self.get_length(1)
-
             def derivative(new_length):
                 return self.volume_derivative_of_cells_neighbouring(1, new_length)
 
-            self.set_length(1, newtons_method_1d(volume_excess, length_1, derivative))
+            self.set_length(1, newton(volume_excess, self.get_length(1), derivative))
             self.check_volumes_and_lengths()
             return
 
         # if more than 3 walls (more than 2 cells)
-        i_range = range(1, self.num_cells)
+        i, i_min, i_max = 1, 1, self.num_cells - 1
+
         num_passes_counter = -1
         step_direction = +1
-        i = 1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
-        while num_passes_counter < 1000:
+        while num_passes_counter < max_iter:
+            # do not allow length to decrease beyond their original value.
 
             def excess_volume(test_length, i=i):
                 return self.volume_of_cells_neighbouring(i, test_length) - sum(
@@ -520,16 +372,13 @@ class CellWalls(abc.Sequence):
             def dV_dl(test_length, i=i):  # noqa: N802
                 return self.volume_derivative_of_cells_neighbouring(i, test_length)
 
-            # do not allow length to decrease beyond their original value.
-            if excess_volume(self.original_lengths[i]) < 0:
-                optimal_length = newtons_method_1d(
-                    excess_volume, self.get_length(i), dV_dl
-                )
-                self.set_length(i, optimal_length)
-            else:
-                self.set_length(i, self.original_lengths[i])
-
-            if i == min(i_range):
+            self.set_length(
+                i,
+                newton(excess_volume, self.get_length(i), dV_dl)
+                if excess_volume(self.original_lengths[i]) < 0
+                else self.original_lengths[i],
+            )
+            if i == i_min:
                 # hitting the left end: bounce to the right
                 step_direction = +1
                 num_passes_counter += 1
@@ -545,14 +394,13 @@ class CellWalls(abc.Sequence):
                     )
                     self.check_volumes_and_lengths()
                     return
-            elif i == max(i_range):
+            elif i == i_max:
                 # hitting the right end: bounce to the left
                 step_direction = -1
                 num_passes_counter += 1
                 forward_pass_result = self.lengths.copy()
             i += step_direction
         bluemira_warn(
-            "Optimization failed: Did not converge within"
+            "Optimisation failed: Did not converge within"
             f"{num_passes_counter} iterations!"
         )
-        return

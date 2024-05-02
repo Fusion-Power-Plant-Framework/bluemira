@@ -35,7 +35,9 @@ def state_download_size(download_size: int, uncompressed_size: int, units: str):
 
 
 def extractor(
-    compressed_files: list[Path], extraction_dir: Path, del_compressed_file: bool
+    compressed_files: list[Path],
+    extraction_dir: Path,
+    del_compressed_file: bool,  # noqa: FBT001
 ):
     """Customisable extractor"""
     Path.mkdir(extraction_dir, parents=True, exist_ok=True)

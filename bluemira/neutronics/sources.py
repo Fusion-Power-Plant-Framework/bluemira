@@ -1,9 +1,15 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+"""Neutronics sources"""
+
 import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import dt_neutron_energy
-from bluemira.neutronics.neutronics_axisymmetric import create_ring_source
 from bluemira.neutronics.params import PlasmaSourceParameters
 from bluemira.radiation_transport.error import SourceError
 
@@ -45,14 +51,16 @@ def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source
 def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source:
     """
     Creating simple line ring source lying on the Z=0 plane,
-        at r = major radius + shafranov shift,
-        producing 14.1 MeV neutrons with no variation in energy.
+    at r = major radius + shafranov shift,
+    producing 14.1 MeV neutrons with no variation in energy.
     A more accurate source will slightly affect the wall loadings and dpa profiles.
 
     Parameters
     ----------
-    major_r_cm: major radius [cm]
-    shaf_shift_cm: shafranov shift [cm]
+    major_r_cm:
+        major radius [cm]
+    shaf_shift_cm:
+        shafranov shift [cm]
     """
     ring_source = openmc.Source()
     source_radii_cm = openmc.stats.Discrete([major_r_cm + shaf_shift_cm], [1])

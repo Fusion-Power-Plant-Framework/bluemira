@@ -30,22 +30,22 @@ from bluemira.codes.interface import (
 from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialise_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.full_tokamak import SingleNullTokamak
 from bluemira.neutronics.make_csg import BlanketCellArray
-from bluemira.neutronics.neutronics_axisymmetric import create_materials
+from bluemira.neutronics.make_materials import create_materials
+from bluemira.neutronics.neutronics_axisymmetric import csg_tokamak
+from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
-    BlanketLayers,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
     TokamakDimensions,
     get_preset_physical_properties,
 )
-from bluemira.neutronics.result_presentation import OpenMCResult
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
 
 def some_function_on_blanket_wire(*_args):
+    """DELETE ME"""
     # Loading data
     with open("data/inner_boundary") as j:
         deserialise_shape(json.load(j))
@@ -83,6 +83,8 @@ def some_function_on_blanket_wire(*_args):
 
 
 class OpenMCRunModes(BaseRunMode):
+    """OpenMC run modes"""
+
     RUN = "fixed source"
     RUN_AND_PLOT = auto()
     PLOT = "plot"
@@ -134,6 +136,8 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
 
 
 class Setup(CodesSetup):
+    """Setup task for OpenMC solver"""
+
     def __init__(
         self,
         out_path: str,
@@ -142,7 +146,8 @@ class Setup(CodesSetup):
         cells,
         source,
         blanket_cell_array,
-        generator,
+        pre_cell_arrays,
+        outer_wire,
         mat_lib,
     ):
         super().__init__(None, codes_name)
@@ -152,7 +157,8 @@ class Setup(CodesSetup):
         self.cross_section_xml = cross_section_xml
         self.source = source
         self.blanket_cell_array = blanket_cell_array
-        self.generator = generator
+        self.pre_cell_arrays = pre_cell_arrays
+        self.outer_wire = outer_wire
         self.mat_lib = mat_lib
         self.matlist = attrgetter(
             "outb_sf_mat",
@@ -160,7 +166,7 @@ class Setup(CodesSetup):
             "outb_bz_mat",
             "outb_mani_mat",
             "outb_vv_mat",
-            "div_fw_mat",
+            "divertor_mat",
             "div_fw_mat",
         )
 
@@ -202,6 +208,7 @@ class Setup(CodesSetup):
         self.files_created.add(Path(self.out_path, run_mode.name.lower(), "tallies.xml"))
 
     def run(self, run_mode, runtime_params, source_params, *, debug: bool = False):
+        """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
             self.settings.source = self.source(source_params)
@@ -216,13 +223,10 @@ class Setup(CodesSetup):
         self.files_created.add("tallies.out")
 
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
+        """Plot stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
-            plot_width_0 = (
-                self.generator.data.vacuum_vessel_wire.bounding_box.x_max * 2.1
-            )
-            plot_width_1 = (
-                self.generator.data.vacuum_vessel_wire.bounding_box.z_max * 3.1
-            )
+            plot_width_0 = self.outer_wire.bounding_box.x_max * 2.1
+            plot_width_1 = self.outer_wire.bounding_box.z_max * 3.1
             plot = openmc.Plot()
             plot.basis = runtime_params.plot_axis
             plot.pixels = [
@@ -236,13 +240,8 @@ class Setup(CodesSetup):
             self.files_created.add(plot_pth)
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
-        all_ext_vertices = self.generator.get_coordinates_from_pre_cell_arrays(
-            self.generator.pre_cell_array.blanket, self.generator.pre_cell_array.divertor
-        )
-        z_min = all_ext_vertices[:, -1].min()
-        z_max = all_ext_vertices[:, -1].max()
-        r_max = max(abs(all_ext_vertices[:, 0]))
-        r_min = -r_max
+        """Stochastic volume stage for setup openmc"""
+        z_max, z_min, r_max, r_min = self.pre_cell_arrays.bounding_box()
 
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
@@ -262,6 +261,8 @@ class Setup(CodesSetup):
 
 
 class Run(CodesTask):
+    """Run task for OpenMC solver"""
+
     def __init__(self, out_path: Path, codes_name: str):
         super().__init__(None, codes_name)
 
@@ -286,24 +287,31 @@ class Run(CodesTask):
         )
 
     def run(self, run_mode, *, debug: bool = False):
+        """Run stage for run task"""
         self._run(run_mode, debug=debug)
 
     def plot(self, run_mode, *, debug: bool = False):
+        """Plot stage for run task"""
         self._run(run_mode, debug=debug)
 
     def volume(self, run_mode, *, debug: bool = False):
+        """Stochastic volume stage for run task"""
         self._run(run_mode, debug=debug)
 
 
 class Teardown(CodesTeardown):
+    """Teardown task for OpenMC solver"""
+
     def __init__(
         self,
+        cells,
         out_path: str,
         codes_name: str,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
+        self.cells = cells
 
     @staticmethod
     def _cleanup(files_created, *, delete_files: bool = False):
@@ -328,7 +336,8 @@ class Teardown(CodesTeardown):
                 "they don't exists."
             )
 
-    def run(self, universe, files_created, source_params, statepoint_file, _cells):
+    def run(self, universe, files_created, source_params, statepoint_file):
+        """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
             n_DT_reactions(source_params.plasma_physics_units.reactor_power),
@@ -338,21 +347,25 @@ class Teardown(CodesTeardown):
         return result
 
     def plot(self, _universe, files_created, *_args):
+        """Plot stage for Teardown task"""
         self._cleanup(files_created)
 
     def volume(
-        self, _universe, files_created, _source_params, _statepoint_file, cells
+        self, _universe, files_created, _source_params, _statepoint_file
     ) -> dict[int, float]:
+        """Stochastic volume stage for teardown task"""
         self._cleanup(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
             )
-            for cell in cells
+            for cell in self.cells
         }
 
 
 class OpenMCNeutronicsSolver(CodesSolver):
+    """OpenMC 2D neutronics solver"""
+
     name: str = OPENMC_NAME
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
     params: OpenMCNeutronicsSolverParams
@@ -381,46 +394,37 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         self.source = source
 
-        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry_base(
-            _tokamak_geometry, self.params.major_radius.value, 0.1, 2, 4
+        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
+            _tokamak_geometry,
+            self.params.major_radius.value,
+            tf_inner_radius=2,
+            tf_outer_radius=4,
+            divertor_surface_tk=0.1,
+            blanket_surface_tk=0.01,
+            blk_ib_manifold=0.02,
+            blk_ob_manifold=0.2,
         )
-        self.tokamak_dimensions.inboard.manifold = 0.02  # why modified?
-        self.tokamak_dimensions.outboard.manifold = 0.2
 
         self.mat_lib = create_materials(_breeder_materials)
 
-        self.mat_dict = {
-            BlanketLayers.Surface.name: self.mat_lib.outb_sf_mat,
-            BlanketLayers.FirstWall.name: self.mat_lib.outb_fw_mat,
-            BlanketLayers.BreedingZone.name: self.mat_lib.outb_bz_mat,
-            BlanketLayers.Manifold.name: self.mat_lib.outb_mani_mat,
-            BlanketLayers.VacuumVessel.name: self.mat_lib.outb_vv_mat,
-            # TODO: make these two Divertor names into Enum
-            "Divertor": self.mat_lib.div_fw_mat,
-            "DivertorSurface": self.mat_lib.div_fw_mat,
-            "CentralSolenoid": self.mat_lib.tf_coil_mat,
-            "TFCoil": self.mat_lib.tf_coil_mat,
-        }
-
-        panel_breakpoint_t, outer_boundary, divertor_wire, vacuum_vessel_wire = (
+        panel_breakpoint_t, outer_boundary, divertor_wire, self.vacuum_vessel_wire = (
             some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)
         )
 
-        self.generator = SingleNullTokamak(
-            panel_breakpoint_t, divertor_wire, outer_boundary, vacuum_vessel_wire
+        self.pre_cell_arrays, self.cell_arrays = csg_tokamak(
+            panel_breakpoint_t,
+            divertor_wire,
+            outer_boundary,
+            self.vacuum_vessel_wire,
+            self.mat_lib,
+            self.tokamak_dimensions,
+            snap_to_horizontal_angle=45,
+            control_id=True,
         )
-
-        self.generator.make_pre_cell_arrays(snap_to_horizontal_angle=45)
-        self.blanket_cell_array, _div_cell_array, _tf_coils, _cs, _plasma, _void = (
-            self.generator.make_cell_arrays(
-                self.mat_lib, self.tokamak_dimensions, control_id=True
-            )
-        )
-
-        self.cells = self.generator.cell_array.cells
 
     @property
     def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
+        """Source term for OpenMC"""
         return self._source
 
     @source.setter
@@ -459,14 +463,17 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.out_path,
             self.name,
             str(self.build_config["cross_section_xml"]),
-            self.cells,
+            self.cell_arrays.cells,
             self.source,
-            self.blanket_cell_array,
-            self.generator,
+            self.cell_arrays.blanket,
+            self.pre_cell_arrays,
+            self.vacuum_vessel_wire,
             self.mat_lib,
         )
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(
+            self.cell_arrays.cells, self.out_path, self.name
+        )
 
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
@@ -483,6 +490,5 @@ class OpenMCNeutronicsSolver(CodesSolver):
                     run_mode.name.lower(),
                     f"statepoint.{runtime_params.batches}.h5",
                 ),
-                self.cells,
             )
         return result
