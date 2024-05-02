@@ -20,6 +20,7 @@ from typing import Any
 
 import numba as nb
 import numpy as np
+from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
@@ -207,6 +208,13 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     -------
     Vertex at the point
     """
+    if isinstance(point, Coordinates):
+        if np.shape(point) != (3, 1):
+            raise GeometryError(
+                "Can only cast the 3D coordinates of a single point"
+                "into a cadapi vertex!"
+            )
+        point = point.points[0]
     if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
@@ -1058,6 +1066,38 @@ def slice_shape(
     return None
 
 
+def get_wire_plane_intersect(
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+) -> npt.NDArray[float]:
+    """
+    Cut a wire using a plane.
+
+    Parameters
+    ----------
+    convex_bm_wire:
+        The wire that we're interested in cutting.
+    plane:
+        Plane that is cutting the wire.
+    cut_direction:
+        np.ndarray with shape==(3,)
+
+    Returns
+    -------
+    intersection point:
+        np.ndarray with shape==(3,)
+    """
+    intersection_points = slice_shape(convex_bm_wire, plane)
+    if len(intersection_points) > 1:
+        if len(intersection_points) > 2:  # noqa: PLR2004
+            bluemira_warn(
+                "convex_bm_wire expected to be a convex hull, but isn't.\n"
+                "Proceeding by choosing the final intersection point..."
+            )
+        final_intersection = np.argmax(np.dot(intersection_points, cut_direction))
+        return intersection_points[final_intersection]
+    return intersection_points[0]
+
+
 def circular_pattern(
     shape: BluemiraGeo,
     origin: tuple[float, float, float] = (0, 0, 0),
@@ -1296,30 +1336,35 @@ def signed_distance_2D_polygon(
     return d
 
 
-def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
+def signed_distance(
+    origin: BluemiraWire | Coordinates, target: BluemiraWire | Coordinates
+) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
-    values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
+    values if origin does not touch or intersect target, 0 if there is one intersection,
     and a positive estimate of the intersection length if there are overlaps.
 
     Parameters
     ----------
-    wire_1:
-        Subject wire
-    wire_2:
-        Target wire
+    origin:
+        a 0D/1D set of points
+    target:
+        a 0D/1D set of points
 
     Returns
     -------
-    Signed distance from wire_1 to wire_2
+    Closest distance between origin and target
 
     Notes
     -----
     This is not a pure implementation of a distance function, as for overlapping wires a
     metric of the quantity of overlap is returned (a positive value). This nevertheless
     enables the use of such a function as a constraint in gradient-based optimisers.
+
+    This function has been extended to allow the target wire to be a point
+        (:class:`~bluemira.geometry.coordinates.Coordinates`) as well
     """
-    d, vectors = distance_to(wire_1, wire_2)
+    d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
     if d == 0.0:
         if len(vectors) <= 1:
@@ -1342,6 +1387,30 @@ def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
         return length
     # There are no intersections, return minimum distance
     return -d
+
+
+def raise_error_if_overlap(
+    origin: BluemiraWire | Coordinates,
+    target: BluemiraWire | Coordinates,
+    origin_name: str = "",
+    target_name: str = "",
+):
+    """
+    Raise an error if two wires/points intersects overlaps.
+    """
+    check_overlaps = signed_distance(origin, target)
+    if check_overlaps < -D_TOLERANCE:
+        return
+    if not origin_name:
+        origin_name = "origin " + origin.__class__.__name__
+    if not target_name:
+        target_name = "target " + target.__class__.__name__
+    if -D_TOLERANCE <= check_overlaps <= 0:
+        # Sometimes intersecting lines can still appears to separate (negative),
+        # but only by just a little. So a small negative number is included in the check.
+        raise GeometryError(f"{origin_name} likely intersects {target_name} !")
+    if check_overlaps > 0:
+        raise GeometryError(f"{origin_name} and {target_name} partially/fully overlaps!")
 
 
 # ======================================================================================
