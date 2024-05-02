@@ -35,7 +35,6 @@ from bluemira.neutronics.make_materials import create_materials
 from bluemira.neutronics.neutronics_axisymmetric import csg_tokamak
 from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
-    BlanketLayers,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
     TokamakDimensions,
@@ -396,25 +395,17 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self.source = source
 
         self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
-            _tokamak_geometry, self.params.major_radius.value, 0.1, 2, 4
+            _tokamak_geometry,
+            self.params.major_radius.value,
+            tf_inner_radius=2,
+            tf_outer_radius=4,
+            divertor_surface_tk=0.1,
+            blanket_surface_tk=0.01,
+            blk_ib_manifold=0.02,
+            blk_ob_manifold=0.2,
         )
-        self.tokamak_dimensions.inboard.manifold = 0.02  # why modified?
-        self.tokamak_dimensions.outboard.manifold = 0.2
 
         self.mat_lib = create_materials(_breeder_materials)
-
-        self.mat_dict = {
-            BlanketLayers.Surface.name: self.mat_lib.outb_sf_mat,
-            BlanketLayers.FirstWall.name: self.mat_lib.outb_fw_mat,
-            BlanketLayers.BreedingZone.name: self.mat_lib.outb_bz_mat,
-            BlanketLayers.Manifold.name: self.mat_lib.outb_mani_mat,
-            BlanketLayers.VacuumVessel.name: self.mat_lib.outb_vv_mat,
-            # TODO: make these two Divertor names into Enum
-            "Divertor": self.mat_lib.div_fw_mat,
-            "DivertorSurface": self.mat_lib.div_fw_mat,
-            "CentralSolenoid": self.mat_lib.tf_coil_mat,
-            "TFCoil": self.mat_lib.tf_coil_mat,
-        }
 
         panel_breakpoint_t, outer_boundary, divertor_wire, self.vacuum_vessel_wire = (
             some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)

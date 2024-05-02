@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass, fields
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -230,6 +230,7 @@ class BlanketThickness:
     surface: float
     first_wall: float
     breeding_zone: float
+    manifold: float
 
     def get_interface_depths(self):
         """Return the depth of the interface layers"""
@@ -302,53 +303,38 @@ class TokamakDimensions:
     def from_tokamak_geometry(
         cls,
         tokamak_geometry: TokamakGeometry,
-        major_radius,
-        divertor_thickness,
-        tf_inner_radius,
-        tf_outer_radius,
+        blanket_io_cut: float,
+        tf_inner_radius: float,
+        tf_outer_radius: float,
+        divertor_surface_tk: float = 0.1,
+        blanket_surface_tk: float = 0.01,
+        blk_ib_manifold: float = 0.02,
+        blk_ob_manifold: float = 0.2,
     ):
         """Bodge method that can be deleted later once
         :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
         """
         return cls(
             BlanketThickness(
-                0.01,
+                blanket_surface_tk,
                 tokamak_geometry.inb_fw_thick,
                 tokamak_geometry.inb_bz_thick,
+                blk_ib_manifold,
             ),
-            major_radius,
+            blanket_io_cut,
             BlanketThickness(
-                0.01,
+                blanket_surface_tk,
                 tokamak_geometry.outb_fw_thick,
                 tokamak_geometry.outb_bz_thick,
+                blk_ob_manifold,
             ),
-            DivertorThickness(divertor_thickness),
+            DivertorThickness(divertor_surface_tk),
             ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
         )
 
 
-@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
-# feature/neutronics.
-class _TokamakGeometryBase:
-    """
-    The thickness measurements for all of the generic components of the tokamak.
-    """
-
-    inb_fw_thick: float
-    inb_bz_thick: float
-    inb_mnfld_thick: float
-    inb_vv_thick: float
-    tf_thick: float
-    outb_fw_thick: float
-    outb_bz_thick: float
-    outb_mnfld_thick: float
-    outb_vv_thick: float
-    inb_gap: float
-
-
-@dataclass(frozen=True)  # TODO: obsolete: remove when neutronics.ex.py is deleted from
-# feature/neutronics.
-class TokamakGeometry(_TokamakGeometryBase):
+@dataclass(frozen=True)
+class TokamakGeometry:
     """The thickness measurements for all of the generic components of the tokamak.
 
     Parameters
@@ -375,20 +361,16 @@ class TokamakGeometry(_TokamakGeometryBase):
         inboard gap [m]
     """
 
-    cgs: _TokamakGeometryBase | None = None
-
-    def __post_init__(self):
-        """
-        Convert from si units dataclass
-        :class:`~bluemira.neutronics.params.TokamakGeometryBase`
-        This gives the illusion that self.cgs.x = 100*self.x. We rely on the 'frozen'
-        nature of this dataclass so these links don't break.
-        """
-        tgcgs = asdict(self)
-        del tgcgs["cgs"]
-        for k, v in tgcgs.items():
-            tgcgs[k] = raw_uc(v, "m", "cm")
-        super().__setattr__("cgs", _TokamakGeometryBase(**tgcgs))
+    inb_fw_thick: float
+    inb_bz_thick: float
+    inb_mnfld_thick: float
+    inb_vv_thick: float
+    tf_thick: float
+    outb_fw_thick: float
+    outb_bz_thick: float
+    outb_mnfld_thick: float
+    outb_vv_thick: float
+    inb_gap: float
 
 
 def get_preset_physical_properties(
