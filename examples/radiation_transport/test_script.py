@@ -10,6 +10,7 @@ from pathlib import Path
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.neutronics.make_materials import BlanketType
+from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
 from bluemira.neutronics.solver import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
@@ -44,8 +45,12 @@ params = OpenMCNeutronicsSolverParams.from_dict({
     "vertical_shift": {"value": 0, "unit": "m"},
 })
 
+
 obj = OpenMCNeutronicsSolver(
-    params, None, None, None, source=make_pps_source, build_config=build_config
+    params,
+    NeutronicsReactor(params, None, None, None),
+    source=make_pps_source,
+    build_config=build_config,
 )
 
 print(obj.execute())

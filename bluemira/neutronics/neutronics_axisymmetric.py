@@ -10,6 +10,7 @@ Separated from slicing.py to prevent import errors
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from itertools import chain
 from typing import TYPE_CHECKING
@@ -17,7 +18,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import openmc
 
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.coordinates import vector_intersect
+from bluemira.geometry.tools import deserialise_shape
 from bluemira.neutronics.constants import to_cm, to_cm3
 from bluemira.neutronics.make_csg import (
     BlanketCellArray,
@@ -25,6 +29,13 @@ from bluemira.neutronics.make_csg import (
     DivertorCellArray,
     flat_intersection,
     flat_union,
+)
+from bluemira.neutronics.make_materials import create_materials
+from bluemira.neutronics.params import (
+    BlanketType,
+    OpenMCNeutronicsSolverParams,
+    TokamakDimensions,
+    get_preset_physical_properties,
 )
 from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.slicing import (
@@ -35,10 +46,9 @@ from bluemira.neutronics.slicing import (
 if TYPE_CHECKING:
     from numpy import typing as npt
 
+    from bluemira.base.reactor import ComponentManager
     from bluemira.geometry.wire import BluemiraWire
-    from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
-    from bluemira.neutronics.params import TokamakDimensions
 
 
 @dataclass
@@ -48,19 +58,19 @@ class ReactorGeometry:
 
     Parameters
     ----------
+    divertor_wire:
+        The plasma-facing side of the divertor.
     panel_break_points:
         The start and end points for each first-wall panel
         (for N panels, the shape is (N+1, 2)).
-    divertor_wire:
-        The plasma-facing side of the divertor.
     boundary:
         interface between the inside of the vacuum vessel and the outside of the blanket
     vacuum_vessel_wire:
         The outer-boundary of the vacuum vessel
     """
 
-    panel_break_points: npt.NDArray
     divertor_wire: BluemiraWire
+    panel_break_points: npt.NDArray
     boundary: BluemiraWire
     vacuum_vessel_wire: BluemiraWire
 
@@ -80,7 +90,7 @@ class PreCellStage:
     blanket: PreCellArray
     divertor: DivertorPreCellArray
 
-    def external_coordinates(self):
+    def external_coordinates(self) -> npt.NDArray:
         """
         Get the outermost coordinates of the tokamak cross-section from pre-cell array
         and divertor pre-cell array.
@@ -91,7 +101,7 @@ class PreCellStage:
             self.divertor.exterior_vertices()[::-1],
         ])
 
-    def bounding_box(self):
+    def bounding_box(self) -> tuple[float, ...]:
         """Get bounding box of pre cell stage"""
         all_ext_vertices = self.external_coordinates()
         z_min = all_ext_vertices[:, -1].min()
@@ -141,37 +151,6 @@ def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int 
     )
     openmc.Cell.next_id = (
         int(max(openmc.Cell.used_ids) / cell_step_size + 1) * cell_step_size + 1
-    )
-
-
-def make_pre_cell_arrays(
-    geom,
-    cutting,
-    snap_to_horizontal_angle: float = 45,
-    blanket_discretisation: int = 10,
-    divertor_discretisation: int = 5,
-):
-    """
-    Parameters
-    ----------
-    snap_to_horizontal_angle:
-        see :meth:`~PanelsAndExteriorCurve.make_quadrilateral_pre_cell_array`
-    """
-    first_point = geom.divertor_wire.edges[0].start_point()
-    last_point = geom.divertor_wire.edges[-1].end_point()
-
-    blanket = cutting.blanket.make_quadrilateral_pre_cell_array(
-        discretisation_level=blanket_discretisation,
-        starting_cut=first_point.xz.flatten(),
-        ending_cut=last_point.xz.flatten(),
-        snap_to_horizontal_angle=snap_to_horizontal_angle,
-    )
-
-    return PreCellStage(
-        blanket=blanket.straighten_exterior(preserve_volume=True),
-        divertor=cutting.divertor.make_divertor_pre_cell_array(
-            discretisation_level=divertor_discretisation
-        ),
     )
 
 
@@ -404,9 +383,7 @@ def set_volumes(
 
 
 def make_cell_arrays(
-    material_library: MaterialsLibrary,
-    tokamak_dimensions: TokamakDimensions,
-    pre_cell_arrays: PreCellStage,
+    pre_cell_reactor: NeutronicsReactor,
     csg: BluemiraNeutronicsCSG,
     *,
     control_id: bool = False,
@@ -431,7 +408,7 @@ def make_cell_arrays(
     """
     # determine universe_box
 
-    z_max, z_min, r_max, _r_min = pre_cell_arrays.bounding_box()
+    z_max, z_min, r_max, _r_min = pre_cell_reactor.bounding_box
     universe = make_universe_box(
         csg,
         z_min - D_TOLERANCE,
@@ -441,9 +418,9 @@ def make_cell_arrays(
     )
 
     blanket = BlanketCellArray.from_pre_cell_array(
-        pre_cell_arrays.blanket,
-        material_library,
-        tokamak_dimensions,
+        pre_cell_reactor.blanket,
+        pre_cell_reactor.material_library,
+        pre_cell_reactor.tokamak_dimensions,
         csg,
         control_id=control_id,
     )
@@ -454,9 +431,9 @@ def make_cell_arrays(
         round_up_next_openmc_ids()
 
     divertor = DivertorCellArray.from_pre_cell_array(
-        pre_cell_arrays.divertor,
-        material_library,
-        tokamak_dimensions.divertor,
+        pre_cell_reactor.divertor,
+        pre_cell_reactor.material_library,
+        pre_cell_reactor.tokamak_dimensions.divertor,
         csg=csg,
         override_start_end_surfaces=(blanket[0].ccw_surface, blanket[-1].cw_surface),
         # ID cannot be controlled at this point.
@@ -468,17 +445,17 @@ def make_cell_arrays(
 
     cs, tf = make_coils(
         csg,
-        tokamak_dimensions.central_solenoid.inner_diameter / 2,
+        pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
         (
             (
-                tokamak_dimensions.central_solenoid.outer_diameter
-                - tokamak_dimensions.central_solenoid.inner_diameter
+                pre_cell_reactor.tokamak_dimensions.central_solenoid.outer_diameter
+                - pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter
             )
             / 2
         ),
         z_min - D_TOLERANCE,
         z_max + D_TOLERANCE,
-        material_library,
+        pre_cell_reactor.material_library,
     )
     plasma, ext_void = make_void_cells(
         csg, tf, cs, universe, blanket, divertor, control_id=control_id
@@ -506,62 +483,147 @@ def make_cell_arrays(
     return cell_array
 
 
-def csg_tokamak(
-    panel_break_points: npt.NDArray,
-    divertor_wire: BluemiraWire,
-    boundary: BluemiraWire,
-    vacuum_vessel_wire: BluemiraWire,
-    mat_lib: MaterialsLibrary,
-    tokamak_dimensions: TokamakDimensions,
-    snap_to_horizontal_angle: float = 45,
-    blanket_discretisation: int = 10,
-    divertor_discretisation: int = 5,
-    *,
-    control_id: bool = True,
-):
-    """
-    Convert panel_break_points, divertor_wire, blanket boundary_wire
-    and vacuum vessel wire into pre-cell array, then cell-arrays.
+def some_function_on_blanket_wire(*_args):
+    """DELETE ME"""
+    # Loading data
+    with open("data/inner_boundary") as j:
+        deserialise_shape(json.load(j))
+    with open("data/outer_boundary") as j:
+        outer_boundary = deserialise_shape(json.load(j))
+        # TODO: need to add method of scaling BluemiraWire (issue #3038 /
+        # TODO: raise new issue about needing method to scale BluemiraWire)
+    with open("data/divertor_face.correct.json") as j:
+        divertor_bmwire = deserialise_shape(json.load(j))
+    with open("data/vv_bndry_outer.json") as j:
+        vacuum_vessel_bmwire = deserialise_shape(json.load(j))
 
-    Parameters
-    ----------
-    panel_break_points
-        np.ndarray of shape (N+1, 2)
-    divertor_wire
-        wire outlining the top (plasma facing side) of the divertor.
-    boundary
-        wire outlining the outside boundary of the blanket.
-    vacuum_vessel_wire
-        wire outlining the outside boudary of the vacuum vessel
-    mat_lib
-        materials Library
-    tokamak_dimensions
-        tokamak dimensions related to known blanket concepts
-
-    """
-    geom = ReactorGeometry(
-        panel_break_points, divertor_wire, boundary, vacuum_vessel_wire
+    fw_panel_bp_list = [
+        np.load("data/fw_panels_10_0.1.npy"),
+        np.load("data/fw_panels_25_0.1.npy"),
+        np.load("data/fw_panels_25_0.3.npy"),
+        np.load("data/fw_panels_50_0.3.npy"),
+        np.load("data/fw_panels_50_0.5.npy"),
+    ]
+    panel_breakpoint_t = fw_panel_bp_list[0].T
+    # MANUAL FIX of the coordinates, because the data we're given is not perfect.
+    panel_breakpoint_t[0] = vector_intersect(
+        panel_breakpoint_t[0],
+        panel_breakpoint_t[1],
+        divertor_bmwire.edges[0].start_point()[::2].flatten(),
+        divertor_bmwire.edges[0].end_point()[::2].flatten(),
     )
+    panel_breakpoint_t[-1] = vector_intersect(
+        panel_breakpoint_t[-2],
+        panel_breakpoint_t[-1],
+        divertor_bmwire.edges[-1].start_point()[::2].flatten(),
+        divertor_bmwire.edges[-1].end_point()[::2].flatten(),
+    )
+    return panel_breakpoint_t, outer_boundary, divertor_bmwire, vacuum_vessel_bmwire
 
-    pre_cell_arrays = make_pre_cell_arrays(
-        geom,
-        CuttingStage(
+
+class NeutronicsReactor:
+    """Pre csg cell reactor"""
+
+    param_cls = OpenMCNeutronicsSolverParams
+
+    def __init__(
+        self,
+        params: dict | ParameterFrame,
+        divertor: ComponentManager,
+        blanket: ComponentManager,
+        vacuum_vessel: ComponentManager,
+        *,
+        snap_to_horizontal_angle: float = 45,
+        blanket_discretisation: int = 10,
+        divertor_discretisation: int = 5,
+    ):
+        self.params = make_parameter_frame(params, self.param_cls)
+        _breeder_materials, _tokamak_geometry = get_preset_physical_properties(
+            BlanketType.HCPB  # blanket.blanket_type
+        )
+
+        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
+            _tokamak_geometry,
+            self.params.major_radius.value,
+            tf_inner_radius=2,
+            tf_outer_radius=4,
+            divertor_surface_tk=0.1,
+            blanket_surface_tk=0.01,
+            blk_ib_manifold=0.02,
+            blk_ob_manifold=0.2,
+        )
+
+        self._material_library = create_materials(_breeder_materials)
+
+        divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire = (
+            self._get_wires_from_components(divertor, blanket, vacuum_vessel)
+        )
+
+        self.geom = ReactorGeometry(
+            divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire
+        )
+
+        self._pre_cell_stage = self._create_pre_cell_stage(
+            blanket_discretisation, divertor_discretisation, snap_to_horizontal_angle
+        )
+
+    def _create_pre_cell_stage(
+        self, blanket_discretisation, divertor_discretisation, snap_to_horizontal_angle
+    ):
+        first_point = self.geom.divertor_wire.edges[0].start_point()
+        last_point = self.geom.divertor_wire.edges[-1].end_point()
+
+        cutting = CuttingStage(
             blanket=PanelsAndExteriorCurve(
-                geom.panel_break_points, geom.boundary, vacuum_vessel_wire
+                self.geom.panel_break_points,
+                self.geom.boundary,
+                self.geom.vacuum_vessel_wire,
             ),
             divertor=DivertorWireAndExteriorCurve(
-                geom.divertor_wire, geom.boundary, vacuum_vessel_wire
+                self.geom.divertor_wire, self.geom.boundary, self.geom.vacuum_vessel_wire
             ),
-        ),
-        snap_to_horizontal_angle=snap_to_horizontal_angle,
-        blanket_discretisation=blanket_discretisation,
-        divertor_discretisation=divertor_discretisation,
-    )
+        )
+        blanket = cutting.blanket.make_quadrilateral_pre_cell_array(
+            discretisation_level=blanket_discretisation,
+            starting_cut=first_point.xz.flatten(),
+            ending_cut=last_point.xz.flatten(),
+            snap_to_horizontal_angle=snap_to_horizontal_angle,
+        )
 
-    return pre_cell_arrays, make_cell_arrays(
-        mat_lib,
-        tokamak_dimensions,
-        pre_cell_arrays,
-        BluemiraNeutronicsCSG(),
-        control_id=control_id,
-    )
+        return PreCellStage(
+            blanket=blanket.straighten_exterior(preserve_volume=True),
+            divertor=cutting.divertor.make_divertor_pre_cell_array(
+                discretisation_level=divertor_discretisation
+            ),
+        )
+
+    @property
+    def bounding_box(self) -> tuple[float, ...]:
+        """Bounding box of Neutronics reactor"""
+        return self._pre_cell_stage.bounding_box()
+
+    @property
+    def material_library(self):
+        """Reactor material library"""
+        return self._material_library
+
+    @property
+    def blanket(self):
+        """Blanket pre cell"""
+        return self._pre_cell_stage.blanket
+
+    @property
+    def divertor(self):
+        """Divertor pre cell"""
+        return self._pre_cell_stage.divertor
+
+    @staticmethod
+    def _get_wires_from_components(
+        divertor: ComponentManager,
+        blanket: ComponentManager,
+        vacuum_vessel: ComponentManager,
+    ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
+        panel_points, outer_boundary, divertor_wire, vacuum_vessel_wire = (
+            some_function_on_blanket_wire(divertor, blanket, vacuum_vessel)
+        )
+        return divertor_wire, panel_points, outer_boundary, vacuum_vessel_wire

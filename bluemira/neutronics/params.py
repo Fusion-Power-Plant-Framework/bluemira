@@ -17,12 +17,52 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from bluemira.base.parameter_frame import ParameterFrame
+
+@dataclass
+class OpenMCNeutronicsSolverParams(ParameterFrame):
+    """
+
+    Parameters
+    ----------
+    major_radius:
+        Major radius of the machine
+    aspect_ratio:
+        aspect ratio of the machine
+    elongation:
+        elongation of the plasma
+    triangularity:
+        triangularity of the plasma
+    reactor_power:
+        total reactor (thermal) power when operating at 100%
+    peaking_factor:
+        (max. heat flux on fw)/(avg. heat flux on fw)
+    temperature:
+        plasma temperature (assumed to be uniform throughout the plasma)
+    shaf_shift:
+        Shafranov shift
+        shift of the centre of flux surfaces, i.e.
+        mean(min radius, max radius) of the LCFS,
+        towards the outboard radial direction.
+    vertical_shift:
+        how far (upwards) in the z direction is the centre of the plasma
+        shifted compared to the geometric center of the poloidal cross-section.
+    """
+
+    major_radius: Parameter[float]  # [m]
+    aspect_ratio: Parameter[float]  # [dimensionless]
+    elongation: Parameter[float]  # [dimensionless]
+    triangularity: Parameter[float]  # [dimensionless]
+    reactor_power: Parameter[float]  # [W]
+    peaking_factor: Parameter[float]  # [dimensionless]
+    temperature: Parameter[float]  # [K]
+    shaf_shift: Parameter[float]  # [m]
+    vertical_shift: Parameter[float]  # [m]
 
 
 class BlanketLayers(Enum):

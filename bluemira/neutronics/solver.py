@@ -5,10 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC designer"""
 
-import json
 from collections.abc import Callable
 from contextlib import contextmanager
-from dataclasses import dataclass, fields
+from dataclasses import fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
@@ -18,7 +17,7 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.tools import _timing
 from bluemira.codes.interface import (
     BaseRunMode,
@@ -27,59 +26,16 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.geometry.coordinates import vector_intersect
-from bluemira.geometry.tools import deserialise_shape
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.make_csg import BlanketCellArray
-from bluemira.neutronics.make_materials import create_materials
-from bluemira.neutronics.neutronics_axisymmetric import csg_tokamak
+from bluemira.neutronics.make_csg import BlanketCellArray, BluemiraNeutronicsCSG
+from bluemira.neutronics.neutronics_axisymmetric import make_cell_arrays
 from bluemira.neutronics.output import OpenMCResult
 from bluemira.neutronics.params import (
+    OpenMCNeutronicsSolverParams,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
-    TokamakDimensions,
-    get_preset_physical_properties,
 )
 from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 from bluemira.plasma_physics.reactions import n_DT_reactions
-
-
-def some_function_on_blanket_wire(*_args):
-    """DELETE ME"""
-    # Loading data
-    with open("data/inner_boundary") as j:
-        deserialise_shape(json.load(j))
-    with open("data/outer_boundary") as j:
-        outer_boundary = deserialise_shape(json.load(j))
-        # TODO: need to add method of scaling BluemiraWire (issue #3038 /
-        # TODO: raise new issue about needing method to scale BluemiraWire)
-    with open("data/divertor_face.correct.json") as j:
-        divertor_bmwire = deserialise_shape(json.load(j))
-    with open("data/vv_bndry_outer.json") as j:
-        vacuum_vessel_bmwire = deserialise_shape(json.load(j))
-
-    fw_panel_bp_list = [
-        np.load("data/fw_panels_10_0.1.npy"),
-        np.load("data/fw_panels_25_0.1.npy"),
-        np.load("data/fw_panels_25_0.3.npy"),
-        np.load("data/fw_panels_50_0.3.npy"),
-        np.load("data/fw_panels_50_0.5.npy"),
-    ]
-    panel_breakpoint_t = fw_panel_bp_list[0].T
-    # MANUAL FIX of the coordinates, because the data we're given is not perfect.
-    panel_breakpoint_t[0] = vector_intersect(
-        panel_breakpoint_t[0],
-        panel_breakpoint_t[1],
-        divertor_bmwire.edges[0].start_point()[::2].flatten(),
-        divertor_bmwire.edges[0].end_point()[::2].flatten(),
-    )
-    panel_breakpoint_t[-1] = vector_intersect(
-        panel_breakpoint_t[-2],
-        panel_breakpoint_t[-1],
-        divertor_bmwire.edges[-1].start_point()[::2].flatten(),
-        divertor_bmwire.edges[-1].end_point()[::2].flatten(),
-    )
-    return panel_breakpoint_t, outer_boundary, divertor_bmwire, vacuum_vessel_bmwire
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -94,47 +50,6 @@ class OpenMCRunModes(BaseRunMode):
 OPENMC_NAME = "OpenMC"
 
 
-@dataclass
-class OpenMCNeutronicsSolverParams(ParameterFrame):
-    """
-
-    Parameters
-    ----------
-    major_radius:
-        Major radius of the machine
-    aspect_ratio:
-        aspect ratio of the machine
-    elongation:
-        elongation of the plasma
-    triangularity:
-        triangularity of the plasma
-    reactor_power:
-        total reactor (thermal) power when operating at 100%
-    peaking_factor:
-        (max. heat flux on fw)/(avg. heat flux on fw)
-    temperature:
-        plasma temperature (assumed to be uniform throughout the plasma)
-    shaf_shift:
-        Shafranov shift
-        shift of the centre of flux surfaces, i.e.
-        mean(min radius, max radius) of the LCFS,
-        towards the outboard radial direction.
-    vertical_shift:
-        how far (upwards) in the z direction is the centre of the plasma
-        shifted compared to the geometric center of the poloidal cross-section.
-    """
-
-    major_radius: Parameter[float]  # [m]
-    aspect_ratio: Parameter[float]  # [dimensionless]
-    elongation: Parameter[float]  # [dimensionless]
-    triangularity: Parameter[float]  # [dimensionless]
-    reactor_power: Parameter[float]  # [W]
-    peaking_factor: Parameter[float]  # [dimensionless]
-    temperature: Parameter[float]  # [K]
-    shaf_shift: Parameter[float]  # [m]
-    vertical_shift: Parameter[float]  # [m]
-
-
 class Setup(CodesSetup):
     """Setup task for OpenMC solver"""
 
@@ -143,23 +58,18 @@ class Setup(CodesSetup):
         out_path: str,
         codes_name: str,
         cross_section_xml: str,
-        cells,
         source,
-        blanket_cell_array,
-        pre_cell_arrays,
-        outer_wire,
-        mat_lib,
+        cell_arrays,
+        pre_cell_model,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
-        self.cells = cells
+        self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
         self.source = source
-        self.blanket_cell_array = blanket_cell_array
-        self.pre_cell_arrays = pre_cell_arrays
-        self.outer_wire = outer_wire
-        self.mat_lib = mat_lib
+        self.blanket_cell_array = cell_arrays.blanket
+        self.pre_cell_model = pre_cell_model
         self.matlist = attrgetter(
             "outb_sf_mat",
             "outb_fw_mat",
@@ -193,7 +103,10 @@ class Setup(CodesSetup):
             for obj, pth in (
                 (self.settings, Path(self.out_path, folder, "settings.xml")),
                 (self.geometry, Path(self.out_path, folder, "geometry.xml")),
-                (self.mat_lib, Path(self.out_path, folder, "materials.xml")),
+                (
+                    self.pre_cell_model.material_library,
+                    Path(self.out_path, folder, "materials.xml"),
+                ),
             ):
                 obj.export_to_xml(pth)
                 self.files_created.add(pth)
@@ -217,7 +130,9 @@ class Setup(CodesSetup):
             self.settings.electron_treatment = runtime_params.electron_treatment
 
             self._set_tallies(
-                run_mode, self.blanket_cell_array, self.matlist(self.mat_lib)
+                run_mode,
+                self.blanket_cell_array,
+                self.matlist(self.pre_cell_model.material_library),
             )
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
@@ -225,8 +140,9 @@ class Setup(CodesSetup):
     def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         """Plot stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
-            plot_width_0 = self.outer_wire.bounding_box.x_max * 2.1
-            plot_width_1 = self.outer_wire.bounding_box.z_max * 3.1
+            z_max, _z_min, r_max, _r_min = self.pre_cell_model.bounding_box
+            plot_width_0 = r_max * 2.1
+            plot_width_1 = z_max * 3.1
             plot = openmc.Plot()
             plot.basis = runtime_params.plot_axis
             plot.pixels = [
@@ -241,7 +157,7 @@ class Setup(CodesSetup):
 
     def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
         """Stochastic volume stage for setup openmc"""
-        z_max, z_min, r_max, r_min = self.pre_cell_arrays.bounding_box()
+        z_max, z_min, r_max, r_min = self.pre_cell_model.bounding_box
 
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
@@ -377,49 +293,20 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def __init__(
         self,
         params: dict | ParameterFrame,
-        blanket_wire: BluemiraWire,
-        divertor_wire: BluemiraWire,
-        vv_wire: BluemiraWire,
+        neutronics_pre_cell_model,
         source: Callable[[PlasmaSourceParameters], openmc.Source],
-        build_config: dict | None = None,
+        build_config: dict,
     ):
-        self.params = self.param_cls.from_frame(params)
+        self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
 
         self.out_path = self.build_config.get("neutronics_output_path", Path.cwd())
 
-        _breeder_materials, _tokamak_geometry = get_preset_physical_properties(
-            self.build_config["blanket_type"]
-        )
-
         self.source = source
 
-        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
-            _tokamak_geometry,
-            self.params.major_radius.value,
-            tf_inner_radius=2,
-            tf_outer_radius=4,
-            divertor_surface_tk=0.1,
-            blanket_surface_tk=0.01,
-            blk_ib_manifold=0.02,
-            blk_ob_manifold=0.2,
-        )
-
-        self.mat_lib = create_materials(_breeder_materials)
-
-        panel_breakpoint_t, outer_boundary, divertor_wire, self.vacuum_vessel_wire = (
-            some_function_on_blanket_wire(blanket_wire, vv_wire, divertor_wire)
-        )
-
-        self.pre_cell_arrays, self.cell_arrays = csg_tokamak(
-            panel_breakpoint_t,
-            divertor_wire,
-            outer_boundary,
-            self.vacuum_vessel_wire,
-            self.mat_lib,
-            self.tokamak_dimensions,
-            snap_to_horizontal_angle=45,
-            control_id=True,
+        self.pre_cell_model = neutronics_pre_cell_model
+        self.cell_arrays = make_cell_arrays(
+            self.pre_cell_model, BluemiraNeutronicsCSG(), control_id=True
         )
 
     @property
@@ -431,7 +318,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
         self._source = value
 
-    def execute(self, *, debug=False):
+    def execute(self, *, debug=False) -> OpenMCResult | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
         run_mode = self.build_config["run_mode"]
         if isinstance(run_mode, str):
@@ -458,17 +345,14 @@ class OpenMCNeutronicsSolver(CodesSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ):
+    ) -> OpenMCResult | dict[int, float]:
         self._setup = self.setup_cls(
             self.out_path,
             self.name,
             str(self.build_config["cross_section_xml"]),
-            self.cell_arrays.cells,
             self.source,
-            self.cell_arrays.blanket,
-            self.pre_cell_arrays,
-            self.vacuum_vessel_wire,
-            self.mat_lib,
+            self.cell_arrays,
+            self.pre_cell_model,
         )
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(
