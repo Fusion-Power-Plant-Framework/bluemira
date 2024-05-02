@@ -530,13 +530,13 @@ def make_coils(
     )
     central_solenoid = openmc.Cell(
         name="Central solenoid",
-        fill=material_library.container_mat,
+        fill=material_library.match_blanket_material("central_solenoid"),
         region=+bottom & -top & -solenoid,
     )
     tf_coils = [
         openmc.Cell(
             name="TF coil (sheath around central solenoid)",
-            fill=material_library.tf_coil_mat,
+            fill=material_library.match_blanket_material("tf coil"),
             region=+bottom & -top & +solenoid & -central_tf_coil,
         )
     ]
@@ -1921,7 +1921,7 @@ class DivertorCellStack:
                 inner_wire,
                 csg=csg,
                 name=f"Bulk of divertor in diver cell stack {stack_num}",
-                fill=material_library.divertor_mat,
+                fill=material_library.match_blanket_material("divertor"),
             ),
         ]
         cell_stack.append(
@@ -1938,7 +1938,7 @@ class DivertorCellStack:
                 subtractive_region=cell_stack[0].exclusion_zone(away_from_plasma=False),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
-                fill=material_library.div_fw_mat,
+                fill=material_library.match_blanket_material("divertor_fw"),
             )
         )
         # Unfortunately, this does mean that the vacuum vessel has a larger ID than the
@@ -1964,7 +1964,7 @@ class DivertorCellStack:
                     subtractive_region=cell_stack[0].exclusion_zone(
                         away_from_plasma=True
                     ),
-                    fill=material_library.div_sf_mat,
+                    fill=material_library.match_blanket_material("divertor_sf"),
                 ),
             )
             # again, unfortunately, this does mean that the surface armour cell has the

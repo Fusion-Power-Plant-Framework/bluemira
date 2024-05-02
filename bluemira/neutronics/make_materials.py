@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING
 
 import bluemira.neutronics.materials_definition as md
@@ -381,7 +381,9 @@ class MaterialsLibrary:
             ).to_openmc_material(),
         )
 
-    def match_blanket_material(self, blanket_cell_type: BlanketLayers, *, inboard: bool):
+    def match_blanket_material(
+        self, blanket_cell_type: BlanketLayers, *, inboard: bool = False
+    ):
         """Choose the appropriate blanket material for the given blanket cell type."""
         if blanket_cell_type == BlanketLayers.Surface:
             return self.inb_sf_mat if inboard else self.outb_sf_mat
@@ -393,4 +395,19 @@ class MaterialsLibrary:
             return self.inb_mani_mat if inboard else self.outb_mani_mat
         if blanket_cell_type == BlanketLayers.VacuumVessel:
             return self.inb_vv_mat if inboard else self.outb_vv_mat
+        if blanket_cell_type == "central_solenoid":
+            return self.container_mat
+        if blanket_cell_type == "tf coil":
+            return self.tf_coil_mat
+        if blanket_cell_type == "divertor":
+            return self.divertor_mat
+        if blanket_cell_type == "divertor_fw":
+            return self.div_fw_mat
+        if blanket_cell_type == "divertor_sf":
+            return self.div_sf_mat
+
         raise TypeError("Accepted cell_types are in BlanketLayers.")
+
+    def to_openmc_materials(self):
+        """Get all materials"""
+        return [getattr(self, field.name) for field in fields(self)]

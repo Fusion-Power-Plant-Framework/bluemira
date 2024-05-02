@@ -7,7 +7,6 @@
 (Including both printed/logged texts and images)
 """
 
-import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,7 +21,7 @@ from bluemira.neutronics.constants import DPACoefficients
 
 def export_to_xml(material_library, path: str | Path = "materials.xml"):
     """Exports material defintions to xml"""
-    material_list = openmc.Materials(dataclasses.asdict(material_library).values())
+    material_list = openmc.Materials(material_library.to_openmc_materials())
     return material_list.export_to_xml(path)
 
 
