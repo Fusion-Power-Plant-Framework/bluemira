@@ -7,12 +7,9 @@
 
 from __future__ import annotations
 
-import dataclasses
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-
-from openmc import Materials
 
 import bluemira.neutronics.materials_definition as md
 from bluemira.base.constants import raw_uc
@@ -20,8 +17,6 @@ from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 from bluemira.neutronics.params import BlanketLayers, BlanketType
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from openmc import Material
 
     from bluemira.materials.material import MassFractionMaterial
@@ -385,11 +380,6 @@ class MaterialsLibrary:
                 md.eurofer_mat, 603, "div_sf"
             ).to_openmc_material(),
         )
-
-    def export_to_xml(self, path: str | Path = "materials.xml"):
-        """Exports material defintions to xml"""
-        material_list = Materials(dataclasses.asdict(self).values())
-        return material_list.export_to_xml(path)
 
     def match_blanket_material(self, blanket_cell_type: BlanketLayers, *, inboard: bool):
         """Choose the appropriate blanket material for the given blanket cell type."""

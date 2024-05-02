@@ -7,6 +7,7 @@
 (Including both printed/logged texts and images)
 """
 
+import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,6 +18,12 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
+
+
+def export_to_xml(material_library, path: str | Path = "materials.xml"):
+    """Exports material defintions to xml"""
+    material_list = openmc.Materials(dataclasses.asdict(material_library).values())
+    return material_list.export_to_xml(path)
 
 
 def get_percent_err(row):

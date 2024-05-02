@@ -11,7 +11,7 @@ from pathlib import Path
 
 import openmc
 
-from bluemira.neutronics.make_csg import BlanketCellArray
+from bluemira.neutronics.openmc.make_csg import BlanketCellArray
 
 
 def filter_new_cells(

@@ -27,17 +27,20 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.neutronics.make_csg import (
+from bluemira.neutronics.openmc.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
     make_cell_arrays,
 )
-from bluemira.neutronics.output import OpenMCResult
+from bluemira.neutronics.openmc.output import OpenMCResult, export_to_xml
+from bluemira.neutronics.openmc.tallying import (
+    _create_tallies_from_filters,
+    filter_new_cells,
+)
 from bluemira.neutronics.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.neutronics.tallying import _create_tallies_from_filters, filter_new_cells
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
 
@@ -148,13 +151,12 @@ class Setup(CodesSetup):
             for obj, pth in (
                 (self.settings, Path(self.out_path, folder, "settings.xml")),
                 (self.geometry, Path(self.out_path, folder, "geometry.xml")),
-                (
-                    self.pre_cell_model.material_library,
-                    Path(self.out_path, folder, "materials.xml"),
-                ),
             ):
                 obj.export_to_xml(pth)
                 self.files_created.add(pth)
+        mat_path = Path(self.out_path, folder, "materials.xml")
+        export_to_xml(self.pre_cell_model.material_library, mat_path)
+        self.files_created.add(mat_path)
 
     def _set_tallies(
         self, run_mode, blanket_cell_array: BlanketCellArray, material_list

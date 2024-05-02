@@ -11,11 +11,11 @@ from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
-from bluemira.neutronics.solver import (
+from bluemira.neutronics.openmc.solver import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
 )
-from bluemira.neutronics.sources import make_pps_source
+from bluemira.neutronics.openmc.sources import make_pps_source
 
 build_config = {
     "cross_section_xml": Path(
