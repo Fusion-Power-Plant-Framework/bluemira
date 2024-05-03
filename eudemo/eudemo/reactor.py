@@ -509,8 +509,8 @@ if __name__ == "__main__":
             "plot_pixel_per_metre": 100,
         },
         blanket_panel_points=reactor.blanket.panel_points(),
-        blanket_outer_boundary=ivc_shapes.blanket_outer_boundary,
-        divertor_wire=reactor.divertor.silhouette(),
+        divertor_internal_boundary=ivc_shapes.div_internal_boundary,
+        ivc_outer_boundary=ivc_shapes.outer_boundary,
         vv_wire=reactor.vacuum_vessel.xz_boundary(),
     )
 

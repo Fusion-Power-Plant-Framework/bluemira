@@ -33,7 +33,7 @@ class IVCShapes:
     """Collection of geometries used to design/build in-vessel components."""
 
     blanket_face: BluemiraFace
-    blanket_outer_boundary: BluemiraWire
+    div_internal_boundary: BluemiraWire
     divertor_face: BluemiraFace
     outer_boundary: BluemiraWire
     inner_boundary: BluemiraWire
@@ -84,11 +84,12 @@ def design_ivc(
     # place, so we cut the wire again here.
     wall_boundary = cut_wall_below_x_point(wall_boundary, plasma_face.bounding_box.z_min)
 
-    blanket_outer_boundary = boolean_cut(wall_boundary, divertor_face)[0]
+    div_boundary = divertor_face.boundary[0]
+    div_internal_boundary = boolean_cut(div_boundary, ivc_boundary)[0]
 
     return IVCShapes(
         blanket_face=plasma_face,
-        blanket_outer_boundary=blanket_outer_boundary,
+        div_internal_boundary=div_internal_boundary,
         divertor_face=divertor_face,
         outer_boundary=ivc_boundary,
         inner_boundary=wall_boundary,

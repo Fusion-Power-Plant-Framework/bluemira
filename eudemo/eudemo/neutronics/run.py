@@ -29,8 +29,8 @@ def run_neutronics(
     params: dict | ParameterFrame,
     build_config: dict,
     blanket_panel_points: Coordinates,
-    blanket_outer_boundary: BluemiraWire,
-    divertor_wire: BluemiraWire,
+    divertor_internal_boundary: BluemiraWire,
+    ivc_outer_boundary: BluemiraWire,
     vv_wire: BluemiraWire,
     source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
 ):
@@ -39,8 +39,8 @@ def run_neutronics(
         params,
         build_config,
         blanket_panel_points=blanket_panel_points,
-        blanket_outer_boundary=blanket_outer_boundary,
-        divertor_wire=divertor_wire,
+        divertor_internal_boundary=divertor_internal_boundary,
+        ivc_outer_boundary=ivc_outer_boundary,
         vv_wire=vv_wire,
         source=source or make_pps_source,
     )
