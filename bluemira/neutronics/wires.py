@@ -11,11 +11,13 @@ BluemiraWire.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import pairwise
 from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 from numpy import typing as npt
 
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
@@ -76,8 +78,11 @@ class WireInfo:
         instance StraightLineInfo) using only two points.
         """
         direction = np.array(end_point) - np.array(start_point)
-        normed_dir = direction / np.linalg.norm(direction)
-        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
+        normed_dir = np.array(direction) / np.linalg.norm(direction)
+        return cls(
+            StraightLineInfo(np.array(start_point), np.array(end_point)),
+            [normed_dir, normed_dir],
+        )
 
 
 class WireInfoList:
@@ -85,9 +90,9 @@ class WireInfoList:
 
     def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        # for prev_wire, curr_wire in pairwise(self.info_list):
-        #     if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
-        #         raise GeometryError("Next wire must start where the previous wire stops")
+        for prev_wire, curr_wire in pairwise(self.info_list):
+            if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
+                raise GeometryError("Next wire must start where the previous wire stops")
 
     def __len__(self) -> int:
         """Number of wire infos"""

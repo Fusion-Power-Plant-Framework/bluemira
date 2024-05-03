@@ -124,12 +124,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     def add_line(
         edge: cadapi.apiEdge,
         wire: BluemiraWire,
-        start_vec: cadapi.apiVector,
-        end_vec: cadapi.apiVector,
+        start_vec: cadapi.apiVector | npt.NDArray,
+        end_vec: cadapi.apiVector | npt.NDArray,
     ):
         """Function to record a line"""
         return WireInfo(
-            StraightLineInfo(start_vec, end_vec),
+            StraightLineInfo(np.array(start_vec), np.array(end_vec)),
             [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
             wire,
         )
@@ -137,13 +137,16 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     def add_circle(
         edge: cadapi.apiEdge,
         wire: BluemiraWire,
-        start_vec: cadapi.apiVector,
-        end_vec: cadapi.apiVector,
+        start_vec: cadapi.apiVector | npt.NDArray,
+        end_vec: cadapi.apiVector | npt.NDArray,
     ):
         """Function to record the arc of a circle."""
         return WireInfo(
             CircleInfo(
-                start_vec, end_vec, np.array(edge.Curve.Center), edge.Curve.Radius
+                np.array(start_vec),
+                np.array(end_vec),
+                np.array(edge.Curve.Center),
+                edge.Curve.Radius,
             ),
             [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
             wire,
