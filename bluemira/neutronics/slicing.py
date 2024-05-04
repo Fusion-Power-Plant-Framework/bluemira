@@ -163,26 +163,39 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         current_start, current_end = edge.firstVertex().Point, edge.lastVertex().Point
 
         # Get the info about this segment of wire
+        if isinstance(edge.Curve, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
+            wire_container.extend(
+                check_and_breakdown_wire(
+                    make_polygon(w_edge.discretise(DISCRETISATION_LEVEL), closed=False)
+                ).info_list
+            )
+            continue
+
         if isinstance(edge.Curve, cadapi.Part.Line | cadapi.Part.LineSegment):
-            wire_container.append(add_line(edge, w_edge, current_start, current_end))
+            wire_info = add_line(edge, w_edge, current_start, current_end)
 
         elif isinstance(edge.Curve, cadapi.Part.ArcOfCircle | cadapi.Part.Circle):
-            wire_container.append(add_circle(edge, w_edge, current_start, current_end))
-
-        elif isinstance(edge.Curve, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
-            sample_pts = w_edge.discretise(DISCRETISATION_LEVEL)
-            disr_wire = make_polygon(sample_pts, closed=False)
-            wire_container.extend([
-                add_line(w_e.boundary[0].OrderedEdges[0], w_e, start, end)
-                for w_e, start, end in zip(
-                    disr_wire.edges, sample_pts.T[:-1], sample_pts.T[1:], strict=True
-                )
-            ])
+            wire_info = add_circle(edge, w_edge, current_start, current_end)
         elif isinstance(edge.Curve, cadapi.Part.ArcOfEllipse | cadapi.Part.Ellipse):
             raise NotImplementedError("Conversion for ellipses are not available yet.")
             # TODO: implement this feature
         else:
             raise NotImplementedError(f"Conversion for {edge.Curve} not available yet.")
+
+        # horrible hack to work around issue #3037, which is still an open issue:
+        # wire segments are sometimes reversed for no apparent reason.
+        if len(wire_container) == 0:
+            wire_container.append(wire_info)
+            continue
+        distance_to_start = np.linalg.norm(
+            wire_container[-1].key_points.end_point - wire_info.key_points.start_point
+        )
+        distance_to_end = np.linalg.norm(
+            wire_container[-1].key_points.end_point - wire_info.key_points.end_point
+        )
+        if distance_to_end < distance_to_start:
+            wire_info = wire_info.reverse()
+        wire_container.append(wire_info)
 
     return WireInfoList(wire_container)
 

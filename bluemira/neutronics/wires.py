@@ -90,9 +90,9 @@ class WireInfoList:
 
     def __init__(self, info_list: list[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in pairwise(self.info_list):
+        for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
-                raise GeometryError("Next wire must start where the previous wire stops")
+                raise GeometryError(f"wire {i + 1} must start where the wire {i} stops.")
 
     def __len__(self) -> int:
         """Number of wire infos"""
