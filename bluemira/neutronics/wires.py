@@ -100,7 +100,7 @@ class WireInfoList:
         return self.info_list[index_or_slice]
 
     def __repr__(self) -> str:
-        """String reprensentation"""
+        """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
 
     def pop(self, index):

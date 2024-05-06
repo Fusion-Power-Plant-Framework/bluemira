@@ -38,7 +38,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
 
-    A polgyon placed in the RHS of the z-xis in the xz plane would have positive volume
+    A polygon placed in the RHS of the z-axis in the xz plane would have positive volume
     if it runs clockwise, and negative volume if it runs counter-clockwise.
 
     Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
@@ -46,7 +46,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
 
     Parameters
     ----------
-    polygon: ndarray of shape (N, 2)
+    polygon:
         Stores the x-z coordinate pairs of the four coordinates.
 
     Notes
@@ -56,7 +56,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
 
     When revolved around the z-axis, this trapezium forms a the frustum of a cone.
     The expression for the volume of this frustrum needs to be modified to avoid
-    ZeroDivisionError, thus it is recasted into the following (also the simplest) form:
+    ZeroDivisionError, thus it is recast into the following (also the simplest) form:
     :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
 
     Adding together the signed volume of all edges, the excess negative volume from one
@@ -95,7 +95,7 @@ def partial_diff_of_volume(
     Notes
     -----
     Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
-    polygon. When r is moved, the polgyon's revolved solid volume changes.
+    polygon. When r is moved, the polygon's revolved solid volume changes.
     After a hefty amount of derivation, everything cancels out to give the expression
     .. math::
 
@@ -159,17 +159,6 @@ class CellWalls:
         start rz coordinates.
         """
         self.cell_walls[index_or_slice] = new_coordinates
-
-    def __add__(self, other_cell_walls: CellWalls):
-        """
-        It is ambiguous whether the user is trying to translate (shift) the
-        rz coordinates (np.ndarray.__add__), or trying to append/extend the array
-        (list.__add__). Explicit instruction is required instead.
-
-        I cannot foresee either to be a common use cases, hence an error is raised in its
-        place.
-        """
-        raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
     def __repr__(self) -> str:
         """String representation"""
@@ -279,9 +268,8 @@ class CellWalls:
         Current volumes of the (simplified) cells created by joining straight lines
         between neighbouring cell walls.
         """
-        return np.asarray([
-            self.get_volume(i) for i in range(self.num_cells)
-        ])  # shape = (N+1,)
+        # shape = (N+1,)
+        return np.asarray([self.get_volume(i) for i in range(self.num_cells)])
 
     def check_volumes_and_lengths(self):
         """
