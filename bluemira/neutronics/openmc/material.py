@@ -11,7 +11,7 @@ from pathlib import Path
 
 import openmc
 
-from bluemira.neutronics.make_materials import NeutronicsMaterials
+from bluemira.neutronics.materials import NeutronicsMaterials
 
 
 class CellType(Enum):

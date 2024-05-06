@@ -248,35 +248,27 @@ class TokamakDimensions:
     central_solenoid: ToroidalFieldCoilDimension
 
     @classmethod
-    def from_tokamak_geometry(
+    def from_parameterframe(
         cls,
-        inboard_fw_tk: float,
-        inboard_breeding_tk: float,
-        outboard_fw_tk: float,
-        outboard_breeding_tk: float,
-        blanket_io_cut: float,
-        tf_inner_radius: float,
-        tf_outer_radius: float,
-        divertor_surface_tk: float = 0.1,
-        blanket_surface_tk: float = 0.01,
-        blk_ib_manifold: float = 0.02,
-        blk_ob_manifold: float = 0.2,
+        params,
     ):
         """Setup tokamak dimensions"""
         return cls(
             BlanketThickness(
-                blanket_surface_tk,
-                inboard_fw_tk,
-                inboard_breeding_tk,
-                blk_ib_manifold,
+                params.blanket_surface_tk.value,
+                params.inboard_fw_tk.value,
+                params.inboard_breeding_tk.value,
+                params.blk_ib_manifold.value,
             ),
-            blanket_io_cut,
+            params.blanket_io_cut.value,
             BlanketThickness(
-                blanket_surface_tk,
-                outboard_fw_tk,
-                outboard_breeding_tk,
-                blk_ob_manifold,
+                params.blanket_surface_tk.value,
+                params.outboard_fw_tk.value,
+                params.outboard_breeding_tk.value,
+                params.blk_ob_manifold.value,
             ),
-            DivertorThickness(divertor_surface_tk),
-            ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
+            DivertorThickness(params.divertor_surface_tk.value),
+            ToroidalFieldCoilDimension(
+                params.tf_inner_radius.value, params.tf_outer_radius.value
+            ),
         )

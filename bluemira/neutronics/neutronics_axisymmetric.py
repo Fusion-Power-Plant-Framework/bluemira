@@ -16,13 +16,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialise_shape
-from bluemira.neutronics.params import (
-    OpenMCNeutronicsSolverParams,
-    TokamakDimensions,
-)
+from bluemira.neutronics.params import TokamakDimensions
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -134,10 +131,27 @@ def some_function_on_blanket_wire(*_args):
     return panel_breakpoint_t, outer_boundary, divertor_bmwire, vacuum_vessel_bmwire
 
 
+@dataclass
+class NeutronicsReactorParameterFrame(ParameterFrame):
+    """Neutronics reactor parameters"""
+
+    inboard_fw_tk: Parameter[float]
+    inboard_breeding_tk: Parameter[float]
+    outboard_fw_tk: Parameter[float]
+    outboard_breeding_tk: Parameter[float]
+    blanket_io_cut: Parameter[float]
+    tf_inner_radius: Parameter[float]
+    tf_outer_radius: Parameter[float]
+    divertor_surface_tk: Parameter[float]
+    blanket_surface_tk: Parameter[float]
+    blk_ib_manifold: Parameter[float]
+    blk_ob_manifold: Parameter[float]
+
+
 class NeutronicsReactor:
     """Pre csg cell reactor"""
 
-    param_cls = OpenMCNeutronicsSolverParams
+    param_cls = NeutronicsReactorParameterFrame
 
     def __init__(
         self,
@@ -145,16 +159,15 @@ class NeutronicsReactor:
         divertor: ComponentManager,
         blanket: ComponentManager,
         vacuum_vessel: ComponentManager,
-        tokamak_dimensions: TokamakDimensions,
         materials_library: NeutronicsMaterials,
         *,
         snap_to_horizontal_angle: float = 45,
         blanket_discretisation: int = 10,
         divertor_discretisation: int = 5,
     ):
-        self.params = make_parameter_frame(params, self.param_cls)
-
-        self.tokamak_dimensions = tokamak_dimensions
+        self.tokamak_dimensions = TokamakDimensions.from_parameterframe(
+            make_parameter_frame(params, self.param_cls)
+        )
         self.material_library = materials_library
 
         divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire = (

@@ -13,13 +13,15 @@ from bluemira.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
 )
-from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
+from bluemira.neutronics.neutronics_axisymmetric import (
+    NeutronicsReactor,
+    NeutronicsReactorParameterFrame,
+)
 from bluemira.neutronics.openmc.solver import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
 )
 from bluemira.neutronics.openmc.sources import make_pps_source
-from bluemira.neutronics.params import TokamakDimensions
 
 build_config = {
     "cross_section_xml": Path(
@@ -36,6 +38,11 @@ build_config = {
     "plot_pixel_per_metre": 100,
 }
 
+# Using built in breeding blanket properties
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
+material_library = create_materials(breeder_materials)
+
+# Setup neutronics parameters
 params = OpenMCNeutronicsSolverParams.from_dict({
     "major_radius": {"value": 8.938, "unit": "m"},
     "aspect_ratio": {"value": 8.938 / 2.8938, "unit": "m"},
@@ -48,30 +55,27 @@ params = OpenMCNeutronicsSolverParams.from_dict({
     "vertical_shift": {"value": 0, "unit": "m"},
 })
 
-breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
-tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
-    tokamak_geometry.inb_fw_thick,
-    tokamak_geometry.inb_bz_thick,
-    tokamak_geometry.outb_fw_thick,
-    tokamak_geometry.outb_bz_thick,
-    params.major_radius.value,
-    # TODO add these to params
-    tf_inner_radius=2,
-    tf_outer_radius=4,
-    divertor_surface_tk=0.1,
-    blanket_surface_tk=0.01,
-    blk_ib_manifold=0.02,
-    blk_ob_manifold=0.2,
-)
+# setup csg parameters
+csg_params = NeutronicsReactorParameterFrame.from_dict({
+    "inboard_fw_tk": {"value": tokamak_geometry.inb_fw_thick, "unit": "m"},
+    "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
+    "outboard_fw_tk": {"value": tokamak_geometry.outb_fw_thick, "unit": "m"},
+    "outboard_breeding_tk": {"value": tokamak_geometry.outb_bz_thick, "unit": "m"},
+    "blanket_io_cut": {"value": params.major_radius.value, "unit": "m"},
+    "tf_inner_radius": {"value": 2, "unit": "m"},
+    "tf_outer_radius": {"value": 4, "unit": "m"},
+    "divertor_surface_tk": {"value": 0.1, "unit": "m"},
+    "blanket_surface_tk": {"value": 0.01, "unit": "m"},
+    "blk_ib_manifold": {"value": 0.02, "unit": "m"},
+    "blk_ob_manifold": {"value": 0.2, "unit": "m"},
+})
 
 
-obj = OpenMCNeutronicsSolver(
+solver = OpenMCNeutronicsSolver(
     params,
-    NeutronicsReactor(
-        params, None, None, None, tokamak_dimensions, create_materials(breeder_materials)
-    ),
+    NeutronicsReactor(csg_params, None, None, None, material_library),
     source=make_pps_source,
     build_config=build_config,
 )
 
-print(obj.execute())
+print(solver.execute())
