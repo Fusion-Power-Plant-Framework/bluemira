@@ -89,7 +89,7 @@ def cut_curve(
     finite_difference = np.diff(cut_params)
     if len(finite_difference) <= 2:  # noqa: PLR2004
         raise GeometryError(
-            "Too few points! I.e. discretization_level parameter too low. "
+            "Too few points! I.e. discretisation_level parameter too low. "
             "Can't determine the cut direction!"
         )
     if (finite_difference <= 0).sum() <= 1:

@@ -81,7 +81,7 @@ def partial_diff_of_volume(
     Gives the relationship between how the the solid volume varies with the position of
     one of its verticies. More precisely, it gives gives the the partial derivative of
     the volume of the solid revolved out of a polygon when one vertex of that polygon
-    is moved in the direction specified by normalized_direction_vector.
+    is moved in the direction specified by normalised_direction_vector.
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ def partial_diff_of_volume(
         Contain (x, z) coordinates of the polygon. It extracts only the vertex being
         moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
         are anchor vertices that cannot be adjusted.
-    normalized_direction_vector: NDArray with shape (2,)
+    normalised_direction_vector: NDArray with shape (2,)
         Direction that the point is allowed to move in.
 
     Notes
@@ -285,7 +285,7 @@ class CellWalls:
 
     def check_volumes_and_lengths(self):
         """
-        Ensure all cells have positive volumes, to minimize the risk of self-intersecting
+        Ensure all cells have positive volumes, to minimise the risk of self-intersecting
         lines and negative lengths
         """
         if not (all(self.volumes > 0) and all(self.lengths > 0)):
@@ -327,7 +327,7 @@ class CellWalls:
             next_curve, _dir_i
         )
 
-    def optimize_to_match_individual_volumes(
+    def optimise_to_match_individual_volumes(
         self, volume_list: Iterable[float], *, max_iter=1000
     ):
         """
@@ -341,7 +341,7 @@ class CellWalls:
 
         target_volumes = np.array(list(volume_list))
         if self.num_cells == 2:  # noqa: PLR2004
-            # only one single step is required for the optimization
+            # only one single step is required for the optimisation
             def volume_excess(new_length):
                 return self.volume_of_cells_neighbouring(1, new_length) - sum(
                     target_volumes
@@ -355,10 +355,9 @@ class CellWalls:
             return
 
         # if more than 3 walls (more than 2 cells)
-        i, i_min, i_max = 1, 1, self.num_cells - 1
+        step_direction, i, i_min, i_max = 1, 1, 1, self.num_cells - 1
 
         num_passes_counter = -1
-        step_direction = +1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
         while num_passes_counter < max_iter:
@@ -380,7 +379,7 @@ class CellWalls:
             )
             if i == i_min:
                 # hitting the left end: bounce to the right
-                step_direction = +1
+                step_direction = 1
                 num_passes_counter += 1
                 backward_pass_result = self.lengths.copy()
                 # termination condition
@@ -388,7 +387,7 @@ class CellWalls:
                     backward_pass_result, forward_pass_result, rtol=0, atol=EPS_FREECAD
                 ):
                     bluemira_debug(
-                        "Cell volume-matching optimization successful."
+                        "Cell volume-matching optimisation successful."
                         "Terminating iterative cell wall length adjustment after "
                         f"{num_passes_counter} passes."
                     )

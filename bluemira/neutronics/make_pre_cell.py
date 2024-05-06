@@ -412,8 +412,8 @@ class PreCellArray:
         if preserve_volume:
             blanket_volumes, vv_volumes = np.array(self.volumes).T
             total_volumes = blanket_volumes + vv_volumes
-            interior_walls_copy.optimize_to_match_individual_volumes(blanket_volumes)
-            exterior_walls_copy.optimize_to_match_individual_volumes(total_volumes)
+            interior_walls_copy.optimise_to_match_individual_volumes(blanket_volumes)
+            exterior_walls_copy.optimise_to_match_individual_volumes(total_volumes)
         new_pre_cells = []
         for i in range(len(self.pre_cells)):
             j = i + 1
@@ -613,12 +613,12 @@ class DivertorPreCell:
         int_wire_pts = np.array(int_wire_pts)  # shape (N+1, 3)
         cw_dir = choose_direction(
             self.cw_wall[0].tangents[0], self.cw_wall.end_point, self.cw_wall.start_point
-        )  # assumed normalized
+        )  # assumed normalised
         ccw_dir = choose_direction(
             self.ccw_wall[0].tangents[1],
             self.ccw_wall.start_point,
             self.ccw_wall.end_point,
-        )  # assumed normalized
+        )  # assumed normalised
         cw_norm = CCW_90 @ cw_dir
         cw_anchor = self.cw_wall.start_point
         ccw_norm = CW_90 @ ccw_dir

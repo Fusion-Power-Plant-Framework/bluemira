@@ -34,7 +34,6 @@ from bluemira.neutronics.params import (
     TokamakDimensions,
 )
 from bluemira.neutronics.radial_wall import (
-    CellWalls,
     polygon_revolve_signed_volume,
 )
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
@@ -1104,13 +1103,13 @@ class BluemiraNeutronicsCSG:
 
 class BlanketCell(openmc.Cell):
     """
-    A generic blanket cell that forms the base class for the five specialized types of
+    A generic blanket cell that forms the base class for the five specialised types of
     blanket cells.
 
     It's a special case of openmc.Cell, in that it has 3 to 4 surfaces
     (mandatory surfaces: exterior_surface, ccw_surface, cw_surface;
     optional surface: interior_surface), and it is more wieldy because we don't have to
-    specify the relevant half-space for each surface; instead the corneres of the cell
+    specify the relevant half-space for each surface; instead the corners of the cell
     is provided by the user, such that the appropriate regions are chosen.
     """
 
@@ -1609,7 +1608,7 @@ class BlanketCellArray:
             Passed as argument onto
             :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
-        cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
+        cell_walls = pre_cell_array.cell_walls
 
         # left wall
         ccw_surf = csg.surface_from_2points(
@@ -1891,7 +1890,7 @@ class DivertorCellStack:
         stack_num:
             A string or number to identify the cell stack by.
         """
-        # I apologize that this is still hard to read.
+        # I apologise that this is still hard to read.
         # I'm trying to make cell_stack a 3-element list if armour_thickness>0,
         # but a 2-element list if armour_thickness==0.
 
