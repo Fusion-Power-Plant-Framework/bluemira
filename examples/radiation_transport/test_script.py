@@ -8,14 +8,18 @@
 from pathlib import Path
 
 from bluemira.base.constants import raw_uc
-from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
-from bluemira.neutronics.make_materials import BlanketType
+from bluemira.neutronics.blanket_data import (
+    BlanketType,
+    create_materials,
+    get_preset_physical_properties,
+)
 from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
 from bluemira.neutronics.openmc.solver import (
     OpenMCNeutronicsSolver,
     OpenMCNeutronicsSolverParams,
 )
 from bluemira.neutronics.openmc.sources import make_pps_source
+from bluemira.neutronics.params import TokamakDimensions
 
 build_config = {
     "cross_section_xml": Path(
@@ -28,7 +32,6 @@ build_config = {
     "run_mode": "run_and_plot",
     "openmc_write_summary": False,
     "parametric_source": True,
-    "blanket_type": BlanketType.HCPB,
     "plot_axis": "xz",
     "plot_pixel_per_metre": 100,
 }
@@ -45,10 +48,28 @@ params = OpenMCNeutronicsSolverParams.from_dict({
     "vertical_shift": {"value": 0, "unit": "m"},
 })
 
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
+tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
+    tokamak_geometry.inb_fw_thick,
+    tokamak_geometry.inb_bz_thick,
+    tokamak_geometry.outb_fw_thick,
+    tokamak_geometry.outb_bz_thick,
+    params.major_radius.value,
+    # TODO add these to params
+    tf_inner_radius=2,
+    tf_outer_radius=4,
+    divertor_surface_tk=0.1,
+    blanket_surface_tk=0.01,
+    blk_ib_manifold=0.02,
+    blk_ob_manifold=0.2,
+)
+
 
 obj = OpenMCNeutronicsSolver(
     params,
-    NeutronicsReactor(params, None, None, None),
+    NeutronicsReactor(
+        params, None, None, None, tokamak_dimensions, create_materials(breeder_materials)
+    ),
     source=make_pps_source,
     build_config=build_config,
 )

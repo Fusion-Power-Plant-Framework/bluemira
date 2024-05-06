@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
-from enum import Enum, auto
 
 import numpy as np
 
@@ -57,49 +56,6 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     temperature: Parameter[float]  # [K]
     shaf_shift: Parameter[float]  # [m]
     vertical_shift: Parameter[float]  # [m]
-
-
-class BlanketLayers(Enum):
-    """
-    The five layers of the blanket as used in the neutronics simulation.
-
-    Variables
-    ---------
-    Surface
-        The surface layer of the first wall.
-    First wall
-        Typically made of tungsten or Eurofer
-    BreedingZone
-        Where tritium is bred
-    Manifold
-        The pipe works and supporting structure
-    VacuumVessel
-        The vacuum vessel keeping the plasma from mixing with outside air.
-    """
-
-    Surface = auto()
-    FirstWall = auto()
-    BreedingZone = auto()
-    Manifold = auto()
-    VacuumVessel = auto()
-
-
-class BlanketType(Enum):
-    """Types of allowed blankets, named by their acronyms."""
-
-    DCLL = auto()
-    HCPB = auto()
-    WCLL = auto()
-
-
-@dataclass
-class BreederTypeParameters:
-    """Dataclass to hold information about the breeder blanket material
-    and design choices.
-    """
-
-    enrichment_fraction_Li6: float
-    blanket_type: BlanketType
 
 
 @dataclass(frozen=True)
@@ -294,7 +250,10 @@ class TokamakDimensions:
     @classmethod
     def from_tokamak_geometry(
         cls,
-        tokamak_geometry: TokamakGeometry,
+        inboard_fw_tk: float,
+        inboard_breeding_tk: float,
+        outboard_fw_tk: float,
+        outboard_breeding_tk: float,
         blanket_io_cut: float,
         tf_inner_radius: float,
         tf_outer_radius: float,
@@ -303,140 +262,21 @@ class TokamakDimensions:
         blk_ib_manifold: float = 0.02,
         blk_ob_manifold: float = 0.2,
     ):
-        """Bodge method that can be deleted later once
-        :func:`~get_preset_physical_properties` migrated over to use TokamakDimensions.
-        """
+        """Setup tokamak dimensions"""
         return cls(
             BlanketThickness(
                 blanket_surface_tk,
-                tokamak_geometry.inb_fw_thick,
-                tokamak_geometry.inb_bz_thick,
+                inboard_fw_tk,
+                inboard_breeding_tk,
                 blk_ib_manifold,
             ),
             blanket_io_cut,
             BlanketThickness(
                 blanket_surface_tk,
-                tokamak_geometry.outb_fw_thick,
-                tokamak_geometry.outb_bz_thick,
+                outboard_fw_tk,
+                outboard_breeding_tk,
                 blk_ob_manifold,
             ),
             DivertorThickness(divertor_surface_tk),
             ToroidalFieldCoilDimension(tf_inner_radius, tf_outer_radius),
         )
-
-
-@dataclass(frozen=True)
-class TokamakGeometry:
-    """The thickness measurements for all of the generic components of the tokamak.
-
-    Parameters
-    ----------
-    inb_fw_thick:
-        inboard first wall thickness [m]
-    inb_bz_thick:
-        inboard breeding zone thickness [m]
-    inb_mnfld_thick:
-        inboard manifold thickness [m]
-    inb_vv_thick:
-        inboard vacuum vessel thickness [m]
-    tf_thick:
-        toroidal field coil thickness [m]
-    outb_fw_thick:
-        outboard first wall thickness [m]
-    outb_bz_thick:
-        outboard breeding zone thickness [m]
-    outb_mnfld_thick:
-        outboard manifold thickness [m]
-    outb_vv_thick:
-        outboard vacuum vessel thickness [m]
-    inb_gap:
-        inboard gap [m]
-    """
-
-    inb_fw_thick: float
-    inb_bz_thick: float
-    inb_mnfld_thick: float
-    inb_vv_thick: float
-    tf_thick: float
-    outb_fw_thick: float
-    outb_bz_thick: float
-    outb_mnfld_thick: float
-    outb_vv_thick: float
-    inb_gap: float
-
-
-def get_preset_physical_properties(
-    blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, TokamakGeometry]:
-    """
-    Works as a switch-case for choosing the tokamak geometry
-    and blankets for a given blanket type.
-    The allowed list of blanket types are specified in BlanketType.
-    Currently, the blanket types with pre-populated data in this function are:
-    {'wcll', 'dcll', 'hcpb'}
-    """
-    if not isinstance(blanket_type, BlanketType):
-        blanket_type = BlanketType[blanket_type.lower()]
-
-    breeder_materials = BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=0.60,
-    )
-
-    # Geometry variables
-
-    # Break down from here.
-    # Paper inboard build ---
-    # Nuclear analyses of solid breeder blanket options for DEMO:
-    # Status,challenges and outlook,
-    # Pereslavtsev, 2019
-    #
-    # 0.400,      # TF Coil inner
-    # 0.200,      # gap                  from figures
-    # 0.060,       # VV steel wall
-    # 0.480,      # VV
-    # 0.060,       # VV steel wall
-    # 0.020,       # gap                  from figures
-    # 0.350,      # Back Supporting Structure
-    # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
-    # 0.350,      # breeder zone
-    # 0.022        # fw and armour
-
-    shared_building_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": 0.2,  # [m]
-        "inb_vv_thick": 0.6,  # [m]
-        "tf_thick": 0.4,  # [m]
-        "outb_vv_thick": 0.6,  # [m]
-    }
-    if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.378,  # [m]
-            inb_mnfld_thick=0.435,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.538,  # [m]
-            outb_mnfld_thick=0.429,  # [m]
-        )
-    elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.022,  # [m]
-            inb_bz_thick=0.300,  # [m]
-            inb_mnfld_thick=0.178,  # [m]
-            outb_fw_thick=0.022,  # [m]
-            outb_bz_thick=0.640,  # [m]
-            outb_mnfld_thick=0.248,  # [m]
-        )
-    elif blanket_type is BlanketType.HCPB:
-        # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.460,  # [m]
-            inb_mnfld_thick=0.560,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.460,  # [m]
-            outb_mnfld_thick=0.560,  # [m]
-        )
-    return breeder_materials, tokamak_geometry

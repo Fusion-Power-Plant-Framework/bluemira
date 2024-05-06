@@ -32,7 +32,8 @@ from bluemira.neutronics.openmc.make_csg import (
     BluemiraNeutronicsCSG,
     make_cell_arrays,
 )
-from bluemira.neutronics.openmc.output import OpenMCResult, export_to_xml
+from bluemira.neutronics.openmc.material import MaterialsLibrary
+from bluemira.neutronics.openmc.output import OpenMCResult
 from bluemira.neutronics.openmc.tallying import (
     _create_tallies_from_filters,
     filter_new_cells,
@@ -109,6 +110,7 @@ class Setup(CodesSetup):
         source,
         cell_arrays,
         pre_cell_model,
+        materials,
     ):
         super().__init__(None, codes_name)
 
@@ -118,6 +120,7 @@ class Setup(CodesSetup):
         self.source = source
         self.blanket_cell_array = cell_arrays.blanket
         self.pre_cell_model = pre_cell_model
+        self.materials = materials
         self.matlist = attrgetter(
             "outb_sf_mat",
             "outb_fw_mat",
@@ -151,12 +154,10 @@ class Setup(CodesSetup):
             for obj, pth in (
                 (self.settings, Path(self.out_path, folder, "settings.xml")),
                 (self.geometry, Path(self.out_path, folder, "geometry.xml")),
+                (self.materials, Path(self.out_path, folder, "materials.xml")),
             ):
                 obj.export_to_xml(pth)
                 self.files_created.add(pth)
-        mat_path = Path(self.out_path, folder, "materials.xml")
-        export_to_xml(self.pre_cell_model.material_library, mat_path)
-        self.files_created.add(mat_path)
 
     def _set_tallies(
         self, run_mode, blanket_cell_array: BlanketCellArray, material_list
@@ -177,9 +178,7 @@ class Setup(CodesSetup):
             self.settings.electron_treatment = runtime_params.electron_treatment
 
             self._set_tallies(
-                run_mode,
-                self.blanket_cell_array,
-                self.matlist(self.pre_cell_model.material_library),
+                run_mode, self.blanket_cell_array, self.matlist(self.materials)
             )
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
@@ -352,8 +351,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self.source = source
 
         self.pre_cell_model = neutronics_pre_cell_model
+        self.materials = MaterialsLibrary.from_neutronics_materials(
+            self.pre_cell_model.material_library
+        )
+
         self.cell_arrays = make_cell_arrays(
-            self.pre_cell_model, BluemiraNeutronicsCSG(), control_id=True
+            self.pre_cell_model, BluemiraNeutronicsCSG(), self.materials, control_id=True
         )
 
     @property
@@ -400,6 +403,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.source,
             self.cell_arrays,
             self.pre_cell_model,
+            self.materials,
         )
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(

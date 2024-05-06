@@ -19,12 +19,9 @@ import numpy as np
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialise_shape
-from bluemira.neutronics.make_materials import create_materials
 from bluemira.neutronics.params import (
-    BlanketType,
     OpenMCNeutronicsSolverParams,
     TokamakDimensions,
-    get_preset_physical_properties,
 )
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
@@ -37,6 +34,7 @@ if TYPE_CHECKING:
     from bluemira.base.reactor import ComponentManager
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
+    from bluemira.neutronics.materials import NeutronicsMaterials
 
 
 @dataclass
@@ -147,29 +145,17 @@ class NeutronicsReactor:
         divertor: ComponentManager,
         blanket: ComponentManager,
         vacuum_vessel: ComponentManager,
+        tokamak_dimensions: TokamakDimensions,
+        materials_library: NeutronicsMaterials,
         *,
         snap_to_horizontal_angle: float = 45,
         blanket_discretisation: int = 10,
         divertor_discretisation: int = 5,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
-        _breeder_materials, _tokamak_geometry = get_preset_physical_properties(
-            BlanketType.HCPB  # blanket.blanket_type
-        )
 
-        self.tokamak_dimensions = TokamakDimensions.from_tokamak_geometry(
-            _tokamak_geometry,
-            self.params.major_radius.value,
-            # TODO add these to params
-            tf_inner_radius=2,
-            tf_outer_radius=4,
-            divertor_surface_tk=0.1,
-            blanket_surface_tk=0.01,
-            blk_ib_manifold=0.02,
-            blk_ob_manifold=0.2,
-        )
-
-        self._material_library = create_materials(_breeder_materials)
+        self.tokamak_dimensions = tokamak_dimensions
+        self.material_library = materials_library
 
         divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire = (
             self._get_wires_from_components(divertor, blanket, vacuum_vessel)
@@ -217,11 +203,6 @@ class NeutronicsReactor:
     def bounding_box(self) -> tuple[float, ...]:
         """Bounding box of Neutronics reactor"""
         return self._pre_cell_stage.bounding_box()
-
-    @property
-    def material_library(self):
-        """Reactor material library"""
-        return self._material_library
 
     @property
     def blanket(self):

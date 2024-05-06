@@ -19,12 +19,6 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
 
 
-def export_to_xml(material_library, path: str | Path = "materials.xml"):
-    """Exports material defintions to xml"""
-    material_list = openmc.Materials(material_library.to_openmc_materials())
-    return material_list.export_to_xml(path)
-
-
 def get_percent_err(row):
     """
     Calculate a percentage error to the required row,
