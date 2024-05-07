@@ -9,14 +9,15 @@ Utility functions for the power cycle model.
 """
 
 import json
-from enum import Enum
 from itertools import pairwise
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 def read_json(file_path) -> dict[str, Any]:
@@ -38,56 +39,30 @@ def create_axes(ax=None):
     return ax
 
 
-'''
-from aenum import MultiValueEnum
-class UniqueDomainMode(MultiValueEnum):
-    """
-    Members define modes of operation for the 'unique_domain' function.
-    """
-
-    FAST = "f", "fast"
-    SLOW = "s", "slow", "careful", "c"
-
-    @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError as exc:
-            raise AttributeError("Invalid value for UniqueDomainMode.") from exc
-'''
-
-
-class UniqueDomainMode(Enum):
-    """
-    Members define modes of operation for the 'unique_domain' function.
-    """
-
-    FAST = "fast"
-    SLOW = "careful"
-
-    @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError as exc:
-            raise AttributeError("Invalid value for UniqueDomainMode.") from exc
-
-
-def unique_domain(x: np.NDArray, y: np.NDArray, epslon=1e-10, mode="careful"):
+@nb.jit
+def unique_domain(
+    x: np.NDArray,
+    y: np.NDArray,
+    epsilon: np.number = 1e-10,
+    *,
+    fast_mode: bool = False,
+):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
-    Epslon must be small enough so that consecutive values can be considered
+    Epsilon must be small enough so that consecutive values can be considered
     equal within the context/scale in which the function is defined.
 
-    Careful mode:
+    Standard mode:
     -------------
-    Nudge forward each non-unique element in x by (N * epslon), given N times,
+    ('fast_mode' = False)
+    Nudge forward each non-unique element in x by (N * epsilon), given N times,
     after the first appearance, that value has appeared in x before.
 
     Fast mode:
     ---------
-    Nudge forward every element in x by (N * epslon), with N being the index
+    ('fast_mode' = True)
+    Nudge forward every element in x by (N * epsilon), with N being the index
     of that element in x. More prone to errors if the number of elements in
     x is large.
     """
@@ -97,17 +72,19 @@ def unique_domain(x: np.NDArray, y: np.NDArray, epslon=1e-10, mode="careful"):
         raise ValueError("x and y must have the same number of elements.")
     new_y = y.copy()
 
-    if UniqueDomainMode(mode) == UniqueDomainMode.FAST:
-        nudge_vector = np.arange(n_points) * epslon
+    if fast_mode:
+        bluemira_warn(
+            "Careful: 'fast' mode nudges all values in 'x'; use small 'epsilon'."
+        )
+        nudge_vector = np.arange(n_points) * epsilon
         new_x = x.copy() + nudge_vector
-
-    if UniqueDomainMode(mode) == UniqueDomainMode.SLOW:
+    else:
         new_x = [x[0]]
         nudge = 0
         if n_points > 1:
             for x_last, x_this in pairwise(x):
                 if np.isclose(x_last, x_this, rtol=EPS):
-                    nudge += epslon
+                    nudge += epsilon
                     nudged_x_this = x_last + nudge
                 else:
                     nudge = 0
