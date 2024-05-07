@@ -10,7 +10,7 @@ fonttools==4.51.0
 fortranformat==2.0.0
 gmsh==4.12.2
 imageio==2.34.1
-joblib==1.4.0
+joblib==1.4.2
 kiwisolver==1.4.5
 llvmlite==0.42.0
 matplotlib==3.8.4
