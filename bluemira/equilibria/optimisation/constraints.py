@@ -726,7 +726,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         ax.plot(self.x, self.z, **kwargs)
 
 
-class MagneticConstraintSet(ABC):
+class MagneticConstraintSet:
     """
     A set of magnetic constraints to be applied to an equilibrium. The optimisation
     problem is of the form:
