@@ -449,7 +449,7 @@ class PreCellArray:
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot pre cells in 2d"""
-        plot_2d(
+        return plot_2d(
             [
                 *(pc.outline for pc in self.pre_cells),
                 *(pc.vv_wire for pc in self.pre_cells),
@@ -553,7 +553,7 @@ class DivertorPreCell:
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot 2d precell"""
-        plot_2d(self.outline, *args, **kwargs)
+        return plot_2d(self.outline, *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> None:
         """Show precell CAD"""
@@ -720,7 +720,7 @@ class DivertorPreCellArray:
 
     def plot_2d(self, *args, **kwargs) -> None:
         """Plot precell array cad in 2d"""
-        plot_2d(
+        return plot_2d(
             [
                 *(dpc.outline for dpc in self.pre_cells),
                 *(dpc.vv_wire.restore_to_wire() for dpc in self.pre_cells),

@@ -94,32 +94,35 @@ def is_monotonically_increasing(series):
     return all(np.diff(series) >= -EPS_FREECAD)  # or all(diff<0)
 
 
-def plot_surfaces(surfaces_list: list[openmc.Surface]):
+def plot_surfaces(surfaces_list: list[openmc.Surface], ax=None):
     """
     Plot a list of surfaces in matplotlib.
     """
-    ax = plt.axes()
+    if not ax:
+        ax = plt.axes()
     # ax.set_aspect(1.0) # don't do this as it makes the plot hard to read.
     for i, surface in enumerate(surfaces_list):
-        plot_coords(surface, color_num=i)
+        plot_surface_at_1000cm(ax, surface, color_num=i)
     ax.legend()
+    ax.set_aspect("equal")
     ax.set_ylim([-1000, 1000])
     ax.set_xlim([-1000, 1000])
+    return ax
 
 
-def plot_coords(surface: openmc.Surface, color_num: int):
+def plot_surface_at_1000cm(ax, surface: openmc.Surface, color_num: int):
     """
     In the range [-1000, 1000], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
     """
     if isinstance(surface, openmc.ZCylinder):
-        plt.plot(
+        ax.plot(
             [surface.x0, surface.x0],
             [-1000, 1000],
             label=f"{surface.id}: {surface.name}",
             color=f"C{color_num}",
         )
     elif isinstance(surface, openmc.ZPlane):
-        plt.plot(
+        ax.plot(
             [-1000, 1000],
             [surface.z0, surface.z0],
             label=f"{surface.id}: {surface.name}",
@@ -136,13 +139,13 @@ def plot_coords(surface: openmc.Surface, color_num: int):
             return -slope * np.array(x) + intercept
 
         y_pos, y_neg = equation_pos([-1000, 1000]), equation_neg([-1000, 1000])
-        plt.plot(
+        ax.plot(
             [-1000, 1000],
             y_pos,
             label=f"{surface.id}: {surface.name} (upper)",
             color=f"C{color_num}",
         )
-        plt.plot(
+        ax.plot(
             [-1000, 1000],
             y_neg,
             label=f"{surface.id}: {surface.name} (lower)",
