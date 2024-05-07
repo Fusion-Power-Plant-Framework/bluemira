@@ -390,22 +390,6 @@ class PanelsAndExteriorCurve:
         line_direction = np.insert(direction_2d, 1, 0, axis=-1)
         return line_origin, line_direction
 
-    def add_cut_points(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
-        """
-        Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
-        these points will eventually be used to cut up self.vv_interior and
-        self.vv_exterior.
-
-        N.B. These cut points must be sequentially added, i.e. they should
-        follow the curves in the clockwise direction.
-        """
-        self.vv_cut_points.append(
-            get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
-        )
-        self.exterior_cut_points.append(
-            get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
-        )
-
     def calculate_cut_points(
         self,
         starting_cut: npt.NDArray[np.float64] | None,
@@ -458,13 +442,30 @@ class PanelsAndExteriorCurve:
         """
         self.vv_cut_points, self.exterior_cut_points = [], []
 
+        def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
+            """
+            Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
+            these points will eventually be used to cut up self.vv_interior and
+            self.vv_exterior.
+
+            N.B. These cut points must be sequentially added, i.e. they should
+            follow the curves in the clockwise direction.
+            """
+            self.vv_cut_points.append(
+                get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
+            )
+            self.exterior_cut_points.append(
+                get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
+            )
+
         threshold_angle = np.deg2rad(snap_to_horizontal_angle)
 
         # initial cut point
-        plane, c_dir = calculate_plane_dir(
-            self.interior_panels[0], [starting_cut[0], 0, starting_cut[-1]]
+        add_cut_points(
+            *calculate_plane_dir(
+                self.interior_panels[0], [starting_cut[0], 0, starting_cut[-1]]
+            )
         )
-        self.add_cut_points(plane, c_dir)
 
         for i in range(1, len(self.interior_panels) - 1):
             origin, c_dir = self.get_bisection_line(i)
@@ -475,10 +476,10 @@ class PanelsAndExteriorCurve:
                 plane = z_plane(self.interior_panels[i][-1])  # horizontal cut plane
             else:
                 plane = xz_plane_from_2_points(origin, origin + c_dir)
-            self.add_cut_points(plane, c_dir)
+            add_cut_points(plane, c_dir)
 
         # final cut point
-        self.add_cut_points(
+        add_cut_points(
             *calculate_plane_dir(
                 self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
             )
@@ -695,25 +696,6 @@ class DivertorWireAndExteriorCurve:
         line_direction = np.insert(direction_2d, 1, 0, axis=-1)
         return line_origin, line_direction
 
-    def add_cut_points(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
-        """
-        Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
-        these points will eventually be used to cut up self.vv_interior and
-        self.vv_exterior.
-
-        N.B. These cut points must be sequentially added, i.e. they should
-        follow the curves in the clockwise direction.
-
-        While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`, this can't be
-        refactored away because they're specific to the class.
-        """
-        self.vv_cut_points.append(
-            get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
-        )
-        self.exterior_cut_points.append(
-            get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
-        )
-
     def calculate_cut_points(
         self,
         starting_cut: npt.NDArray[np.float64] | None,
@@ -751,8 +733,27 @@ class DivertorWireAndExteriorCurve:
         """
         self.vv_cut_points, self.exterior_cut_points = [], []
 
+        def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
+            """
+            Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
+            these points will eventually be used to cut up self.vv_interior and
+            self.vv_exterior.
+
+            N.B. These cut points must be sequentially added, i.e. they should
+            follow the curves in the clockwise direction.
+
+            While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`, this can't be
+            refactored away because they're specific to the class.
+            """
+            self.vv_cut_points.append(
+                get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
+            )
+            self.exterior_cut_points.append(
+                get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
+            )
+
         # initial cut point
-        self.add_cut_points(
+        add_cut_points(
             *calculate_plane_dir(
                 np.array(self.convex_segments[0][0].key_points[0]),
                 [starting_cut[0], 0, starting_cut[-1]],
@@ -762,10 +763,10 @@ class DivertorWireAndExteriorCurve:
         for i in range(len(self.convex_segments) - 1):
             origin, c_dir = self.get_bisection_line(i)
             plane = xz_plane_from_2_points(origin, origin + c_dir)
-            self.add_cut_points(plane, c_dir)
+            add_cut_points(plane, c_dir)
 
         # final cut point
-        self.add_cut_points(
+        add_cut_points(
             *calculate_plane_dir(
                 np.array(self.convex_segments[-1][-1].key_points[1]),
                 [ending_cut[0], 0, ending_cut[-1]],
