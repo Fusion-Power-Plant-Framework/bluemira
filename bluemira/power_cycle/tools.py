@@ -80,8 +80,8 @@ def unique_domain(
         new_x = x.copy() + nudge_vector
     else:
         new_x = [x[0]]
-        nudge = 0
         if n_points > 1:
+            nudge = 0
             for x_last, x_this in pairwise(x):
                 if np.isclose(x_last, x_this, rtol=EPS):
                     nudge += epsilon
