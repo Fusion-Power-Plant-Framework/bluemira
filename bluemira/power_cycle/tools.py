@@ -9,6 +9,8 @@ Utility functions for the power cycle model.
 """
 
 import json
+from enum import Enum
+from itertools import pairwise
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -36,7 +38,42 @@ def create_axes(ax=None):
     return ax
 
 
-def unique_domain(x, y, epslon=1e-10, mode="careful"):
+'''
+from aenum import MultiValueEnum
+class UniqueDomainMode(MultiValueEnum):
+    """
+    Members define modes of operation for the 'unique_domain' function.
+    """
+
+    FAST = "f", "fast"
+    SLOW = "s", "slow", "careful", "c"
+
+    @classmethod
+    def _missing_(cls, value: str):
+        try:
+            return cls[value.upper()]
+        except KeyError as exc:
+            raise AttributeError("Invalid value for UniqueDomainMode.") from exc
+'''
+
+
+class UniqueDomainMode(Enum):
+    """
+    Members define modes of operation for the 'unique_domain' function.
+    """
+
+    FAST = "fast"
+    SLOW = "careful"
+
+    @classmethod
+    def _missing_(cls, value: str):
+        try:
+            return cls[value.upper()]
+        except KeyError as exc:
+            raise AttributeError("Invalid value for UniqueDomainMode.") from exc
+
+
+def unique_domain(x: np.NDArray, y: np.NDArray, epslon=1e-10, mode="careful"):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
@@ -56,39 +93,27 @@ def unique_domain(x, y, epslon=1e-10, mode="careful"):
     """
     n_points = len(x)
     if len(y) != n_points:
+        # pad x or y depending on another argument
         raise ValueError("x and y must have the same number of elements.")
+    new_y = y.copy()
 
-    slow_identifiers = {"careful", "c", "slow", "s"}
-    fast_identifiers = {"fast", "f"}
-
-    if mode in slow_identifiers:
-        new_x = [x[0]]
-        new_y = [y[0]]
-        nudge = 0
-        for p in range(1, n_points):
-            x_last = x[p - 1]
-            x_this = x[p]
-            y_this = y[p]
-            if np.isclose(x_last, x_this, rtol=EPS):
-                nudge += epslon
-                x_this = x_last + nudge
-            else:
-                nudge = 0
-            new_x.append(x_this)
-            new_y.append(y_this)
-
-    elif mode in fast_identifiers:
+    if UniqueDomainMode(mode) == UniqueDomainMode.FAST:
         nudge_vector = np.arange(n_points) * epslon
         new_x = x.copy() + nudge_vector
-        new_y = y.copy()
 
-    else:
-        raise ValueError(
-            f"Invalid argument: '{mode}'. The parameter 'mode' can only"
-            f"assume one of the following values: {slow_identifiers} or "
-            f"{fast_identifiers}."
-        )
-    return new_x, new_y
+    if UniqueDomainMode(mode) == UniqueDomainMode.SLOW:
+        new_x = [x[0]]
+        nudge = 0
+        if n_points > 1:
+            for x_last, x_this in pairwise(x):
+                if np.isclose(x_last, x_this, rtol=EPS):
+                    nudge += epslon
+                    nudged_x_this = x_last + nudge
+                else:
+                    nudge = 0
+                new_x.append(nudged_x_this)
+
+    return np.asarray(new_x), np.asarray(new_y)
 
 
 def match_domains(
