@@ -187,6 +187,13 @@ class NeutronicsReactor(ABC):
         """Divertor pre cell"""
         return self._pre_cell_stage.divertor
 
+    def plot_2d(self, *args, **kwargs):
+        """Plot neutronics reactor 2d profile"""
+        show = kwargs.pop("show", True)
+        ax = kwargs.pop("ax", None)
+        ax = self.blanket.plot_2d(*args, ax=ax, show=False, **kwargs)
+        return self.divertor.plot_2d(*args, ax=ax, show=show, **kwargs)
+
     @abstractmethod
     def _get_wires_from_components(
         self,

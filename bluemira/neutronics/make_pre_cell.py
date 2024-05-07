@@ -259,11 +259,11 @@ class PreCell:
             self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
         return self._blanket_half_solid
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot the outline in 2D"""
         return plot_2d([self.outline, self.vv_wire], *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Plot the outline in 3D"""
         return show_cad(self.half_solid, *args, **kwargs)
 
@@ -447,7 +447,7 @@ class PreCellArray:
         # ax = self.plot_2d(show=False)
         # new_pca.plot_2d(ax=ax, show=True)
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot pre cells in 2d"""
         return plot_2d(
             [
@@ -458,9 +458,9 @@ class PreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show pre cell CAD"""
-        show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
+        return show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
 
     def exterior_vertices(self) -> npt.NDArray:
         """
@@ -551,13 +551,13 @@ class DivertorPreCell:
             ])
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot 2d precell"""
         return plot_2d(self.outline, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show precell CAD"""
-        show_cad(self.half_solid, *args, **kwargs)
+        return show_cad(self.half_solid, *args, **kwargs)
 
     @property
     def outline(self) -> BluemiraWire:
@@ -714,7 +714,7 @@ class DivertorPreCellArray:
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot precell array cad in 2d"""
         return plot_2d(
             [
@@ -725,6 +725,6 @@ class DivertorPreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show precell array CAD"""
-        show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
+        return show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)

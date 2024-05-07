@@ -84,10 +84,6 @@ def run_neutronics(
         csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
 
-    #     blanket_panel_points=reactor.blanket.panel_points(),
-    # divertor_internal_boundary=ivc_shapes.div_internal_boundary,
-    # ivc_outer_boundary=ivc_shapes.outer_boundary,
-    # vv_wire=reactor.vacuum_vessel.xz_boundary()
     obj = OpenMCNeutronicsSolver(
         params,
         build_config,
