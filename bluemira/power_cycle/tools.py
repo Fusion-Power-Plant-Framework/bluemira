@@ -40,11 +40,7 @@ def create_axes(ax=None):
 
 
 @nb.jit
-def unique_domain(
-    x: np.ndarray,
-    y: np.ndarray,
-    epsilon: np.number = DEFAULT_EPSILON,
-):
+def unique_domain(x: np.ndarray, epsilon: np.number = DEFAULT_EPSILON):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
@@ -55,11 +51,6 @@ def unique_domain(
     after the first appearance, that value has appeared in x before.
     """
     n_points = len(x)
-    if len(y) != n_points:
-        # pad x or y depending on another argument
-        raise ValueError("x and y must have the same number of elements.")
-    new_y = y.copy()
-
     new_x = [x[0]]
     if n_points > 1:
         nudge = 0
@@ -72,7 +63,7 @@ def unique_domain(
                 nudge = 0
             new_x.append(new_x_this)
 
-    return np.asarray(new_x), np.asarray(new_y)
+    return np.asarray(new_x)
 
 
 def match_domains(
@@ -94,11 +85,7 @@ def match_domains(
     """
     n_vectors = len(x_set)
     for v in range(n_vectors):
-        x_set[v], y_set[v] = unique_domain(
-            x_set[v],
-            y_set[v],
-            epsilon,
-        )
+        x_set[v] = unique_domain(x_set[v], epsilon=epsilon)
 
     matched_x = np.concatenate(x_set)
     matched_x = np.unique(matched_x)

@@ -15,10 +15,8 @@ from bluemira.power_cycle.tools import match_domains, unique_domain
 @pytest.mark.parametrize("epsilon", [1e-10, 1e-7, 1e-5])
 def test_unique_domain(epsilon):
     x = np.array([1, 1, 2, 2, 3, 3])
-    y = np.array([1, 2, 3, 4, 5, 6])
-
-    new_x, new_y = unique_domain(x, y, epsilon=epsilon)
-    slow_x = np.array([
+    new_x = unique_domain(x, epsilon=epsilon)
+    expected_x = np.array([
         1,
         1 + epsilon,
         2,
@@ -26,8 +24,7 @@ def test_unique_domain(epsilon):
         3,
         3 + epsilon,
     ])
-    assert np.array_equal(new_x, slow_x)
-    assert np
+    assert np.array_equal(new_x, expected_x)
 
 
 @pytest.mark.parametrize("epsilon", [1e-10, 1e-7, 1e-5])
