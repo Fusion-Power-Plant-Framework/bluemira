@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
 
 DEFAULT_EPSILON = 1e-10
 
@@ -40,13 +39,10 @@ def create_axes(ax=None):
     return ax
 
 
-# @nb.jit
 def unique_domain(
     x: np.ndarray,
     y: np.ndarray,
     epsilon: np.number = DEFAULT_EPSILON,
-    *,
-    fast_mode: bool = False,
 ):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
@@ -54,18 +50,8 @@ def unique_domain(
     Epsilon must be small enough so that consecutive values can be considered
     equal within the context/scale in which the function is defined.
 
-    Standard mode:
-    -------------
-    ('fast_mode' = False)
     Nudge forward each non-unique element in x by (N * epsilon), given N times,
     after the first appearance, that value has appeared in x before.
-
-    Fast mode:
-    ---------
-    ('fast_mode' = True)
-    Nudge forward every element in x by (N * epsilon), with N being the index
-    of that element in x. More prone to errors if the number of elements in
-    x is large.
     """
     n_points = len(x)
     if len(y) != n_points:
@@ -73,24 +59,17 @@ def unique_domain(
         raise ValueError("x and y must have the same number of elements.")
     new_y = y.copy()
 
-    if fast_mode:
-        bluemira_warn(
-            "Careful: 'fast' mode nudges all values in 'x'; use small 'epsilon'."
-        )
-        nudge_vector = np.arange(n_points) * epsilon
-        new_x = x.copy() + nudge_vector
-    else:
-        new_x = [x[0]]
-        if n_points > 1:
-            nudge = 0
-            for x_last, x_this in pairwise(x):
-                if np.isclose(x_last, x_this, rtol=EPS):
-                    nudge += epsilon
-                    new_x_this = x_last + nudge
-                else:
-                    new_x_this = x_this
-                    nudge = 0
-                new_x.append(new_x_this)
+    new_x = [x[0]]
+    if n_points > 1:
+        nudge = 0
+        for x_last, x_this in pairwise(x):
+            if np.isclose(x_last, x_this, rtol=EPS):
+                nudge += epsilon
+                new_x_this = x_last + nudge
+            else:
+                new_x_this = x_this
+                nudge = 0
+            new_x.append(new_x_this)
 
     return np.asarray(new_x), np.asarray(new_y)
 
@@ -99,8 +78,6 @@ def match_domains(
     x_set: list[np.ndarray],
     y_set: list[np.ndarray],
     epsilon: np.number = DEFAULT_EPSILON,
-    *,
-    fast_mode: bool = False,
 ):
     """
     Match the domains of multiple functions, each represented by 2 vectors.
@@ -120,7 +97,6 @@ def match_domains(
             x_set[v],
             y_set[v],
             epsilon,
-            fast_mode=fast_mode,
         )
 
     matched_x = np.concatenate(x_set)

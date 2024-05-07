@@ -14,7 +14,7 @@ def test_unique_domain(epsilon):
     x = np.array([1, 1, 2, 2, 3, 3])
     y = np.array([1, 2, 3, 4, 5, 6])
 
-    new_x, new_y = unique_domain(x, y, epsilon=epsilon, fast_mode=False)
+    new_x, new_y = unique_domain(x, y, epsilon=epsilon)
     slow_x = np.array([
         1,
         1 + epsilon,
@@ -24,18 +24,6 @@ def test_unique_domain(epsilon):
         3 + epsilon,
     ])
     assert np.array_equal(new_x, slow_x)
-    assert np.array_equal(new_y, y)
-
-    new_x, new_y = unique_domain(x, y, epsilon=epsilon, fast_mode=True)
-    fast_x = np.array([
-        1 + 0 * epsilon,
-        1 + 1 * epsilon,
-        2 + 2 * epsilon,
-        2 + 3 * epsilon,
-        3 + 4 * epsilon,
-        3 + 5 * epsilon,
-    ])
-    assert np.array_equal(new_x, fast_x)
     assert np.array_equal(new_y, y)
 
 
