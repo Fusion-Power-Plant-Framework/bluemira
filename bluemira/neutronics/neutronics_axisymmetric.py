@@ -11,6 +11,7 @@ Separated from slicing.py to prevent import errors
 from __future__ import annotations
 
 import json
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -148,7 +149,7 @@ class NeutronicsReactorParameterFrame(ParameterFrame):
     blk_ob_manifold: Parameter[float]
 
 
-class NeutronicsReactor:
+class NeutronicsReactor(ABC):
     """Pre csg cell reactor"""
 
     param_cls = NeutronicsReactorParameterFrame
@@ -227,13 +228,10 @@ class NeutronicsReactor:
         """Divertor pre cell"""
         return self._pre_cell_stage.divertor
 
-    @staticmethod
+    @abstractmethod
     def _get_wires_from_components(
+        self,
         divertor: ComponentManager,
         blanket: ComponentManager,
         vacuum_vessel: ComponentManager,
-    ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
-        panel_points, outer_boundary, divertor_wire, vacuum_vessel_wire = (
-            some_function_on_blanket_wire(divertor, blanket, vacuum_vessel)
-        )
-        return divertor_wire, panel_points, outer_boundary, vacuum_vessel_wire
+    ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]: ...

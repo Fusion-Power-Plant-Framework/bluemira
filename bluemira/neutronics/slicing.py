@@ -355,7 +355,7 @@ class PanelsAndExteriorCurve:
         Parameters
         ----------
         panel_break_points:
-            A series of 2D coordinate (of shape = (N+1, 2)) representing the N panels
+            A series of 2D coordinate (of shape = (N+1, 3)) representing the N panels
             of the blanket. It (also) runs clockwise (inboard side to outboard side),
             same as vv_interior
         vv_interior:
@@ -365,7 +365,7 @@ class PanelsAndExteriorCurve:
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior
         # shape = (N+1, 3)
-        self.interior_panels = np.insert(panel_break_points, 1, 0, axis=-1)
+        self.interior_panels = panel_break_points
         if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:  # noqa: PLR2004
             raise ValueError(
                 "Expected an input np.ndarray of breakpoints of shape = "

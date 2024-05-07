@@ -495,7 +495,7 @@ if __name__ == "__main__":
         },
         {
             "cross_section_xml": Path(
-                "/home/oliver/bluemira_openmc_data/cross_sections.xml"
+                "~/Documents/BLUEPRINT/cross_section_data/cross_section_data/cross_sections.xml"
             ).expanduser(),
             "particles": 16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
             "batches": 3,
@@ -508,10 +508,10 @@ if __name__ == "__main__":
             "plot_axis": "xz",
             "plot_pixel_per_metre": 100,
         },
-        blanket_panel_points=reactor.blanket.panel_points(),
-        divertor_internal_boundary=ivc_shapes.div_internal_boundary,
-        ivc_outer_boundary=ivc_shapes.outer_boundary,
-        vv_wire=reactor.vacuum_vessel.xz_boundary(),
+        blanket=reactor.blanket,
+        divertor=reactor.divertor,
+        vacuum_vessel=reactor.vacuum_vessel,
+        ivc_shapes=ivc_shapes,
     )
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
