@@ -9,10 +9,10 @@ Utility functions for the power cycle model.
 """
 
 import json
-from itertools import pairwise
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
@@ -39,6 +39,7 @@ def create_axes(ax=None):
     return ax
 
 
+@nb.jit
 def unique_domain(
     x: np.ndarray,
     y: np.ndarray,
@@ -62,7 +63,7 @@ def unique_domain(
     new_x = [x[0]]
     if n_points > 1:
         nudge = 0
-        for x_last, x_this in pairwise(x):
+        for x_last, x_this in zip(x[:-1], x[1:]):  # noqa: RUF007, B905
             if np.isclose(x_last, x_this, rtol=EPS):
                 nudge += epsilon
                 new_x_this = x_last + nudge
