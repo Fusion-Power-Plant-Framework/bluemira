@@ -67,8 +67,8 @@ def unique_domain(x: np.ndarray, epsilon: np.number = DEFAULT_EPSILON):
 
 
 def match_domains(
-    x_set: list[np.ndarray],
-    y_set: list[np.ndarray],
+    all_x: list[np.ndarray],
+    all_y: list[np.ndarray],
     epsilon: np.number = DEFAULT_EPSILON,
 ):
     """
@@ -76,25 +76,26 @@ def match_domains(
 
     First, for each pair of vectors (x,y) that define a function, the domain
     x is ensured to be unique with 'unique_domain' (otherwise, calling 'unique'
-    on 'matched_x' later can neglect step functions).
+    on 'x_matched' later can neglect step functions).
 
     Then, for each pair (x,y), values in every 'y' vector are interpolated,
     to ensure that all of them have one element associated to every element
     of the union of all distinct 'x' vectors. Values defined before and after
     the original domain 'x' of the image 'y' are set to zero.
     """
-    n_vectors = len(x_set)
+    n_vectors = len(all_x)
     for v in range(n_vectors):
-        x_set[v] = unique_domain(x_set[v], epsilon=epsilon)
+        all_x[v] = unique_domain(all_x[v], epsilon=epsilon)
 
-    matched_x = np.concatenate(x_set)
-    matched_x = np.unique(matched_x)
+    x_matched = np.concatenate(all_x)
+    x_matched = np.unique(x_matched)
+    all_y_matched = all_y.copy()
 
     for v in range(n_vectors):
-        x = x_set[v]
-        y = y_set[v]
+        x = all_x[v]
+        y = all_y[v]
 
-        y = np.interp(matched_x, x, y, left=0, right=0)
-        y_set[v] = y
+        y = np.interp(x_matched, x, y, left=0, right=0)
+        all_y_matched[v] = y
 
-    return matched_x, y_set
+    return x_matched, all_y_matched
