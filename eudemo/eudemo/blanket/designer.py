@@ -145,7 +145,14 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
 
         # to get the panel points, we must remove the gap points
         # introduced in the ib <-> ob slice
-        panel_points = self._remove_gap_and_merge(ib_panels.vertexes, ob_panels.vertexes)
+        ib_verts = ib_panels.vertexes.points
+        ob_verts = ob_panels.vertexes.points
+        ib_verts[0] = cut_ib.vertexes.points[cut_ib.vertexes.argmin(ib_verts[0])]
+        ob_verts[-1] = cut_ob.vertexes.points[cut_ob.vertexes.argmin(ob_verts[-1])]
+
+        panel_points = self._remove_gap_and_merge(
+            Coordinates(ib_verts), Coordinates(ob_verts)
+        )
 
         return cut_ib, cut_ob, panel_points
 
