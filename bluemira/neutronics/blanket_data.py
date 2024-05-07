@@ -246,37 +246,31 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     )
 
     # Making blanket
-    _PbLi_mat = make_PbLi_mat(li_enrich_ao)
     inb_bz_mat = HomogenisedMixture(
         name="inb_breeder_zone",
         material_id=102,
         materials=[
             MixtureFraction(lined_euro_mat, 0.0605 + 0.9395 * 0.05),
-            MixtureFraction(_PbLi_mat, 0.9395 * 0.95),
+            MixtureFraction(make_PbLi_mat(li_enrich_ao), 0.9395 * 0.95),
         ],
         percent_type="vo",
     )
 
-    inb_mani_mat = HomogenisedMixture(
-        name="inb_manifold",
-        material_id=103,
-        materials=[
-            MixtureFraction(eurofer_mat, 0.573),
-            MixtureFraction(inb_bz_mat, 0.426),
-        ],  # 1% void
-        percent_type="vo",
-    )
-
-    # Making divertor
-    divertor_mat = duplicate_mat_as(inb_vv_mat, "divertor", 301)
-    div_fw_mat = duplicate_mat_as(inb_fw_mat, "div_first_wall", 302)
     return ReactorBaseMaterials(
         inb_vv_mat=inb_vv_mat,
         inb_fw_mat=inb_fw_mat,
         inb_bz_mat=inb_bz_mat,
-        inb_mani_mat=inb_mani_mat,
-        divertor_mat=divertor_mat,
-        div_fw_mat=div_fw_mat,
+        inb_mani_mat=HomogenisedMixture(
+            name="inb_manifold",
+            material_id=103,
+            materials=[
+                MixtureFraction(eurofer_mat, 0.573),
+                MixtureFraction(inb_bz_mat, 0.426),
+            ],  # 1% void
+            percent_type="vo",
+        ),
+        divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
+        div_fw_mat=duplicate_mat_as(inb_fw_mat, "div_first_wall", 302),
     )
 
 
@@ -304,66 +298,56 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         percent_type="vo",
     )
 
-    # Making first wall
-    inb_fw_mat = HomogenisedMixture(
-        name="inb_first_wall",  # optional name of homogeneous material
-        material_id=101,
-        materials=[
-            MixtureFraction(tungsten_mat, 2.0 / 27.0),
-            MixtureFraction(eurofer_mat, 25.0 * 0.573 / 27.0),
-            MixtureFraction(he_cool_mat, 25.0 * 0.427 / 27.0),
-        ],
-        percent_type="vo",
-    )
-
     # Making blanket
     structural_fraction_vo = 0.128
     multiplier_fraction_vo = 0.493  # 0.647
     breeder_fraction_vo = 0.103  # 0.163
     helium_fraction_vo = 0.276  # 0.062
 
-    inb_bz_mat = HomogenisedMixture(
-        name="inb_breeder_zone",
-        material_id=102,
-        materials=[
-            MixtureFraction(eurofer_mat, structural_fraction_vo),
-            MixtureFraction(Be12Ti_mat, multiplier_fraction_vo),
-            MixtureFraction(make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
-            MixtureFraction(he_cool_mat, helium_fraction_vo),
-        ],
-        percent_type="vo",
-    )
-
-    inb_mani_mat = HomogenisedMixture(
-        name="inb_manifold",
-        material_id=103,
-        materials=[
-            MixtureFraction(eurofer_mat, 0.4724),
-            MixtureFraction(make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
-            MixtureFraction(he_cool_mat, 0.5035),
-        ],
-        percent_type="vo",
-    )
-
-    # Making divertor
-    divertor_mat = duplicate_mat_as(inb_vv_mat, "divertor", 301)
-    div_fw_mat = HomogenisedMixture(
-        name="div_first_wall",
-        material_id=302,
-        materials=[
-            MixtureFraction(tungsten_mat, 16.0 / 25.0),
-            MixtureFraction(water_mat, 4.5 / 25.0),
-            MixtureFraction(eurofer_mat, 4.5 / 25.0),
-        ],
-        percent_type="vo",
-    )
     return ReactorBaseMaterials(
         inb_vv_mat=inb_vv_mat,
-        inb_fw_mat=inb_fw_mat,
-        inb_bz_mat=inb_bz_mat,
-        inb_mani_mat=inb_mani_mat,
-        divertor_mat=divertor_mat,
-        div_fw_mat=div_fw_mat,
+        inb_fw_mat=HomogenisedMixture(
+            name="inb_first_wall",  # optional name of homogeneous material
+            material_id=101,
+            materials=[
+                MixtureFraction(tungsten_mat, 2.0 / 27.0),
+                MixtureFraction(eurofer_mat, 25.0 * 0.573 / 27.0),
+                MixtureFraction(he_cool_mat, 25.0 * 0.427 / 27.0),
+            ],
+            percent_type="vo",
+        ),
+        inb_bz_mat=HomogenisedMixture(
+            name="inb_breeder_zone",
+            material_id=102,
+            materials=[
+                MixtureFraction(eurofer_mat, structural_fraction_vo),
+                MixtureFraction(Be12Ti_mat, multiplier_fraction_vo),
+                MixtureFraction(make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
+                MixtureFraction(he_cool_mat, helium_fraction_vo),
+            ],
+            percent_type="vo",
+        ),
+        inb_mani_mat=HomogenisedMixture(
+            name="inb_manifold",
+            material_id=103,
+            materials=[
+                MixtureFraction(eurofer_mat, 0.4724),
+                MixtureFraction(make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
+                MixtureFraction(he_cool_mat, 0.5035),
+            ],
+            percent_type="vo",
+        ),
+        divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
+        div_fw_mat=HomogenisedMixture(
+            name="div_first_wall",
+            material_id=302,
+            materials=[
+                MixtureFraction(tungsten_mat, 16.0 / 25.0),
+                MixtureFraction(water_mat, 4.5 / 25.0),
+                MixtureFraction(eurofer_mat, 4.5 / 25.0),
+            ],
+            percent_type="vo",
+        ),
     )
 
 
@@ -381,22 +365,11 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion,
     WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
     """
-    _PbLi_mat = make_PbLi_mat(li_enrich_ao)
+    PbLi_mat = make_PbLi_mat(li_enrich_ao)
 
     # Divertor definition from Neutronic analyses of the preliminary
     #  design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     # Using Eurofer instead of SS316LN
-    inb_vv_mat = HomogenisedMixture(
-        name="inb_vacuum_vessel",
-        material_id=104,
-        materials=[
-            MixtureFraction(eurofer_mat, 0.6),
-            MixtureFraction(water_mat, 0.4),
-        ],
-        percent_type="vo",
-    )
-
-    # Making first wall
     inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",
         material_id=101,
@@ -408,40 +381,40 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         percent_type="vo",
     )
 
-    # Making blanket
-    inb_bz_mat = HomogenisedMixture(
-        name="inb_breeder_zone",
-        material_id=102,
-        materials=[
-            MixtureFraction(tungsten_mat, 0.0004),
-            MixtureFraction(_PbLi_mat, 0.8238),
-            MixtureFraction(water_mat, 0.0176),
-            MixtureFraction(eurofer_mat, 0.1582),
-        ],
-        percent_type="vo",
-    )
-
-    inb_mani_mat = HomogenisedMixture(
-        name="inb_manifold",
-        material_id=103,
-        materials=[
-            MixtureFraction(_PbLi_mat, 0.2129),
-            MixtureFraction(water_mat, 0.2514),
-            MixtureFraction(eurofer_mat, 0.5357),
-        ],
-        percent_type="vo",
-    )
-
-    # Making divertor
-    divertor_mat = duplicate_mat_as(eurofer_mat, "divertor", 301)
-    div_fw_mat = duplicate_mat_as(inb_fw_mat, "div_first_wall", 302)
     return ReactorBaseMaterials(
-        inb_vv_mat=inb_vv_mat,
+        inb_vv_mat=HomogenisedMixture(
+            name="inb_vacuum_vessel",
+            material_id=104,
+            materials=[
+                MixtureFraction(eurofer_mat, 0.6),
+                MixtureFraction(water_mat, 0.4),
+            ],
+            percent_type="vo",
+        ),
         inb_fw_mat=inb_fw_mat,
-        inb_bz_mat=inb_bz_mat,
-        inb_mani_mat=inb_mani_mat,
-        divertor_mat=divertor_mat,
-        div_fw_mat=div_fw_mat,
+        inb_bz_mat=HomogenisedMixture(
+            name="inb_breeder_zone",
+            material_id=102,
+            materials=[
+                MixtureFraction(tungsten_mat, 0.0004),
+                MixtureFraction(PbLi_mat, 0.8238),
+                MixtureFraction(water_mat, 0.0176),
+                MixtureFraction(eurofer_mat, 0.1582),
+            ],
+            percent_type="vo",
+        ),
+        inb_mani_mat=HomogenisedMixture(
+            name="inb_manifold",
+            material_id=103,
+            materials=[
+                MixtureFraction(PbLi_mat, 0.2129),
+                MixtureFraction(water_mat, 0.2514),
+                MixtureFraction(eurofer_mat, 0.5357),
+            ],
+            percent_type="vo",
+        ),
+        divertor_mat=duplicate_mat_as(eurofer_mat, "divertor", 301),
+        div_fw_mat=duplicate_mat_as(inb_fw_mat, "div_first_wall", 302),
     )
 
 
