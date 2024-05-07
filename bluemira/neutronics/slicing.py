@@ -273,7 +273,7 @@ def break_wire_into_convex_chunks(
     """
     wire_segments = list(check_and_breakdown_wire(wire))
     convex_chunks = []
-    # initializing the first chunk
+    # initialising the first chunk
     this_chunk = []
     chunk_start_tangent = wire_segments[0].tangents[0]
 
@@ -444,9 +444,9 @@ class PanelsAndExteriorCurve:
 
         def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
             """
-            Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
-            these points will eventually be used to cut up self.vv_interior and
-            self.vv_exterior.
+            Find where the cutting_plane intersect the self.vv_interior and
+            self.vv_exterior; these points will eventually be used to cut up
+            self.vv_interior and self.vv_exterior.
 
             N.B. These cut points must be sequentially added, i.e. they should
             follow the curves in the clockwise direction.
@@ -735,15 +735,15 @@ class DivertorWireAndExteriorCurve:
 
         def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
             """
-            Find where the cutting_plane intersect the self.vv_interior and self.vv_exterior;
-            these points will eventually be used to cut up self.vv_interior and
-            self.vv_exterior.
+            Find where the cutting_plane intersect the self.vv_interior and
+            self.vv_exterior; these points will eventually be used to cut up
+            self.vv_interior and self.vv_exterior.
 
             N.B. These cut points must be sequentially added, i.e. they should
             follow the curves in the clockwise direction.
 
-            While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`, this can't be
-            refactored away because they're specific to the class.
+            While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`,
+            this can't be refactored away because they're specific to the class.
             """
             self.vv_cut_points.append(
                 get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)

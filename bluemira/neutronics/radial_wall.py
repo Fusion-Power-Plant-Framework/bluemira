@@ -85,12 +85,12 @@ def partial_diff_of_volume(
 
     Parameters
     ----------
-    three_vertices: NDArray with shape (3, 2)
+    three_vertices:
         Contain (x, z) coordinates of the polygon. It extracts only the vertex being
         moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
-        are anchor vertices that cannot be adjusted.
-    normalised_direction_vector: NDArray with shape (2,)
-        Direction that the point is allowed to move in.
+        are anchor vertices that cannot be adjusted. shape (3, 2)
+    normalised_direction_vector:
+        Direction that the point is allowed to move in. shape = (2,)
 
     Notes
     -----
@@ -288,14 +288,20 @@ class CellWalls:
         -------
         volume: float
         """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
+        start_i, dir_i = self.starts[i], self.directions[i]
+        new_end = start_i + dir_i * test_length
         prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
-        prev_outline = [prev_wall[0], prev_wall[1], new_end, _start_i]
-        next_outline = [_start_i, new_end, next_wall[1], next_wall[0]]
-        return polygon_revolve_signed_volume(
-            prev_outline
-        ) + polygon_revolve_signed_volume(next_outline)
+        return polygon_revolve_signed_volume([
+            prev_wall[0],
+            prev_wall[1],
+            new_end,
+            start_i,
+        ]) + polygon_revolve_signed_volume([
+            start_i,
+            new_end,
+            next_wall[1],
+            next_wall[0],
+        ])
 
     def volume_derivative_of_cells_neighbouring(self, i, test_length):
         """
@@ -306,14 +312,12 @@ class CellWalls:
         -------
         dV/dl: float
         """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
+        start_i, dir_i = self.starts[i], self.directions[i]
+        new_end = start_i + dir_i * test_length
         prev_end, next_end = self.ends[i - 1 : i + 2 : 2]
-        prev_curve = [prev_end, new_end, _start_i]
-        next_curve = [_start_i, new_end, next_end]
-        return partial_diff_of_volume(prev_curve, _dir_i) + partial_diff_of_volume(
-            next_curve, _dir_i
-        )
+        return partial_diff_of_volume(
+            [prev_end, new_end, start_i], dir_i
+        ) + partial_diff_of_volume([start_i, new_end, next_end], dir_i)
 
     def optimise_to_match_individual_volumes(
         self, volume_list: Iterable[float], *, max_iter=1000

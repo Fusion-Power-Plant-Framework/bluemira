@@ -667,10 +667,6 @@ class DivertorPreCellArray:
                 atol=0,
                 rtol=EPS_FREECAD,
             ):
-                # # Don't need this check below, thus commented out.
-                # and np.allclose(prev_cell.vertex.interior_end,
-                #                 curr_cell.vertex.interior_start,
-                #                 atol=0, rtol=EPS_FREECAD)
                 raise GeometryError("Expect neighbouring cells to share corners!")
 
     def exterior_vertices(self) -> npt.NDArray:

@@ -10,7 +10,6 @@ Separated from slicing.py to prevent import errors
 
 from __future__ import annotations
 
-import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -18,8 +17,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.geometry.coordinates import vector_intersect
-from bluemira.geometry.tools import deserialise_shape
 from bluemira.neutronics.params import TokamakDimensions
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
@@ -92,44 +89,6 @@ class PreCellStage:
         z_max = all_ext_vertices[:, -1].max()
         r_max = max(abs(all_ext_vertices[:, 0]))
         return z_max, z_min, r_max, -r_max
-
-
-def some_function_on_blanket_wire(*_args):
-    """DELETE ME"""
-    # Loading data
-    with open("data/inner_boundary") as j:
-        deserialise_shape(json.load(j))
-    with open("data/outer_boundary") as j:
-        outer_boundary = deserialise_shape(json.load(j))
-        # TODO: need to add method of scaling BluemiraWire (issue #3038 /
-        # TODO: raise new issue about needing method to scale BluemiraWire)
-    with open("data/divertor_face.correct.json") as j:
-        divertor_bmwire = deserialise_shape(json.load(j))
-    with open("data/vv_bndry_outer.json") as j:
-        vacuum_vessel_bmwire = deserialise_shape(json.load(j))
-
-    fw_panel_bp_list = [
-        np.load("data/fw_panels_10_0.1.npy"),
-        np.load("data/fw_panels_25_0.1.npy"),
-        np.load("data/fw_panels_25_0.3.npy"),
-        np.load("data/fw_panels_50_0.3.npy"),
-        np.load("data/fw_panels_50_0.5.npy"),
-    ]
-    panel_breakpoint_t = fw_panel_bp_list[0].T
-    # MANUAL FIX of the coordinates, because the data we're given is not perfect.
-    panel_breakpoint_t[0] = vector_intersect(
-        panel_breakpoint_t[0],
-        panel_breakpoint_t[1],
-        divertor_bmwire.edges[0].start_point()[::2].flatten(),
-        divertor_bmwire.edges[0].end_point()[::2].flatten(),
-    )
-    panel_breakpoint_t[-1] = vector_intersect(
-        panel_breakpoint_t[-2],
-        panel_breakpoint_t[-1],
-        divertor_bmwire.edges[-1].start_point()[::2].flatten(),
-        divertor_bmwire.edges[-1].end_point()[::2].flatten(),
-    )
-    return panel_breakpoint_t, outer_boundary, divertor_bmwire, vacuum_vessel_bmwire
 
 
 @dataclass

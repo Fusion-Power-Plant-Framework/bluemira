@@ -801,19 +801,13 @@ class BluemiraNeutronicsCSG:
         point1, point2 = to_cm((point1, point2))
         dr, dz = point2 - point1
         if np.isclose(dr, 0, rtol=0, atol=DTOL_CM):
-            _r = point1[0]
             if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
                 return None
-                # raise GeometryError(
-                #     "The two points provided aren't distinct enough to "
-                #     "uniquely identify a surface!"
-                # )
-            return openmc.ZCylinder(r=_r, surface_id=surface_id, name=name)
+            return openmc.ZCylinder(r=point1[0], surface_id=surface_id, name=name)
         if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
-            _z = point1[-1]
-            z_plane = openmc.ZPlane(z0=_z, surface_id=surface_id, name=name)
-            self.hangar[_z] = z_plane
-            return self.hangar[_z]
+            z = point1[-1]
+            self.hangar[z] = openmc.ZPlane(z0=z, surface_id=surface_id, name=name)
+            return self.hangar[z]
         slope = dz / dr
         z_intercept = -slope * point1[0] + point1[-1]
         return openmc.ZCone(
@@ -1045,7 +1039,6 @@ class BluemiraNeutronicsCSG:
         -------
             An openmc.Region built from surface provided and includes all of these
         """
-        # switch case: blue
         if isinstance(surface, openmc.ZPlane | openmc.ZCylinder):
             return choose_plane_cylinders(surface, vertices_array)
 
@@ -1085,7 +1078,8 @@ class BluemiraNeutronicsCSG:
         series_of_surfaces
             Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
             surface. For the last 3 options, see
-            :func:`~bluemira.neutronics.make_csg.choose_region` for more.
+            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region`
+            for more.
 
         vertices_array
             array of shape (?, 3), where every single point should be included by, or at
@@ -1536,11 +1530,10 @@ class BlanketCellArray:
         exterior_vertices:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
-        exterior_vertices = [self.blanket_cell_array[0][-1].vertex.xyz[:, 3]]
-        exterior_vertices.extend(
-            stack[-1].vertex.xyz[:, 0] for stack in self.blanket_cell_array
-        )
-        return np.array(exterior_vertices)
+        return np.asarray([
+            self.blanket_cell_array[0][-1].vertex.xyz[:, 3],
+            *(stack[-1].vertex.xyz[:, 0] for stack in self.blanket_cell_array),
+        ])
 
     def interior_vertices(self) -> npt.NDArray:
         """
