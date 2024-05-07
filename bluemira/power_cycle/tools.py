@@ -13,11 +13,12 @@ from itertools import pairwise
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+
+DEFAULT_EPSILON = 1e-10
 
 
 def read_json(file_path) -> dict[str, Any]:
@@ -39,11 +40,11 @@ def create_axes(ax=None):
     return ax
 
 
-@nb.jit
+# @nb.jit
 def unique_domain(
-    x: np.NDArray,
-    y: np.NDArray,
-    epsilon: np.number = 1e-10,
+    x: np.ndarray,
+    y: np.ndarray,
+    epsilon: np.number = DEFAULT_EPSILON,
     *,
     fast_mode: bool = False,
 ):
@@ -85,10 +86,11 @@ def unique_domain(
             for x_last, x_this in pairwise(x):
                 if np.isclose(x_last, x_this, rtol=EPS):
                     nudge += epsilon
-                    nudged_x_this = x_last + nudge
+                    new_x_this = x_last + nudge
                 else:
+                    new_x_this = x_this
                     nudge = 0
-                new_x.append(nudged_x_this)
+                new_x.append(new_x_this)
 
     return np.asarray(new_x), np.asarray(new_y)
 
@@ -96,8 +98,9 @@ def unique_domain(
 def match_domains(
     x_set: list[np.ndarray],
     y_set: list[np.ndarray],
-    epslon=1e-10,
-    mode="careful",
+    epsilon: np.number = DEFAULT_EPSILON,
+    *,
+    fast_mode: bool = False,
 ):
     """
     Match the domains of multiple functions, each represented by 2 vectors.
@@ -113,7 +116,12 @@ def match_domains(
     """
     n_vectors = len(x_set)
     for v in range(n_vectors):
-        x_set[v], y_set[v] = unique_domain(x_set[v], y_set[v], epslon, mode)
+        x_set[v], y_set[v] = unique_domain(
+            x_set[v],
+            y_set[v],
+            epsilon,
+            fast_mode=fast_mode,
+        )
 
     matched_x = np.concatenate(x_set)
     matched_x = np.unique(matched_x)

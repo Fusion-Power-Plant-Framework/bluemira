@@ -9,37 +9,34 @@ import pytest
 from bluemira.power_cycle.tools import match_domains, unique_domain
 
 
-@pytest.mark.parametrize("epslon", [1e-10, 1e-7, 1e-5])
-def test_unique_domain(epslon):
+@pytest.mark.parametrize("epsilon", [1e-10, 1e-7, 1e-5])
+def test_unique_domain(epsilon):
     x = np.array([1, 1, 2, 2, 3, 3])
     y = np.array([1, 2, 3, 4, 5, 6])
 
-    new_x, new_y = unique_domain(x, y, epslon=epslon, mode="careful")
+    new_x, new_y = unique_domain(x, y, epsilon=epsilon, fast_mode=False)
     slow_x = np.array([
         1,
-        1 + epslon,
+        1 + epsilon,
         2,
-        2 + epslon,
+        2 + epsilon,
         3,
-        3 + epslon,
+        3 + epsilon,
     ])
     assert np.array_equal(new_x, slow_x)
     assert np.array_equal(new_y, y)
 
-    new_x, new_y = unique_domain(x, y, epslon=epslon, mode="fast")
+    new_x, new_y = unique_domain(x, y, epsilon=epsilon, fast_mode=True)
     fast_x = np.array([
-        1 + 0 * epslon,
-        1 + 1 * epslon,
-        2 + 2 * epslon,
-        2 + 3 * epslon,
-        3 + 4 * epslon,
-        3 + 5 * epslon,
+        1 + 0 * epsilon,
+        1 + 1 * epsilon,
+        2 + 2 * epsilon,
+        2 + 3 * epsilon,
+        3 + 4 * epsilon,
+        3 + 5 * epsilon,
     ])
     assert np.array_equal(new_x, fast_x)
     assert np.array_equal(new_y, y)
-
-    with pytest.raises(ValueError, match="Invalid argument"):
-        unique_domain(x, y, mode="invalid_mode")
 
 
 def test_match_domains():
