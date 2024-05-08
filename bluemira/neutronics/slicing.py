@@ -427,7 +427,7 @@ class PanelsAndExteriorCurve:
         exterior_cut_points:
             cut points where the vacuum vessel exterior wire is split
         """
-        self.vv_cut_points, self.exterior_cut_points = [], []
+        vv_cut_points, exterior_cut_points = [], []
 
         def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
             """
@@ -438,10 +438,10 @@ class PanelsAndExteriorCurve:
             N.B. These cut points must be sequentially added, i.e. they should
             follow the curves in the clockwise direction.
             """
-            self.vv_cut_points.append(
+            vv_cut_points.append(
                 get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
             )
-            self.exterior_cut_points.append(
+            exterior_cut_points.append(
                 get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
             )
 
@@ -472,7 +472,7 @@ class PanelsAndExteriorCurve:
             )
         )
 
-        return self.vv_cut_points, self.exterior_cut_points
+        return vv_cut_points, exterior_cut_points
 
     def execute_curve_cut(
         self,
@@ -679,9 +679,9 @@ class DivertorWireAndExteriorCurve:
         origin_2d, direction_2d = get_bisection_line(
             anchor1 - direct1, anchor1, anchor2 - direct2, anchor2
         )
-        line_origin = np.insert(origin_2d, 1, 0, axis=-1)
-        line_direction = np.insert(direction_2d, 1, 0, axis=-1)
-        return line_origin, line_direction
+        return np.insert(origin_2d, 1, 0, axis=-1), np.insert(
+            direction_2d, 1, 0, axis=-1
+        )
 
     def calculate_cut_points(
         self,
@@ -718,7 +718,7 @@ class DivertorWireAndExteriorCurve:
         self.exterior_cut_points
             cut points where the vacuum vessel exterior wire is split
         """
-        self.vv_cut_points, self.exterior_cut_points = [], []
+        vv_cut_points, exterior_cut_points = [], []
 
         def add_cut_points(cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
             """
@@ -732,10 +732,10 @@ class DivertorWireAndExteriorCurve:
             While identical to :meth:`~PanelsAndExteriorCurve.add_cut_points`,
             this can't be refactored away because they're specific to the class.
             """
-            self.vv_cut_points.append(
+            vv_cut_points.append(
                 get_wire_plane_intersect(self.vv_interior, cutting_plane, cut_direction)
             )
-            self.exterior_cut_points.append(
+            exterior_cut_points.append(
                 get_wire_plane_intersect(self.vv_exterior, cutting_plane, cut_direction)
             )
 
@@ -760,7 +760,7 @@ class DivertorWireAndExteriorCurve:
             )
         )
 
-        return self.vv_cut_points, self.exterior_cut_points
+        return vv_cut_points, exterior_cut_points
 
     def execute_curve_cut(
         self,
