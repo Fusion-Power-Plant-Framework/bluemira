@@ -560,9 +560,10 @@ def blanket_and_divertor_outer_region(
 
 def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
     """Get the plasma chamber's poloidal cross-section"""
+    blanket_exterior_pts = blanket.exterior_vertices()
     blanket_interior_pts = blanket.interior_vertices()
     dividing_surface = csg.surface_from_2points(
-        blanket_interior_pts[0][::2], blanket_interior_pts[-1][::2]
+        blanket_exterior_pts[0][::2], blanket_exterior_pts[-1][::2]
     )
     plasma = csg.region_from_surface_series(
         [*blanket.interior_surfaces(), dividing_surface],
@@ -1523,8 +1524,8 @@ class BlanketCellArray:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.asarray([
-            self.blanket_cell_array[0][-1].vertex.xyz[:, 3],
-            *(stack[-1].vertex.xyz[:, 0] for stack in self.blanket_cell_array),
+            self.blanket_cell_array[0][-1].vertex.points[3],
+            *(stack[-1].vertex.points[0] for stack in self.blanket_cell_array),
         ])
 
     def interior_vertices(self) -> npt.NDArray:
@@ -1538,8 +1539,8 @@ class BlanketCellArray:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.asarray([
-            self.blanket_cell_array[0][0].vertex.xyz[:, 2],
-            *(stack[0].vertex.xyz[:, 1] for stack in self.blanket_cell_array),
+            self.blanket_cell_array[0][0].vertex.points[2],
+            *(stack[0].vertex.points[1] for stack in self.blanket_cell_array),
         ])
 
     def interior_surfaces(self) -> list[openmc.Surface]:

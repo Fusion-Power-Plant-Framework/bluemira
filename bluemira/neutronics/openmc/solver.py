@@ -200,6 +200,7 @@ class Setup(CodesSetup):
                 int(plot_width_1 * runtime_params.plot_pixel_per_metre),
             ]
             plot.width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
+            plot.show_overlaps = True
 
             plot_pth = Path(self.out_path, run_mode.name.lower(), "plots.xml")
             openmc.Plots([plot]).export_to_xml(plot_pth)
