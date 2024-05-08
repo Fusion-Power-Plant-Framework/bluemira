@@ -239,7 +239,12 @@ class Run(CodesTask):
         folder = run_mode.name.lower()
         cwd = Path(self.out_path, folder)
         cwd.mkdir(parents=True, exist_ok=True)
-        _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
+        _timing(
+            openmc.run,
+            "Executed in",
+            f"Running OpenMC in {folder} mode",
+            debug_info_str=False,
+        )(
             output=debug,
             threads=None,
             geometry_debug=False,

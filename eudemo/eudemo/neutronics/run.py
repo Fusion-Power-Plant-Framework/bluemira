@@ -72,7 +72,7 @@ def run_neutronics(
         "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
         "outboard_fw_tk": {"value": tokamak_geometry.outb_fw_thick, "unit": "m"},
         "outboard_breeding_tk": {"value": tokamak_geometry.outb_bz_thick, "unit": "m"},
-        "blanket_io_cut": {"value": params["major_radius"]["value"], "unit": "m"},
+        "blanket_io_cut": {"value": params.global_params.R_0.value, "unit": "m"},
         "tf_inner_radius": {"value": 2, "unit": "m"},
         "tf_outer_radius": {"value": 4, "unit": "m"},
         "divertor_surface_tk": {"value": 0.1, "unit": "m"},

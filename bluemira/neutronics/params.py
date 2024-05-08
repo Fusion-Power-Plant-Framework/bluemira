@@ -47,14 +47,20 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         shifted compared to the geometric center of the poloidal cross-section.
     """
 
-    major_radius: Parameter[float]  # [m]
-    aspect_ratio: Parameter[float]  # [dimensionless]
-    elongation: Parameter[float]  # [dimensionless]
-    triangularity: Parameter[float]  # [dimensionless]
+    R_0: Parameter[float]
+    """Major Radius"""
+    A: Parameter[float]
+    """Aspect ratio"""
+    kappa: Parameter[float]
+    """Plasma elongation"""
+    delta: Parameter[float]
+    """Plasma triangularity"""
     reactor_power: Parameter[float]  # [W]
     peaking_factor: Parameter[float]  # [dimensionless]
-    temperature: Parameter[float]  # [K]
-    shaf_shift: Parameter[float]  # [m]
+    T_e: Parameter[float]
+    """Average plasma electron temperature [J]"""
+    shaf_shift: Parameter[float]
+    """Shafranov shift"""
     vertical_shift: Parameter[float]  # [m]
 
 
@@ -135,16 +141,23 @@ class PlasmaSourceParameters:
         conversion = {
             "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
-            "temperature": ("K", "keV"),
+            "temperature": ("J", "keV"),
             "shaf_shift": ("m", "cm"),
             "vertical_shift": ("m", "cm"),
+        }
+        mapping = {
+            "aspect_ratio": "A",
+            "major_radius": "R_0",
+            "elongation": "kappa",
+            "triangularity": "delta",
+            "temperature": "T_e",
         }
         param_convert_dict = {}
         param_dict = {}
         for k in fields(cls):
             if k.name == "plasma_physics_units":
                 continue
-            val = getattr(params, k.name).value
+            val = getattr(params, mapping.get(k.name, k.name)).value
             param_dict[k.name] = val
             if k.name in conversion:
                 param_convert_dict[k.name] = raw_uc(val, *conversion[k.name])

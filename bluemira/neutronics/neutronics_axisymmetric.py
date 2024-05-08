@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.neutronics.params import TokamakDimensions
@@ -126,6 +127,7 @@ class NeutronicsReactor(ABC):
         blanket_discretisation: int = 10,
         divertor_discretisation: int = 5,
     ):
+        bluemira_print("Creating axis-symmetric neutronics model")
         self.tokamak_dimensions = TokamakDimensions.from_parameterframe(
             make_parameter_frame(params, self.param_cls)
         )

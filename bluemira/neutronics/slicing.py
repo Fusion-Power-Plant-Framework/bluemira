@@ -296,17 +296,20 @@ def break_wire_into_convex_chunks(
             this_chunk[-1].tangents[1], w_s.tangents[0], TOLERANCE_DEGREES
         ):
             continue
-        if turned_morethan_180(chunk_start_tangent, next_start_tangent, curvature_sign):
+        interior_curve_turned_over_180 = turned_morethan_180(
+            chunk_start_tangent, next_start_tangent, curvature_sign
+        )
+        if turned_morethan_180(prev_end_tangent, next_start_tangent, curvature_sign):
+            convex_chunks.append(WireInfoList(this_chunk.copy()))
+            this_chunk.clear()
+            chunk_start_tangent = w_s.tangents[0]
+        elif interior_curve_turned_over_180:
             # curled in on itself too much.
             bluemira_warn(
                 "Divertor wire geometry possibly too extreme for program "
                 "to handle. Check pre-cell visually by using the .plot_2d() methods "
                 "on the relevant DivertorPreCell and DivertorPreCellArray."
             )
-        if turned_morethan_180(prev_end_tangent, next_start_tangent, curvature_sign):
-            convex_chunks.append(WireInfoList(this_chunk.copy()))
-            this_chunk.clear()
-            chunk_start_tangent = w_s.tangents[0]
 
     add_to_chunk(wire_segments[-1])
     convex_chunks.append(WireInfoList(this_chunk.copy()))

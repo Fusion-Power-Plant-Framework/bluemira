@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import Component
-from bluemira.base.constants import raw_uc
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter_frame import ParameterFrame
@@ -481,33 +480,9 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    run_neutronics(
-        {
-            "major_radius": {"value": 8.938, "unit": "m"},
-            "aspect_ratio": {"value": 8.938 / 2.8938, "unit": "m"},
-            "elongation": {"value": 1.65, "unit": ""},
-            "triangularity": {"value": 0.333, "unit": ""},
-            "reactor_power": {"value": 1998, "unit": "MW"},
-            "peaking_factor": {"value": 1.508, "unit": ""},
-            "temperature": {"value": raw_uc(15.4, "keV", "K"), "unit": "K"},
-            "shaf_shift": {"value": 0, "unit": "m"},
-            "vertical_shift": {"value": 0, "unit": "m"},
-        },
-        {
-            "cross_section_xml": Path(
-                "~/Documents/BLUEPRINT/cross_section_data/cross_section_data/cross_sections.xml"
-            ).expanduser(),
-            "particles": 16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
-            "batches": 3,
-            "photon_transport": True,
-            "electron_treatment": "ttb",
-            "run_mode": "run_and_plot",
-            "openmc_write_summary": False,
-            "parametric_source": True,
-            "blanket_type": "HCPB",
-            "plot_axis": "xz",
-            "plot_pixel_per_metre": 100,
-        },
+    neutronics_output = run_neutronics(
+        reactor_config.params_for("Neutronics"),
+        reactor_config.config_for("Neutronics"),
         blanket=reactor.blanket,
         divertor=reactor.divertor,
         vacuum_vessel=reactor.vacuum_vessel,
