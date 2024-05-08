@@ -210,7 +210,7 @@ def build_blanket(
     )
     ib_silhouette, ob_silhouette, panel_points = designer.execute()
     builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
-    return Blanket(builder.build(), panel_points)
+    return Blanket(builder.build(), panel_points, r_inner_cut)
 
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:

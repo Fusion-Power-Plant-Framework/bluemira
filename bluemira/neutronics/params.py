@@ -261,10 +261,7 @@ class TokamakDimensions:
     central_solenoid: ToroidalFieldCoilDimension
 
     @classmethod
-    def from_parameterframe(
-        cls,
-        params,
-    ):
+    def from_parameterframe(cls, params, r_inner_cut: float):
         """Setup tokamak dimensions"""
         return cls(
             BlanketThickness(
@@ -273,7 +270,7 @@ class TokamakDimensions:
                 params.inboard_breeding_tk.value,
                 params.blk_ib_manifold.value,
             ),
-            params.blanket_io_cut.value,
+            r_inner_cut,
             BlanketThickness(
                 params.blanket_surface_tk.value,
                 params.outboard_fw_tk.value,

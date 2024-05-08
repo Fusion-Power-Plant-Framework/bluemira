@@ -19,7 +19,6 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.neutronics.params import TokamakDimensions
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
     from bluemira.neutronics.materials import NeutronicsMaterials
+    from bluemira.neutronics.params import TokamakDimensions
 
 
 @dataclass
@@ -101,7 +101,6 @@ class NeutronicsReactorParameterFrame(ParameterFrame):
     inboard_breeding_tk: Parameter[float]
     outboard_fw_tk: Parameter[float]
     outboard_breeding_tk: Parameter[float]
-    blanket_io_cut: Parameter[float]
     tf_inner_radius: Parameter[float]
     tf_outer_radius: Parameter[float]
     divertor_surface_tk: Parameter[float]
@@ -128,14 +127,16 @@ class NeutronicsReactor(ABC):
         divertor_discretisation: int = 5,
     ):
         bluemira_print("Creating axis-symmetric neutronics model")
-        self.tokamak_dimensions = TokamakDimensions.from_parameterframe(
-            make_parameter_frame(params, self.param_cls)
-        )
-        self.material_library = materials_library
 
-        divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire = (
-            self._get_wires_from_components(divertor, blanket, vacuum_vessel)
-        )
+        self.params = make_parameter_frame(params, self.param_cls)
+        self.material_library = materials_library
+        (
+            self.tokamak_dimensions,
+            divertor_wire,
+            panel_points,
+            blanket_wire,
+            vacuum_vessel_wire,
+        ) = self._get_wires_from_components(divertor, blanket, vacuum_vessel)
 
         self.geom = ReactorGeometry(
             divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire
@@ -202,4 +203,6 @@ class NeutronicsReactor(ABC):
         divertor: ComponentManager,
         blanket: ComponentManager,
         vacuum_vessel: ComponentManager,
-    ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]: ...
+    ) -> tuple[
+        TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire
+    ]: ...

@@ -21,6 +21,7 @@ from bluemira.neutronics.openmc.solver import (
     OpenMCNeutronicsSolver,
 )
 from bluemira.neutronics.openmc.sources import make_pps_source
+from bluemira.neutronics.params import TokamakDimensions
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,13 +39,16 @@ if TYPE_CHECKING:
 
 
 class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
+    """EUDEMO Axis-symmetric neutronics model"""
+
     def _get_wires_from_components(
         self,
         ivc_shapes: IVCShapes,
         blanket: Blanket,
         vacuum_vessel: VacuumVessel,
-    ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
+    ) -> tuple[TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
         return (
+            TokamakDimensions.from_parameterframe(self.params, blanket.r_inner_cut),
             ivc_shapes.div_internal_boundary,
             blanket.panel_points().T,
             ivc_shapes.outer_boundary,
@@ -72,7 +76,6 @@ def run_neutronics(
         "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
         "outboard_fw_tk": {"value": tokamak_geometry.outb_fw_thick, "unit": "m"},
         "outboard_breeding_tk": {"value": tokamak_geometry.outb_bz_thick, "unit": "m"},
-        "blanket_io_cut": {"value": params.global_params.R_0.value, "unit": "m"},
         "tf_inner_radius": {"value": 2, "unit": "m"},
         "tf_outer_radius": {"value": 4, "unit": "m"},
         "divertor_surface_tk": {"value": 0.1, "unit": "m"},
