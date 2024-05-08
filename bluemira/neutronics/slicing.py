@@ -837,11 +837,7 @@ class DivertorWireAndExteriorCurve:
         This implementation shall be updated/replaced when issue #3038 gets resolved.
         """
         return WireInfoList(
-            list(
-                starmap(
-                    WireInfo.from_2P, pairwise([curve.value_at(t) for t in param_range])
-                )
-            )
+            starmap(WireInfo.from_2P, pairwise([curve.value_at(t) for t in param_range]))
         )
 
     def make_divertor_pre_cell_array(

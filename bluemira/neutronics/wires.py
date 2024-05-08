@@ -90,7 +90,7 @@ class WireInfo:
 class WireInfoList:
     """A class to store info about a series of wires"""
 
-    def __init__(self, info_list: list[WireInfo]):
+    def __init__(self, info_list: Iterable[WireInfo]):
         self.info_list = list(info_list)
         for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
