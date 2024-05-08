@@ -52,10 +52,10 @@ if TYPE_CHECKING:
 class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""
 
-    RUN = "fixed source"
+    RUN = openmc.settings.RunMode.FIXED_SOURCE.value
     RUN_AND_PLOT = auto()
-    PLOT = "plot"
-    VOLUME = "volume"
+    PLOT = openmc.settings.RunMode.PLOT.value
+    VOLUME = openmc.settings.RunMode.VOLUME.value
 
 
 OPENMC_NAME = "OpenMC"
@@ -96,7 +96,7 @@ class OpenMCSimulationRuntimeParameters:
     photon_transport: bool = True
     # Bremsstrahlung only matters for very thin objects
     electron_treatment: Literal["ttb", "led"] = "led"
-    run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
+    run_mode: str = OpenMCRunModes.RUN.value
     openmc_write_summary: bool = False
     parametric_source: bool = True
     plot_axis: str = "xz"

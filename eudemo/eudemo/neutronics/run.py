@@ -88,10 +88,7 @@ def run_neutronics(
     )
 
     obj = OpenMCNeutronicsSolver(
-        params,
-        build_config,
-        neutronics_csg,
-        source=source or make_pps_source,
+        params, build_config, neutronics_csg, source=source or make_pps_source
     )
 
     return obj.execute()
