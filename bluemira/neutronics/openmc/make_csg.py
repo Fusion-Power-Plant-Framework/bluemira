@@ -1694,7 +1694,11 @@ class DivertorCell(openmc.Cell):
         ])
 
     def exclusion_zone(
-        self, *, away_from_plasma: bool = True, control_id: bool = False
+        self,
+        *,
+        away_from_plasma: bool = True,
+        control_id: bool = False,
+        additional_test_points: npt.NDArray | None = None,
     ) -> openmc.Region:
         """
         Get the exclusion zone of a semi-CONVEX cell.
@@ -1714,13 +1718,22 @@ class DivertorCell(openmc.Cell):
             Passed as argument onto
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
-        _surfaces = [self.cw_surface, self.ccw_surface]
         if away_from_plasma:
-            _surfaces.extend(self.interior_surfaces)
-        else:
-            _surfaces.extend(self.exterior_surfaces)
+            vertices_array = self.interior_wire.get_3D_coordinates()
+            if additional_test_points is not None:
+                vertices_array = np.concatenate([additional_test_points, vertices_array])
+            return self.csg.region_from_surface_series(
+                [self.cw_surface, self.ccw_surface, *self.interior_surfaces],
+                vertices_array,
+                control_id=control_id,
+            )
+        vertices_array = self.exterior_wire.get_3D_coordinates()
+        if additional_test_points is not None:
+            vertices_array = np.concatenate([additional_test_points, vertices_array])
         return self.csg.region_from_surface_series(
-            _surfaces, self.get_all_vertices(), control_id=control_id
+            [self.cw_surface, self.ccw_surface, *self.exterior_surfaces],
+            vertices_array,
+            control_id=control_id,
         )
 
 
@@ -1860,14 +1873,15 @@ class DivertorCellStack:
         outermost_surf = csg.surfaces_from_info_list(outermost_wire)
         outer_wire = divertor_pre_cell.vv_wire
         outer_surf = csg.surfaces_from_info_list(outer_wire)
-        if armour_thickness == 0:
-            inner_wire = divertor_pre_cell.interior_wire
-            inner_surf = csg.surfaces_from_info_list(inner_wire)
-        else:
+        if armour_thickness > 0:
             inner_wire = divertor_pre_cell.offset_interior_wire(armour_thickness)
             inner_surf = csg.surfaces_from_info_list(inner_wire)
             innermost_wire = divertor_pre_cell.interior_wire
             innermost_surf = csg.surfaces_from_info_list(innermost_wire)
+        else:
+            inner_wire = divertor_pre_cell.interior_wire
+            inner_surf = csg.surfaces_from_info_list(inner_wire)
+        # make the middle cell
         cell_stack = [
             # The middle cell is the only cell guaranteed to be convex.
             # Therefore it is the first cell to be made.
@@ -1885,6 +1899,7 @@ class DivertorCellStack:
                 fill=materials.match_material(CellType.DivertorBulk),
             ),
         ]
+        # make the vacuum vessel cell
         cell_stack.append(
             DivertorCell(
                 # surfaces: ext, cw, ccw, int.
@@ -1896,7 +1911,12 @@ class DivertorCellStack:
                 outermost_wire,
                 outer_wire.reverse(),
                 csg=csg,
-                subtractive_region=cell_stack[0].exclusion_zone(away_from_plasma=False),
+                subtractive_region=cell_stack[0].exclusion_zone(
+                    away_from_plasma=False,
+                    additional_test_points=innermost_wire.get_3D_coordinates()
+                    if armour_thickness > 0
+                    else inner_wire.get_3D_coordinates(),
+                ),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
                 fill=materials.match_material(CellType.DivertorFirstWall),
@@ -1923,7 +1943,8 @@ class DivertorCellStack:
                     name=f"Divertor armour in divertor cell stack {stack_num}",
                     # subtract away everything in the first cell.
                     subtractive_region=cell_stack[0].exclusion_zone(
-                        away_from_plasma=True
+                        away_from_plasma=True,
+                        additional_test_points=outermost_wire.get_3D_coordinates(),
                     ),
                     fill=materials.match_material(CellType.DivertorSurface),
                 ),
@@ -2029,7 +2050,11 @@ class DivertorCellArray:
             :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
         """
         return openmc.Union([
-            stack[0].exclusion_zone(away_from_plasma=True, control_id=control_id)
+            stack[0].exclusion_zone(
+                away_from_plasma=True,
+                control_id=control_id,
+                additional_test_points=stack.exterior_wire.get_3D_coordinates(),
+            )
             for stack in self.cell_array
         ])
 
