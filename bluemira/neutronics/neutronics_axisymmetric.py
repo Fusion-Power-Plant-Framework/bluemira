@@ -92,6 +92,18 @@ class PreCellStage:
         r_max = max(abs(all_ext_vertices[:, 0]))
         return z_max, z_min, r_max, -r_max
 
+    def half_bounding_box(self) -> tuple[float, ...]:
+        """
+        Get bounding box of the 2D poloidal cross-section of the right-hand half of the
+        reactor.
+        """
+        all_ext_vertices = self.external_coordinates()
+        z_min = all_ext_vertices[:, -1].min()
+        z_max = all_ext_vertices[:, -1].max()
+        r_max = max(abs(all_ext_vertices[:, 0]))
+        r_min = min(abs(all_ext_vertices[:, 0]))
+        return z_max, z_min, r_max, r_min
+
 
 @dataclass
 class NeutronicsReactorParameterFrame(ParameterFrame):
@@ -179,6 +191,11 @@ class NeutronicsReactor(ABC):
     def bounding_box(self) -> tuple[float, ...]:
         """Bounding box of Neutronics reactor"""
         return self._pre_cell_stage.bounding_box()
+
+    @property
+    def half_bounding_box(self) -> tuple[float, ...]:
+        """Bounding box of the right-hand half of the 2D poloidal cross-section"""
+        return self._pre_cell_stage.half_bounding_box()
 
     @property
     def blanket(self):

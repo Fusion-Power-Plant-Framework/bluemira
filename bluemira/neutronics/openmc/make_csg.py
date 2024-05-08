@@ -510,6 +510,10 @@ def make_coils(
         z-coordinate of the the bottom z-plane shared by both cylinders
         (cs and tf coil)
     """
+    if tf_coil_thick <= 0 or solenoid_radius <= 0:
+        raise GeometryError(
+            "Centrol column TF Coils and solenoid must have positive thicknesses!"
+        )
     solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
     central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
     top = csg.find_suitable_z_plane(
@@ -682,7 +686,7 @@ def make_cell_arrays(
     """
     # determine universe_box
 
-    z_max, z_min, r_max, _r_min = pre_cell_reactor.bounding_box
+    z_max, z_min, r_max, r_min = pre_cell_reactor.half_bounding_box
     universe = make_universe_box(
         csg,
         z_min - D_TOLERANCE,
@@ -720,13 +724,7 @@ def make_cell_arrays(
     cs, tf = make_coils(
         csg,
         pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
-        (
-            (
-                pre_cell_reactor.tokamak_dimensions.central_solenoid.outer_diameter
-                - pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter
-            )
-            / 2
-        ),
+        r_min - pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
         z_min - D_TOLERANCE,
         z_max + D_TOLERANCE,
         materials,
