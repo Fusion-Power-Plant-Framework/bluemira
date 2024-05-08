@@ -5,13 +5,18 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC CSG neutronics materials"""
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, fields
 from enum import Enum, auto
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import openmc
 
-from bluemira.neutronics.materials import NeutronicsMaterials
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from bluemira.neutronics.materials import NeutronicsMaterials
 
 
 class CellType(Enum):

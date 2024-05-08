@@ -5,13 +5,14 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC designer"""
 
-from collections.abc import Callable
+from __future__ import annotations
+
 from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import openmc
@@ -43,6 +44,9 @@ from bluemira.neutronics.params import (
     PlasmaSourceParameters,
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class OpenMCRunModes(BaseRunMode):

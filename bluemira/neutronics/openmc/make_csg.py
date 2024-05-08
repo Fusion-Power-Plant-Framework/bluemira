@@ -22,28 +22,18 @@ from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import (
-    make_circle_arc_3P,
-    make_polygon,
-    revolve_shape,
-)
+from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
 from bluemira.neutronics.openmc.material import CellType
-from bluemira.neutronics.params import (
-    TokamakDimensions,
-)
-from bluemira.neutronics.radial_wall import (
-    polygon_revolve_signed_volume,
-)
-from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
+from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
+from bluemira.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
     import numpy.typing as npt
 
-    from bluemira.neutronics.make_materials import MaterialsLibrary
     from bluemira.neutronics.make_pre_cell import (
         DivertorPreCell,
         DivertorPreCellArray,
@@ -51,7 +41,9 @@ if TYPE_CHECKING:
         PreCellArray,
     )
     from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
+    from bluemira.neutronics.openmc.material import MaterialsLibrary
     from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
+    from bluemira.neutronics.wires import StraightLineInfo, WireInfoList
 
 
 # Found to work by trial and error. I'm sorry.
@@ -476,18 +468,18 @@ def make_universe_box(
     bottom = csg.find_suitable_z_plane(
         z_min,
         boundary_type="vacuum",
-        surface_id=999 if control_id else None,
+        surface_id=998 if control_id else None,
         name="Universe bottom",
     )
     top = csg.find_suitable_z_plane(
         z_max,
         boundary_type="vacuum",
-        surface_id=1000 if control_id else None,
+        surface_id=999 if control_id else None,
         name="Universe top",
     )
     universe_cylinder = openmc.ZCylinder(
         r=to_cm(r_max),
-        surface_id=1001 if control_id else None,
+        surface_id=1000 if control_id else None,
         boundary_type="vacuum",
         name="Max radius of Universe",
     )

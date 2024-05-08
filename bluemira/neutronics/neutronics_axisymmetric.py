@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.neutronics.params import TokamakDimensions
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
@@ -145,9 +146,6 @@ class NeutronicsReactor(ABC):
     def _create_pre_cell_stage(
         self, blanket_discretisation, divertor_discretisation, snap_to_horizontal_angle
     ):
-        first_point = self.geom.divertor_wire.edges[0].start_point()
-        last_point = self.geom.divertor_wire.edges[-1].end_point()
-
         cutting = CuttingStage(
             blanket=PanelsAndExteriorCurve(
                 self.geom.panel_break_points,
@@ -158,18 +156,20 @@ class NeutronicsReactor(ABC):
                 self.geom.divertor_wire, self.geom.boundary, self.geom.vacuum_vessel_wire
             ),
         )
+        divertor = cutting.divertor.make_divertor_pre_cell_array(
+            discretisation_level=divertor_discretisation
+        )
+        first, last = divertor.exterior_vertices()[(0, -1),]
+
         blanket = cutting.blanket.make_quadrilateral_pre_cell_array(
             discretisation_level=blanket_discretisation,
-            starting_cut=first_point.xz.flatten(),
-            ending_cut=last_point.xz.flatten(),
+            starting_cut=Coordinates(first).xz.flatten(),
+            ending_cut=Coordinates(last).xz.flatten(),
             snap_to_horizontal_angle=snap_to_horizontal_angle,
         )
 
         return PreCellStage(
-            blanket=blanket.straighten_exterior(preserve_volume=True),
-            divertor=cutting.divertor.make_divertor_pre_cell_array(
-                discretisation_level=divertor_discretisation
-            ),
+            blanket=blanket.straighten_exterior(preserve_volume=True), divertor=divertor
         )
 
     @property
