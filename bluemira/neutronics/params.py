@@ -265,20 +265,20 @@ class TokamakDimensions:
         """Setup tokamak dimensions"""
         return cls(
             BlanketThickness(
-                params.blanket_surface_tk.value,
+                params.fw_blanket_surface_tk.value,
                 params.inboard_fw_tk.value,
                 params.inboard_breeding_tk.value,
                 params.blk_ib_manifold.value,
             ),
             r_inner_cut,
             BlanketThickness(
-                params.blanket_surface_tk.value,
+                params.fw_blanket_surface_tk.value,
                 params.outboard_fw_tk.value,
                 params.outboard_breeding_tk.value,
                 params.blk_ob_manifold.value,
             ),
-            DivertorThickness(params.divertor_surface_tk.value),
+            DivertorThickness(params.fw_divertor_surface_tk.value),
             ToroidalFieldCoilDimension(
-                params.tf_inner_radius.value, params.tf_outer_radius.value
+                params.r_tf_in.value, params.r_tf_in.value + params.tk_tf_inboard.value
             ),
         )

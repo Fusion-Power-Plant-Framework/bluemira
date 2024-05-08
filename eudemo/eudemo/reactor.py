@@ -480,7 +480,7 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    neutronics_output = run_neutronics(
+    csg_model, neutronics_output = run_neutronics(
         reactor_config.params_for("Neutronics"),
         reactor_config.config_for("Neutronics"),
         blanket=reactor.blanket,
