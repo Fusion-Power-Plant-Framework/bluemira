@@ -484,7 +484,6 @@ if __name__ == "__main__":
         reactor_config.params_for("Neutronics"),
         reactor_config.config_for("Neutronics"),
         blanket=reactor.blanket,
-        divertor=reactor.divertor,
         vacuum_vessel=reactor.vacuum_vessel,
         ivc_shapes=ivc_shapes,
     )

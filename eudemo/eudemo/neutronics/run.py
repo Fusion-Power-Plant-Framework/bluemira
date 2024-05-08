@@ -25,6 +25,7 @@ from bluemira.neutronics.openmc.sources import make_pps_source
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    import numpy.typing as npt
     import openmc.source
 
     from bluemira.base.parameter_frame import ParameterFrame
@@ -39,14 +40,14 @@ if TYPE_CHECKING:
 class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
     def _get_wires_from_components(
         self,
-        divertor: IVCShapes,
+        ivc_shapes: IVCShapes,
         blanket: Blanket,
         vacuum_vessel: VacuumVessel,
     ) -> tuple[BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
         return (
-            divertor.div_internal_boundary,
+            ivc_shapes.div_internal_boundary,
             blanket.panel_points().T,
-            divertor.outer_boundary,
+            ivc_shapes.outer_boundary,
             vacuum_vessel.xz_boundary(),
         )
 
@@ -55,7 +56,6 @@ def run_neutronics(
     params: dict | ParameterFrame,
     build_config: dict,
     blanket: ComponentManager,
-    divertor: ComponentManager,
     vacuum_vessel: ComponentManager,
     ivc_shapes: IVCShapes,
     source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
