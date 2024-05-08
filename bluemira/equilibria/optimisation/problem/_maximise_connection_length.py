@@ -41,7 +41,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         lower: bool = True,
         plasma_facing_boundary: Grid | Coordinates | None = None,
-        calculation_method: str = "field_line_tracer",
+        calculation_method: str = "flux_surface_geometry",
         psi_n_tol: float = 1e-6,
         delta_start: float = 0.01,
         opt_algorithm: str = "SLSQP",

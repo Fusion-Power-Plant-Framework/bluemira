@@ -200,6 +200,8 @@ class MaximiseConnectionLength(ObjectiveFunction):
             calculation_method=self.calculation_method,
         )
 
+        bluemira_print(f"connection length = {length}")
+
         return -1 * length
 
 
@@ -228,7 +230,7 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         scale: float,
         double_null: bool,
         plasma_facing_boundary: Grid | Coordinates | None,
-        calculation_method: str = "field_line_tracer",
+        calculation_method: str = "flux_surface_geometry",
         outer: bool = True,
         psi_n_tol: float = PSI_NORM_TOL,
         delta_start: float = 0.01,
@@ -246,17 +248,31 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         """Objective function for an optimisation."""
         self.eq.coilset.get_control_coils().current = vector * self.scale
 
-        legs = LegFlux(self.eq).get_legs(delta=self.delta_start)
+        legs = LegFlux(self.eq).get_legs()
         lengths, _angles = get_legs_length_and_angle(
             self.eq, legs, self.plasma_facing_boundary
         )
 
-        length = lengths["lower_outer"][0] if self.outer else lengths["lower_inner"][0]
-        if self.double_null:
+        checklow = (
+            lengths.get("lower_outer") if self.outer else lengths.get("lower_inner")
+        )
+        checkup = (
+            lengths.get("upper_outer") if self.outer else lengths.get("upper_inner")
+        )
+        if checklow:
+            length = (
+                lengths["lower_outer"][0] if self.outer else lengths["lower_inner"][0]
+            )
+        else:
+            length = 0.0
+
+        if self.double_null and checkup:
             length_upper = (
                 lengths["upper_outer"][0] if self.outer else lengths["upper_inner"][0]
             )
             length += length_upper
+
+        bluemira_print(f"total leg(s) length = {length}")
 
         return -length
 

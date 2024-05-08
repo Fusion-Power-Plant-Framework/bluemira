@@ -264,17 +264,22 @@ def get_legs_length_and_angle(
             lengths = []
             angles = []
             for leg in leg_list:
-                leg_fs = PartialOpenFluxSurface(leg)
-                if plasma_facing_boundary is not None:
-                    leg_fs.clip(plasma_facing_boundary)
-                alpha = leg_fs.alpha
-                if alpha is None:
-                    grazing_ang = None
-                elif alpha <= np.pi:
-                    grazing_ang = alpha
+                if leg is None:
+                    con_length = 0.0
+                    grazing_ang = 180.0
                 else:
-                    grazing_ang = 2 * np.pi - alpha
-                lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
+                    leg_fs = PartialOpenFluxSurface(leg)
+                    if plasma_facing_boundary is not None:
+                        leg_fs.clip(plasma_facing_boundary)
+                    con_length = OpenFluxSurface(leg_fs.coords).connection_length(eq)
+                    alpha = leg_fs.alpha
+                    if alpha is None:
+                        grazing_ang = 180.0
+                    elif alpha <= np.pi:
+                        grazing_ang = alpha
+                    else:
+                        grazing_ang = 2 * np.pi - alpha
+                lengths.append(con_length)
                 angles.append(grazing_ang)
         length_dict.update({name: lengths})
         angle_dict.update({name: angles})
@@ -299,6 +304,7 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
 
     """
     # Separatrix list is sorted by INNER then OUTER
+    separatrix.sort(key=lambda separatrix: separatrix.x[0])
     legs = []
     for half_sep in separatrix:
         for x_p in x_points:

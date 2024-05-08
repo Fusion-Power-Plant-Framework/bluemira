@@ -48,9 +48,6 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     PointType,
     spherical_harmonic_approximation,
 )
-from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
-    spherical_harmonic_approximation,
-)
 
 plot_defaults()
 

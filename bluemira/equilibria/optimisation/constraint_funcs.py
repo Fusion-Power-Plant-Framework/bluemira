@@ -43,7 +43,7 @@ use in derivative based algorithms, such as those utilising gradient descent.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from bluemira.equilibria.grid import Grid
