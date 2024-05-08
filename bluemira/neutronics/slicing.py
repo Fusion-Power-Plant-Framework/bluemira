@@ -272,9 +272,8 @@ def break_wire_into_convex_chunks(
         a list of WireInfos
     """
     wire_segments = list(check_and_breakdown_wire(wire))
-    convex_chunks = []
     # initialising the first chunk
-    this_chunk = []
+    convex_chunks, this_chunk = [], []
     chunk_start_tangent = wire_segments[0].tangents[0]
 
     def add_to_chunk(this_seg: WireInfo) -> None:
@@ -287,42 +286,30 @@ def break_wire_into_convex_chunks(
                 this_chunk[-1].key_points.start_point, this_seg.key_points.end_point
             )
             return
-
         this_chunk.append(WireInfo(this_seg.key_points, this_seg.tangents))
 
-    def conclude_chunk(chunk):
-        """Wrap up the current chunk"""
-        convex_chunks.append(WireInfoList(chunk.copy()))
-        chunk.clear()
-
-    while len(wire_segments) > 1:
-        add_to_chunk(wire_segments.pop(0))
+    for no, w_s in enumerate(wire_segments[1:]):
+        add_to_chunk(wire_segments[no])
         prev_end_tangent = this_chunk[-1].tangents[-1]
-        next_start_tangent = wire_segments[0].tangents[0]
+        next_start_tangent = w_s.tangents[0]
         if deviate_less_than(
-            this_chunk[-1].tangents[1], wire_segments[0].tangents[0], TOLERANCE_DEGREES
+            this_chunk[-1].tangents[1], w_s.tangents[0], TOLERANCE_DEGREES
         ):
             continue
-        interior_curve_turned_over_180 = turned_morethan_180(
-            chunk_start_tangent, next_start_tangent, curvature_sign
-        )
-        concave_turning_point = turned_morethan_180(
-            prev_end_tangent, next_start_tangent, curvature_sign
-        )
-        if concave_turning_point:
-            conclude_chunk(this_chunk)
-            if wire_segments:  # if there are still segments left
-                chunk_start_tangent = wire_segments[0].tangents[0]
-            continue
-        if interior_curve_turned_over_180:
+        if turned_morethan_180(chunk_start_tangent, next_start_tangent, curvature_sign):
             # curled in on itself too much.
             bluemira_warn(
                 "Divertor wire geometry possibly too extreme for program "
                 "to handle. Check pre-cell visually by using the .plot_2d() methods "
                 "on the relevant DivertorPreCell and DivertorPreCellArray."
             )
-    add_to_chunk(wire_segments.pop(0))
-    conclude_chunk(this_chunk)
+        if turned_morethan_180(prev_end_tangent, next_start_tangent, curvature_sign):
+            convex_chunks.append(WireInfoList(this_chunk.copy()))
+            this_chunk.clear()
+            chunk_start_tangent = w_s.tangents[0]
+
+    add_to_chunk(wire_segments[-1])
+    convex_chunks.append(WireInfoList(this_chunk.copy()))
 
     return convex_chunks
 
