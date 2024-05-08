@@ -116,7 +116,8 @@
     "parametric_source": true,
     "blanket_type": "HCPB",
     "plot_axis": "xz",
-    "plot_pixel_per_metre": 100
+    "plot_pixel_per_metre": 100,
+    "neutronics_output_path": "$path_expand:./neutronics"
   },
   "TF coils": {
     "run_mode": "read",

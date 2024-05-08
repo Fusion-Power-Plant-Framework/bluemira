@@ -348,7 +348,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def __init__(
         self,
         params: dict | ParameterFrame,
-        build_config: dict | None,
+        build_config: dict,
         neutronics_pre_cell_model,
         source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
     ):
@@ -379,7 +379,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
     def execute(self, *, debug=False) -> OpenMCResult | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
-        run_mode = self.build_config["run_mode"]
+        run_mode = self.build_config.get("run_mode", self.run_mode_cls.RUN)
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
 
