@@ -37,7 +37,7 @@ jobs:
           FILE_NAME: "report-json_3.10_ubuntu-latest"
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
+          gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir ref_report
@@ -51,7 +51,7 @@ jobs:
           FILE_NAME: "report-json_3.10_ubuntu-latest"
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
+          gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir PR_report
