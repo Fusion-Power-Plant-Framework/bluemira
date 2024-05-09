@@ -34,7 +34,7 @@
      inkscape:snap-nodes="false"
      inkscape:object-nodes="true"
      inkscape:zoom="1"
-     inkscape:cx="75.5"
+     inkscape:cx="259.5"
      inkscape:cy="164.5"
      inkscape:window-width="1350"
      inkscape:window-height="664"
@@ -124,7 +124,7 @@
       </g>
       <g
          id="g231-5"
-         transform="translate(-218.71637,165.7943)">
+         transform="translate(-418.39715,165.7943)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -132,15 +132,15 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1">Vertical Stability </tspan><tspan
+             id="tspan12">Vertical Stability </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan2">calculations
+             id="tspan13">calculations
 </tspan></text>
       </g>
       <g
          id="g231-5-6"
-         transform="translate(-417.80317,180.1576)">
+         transform="translate(-617.48395,180.1576)">
         <text
            transform="matrix(1,0,0,-1,745.398,253.5097)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:173.576;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -148,23 +148,23 @@
            xml:space="preserve"><tspan
              x="0"
              y="31.974001"
-             id="tspan3">2-D winding pack </tspan><tspan
+             id="tspan14">2-D winding pack </tspan><tspan
              x="0"
              y="47.961002"
-             id="tspan4">design module
+             id="tspan15">design module
 </tspan></text>
       </g>
       <text
-         transform="matrix(1,0,0,-1,526.37719,365.57771)"
+         transform="matrix(1,0,0,-1,326.69641,365.57771)"
          style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="text325-7"
          xml:space="preserve"><tspan
            x="0"
            y="0"
-           id="tspan5">3-D radiation </tspan><tspan
+           id="tspan16">3-D radiation </tspan><tspan
            x="0"
            y="15.987"
-           id="tspan6">transport</tspan></text>
+           id="tspan17">transport</tspan></text>
       <g
          id="g73"
          transform="matrix(1.0026884,0,0,1.0079576,0.1820512,138.6613)">
@@ -226,7 +226,7 @@
            id="path105" />
       </g>
       <path
-         d="m 306.39888,398.91287 8.985,9.978 8.986,-9.978 -8.986,-10.006 z"
+         d="m 106.71811,398.91287 8.985,9.978 8.986,-9.978 -8.986,-10.006 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path109" />
       <path
@@ -234,11 +234,11 @@
          style="fill:#5b9bd5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.0001"
          id="path111" />
       <path
-         d="m 506.07966,398.91287 8.986,9.978 8.986,-9.978 -8.986,-10.006 z"
+         d="m 306.39888,398.91287 8.986,9.978 8.986,-9.978 -8.986,-10.006 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path115" />
       <path
-         d="m 705.76044,398.42234 8.986,9.977 8.986,-9.977 -8.986,-10.007 z"
+         d="m 506.07966,398.42234 8.986,9.977 8.986,-9.977 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path127" />
       <g
@@ -298,7 +298,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan155">Q1</tspan></text>
+             id="tspan155">Q2</tspan></text>
       </g>
       <g
          id="g159"
@@ -310,7 +310,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan161">Q2</tspan></text>
+             id="tspan161">Q3</tspan></text>
       </g>
       <g
          id="g237"
@@ -370,7 +370,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan311">Q3</tspan></text>
+             id="tspan311">Q4</tspan></text>
       </g>
       <g
          id="g315"
@@ -382,7 +382,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan317">Q4</tspan></text>
+             id="tspan317">Q1</tspan></text>
       </g>
       <g
          id="g321"
@@ -406,16 +406,12 @@
              y="0" /></text>
       </g>
       <path
-         d="m 106.71811,480.44919 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
-         style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         id="path353" />
-      <path
-         d="m 506.07966,362.30473 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
+         d="m 306.39888,362.30473 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path544" />
       <g
          id="g552"
-         transform="translate(-17.239178,165.7943)">
+         transform="translate(-216.91996,165.7943)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -423,10 +419,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan7">Coupling to 3D </tspan><tspan
+             id="tspan18">Coupling to 3D </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan8">FEA
+             id="tspan19">FEA
 </tspan></text>
       </g>
       <path
@@ -443,48 +439,14 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan9">Moving EUDEMO </tspan><tspan
+             id="tspan20">Moving EUDEMO </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan10">design into separate </tspan><tspan
+             id="tspan21">design into separate </tspan><tspan
              x="0"
              y="31.974001"
-             id="tspan11">repo</tspan></text>
+             id="tspan22">repo</tspan></text>
       </g>
-      <g
-         id="g736"
-         transform="translate(-411.63135,138.72568)">
-        <text
-           transform="matrix(1,0,0,-1,939.95369,345.52897)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:168.194;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="text734"
-           xml:space="preserve"><tspan
-             x="0"
-             y="0"
-             id="tspan12">Version 2, removal </tspan><tspan
-             x="0"
-             y="15.987"
-             id="tspan13">of old APIs</tspan></text>
-      </g>
-      <g
-         id="g2"
-         transform="translate(-812.2575,138.54456)">
-        <text
-           transform="matrix(1,0,0,-1,939.95369,357.85646)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:168.194;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="text2"
-           xml:space="preserve"><tspan
-             x="0"
-             y="12.146373"
-             id="tspan14">Upgrade to </tspan><tspan
-             x="0"
-             y="28.133374"
-             id="tspan15">Python3.10</tspan></text>
-      </g>
-      <path
-         d="m 506.07966,480.44919 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
-         style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         id="path2" />
     </g>
   </g>
 </svg>
