@@ -444,8 +444,6 @@ class PreCellArray:
                 )
             )
         return PreCellArray(new_pre_cells)
-        # ax = self.plot_2d(show=False)
-        # new_pca.plot_2d(ax=ax, show=True)
 
     def plot_2d(self, *args, **kwargs):
         """Plot pre cells in 2d"""
@@ -608,17 +606,21 @@ class DivertorPreCell:
                by x%, radius scaled down by x%).
             2. All tangents are preserved, so no need to change them.
         """
-        int_wire_pts = [w.key_points[0] for w in self.interior_wire]
-        int_wire_pts.append(self.interior_wire[-1].key_points[1])
-        int_wire_pts = np.array(int_wire_pts)  # shape (N+1, 3)
+        int_wire_pts = np.array([
+            *(w.key_points[0] for w in self.interior_wire),
+            self.interior_wire[-1].key_points[1],
+        ])
+
+        # assumed normalised
         cw_dir = choose_direction(
             self.cw_wall[0].tangents[0], self.cw_wall.end_point, self.cw_wall.start_point
-        )  # assumed normalised
+        )
         ccw_dir = choose_direction(
             self.ccw_wall[0].tangents[1],
             self.ccw_wall.start_point,
             self.ccw_wall.end_point,
-        )  # assumed normalised
+        )
+
         cw_norm = CCW_90 @ cw_dir
         cw_anchor = self.cw_wall.start_point
         ccw_norm = CW_90 @ ccw_dir

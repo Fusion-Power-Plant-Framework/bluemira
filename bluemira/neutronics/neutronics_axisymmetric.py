@@ -4,8 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Only contains 1 class that controls the overall conversion from bluemira model to csg.
-Separated from slicing.py to prevent import errors
+Axis-symmetric CSG CAD models for neutronics.
 """
 
 from __future__ import annotations

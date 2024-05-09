@@ -89,7 +89,6 @@ class OpenMCSimulationRuntimeParameters:
         Where the xml file for cross-section is stored locally.
     """
 
-    # Parameters used outside of setup_openmc()
     particles: int  # number of particles used in the neutronics simulation
     cross_section_xml: str | Path
     batches: int = 2
@@ -286,12 +285,8 @@ class Teardown(CodesTeardown):
         self.cells = cells
 
     @staticmethod
-    def _cleanup(files_created, *, delete_files: bool = False):
+    def delete_files(files_created):
         """Remove files generated during the run (mainly .xml files.)"""
-        if not delete_files:
-            bluemira_debug("No files removed as debug mode is turned on.")
-            return  # skip this entire method if we want to keep the files.
-
         removed_files, failed_to_remove_files = [], []
         for file_name in files_created:
             if (f := file_name).exists():
@@ -308,25 +303,48 @@ class Teardown(CodesTeardown):
                 "they don't exists."
             )
 
-    def run(self, universe, files_created, source_params, statepoint_file):
+    def run(
+        self,
+        universe,
+        files_created,
+        source_params,
+        statepoint_file,
+        *,
+        delete_files: bool = False,
+    ):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
             n_DT_reactions(source_params.plasma_physics_units.reactor_power),
             statepoint_file,
         )
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
         return result
 
-    def plot(self, _universe, files_created, *_args):
+    def plot(
+        self,
+        _universe,
+        files_created,
+        *_args,
+        delete_files: bool = False,
+    ):
         """Plot stage for Teardown task"""
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
 
     def volume(
-        self, _universe, files_created, _source_params, _statepoint_file
+        self,
+        _universe,
+        files_created,
+        _source_params,
+        _statepoint_file,
+        *,
+        delete_files: bool = False,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"

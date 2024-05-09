@@ -268,43 +268,6 @@ def z_torus(
     )
 
 
-def torus_from_5points(
-    point1: npt.NDArray[np.float64],  # noqa: ARG001
-    point2: npt.NDArray[np.float64],  # noqa: ARG001
-    point3: npt.NDArray[np.float64],  # noqa: ARG001
-    point4: npt.NDArray[np.float64],  # noqa: ARG001
-    point5: npt.NDArray[np.float64],  # noqa: ARG001
-    surface_id: int | None = None,  # noqa: ARG001
-    name: str = "",  # noqa: ARG001
-) -> openmc.ZTorus:
-    """
-    Make an elliptical torus centered on the z-axis using 5 points.
-    All 5 points should lie on the RZ plane AND the surface of the torus simultaneously.
-    Semi-major/semi-minor axes of the ellipse must be aligned to the R/Z (or Z/R) axes.
-
-    Parameters
-    ----------
-    point1, point2, point3:
-        RZ coordinates of the 3 points on the surface of the torus.
-    surface_id, name:
-        See openmc.Surface
-    """
-    raise NotImplementedError(
-        "The maths of determining where the ellipse center should"
-        "be is yet to be worked out."
-    )
-    # center, vertical_radius, horiz_radius = (point1, point2, point3, point4, point5)
-    # major_radius, height = center[0], center[-1]
-    # return openmc.ZTorus(
-    #     z0=height,
-    #     a=major_radius,
-    #     b=vertical_radius,
-    #     c=horizontal_radius,
-    #     surface_id=surface_id,
-    #     name=name,
-    # )
-
-
 def choose_halfspace(
     surface: openmc.Surface, choice_points: npt.NDArray
 ) -> openmc.Halfspace:
@@ -952,8 +915,6 @@ class BluemiraNeutronicsCSG:
         z_dist = z - surface.z0
         upper_cone = np.logical_and(~middle, z_dist > 0)
         lower_cone = np.logical_and(~middle, z_dist < 0)
-        # upper_not_cone = np.logical_and(middle, z_dist > 0)
-        # lower_not_cone = np.logical_and(middle, z_dist < 0)
 
         # all of the following cases requires a plane to be made.
         if control_id:
@@ -1081,7 +1042,7 @@ class BluemiraNeutronicsCSG:
 
         Returns
         -------
-        intersection_region: openmc.Region
+        intersection_region:
             openmc.Intersection of a list of
             [(openmc.Halfspace) or (openmc.Union of openmc.Halfspace)]
         """
