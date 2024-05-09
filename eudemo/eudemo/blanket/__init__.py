@@ -19,10 +19,12 @@ __all__ = ["Blanket", "BlanketBuilder", "BlanketDesigner"]
 class Blanket(ComponentManager):
     """Wrapper around a Blanket component tree."""
 
-    def __init__(self, comp: Component, panel_points: Coordinates, r_inner_cut: float):
+    def __init__(
+        self, component_tree: Component, panel_points: Coordinates, r_inner_cut: float
+    ):
         self.r_inner_cut = r_inner_cut
         self._panel_points = panel_points
-        super().__init__(comp)
+        super().__init__(component_tree)
 
     def panel_points(self) -> Coordinates:
         """The panel points of the blanket."""
