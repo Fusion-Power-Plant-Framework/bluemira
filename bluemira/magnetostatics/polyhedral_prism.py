@@ -29,6 +29,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0_4PI
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates, get_area_2d, get_centroid_2d
 from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
@@ -419,13 +420,16 @@ class PolyhedralPrismCurrentSource(
         alpha: float,
         beta: float,
         current: float,
+        *,
+        bypass_endcap_error: bool | None = False,
+        endcap_warning: bool | None = True,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
         self._origin = origin
-
+        self._warning = False
         length = np.linalg.norm(ds)
         self._halflength = 0.5 * length
-        self._check_angle_values(alpha, beta)
+        self._check_angle_values(alpha, beta, bypass_endcap_error, endcap_warning)
         m_breadth = np.max(np.abs(xs_coordinates.x))
         self._check_raise_self_intersection(length, m_breadth, alpha, beta)
 
@@ -452,20 +456,40 @@ class PolyhedralPrismCurrentSource(
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
 
-    def _check_angle_values(self, alpha: float, beta: float):
+    def _check_angle_values(self, alpha, beta, bypass_endcap_error, endcap_warning):
         """
         Check that end-cap angles are acceptable.
         """
-        if not np.isclose(alpha, beta):
-            raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} "
-                f"!= {beta=:.3f}"
-            )
-        if not (0 <= abs(alpha) < 0.5 * np.pi):
-            raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside"
-                " bounds of [0, 180°)."
-            )
+        if bypass_endcap_error is True:
+            if not (0 <= abs(alpha) < 0.5 * np.pi):
+                raise MagnetostaticsError(
+                    f"{self.__class__.__name__} instantiation error: {alpha=:.3f}"
+                    " is outside bounds of [0, 180°)."
+                )
+            if not (0 <= abs(beta) < 0.5 * np.pi):
+                raise MagnetostaticsError(
+                    f"{self.__class__.__name__} instantiation error: {beta=:.3f}"
+                    " is outside bounds of [0, 180°)."
+                )
+            if (endcap_warning is True) and (not np.isclose(alpha, beta)):
+                bluemira_warn(
+                    "Unequal end cap angles will result in result not being precise."
+                    " This inaccuracy will increase as the end cap angle"
+                    " discrepency increases."
+                )
+            elif (endcap_warning is False) and (not np.isclose(alpha, beta)):
+                self._warning = True
+        else:
+            if not np.isclose(alpha, beta):
+                raise MagnetostaticsError(
+                    f"{self.__class__.__name__} instantiation error: {alpha=:.3f} "
+                    f"!= {beta=:.3f}"
+                )
+            if not (0 <= abs(alpha) < 0.5 * np.pi):
+                raise MagnetostaticsError(
+                    f"{self.__class__.__name__} instantiation error: {alpha=:.3f}"
+                    " is outside bounds of [0, 180°)."
+                )
 
     def _set_cross_section(self, xs_coordinates: Coordinates):
         xs_coordinates = deepcopy(xs_coordinates)

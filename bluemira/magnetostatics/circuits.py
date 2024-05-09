@@ -58,22 +58,44 @@ class PlanarCircuit(SourceGroup):
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
+        warning_called = False
         for midpoint, d_l, beta, alpha in zip(
             self.midpoints, self.d_l, betas, alphas, strict=False
         ):
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
+            if source_class is PolyhedralPrismCurrentSource:
+                source = source_class(
+                    midpoint,
+                    d_l,
+                    normal,
+                    t_vec,
+                    *xs_args,
+                    alpha=alpha,
+                    beta=beta,
+                    current=current,
+                    bypass_endcap_error=True,
+                    endcap_warning=False,
+                )
 
-            source = source_class(
-                midpoint,
-                d_l,
-                normal,
-                t_vec,
-                *xs_args,
-                alpha=alpha,
-                beta=beta,
-                current=current,
-            )
+                if warning_called is False and source._warning is True:
+                    bluemira_warn(
+                        "Unequal end cap angles will result in result not"
+                        " being precise. This inaccuracy will increase as the"
+                        " end cap angle discrepency increases."
+                    )
+                    warning_called = True
+            else:
+                source = source_class(
+                    midpoint,
+                    d_l,
+                    normal,
+                    t_vec,
+                    *xs_args,
+                    alpha=alpha,
+                    beta=beta,
+                    current=current,
+                )
             sources.append(source)
         return sources
 
