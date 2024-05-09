@@ -1246,6 +1246,29 @@ def mirror_shape(
     return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
 
 
+def is_convex(points: npt.NDArray):
+    """
+    Check that the the list of xz points are strictly convex, i.e.
+    Not even collinear points are allowed.
+
+    However, repeated points are allowed, as the repeated point would be ignored;
+    and points are allowed to be entered in 3D (xyz), but the y component would be
+    ignored as well.
+
+    Parameters
+    ----------
+    points
+        A list of points that we want to check the convexity for. Shape = (n, 2/3)
+
+    Returns
+    -------
+    boolean
+    """
+    if np.shape(points)[1] == 3:  # noqa: PLR2004
+        points = np.array(points)[:, ::2]  # squash 3D points down to 2D
+    return len(np.unique(points, axis=0)) == ConvexHull(points).nsimplex
+
+
 # # =============================================================================
 # # Save functions
 # # =============================================================================

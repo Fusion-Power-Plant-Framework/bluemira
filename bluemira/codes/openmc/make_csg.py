@@ -24,6 +24,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
+    is_convex,
     make_circle_arc_3P,
     make_polygon,
     polygon_revolve_signed_volume,
@@ -549,18 +550,25 @@ def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.R
     dividing_surface = csg.surface_from_2points(
         blanket_exterior_pts[0][::2], blanket_exterior_pts[-1][::2]
     )
+    if not is_convex(blanket_interior_pts):
+        raise GeometryError(
+            f"{blanket} interior (blanket_outline's inner_curve) needs to be convex!"
+        )
     plasma = csg.region_from_surface_series(
         [*blanket.interior_surfaces(), dividing_surface],
         blanket_interior_pts,
         control_id=control_id,
     )
 
+    divertor_exterior_vertices = divertor.exterior_vertices()
+    if not is_convex(divertor_exterior_vertices):
+        raise GeometryError(f"{divertor} exterior needs to be convex!")
     exhaust_including_divertor = csg.region_from_surface_series(
         [
             *chain.from_iterable(divertor.exterior_surfaces()),
             dividing_surface,
         ],
-        divertor.exterior_vertices(),
+        divertor_exterior_vertices,
         control_id=control_id,
     )
 
@@ -886,7 +894,7 @@ class BluemiraNeutronicsCSG:
         The tricky part to handle is the floating point precision problem.
         It's possible that th every point used to create the cone does not lie on the
         cone/ lies on the wrong side of the cone.
-        Hence the first step is to shrink the choice_points by 0.5%
+        Hence the first step is to shrink the choice_points by SHRINK_DISTANCE
         towards the centroid.
 
         Parameters
@@ -1130,7 +1138,7 @@ class BlanketCell(openmc.Cell):
             fill=fill,
             region=self.csg.region_from_surface_series(
                 [exterior_surface, ccw_surface, cw_surface, interior_surface],
-                self.vertex.xyz.T,
+                self.vertex.xyz.T,  # We just assume it is convex
                 control_id=bool(cell_id),
             ),
         )
@@ -1254,6 +1262,12 @@ class BlanketCellStack:
             Passed as argument onto
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
         """
+        vertices = np.vstack((
+            self.cell_stack[0].vertex.xyz.T[(1, 2),],
+            self.cell_stack[-1].vertex.xyz.T[(3, 0),],
+        ))
+        if not is_convex(vertices):
+            raise GeometryError(f"{self}'s vertices need to be convex!")
         return csg.region_from_surface_series(
             [
                 self.exterior_surface,
@@ -1261,10 +1275,7 @@ class BlanketCellStack:
                 self.cw_surface,
                 self.interior_surface,
             ],
-            np.vstack((
-                self.cell_stack[0].vertex.xz.T[(1, 2),],
-                self.cell_stack[-1].vertex.xz.T[(3, 0),],
-            )),
+            vertices,
             control_id=control_id,
         )
 
@@ -1546,17 +1557,23 @@ class BlanketCellArray:
             Passed as argument onto
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
-        return openmc.Union([
-            self.csg.region_from_surface_series(
-                [stack.cw_surface, stack.ccw_surface, stack.interior_surface],
-                np.vstack((
-                    stack[0].vertex.xz.T[(1, 2),],
-                    stack[-1].vertex.xz.T[(3, 0),],
-                )),
-                control_id=control_id,
+        exclusion_zone_by_stack = []
+        for stack in self.blanket_cell_array:
+            stack_vertices = np.vstack((
+                stack[0].vertex.xyz.T[(1, 2),],
+                stack[-1].vertex.xyz.T[(3, 0),],
+            ))
+            if not is_convex(stack_vertices):
+                raise GeometryError(f"{self}'s vertices need to be convex!")
+
+            exclusion_zone_by_stack.append(
+                self.csg.region_from_surface_series(
+                    [stack.cw_surface, stack.ccw_surface, stack.interior_surface],
+                    stack_vertices,
+                    control_id=control_id,
+                )
             )
-            for stack in self.blanket_cell_array
-        ])
+        return openmc.Union(exclusion_zone_by_stack)
 
     @classmethod
     def from_pre_cell_array(
@@ -1740,14 +1757,25 @@ class DivertorCell(openmc.Cell):
             vertices_array = self.interior_wire.get_3D_coordinates()
             if additional_test_points is not None:
                 vertices_array = np.concatenate([additional_test_points, vertices_array])
+
+            if not is_convex(vertices_array):
+                raise GeometryError(
+                    f"{self} (excluding the surface)'s vertices needs to be convex!"
+                )
             return self.csg.region_from_surface_series(
                 [self.cw_surface, self.ccw_surface, *self.interior_surfaces],
                 vertices_array,
                 control_id=control_id,
             )
+        # exclusion zone facing towards the plasma
         vertices_array = self.exterior_wire.get_3D_coordinates()
         if additional_test_points is not None:
             vertices_array = np.concatenate([additional_test_points, vertices_array])
+
+        if not is_convex(vertices_array):
+            raise GeometryError(
+                f"{self} (excluding the vacuum vessel)'s vertices needs to be convex!"
+            )
         return self.csg.region_from_surface_series(
             [self.cw_surface, self.ccw_surface, *self.exterior_surfaces],
             vertices_array,
@@ -1853,6 +1881,10 @@ class DivertorCellStack:
             Passed as argument onto
             :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
         """
+        all_vertices = self.get_all_vertices()
+        if not is_convex(all_vertices):
+            raise GeometryError(f"overall_region of {self} needs to be convex!")
+
         return self.csg.region_from_surface_series(
             [
                 self.cw_surface,
@@ -1860,7 +1892,7 @@ class DivertorCellStack:
                 *self.interior_surfaces,
                 *self.exterior_surfaces,
             ],
-            self.get_all_vertices(),
+            all_vertices,
             control_id=control_id,
         )
 

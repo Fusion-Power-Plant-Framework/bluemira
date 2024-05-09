@@ -18,7 +18,9 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.neutronics.slicing import (
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.tools import is_convex
+from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
 )
@@ -74,6 +76,15 @@ class PreCellStage:
 
     blanket: PreCellArray
     divertor: DivertorPreCellArray
+
+    def __post_init__(self):
+        """Check convexity after initialization"""
+        ext_coords = self.external_coordinates()
+        if not is_convex(ext_coords):
+            raise GeometryError(
+                f"The vertices of {self.blanket} + {self.divertor} must form"
+                "a convex outline!"
+            )
 
     def external_coordinates(self) -> npt.NDArray:
         """
