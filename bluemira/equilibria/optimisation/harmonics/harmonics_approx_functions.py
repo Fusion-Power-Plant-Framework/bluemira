@@ -669,6 +669,8 @@ def spherical_harmonic_approximation(
             eq=eq,
             vac_psi_app=coilset_approx_psi,
             nlevels=nlevels,
+            original_LCFS=original_LCFS,
+            approx_LCFS=approx_LCFS,
         )
 
     return (
@@ -688,6 +690,8 @@ def plot_psi_comparision(
     vac_psi_app: np.ndarray,
     axes: list[plt.Axes] | None = None,
     nlevels: int = 50,
+    original_LCFS: Coordinates | None = None,
+    approx_LCFS: Coordinates | None = None,
     *,
     show: bool = True,
 ) -> tuple[plt.Axes, ...]:
@@ -720,7 +724,8 @@ def plot_psi_comparision(
     tot_psi_app = eq.plasma.psi(grid.x, grid.z) + vac_psi_app
 
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
-    clevels = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
+    clevels_org = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
+    clevels_app = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_app), nlevels)
     n_ax = 4
 
     if axes is not None:
@@ -738,13 +743,22 @@ def plot_psi_comparision(
         )
 
     plot1.set_title("Original, Total Psi")
-    plot1.contour(grid.x, grid.z, tot_psi_org, levels=clevels, cmap=cmap, zorder=8)
+    plot1.contour(grid.x, grid.z, tot_psi_org, levels=clevels_org, cmap=cmap, zorder=8)
     plot2.set_title("SH Approximation, Total Psi")
-    plot2.contour(grid.x, grid.z, tot_psi_app, levels=clevels, cmap=cmap, zorder=8)
+    plot2.contour(grid.x, grid.z, tot_psi_app, levels=clevels_app, cmap=cmap, zorder=8)
     plot3.set_title("Original, Vacuum Psi")
-    plot3.contour(grid.x, grid.z, vac_psi_org, levels=clevels, cmap=cmap, zorder=8)
+    plot3.contour(grid.x, grid.z, vac_psi_org, levels=clevels_org, cmap=cmap, zorder=8)
     plot4.set_title("SH Approximation, Vacuum Psi")
-    plot4.contour(grid.x, grid.z, vac_psi_app, levels=clevels, cmap=cmap, zorder=8)
+    plot4.contour(grid.x, grid.z, vac_psi_app, levels=clevels_app, cmap=cmap, zorder=8)
+
+    if original_LCFS is not None:
+        plot1.plot(original_LCFS.x, original_LCFS.z, color="r")
+        plot2.plot(original_LCFS.x, original_LCFS.z, color="r")
+        plot3.plot(original_LCFS.x, original_LCFS.z, color="r")
+        plot4.plot(original_LCFS.x, original_LCFS.z, color="r")
+    if approx_LCFS is not None:
+        plot2.plot(approx_LCFS.x, approx_LCFS.z, color="b", linestyle="--")
+        plot4.plot(approx_LCFS.x, approx_LCFS.z, color="b", linestyle="--")
 
     if show:
         plt.show()
