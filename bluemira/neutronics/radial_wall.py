@@ -38,7 +38,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
 
-    A polgyon placed in the RHS of the z-xis in the xz plane would have positive volume
+    A polygon placed in the RHS of the z-axis in the xz plane would have positive volume
     if it runs clockwise, and negative volume if it runs counter-clockwise.
 
     Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
@@ -46,7 +46,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
 
     Parameters
     ----------
-    polygon: ndarray of shape (N, 2)
+    polygon:
         Stores the x-z coordinate pairs of the four coordinates.
 
     Notes
@@ -56,7 +56,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
 
     When revolved around the z-axis, this trapezium forms a the frustum of a cone.
     The expression for the volume of this frustrum needs to be modified to avoid
-    ZeroDivisionError, thus it is recasted into the following (also the simplest) form:
+    ZeroDivisionError, thus it is recast into the following (also the simplest) form:
     :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
 
     Adding together the signed volume of all edges, the excess negative volume from one
@@ -81,7 +81,7 @@ def partial_diff_of_volume(
     Gives the relationship between how the the solid volume varies with the position of
     one of its verticies. More precisely, it gives gives the the partial derivative of
     the volume of the solid revolved out of a polygon when one vertex of that polygon
-    is moved in the direction specified by normalized_direction_vector.
+    is moved in the direction specified by normalised_direction_vector.
 
     Parameters
     ----------
@@ -89,13 +89,13 @@ def partial_diff_of_volume(
         Contain (x, z) coordinates of the polygon. It extracts only the vertex being
         moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
         are anchor vertices that cannot be adjusted.
-    normalized_direction_vector: NDArray with shape (2,)
+    normalised_direction_vector: NDArray with shape (2,)
         Direction that the point is allowed to move in.
 
     Notes
     -----
     Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
-    polygon. When r is moved, the polgyon's revolved solid volume changes.
+    polygon. When r is moved, the polygon's revolved solid volume changes.
     After a hefty amount of derivation, everything cancels out to give the expression
     .. math::
 
@@ -159,17 +159,6 @@ class CellWalls:
         start rz coordinates.
         """
         self.cell_walls[index_or_slice] = new_coordinates
-
-    def __add__(self, other_cell_walls: CellWalls):
-        """
-        It is ambiguous whether the user is trying to translate (shift) the
-        rz coordinates (np.ndarray.__add__), or trying to append/extend the array
-        (list.__add__). Explicit instruction is required instead.
-
-        I cannot foresee either to be a common use cases, hence an error is raised in its
-        place.
-        """
-        raise NotImplementedError("Please explicitly extend or offset self.cell_walls.")
 
     def __repr__(self) -> str:
         """String representation"""
@@ -279,13 +268,12 @@ class CellWalls:
         Current volumes of the (simplified) cells created by joining straight lines
         between neighbouring cell walls.
         """
-        return np.asarray([
-            self.get_volume(i) for i in range(self.num_cells)
-        ])  # shape = (N+1,)
+        # shape = (N+1,)
+        return np.asarray([self.get_volume(i) for i in range(self.num_cells)])
 
     def check_volumes_and_lengths(self):
         """
-        Ensure all cells have positive volumes, to minimize the risk of self-intersecting
+        Ensure all cells have positive volumes, to minimise the risk of self-intersecting
         lines and negative lengths
         """
         if not (all(self.volumes > 0) and all(self.lengths > 0)):
@@ -327,7 +315,7 @@ class CellWalls:
             next_curve, _dir_i
         )
 
-    def optimize_to_match_individual_volumes(
+    def optimise_to_match_individual_volumes(
         self, volume_list: Iterable[float], *, max_iter=1000
     ):
         """
@@ -341,7 +329,7 @@ class CellWalls:
 
         target_volumes = np.array(list(volume_list))
         if self.num_cells == 2:  # noqa: PLR2004
-            # only one single step is required for the optimization
+            # only one single step is required for the optimisation
             def volume_excess(new_length):
                 return self.volume_of_cells_neighbouring(1, new_length) - sum(
                     target_volumes
@@ -355,10 +343,9 @@ class CellWalls:
             return
 
         # if more than 3 walls (more than 2 cells)
-        i, i_min, i_max = 1, 1, self.num_cells - 1
+        step_direction, i, i_min, i_max = 1, 1, 1, self.num_cells - 1
 
         num_passes_counter = -1
-        step_direction = +1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
         while num_passes_counter < max_iter:
@@ -380,7 +367,7 @@ class CellWalls:
             )
             if i == i_min:
                 # hitting the left end: bounce to the right
-                step_direction = +1
+                step_direction = 1
                 num_passes_counter += 1
                 backward_pass_result = self.lengths.copy()
                 # termination condition
@@ -388,7 +375,7 @@ class CellWalls:
                     backward_pass_result, forward_pass_result, rtol=0, atol=EPS_FREECAD
                 ):
                     bluemira_debug(
-                        "Cell volume-matching optimization successful."
+                        "Cell volume-matching optimisation successful."
                         "Terminating iterative cell wall length adjustment after "
                         f"{num_passes_counter} passes."
                     )

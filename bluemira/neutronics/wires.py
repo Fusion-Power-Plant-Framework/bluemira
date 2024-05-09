@@ -62,7 +62,7 @@ class WireInfo:
     # we don't need to. Or merge this invention into an existing issue?
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[Iterable[float]]  # 2 normalized directional vectors xyz
+    tangents: Sequence[Iterable[float]]  # 2 normalised directional vectors xyz
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
@@ -100,7 +100,7 @@ class WireInfoList:
         return self.info_list[index_or_slice]
 
     def __repr__(self) -> str:
-        """String reprensentation"""
+        """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
 
     def pop(self, index):
@@ -111,7 +111,7 @@ class WireInfoList:
         """
         Get of the entire wire.
         """
-        # assume continuity, which is already enforced during initialization, so we
+        # assume continuity, which is already enforced during initialisation, so we
         # should be fine.
         # shape = (N+1, 3)
         return np.array(

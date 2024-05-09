@@ -42,7 +42,7 @@ from bluemira.neutronics.wires import (
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-    from numpy import typing as npt
+    import numpy.typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
 
@@ -89,7 +89,7 @@ def cut_curve(
     finite_difference = np.diff(cut_params)
     if len(finite_difference) <= 2:  # noqa: PLR2004
         raise GeometryError(
-            "Too few points! I.e. discretization_level parameter too low. "
+            "Too few points! I.e. discretisation_level parameter too low. "
             "Can't determine the cut direction!"
         )
     if (finite_difference <= 0).sum() <= 1:
@@ -98,7 +98,7 @@ def cut_curve(
     elif (finite_difference >= 0).sum() <= 1:
         # strictly monotonically decreasing except for 1 wrap-around point
         increasing = False
-    else:  # no discrenable pattern in the increase/decrease
+    else:  # no discernible pattern in the increase/decrease
         raise GeometryError("Points are too disordered!")
 
     # generator function
@@ -149,10 +149,10 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
             wire,
         )
 
-    for bmw_edge in wire.edges:
-        if len(bmw_edge.boundary) != 1 or len(bmw_edge.boundary[0].OrderedEdges) != 1:
+    for w_edge in wire.edges:
+        if len(w_edge.boundary) != 1 or len(w_edge.boundary[0].OrderedEdges) != 1:
             raise GeometryError("Expected each boundary to contain only 1 curve!")
-        edge = bmw_edge.boundary[0].OrderedEdges[0]
+        edge = w_edge.boundary[0].OrderedEdges[0]
 
         # Create aliases for easier referring to variables.
         # The following line may become `edge.start_point(), edge.end_point()`
@@ -161,17 +161,17 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
 
         # Get the info about this segment of wire
         if isinstance(edge.Curve, cadapi.Part.Line | cadapi.Part.LineSegment):
-            wire_container.append(add_line(edge, bmw_edge, current_start, current_end))
+            wire_container.append(add_line(edge, w_edge, current_start, current_end))
 
         elif isinstance(edge.Curve, cadapi.Part.ArcOfCircle | cadapi.Part.Circle):
-            wire_container.append(add_circle(edge, bmw_edge, current_start, current_end))
+            wire_container.append(add_circle(edge, w_edge, current_start, current_end))
 
         elif isinstance(edge.Curve, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
-            sample_pts = bmw_edge.discretise(DISCRETISATION_LEVEL)
+            sample_pts = w_edge.discretise(DISCRETISATION_LEVEL)
             disr_wire = make_polygon(sample_pts, closed=False)
             wire_container.extend([
-                add_line(wire_edge.boundary[0].OrderedEdges[0], wire_edge, start, end)
-                for wire_edge, start, end in zip(
+                add_line(w_e.boundary[0].OrderedEdges[0], w_e, start, end)
+                for w_e, start, end in zip(
                     disr_wire.edges, sample_pts.T[:-1], sample_pts.T[1:], strict=True
                 )
             ])
@@ -462,10 +462,11 @@ class PanelsAndExteriorCurve:
             self.add_cut_points(plane, c_dir)
 
         # final cut point
-        plane, c_dir = calculate_plane_dir(
-            self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
+        self.add_cut_points(
+            *calculate_plane_dir(
+                self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
+            )
         )
-        self.add_cut_points(plane, c_dir)
 
         return self.vv_cut_points, self.exterior_cut_points
 
@@ -701,7 +702,7 @@ class DivertorWireAndExteriorCurve:
         self,
         starting_cut: npt.NDArray[np.float64] | None,
         ending_cut: npt.NDArray[np.float64] | None,
-    ) -> list[npt.NDArray[np.float64]]:
+    ) -> tuple[list[npt.NDArray[np.float64]], ...]:
         """
         Cut the curves up into N segments to match the N convex chunks of the
         divertor.
@@ -735,12 +736,12 @@ class DivertorWireAndExteriorCurve:
         self.vv_cut_points, self.exterior_cut_points = [], []
 
         # initial cut point
-
-        plane, c_dir = calculate_plane_dir(
-            np.array(self.convex_segments[0][0].key_points[0]),
-            [starting_cut[0], 0, starting_cut[-1]],
+        self.add_cut_points(
+            *calculate_plane_dir(
+                np.array(self.convex_segments[0][0].key_points[0]),
+                [starting_cut[0], 0, starting_cut[-1]],
+            )
         )
-        self.add_cut_points(plane, c_dir)
 
         for i in range(len(self.convex_segments) - 1):
             origin, c_dir = self.get_bisection_line(i)
@@ -748,11 +749,12 @@ class DivertorWireAndExteriorCurve:
             self.add_cut_points(plane, c_dir)
 
         # final cut point
-        plane, c_dir = calculate_plane_dir(
-            np.array(self.convex_segments[-1][-1].key_points[1]),
-            [ending_cut[0], 0, ending_cut[-1]],
+        self.add_cut_points(
+            *calculate_plane_dir(
+                np.array(self.convex_segments[-1][-1].key_points[1]),
+                [ending_cut[0], 0, ending_cut[-1]],
+            )
         )
-        self.add_cut_points(plane, c_dir)
 
         return self.vv_cut_points, self.exterior_cut_points
 
@@ -761,7 +763,7 @@ class DivertorWireAndExteriorCurve:
         discretisation_level: int,
         starting_cut: npt.NDArray[np.float64] | None,
         ending_cut: npt.NDArray[np.float64] | None,
-    ) -> list[WireInfoList]:
+    ) -> tuple[list[WireInfoList], ...]:
         """
         Cut the vacuum vessel curves into a series return these segments.
 
@@ -830,9 +832,13 @@ class DivertorWireAndExteriorCurve:
 
         This implementation shall be updated/replaced when issue #3038 gets resolved.
         """
-        sample_coords_3d = [curve.value_at(t) for t in param_range]
-        this_curve = list(starmap(WireInfo.from_2P, pairwise(sample_coords_3d)))
-        return WireInfoList(this_curve)
+        return WireInfoList(
+            list(
+                starmap(
+                    WireInfo.from_2P, pairwise([curve.value_at(t) for t in param_range])
+                )
+            )
+        )
 
     def make_divertor_pre_cell_array(
         self,
@@ -878,38 +884,42 @@ class DivertorWireAndExteriorCurve:
         ):
             interior_wire = self.convex_segments[i]
             # make a new line joining the start and end.
-            if np.allclose(
-                exterior_segment.end_point,
-                interior_wire.start_point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            ):
-                cw_line = WireInfoList([interior_wire.pop(0)])
-            else:
-                cw_line = WireInfoList([
+            # merge lines if collinear
+            cw_line = (
+                WireInfoList([interior_wire.pop(0)])
+                if np.allclose(
+                    exterior_segment.end_point,
+                    interior_wire.start_point,
+                    rtol=0,
+                    atol=EPS_FREECAD,
+                )
+                else WireInfoList([
                     WireInfo.from_2P(
                         exterior_segment.end_point, interior_wire.start_point
                     )
                 ])
-                # merge lines if collinear
+            )
+
             while straight_lines_deviate_less_than(cw_line[-1], interior_wire[0], 0.5):
                 cw_line.end_point = interior_wire.start_point
                 interior_wire.pop(0)
 
-            if np.allclose(
-                interior_wire.end_point,
-                exterior_segment.start_point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            ):
-                ccw_line = WireInfoList([interior_wire.pop(-1)])
-            else:
-                ccw_line = WireInfoList([
+            # merge lines if collinear
+            ccw_line = (
+                WireInfoList([interior_wire.pop(-1)])
+                if np.allclose(
+                    interior_wire.end_point,
+                    exterior_segment.start_point,
+                    rtol=0,
+                    atol=EPS_FREECAD,
+                )
+                else WireInfoList([
                     WireInfo.from_2P(
                         interior_wire.end_point, exterior_segment.start_point
                     )
                 ])
-                # merge lines if collinear
+            )
+
             while straight_lines_deviate_less_than(interior_wire[-1], ccw_line[0], 0.5):
                 ccw_line.start_point = interior_wire.end_point
                 interior_wire.pop(-1)

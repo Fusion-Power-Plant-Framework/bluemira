@@ -10,23 +10,30 @@ in this module are in SI (distrance:[m]) unless otherwise specified by the docst
 
 from __future__ import annotations
 
-from itertools import pairwise
+from dataclasses import dataclass
+from itertools import chain, pairwise
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 
-from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
+from bluemira.geometry.tools import (
+    make_circle_arc_3P,
+    make_polygon,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
-from bluemira.neutronics.params import BlanketLayers
+from bluemira.neutronics.openmc.material import CellType
+from bluemira.neutronics.params import (
+    TokamakDimensions,
+)
 from bluemira.neutronics.radial_wall import (
-    CellWalls,
     polygon_revolve_signed_volume,
 )
 from bluemira.neutronics.wires import CircleInfo, StraightLineInfo, WireInfoList
@@ -43,10 +50,43 @@ if TYPE_CHECKING:
         PreCell,
         PreCellArray,
     )
+    from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
     from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
+
 
 # Found to work by trial and error. I'm sorry.
 SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
+
+
+@dataclass
+class CellStage:
+    """Stage of making cells."""
+
+    blanket: BlanketCellArray
+    divertor: DivertorCellArray
+    tf_coils: list[openmc.Cell]
+    central_solenoid: openmc.Cell
+    plasma: openmc.Cell
+    ext_void: openmc.Cell
+    universe: openmc.Region
+
+    @property
+    def cells(self):
+        """Get the list of all cells."""
+        return (
+            *chain.from_iterable((*self.blanket, *self.divertor)),
+            *self.tf_coils,
+            self.central_solenoid,
+            self.plasma,
+            self.ext_void,
+        )
+
+    def get_all_hollow_merged_cells(self):
+        """Blanket and divertor cells"""
+        return [
+            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.blanket],
+            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
+        ]
 
 
 def is_monotonically_increasing(series):
@@ -234,13 +274,13 @@ def z_torus(
 
 
 def torus_from_5points(
-    point1: npt.NDArray[np.float64],
-    point2: npt.NDArray[np.float64],
-    point3: npt.NDArray[np.float64],
-    point4: npt.NDArray[np.float64],
-    point5: npt.NDArray[np.float64],
-    surface_id: int | None = None,
-    name: str = "",
+    point1: npt.NDArray[np.float64],  # noqa: ARG001
+    point2: npt.NDArray[np.float64],  # noqa: ARG001
+    point3: npt.NDArray[np.float64],  # noqa: ARG001
+    point4: npt.NDArray[np.float64],  # noqa: ARG001
+    point5: npt.NDArray[np.float64],  # noqa: ARG001
+    surface_id: int | None = None,  # noqa: ARG001
+    name: str = "",  # noqa: ARG001
 ) -> openmc.ZTorus:
     """
     Make an elliptical torus centered on the z-axis using 5 points.
@@ -258,16 +298,16 @@ def torus_from_5points(
         "The maths of determining where the ellipse center should"
         "be is yet to be worked out."
     )
-    center, vertical_radius, horizontal_radius = (point1, point2, point3, point4, point5)
-    major_radius, height = center[0], center[-1]
-    return openmc.ZTorus(
-        z0=height,
-        a=major_radius,
-        b=vertical_radius,
-        c=horizontal_radius,
-        surface_id=surface_id,
-        name=name,
-    )
+    # center, vertical_radius, horiz_radius = (point1, point2, point3, point4, point5)
+    # major_radius, height = center[0], center[-1]
+    # return openmc.ZTorus(
+    #     z0=height,
+    #     a=major_radius,
+    #     b=vertical_radius,
+    #     c=horizontal_radius,
+    #     surface_id=surface_id,
+    #     name=name,
+    # )
 
 
 def choose_halfspace(
@@ -326,8 +366,9 @@ def flat_intersection(region_list: Iterable[openmc.Region]) -> openmc.Intersecti
     Get the flat intersection of an entire list of regions.
     e.g. (a (b c)) becomes (a b c)
     """
-    possibly_redundant_reg = openmc.Intersection(region_list)
-    return openmc.Intersection(intersection_dictionary(possibly_redundant_reg).values())
+    return openmc.Intersection(
+        intersection_dictionary(openmc.Intersection(region_list)).values()
+    )
 
 
 def intersection_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
@@ -350,8 +391,7 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
     Get the flat union of an entire list of regions.
     e.g. (a | (b | c)) becomes (a | b | c)
     """
-    possibly_redundant_reg = openmc.Union(region_list)
-    return openmc.Union(union_dictionary(possibly_redundant_reg).values())
+    return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
 
 
 # TODO: Raise issue/papercut to check if simplifying the boolean expressions can yield
@@ -374,6 +414,351 @@ def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
             final_intersection.update(union_dictionary(_r))
         return final_intersection
     return {str(region): region}
+
+
+def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
+    """
+    Make openmc's surfaces' and cells' next IDs to be incremented to the next
+    pre-determined interval.
+    """
+    openmc.Surface.next_id = (
+        int(max(openmc.Surface.used_ids) / surface_step_size + 1) * surface_step_size + 1
+    )
+    openmc.Cell.next_id = (
+        int(max(openmc.Cell.used_ids) / cell_step_size + 1) * cell_step_size + 1
+    )
+
+
+def exterior_vertices(blanket, divertor) -> npt.NDArray:
+    """
+    Get the 3D coordinates of every point at the outer boundary of the tokamak's
+    poloidal cross-section.
+
+    Returns
+    -------
+    coordinates
+        array of shape (N+1+n*M, 3), where N = number of blanket pre-cells,
+        M = number of divertor pre-cells, n = discretisation_level used when chopping
+        up the divertor in
+        :meth:`bluemira.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
+    """
+    return np.concatenate([
+        blanket.exterior_vertices(),
+        divertor.exterior_vertices()[::-1],
+    ])
+
+
+def interior_vertices(blanket, divertor) -> npt.NDArray:
+    """
+    Get the 3D coordinates of every point at the interior boundary of the tokamak's
+    poloidal cross-section
+
+    Returns
+    -------
+    coordinates
+        array of shape ((N+1)+sum(number of interior points of the divertor), 3),
+        where N = number of blanket pre-cells, M = number of divertor pre-cells.
+        Runs clockwise, beginning at the inboard blanket-divertor joining point.
+    """
+    return np.concatenate([
+        blanket.interior_vertices(),
+        divertor.interior_vertices()[::-1],
+    ])
+
+
+def make_universe_box(
+    csg, z_min: float, z_max: float, r_max: float, *, control_id: bool = False
+):
+    """Box up the universe in a cylinder (including top and bottom)."""
+    bottom = csg.find_suitable_z_plane(
+        z_min,
+        boundary_type="vacuum",
+        surface_id=999 if control_id else None,
+        name="Universe bottom",
+    )
+    top = csg.find_suitable_z_plane(
+        z_max,
+        boundary_type="vacuum",
+        surface_id=1000 if control_id else None,
+        name="Universe top",
+    )
+    universe_cylinder = openmc.ZCylinder(
+        r=to_cm(r_max),
+        surface_id=1001 if control_id else None,
+        boundary_type="vacuum",
+        name="Max radius of Universe",
+    )
+    return -top & +bottom & -universe_cylinder
+
+
+def make_coils(
+    csg,
+    solenoid_radius: float,
+    tf_coil_thick: float,
+    z_min: float,
+    z_max: float,
+    materials,
+) -> tuple[openmc.Cell, list[openmc.Cell]]:
+    """
+    Make tf coil and the central solenoid. The former wraps around the latter.
+
+    Parameters
+    ----------
+    solenoid_radius:
+        Central solenoid radius [m]
+    tf_coil_thick:
+        Thickness of the tf-coil, wrapped around the central solenoid [m]
+    z_max:
+        z-coordinate of the the top z-plane shared by both cylinders
+        (cs and tf coil)
+    z_min
+        z-coordinate of the the bottom z-plane shared by both cylinders
+        (cs and tf coil)
+    """
+    solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
+    central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
+    top = csg.find_suitable_z_plane(
+        z_max,
+        [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
+        name="Top of central solenoid",
+    )
+    bottom = csg.find_suitable_z_plane(
+        z_min,
+        [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
+        name="Bottom of central solenoid",
+    )
+    central_solenoid = openmc.Cell(
+        name="Central solenoid",
+        fill=materials.match_material(CellType.CSCoil),
+        region=+bottom & -top & -solenoid,
+    )
+    tf_coils = [
+        openmc.Cell(
+            name="TF coil (sheath around central solenoid)",
+            fill=materials.match_material(CellType.TFCoil),
+            region=+bottom & -top & +solenoid & -central_tf_coil,
+        )
+    ]
+    central_solenoid.volume = (top.z0 - bottom.z0) * np.pi * solenoid.r**2
+    tf_coils[0].volume = (
+        (top.z0 - bottom.z0) * np.pi * (central_tf_coil.r**2 - solenoid.r**2)
+    )
+    return central_solenoid, tf_coils
+
+
+def blanket_and_divertor_outer_region(
+    csg, blanket, divertor, *, control_id: bool = False
+) -> openmc.Region:
+    """
+    Get the entire tokamak's poloidal cross-section (everything inside
+    self.geom.boundary) as an openmc.Region.
+    """
+    return csg.region_from_surface_series(
+        [
+            *blanket.exterior_surfaces(),
+            *chain.from_iterable(divertor.exterior_surfaces()),
+        ],
+        exterior_vertices(blanket, divertor),
+        control_id=control_id,
+    )
+
+
+def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
+    """Get the plasma chamber's poloidal cross-section"""
+    blanket_interior_pts = blanket.interior_vertices()
+    dividing_surface = csg.surface_from_2points(
+        blanket_interior_pts[0][::2], blanket_interior_pts[-1][::2]
+    )
+    plasma = csg.region_from_surface_series(
+        [*blanket.interior_surfaces(), dividing_surface],
+        blanket_interior_pts,
+        control_id=control_id,
+    )
+
+    exhaust_including_divertor = csg.region_from_surface_series(
+        [
+            *chain.from_iterable(divertor.exterior_surfaces()),
+            dividing_surface,
+        ],
+        divertor.exterior_vertices(),
+        control_id=control_id,
+    )
+
+    return flat_union([plasma, exhaust_including_divertor]) & ~divertor.exclusion_zone(
+        control_id=control_id
+    )
+
+
+def make_void_cells(
+    csg,
+    tf_coils,
+    central_solenoid,
+    universe,
+    blanket,
+    divertor,
+    *,
+    control_id: bool = False,
+):
+    """Make the plasma chamber and the outside ext_void. This should be called AFTER
+    the blanket and divertor cells are created.
+    """
+    full_tokamak_region = blanket_and_divertor_outer_region(
+        csg, blanket, divertor, control_id=control_id
+    )
+    void_region = universe & ~full_tokamak_region
+    if tf_coils:
+        void_region &= ~tf_coils[0].region
+    if central_solenoid:
+        void_region &= ~central_solenoid.region
+
+    return (
+        openmc.Cell(
+            region=plasma_void(csg, blanket, divertor, control_id=control_id),
+            fill=None,
+            name="Plasma void",
+        ),
+        openmc.Cell(
+            region=flat_intersection(void_region),
+            fill=None,
+            name="Exterior void",
+        ),
+    )
+
+
+def set_volumes(
+    universe: openmc.Universe,
+    tf_coils: list[openmc.Cell],
+    central_solenoid: openmc.Cell,
+    ext_void: openmc.Cell,
+    blanket: BlanketCellArray,
+    divertor: DivertorCellArray,
+    plasma: openmc.Cell,
+):
+    """
+    Sets the volume of the voids. Not necessary/ used anywhere yet.
+    """
+    ext_vertices = exterior_vertices(blanket, divertor)
+    total_universe_volume = (
+        #  top - bottom
+        (universe[0].surface.z0 - universe[1].surface.z0)
+        * np.pi
+        * universe[2].surface.r ** 2  # cylinder
+    )  # cm^3
+    universe.volume = total_universe_volume
+
+    outer_boundary_volume = to_cm3(polygon_revolve_signed_volume(ext_vertices[:, ::2]))
+    ext_void_volume = total_universe_volume - outer_boundary_volume
+    if tf_coils:
+        for coil in tf_coils:
+            ext_void_volume -= coil.volume
+    if central_solenoid:
+        ext_void_volume -= central_solenoid.volume
+    ext_void.volume = ext_void_volume
+    blanket_volumes = sum(cell.volume for cell in chain.from_iterable(blanket))
+    divertor_volumes = sum(cell.volume for cell in chain.from_iterable(divertor))
+    plasma.volume = outer_boundary_volume - blanket_volumes - divertor_volumes
+
+
+def make_cell_arrays(
+    pre_cell_reactor: NeutronicsReactor,
+    csg: BluemiraNeutronicsCSG,
+    materials: MaterialsLibrary,
+    *,
+    control_id: bool = False,
+) -> CellStage:
+    """Make pre-cell arrays for the blanket and the divertor.
+
+    Parameters
+    ----------
+    materials:
+        library containing information about the materials
+    tokamak_dimensions:
+        A parameter :class:`bluemira.neutronics.params.TokamakDimensions`,
+        Specifying the dimensions of various layers in the blanket, divertor, and
+        central solenoid.
+    control_id: bool
+        Whether to set the blanket Cells and surface IDs by force or not.
+        With this set to True, it will be easier to understand where each cell came
+        from. However, it will lead to warnings and errors if a cell/surface is
+        generated to use a cell/surface ID that has already been used respectively.
+        Keep this as False if you're running openmc simulations multiple times in one
+        session.
+    """
+    # determine universe_box
+
+    z_max, z_min, r_max, _r_min = pre_cell_reactor.bounding_box
+    universe = make_universe_box(
+        csg,
+        z_min - D_TOLERANCE,
+        z_max + D_TOLERANCE,
+        r_max + D_TOLERANCE,
+        control_id=control_id,
+    )
+
+    blanket = BlanketCellArray.from_pre_cell_array(
+        pre_cell_reactor.blanket,
+        materials,
+        pre_cell_reactor.tokamak_dimensions,
+        csg,
+        control_id=control_id,
+    )
+
+    # change the cell and surface id register before making the divertor.
+    # (ids will only count up from here.)
+    if control_id:
+        round_up_next_openmc_ids()
+
+    divertor = DivertorCellArray.from_pre_cell_array(
+        pre_cell_reactor.divertor,
+        materials,
+        pre_cell_reactor.tokamak_dimensions.divertor,
+        csg=csg,
+        override_start_end_surfaces=(blanket[0].ccw_surface, blanket[-1].cw_surface),
+        # ID cannot be controlled at this point.
+    )
+
+    # make the plasma cell and the exterior void.
+    if control_id:
+        round_up_next_openmc_ids()
+
+    cs, tf = make_coils(
+        csg,
+        pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
+        (
+            (
+                pre_cell_reactor.tokamak_dimensions.central_solenoid.outer_diameter
+                - pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter
+            )
+            / 2
+        ),
+        z_min - D_TOLERANCE,
+        z_max + D_TOLERANCE,
+        materials,
+    )
+    plasma, ext_void = make_void_cells(
+        csg, tf, cs, universe, blanket, divertor, control_id=control_id
+    )
+
+    cell_stage = CellStage(
+        blanket=blanket,
+        divertor=divertor,
+        tf_coils=tf,
+        central_solenoid=cs,
+        plasma=plasma,
+        ext_void=ext_void,
+        universe=universe,
+    )
+    set_volumes(
+        cell_stage.universe,
+        cell_stage.tf_coils,
+        cell_stage.central_solenoid,
+        cell_stage.ext_void,
+        cell_stage.blanket,
+        cell_stage.divertor,
+        cell_stage.plasma,
+    )
+
+    return cell_stage
 
 
 class BluemiraNeutronicsCSG:
@@ -721,13 +1106,13 @@ class BluemiraNeutronicsCSG:
 
 class BlanketCell(openmc.Cell):
     """
-    A generic blanket cell that forms the base class for the five specialized types of
+    A generic blanket cell that forms the base class for the five specialised types of
     blanket cells.
 
     It's a special case of openmc.Cell, in that it has 3 to 4 surfaces
     (mandatory surfaces: exterior_surface, ccw_surface, cw_surface;
     optional surface: interior_surface), and it is more wieldy because we don't have to
-    specify the relevant half-space for each surface; instead the corneres of the cell
+    specify the relevant half-space for each surface; instead the corners of the cell
     is provided by the user, such that the appropriate regions are chosen.
     """
 
@@ -1041,9 +1426,20 @@ class BlanketCellStack:
 
         cell_stack = []
         # k = range(0, M - layer_mask == False)
-        for k, points in enumerate(wall_cut_pts[1:][layer_mask]):
+        cell_types = np.array(
+            (
+                CellType.BlanketSurface,
+                CellType.BlanketFirstWall,
+                CellType.BlanketBreedingZone,
+                CellType.BlanketManifold,
+                CellType.VacuumVessel,
+            ),
+            dtype=object,
+        )[layer_mask]
+        for k, (points, cell_type) in enumerate(
+            zip(wall_cut_pts[1:][layer_mask], cell_types, strict=False)
+        ):
             j = k + 1  # = range(1, M+1)
-            cell_type = BlanketLayers(j)
             if j > 1:
                 int_surf.name = (
                     f"{cell_type}-{cell_type.name} "
@@ -1064,7 +1460,7 @@ class BlanketCellStack:
                     csg=csg,
                     cell_id=cell_ids[k],  # up to M
                     name=f"{cell_type.name} of blanket cell stack {i}",
-                    fill=fill_lib.match_blanket_material(cell_type, inboard=inboard),
+                    fill=fill_lib.match_material(cell_type, inboard=inboard),
                 )
             )
             int_surf = ext_surf
@@ -1200,7 +1596,7 @@ class BlanketCellArray:
     def from_pre_cell_array(
         cls,
         pre_cell_array: PreCellArray,
-        material_library: MaterialsLibrary,
+        materials: MaterialsLibrary,
         blanket_dimensions: TokamakDimensions,
         csg: BluemiraNeutronicsCSG,
         *,
@@ -1216,7 +1612,7 @@ class BlanketCellArray:
         ----------
         pre_cell_array
             PreCellArray
-        material_library
+        materials
             :class:`~MaterialsLibrary` so that it separates into .inboard, .outboard,
             .divertor, .tf_coil_windings, etc.
         blanket_dimensions
@@ -1226,7 +1622,7 @@ class BlanketCellArray:
             Passed as argument onto
             :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
-        cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
+        cell_walls = pre_cell_array.cell_walls
 
         # left wall
         ccw_surf = csg.surface_from_2points(
@@ -1251,7 +1647,7 @@ class BlanketCellArray:
                 cw_surf,
                 get_depth_values(pre_cell, blanket_dimensions),
                 csg=csg,
-                fill_lib=material_library,
+                fill_lib=materials,
                 inboard=check_inboard_outboard(pre_cell, blanket_dimensions),
                 blanket_stack_num=i if control_id else None,
             )
@@ -1495,7 +1891,7 @@ class DivertorCellStack:
         divertor_pre_cell: DivertorPreCell,
         cw_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
-        material_library: MaterialsLibrary,
+        materials: MaterialsLibrary,
         csg: BluemiraNeutronicsCSG,
         armour_thickness: float = 0,
         stack_num: str | int = "",
@@ -1508,7 +1904,7 @@ class DivertorCellStack:
         stack_num:
             A string or number to identify the cell stack by.
         """
-        # I apologize that this is still hard to read.
+        # I apologise that this is still hard to read.
         # I'm trying to make cell_stack a 3-element list if armour_thickness>0,
         # but a 2-element list if armour_thickness==0.
 
@@ -1538,7 +1934,7 @@ class DivertorCellStack:
                 inner_wire,
                 csg=csg,
                 name=f"Bulk of divertor in diver cell stack {stack_num}",
-                fill=material_library.divertor_mat,
+                fill=materials.match_material(CellType.DivertorBulk),
             ),
         ]
         cell_stack.append(
@@ -1555,7 +1951,7 @@ class DivertorCellStack:
                 subtractive_region=cell_stack[0].exclusion_zone(away_from_plasma=False),
                 name="Vacuum Vessel behind the divertor in divertor cell stack"
                 f"{stack_num}",
-                fill=material_library.div_fw_mat,
+                fill=materials.match_material(CellType.DivertorFirstWall),
             )
         )
         # Unfortunately, this does mean that the vacuum vessel has a larger ID than the
@@ -1581,7 +1977,7 @@ class DivertorCellStack:
                     subtractive_region=cell_stack[0].exclusion_zone(
                         away_from_plasma=True
                     ),
-                    fill=material_library.div_sf_mat,
+                    fill=materials.match_material(CellType.DivertorSurface),
                 ),
             )
             # again, unfortunately, this does mean that the surface armour cell has the
@@ -1693,7 +2089,7 @@ class DivertorCellArray:
     def from_pre_cell_array(
         cls,
         pre_cell_array: DivertorPreCellArray,
-        material_library: MaterialsLibrary,
+        materials: MaterialsLibrary,
         divertor_thickness: DivertorThickness,
         csg: BluemiraNeutronicsCSG,
         override_start_end_surfaces: tuple[openmc.Surface, openmc.Surface] | None = None,
@@ -1705,7 +2101,7 @@ class DivertorCellArray:
         ----------
         pre_cell_array
             The array of divertor pre-cells.
-        material_library
+        materials
             container of openmc.Material
         divertor_thickness
             A parameter :class:`bluemira.neutronics.params.DivertorThickness`. For now it
@@ -1740,7 +2136,7 @@ class DivertorCellArray:
                     dpc,
                     cw_surf,
                     ccw_surf,
-                    material_library,
+                    materials,
                     csg,
                     divertor_thickness.surface,
                     i + 1,
