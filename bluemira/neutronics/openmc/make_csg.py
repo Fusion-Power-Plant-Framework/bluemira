@@ -61,7 +61,7 @@ class CellStage:
     blanket: BlanketCellArray
     divertor: DivertorCellArray
     tf_coils: list[openmc.Cell]
-    central_solenoid: openmc.Cell
+    cs_coil: openmc.Cell
     plasma: openmc.Cell
     ext_void: openmc.Cell
     universe: openmc.Region
@@ -72,7 +72,7 @@ class CellStage:
         return (
             *chain.from_iterable((*self.blanket, *self.divertor)),
             *self.tf_coils,
-            self.central_solenoid,
+            self.cs_coil,
             self.plasma,
             self.ext_void,
         )
@@ -690,8 +690,8 @@ def make_cell_arrays(
 
     cs, tf = make_coils(
         csg,
-        pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
-        r_min - pre_cell_reactor.tokamak_dimensions.central_solenoid.inner_diameter / 2,
+        r_min - pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
+        pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
         z_min - D_TOLERANCE,
         z_max + D_TOLERANCE,
         materials,
@@ -704,7 +704,7 @@ def make_cell_arrays(
         blanket=blanket,
         divertor=divertor,
         tf_coils=tf,
-        central_solenoid=cs,
+        cs_coil=cs,
         plasma=plasma,
         ext_void=ext_void,
         universe=universe,
@@ -712,7 +712,7 @@ def make_cell_arrays(
     set_volumes(
         cell_stage.universe,
         cell_stage.tf_coils,
-        cell_stage.central_solenoid,
+        cell_stage.cs_coil,
         cell_stage.ext_void,
         cell_stage.blanket,
         cell_stage.divertor,

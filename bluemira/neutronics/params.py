@@ -233,8 +233,8 @@ class ToroidalFieldCoilDimension:
         Outer diameter of the windings.
     """
 
-    inner_diameter: float
-    outer_diameter: float
+    thickness: float
+    inner_radius: float
 
 
 @dataclass
@@ -250,7 +250,7 @@ class TokamakDimensions:
         thicknesses of the outboard blanket
     divertor
         thicknesses of the divertor components
-    central_solenoid
+    cs_coil
         diameters of the toroidal field coil in the
     """
 
@@ -258,7 +258,7 @@ class TokamakDimensions:
     inboard_outboard_transition_radius: float
     outboard: BlanketThickness
     divertor: DivertorThickness
-    central_solenoid: ToroidalFieldCoilDimension
+    cs_coil: ToroidalFieldCoilDimension
 
     @classmethod
     def from_parameterframe(cls, params, r_inner_cut: float):
@@ -278,7 +278,5 @@ class TokamakDimensions:
                 params.blk_ob_manifold.value,
             ),
             DivertorThickness(params.fw_divertor_surface_tk.value),
-            ToroidalFieldCoilDimension(
-                params.r_tf_in.value, params.r_tf_in.value + params.tk_tf_inboard.value
-            ),
+            ToroidalFieldCoilDimension(params.tk_tf_inboard.value, params.r_tf_in.value),
         )
