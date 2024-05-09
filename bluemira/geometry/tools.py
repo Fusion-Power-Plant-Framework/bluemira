@@ -766,6 +766,9 @@ def convex_hull_wires_2d(
     return make_polygon(hull_coords, closed=True)
 
 
+# # =============================================================================
+# # Volume function
+# # =============================================================================
 def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     """
     Revolve a polygon along the z axis, and return the volume.
