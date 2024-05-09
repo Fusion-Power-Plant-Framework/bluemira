@@ -74,6 +74,13 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self.target_harmonics = ref_harmonics
         self.max_degree = len(ref_harmonics) + 1
 
+        if invert and constraint_type == "equality":
+            bluemira_warn(
+                "Have used 'invert=True' while using 'equality' type for the"
+                "Spherical Harmonic Constraint."
+                "Please double check your constraint inputs."
+            )
+
         self.invert = invert
 
         self.sh_coil_names = sh_coil_names
