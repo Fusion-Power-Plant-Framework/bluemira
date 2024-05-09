@@ -411,7 +411,7 @@ class OpenFluxSurface(FluxSurface):
 
         # Pick the first intersection, travelling from the o_point outwards
         deltas = x_inter - o_point.x
-        arg_inter = np.argmax(deltas > 0)
+        arg_inter = np.argmax(deltas >= 0)
         x_mp = x_inter[arg_inter]
         z_mp = o_point.z
 
