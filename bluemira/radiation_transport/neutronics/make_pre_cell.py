@@ -491,6 +491,13 @@ class PreCellArray:
         """Get pre cell"""
         return self.pre_cells[index_or_slice]
 
+    def __setitem__(self, index_or_slice, new_pre_cell: PreCell | PreCellArray):
+        """Set an element to be a new Precell, or a slice to be a new PreCellarray."""
+        if isinstance(new_pre_cell, PreCell):
+            self.pre_cells[index_or_slice] = new_pre_cell
+        else:
+            self.pre_cells[index_or_slice] = new_pre_cell.pre_cells
+
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
         if isinstance(other_array, PreCellArray):
@@ -502,6 +509,18 @@ class PreCellArray:
     def __repr__(self) -> str:
         """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
+
+    def copy(self):
+        """
+        NOT a deepcopy, each element of the new_copy.pre_cells list points to the same
+        items as the self.pre_cells
+
+        Returns
+        -------
+        new_copy
+            copy of itself
+        """
+        return PreCellArray(self.pre_cells.copy())
 
 
 class DivertorPreCell:
@@ -731,3 +750,15 @@ class DivertorPreCellArray:
     def show_cad(self, *args, **kwargs):
         """Show precell array CAD"""
         return show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
+
+    def copy(self):
+        """
+        NOT a deepcopy, each element of the new_copy.pre_cells list points to the same
+        items as the self.pre_cells
+
+        Returns
+        -------
+        new_copy
+            copy of itself
+        """
+        return DivertorPreCellArray(self.pre_cells.copy())

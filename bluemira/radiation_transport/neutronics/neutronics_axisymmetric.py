@@ -19,7 +19,9 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import is_convex
+from bluemira.geometry.plane import calculate_plane_dir
+from bluemira.geometry.tools import get_wire_plane_intersect, is_convex, make_polygon
+from bluemira.neutronics.make_pre_cell import PreCell
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
@@ -70,19 +72,74 @@ class CuttingStage:
     divertor: DivertorWireAndExteriorCurve
 
 
-@dataclass
 class PreCellStage:
     """Stage of making pre-cells"""
 
-    blanket: PreCellArray
-    divertor: DivertorPreCellArray
-
-    def __post_init__(self):
+    def __init__(self, blanket: PreCellArray, divertor: DivertorPreCellArray):
         """Check convexity after initialization"""
+        self.blanket = blanket.copy()
+        self.divertor = divertor.copy()
+        # 1. stretch first blanket cell in PreCellArray to reach div_start_wire
+        div_start_wire = self.divertor[0].cw_wall.restore_to_wire()
+        # pull everything down to: div_start_wire.
+        # Alternatively, choose div_start_wire=self.divertor[0].outline
+        old_vv_wire = self.blanket[0].vv_wire
+        ext_pt, i_high, i_low = np.insert(self.blanket[0].vertex, 1, 0, axis=0).T[:3]
+        i_end = get_wire_plane_intersect(
+            div_start_wire, *calculate_plane_dir(i_high, i_low)
+        )
+        # v_end = get_wire_plane_intersect(
+        #     div_start_wire,
+        #     *calculate_plane_dir(old_vv_wire.end_point().xyz.flatten(),
+        #     old_vv_wire.start_point().xyz.flatten())
+        # )
+        in_wire = make_polygon(np.array([i_high, i_end]).T, closed=False)
+        vv_wire = make_polygon(
+            np.array([
+                old_vv_wire.end_point().xyz.flatten(),
+                self.divertor[0].vv_wire.end_point,
+            ]).T,
+            closed=False,
+        )
+        ex_wire = make_polygon(
+            np.array([self.divertor[0].vertex.T[0], ext_pt]).T, closed=False
+        )
+        new_start_cell = PreCell(in_wire, vv_wire, ex_wire)
+        self.blanket[0] = new_start_cell
+
+        # 2. stretch first blanket cell in PreCellArray to reach div_end_wire
+        div_end_wire = self.divertor[-1].ccw_wall.restore_to_wire()
+        old_vv_wire = self.blanket[-1].vv_wire
+        i_low, i_high, ext_pt = np.insert(self.blanket[-1].vertex, 1, 0, axis=0).T[-3:]
+        i_start = get_wire_plane_intersect(
+            div_end_wire, *calculate_plane_dir(i_high, i_low)
+        )
+        # v_end = get_wire_plane_intersect(
+        #     div_end_wire,
+        #     *calculate_plane_dir(old_vv_wire.start_point().xyz.flatten(),
+        #     old_vv_wire.end_point().xyz.flatten())
+        # )
+        in_wire = make_polygon(np.array([i_start, i_high]).T, closed=False)
+        vv_wire = make_polygon(
+            np.array([
+                old_vv_wire.start_point().xyz.flatten(),
+                self.divertor[-1].vv_wire.start_point,
+            ]).T,
+            closed=False,
+        )
+        ex_wire = make_polygon(
+            np.array([ext_pt, self.divertor[-1].vertex.T[-1]]).T, closed=False
+        )
+        new_end_cell = PreCell(in_wire, vv_wire, ex_wire)
+        self.blanket[-1] = new_end_cell
+
+        # re-initialize so that the cell_walls are re-calculated
+        self.blanket = self.blanket.copy()
+
         ext_coords = self.external_coordinates()
         if not is_convex(ext_coords):
             raise GeometryError(
-                f"The vertices of {self.blanket} + {self.divertor} must form"
+                f"The vertices of {self.blanket} + {self.divertor} must form "
                 "a convex outline!"
             )
 
