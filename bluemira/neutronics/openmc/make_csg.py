@@ -22,11 +22,15 @@ from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_circle_arc_3P, make_polygon, revolve_shape
+from bluemira.geometry.tools import (
+    make_circle_arc_3P,
+    make_polygon,
+    polygon_revolve_signed_volume,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
 from bluemira.neutronics.openmc.material import CellType
-from bluemira.neutronics.radial_wall import polygon_revolve_signed_volume
 from bluemira.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:

@@ -766,6 +766,86 @@ def convex_hull_wires_2d(
     return make_polygon(hull_coords, closed=True)
 
 
+def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
+    """
+    Revolve a polygon along the z axis, and return the volume.
+
+    A polygon placed in the RHS of the z-axis in the xz plane would have positive volume
+    if it runs clockwise, and negative volume if it runs counter-clockwise.
+
+    Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
+    negative volume if it runs clockwise, positive volume if it runs counter-clockwise.
+
+    Parameters
+    ----------
+    polygon:
+        Stores the x-z coordinate pairs of the four coordinates.
+
+    Notes
+    -----
+    Consider one edge of the polygon, which has two vertices, $p$ and $c$.
+    TODO: insert graphics
+
+    When revolved around the z-axis, this trapezium forms a the frustum of a cone.
+    The expression for the volume of this frustrum needs to be modified to avoid
+    ZeroDivisionError, thus it is recast into the following (also the simplest) form:
+    :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
+
+    Adding together the signed volume of all edges, the excess negative volume from one
+    side would cancel out the excess positive volume from the other, such that
+    abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
+    """
+    polygon = np.array(polygon)
+    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
+        raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
+    previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
+    px, pz = previous_points[:, 0], previous_points[:, -1]
+    cx, cz = current_points[:, 0], current_points[:, -1]
+    volume_3_over_pi = (pz - cz) * (px**2 + px * cx + cx**2)
+    return np.pi / 3 * sum(volume_3_over_pi)
+
+
+def partial_diff_of_volume(
+    three_vertices: Sequence[Sequence[float]],
+    normalised_direction_vector: Iterable[float],
+) -> float:
+    """
+    Gives the relationship between how the the solid volume varies with the position of
+    one of its verticies. More precisely, it gives gives the the partial derivative of
+    the volume of the solid revolved out of a polygon when one vertex of that polygon
+    is moved in the direction specified by normalised_direction_vector.
+
+    Parameters
+    ----------
+    three_vertices:
+        Contain (x, z) coordinates of the polygon. It extracts only the vertex being
+        moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
+        are anchor vertices that cannot be adjusted. shape (3, 2)
+    normalised_direction_vector:
+        Direction that the point is allowed to move in. shape = (2,)
+
+    Notes
+    -----
+    Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
+    polygon. When r is moved, the polygon's revolved solid volume changes.
+    After a hefty amount of derivation, everything cancels out to give the expression
+    .. math::
+
+        \\frac{dV}{d r_z} = q_z q_x - r_z q_x + 2 q_z r_x - 2 s_z r_x + r_z s_x - s_z s_x
+        \\frac{dV}{d r_x} = (q_x + r_x + s_x) (s_x - q_x)
+
+
+    The dot product between the direction of motion and the vector :math:`\\frac{dV}{dr}`
+    gives the required scalar derivative showing "how much does the volume change when
+    r is moved in a certain direction by one unit length".
+    """
+    (qx, qz), (rx, rz), (sx, sz) = three_vertices
+    x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
+    z_component = (qx + rx + sx) * (sx - qx)
+    xz_derivatives = np.array([x_component, z_component]).T
+    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
+
+
 # # =============================================================================
 # # Shape operation
 # # =============================================================================
