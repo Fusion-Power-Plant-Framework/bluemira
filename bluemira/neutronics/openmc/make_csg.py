@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    from bluemira.neutronics.geometry import DivertorThickness, TokamakDimensions
     from bluemira.neutronics.make_pre_cell import (
         DivertorPreCell,
         DivertorPreCellArray,
@@ -46,7 +47,6 @@ if TYPE_CHECKING:
     )
     from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
     from bluemira.neutronics.openmc.material import MaterialsLibrary
-    from bluemira.neutronics.params import DivertorThickness, TokamakDimensions
     from bluemira.neutronics.wires import StraightLineInfo, WireInfoList
 
 

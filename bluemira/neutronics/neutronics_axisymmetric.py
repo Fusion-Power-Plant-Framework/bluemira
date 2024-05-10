@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 
     from bluemira.base.reactor import ComponentManager
     from bluemira.geometry.wire import BluemiraWire
+    from bluemira.neutronics.geometry import TokamakDimensions
     from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
     from bluemira.neutronics.materials import NeutronicsMaterials
-    from bluemira.neutronics.params import TokamakDimensions
 
 
 @dataclass

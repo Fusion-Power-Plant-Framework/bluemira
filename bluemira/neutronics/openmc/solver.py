@@ -35,13 +35,13 @@ from bluemira.neutronics.openmc.make_csg import (
 )
 from bluemira.neutronics.openmc.material import MaterialsLibrary
 from bluemira.neutronics.openmc.output import OpenMCResult
+from bluemira.neutronics.openmc.params import (
+    OpenMCNeutronicsSolverParams,
+    PlasmaSourceParameters,
+)
 from bluemira.neutronics.openmc.tallying import (
     _create_tallies_from_filters,
     filter_new_cells,
-)
-from bluemira.neutronics.params import (
-    OpenMCNeutronicsSolverParams,
-    PlasmaSourceParameters,
 )
 from bluemira.plasma_physics.reactions import n_DT_reactions
 

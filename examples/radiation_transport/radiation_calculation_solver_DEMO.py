@@ -195,7 +195,7 @@ else:
             if core_filter_in(point):
                 rad_sol_grid[j, i] = interpolated_field_values(
                     x_sol[i], z_sol[j], f_core
-                )
+                ).item()
             else:
                 rad_sol_grid[j, i] = (
                     rad_sol_grid[j, i]
@@ -203,7 +203,7 @@ else:
                     * (pfr_down_filter(point) * 1.0)
                     * (pfr_up_filter(point) * 1.0)
                     * (core_filter_out(point) * 1.0)
-                )
+                ).item()
 
     func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
     # Calculate radiation of FW points

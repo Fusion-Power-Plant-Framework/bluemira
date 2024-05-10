@@ -10,7 +10,7 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import dt_neutron_energy
-from bluemira.neutronics.params import PlasmaSourceParameters
+from bluemira.neutronics.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.error import SourceError
 
 try:
