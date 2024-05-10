@@ -25,14 +25,17 @@ from bluemira.geometry.plane import (
     z_plane,
 )
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
-from bluemira.neutronics.constants import DISCRETISATION_LEVEL, TOLERANCE_DEGREES
-from bluemira.neutronics.make_pre_cell import (
+from bluemira.radiation_transport.neutronics.constants import (
+    DISCRETISATION_LEVEL,
+    TOLERANCE_DEGREES,
+)
+from bluemira.radiation_transport.neutronics.make_pre_cell import (
     DivertorPreCell,
     DivertorPreCellArray,
     PreCell,
     PreCellArray,
 )
-from bluemira.neutronics.wires import (
+from bluemira.radiation_transport.neutronics.wires import (
     CircleInfo,
     StraightLineInfo,
     WireInfo,
@@ -493,7 +496,7 @@ class PanelsAndExteriorCurve:
         ----------
         snap_to_horizontal_angle, starting_cut, ending_cut:
             See
-            :meth:`~bluemira.neutronics.slicing.PanelsAndExteriorCurve.calculate_cut_points`
+            :meth:`~bluemira.radiation_transport.neutronics.slicing.PanelsAndExteriorCurve.calculate_cut_points`
         discretisation_level:
             how many points to use to approximate the curve.
 
@@ -790,7 +793,7 @@ class DivertorWireAndExteriorCurve:
         ----------
         starting_cut, ending_cut:
             See
-            :meth:`~bluemira.neutronics.slicing.DivertorWireAndExteriorCurve.calculate_cut_points`
+            :meth:`~bluemira.radiation_transport.neutronics.slicing.DivertorWireAndExteriorCurve.calculate_cut_points`
         discretisation_level:
             how many points to use to approximate the curve.
 

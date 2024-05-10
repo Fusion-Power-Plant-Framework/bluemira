@@ -24,11 +24,11 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.radial_wall import (
+from bluemira.radiation_transport.neutronics.radial_wall import (
     CellWalls,
     Vert,
 )
-from bluemira.neutronics.wires import (
+from bluemira.radiation_transport.neutronics.wires import (
     CircleInfo,
     StraightLineInfo,
     WireInfo,
@@ -273,7 +273,8 @@ class PreCell:
         The side (clockwise side and counter-clockwise) walls of this cell.
         Only create it when called, because some instances of PreCell will never use it.
 
-        it is of type :class:`~bluemira.neutronics.radial_wall.CellWalls`.
+        it is of type
+        :class:`~bluemira.radiation_transport.neutronics.radial_wall.CellWalls`.
         """
         if not hasattr(self, "_cell_walls"):
             self._cell_walls = CellWalls(

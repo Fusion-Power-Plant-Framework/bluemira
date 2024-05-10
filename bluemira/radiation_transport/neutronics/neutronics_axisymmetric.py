@@ -18,7 +18,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.neutronics.slicing import (
+from bluemira.radiation_transport.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
 )
@@ -28,9 +28,12 @@ if TYPE_CHECKING:
 
     from bluemira.base.reactor import ComponentManager
     from bluemira.geometry.wire import BluemiraWire
-    from bluemira.neutronics.geometry import TokamakDimensions
-    from bluemira.neutronics.make_pre_cell import DivertorPreCellArray, PreCellArray
-    from bluemira.neutronics.materials import NeutronicsMaterials
+    from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
+    from bluemira.radiation_transport.neutronics.make_pre_cell import (
+        DivertorPreCellArray,
+        PreCellArray,
+    )
+    from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
 
 @dataclass

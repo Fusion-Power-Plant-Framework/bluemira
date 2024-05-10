@@ -22,7 +22,7 @@ from bluemira.geometry.tools import partial_diff_of_volume, polygon_revolve_sign
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.neutronics.make_pre_cell import PreCellArray
+    from bluemira.radiation_transport.neutronics.make_pre_cell import PreCellArray
 
 
 class Vert(IntEnum):

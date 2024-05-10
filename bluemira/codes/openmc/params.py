@@ -131,7 +131,7 @@ class PlasmaSourceParameters:
     def from_parameterframe(cls, params: ParameterFrame):
         """
         Convert from si units dataclass
-        :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
+        :class:`~bluemira.radiation_transport.neutronics.params.PlasmaSourceParameters`
 
         This gives the illusion that self.cgs.x = scale_factor*self.x
         We rely on the 'frozen' nature of this dataclass so these links don't break.

@@ -16,7 +16,7 @@ import openmc
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from bluemira.neutronics.materials import NeutronicsMaterials
+    from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
 
 class CellType(Enum):

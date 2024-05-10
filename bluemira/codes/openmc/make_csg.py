@@ -30,8 +30,13 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
-from bluemira.neutronics.wires import CircleInfo
+from bluemira.radiation_transport.neutronics.constants import (
+    DTOL_CM,
+    to_cm,
+    to_cm3,
+    to_m,
+)
+from bluemira.radiation_transport.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -39,15 +44,23 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.codes.openmc.material import MaterialsLibrary
-    from bluemira.neutronics.geometry import DivertorThickness, TokamakDimensions
-    from bluemira.neutronics.make_pre_cell import (
+    from bluemira.radiation_transport.neutronics.geometry import (
+        DivertorThickness,
+        TokamakDimensions,
+    )
+    from bluemira.radiation_transport.neutronics.make_pre_cell import (
         DivertorPreCell,
         DivertorPreCellArray,
         PreCell,
         PreCellArray,
     )
-    from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
-    from bluemira.neutronics.wires import StraightLineInfo, WireInfoList
+    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
+        NeutronicsReactor,
+    )
+    from bluemira.radiation_transport.neutronics.wires import (
+        StraightLineInfo,
+        WireInfoList,
+    )
 
 
 # Found to work by trial and error. I'm sorry.
@@ -162,8 +175,8 @@ def get_depth_values(
     pre_cell:
         :class:`~PreCell` to be classified as either inboard or outboard
     blanket_dimensions:
-        :class:`bluemira.neutronics.params.TokamakDimensions` recording the
-        dimensions of the blanket in SI units (unit: [m]).
+        :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`
+        recording the dimensions of the blanket in SI units (unit: [m]).
 
     Returns
     -------
@@ -402,7 +415,7 @@ def exterior_vertices(blanket, divertor) -> npt.NDArray:
         array of shape (N+1+n*M, 3), where N = number of blanket pre-cells,
         M = number of divertor pre-cells, n = discretisation_level used when chopping
         up the divertor in
-        :meth:`bluemira.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
+        :meth:`bluemira.radiation_transport.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
     """
     return np.concatenate([
         blanket.exterior_vertices(),
@@ -640,7 +653,8 @@ def make_cell_arrays(
     materials:
         library containing information about the materials
     tokamak_dimensions:
-        A parameter :class:`bluemira.neutronics.params.TokamakDimensions`,
+        A parameter
+        :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`,
         Specifying the dimensions of various layers in the blanket, divertor, and
         central solenoid.
     control_id: bool
@@ -989,7 +1003,7 @@ class BluemiraNeutronicsCSG:
             array of shape (?, 3), that the final region should include.
         control_id
             Passed as argument onto
-            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
 
         Returns
         -------
@@ -1034,7 +1048,7 @@ class BluemiraNeutronicsCSG:
         series_of_surfaces
             Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
             surface. For the last 3 options, see
-            :func:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region`
+            :func:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region`
             for more.
 
         vertices_array
@@ -1042,7 +1056,7 @@ class BluemiraNeutronicsCSG:
             least on the edge of the returned Region.
         control_id
             Passed as argument onto
-            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
 
         Returns
         -------
@@ -1238,7 +1252,7 @@ class BlanketCellStack:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
         """
         return csg.region_from_surface_series(
             [
@@ -1530,7 +1544,7 @@ class BlanketCellArray:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         return openmc.Union([
             self.csg.region_from_surface_series(
@@ -1556,7 +1570,7 @@ class BlanketCellArray:
     ) -> BlanketCellArray:
         """
         Create a BlanketCellArray from a
-        :class:`~bluemira.neutronics.make_pre_cell.PreCellArray`.
+        :class:`~bluemira.radiation_transport.neutronics.make_pre_cell.PreCellArray`.
         This method assumes itself is the first method to be run to create cells in the
         :class:`~openmc.Universe.`
 
@@ -1568,11 +1582,11 @@ class BlanketCellArray:
             :class:`~MaterialsLibrary` so that it separates into .inboard, .outboard,
             .divertor, .tf_coil_windings, etc.
         blanket_dimensions
-            :class:`bluemira.neutronics.params.TokamakDimensions` recording the
-            dimensions of the blanket in SI units (unit: [m]).
+            :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`
+            recording the dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :meth:`~bluemira.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = pre_cell_array.cell_walls
 
@@ -1720,7 +1734,7 @@ class DivertorCell(openmc.Cell):
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
         """
         if away_from_plasma:
             vertices_array = self.interior_wire.get_3D_coordinates()
@@ -1837,7 +1851,7 @@ class DivertorCellStack:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
         """
         return self.csg.region_from_surface_series(
             [
@@ -2051,7 +2065,7 @@ class DivertorCellArray:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
         """
         return openmc.Union([
             stack[0].exclusion_zone(
@@ -2081,8 +2095,10 @@ class DivertorCellArray:
         materials
             container of openmc.Material
         divertor_thickness
-            A parameter :class:`bluemira.neutronics.params.DivertorThickness`. For now it
-            only has one scalar value stating how thick the divertor armour should be.
+            A parameter
+            :class:`bluemira.radiation_transport.neutronics.params.DivertorThickness`.
+            For now it only has one scalar value stating how thick the
+            divertor armour should be.
         override_start_end_surfaces
             openmc.Surfaces that would be used as the first cw_surface and last
             ccw_surface

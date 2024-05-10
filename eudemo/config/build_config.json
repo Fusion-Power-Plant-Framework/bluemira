@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",

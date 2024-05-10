@@ -10,8 +10,8 @@ import openmc
 
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
-from bluemira.neutronics.constants import dt_neutron_energy
 from bluemira.radiation_transport.error import SourceError
+from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
 try:
     from pps_isotropic.source import create_parametric_plasma_source

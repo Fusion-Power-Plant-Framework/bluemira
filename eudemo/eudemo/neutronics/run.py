@@ -10,16 +10,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from bluemira.codes.wrapper import neutronics_code_solver
-from bluemira.neutronics.blanket_data import (
+from bluemira.radiation_transport.error import NeutronicsError
+from bluemira.radiation_transport.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
 )
-from bluemira.neutronics.geometry import TokamakDimensions
-from bluemira.neutronics.neutronics_axisymmetric import (
+from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
+from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
     NeutronicsReactorParameterFrame,
 )
-from bluemira.radiation_transport.error import NeutronicsError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
