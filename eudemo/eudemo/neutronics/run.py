@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bluemira.codes.openmc.solver import OpenMCNeutronicsSolver
+from bluemira.codes.openmc.sources import make_pps_source
 from bluemira.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
@@ -18,10 +20,6 @@ from bluemira.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
     NeutronicsReactorParameterFrame,
 )
-from bluemira.neutronics.openmc.solver import (
-    OpenMCNeutronicsSolver,
-)
-from bluemira.neutronics.openmc.sources import make_pps_source
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,8 +29,8 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
+    from bluemira.codes.openmc.params import PlasmaSourceParameters
     from bluemira.geometry.wire import BluemiraWire
-    from bluemira.neutronics.openmc.params import PlasmaSourceParameters
     from eudemo.blanket import Blanket
     from eudemo.ivc import IVCShapes
     from eudemo.vacuum_vessel import VacuumVessel

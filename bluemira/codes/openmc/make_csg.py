@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 
+from bluemira.codes.openmc.material import CellType
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
@@ -30,7 +31,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.constants import DTOL_CM, to_cm, to_cm3, to_m
-from bluemira.neutronics.openmc.material import CellType
 from bluemira.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:
@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    from bluemira.codes.openmc.material import MaterialsLibrary
     from bluemira.neutronics.geometry import DivertorThickness, TokamakDimensions
     from bluemira.neutronics.make_pre_cell import (
         DivertorPreCell,
@@ -46,7 +47,6 @@ if TYPE_CHECKING:
         PreCellArray,
     )
     from bluemira.neutronics.neutronics_axisymmetric import NeutronicsReactor
-    from bluemira.neutronics.openmc.material import MaterialsLibrary
     from bluemira.neutronics.wires import StraightLineInfo, WireInfoList
 
 

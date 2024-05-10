@@ -28,18 +28,18 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.neutronics.openmc.make_csg import (
+from bluemira.codes.openmc.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
     make_cell_arrays,
 )
-from bluemira.neutronics.openmc.material import MaterialsLibrary
-from bluemira.neutronics.openmc.output import OpenMCResult
-from bluemira.neutronics.openmc.params import (
+from bluemira.codes.openmc.material import MaterialsLibrary
+from bluemira.codes.openmc.output import OpenMCResult
+from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.neutronics.openmc.tallying import (
+from bluemira.codes.openmc.tallying import (
     _create_tallies_from_filters,
     filter_new_cells,
 )

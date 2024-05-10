@@ -9,8 +9,8 @@ import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
+from bluemira.codes.openmc.params import PlasmaSourceParameters
 from bluemira.neutronics.constants import dt_neutron_energy
-from bluemira.neutronics.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.error import SourceError
 
 try:
