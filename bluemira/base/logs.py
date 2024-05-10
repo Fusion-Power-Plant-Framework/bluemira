@@ -39,10 +39,6 @@ def logger_setup(
     level:
         The initial logging level to be printed to the console, default = INFO.
 
-    Returns
-    -------
-    The logger to be used
-
     Notes
     -----
     set to debug initially
@@ -134,9 +130,6 @@ def _convert_log_level(level: str | int, current_level: int = 0) -> LogLevel:
     current_level:
         The current bluemira logging level to increment from.
 
-    Returns
-    -------
-    The LogLevel corresponding to the requested level.
     """
     try:
         if isinstance(level, str):

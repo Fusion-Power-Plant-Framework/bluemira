@@ -52,7 +52,8 @@ def get_git_version(directory: str) -> str:
 
     Returns
     -------
-    The git version bytestring
+    str
+        The git version bytestring
     """
     return subprocess.check_output(
         ["git", "describe", "--tags", "--always"],  # noqa: S603, S607
@@ -71,7 +72,8 @@ def get_git_branch(directory: str) -> str:
 
     Returns
     -------
-    The git branch string
+    str
+        The git branch string
     """
     return (
         subprocess.check_output(
@@ -96,7 +98,8 @@ def get_git_files(directory: str, branch: str) -> list[str]:
 
     Returns
     -------
-    The list of git-controlled path strings
+    list[str]
+        The list of git-controlled path strings
     """
     return (
         subprocess.check_output(
@@ -114,7 +117,8 @@ def get_platform() -> str:
 
     Returns
     -------
-    The generic name of the platform (e.g. Linux, Windows)
+    str
+        The generic name of the platform (e.g. Linux, Windows)
     """
     return platform.uname()[0]
 
@@ -141,8 +145,9 @@ def count_slocs(
 
     Returns
     -------
-    The dictionary of number of lines of code per file extension, and the
-    total linecount
+    dict[str, int | list[int]]
+        The dictionary of number of lines of code per file extension, and the
+        total linecount
     """
     if ignore is None:
         ignore = [".git", ".txt", "look_and_feel.py"]
@@ -193,12 +198,13 @@ def _print_color(string: str, color: str) -> str:
 
     Returns
     -------
-    The string with ANSI color decoration
+    str
+        The string with ANSI color decoration
     """
     return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
 
 
-def _bm_print(string: str, width: int = 73):
+def _bm_print(string: str, width: int = 73) -> str:
     """
     Create the text string for boxed text to print to the console.
 
@@ -211,7 +217,8 @@ def _bm_print(string: str, width: int = 73):
 
     Returns
     -------
-    The text string of the boxed text
+    str
+        The text string of the boxed text
     """
     strings = [
         " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
@@ -282,7 +289,7 @@ def bluemira_debug(string: str):
     return LOGGER.debug(colourise(string, color="green"))
 
 
-def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue"):
+def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue") -> str:
     """
     Create the text string for coloured, boxed text to flush print to the
     console.
@@ -298,6 +305,7 @@ def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue"):
 
     Returns
     -------
+    str
         The text string of the boxed coloured text to flush print
     """
     a = width - len(string) - 2
@@ -427,7 +435,8 @@ def version_banner() -> list[str]:
 
     Returns
     -------
-    The list of strings of text describing the version and code information
+    list[str]
+        The list of strings of text describing the version and code information
     """
     mapping = {
         "SLOC": "total",
@@ -458,7 +467,8 @@ def user_banner() -> list[str]:
 
     Returns
     -------
-    The text for the banner containing user and platform information
+    list[str]
+        The text for the banner containing user and platform information
     """
     return [
         f"User       : {getuser()}",

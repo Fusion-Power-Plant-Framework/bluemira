@@ -425,8 +425,10 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
     -----
     x^* = minimise: winding_pack_length
           subject to:
-              ripple|separatrix \\preceq TF_ripple_limit
-              SDF(wp_shape, keep_out_zone) \\preceq 0
+
+          .. math::
+              \\text{ripple}|\\text{separatrix} \\preceq
+              \\text{TF_ripple_limit SDF(wp_shape, keep_out_zone)} \\preceq 0
 
     The geometry parameterisation is updated in place
     """
