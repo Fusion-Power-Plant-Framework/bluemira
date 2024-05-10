@@ -931,13 +931,13 @@ class BluemiraNeutronicsCSG:
         centroid = np.mean(choice_points, axis=0)
         step_dir = centroid - choice_points
         unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
-        choice_points += SHRINK_DISTANCE * unit_step_dir
+        shrunken_points = choice_points + SHRINK_DISTANCE * unit_step_dir
 
         # # Alternative
-        # choice_points = (choice_points + 0.01 * centroid) / 1.01
+        # shrunken_points = (choice_points + 0.01 * centroid) / 1.01
         # take one step towards the centroid = 0.1 cm
 
-        x, y, z = np.array(to_cm(choice_points)).T
+        x, y, z = np.array(to_cm(shrunken_points)).T
         values = surface.evaluate([x, y, z])
         middle = values > 0
         if all(middle):  # exist outside of cone
@@ -1366,17 +1366,6 @@ class BlanketCellStack:
             ])
             for inn, out in pairwise(wall_cut_pts)
         ]
-        # tops = []
-        # bottoms = []
-        # for v in vertices:
-        #     v = v.xz.T
-        #     tops.append(v[:2])
-        #     bottoms.append(v[2:])
-        # print(wall_cut_pts[:,1])
-        # print(tops)
-        # print(wall_cut_pts[:,0])
-        # print(bottoms)
-        # input()
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
         projection_cw = wall_cut_pts[:, 1] @ dirs[1] / np.linalg.norm(dirs[1])

@@ -14,7 +14,6 @@ from numpy import typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.display import plot_2d, show_cad
-from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
     Coordinates,
     choose_direction,
@@ -374,10 +373,7 @@ class PreCellArray:
                 next_cell.vertex[:, Vert.exterior_start],
                 next_cell.vertex[:, Vert.interior_end],
             )
-            if not (
-                np.allclose(this_wall[0], next_wall[0], atol=0, rtol=EPS_FREECAD)
-                and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=EPS_FREECAD)
-            ):
+            if not np.array_equal(this_wall, next_wall):
                 raise GeometryError(
                     "Adjacent pre-cells are expected to have matching"
                     f"corners; but instead we have {this_wall}!={next_wall}."
@@ -689,11 +685,9 @@ class DivertorPreCellArray:
         self.pre_cells = list(list_of_div_pc)
         # Perform check that they are adjacent
         for prev_cell, curr_cell in pairwise(self.pre_cells):
-            if not np.allclose(
+            if not np.array_equal(
                 prev_cell.vertex.xyz[:, Vert.exterior_start],
                 curr_cell.vertex.xyz[:, Vert.exterior_end],
-                atol=0,
-                rtol=EPS_FREECAD,
             ):
                 raise GeometryError("Expect neighbouring cells to share corners!")
 
