@@ -957,7 +957,7 @@ def _parse_to_xyz_array(
         xyz_array = _parse_dict(xyz_array)
     elif isinstance(xyz_array, Iterable):
         # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
-        xyz_array = _parse_array(np.asarray(xyz_array, dtype=object))
+        xyz_array = _parse_array(np.array(xyz_array, dtype=object))
     else:
         raise CoordinatesError(f"Cannot instantiate Coordinates with: {type(xyz_array)}")
     return xyz_array
@@ -965,7 +965,7 @@ def _parse_to_xyz_array(
 
 def _parse_array(xyz_array: npt.ArrayLike):
     try:
-        xyz_array = np.atleast_2d(np.squeeze(np.asarray(xyz_array, dtype=np.float64)))
+        xyz_array = np.atleast_2d(np.squeeze(np.array(xyz_array, dtype=np.float64)))
     except ValueError as ve:
         raise CoordinatesError(
             "Cannot instantiate Coordinates with a ragged (3, N | M) array."
@@ -1014,7 +1014,7 @@ def _parse_dict(xyz_dict):
     lengths = [len(c) for c in [x, y, z]]
     if np.all(np.array(lengths) <= 1):
         # Vertex detected
-        return np.asarray([x, y, z])
+        return np.array([x, y, z])
 
     usable_lengths = [length for length in lengths if length != 1]
 
@@ -1032,7 +1032,7 @@ def _parse_dict(xyz_dict):
     if len(z) == 1:
         z = z[0] * np.ones(actual_length)
 
-    return np.asarray([x, y, z])
+    return np.array([x, y, z])
 
 
 class Coordinates:
@@ -1575,7 +1575,7 @@ def coords_plane_intersect(
 @nb.jit(cache=True, nopython=True)
 def _coords_plane_intersect(
     array: np.ndarray, p1: np.ndarray, vec2: np.ndarray
-) -> npt.NDArray:
+) -> list[float]:
     # JIT compiled utility of the above
     out = []
     for i in range(len(array)):
@@ -1586,7 +1586,7 @@ def _coords_plane_intersect(
             fac = -(np.dot(vec2, w)) / dot
             if (fac >= 0) and (fac <= 1):
                 out.append(array[i] + fac * vec1)
-    return np.array(out)
+    return out
 
 
 def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
