@@ -70,7 +70,7 @@ from bluemira.codes.process.model_mapping import (
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
-# %%[markdown]
+# %% [markdown]
 # First we are going to build a template using the :py:class:`PROCESSTemplateBuilder`,
 # without interacting with any of PROCESS' integers.
 
@@ -79,7 +79,7 @@ from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 template_builder = PROCESSTemplateBuilder()
 
 
-# %%[markdown]
+# %% [markdown]
 # Now we're going to specify which optimisation algorithm we want to use, and the
 # number of iterations and tolerance.
 
@@ -89,13 +89,13 @@ template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
 template_builder.set_optimisation_numerics(max_iterations=1000, tolerance=1e-8)
 
 
-# %%[markdown]
+# %% [markdown]
 # Let's select the optimisation objective as the major radius:
 
 # %%
 template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
-# %%[markdown]
+# %% [markdown]
 # You can inspect what options are available by taking a look at the
 # :py:class:`Objective` Enum. The options are hopefully self-explanatory.
 # The values of the options correspond to the PROCESS integers.
@@ -104,7 +104,7 @@ template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 print("\n".join(str(o) for o in list(Objective)))
 
 
-# %%[markdown]
+# %% [markdown]
 # Now we will add a series of constraint equations to the PROCESS problem
 # we wish to solve. You can read more about these constraints an what
 # they mean in the PROCESS documentation
@@ -128,7 +128,7 @@ for constraint in (
     template_builder.add_constraint(constraint)
 
 
-# %%[markdown]
+# %% [markdown]
 # Many of these constraints require certain iteration variables to have been
 # specified, or certain input values. The novice user can easily not be
 # aware that this is the case, or simply forget to specify these.
@@ -141,7 +141,7 @@ for constraint in (
 inputs = template_builder.make_inputs()
 
 
-# %%[markdown]
+# %% [markdown]
 # So let's go ahead and add the iteration variables we want to the problem:
 
 # %%
@@ -165,7 +165,7 @@ template_builder.add_variable("tdmptf", 2.5829e01)
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
 template_builder.add_variable("fvsbrnni", 0.39566)
 
-# %%[markdown]
+# %% [markdown]
 # Many of the PROCESS constraints use so-called 'f-values', which are automatically
 # added to the iteration variables using this API. However, often one wants to modify
 # the defaults of these f-values, which one can do as such:
@@ -176,7 +176,7 @@ template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 
 
-# %%[markdown]
+# %% [markdown]
 # Often one wants to specify certain impurity concentrations, and even use
 # one of these as an iteration variable.
 
@@ -187,7 +187,7 @@ template_builder.add_impurity(Impurities.W, 5.0e-5)
 template_builder.add_variable(Impurities.Xe.id(), 3.573e-04)
 
 
-# %%[markdown]
+# %% [markdown]
 # We also want to specify some input values that are not variables:
 
 # %%
@@ -278,7 +278,7 @@ template_builder.add_input_values({
     "vftf": 0.3,
 })
 
-# %%[markdown]
+# %% [markdown]
 # PROCESS has many different models with integer-value 'switches'. We can specify
 # these choices as follows:
 
@@ -313,7 +313,7 @@ for model_choice in (
 ):
     template_builder.set_model(model_choice)
 
-# %%[markdown]
+# %% [markdown]
 # Some of these model choices also require certain input values
 # to be specified. If these are not specified by the user, default
 # values are used, which may not be desirable. Let us see what
@@ -322,7 +322,7 @@ for model_choice in (
 # %%
 inputs = template_builder.make_inputs()
 
-# %%[markdown]
+# %% [markdown]
 # And now let's add those missing inputs:
 
 # %%
@@ -331,9 +331,10 @@ template_builder.add_input_value("n_layer", 20)
 template_builder.add_input_value("n_pancake", 20)
 
 
-# %%[markdown]
+# %% [markdown]
 # Finally, let us run PROCESS with our inputs. In this case, we're just running
-# PROCESS as an external code (see e.g. [External code example](../external_code.ex.py))
+# PROCESS as an external code (see e.g.
+# [External code example](../codes/external_code.ex.py))
 # So we are not interesed in passing any parameters into it. In future, once the
 # input template has been refined to something desirable, one can pass in parameters
 # in mapped names to PROCESS, and not need to explicitly know all the PROCESS

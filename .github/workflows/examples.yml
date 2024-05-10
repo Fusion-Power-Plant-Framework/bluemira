@@ -40,9 +40,19 @@ jobs:
         run: |
           # Exclude examples using plasmod or process, as these aren't available
           # to the CI runners
+          # Reasons:
+          # requires plasmod
+          # requires process
+          # requires plasmod
+          # not an example
+          # requires process
+          # needs improvement #2999
+          # weird pyvista import bug
           python ./scripts/run_examples.py \
             -e 'plasmod_example' \
             -e 'process_example' \
-            -e 'solver_example' \
             -e 'equilibria/fem_fixed_boundary' \
-            -e 'codes/ext_code_script'
+            -e 'codes/ext_code_script' \
+            -e 'radiation_transport/radiation_calculation_solver_DEMO' \
+            -e 'mesh/mesh_tutorial' \
+            -e 'magnetostatics/finite_element_2D_single_coil'

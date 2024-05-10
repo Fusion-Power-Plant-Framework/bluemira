@@ -617,7 +617,7 @@ class CoilGroupFieldsMixin:
         Calculate the force response at the coil centre including the coil
         self-force.
 
-        .... math::
+        .. math::
 
              \\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}
             F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)

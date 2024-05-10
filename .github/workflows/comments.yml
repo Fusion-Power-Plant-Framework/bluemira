@@ -43,7 +43,7 @@ jobs:
           mkdir ref_report
           unzip report-json.zip -d ref_report
         else
-            exit 1
+            echo 'No report found'
         fi
     - name: Download PR test report
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''

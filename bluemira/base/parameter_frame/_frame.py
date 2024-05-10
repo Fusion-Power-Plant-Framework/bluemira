@@ -477,10 +477,6 @@ def _convert_angle_units(
     angle_unit
         the angle unit in `orig_unit`
 
-    Returns
-    -------
-        the new unit
-
     """
     breaking_units = ["steradian", "square_degree"]
     new_angle_unit = base_unit_defaults["[angle]"]

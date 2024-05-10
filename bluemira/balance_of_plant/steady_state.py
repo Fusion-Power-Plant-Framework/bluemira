@@ -177,9 +177,6 @@ class PredeterminedEfficiency(PowerCycleEfficiencyCalc):
         p_divertor:
             Divertor thermal power [MW]
 
-        Returns
-        -------
-        The efficiency
         """
         return self.efficiency
 
@@ -211,9 +208,6 @@ class SuperheatedRankine(PowerCycleEfficiencyCalc):
         p_divertor:
             Divertor thermal power [MW]
 
-        Returns
-        -------
-        The efficiency
         """
         return superheated_rankine(
             p_blanket, p_divertor, self.bb_t_out, self.delta_t_turbine
@@ -476,11 +470,14 @@ class BalanceOfPlantModel:
     Notes
     -----
     .. math::
-        P_{el}={\\eta}_{BOP}\\Bigg[\\Bigg(\\frac{4}{5}P_{fus}f_{nrgm}-\\
-        P_{n_{aux}}-P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}\\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)\\
-        \\Big(1+\\frac{f_{p_{BB}}}{1-f_{p_{BB}}}\\Big)
-        +\\Bigg(P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}f_{fw}\\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)\\
-        \\Big(1+\\frac{f_{p_{DIV}}}{1-f_{p_{DIV}}}\\Big)\\Bigg]
+
+        P_{el}={\\eta}_{BOP} & \\Bigg[\\Bigg(\\frac{4}{5}P_{fus}f_{nrgm}-
+                P_{n_{aux}}-P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}
+                \\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)
+                \\Big(1+\\frac{f_{p_{BB}}}{1-f_{p_{BB}}}\\Big) \\\\
+                & +\\Bigg(P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}f_{fw}
+                    \\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)
+                    \\Big(1+\\frac{f_{p_{DIV}}}{1-f_{p_{DIV}}}\\Big)\\Bigg]
 
     """
 
@@ -634,10 +631,8 @@ class BalanceOfPlantModel:
         ----------
         title:
             Title to print on the plot
-
-        Other Parameters
-        ----------------
-        see BALANCE_PLOT_DEFAULTS for details
+        kwargs:
+            see BALANCE_PLOT_DEFAULTS for details
         """
         plotter = self._plotter(**kwargs)
         return plotter.plot(self.flow_dict, title=title)
