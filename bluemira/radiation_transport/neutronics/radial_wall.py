@@ -28,10 +28,10 @@ if TYPE_CHECKING:
 class Vert(IntEnum):
     """Vertices index for cells"""
 
-    ext_end = 0
-    int_start = 1
-    int_end = 2
-    ext_start = 3
+    exterior_end = 0
+    interior_start = 1
+    interior_end = 2
+    exterior_start = 3
 
 
 class CellWalls:
@@ -96,12 +96,12 @@ class CellWalls:
         # cut each coordinates down from having shape (3, 1) down to (2,)
         return cls([
             *(
-                (c.vertex[:, Vert.int_end], c.vertex[:, Vert.ext_start])
+                (c.vertex[:, Vert.interior_end], c.vertex[:, Vert.exterior_start])
                 for c in pre_cell_array
             ),
             (
-                pre_cell_array[-1].vertex[:, Vert.int_start],
-                pre_cell_array[-1].vertex[:, Vert.ext_end],
+                pre_cell_array[-1].vertex[:, Vert.interior_start],
+                pre_cell_array[-1].vertex[:, Vert.exterior_end],
             ),
         ])
 
@@ -112,9 +112,12 @@ class CellWalls:
         make a CellWall.
         """
         return cls([
-            *((c.vertex[:, Vert.int_end], c.vv_point[:, 0]) for c in pre_cell_array),
+            *(
+                (c.vertex[:, Vert.interior_end], c.vv_point[:, 0])
+                for c in pre_cell_array
+            ),
             (
-                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vertex[:, Vert.interior_start],
                 pre_cell_array[-1].vv_point[:, 1],
             ),
         ])

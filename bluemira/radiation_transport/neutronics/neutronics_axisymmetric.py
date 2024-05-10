@@ -17,10 +17,8 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import calculate_plane_dir
-from bluemira.geometry.tools import get_wire_plane_intersect, is_convex, make_polygon
+from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
 from bluemira.neutronics.make_pre_cell import PreCell
 from bluemira.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
@@ -96,8 +94,8 @@ class PreCellStage:
         in_wire = make_polygon(np.array([i_high, i_end]).T, closed=False)
         vv_wire = make_polygon(
             np.array([
-                old_vv_wire.end_point().xyz.flatten(),
                 self.divertor[0].vv_wire.end_point,
+                old_vv_wire.end_point().xyz.flatten(),
             ]).T,
             closed=False,
         )
@@ -135,13 +133,6 @@ class PreCellStage:
 
         # re-initialize so that the cell_walls are re-calculated
         self.blanket = self.blanket.copy()
-
-        ext_coords = self.external_coordinates()
-        if not is_convex(ext_coords):
-            raise GeometryError(
-                f"The vertices of {self.blanket} + {self.divertor} must form "
-                "a convex outline!"
-            )
 
     def external_coordinates(self) -> npt.NDArray:
         """
@@ -248,8 +239,8 @@ class NeutronicsReactor(ABC):
 
         blanket = cutting.blanket.make_quadrilateral_pre_cell_array(
             discretisation_level=blanket_discretisation,
-            starting_cut=Coordinates(first).xz.flatten(),
-            ending_cut=Coordinates(last).xz.flatten(),
+            starting_cut=first[::2],
+            ending_cut=last[::2],
             snap_to_horizontal_angle=snap_to_horizontal_angle,
         )
 

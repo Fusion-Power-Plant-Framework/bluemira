@@ -14,7 +14,6 @@ from numpy import typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.display import plot_2d, show_cad
-from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
     Coordinates,
     choose_direction,
@@ -22,7 +21,12 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
+from bluemira.geometry.tools import (
+    is_convex,
+    make_polygon,
+    raise_error_if_overlap,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.neutronics.radial_wall import (
     CellWalls,
@@ -279,8 +283,8 @@ class PreCell:
         if not hasattr(self, "_cell_walls"):
             self._cell_walls = CellWalls(
                 np.asarray((
-                    self.vertex.T[(Vert.int_end, Vert.ext_start),],
-                    self.vertex.T[(Vert.int_start, Vert.ext_end),],
+                    self.vertex.T[(Vert.interior_end, Vert.exterior_start),],
+                    self.vertex.T[(Vert.interior_start, Vert.exterior_end),],
                 ))
             )
 
@@ -362,24 +366,25 @@ class PreCellArray:
         for this_cell, next_cell in pairwise(self.pre_cells):
             # perform check that they are actually adjacent
             this_wall = (
-                this_cell.vertex[:, Vert.ext_end],
-                this_cell.vertex[:, Vert.int_start],
+                this_cell.vertex[:, Vert.exterior_end],
+                this_cell.vertex[:, Vert.interior_start],
             )
             next_wall = (
-                next_cell.vertex[:, Vert.ext_start],
-                next_cell.vertex[:, Vert.int_end],
+                next_cell.vertex[:, Vert.exterior_start],
+                next_cell.vertex[:, Vert.interior_end],
             )
             if not (
-                np.allclose(this_wall[0], next_wall[0], atol=0, rtol=EPS_FREECAD)
-                and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=EPS_FREECAD)
+                np.allclose(this_wall[0], next_wall[0], atol=0, rtol=0)
+                and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=0)
             ):
                 raise GeometryError(
                     "Adjacent pre-cells are expected to have matching"
                     f"corners; but instead we have {this_wall}!={next_wall}."
                 )
         self.cell_walls = CellWalls.from_pre_cell_array(self)
-        # TODO: assert inside and outside are both convex hulls. Useful candidate classes
-        # /functions: bluemira.geometry.tools::ConvexHull/scipy.spatial::ConvexHull
+
+        if not is_convex(self.exterior_vertices()[:, ::2]):
+            raise GeometryError(f"{self} must have convex exterior wires!")
 
     @property
     def volumes(self) -> tuple[float]:
@@ -684,12 +689,15 @@ class DivertorPreCellArray:
         # Perform check that they are adjacent
         for prev_cell, curr_cell in pairwise(self.pre_cells):
             if not np.allclose(
-                prev_cell.vertex.xyz[:, Vert.ext_start],
-                curr_cell.vertex.xyz[:, Vert.ext_end],
+                prev_cell.vertex.xyz[:, Vert.exterior_start],
+                curr_cell.vertex.xyz[:, Vert.exterior_end],
                 atol=0,
-                rtol=EPS_FREECAD,
+                rtol=0,
             ):
                 raise GeometryError("Expect neighbouring cells to share corners!")
+
+        if not is_convex(self.exterior_vertices()[:, ::2]):
+            raise GeometryError(f"{self} must have convex exterior vertices!")
 
     def exterior_vertices(self) -> npt.NDArray:
         """

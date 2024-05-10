@@ -19,8 +19,7 @@ import numpy as np
 import openmc
 
 from bluemira.codes.openmc.material import CellType
-from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
@@ -37,6 +36,7 @@ from bluemira.radiation_transport.neutronics.constants import (
     to_cm3,
     to_m,
 )
+from bluemira.radiation_transport.neutronics.radial_wall import Vert
 from bluemira.radiation_transport.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.codes.openmc.material import MaterialsLibrary
+    from bluemira.geometry.coordinates import Coordinates
     from bluemira.radiation_transport.neutronics.geometry import (
         DivertorThickness,
         TokamakDimensions,
@@ -101,7 +102,7 @@ class CellStage:
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
-    return all(np.diff(series) >= -EPS_FREECAD)  # or all(diff<0)
+    return all(np.diff(series) >= 0)  # or all(diff<0)
 
 
 def plot_surfaces(surfaces_list: list[openmc.Surface], ax=None):
@@ -526,30 +527,37 @@ def make_coils(
     return central_solenoid, tf_coils
 
 
-def blanket_and_divertor_outer_region(
+def make_dividing_surface(csg, component):
+    """Make the dividing surface"""
+    exterior_pts = component.exterior_vertices()[:, ::2]
+    return csg.surface_from_2points(exterior_pts[0], exterior_pts[-1])
+
+
+def blanket_and_divertor_outer_regions(
     csg, blanket, divertor, *, control_id: bool = False
 ) -> openmc.Region:
     """
     Get the entire tokamak's poloidal cross-section (everything inside
     self.geom.boundary) as an openmc.Region.
     """
-    return csg.region_from_surface_series(
-        [
-            *blanket.exterior_surfaces(),
-            *chain.from_iterable(divertor.exterior_surfaces()),
-        ],
-        exterior_vertices(blanket, divertor),
+    dividing_surface = make_dividing_surface(csg, blanket)
+    blanket_outer = csg.region_from_surface_series(
+        [*blanket.exterior_surfaces(), dividing_surface],
+        blanket.exterior_vertices(),
         control_id=control_id,
     )
+    divertor_outer = csg.region_from_surface_series(
+        [*divertor.exterior_surfaces(), dividing_surface],
+        divertor.exterior_vertices(),
+        control_id=control_id,
+    )
+    return blanket_outer, divertor_outer
 
 
 def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
     """Get the plasma chamber's poloidal cross-section"""
-    blanket_exterior_pts = blanket.exterior_vertices()
     blanket_interior_pts = blanket.interior_vertices()
-    dividing_surface = csg.surface_from_2points(
-        blanket_exterior_pts[0][::2], blanket_exterior_pts[-1][::2]
-    )
+    dividing_surface = make_dividing_surface(csg, blanket)
     if not is_convex(blanket_interior_pts):
         raise GeometryError(
             f"{blanket} interior (blanket_outline's inner_curve) needs to be convex!"
@@ -564,10 +572,7 @@ def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.R
     if not is_convex(divertor_exterior_vertices):
         raise GeometryError(f"{divertor} exterior needs to be convex!")
     exhaust_including_divertor = csg.region_from_surface_series(
-        [
-            *chain.from_iterable(divertor.exterior_surfaces()),
-            dividing_surface,
-        ],
+        [*divertor.exterior_surfaces(), dividing_surface],
         divertor_exterior_vertices,
         control_id=control_id,
     )
@@ -590,10 +595,10 @@ def make_void_cells(
     """Make the plasma chamber and the outside ext_void. This should be called AFTER
     the blanket and divertor cells are created.
     """
-    full_tokamak_region = blanket_and_divertor_outer_region(
+    blanket_silhouette, divertor_silhouette = blanket_and_divertor_outer_regions(
         csg, blanket, divertor, control_id=control_id
     )
-    void_region = universe & ~full_tokamak_region
+    void_region = universe & ~blanket_silhouette & ~divertor_silhouette
     if tf_coils:
         void_region &= ~tf_coils[0].region
     if central_solenoid:
@@ -1138,12 +1143,12 @@ class BlanketCell(openmc.Cell):
             fill=fill,
             region=self.csg.region_from_surface_series(
                 [exterior_surface, ccw_surface, cw_surface, interior_surface],
-                self.vertex.xyz.T,  # We just assume it is convex
+                self.vertex.T,  # We just assume it is convex
                 control_id=bool(cell_id),
             ),
         )
 
-        self.volume = to_cm3(polygon_revolve_signed_volume(vertices.xz.T))
+        self.volume = to_cm3(polygon_revolve_signed_volume(vertices[::2].T))
         if self.volume <= 0:
             raise GeometryError("Wrong ordering of vertices!")
 
@@ -1263,8 +1268,8 @@ class BlanketCellStack:
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
         """
         vertices = np.vstack((
-            self.cell_stack[0].vertex.xyz.T[(1, 2),],
-            self.cell_stack[-1].vertex.xyz.T[(3, 0),],
+            self.cell_stack[0].vertex.T[(1, 2),],
+            self.cell_stack[-1].vertex.T[(3, 0),],
         ))
         if not is_convex(vertices):
             raise GeometryError(f"{self}'s vertices need to be convex!")
@@ -1317,7 +1322,7 @@ class BlanketCellStack:
             boolean denoting whether this cell is inboard or outboard
         blanket_stack_num
             An optional number indexing the current stack. Used for labelling.
-
+            If None: we will not be controlling the cell and surfaces id.
         """
         # check exterior wire is correct
         ext_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
@@ -1341,7 +1346,7 @@ class BlanketCellStack:
         # 1.1 perform sanity check
         directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
-        i = blanket_stack_num or "(unspecified)"
+        i = "(unspecified)" if blanket_stack_num is None else blanket_stack_num
         cls.check_cut_point_ordering(
             wall_cut_pts[:, 0],
             dirs[0],
@@ -1352,16 +1357,26 @@ class BlanketCellStack:
             dirs[1],
             location_msg=f"Occuring in cell stack {i}'s CW wall",
         )
-
         # 2. Accumulate the corners of each cell.
         vertices = [
-            Coordinates({
-                "x": np.asarray([out[1, 0], inn[1, 0], inn[0, 0], out[0, 0]]),
-                "z": np.asarray([out[1, 1], inn[1, 1], inn[0, 1], out[0, 1]]),
-            })
+            np.array([
+                [out[1, 0], inn[1, 0], inn[0, 0], out[0, 0]],
+                np.full(4, 0),
+                [out[1, 1], inn[1, 1], inn[0, 1], out[0, 1]],
+            ])
             for inn, out in pairwise(wall_cut_pts)
         ]
-
+        # tops = []
+        # bottoms = []
+        # for v in vertices:
+        #     v = v.xz.T
+        #     tops.append(v[:2])
+        #     bottoms.append(v[2:])
+        # print(wall_cut_pts[:,1])
+        # print(tops)
+        # print(wall_cut_pts[:,0])
+        # print(bottoms)
+        # input()
         # shape (M, 2, 2)
         projection_ccw = wall_cut_pts[:, 0] @ dirs[0] / np.linalg.norm(dirs[0])
         projection_cw = wall_cut_pts[:, 1] @ dirs[1] / np.linalg.norm(dirs[1])
@@ -1427,7 +1442,6 @@ class BlanketCellStack:
                 *points,
                 surface_id=surface_ids[j],  # up to M+1
             )
-
             cell_stack.append(
                 BlanketCell(
                     exterior_surface=ext_surf,
@@ -1512,8 +1526,11 @@ class BlanketCellArray:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.asarray([
-            self.blanket_cell_array[0][-1].vertex.points[3],
-            *(stack[-1].vertex.points[0] for stack in self.blanket_cell_array),
+            self.blanket_cell_array[0][-1].vertex.T[Vert.exterior_start],
+            *(
+                stack[-1].vertex.T[Vert.exterior_end]
+                for stack in self.blanket_cell_array
+            ),
         ])
 
     def interior_vertices(self) -> npt.NDArray:
@@ -1527,8 +1544,8 @@ class BlanketCellArray:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
         return np.asarray([
-            self.blanket_cell_array[0][0].vertex.points[2],
-            *(stack[0].vertex.points[1] for stack in self.blanket_cell_array),
+            self.blanket_cell_array[0][0].vertex.T[Vert.interior_start],
+            *(stack[0].vertex.T[Vert.interior_end] for stack in self.blanket_cell_array),
         ])
 
     def interior_surfaces(self) -> list[openmc.Surface]:
@@ -1560,8 +1577,8 @@ class BlanketCellArray:
         exclusion_zone_by_stack = []
         for stack in self.blanket_cell_array:
             stack_vertices = np.vstack((
-                stack[0].vertex.xyz.T[(1, 2),],
-                stack[-1].vertex.xyz.T[(3, 0),],
+                stack[0].vertex.T[(1, 2),],
+                stack[-1].vertex.T[(3, 0),],
             ))
             if not is_convex(stack_vertices):
                 raise GeometryError(f"{self}'s vertices need to be convex!")
@@ -1606,6 +1623,7 @@ class BlanketCellArray:
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = pre_cell_array.cell_walls
+        # TODO: when contorl_id, we're forced to start at id=0
 
         # left wall
         ccw_surf = csg.surface_from_2points(
@@ -2049,14 +2067,20 @@ class DivertorCellArray:
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
         """
-        return [surf_stack[0] for surf_stack in self.radial_surfaces]
+        return list(
+            chain.from_iterable([surf_stack[0] for surf_stack in self.radial_surfaces])
+        )
 
     def exterior_surfaces(self) -> list[openmc.Surface]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.
         """
-        return [surf_stack[-1] for surf_stack in self.radial_surfaces]
+        return list(
+            chain.from_iterable([
+                surf_stack[-1][::-1] for surf_stack in self.radial_surfaces
+            ])
+        )
 
     def exterior_vertices(self) -> npt.NDArray:
         """
