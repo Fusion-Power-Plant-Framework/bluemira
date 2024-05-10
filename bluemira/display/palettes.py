@@ -8,11 +8,17 @@
 Colour palettes
 """
 
+from __future__ import annotations
+
 from itertools import cycle, zip_longest
+from typing import TYPE_CHECKING
 
 import numpy as np
 import seaborn as sns
 from matplotlib import colors
+
+if TYPE_CHECKING:
+    from matplotlib.typing import ColorType
 
 
 class ColorPalette:
@@ -21,11 +27,11 @@ class ColorPalette:
 
     Parameters
     ----------
-    palette_map: Dict[str: Any]
+    palette_map:
         Dictionary of color names to any object matplotlib will recognise as a color
     """
 
-    def __init__(self, palette_map):
+    def __init__(self, palette_map: dict[str, ColorType]):
         self._dict = palette_map
         color_list = []
         for v in palette_map.values():
@@ -46,15 +52,15 @@ class ColorPalette:
         """
         return next(self._cycle)
 
-    def __setitem__(self, idx_or_key: int | str, value):
+    def __setitem__(self, idx_or_key: int | str, value: ColorType | ColorPalette):
         """
         Set an item in the ColorPalette by index or key
 
         Parameters
         ----------
-        idx_or_key: Union[int, str]
+        idx_or_key:
             Index or key of the ColorPalette
-        value: Union[ColorType, ColorPalette]
+        value:
             The value to set. Note that this can be another ColorPalette
         """
         if isinstance(idx_or_key, int):
@@ -67,18 +73,18 @@ class ColorPalette:
             idx = list(self._dict).index(idx_or_key)
             self._palette[idx] = type(self)({idx_or_key: value})
 
-    def __getitem__(self, idx_or_key: int | str):
+    def __getitem__(self, idx_or_key: int | str) -> ColorType | ColorPalette | None:
         """
         Get an item in the ColorPalette by index or key
 
         Parameters
         ----------
-        idx_or_key: Union[int, str]
+        idx_or_key:
             Index or key of the ColorPalette
 
         Returns
         -------
-        value: Union[ColorType, ColorPalette]
+        value:
             The value. Note that this can be another ColorPalette
         """
         if isinstance(idx_or_key, int):
@@ -216,7 +222,9 @@ def make_rgb_alpha(
     )
 
 
-def make_alpha_palette(color, n_colors: int, background_rgb="white") -> ColorPalette:
+def make_alpha_palette(
+    color, n_colors: int, background_rgb: ColorType = "white"
+) -> ColorPalette:
     """
     Make a palette from a color by varying alpha.
 
@@ -226,7 +234,7 @@ def make_alpha_palette(color, n_colors: int, background_rgb="white") -> ColorPal
         Palette base color. Anything matplotlib will recognise as a color
     n_colors:
         Numer of colors to make in the palette
-    background_rgb: Any
+    background_rgb:
         Background color. Anything matplotlib will recognise as a color
 
     Returns
