@@ -176,7 +176,7 @@ class TestChargedParticleRecursionDN:
             self.solver.first_wall,
             self.solver._yz_plane,
             outboard=True,
-            )
+        )
 
         x = x_sep_omp + 1e-3
         while x < x_wall_limit + 2e-3:
@@ -185,8 +185,8 @@ class TestChargedParticleRecursionDN:
                 self.solver._o_point.z,
                 self.solver.eq,
                 self.solver._o_point,
-                self.solver._yz_plane
-                )
+                self.solver._yz_plane,
+            )
 
             self.solver.flux_surfaces_ob_lfs.append(lfs)
             self.solver.flux_surfaces_ob_hfs.append(hfs)

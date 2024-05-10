@@ -177,9 +177,7 @@ def get_array_alpha(flux_surfaces):
     return np.array([fs.alpha for fs in flux_surfaces])
 
 
-def _get_sep_out_intersection(
-    eq, first_wall, yz_plane, *, outboard=True
-):
+def _get_sep_out_intersection(eq, first_wall, yz_plane, *, outboard=True):
     """
     Find the middle and maximum outboard mid-plane psi norm values
     """
@@ -197,9 +195,7 @@ def _get_sep_out_intersection(
         sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - sep.o_point.x))
         x_sep1_mp = sep1_intersections.T[0][sep1_arg]
         x_sep2_mp = sep2_intersections.T[0][sep2_arg]
-        x_sep_mp = (
-            max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
-        )
+        x_sep_mp = max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
     else:
         # separatrix list is sorted by loop length when found,
         # so separatrix[0] will have the intersection
@@ -212,9 +208,7 @@ def _get_sep_out_intersection(
 
     out_intersections = coords_plane_intersect(first_wall, yz_plane)
     x_out_mp = (
-        np.max(out_intersections.T[0])
-        if outboard
-        else np.min(out_intersections.T[0])
+        np.max(out_intersections.T[0]) if outboard else np.min(out_intersections.T[0])
     )
 
     return x_sep_mp, x_out_mp

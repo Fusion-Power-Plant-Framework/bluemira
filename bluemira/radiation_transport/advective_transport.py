@@ -161,14 +161,16 @@ class ChargedParticleSolver:
             outboard=True,
         )
 
-        self.flux_surfaces_ob_lfs, self.flux_surfaces_ob_hfs = fsm._make_flux_surfaces_ibob(
-            self.dx_mp,
-            self.eq,
-            self._o_point,
-            self._yz_plane,
-            self.x_sep_omp,
-            x_out_omp,
-            outboard=True
+        self.flux_surfaces_ob_lfs, self.flux_surfaces_ob_hfs = (
+            fsm._make_flux_surfaces_ibob(
+                self.dx_mp,
+                self.eq,
+                self._o_point,
+                self._yz_plane,
+                self.x_sep_omp,
+                x_out_omp,
+                outboard=True,
+            )
         )
 
     def _make_flux_surfaces_ib(self):
@@ -182,13 +184,16 @@ class ChargedParticleSolver:
             outboard=False,
         )
 
-        self.flux_surfaces_ib_lfs, self.flux_surfaces_ib_hfs = fsm._make_flux_surfaces_ibob(
-            self.dx_mp,
-            self.eq, self._o_point,
-            self._yz_plane,
-            self.x_sep_imp,
-            x_out_imp,
-            outboard=False
+        self.flux_surfaces_ib_lfs, self.flux_surfaces_ib_hfs = (
+            fsm._make_flux_surfaces_ibob(
+                self.dx_mp,
+                self.eq,
+                self._o_point,
+                self._yz_plane,
+                self.x_sep_imp,
+                x_out_imp,
+                outboard=False,
+            )
         )
 
     def _clip_flux_surfaces(self, first_wall):
