@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
@@ -170,11 +171,23 @@ class TestChargedParticleRecursionDN:
         fw = deepcopy(self.solver.first_wall)
         self.solver.flux_surfaces_ob_hfs = []
         self.solver.flux_surfaces_ob_lfs = []
-        x_sep_omp, x_wall_limit = self.solver._get_sep_out_intersection(outboard=True)
+        x_sep_omp, x_wall_limit = fsm._get_sep_out_intersection(
+            self.solver.eq,
+            self.solver.first_wall,
+            self.solver._yz_plane,
+            outboard=True,
+            )
 
         x = x_sep_omp + 1e-3
         while x < x_wall_limit + 2e-3:
-            lfs, hfs = self.solver._make_flux_surfaces(x, self.solver._o_point.z)
+            lfs, hfs = fsm._make_flux_surfaces(
+                x,
+                self.solver._o_point.z,
+                self.solver.eq,
+                self.solver._o_point,
+                self.solver._yz_plane
+                )
+
             self.solver.flux_surfaces_ob_lfs.append(lfs)
             self.solver.flux_surfaces_ob_hfs.append(hfs)
             x += 1e-3

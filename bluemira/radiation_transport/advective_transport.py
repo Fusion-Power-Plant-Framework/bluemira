@@ -15,16 +15,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 
+import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
-from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
-from bluemira.equilibria.find import (
-    find_flux_surface_through_point,
-)
-from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
-from bluemira.equilibria.flux_surfaces import OpenFluxSurface
-from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -155,88 +150,46 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _get_sep_out_intersection(self, *, outboard=True):
-        """
-        Find the middle and maximum outboard mid-plane psi norm values
-        """
-        yz_plane = self._yz_plane
-        sep = LegFlux(self.eq)
-
-        if sep.n_null == NumNull.SN:
-            sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
-            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
-            x_sep_mp = sep_intersections.T[0][sep_arg]
-        elif sep.sort_split == SortSplit.X:
-            sep1_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
-            sep2_intersections = coords_plane_intersect(sep.separatrix[1], yz_plane)
-            sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
-            sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - sep.o_point.x))
-            x_sep1_mp = sep1_intersections.T[0][sep1_arg]
-            x_sep2_mp = sep2_intersections.T[0][sep2_arg]
-            x_sep_mp = (
-                max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
-            )
-        else:
-            # separatrix list is sorted by loop length when found,
-            # so separatrix[0] will have the intersection
-            sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
-            if isinstance(sep_intersections, Coordinates):
-                sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
-                x_sep_mp = sep_intersections.T[0][sep_arg]
-            else:
-                raise BluemiraError("Your seperatrix does not cross the midplane.")
-
-        out_intersections = coords_plane_intersect(self.first_wall, yz_plane)
-        x_out_mp = (
-            np.max(out_intersections.T[0])
-            if outboard
-            else np.min(out_intersections.T[0])
-        )
-
-        return x_sep_mp, x_out_mp
-
-    def _make_flux_surfaces(self, x, z):
-        """
-        Make individual PartialOpenFluxSurfaces through a point.
-        """
-        coords = find_flux_surface_through_point(
-            self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
-        )
-        coords = Coordinates({"x": coords[0], "z": coords[1]})
-        f_s = OpenFluxSurface(coords)
-        lfs, hfs = f_s.split(self._o_point, plane=self._yz_plane)
-        return lfs, hfs
-
     def _make_flux_surfaces_ob(self):
         """
         Make the flux surfaces on the outboard.
         """
-        self.x_sep_omp, x_out_omp = self._get_sep_out_intersection(outboard=True)
+        self.x_sep_omp, x_out_omp = fsm._get_sep_out_intersection(
+            self.eq,
+            self.first_wall,
+            self._yz_plane,
+            outboard=True,
+        )
 
-        self.flux_surfaces_ob_lfs = []
-        self.flux_surfaces_ob_hfs = []
-
-        x = self.x_sep_omp + self.dx_mp
-        while x < x_out_omp:
-            lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
-            self.flux_surfaces_ob_lfs.append(lfs)
-            self.flux_surfaces_ob_hfs.append(hfs)
-            x += self.dx_mp
+        self.flux_surfaces_ob_lfs, self.flux_surfaces_ob_hfs = fsm._make_flux_surfaces_ibob(
+            self.dx_mp,
+            self.eq,
+            self._o_point,
+            self._yz_plane,
+            self.x_sep_omp,
+            x_out_omp,
+            outboard=True
+        )
 
     def _make_flux_surfaces_ib(self):
         """
         Make the flux surfaces on the inboard.
         """
-        self.x_sep_imp, x_out_imp = self._get_sep_out_intersection(outboard=False)
+        self.x_sep_imp, x_out_imp = fsm._get_sep_out_intersection(
+            self.eq,
+            self.first_wall,
+            self._yz_plane,
+            outboard=False,
+        )
 
-        self.flux_surfaces_ib_lfs = []
-        self.flux_surfaces_ib_hfs = []
-        x = self.x_sep_imp - self.dx_mp
-        while x > x_out_imp:
-            lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
-            self.flux_surfaces_ib_lfs.append(lfs)
-            self.flux_surfaces_ib_hfs.append(hfs)
-            x -= self.dx_mp
+        self.flux_surfaces_ib_lfs, self.flux_surfaces_ib_hfs = fsm._make_flux_surfaces_ibob(
+            self.dx_mp,
+            self.eq, self._o_point,
+            self._yz_plane,
+            self.x_sep_imp,
+            x_out_imp,
+            outboard=False
+        )
 
     def _clip_flux_surfaces(self, first_wall):
         """
@@ -257,7 +210,7 @@ class ChargedParticleSolver:
                         # Drop the flux surface from the group
                         group.pop(i)
 
-    def analyse(self, first_wall):
+    def analyse(self, first_wall: Coordinates):
         """
         Perform the calculation to obtain charged particle heat fluxes on the
         the specified first_wall
@@ -279,21 +232,21 @@ class ChargedParticleSolver:
         self.first_wall = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
-            x, z, hf = self._analyse_DN(first_wall)
+            x, z, hf = self._analyse_DN()
         else:
-            x, z, hf = self._analyse_SN(first_wall)
+            x, z, hf = self._analyse_SN()
 
         self.result = x, z, hf
         return x, z, hf
 
-    def _analyse_SN(self, first_wall):
+    def _analyse_SN(self):
         """
         Calculation for the case of single nulls.
         """
         self._make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
-        self._clip_flux_surfaces(first_wall)
+        self._clip_flux_surfaces(self.first_wall)
 
         x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
             self.flux_surfaces_ob_lfs
@@ -333,7 +286,7 @@ class ChargedParticleSolver:
             f_correct_power * np.append(heat_flux_lfs, heat_flux_hfs),
         )
 
-    def _analyse_DN(self, first_wall):
+    def _analyse_DN(self):
         """
         Calculation for the case of double nulls.
         """
@@ -341,7 +294,7 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ib()
 
         # Find the intersections of the flux surfaces with the first wall
-        self._clip_flux_surfaces(first_wall)
+        self._clip_flux_surfaces(self.first_wall)
 
         (
             x_omp,
