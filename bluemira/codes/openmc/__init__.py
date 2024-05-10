@@ -4,3 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC interface"""
+
+from bluemira.codes.openmc.solver import OpenMCNeutronicsSolver as Solver
+
+__all__ = ["Solver"]
