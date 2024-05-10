@@ -81,7 +81,7 @@ def _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     Calculation for the case of single nulls.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
-        equilibrium.get_separatrix(), first_wall, yz_plane, o_point, outboard=True
+        equilibrium.get_separatrix(), first_wall, yz_plane, outboard=True
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
@@ -103,10 +103,10 @@ def _analyse_DN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     """
     separatrix = equilibrium.get_separatrix()
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
-        separatrix, first_wall, yz_plane, o_point, outboard=True
+        separatrix, first_wall, yz_plane, outboard=True
     )
     x_sep_imp, x_out_imp = _get_sep_out_intersection(
-        separatrix, first_wall, yz_plane, o_point, outboard=False
+        separatrix, first_wall, yz_plane, outboard=False
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
@@ -181,7 +181,6 @@ def _get_sep_out_intersection(eq, first_wall, yz_plane, *, outboard=True):
     """
     Find the middle and maximum outboard mid-plane psi norm values
     """
-    yz_plane = yz_plane
     sep = LegFlux(eq)
 
     if sep.n_null == NumNull.SN:
