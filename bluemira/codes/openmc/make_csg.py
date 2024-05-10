@@ -528,7 +528,7 @@ def make_coils(
 
 
 def make_dividing_surface(csg, component):
-    """Make the dividing surface"""
+    """Surface that marks the end of the divertor/blanket's exterior."""
     exterior_pts = component.exterior_vertices()[:, ::2]
     return csg.surface_from_2points(exterior_pts[0], exterior_pts[-1])
 

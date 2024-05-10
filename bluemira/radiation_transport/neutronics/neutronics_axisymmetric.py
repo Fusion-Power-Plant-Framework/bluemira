@@ -19,8 +19,8 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.geometry.plane import calculate_plane_dir
 from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
-from bluemira.neutronics.make_pre_cell import PreCell
-from bluemira.neutronics.slicing import (
+from bluemira.radiation_transport.neutronics.make_pre_cell import PreCell
+from bluemira.radiation_transport.neutronics.slicing import (
     DivertorWireAndExteriorCurve,
     PanelsAndExteriorCurve,
 )
