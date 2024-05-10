@@ -1586,7 +1586,7 @@ def _coords_plane_intersect(
             fac = -(np.dot(vec2, w)) / dot
             if (fac >= 0) and (fac <= 1):
                 out.append(array[i] + fac * vec1)
-    return np.asarray(out)
+    return np.array(out)
 
 
 def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
