@@ -530,7 +530,7 @@ def make_radiation_shield_box(
 
     return openmc.Cell(
         name="Radiation shield wall",
-        fill=materials.match_material(CellType.TFCoil),
+        fill=materials.match_material(CellType.RadiationShield),
         region=universe & ~rad_shield_inner,
     )
 

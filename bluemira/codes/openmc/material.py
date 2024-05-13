@@ -72,6 +72,7 @@ class MaterialsLibrary:
     inb_sf_mat: openmc.Material
     outb_sf_mat: openmc.Material
     div_sf_mat: openmc.Material
+    rad_shield: openmc.Material
 
     @classmethod
     def from_neutronics_materials(cls, materials_lib: NeutronicsMaterials):
@@ -104,6 +105,8 @@ class MaterialsLibrary:
                 return self.div_fw_mat
             case CellType.DivertorSurface:
                 return self.div_sf_mat
+            case CellType.RadiationShield:
+                return self.rad_shield
 
     def export_to_xml(self, path: str | Path = "materials.xml"):
         """Exports material defintions to xml"""

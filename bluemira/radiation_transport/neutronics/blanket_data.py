@@ -590,4 +590,6 @@ def _create_from_blanket_type(
         inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
         outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
         div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
+        # TODO get shield material
+        rad_shield=duplicate_mat_as(eurofer_mat, "div_sf", 604),
     )

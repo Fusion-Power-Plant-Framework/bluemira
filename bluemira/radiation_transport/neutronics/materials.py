@@ -34,3 +34,4 @@ class NeutronicsMaterials:
     inb_sf_mat: HomogenisedMixture | MassFractionMaterial
     outb_sf_mat: HomogenisedMixture | MassFractionMaterial
     div_sf_mat: HomogenisedMixture | MassFractionMaterial
+    rad_shield: HomogenisedMixture | MassFractionMaterial
