@@ -224,7 +224,6 @@ class OpenMCResult:
             n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
         )
         # DataFrame columns rearrangement
-        n_wl_df = n_wl_df.reindex([12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
         n_wl_df = n_wl_df[
             [
                 "cell",
