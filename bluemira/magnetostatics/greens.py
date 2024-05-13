@@ -198,12 +198,7 @@ def greens_psi(
     """
     _, k2 = calc_a_k2(xc, zc, x, z)
     e, k = calc_e_k(k2)
-    return (
-        MU_0_2PI
-        * np.sqrt(x * xc)
-        * ((2 - k2) * k - 2 * e)
-        / np.sqrt(k2)
-    )
+    return MU_0_2PI * np.sqrt(x * xc) * ((2 - k2) * k - 2 * e) / np.sqrt(k2)
 
 
 @nb.jit(nopython=True)
