@@ -79,5 +79,4 @@ Other Examples
     examples/mesh/mesh_tutorial
     examples/plasma_physics/fusion_reactions
     examples/radiation_transport/heat_flux_calculation
-    examples/radiation_transport/neutronics
     examples/structural/tour_eiffel_example
