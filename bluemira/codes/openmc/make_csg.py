@@ -102,6 +102,37 @@ class CellStage:
             *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
         ]
 
+    def set_volumes(self):
+        """
+        Sets the volume of the voids. Not necessary/ used anywhere yet.
+        """
+        ext_vertices = exterior_vertices(self.blanket, self.divertor)
+        total_universe_volume = (
+            #  top - bottom
+            (self.universe[0].surface.z0 - self.universe[1].surface.z0)
+            * np.pi
+            * self.universe[2].surface.r ** 2  # cylinder
+        )  # cm^3
+
+        # is this needed?
+        # self.universe.volume = total_universe_volume
+
+        outer_boundary_volume = to_cm3(
+            polygon_revolve_signed_volume(ext_vertices[:, ::2])
+        )
+        ext_void_volume = total_universe_volume - outer_boundary_volume
+        if self.tf_coils:
+            for coil in self.tf_coils:
+                ext_void_volume -= coil.volume
+        if self.cs_coil:
+            ext_void_volume -= self.cs_coil.volume
+        self.ext_void.volume = ext_void_volume
+        blanket_volumes = sum(cell.volume for cell in chain.from_iterable(self.blanket))
+        divertor_volumes = sum(
+            cell.volume for cell in chain.from_iterable(self.divertor)
+        )
+        self.plasma.volume = outer_boundary_volume - blanket_volumes - divertor_volumes
+
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
@@ -657,40 +688,6 @@ def make_void_cells(
     )
 
 
-def set_volumes(
-    universe: openmc.region.Intersection,
-    tf_coils: list[openmc.Cell],
-    central_solenoid: openmc.Cell,
-    ext_void: openmc.Cell,
-    blanket: BlanketCellArray,
-    divertor: DivertorCellArray,
-    plasma: openmc.Cell,
-):
-    """
-    Sets the volume of the voids. Not necessary/ used anywhere yet.
-    """
-    ext_vertices = exterior_vertices(blanket, divertor)
-    total_universe_volume = (
-        #  top - bottom
-        (universe[0].surface.z0 - universe[1].surface.z0)
-        * np.pi
-        * universe[2].surface.r ** 2  # cylinder
-    )  # cm^3
-    universe.volume = total_universe_volume
-
-    outer_boundary_volume = to_cm3(polygon_revolve_signed_volume(ext_vertices[:, ::2]))
-    ext_void_volume = total_universe_volume - outer_boundary_volume
-    if tf_coils:
-        for coil in tf_coils:
-            ext_void_volume -= coil.volume
-    if central_solenoid:
-        ext_void_volume -= central_solenoid.volume
-    ext_void.volume = ext_void_volume
-    blanket_volumes = sum(cell.volume for cell in chain.from_iterable(blanket))
-    divertor_volumes = sum(cell.volume for cell in chain.from_iterable(divertor))
-    plasma.volume = outer_boundary_volume - blanket_volumes - divertor_volumes
-
-
 def make_cell_arrays(
     pre_cell_reactor: NeutronicsReactor,
     csg: BluemiraNeutronicsCSG,
@@ -801,15 +798,7 @@ def make_cell_arrays(
         ext_void=ext_void,
         universe=universe,
     )
-    set_volumes(
-        cell_stage.universe,
-        cell_stage.tf_coils,
-        cell_stage.cs_coil,
-        cell_stage.ext_void,
-        cell_stage.blanket,
-        cell_stage.divertor,
-        cell_stage.plasma,
-    )
+    cell_stage.set_volumes()
 
     return cell_stage
 
