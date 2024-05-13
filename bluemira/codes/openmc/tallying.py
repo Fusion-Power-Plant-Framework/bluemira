@@ -76,7 +76,7 @@ def filter_cells(
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
         ("Total power", "heating", []),
-        ("divertor power", "heating", []),
+        ("divertor power", "heating", [div_cells]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [bz_filter]),
         # Fluence
