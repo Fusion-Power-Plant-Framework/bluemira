@@ -178,9 +178,9 @@ class Setup(CodesSetup):
     def run(
         self,
         run_mode,
-        tally_function,
         runtime_params,
         source_params,
+        tally_function,
         *,
         debug: bool = False,
     ):
@@ -201,7 +201,15 @@ class Setup(CodesSetup):
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
 
-    def plot(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
+    def plot(
+        self,
+        run_mode,
+        runtime_params,
+        _source_params,
+        _tally_function,
+        *,
+        debug: bool = False,
+    ):
         """Plot stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             z_max, _z_min, r_max, _r_min = self.pre_cell_model.bounding_box
@@ -220,7 +228,15 @@ class Setup(CodesSetup):
             openmc.Plots([plot]).export_to_xml(plot_pth)
             self.files_created.add(plot_pth)
 
-    def volume(self, run_mode, runtime_params, _source_params, *, debug: bool = False):
+    def volume(
+        self,
+        run_mode,
+        runtime_params,
+        _source_params,
+        _tally_function,
+        *,
+        debug: bool = False,
+    ):
         """Stochastic volume stage for setup openmc"""
         z_max, z_min, r_max, r_min = self.pre_cell_model.bounding_box
 
@@ -477,7 +493,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
-            result = setup(run_mode, runtime_params, source_params, debug=debug)
+            result = setup(
+                run_mode, runtime_params, source_params, self.tally_function, debug=debug
+            )
         if run := self._get_execution_method(self._run, run_mode):
             result = run(run_mode, debug=debug)
         if teardown := self._get_execution_method(self._teardown, run_mode):

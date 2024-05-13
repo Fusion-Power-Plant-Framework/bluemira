@@ -61,6 +61,7 @@ def run_neutronics(
     vacuum_vessel: ComponentManager,
     ivc_shapes: IVCShapes,
     source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
+    tally_function=None,
 ):
     """Runs the neutronics model"""
     # TODO get these materials from the componentmanager or something similar
@@ -79,13 +80,18 @@ def run_neutronics(
     neutronics_csg = EUDEMONeutronicsCSGReactor(
         csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
-    try:
-        from bluemira.codes.openmc.sources import make_pps_source  # noqa: PLC0415
-    except ImportError:
-        raise NeutronicsError("Cannot import neutronics source") from None
+    if source is None:
+        try:
+            from bluemira.codes.openmc.sources import make_pps_source  # noqa: PLC0415
+        except ImportError:
+            raise NeutronicsError("Cannot import neutronics source") from None
 
     solver = neutronics_code_solver(
-        params, build_config, neutronics_csg, source=source or make_pps_source
+        params,
+        build_config,
+        neutronics_csg,
+        source=source or make_pps_source,
+        tally_function=tally_function,
     )
 
     res = solver.execute()
