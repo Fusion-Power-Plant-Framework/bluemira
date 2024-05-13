@@ -472,7 +472,7 @@ def greens_all(
         if xc <= 0
         if x <= 0
     """
-    a, k2 = calc_a_k2((xc, zc, x, z))
+    a, k2 = calc_a_k2(xc, zc, x, z)
     e, k = calc_e_k(k2)
     i1, i2 = calc_i1_i2(a, k2, e, k)
     a_part = (z - zc) ** 2 + x**2 + xc**2
