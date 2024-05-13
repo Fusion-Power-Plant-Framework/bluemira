@@ -35,6 +35,9 @@ class CellType(Enum):
         The pipe works and supporting structure
     VacuumVessel
         The vacuum vessel keeping the plasma from mixing with outside air.
+    RadiationShield
+        The radiation shield surrounding the reactor, also called a bio shield.
+
     """
 
     BlanketSurface = auto()
@@ -47,6 +50,7 @@ class CellType(Enum):
     DivertorSurface = auto()
     TFCoil = auto()
     CSCoil = auto()
+    RadiationShield = auto()
 
 
 @dataclass

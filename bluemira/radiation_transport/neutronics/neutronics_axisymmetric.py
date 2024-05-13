@@ -179,6 +179,7 @@ class NeutronicsReactorParameterFrame(ParameterFrame):
     fw_divertor_surface_tk: Parameter[float]
     fw_blanket_surface_tk: Parameter[float]
     blk_ib_manifold: Parameter[float]
+    tk_rs: Parameter[float]
     blk_ob_manifold: Parameter[float]
 
 

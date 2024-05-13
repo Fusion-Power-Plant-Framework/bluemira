@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 import openmc
+import openmc.region
 
 from bluemira.codes.openmc.material import CellType
 from bluemira.geometry.constants import D_TOLERANCE
@@ -78,8 +79,9 @@ class CellStage:
     tf_coils: list[openmc.Cell]
     cs_coil: openmc.Cell
     plasma: openmc.Cell
+    radiation_shield: openmc.Cell
     ext_void: openmc.Cell
-    universe: openmc.Region
+    universe: openmc.region.Intersection
 
     @property
     def cells(self):
@@ -89,6 +91,7 @@ class CellStage:
             *self.tf_coils,
             self.cs_coil,
             self.plasma,
+            self.radiation_shield,
             self.ext_void,
         )
 
@@ -468,6 +471,39 @@ def make_universe_box(
     return -top & +bottom & -universe_cylinder
 
 
+def make_radiation_shield_box(
+    csg,
+    z_min: float,
+    z_max: float,
+    r_max: float,
+    universe: openmc.region.Intersection,
+    materials: MaterialsLibrary,
+):
+    """Define the radiation shield wall as a hollow of the universe box."""
+    bottom_inner = csg.find_suitable_z_plane(
+        z_min,
+        name="Radiation shield bottom inner wall",
+    )
+
+    top_inner = csg.find_suitable_z_plane(
+        z_max,
+        name="Radiation shield top inner wall",
+    )
+
+    radial_cylinder_inboard = openmc.ZCylinder(
+        r=to_cm(r_max),
+        name="Radiation shield wall radial inboard",
+    )
+
+    rad_shield_inner = -top_inner & +bottom_inner & -radial_cylinder_inboard
+
+    return openmc.Cell(
+        name="Radiation shield wall",
+        fill=materials.match_material(CellType.TFCoil),
+        region=universe & ~rad_shield_inner,
+    )
+
+
 def make_coils(
     csg,
     solenoid_radius: float,
@@ -584,11 +620,12 @@ def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.R
 
 def make_void_cells(
     csg,
-    tf_coils,
-    central_solenoid,
-    universe,
-    blanket,
-    divertor,
+    universe: openmc.region.Intersection,
+    blanket: BlanketCellArray,
+    divertor: DivertorCellArray,
+    central_solenoid: openmc.Cell,
+    tf_coils: list[openmc.Cell] | None,
+    rad_shield: openmc.Cell | None = None,
     *,
     control_id: bool = False,
 ):
@@ -603,6 +640,8 @@ def make_void_cells(
         void_region &= ~tf_coils[0].region
     if central_solenoid:
         void_region &= ~central_solenoid.region
+    if rad_shield:
+        void_region &= ~rad_shield.region
 
     return (
         openmc.Cell(
@@ -619,7 +658,7 @@ def make_void_cells(
 
 
 def set_volumes(
-    universe: openmc.Universe,
+    universe: openmc.region.Intersection,
     tf_coils: list[openmc.Cell],
     central_solenoid: openmc.Cell,
     ext_void: openmc.Cell,
@@ -681,11 +720,19 @@ def make_cell_arrays(
     # determine universe_box
 
     z_max, z_min, r_max, r_min = pre_cell_reactor.half_bounding_box
+
+    z_min_adj = z_min - D_TOLERANCE
+    z_max_adj = z_max + D_TOLERANCE
+    r_max_adj = r_max + D_TOLERANCE
+
+    rad_shield_wall_tk = pre_cell_reactor.tokamak_dimensions.rad_shield.wall
+
+    # make the universe box, incorporates the radiation shield wall
     universe = make_universe_box(
         csg,
-        z_min - D_TOLERANCE,
-        z_max + D_TOLERANCE,
-        r_max + D_TOLERANCE,
+        z_min_adj - rad_shield_wall_tk,
+        z_max_adj + rad_shield_wall_tk,
+        r_max_adj + rad_shield_wall_tk,
         control_id=control_id,
     )
 
@@ -719,12 +766,29 @@ def make_cell_arrays(
         csg,
         r_min - pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
         pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
-        z_min - D_TOLERANCE,
-        z_max + D_TOLERANCE,
+        z_min_adj,
+        z_max_adj,
+        materials,
+    )
+    # make the radiation shield wall
+    # which is a hollow of the universe box
+    rad_shield = make_radiation_shield_box(
+        csg,
+        z_min_adj,
+        z_max_adj,
+        r_max_adj,
+        universe,
         materials,
     )
     plasma, ext_void = make_void_cells(
-        csg, tf, cs, universe, blanket, divertor, control_id=control_id
+        csg,
+        universe=universe,
+        blanket=blanket,
+        divertor=divertor,
+        central_solenoid=cs,
+        tf_coils=tf,
+        rad_shield=rad_shield,
+        control_id=control_id,
     )
 
     cell_stage = CellStage(
@@ -733,6 +797,7 @@ def make_cell_arrays(
         tf_coils=tf,
         cs_coil=cs,
         plasma=plasma,
+        radiation_shield=rad_shield,
         ext_void=ext_void,
         universe=universe,
     )

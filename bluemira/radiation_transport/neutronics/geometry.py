@@ -8,8 +8,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
+        NeutronicsReactorParameterFrame,
+    )
 
 
 @dataclass
@@ -83,6 +89,21 @@ class ToroidalFieldCoilDimension:
 
 
 @dataclass
+class RadiationShieldThickness:
+    """
+    Radiation shield dimensions.
+    For now it only has 1 value: the wall layer thickness.
+
+    Parameters
+    ----------
+    wall
+        The wall thickness of the radiation shield.
+    """
+
+    wall: float
+
+
+@dataclass
 class TokamakDimensions:
     """
     The dimensions of the simplest axis-symmetric case of the tokamak.
@@ -104,9 +125,12 @@ class TokamakDimensions:
     outboard: BlanketThickness
     divertor: DivertorThickness
     cs_coil: ToroidalFieldCoilDimension
+    rad_shield: RadiationShieldThickness
 
     @classmethod
-    def from_parameterframe(cls, params, r_inner_cut: float):
+    def from_parameterframe(
+        cls, params: NeutronicsReactorParameterFrame, r_inner_cut: float
+    ):
         """Setup tokamak dimensions"""
         return cls(
             BlanketThickness(
@@ -124,4 +148,5 @@ class TokamakDimensions:
             ),
             DivertorThickness(params.fw_divertor_surface_tk.value),
             ToroidalFieldCoilDimension(params.tk_tf_inboard.value, params.r_tf_in.value),
+            RadiationShieldThickness(params.tk_rs.value),
         )

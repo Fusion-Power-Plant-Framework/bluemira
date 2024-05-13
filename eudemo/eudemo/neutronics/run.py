@@ -88,4 +88,6 @@ def run_neutronics(
         params, build_config, neutronics_csg, source=source or make_pps_source
     )
 
-    return neutronics_csg, solver.execute()
+    res = solver.execute()
+
+    return neutronics_csg, res
