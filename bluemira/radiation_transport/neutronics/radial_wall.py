@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from math import fsum
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -18,100 +17,21 @@ from scipy.optimize import newton
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
+from bluemira.geometry.tools import partial_diff_of_volume, polygon_revolve_signed_volume
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable
 
-    from bluemira.neutronics.make_pre_cell import PreCellArray
+    from bluemira.radiation_transport.neutronics.make_pre_cell import PreCellArray
 
 
 class Vert(IntEnum):
     """Vertices index for cells"""
 
-    ext_end = 0
-    int_start = 1
-    int_end = 2
-    ext_start = 3
-
-
-def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
-    """
-    Revolve a polygon along the z axis, and return the volume.
-
-    A polygon placed in the RHS of the z-axis in the xz plane would have positive volume
-    if it runs clockwise, and negative volume if it runs counter-clockwise.
-
-    Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
-    negative volume if it runs clockwise, positive volume if it runs counter-clockwise.
-
-    Parameters
-    ----------
-    polygon:
-        Stores the x-z coordinate pairs of the four coordinates.
-
-    Notes
-    -----
-    Consider one edge of the polygon, which has two vertices, $p$ and $c$.
-    TODO: insert graphics
-
-    When revolved around the z-axis, this trapezium forms a the frustum of a cone.
-    The expression for the volume of this frustrum needs to be modified to avoid
-    ZeroDivisionError, thus it is recast into the following (also the simplest) form:
-    :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
-
-    Adding together the signed volume of all edges, the excess negative volume from one
-    side would cancel out the excess positive volume from the other, such that
-    abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
-    """
-    polygon = np.array(polygon)
-    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
-        raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
-    previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
-    px, pz = previous_points[:, 0], previous_points[:, -1]
-    cx, cz = current_points[:, 0], current_points[:, -1]
-    volume_3_over_pi = (pz - cz) * (px**2 + px * cx + cx**2)
-    return np.pi / 3 * fsum(volume_3_over_pi)
-
-
-def partial_diff_of_volume(
-    three_vertices: Sequence[Sequence[float]],
-    normalised_direction_vector: Iterable[float],
-) -> float:
-    """
-    Gives the relationship between how the the solid volume varies with the position of
-    one of its verticies. More precisely, it gives gives the the partial derivative of
-    the volume of the solid revolved out of a polygon when one vertex of that polygon
-    is moved in the direction specified by normalised_direction_vector.
-
-    Parameters
-    ----------
-    three_vertices: NDArray with shape (3, 2)
-        Contain (x, z) coordinates of the polygon. It extracts only the vertex being
-        moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
-        are anchor vertices that cannot be adjusted.
-    normalised_direction_vector: NDArray with shape (2,)
-        Direction that the point is allowed to move in.
-
-    Notes
-    -----
-    Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
-    polygon. When r is moved, the polygon's revolved solid volume changes.
-    After a hefty amount of derivation, everything cancels out to give the expression
-    .. math::
-
-        \\frac{dV}{d r_z} = q_z q_x - r_z q_x + 2 q_z r_x - 2 s_z r_x + r_z s_x - s_z s_x
-        \\frac{dV}{d r_x} = (q_x + r_x + s_x) (s_x - q_x)
-
-
-    The dot product between the direction of motion and the vector :math:`\\frac{dV}{dr}`
-    gives the required scalar derivative showing "how much does the volume change when
-    r is moved in a certain direction by one unit length".
-    """
-    (qx, qz), (rx, rz), (sx, sz) = three_vertices
-    x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
-    z_component = (qx + rx + sx) * (sx - qx)
-    xz_derivatives = np.array([x_component, z_component]).T
-    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
+    exterior_end = 0
+    interior_start = 1
+    interior_end = 2
+    exterior_start = 3
 
 
 class CellWalls:
@@ -176,12 +96,12 @@ class CellWalls:
         # cut each coordinates down from having shape (3, 1) down to (2,)
         return cls([
             *(
-                (c.vertex[:, Vert.int_end], c.vertex[:, Vert.ext_start])
+                (c.vertex[:, Vert.interior_end], c.vertex[:, Vert.exterior_start])
                 for c in pre_cell_array
             ),
             (
-                pre_cell_array[-1].vertex[:, Vert.int_start],
-                pre_cell_array[-1].vertex[:, Vert.ext_end],
+                pre_cell_array[-1].vertex[:, Vert.interior_start],
+                pre_cell_array[-1].vertex[:, Vert.exterior_end],
             ),
         ])
 
@@ -192,9 +112,12 @@ class CellWalls:
         make a CellWall.
         """
         return cls([
-            *((c.vertex[:, Vert.int_end], c.vv_point[:, 0]) for c in pre_cell_array),
+            *(
+                (c.vertex[:, Vert.interior_end], c.vv_point[:, 0])
+                for c in pre_cell_array
+            ),
             (
-                pre_cell_array[-1].vertex[:, Vert.int_start],
+                pre_cell_array[-1].vertex[:, Vert.interior_start],
                 pre_cell_array[-1].vv_point[:, 1],
             ),
         ])
@@ -288,14 +211,20 @@ class CellWalls:
         -------
         volume: float
         """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
+        start_i, dir_i = self.starts[i], self.directions[i]
+        new_end = start_i + dir_i * test_length
         prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
-        prev_outline = [prev_wall[0], prev_wall[1], new_end, _start_i]
-        next_outline = [_start_i, new_end, next_wall[1], next_wall[0]]
-        return polygon_revolve_signed_volume(
-            prev_outline
-        ) + polygon_revolve_signed_volume(next_outline)
+        return polygon_revolve_signed_volume([
+            prev_wall[0],
+            prev_wall[1],
+            new_end,
+            start_i,
+        ]) + polygon_revolve_signed_volume([
+            start_i,
+            new_end,
+            next_wall[1],
+            next_wall[0],
+        ])
 
     def volume_derivative_of_cells_neighbouring(self, i, test_length):
         """
@@ -306,14 +235,12 @@ class CellWalls:
         -------
         dV/dl: float
         """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
+        start_i, dir_i = self.starts[i], self.directions[i]
+        new_end = start_i + dir_i * test_length
         prev_end, next_end = self.ends[i - 1 : i + 2 : 2]
-        prev_curve = [prev_end, new_end, _start_i]
-        next_curve = [_start_i, new_end, next_end]
-        return partial_diff_of_volume(prev_curve, _dir_i) + partial_diff_of_volume(
-            next_curve, _dir_i
-        )
+        return partial_diff_of_volume(
+            [prev_end, new_end, start_i], dir_i
+        ) + partial_diff_of_volume([start_i, new_end, next_end], dir_i)
 
     def optimise_to_match_individual_volumes(
         self, volume_list: Iterable[float], *, max_iter=1000

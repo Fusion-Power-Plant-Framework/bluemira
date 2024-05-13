@@ -16,7 +16,7 @@ from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.neutronics.constants import DPACoefficients
+from bluemira.radiation_transport.neutronics.constants import DPACoefficients
 
 
 def get_percent_err(row):

@@ -67,7 +67,9 @@ class WireInfo:
 
     def reverse(self) -> WireInfo:
         """Flip the wire"""
-        return type(self)(self.key_points.reverse(), self.tangents[::-1], None)
+        return type(self)(
+            self.key_points.reverse(), [-t for t in self.tangents[::-1]], None
+        )
 
     @classmethod
     def from_2P(  # noqa: N802
@@ -78,18 +80,21 @@ class WireInfo:
         instance StraightLineInfo) using only two points.
         """
         direction = np.array(end_point) - np.array(start_point)
-        normed_dir = direction / np.linalg.norm(direction)
-        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
+        normed_dir = np.array(direction) / np.linalg.norm(direction)
+        return cls(
+            StraightLineInfo(np.array(start_point), np.array(end_point)),
+            [normed_dir, normed_dir],
+        )
 
 
 class WireInfoList:
     """A class to store info about a series of wires"""
 
-    def __init__(self, info_list: list[WireInfo]):
+    def __init__(self, info_list: Iterable[WireInfo]):
         self.info_list = list(info_list)
-        for prev_wire, curr_wire in pairwise(self.info_list):
+        for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
             if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
-                raise GeometryError("Next wire must start where the previous wire stops")
+                raise GeometryError(f"wire {i + 1} must start where the wire {i} stops.")
 
     def __len__(self) -> int:
         """Number of wire infos"""

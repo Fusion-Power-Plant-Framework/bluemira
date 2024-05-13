@@ -13,7 +13,7 @@ from enum import Enum, auto
 from bluemira.base.constants import raw_uc
 from bluemira.materials.material import MassFractionMaterial
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
-from bluemira.neutronics.materials import NeutronicsMaterials
+from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
 # Elements
 he_cool_mat = MassFractionMaterial(

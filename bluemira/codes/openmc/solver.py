@@ -5,13 +5,14 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC designer"""
 
-from collections.abc import Callable
+from __future__ import annotations
+
 from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import openmc
@@ -27,31 +28,34 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.neutronics.openmc.make_csg import (
+from bluemira.codes.openmc.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
     make_cell_arrays,
 )
-from bluemira.neutronics.openmc.material import MaterialsLibrary
-from bluemira.neutronics.openmc.output import OpenMCResult
-from bluemira.neutronics.openmc.tallying import (
-    _create_tallies_from_filters,
-    filter_new_cells,
-)
-from bluemira.neutronics.params import (
+from bluemira.codes.openmc.material import MaterialsLibrary
+from bluemira.codes.openmc.output import OpenMCResult
+from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
+from bluemira.codes.openmc.tallying import (
+    _create_tallies_from_filters,
+    filter_new_cells,
+)
 from bluemira.plasma_physics.reactions import n_DT_reactions
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""
 
-    RUN = "fixed source"
+    RUN = openmc.settings.RunMode.FIXED_SOURCE.value
     RUN_AND_PLOT = auto()
-    PLOT = "plot"
-    VOLUME = "volume"
+    PLOT = openmc.settings.RunMode.PLOT.value
+    VOLUME = openmc.settings.RunMode.VOLUME.value
 
 
 OPENMC_NAME = "OpenMC"
@@ -85,14 +89,13 @@ class OpenMCSimulationRuntimeParameters:
         Where the xml file for cross-section is stored locally.
     """
 
-    # Parameters used outside of setup_openmc()
     particles: int  # number of particles used in the neutronics simulation
     cross_section_xml: str | Path
     batches: int = 2
     photon_transport: bool = True
     # Bremsstrahlung only matters for very thin objects
     electron_treatment: Literal["ttb", "led"] = "led"
-    run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
+    run_mode: str = OpenMCRunModes.RUN.value
     openmc_write_summary: bool = False
     parametric_source: bool = True
     plot_axis: str = "xz"
@@ -196,6 +199,7 @@ class Setup(CodesSetup):
                 int(plot_width_1 * runtime_params.plot_pixel_per_metre),
             ]
             plot.width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
+            plot.show_overlaps = True
 
             plot_pth = Path(self.out_path, run_mode.name.lower(), "plots.xml")
             openmc.Plots([plot]).export_to_xml(plot_pth)
@@ -235,7 +239,12 @@ class Run(CodesTask):
         folder = run_mode.name.lower()
         cwd = Path(self.out_path, folder)
         cwd.mkdir(parents=True, exist_ok=True)
-        _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
+        _timing(
+            openmc.run,
+            "Executed in",
+            f"Running OpenMC in {folder} mode",
+            debug_info_str=False,
+        )(
             output=debug,
             threads=None,
             geometry_debug=False,
@@ -276,12 +285,8 @@ class Teardown(CodesTeardown):
         self.cells = cells
 
     @staticmethod
-    def _cleanup(files_created, *, delete_files: bool = False):
+    def delete_files(files_created):
         """Remove files generated during the run (mainly .xml files.)"""
-        if not delete_files:
-            bluemira_debug("No files removed as debug mode is turned on.")
-            return  # skip this entire method if we want to keep the files.
-
         removed_files, failed_to_remove_files = [], []
         for file_name in files_created:
             if (f := file_name).exists():
@@ -298,25 +303,48 @@ class Teardown(CodesTeardown):
                 "they don't exists."
             )
 
-    def run(self, universe, files_created, source_params, statepoint_file):
+    def run(
+        self,
+        universe,
+        files_created,
+        source_params,
+        statepoint_file,
+        *,
+        delete_files: bool = False,
+    ):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
             n_DT_reactions(source_params.plasma_physics_units.reactor_power),
             statepoint_file,
         )
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
         return result
 
-    def plot(self, _universe, files_created, *_args):
+    def plot(
+        self,
+        _universe,
+        files_created,
+        *_args,
+        delete_files: bool = False,
+    ):
         """Plot stage for Teardown task"""
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
 
     def volume(
-        self, _universe, files_created, _source_params, _statepoint_file
+        self,
+        _universe,
+        files_created,
+        _source_params,
+        _statepoint_file,
+        *,
+        delete_files: bool = False,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
-        self._cleanup(files_created)
+        if delete_files:
+            self.delete_files(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
@@ -339,9 +367,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def __init__(
         self,
         params: dict | ParameterFrame,
-        neutronics_pre_cell_model,
-        source: Callable[[PlasmaSourceParameters], openmc.Source],
         build_config: dict,
+        neutronics_pre_cell_model,
+        source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
@@ -370,7 +398,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
     def execute(self, *, debug=False) -> OpenMCResult | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
-        run_mode = self.build_config["run_mode"]
+        run_mode = self.build_config.get("run_mode", self.run_mode_cls.RUN)
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
 

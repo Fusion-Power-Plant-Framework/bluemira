@@ -5,13 +5,18 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """OpenMC CSG neutronics materials"""
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, fields
 from enum import Enum, auto
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import openmc
 
-from bluemira.neutronics.materials import NeutronicsMaterials
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
 
 class CellType(Enum):
@@ -30,6 +35,9 @@ class CellType(Enum):
         The pipe works and supporting structure
     VacuumVessel
         The vacuum vessel keeping the plasma from mixing with outside air.
+    RadiationShield
+        The radiation shield surrounding the reactor, also called a bio shield.
+
     """
 
     BlanketSurface = auto()
@@ -42,6 +50,7 @@ class CellType(Enum):
     DivertorSurface = auto()
     TFCoil = auto()
     CSCoil = auto()
+    RadiationShield = auto()
 
 
 @dataclass

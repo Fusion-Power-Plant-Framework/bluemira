@@ -14,7 +14,6 @@ from numpy import typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.display import plot_2d, show_cad
-from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
     Coordinates,
     choose_direction,
@@ -22,13 +21,18 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_polygon, raise_error_if_overlap, revolve_shape
+from bluemira.geometry.tools import (
+    is_convex,
+    make_polygon,
+    raise_error_if_overlap,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.radial_wall import (
+from bluemira.radiation_transport.neutronics.radial_wall import (
     CellWalls,
     Vert,
 )
-from bluemira.neutronics.wires import (
+from bluemira.radiation_transport.neutronics.wires import (
     CircleInfo,
     StraightLineInfo,
     WireInfo,
@@ -259,11 +263,11 @@ class PreCell:
             self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
         return self._blanket_half_solid
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot the outline in 2D"""
         return plot_2d([self.outline, self.vv_wire], *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Plot the outline in 3D"""
         return show_cad(self.half_solid, *args, **kwargs)
 
@@ -273,13 +277,14 @@ class PreCell:
         The side (clockwise side and counter-clockwise) walls of this cell.
         Only create it when called, because some instances of PreCell will never use it.
 
-        it is of type :class:`~bluemira.neutronics.radial_wall.CellWalls`.
+        it is of type
+        :class:`~bluemira.radiation_transport.neutronics.radial_wall.CellWalls`.
         """
         if not hasattr(self, "_cell_walls"):
             self._cell_walls = CellWalls(
                 np.asarray((
-                    self.vertex.T[(Vert.int_end, Vert.ext_start),],
-                    self.vertex.T[(Vert.int_start, Vert.ext_end),],
+                    self.vertex.T[(Vert.interior_end, Vert.exterior_start),],
+                    self.vertex.T[(Vert.interior_start, Vert.exterior_end),],
                 ))
             )
 
@@ -361,24 +366,22 @@ class PreCellArray:
         for this_cell, next_cell in pairwise(self.pre_cells):
             # perform check that they are actually adjacent
             this_wall = (
-                this_cell.vertex[:, Vert.ext_end],
-                this_cell.vertex[:, Vert.int_start],
+                this_cell.vertex[:, Vert.exterior_end],
+                this_cell.vertex[:, Vert.interior_start],
             )
             next_wall = (
-                next_cell.vertex[:, Vert.ext_start],
-                next_cell.vertex[:, Vert.int_end],
+                next_cell.vertex[:, Vert.exterior_start],
+                next_cell.vertex[:, Vert.interior_end],
             )
-            if not (
-                np.allclose(this_wall[0], next_wall[0], atol=0, rtol=EPS_FREECAD)
-                and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=EPS_FREECAD)
-            ):
+            if not np.array_equal(this_wall, next_wall):
                 raise GeometryError(
                     "Adjacent pre-cells are expected to have matching"
                     f"corners; but instead we have {this_wall}!={next_wall}."
                 )
         self.cell_walls = CellWalls.from_pre_cell_array(self)
-        # TODO: assert inside and outside are both convex hulls. Useful candidate classes
-        # /functions: bluemira.geometry.tools::ConvexHull/scipy.spatial::ConvexHull
+
+        if not is_convex(self.exterior_vertices()[:, ::2]):
+            raise GeometryError(f"{self} must have convex exterior wires!")
 
     @property
     def volumes(self) -> tuple[float]:
@@ -444,12 +447,10 @@ class PreCellArray:
                 )
             )
         return PreCellArray(new_pre_cells)
-        # ax = self.plot_2d(show=False)
-        # new_pca.plot_2d(ax=ax, show=True)
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot pre cells in 2d"""
-        plot_2d(
+        return plot_2d(
             [
                 *(pc.outline for pc in self.pre_cells),
                 *(pc.vv_wire for pc in self.pre_cells),
@@ -458,9 +459,9 @@ class PreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show pre cell CAD"""
-        show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
+        return show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
 
     def exterior_vertices(self) -> npt.NDArray:
         """
@@ -492,6 +493,13 @@ class PreCellArray:
         """Get pre cell"""
         return self.pre_cells[index_or_slice]
 
+    def __setitem__(self, index_or_slice, new_pre_cell: PreCell | PreCellArray):
+        """Set an element to be a new Precell, or a slice to be a new PreCellarray."""
+        if isinstance(new_pre_cell, PreCell):
+            self.pre_cells[index_or_slice] = new_pre_cell
+        else:
+            self.pre_cells[index_or_slice] = new_pre_cell.pre_cells
+
     def __add__(self, other_array) -> PreCellArray:
         """Adding two list together to create a new one."""
         if isinstance(other_array, PreCellArray):
@@ -503,6 +511,18 @@ class PreCellArray:
     def __repr__(self) -> str:
         """String representation"""
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
+
+    def copy(self):
+        """
+        NOT a deepcopy, each element of the new_copy.pre_cells list points to the same
+        items as the self.pre_cells
+
+        Returns
+        -------
+        new_copy
+            copy of itself
+        """
+        return PreCellArray(self.pre_cells.copy())
 
 
 class DivertorPreCell:
@@ -551,13 +571,13 @@ class DivertorPreCell:
             ])
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot 2d precell"""
-        plot_2d(self.outline, *args, **kwargs)
+        return plot_2d(self.outline, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show precell CAD"""
-        show_cad(self.half_solid, *args, **kwargs)
+        return show_cad(self.half_solid, *args, **kwargs)
 
     @property
     def outline(self) -> BluemiraWire:
@@ -608,17 +628,21 @@ class DivertorPreCell:
                by x%, radius scaled down by x%).
             2. All tangents are preserved, so no need to change them.
         """
-        int_wire_pts = [w.key_points[0] for w in self.interior_wire]
-        int_wire_pts.append(self.interior_wire[-1].key_points[1])
-        int_wire_pts = np.array(int_wire_pts)  # shape (N+1, 3)
+        int_wire_pts = np.array([
+            *(w.key_points[0] for w in self.interior_wire),
+            self.interior_wire[-1].key_points[1],
+        ])
+
+        # assumed normalised
         cw_dir = choose_direction(
             self.cw_wall[0].tangents[0], self.cw_wall.end_point, self.cw_wall.start_point
-        )  # assumed normalised
+        )
         ccw_dir = choose_direction(
             self.ccw_wall[0].tangents[1],
             self.ccw_wall.start_point,
             self.ccw_wall.end_point,
-        )  # assumed normalised
+        )
+
         cw_norm = CCW_90 @ cw_dir
         cw_anchor = self.cw_wall.start_point
         ccw_norm = CW_90 @ ccw_dir
@@ -661,17 +685,14 @@ class DivertorPreCellArray:
         self.pre_cells = list(list_of_div_pc)
         # Perform check that they are adjacent
         for prev_cell, curr_cell in pairwise(self.pre_cells):
-            if not np.allclose(
-                prev_cell.vertex.xyz[:, Vert.ext_start],
-                curr_cell.vertex.xyz[:, Vert.ext_end],
-                atol=0,
-                rtol=EPS_FREECAD,
+            if not np.array_equal(
+                prev_cell.vertex.xyz[:, Vert.exterior_start],
+                curr_cell.vertex.xyz[:, Vert.exterior_end],
             ):
-                # # Don't need this check below, thus commented out.
-                # and np.allclose(prev_cell.vertex.interior_end,
-                #                 curr_cell.vertex.interior_start,
-                #                 atol=0, rtol=EPS_FREECAD)
                 raise GeometryError("Expect neighbouring cells to share corners!")
+
+        if not is_convex(self.exterior_vertices()[:, ::2]):
+            raise GeometryError(f"{self} must have convex exterior vertices!")
 
     def exterior_vertices(self) -> npt.NDArray:
         """
@@ -718,9 +739,9 @@ class DivertorPreCellArray:
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
-    def plot_2d(self, *args, **kwargs) -> None:
+    def plot_2d(self, *args, **kwargs):
         """Plot precell array cad in 2d"""
-        plot_2d(
+        return plot_2d(
             [
                 *(dpc.outline for dpc in self.pre_cells),
                 *(dpc.vv_wire.restore_to_wire() for dpc in self.pre_cells),
@@ -729,6 +750,18 @@ class DivertorPreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs) -> None:
+    def show_cad(self, *args, **kwargs):
         """Show precell array CAD"""
-        show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
+        return show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
+
+    def copy(self):
+        """
+        NOT a deepcopy, each element of the new_copy.pre_cells list points to the same
+        items as the self.pre_cells
+
+        Returns
+        -------
+        new_copy
+            copy of itself
+        """
+        return DivertorPreCellArray(self.pre_cells.copy())

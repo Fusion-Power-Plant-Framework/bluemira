@@ -105,3 +105,30 @@ def transport_code_solver(
     """
     transp = get_code_interface(module)
     return transp.Solver(params, build_config)
+
+
+def neutronics_code_solver(
+    params: ParameterFrame,
+    build_config: BuildConfig,
+    neutronics_model,
+    source,
+    module: str = "OPENMC",
+) -> CodesSolver:
+    """
+    Neutronics solver
+
+    Parameters
+    ----------
+    params:
+        ParameterFrame for neutronics code
+    build_config:
+        build configuration dictionary
+    module:
+        Module to use
+
+    Returns
+    -------
+    The solver object to be run
+    """
+    neutron = get_code_interface(module)
+    return neutron.Solver(params, build_config, neutronics_model, source)
