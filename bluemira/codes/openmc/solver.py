@@ -32,6 +32,7 @@ from bluemira.codes.interface import (
 from bluemira.codes.openmc.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
+    DivertorCellArray,
     make_cell_arrays,
 )
 from bluemira.codes.openmc.material import MaterialsLibrary
@@ -117,6 +118,7 @@ class Setup(CodesSetup):
         self.cross_section_xml = cross_section_xml
         self.source = source
         self.blanket_cell_array = cell_arrays.blanket
+        self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
         self.materials = materials
         self.matlist = attrgetter(
@@ -127,6 +129,7 @@ class Setup(CodesSetup):
             "outb_vv_mat",
             "divertor_mat",
             "div_fw_mat",
+            "tf_coil_mat",
         )
 
     @contextmanager
@@ -162,11 +165,14 @@ class Setup(CodesSetup):
         run_mode,
         tally_function: TALLY_FUNCTION_TYPE,
         blanket_cell_array: BlanketCellArray,
+        divertor_cell_array: DivertorCellArray,
         material_list: list[openmc.Material],
     ):
         out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
         tallies_list = []
-        for name, scores, filters in tally_function(material_list, blanket_cell_array):
+        for name, scores, filters in tally_function(
+            material_list, blanket_cell_array, divertor_cell_array
+        ):
             tally = openmc.Tally(name=name)
             tally.scores = [scores]
             tally.filters = filters
@@ -196,6 +202,7 @@ class Setup(CodesSetup):
                 run_mode,
                 tally_function,
                 self.blanket_cell_array,
+                self.divertor_cell_array,
                 self.matlist(self.materials),
             )
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
@@ -385,7 +392,7 @@ class Teardown(CodesTeardown):
 
 
 TALLY_FUNCTION_TYPE = Callable[
-    [list[openmc.Material], BlanketCellArray],
+    [list[openmc.Material], BlanketCellArray, DivertorCellArray],
     tuple[
         str,
         str,
