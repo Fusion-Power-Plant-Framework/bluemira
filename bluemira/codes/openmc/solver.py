@@ -7,12 +7,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import numpy as np
 import openmc
@@ -39,14 +40,8 @@ from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.codes.openmc.tallying import (
-    _create_tallies_from_filters,
-    filter_new_cells,
-)
+from bluemira.codes.openmc.tallying import filter_cells
 from bluemira.plasma_physics.reactions import n_DT_reactions
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -163,15 +158,32 @@ class Setup(CodesSetup):
                 self.files_created.add(pth)
 
     def _set_tallies(
-        self, run_mode, blanket_cell_array: BlanketCellArray, material_list
+        self,
+        run_mode,
+        tally_function: TALLY_FUNCTION_TYPE,
+        blanket_cell_array: BlanketCellArray,
+        material_list: list[openmc.Material],
     ):
-        filter_list = filter_new_cells(material_list, blanket_cell_array)
-        _create_tallies_from_filters(
-            *filter_list, out_path=Path(self.out_path, run_mode.name.lower())
-        )
-        self.files_created.add(Path(self.out_path, run_mode.name.lower(), "tallies.xml"))
+        out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
+        tallies_list = []
+        for name, scores, filters in tally_function(material_list, blanket_cell_array):
+            tally = openmc.Tally(name=name)
+            tally.scores = [scores]
+            tally.filters = filters
+            tallies_list.append(tally)
 
-    def run(self, run_mode, runtime_params, source_params, *, debug: bool = False):
+        openmc.Tallies(tallies_list).export_to_xml(out_path)
+        self.files_created.add(out_path)
+
+    def run(
+        self,
+        run_mode,
+        tally_function,
+        runtime_params,
+        source_params,
+        *,
+        debug: bool = False,
+    ):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
@@ -181,7 +193,10 @@ class Setup(CodesSetup):
             self.settings.electron_treatment = runtime_params.electron_treatment
 
             self._set_tallies(
-                run_mode, self.blanket_cell_array, self.matlist(self.materials)
+                run_mode,
+                tally_function,
+                self.blanket_cell_array,
+                self.matlist(self.materials),
             )
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
@@ -353,6 +368,16 @@ class Teardown(CodesTeardown):
         }
 
 
+TALLY_FUNCTION_TYPE = Callable[
+    [list[openmc.Material], BlanketCellArray],
+    tuple[
+        str,
+        str,
+        list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter],
+    ],
+]
+
+
 class OpenMCNeutronicsSolver(CodesSolver):
     """OpenMC 2D neutronics solver"""
 
@@ -370,6 +395,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         build_config: dict,
         neutronics_pre_cell_model,
         source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
+        tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
@@ -387,6 +413,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.pre_cell_model, BluemiraNeutronicsCSG(), self.materials, control_id=True
         )
 
+        self.tally_function = filter_cells if tally_function is None else tally_function
+
     @property
     def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
         """Source term for OpenMC"""
@@ -395,6 +423,15 @@ class OpenMCNeutronicsSolver(CodesSolver):
     @source.setter
     def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
         self._source = value
+
+    @property
+    def tally_function(self) -> TALLY_FUNCTION_TYPE:
+        """Function used to set up tallies"""
+        return self._tally_function
+
+    @tally_function.setter
+    def tally_function(self, value: TALLY_FUNCTION_TYPE):
+        self._tally_function = value
 
     def execute(self, *, debug=False) -> OpenMCResult | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
