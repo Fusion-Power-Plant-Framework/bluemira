@@ -12,11 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from bluemira.equilibria.find import Opoint, Optional, Xpoint
-
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -31,6 +26,12 @@ from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
 from bluemira.equilibria.plotting import ProfilePlotter
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from bluemira.equilibria.find import Opoint, Optional, Xpoint
 
 __all__ = [
     "BetaIpProfile",
@@ -798,7 +799,7 @@ class CustomProfile(Profile):
         return super().fRBpol(psinorm)
 
     @classmethod
-    def from_eqdsk(cls, filename: str) -> CustomProfile:
+    def from_eqdsk(cls, filename: Path | str) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk file
         """

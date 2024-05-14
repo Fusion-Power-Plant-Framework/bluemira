@@ -37,6 +37,7 @@ from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
+from bluemira.utilities.tools import iterable_to_list
 
 
 @cadapi.catch_caderr(GeometryError)
@@ -1367,8 +1368,7 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     error: GeometryError
         In case the boolean operation fails.
     """
-    if not isinstance(shapes, list):
-        raise TypeError(f"{shapes} is not a list.")
+    shapes = iterable_to_list(shapes)
 
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
@@ -1389,7 +1389,7 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
 def boolean_cut(
     shape: BluemiraGeo, tools: BluemiraGeo | Iterable[BluemiraGeo]
-) -> BluemiraGeo | list[BluemiraGeo]:
+) -> BluemiraGeo | Iterable[BluemiraGeo]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1422,7 +1422,7 @@ def boolean_cut(
 
 
 def boolean_fragments(
-    shapes: list[BluemiraSolid], tolerance: float = 0.0
+    shapes: Iterable[BluemiraSolid], tolerance: float = 0.0
 ) -> tuple[BluemiraCompound, list[list[BluemiraSolid]]]:
     """
     Split a list of shapes into their Boolean fragments.
