@@ -4,10 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-import tempfile
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 from matplotlib.testing import compare as mpl_compare
 
 from bluemira.balance_of_plant.plotting import SuperSankey
@@ -16,7 +14,7 @@ from bluemira.display.auto_config import plot_defaults
 
 
 class TestSuperSankey:
-    def test_sankey_ring(self):
+    def test_sankey_ring(self, tmp_path):
         plot_defaults(force=True)
 
         scale = 0.001
@@ -56,10 +54,10 @@ class TestSuperSankey:
             connect=[(2, 0), (1, 1)],
         )
         sankey.finish()
-        figure = plt.gcf()
-        new_file = tempfile.NamedTemporaryFile()
+        figure = sankey.ax.figure
+        new_file = tmp_path / "sankey_test.png"
         figure.savefig(new_file)
 
         path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
         reference_file = Path(path, "sankey_test.png")
-        assert mpl_compare.compare_images(reference_file, new_file.name, 0.001) is None
+        assert mpl_compare.compare_images(reference_file, new_file, 0.001) is None
