@@ -38,13 +38,30 @@ def create_axes(ax=None):
 
 
 @nb.jit
+def _nudge_check(x_last, x_this):
+    is_close = np.isclose(x_last, x_this, rtol=EPS)
+    is_decreasing = x_last > x_this
+    return is_close or is_decreasing
+
+
+@nb.jit
+def _validate_monotonically_increasing(x, strict_flag):
+    for x_last, x_this in zip(x[:-1], x[1:]):  # noqa: RUF007, B905
+        if strict_flag and not (x_this > x_last):
+            raise ValueError("Vector is not strictly monotonically increasing.")
+        if not strict_flag and not (x_this >= x_last):
+            raise ValueError("Vector is not monotonically increasing.")
+
+
+@nb.jit
 def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
     To be a function domain, x must be strictly monotonically increasing. So x
-    must start as a monotonically increasing vector. The function then ensures
-    strict monotonicity by nudging forward repeated values by a small epsilon.
+    must start at least as a monotonically increasing vector. The function then
+    ensures strict monotonicity by nudging forward repeated values by a small
+    epsilon.
 
     Epsilon must be small enough so that consecutive values can be considered
     equal within the context/scale in which the function is defined.
@@ -52,32 +69,22 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
     The nudge forward for each non-unique element in x is (N * epsilon), given
     N times, after the first appearance, that value has appeared in x before.
     """
-
-    def nudge_check(x_last, x_this):
-        is_close = np.isclose(x_last, x_this, rtol=EPS)
-        is_decreasing = x_last > x_this
-        return is_close or is_decreasing
-
-    if not np.all(np.diff(x) >= 0):
-        raise ValueError("Input 'x' must be monotonically increasing.")
-
+    _validate_monotonically_increasing(x, strict_flag=False)
     new_x = [x[0]]
     if len(x) > 1:
         for x_this in x[1:]:
             nudge = 0
             new_x_this = x_this
-            needs_nudge = nudge_check(new_x[-1], x_this)
+            needs_nudge = _nudge_check(new_x[-1], x_this)
             if needs_nudge:
                 while needs_nudge:
                     nudge += epsilon
                     new_x_this = x_this + nudge
-                    needs_nudge = nudge_check(new_x[-1], new_x_this)
+                    needs_nudge = _nudge_check(new_x[-1], new_x_this)
             else:
                 new_x_this = x_this
             new_x.append(new_x_this)
-
-    if not np.all(np.diff(x) > 0):
-        raise ValueError("Output 'x' is not strictly monotonically increasing.")
+    _validate_monotonically_increasing(new_x, strict_flag=True)
     return np.asarray(new_x)
 
 
