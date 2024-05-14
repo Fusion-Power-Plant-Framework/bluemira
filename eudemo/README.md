@@ -23,3 +23,7 @@ relative to the `eudemo` directory.
 In future this will be moved to a separate repository.
 It should be used as a template for how we expect
 other reactor repositories to be structured.
+
+## Neutronics
+
+To use the axis-symmetric neutronics run you will need to download the required neutronics cross section data into the folder `eudemo/config/cross_section_data` or modify the build_config.json accordingly. Secondly you will need to provide a source, the default used in the `make_pps_source` function is not currently open source but should be available shortly.

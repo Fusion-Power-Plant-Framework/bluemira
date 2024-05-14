@@ -136,7 +136,7 @@ class TestBlanketDesigner:
 
         with mock.patch.object(designer, "segment_blanket") as sb_mock:
             sb_mock.return_value = blanket
-            ib, ob = designer.run()
+            ib, ob, panels = designer.run()
 
         # These areas were (painstakingly) worked out by hand
         panel_trapezium_area = 9 / 2 * (4 * np.sqrt(2) - 5)
