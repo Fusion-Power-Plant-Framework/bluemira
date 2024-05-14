@@ -10,15 +10,18 @@ on:
 
 jobs:
   dep_pr:
+    runs-on: ubuntu-latest
     steps:
-      - name: Permissions Check
-        uses: ./.github/workflows/actions/permission_check
-        with:
-          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
+      - name: Permissions Check
+        uses: ./.github/workflows/actions/permission_check
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
       - name: Open develop_dependencies PR
         uses: ./.github/workflows/actions/dependencies_PR
         with:
