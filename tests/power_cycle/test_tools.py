@@ -7,7 +7,28 @@
 import numpy as np
 import pytest
 
-from bluemira.power_cycle.tools import match_domains, unique_domain
+from bluemira.power_cycle.tools import (
+    _validate_monotonically_increasing,
+    match_domains,
+    unique_domain,
+)
+
+
+def test_validate_monotonically_increasing():
+    x_strict_monotonic = np.array([1, 2, 3, 4, 5])
+    x_monotonic = np.array([1, 2, 2, 4, 5])
+    x_not_increasing = np.array([1, 2, 3, 2, 1])
+    msg_not_strict = "Vector is not strictly monotonically increasing."
+    msg_not_increasing = "Vector is not monotonically increasing."
+
+    _validate_monotonically_increasing(x_strict_monotonic, strict_flag=True)
+    _validate_monotonically_increasing(x_monotonic, strict_flag=False)
+
+    with pytest.raises(ValueError, match=msg_not_strict):
+        _validate_monotonically_increasing(x_monotonic, strict_flag=True)
+
+    with pytest.raises(ValueError, match=msg_not_increasing):
+        _validate_monotonically_increasing(x_not_increasing, strict_flag=False)
 
 
 @pytest.mark.parametrize("epsilon", [1e-10, 1e-7, 1e-5])
