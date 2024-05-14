@@ -89,15 +89,13 @@ class OpenMCResult:
                 mat_names[_cell.fill.id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
-        cell_vols = {}
-        for cell_id in universe.cells:
-            if isinstance(universe.cells[cell_id].volume, float):
-                cell_vols[cell_id] = raw_uc(
-                    universe.cells[cell_id].volume, "cm^3", "m^3"
-                )
-            else:
-                cell_vols[cell_id] = universe.cells[cell_id].volume  # catch the None's.
-            # provided by openmc in cm^3, but we want to save it in m^3
+        # provided by openmc in cm^3, but we want to save it in m^3
+        cell_vols = {
+            cell_id: raw_uc(universe.cells[cell_id].volume, "cm^3", "m^3")
+            if isinstance(universe.cells[cell_id].volume, float)
+            else None
+            for cell_id in universe.cells
+        }
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
@@ -174,7 +172,7 @@ class OpenMCResult:
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "material heating")
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "Total power")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
@@ -202,7 +200,9 @@ class OpenMCResult:
     def _load_neutron_wall_loading(cls, statepoint, cell_names, cell_vols, src_rate):
         """Load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
-        n_wl_df = cls._load_dataframe_from_statepoint(statepoint, "neutron wall load")
+        n_wl_df = cls._load_dataframe_from_statepoint(
+            statepoint, "neutron flux in every cell"
+        )
         n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
         n_wl_df["vol (m^3)"] = n_wl_df["cell"].map(cell_vols)
         total_displacements_per_second = (

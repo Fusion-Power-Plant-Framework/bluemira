@@ -45,11 +45,10 @@ def filter_cells(
     blanket_cells = [*chain.from_iterable(blanket_cell_array)]
     div_cells = [*chain.from_iterable(divertor_cell_array)]
     cells = blanket_cells + div_cells
-    # fw_surf_cells = [
-    #     *(stack[0] for stack in blanket_cell_array),
-    #     *(stack[1] for stack in blanket_cell_array),
-    # # TODO: ask Matti if we need stack[1] too or not
-    # ]
+    fw_surf_cells = [
+        *(stack[0] for stack in blanket_cell_array),
+        *(stack[1] for stack in blanket_cell_array),
+    ]
     vv_cells = [
         *(stack[-1] for stack in blanket_cell_array),
         *(stack[-1] for stack in divertor_cell_array),
@@ -60,7 +59,7 @@ def filter_cells(
     # blanket_cell_filter = openmc.CellFilter(blanket_cells)
     div_cell_filter = openmc.CellFilter(div_cells)
     cell_filter = openmc.CellFilter(cells)
-    # fw_surf_filter = openmc.CellFilter(fw_surf_cells)
+    fw_surf_filter = openmc.CellFilter(fw_surf_cells)
     vv_filter = openmc.CellFilter(vv_cells)
     bz_filter = openmc.CellFilter(bz_cells)
 
@@ -68,18 +67,19 @@ def filter_cells(
     mat_filter = openmc.MaterialFilter(material_list[:-1])
     eurofer_filter = openmc.MaterialFilter([material_list[-1]])
     neutron_filter = openmc.ParticleFilter(["neutron"])
-    # photon_filter = openmc.ParticleFilter(["photon"])
+    photon_filter = openmc.ParticleFilter(["photon"])
 
     # name, scores, filters
     return (
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
-        ("Total power", "heating", []),
+        ("Total power", "heating", [mat_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [bz_filter]),
         # Fluence
         ("neutron flux in every cell", "flux", [cell_filter, neutron_filter]),
+        ("photon heating", "heating", [fw_surf_filter, photon_filter]),
         # ("neutron flux in 2d mesh", "flux", [cyl_mesh_filter, neutron_filter]),
         # TF winding pack does not exits yet, so this will have to wait
         # DPA
