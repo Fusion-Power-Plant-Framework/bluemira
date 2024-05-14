@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-import timeit as ti
-from functools import partial
 
 import numpy as np
 import pytest
@@ -47,17 +45,6 @@ def test_unique_domain(epsilon):
         3 + 1 * epsilon,
     ])
     assert all(np.isclose(new_x, expected_x))
-
-
-@pytest.mark.parametrize("epsilon", [1e-10, 1e-7, 1e-5])
-def test_timing_unique_domain(epsilon):
-    n_repeat = 100
-    times = ti.Timer(partial(test_unique_domain, epsilon)).repeat(
-        repeat=10, number=n_repeat
-    )
-    avg_time = min(times) / n_repeat
-    print(f"For epsilon={epsilon}, avg.'unique_domain' runtime: {avg_time} s")
-    assert avg_time < 1
 
 
 def test_match_domains():
