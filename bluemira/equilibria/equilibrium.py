@@ -111,7 +111,7 @@ class MHDState:
     @classmethod
     def _get_eqdsk(
         cls,
-        filename: str,
+        filename: Path | str,
     ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
@@ -167,10 +167,12 @@ class MHDState:
         """
         Writes the Equilibrium Object to an eqdsk file
         """
+        filename = Path(filename)
         data["name"] = f"{filename}_{header}"
+        suf = f".{filetype}"
 
-        if not filename.endswith(f".{filetype}"):
-            filename += f".{filetype}"
+        if isinstance(filename, Path) and filename.suffix != suf:
+            filename = Path(filename, filetype)
 
         if directory is None:
             try:
@@ -186,7 +188,7 @@ class MHDState:
 
         self.filename = filename  # Convenient
         eqdsk = EQDSKInterface(**data)
-        eqdsk.write(filename, file_format=filetype, **kwargs)
+        eqdsk.write(filename.as_posix(), file_format=filetype, **kwargs)
 
 
 class FixedPlasmaEquilibrium(MHDState):
@@ -202,7 +204,7 @@ class FixedPlasmaEquilibrium(MHDState):
         psi: npt.NDArray[np.float64],
         psi_ax: float,
         psi_b: float,
-        filename: str | None = None,
+        filename: Path | str | None = None,
     ):
         super().__init__()
         self.set_grid(grid)
@@ -220,7 +222,7 @@ class FixedPlasmaEquilibrium(MHDState):
         self.filename = filename
 
     @classmethod
-    def from_eqdsk(cls, filename: str):
+    def from_eqdsk(cls, filename: Path | str):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
@@ -373,7 +375,7 @@ class CoilSetMHDState(MHDState):
     @classmethod
     def _get_eqdsk(
         cls,
-        filename: str,
+        filename: Path | str,
         *,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
@@ -526,7 +528,7 @@ class Breakdown(CoilSetMHDState):
         coilset: CoilSet,
         grid: Grid,
         psi: npt.NDArray[np.float64] | None = None,
-        filename: str | None = None,
+        filename: Path | str | None = None,
         **kwargs,
     ):
         super().__init__()
@@ -543,7 +545,11 @@ class Breakdown(CoilSetMHDState):
 
     @classmethod
     def from_eqdsk(
-        cls, filename: str, *, force_symmetry: bool, user_coils: CoilSet | None = None
+        cls,
+        filename: Path | str,
+        *,
+        force_symmetry: bool,
+        user_coils: CoilSet | None = None,
     ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
@@ -597,12 +603,12 @@ class Breakdown(CoilSetMHDState):
 
     def to_eqdsk(
         self,
-        filename: str,
+        filename: Path | str,
         header: str = "bluemira_equilibria",
         directory: str | None = None,
         filetype: str = "json",
         **kwargs,
-    ) -> EQDSKInterface:
+    ):
         """
         Writes the Equilibrium Object to an eqdsk file
         """
@@ -825,7 +831,7 @@ class Equilibrium(CoilSetMHDState):
         limiter: Limiter | None = None,
         psi: npt.NDArray[np.float64] | None = None,
         jtor: npt.NDArray[np.float64] | None = None,
-        filename: str | None = None,
+        filename: Path | str | None = None,
     ):
         super().__init__()
         # Constructors
@@ -861,7 +867,7 @@ class Equilibrium(CoilSetMHDState):
     @classmethod
     def from_eqdsk(
         cls,
-        filename: str,
+        filename: Path | str,
         *,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
@@ -989,7 +995,7 @@ class Equilibrium(CoilSetMHDState):
 
     def to_eqdsk(
         self,
-        filename: str,
+        filename: Path | str,
         header: str = "BP_equilibria",
         directory: str | None = None,
         filetype: str = "json",

@@ -945,7 +945,9 @@ def vector_intersect(
 # =============================================================================
 
 
-def _parse_to_xyz_array(xyz_array):
+def _parse_to_xyz_array(
+    xyz_array: npt.ArrayLike | dict[str, npt.ArrayLike],
+) -> npt.NDArray:
     """
     Make a 3, N xyz array out of just about anything.
     """
@@ -955,16 +957,15 @@ def _parse_to_xyz_array(xyz_array):
         xyz_array = _parse_dict(xyz_array)
     elif isinstance(xyz_array, Iterable):
         # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
-        xyz_array = np.array(xyz_array, dtype=object)
-        xyz_array = _parse_array(xyz_array)
+        xyz_array = _parse_array(np.array(xyz_array, dtype=object))
     else:
         raise CoordinatesError(f"Cannot instantiate Coordinates with: {type(xyz_array)}")
     return xyz_array
 
 
-def _parse_array(xyz_array):
+def _parse_array(xyz_array: npt.ArrayLike):
     try:
-        xyz_array = np.array(np.atleast_2d(np.squeeze(xyz_array)), dtype=np.float64)
+        xyz_array = np.atleast_2d(np.squeeze(np.array(xyz_array, dtype=np.float64)))
     except ValueError as ve:
         raise CoordinatesError(
             "Cannot instantiate Coordinates with a ragged (3, N | M) array."
@@ -1056,7 +1057,7 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array: np.ndarray | dict | Iterable[Iterable]):
+    def __init__(self, xyz_array: npt.ArrayLike | dict[str, npt.ArrayLike]):
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
@@ -1100,11 +1101,7 @@ class Coordinates:
         if len(self) > DIM:
             eigenvalues, eigenvectors = principal_components(self._array)
 
-            if np.isclose(eigenvalues[-1], 0.0):
-                self._is_planar = True
-            else:
-                self._is_planar = False
-
+            self._is_planar = np.isclose(eigenvalues[-1], 0.0)
             self._normal_vector = eigenvectors[:, -1]
         else:
             bluemira_warn("Cannot set planar properties on Coordinates with length < 3.")
@@ -1446,17 +1443,13 @@ class Coordinates:
         other:
             The other Coordinates to compare against
 
-        Returns
-        -------
-        Whether or not the Coordinates are identical
-
         Notes
         -----
         Coordinates with identical coordinates but different orderings will not be
         counted as identical.
         """
-        if isinstance(other, self.__class__):
-            return np.all(np.allclose(self._array, other._array, rtol=EPS, atol=0))
+        if isinstance(other, type(self)):
+            return np.allclose(self._array, other._array, rtol=EPS, atol=0)
         return False
 
     def __hash__(self):
@@ -1582,7 +1575,7 @@ def coords_plane_intersect(
 @nb.jit(cache=True, nopython=True)
 def _coords_plane_intersect(
     array: np.ndarray, p1: np.ndarray, vec2: np.ndarray
-) -> np.ndarray:
+) -> list[float]:
     # JIT compiled utility of the above
     out = []
     for i in range(len(array)):

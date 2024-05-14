@@ -80,14 +80,14 @@ class TestGetNormal:
         z = np.array([0, 0, 2, 2, 0])
         y = np.zeros(5)
         n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
+        np.testing.assert_allclose(np.abs(n_hat), np.array([0, 1, 0]))
 
     def test_edge(self):
         x = np.array([1, 2, 3])
         y = np.array([1, 2, 3])
         z = np.array([1, 2, 4])
         n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
+        np.testing.assert_allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
 
     def test_error(self):
         fails = [
@@ -132,12 +132,12 @@ class TestCoordinates:
         c1 = Coordinates(xyz)
         c2 = Coordinates(xyz.T)
         assert c1 == c2
-        assert np.allclose(c1.x, xyz[0])
-        assert np.allclose(c1.y, xyz[1])
-        assert np.allclose(c1.z, xyz[2])
-        assert np.allclose(c1[0], xyz[0])
-        assert np.allclose(c1[1], xyz[1])
-        assert np.allclose(c1[2], xyz[2])
+        np.testing.assert_allclose(c1.x, xyz[0])
+        np.testing.assert_allclose(c1.y, xyz[1])
+        np.testing.assert_allclose(c1.z, xyz[2])
+        np.testing.assert_allclose(c1[0], xyz[0])
+        np.testing.assert_allclose(c1[1], xyz[1])
+        np.testing.assert_allclose(c1[2], xyz[2])
 
     def test_bad_array_init(self):
         a = self.rng.random((4, 4))
@@ -151,22 +151,22 @@ class TestCoordinates:
     def test_obj_but_good_lengths(self):
         xyz = np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [0, 0, 0, 0, 0]], dtype=object)
         c = Coordinates(xyz)
-        assert np.allclose(c.x, [1, 2, 3, 4, 5])
-        assert np.allclose(c.y, [1, 2, 3, 4, 5])
-        assert np.allclose(c.z, [0, 0, 0, 0, 0])
+        np.testing.assert_allclose(c.x, [1, 2, 3, 4, 5])
+        np.testing.assert_allclose(c.y, [1, 2, 3, 4, 5])
+        np.testing.assert_allclose(c.z, [0, 0, 0, 0, 0])
 
     def test_dict_init(self):
         xyz = {"x": [0, 1, 2, 3], "y": 1, "z": 0}
         c = Coordinates(xyz)
-        assert np.allclose(c.x, np.array([0, 1, 2, 3]))
-        assert np.allclose(c.y, np.array([1, 1, 1, 1]))
-        assert np.allclose(c.z, np.array([0, 0, 0, 0]))
+        np.testing.assert_allclose(c.x, np.array([0, 1, 2, 3]))
+        np.testing.assert_allclose(c.y, np.array([1, 1, 1, 1]))
+        np.testing.assert_allclose(c.z, np.array([0, 0, 0, 0]))
 
         xyz = {"x": [0, 0, 0, 0], "y": [1, 2, 2, 1], "z": [-1, -1, 1, 1]}
         c = Coordinates(xyz)
-        assert np.allclose(c.x, xyz["x"])
-        assert np.allclose(c.y, xyz["y"])
-        assert np.allclose(c.z, xyz["z"])
+        np.testing.assert_allclose(c.x, xyz["x"])
+        np.testing.assert_allclose(c.y, xyz["y"])
+        np.testing.assert_allclose(c.z, xyz["z"])
 
     def test_ragged_dict_init(self):
         xyz = {"x": [0, 0, 0, 0], "y": [1, 2, 1], "z": [-1, -1, 1, 1]}
@@ -177,16 +177,16 @@ class TestCoordinates:
         xyz = [[0, 0, 0], (1, 1, 1), [2, 2, 2], [3, 3, 3]]
         c = Coordinates(xyz)
 
-        assert np.allclose(c.x, list(range(4)))
-        assert np.allclose(c.y, list(range(4)))
-        assert np.allclose(c.z, list(range(4)))
+        np.testing.assert_allclose(c.x, list(range(4)))
+        np.testing.assert_allclose(c.y, list(range(4)))
+        np.testing.assert_allclose(c.z, list(range(4)))
 
         xyz = ([0, 1, 2, 3, 4], [0, 1, 2, 3, 4], (0, 1, 2, 3, 4))
         c = Coordinates(xyz)
 
-        assert np.allclose(c.x, list(range(5)))
-        assert np.allclose(c.y, list(range(5)))
-        assert np.allclose(c.z, list(range(5)))
+        np.testing.assert_allclose(c.x, list(range(5)))
+        np.testing.assert_allclose(c.y, list(range(5)))
+        np.testing.assert_allclose(c.z, list(range(5)))
 
     def test_bad_iterable_init(self):
         xyz = [[0, 0, 0], (1, 1), [2, 2, 2], [3, 3, 3]]
@@ -205,7 +205,7 @@ class TestCoordinates:
         assert np.all(xyz[1] == c1[1])
         assert np.all(xyz[2] == c1[2])
 
-        assert np.allclose([3, 0, 3], c1[:, -1])
+        np.testing.assert_allclose([3, 0, 3], c1[:, -1])
 
     def test_unpacking(self):
         xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
@@ -220,9 +220,9 @@ class TestCoordinates:
         xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
         c = Coordinates(xyz)
         c.reverse()
-        assert np.allclose(c.x, xyz[0][::-1])
-        assert np.allclose(c.y, xyz[1][::-1])
-        assert np.allclose(c.z, xyz[2][::-1])
+        np.testing.assert_allclose(c.x, xyz[0][::-1])
+        np.testing.assert_allclose(c.y, xyz[1][::-1])
+        np.testing.assert_allclose(c.z, xyz[2][::-1])
 
     def test_translate(self):
         a = self.rng.random((3, 123))
@@ -230,7 +230,7 @@ class TestCoordinates:
         c = Coordinates(a)
         c.translate(v)
 
-        assert np.allclose(a + v.reshape(3, 1), c)
+        np.testing.assert_allclose(a + v.reshape(3, 1), c)
 
     def test_rotate(self):
         a = self.rng.random((3, 123))
@@ -620,8 +620,8 @@ class TestIntersections:
         ax.plot(intx, intz, marker="^", color="k")
 
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
-        assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
+        np.testing.assert_allclose(np.sort(intx), np.sort(tf.x[args]))
+        np.testing.assert_allclose(np.sort(intz), np.sort(tf.z[args]))
 
 
 @pytest.mark.classplot
@@ -631,7 +631,7 @@ class TestCoordinatesPlaneIntersect:
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
         intersect = coords_plane_intersect(coords, plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
-        assert np.allclose(intersect, e)
+        np.testing.assert_allclose(intersect, e)
 
     def test_complex(self):
         coords = Coordinates({
@@ -713,7 +713,7 @@ class TestCoordinatesPlaneIntersect:
         coords = Coordinates({"x": [0, 2, 2, 0, 0], "z": [-1, -1, 1, 1, -1]})
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = coords_plane_intersect(coords, plane)
-        assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
+        np.testing.assert_allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
 
 
 class TestRotationMatrix:
@@ -724,7 +724,7 @@ class TestRotationMatrix:
         for a1, a2 in zip(axes, axes2, strict=False):
             r_1 = rotation_matrix(np.pi / 6, a1)
             r_2 = rotation_matrix(np.pi / 6, a2)
-            assert np.allclose(r_1, r_2), a1
+            np.testing.assert_allclose(r_1, r_2)
 
         axes = ["fail", "somthing", "1"]
         for axis in axes:

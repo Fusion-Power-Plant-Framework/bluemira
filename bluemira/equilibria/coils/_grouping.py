@@ -492,11 +492,10 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         raise KeyError(f"Coil '{name}' not found in Group")
 
-    def _get_coiltype(self, ctype):
+    def _get_coiltype(self, ctype: CoilType | str) -> list[Coil]:
         """Find coil by type"""
         coils = []
-        if isinstance(ctype, str):
-            ctype = CoilType[ctype]
+        ctype = CoilType(ctype)
         for c in self._coils:
             if isinstance(c, CoilGroup):
                 coils.extend(c._get_coiltype(ctype))
@@ -1115,7 +1114,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
 
-    def get_coiltype(self, ctype):
+    def get_coiltype(self, ctype: str | CoilType) -> CoilSet | None:
         """Get coils by coils type"""
         if coiltype := self._get_coiltype(ctype):
             return CoilSet(*coiltype)
