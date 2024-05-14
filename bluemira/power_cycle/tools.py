@@ -45,7 +45,7 @@ def _nudge_check(x_last, x_this):
 
 
 @nb.jit
-def _validate_monotonically_increasing(x, strict_flag):
+def _validate_monotonic_increase(x, strict_flag):
     for x_last, x_this in zip(x[:-1], x[1:]):  # noqa: RUF007, B905
         if strict_flag and not (x_this > x_last):
             raise ValueError("Vector is not strictly monotonically increasing.")
@@ -69,7 +69,7 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
     The nudge forward for each non-unique element in x is (N * epsilon), given
     N times, after the first appearance, that value has appeared in x before.
     """
-    _validate_monotonically_increasing(x, strict_flag=False)
+    _validate_monotonic_increase(x, strict_flag=False)
     new_x = [x[0]]
     if len(x) > 1:
         for x_this in x[1:]:
@@ -84,7 +84,7 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
             else:
                 new_x_this = x_this
             new_x.append(new_x_this)
-    _validate_monotonically_increasing(new_x, strict_flag=True)
+    _validate_monotonic_increase(new_x, strict_flag=True)
     return np.asarray(new_x)
 
 
