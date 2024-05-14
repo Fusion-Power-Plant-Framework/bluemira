@@ -225,3 +225,16 @@ class EUDEMOReactorParams(ParameterFrame):
     # First wall panelling
     fw_a_max: Parameter[float]
     fw_dL_min: Parameter[float]  # noqa: N815
+
+    # CSG neutronics
+    reactor_power: Parameter[float]
+    peaking_factor: Parameter[float]
+    vertical_shift: Parameter[float]
+    inboard_fw_tk: Parameter[float]
+    outboard_fw_tk: Parameter[float]
+    fw_blanket_surface_tk: Parameter[float]
+    fw_divertor_surface_tk: Parameter[float]
+    inboard_breeding_tk: Parameter[float]
+    outboard_breeding_tk: Parameter[float]
+    blk_ib_manifold: Parameter[float]
+    blk_ob_manifold: Parameter[float]

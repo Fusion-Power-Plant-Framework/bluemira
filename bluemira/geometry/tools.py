@@ -20,6 +20,7 @@ from typing import Any
 
 import numba as nb
 import numpy as np
+from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
@@ -208,6 +209,13 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     -------
     Vertex at the point
     """
+    if isinstance(point, Coordinates):
+        if np.shape(point) != (3, 1):
+            raise GeometryError(
+                "Can only cast the 3D coordinates of a single point"
+                "into a cadapi vertex!"
+            )
+        point = point.points[0]
     if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
@@ -760,6 +768,89 @@ def convex_hull_wires_2d(
 
 
 # # =============================================================================
+# # Volume function
+# # =============================================================================
+def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
+    """
+    Revolve a polygon along the z axis, and return the volume.
+
+    A polygon placed in the RHS of the z-axis in the xz plane would have positive volume
+    if it runs clockwise, and negative volume if it runs counter-clockwise.
+
+    Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
+    negative volume if it runs clockwise, positive volume if it runs counter-clockwise.
+
+    Parameters
+    ----------
+    polygon:
+        Stores the x-z coordinate pairs of the four coordinates.
+
+    Notes
+    -----
+    Consider one edge of the polygon, which has two vertices, $p$ and $c$.
+    TODO: insert graphics
+
+    When revolved around the z-axis, this trapezium forms a the frustum of a cone.
+    The expression for the volume of this frustrum needs to be modified to avoid
+    ZeroDivisionError, thus it is recast into the following (also the simplest) form:
+    :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
+
+    Adding together the signed volume of all edges, the excess negative volume from one
+    side would cancel out the excess positive volume from the other, such that
+    abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
+    """
+    polygon = np.array(polygon)
+    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
+        raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
+    previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
+    px, pz = previous_points[:, 0], previous_points[:, -1]
+    cx, cz = current_points[:, 0], current_points[:, -1]
+    volume_3_over_pi = (pz - cz) * (px**2 + px * cx + cx**2)
+    return np.pi / 3 * sum(volume_3_over_pi)
+
+
+def partial_diff_of_volume(
+    three_vertices: Sequence[Sequence[float]],
+    normalised_direction_vector: Iterable[float],
+) -> float:
+    """
+    Gives the relationship between how the the solid volume varies with the position of
+    one of its verticies. More precisely, it gives gives the the partial derivative of
+    the volume of the solid revolved out of a polygon when one vertex of that polygon
+    is moved in the direction specified by normalised_direction_vector.
+
+    Parameters
+    ----------
+    three_vertices:
+        Contain (x, z) coordinates of the polygon. It extracts only the vertex being
+        moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
+        are anchor vertices that cannot be adjusted. shape (3, 2)
+    normalised_direction_vector:
+        Direction that the point is allowed to move in. shape = (2,)
+
+    Notes
+    -----
+    Let there be 3 points, :math:`q`, :math:`r`, and :math:`s`, forming two edges of a
+    polygon. When r is moved, the polygon's revolved solid volume changes.
+    After a hefty amount of derivation, everything cancels out to give the expression
+    .. math::
+
+        \\frac{dV}{d r_z} = q_z q_x - r_z q_x + 2 q_z r_x - 2 s_z r_x + r_z s_x - s_z s_x
+        \\frac{dV}{d r_x} = (q_x + r_x + s_x) (s_x - q_x)
+
+
+    The dot product between the direction of motion and the vector :math:`\\frac{dV}{dr}`
+    gives the required scalar derivative showing "how much does the volume change when
+    r is moved in a certain direction by one unit length".
+    """
+    (qx, qz), (rx, rz), (sx, sz) = three_vertices
+    x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
+    z_component = (qx + rx + sx) * (sx - qx)
+    xz_derivatives = np.array([x_component, z_component]).T
+    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
+
+
+# # =============================================================================
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
@@ -1059,6 +1150,38 @@ def slice_shape(
     return None
 
 
+def get_wire_plane_intersect(
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+) -> npt.NDArray[float]:
+    """
+    Cut a wire using a plane.
+
+    Parameters
+    ----------
+    convex_bm_wire:
+        The wire that we're interested in cutting.
+    plane:
+        Plane that is cutting the wire.
+    cut_direction:
+        np.ndarray with shape==(3,)
+
+    Returns
+    -------
+    intersection point:
+        np.ndarray with shape==(3,)
+    """
+    intersection_points = slice_shape(convex_bm_wire, plane)
+    if len(intersection_points) > 1:
+        if len(intersection_points) > 2:  # noqa: PLR2004
+            bluemira_warn(
+                "convex_bm_wire expected to be a convex hull, but isn't.\n"
+                "Proceeding by choosing the final intersection point..."
+            )
+        final_intersection = np.argmax(np.dot(intersection_points, cut_direction))
+        return intersection_points[final_intersection]
+    return intersection_points[0]
+
+
 def circular_pattern(
     shape: BluemiraGeo,
     origin: tuple[float, float, float] = (0, 0, 0),
@@ -1122,6 +1245,29 @@ def mirror_shape(
     if np.linalg.norm(direction) <= 3 * EPS:
         raise GeometryError("Direction vector cannot have a zero norm.")
     return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
+
+
+def is_convex(points: npt.NDArray):
+    """
+    Check that the the list of xz points are strictly convex, i.e.
+    Not even collinear points are allowed.
+
+    However, repeated points are allowed, as the repeated point would be ignored;
+    and points are allowed to be entered in 3D (xyz), but the y component would be
+    ignored as well.
+
+    Parameters
+    ----------
+    points
+        A list of points that we want to check the convexity for. Shape = (n, 2/3)
+
+    Returns
+    -------
+    boolean
+    """
+    if np.shape(points)[1] == 3:  # noqa: PLR2004
+        points = np.array(points)[:, ::2]  # squash 3D points down to 2D
+    return len(np.unique(points, axis=0)) == ConvexHull(points).nsimplex
 
 
 # # =============================================================================
@@ -1297,30 +1443,35 @@ def signed_distance_2D_polygon(
     return d
 
 
-def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
+def signed_distance(
+    origin: BluemiraWire | Coordinates, target: BluemiraWire | Coordinates
+) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
-    values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
+    values if origin does not touch or intersect target, 0 if there is one intersection,
     and a positive estimate of the intersection length if there are overlaps.
 
     Parameters
     ----------
-    wire_1:
-        Subject wire
-    wire_2:
-        Target wire
+    origin:
+        a 0D/1D set of points
+    target:
+        a 0D/1D set of points
 
     Returns
     -------
-    Signed distance from wire_1 to wire_2
+    Closest distance between origin and target
 
     Notes
     -----
     This is not a pure implementation of a distance function, as for overlapping wires a
     metric of the quantity of overlap is returned (a positive value). This nevertheless
     enables the use of such a function as a constraint in gradient-based optimisers.
+
+    This function has been extended to allow the target wire to be a point
+        (:class:`~bluemira.geometry.coordinates.Coordinates`) as well
     """
-    d, vectors = distance_to(wire_1, wire_2)
+    d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
     if d == 0.0:
         if len(vectors) <= 1:
@@ -1343,6 +1494,30 @@ def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
         return length
     # There are no intersections, return minimum distance
     return -d
+
+
+def raise_error_if_overlap(
+    origin: BluemiraWire | Coordinates,
+    target: BluemiraWire | Coordinates,
+    origin_name: str = "",
+    target_name: str = "",
+):
+    """
+    Raise an error if two wires/points intersects overlaps.
+    """
+    check_overlaps = signed_distance(origin, target)
+    if check_overlaps < -D_TOLERANCE:
+        return
+    if not origin_name:
+        origin_name = "origin " + origin.__class__.__name__
+    if not target_name:
+        target_name = "target " + target.__class__.__name__
+    if -D_TOLERANCE <= check_overlaps <= 0:
+        # Sometimes intersecting lines can still appears to separate (negative),
+        # but only by just a little. So a small negative number is included in the check.
+        raise GeometryError(f"{origin_name} likely intersects {target_name} !")
+    if check_overlaps > 0:
+        raise GeometryError(f"{origin_name} and {target_name} partially/fully overlaps!")
 
 
 # ======================================================================================

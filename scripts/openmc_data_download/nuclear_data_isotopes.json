@@ -1,0 +1,9 @@
+{
+  "tendl": {
+    "neutron": "*"
+  },
+  "endf": {
+    "neutron": "*",
+    "photon": "*"
+  }
+}

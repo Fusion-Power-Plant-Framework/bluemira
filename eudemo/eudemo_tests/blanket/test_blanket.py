@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from bluemira.geometry.coordinates import Coordinates
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo_tests.blanket.tools import make_simple_blanket
 
@@ -22,22 +23,32 @@ def make_blanket_component():
         ib_silhouette=segments.inboard,
         ob_silhouette=segments.outboard,
     )
-    return segments, builder.build()
+    return params, segments, builder.build()
 
 
 class TestBlanket:
     def test_inboard_xz_silhouette_face_from_BlanketBuilder_component_tree(self):
-        segments, component = make_blanket_component()
+        params, segments, component = make_blanket_component()
+        io_cut = segments.inboard.bounding_box.x_max
+        panel_points = Coordinates(
+            segments.inboard_boundary.vertexes.points
+            + segments.outboard_boundary.vertexes.points
+        )
 
-        blanket = Blanket(component_tree=component)
-        ib_face = blanket.inboard_xz_silhouette()
+        blanket = Blanket(component, panel_points, io_cut)
+        ib_face = blanket.inboard_xz_face()
 
         assert ib_face is segments.inboard
 
     def test_outboard_xz_silhouette_face_from_BlanketBuilder_component_tree(self):
-        segments, component = make_blanket_component()
+        params, segments, component = make_blanket_component()
+        io_cut = segments.inboard.bounding_box.x_max
+        panel_points = Coordinates(
+            segments.inboard_boundary.vertexes.points
+            + segments.outboard_boundary.vertexes.points
+        )
 
-        blanket = Blanket(component_tree=component)
-        ob_face = blanket.outboard_xz_silhouette()
+        blanket = Blanket(component, panel_points, io_cut)
+        ob_face = blanket.outboard_xz_face()
 
         assert ob_face is segments.outboard

@@ -78,6 +78,7 @@ from eudemo.maintenance.port_plug import (
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
+from eudemo.neutronics.run import run_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -207,9 +208,9 @@ def build_blanket(
     designer = BlanketDesigner(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
-    ib_silhouette, ob_silhouette = designer.execute()
+    ib_silhouette, ob_silhouette, panel_points = designer.execute()
     builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
-    return Blanket(builder.build())
+    return Blanket(builder.build(), panel_points, r_inner_cut)
 
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
@@ -477,6 +478,14 @@ if __name__ == "__main__":
         ivc_shapes.blanket_face,
         r_inner_cut,
         cut_angle,
+    )
+
+    csg_model, neutronics_output = run_neutronics(
+        reactor_config.params_for("Neutronics"),
+        reactor_config.config_for("Neutronics"),
+        blanket=reactor.blanket,
+        vacuum_vessel=reactor.vacuum_vessel,
+        ivc_shapes=ivc_shapes,
     )
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(

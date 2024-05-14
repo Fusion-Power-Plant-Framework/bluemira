@@ -79,11 +79,7 @@ pinned = [
     "matplotlib==3.8.3",
     "scipy==1.10.1",
 ]
-openmoc = ["OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b"]
-openmc = [
-    "OpenMC @git+https://github.com/openmc-dev/openmc.git",
-    "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
-]
+openmc = ["openmc>=0.14.0", "openmc_data"]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
 
@@ -311,6 +307,7 @@ ignore-names = [
     "*_F",
     "*eV",
     "I_not_dI",
+    "*Li*"
 ]
 
 [tool.ruff.lint.per-file-ignores]
