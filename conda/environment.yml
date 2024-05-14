@@ -24,7 +24,7 @@ dependencies:
   - freecad=0.21.2
   - h5py
   - c-blosc2=2.14.3
-  - openmc>=0.13.3
+  - openmc>=0.14.0
   - graphviz
   - pip
   - pip:
