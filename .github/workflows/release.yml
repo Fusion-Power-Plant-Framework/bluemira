@@ -28,13 +28,13 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Permissions Check
-        uses: ./.github/workflows/actions/permission_check
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Permissions Check
+        uses: ./.github/workflows/actions/permission_check
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
