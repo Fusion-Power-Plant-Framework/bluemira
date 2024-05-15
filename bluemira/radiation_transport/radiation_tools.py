@@ -370,8 +370,8 @@ def electron_density_and_temperature_sol_decay(
     far_sol_gradient = 1 - near_sol_gradient
 
     # power decay length modified according to the flux expansion
-    lambda_q_near = lambda_q_near * f_exp
-    lambda_q_far = lambda_q_far * f_exp
+    lambda_q_near *= f_exp
+    lambda_q_far *= f_exp
 
     # Assuming conduction-limited regime.
     lambda_t_near = t_factor * lambda_q_near

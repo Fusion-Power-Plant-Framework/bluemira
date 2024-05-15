@@ -100,7 +100,7 @@ class TestNormalAt:
 
     @pytest.mark.parametrize("normal", normals)
     def test_circle_normal(self, normal):
-        normal = normal / np.linalg.norm(normal)
+        normal /= np.linalg.norm(normal)
         circle = BluemiraFace(make_circle(axis=normal))
         np.testing.assert_allclose(circle.normal_at(), normal)
 
@@ -121,7 +121,7 @@ class TestNormalAt:
     def test_curved_solid_face_normals(self, wire):
         face = BluemiraFace(wire)
         solid = extrude_shape(face, (10, 1, 1))
-        biggest_face = sorted(solid.faces, key=lambda face: face.area)[-1]
+        biggest_face = max(solid.faces, key=lambda face: face.area)
         normal_1 = biggest_face.normal_at(0, 0)
         normal_2 = biggest_face.normal_at(0.5, 0.5)
         assert not np.allclose(normal_1, normal_2)
@@ -129,7 +129,7 @@ class TestNormalAt:
     @pytest.mark.parametrize("wire", wires)
     def test_curved_shell_face_normals(self, wire):
         shell = extrude_shape(wire, (10, 1, 1))
-        biggest_face = sorted(shell.faces, key=lambda face: face.area)[-1]
+        biggest_face = max(shell.faces, key=lambda face: face.area)
         normal_1 = biggest_face.normal_at(0, 0)
         normal_2 = biggest_face.normal_at(0.5, 0.5)
         assert not np.allclose(normal_1, normal_2)

@@ -11,9 +11,11 @@ Core functionality for the bluemira mesh module.
 from __future__ import annotations
 
 import inspect
+import operator
 import pprint
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum, auto
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import gmsh
@@ -346,7 +348,7 @@ class Mesh:
                         points_lcar += [(p[1], v["lcar"]) for p in points_tags]
                 for o in v["boundary"]:
                     points_lcar += self.__create_dict_for_mesh_size(o)
-        points_lcar = sorted(points_lcar, key=lambda element: (element[0], element[1]))
+        points_lcar = sorted(points_lcar, key=operator.itemgetter(0, 1))
         points_lcar.reverse()
         points_lcar = dict(points_lcar)
         return list(points_lcar.items())
@@ -585,9 +587,7 @@ class _FreeCADGmsh:
 
     @staticmethod
     def _finalise_mesh(logfile: str = "gmsh.log"):
-        with open(logfile, "w") as file_handler:
-            file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
-
+        Path(logfile).write_text("\n".join(str(item) for item in gmsh.logger.get()))
         # This should be called when you are done using the Gmsh Python API:
         # gmsh.logger.stop()
         # gmsh.finalize()

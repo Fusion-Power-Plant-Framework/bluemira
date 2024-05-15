@@ -1391,9 +1391,7 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
         e = polygon[j] - polygon[i]
         w = point - polygon[i]
         b = w - e * _nb_clip(_nb_dot_2D(w, e) / _nb_dot_2D(e, e), 0.0, 1.0)
-        d_new = _nb_dot_2D(b, b)
-        if d_new < d:
-            d = d_new
+        d = min(_nb_dot_2D(b, b), d)
 
         cond = np.array([
             point[1] >= polygon[i][1],

@@ -294,7 +294,7 @@ if __name__ == "__main__":
     # than that with exact solution.
     for dirich_bc in (None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3):
         for d in dirich_bc:
-            i = i + 1
+            i += 1
             print(f"boundary conditions n.{i}")
 
             # solve the Grad-Shafranov equation

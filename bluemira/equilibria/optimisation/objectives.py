@@ -84,7 +84,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
 
     def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
-        vector = vector * self.scale
+        vector = vector * self.scale  # nlopt read only  # noqa: PLR6104
         fom, _ = regularised_lsq_fom(vector, self.a_mat, self.b_vec, self.gamma)
         if fom <= 0:
             raise EquilibriaError(
@@ -94,7 +94,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
 
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Gradient of the objective function for an optimisation."""
-        vector = vector * self.scale
+        vector = vector * self.scale  # nlopt read only  # noqa: PLR6104
         jac = 2 * self.a_mat.T @ self.a_mat @ vector / float(len(self.b_vec))
         jac -= 2 * self.a_mat.T @ self.b_vec / float(len(self.b_vec))
         jac += 2 * self.gamma * self.gamma * vector
