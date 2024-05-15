@@ -474,8 +474,8 @@ class CoreRadiation(Radiation):
         else:
             fig = ax.figure
 
-        p_min = min([np.amin(p) for p in power_density])
-        p_max = max([np.amax(p) for p in power_density])
+        p_min = min(np.amin(p) for p in power_density)
+        p_max = max(np.amax(p) for p in power_density)
 
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
@@ -1164,8 +1164,8 @@ class ScrapeOffLayerRadiation(Radiation):
         tubes = functools.reduce(operator.iadd, flux_tubes, [])
         power = functools.reduce(operator.iadd, power_density, [])
 
-        p_min = min([min(p) for p in power])
-        p_max = max([max(p) for p in power])
+        p_min = min(min(p) for p in power)
+        p_max = max(max(p) for p in power)
 
         plot_coordinates(firstwall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()

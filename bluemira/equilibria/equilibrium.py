@@ -141,14 +141,14 @@ class MHDState:
             psi = e.psi
         elif "SCENE" in e.name and not isinstance(cls, Breakdown):
             psi = e.psi
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
+            e.dxc /= 2
+            e.dzc /= 2
         elif "fiesta" in e.name.lower():
             psi = e.psi
         else:  # CREATE
             psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
+            e.dxc /= 2
+            e.dzc /= 2
             e.cplasma = abs(e.cplasma)
 
         grid = Grid.from_eqdsk(e)

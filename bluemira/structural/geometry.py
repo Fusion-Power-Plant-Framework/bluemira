@@ -248,33 +248,36 @@ class Geometry:
             e_nodes = sorted([elem.node_1.id_number, elem.node_2.id_number])
 
             if e_nodes == new_element_nodes:
-                # An element already exists here, update properties
-                elem_id = elem.id_number
+                # An element already exists here
+                break
+        else:
+            # There is no such Element; add a new one to the model
+            element = Element(
+                self.nodes[node_id1],
+                self.nodes[node_id2],
+                self.n_elements,
+                cross_section,
+                material,
+            )
+            self.elements.append(element)
+            # Keep track of Element connectivity
+            self.nodes[node_id1].add_connection(element.id_number)
+            self.nodes[node_id2].add_connection(element.id_number)
+            return element.id_number
 
-                element = Element(
-                    self.nodes[node_id1],
-                    self.nodes[node_id2],
-                    elem_id,
-                    cross_section,
-                    material,
-                )
+        # An element already exists here, update properties
+        elem_id = elem.id_number
 
-                self.elements[elem_id] = element
-                return elem_id
-
-        # There is no such Element; add a new one to the model
         element = Element(
             self.nodes[node_id1],
             self.nodes[node_id2],
-            self.n_elements,
+            elem_id,
             cross_section,
             material,
         )
-        self.elements.append(element)
-        # Keep track of Element connectivity
-        self.nodes[node_id1].add_connection(element.id_number)
-        self.nodes[node_id2].add_connection(element.id_number)
-        return element.id_number
+
+        self.elements[elem_id] = element
+        return elem_id
 
     def remove_element(self, elem_id: int):
         """

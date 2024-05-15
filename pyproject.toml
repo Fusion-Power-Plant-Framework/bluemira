@@ -74,9 +74,9 @@ examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
     "numba==0.59.1",
-    "numba-scipy @ git+https://github.com/numba/numba-scipy@1e2f244",
+    "numba-scipy==0.4.0",
     "numpy==1.26.4",
-    "matplotlib==3.8.3",
+    "matplotlib==3.8.4",
     "scipy==1.10.1",
 ]
 openmc = ["openmc>=0.14.0", "openmc_data"]
@@ -316,8 +316,7 @@ ignore-names = [
 "bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/model_mapping.py" = ["PLR6301"]
 "bluemira/geometry/parameterisations.py" = ["E731"]
-"bluemira/codes/plasmod/api/_outputs.py" = ["N815"]
-"bluemira/codes/plasmod/api/_inputs.py" = ["N815"]
+"bluemira/codes/plasmod/api/{_inputs,_outputs}.py" = ["N815"]
 "data/*" = ["INP001"]
 "scripts/*" = ["INP001", "CPY001", "T201"]
 "setup.py" = ["CPY001"]
@@ -327,34 +326,7 @@ ignore-names = [
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = ["E402", "W505"]
 "eudemo/eudemo/reactor.py" = ["ARG001"]
-"eudemo/eudemo_tests/*" = [
-    "INP001",
-    "PLR2004",
-    "PLR6301",
-    "S101",
-    "F841",
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D104",
-    "D105",
-    "D202",
-    "D205",
-    "D210",
-    "D300",
-    "D301",
-    "D401",
-    "D403",
-    "D404",
-    "D406",
-    "D409",
-    "N802",
-    "PLC2701",
-    "PT023",
-    "T201",
-]
-"tests/*" = [
+"{tests,eudemo/eudemo_tests}/*" = [
     "INP001",
     "PLR2004",
     "PLR6301",

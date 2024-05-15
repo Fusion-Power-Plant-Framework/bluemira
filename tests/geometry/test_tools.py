@@ -752,7 +752,7 @@ class TestFilletChamfer2D:
         n = 4 if wire.is_closed() else 2
         # I'll be honest, I don't understand why this modified radius happens...
         # I worry about what happens at other angles...
-        radius = 0.5 * np.sqrt(2) * radius
+        radius *= 0.5 * np.sqrt(2)
         correct_length = wire.length - n * 2 * radius
         correct_length += n * np.sqrt(2 * radius**2)
 

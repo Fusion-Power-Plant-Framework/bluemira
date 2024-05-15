@@ -150,13 +150,13 @@ class TestLowerPort:
         rotated_duct = duct_xyz_cad.deepcopy()
         rotated_duct.rotate(degree=-180 / self.duct_des_params.n_TF.value)
         phat_tf = self._make_tf(10)
-        cut_duct = sorted(
+        cut_duct = min(
             boolean_cut(rotated_duct, phat_tf), key=lambda shape: -shape.volume
-        )[0]
+        )
         koz = lp_duct_xz_koz.deepcopy()
         koz.translate((0, -5, 0))
         koz = extrude_shape(koz, (0, 10, 0))
-        cut_koz = sorted(boolean_cut(koz, phat_tf), key=lambda shape: -shape.volume)[0]
+        cut_koz = min(boolean_cut(koz, phat_tf), key=lambda shape: -shape.volume)
         fuse = boolean_fuse([cut_koz, cut_duct])
 
         assert cut_koz.volume == pytest.approx(fuse.volume)

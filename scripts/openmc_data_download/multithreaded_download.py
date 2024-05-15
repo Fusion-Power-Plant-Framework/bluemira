@@ -13,7 +13,7 @@ import requests
 from rich.progress import Progress
 
 
-async def get_size(url: str, timeout: int = 10) -> int:
+async def get_size(url: str, timeout: int = 10) -> int:  # noqa: RUF029
     """Get size of file"""
     response = requests.head(  # noqa: ASYNC100
         url, allow_redirects=True, timeout=timeout
