@@ -594,16 +594,17 @@ class CoilGroup(CoilGroupFieldsMixin):
             if isinstance(coil_or_group, CoilGroup):
                 try:
                     c_rtn = coil_or_group.get_coil_or_group_with_coil_name(coil_name)
-                    # if it's a CoilGroup, return it
-                    # (we want the lowest level group that contains the coil)
-                    if isinstance(c_rtn, CoilGroup):
-                        return c_rtn
-                    # otherwise it's a coil,
-                    # so return the group it's in
-                    return coil_or_group  # noqa: TRY300
                 except ValueError:
                     continue
-            elif coil_or_group.name == coil_name:
+                # if it's a CoilGroup, return it
+                # (we want the lowest level group that contains the coil)
+                if isinstance(c_rtn, CoilGroup):
+                    return c_rtn
+                # otherwise it's a coil,
+                # so return the group it's in
+                return coil_or_group
+
+            if coil_or_group.name == coil_name:
                 return coil_or_group
         raise ValueError(f"No coil or coil group with primary coil name {coil_name}")
 
