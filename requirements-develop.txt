@@ -52,4 +52,4 @@ tomli==2.0.1
 typing_extensions==4.11.0
 urllib3==2.2.1
 virtualenv==20.26.1
-zipp==3.18.1
+zipp==3.18.2
