@@ -345,7 +345,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
-        self._dcm = np.array([t_vec, ds / length, normal])
+        self._dcm = np.array([t_vec, ds / length, normal], dtype=float)
         self._length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
         self._breadth = breadth
         self._depth = depth

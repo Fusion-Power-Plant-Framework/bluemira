@@ -639,7 +639,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         self._dtheta = np.deg2rad(dtheta)
         self._rho = current / (4 * breadth * depth)
-        self._dcm = np.array([ds, normal, t_vec])
+        self._dcm = np.array([ds, normal, t_vec], dtype=float)
         self._points = self._calculate_points()
 
     @property
