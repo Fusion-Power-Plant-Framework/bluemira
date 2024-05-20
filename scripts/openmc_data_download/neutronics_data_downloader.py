@@ -30,7 +30,7 @@ def state_download_size(download_size: int, uncompressed_size: int, units: str):
     bluemira_warn(
         f"This script will download up to {download_size} {units} "
         "of data. Extracting and processing the data may require as much "
-        f"as {uncompressed_size} {units} of additional free disk space."
+        f"as {uncompressed_size:.2f} {units} of additional free disk space."
     )
 
 
@@ -90,20 +90,23 @@ def _filter_members(
 
     with open(Path(Path(file).parent, isotope_file)) as fh:
         isotope_data = json.load(fh)
-    if filename in ard["tendl"][tendl.args.release]["neutron"]["compressed_files"]:
+    if (
+        filename
+        in ard["tendl"][tendl.args.release]["neutron"]["ace"]["compressed_files"]
+    ):
         return _filter(
             filename, members, isotope_data["tendl"]["neutron"], lambda m: f"*/{m}"
         )
-    if filename == ard["endf"]["b7.1"]["neutron"]["compressed_files"][0]:
+    if filename == ard["endf"]["b7.1"]["neutron"]["ace"]["compressed_files"][0]:
         return _filter(
             filename,
             members,
             isotope_data["endf"]["neutron"],
             lambda m: f"*/{m[:-3]}_{m[-3:]}*.ace",
         )
-    if filename == ard["endf"]["b7.1"]["neutron"]["compressed_files"][1]:
+    if filename == ard["endf"]["b7.1"]["neutron"]["ace"]["compressed_files"][1]:
         return _filter(filename, members, ["bebeo", "obeo"], lambda m: f"{m}.acer")
-    if filename in ard["endf"]["b7.1"]["photon"]["compressed_files"]:
+    if filename in ard["endf"]["b7.1"]["photon"]["endf"]["compressed_files"]:
         return _filter(
             filename, members, isotope_data["endf"]["photon"], lambda m: f"*{m}*.endf"
         )
@@ -178,7 +181,6 @@ def download_data(
     """Download neutronics data"""
     for name, lib in zip(lib_names, libs, strict=False):
         bluemira_print(f"Downloading {name} cross section data")
-        lib.state_download_size = state_download_size
         lib.download = download
         lib.extract = extractor
         lib.args.destination = Path(name)
@@ -224,6 +226,10 @@ def main(p):
     download = functools.partial(downloader, max_workers=p.download_threads)
 
     # Imported after parsing arguments because argparse is called on import here...
+    from openmc_data import utils  # noqa: PLC0415
+
+    utils.state_download_size = state_download_size
+
     import openmc_data.convert.convert_endf as endf  # noqa: PLC0415
     import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
 
