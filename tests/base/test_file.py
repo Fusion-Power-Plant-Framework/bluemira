@@ -21,7 +21,6 @@ from bluemira.base.file import (
 
 REACTOR_NAME = "TEST_REACTOR"
 FILE_REF_PATH = Path("data").as_posix()
-FILE_GEN_PATH = Path("tests", "base", "file_manager_gen").as_posix()
 
 
 @pytest.mark.parametrize(
@@ -56,32 +55,34 @@ def test_try_get_bluemira_path_raises(path, subfolder):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def file_manager_good():
+def file_manager_good(tmp_path_factory):
     """
     Create a FileManager to run some tests on.
     """
+    file_gen_path = tmp_path_factory.mktemp("file_manager_gen")
     file_manager = FileManager(
         REACTOR_NAME,
         reference_data_root=FILE_REF_PATH,
-        generated_data_root=FILE_GEN_PATH,
+        generated_data_root=file_gen_path.as_posix(),
     )
 
     yield file_manager
 
     # Make sure we clean up the directories after testing that they have been created.
-    if Path(FILE_GEN_PATH):
-        remove_dir_and_subs(FILE_GEN_PATH)
+    if Path(file_gen_path):
+        remove_dir_and_subs(file_gen_path.as_posix())
 
 
 @pytest.fixture(scope="session", autouse=True)
-def file_manager_bad():
+def file_manager_bad(tmp_path_factory):
     """
     Create a FileManager to run some tests on.
     """
+    file_gen_path = tmp_path_factory.mktemp("file_manager_gen_bad")
     return FileManager(
         REACTOR_NAME,
         reference_data_root=FILE_REF_PATH + "bad",
-        generated_data_root=FILE_GEN_PATH,
+        generated_data_root=file_gen_path.as_posix(),
     )
 
 
@@ -169,16 +170,17 @@ def test_reference_data_dirs_error(file_manager_bad: FileManager):
         file_manager_bad.set_reference_data_paths()
 
 
-def test_create_reference_data_dirs():
+def test_create_reference_data_dirs(tmp_path):
     """
     Test that the reference data path dictionary is created and populated
 
     Creates the directory and removes it.
     """
+    path = tmp_path / "create"
     file_manager = FileManager(
         REACTOR_NAME,
         reference_data_root=FILE_REF_PATH + "create",
-        generated_data_root=FILE_GEN_PATH,
+        generated_data_root=path.as_posix(),
     )
 
     file_manager.create_reference_data_paths()
@@ -201,8 +203,8 @@ def test_create_reference_data_dirs():
             )
 
     # Make sure we clean up the directories after testing that they have been created.
-    if Path(FILE_GEN_PATH).exists():
-        remove_dir_and_subs(FILE_GEN_PATH)
+    if Path(path).exists():
+        remove_dir_and_subs(path.as_posix())
 
 
 def test_generated_data_dirs(file_manager_good: FileManager):
