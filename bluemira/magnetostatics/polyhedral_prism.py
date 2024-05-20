@@ -434,7 +434,7 @@ class PolyhedralPrismCurrentSource(
         self._check_raise_self_intersection(length, m_breadth, alpha, beta)
 
         # Normalised direction cosine matrix
-        self._dcm = np.array([t_vec, ds / length, normal])
+        self._dcm = np.array([t_vec, ds / length, normal], dtype=float)
         self._set_cross_section(xs_coordinates)
 
         self._alpha = alpha
