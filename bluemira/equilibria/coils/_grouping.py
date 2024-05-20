@@ -14,6 +14,7 @@ from collections import Counter
 from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass
+from enum import Enum, auto
 from operator import attrgetter
 from typing import TYPE_CHECKING
 
@@ -593,17 +594,16 @@ class CoilGroup(CoilGroupFieldsMixin):
             if isinstance(coil_or_group, CoilGroup):
                 try:
                     c_rtn = coil_or_group.get_coil_or_group_with_coil_name(coil_name)
+                    # if it's a CoilGroup, return it
+                    # (we want the lowest level group that contains the coil)
+                    if isinstance(c_rtn, CoilGroup):
+                        return c_rtn
+                    # otherwise it's a coil,
+                    # so return the group it's in
+                    return coil_or_group  # noqa: TRY300
                 except ValueError:
                     continue
-                # if it's a CoilGroup, return it
-                # (we want the lowest level group that contains the coil)
-                if isinstance(c_rtn, CoilGroup):
-                    return c_rtn
-                # otherwise it's a coil,
-                # so return the group it's in
-                return coil_or_group
-
-            if coil_or_group.name == coil_name:
+            elif coil_or_group.name == coil_name:
                 return coil_or_group
         raise ValueError(f"No coil or coil group with primary coil name {coil_name}")
 
@@ -1019,6 +1019,26 @@ class CoilSetOptimisationState:
         return np.concatenate([self.xs, self.zs])
 
 
+class CoilSetSymmetryStatus(Enum):
+    """
+    CoilSet symmetry status
+
+    Parameters
+    ----------
+    FULL:
+        Full symmetry (only SymmetricCircuits in the CoilSet)
+    PARTIAL:
+        Partial symmetry (mixture of SymmetricCircuits
+        and non-symmetric coils in the CoilSet)
+    NONE:
+        No symmetry (no SymmetricCircuits in the CoilSet)
+    """
+
+    FULL = auto()
+    PARTIAL = auto()
+    NONE = auto()
+
+
 class CoilSet(CoilSetFieldsMixin, CoilGroup):
     """
     CoilSet is a CoilGroup with the concept of control coils
@@ -1202,6 +1222,181 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             cc.current = opt_currents * current_scale
         if coil_position_map is not None:
             cc._set_opt_positions(coil_position_map)
+
+    @property
+    def n_current_optimisable_coils(self) -> int:
+        """
+        Get the number of all current optimisable coils
+        """
+        return len(self.current_optimisable_coil_names)
+
+    @property
+    def current_optimisable_coil_names(self) -> list[str]:
+        """
+        Get the names of all current optimisable coils
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return [*flatten_iterable(optimisable_coil_names)]
+
+    @property
+    def all_current_optimisable_coils(self) -> list[Coil]:
+        """
+        Get the names of all coils that can be current optimised.
+        """
+        return [self[cn] for cn in self.current_optimisable_coil_names]
+
+    def get_current_optimisable_coils(
+        self, coil_names: list[str] | None = None
+    ) -> list[Coil]:
+        """
+        Get the coils that can be current optimised.
+        """
+        if coil_names is None:
+            return self.all_current_optimisable_coils
+
+        opt_coils_map = {c.name: c for c in self.all_current_optimisable_coils}
+        rtn = []
+        for cn in coil_names:
+            c = opt_coils_map.get(cn)
+            if c is not None:
+                rtn.append(c)
+            else:
+                raise ValueError(f"Coil {cn} is not a current optimisable coil")
+        return rtn
+
+    @property
+    def _opt_currents_inds(self) -> list[int]:
+        """
+        Get the indices of the coils that can be optimised.
+
+        These indices are used to extract the optimisable currents from the CoilSet
+        and are based on the index of the coils in the name array.
+        """
+        return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
+
+    @property
+    def _opt_currents_symmetry_status(self) -> CoilSetSymmetryStatus:
+        """
+        Get the symmetry status of the CoilSet for current optimisations.
+
+        Notes
+        -----
+            For FULL and NONE symmetry status, analytic derivatives can be used.
+            When the status is FULL, the derivative values must be halved
+            after applying the repetition matrix as they will be added together.
+            For PARTIAL symmetry status, numerical derivatives must be used.
+        """
+        if all(isinstance(c, SymmetricCircuit) for c in self._coils):
+            return CoilSetSymmetryStatus.FULL
+        if any(isinstance(c, SymmetricCircuit) for c in self._coils):
+            return CoilSetSymmetryStatus.PARTIAL
+        return CoilSetSymmetryStatus.NONE
+
+    @property
+    def _opt_currents_expand_mat(self) -> np.ndarray:
+        """
+        Get the optimisation currents expansion matrix.
+
+        This matrix is used to convert the optimisable currents to the full set of
+        currents in the CoilSet.
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+        n_distinct_coils_and_groupings = len(cc._coils)
+
+        if cc._opt_currents_symmetry_status == CoilSetSymmetryStatus.NONE:
+            return np.eye(n_all_coils)
+
+        # this should be true as, at the top level, the number
+        # of coil or group objects should be the same as the no
+        # of optimisable coils
+        if n_opt_coils != n_distinct_coils_and_groupings:
+            raise ValueError(
+                "The number of optimisable coils does not match the number "
+                "of distinct coils and groupings. Something's gone wrong."
+            )
+
+        # you are putting 1's in the col. corresponding
+        # to all coils in the same Circuit
+        mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row = 0
+        for i_col, c in enumerate(cc._coils):
+            if isinstance(c, Circuit):
+                n_coils_in_group = c.n_coils()
+                for n in range(n_coils_in_group):
+                    mat[i_row + n, i_col] = 1
+                i_row += n
+            else:
+                mat[i_row, i_col] = 1
+            i_row += 1
+        return mat
+
+    @property
+    def _opt_currents_sym_reduce_mat(self) -> np.ndarray:
+        """
+        Get the optimisation currents symmetry reduce matrix.
+
+        This matrix is used to convert a full set of optimisation currents
+        into a reduced set, for filtering out all non-primary symmetric circuit
+        coil currents.
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+
+        if cc._opt_currents_symmetry_status != CoilSetSymmetryStatus.FULL:
+            raise ValueError(
+                "Symmetry reduce matrix can only be used with a CoilSet "
+                "that only has SymmetricCircuits"
+            )
+
+        mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row = 0
+        for i_col in range(n_opt_coils):
+            # we have check that all coils are SymmetricCircuits
+            # we just need alternative 1's & 0's
+            # per column (per SymmetricCircuit)
+            mat[i_row, i_col] = 1
+            mat[i_row + 1, i_col] = 0
+            i_row += 2
+        return mat
+
+    @property
+    def _opt_currents(self) -> np.ndarray:
+        """
+        Get the currents for the optimisable coils
+        """
+        return self.current[self._opt_currents_inds]
+
+    @_opt_currents.setter
+    def _opt_currents(self, values: np.ndarray):
+        """
+        Set the currents for the optimisable coils
+        """
+        n_all_coils = self.n_coils()
+
+        n_vals = values.shape[0]
+        n_curr_opt_coils = self.n_current_optimisable_coils
+
+        if n_vals == 1:
+            c = values[0]
+            self.current = np.ones(n_all_coils) * c
+            return
+
+        if n_vals != n_curr_opt_coils:
+            raise ValueError(
+                f"The number of current elements {n_vals} "
+                "does not match the number of "
+                f"optimisable currents: {n_curr_opt_coils}"
+            )
+
+        self.current = self._opt_currents_expand_mat @ values
 
     @property
     def n_position_optimisable_coils(self) -> int:
