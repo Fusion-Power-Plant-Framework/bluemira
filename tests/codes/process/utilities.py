@@ -42,7 +42,7 @@ class FakeMFile:
     PROCESS installed.
     """
 
-    data = mfile_data()
+    data = deepcopy(mfile_data())
 
     def __init__(self, filename, name="PROCESS"):
         self.filename = filename
