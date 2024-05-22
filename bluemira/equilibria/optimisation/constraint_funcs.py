@@ -273,7 +273,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        self.eq.coilset.get_control_coils()._opt_currents = self.scale * vector
+        self.eq.coilset.get_control_coils().current = self.scale * vector
         lcfs = self.eq.get_LCFS()
         if self.inboard:
             return self.radius - min(lcfs.x)
