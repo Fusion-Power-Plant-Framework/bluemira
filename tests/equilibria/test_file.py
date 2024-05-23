@@ -29,6 +29,7 @@ class TestEQDSKInterface:
         Path(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out"),
         Path(path, "DN-DEMO_eqref.json"),
         Path(path, "eqref_OOB.json"),
+        Path(path, "DN-DEMO_eqref_withCoilNames.json"),
     )
 
     @classmethod
@@ -185,6 +186,7 @@ class TestEQDSKInterface:
         assert not mismatched
 
     def test_write_then_read_in_json_format(self):
+        # Test with jetto_eqdsk.out (no coil information)
         eq = EQDSKInterface.from_file(self.testfiles[0])
 
         with mock.patch(OPEN, new_callable=mock.mock_open) as open_mock:
@@ -198,6 +200,32 @@ class TestEQDSKInterface:
 
         assert eq2.nz == 151
         assert eq2.nbdry == 72
+        assert eq2.coil_names is None
+        assert eq2.coil_types is None
+
+        # Test with DN-DEMO_eqref_withCoilNames.json (with coil information)
+        eq3 = EQDSKInterface.from_file(self.testfiles[3])
+
+        with open(str(self.testfiles[3])) as data_file:
+            eq3_json_dict = json.load(data_file)
+
+        with mock.patch(OPEN, new_callable=mock.mock_open) as open_mock:
+            eq3.write("some/path.json", file_format="json")
+        written = combine_text_mock_write_calls(open_mock)
+
+        # check the contents of the written mock variable
+        compare_dicts(eq3_json_dict, json.loads(written))
+
+        with mock.patch(
+            OPEN, new_callable=mock.mock_open, read_data=written
+        ) as open_mock:
+            eq4 = EQDSKInterface.from_file("/some/path.json")
+
+        assert eq4.ncoil == 11
+        assert eq4.coil_names[2] == "PF_3"
+        assert eq4.coil_names[10] == "CS_5"
+        assert eq4.coil_types[1] == "PF"
+        assert eq4.coil_types[7] == "CS"
 
     def test_derived_field_is_calculated_if_not_given(self):
         data = copy.deepcopy(self.eudemo_sof_data)
