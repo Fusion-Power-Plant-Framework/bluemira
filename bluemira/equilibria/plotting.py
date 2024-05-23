@@ -61,15 +61,16 @@ PLOT_DEFAULTS = {
     },
     "separatrix": {
         "color": "r",
-        "linewidth": 3,
+        "linewidth": 1.5,
     },
     "opoint": {
         "marker": "o",
         "color": "g",
     },
     "xpoint": {
-        "marker": "X",
+        "marker": "x",
         "color": "k",
+        "linewidth": 2,
     },
     "grid": {
         "edgewidth": 2,
@@ -88,10 +89,11 @@ PLOT_DEFAULTS = {
             "NONE": "grey",
         },
         "edgecolor": "k",
-        "linewidth": 2,
+        "linewidth": 1,
         "fontsize": 6,
         "alpha": 0.5,
     },
+    "contour": {"linewidths": 1.5},
 }
 
 
@@ -202,7 +204,9 @@ class CoilGroupPlotter(Plotter):
         super().__init__(ax)
         self._cg = coil
         self.colors = kwargs.pop("facecolor", None)
-        self.linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
+        self.linewidth = kwargs.pop(
+            "linewidth", PLOT_DEFAULTS["coil"]["linewidth"] + 0.5
+        )
         self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
         if "alpha" in kwargs:
             # Alpha can be provided as a list or cycle to other systems, so make sure we
@@ -446,7 +450,13 @@ class EquilibriumPlotterMixin:
 
         levels = np.linspace(np.amin(self.psi), np.amax(self.psi), nlevels)
         self.ax.contour(
-            self.eq.x, self.eq.z, self.psi, levels=levels, cmap=cmap, zorder=8
+            self.eq.x,
+            self.eq.z,
+            self.psi,
+            levels=levels,
+            cmap=cmap,
+            zorder=8,
+            linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
     def plot_plasma_current(self, **kwargs):
@@ -563,7 +573,13 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self.ax.contour(
-                self.eq.x, self.eq.z, self.psi, levels=[psi], colors=color, zorder=9
+                self.eq.x,
+                self.eq.z,
+                self.psi,
+                levels=[psi],
+                colors=color,
+                zorder=9,
+                linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
             )
 
     def plot_separatrix(self):
@@ -598,6 +614,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                     p.x,
                     p.z,
                     marker=PLOT_DEFAULTS["xpoint"]["marker"],
+                    markeredgewidth=PLOT_DEFAULTS["xpoint"]["linewidth"],
                     color=PLOT_DEFAULTS["xpoint"]["color"],
                     zorder=10,
                 )
@@ -648,7 +665,14 @@ class BreakdownPlotter(Plotter):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.ax.contour(self.bd.x, self.bd.z, self.psi, levels=levels, colors="r")
+            self.ax.contour(
+                self.bd.x,
+                self.bd.z,
+                self.psi,
+                levels=levels,
+                colors="r",
+                linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
+            )
 
     def plot_Bp(self, **kwargs):
         """
@@ -673,6 +697,7 @@ class BreakdownPlotter(Plotter):
             levels=[field],
             colors=colors,
             linestyles="dashed",
+            linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
         if self.psi_bd is not None:

@@ -558,14 +558,16 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {
-            "marker": "X",
-            "color": "b",
-            "markersize": 10,
-            "zorder": 45,
-            "linestyle": "None",
-        }
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="x",
+            color="b",
+            markersize=10,
+            markeredgewidth=3,
+            zorder=45,
+            linestyle="None",
+        )
 
     def __len__(self) -> int:
         """
@@ -613,8 +615,14 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "s", "markersize": 8, "color": "b", "linestyle": "None"}
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="s",
+            markersize=8,
+            color="b",
+            linestyle="None",
+        )
 
 
 class IsofluxConstraint(RelativeMagneticConstraint):
@@ -670,15 +678,14 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         kwargs = {
             "marker": "o",
-            "markeredgewidth": 3,
             "markeredgecolor": "b",
-            "markersize": 10,
+            "markersize": 5,
             "linestyle": "None",
             "markerfacecolor": "None",
             "zorder": 45,
         }
         ax.plot(self.x, self.z, **kwargs)
-        kwargs["markeredgewidth"] = 5
+        kwargs["markerfacecolor"] = "m"
         ax.plot(self.ref_x, self.ref_z, **kwargs)
 
 
@@ -722,8 +729,14 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "o", "markersize": 8, "color": "b", "linestyle": "None"}
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="o",
+            markersize=8,
+            color="b",
+            linestyle="None",
+        )
 
 
 class MagneticConstraintSet:
