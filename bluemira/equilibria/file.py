@@ -119,6 +119,10 @@ class EQDSKInterface:
     """Safety factor values on the 1-D flux grid [dimensionless]."""
     file_name: str | None = None
     """The EQDSK file the data originates from."""
+    coil_names: list[str] | None = None
+    """Name of the coils"""
+    coil_types: list[str] | None = None
+    """Type of the coils"""
 
     def __post_init__(self):
         """Calculate derived parameters if they're not given."""
