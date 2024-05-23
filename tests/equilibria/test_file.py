@@ -22,6 +22,7 @@ from tests._helpers import combine_text_mock_write_calls
 
 OPEN = "builtins.open"
 
+
 class TestEQDSKInterface:
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
     testfiles = (
