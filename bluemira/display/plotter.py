@@ -21,7 +21,7 @@ from typing import (
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
 import numpy as np
-from matplotlib.patches import PathPatch
+from matplotlib.patches import PathPatch, Polygon
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.error import DisplayError
@@ -490,7 +490,17 @@ class FacePlotter(BasePlotter):
 
     def _make_plot_2d(self):
         if self.options.show_faces:
-            self.ax.fill(*self._data_to_plot, **self.options.face_options)
+            face_opts = self.options.face_options
+            if "hatch" in face_opts and face_opts["hatch"] is not None:
+                self.ax.add_patch(
+                    Polygon(
+                        np.asarray(self._data_to_plot).T,
+                        fill=False,
+                        **face_opts,
+                    )
+                )
+            else:
+                self.ax.fill(*self._data_to_plot, **face_opts)
 
         for w in self._wplotters:
             w.ax = self.ax
