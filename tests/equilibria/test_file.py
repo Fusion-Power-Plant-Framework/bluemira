@@ -231,7 +231,7 @@ class TestEQDSKInterface:
         eq3 = EQDSKInterface.from_file(self.testfiles[3])
 
         with open(str(self.testfiles[3])) as data_file:
-            eq3_string = json.load(data_file)
+            eq3_json_dict = json.load(data_file)
 
         with mock.patch(OPEN, new_callable=mock.mock_open) as open_mock:
             eq3.write("some/path.json", file_format="json")
