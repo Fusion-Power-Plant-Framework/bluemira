@@ -22,31 +22,6 @@ from tests._helpers import combine_text_mock_write_calls
 
 OPEN = "builtins.open"
 
-
-def assert_dict_subset(expected, actual):
-    """
-    Recursively check if all key-value pairs in `expected`
-    are exactly the same in `actual`.
-    Allow `actual` to have extra keys.
-    """
-    assert isinstance(expected, dict)
-    assert isinstance(actual, dict)
-
-    for key, value in expected.items():
-        assert key in actual, f"Missing key: {key}"
-        assert (
-            value == actual[key]
-        ), f"Value mismatch for key '{key}': expected {value}, got {actual[key]}"
-        if isinstance(value, dict):
-            assert_dict_subset(value, actual[key])
-        elif isinstance(value, list):
-            assert all(
-                item in actual[key] for item in value
-            ), f"Value mismatch for list at key '{key}'"
-        else:
-            assert value == actual[key], f"Value mismatch for key '{key}'"
-
-
 class TestEQDSKInterface:
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
     testfiles = (
@@ -238,7 +213,7 @@ class TestEQDSKInterface:
         written = combine_text_mock_write_calls(open_mock)
 
         # check the contents of the written mock variable
-        assert_dict_subset(eq3_string, json.loads(written))
+        compare_dicts(eq3_json_dict, json.loads(written))
 
         with mock.patch(
             OPEN, new_callable=mock.mock_open, read_data=written
