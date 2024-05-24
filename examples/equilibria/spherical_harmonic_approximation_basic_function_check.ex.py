@@ -140,5 +140,7 @@ psi = approx_total_psi
 levels = np.linspace(np.amin(psi), np.amax(psi), 50)
 plot = plt.subplot2grid((2, 2), (0, 0), rowspan=2, colspan=1)
 plot.set_title("approx_total_psi")
-plot.contour(eq.grid.x, eq.grid.z, psi, levels=levels, cmap="viridis", zorder=Zorder.PSI)
+plot.contour(
+    eq.grid.x, eq.grid.z, psi, levels=levels, cmap="viridis", zorder=Zorder.PSI.value
+)
 plt.show()

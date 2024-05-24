@@ -745,19 +745,39 @@ def plot_psi_comparision(
 
     plot1.set_title("Original, Total Psi")
     plot1.contour(
-        grid.x, grid.z, tot_psi_org, levels=clevels_org, cmap=cmap, zorder=Zorder.PSI
+        grid.x,
+        grid.z,
+        tot_psi_org,
+        levels=clevels_org,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
     )
     plot2.set_title("SH Approximation, Total Psi")
     plot2.contour(
-        grid.x, grid.z, tot_psi_app, levels=clevels_app, cmap=cmap, zorder=Zorder.PSI
+        grid.x,
+        grid.z,
+        tot_psi_app,
+        levels=clevels_app,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
     )
     plot3.set_title("Original, Vacuum Psi")
     plot3.contour(
-        grid.x, grid.z, vac_psi_org, levels=clevels_org, cmap=cmap, zorder=Zorder.PSI
+        grid.x,
+        grid.z,
+        vac_psi_org,
+        levels=clevels_org,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
     )
     plot4.set_title("SH Approximation, Vacuum Psi")
     plot4.contour(
-        grid.x, grid.z, vac_psi_app, levels=clevels_app, cmap=cmap, zorder=Zorder.PSI
+        grid.x,
+        grid.z,
+        vac_psi_app,
+        levels=clevels_app,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
     )
 
     if original_LCFS is not None:

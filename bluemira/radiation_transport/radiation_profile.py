@@ -492,7 +492,7 @@ class CoreRadiation(Radiation):
                 cmap="plasma",
                 vmin=p_min,
                 vmax=p_max,
-                zorder=Zorder.RADIATION,
+                zorder=Zorder.RADIATION.value,
             )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
@@ -1184,7 +1184,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 cmap="plasma",
                 vmin=p_min,
                 vmax=p_max,
-                zorder=Zorder.RADIATION,
+                zorder=Zorder.RADIATION.value,
             )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
@@ -2089,7 +2089,7 @@ class RadiationSource:
             cmap="plasma",
             vmin=min(self.rad_tot),
             vmax=max(self.rad_tot),
-            zorder=Zorder.RADIATION,
+            zorder=Zorder.RADIATION.value,
         )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")

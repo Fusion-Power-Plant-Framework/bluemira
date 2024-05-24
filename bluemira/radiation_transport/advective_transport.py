@@ -451,7 +451,7 @@ class ChargedParticleSolver:
             self.result[1],
             c=self.result[2],
             s=10,
-            zorder=Zorder.RADIATION,
+            zorder=Zorder.RADIATION.value,
             cmap="plasma",
         )
         f = ax.figure

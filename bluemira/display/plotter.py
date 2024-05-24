@@ -195,10 +195,10 @@ class DefaultPlotOptions:
         }
     )
     wire_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "black", "linewidth": 0.5, "zorder": Zorder.WIRE}
+        lambda: {"color": "black", "linewidth": 0.5, "zorder": Zorder.WIRE.value}
     )
     face_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "blue", "zorder": Zorder.FACE}
+        lambda: {"color": "blue", "zorder": Zorder.FACE.value}
     )
     # discretisation properties for plotting wires (and faces)
     ndiscr: int = 100

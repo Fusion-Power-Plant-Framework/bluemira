@@ -350,7 +350,7 @@ class CoilGroupPlotter(Plotter):
                 "linewidth": 1,
                 "edgecolor": "k",
             },
-            zorder=Zorder.TEXT,
+            zorder=Zorder.TEXT.value,
         )
 
     def _plot_coil(self, x_boundary, z_boundary, ctype, *, fill=True, **kwargs):
@@ -369,16 +369,18 @@ class CoilGroupPlotter(Plotter):
         z = np.append(z_boundary, z_boundary[0])
         if all(x_boundary == x_boundary[0]) or all(z_boundary == z_boundary[0]):
             self.ax.plot(
-                x[0], z[0], zorder=Zorder.WIRE, color="k", lw=linewidth, marker="+"
+                x[0], z[0], zorder=Zorder.WIRE.value, color="k", lw=linewidth, marker="+"
             )
         else:
-            self.ax.plot(x, z, zorder=Zorder.WIRE, color=color, linewidth=linewidth)
+            self.ax.plot(
+                x, z, zorder=Zorder.WIRE.value, color=color, linewidth=linewidth
+            )
 
         if fill:
             if mask:
-                self.ax.fill(x, z, color="w", zorder=Zorder.FACE, alpha=1)
+                self.ax.fill(x, z, color="w", zorder=Zorder.FACE.value, alpha=1)
 
-            self.ax.fill(x, z, zorder=Zorder.FACE, color=fcolor, alpha=alpha)
+            self.ax.fill(x, z, zorder=Zorder.FACE.value, color=fcolor, alpha=alpha)
 
 
 class PlasmaCoilPlotter(Plotter):
@@ -455,7 +457,7 @@ class EquilibriumPlotterMixin:
             self.psi,
             levels=levels,
             cmap=cmap,
-            zorder=Zorder.PSI,
+            zorder=Zorder.PSI.value,
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
@@ -476,7 +478,7 @@ class EquilibriumPlotterMixin:
             self.eq._jtor,
             levels=levels,
             cmap=cmap,
-            zorder=Zorder.PLASMACURRENT,
+            zorder=Zorder.PLASMACURRENT.value,
         )
 
 
@@ -509,7 +511,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             z,
             color=PLOT_DEFAULTS["separatrix"]["color"],
             linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
-            zorder=Zorder.SEPARATRIX,
+            zorder=Zorder.SEPARATRIX.value,
         )
 
 
@@ -583,7 +585,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 self.psi,
                 levels=[psi],
                 colors=color,
-                zorder=Zorder.FLUXSURFACE,
+                zorder=Zorder.FLUXSURFACE.value,
                 linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
             )
 
@@ -606,7 +608,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 z,
                 color=PLOT_DEFAULTS["separatrix"]["color"],
                 linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
-                zorder=Zorder.SEPARATRIX,
+                zorder=Zorder.SEPARATRIX.value,
             )
 
     def plot_X_points(self):  # noqa: N802
@@ -621,7 +623,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                     marker=PLOT_DEFAULTS["xpoint"]["marker"],
                     markeredgewidth=PLOT_DEFAULTS["xpoint"]["linewidth"],
                     color=PLOT_DEFAULTS["xpoint"]["color"],
-                    zorder=Zorder.OXPOINT,
+                    zorder=Zorder.OXPOINT.value,
                 )
 
     def plot_O_points(self):  # noqa: N802
@@ -634,7 +636,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 p.z,
                 marker=PLOT_DEFAULTS["opoint"]["marker"],
                 color=PLOT_DEFAULTS["opoint"]["color"],
-                zorder=Zorder.OXPOINT,
+                zorder=Zorder.OXPOINT.value,
             )
 
     def plot_plasma_coil(self):
@@ -729,7 +731,7 @@ class XZLPlotter(Plotter):
                 self.ax,
                 fill=False,
                 edgecolor="r",
-                zorder=Zorder.POSITION_1D,
+                zorder=Zorder.POSITION_1D.value,
                 linestyle="--",
             )
 
@@ -739,7 +741,7 @@ class XZLPlotter(Plotter):
                 self.ax,
                 fill=False,
                 edgecolor="k",
-                zorder=Zorder.POSITION_1D,
+                zorder=Zorder.POSITION_1D.value,
                 linestyle="--",
             )
 
@@ -759,7 +761,7 @@ class RegionPlotter(Plotter):
                 self.ax,
                 fill=True,
                 alpha=0.2,
-                zorder=Zorder.POSITION_2D,
+                zorder=Zorder.POSITION_2D.value,
                 facecolor="g",
                 edgecolor="g",
             )
