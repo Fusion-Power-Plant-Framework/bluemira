@@ -28,7 +28,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import CoilType, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.display.plotter import plot_coordinates
+from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
@@ -214,7 +214,7 @@ class CoilGroupPlotter(Plotter):
             alpha = kwargs["alpha"]
             if isinstance(alpha, cycle):
                 kwargs["alpha"] = next(alpha)
-            if isinstance(kwargs["alpha"], list):
+            if isinstance(alpha, list):
                 kwargs["alpha"] = alpha[0]
 
         self.plot_coil(subcoil=subcoil, label=label, force=force, **kwargs)
@@ -350,7 +350,7 @@ class CoilGroupPlotter(Plotter):
                 "linewidth": 1,
                 "edgecolor": "k",
             },
-            zorder=100,
+            zorder=Zorder.TEXT,
         )
 
     def _plot_coil(self, x_boundary, z_boundary, ctype, *, fill=True, **kwargs):
@@ -369,16 +369,16 @@ class CoilGroupPlotter(Plotter):
         z = np.append(z_boundary, z_boundary[0])
         if all(x_boundary == x_boundary[0]) or all(z_boundary == z_boundary[0]):
             self.ax.plot(
-                x[0], z[0], zorder=11, color="k", linewidth=linewidth, marker="+"
+                x[0], z[0], zorder=Zorder.WIRE, color="k", lw=linewidth, marker="+"
             )
         else:
-            self.ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
+            self.ax.plot(x, z, zorder=Zorder.WIRE, color=color, linewidth=linewidth)
 
         if fill:
             if mask:
-                self.ax.fill(x, z, color="w", zorder=10, alpha=1)
+                self.ax.fill(x, z, color="w", zorder=Zorder.FACE, alpha=1)
 
-            self.ax.fill(x, z, zorder=10, color=fcolor, alpha=alpha)
+            self.ax.fill(x, z, zorder=Zorder.FACE, color=fcolor, alpha=alpha)
 
 
 class PlasmaCoilPlotter(Plotter):
@@ -455,7 +455,7 @@ class EquilibriumPlotterMixin:
             self.psi,
             levels=levels,
             cmap=cmap,
-            zorder=8,
+            zorder=Zorder.PSI,
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
@@ -471,7 +471,12 @@ class EquilibriumPlotterMixin:
 
         levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
         self.ax.contourf(
-            self.eq.x, self.eq.z, self.eq._jtor, levels=levels, cmap=cmap, zorder=7
+            self.eq.x,
+            self.eq.z,
+            self.eq._jtor,
+            levels=levels,
+            cmap=cmap,
+            zorder=Zorder.PLASMACURRENT,
         )
 
 
@@ -504,7 +509,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             z,
             color=PLOT_DEFAULTS["separatrix"]["color"],
             linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
-            zorder=9,
+            zorder=Zorder.SEPARATRIX,
         )
 
 
@@ -578,7 +583,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 self.psi,
                 levels=[psi],
                 colors=color,
-                zorder=9,
+                zorder=Zorder.FLUXSURFACE,
                 linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
             )
 
@@ -601,7 +606,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 z,
                 color=PLOT_DEFAULTS["separatrix"]["color"],
                 linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
-                zorder=9,
+                zorder=Zorder.SEPARATRIX,
             )
 
     def plot_X_points(self):  # noqa: N802
@@ -616,7 +621,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                     marker=PLOT_DEFAULTS["xpoint"]["marker"],
                     markeredgewidth=PLOT_DEFAULTS["xpoint"]["linewidth"],
                     color=PLOT_DEFAULTS["xpoint"]["color"],
-                    zorder=10,
+                    zorder=Zorder.OXPOINT,
                 )
 
     def plot_O_points(self):  # noqa: N802
@@ -629,7 +634,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 p.z,
                 marker=PLOT_DEFAULTS["opoint"]["marker"],
                 color=PLOT_DEFAULTS["opoint"]["color"],
-                zorder=10,
+                zorder=Zorder.OXPOINT,
             )
 
     def plot_plasma_coil(self):
@@ -720,12 +725,22 @@ class XZLPlotter(Plotter):
 
         for coords in self.xzl.excl_loops:
             plot_coordinates(
-                coords, self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--"
+                coords,
+                self.ax,
+                fill=False,
+                edgecolor="r",
+                zorder=Zorder.POSITION_1D,
+                linestyle="--",
             )
 
         for coords in self.xzl.incl_loops:
             plot_coordinates(
-                coords, self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--"
+                coords,
+                self.ax,
+                fill=False,
+                edgecolor="k",
+                zorder=Zorder.POSITION_1D,
+                linestyle="--",
             )
 
 
@@ -744,7 +759,7 @@ class RegionPlotter(Plotter):
                 self.ax,
                 fill=True,
                 alpha=0.2,
-                zorder=1,
+                zorder=Zorder.POSITION_2D,
                 facecolor="g",
                 edgecolor="g",
             )

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -46,6 +47,23 @@ UNIT_LABEL = "[m]"
 X_LABEL = f"x {UNIT_LABEL}"
 Y_LABEL = f"y {UNIT_LABEL}"
 Z_LABEL = f"z {UNIT_LABEL}"
+
+
+class Zorder(Enum):
+    """Layer ordering of common plots"""
+
+    POSITION_1D = 1
+    POSITION_2D = 2
+    PLASMACURRENT = 7
+    PSI = 8
+    FLUXSURFACE = 9
+    SEPARATRIX = 10
+    OXPOINT = 11
+    FACE = 20
+    WIRE = 30
+    RADIATION = 40
+    CONSTRAINT = 45
+    TEXT = 100
 
 
 class ViewDescriptor:
@@ -177,10 +195,10 @@ class DefaultPlotOptions:
         }
     )
     wire_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "black", "linewidth": 0.5, "zorder": 20}
+        lambda: {"color": "black", "linewidth": 0.5, "zorder": Zorder.WIRE}
     )
     face_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "blue", "zorder": 10}
+        lambda: {"color": "blue", "zorder": Zorder.FACE}
     )
     # discretisation properties for plotting wires (and faces)
     ndiscr: int = 100

@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.display.plotter import plot_coordinates
+from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.flux_surfaces_maker import (
@@ -492,7 +492,7 @@ class CoreRadiation(Radiation):
                 cmap="plasma",
                 vmin=p_min,
                 vmax=p_max,
-                zorder=40,
+                zorder=Zorder.RADIATION,
             )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
@@ -1184,7 +1184,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 cmap="plasma",
                 vmin=p_min,
                 vmax=p_max,
-                zorder=40,
+                zorder=Zorder.RADIATION,
             )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
@@ -2089,7 +2089,7 @@ class RadiationSource:
             cmap="plasma",
             vmin=min(self.rad_tot),
             vmax=max(self.rad_tot),
-            zorder=40,
+            zorder=Zorder.RADIATION,
         )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")

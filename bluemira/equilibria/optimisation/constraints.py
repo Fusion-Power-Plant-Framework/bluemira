@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from bluemira.display.plotter import Zorder
 from bluemira.equilibria.optimisation.constraint_funcs import (
     AxBConstraint,
     ConstraintFunction,
@@ -565,7 +566,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             color="b",
             markersize=10,
             markeredgewidth=3,
-            zorder=45,
+            zorder=Zorder.CONSTRAINT,
             linestyle="None",
         )
 
@@ -622,6 +623,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             markersize=8,
             color="b",
             linestyle="None",
+            zorder=Zorder.CONSTRAINT,
         )
 
 
@@ -682,7 +684,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             "markersize": 5,
             "linestyle": "None",
             "markerfacecolor": "None",
-            "zorder": 45,
+            "zorder": Zorder.CONSTRAINT,
         }
         ax.plot(self.x, self.z, **kwargs)
         kwargs["markerfacecolor"] = "m"
@@ -736,6 +738,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
             markersize=8,
             color="b",
             linestyle="None",
+            zorder=Zorder.CONSTRAINT,
         )
 
 
