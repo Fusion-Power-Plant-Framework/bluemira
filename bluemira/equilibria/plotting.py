@@ -70,7 +70,8 @@ PLOT_DEFAULTS = {
     "xpoint": {
         "marker": "x",
         "color": "k",
-        "linewidth": 2,
+        "linewidth": 1.4,
+        "size": 5,
     },
     "grid": {
         "edgewidth": 2,
@@ -621,6 +622,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                     p.x,
                     p.z,
                     marker=PLOT_DEFAULTS["xpoint"]["marker"],
+                    markersize=PLOT_DEFAULTS["xpoint"]["size"],
                     markeredgewidth=PLOT_DEFAULTS["xpoint"]["linewidth"],
                     color=PLOT_DEFAULTS["xpoint"]["color"],
                     zorder=Zorder.OXPOINT.value,
