@@ -509,7 +509,7 @@ class FacePlotter(BasePlotter):
     def _make_plot_2d(self):
         if self.options.show_faces:
             face_opts = self.options.face_options
-            if "hatch" in face_opts and face_opts["hatch"] is not None:
+            if face_opts.get("hatch", None) is not None:
                 self.ax.add_patch(
                     Polygon(
                         np.asarray(self._data_to_plot).T,
