@@ -99,7 +99,9 @@ RUN apt-get install git -y
 USER user
 COPY requirements-develop.txt .
 RUN pip install --no-cache-dir -r requirements-develop.txt && rm requirements-develop.txt
-
+RUN echo "echo -n 'Installing bluemira development version...' &&  \
+          pip install -U -e /home/user/bluemira --quiet --quiet && \
+          echo 'Done'"  >> .bashrc
 
 FROM user_base as release
 RUN pip install git+https://github.com/Fusion-Power-Plant-Framework/bluemira.git@main
