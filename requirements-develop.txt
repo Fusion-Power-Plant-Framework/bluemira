@@ -22,7 +22,7 @@ mypy-extensions==1.0.0
 myst-nb==1.1.0
 myst-parser==3.0.1
 nbclient==0.10.0
-nodeenv==1.8.0
+nodeenv==1.9.0
 platformdirs==4.2.2
 pluggy==1.5.0
 pre-commit==3.7.1
