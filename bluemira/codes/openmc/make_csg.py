@@ -1404,12 +1404,14 @@ class BlanketCellStack:
         cls.check_cut_point_ordering(
             wall_cut_pts[:, 0],
             dirs[0],
-            location_msg=f"Occuring in cell stack {i}'s CCW wall",
+            location_msg=f"\nOccuring in cell stack {i}'s CCW wall:"
+            "\nCheck if the thickness specified can fit into the blanket?",
         )
         cls.check_cut_point_ordering(
             wall_cut_pts[:, 1],
             dirs[1],
-            location_msg=f"Occuring in cell stack {i}'s CW wall",
+            location_msg=f"\nOccuring in cell stack {i}'s CW wall:"
+            "\nCheck if the thickness specified can fit into the blanket?",
         )
         # 2. Accumulate the corners of each cell.
         vertices = [
