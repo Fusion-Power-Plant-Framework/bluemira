@@ -72,7 +72,10 @@ class Builder(abc.ABC):
         """Build the component."""
 
     def component_tree(
-        self, xz: list[Component], xy: list[Component], xyz: list[Component]
+        self,
+        xz: list[Component] | None,
+        xy: list[Component] | None,
+        xyz: list[Component] | None,
     ) -> Component:
         """
         Adds views of components to an overall component tree.

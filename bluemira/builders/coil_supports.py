@@ -231,19 +231,23 @@ class ITERGravitySupportBuilder(Builder):
         return plate_list
 
     def _make_floor_block(self, v1x, v4x):
-        xz_profile = Coordinates(
-            {
-                "x": [v1x, v1x, v4x, v4x],
-                "y": [
-                    -0.5 * self.params.tf_gs_base_depth.value,
-                    0.5 * self.params.tf_gs_base_depth.value,
-                    0.5 * self.params.tf_gs_base_depth.value,
-                    -0.5 * self.params.tf_gs_base_depth.value,
-                ],
-                "z": 4 * [self.params.z_gs.value],
-            },
+        xz_profile = BluemiraFace(
+            make_polygon(
+                Coordinates(
+                    {
+                        "x": [v1x, v1x, v4x, v4x],
+                        "y": [
+                            -0.5 * self.params.tf_gs_base_depth.value,
+                            0.5 * self.params.tf_gs_base_depth.value,
+                            0.5 * self.params.tf_gs_base_depth.value,
+                            -0.5 * self.params.tf_gs_base_depth.value,
+                        ],
+                        "z": 4 * [self.params.z_gs.value],
+                    },
+                ),
+                closed=True,
+            )
         )
-        xz_profile = BluemiraFace(make_polygon(xz_profile, closed=True))
         return extrude_shape(
             xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate.value)
         )

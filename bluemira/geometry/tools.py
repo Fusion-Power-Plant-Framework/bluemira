@@ -8,6 +8,8 @@
 Useful functions for bluemira geometries.
 """
 
+from __future__ import annotations
+
 import datetime
 import enum
 import functools
@@ -16,7 +18,7 @@ import json
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numba as nb
 import numpy as np
@@ -33,16 +35,19 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.utilities.tools import iterable_to_list
 
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.geometry.plane import BluemiraPlane
+
 
 @cadapi.catch_caderr(GeometryError)
-def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
+def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
@@ -85,7 +90,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: BluemiraGeo | np.ndarray | Any):
+    def default(self, obj: BluemiraGeoT | np.ndarray | Any):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -1379,7 +1384,7 @@ def is_convex(points: npt.NDArray):
 # # Save functions
 # # =============================================================================
 def save_as_STP(
-    shapes: BluemiraGeo | Iterable[BluemiraGeo],
+    shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
     unit_scale: str = "metre",
     **kwargs,
@@ -1399,13 +1404,13 @@ def save_as_STP(
     filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
-        shapes = [shapes]
+        shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
 
     cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
 
 
 def save_cad(
-    shapes: BluemiraGeo | list[BluemiraGeo],
+    shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
@@ -1427,8 +1432,8 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    if not isinstance(shapes, list):
-        shapes = [shapes]
+    if not isinstance(shapes, Iterable):
+        shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
     if names is not None and not isinstance(names, list):
         names = [names]
 
@@ -1666,8 +1671,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
 
 def boolean_cut(
-    shape: BluemiraGeo, tools: BluemiraGeo | Iterable[BluemiraGeo]
-) -> BluemiraGeo | Iterable[BluemiraGeo]:
+    shape: BluemiraGeoT, tools: BluemiraGeoT | Iterable[BluemiraGeoT]
+) -> BluemiraGeoT | list[BluemiraGeoT]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1733,7 +1738,7 @@ def boolean_fragments(
     return convert(compound), converted
 
 
-def point_inside_shape(point: Iterable[float], shape: BluemiraGeo) -> bool:
+def point_inside_shape(point: Iterable[float], shape: BluemiraGeoT) -> bool:
     """
     Check whether or not a point is inside a shape.
 
@@ -1783,7 +1788,7 @@ def point_on_plane(
 # # =============================================================================
 # # Serialise and Deserialise
 # # =============================================================================
-def serialise_shape(shape: BluemiraGeo):
+def serialise_shape(shape: BluemiraGeoT):
     """
     Serialise a BluemiraGeo object.
     """
@@ -1805,7 +1810,7 @@ def serialise_shape(shape: BluemiraGeo):
     raise NotImplementedError(f"Serialisation non implemented for {type_}")
 
 
-def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
+def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
     """
     Deserialise a BluemiraGeo object obtained from serialise_shape.
 
@@ -1830,7 +1835,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
-    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeo]) -> BluemiraGeo:
+    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeoT]) -> BluemiraGeoT:
         label = shape_dict["label"]
         boundary = shape_dict["boundary"]
 
@@ -1865,7 +1870,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
 # # =============================================================================
 # # shape utils
 # # =============================================================================
-def get_shape_by_name(shape: BluemiraGeo, name: str) -> list[BluemiraGeo]:
+def get_shape_by_name(shape: BluemiraGeoT, name: str) -> list[BluemiraGeoT]:
     """
     Search through the boundary of the shape and get any shapes with a label
     corresponding to the provided name. Includes the shape itself if the name matches

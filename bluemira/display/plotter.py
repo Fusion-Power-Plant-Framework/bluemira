@@ -17,7 +17,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Iterable,
 )
 
 import matplotlib.pyplot as plt
@@ -40,9 +39,9 @@ from bluemira.geometry.coordinates import (
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
-    from bluemira.geometry.base import BluemiraGeo
+    from bluemira.geometry.base import BluemiraGeoT
 
 UNIT_LABEL = "[m]"
 X_LABEL = f"x {UNIT_LABEL}"
@@ -601,7 +600,9 @@ class ComponentPlotter(BasePlotter):
         pass
 
 
-def _validate_plot_inputs(parts, options):
+def _validate_plot_inputs(
+    parts, options
+) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
     Validate the lists of parts and options, applying some default options.
     """
@@ -643,8 +644,8 @@ def _get_plotter_class(part):
 
 
 def plot_2d(
-    parts: BluemiraGeo | list[BluemiraGeo],
-    options: PlotOptions | list[PlotOptions] | None = None,
+    parts: BluemiraGeoT | Iterable[BluemiraGeoT],
+    options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
     ax=None,
     *,
     show: bool = True,
@@ -679,8 +680,8 @@ def plot_2d(
 
 
 def plot_3d(
-    parts: BluemiraGeo | list[BluemiraGeo],
-    options: PlotOptions | list[PlotOptions] | None = None,
+    parts: BluemiraGeoT | Iterable[BluemiraGeoT],
+    options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
     ax=None,
     *,
     show: bool = True,

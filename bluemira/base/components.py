@@ -11,7 +11,7 @@ Module containing the base Component class.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -22,6 +22,9 @@ from bluemira.display.plotter import Plottable
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
+
+
+ComponentT = TypeVar("ComponentT", bound="Component")
 
 
 class Component(NodeMixin, Plottable, DisplayableCAD):
