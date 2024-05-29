@@ -4,7 +4,7 @@ attrs==23.2.0
 certifi==2024.2.2
 cfgv==3.4.0
 charset-normalizer==3.3.2
-coverage[toml]==7.5.1
+coverage[toml]==7.5.3
 distlib==0.3.8
 docutils==0.20.1
 filelock==3.14.0
