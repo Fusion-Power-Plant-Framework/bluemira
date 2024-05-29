@@ -8,6 +8,8 @@
 Thermal shield builders
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -36,12 +38,12 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
