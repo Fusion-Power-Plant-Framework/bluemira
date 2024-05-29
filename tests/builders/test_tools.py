@@ -330,14 +330,6 @@ class TestBuildSectioned:
         )
         faces.append(BluemiraFace([offset, sec]))
 
-    # failing test mark
-    face_sec = list(map(list, zip(*[faces + faces, enable_sectioning], strict=False)))  # noqa: RUF012
-    face_sec[2] = pytest.param(
-        faces[2],
-        enable_sectioning[2],
-        marks=pytest.mark.xfail(reason="Possible #1347 Topology failure"),
-    )
-
     @pytest.mark.parametrize("face", faces)
     def test_build_sectioned_xy(self, face):
         sec = build_sectioned_xy(face, self.plot_colour)
@@ -346,7 +338,10 @@ class TestBuildSectioned:
         assert all(isinstance(s, PhysicalComponent) for s in sec)
         assert [s.plot_options.face_options["color"] == self.plot_colour for s in sec]
 
-    @pytest.mark.parametrize(("face", "section_bool"), face_sec)
+    @pytest.mark.parametrize(
+        ("face", "section_bool"),
+        list(map(list, zip(*[faces + faces, enable_sectioning], strict=False))),
+    )
     def test_build_sectioned_xyz(self, face, section_bool):
         sec = build_sectioned_xyz(
             face, "test", 12, self.plot_colour, enable_sectioning=section_bool
