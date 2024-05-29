@@ -294,7 +294,7 @@ def _check_constraints(
         x_star: np.ndarray,
         constraint: ConstraintT,
         condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+    ) -> tuple[str | None, np.ndarray, np.ndarray, np.ndarray] | None:
         """Return the items in the constraint vector that violate the condition."""
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
@@ -302,7 +302,7 @@ def _check_constraints(
         tols = np.array(constraint["tolerance"])
         indices = np.nonzero(condition(c_value, tols))[0]
         if indices.size > 0:
-            return (indices, c_value, tols)
+            return (constraint.get("name", None), indices, c_value, tols)
         return None
 
     condition, comp_str = (
@@ -314,10 +314,11 @@ def _check_constraints(
     warnings = []
     for i, constraint in enumerate(constraints):
         if diff := _check_constraint(x_star, constraint, condition):
-            indices, c_value, tols = diff
+            name, indices, c_value, tols = diff
+            name = "" if name is None else f"({name}) "
             warnings.append(
                 "\n".join([
-                    f"{constraint_type} constraint {i} [{j}]: "
+                    f"{constraint_type} constraint {i} {name}[{j}]: "
                     f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
                     for j in indices
                 ])

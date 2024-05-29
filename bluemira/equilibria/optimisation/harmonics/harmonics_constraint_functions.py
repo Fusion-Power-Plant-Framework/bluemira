@@ -37,11 +37,13 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         b_vec: np.ndarray,
         value: float,
         scale: float,
+        name: str | None,
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""

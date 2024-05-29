@@ -199,6 +199,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         for constraint in constraints:
             f_constraint = constraint.f_constraint()
             d: ConstraintT = {
+                "name": f_constraint.name,
                 "f_constraint": f_constraint.f_constraint,
                 "df_constraint": getattr(f_constraint, "df_constraint", None),
                 "tolerance": constraint.tolerance,

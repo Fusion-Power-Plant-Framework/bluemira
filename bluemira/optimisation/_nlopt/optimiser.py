@@ -146,6 +146,7 @@ class NloptOptimiser(Optimiser):
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
         df_constraint: OptimiserCallable | None = None,
+        name: str | None = None,  # noqa: ARG002
     ) -> None:
         """
         Add an equality constraint.
@@ -172,6 +173,7 @@ class NloptOptimiser(Optimiser):
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
         df_constraint: OptimiserCallable | None = None,
+        name: str | None = None,  # noqa: ARG002
     ) -> None:
         """
         Add an inequality constraint.

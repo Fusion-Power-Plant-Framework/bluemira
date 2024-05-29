@@ -60,6 +60,16 @@ class UpdateableConstraint(ABC):
     updateable.
     """
 
+    def __init_subclass__(cls, **kwargs):
+        """Create constraint name on definition of subclass"""
+        cls._name = cls.__name__.removesuffix("Constraint").removesuffix("Constraints")
+        return super().__init_subclass__(**kwargs)
+
+    @property
+    def name(self) -> str:
+        """Name of constraint"""
+        return self._name
+
     @abstractmethod
     def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
@@ -183,7 +193,7 @@ class FieldConstraints(UpdateableConstraint):
 
     def f_constraint(self) -> FieldConstraintFunction:
         """Calculate the constraint function"""
-        f_constraint = FieldConstraintFunction(**self._args)
+        f_constraint = FieldConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.f_constraint_type
         return f_constraint
 
@@ -369,7 +379,7 @@ class CoilForceConstraints(UpdateableConstraint):
 
     def f_constraint(self) -> CoilForceConstraintFunction:
         """Calculate the constraint function"""
-        return CoilForceConstraintFunction(**self._args)
+        return CoilForceConstraintFunction(name=self.name, **self._args)
 
 
 class MagneticConstraint(UpdateableConstraint):
@@ -447,7 +457,7 @@ class MagneticConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> ConstraintFunction:
         """Return the non-linear, numerical, part of the constraint."""
-        f_constraint = self._f_constraint(**self._args)
+        f_constraint = self._f_constraint(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 

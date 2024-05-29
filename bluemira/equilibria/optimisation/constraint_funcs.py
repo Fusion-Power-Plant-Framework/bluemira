@@ -57,6 +57,18 @@ if TYPE_CHECKING:
 class ConstraintFunction(abc.ABC):
     """Override to define a numerical constraint for a coilset optimisation."""
 
+    @property
+    def name(self) -> str | None:
+        """The name of the constraint"""
+        try:
+            return self._name
+        except AttributeError:
+            return None
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
     @abc.abstractmethod
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """The constraint function."""
@@ -102,11 +114,13 @@ class AxBConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
+        name: str | None = None,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
@@ -142,11 +156,13 @@ class L2NormConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
+        name: str | None = None,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
@@ -189,6 +205,7 @@ class FieldConstraintFunction(ConstraintFunction):
         bzp_vec: npt.NDArray[np.float64],
         B_max: npt.NDArray[np.float64],
         scale: float,
+        name: str | None = None,
     ):
         self.ax_mat = ax_mat
         self.az_mat = az_mat
@@ -196,6 +213,7 @@ class FieldConstraintFunction(ConstraintFunction):
         self.bzp_vec = bzp_vec
         self.B_max = B_max
         self.scale = scale
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
@@ -245,11 +263,13 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         scale: float,
         *,
         inboard: bool,
+        name: str | None = None,
     ):
         self.eq = eq
         self.radius = radius
         self.scale = scale
         self.inboard = inboard
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
@@ -294,6 +314,7 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
+        name: str | None = None,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -303,6 +324,7 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
+        self.name = name
 
         if self.n_CS == 0 and self.n_PF == 0:
             raise ValueError(
