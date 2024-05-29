@@ -58,7 +58,7 @@ class TestHardBoundingBox:
     temp.close()
     solid = revolve_shape(BluemiraFace(temp), degree=159)
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(reason="Bounding box is not precise")
     def test_bad_bounding_box(self):
         assert np.isclose(self.wire.bounding_box.z_min, -5.0)
 
