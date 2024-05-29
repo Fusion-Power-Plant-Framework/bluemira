@@ -375,7 +375,7 @@ class TestManickamCunninghamZakahrovCAD:
         fs = ClosedFluxSurface(wire.discretise(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(delta, fs.delta)
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(reason="Close but no cigar 🤷")
     @pytest.mark.parametrize("parameterisation", [CunninghamLCFS, ManickamLCFS])
     @pytest.mark.parametrize("delta", [0.33, -0.33, 0.5, -0.5])
     def test_delta_fail(self, parameterisation, delta):

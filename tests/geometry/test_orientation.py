@@ -68,7 +68,8 @@ class TestOrientation:
             bm_wire = BluemiraWire([wire_1, wire_2])
 
 
-class ExtrudeOrientation:
+@pytest.mark.parametrize("extrusion", [1, -1])
+class TestExtrudeOrientation:
     """
     Helper class for testing orientations are respected after an extrude operation.
     """
@@ -80,19 +81,21 @@ class ExtrudeOrientation:
         [0.5, 0, 0.5],
         [0.5, 0, -0.5],
     )
-    _extrusion: float
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _setup(self, extrusion):
         profile = cadapi.make_polygon(self.VERTS)
         face = cadapi.apiFace(profile)
-        self.solid_fc = cadapi.extrude_shape(face, (0, self._extrusion, 0))
+        self.solid_fc = cadapi.extrude_shape(face, (0, extrusion, 0))
 
         profile = geo_tools.make_polygon(self.VERTS)
         face = BluemiraFace(profile)
-        self.solid_bm = geo_tools.extrude_shape(face, (0, self._extrusion, 0))
+        self.solid_bm = geo_tools.extrude_shape(face, (0, extrusion, 0))
 
-    @pytest.mark.parametrize("shapes_name", ["wires", "faces", "solids"])
-    def test_shapes(self, shapes_name: str):
+    @pytest.mark.parametrize(
+        "shapes_name", ["wires", "faces", "edges", "shells", "solids"]
+    )
+    def test_shapes(self, extrusion, shapes_name: str):  # noqa: ARG002
         shapes_name = shapes_name.capitalize()
         shapes_fc = getattr(self.solid_fc, shapes_name)
         shapes_bm = getattr(self.solid_bm.shape, shapes_name)
@@ -100,43 +103,3 @@ class ExtrudeOrientation:
             fc.Orientation == bm.Orientation
             for fc, bm in zip(shapes_fc, shapes_bm, strict=False)
         )
-
-    def test_edges(self):
-        self.test_shapes("edges")
-
-    def test_shells(self):
-        self.test_shapes("shells")
-
-
-class TestExtrudeNegativeOrientation(ExtrudeOrientation):
-    """
-    Test that orientations are respected after a negative extrude operation.
-    """
-
-    _extrusion = -1.0
-
-    @pytest.mark.xfail(
-        reason=(
-            "Inversion of shell orientation under investigation - no effect on other"
-            " results seen so far."
-        )
-    )
-    def test_shells(self):
-        super().test_shells()
-
-
-class TestExtrudePositiveOrientation(ExtrudeOrientation):
-    """
-    Test that orientations are respected after a positive extrude operation.
-    """
-
-    _extrusion = 1.0
-
-    @pytest.mark.xfail(
-        reason=(
-            "Mismatch of edge orientation under investigation - no effect on other"
-            " results seen so far."
-        )
-    )
-    def test_edges(self):
-        super().test_edges()
