@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     import anytree
 
     import bluemira.codes._freecadapi as cadapi
+    from bluemira.base.components import ComponentT
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
@@ -47,7 +48,7 @@ class BaseManager(abc.ABC):
     """
 
     @abc.abstractmethod
-    def component(self) -> Component:
+    def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
         """
@@ -55,7 +56,7 @@ class BaseManager(abc.ABC):
     @abc.abstractmethod
     def save_cad(
         self,
-        components: Component | Iterable[Component],
+        components: ComponentT | Iterable[ComponentT],
         filename: str,
         cad_format: str | cadapi.CADFileType = "stp",
         **kwargs,
@@ -79,7 +80,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
-        component_filter: Callable[[Component], bool] | None,
+        component_filter: Callable[[ComponentT], bool] | None,
         **kwargs,
     ):
         """
@@ -96,7 +97,7 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, component_filter: Callable[[Component], bool] | None):
+    def plot(self, *dims: str, component_filter: Callable[[ComponentT], bool] | None):
         """
         Plot the component.
 
@@ -150,10 +151,10 @@ class BaseManager(abc.ABC):
 
     @staticmethod
     def _filter_tree(
-        comp: Component,
+        comp: ComponentT,
         dims_to_show: tuple[str, ...],
-        component_filter: Callable[[Component], bool] | None,
-    ) -> Component:
+        component_filter: Callable[[ComponentT], bool] | None,
+    ) -> ComponentT:
         """
         Filter a component tree
 
@@ -168,9 +169,9 @@ class BaseManager(abc.ABC):
 
     def _plot_dims(
         self,
-        comp: Component,
+        comp: ComponentT,
         dims_to_show: tuple[str, ...],
-        component_filter: Callable[[Component], bool] | None,
+        component_filter: Callable[[ComponentT], bool] | None,
     ):
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
@@ -255,10 +256,10 @@ class ComponentManager(BaseManager):
         The component tree this manager should wrap.
     """
 
-    def __init__(self, component_tree: Component) -> None:
+    def __init__(self, component_tree: ComponentT) -> None:
         self._component = component_tree
 
-    def component(self) -> Component:
+    def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
         """
@@ -267,7 +268,7 @@ class ComponentManager(BaseManager):
     def save_cad(
         self,
         *dims: str,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
@@ -307,7 +308,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         *dims: str,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -336,7 +337,7 @@ class ComponentManager(BaseManager):
     def plot(
         self,
         *dims: str,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
     ):
         """
         Plot the component.
@@ -456,7 +457,7 @@ class Reactor(BaseManager):
 
     def _construct_xyz_cad(
         self,
-        reactor_component: Component,
+        reactor_component: ComponentT,
         with_components: list[ComponentManager] | None = None,
         n_sectors: int = 1,
     ):
@@ -487,7 +488,7 @@ class Reactor(BaseManager):
         dims_to_show: tuple[str, ...],
         with_components: list[ComponentManager] | None,
         n_sectors: int | None,
-        component_filter: Callable[[Component], bool] | None,
+        component_filter: Callable[[ComponentT], bool] | None,
     ) -> Component:
         # We filter because self.component (above) only creates
         # a new root node for this reactor, not a new component tree.
@@ -516,7 +517,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: list[ComponentManager] | None = None,
         n_sectors: int | None = None,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
@@ -568,7 +569,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: list[ComponentManager] | None = None,
         n_sectors: int | None = None,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -605,7 +606,7 @@ class Reactor(BaseManager):
         self,
         *dims: str,
         with_components: list[ComponentManager] | None = None,
-        component_filter: Callable[[Component], bool] | None = FilterMaterial(),
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
     ):
         """
         Plot the reactor.

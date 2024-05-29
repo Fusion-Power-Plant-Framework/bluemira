@@ -18,6 +18,7 @@ from bluemira.base.tools import _timing
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
@@ -48,7 +49,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     def __init__(
         self,
         params: ParameterFrameLike,
-        build_config: dict | None = None,
+        build_config: BuildConfig | None = None,
         *,
         verbose: bool = True,
     ):
