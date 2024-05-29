@@ -8,7 +8,7 @@ CoolProp==6.6.0
 cycler==0.12.1
 fonttools==4.52.4
 fortranformat==2.0.0
-gmsh==4.13.0
+gmsh==4.13.1
 imageio==2.34.1
 joblib==1.4.2
 kiwisolver==1.4.5
