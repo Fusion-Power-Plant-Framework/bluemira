@@ -233,7 +233,7 @@ class ShapeFunction:
         if order is None:
             order = cls._order
         # Normalise data here
-        data /= max(data)
+        data /= max(abs(data))
         coeffs = fitfunc(cls._dfunc, data, order=order)
         cls.data = data
         return cls(coeffs)
