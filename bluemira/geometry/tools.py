@@ -1432,7 +1432,7 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    if not isinstance(shapes, Iterable):
+    if not isinstance(shapes, list):
         shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
     if names is not None and not isinstance(names, list):
         names = [names]
