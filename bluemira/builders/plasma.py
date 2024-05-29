@@ -59,6 +59,7 @@ class PlasmaBuilder(Builder):
     LCFS = "LCFS"
 
     param_cls: type[PlasmaBuilderParams] = PlasmaBuilderParams
+    params: PlasmaBuilderParams
 
     def __init__(
         self,

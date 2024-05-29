@@ -233,6 +233,7 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
     """
 
     def decorator(func: Callable) -> BluemiraWire:
+        @functools.wraps(func)
         def wrapper(
             points: list | np.ndarray | dict, label: str = "", *, closed: bool = False
         ) -> BluemiraWire:
@@ -251,7 +252,6 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
                 wire = cadapi.close_wire(wire)
             return BluemiraWire(wire, label=label)
 
-        wrapper.__doc__ = func.__doc__
         return wrapper
 
     return decorator
@@ -928,12 +928,12 @@ def partial_diff_of_volume(
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
-    shape: BluemiraGeo,
+    shape: BluemiraGeoT,
     base: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
-) -> BluemiraGeo:
+) -> BluemiraGeoT:
     """
     Apply the revolve (base, dir, degree) to this shape
 

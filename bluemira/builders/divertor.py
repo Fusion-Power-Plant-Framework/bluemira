@@ -51,6 +51,7 @@ class DivertorBuilder(Builder):
     CASETTES = "cassettes"
     SEGMENT_PREFIX = "segment"
     param_cls: type[DivertorBuilderParams] = DivertorBuilderParams
+    params: DivertorBuilderParams
 
     def __init__(
         self,

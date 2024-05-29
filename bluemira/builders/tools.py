@@ -105,7 +105,7 @@ def circular_pattern_component(
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-) -> list[Component]:
+) -> list[ComponentT]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 

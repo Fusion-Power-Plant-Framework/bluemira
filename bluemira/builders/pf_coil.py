@@ -54,7 +54,8 @@ class PFCoilBuilder(Builder):
     OUTER_INS = "Outer Ins"
     WINDING_PACK = "Winding Pack"
 
-    param_cls = PFCoilBuilderParams
+    param_cls: type[PFCoilBuilderParams] = PFCoilBuilderParams
+    params: PFCoilBuilderParams
 
     def __init__(
         self,
@@ -182,7 +183,8 @@ class PFCoilPictureFrame(Designer):
     PictureFrame parameterisation.
     """
 
-    param_cls = PFCoilPictureFrameParams
+    param_cls: type[PFCoilPictureFrameParams] = PFCoilPictureFrameParams
+    params: PFCoilPictureFrameParams
 
     def __init__(self, params: ParameterFrameLike, coil: Coil):
         super().__init__(params, verbose=False)
