@@ -69,9 +69,7 @@ class TestOffset:
             assert np.isclose(wire.length, new_wire.length)
             assert new_wire.label == "new"
 
-    @pytest.mark.xfail
     def test_bad_princeton(self):
-        # TODO: This is a more fundamental issue that I have yet to get to the bottom of
         p = PrincetonD({
             "x1": {"value": 4},
             "x2": {"value": 14},
