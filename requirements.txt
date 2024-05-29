@@ -42,4 +42,4 @@ six==1.16.0
 tables==3.9.2
 tabulate==0.9.0
 threadpoolctl==3.5.0
-typeguard==4.2.1
+typeguard==4.3.0
