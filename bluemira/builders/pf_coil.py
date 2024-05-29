@@ -8,7 +8,10 @@
 Builder for the PF coils
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -20,7 +23,11 @@ from bluemira.equilibria.coils import Coil, CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -51,8 +58,8 @@ class PFCoilBuilder(Builder):
 
     def __init__(
         self,
-        params: PFCoilBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         xz_cross_section: BluemiraWire,
     ):
         super().__init__(params, build_config, verbose=False)
@@ -177,7 +184,7 @@ class PFCoilPictureFrame(Designer):
 
     param_cls = PFCoilPictureFrameParams
 
-    def __init__(self, params: PFCoilPictureFrameParams | dict, coil: Coil):
+    def __init__(self, params: ParameterFrameLike, coil: Coil):
         super().__init__(params, verbose=False)
         self.coil = coil
 

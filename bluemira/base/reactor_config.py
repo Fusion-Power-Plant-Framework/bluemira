@@ -5,27 +5,31 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Class to hold parameters and config values."""
 
+from __future__ import annotations
+
 import json
 import pprint
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import make_parameter_frame
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.parameter_frame.typing import ParameterFrameT
 
 
 @dataclass
 class ConfigParams:
     """Container for the global and local parameters of a `ReactorConfig`."""
 
-    global_params: ParameterFrame
+    global_params: ParameterFrameT
     local_params: dict
 
-
-_PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 _PARAMETERS_KEY = "params"
 _FILEPATH_PREFIX = "$path:"
@@ -103,7 +107,7 @@ class ReactorConfig:
     def __init__(
         self,
         config_path: str | Path | dict,
-        global_params_type: type[_PfT],
+        global_params_type: type[ParameterFrameT],
         *,
         warn_on_duplicate_keys: bool = False,
         warn_on_empty_local_params: bool = False,

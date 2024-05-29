@@ -8,7 +8,10 @@
 Coil support builders
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -40,8 +43,12 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
 from bluemira.utilities.tools import floatify
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass
@@ -76,11 +83,12 @@ class ITERGravitySupportBuilder(Builder):
     """
 
     param_cls: type[ITERGravitySupportBuilderParams] = ITERGravitySupportBuilderParams
+    params: ITERGravitySupportBuilderParams
 
     def __init__(
         self,
-        params: ITERGravitySupportBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         tf_xz_keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -94,7 +102,7 @@ class ITERGravitySupportBuilder(Builder):
         return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
     @staticmethod
-    def build_xz(xyz_component):
+    def build_xz(xyz_component: PhysicalComponent) -> PhysicalComponent:
         """
         Build the x-z component of the ITER-like gravity support.
         """
@@ -296,10 +304,11 @@ class PFCoilSupportBuilder(Builder):
     """
 
     param_cls: type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
+    params: PFCoilSupportBuilderParams
 
     def __init__(
         self,
-        params: PFCoilSupportBuilderParams | dict,
+        params: ParameterFrameLike,
         build_config: dict,
         tf_xz_keep_out_zone: BluemiraWire,
         pf_coil_xz: BluemiraWire,
@@ -690,12 +699,13 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         List of x-z keep_out_zone faces on the y=0 plane
     """
 
-    param_cls = StraightOISDesignerParams
+    param_cls: type[StraightOISDesignerParams] = StraightOISDesignerParams
+    params: StraightOISDesignerParams
 
     def __init__(
         self,
-        params: dict | ParameterFrame,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         tf_coil_xz_face: BluemiraFace,
         keep_out_zones: list[BluemiraFace],
     ):
@@ -821,11 +831,12 @@ class OISBuilder(Builder):
     LEFT_OIS = "TF OIS left"
     OIS_XZ = "TF OIS"
     param_cls: type[OISBuilderParams] = OISBuilderParams
+    params: OISBuilderParams
 
     def __init__(
         self,
-        params: OISBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         ois_xz_profiles: BluemiraWire | list[BluemiraWire],
     ):
         super().__init__(params, build_config)

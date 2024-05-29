@@ -17,6 +17,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Iterable,
 )
 
 import matplotlib.pyplot as plt

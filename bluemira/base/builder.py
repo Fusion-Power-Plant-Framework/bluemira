@@ -11,7 +11,7 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, TypeAlias, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -19,9 +19,9 @@ from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
-    from bluemira.base.reactor_config import ConfigParams
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
 
-BuildConfig = dict[str, Union[int, float, str, "BuildConfig"]]
+BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
 """
@@ -48,7 +48,7 @@ class Builder(abc.ABC):
 
     def __init__(
         self,
-        params: dict | ParameterFrame | ConfigParams | None,
+        params: ParameterFrameLike,
         build_config: dict | None = None,
         *,
         verbose=True,

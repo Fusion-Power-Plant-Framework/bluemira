@@ -14,7 +14,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    TypeVar,
     get_args,
     get_type_hints,
 )
@@ -36,14 +35,12 @@ from bluemira.base.parameter_frame._parameter import (
     ParameterValueType,
 )
 
-# due to circular import
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
     from types import GenericAlias
 
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
-
-_PfT = TypeVar("_PfT", bound="ParameterFrame")  # noqa: PYI018
 
 
 @dataclass
@@ -161,12 +158,13 @@ class ParameterFrame:
                 key,
                 Parameter(
                     name=key,
+                    value=value.pop("value"),
                     **value,
                     _value_types=_validate_parameter_field(key, self._types[key]),
                 ),
             )
 
-    def update_from_frame(self, frame: ParameterFrame):
+    def update_from_frame(self, frame: ParameterFrameT):
         """Update the frame with the values of another frame"""
         for o_param in frame:
             if hasattr(self, o_param.name):
@@ -218,7 +216,9 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_frame(cls: type[ParameterFrame], frame: ParameterFrame) -> ParameterFrame:
+    def from_frame(
+        cls: type[ParameterFrameT], frame: ParameterFrameT
+    ) -> ParameterFrameT:
         """Initialise an instance from another ParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
@@ -233,8 +233,8 @@ class ParameterFrame:
 
     @classmethod
     def from_json(
-        cls: type[ParameterFrame], json_in: str | json.SupportsRead
-    ) -> ParameterFrame:
+        cls: type[ParameterFrameT], json_in: str | json.SupportsRead
+    ) -> ParameterFrameT:
         """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
@@ -250,8 +250,8 @@ class ParameterFrame:
 
     @classmethod
     def from_config_params(
-        cls: type[ParameterFrame], config_params: ConfigParams
-    ) -> ParameterFrame:
+        cls: type[ParameterFrameT], config_params: ConfigParams
+    ) -> ParameterFrameT:
         """
         Initialise an instance from a
         :class:`~bluemira.base.reactor_config.ConfigParams` object.
@@ -568,9 +568,9 @@ class EmptyFrame(ParameterFrame):
 
 
 def make_parameter_frame(
-    params: dict[str, ParamDictT] | ParameterFrame | ConfigParams | str | None,
-    param_cls: type[ParameterFrame],
-) -> ParameterFrame | None:
+    params: ParameterFrameLike,
+    param_cls: type[ParameterFrameT],
+) -> ParameterFrameT | None:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 

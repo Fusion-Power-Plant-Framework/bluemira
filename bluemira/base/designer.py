@@ -7,13 +7,18 @@
 Interface for designer classes.
 """
 
-import abc
-from collections.abc import Callable
-from typing import Generic, TypeVar
+from __future__ import annotations
 
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.base.reactor_config import ConfigParams
+import abc
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.tools import _timing
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
@@ -42,7 +47,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     def __init__(
         self,
-        params: dict | ParameterFrame | ConfigParams | None,
+        params: ParameterFrameLike,
         build_config: dict | None = None,
         *,
         verbose: bool = True,
@@ -87,7 +92,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         raise NotImplementedError
 
     @abc.abstractproperty
-    def param_cls(self) -> type[ParameterFrame]:
+    def param_cls(self) -> type[ParameterFrameT]:
         """The ParameterFrame class defining this designer's parameters."""
         ...
 
@@ -108,7 +113,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
 def run_designer(
     designer_cls: type[Designer[_DesignerReturnT]],
-    params: ParameterFrame | dict,
+    params: ParameterFrameLike,
     build_config: dict,
     **kwargs,
 ) -> _DesignerReturnT:

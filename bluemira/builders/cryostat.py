@@ -8,11 +8,14 @@
 Cryostat builder
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.base.builder import Builder
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -24,6 +27,9 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
 
 
 @dataclass
@@ -62,7 +68,7 @@ class CryostatDesigner(Designer[tuple[float, float]]):
 
     def __init__(
         self,
-        params: ParameterFrame | dict,
+        params: ParameterFrameLike,
         cryo_ts_xz: BluemiraFace,
     ):
         super().__init__(params)
@@ -90,8 +96,8 @@ class CryostatBuilder(Builder):
 
     def __init__(
         self,
-        params: ParameterFrame | dict | None,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         x_out: float,
         z_top: float,
     ):

@@ -9,6 +9,7 @@ Thermal shield builders
 """
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -38,6 +39,10 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+
 
 @dataclass
 class VVTSBuilderParams(ParameterFrame):
@@ -58,11 +63,12 @@ class VVTSBuilder(Builder):
     VVTS = "VVTS"
     VOID = "VVTS voidspace"
     param_cls: type[VVTSBuilderParams] = VVTSBuilderParams
+    params: VVTSBuilderParams
 
     def __init__(
         self,
-        params: VVTSBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -176,11 +182,12 @@ class CryostatTSBuilder(Builder):
     VOID = "Cryostat voidspace"
 
     param_cls: type[CryostatTSBuilderParams] = CryostatTSBuilderParams
+    params: CryostatTSBuilderParams
 
     def __init__(
         self,
-        params: CryostatTSBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         pf_keep_out_zones: list[BluemiraWire],
         tf_keep_out_zone: BluemiraWire,
     ):

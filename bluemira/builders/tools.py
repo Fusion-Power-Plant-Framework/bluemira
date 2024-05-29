@@ -12,23 +12,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bluemira.display.palettes import ColorPalette
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from bluemira.geometry.solid import BluemiraSolid
-    from bluemira.geometry.wire import BluemiraWire
-    from bluemira.materials.material import SerialisedMaterial
-
 import numpy as np
 from anytree import PreOrderIter
 
-import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
+from bluemira.display.palettes import ColorPalette
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -43,6 +34,14 @@ from bluemira.geometry.tools import (
     slice_shape,
     sweep_shape,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.components import ComponentT
+    from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
+    from bluemira.materials.material import SerialisedMaterial
 
 __all__ = [
     "apply_component_display_options",
