@@ -215,7 +215,7 @@ class CryostatTSBuilder(Builder):
 
     def build_xz(
         self, pf_kozs: list[BluemiraWire], tf_koz: BluemiraWire
-    ) -> PhysicalComponent:
+    ) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the thermal shield.
         """

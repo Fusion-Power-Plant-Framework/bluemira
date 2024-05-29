@@ -22,6 +22,7 @@ from bluemira.display.plotter import Plottable
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.materials.material import Material
 
 
 ComponentT = TypeVar("ComponentT", bound="Component")
@@ -384,7 +385,7 @@ class PhysicalComponent(Component):
         self,
         name: str,
         shape: BluemiraGeoT,
-        material: Any = None,
+        material: Material | None = None,
         parent: ComponentT | None = None,
         children: list[ComponentT] | None = None,
     ):
@@ -430,7 +431,7 @@ class PhysicalComponent(Component):
         self._shape = value
 
     @property
-    def material(self):
+    def material(self) -> Material:
         """
         The material that the Component is built from.
         """
@@ -450,7 +451,7 @@ class MagneticComponent(PhysicalComponent):
         self,
         name: str,
         shape: BluemiraGeoT,
-        material: Any = None,
+        material: Material | None = None,
         conductor: Any = None,
         parent: ComponentT | None = None,
         children: list[ComponentT] | None = None,

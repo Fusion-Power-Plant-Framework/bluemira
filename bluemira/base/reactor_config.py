@@ -283,7 +283,7 @@ class ReactorConfig:
 
     def _extract_and_expand_file_data_if_needed(
         self, value: Any, rel_path: Path
-    ) -> tuple[Any | dict, str]:
+    ) -> tuple[Any | dict, Path]:
         """
         Returns the file data and the path to the file if value is a path.
 

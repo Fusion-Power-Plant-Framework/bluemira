@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from bluemira.base.components import ComponentT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
-    from bluemira.materials.material import SerialisedMaterial
+    from bluemira.materials.material import Material
 
 __all__ = [
     "apply_component_display_options",
@@ -357,7 +357,7 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 def build_sectioned_xy(
     face: BluemiraFace,
     plot_colour: tuple[float],
-    material: SerialisedMaterial | None = None,
+    material: Material | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -394,14 +394,14 @@ def build_sectioned_xy(
 
 
 def build_sectioned_xyz(
-    face: BluemiraFace,
-    name: str,
+    face: BluemiraFace | list[BluemiraFace],
+    name: str | list[str],
     n_TF: int,
-    plot_colour: tuple[float],
+    plot_colour: tuple[float] | list[tuple[float]],
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
-    material: SerialisedMaterial | None = None,
+    material: Material | list[Material | None] | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component

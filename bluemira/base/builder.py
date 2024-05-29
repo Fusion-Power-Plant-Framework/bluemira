@@ -19,6 +19,7 @@ from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
+    from bluemira.base.components import ComponentT
     from bluemira.base.parameter_frame.typing import ParameterFrameLike
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
@@ -73,9 +74,9 @@ class Builder(abc.ABC):
 
     def component_tree(
         self,
-        xz: list[Component] | None,
-        xy: list[Component] | None,
-        xyz: list[Component] | None,
+        xz: list[ComponentT] | None,
+        xy: list[ComponentT] | None,
+        xyz: list[ComponentT] | None,
     ) -> Component:
         """
         Adds views of components to an overall component tree.
