@@ -345,9 +345,6 @@ class TestCADFiletype:
 
     # Commented out CADFileTypes dont work with basic shapes tested or needed more
     # FreeCAD imported, should be reviewed in future
-    # TODO @je-cook: some of these crash on CI (?)
-    # 3668
-    @pytest.mark.longrun
     @pytest.mark.parametrize(
         "name",
         [
@@ -375,6 +372,8 @@ class TestCADFiletype:
             "STEP_2",
             "STEP_ZIP",  # Case sensitive extension
             "STL",
+            "SVG_FLAT",
+            "WEBGL",
             # "THREED_MANUFACTURING",  # segfault
             pytest.param("IFC_BIM", marks=[skipif_import_error("ifcopenshell")]),
             pytest.param(
@@ -382,18 +381,68 @@ class TestCADFiletype:
                 marks=[skipif_import_error("ifcopenshell", "ifcjson")],
             ),
             pytest.param("DAE", marks=[skipif_import_error("collada")]),
-            pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),  # LibreDWG required
-            # # Part.Feature has no compatible object type, find compatible object type
-            # "ASC", "BDF", "DAT", "FENICS_FEM", "FENICS_FEM_XML", "INP", "MED",
-            # "MESHJSON", "MESHPY", "MESHYAML", "PCD", "PLY", "TETGEN_FEM", "UNV",
-            # "VTK", "VTU", "YAML", "Z88_FEM_MESH", "Z88_FEM_MESH_2",
-            # # More FreeCAD than we import, fails differently on each import
-            # "WEBGL",
-            # # No file output
-            # "SVG, "SVG_FLAT",
-            # # Requires TechDrawGui import which requires a GUI
-            # "PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2",
-            # "WEBGL_X3D", "X3D", "X3DZ"
+            pytest.param(
+                "AUTOCAD", marks=[pytest.mark.xfail(reason="LibreDWG required")]
+            ),
+            # TODO Part.Feature has no compatible object type,
+            #      find compatible object type
+            pytest.param("ASC", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param("BDF", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param("DAT", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param(
+                "FENICS_FEM", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            pytest.param(
+                "FENICS_FEM_XML", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            pytest.param("INP", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param("MED", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param(
+                "MESHJSON", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            pytest.param("MESHPY", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param(
+                "MESHYAML", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            pytest.param("PCD", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param("PLY", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param(
+                "TETGEN_FEM", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            pytest.param("UNV", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param("VTK", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param("VTU", marks=[pytest.mark.xfail(reason="No FEM object")]),
+            pytest.param("YAML", marks=[pytest.mark.xfail(reason="No file created")]),
+            pytest.param(
+                "Z88_FEM_MESH", marks=[pytest.mark.xfail(reason="No FEM object")]
+            ),
+            pytest.param(
+                "Z88_FEM_MESH_2", marks=[pytest.mark.xfail(reason="No file created")]
+            ),
+            # Requires imports which requires a full GUI
+            # pytest.param(
+            #     "SVG", marks=[pytest.mark.xfail(reason="No DrawingGui found")]
+            # ),
+            # pytest.param("PDF", marks=[pytest.mark.xfail(reason="More GUI required")]),
+            # pytest.param(
+            #     "VRML", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
+            # pytest.param(
+            #     "VRML_2", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
+            # pytest.param(
+            #     "VRML_ZIP", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
+            # pytest.param(
+            #     "VRML_ZIP_2", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
+            # pytest.param(
+            #     "WEBGL_X3D", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
+            # pytest.param("X3D", marks=[pytest.mark.xfail(reason="More GUI required")]),
+            # pytest.param(
+            #     "X3DZ", marks=[pytest.mark.xfail(reason="More GUI required")]
+            # ),
         ],
     )
     def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):

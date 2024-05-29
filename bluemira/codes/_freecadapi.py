@@ -669,7 +669,7 @@ def offset_wire(
                 thickness, f_join.value, fill=False, intersection=open_wire
             ),
         )
-    except Base.FreeCADError as error:
+    except (ValueError, Base.FreeCADError) as error:
         msg = "\n".join([
             "FreeCAD was unable to make an offset of wire:",
             f"{error.args[0]['sErrMsg']}",
@@ -1327,37 +1327,37 @@ class CADFileType(enum.Enum):
     ASC = ("asc", "Points")
     AUTOCAD = ("dwg", "importDWG")
     AUTOCAD_DXF = ("dxf", "importDXF")
-    # BDF = ("bdf", "feminout.exportNastranMesh")
+    BDF = ("bdf", "feminout.exportNastranMesh")
     BINMESH = ("bms", "Mesh")
     BREP = ("brep", "Part")
     BREP_2 = ("brp", "Part")
     CSG = ("csg", "exportCSG")
     DAE = ("dae", "importDAE")
-    # DAT = ("dat", "Fem")
+    DAT = ("dat", "Fem")
     FREECAD = ("FCStd", None)
-    # FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
-    # FENICS_FEM_XML = ("xml", "feminout.importFenicsMesh")
+    FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
+    FENICS_FEM_XML = ("xml", "feminout.importFenicsMesh")
     GLTRANSMISSION = ("gltf", "ImportGui")
     GLTRANSMISSION_2 = ("glb", "ImportGui")
     IFC_BIM = ("ifc", "exportIFC")
     IFC_BIM_JSON = ("ifcJSON", "exportIFC")
     IGES = ("iges", "ImportGui")
     IGES_2 = ("igs", "ImportGui")
-    # INP = ("inp", "Fem")
+    INP = ("inp", "Fem")
     INVENTOR_V2_1 = ("iv", "Mesh")
-    JSON = ("json", "importJSON")
-    # JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
-    # MED = ("med", "Fem")
-    # MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
-    # MESHPY = ("meshpy", "feminout.importPyMesh")
-    # MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
+    JSON = ("json", "BIM.importers.importJSON")
+    JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
+    MED = ("med", "Fem")
+    MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
+    MESHPY = ("meshpy", "feminout.importPyMesh")
+    MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
     OBJ = ("obj", "Mesh")
-    OBJ_WAVE = ("$obj", "importOBJ")
+    OBJ_WAVE = ("$obj", "BIM.importers.importOBJ")
     OFF = ("off", "Mesh")
     OPENSCAD = ("scad", "exportCSG")
-    # PCD = ("pcd", "Points")
+    PCD = ("pcd", "Points")
     # PDF = ("pdf", "FreeCADGui")
-    # PLY = ("ply", "Points")
+    PLY = ("$ply", "Points")
     PLY_STANFORD = ("ply", "Mesh")
     SIMPLE_MODEL = ("smf", "Mesh")
     STEP = ("stp", "ImportGui")
@@ -1365,23 +1365,23 @@ class CADFileType(enum.Enum):
     STEP_ZIP = ("stpZ", "stepZ")
     STL = ("stl", "Mesh")
     # SVG = ("svg", "DrawingGui")
-    # SVG_FLAT = ("$svg", "importSVG")
-    # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
+    SVG_FLAT = ("$svg", "importSVG")
+    TETGEN_FEM = ("poly", "feminout.convert2TetGen")
     # THREED_MANUFACTURING = ("3mf", "Mesh")  # segfault?
-    # UNV = ("unv", "Fem")
+    UNV = ("unv", "Fem")
     # VRML = ("vrml", "FreeCADGui")
     # VRML_2 = ("wrl", "FreeCADGui")
     # VRML_ZIP = ("wrl.gz", "FreeCADGui")
     # VRML_ZIP_2 = ("wrz", "FreeCADGui")
-    # VTK = ("vtk", "Fem")
-    # VTU = ("vtu", "Fem")
-    # WEBGL = ("html", "importWebGL")
+    VTK = ("vtk", "Fem")
+    VTU = ("vtu", "Fem")
+    WEBGL = ("html", "BIM.importers.importWebGL")
     # WEBGL_X3D = ("xhtml", "FreeCADGui")
     # X3D = ("x3d", "FreeCADGui")
     # X3DZ = ("x3dz", "FreeCADGui")
-    # YAML = ("yaml", "feminout.importYamlJsonMesh")
-    # Z88_FEM_MESH = ("z88", "Fem")
-    # Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
+    YAML = ("yaml", "feminout.importYamlJsonMesh")
+    Z88_FEM_MESH = ("z88", "Fem")
+    Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
 
     def __new__(cls, *args, **kwds):  # noqa: ARG003
         """Create Enum from first half of tuple"""
@@ -1389,7 +1389,7 @@ class CADFileType(enum.Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _, module: str = ""):
+    def __init__(self, _, module: str | None = ""):
         self.module = module
 
     @classmethod
@@ -1416,26 +1416,33 @@ class CADFileType(enum.Enum):
         FreeCADError
             Unable to save file type
         """
-        try:
-            export_func = __import__(self.module).export
-        except AttributeError:
-            modlist = self.module.split(".")
-            if len(modlist) > 1:
-                return getattr(__import__(modlist[0]), modlist[1]).export
-            raise FreeCADError(
-                f"Unable to save to {self.value} please try through the main FreeCAD GUI"
-            ) from None
-        except TypeError:
+        if self.module is None:
             # Assume CADFileType.FREECAD
             def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
                 doc = objs[0].Document
                 doc.saveAs(filename)
 
             return FreeCADwriter
+        modlist = self.module.split(".")
+        msg = "Unable to save to {} please try through the main FreeCAD GUI"
+        if len(modlist) > 1:
+            try:
+                export_func = getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).export
+            except AttributeError:
+                raise FreeCADError(msg.format(self.value)) from None
         else:
-            if self in self.manual_mesh_formats():
-                return meshed_exporter(self, export_func)
-            return export_func
+            try:
+                export_func = __import__(self.module).export
+            except AttributeError:
+                raise FreeCADError(msg.format(self.value)) from None
+        if self in self.manual_mesh_formats():
+            return meshed_exporter(self, export_func)
+        if self is self.WEBGL:
+            return webgl_export(export_func)
+        return export_func
 
 
 class ExporterProtocol(Protocol):
@@ -1443,6 +1450,26 @@ class ExporterProtocol(Protocol):
 
     def __call__(self, objs: list[Part.Feature], filename: str, **kwargs):
         """Export CAD protocol"""
+
+
+def webgl_export(export_func: Callable[[Part.Feature, str], None]) -> ExporterProtocol:
+    """Webgl exporter for offscreen rendering"""
+    # Default camera in freecad gui found with
+    # Gui.ActiveDocument.ActiveView.getCamera()
+    camerastr = (
+        "#Inventor V2.1 ascii\n\n\nOrthographicCamera "
+        "{\n  viewportMapping ADJUST_CAMERA\n  "
+        "position 40.957512 -70.940689 57.35767\n  "
+        "orientation 0.86492187 0.23175442 0.44519675  1.0835806\n  "
+        "aspectRatio 1\n  focalDistance 100\n  height 100\n\n}\n"
+    )
+
+    @wraps(export_func)
+    def wrapper(objs: list[Part.Feature], filename: str, **kwargs):
+        kwargs["camera"] = kwargs.pop("camera", None) or camerastr
+        export_func(objs, filename, **kwargs)
+
+    return wrapper
 
 
 def meshed_exporter(
