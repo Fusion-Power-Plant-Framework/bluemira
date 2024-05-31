@@ -6,8 +6,6 @@
 
 """Strand class"""
 
-from typing import List, Union
-
 import numpy as np
 
 from bluemira.magnets.materials import Copper100, Material, Nb3Sn, NbTi
@@ -16,26 +14,26 @@ from bluemira.magnets.utils import parall_r, serie_r
 
 class Strand:
     """
-    Strand class
+    Represents a strand with a circular cross-section.
     """
 
     def __init__(
             self,
-            materials: List[Material],
-            percentage: Union[np.array, List[float]],
+            materials: list[Material],
+            percentage: np.array | list[float],
             d_strand: float = 0.82e-3,
     ):
         """
-        Class that represents a strand with a circular cross-section.
+        Initialize a Strand instance.
 
         Parameters
         ----------
         materials:
-            list of materials inside the strand
+            List of materials inside the strand.
         percentage:
-            percentage of each material (with the same ordering of materials)
+            Percentage of each material (with the same ordering of materials).
         d_strand:
-            strand diameter [m]
+            Strand diameter in meters.
         """
         self.materials = materials
         self.percentage = percentage
@@ -43,42 +41,36 @@ class Strand:
 
     @property
     def area(self) -> float:
-        """Area of the strand cross-section"""
+        """Returns the area of the strand cross-section in square meters."""
         return np.pi * self.d_strand ** 2 / 4
 
-    def ym(self, **kwargs) -> float:
+    def E(self, **kwargs) -> float:
         """
-        Young modulus for the considered strand
+        Returns the Young's modulus for the strand.
 
         Parameters
         ----------
-        kwargs:
-            Other Parameters that shall be used to calculate the Young moduli
-            (e.g. Temperature)
+        **kwargs:
+            Additional parameters (e.g., temperature).
 
         Returns
         -------
-            float [Pa]
-
-        Note
-        ----
-            Dummy value
+        Young's modulus in Pascals.
         """
         return 0.1e9
 
     def res(self, **kwargs) -> float:
         """
-        Calculates the equivalent resistivity based on the parallel connection
-        of strand components.
+        Calculates the equivalent resistivity based on the parallel connection of strand components.
 
         Parameters
         ----------
-        **kwargs: dict
+        **kwargs:
             Additional parameters for calculating resistivity.
 
-        Return
-        ------
-            float [Ohm m]
+        Returns
+        -------
+        Equivalent resistivity in Ohm meters.
         """
         resistances = [
             x.res(**kwargs) / self.area / self.percentage[i]
@@ -89,17 +81,16 @@ class Strand:
 
     def cp_v(self, **kwargs) -> float:
         """
-        Calculates the equivalent specific heat based on the series connection
-        of strand components.
+        Calculates the equivalent specific heat based on the series connection of strand components.
 
         Parameters
         ----------
-        **kwargs: dict
+        **kwargs:
             Additional parameters for calculating specific heat.
 
-        Return
-        ------
-            float [J/K/m]
+        Returns
+        -------
+        Equivalent specific heat in Joules per Kelvin per meter.
         """
         specific_heat = [
             x.cp_v(**kwargs) * self.percentage[i] for i, x in enumerate(self.materials)
@@ -107,214 +98,187 @@ class Strand:
         return serie_r(specific_heat)
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
-            **kwargs
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5, **kwargs
     ) -> float:
         """
-        Critical current
+        Returns the critical current.
 
         Parameters
         ----------
-        T:
-            Operating temperature [K]
         B:
-            Operating magnetic field [T]
-        strain:
-            total applied measured strain [%]
+            Operating magnetic field in Teslas.
+        T:
+            Operating temperature in Kelvins.
+        esps:
+            Total applied measured strain in percentage. Default is 0.55.
         T_margin:
-            Strand temperature margin in operation [K]
-        **kwargs: dict
-            Additional parameters
+            Strand temperature margin in operation in Kelvins. Default is 1.5.
+        **kwargs:
+            Additional parameters.
 
-        Return
-        ------
-            float [A]
+        Returns
+        -------
+        Critical current in Amperes.
         """
         return 0
 
 
 class Wire_Nb3Sn(Strand):
+    """Represents an Nb3Sn strand made of 50% Copper100 and 50% Nb3Sn."""
+
+    # superconducting parameters for the calculation of Ic
+    c_ = 1.0
+    Ca1 = 50.06
+    Ca2 = 0.00
+    eps_0a = 0.00312
+    eps_m = -0.00059
+    Bc20max = 33.24
+    Tc0max = 16.34
+    p = 0.593
+    q = 2.156
+    C = 83075 * 1e6
+
     def __init__(self, d_strand: float = 0.82e-3):
         """
-        Nb3Sn strand. It is made by 50% Copper100 and 50% Nb3Sn
+        Initialize a Wire_Nb3Sn instance.
 
         Parameters
         ----------
-            d_strand:
-                strand diameter [m]
+        d_strand:
+            Strand diameter in meters. Default is 0.82e-3.
         """
         copper_100 = Copper100()
         mat_Nb3Sn = Nb3Sn()
         materials = [copper_100, mat_Nb3Sn]
         percentage = [0.5, 0.5]
         super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
+        # percentage of copper with respect to superconducting material
+        self._CunonCu = self.percentage[0] / self.percentage[1]
+        # area of superconducting material
+        self._superc_area = np.pi * self.d_strand ** 2 / (4 * (1 + self._CunonCu))
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
-            **kwargs
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5, **kwargs
     ) -> float:
         """
-        Nb3Sn critical current from Jc(B,T,strain).
-        Parameterization for the ITER Nb3Sn Production.
-
-        Ref
-        ---
-        fit from IEEE TRANSACTIONS ON APPLIED SUPERCONDUCTIVITY, VOL. 19, NO. 3,
-        JUNE 2009 Luca Bottura and Bernardo Bordini
-
-        note
-        ----
-        fit parameters form WST strand,A. Nijhuis, “TF conductor samples strand
-        thermo mechanical critical performances tests”,
-        https://idm.euro-fusion.org/?uid=2M5SMM v1.0.
+        Returns the strand critical current.
 
         Parameters
         ----------
-        T:
-            Operating temperature [K]
         B:
-            Operating magnetic field [T]
-        strain:
-            total applied measured strain [%]
+            Operating magnetic field in Teslas.
+        T:
+            Operating temperature in Kelvins.
+        eps:
+            Total applied measured strain in percentage. Default is 0.55.
         T_margin:
-            Strand temperature margin in operation [K]
-        Return
-        ------
-            float [A]
+            Strand temperature margin in operation in Kelvins. Default is 1.5.
+
+        Returns
+        -------
+        Strand current density in Amperes per square meter.
         """
-        d_ = self.d_strand * 1e3
-        CunonCu = self.percentage[0] / self.percentage[1]
-        # superconducting area
-        strand_A = np.pi * d_ ** 2 / (4 * (1 + CunonCu))
-        c_ = 1.0
-        Ca1 = 50.06
-        Ca2 = 0.00
-        eps_0a = 0.00312
-        eps_m = -0.00059
-        Bc20max = 33.24
-        Tc0max = 16.34
-        p = 0.593
-        q = 2.156
-        C = 83075 * strand_A  # [AT]
         T_ = T + T_margin
         # Todo: check the sign of eps_m in this equation
         int_eps = -strain / 100  # + eps_m
-        eps_sh = Ca2 * eps_0a / (np.sqrt(Ca1 ** 2 - Ca2 ** 2))
+        eps_sh = self.Ca2 * self.eps_0a / (np.sqrt(self.Ca1 ** 2 - self.Ca2 ** 2))
         s_eps = 1 + (
-                Ca1
+                self.Ca1
                 * (
-                        np.sqrt(eps_sh ** 2 + eps_0a ** 2)
-                        - np.sqrt((int_eps - eps_sh) ** 2 + eps_0a ** 2)
+                        np.sqrt(eps_sh ** 2 + self.eps_0a ** 2)
+                        - np.sqrt((int_eps - eps_sh) ** 2 + self.eps_0a ** 2)
                 )
-                - Ca2 * int_eps
-        ) / (1 - Ca1 * eps_0a)
-        Bc0_eps = Bc20max * s_eps
-        Tc0_eps = Tc0max * (s_eps) ** (1 / 3)
+                - self.Ca2 * int_eps
+        ) / (1 - self.Ca1 * self.eps_0a)
+        Bc0_eps = self.Bc20max * s_eps
+        Tc0_eps = self.Tc0max * (s_eps) ** (1 / 3)
         t = T_ / Tc0_eps
         BcT_eps = Bc0_eps * (1 - t ** (1.52))
         b = B / BcT_eps
         hT = (1 - t ** (1.52)) * (1 - t ** 2)
-        fPb = (b ** p) * (1 - b) ** q
-        return c_ * (C / B) * s_eps * fPb * hT
-
-    def Je(self, Ic: float):
-        """
-        Strand current density
-
-        Parameters
-        ----------
-        Ic:
-            Critical current [A]
-
-        Return
-        ------
-             float [A/m2]
-        """
-        return Ic / self.area
+        fPb = (b ** self.p) * (1 - b) ** self.q
+        return self.c_ * (self.C / B) * s_eps * fPb * hT * self._superc_area
 
 
 class Wire_NbTi(Strand):
+    """Represents an NbTi strand."""
+
+    # superconducting parameters for the calculation of Ic
+    n = 1.7
+    Bc20_T = 15.19
+    Tc0_K = 8.907
+    C0 = 3.00e04
+    C1 = 0.45
+    a1 = 3.2
+    b1 = 2.43
+    C2 = 0.55
+    a2 = 0.65
+    b2 = 2
+    g1 = 1.8
+    g2 = 1.8
+
     def __init__(self, d_strand: float = 0.82e-3):
         """
-        NbTi strand
+        Initialize a Wire_NbTi instance.
 
         Parameters
         ----------
         d_strand:
-            strand diameter [m]
+            Strand diameter in meters. Default is 0.82e-3.
         """
         copper_100 = Copper100()
         mat_NbTi = NbTi()
         materials = [copper_100, mat_NbTi]
         percentage = [0.5, 0.5]
         super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
+        # percentage of copper with respect to superconducting material
+        self._CunonCu = self.percentage[0] / self.percentage[1]
+        # area of superconducting material
+        self._superc_area = np.pi * self.d_strand ** 2 / (4 * (1 + self._CunonCu))
 
     def Ic(self, B: float, T: float, T_margin: float = 1.5, **kwargs):
         """
-        NbTi critical current
-
-        Ref
-        ---
-        Pinning Properties of Commercial Nb-Ti Wires Described by a 2-Components Model,
-        Luigi Muzzi, Gianluca De Marzi, et al.
-
-        Note
-        ----
-        Fit data from DTT TF strand
+        NbTi critical current.
 
         Parameters
         ----------
-        T:
-            Operating temperature [K]
         B:
-            Operating magnetic field [T]
+            Operating magnetic field in Teslas.
+        T:
+            Operating temperature in Kelvins.
         T_margin:
-            Strand temperature margin in operation [K]
+            Strand temperature margin in operation in Kelvins. Default is 1.5.
 
-        Return
-        ------
-            float [A]
+        Returns
+        -------
+        Critical current in Amperes.
+
+        References
+        ----------
+        - Pinning Properties of Commercial Nb-Ti Wires Described by a 2-Components Model, Luigi Muzzi, Gianluca De Marzi, et al.
+        - Fit data from DTT TF strand.
         """
-        d_ = self.d_strand * 1e3
-        CunonCu = self.percentage[0] / self.percentage[1]
-        n = 1.7
-        Bc20_T = 15.19
-        Tc0_K = 8.907
-        t = (T + T_margin) / Tc0_K
-        tt = 1 - t ** n
-        b = B / Bc20_T
-        C0 = 3.00e04
-        C1 = 0.45
-        a1 = 3.2
-        b1 = 2.43
-        C2 = 0.55
-        a2 = 0.65
-        b2 = 2
-        g1 = 1.8
-        g2 = 1.8
-        G = (a1 / (a1 + b1)) ** a1
-        GG = (b1 / (a1 + b1)) ** b1
+        t = (T + T_margin) / self.Tc0_K
+        b = B / self.Bc20_T
+        tt = 1 - t ** self.n
+        G = (self.a1 / (self.a1 + self.b1)) ** self.a1
+        GG = (self.b1 / (self.a1 + self.b1)) ** self.b1
         GGG = G * GG
-        F = (a2 / (a2 + b2)) ** a2
-        FF = (b2 / (a2 + b2)) ** b2
+        F = (self.a2 / (self.a2 + self.b2)) ** self.a2
+        FF = (self.b2 / (self.a2 + self.b2)) ** self.b2
         FFF = F * FF
         Jc = (
-                C0 * C1 / (B * GGG) * (b / tt) ** a1 * (1 - b / tt) ** b1 * tt ** g1
-                + C0 * C2 / (B * FFF) * (b / tt) ** a2 * (1 - b / tt) ** b2 * tt ** g2
-        )
-        return Jc * np.pi * d_ ** 2 / (4 * (1 + CunonCu))
-
-    def Je(self, Ic: float):
-        """
-        Strand current density
-
-        Parameters
-        ----------
-        Ic:
-            strand current [A]
-
-        Return
-        ------
-             float [A/m2]
-        """
-        return Ic / self.area
+                     self.C0
+                     * self.C1
+                     / (B * GGG)
+                     * (self.b / tt) ** self.a1
+                     * (1 - self.b / tt) ** self.b1
+                     * tt ** self.g1
+                     + self.C0
+                     * self.C2
+                     / (B * FFF)
+                     * (self.b / tt) ** self.a2
+                     * (1 - self.b / tt) ** self.b2
+                     * tt ** self.g2
+             ) * 1e6
+        return Jc * self._superc_area
