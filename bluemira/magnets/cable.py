@@ -162,18 +162,18 @@ class Cable(Material):
         """Cable dimension in the y direction [m]"""
         return self.area / self.dx
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         """Cable Young's moduli"""
         return 0
 
     # OD structural properties
     def Kx(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
-        return self.ym(**kwargs) * self.dy / self.dx
+        return self.E(**kwargs) * self.dy / self.dx
 
     def Ky(self, **kwargs):
         """Total equivalent stiffness along y-axis"""
-        return self.ym(**kwargs) * self.dx / self.dy
+        return self.E(**kwargs) * self.dx / self.dy
 
     def optimize_n_stab_ths(
             self,
@@ -455,7 +455,7 @@ class DummySquareCableHTS(SquareCable):
         cable string identifier
     """
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         return 120e9
 
 
@@ -483,7 +483,7 @@ class DummySquareCableLTS(SquareCable):
         cable string identifier
     """
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         return 0.1e9
 
 
@@ -573,7 +573,7 @@ class DummyRoundCableHTS(RoundCable):
     #todo decide if it is the case to add also the cooling material
     """
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         return 120e9
 
 
@@ -603,5 +603,5 @@ class DummyRoundCableLTS(RoundCable):
     #todo decide if it is the case to add also the cooling material
     """
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         return 0.1e9

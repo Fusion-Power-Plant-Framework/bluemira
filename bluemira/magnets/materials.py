@@ -28,7 +28,7 @@ class Material:
         """Density"""
         return 0
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         """Young module"""
         return 1e-6
 
@@ -57,7 +57,7 @@ class AISI_316LN(Material):
         """Material density [kg/m³]"""
         return 7890.0
 
-    def ym(self, T: float, **kwargs):
+    def E(self, T: float, **kwargs):
         """
         Young modulus
 
@@ -76,10 +76,10 @@ class AISI_316LN(Material):
             float [Pa]
         """
         if T > 173:
-            ym = 200.4 * 1e9 - 8.1221e-2 * (T - 273) * 1e9
+            E = 200.4 * 1e9 - 8.1221e-2 * (T - 273) * 1e9
         else:
-            ym = 208.5 * 1e9
-        return ym
+            E = 208.5 * 1e9
+        return E
 
     def res(self, T: float, **kwargs):
         """
@@ -440,5 +440,5 @@ class DummyInsulator(Material):
     def res(self, **kwargs):
         return 1e6
 
-    def ym(self, **kwargs):
+    def E(self, **kwargs):
         return 12e9

@@ -102,7 +102,7 @@ class CaseTF:
 
     def Kx_ps(self, **kwargs):
         """Equivalent radial mechanical stiffness of ps"""
-        return self.mat_case.ym(**kwargs) * self.dy_ps / self.dx_ps
+        return self.mat_case.E(**kwargs) * self.dy_ps / self.dx_ps
 
     def Kx_lat(self, **kwargs):
         """Equivalent radial stiffness of the lateral case part connected to each winding pack"""
@@ -112,11 +112,11 @@ class CaseTF:
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.ym(**kwargs) * dy_lat / dx_lat
+        return self.mat_case.E(**kwargs) * dy_lat / dx_lat
 
     def Kx_vault(self, **kwargs):
         """Equivalent radial stiffness of the vault"""
-        return self.mat_case.ym(**kwargs) * self.dy_vault / self.dx_vault
+        return self.mat_case.E(**kwargs) * self.dy_vault / self.dx_vault
 
     def Kx(self, **kwargs):
         """Total equivalent radial stiffness of the case"""
@@ -132,7 +132,7 @@ class CaseTF:
 
     def Ky_ps(self, **kwargs):
         """Equivalent toroidal stiffness of ps"""
-        return self.mat_case.ym(**kwargs) * self.dx_ps / self.dy_ps
+        return self.mat_case.E(**kwargs) * self.dx_ps / self.dy_ps
 
     def Ky_lat(self, **kwargs):
         """Equivalent toroidal stiffness of the lateral case part connected to each winding"""
@@ -142,11 +142,11 @@ class CaseTF:
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.ym(**kwargs) * dx_lat / dy_lat
+        return self.mat_case.E(**kwargs) * dx_lat / dy_lat
 
     def Ky_vault(self, **kwargs):
         """Equivalent toroidal stiffness of the vault"""
-        return self.mat_case.ym(**kwargs) * self.dx_vault / self.dy_vault
+        return self.mat_case.E(**kwargs) * self.dx_vault / self.dy_vault
 
     def Ky(self, **kwargs):
         """Total equivalent toroidal stiffness of the case"""

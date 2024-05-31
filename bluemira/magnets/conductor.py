@@ -181,19 +181,19 @@ class Conductor:
     # TODO: add a description of the 0D structural model, otherwise the following
     # function cannot be undestood
     def Kx_topbot_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dy / self.dx_ins
+        return self.mat_ins.E(**kwargs) * self.dy / self.dx_ins
 
     def Kx_lat_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dy_ins / (self.dx - 2 * self.dx_ins)
+        return self.mat_ins.E(**kwargs) * self.dy_ins / (self.dx - 2 * self.dx_ins)
 
     def Kx_lat_jacket(self, **kwargs):
         return (
-                self.mat_jacket.ym(**kwargs) * self.dy_jacket / (
+                self.mat_jacket.E(**kwargs) * self.dy_jacket / (
                 self.dx - 2 * self.dx_ins)
         )
 
     def Kx_topbot_jacket(self, **kwargs):
-        return self.mat_jacket.ym(**kwargs) * self.cable.dy / self.dx_jacket
+        return self.mat_jacket.E(**kwargs) * self.cable.dy / self.dx_jacket
 
     def Kx_cable(self, **kwargs):
         return self.cable.Kx(**kwargs)
@@ -210,19 +210,19 @@ class Conductor:
                 )
 
     def Ky_topbot_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dx / self.dy_ins
+        return self.mat_ins.E(**kwargs) * self.dx / self.dy_ins
 
     def Ky_lat_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dx_ins / (self.dy - 2 * self.dy_ins)
+        return self.mat_ins.E(**kwargs) * self.dx_ins / (self.dy - 2 * self.dy_ins)
 
     def Ky_lat_jacket(self, **kwargs):
         return (
-                self.mat_jacket.ym(**kwargs) * self.dx_jacket / (
+                self.mat_jacket.E(**kwargs) * self.dx_jacket / (
                 self.dy - 2 * self.dy_ins)
         )
 
     def Ky_topbot_jacket(self, **kwargs):
-        return self.mat_jacket.ym(**kwargs) * self.cable.dx / self.dy_jacket
+        return self.mat_jacket.E(**kwargs) * self.cable.dx / self.dy_jacket
 
     def Ky_cable(self, **kwargs):
         return self.cable.Ky(**kwargs)
