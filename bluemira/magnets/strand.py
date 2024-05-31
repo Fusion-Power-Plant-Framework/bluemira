@@ -6,6 +6,8 @@
 
 """Strand class"""
 
+from typing import List, Union
+
 import numpy as np
 
 from bluemira.magnets.materials import Copper100, Material, Nb3Sn, NbTi
@@ -19,8 +21,8 @@ class Strand:
 
     def __init__(
             self,
-            materials: list[Material],
-            percentage: np.array | list[float],
+            materials: List[Material],
+            percentage: Union[np.array, List[float]],
             d_strand: float = 0.82e-3,
     ):
         """
@@ -98,7 +100,8 @@ class Strand:
         return serie_r(specific_heat)
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5, **kwargs
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
+            **kwargs
     ) -> float:
         """
         Returns the critical current.
@@ -158,7 +161,8 @@ class Wire_Nb3Sn(Strand):
         self._superc_area = np.pi * self.d_strand ** 2 / (4 * (1 + self._CunonCu))
 
     def Ic(
-            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5, **kwargs
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
+            **kwargs
     ) -> float:
         """
         Returns the strand critical current.
@@ -268,17 +272,9 @@ class Wire_NbTi(Strand):
         FF = (self.b2 / (self.a2 + self.b2)) ** self.b2
         FFF = F * FF
         Jc = (
-                     self.C0
-                     * self.C1
-                     / (B * GGG)
-                     * (self.b / tt) ** self.a1
-                     * (1 - self.b / tt) ** self.b1
-                     * tt ** self.g1
-                     + self.C0
-                     * self.C2
-                     / (B * FFF)
-                     * (self.b / tt) ** self.a2
-                     * (1 - self.b / tt) ** self.b2
-                     * tt ** self.g2
+                     self.C0 * self.C1 / (B * GGG) * (self.b / tt) ** self.a1 * (
+                     1 - self.b / tt) ** self.b1 * tt ** self.g1
+                     + self.C0 * self.C2 / (B * FFF) * (self.b / tt) ** self.a2 * (
+                             1 - self.b / tt) ** self.b2 * tt ** self.g2
              ) * 1e6
         return Jc * self._superc_area
