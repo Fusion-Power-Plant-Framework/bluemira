@@ -76,7 +76,7 @@ class PreCellStage:
     def __init__(self, blanket: PreCellArray, divertor: DivertorPreCellArray):
         """Check convexity after initialization"""
         self.blanket = blanket.copy()
-        self.divertor = divertor.copy()
+        self.divertor = divertor
         # 1. stretch first blanket cell in PreCellArray to reach div_start_wire
         div_start_wire = self.divertor[0].cw_wall.restore_to_wire()
         # pull everything down to: div_start_wire.

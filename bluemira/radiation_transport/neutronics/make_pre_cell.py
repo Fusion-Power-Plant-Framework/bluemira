@@ -379,7 +379,10 @@ class PreCellArray:
                     f"corners; but instead we have {this_wall}!={next_wall}."
                 )
         self.cell_walls = CellWalls.from_pre_cell_array(self)
+        self.check_convexity()
 
+    def check_convexity(self):
+        """Check that the outermost points of self forms a convex hull."""
         if not is_convex(self.exterior_vertices()[:, ::2]):
             raise GeometryError(f"{self} must have convex exterior wires!")
 
@@ -690,7 +693,10 @@ class DivertorPreCellArray:
                 curr_cell.vertex.xyz[:, Vert.exterior_end],
             ):
                 raise GeometryError("Expect neighbouring cells to share corners!")
+        self.check_convexity()
 
+    def check_convexity(self):
+        """Check that the outermost points of self forms a convex hull."""
         if not is_convex(self.exterior_vertices()[:, ::2]):
             raise GeometryError(f"{self} must have convex exterior vertices!")
 
