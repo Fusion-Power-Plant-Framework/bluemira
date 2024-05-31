@@ -61,7 +61,7 @@ class Strand:
         """
         return 0.1e9
 
-    def res(self, **kwargs) -> float:
+    def erho(self, **kwargs) -> float:
         """
         Calculates the equivalent resistivity based on the parallel connection of strand components.
 
@@ -75,7 +75,7 @@ class Strand:
         Equivalent resistivity in Ohm meters.
         """
         resistances = [
-            x.res(**kwargs) / self.area / self.percentage[i]
+            x.erho(**kwargs) / self.area / self.percentage[i]
             for i, x in enumerate(self.materials)
         ]
         res_tot = parall_r(resistances)

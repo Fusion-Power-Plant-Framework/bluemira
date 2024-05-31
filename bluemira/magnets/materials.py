@@ -32,7 +32,7 @@ class Material:
         """Young module"""
         return 1e-6
 
-    def res(self, **kwargs):
+    def erho(self, **kwargs):
         """Electrical Resistivity"""
         return 1e6
 
@@ -81,7 +81,7 @@ class AISI_316LN(Material):
             E = 208.5 * 1e9
         return E
 
-    def res(self, T: float, **kwargs):
+    def erho(self, T: float, **kwargs):
         """
         Electrical Resistivity
 
@@ -129,7 +129,7 @@ class Copper100(Material):
         """Material density [kg/m³]"""
         return 8960
 
-    def res(self, T: float, B: float, **kwargs):
+    def erho(self, T: float, B: float, **kwargs):
         """
         Electrical Resistivity
 
@@ -221,7 +221,7 @@ class Copper300(Material):
         """Material density [kg/m³]"""
         return 8960
 
-    def res(self, T: float, B: float, **kwargs):
+    def erho(self, T: float, B: float, **kwargs):
         """
         Electrical Resistivity
 
@@ -339,7 +339,7 @@ class Nb3Sn(Material):
         cp_Nb3Sn = 1 / ((1 / self.cp300) + (1 / cp_low_NC))
         return cp_Nb3Sn * density
 
-    def res(self, T: float, **kwargs):
+    def erho(self, T: float, **kwargs):
         """
         Electrical Resistivity
 
@@ -411,7 +411,7 @@ class NbTi(Material):
         cp_NbTi = 1 / ((1 / self.cp300) + (1 / cp_low_NC))
         return cp_NbTi * density
 
-    def res(self, T: float, **kwargs):
+    def erho(self, T: float, **kwargs):
         """
         Electrical Resistivity
 
@@ -437,7 +437,7 @@ class NbTi(Material):
 class DummyInsulator(Material):
     """A dummy insulator"""
 
-    def res(self, **kwargs):
+    def erho(self, **kwargs):
         return 1e6
 
     def E(self, **kwargs):

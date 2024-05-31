@@ -78,7 +78,7 @@ class Cable(Material):
     def n_stab_strand(self, value: int):
         self._n_stab_strand = int(np.ceil(value))
 
-    def res(self, **kwargs):
+    def erho(self, **kwargs):
         """
         Computes the cable's equivalent resistivity considering the resistance
         of its strands in parallel.
@@ -93,8 +93,8 @@ class Cable(Material):
             float [Ohm m]
         """
         resistances = np.array([
-            self.sc_strand.res(**kwargs) / self.area_sc,
-            self.stab_strand.res(**kwargs) / self.area_stab,
+            self.sc_strand.erho(**kwargs) / self.area_sc,
+            self.stab_strand.erho(**kwargs) / self.area_stab,
         ])
         res_tot = parall_r(resistances)
         return res_tot * self.area
@@ -245,7 +245,7 @@ class Cable(Material):
             if isinstance(T, np.ndarray):
                 T = T[0]
 
-            Q_gen = (I(t) / cable.area) ** 2 * cable.res(B=B(t), T=T)
+            Q_gen = (I(t) / cable.area) ** 2 * cable.erho(B=B(t), T=T)
 
             # Calculate the rate of heat absorption by conductor components
             Q_abs = cable.cp_v(T=T)

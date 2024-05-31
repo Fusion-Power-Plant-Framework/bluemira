@@ -127,7 +127,7 @@ class Conductor:
         """Area of the insulator [m^2]"""
         return self.area - self.area_jacket - self.cable.area
 
-    def res(self, **kwargs):
+    def erho(self, **kwargs):
         """
         Computes the conductor's equivalent resistivity considering the resistance
         of its strands in parallel.
@@ -146,8 +146,8 @@ class Conductor:
         The insulator in not considered into the calculation.
         """
         resistances = np.array([
-            self.cable.res(**kwargs) / self.cable.area,
-            self.mat_jacket.res(**kwargs) / self.area_jacket,
+            self.cable.erho(**kwargs) / self.cable.area,
+            self.mat_jacket.erho(**kwargs) / self.area_jacket,
         ])
         res_tot = parall_r(resistances)
         return res_tot * self.area
