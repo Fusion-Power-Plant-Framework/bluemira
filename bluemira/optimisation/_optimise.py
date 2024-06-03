@@ -316,9 +316,10 @@ def _check_constraints(
         if diff := _check_constraint(x_star, constraint, condition):
             name, indices, c_value, tols = diff
             name = "" if name is None else f"({name}) "
+            constraint_name = f"constraint {i}" if name is None else f"{name} (no. {i})"
             warnings.append(
                 "\n".join([
-                    f"{constraint_type} constraint {i} {name}[{j}]: "
+                    f"{constraint_type} {constraint_name} [{j}]: "
                     f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
                     for j in indices
                 ])

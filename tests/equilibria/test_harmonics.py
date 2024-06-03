@@ -300,7 +300,7 @@ def test_SphericalHarmonicConstraintFunction():
     b_vec = np.array([1e-2, 1e-18])
     test_vector = np.array([1, 1, 1, 1])
     test_result = a_mat[1:,] @ test_vector
-    test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
+    test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1, name="")
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 

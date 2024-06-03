@@ -62,7 +62,7 @@ class UpdateableConstraint(ABC):
 
     def __init_subclass__(cls, **kwargs):
         """Create constraint name on definition of subclass"""
-        cls._name = cls.__name__.removesuffix("Constraint").removesuffix("Constraints")
+        cls._name = cls.__name__
         return super().__init_subclass__(**kwargs)
 
     @property
