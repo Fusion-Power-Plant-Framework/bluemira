@@ -70,6 +70,10 @@ class UpdateableConstraint(ABC):
         """Name of constraint"""
         return self._name
 
+    @name.setter
+    def name(self, value: str):
+        self._name = value
+
     @abstractmethod
     def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
