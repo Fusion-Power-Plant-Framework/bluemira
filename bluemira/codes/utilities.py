@@ -33,6 +33,12 @@ class Model(Enum):
     Base Model Enum
     """
 
+    def __new__(cls, *args, **_kwds):
+        """Overwrite default new to ignore extra arguments"""
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
+
     @classmethod
     def info(cls):
         """
@@ -40,6 +46,16 @@ class Model(Enum):
         """
         infostr = f"{cls.__doc__}\n" + "\n".join(repr(l_) for l_ in list(cls))
         bluemira_print(infostr)
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value]
+        except KeyError:
+            raise ValueError(
+                f"{cls.__name__} has no type {value}."
+                f" Select from {(*cls._member_names_,)}"
+            ) from None
 
 
 def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
