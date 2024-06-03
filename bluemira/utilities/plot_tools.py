@@ -112,7 +112,7 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
 
 
 def save_figure(
-    fig, name, *, save=False, folder=None, dpi=600, file_format="png", **kwargs
+    fig, name, *, save=False, folder=None, dpi=600, file_format="svg", **kwargs
 ):
     """
     Saves a figure to the directory if save flag active
