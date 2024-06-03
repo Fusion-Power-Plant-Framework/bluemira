@@ -4,7 +4,7 @@ import numpy as np
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.magnets.cable import DummyRoundCableLTS, DummyRoundCableHTS
 from bluemira.magnets.case import CaseTF
-from bluemira.magnets.conductor import SquareConductor, optimize_jacket_conductor
+from bluemira.magnets.conductor import SquareConductor
 from bluemira.magnets.materials import (OperationalPoint, Copper300, AISI_316LN,
                                         DummyInsulator)
 from bluemira.magnets.strand import Strand, Wire_Nb3Sn
@@ -122,9 +122,8 @@ for i in range(10):
         t_z_cable_jacket = t_z * case.area_wps_jacket / (
                 case.area_jacket + case.area_wps_jacket) / (
                                np.sum([w.nx * w.ny for w in case.WPs]))
-    result_opt_jacket = optimize_jacket_conductor(
-        conductor, pm, t_z_cable_jacket, T0, B_TF_i,
-        S_Y, bounds=[1e-5, 0.2]
+    result_opt_jacket = conductor.optimize_jacket_conductor(
+        pm, t_z_cable_jacket, T0, B_TF_i, S_Y, bounds=[1e-5, 0.2]
     )
     print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
 

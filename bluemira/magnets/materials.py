@@ -29,7 +29,7 @@ class Material:
         return 0
 
     def E(self, **kwargs):
-        """Young module"""
+        """Young's module"""
         return 1e-6
 
     def erho(self, **kwargs):
@@ -59,7 +59,7 @@ class AISI_316LN(Material):
 
     def E(self, T: float, **kwargs):
         """
-        Young modulus
+        Young's module
 
         Ref
         ---
@@ -441,4 +441,5 @@ class DummyInsulator(Material):
         return 1e6
 
     def E(self, **kwargs):
+        """Young's module"""
         return 12e9

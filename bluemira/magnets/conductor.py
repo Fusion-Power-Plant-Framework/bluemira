@@ -6,6 +6,8 @@
 
 """Conductor class"""
 
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
@@ -238,6 +240,189 @@ class Conductor:
                          ])
                 )
 
+    def _tresca_sigma_jacket(self, pressure: float, f_z: float, T: float,
+                             B: float, direction: str = 'x') -> float:
+        """
+        Calculate the radial stress in the jacket when the conductor is subjected to a pressure
+        along a specified direction and a force perpendicular to the conductor cross-section.
+        The Tresca criterion is used for this calculation.
+
+        Parameters
+        ----------
+        pressure :
+            The pressure applied along the specified direction (Pa).
+        f_z :
+            The force applied in the z direction, perpendicular to the conductor cross-section (N).
+        T :
+            The operating temperature (K).
+        B :
+            The operating magnetic field (T).
+        direction :
+            The direction along which the pressure is applied ('x' or 'y'). Default is 'x'.
+
+        Returns
+        -------
+            The calculated Tresca stress in the jacket (Pa).
+
+        Raises
+        ------
+        ValueError
+            If the specified direction is not 'x' or 'y'.
+        """
+
+        if direction not in ['x', 'y']:
+            raise ValueError("Invalid direction: choose either 'x' or 'y'.")
+
+        if direction == 'x':
+            saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
+
+            K = parall_k([
+                2 * self.Ky_lat_ins(T=T, B=B),
+                2 * self.Ky_lat_jacket(T=T, B=B),
+                serie_k([
+                    self.Ky_cable(T=T, B=B),
+                    self.Ky_topbot_jacket(T=T, B=B) / 2
+                ]),
+            ])
+
+            X_jacket = 2 * self.Ky_lat_jacket(T=T, B=B) / K
+
+        else:
+            saf_jacket = (self.cable.dy + 2 * self.dy_jacket) / (2 * self.dy_jacket)
+
+            K = parall_k([
+                2 * self.Kx_lat_ins(T=T, B=B),
+                2 * self.Kx_lat_jacket(T=T, B=B),
+                serie_k([
+                    self.Kx_cable(T=T, B=B),
+                    self.Kx_topbot_jacket(T=T, B=B) / 2
+                ]),
+            ])
+
+            X_jacket = 2 * self.Kx_lat_jacket(T=T, B=B) / K
+
+        tresca_stress = pressure * X_jacket * saf_jacket + f_z / self.area_jacket
+
+        return tresca_stress
+
+    def optimize_jacket_conductor(
+            self,
+            pressure: float,
+            f_z: float,
+            T: float,
+            B: float,
+            allowable_sigma: float,
+            bounds: Optional[np.ndarray] = None,
+            direction: str = 'x'
+    ):
+        """
+        Optimize the jacket dimension of a conductor based on allowable stress using the Tresca criterion.
+
+        Parameters
+        ----------
+        pressure :
+            The pressure applied along the specified direction (Pa).
+        f_z :
+            The force applied in the z direction, perpendicular to the conductor cross-section (N).
+        T :
+            The operating temperature (K).
+        B :
+            The operating magnetic field (T).
+        allowable_sigma :
+            The allowable stress (Pa) for the jacket material.
+        bounds :
+            Optional bounds for the jacket thickness optimization (default is None).
+        direction :
+            The direction along which the pressure is applied ('x' or 'y'). Default is 'x'.
+
+        Returns
+        -------
+            The result of the optimization process containing information about the optimal jacket thickness.
+
+        Raises
+        ------
+        ValueError
+            If the optimization process did not converge.
+
+        Notes
+        -----
+        This function uses the Tresca yield criterion to optimize the thickness of the jacket surrounding the conductor.
+        This function directly update the conductor's jacket thickness along the x direction to the optimal value.
+        """
+
+        def sigma_difference(
+                jacket_thickness: float,
+                pressure: float,
+                fz: float,
+                T: float,
+                B: float,
+                allowable_sigma: float,
+                direction: str = 'x'
+        ):
+            """
+            Fitness function for the optimization problem. It calculates the absolute difference between
+            the Tresca stress and the allowable stress.
+
+            Parameters
+            ----------
+            jacket_thickness :
+                The thickness of the jacket in the direction perpendicular to the applied pressure(m).
+            pressure :
+                The pressure applied along the specified direction (Pa).
+            fz :
+                The force applied in the z direction, perpendicular to the conductor cross-section (N).
+            T :
+                The temperature (K) at which the conductor operates.
+            B :
+                The magnetic field (T) at which the conductor operates.
+            allowable_sigma :
+                The allowable stress (Pa) for the jacket material.
+            direction :
+                The direction along which the pressure is applied ('x' or 'y'). Default is 'x'.
+
+            Returns
+            -------
+                The absolute difference between the calculated Tresca stress and the allowable stress (Pa).
+
+            Notes
+            -----
+                This function modifies the conductor's jacket thickness along the specified direction
+                using the value provided in jacket_thickness.
+            """
+            if direction not in ['x', 'y']:
+                raise ValueError("Invalid direction: choose either 'x' or 'y'.")
+
+            if direction == 'x':
+                self.dx_jacket = jacket_thickness
+            else:
+                self.dy_jacket = jacket_thickness
+
+            sigma_r = self._tresca_sigma_jacket(pressure, fz, T, B, direction)
+            diff = abs(sigma_r - allowable_sigma)
+            return diff
+
+        method = "bounded" if bounds is not None else None
+
+        result = minimize_scalar(
+            fun=sigma_difference,
+            args=(pressure, f_z, T, B, allowable_sigma),
+            bounds=bounds,
+            method=method,
+            options={"xatol": 1e-4},
+        )
+
+        if not result.success:
+            raise ValueError("Optimization of the jacket conductor did not converge.")
+        self.dx_jacket = result.x
+        if direction == 'x':
+            print(f"Optimal dx_jacket: {self.dx_jacket}")
+        else:
+            print(f"Optimal dy_jacket: {self.dy_jacket}")
+        print(f"Averaged sigma in the {direction}-direction: "
+              f"{self._tresca_sigma_jacket(pressure, f_z, T, B) / 1e6} MPa")
+
+        return result
+
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
         """
         Schematic plot of the cable cross-section.
@@ -337,63 +522,3 @@ class SquareConductor(Conductor):
     @property
     def dy_ins(self):
         return self.dx_ins
-
-
-def _sigma_r_jacket(conductor: Conductor, pressure: float, f_z: float, T: float,
-                    B: float):
-    saf_jacket = (conductor.cable.dx + 2 * conductor.dx_jacket) / (
-            2 * conductor.dx_jacket
-    )
-    K = parall_k([
-        2 * conductor.Ky_lat_ins(T=T, B=B),
-        2 * conductor.Ky_lat_jacket(T=T, B=B),
-        serie_k([conductor.Ky_cable(T=T, B=B),
-                 conductor.Ky_topbot_jacket(T=T, B=B) / 2]),
-    ])
-    X_jacket = 2 * conductor.Ky_lat_jacket(T=T, B=B) / K
-    return pressure * X_jacket * saf_jacket + f_z / conductor.area_jacket
-
-
-def optimize_jacket_conductor(
-        conductor: Conductor,
-        pressure: float,
-        fz: float,
-        T: float,
-        B: float,
-        allowable_sigma: float,
-        bounds: np.array = None,
-):
-    def sigma_difference(
-            dx_jacket: float,
-            pressure: float,
-            fz: float,
-            T: float,
-            B: float,
-            conductor: Conductor,
-            allowable_sigma: float,
-    ):
-        conductor.dx_jacket = dx_jacket
-        sigma_r = _sigma_r_jacket(conductor, pressure, fz, T, B)
-        diff = abs(sigma_r - allowable_sigma)
-        return diff
-
-    method = None
-    if bounds is not None:
-        method = "bounded"
-
-    result = minimize_scalar(
-        fun=sigma_difference,
-        args=(pressure, fz, T, B, conductor, allowable_sigma),
-        bounds=bounds,
-        method=method,
-        options={"xatol": 1e-4},
-    )
-
-    if not result.success:
-        raise ValueError("dx_jacket optimization did not converge.")
-    conductor.dx_jacket = result.x
-    print(f"Optimal dx_jacket: {conductor.dx_jacket}")
-    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, fz, T, B) / 1e6} "
-          f"MPa")
-
-    return result

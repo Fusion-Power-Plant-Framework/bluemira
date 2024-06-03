@@ -56,7 +56,8 @@ class Cable(Material):
         name:
             cable string identifier
 
-        #TODO: discuss if it is necessary to implement also the cooling material
+        Notes:
+        Cooling material not implemented.
         """
         self.name = name
         self._dx = dx
@@ -163,10 +164,10 @@ class Cable(Material):
         return self.area / self.dx
 
     def E(self, **kwargs):
-        """Cable Young's moduli"""
+        """Young's moduli"""
         return 0
 
-    # OD structural properties
+    # OD homogenized structural properties
     def Kx(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
         return self.E(**kwargs) * self.dy / self.dx
@@ -217,6 +218,7 @@ class Cable(Material):
         -----
             The number of stabilizer strands in the cable is directly modified. An
             error is raised in case the optimization process did not converge.
+            Cooling material contribution is neglected when applying the hot spot criteria.
         """
 
         def _heat_balance_model_cable(t, T, B: Callable, I: Callable, cable: Cable):
@@ -326,7 +328,7 @@ class Cable(Material):
 
         return result
 
-    def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None, **kwargs):
+    def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
         """
         Schematic plot of the cable cross-section.
 
@@ -384,7 +386,11 @@ class SquareCable(Cable):
             name: str = "",
     ):
         """
-        Representation of a square cable
+        Representation of a square cable.
+
+        Notes
+        -----
+        No geometrical dimensions are given. They are extrapolated from the cable design parameters.
 
         Parameters
         ----------
@@ -405,7 +411,9 @@ class SquareCable(Cable):
         name:
             cable string identifier
 
-        #todo decide if it is the case to add also the cooling material
+        Notes
+        -----
+        Cooling material not implemented
         """
         dx = 0.1
         super().__init__(
@@ -456,6 +464,7 @@ class DummySquareCableHTS(SquareCable):
     """
 
     def E(self, **kwargs):
+        """Young's module"""
         return 120e9
 
 
@@ -484,6 +493,7 @@ class DummySquareCableLTS(SquareCable):
     """
 
     def E(self, **kwargs):
+        """Young's module"""
         return 0.1e9
 
 
@@ -521,7 +531,7 @@ class RoundCable(Cable):
         name:
             cable string identifier
 
-        #todo decide if it is the case to add also the cooling material
+
         """
         dx = 0.1
         super().__init__(
@@ -570,10 +580,13 @@ class DummyRoundCableHTS(RoundCable):
     name:
         cable string identifier
 
-    #todo decide if it is the case to add also the cooling material
+    Notes
+    -----
+    Cooling material not implemented
     """
 
     def E(self, **kwargs):
+        """Young's module"""
         return 120e9
 
 
@@ -600,8 +613,11 @@ class DummyRoundCableLTS(RoundCable):
     name:
         cable string identifier
 
-    #todo decide if it is the case to add also the cooling material
+    Notes
+    -----
+    Cooling material not implemented
     """
 
     def E(self, **kwargs):
+        """Young's module"""
         return 0.1e9

@@ -48,7 +48,7 @@ class Strand:
 
     def E(self, **kwargs) -> float:
         """
-        Returns the Young's modulus for the strand.
+        Young's modulus.
 
         Parameters
         ----------
