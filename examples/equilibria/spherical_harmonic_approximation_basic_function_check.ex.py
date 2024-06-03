@@ -93,9 +93,9 @@ plt.show()
     sh_coilset_current,
 ) = spherical_harmonic_approximation(
     eq,
-    n_points=20,
-    point_type=PointType.ARC_PLUS_EXTREMA,
-    acceptable_fit_metric=0.05,
+    n_points=10,
+    point_type=PointType.GRID_POINTS,
+    acceptable_fit_metric=0.01,
     seed=15,
     plot=True,
 )
@@ -103,36 +103,28 @@ plt.show()
 # %% [markdown]
 # ## Outputs
 #
-# spherical_harmonic_approximation outputs a dictionary of results
+# spherical_harmonic_approximation outputs results
 # that can be used in optimisation.
 #
 # ### Always output
 #
-# - "coilset", coilset to use with SH approximation
-# - "r_t", typical length scale for spherical harmonic approximation
-# - "harmonic_amplitudes", SH coefficients/amplitudes for required number of degrees
+# - "sh_coil_names", names of the coils that can be used with SH approximation
+# - "coil_current_harmonic_amplitudes", SH amplitudes for required number of degrees
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
+# - "fit_metric_value", fit metric achieved
+# - "approx_total_psi", the total psi obtained using the SH approximation
+# - "r_t", typical length scale for spherical harmonic approximation
+# - "sh_coilset_current", the coil currents obtained using the approximation
 
 # %%
 print(sh_coil_names)
-
-# %%
-print(r_t)
+print(sh_coilset_current)
 
 # %%
 print(coil_current_harmonic_amplitudes)
-
-# %%
 print(degree)
-
-# %% [markdown]
-# ### Output on request
-#
-# - "fit_metric_value", fit metric achieved
-# - "approx_total_psi", the total psi obtained using the SH approximation
-
-# %%
 print(fit_metric_value)
+print(r_t)
 
 # %%
 psi = approx_total_psi

@@ -50,6 +50,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # ### Imports
 
 # %%
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.patches as patch
@@ -202,12 +203,12 @@ plt.show()
 
 # %%
 # Number of desired collocation points excluding extrema (always 4 or +4 automatically)
-n = 20
+n = 10
 
 # Create the set of collocation points for the harmonics
 collocation = collocation_points(
     original_LCFS,
-    PointType.ARC_PLUS_EXTREMA,
+    PointType.GRID_POINTS,
     n,
     seed=15,
 )
@@ -399,6 +400,14 @@ min_degree = 2
 # 0 = good, 1 = bad
 acceptable = 0.05
 
+# Clip the grid in the z-direction to remove area below upper/lower-most coil
+clipped_eq = deepcopy(eq)
+clip = (eq.grid.z[0, :] > np.min(eq.coilset.z)) & (
+    eq.grid.z[0, :] < np.max(eq.coilset.z)
+)
+clipped_eq.grid.x, clipped_eq.grid.z = eq.grid.x[:, clip], eq.grid.z[:, clip]
+clipped_eq.x, clipped_eq.z = eq.grid.x[:, clip], eq.grid.z[:, clip]
+
 for degree in np.arange(min_degree, max_degree):  # + 1):
     # Construct matrix from harmonic amplitudes for coils
     currents2harmonics = coil_harmonic_amplitude_matrix(
@@ -436,14 +445,19 @@ for degree in np.arange(min_degree, max_degree):  # + 1):
     approx_total_psi = coilset_approx_psi + plasma_psi
     eq.get_OX_points(approx_total_psi, force_update=True)
 
+    # Clip the grid in the z direction to remove area below upper/lower-most coil
+    clip_psi = approx_total_psi[:, clip]
+    clipped_eq.get_OX_points(clip_psi, force_update=True)
+
     # Get LCFS for approximation
-    approx_LCFS = eq.get_LCFS(psi=approx_total_psi)
+    approx_LCFS = clipped_eq.get_LCFS(psi=clip_psi)
 
     # Compare staring equilibrium to new approximate equilibrium
     fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
 
+    print("fit metric = ", fit_metric_value, "degree required = ", degree)
+
     if fit_metric_value <= acceptable:
-        print("fit metric = ", fit_metric_value, "degree required = ", degree)
         break
     elif degree == max_degree:
         print(
