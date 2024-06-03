@@ -9,4 +9,4 @@ PyYAML==6.0.1
 shiboken2==5.15.8
 typing_extensions==4.12.1
 vtk==9.2.6
-zipp==3.19.0
+zipp==3.19.1
