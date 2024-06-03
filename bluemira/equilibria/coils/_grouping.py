@@ -1193,7 +1193,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         cc = self.get_control_coils()
         xs, zs = cc._get_opt_positions(position_coil_names)
-        currents = cc.current / current_scale
+        currents = cc._opt_currents / current_scale
         return CoilSetOptimisationState(
             currents=currents,
             xs=xs,
@@ -1220,7 +1220,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         cc = self.get_control_coils()
         if opt_currents is not None:
-            cc.current = opt_currents * current_scale
+            cc._opt_currents = opt_currents * current_scale
         if coil_position_map is not None:
             cc._set_opt_positions(coil_position_map)
 
