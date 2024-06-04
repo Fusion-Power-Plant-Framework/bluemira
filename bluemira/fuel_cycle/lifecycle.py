@@ -190,7 +190,7 @@ class LifeCycle:
                 f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
             # TODO: treat output parameter
-        self.n_cycles = self.fpy, YR_TO_S / self.t_flattop
+        self.n_cycles = self.fpy * YR_TO_S / self.t_flattop
 
     def set_availabilities(self, load_factor: float):
         """
@@ -230,7 +230,7 @@ class LifeCycle:
         Calculate the number of pulses per phase.
         """
         self.n_pulse_p = [
-            int((phases[i][0] * YR_TO_S) // self.t_flattop)
+            int(YR_TO_S * phases[i][0] // self.t_flattop)
             for i in range(len(phases))
             if phases[i][1].startswith("Phase P")
         ]
@@ -294,13 +294,13 @@ class LifeCycle:
         results that violate the tolerances.
         """
         life = self.fpy / self.params.A_global
-        actual_life = (
+        actual_life = S_TO_YR * (
             self.t_on_total
             + self.total_ramptime
             + self.t_interdown
             + self.total_planned_maintenance
             + self.t_unplanned_m
-        ) * S_TO_YR
+        )
         actual_lf = self.fpy / actual_life
         delt = abs_rel_difference(actual_life, life)
         delta2 = abs_rel_difference(actual_lf, self.params.A_global)
@@ -337,7 +337,7 @@ class LifeCycle:
                 self.inputs,
             )  # Phoenix
 
-        if self.params.A_global > self.fpy / (self.fpy + self.min_downtime * S_TO_YR):
+        if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
         self.params.A_global = actual_lf
