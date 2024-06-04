@@ -89,15 +89,18 @@ class CaseTF:
 
     @property
     def area(self):
+        """Total case area (winding packs included)"""
         return (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
 
     @property
     def area_jacket(self):
+        """Total jacket area (total case area - winding packs area)"""
         total_wp_area = np.sum([w.conductor.area * w.nx * w.ny for w in self.WPs])
         return self.area - total_wp_area
 
     @property
     def area_wps_jacket(self):
+        """Tatal jacket area in the winding packs"""
         return np.sum([w.conductor.area_jacket * w.nx * w.ny for w in self.WPs])
 
     def Kx_ps(self, **kwargs):
@@ -171,7 +174,7 @@ class CaseTF:
             I:
                 total current flowing in the case
             kwargs:
-                arguments necessary to calculate the structural properties of the case
+                additional arguments necessary to calculate the structural properties of the case
 
         """
         # The maximum principal stress acting on the case nose is the compressive
@@ -208,6 +211,33 @@ class CaseTF:
             allowable_sigma: float,
             bounds: np.array = None,
     ):
+        """
+        Optimize the vault radial thickness of the case
+
+        Parameters
+        ----------
+        pm :
+            The magnetic pressure applied along the radial direction (Pa).
+        f_z :
+            The force applied in the z direction, perpendicular to the case cross-section (N).
+        T :
+            The operating temperature (K).
+        B :
+            The operating magnetic field (T).
+        allowable_sigma :
+            The allowable stress (Pa) for the jacket material.
+        bounds :
+            Optional bounds for the jacket thickness optimization (default is None).
+
+        Returns
+        -------
+            The result of the optimization process containing information about the optimal vault thickness.
+
+        Raises
+        ------
+        ValueError
+            If the optimization process did not converge.
+        """
         def sigma_difference(
                 dy_vault: float,
                 pm: float,
@@ -217,6 +247,34 @@ class CaseTF:
                 case: CaseTF,
                 allowable_sigma: float,
         ):
+            """
+            Fitness function for the optimization problem. It calculates the absolute difference between
+            the Tresca stress and the allowable stress.
+
+            Parameters
+            ----------
+            dy_vault :
+                The thickness of the vault in the direction perpendicular to the applied pressure(m).
+            pm :
+                The magnetic pressure applied along the radial direction (Pa).
+            fz :
+                The force applied in the z direction, perpendicular to the case cross-section (N).
+            T :
+                The temperature (K) at which the conductor operates.
+            B :
+                The magnetic field (T) at which the conductor operates.
+            allowable_sigma :
+                The allowable stress (Pa) for the vault material.
+
+            Returns
+            -------
+                The absolute difference between the calculated Tresca stress and the allowable stress (Pa).
+
+            Notes
+            -----
+                This function modifies the case's vault thickness
+                using the value provided in jacket_thickness.
+            """
             case.dy_vault = dy_vault
             sigma = case._tresca_stress(pm, fz, T=T, B=B)
             diff = abs(sigma - allowable_sigma)
@@ -235,7 +293,7 @@ class CaseTF:
         )
 
         if not result.success:
-            raise ValueError("dx_vault optimization did not converge.")
+            raise ValueError("dy_vault optimization did not converge.")
         self.dy_vault = result.x
         print(f"Optimal dy_vault: {self.dy_vault}")
         print(f"Tresca sigma: {self._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
@@ -243,6 +301,19 @@ class CaseTF:
         return result
 
     def plot(self, ax=None, show: bool = False, homogenized: bool = False):
+        """
+        Schematic plot of the case cross-section.
+
+        Parameters
+        ----------
+        ax:
+            Matplotlib Axis on which the plot shall be displayed. If None,
+            a new figure is created
+        show:
+            if True, the plot is displayed
+        homogenized:
+            if True, the winding pack is homogenized (default is False)
+        """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -264,7 +335,7 @@ class CaseTF:
 
         return ax
 
-    def rearrange_conductors_in_wp_type1(
+    def rearrange_conductors_in_wp(
             self,
             n_conductors: int,
             cond: Conductor,
