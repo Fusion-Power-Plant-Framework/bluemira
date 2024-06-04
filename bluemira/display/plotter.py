@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -21,7 +22,7 @@ from typing import (
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
 import numpy as np
-from matplotlib.patches import PathPatch
+from matplotlib.patches import PathPatch, Polygon
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.error import DisplayError
@@ -46,6 +47,23 @@ UNIT_LABEL = "[m]"
 X_LABEL = f"x {UNIT_LABEL}"
 Y_LABEL = f"y {UNIT_LABEL}"
 Z_LABEL = f"z {UNIT_LABEL}"
+
+
+class Zorder(Enum):
+    """Layer ordering of common plots"""
+
+    POSITION_1D = 1
+    POSITION_2D = 2
+    PLASMACURRENT = 7
+    PSI = 8
+    FLUXSURFACE = 9
+    SEPARATRIX = 10
+    OXPOINT = 11
+    FACE = 20
+    WIRE = 30
+    RADIATION = 40
+    CONSTRAINT = 45
+    TEXT = 100
 
 
 class ViewDescriptor:
@@ -177,10 +195,10 @@ class DefaultPlotOptions:
         }
     )
     wire_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "black", "linewidth": 0.5, "zorder": 20}
+        lambda: {"color": "black", "linewidth": 0.5, "zorder": Zorder.WIRE.value}
     )
     face_options: DictOptionsDescriptor = DictOptionsDescriptor(
-        lambda: {"color": "blue", "zorder": 10}
+        lambda: {"color": "blue", "zorder": Zorder.FACE.value}
     )
     # discretisation properties for plotting wires (and faces)
     ndiscr: int = 100
@@ -490,7 +508,17 @@ class FacePlotter(BasePlotter):
 
     def _make_plot_2d(self):
         if self.options.show_faces:
-            self.ax.fill(*self._data_to_plot, **self.options.face_options)
+            face_opts = self.options.face_options
+            if face_opts.get("hatch", None) is not None:
+                self.ax.add_patch(
+                    Polygon(
+                        np.asarray(self._data_to_plot).T,
+                        fill=False,
+                        **face_opts,
+                    )
+                )
+            else:
+                self.ax.fill(*self._data_to_plot, **face_opts)
 
         for w in self._wplotters:
             w.ax = self.ax

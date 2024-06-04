@@ -20,6 +20,7 @@ from scipy.special import lpmv
 from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.display.plotter import Zorder
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -758,13 +759,41 @@ def plot_psi_comparision(
         )
 
     plot1.set_title("Original, Total Psi")
-    plot1.contour(grid.x, grid.z, tot_psi_org, levels=clevels_org, cmap=cmap, zorder=8)
+    plot1.contour(
+        grid.x,
+        grid.z,
+        tot_psi_org,
+        levels=clevels_org,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
+    )
     plot2.set_title("SH Approximation, Total Psi")
-    plot2.contour(grid.x, grid.z, tot_psi_app, levels=clevels_app, cmap=cmap, zorder=8)
+    plot2.contour(
+        grid.x,
+        grid.z,
+        tot_psi_app,
+        levels=clevels_app,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
+    )
     plot3.set_title("Original, Vacuum Psi")
-    plot3.contour(grid.x, grid.z, vac_psi_org, levels=clevels_org, cmap=cmap, zorder=8)
+    plot3.contour(
+        grid.x,
+        grid.z,
+        vac_psi_org,
+        levels=clevels_org,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
+    )
     plot4.set_title("SH Approximation, Vacuum Psi")
-    plot4.contour(grid.x, grid.z, vac_psi_app, levels=clevels_app, cmap=cmap, zorder=8)
+    plot4.contour(
+        grid.x,
+        grid.z,
+        vac_psi_app,
+        levels=clevels_app,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
+    )
 
     if original_LCFS is not None:
         plot1.plot(original_LCFS.x, original_LCFS.z, color="r")
