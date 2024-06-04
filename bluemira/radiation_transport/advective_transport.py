@@ -18,7 +18,7 @@ from matplotlib.axes import Axes
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.display.plotter import plot_coordinates
+from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
@@ -451,7 +451,7 @@ class ChargedParticleSolver:
             self.result[1],
             c=self.result[2],
             s=10,
-            zorder=40,
+            zorder=Zorder.RADIATION.value,
             cmap="plasma",
         )
         f = ax.figure

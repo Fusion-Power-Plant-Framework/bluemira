@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from bluemira.display.plotter import Zorder
 from bluemira.equilibria.optimisation.constraint_funcs import (
     AxBConstraint,
     ConstraintFunction,
@@ -558,14 +559,16 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {
-            "marker": "X",
-            "color": "b",
-            "markersize": 10,
-            "zorder": 45,
-            "linestyle": "None",
-        }
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="x",
+            color="b",
+            markersize=6,
+            markeredgewidth=2,
+            zorder=Zorder.CONSTRAINT.value,
+            linestyle="None",
+        )
 
     def __len__(self) -> int:
         """
@@ -613,8 +616,15 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "s", "markersize": 8, "color": "b", "linestyle": "None"}
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="s",
+            markersize=8,
+            color="b",
+            linestyle="None",
+            zorder=Zorder.CONSTRAINT.value,
+        )
 
 
 class IsofluxConstraint(RelativeMagneticConstraint):
@@ -670,15 +680,14 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         kwargs = {
             "marker": "o",
-            "markeredgewidth": 3,
             "markeredgecolor": "b",
-            "markersize": 10,
+            "markersize": 5,
             "linestyle": "None",
             "markerfacecolor": "None",
-            "zorder": 45,
+            "zorder": Zorder.CONSTRAINT.value,
         }
         ax.plot(self.x, self.z, **kwargs)
-        kwargs["markeredgewidth"] = 5
+        kwargs["markerfacecolor"] = "m"
         ax.plot(self.ref_x, self.ref_z, **kwargs)
 
 
@@ -722,8 +731,15 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "o", "markersize": 8, "color": "b", "linestyle": "None"}
-        ax.plot(self.x, self.z, **kwargs)
+        ax.plot(
+            self.x,
+            self.z,
+            marker="o",
+            markersize=8,
+            color="b",
+            linestyle="None",
+            zorder=Zorder.CONSTRAINT.value,
+        )
 
 
 class MagneticConstraintSet:

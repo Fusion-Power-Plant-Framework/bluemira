@@ -60,6 +60,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.special import lpmv
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.display.plotter import Zorder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
@@ -156,16 +157,22 @@ plot1.set_title("Total")
 plot2.set_title("Plasma")
 plot3.set_title("Vacuum")
 
-plot1.contour(x_plot, z_plot, total_psi, levels=levels1, cmap=cmap, zorder=8)
-plot2.contour(x_plot, z_plot, plasma_psi, levels=levels2, cmap=cmap, zorder=8)
-plot3.contour(x_plot, z_plot, vacuum_psi, levels=levels3, cmap=cmap, zorder=8)
+plot1.contour(
+    x_plot, z_plot, total_psi, levels=levels1, cmap=cmap, zorder=Zorder.PSI.value
+)
+plot2.contour(
+    x_plot, z_plot, plasma_psi, levels=levels2, cmap=cmap, zorder=Zorder.PSI.value
+)
+plot3.contour(
+    x_plot, z_plot, vacuum_psi, levels=levels3, cmap=cmap, zorder=Zorder.PSI.value
+)
 plot3.contour(
     x_plot,
     z_plot,
     non_sh_coil_cont,
     levels=levels3,
     cmap=cmap,
-    zorder=8,
+    zorder=Zorder.PSI.value,
     linestyles="dashed",
 )
 
@@ -221,7 +228,9 @@ nlevels = 50
 levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
 cmap = "viridis"
 plot1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=1)
-plot1.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
+plot1.contour(
+    x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=Zorder.PSI.value
+)
 plot1.scatter(collocation.x, collocation.z, color="purple")
 plot1.plot(x_bdry, z_bdry, color="red")
 plt.show()
@@ -323,7 +332,9 @@ plot2 = plt.subplot2grid((3, 3), (0, 1), rowspan=2, colspan=1)
 plot3 = plt.subplot2grid((3, 3), (0, 2), rowspan=2, colspan=1)
 plot1.set_title("Vacuum Psi")
 plot3.set_title("SH Psi")
-plot1.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
+plot1.contour(
+    x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=Zorder.PSI.value
+)
 plot1.plot(x_bdry, z_bdry, color="red")
 if plot_diff:
     plot2.contour(
@@ -332,11 +343,16 @@ if plot_diff:
         vacuum_psi - approx_psi_vac_data,
         levels=levels,
         cmap=cmap,
-        zorder=8,
+        zorder=Zorder.PSI.value,
     )
 else:
     plot2.contour(
-        x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8
+        x_plot,
+        z_plot,
+        approx_psi_vac_data,
+        levels=levels,
+        cmap=cmap,
+        zorder=Zorder.PSI.value,
     )
     plot2.contour(
         x_plot,
@@ -344,11 +360,18 @@ else:
         vacuum_psi,
         levels=levels,
         cmap=cmap,
-        zorder=8,
+        zorder=Zorder.PSI.value,
         linestyles="dashed",
     )
 plot2.plot(x_bdry, z_bdry, color="red")
-plot3.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8)
+plot3.contour(
+    x_plot,
+    z_plot,
+    approx_psi_vac_data,
+    levels=levels,
+    cmap=cmap,
+    zorder=Zorder.PSI.value,
+)
 plot3.plot(x_bdry, z_bdry, color="red")
 plt.show()
 
@@ -483,14 +506,28 @@ plot1.set_title("Vacuum Psi")
 plot2.set_title("SH Approx Psi")
 plot3.set_title("Coilset Approx Psi")
 
-plot1.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
+plot1.contour(
+    x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=Zorder.PSI.value
+)
 plot1.plot(x_bdry, z_bdry, color="red")
 
-plot2.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8)
+plot2.contour(
+    x_plot,
+    z_plot,
+    approx_psi_vac_data,
+    levels=levels,
+    cmap=cmap,
+    zorder=Zorder.PSI.value,
+)
 plot2.plot(x_bdry, z_bdry, color="red")
 
 plot3.contour(
-    x_plot, z_plot, coilset_approx_psi_plot, levels=levels, cmap=cmap, zorder=8
+    x_plot,
+    z_plot,
+    coilset_approx_psi_plot,
+    levels=levels,
+    cmap=cmap,
+    zorder=Zorder.PSI.value,
 )
 plot3.plot(x_bdry, z_bdry, color="red")
 
@@ -534,7 +571,12 @@ plot1.set_title("Vacuum - SH Approx Psi")
 plot2.set_title("Vacuum - Coilset Approx Psi")
 
 plot1.contour(
-    x_plot, z_plot, vacuum_psi - approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8
+    x_plot,
+    z_plot,
+    vacuum_psi - approx_psi_vac_data,
+    levels=levels,
+    cmap=cmap,
+    zorder=Zorder.PSI.value,
 )
 plot1.plot(x_bdry, z_bdry, color="red")
 
@@ -544,7 +586,7 @@ plot2.contour(
     vacuum_psi - coilset_approx_psi_plot,
     levels=levels,
     cmap=cmap,
-    zorder=8,
+    zorder=Zorder.PSI.value,
 )
 plot2.plot(x_bdry, z_bdry, color="red")
 plot2.plot(x_lcfs, z_lcfs, color="blue", linestyle="dashed")

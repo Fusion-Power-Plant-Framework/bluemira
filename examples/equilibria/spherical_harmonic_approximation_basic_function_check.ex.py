@@ -42,6 +42,7 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
+from bluemira.display.plotter import Zorder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
@@ -131,5 +132,7 @@ psi = approx_total_psi
 levels = np.linspace(np.amin(psi), np.amax(psi), 50)
 plot = plt.subplot2grid((2, 2), (0, 0), rowspan=2, colspan=1)
 plot.set_title("approx_total_psi")
-plot.contour(eq.grid.x, eq.grid.z, psi, levels=levels, cmap="viridis", zorder=8)
+plot.contour(
+    eq.grid.x, eq.grid.z, psi, levels=levels, cmap="viridis", zorder=Zorder.PSI.value
+)
 plt.show()
