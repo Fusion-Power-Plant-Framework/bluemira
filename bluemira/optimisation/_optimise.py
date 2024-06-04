@@ -256,9 +256,17 @@ def _make_optimiser(
         keep_history=keep_history,
     )
     for constraint in eq_constraints:
-        opt.add_eq_constraint(**constraint)
+        opt.add_eq_constraint(
+            f_constraint=constraint["f_constraint"],
+            tolerance=constraint["tolerance"],
+            df_constraint=constraint.get("df_constraint", None),
+        )
     for constraint in ineq_constraints:
-        opt.add_ineq_constraint(**constraint)
+        opt.add_ineq_constraint(
+            f_constraint=constraint["f_constraint"],
+            tolerance=constraint["tolerance"],
+            df_constraint=constraint.get("df_constraint", None),
+        )
     if bounds:
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
@@ -294,7 +302,7 @@ def _check_constraints(
         x_star: np.ndarray,
         constraint: ConstraintT,
         condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+    ) -> tuple[str | None, np.ndarray, np.ndarray, np.ndarray] | None:
         """Return the items in the constraint vector that violate the condition."""
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
@@ -302,7 +310,7 @@ def _check_constraints(
         tols = np.array(constraint["tolerance"])
         indices = np.nonzero(condition(c_value, tols))[0]
         if indices.size > 0:
-            return (indices, c_value, tols)
+            return (constraint.get("name", None), indices, c_value, tols)
         return None
 
     condition, comp_str = (
@@ -314,14 +322,17 @@ def _check_constraints(
     warnings = []
     for i, constraint in enumerate(constraints):
         if diff := _check_constraint(x_star, constraint, condition):
-            indices, c_value, tols = diff
+            name, indices, c_value, tols = diff
+            constraint_name = f"constraint {i}" if name is None else f"{name}"
             warnings.append(
                 "\n".join([
-                    f"{constraint_type} constraint {i} [{j}]: "
+                    f"\t{constraint_name} [{i},{j}]: "
                     f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
                     for j in indices
                 ])
             )
+    if warnings:
+        warnings = [f"{constraint_type}:", *warnings]
     return warnings
 
 

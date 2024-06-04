@@ -48,6 +48,7 @@ class OptimiserCallable(Protocol):
 class ConstraintT(TypedDict):
     """Typing for definition of a constraint."""
 
+    name: NotRequired[str]
     f_constraint: OptimiserCallable
     tolerance: np.ndarray
     df_constraint: NotRequired[OptimiserCallable | None]

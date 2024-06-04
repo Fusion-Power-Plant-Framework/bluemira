@@ -146,7 +146,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""
-        f_constraint = SphericalHarmonicConstraintFunction(**self._args)
+        f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
