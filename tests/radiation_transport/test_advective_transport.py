@@ -166,8 +166,8 @@ class TestChargedParticleRecursionSN:
 
     def test_analyse_SN(self, caplog):
         fw = deepcopy(self.solver.first_wall)
-        self.solver.flux_surfaces_ob_hfs = []
-        self.solver.flux_surfaces_ob_lfs = []
+        self.solver.flux_surfaces_ob_down = []
+        self.solver.flux_surfaces_ob_up = []
         x_sep_omp, x_wall_limit = fsm._get_sep_out_intersection(
             self.solver.eq,
             self.solver.first_wall,
@@ -175,8 +175,7 @@ class TestChargedParticleRecursionSN:
             outboard=True,
         )
 
-        x = x_sep_omp + 1e-3
-        while x < x_wall_limit + 2e-3:
+        for x in np.arange(x_sep_omp + 1e-3, x_wall_limit + 2e-3, step=1e-3):
             lfs, hfs = fsm._make_flux_surfaces(
                 x,
                 self.solver._o_point.z,
@@ -185,9 +184,8 @@ class TestChargedParticleRecursionSN:
                 self.solver._yz_plane,
             )
 
-            self.solver.flux_surfaces_ob_lfs.append(lfs)
-            self.solver.flux_surfaces_ob_hfs.append(hfs)
-            x += 1e-3
+            self.solver.flux_surfaces_ob_down.append(lfs)
+            self.solver.flux_surfaces_ob_up.append(hfs)
 
         fs_before_pop = self.solver.flux_surfaces
         self.solver._clip_flux_surfaces(fw)
