@@ -649,7 +649,7 @@ class DivertorWireAndExteriorCurve:
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior
 
-    def get_bisection_line(
+    def get_projection_line(
         self, prev_idx: int
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
@@ -668,26 +668,12 @@ class DivertorWireAndExteriorCurve:
         line_direction:
             a normal vector pointing in the direction of this line.
         """
-        # Get the vectors as arrays of shape = (2,)
-        anchor1 = np.array(self.convex_segments[prev_idx][-1].key_points[1])[::2]
-        anchor2 = np.array(self.convex_segments[prev_idx + 1][0].key_points[0])[::2]
+        # Get the anchor point as an array of shape = (2,)
+        anchor = self.convex_segments[prev_idx].end_point[::2]
         # force the directions to point outwards.
-        direct1 = choose_direction(
-            np.array(self.convex_segments[prev_idx][-1].tangents[1])[::2],
-            self.center_point,
-            anchor1,
-        )
-        direct2 = choose_direction(
-            np.array(self.convex_segments[prev_idx + 1][0].tangents[0])[::2],
-            self.center_point,
-            anchor2,
-        )
-        origin_2d, direction_2d = get_bisection_line(
-            anchor1 - direct1, anchor1, anchor2 - direct2, anchor2
-        )
-        return np.insert(origin_2d, 1, 0, axis=-1), np.insert(
-            direction_2d, 1, 0, axis=-1
-        )
+        unnormed_dir = anchor - self.center_point
+        direct = unnormed_dir / np.linalg.norm(unnormed_dir)
+        return np.insert(anchor, 1, 0, axis=-1), np.insert(direct, 1, 0, axis=-1)
 
     def calculate_cut_points(
         self,
@@ -754,7 +740,7 @@ class DivertorWireAndExteriorCurve:
         )
 
         for i in range(len(self.convex_segments) - 1):
-            origin, c_dir = self.get_bisection_line(i)
+            origin, c_dir = self.get_projection_line(i)
             plane = xz_plane_from_2_points(origin, origin + c_dir)
             add_cut_points(plane, c_dir)
 
