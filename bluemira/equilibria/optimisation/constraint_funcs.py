@@ -66,7 +66,7 @@ class ConstraintFunction(abc.ABC):
             return None
 
     @name.setter
-    def name(self, value: str):
+    def name(self, value: str | None):
         self._name = value
 
     @abc.abstractmethod

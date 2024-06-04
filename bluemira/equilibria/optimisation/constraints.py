@@ -67,7 +67,7 @@ class UpdateableConstraint(ABC):
 
     @property
     def name(self) -> str:
-        """Name of constraint"""
+        """The name of the constraint"""
         return self._name
 
     @name.setter
