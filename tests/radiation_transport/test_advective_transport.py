@@ -14,7 +14,10 @@ import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+from bluemira.radiation_transport.advective_transport import (
+    ChargedParticleSolver,
+    ChargedParticleSolverParams,
+)
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
@@ -49,6 +52,21 @@ class TestChargedParticleInputs:
             ChargedParticleSolver(params, None)
         assert "not_a_param" in str(type_error)
 
+    def test_convert_params_to_ChargedParticleSolverParams(self):
+        params = "not a config"
+
+        with pytest.raises(TypeError) as type_error:
+            ChargedParticleSolver._make_params(params)
+
+        params = {
+            "f_lfs_lower_target": 0.9,
+            "f_hfs_lower_target": 0.9,
+            "f_lfs_upper_target": 0,
+            "f_hfs_upper_target": 0.9,
+        }
+        params_new = ChargedParticleSolver._make_params(params)
+        assert isinstance(params_new, ChargedParticleSolverParams)
+
 
 class TestChargedParticleRecursionSN:
     @classmethod
@@ -75,6 +93,18 @@ class TestChargedParticleRecursionSN:
         x, z, hf = solver.analyse(fw)
         cls.x, cls.z, cls.hf = np.array(x), np.array(z), np.array(hf)
         cls.solver = solver
+
+    def test_single_null_warnings(self, caplog):
+        params = {
+            "f_lfs_lower_target": 0.1,
+            "f_hfs_lower_target": 0.4,
+            "f_lfs_upper_target": 0.4,
+            "f_hfs_upper_target": 0.1,
+        }
+        ChargedParticleSolver(params, self.solver.eq)
+
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelname == "WARNING"
 
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 5.379, rtol=1e-2)
@@ -134,6 +164,37 @@ class TestChargedParticleRecursionSN:
         ax = self.solver.plot(show=True)
         assert len(ax.lines) > 2
 
+    def test_analyse_SN(self, caplog):
+        fw = deepcopy(self.solver.first_wall)
+        self.solver.flux_surfaces_ob_hfs = []
+        self.solver.flux_surfaces_ob_lfs = []
+        x_sep_omp, x_wall_limit = fsm._get_sep_out_intersection(
+            self.solver.eq,
+            self.solver.first_wall,
+            self.solver._yz_plane,
+            outboard=True,
+        )
+
+        x = x_sep_omp + 1e-3
+        while x < x_wall_limit + 2e-3:
+            lfs, hfs = fsm._make_flux_surfaces(
+                x,
+                self.solver._o_point.z,
+                self.solver.eq,
+                self.solver._o_point,
+                self.solver._yz_plane,
+            )
+
+            self.solver.flux_surfaces_ob_lfs.append(lfs)
+            self.solver.flux_surfaces_ob_hfs.append(hfs)
+            x += 1e-3
+
+        fs_before_pop = self.solver.flux_surfaces
+        self.solver._clip_flux_surfaces(fw)
+        fs_after_pop = self.solver.flux_surfaces
+        assert len(fs_before_pop) > len(fs_after_pop)
+        assert "No intersection detected" in caplog.text
+
 
 class TestChargedParticleRecursionDN:
     @classmethod
@@ -162,6 +223,18 @@ class TestChargedParticleRecursionDN:
         x, z, hf = solver.analyse(fw)
         cls.x, cls.z, cls.hf = np.array(x), np.array(z), np.array(hf)
         cls.solver = solver
+
+    def test_double_null_warnings(self, caplog):
+        params = {
+            "f_lfs_lower_target": 0.0,
+            "f_hfs_lower_target": 0.0,
+            "f_lfs_upper_target": 0.9,
+            "f_hfs_upper_target": 0.1,
+        }
+        ChargedParticleSolver(params, self.solver.eq)
+
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelname == "WARNING"
 
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 86.194, rtol=1e-2)
