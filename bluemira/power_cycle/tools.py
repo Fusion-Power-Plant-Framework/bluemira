@@ -108,7 +108,8 @@ def match_domains(
     """
     n_vectors = len(all_x)
     for v in range(n_vectors):
-        all_x[v] = unique_domain(all_x[v], epsilon=epsilon)
+        numba_safe_x = [float(x) for x in all_x[v]]
+        all_x[v] = unique_domain(numba_safe_x, epsilon=epsilon)
     x_matched = np.unique(np.concatenate(all_x))
 
     all_y_matched = all_y.copy()
