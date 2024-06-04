@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, raw_uc
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
@@ -186,7 +186,7 @@ class EUDEMOFuelCycleModel:
         m_T = m_T_0 * np.ones(len(self.DEMO_t))
         for i in range(1, len(self.DEMO_t)):
             dt = self.DEMO_t[i] - self.DEMO_t[i - 1]
-            dts = raw_uc(dt, "yr", "s")
+            dts = dt * YR_TO_S
             t_bred = TBR * self.brate[i] * dts
             t_bred += self.prate[i] * dts
             t_burnt = self.brate[i] * dts
@@ -351,7 +351,7 @@ class EUDEMOFuelCycleModel:
 
         m_T_out = self.plasma(self.params.eta_iv, self.params.I_miv, flows=flows)
         # Resolution - Not used everywhere for speed
-        n_ts = int(round(raw_uc(self.DEMO_t[-1], "yr", "s") / self.timestep))
+        n_ts = int(round(self.DEMO_t[-1] * YR_TO_S / self.timestep))
         self.t, m_pellet_in = discretise_1d(self.DEMO_t, self.m_T_in, n_ts)
 
         # Flow out of the vacuum vessel
