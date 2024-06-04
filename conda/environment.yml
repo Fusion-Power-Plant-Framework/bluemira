@@ -5,7 +5,7 @@ channels:
 
 variables:
   # Avoid use of .local
-  PYTHONNOUSERSITE: '1'
+  PYTHONNOUSERSITE: "1"
 
   # The below settings are needed to support FreeCAD integration alongside click.
   # When adding or changing an environment variable you should consider including it
@@ -14,9 +14,9 @@ variables:
   # into the GitHub Actions shell).
   # NOTE: This may produce a warning when activating the conda environment if overriding
   # the machine's language
-  LANG: 'C'
-  LC_ALL: 'C'
-  PYTHONIOENCODING: 'utf-8'
+  LANG: "C"
+  LC_ALL: "C"
+  PYTHONIOENCODING: "utf-8"
 
 dependencies:
   - python  >=3.10,<3.12
@@ -28,8 +28,8 @@ dependencies:
   - graphviz
   - pip
   - pip:
-    - -r ../requirements.txt
-    - -r ../requirements-develop.txt
-    - -r ../requirements-conda.txt
-    - -r ../requirements-examples.txt
-    - -e ../
+      - -r ../requirements.txt
+      - -r ../requirements-develop.txt
+      - -r ../requirements-conda.txt
+      - -r ../requirements-examples.txt
+      - -e ../

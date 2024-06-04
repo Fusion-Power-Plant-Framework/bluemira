@@ -16,76 +16,76 @@ jobs:
       RESULT: ${{ github.event.workflow_run.conclusion }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - name: "Get information about the current run"
-      uses: potiuk/get-workflow-origin@v1_5
-      id: workflow-run-info
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        sourceRunId: ${{ github.event.workflow_run.id }}
-    - name: Checkout
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ steps.workflow-run-info.outputs.targetBranch }}
-    - name: Get base hash
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      id: base_sha
-      run: echo base_sha=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
-    - name: Download reference test report
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      env:
+      - name: "Get information about the current run"
+        uses: potiuk/get-workflow-origin@v1_5
+        id: workflow-run-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+      - name: Checkout
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.workflow-run-info.outputs.targetBranch }}
+      - name: Get base hash
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        id: base_sha
+        run: echo base_sha=$(git rev-parse HEAD) >> $GITHUB_OUTPUT
+      - name: Download reference test report
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        env:
           FILE_NAME: "report-json_3.10_ubuntu-latest"
-      run: |
-        artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
-        if [ ! -z "${artifact_url}" ]; then
-          gh api ${artifact_url} > report-json.zip
-          mkdir ref_report
-          unzip report-json.zip -d ref_report
-        else
-            echo 'No report found'
-        fi
-    - name: Download PR test report
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      env:
+        run: |
+          artifact_url="$( \
+            gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
+          if [ ! -z "${artifact_url}" ]; then
+            gh api ${artifact_url} > report-json.zip
+            mkdir ref_report
+            unzip report-json.zip -d ref_report
+          else
+              echo 'No report found'
+          fi
+      - name: Download PR test report
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        env:
           FILE_NAME: "report-json_3.10_ubuntu-latest"
-      run: |
-        artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
-        if [ ! -z "${artifact_url}" ]; then
-          gh api ${artifact_url} > report-json.zip
-          mkdir PR_report
-          unzip report-json.zip -d PR_report
-        else
-            exit 1
-        fi
-    - name: Generate warning report
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      id: warning-report
-      run: |
-        if [ -f "ref_report/.report.json" ]; then
-          compare_args="--compare ref_report/.report.json"
-        fi
-        report_str=$(python scripts/format_warning_report.py PR_report/.report.json ${compare_args}) || true
-        echo "report<<EOF" >> $GITHUB_OUTPUT
-        echo "${report_str}" >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
+        run: |
+          artifact_url="$( \
+            gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
+          if [ ! -z "${artifact_url}" ]; then
+            gh api ${artifact_url} > report-json.zip
+            mkdir PR_report
+            unzip report-json.zip -d PR_report
+          else
+              exit 1
+          fi
+      - name: Generate warning report
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        id: warning-report
+        run: |
+          if [ -f "ref_report/.report.json" ]; then
+            compare_args="--compare ref_report/.report.json"
+          fi
+          report_str=$(python scripts/format_warning_report.py PR_report/.report.json ${compare_args}) || true
+          echo "report<<EOF" >> $GITHUB_OUTPUT
+          echo "${report_str}" >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
-    - name: Find warning report comment
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      uses: peter-evans/find-comment@v3
-      id: find-warning-report-comment
-      with:
-        issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
-        comment-author: "github-actions[bot]"
-        body-includes: ⚠️ Warning Report
-        direction: last
+      - name: Find warning report comment
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        uses: peter-evans/find-comment@v3
+        id: find-warning-report-comment
+        with:
+          issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
+          comment-author: "github-actions[bot]"
+          body-includes: ⚠️ Warning Report
+          direction: last
 
-    - name: Create or update warning report comment
-      if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
-        issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
-        body: ${{ steps.warning-report.outputs.report }}
-        edit-mode: replace
+      - name: Create or update warning report comment
+        if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
+          issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
+          body: ${{ steps.warning-report.outputs.report }}
+          edit-mode: replace

@@ -3,90 +3,85 @@ name: Build
 inputs:
   os:
     required: true
-    type: string
   python-version:
     required: true
-    type: string
   bm-private-data-key:
-    type: string
-    default: ''
+    default: ""
   with-artifact:
     required: false
-    type: boolean
-    default: true
+    default: "false"
 
 runs:
   using: "composite"
   steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-  - name: Checkout bluemira-private-data
-    uses: actions/checkout@v4
-    if: ${{ !github.event.pull_request.head.repo.fork && inputs.bm-private-data-key != '' }}
-    with:
-      repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
-      ssh-key: ${{ inputs.bm-private-data-key }}
-      path: './bluemira-private-data'
+    - name: Checkout bluemira-private-data
+      uses: actions/checkout@v4
+      if: ${{ !github.event.pull_request.head.repo.fork && inputs.bm-private-data-key != '' }}
+      with:
+        repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
+        ssh-key: ${{ inputs.bm-private-data-key }}
+        path: "./bluemira-private-data"
 
-  - name: Move bluemira-private-data
-    working-directory: "/home/runner/work/"
-    if: ${{ !github.event.pull_request.head.repo.fork && inputs.bm-private-data-key != '' }}
-    shell: bash -l {0}
-    run: |
+    - name: Move bluemira-private-data
+      working-directory: "/home/runner/work/"
+      if: ${{ !github.event.pull_request.head.repo.fork && inputs.bm-private-data-key != '' }}
+      shell: bash -l {0}
+      run: |
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
-  - name: Cache pip
-    uses: actions/cache@v4
-    env:
-      # Increase this value to reset cache if requirements.txt has not changed
-      PIP_CACHE_NUMBER: 1
-    with:
-      path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
-      key:
-        ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
-        hashFiles('requirements.txt', 'requirements-develop.txt', 'pyproject.toml') }}
+    - name: Cache pip
+      uses: actions/cache@v4
+      env:
+        # Increase this value to reset cache if requirements.txt has not changed
+        PIP_CACHE_NUMBER: 1
+      with:
+        path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        key: ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
+          hashFiles('requirements.txt', 'requirements-develop.txt', 'pyproject.toml') }}
 
-  - name: Cache conda
-    uses: actions/cache@v4
-    env:
-      # Increase this value to reset cache if conda/environment.yml has not changed
-      CONDA_CACHE_NUMBER: 1
-    with:
-      path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
-      key:
-        ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
-        hashFiles(
+    - name: Cache conda
+      uses: actions/cache@v4
+      env:
+        # Increase this value to reset cache if conda/environment.yml has not changed
+        CONDA_CACHE_NUMBER: 1
+      with:
+        path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+        key: ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
+          hashFiles(
           'conda/environment.yml',
           'requirements.txt',
           'requirements-develop.txt',
           'requirements-conda.txt',
           'pyproject.toml'
-        ) }}
+          ) }}
 
-  - name: Install Environment
-    uses: conda-incubator/setup-miniconda@v3
-    with:
-      activate-environment: bluemira
-      environment-file: conda/environment.yml
-      miniforge-version: "latest"
-      use-only-tar-bz2: false
-      miniforge-variant: Mambaforge
-      use-mamba: true
-      python-version: ${{ inputs.python-version }}
+    - name: Install Environment
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: bluemira
+        environment-file: conda/environment.yml
+        miniforge-version: "latest"
+        use-only-tar-bz2: false
+        miniforge-variant: Mambaforge
+        use-mamba: true
+        python-version: ${{ inputs.python-version }}
 
-  - name: Install bluemira
-    shell: bash -l {0}
-    run: pip install -U -e .
+    - name: Install bluemira
+      shell: bash -l {0}
+      run: pip install -U -e .
 
-  - name: Freeze conda env
-    if: ${{ inputs.with-artifact }}
-    shell: bash -l {0}
-    run: |
-      conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+    - name: Freeze conda env
+      if: ${{ inputs.with-artifact == 'true' }}
+      shell: bash -l {0}
+      run: |
+        conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
 
-  - uses: actions/upload-artifact@v3
-    if: ${{ inputs.with-artifact }}
-    with:
-      name: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
-      path: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+    - uses: actions/upload-artifact@v4
+      if: ${{ inputs.with-artifact == 'true' }}
+      with:
+        name: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+        path: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+        overwrite: true
