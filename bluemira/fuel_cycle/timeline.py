@@ -386,7 +386,7 @@ class Timeline:
         for i in fuse_indices[1::2]:
             self.ft[i] = self.t[i] - self.t[i - 1]
         self.ft = np.cumsum(self.ft) * S_TO_YR
-        self.t = self.t * S_TO_YR
+        self.t *= S_TO_YR
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 
     def to_dict(self) -> Dict[str, Union[np.ndarray, int]]:
