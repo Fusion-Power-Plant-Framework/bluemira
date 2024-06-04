@@ -256,9 +256,17 @@ def _make_optimiser(
         keep_history=keep_history,
     )
     for constraint in eq_constraints:
-        opt.add_eq_constraint(**constraint)
+        opt.add_eq_constraint(
+            f_constraint=constraint["f_constraint"],
+            tolerance=constraint["tolerance"],
+            df_constraint=constraint.get("df_constraint", None),
+        )
     for constraint in ineq_constraints:
-        opt.add_ineq_constraint(**constraint)
+        opt.add_ineq_constraint(
+            f_constraint=constraint["f_constraint"],
+            tolerance=constraint["tolerance"],
+            df_constraint=constraint.get("df_constraint", None),
+        )
     if bounds:
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
@@ -315,15 +323,16 @@ def _check_constraints(
     for i, constraint in enumerate(constraints):
         if diff := _check_constraint(x_star, constraint, condition):
             name, indices, c_value, tols = diff
-            name = "" if name is None else f"({name}) "
-            constraint_name = f"constraint {i}" if name is None else f"{name} (no. {i})"
+            constraint_name = f"constraint {i}" if name is None else f"{name}"
             warnings.append(
                 "\n".join([
-                    f"{constraint_type} {constraint_name} [{j}]: "
+                    f"\t{constraint_name} [{i},{j}]: "
                     f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
                     for j in indices
                 ])
             )
+    if warnings:
+        warnings = [f"{constraint_type}:", *warnings]
     return warnings
 
 
