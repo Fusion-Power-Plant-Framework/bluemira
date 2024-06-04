@@ -17,12 +17,9 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
-    calculate_line_radiation_loss,
-    calculate_z_species,
     electron_density_and_temperature_sol_decay,
-    exponential_decay,
-    gaussian_decay,
     ion_front_distance,
+    radiative_loss_function_values,
     target_temperature,
     upstream_temperature,
 )
@@ -128,7 +125,7 @@ class TestCoreRadiation:
         assert ne[0] == ne[-1]
         assert len(ne) == len(flux_tube)
 
-    def test_mp_electon_density_temperature_profiles(self):
+    def test_mp_electron_density_temperature_profiles(self):
         te_sol_omp, ne_sol_omp = (
             self.source.sol_rad.mp_electron_density_temperature_profiles()
         )
@@ -260,35 +257,22 @@ class TestCoreRadiation:
         rad_edge = self.source.rad_core_by_points(12, -1)
         assert rad_centre > rad_edge
 
-
-def test_gaussian_decay():
-    decayed_val = gaussian_decay(10, 1, 50)
-    gap_1 = decayed_val[0] - decayed_val[1]
-    gap_2 = decayed_val[1] - decayed_val[2]
-    gap_3 = decayed_val[-2] - decayed_val[-1]
-    assert gap_1 < gap_2 < gap_3
-
-
-def test_exponential_decay():
-    decayed_val = exponential_decay(10, 1, 50, decay=True)
-    gap_1 = decayed_val[0] - decayed_val[1]
-    gap_2 = decayed_val[1] - decayed_val[2]
-    gap_3 = decayed_val[-2] - decayed_val[-1]
-    assert gap_1 > gap_2 > gap_3
-
-
-def test_calculate_z_species():
-    t_ref = np.array([0, 10])
-    z_ref = np.array([10, 20])
-    frac = 0.1
-    t_test = 5
-    z = calculate_z_species(t_ref, z_ref, frac, t_test)
-    assert z == pytest.approx(22.5)
-
-
-def test_calculate_line_radiation_loss():
-    ne = 1e20
-    p_loss = 1e-31
-    frac = 0.01
-    rad = calculate_line_radiation_loss(ne, p_loss, frac)
-    assert rad == pytest.approx(0.796, abs=1e-3)
+    def test_radiative_loss_function_values(self):
+        imp_data_t_ref = [
+            data["T_ref"]
+            for key, data in self.source.imp_data_core.items()
+            if key != "Ar"
+        ]
+        imp_data_t_ref = imp_data_t_ref[0]
+        t_ref = np.array([imp_data_t_ref[0], imp_data_t_ref[2], imp_data_t_ref[4]])
+        imp_data_l_ref = [
+            data["L_ref"]
+            for key, data in self.source.imp_data_core.items()
+            if key != "Ar"
+        ]
+        imp_data_l_ref = imp_data_l_ref[0]
+        l_ref = np.array([imp_data_l_ref[0], imp_data_l_ref[2], imp_data_l_ref[4]])
+        tvals = np.array([imp_data_t_ref[1], imp_data_t_ref[3]])
+        lvals = np.array([imp_data_l_ref[1], imp_data_l_ref[3]])
+        l1 = radiative_loss_function_values(tvals, t_ref, l_ref)
+        np.testing.assert_allclose(l1, lvals, rtol=2e-1)
