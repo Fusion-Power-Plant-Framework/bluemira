@@ -57,10 +57,10 @@ class ChargedParticleSolver:
 
         # Constructors
         self.first_wall = None
-        self.flux_surfaces_ob_lfs = None
-        self.flux_surfaces_ob_hfs = None
-        self.flux_surfaces_ib_lfs = None
-        self.flux_surfaces_ib_hfs = None
+        self.flux_surfaces_ob_down = None
+        self.flux_surfaces_ob_up = None
+        self.flux_surfaces_ib_down = None
+        self.flux_surfaces_ib_up = None
         self.x_sep_omp = None
         self.x_sep_imp = None
         self.result = None
@@ -83,10 +83,10 @@ class ChargedParticleSolver:
         """
         flux_surfaces = []
         for group in [
-            self.flux_surfaces_ob_lfs,
-            self.flux_surfaces_ob_hfs,
-            self.flux_surfaces_ib_lfs,
-            self.flux_surfaces_ib_hfs,
+            self.flux_surfaces_ob_down,
+            self.flux_surfaces_ob_up,
+            self.flux_surfaces_ib_down,
+            self.flux_surfaces_ib_up,
         ]:
             if group:
                 flux_surfaces.extend(group)
@@ -161,7 +161,7 @@ class ChargedParticleSolver:
             outboard=True,
         )
 
-        self.flux_surfaces_ob_lfs, self.flux_surfaces_ob_hfs = (
+        self.flux_surfaces_ob_down, self.flux_surfaces_ob_up = (
             fsm._make_flux_surfaces_ibob(
                 self.dx_mp,
                 self.eq,
@@ -184,7 +184,7 @@ class ChargedParticleSolver:
             outboard=False,
         )
 
-        self.flux_surfaces_ib_lfs, self.flux_surfaces_ib_hfs = (
+        self.flux_surfaces_ib_down, self.flux_surfaces_ib_up = (
             fsm._make_flux_surfaces_ibob(
                 self.dx_mp,
                 self.eq,
@@ -202,10 +202,10 @@ class ChargedParticleSolver:
         are found.
         """
         for group in [
-            self.flux_surfaces_ob_lfs,
-            self.flux_surfaces_ob_hfs,
-            self.flux_surfaces_ib_lfs,
-            self.flux_surfaces_ib_hfs,
+            self.flux_surfaces_ob_down,
+            self.flux_surfaces_ob_up,
+            self.flux_surfaces_ib_down,
+            self.flux_surfaces_ib_up,
         ]:
             if group:
                 for i, flux_surface in enumerate(group):
@@ -254,10 +254,10 @@ class ChargedParticleSolver:
         self._clip_flux_surfaces(self.first_wall)
 
         x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
-            self.flux_surfaces_ob_lfs
+            self.flux_surfaces_ob_down
         )
         _, _, x_hfs_inter, z_hfs_inter, alpha_hfs = self._get_arrays(
-            self.flux_surfaces_ob_hfs
+            self.flux_surfaces_ob_up
         )
 
         # Calculate values at OMP
@@ -307,9 +307,9 @@ class ChargedParticleSolver:
             x_lfs_down_inter,
             z_lfs_down_inter,
             alpha_lfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ob_lfs)
+        ) = self._get_arrays(self.flux_surfaces_ob_down)
         _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = self._get_arrays(
-            self.flux_surfaces_ob_hfs
+            self.flux_surfaces_ob_up
         )
         (
             x_imp,
@@ -317,9 +317,9 @@ class ChargedParticleSolver:
             x_hfs_down_inter,
             z_hfs_down_inter,
             alpha_hfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ib_lfs)
+        ) = self._get_arrays(self.flux_surfaces_ib_down)
         _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = self._get_arrays(
-            self.flux_surfaces_ib_hfs
+            self.flux_surfaces_ib_up
         )
 
         # Calculate values at OMP
