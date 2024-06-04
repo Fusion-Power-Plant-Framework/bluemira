@@ -12,11 +12,11 @@ import numpy as np
 
 from bluemira.base.constants import (
     ELECTRON_MASS,
+    ELEMENTARY_CHARGE,
     EPS_0,
-    EV_TO_J,
     H_PLANCK,
-    K_BOLTZMANN,
     PROTON_MASS,
+    raw_uc,
 )
 
 
@@ -35,7 +35,9 @@ def debye_length(temperature: float, density: float) -> float:
     -------
     Debye length [m]
     """
-    return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
+    return np.sqrt(
+        EPS_0 * raw_uc(temperature, "K", "J") / (ELEMENTARY_CHARGE**2 * density)
+    )
 
 
 def reduced_mass(mass_1: float, mass_2: float) -> float:
@@ -74,7 +76,10 @@ def thermal_velocity(temperature: float, mass: float) -> float:
     The sqrt(2) term is for a 3-dimensional system and the most probable velocity in
     the particle velocity distribution.
     """
-    return np.sqrt(2) * np.sqrt(K_BOLTZMANN * temperature / mass)
+    return np.sqrt(2) * np.sqrt(
+        raw_uc(temperature, "K", "J")  # = Joule = kg*m^2/s^2
+        / mass
+    )  # sqrt(m^2/s^2) = m/s
 
 
 def de_broglie_length(velocity: float, mu_12: float) -> float:
@@ -110,7 +115,7 @@ def impact_parameter_perp(velocity: float, mu_12: float) -> float:
     -------
     Perpendicular impact parameter [m]
     """
-    return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
+    return ELEMENTARY_CHARGE**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
 
 
 def coulomb_logarithm(temperature: float, density: float) -> float:
@@ -146,7 +151,8 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
     Z_eff:
         Effective charge [dimensionless]
     T_e:
-        Electron temperature on axis [eV]
+        Electron temperature on axis [keV]
+        The equation takes in temperature as [eV], so an in-line conversion is used here.
     ln_lambda:
         Coulomb logarithm value
 
@@ -160,4 +166,9 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
 
     \t:math:`\\sigma = 1.92e4 (2-Z_{eff}^{-1/3}) \\dfrac{T_{e}^{3/2}}{Z_{eff}ln\\Lambda}`
     """
-    return 1.92e4 * (2 - Z_eff ** (-1 / 3)) * T_e**1.5 / (Z_eff * ln_lambda)
+    return (
+        1.92e4
+        * (2 - Z_eff ** (-1 / 3))
+        * raw_uc(T_e, "keV", "eV") ** 1.5
+        / (Z_eff * ln_lambda)
+    )

@@ -186,10 +186,11 @@ class EUDEMOFuelCycleModel:
         m_T = m_T_0 * np.ones(len(self.DEMO_t))
         for i in range(1, len(self.DEMO_t)):
             dt = self.DEMO_t[i] - self.DEMO_t[i - 1]
-            t_bred = TBR * self.brate[i] * (YR_TO_S * dt)
-            t_bred += self.prate[i] * (YR_TO_S * dt)
-            t_burnt = self.brate[i] * (YR_TO_S * dt)
-            t_DD = self.prate[i] * (YR_TO_S * dt)
+            dts = dt * YR_TO_S
+            t_bred = TBR * self.brate[i] * dts
+            t_bred += self.prate[i] * dts
+            t_burnt = self.brate[i] * dts
+            t_DD = self.prate[i] * dts
             m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
         return m_T
 
@@ -350,7 +351,7 @@ class EUDEMOFuelCycleModel:
 
         m_T_out = self.plasma(self.params.eta_iv, self.params.I_miv, flows=flows)
         # Resolution - Not used everywhere for speed
-        n_ts = int(round((YR_TO_S * self.DEMO_t[-1]) / self.timestep))
+        n_ts = int(round(self.DEMO_t[-1] * YR_TO_S / self.timestep))
         self.t, m_pellet_in = discretise_1d(self.DEMO_t, self.m_T_in, n_ts)
 
         # Flow out of the vacuum vessel

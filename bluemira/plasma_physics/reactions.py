@@ -15,14 +15,10 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import (
-    AMU_TO_KG,
-    C_LIGHT,
     D_MOLAR_MASS,
     ELECTRON_MOLAR_MASS,
-    EV_TO_J,
     HE3_MOLAR_MASS,
     HE_MOLAR_MASS,
-    J_TO_EV,
     NEUTRON_MOLAR_MASS,
     N_AVOGADRO,
     PROTON_MOLAR_MASS,
@@ -58,7 +54,7 @@ def E_DT_fusion() -> float:
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
+    return raw_uc(delta_m, "amu", "eV")
 
 
 def E_DD_fusion() -> float:
@@ -85,7 +81,7 @@ def E_DD_fusion() -> float:
         (D_MOLAR_MASS + D_MOLAR_MASS) - (HE3_MOLAR_MASS + NEUTRON_MOLAR_MASS),
     ])
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
+    return raw_uc(delta_m, "amu", "eV")
 
 
 def n_DT_reactions(p_fus: float) -> float:
@@ -105,7 +101,7 @@ def n_DT_reactions(p_fus: float) -> float:
     Number of D-T reactions per second [1/s]
     """
     e_dt = E_DT_fusion()
-    return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
+    return raw_uc(p_fus, "MW", "W") / raw_uc(e_dt, "eV", "J")
 
 
 def n_DD_reactions(p_fus: float) -> float:
@@ -125,7 +121,7 @@ def n_DD_reactions(p_fus: float) -> float:
     Number of D-D reactions per second [1/s]
     """
     e_dd = E_DD_fusion()
-    return p_fus / (e_dd * EV_TO_J)
+    return p_fus / raw_uc(e_dd, "eV", "J")
 
 
 def r_T_burn(p_fus: float) -> float:  # noqa: N802

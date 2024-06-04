@@ -386,8 +386,7 @@ class Timeline:
         self.ft = np.zeros(len(self.t))
         for i in fuse_indices[1::2]:
             self.ft[i] = self.t[i] - self.t[i - 1]
-        self.ft = np.cumsum(self.ft)
-        self.ft *= S_TO_YR
+        self.ft = np.cumsum(self.ft) * S_TO_YR
         self.t *= S_TO_YR
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 

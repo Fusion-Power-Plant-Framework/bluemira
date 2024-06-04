@@ -282,8 +282,8 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
         The time vector
     m_t_flow:
         The mass flow vector
-    t_delay:
-        The delay duration [s]
+    tt_delay:
+        The delay duration [yr]
 
     Returns
     -------
@@ -594,7 +594,7 @@ def _fountain_linear_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * YR_TO_S  # kg/yr
+    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
     dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
@@ -747,13 +747,12 @@ def _linear_thresh_sink(
     decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * years  # kg/yr
-    dts = dt * years
+    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
     j_inv0 = inventory
@@ -842,13 +841,12 @@ def _sqrt_thresh_sink(
     not accounted for in this function. We have to add decay in the sink and
     ensure this is handled when calculation the absorbtion and out-flow.
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         # Nothing can happen if time is zero
         return m_flow, inventory, sum_in, decayed
 
-    dts = dt * years
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
 

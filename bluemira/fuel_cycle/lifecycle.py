@@ -175,7 +175,7 @@ class LifeCycle:
         self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
         tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
         if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux / YR_TO_S, 2)
+            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux * S_TO_YR, 2)
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
             bluemira_warn(
                 f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
