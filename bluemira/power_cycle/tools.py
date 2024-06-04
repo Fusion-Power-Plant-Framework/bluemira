@@ -11,7 +11,7 @@ import sys
 from copy import deepcopy
 from dataclasses import asdict, is_dataclass
 from pprint import PrettyPrinter
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -110,7 +110,8 @@ def match_domains(
     """
     n_vectors = len(all_x)
     for v in range(n_vectors):
-        all_x[v] = unique_domain(all_x[v], epsilon=epsilon)
+        numba_safe_x = [float(x) for x in all_x[v]]
+        all_x[v] = unique_domain(numba_safe_x, epsilon=epsilon)
     x_matched = np.unique(np.concatenate(all_x))
 
     all_y_matched = all_y.copy()
@@ -123,6 +124,65 @@ def match_domains(
             right=0,
         )
     return x_matched, all_y_matched
+
+
+def rms_deviation(
+    fun_ref: Union[List[List], List[np.ndarray]],
+    fun_est: Union[List[List], List[np.ndarray]],
+    *,
+    x_range: Union[None, List[float], np.ndarray[float]] = None,
+    normalize: bool = True,
+):
+    """
+    Calculate the Root Mean Squared Deviation between two functions.
+
+    Functions are defined by a pair of vectors (x,y). The first function is
+    considered the reference, the second function is considered an estimate
+    to be evaluated.
+
+    The range of evaluation 'x_range' can be provided as a pair of x values.
+    If so, deviation is calculated only between those values.
+
+    Flag 'normalize' indicates whether deviation at each point is normalized:
+        - by the range (max-min) of all reference values, if the reference
+          value for that point is zero;
+        - by the reference value itself, if the reference value for that point
+          is different than zero.
+    """
+    x_ref = np.array(fun_ref[0])
+    y_ref = np.array(fun_ref[1])
+    x_est = np.array(fun_est[0])
+    y_est = np.array(fun_est[1])
+    x_matched, both_y_matched = match_domains([x_ref, x_est], [y_ref, y_est])
+    y_ref = both_y_matched[0]
+    y_est = both_y_matched[1]
+
+    if x_range is not None:
+        tx = []
+        ty_ref = []
+        ty_est = []
+        for x, yr, ye in zip(x_matched, y_ref, y_est):
+            if x_range[0] <= x <= x_range[1]:
+                tx.append(x)
+                ty_ref.append(yr)
+                ty_est.append(ye)
+        tx = np.array(tx)
+        ty_ref = np.array(ty_ref)
+        ty_est = np.array(ty_est)
+    else:
+        tx = x_matched
+        ty_ref = y_ref
+        ty_est = y_est
+
+    dev = np.subtract(ty_ref, ty_est)
+    if normalize:
+        s = np.max(y_ref) - np.min(y_ref)
+        dev = [d / s if r == 0 else d / r for d, r in zip(dev, ty_ref)]
+        dev = np.array(dev)
+
+    mean_squared_dev = np.square(dev).mean()
+    rms_dev = np.sqrt(mean_squared_dev)
+    return rms_dev, (tx, ty_ref, ty_est)
 
 
 def symmetrical_subplot_distribution(n_plots, direction="row"):
