@@ -73,7 +73,7 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
     x = nb.typed.List(x)
     new_x = nb.typed.List()
     validate_monotonic_increase(x, strict_flag=False)
-    new_x.append(x[0])
+    new_x.append(float(x[0]))
     if len(x) > 1:
         for x_this in x[1:]:
             nudge = 0
@@ -86,7 +86,7 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
                     needs_nudge = _nudge_check(new_x[-1], new_x_this)
             else:
                 new_x_this = x_this
-            new_x.append(new_x_this)
+            new_x.append(float(new_x_this))
     validate_monotonic_increase(new_x, strict_flag=True)
     return np.asarray(new_x)
 
