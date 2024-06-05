@@ -80,16 +80,16 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
             new_x_this = x_this
             if _needs_nudge(new_x[-1], x_this):
                 for i in range(max_iterations):
-                    nudge += epsilon
-                    new_x_this = x_this + nudge
-                    if not _needs_nudge(new_x[-1], new_x_this):
-                        break
                     if i == max_iterations - 1:
                         raise ValueError(
                             "Maximum number of iterations for computing 'nudge'"
                             "has been reached. Raise the maximum number of "
                             "iterations or pre-process 'x'."
                         )
+                    nudge += epsilon
+                    new_x_this = x_this + nudge
+                    if not _needs_nudge(new_x[-1], new_x_this):
+                        break
             else:
                 new_x_this = x_this
             new_x.append(float(new_x_this))
