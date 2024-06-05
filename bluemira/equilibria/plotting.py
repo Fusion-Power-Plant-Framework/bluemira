@@ -14,13 +14,6 @@ import warnings
 from itertools import cycle
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from bluemira.equilibria.equilibrium import (
-        Equilibrium,
-        FixedPlasmaEquilibrium,
-    )
-    from bluemira.equilibria.grid import Grid
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.gridspec import GridSpec
@@ -32,7 +25,17 @@ from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
-from bluemira.utilities.plot_tools import str_to_latex
+from bluemira.utilities.plot_tools import smooth_contour_fill, str_to_latex
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.axes import Axes
+
+    from bluemira.equilibria.equilibrium import (
+        Equilibrium,
+        FixedPlasmaEquilibrium,
+    )
+    from bluemira.equilibria.grid import Grid
 
 __all__ = [
     "BreakdownPlotter",
@@ -431,6 +434,10 @@ class EquilibriumPlotterMixin:
     DRY plotting mixin class.
     """
 
+    eq: Equilibrium | FixedPlasmaEquilibrium
+    ax: Axes
+    psi: float | npt.NDArray[np.float64]
+
     def plot_Bp(self, **kwargs):
         """
         Plots the poloidal field onto the Axes.
@@ -462,7 +469,7 @@ class EquilibriumPlotterMixin:
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
-    def plot_plasma_current(self, **kwargs):
+    def plot_plasma_current(self, *, smooth: bool = True, **kwargs):
         """
         Plots flux surfaces inside plasma
         """
@@ -473,7 +480,7 @@ class EquilibriumPlotterMixin:
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
 
         levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
-        self.ax.contourf(
+        cont = self.ax.contourf(
             self.eq.x,
             self.eq.z,
             self.eq._jtor,
@@ -481,6 +488,8 @@ class EquilibriumPlotterMixin:
             cmap=cmap,
             zorder=Zorder.PLASMACURRENT.value,
         )
+        if smooth:
+            smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
 
 
 class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
