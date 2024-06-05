@@ -38,7 +38,7 @@ def create_axes(ax=None):
 
 
 @nb.jit
-def _nudge_check(x_last, x_this):
+def _needs_nudge(x_last, x_this):
     is_close = np.isclose(x_last, x_this, rtol=EPS)
     is_decreasing = x_last > x_this
     return is_close or is_decreasing
@@ -55,7 +55,7 @@ def validate_monotonic_increase(x, strict_flag):
 
 
 @nb.jit
-def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
+def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
@@ -78,12 +78,18 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
         for x_this in x[1:]:
             nudge = 0
             new_x_this = x_this
-            needs_nudge = _nudge_check(new_x[-1], x_this)
-            if needs_nudge:
-                while needs_nudge:
+            if _needs_nudge(new_x[-1], x_this):
+                for i in range(max_iterations):
                     nudge += epsilon
                     new_x_this = x_this + nudge
-                    needs_nudge = _nudge_check(new_x[-1], new_x_this)
+                    if not _needs_nudge(new_x[-1], new_x_this):
+                        break
+                    if i == max_iterations - 1:
+                        raise ValueError(
+                            "Maximum number of iterations for computing 'nudge'"
+                            "has been reached. Raise the maximum number of "
+                            "iterations or pre-process 'x'."
+                        )
             else:
                 new_x_this = x_this
             new_x.append(float(new_x_this))
