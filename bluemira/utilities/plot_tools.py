@@ -30,6 +30,9 @@ from bluemira.geometry.coordinates import Coordinates, check_ccw, rotation_matri
 from bluemira.geometry.placement import BluemiraPlacement
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.contour import ContourSet
+
     from bluemira.base.components import Component
 
 __all__ = [
@@ -168,7 +171,7 @@ def set_component_view(comp: Component, placement: str | BluemiraPlacement):
         set_component_view(child, placement)
 
 
-def smooth_contour_fill(ax, contour, cut_edge: Coordinates):
+def smooth_contour_fill(ax: Axes, contour: ContourSet, cut_edge: Coordinates):
     """Smooths the edge of a filled contour with a set of coordinates"""
     edge_arr = cut_edge.xz.T
     clip_patch = PathPatch(

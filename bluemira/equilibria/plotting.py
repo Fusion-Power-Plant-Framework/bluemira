@@ -28,6 +28,8 @@ from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import smooth_contour_fill, str_to_latex
 
 if TYPE_CHECKING:
+    from matplotlib.contour import ContourSet
+
     from bluemira.equilibria.equilibrium import (
         Equilibrium,
         FixedPlasmaEquilibrium,
@@ -462,7 +464,7 @@ class EquilibriumPlotterMixin:
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
-    def plot_plasma_current(self, **kwargs):
+    def plot_plasma_current(self, **kwargs) -> ContourSet | None:
         """
         Plots flux surfaces inside plasma
         """
@@ -555,7 +557,9 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.op_psi = np.amin(self.psi)
 
         if not field:
-            smooth_contour_fill(self.ax, self.plot_plasma_current(), self.eq.get_LCFS())
+            cont = self.plot_plasma_current()
+            if cont is not None:
+                smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
             self.plot_psi()
         else:
             self.plot_Bp()
