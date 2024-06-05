@@ -190,11 +190,11 @@ class ParameterFrame:
 
     @classmethod
     def from_dict(
-        cls: type[ParameterFrame],
+        cls: type[ParameterFrameT],
         data: dict[str, ParamDictT],
         *,
         allow_unknown=False,
-    ) -> ParameterFrame:
+    ) -> ParameterFrameT:
         """Initialise an instance from a dictionary."""
         data = copy.deepcopy(data)
         kwargs: dict[str, Parameter] = {}

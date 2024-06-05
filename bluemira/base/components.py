@@ -395,8 +395,8 @@ class PhysicalComponent(Component):
 
     def copy(
         self,
-        parent: Component | None = None,
-    ) -> Component:
+        parent: ComponentT | None = None,
+    ) -> ComponentT:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
