@@ -28,6 +28,8 @@ from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import smooth_contour_fill, str_to_latex
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.axes import Axes
     from matplotlib.contour import ContourSet
 
     from bluemira.equilibria.equilibrium import (
@@ -433,6 +435,10 @@ class EquilibriumPlotterMixin:
     DRY plotting mixin class.
     """
 
+    eq: Equilibrium | FixedPlasmaEquilibrium
+    ax: Axes
+    psi: float | npt.NDArray[np.float64]
+
     def plot_Bp(self, **kwargs):
         """
         Plots the poloidal field onto the Axes.
@@ -464,7 +470,7 @@ class EquilibriumPlotterMixin:
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
-    def plot_plasma_current(self, **kwargs) -> ContourSet | None:
+    def plot_plasma_current(self, *, smooth: bool = True, **kwargs) -> ContourSet | None:
         """
         Plots flux surfaces inside plasma
         """
@@ -475,7 +481,7 @@ class EquilibriumPlotterMixin:
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
 
         levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
-        return self.ax.contourf(
+        cont = self.ax.contourf(
             self.eq.x,
             self.eq.z,
             self.eq._jtor,
@@ -483,6 +489,8 @@ class EquilibriumPlotterMixin:
             cmap=cmap,
             zorder=Zorder.PLASMACURRENT.value,
         )
+        if smooth:
+            smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
 
 
 class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
@@ -557,9 +565,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.op_psi = np.amin(self.psi)
 
         if not field:
-            cont = self.plot_plasma_current()
-            if cont is not None:
-                smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
+            self.plot_plasma_current()
             self.plot_psi()
         else:
             self.plot_Bp()
