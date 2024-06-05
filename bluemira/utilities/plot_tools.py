@@ -8,9 +8,12 @@
 A collection of plotting tools.
 """
 
+from __future__ import annotations
+
 import os
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import imageio
 import matplotlib.pyplot as plt
@@ -21,11 +24,13 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
-from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
+from bluemira.geometry.coordinates import Coordinates, check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
+
+if TYPE_CHECKING:
+    from bluemira.base.components import Component
 
 __all__ = [
     "BluemiraPathPatch3D",
@@ -33,6 +38,7 @@ __all__ = [
     "coordinates_to_path",
     "make_gif",
     "save_figure",
+    "smooth_contour_fill",
     "str_to_latex",
 ]
 
@@ -160,6 +166,19 @@ def set_component_view(comp: Component, placement: str | BluemiraPlacement):
     comp.plot_options.view = placement
     for child in comp.children:
         set_component_view(child, placement)
+
+
+def smooth_contour_fill(ax, contour, cut_edge: Coordinates):
+    """Smooths the edge of a filled contour with a set of coordinates"""
+    edge_arr = cut_edge.xz.T
+    clip_patch = PathPatch(
+        Path_mpl(edge_arr, ring_coding(len(edge_arr))),
+        facecolor="none",
+        edgecolor="none",
+    )
+    ax.add_patch(clip_patch)
+    for cnt in contour.collections:
+        cnt.set_clip_path(clip_patch)
 
 
 class Plot3D(Axes3D):
