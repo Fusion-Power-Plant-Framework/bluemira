@@ -67,6 +67,11 @@ def test_unique_domain(epsilon):
     ])
     assert all(np.isclose(new_x, expected_x))
 
+    x = np.array([1, 1, 1, 1, 1])
+    max_iterations = 3
+    with pytest.raises(ValueError, match="Maximum number of iterations"):
+        unique_domain(x, max_iterations=max_iterations)
+
 
 def test_match_domains():
     all_x = [np.array([1, 2, 3]), np.array([2, 3, 4])]

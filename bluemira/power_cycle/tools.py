@@ -40,7 +40,7 @@ def create_axes(ax=None):
 
 
 @nb.jit
-def _nudge_check(x_last, x_this):
+def _needs_nudge(x_last, x_this):
     is_close = np.isclose(x_last, x_this, rtol=EPS)
     is_decreasing = x_last > x_this
     return is_close or is_decreasing
@@ -80,11 +80,17 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
         for x_this in x[1:]:
             nudge = 0
             new_x_this = x_this
-            if _nudge_check(new_x[-1], x_this):
-                for _ in range(max_iterations):
+            if _needs_nudge(new_x[-1], x_this):
+                for i in range(max_iterations):
+                    if i == max_iterations - 1:
+                        raise ValueError(
+                            "Maximum number of iterations for computing 'nudge'"
+                            "has been reached. Raise the maximum number of "
+                            "iterations or pre-process 'x'."
+                        )
                     nudge += epsilon
                     new_x_this = x_this + nudge
-                    if not _nudge_check(new_x[-1], new_x_this):
+                    if not _needs_nudge(new_x[-1], new_x_this):
                         break
             else:
                 new_x_this = x_this
