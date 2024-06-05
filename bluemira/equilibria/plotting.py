@@ -30,7 +30,6 @@ from bluemira.utilities.plot_tools import smooth_contour_fill, str_to_latex
 if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
-    from matplotlib.contour import ContourSet
 
     from bluemira.equilibria.equilibrium import (
         Equilibrium,
@@ -470,12 +469,12 @@ class EquilibriumPlotterMixin:
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
 
-    def plot_plasma_current(self, *, smooth: bool = True, **kwargs) -> ContourSet | None:
+    def plot_plasma_current(self, *, smooth: bool = True, **kwargs):
         """
         Plots flux surfaces inside plasma
         """
         if self.eq._jtor is None:
-            return None
+            return
 
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])

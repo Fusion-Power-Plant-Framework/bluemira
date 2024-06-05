@@ -26,7 +26,7 @@ from mpl_toolkits.mplot3d.art3d import PathPatch3D
 import bluemira.display.error as bm_display_error
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.coordinates import Coordinates, check_ccw, rotation_matrix_v1v2
+from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
 if TYPE_CHECKING:
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from matplotlib.contour import ContourSet
 
     from bluemira.base.components import Component
+    from bluemira.geometry.coordinates import Coordinates
 
 __all__ = [
     "BluemiraPathPatch3D",
