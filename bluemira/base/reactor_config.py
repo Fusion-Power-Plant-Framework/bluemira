@@ -20,6 +20,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from bluemira.base.parameter_frame._parameter import ParamDictT
     from bluemira.base.parameter_frame.typing import ParameterFrameT
 
 
@@ -28,7 +29,7 @@ class ConfigParams:
     """Container for the global and local parameters of a `ReactorConfig`."""
 
     global_params: ParameterFrameT
-    local_params: dict
+    local_params: dict[str, ParamDictT]
 
 
 _PARAMETERS_KEY = "params"
