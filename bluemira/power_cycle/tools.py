@@ -70,8 +70,10 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
     The nudge forward for each non-unique element in x is (N * epsilon), given
     N times, after the first appearance, that value has appeared in x before.
     """
+    x = nb.typed.List(x)
+    new_x = nb.typed.List()
     validate_monotonic_increase(x, strict_flag=False)
-    new_x = [x[0]]
+    new_x.append(x[0])
     if len(x) > 1:
         for x_this in x[1:]:
             nudge = 0
@@ -108,7 +110,7 @@ def match_domains(
     """
     n_vectors = len(all_x)
     for v in range(n_vectors):
-        numba_safe_x = [float(x) for x in all_x[v]]
+        numba_safe_x = nb.typed.List([float(x) for x in all_x[v]])
         all_x[v] = unique_domain(numba_safe_x, epsilon=epsilon)
     x_matched = np.unique(np.concatenate(all_x))
 
