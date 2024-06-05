@@ -57,7 +57,7 @@ def validate_monotonic_increase(x, strict_flag):
 
 
 @nb.jit
-def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
+def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
@@ -80,15 +80,15 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10):
         for x_this in x[1:]:
             nudge = 0
             new_x_this = x_this
-            needs_nudge = _nudge_check(new_x[-1], x_this)
-            if needs_nudge:
-                while needs_nudge:
+            if _nudge_check(new_x[-1], x_this):
+                for _ in range(max_iterations):
                     nudge += epsilon
                     new_x_this = x_this + nudge
-                    needs_nudge = _nudge_check(new_x[-1], new_x_this)
+                    if not _nudge_check(new_x[-1], new_x_this):
+                        break
             else:
                 new_x_this = x_this
-            new_x.append(new_x_this)
+            new_x.append(float(new_x_this))
     validate_monotonic_increase(new_x, strict_flag=True)
     return np.asarray(new_x)
 
