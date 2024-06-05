@@ -177,8 +177,7 @@ def smooth_contour_fill(ax, contour, cut_edge: Coordinates):
         edgecolor="none",
     )
     ax.add_patch(clip_patch)
-    for cnt in contour.collections:
-        cnt.set_clip_path(clip_patch)
+    contour.set_clip_path(clip_patch)
 
 
 class Plot3D(Axes3D):
