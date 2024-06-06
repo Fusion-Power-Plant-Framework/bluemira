@@ -983,6 +983,39 @@ def sweep_shape(
     return convert(result, label=label)
 
 
+def loft_shape(
+    profiles: Iterable[BluemiraWire],
+    *,
+    solid: bool = True,
+    ruled: bool = False,
+    label: str = "",
+) -> BluemiraSolid | BluemiraShell:
+    """
+    Loft between a set of profiles.
+
+    Parameters
+    ----------
+    profiles:
+        Profile(s) to loft between
+    solid:
+        Whether or not to create a Solid
+    ruled:
+        created a ruled shape
+
+    Returns
+    -------
+    Lofted geometry object
+    """
+    return convert(
+        cadapi.loft(
+            [p.shape for p in profiles],
+            solid=solid,
+            ruled=ruled,
+        ),
+        label=label,
+    )
+
+
 def fillet_chamfer_decorator(*, chamfer: bool):
     """
     Decorator for fillet and chamfer operations, checking for validity of wire
