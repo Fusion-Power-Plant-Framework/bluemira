@@ -14,7 +14,6 @@ from collections import Counter
 from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass
-from enum import Enum, auto
 from operator import attrgetter
 from typing import TYPE_CHECKING
 
@@ -1020,26 +1019,6 @@ class CoilSetOptimisationState:
         return np.concatenate([self.xs, self.zs])
 
 
-class CoilSetSymmetryStatus(Enum):
-    """
-    CoilSet symmetry status
-
-    Parameters
-    ----------
-    FULL:
-        Full symmetry (only SymmetricCircuits in the CoilSet)
-    PARTIAL:
-        Partial symmetry (mixture of SymmetricCircuits
-        and non-symmetric coils in the CoilSet)
-    NONE:
-        No symmetry (no SymmetricCircuits in the CoilSet)
-    """
-
-    FULL = auto()
-    PARTIAL = auto()
-    NONE = auto()
-
-
 class CoilSet(CoilSetFieldsMixin, CoilGroup):
     """
     CoilSet is a CoilGroup with the concept of control coils
@@ -1101,7 +1080,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             self._control_ind = []
         self._control = [names[c] for c in self._control_ind]
 
-    def get_control_coils(self):
+    def get_control_coils(self) -> CoilSet:
         """Get control coils"""
         coils = []
         for c in self._coils:
@@ -1279,22 +1258,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
 
     @property
-    def _opt_currents_symmetry_status(self) -> CoilSetSymmetryStatus:
+    def _contains_circuits(self) -> bool:
         """
-        Get the symmetry status of the CoilSet for current optimisations.
-
-        Notes
-        -----
-            For FULL and NONE symmetry status, analytic derivatives can be used.
-            When the status is FULL, the derivative values must be halved
-            after applying the repetition matrix as they will be added together.
-            For PARTIAL symmetry status, numerical derivatives must be used.
+        A simple check to see if the CoilSet contains any Circuits.
         """
-        if all(isinstance(c, SymmetricCircuit) for c in self._coils):
-            return CoilSetSymmetryStatus.FULL
-        if any(isinstance(c, SymmetricCircuit) for c in self._coils):
-            return CoilSetSymmetryStatus.PARTIAL
-        return CoilSetSymmetryStatus.NONE
+        return any(isinstance(c, Circuit) for c in self._coils)
 
     @property
     def _opt_currents_expand_mat(self) -> np.ndarray:
@@ -1310,7 +1278,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         n_opt_coils = cc.n_current_optimisable_coils
         n_distinct_coils_and_groupings = len(cc._coils)
 
-        if cc._opt_currents_symmetry_status == CoilSetSymmetryStatus.NONE:
+        if not cc._contains_circuits:
             return np.eye(n_all_coils)
 
         # this should be true as, at the top level, the number

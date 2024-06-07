@@ -13,7 +13,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import (
     Coil,
     CoilSet,
-    CoilSetSymmetryStatus,
     SymmetricCircuit,
 )
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -239,16 +238,9 @@ class TestCoilsetOptimiser:
         )
 
     def test_coilset_symmetry_status(self):
-        assert (
-            self.coilset_none._opt_currents_symmetry_status is CoilSetSymmetryStatus.NONE
-        )
-        assert (
-            self.coilset_partial._opt_currents_symmetry_status
-            is CoilSetSymmetryStatus.PARTIAL
-        )
-        assert (
-            self.coilset_sym._opt_currents_symmetry_status is CoilSetSymmetryStatus.FULL
-        )
+        assert self.coilset_none._contains_circuits is False
+        assert self.coilset_partial._contains_circuits is True
+        assert self.coilset_sym._contains_circuits is True
 
     def test_numerical_constraints(self):
         self.optimiser_none.update_magnetic_constraints(I_not_dI=True, fixed_coils=False)
@@ -269,20 +261,20 @@ class TestCoilsetOptimiser:
             self.optimiser_sym._make_numerical_constraints(self.optimiser_sym.coilset)
         )
 
+        # make sure things make sense
+
         assert len(eq_constraints_none) == 0
         assert len(ineq_constraints_none) == 2
-        # df_constraint is not None for all constraints in a NON-symmetric coilset
         dfs_c_none = [c.get("df_constraint") for c in ineq_constraints_none]
         assert all(c is not None for c in dfs_c_none)
 
         assert len(eq_constraints_part) == 0
         assert len(ineq_constraints_part) == 2
-        # df_constraint is None for all constraints in a PARTIAL'ly symmetric coilset
-        assert all(c.get("df_constraint") is None for c in ineq_constraints_part)
+        dfs_c_part = [c.get("df_constraint") for c in ineq_constraints_sym]
+        assert all(c is not None for c in dfs_c_part)
 
         assert len(eq_constraints_sym) == 0
         assert len(ineq_constraints_sym) == 2
-        # df_constraint is not None in a FULL'ly symmetric coilset
         dfs_c_sym = [c.get("df_constraint") for c in ineq_constraints_sym]
         assert all(c is not None for c in dfs_c_sym)
 
@@ -295,9 +287,11 @@ class TestCoilsetOptimiser:
         f_c_sym_res = f_c_sym(self.optimiser_sym.coilset._opt_currents)
 
         df_c_none = ineq_constraints_none[0]["df_constraint"]
+        df_c_part = ineq_constraints_part[0]["df_constraint"]
         df_c_sym = ineq_constraints_sym[0]["df_constraint"]
 
         df_c_none_res = df_c_none(self.optimiser_none.coilset._opt_currents)
+        df_c_part_res = df_c_part(self.optimiser_partial.coilset._opt_currents)
         df_c_sym_res = df_c_sym(self.optimiser_sym.coilset._opt_currents)
 
         # none sym. should have an f_c res shape of 2 (as there are two coils)
@@ -307,9 +301,10 @@ class TestCoilsetOptimiser:
 
         # partial sym. should have an f_c res shape of 4 (as there are four coils)
         # and can't test the df_c res shape as it will be numerical approximated
-        # but would have a shape of 3x3 (3 forces per coil, and there are 3 coils,
+        # but would have a shape of 4x3 (4 forces per coil, and there are 3 coils,
         # the two coils and the primary one from the SymmetricCircuit
         assert f_c_part_res.shape == (4,)
+        assert df_c_part_res.shape == (4, 3)
 
         # fully sym. should have an f_c res shape of 2 (as there are two coils)
         # but df_c  a shape of 2x1 (2 forces x 1 coil (the primary one))

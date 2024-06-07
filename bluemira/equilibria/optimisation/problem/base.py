@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSetSymmetryStatus
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
@@ -213,10 +212,17 @@ class CoilsetOptimisationProblem(abc.ABC):
             f_c = f.f_constraint
             df_c = getattr(f, "df_constraint", None)
 
-            if coilset._opt_currents_symmetry_status in {
-                CoilSetSymmetryStatus.FULL,
-                CoilSetSymmetryStatus.PARTIAL,
-            }:
+            if coilset._contains_circuits:
+                # if the coilset contains circuits, we need to wrap the constraint
+                # functions (f_c) and 'expand' the current vector, which repeats
+                # the currents for each circuit in the coilset.
+                #
+                # for the derivative function (df_c), we also apply the "expand" matrix
+                # to the output of the derivative function which reduces the
+                # shape of the output to the shape of the coilset opt currents
+                # by adding (summing) the derivatives from the coils in the
+                # circuit.
+
                 # wrap the constraint function
                 @functools.wraps(f.f_constraint)
                 def wrapped_f_c(x, f=f):
@@ -224,29 +230,14 @@ class CoilsetOptimisationProblem(abc.ABC):
 
                 f_c = wrapped_f_c
 
-                # wrap the derivative function
-                if (
-                    df_c is None
-                    or coilset._opt_currents_symmetry_status
-                    is CoilSetSymmetryStatus.PARTIAL
-                ):
-                    # if partially symmetric, the derivative function
-                    # is set to None as there is no analytical solution
-                    df_c = None
-                else:
-                    # if fully symmetric, the result of the derivative
-                    # function is multiplied by the repetition matrix
-                    # (to reduce the shape to the number of current optimisable coils)
-                    # by multiplying the result with the repetition matrix
-                    # and dividing by 2 (as the values are added together)
+                if df_c is not None:
+                    # wrap the derivative function
                     @functools.wraps(f.df_constraint)
                     def wrapped_df_c(x, f=f):
                         df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
                         return df_res @ coilset._opt_currents_expand_mat
 
                     df_c = wrapped_df_c
-
-                # df_c = None
 
             d: ConstraintT = {
                 "name": f_constraint.name,
