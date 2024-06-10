@@ -230,7 +230,7 @@ def _read_json(file) -> dict[str, Any]:
     data_has_pnorm = False
     data_has_psinorm = False
     for k, value in data.items():
-        if isinstance(value, list):
+        if isinstance(value, list) and k not in {"coil_type", "coil_names"}:
             data[k] = np.asarray(value)
         data_has_pnorm |= k == "pnorm"
         data_has_psinorm |= k == "psinorm"

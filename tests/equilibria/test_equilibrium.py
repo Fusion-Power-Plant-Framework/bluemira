@@ -365,6 +365,19 @@ class TestEquilibrium:
         if grouping is CoilSet:
             assert len(coil.control) == 0
 
+    def test_eq_coilnames(self):
+        testfile = Path(
+            get_bluemira_path("equilibria/test_data", subfolder="tests"),
+            "DN-DEMO_eqref_withCoilNames.json",
+        )
+        e = Equilibrium.from_eqdsk(testfile)
+        assert e.coilset.name == [
+            *("PF_1", "PF_2", "PF_3", "PF_4", "PF_5", "PF_6"),
+            *("CS_1", "CS_2", "CS_3", "CS_4", "CS_5"),
+        ]
+        assert e.coilset.n_coils(ctype="PF") == 6
+        assert e.coilset.n_coils(ctype="CS") == 5
+
 
 class TestEqReadWrite:
     @pytest.mark.parametrize("qpsi_calcmode", [0, 1])
@@ -387,6 +400,9 @@ class TestEqReadWrite:
         eq2 = Equilibrium.from_eqdsk(new_file_path)
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
         new_file_path.unlink()
+        if file_format == "eqdsk":
+            d1.pop("coil_names")
+            d2.pop("coil_names")
         assert compare_dicts(d1, d2, almost_equal=True)
 
 
