@@ -13,6 +13,7 @@ from __future__ import annotations
 import operator
 import string
 import warnings
+from collections import Counter
 from collections.abc import Callable, Iterable
 from functools import wraps
 from importlib import import_module as imp
@@ -30,7 +31,12 @@ from matplotlib import colors
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.file import force_file_extension
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_debug,
+    bluemira_error,
+    bluemira_print,
+    bluemira_warn,
+)
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -558,6 +564,9 @@ def compare_dicts(
     def array_is_eq(val1, val2):
         return (np.asarray(val1) == np.asarray(val2)).all()
 
+    def list_eq(val1, val2):
+        return Counter(val1) == Counter(val2)
+
     if almost_equal:
         array_eq = array_almost_eq
         num_eq = num_almost_eq
@@ -569,10 +578,13 @@ def compare_dicts(
     comp_map = {
         key: (
             array_eq
-            if isinstance(val, np.ndarray | list)
+            if isinstance(val, np.ndarray)
+            or (isinstance(val, list) and is_num(next(flatten_iterable(val))))
             else (
                 dict_eq
                 if isinstance(val, dict)
+                else list_eq
+                if isinstance(val, list)
                 else num_eq
                 if is_num(val)
                 else operator.eq
@@ -614,7 +626,7 @@ def compare_dicts(
     else:
         result += "==========================================================="
         if verbose:
-            print(result)  # noqa: T201
+            bluemira_error(result)
     return the_same
 
 

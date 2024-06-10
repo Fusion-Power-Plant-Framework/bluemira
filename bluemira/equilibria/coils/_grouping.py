@@ -17,11 +17,6 @@ from dataclasses import dataclass
 from operator import attrgetter
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from matplotlib.axes import Axes
-
-    from bluemira.equilibria.file import EQDSKInterface
-
 import numpy as np
 
 from bluemira.base.constants import CoilType
@@ -38,6 +33,12 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.axes import Axes
+
+    from bluemira.equilibria.file import EQDSKInterface
 
 
 def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
@@ -296,7 +297,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                     current=0,
                     dx=0,
                     dz=0,
-                    ctype="DUM",
+                    ctype=CoilType.DUM,
                     j_max=0,
                     b_max=0,
                 )
@@ -308,10 +309,21 @@ class CoilGroup(CoilGroupFieldsMixin):
                 "Please replace with an appropriate coilset."
             )
             return cls(*coils)
+
+        def _get_val(lst: npt.ArrayLike | None, idx: int, default=None):
+            if lst is None:
+                return None
+            try:
+                return lst[idx]
+            except IndexError:
+                return default
+
         for i in range(eqdsk.ncoil):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]
-            if abs(eqdsk.Ic[i]) < I_MIN:
+            cn = _get_val(eqdsk.coil_names, i)
+            ct = None if (v := _get_val(eqdsk.coil_types, i)) is None else CoilType(v)
+            if ct is CoilType.NONE or (abs(eqdsk.Ic[i]) < I_MIN and ct is None):
                 # Some eqdsk formats (e.g., CREATE) contain 'quasi-coils'
                 # with currents very close to 0.
                 # Catch these cases and make sure current is set to zero.
@@ -322,10 +334,11 @@ class CoilGroup(CoilGroupFieldsMixin):
                         current=0,
                         dx=dx,
                         dz=dz,
-                        ctype="NONE",
+                        ctype=ct or CoilType.NONE,
+                        name=cn,
                     )
                 )
-            elif dx != dz:  # Rough and ready
+            elif ct is CoilType.CS or (dx != dz and ct is None):  # Rough and ready
                 cscoils.append(
                     Coil(
                         eqdsk.xc[i],
@@ -333,7 +346,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                         current=eqdsk.Ic[i],
                         dx=dx,
                         dz=dz,
-                        ctype="CS",
+                        ctype=CoilType.CS,
+                        name=cn,
                     )
                 )
             else:
@@ -343,7 +357,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                     current=eqdsk.Ic[i],
                     dx=dx,
                     dz=dz,
-                    ctype="PF",
+                    ctype=ct or CoilType.PF,
+                    name=cn,
                 )
                 coil.fix_size()  # Oh ja
                 pfcoils.append(coil)
