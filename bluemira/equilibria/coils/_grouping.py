@@ -1156,7 +1156,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self, position_coil_names: list[str] | None = None, current_scale: float = 1.0
     ) -> CoilSetOptimisationState:
         """
-        Get the state of the CoilSet for optimisation
+        Get the state of the CoilSet for optimisation.
 
         Parameters
         ----------
@@ -1186,7 +1186,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         current_scale: float = 1.0,
     ):
         """
-        Set the state of the CoilSet for optimisation.
+        Set the state of the CoilSet, post optimisation.
+
+        Used in conjunction with `get_optimisation_state`.
 
         Parameters
         ----------
@@ -1235,7 +1237,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Get a list of coils that can be current optimised.
 
         If coil_names is given, only the coils with those names are returned.
-        coil_names must be a subset of `all_current_optimisable_coils`.
+        Names in coil_names must be a subset of current optimisable coils.
 
         Parameters
         ----------
@@ -1246,7 +1248,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Raises
         ------
         ValueError:
-            If a coil name is not a current optimisable coil.
+            If a name in `coil_names` in not in `all_current_optimisable_coils`.
         """
         if coil_names is None:
             return self.all_current_optimisable_coils
@@ -1322,14 +1324,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def _opt_currents(self) -> np.ndarray:
         """
-        Get the currents for the optimisable coils
+        Get the currents for the optimisable coils.
         """
         return self.current[self._opt_currents_inds]
 
     @_opt_currents.setter
     def _opt_currents(self, values: np.ndarray):
         """
-        Set the currents for the optimisable coils
+        Set the currents for the optimisable coils.
         """
         n_all_coils = self.n_coils()
 
@@ -1406,7 +1408,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]) -> None:
         """
-        Set the positions of the position optimisable coils
+        Set the positions of the position optimisable coils.
         """
         pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
         for coil_name, position in coil_position_map.items():
