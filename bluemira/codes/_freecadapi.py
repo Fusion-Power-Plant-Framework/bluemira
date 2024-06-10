@@ -1707,7 +1707,7 @@ def loft(
     solid:
         Whether or not to create a Solid
     ruled:
-        created a ruled shape
+        Create a ruled shape
 
     Returns
     -------
