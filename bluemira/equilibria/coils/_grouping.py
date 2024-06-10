@@ -322,7 +322,7 @@ class CoilGroup(CoilGroupFieldsMixin):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]
             cn = _get_val(eqdsk.coil_names, i)
-            ct = v if (v := _get_val(eqdsk.coil_types, i)) is None else CoilType(v)
+            ct = None if (v := _get_val(eqdsk.coil_types, i)) is None else CoilType(v)
             if ct is CoilType.NONE or (abs(eqdsk.Ic[i]) < I_MIN and ct is None):
                 # Some eqdsk formats (e.g., CREATE) contain 'quasi-coils'
                 # with currents very close to 0.
