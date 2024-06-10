@@ -22,7 +22,7 @@ numba-scipy==0.4.0
 numexpr==2.10.0
 numpy==1.26.4
 openmc_data==2.2.10
-packaging==24.0
+packaging==24.1
 pandas==2.2.2
 periodictable==1.7.0
 Pillow==10.3.0
