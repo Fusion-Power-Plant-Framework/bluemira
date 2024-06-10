@@ -1186,14 +1186,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         current_scale: float = 1.0,
     ):
         """
-        Set the state of the CoilSet for optimisation
+        Set the state of the CoilSet for optimisation.
 
         Parameters
         ----------
         opt_currents:
             The optimisation currents
         coil_position_map:
-            The map of coil names to positions
+            The map of coil names to positions: [x, z]
         current_scale:
             The scale of the currents
         """
@@ -1206,14 +1206,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def n_current_optimisable_coils(self) -> int:
         """
-        Get the number of all current optimisable coils
+        Get the number of all current optimisable coils.
         """
         return len(self.current_optimisable_coil_names)
 
     @property
     def current_optimisable_coil_names(self) -> list[str]:
         """
-        Get the names of all current optimisable coils
+        Get the names of all current optimisable coils.
         """
         optimisable_coil_names = [
             c.primary_coil.name if isinstance(c, Circuit) else c.name
@@ -1232,7 +1232,21 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self, coil_names: list[str] | None = None
     ) -> list[Coil]:
         """
-        Get the coils that can be current optimised.
+        Get a list of coils that can be current optimised.
+
+        If coil_names is given, only the coils with those names are returned.
+        coil_names must be a subset of `all_current_optimisable_coils`.
+
+        Parameters
+        ----------
+        coil_names:
+            The names of the coils to get.
+            If None, all current optimisable coils are returned.
+
+        Raises
+        ------
+        ValueError:
+            If a coil name is not a current optimisable coil.
         """
         if coil_names is None:
             return self.all_current_optimisable_coils
@@ -1390,7 +1404,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         x, z = [c.x for c in coils], [c.z for c in coils]
         return np.asarray(x), np.asarray(z)
 
-    def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]):
+    def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]) -> None:
         """
         Set the positions of the position optimisable coils
         """
