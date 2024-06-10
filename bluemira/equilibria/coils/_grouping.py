@@ -1224,7 +1224,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def all_current_optimisable_coils(self) -> list[Coil]:
         """
-        Get the names of all coils that can be current optimised.
+        Get a list of all coils that can be current optimised.
         """
         return [self[cn] for cn in self.current_optimisable_coil_names]
 
