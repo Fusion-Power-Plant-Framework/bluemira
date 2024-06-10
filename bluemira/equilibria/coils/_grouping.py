@@ -346,7 +346,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                         current=eqdsk.Ic[i],
                         dx=dx,
                         dz=dz,
-                        ctype=ct or CoilType.CS,
+                        ctype=CoilType.CS,
                         name=cn,
                     )
                 )
