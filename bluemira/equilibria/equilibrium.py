@@ -187,6 +187,10 @@ class MHDState:
             filename = Path(directory, filename)
 
         self.filename = filename  # Convenient
+        if data.get("coil_types") is not None:
+            data["coil_types"] = [
+                ct if isinstance(ct, str) else ct.name for ct in data["coil_types"]
+            ]
         eqdsk = EQDSKInterface(**data)
         eqdsk.write(filename.as_posix(), file_format=filetype, **kwargs)
 
@@ -594,6 +598,8 @@ class Breakdown(CoilSetMHDState):
             "Bz": self.Bz(),
             "Bp": self.Bp(),
             "ncoil": self.coilset.n_coils(),
+            "coil_names": self.coilset.name,
+            "coil_types": self.coilset.ctype,
             "xc": xc,
             "zc": zc,
             "dxc": dxc,
@@ -974,6 +980,8 @@ class Equilibrium(CoilSetMHDState):
             "xbdry": lcfs.x,
             "zbdry": lcfs.z,
             "ncoil": self.coilset.n_coils(),
+            "coil_names": self.coilset.name,
+            "coil_types": self.coilset.ctype,
             "xc": x_c,
             "zc": z_c,
             "dxc": dxc,
