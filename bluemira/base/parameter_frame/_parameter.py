@@ -119,21 +119,21 @@ class Parameter(Generic[ParameterValueType]):
         """String repr of class instance."""
         return f"<{type(self).__name__}({self.name}={self.value} {self.unit})>"
 
-    def __eq__(self, __o: object) -> bool:
+    def __eq__(self, o: object, /) -> bool:
         """
         Check if this parameter is equal to another.
 
         Parameters are equal if their names and values (with matching
         units) are equal.
         """
-        if not isinstance(__o, Parameter):
+        if not isinstance(o, Parameter):
             return NotImplemented
         try:
-            o_value_with_correct_unit = raw_uc(__o.value, __o.unit, self.unit)
+            o_value_with_correct_unit = raw_uc(o.value, o.unit, self.unit)
         except pint.DimensionalityError:
             # incompatible units
             return False
-        return (self.name == __o.name) and (self.value == o_value_with_correct_unit)
+        return (self.name == o.name) and (self.value == o_value_with_correct_unit)
 
     def __hash__(self) -> int:
         return hash((self._name, self._description, self._long_name))
