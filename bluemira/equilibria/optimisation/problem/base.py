@@ -240,7 +240,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                     df_c = wrapped_df_c
 
             d: ConstraintT = {
-                "name": f_constraint.name,
+                "name": f.name,
                 "f_constraint": f_c,
                 "df_constraint": df_c,
                 "tolerance": constraint.tolerance,
