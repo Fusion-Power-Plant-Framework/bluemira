@@ -49,7 +49,7 @@ sphinxcontrib-serializinghtml==1.1.10
 sqlalchemy==2.0.30
 toml==0.10.2
 tomli==2.0.1
-typing_extensions==4.12.1
+typing_extensions==4.12.2
 urllib3==2.2.1
 virtualenv==20.26.2
 zipp==3.19.2
