@@ -1000,7 +1000,8 @@ def loft_shape(
     solid:
         Whether or not to create a Solid
     ruled:
-        Create a ruled shape
+        Create a ruled shape, see https://en.wikipedia.org/wiki/Ruled_surface
+        for explanation.
 
     Returns
     -------
