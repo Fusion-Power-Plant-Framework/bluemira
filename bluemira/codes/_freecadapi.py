@@ -1694,6 +1694,32 @@ def sweep_shape(
     return solid_result.Shells[0]
 
 
+def loft(
+    profiles: Iterable[apiWire], *, solid: bool = False, ruled: bool = False
+) -> apiShell | apiSolid:
+    """
+    Loft between a set of profiles.
+
+    Parameters
+    ----------
+    profiles:
+        Profile(s) to loft between
+    solid:
+        Whether or not to create a Solid
+    ruled:
+        Create a ruled shape
+
+    Returns
+    -------
+    Lofted geometry object
+    """
+    lofted_shape = Part.makeLoft(profiles, solid, ruled)
+
+    if solid:
+        return lofted_shape.Solids[0]
+    return lofted_shape.Shells[0]
+
+
 def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> apiWire:
     """
     Fillet or chamfer a two-dimensional wire, returning a new wire
