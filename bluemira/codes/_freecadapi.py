@@ -1266,7 +1266,9 @@ class Document:
         if not hasattr(FreeCADGui, "subgraphFromObject"):
             FreeCADGui.setupWithoutGUI()
 
+        self._old_doc = FreeCAD.ActiveDocument
         self.doc = FreeCAD.newDocument()
+        FreeCAD.setActiveDocument(self.doc.Name)
         return self
 
     def setup(
@@ -1316,6 +1318,7 @@ class Document:
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         FreeCAD.closeDocument(self.doc.Name)
+        FreeCAD.setActiveDocument(self._old_doc.Name)
 
 
 # ======================================================================================
