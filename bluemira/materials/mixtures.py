@@ -227,12 +227,12 @@ class HomogenisedMixture:
         return self._calc_homogenised_property("rho", temperature, mix_type=mix_type)
 
     def erho(
-            self,
-            temperature: float | None = None,
-            mix_type: MixtureConnectionType = MixtureConnectionType.PARALLEL,
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.PARALLEL,
     ) -> float:
         """
-        Density.
+        Electrical resistivity.
 
         Parameters
         ----------
@@ -241,7 +241,7 @@ class HomogenisedMixture:
 
         Returns
         -------
-        The density of the material at the given temperature.
+        The electrical resistivity of the material at the given temperature.
         """
         return self._calc_homogenised_property("erho", temperature, mix_type=mix_type)
 
