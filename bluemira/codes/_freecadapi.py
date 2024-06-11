@@ -1259,53 +1259,63 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # FreeCAD Configuration
 # ======================================================================================
-def _setup_document(
-    parts: Iterable[apiShape],
-    labels: Iterable[str] | None = None,
-    *,
-    rotate: bool = False,
-) -> Iterator[Part.Feature]:
-    """
-    Setup FreeCAD document.
+class Document:
+    """Context manager to wrap freecad document creation"""
 
-    Converts shapes to FreeCAD Part.Features to enable saving and viewing
+    def __enter__(self):
+        if not hasattr(FreeCADGui, "subgraphFromObject"):
+            FreeCADGui.setupWithoutGUI()
 
-    Raises
-    ------
-    ValueError
-        Number of objects not equal to number of labels
+        self.doc = FreeCAD.newDocument()
+        return self
 
-    Yields
-    ------
-    :
-        Each document object
+    def setup(
+        self,
+        parts: Iterable[apiShape],
+        labels: Iterable[str] | None = None,
+        *,
+        rotate: bool = False,
+    ) -> Iterator[Part.Feature]:
+        """
+        Setup FreeCAD document.
 
-    Notes
-    -----
-    TODO the rotate flag should be removed. We should fix it in the camera of the viewer
-    """
-    if not hasattr(FreeCADGui, "subgraphFromObject"):
-        FreeCADGui.setupWithoutGUI()
+        Converts shapes to FreeCAD Part.Features to enable saving and viewing
 
-    doc = FreeCAD.newDocument()
+        Raises
+        ------
+        ValueError
+            Number of objects not equal to number of labels
 
-    if labels is None:
-        # Empty string is the default argument for addObject
-        labels = [""] * len(parts)
+        Yields
+        ------
+        :
+            Each object in document
 
-    elif len(labels) != len(parts):
-        raise ValueError(
-            f"Number of labels ({len(labels)}) != number of objects ({len(parts)})"
-        )
+        Notes
+        -----
+        TODO the rotate flag should be removed.
+             We should fix it in the camera of the viewer
+        """
+        if labels is None:
+            # Empty string is the default argument for addObject
+            labels = [""] * len(parts)
 
-    for part, label in zip(parts, labels, strict=False):
-        new_part = part.copy()
-        if rotate:
-            new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::FeaturePython", label)
-        obj.Shape = new_part
-        doc.recompute()
-        yield obj
+        elif len(labels) != len(parts):
+            raise ValueError(
+                f"Number of labels ({len(labels)}) != number of objects ({len(parts)})"
+            )
+
+        for part, label in zip(parts, labels, strict=False):
+            new_part = part.copy()
+            if rotate:
+                new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+            obj = self.doc.addObject("Part::FeaturePython", label)
+            obj.Shape = new_part
+            self.doc.recompute()
+            yield obj
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        FreeCAD.closeDocument(self.doc.Name)
 
 
 # ======================================================================================
@@ -1607,21 +1617,22 @@ def save_cad(
         for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
     })
 
-    objs = list(_setup_document(shapes, labels, rotate=False))
+    with Document() as doc:
+        objs = list(doc.setup(shapes, labels, rotate=False))
 
-    # Part is always built in mm but some formats are unitless
-    if cad_format not in CADFileType.unitless_formats():
-        _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
+        # Part is always built in mm but some formats are unitless
+        if cad_format not in CADFileType.unitless_formats():
+            _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
 
-    # Some exporters need FreeCADGui to be setup before their import,
-    # this is achieved in _setup_document
-    try:
-        cad_format.exporter(objs, filename, **kwargs)
-    except ImportError as imp_err:
-        raise FreeCADError(
-            f"Unable to save to {cad_format.value} please try through the main"
-            " FreeCAD GUI"
-        ) from imp_err
+        # Some exporters need FreeCADGui to be setup before their import,
+        # this is achieved in _setup_document
+        try:
+            cad_format.exporter(objs, filename, **kwargs)
+        except ImportError as imp_err:
+            raise FreeCADError(
+                f"Unable to save to {cad_format.value} please try through the main"
+                " FreeCAD GUI"
+            ) from imp_err
 
     if not Path(filename).exists():
         mesg = f"{filename} not created, filetype not written by FreeCAD."
@@ -2650,21 +2661,22 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for obj, option in zip(
-        _setup_document(parts, labels, rotate=True), options, strict=False
-    ):
-        subgraph = FreeCADGui.subgraphFromObject(obj)
-        _colourise(subgraph, option)
-        root.addChild(subgraph)
+    with Document() as doc:
+        for obj, option in zip(
+            doc.setup(parts, labels, rotate=True), options, strict=False
+        ):
+            subgraph = FreeCADGui.subgraphFromObject(obj)
+            _colourise(subgraph, option)
+            root.addChild(subgraph)
 
-    viewer = quarter.QuarterWidget()
-    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
-    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
-    viewer.setSceneGraph(root)
+        viewer = quarter.QuarterWidget()
+        viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+        viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+        viewer.setSceneGraph(root)
 
-    viewer.setWindowTitle("Bluemira Display")
-    viewer.show()
-    app.exec_()
+        viewer.setWindowTitle("Bluemira Display")
+        viewer.show()
+        app.exec_()
 
 
 # # =============================================================================
