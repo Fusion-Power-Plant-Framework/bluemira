@@ -1382,6 +1382,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ) -> list[Coil]:
         """
         Get the coils that can be position optimised.
+
+
+        Parameters
+        ----------
+        coil_names:
+            The names of the coils to get the positions of.
+            If None, all position optimisable coils are returned.
         """
         if coil_names is None:
             return self.all_position_optimisable_coils
@@ -1401,6 +1408,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get the positions of the position optimisable coils.
+
+        Parameters
+        ----------
+        position_coil_names:
+            The names of the coils to get the positions of.
+            If None, all position optimisable coils are returned.
         """
         coils = self.get_position_optimisable_coils(position_coil_names)
         x, z = [c.x for c in coils], [c.z for c in coils]
