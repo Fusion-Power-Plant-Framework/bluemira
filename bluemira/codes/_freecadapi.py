@@ -1424,20 +1424,20 @@ class CADFileType(enum.Enum):
 
             return FreeCADwriter
         modlist = self.module.split(".")
-        msg = "Unable to save to {} please try through the main FreeCAD GUI"
-        if len(modlist) > 1:
-            try:
-                export_func = getattr(
+        try:
+            export_func = (
+                getattr(
                     __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
                     modlist[-1],
                 ).export
-            except AttributeError:
-                raise FreeCADError(msg.format(self.value)) from None
-        else:
-            try:
-                export_func = __import__(self.module).export
-            except AttributeError:
-                raise FreeCADError(msg.format(self.value)) from None
+                if len(modlist) > 1
+                else __import__(self.module).export
+            )
+        except AttributeError:
+            raise FreeCADError(
+                f"Unable to save to {self.value} "
+                "please try through the main FreeCAD GUI"
+            ) from None
         if self in self.manual_mesh_formats():
             return meshed_exporter(self, export_func)
         if self is self.WEBGL:
