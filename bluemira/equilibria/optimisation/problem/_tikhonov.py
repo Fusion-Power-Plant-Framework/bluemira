@@ -116,8 +116,9 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
+            currents_expand_mat=self.eq.coilset._opt_currents_expand_mat,
         )
-        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=getattr(objective, "df_objective", None),
@@ -186,21 +187,23 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         self.targets(self.eq, I_not_dI=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
+        c_cs = self.eq.coilset.get_control_coils()
+
         # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
+        current_adjustment = tikhonov(
+            a_mat, b_vec, self.gamma, currents_expand_mat=c_cs._opt_currents_expand_mat
+        )
 
-        # Update parameterisation (coilset).
-        opt_currents = self.coilset.get_control_coils().current + current_adjustment
-        self.coilset.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
-
-        currents = self.coilset.current
+        # Update parametrisation (coilset).
+        opt_currents = c_cs._opt_currents + current_adjustment
+        c_cs.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
 
         f_x = floatify(
-            np.linalg.norm(a_mat @ currents - b_vec)
-            + np.linalg.norm(self.gamma * currents)
+            np.linalg.norm(a_mat @ c_cs.current - b_vec)
+            + np.linalg.norm(self.gamma * c_cs.current)
         )
         return CoilsetOptimiserResult(
-            coilset=self.coilset,
+            coilset=c_cs,
             f_x=f_x,
             n_evals=0,
             history=[],

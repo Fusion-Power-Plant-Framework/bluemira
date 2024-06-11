@@ -1080,7 +1080,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             self._control_ind = []
         self._control = [names[c] for c in self._control_ind]
 
-    def get_control_coils(self):
+    def get_control_coils(self) -> CoilSet:
         """Get control coils"""
         coils = []
         for c in self._coils:
@@ -1156,7 +1156,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self, position_coil_names: list[str] | None = None, current_scale: float = 1.0
     ) -> CoilSetOptimisationState:
         """
-        Get the state of the CoilSet for optimisation
+        Get the state of the CoilSet for optimisation.
 
         Parameters
         ----------
@@ -1172,7 +1172,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         cc = self.get_control_coils()
         xs, zs = cc._get_opt_positions(position_coil_names)
-        currents = cc.current / current_scale
+        currents = cc._opt_currents / current_scale
         return CoilSetOptimisationState(
             currents=currents,
             xs=xs,
@@ -1186,22 +1186,171 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         current_scale: float = 1.0,
     ):
         """
-        Set the state of the CoilSet for optimisation
+        Set the state of the CoilSet, post optimisation.
+
+        Used in conjunction with `get_optimisation_state`.
 
         Parameters
         ----------
         opt_currents:
             The optimisation currents
         coil_position_map:
-            The map of coil names to positions
+            The map of coil names to positions: [x, z]
         current_scale:
             The scale of the currents
         """
         cc = self.get_control_coils()
         if opt_currents is not None:
-            cc.current = opt_currents * current_scale
+            cc._opt_currents = opt_currents * current_scale
         if coil_position_map is not None:
             cc._set_opt_positions(coil_position_map)
+
+    @property
+    def n_current_optimisable_coils(self) -> int:
+        """
+        Get the number of all current optimisable coils.
+        """
+        return len(self.current_optimisable_coil_names)
+
+    @property
+    def current_optimisable_coil_names(self) -> list[str]:
+        """
+        Get the names of all current optimisable coils.
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return [*flatten_iterable(optimisable_coil_names)]
+
+    @property
+    def all_current_optimisable_coils(self) -> list[Coil]:
+        """
+        Get a list of all coils that can be current optimised.
+        """
+        return [self[cn] for cn in self.current_optimisable_coil_names]
+
+    def get_current_optimisable_coils(
+        self, coil_names: list[str] | None = None
+    ) -> list[Coil]:
+        """
+        Get a list of coils that can be current optimised.
+
+        If coil_names is given, only the coils with those names are returned.
+        Names in coil_names must be a subset of current optimisable coils.
+
+        Parameters
+        ----------
+        coil_names:
+            The names of the coils to get.
+            If None, all current optimisable coils are returned.
+
+        Raises
+        ------
+        ValueError:
+            If a name in `coil_names` in not in `all_current_optimisable_coils`.
+        """
+        if coil_names is None:
+            return self.all_current_optimisable_coils
+
+        opt_coils_map = {c.name: c for c in self.all_current_optimisable_coils}
+        rtn = []
+        for cn in coil_names:
+            c = opt_coils_map.get(cn)
+            if c is not None:
+                rtn.append(c)
+            else:
+                raise ValueError(f"Coil {cn} is not a current optimisable coil")
+        return rtn
+
+    @property
+    def _opt_currents_inds(self) -> list[int]:
+        """
+        Get the indices of the coils that can be optimised.
+
+        These indices are used to extract the optimisable currents from the CoilSet
+        and are based on the index of the coils in the name array.
+        """
+        return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
+
+    @property
+    def _contains_circuits(self) -> bool:
+        """
+        A simple check to see if the CoilSet contains any Circuits.
+        """
+        return any(isinstance(c, Circuit) for c in self._coils)
+
+    @property
+    def _opt_currents_expand_mat(self) -> np.ndarray:
+        """
+        Get the optimisation currents expansion matrix.
+
+        This matrix is used to convert the optimisable currents to the full set of
+        currents in the CoilSet.
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+        n_distinct_coils_and_groupings = len(cc._coils)
+
+        if not cc._contains_circuits:
+            return np.eye(n_all_coils)
+
+        # this should be true as, at the top level, the number
+        # of coil or group objects should be the same as the no
+        # of optimisable coils
+        if n_opt_coils != n_distinct_coils_and_groupings:
+            raise ValueError(
+                "The number of optimisable coils does not match the number "
+                "of distinct coils and groupings. Something's gone wrong."
+            )
+
+        # you are putting 1's in the col. corresponding
+        # to all coils in the same Circuit
+        mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row = 0
+        for i_col, c in enumerate(cc._coils):
+            if isinstance(c, Circuit):
+                n_coils_in_group = c.n_coils()
+                for n in range(n_coils_in_group):
+                    mat[i_row + n, i_col] = 1
+                i_row += n
+            else:
+                mat[i_row, i_col] = 1
+            i_row += 1
+        return mat
+
+    @property
+    def _opt_currents(self) -> np.ndarray:
+        """
+        Get the currents for the optimisable coils.
+        """
+        return self.current[self._opt_currents_inds]
+
+    @_opt_currents.setter
+    def _opt_currents(self, values: np.ndarray):
+        """
+        Set the currents for the optimisable coils.
+        """
+        n_all_coils = self.n_coils()
+
+        n_vals = values.shape[0]
+        n_curr_opt_coils = self.n_current_optimisable_coils
+
+        if n_vals == 1:
+            c = values[0]
+            self.current = np.ones(n_all_coils) * c
+            return
+
+        if n_vals != n_curr_opt_coils:
+            raise ValueError(
+                f"The number of current elements {n_vals} "
+                "does not match the number of "
+                f"optimisable currents: {n_curr_opt_coils}"
+            )
+
+        self.current = self._opt_currents_expand_mat @ values
 
     @property
     def n_position_optimisable_coils(self) -> int:
@@ -1233,6 +1382,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ) -> list[Coil]:
         """
         Get the coils that can be position optimised.
+
+
+        Parameters
+        ----------
+        coil_names:
+            The names of the coils to get the positions of.
+            If None, all position optimisable coils are returned.
         """
         if coil_names is None:
             return self.all_position_optimisable_coils
@@ -1252,14 +1408,20 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get the positions of the position optimisable coils.
+
+        Parameters
+        ----------
+        position_coil_names:
+            The names of the coils to get the positions of.
+            If None, all position optimisable coils are returned.
         """
         coils = self.get_position_optimisable_coils(position_coil_names)
         x, z = [c.x for c in coils], [c.z for c in coils]
         return np.asarray(x), np.asarray(z)
 
-    def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]):
+    def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]) -> None:
         """
-        Set the positions of the position optimisable coils
+        Set the positions of the position optimisable coils.
         """
         pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
         for coil_name, position in coil_position_map.items():
