@@ -95,6 +95,8 @@ class MaterialProperty:
             The temperature [K].
         pressure:
             The optional pressure [Pa].
+        B:
+            The magnetic flux density [T].
         esp_vol:
             The optional cell volume [m^3].
 

@@ -112,7 +112,7 @@ class HomogenisedMixture:
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
     ) -> float:
         """
-        Calculate an mass-fraction-averaged property for the homogenised mixture.
+        Calculate a mass-fraction-averaged property for the homogenised mixture.
         """
         temperature = self.temperature if temperature is None else temperature
         warn = []
@@ -133,6 +133,9 @@ class HomogenisedMixture:
         if mix_type is MixtureConnectionType.SERIES:
             f = np.array(fractions) / sum(fractions)  # Normalised
             value = np.dot(values, f)
+        elif mix_type is MixtureConnectionType.PARALLEL:
+            f = np.array(fractions) / sum(fractions)
+            value = 1 / np.dot(np.reciprocal(values), f)
         else:
             raise NotImplementedError(f"{mix_type=} not implemented")
 
@@ -222,6 +225,25 @@ class HomogenisedMixture:
         The density of the material at the given temperature.
         """
         return self._calc_homogenised_property("rho", temperature, mix_type=mix_type)
+
+    def erho(
+        self,
+        temperature: float | None = None,
+        mix_type: MixtureConnectionType = MixtureConnectionType.PARALLEL,
+    ) -> float:
+        """
+        Electrical resistivity.
+
+        Parameters
+        ----------
+        temperature:
+            The optional temperature [K].
+
+        Returns
+        -------
+        The electrical resistivity of the material at the given temperature.
+        """
+        return self._calc_homogenised_property("erho", temperature, mix_type=mix_type)
 
     def Sy(  # noqa: N802
         self,
