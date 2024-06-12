@@ -715,7 +715,7 @@ class TestSavingCAD:
 
 
 class TestImportCAD:
-    def test_save_and_import(self, tmp_path):
+    def test_save_and_import_wire(self, tmp_path):
         obj = make_circle(5, axis=(1, 1, 1))
         file = tmp_path / "file.stp"
         save_cad(obj, filename=file, cad_format="stp")
@@ -723,6 +723,17 @@ class TestImportCAD:
         obj2 = import_cad(file)
 
         assert obj2.length == pytest.approx(obj.length)
+
+    def test_save_and_import_shell(self, tmp_path):
+        obj = extrude_shape(make_circle(5, axis=(1, 1, 1)), (0, 0, 1))
+        file = tmp_path / "file.stp"
+        save_cad(obj, filename=file, cad_format="stp")
+
+        obj2 = import_cad(file)
+
+        assert obj2.length == pytest.approx(obj.length)
+        assert obj2.area == pytest.approx(obj.area)
+        assert obj2.volume == pytest.approx(obj.volume)
 
 
 class TestMirrorShape:
