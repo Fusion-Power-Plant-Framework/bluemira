@@ -1597,7 +1597,7 @@ def save_as_STP(
 
 def save_cad(
     shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
-    filename: str,
+    filename: str | Path,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
     **kwargs,
@@ -1625,11 +1625,24 @@ def save_cad(
 
     cadapi.save_cad(
         [s.shape for s in shapes],
-        filename,
+        Path(filename).as_posix(),
         cad_format=cad_format,
         labels=names,
         **kwargs,
     )
+
+
+def import_cad(
+    filename: str | Path, cad_format: str | cadapi.CADFileType | None = None, **kwargs
+) -> BluemiraGeo | list[BluemiraGeo]:
+    """Import CAD from file"""
+    objs = [
+        convert(s[0], label=s[1])
+        for s in cadapi.import_cad(filename, cad_format, **kwargs)
+    ]
+    if len(objs) == 1:
+        return objs[0]
+    return objs
 
 
 # ======================================================================================
