@@ -1527,7 +1527,10 @@ class ImporterProtocol(Protocol):
 
 
 def import_cad(
-    file: str | Path, filetype: CADFileType | str | None = None, **kwargs
+    file: str | Path,
+    filetype: CADFileType | str | None = None,
+    unit_scale: str = "m",
+    **kwargs,
 ) -> list[tuple[apiShape, str]]:
     """Import CAD objects from file"""
     file = Path(file)
@@ -1536,6 +1539,8 @@ def import_cad(
         if filetype is None
         else CADFileType(filetype)
     )
+    scale = raw_uc(1, "mm", unit_scale)
+
     with Document() as doc:
         filetype.importer(file.as_posix(), doc.doc.Name, **kwargs)
         if filetype in CADFileType.mesh_import_formats():
@@ -1553,8 +1558,10 @@ def import_cad(
                 Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
                 objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
                 if len(objs) > 0:
-                    return objs
+                    return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
             bluemira_warn("No objects found in import")
+        if filetype not in CADFileType.unitless_formats():
+            return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
         return objs
 
 

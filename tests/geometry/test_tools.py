@@ -722,7 +722,7 @@ class TestImportCAD:
 
         obj2 = import_cad(file)
 
-        assert obj.length == obj2.length
+        assert obj2.length == pytest.approx(obj.length)
 
 
 class TestMirrorShape:
