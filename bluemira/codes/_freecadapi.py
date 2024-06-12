@@ -14,7 +14,7 @@ import enum
 import math
 import os
 import sys
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
@@ -23,6 +23,7 @@ from typing import (
     TYPE_CHECKING,
     Protocol,
 )
+from unittest import mock
 
 import FreeCAD
 import BOPTools
@@ -1267,7 +1268,7 @@ class Document:
             FreeCADGui.setupWithoutGUI()
 
         self._old_doc = FreeCAD.ActiveDocument
-        self.doc = FreeCAD.newDocument()
+        self.doc = FreeCAD.newDocument("Bluemira_FreeCAD_wrapper")
         FreeCAD.setActiveDocument(self.doc.Name)
         return self
 
@@ -1318,7 +1319,8 @@ class Document:
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         FreeCAD.closeDocument(self.doc.Name)
-        FreeCAD.setActiveDocument(self._old_doc.Name)
+        if self._old_doc is not None:
+            FreeCAD.setActiveDocument(self._old_doc.Name)
 
 
 # ======================================================================================
@@ -1344,7 +1346,7 @@ class CADFileType(enum.Enum):
     BINMESH = ("bms", "Mesh")
     BREP = ("brep", "Part")
     BREP_2 = ("brp", "Part")
-    CSG = ("csg", "exportCSG")
+    CSG = ("csg", "exportCSG", "importCSG")
     DAE = ("dae", "importDAE")
     DAT = ("dat", "Fem")
     FREECAD = ("FCStd", None)
@@ -1402,13 +1404,16 @@ class CADFileType(enum.Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _, module: str | None = ""):
-        self.module = module
+    def __init__(
+        self, _, export_module: str | None = "", import_module: str | None = None
+    ):
+        self.export_module = export_module
+        self.import_module = import_module or export_module
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that don't need to be converted because they are unitless"""
-        return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])  # noqa: DOC201
+        return (cls.OBJ_WAVE, *[form for form in cls if form.export_module == "Mesh"])  # noqa: DOC201
 
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
@@ -1420,6 +1425,24 @@ class CADFileType(enum.Enum):
             cls.SIMPLE_MODEL,
         )
 
+    @classmethod
+    def not_importable_formats(cls) -> tuple[CADFileType, ...]:
+        return ()
+
+    @classmethod
+    def mesh_import_formats(cls) -> tuple[CADFileType, ...]:
+        return (
+            cls.ASCII_STEREO_MESH,
+            cls.BINMESH,
+            cls.INVENTOR_V2_1,
+            cls.OBJ,
+            cls.OBJ_WAVE,
+            cls.OFF,
+            cls.PLY_STANFORD,
+            cls.SIMPLE_MODEL,
+            cls.STL,
+        )
+
     @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
         """Get exporter module for each filetype
@@ -1429,14 +1452,14 @@ class CADFileType(enum.Enum):
         FreeCADError
             Unable to save file type
         """
-        if self.module is None:
+        if self.export_module is None:
             # Assume CADFileType.FREECAD
             def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
                 doc = objs[0].Document
                 doc.saveAs(filename)
 
             return FreeCADwriter
-        modlist = self.module.split(".")
+        modlist = self.export_module.split(".")
         try:
             export_func = (
                 getattr(
@@ -1444,7 +1467,7 @@ class CADFileType(enum.Enum):
                     modlist[-1],
                 ).export
                 if len(modlist) > 1
-                else __import__(self.module).export
+                else __import__(self.export_module).export
             )
         except AttributeError:
             raise FreeCADError(
@@ -1457,15 +1480,85 @@ class CADFileType(enum.Enum):
             return webgl_export(export_func)
         return export_func
 
+    @DynamicClassAttribute
+    def importer(self) -> ImporterProtocol:
+        """Get importer module for each filetype"""
+        if self.import_module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADreader(filename, document, **kwargs):  # noqa: ARG001
+                FreeCAD.getDocument(document).mergeProject(filename)
+
+            return FreeCADreader
+        if self in {self.ADDITIVE_MANUFACTURING, self.WEBGL, self.JSON}:
+            raise NotImplementedError(f"{self.name} import not implemented in FreeCAD")
+        modlist = self.import_module.split(".")
+        msg = "Unable to import from {} please try through the main FreeCAD GUI"
+        try:
+            read = (
+                getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).insert
+                if len(modlist) > 1
+                else __import__(self.import_module).insert
+            )
+        except AttributeError:
+            raise FreeCADError(msg.format(self.value)) from None
+
+        if self is CADFileType.STEP_ZIP:
+            read = stepz_import(read)
+        return read
+
 
 class ExporterProtocol(Protocol):
     """Typing for CAD exporter"""
 
     def __call__(self, objs: list[Part.Feature], filename: str, **kwargs):
         """Export CAD protocol"""
+        ...
 
 
-def webgl_export(export_func: Callable[[Part.Feature, str], None]) -> ExporterProtocol:
+class ImporterProtocol(Protocol):
+    """Typing for CAD importer"""
+
+    def __call__(self, filename: str, document: str, **kwargs):
+        """Import CAD protocol"""
+        ...
+
+
+def import_cad(
+    file: str | Path, filetype: CADFileType | str | None = None, **kwargs
+) -> list[tuple[apiShape, str]]:
+    """Import CAD objects from file"""
+    file = Path(file)
+    filetype = (
+        CADFileType(file.suffix.strip("."))
+        if filetype is None
+        else CADFileType(filetype)
+    )
+    with Document() as doc:
+        filetype.importer(file.as_posix(), doc.doc.Name, **kwargs)
+        if filetype in CADFileType.mesh_import_formats():
+            raise NotImplementedError("Mesh CAD formats not implemented")
+        objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
+        if len(objs) == 0:
+            if filetype in {
+                CADFileType.STEP,
+                CADFileType.STEP_2,
+                CADFileType.BREP,
+                CADFileType.BREP_2,
+                CADFileType.IGES,
+                CADFileType.IGES_2,
+            }:
+                Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
+                objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
+                if len(objs) > 0:
+                    return objs
+            bluemira_warn("No objects found in import")
+        return objs
+
+
+def webgl_export(export_func: ExporterProtocol) -> ExporterProtocol:
     """Webgl exporter for offscreen rendering"""
     # Default camera in freecad gui found with
     # Gui.ActiveDocument.ActiveView.getCamera()
@@ -1485,8 +1578,19 @@ def webgl_export(export_func: Callable[[Part.Feature, str], None]) -> ExporterPr
     return wrapper
 
 
+def stepz_import(import_func: ImporterProtocol) -> ImporterProtocol:
+    """Step z importer "needs" more FreeCADGui so we're patching it out"""
+
+    @wraps(import_func)
+    def wrapper(filename: str, document: str, **kwargs):
+        with mock.patch("stepZ.FreeCADGui.SendMsgToActiveView", create=True):
+            import_func(filename, document, **kwargs)
+
+    return wrapper
+
+
 def meshed_exporter(
-    cad_format: CADFileType, export_func: Callable[[Part.Feature, str], None]
+    cad_format: CADFileType, export_func: ExporterProtocol
 ) -> ExporterProtocol:
     """Meshing and then exporting CAD in certain formats."""
 

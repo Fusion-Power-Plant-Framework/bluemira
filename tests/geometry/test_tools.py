@@ -39,6 +39,7 @@ from bluemira.geometry.tools import (
     fillet_wire_2D,
     find_clockwise_angle_2d,
     force_wire_to_spline,
+    import_cad,
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
@@ -711,6 +712,17 @@ class TestSavingCAD:
             assert len(lines) < 10
         else:
             assert lines == []
+
+
+class TestImportCAD:
+    def test_save_and_import(self, tmp_path):
+        obj = make_circle(5, axis=(1, 1, 1))
+        file = tmp_path / "file.stp"
+        save_cad(obj, filename=file, cad_format="stp")
+
+        obj2 = import_cad(file)
+
+        assert obj.length == obj2.length
 
 
 class TestMirrorShape:

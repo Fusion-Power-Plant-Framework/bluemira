@@ -64,6 +64,13 @@ def _freecad_save_config(
     # Seems to have little effect on anything but its an option to set
     part_step_prefs.SetInt("Unit", _Unit[unit].value)
 
+    part_iges_prefs = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/Part/IGES"
+    )
+    part_iges_prefs.SetBool("BrepMode", True)  # noqa: FBT003
+    part_iges_prefs.SetString("Author", author)
+    part_iges_prefs.SetString("Company", "Bluemira")
+
     part_gen_prefs = FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/Mod/Part/General"
     )

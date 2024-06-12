@@ -63,6 +63,11 @@ class BluemiraCompound(BluemiraGeo):
         bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
         bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
         bm_wires = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
+        if len(bm_wires) == 0:
+            bm_wires = [
+                BluemiraWire(wire)
+                for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
+            ]
 
         return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label)
 
