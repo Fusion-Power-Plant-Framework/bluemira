@@ -1633,13 +1633,17 @@ def save_cad(
 
 
 def import_cad(
-    filename: str | Path, cad_format: str | cadapi.CADFileType | None = None, **kwargs
+    filename: str | Path,
+    cad_format: str | cadapi.CADFileType | None = None,
+    unit_scale: str = "m",
+    **kwargs,
 ) -> BluemiraGeo | list[BluemiraGeo]:
     """Import CAD from file"""
     objs = [
         convert(s[0], label=s[1])
-        for s in cadapi.import_cad(filename, cad_format, **kwargs)
+        for s in cadapi.import_cad(filename, cad_format, unit_scale, **kwargs)
     ]
+
     if len(objs) == 1:
         return objs[0]
     return objs
