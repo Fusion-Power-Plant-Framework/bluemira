@@ -106,6 +106,26 @@ class TestCoreRadiation:
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
+    def test_core_electron_density_temperature_profile(self):
+        rho_core = self.profiles.collect_rho_core_values()
+        ne_core, te_core, psi_n = (
+            self.profiles.core_electron_density_temperature_profile(rho_core)
+        )
+
+        assert len(ne_core) == len(rho_core)
+        assert len(te_core) == len(rho_core)
+        assert len(psi_n) == len(rho_core)
+
+        # Ensure values are within expected ranges
+        assert np.all(ne_core >= self.params["n_e_sep"]["value"])
+        assert np.all(te_core >= self.params["T_e_sep"]["value"])
+        assert np.all(ne_core <= self.params["n_e_0"]["value"])
+        assert np.all(te_core <= self.params["T_e_0"]["value"])
+
+        # Ensure the density and temperature are decreasing towards the edge
+        assert ne_core[0] > ne_core[-1]
+        assert te_core[0] > te_core[-1]
+
     def test_calculate_mp_radiation_profile(self):
         self.source.core_rad.calculate_mp_radiation_profile()
         rad_tot = np.sum(np.array(self.source.core_rad.rad_mp, dtype=object), axis=0)
