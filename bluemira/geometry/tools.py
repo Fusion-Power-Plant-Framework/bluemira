@@ -366,6 +366,70 @@ def make_bspline(
     )
 
 
+def make_bsplinesurface(
+    poles: list | np.ndarray,
+    mults_u: list | np.ndarray,
+    mults_v: list | np.ndarray,
+    knot_vector_u: list | np.ndarray,
+    knot_vector_v: list | np.ndarray,
+    degree_u: int,
+    degree_v: int,
+    weights: list | np.ndarray,
+    *,
+    periodic: bool,
+    check_rational: bool,
+    label: str = "",
+) -> BluemiraWire:
+    """
+    Builds a B-SplineSurface by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles:
+        Array of poles (control points).
+    mults_u:
+        list of integers for the u-multiplicity
+    mults_v:
+        list of integers for the u-multiplicity
+    knot_vector_u:
+        list of u-knots
+    knot_vector_v:
+        list of v-knots
+    degree_u:
+        degree of NURBS in u-direction
+    degree_v:
+        degree of NURBS in v-direction
+    weights:
+        point weights.
+    periodic:
+        Whether or not the spline is periodic (same curvature at start and end points)
+    check_rational:
+        Whether or not to check if the BSpline is rational (not sure)
+
+    Returns
+    -------
+    A FreeCAD solid that contours the bsplinesurface
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    """
+    return convert(
+        cadapi.make_bsplinesurface(
+            poles,
+            mults_v,
+            mults_u,
+            knot_vector_u,
+            knot_vector_v,
+            degree_u=degree_u,
+            degree_v=degree_v,
+            weights=weights,
+            periodic=periodic,
+            check_rational=check_rational,
+        )
+    )
+
+
 def _make_polygon_fallback(
     points,
     label="",
@@ -414,7 +478,10 @@ def interpolate_bspline(
     points = Coordinates(points)
     return BluemiraWire(
         cadapi.interpolate_bspline(
-            points.T, closed=closed, start_tangent=start_tangent, end_tangent=end_tangent
+            points.T,
+            closed=closed,
+            start_tangent=start_tangent,
+            end_tangent=end_tangent,
         ),
         label=label,
     )
@@ -714,7 +781,8 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire),
+        label=label,
     )
 
 
@@ -1029,7 +1097,9 @@ def fillet_chamfer_decorator(*, chamfer: bool):
             edges = wire.shape.OrderedEdges
             func_name = "chamfer" if chamfer else "fillet"
             if len(edges) < 2:  # noqa: PLR2004
-                raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
+                raise GeometryError(
+                    f"Cannot {func_name} a wire with less than 2 edges!"
+                )
             if not cadapi._wire_is_planar(wire.shape):
                 raise GeometryError(f"Cannot {func_name} a non-planar wire!")
             if radius == 0:
@@ -1185,7 +1255,9 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+    convex_bm_wire: BluemiraWire,
+    plane: BluemiraPlane,
+    cut_direction: npt.NDArray[float],
 ) -> npt.NDArray[float]:
     """
     Cut a wire using a plane.
@@ -1427,11 +1499,13 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
         b = w - e * _nb_clip(_nb_dot_2D(w, e) / _nb_dot_2D(e, e), 0.0, 1.0)
         d = min(_nb_dot_2D(b, b), d)
 
-        cond = np.array([
-            point[1] >= polygon[i][1],
-            point[1] < polygon[j][1],
-            e[0] * w[1] > e[1] * w[0],
-        ])
+        cond = np.array(
+            [
+                point[1] >= polygon[i][1],
+                point[1] < polygon[j][1],
+                e[0] * w[1] > e[1] * w[0],
+            ]
+        )
         if np.all(cond) or np.all(~cond):
             sign = -sign
 
@@ -1549,7 +1623,9 @@ def raise_error_if_overlap(
         # but only by just a little. So a small negative number is included in the check.
         raise GeometryError(f"{origin_name} likely intersects {target_name} !")
     if check_overlaps > 0:
-        raise GeometryError(f"{origin_name} and {target_name} partially/fully overlaps!")
+        raise GeometryError(
+            f"{origin_name} and {target_name} partially/fully overlaps!"
+        )
 
 
 # ======================================================================================
