@@ -48,3 +48,34 @@ class EquilibriumManager:
         Get an equilibrium state from the Equilibrium manager.
         """
         return self.states.get(name, None)
+
+
+class NeutronicsManager:
+    def __init__(self, csg_reactor, results):
+        self.csg_reactor = csg_reactor
+        self.results = results
+
+    def plot(self):
+        from pathlib import Path
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from PIL import Image
+
+        fig, ax = plt.subplots()
+        ax.axis("off")
+        ax.imshow(
+            np.asarray(
+                Image.open(
+                    Path(__file__).parent.parent
+                    / "config"
+                    / "neutronics"
+                    / "plot"
+                    / "plot_1.png"
+                )
+            )
+        )
+
+        self.csg_reactor.plot_2d()
+
+        plt.show()

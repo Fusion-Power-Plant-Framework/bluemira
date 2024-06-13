@@ -77,7 +77,7 @@ from eudemo.maintenance.port_plug import (
     RadiationPortPlugBuilder,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
-from eudemo.model_managers import EquilibriumManager
+from eudemo.model_managers import EquilibriumManager, NeutronicsManager
 from eudemo.neutronics.run import run_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -107,6 +107,7 @@ class EUDEMO(Reactor):
 
     # Models
     equilibria: EquilibriumManager
+    neutronics: NeutronicsManager
 
 
 def build_reference_equilibrium(
@@ -480,13 +481,17 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    csg_model, neutronics_output = run_neutronics(
-        reactor_config.params_for("Neutronics"),
-        reactor_config.config_for("Neutronics"),
-        blanket=reactor.blanket,
-        vacuum_vessel=reactor.vacuum_vessel,
-        ivc_shapes=ivc_shapes,
+    reactor.neutronics = NeutronicsManager(
+        *run_neutronics(
+            reactor_config.params_for("Neutronics"),
+            reactor_config.config_for("Neutronics"),
+            blanket=reactor.blanket,
+            vacuum_vessel=reactor.vacuum_vessel,
+            ivc_shapes=ivc_shapes,
+        )
     )
+
+    reactor.neutronics.plot()
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
