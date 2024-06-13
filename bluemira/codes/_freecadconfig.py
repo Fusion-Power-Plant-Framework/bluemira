@@ -64,6 +64,11 @@ def _freecad_save_config(
     # Seems to have little effect on anything but its an option to set
     part_step_prefs.SetInt("Unit", _Unit[unit].value)
 
+    part_step_2_prefs = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/Import/hSTEP"
+    )
+    part_step_2_prefs.SetBool("ReadShapeCompoundMode", False)  # noqa: FBT003
+
     part_iges_prefs = FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/Mod/Part/IGES"
     )
@@ -79,3 +84,4 @@ def _freecad_save_config(
     import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
     import_prefs.SetInt("ImportMode", 0)
     import_prefs.SetBool("ExportLegacy", False)  # noqa: FBT003
+    import_prefs.SetBool("ExpandCompound", True)  # noqa: FBT003
