@@ -19,10 +19,7 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import (
-    TYPE_CHECKING,
-    Protocol,
-)
+from typing import TYPE_CHECKING, Protocol
 from unittest import mock
 
 import FreeCAD
@@ -1427,7 +1424,7 @@ class CADFileType(enum.Enum):
 
     @classmethod
     def not_importable_formats(cls) -> tuple[CADFileType, ...]:
-        return ()
+        return (cls.ADDITIVE_MANUFACTURING, cls.WEBGL, cls.JSON)
 
     @classmethod
     def mesh_import_formats(cls) -> tuple[CADFileType, ...]:
@@ -1489,7 +1486,7 @@ class CADFileType(enum.Enum):
                 FreeCAD.getDocument(document).mergeProject(filename)
 
             return FreeCADreader
-        if self in {self.ADDITIVE_MANUFACTURING, self.WEBGL, self.JSON}:
+        if self in self.not_importable_formats():
             raise NotImplementedError(f"{self.name} import not implemented in FreeCAD")
         modlist = self.import_module.split(".")
         msg = "Unable to import from {} please try through the main FreeCAD GUI"
