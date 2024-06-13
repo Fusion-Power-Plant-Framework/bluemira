@@ -61,6 +61,7 @@ apiFace = Part.Face  # noqa: N816
 apiShell = Part.Shell  # noqa: N816
 apiSolid = Part.Solid  # noqa: N816
 apiShape = Part.Shape  # noqa: N816
+apiSurface = Part.BSplineSurface  # noqa:  N816
 apiPlacement = Base.Placement  # noqa:  N816
 apiPlane = Part.Plane  # noqa: N816
 apiCompound = Part.Compound  # noqa: N816
@@ -307,6 +308,71 @@ def make_bspline(
     return apiWire(bspline.toShape())
 
 
+def make_bsplinesurface(
+    poles: np.ndarray,
+    mults_u: np.ndarray,
+    mults_v: np.ndarray,
+    knot_vector_u: np.ndarray,
+    knot_vector_v: np.ndarray,
+    degree_u: np.ndarray,
+    degree_v: np.ndarray,
+    weights: np.ndarray,
+    *,
+    periodic: bool = False,
+    check_rational: bool = False,
+) -> apiSurface:
+    """
+    Builds a B-SplineSurface by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles:
+        poles (sequence of Base.Vector).
+    mults_u:
+        list of integers for the u-multiplicity
+    mults_v:
+        list of integers for the u-multiplicity
+    knot_vector_u:
+        list of u-knots
+    knot_vector_v:
+        list of v-knots
+    degree_u:
+        degree of NURBS in u-direction
+    degree_v:
+        degree of NURBS in v-direction
+    weights:
+        pole weights (sequence of float).
+    periodic:
+        Whether or not the spline is periodic (same curvature at start and end points)
+    check_rational:
+        Whether or not to check if the BSpline is rational (not sure)
+
+    Returns
+    -------
+    A FreeCAD solid that contours the bsplinesurface
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    """
+    # Create base vectors from poles
+    poles = [[Base.Vector(p[0], p[1], p[2]) for p in row] for row in poles]
+    bsplinesurface = Part.BSplineSurface()
+    bsplinesurface.buildFromPolesMultsKnots(
+        poles,
+        mults_u,
+        mults_v,
+        knot_vector_u,
+        knot_vector_v,
+        periodic,
+        check_rational,
+        degree_u,
+        degree_v,
+        weights,
+    )
+    return bsplinesurface.toShape()
+
+
 def interpolate_bspline(
     points: list | np.ndarray,
     *,
@@ -352,7 +418,9 @@ def interpolate_bspline(
             pntslist.pop()
         else:
             # len == 2 and first == last
-            _err = "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"
+            _err = (
+                "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"
+            )
             raise InvalidCADInputsError(_err)
 
     kwargs = {}
@@ -371,10 +439,12 @@ def interpolate_bspline(
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
     except Part.OCCError as error:
-        msg = "\n".join([
-            "FreeCAD was unable to make a spline:",
-            f"{error.args[0]}",
-        ])
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make a spline:",
+                f"{error.args[0]}",
+            ]
+        )
         raise FreeCADError(msg) from error
     return wire
 
@@ -493,8 +563,12 @@ def make_ellipse(
     FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(
+        center
+    )
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(
+        center
+    )
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
@@ -569,10 +643,12 @@ def offset_wire(
             ),
         )
     except Base.FreeCADError as error:
-        msg = "\n".join([
-            "FreeCAD was unable to make an offset of wire:",
-            f"{error.args[0]['sErrMsg']}",
-        ])
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make an offset of wire:",
+                f"{error.args[0]['sErrMsg']}",
+            ]
+        )
         raise FreeCADError(msg) from None
 
     fix_wire(wire)
@@ -1310,7 +1386,9 @@ def meshed_exporter(
     """Meshing and then exporting CAD in certain formats."""
 
     @wraps(export_func)
-    def wrapper(objs: Part.Feature, filename: str, *, tessellate: float = 0.5, **kwargs):
+    def wrapper(
+        objs: Part.Feature, filename: str, *, tessellate: float = 0.5, **kwargs
+    ):
         """
         Tessellation should happen on a copied object
         """
@@ -1424,10 +1502,12 @@ def save_cad(
 
     filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
 
-    _freecad_save_config(**{
-        k: kwargs.pop(k)
-        for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
-    })
+    _freecad_save_config(
+        **{
+            k: kwargs.pop(k)
+            for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
+        }
+    )
 
     objs = list(_setup_document(shapes, labels, rotate=False))
 
@@ -1966,7 +2046,9 @@ def _wire_edges_tangent(wire):
 
     if wire.isClosed():
         # Check last and first edge tangency
-        edges_tangent.append(_edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0]))
+        edges_tangent.append(
+            _edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0])
+        )
 
     return all(edges_tangent)
 
