@@ -107,7 +107,7 @@ print(f"after optimization: conductor dx_cable = {cable.dx}")
 
 op = OperationalPoint(B=B_TF_i, T=T0)
 
-show = False
+show = True
 
 # Some iterations to optimize case vault and cable jacket consistently. This should go
 # in a kind of "optimization" or "convergence" loop.
@@ -135,7 +135,7 @@ for i in range(10):
         WPs=[wp1]
     )
 
-    if show:
+    if False:
         ax = case.plot(homogenized=False)
         ax.set_aspect("equal")
         plt.show()
@@ -143,7 +143,7 @@ for i in range(10):
     case.rearrange_conductors_in_wp(n_cond, conductor, case.R_wp_i[0],
                                           case.dx_i * 0.7, 0.05, 4)
 
-    if show:
+    if show and i == 0:
         ax = case.plot(homogenized=homogenized)
         ax.set_aspect("equal")
         plt.title("Before vault optimization")
@@ -152,7 +152,7 @@ for i in range(10):
     case.optimize_vault_radial_thickness(
         pm, t_z, T=T0, B=B_TF_i, allowable_sigma=S_Y, bounds=[1e-2, 1]
     )
-    if show:
+    if False:
         ax = case.plot(homogenized=homogenized)
         ax.set_aspect("equal")
         plt.title("After vault optimization")
