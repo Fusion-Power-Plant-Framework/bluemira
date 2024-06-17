@@ -73,7 +73,7 @@ dev = [
 examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.59.1",
+    "numba==0.60.0",
     "numba-scipy==0.4.0",
     "numpy==1.26.4",
     "matplotlib==3.9.0",
