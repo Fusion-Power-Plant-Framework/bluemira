@@ -12,12 +12,12 @@ gmsh==4.13.1
 imageio==2.34.1
 joblib==1.4.2
 kiwisolver==1.4.5
-llvmlite==0.42.0
+llvmlite==0.43.0
 matplotlib==3.9.0
 neutronics-material-maker==1.1.4
 nlopt==2.7.1
 meshio==5.3.5
-numba==0.59.1
+numba==0.60.0
 numba-scipy==0.4.0
 numexpr==2.10.0
 numpy==1.26.4
