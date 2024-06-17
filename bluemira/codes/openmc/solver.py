@@ -353,7 +353,7 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            n_DT_reactions(source_params.plasma_physics_units.reactor_power),
+            n_DT_reactions(source_params.reactor_power),
             statepoint_file,
         )
         if delete_files:
