@@ -303,6 +303,9 @@ ANGLE_UNITS = [
 # Physical constants
 # =============================================================================
 
+# Speed of light
+C_LIGHT = ureg.Quantity("c").to_base_units().magnitude  # [m/s]
+
 # Vacuum permeability
 MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 
