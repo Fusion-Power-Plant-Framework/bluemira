@@ -349,7 +349,7 @@ def make_bsplinesurface(
 
     Returns
     -------
-    A FreeCAD solid that contours the bsplinesurface
+    A FreeCAD object that contours the bsplinesurface
 
     Notes
     -----
