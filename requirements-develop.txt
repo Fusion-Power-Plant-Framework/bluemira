@@ -7,7 +7,7 @@ charset-normalizer==3.3.2
 coverage[toml]==7.5.3
 distlib==0.3.8
 docutils==0.20.1
-filelock==3.14.0
+filelock==3.15.1
 greenlet==3.0.3
 identify==2.5.36
 idna==3.7
