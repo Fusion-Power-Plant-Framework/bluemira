@@ -9,7 +9,7 @@ path2 = [(1.0, 1.0), (1.0, 50), (100, 50), (100, 1.0), (1.0, 1.0)]
 po = pyclipr.ClipperOffset()
 
 # Set the scale factor to convert to internal integer representation
-po.scaleFactor = int(1000)
+po.scaleFactor = 1000
 
 # add the path - ensuring to use Polygon for the endType argument
 # addPaths is required when working with polygon - this is a list of correctly orientated paths for exterior
@@ -21,7 +21,7 @@ offsetSquare = po.execute(10.0)
 
 # Create a clipping object
 pc = pyclipr.Clipper()
-pc.scaleFactor = int(1000)
+pc.scaleFactor = 1000
 
 # Add the paths to the clipping object. Ensure the subject and clip arguments are set to differentiate
 # the paths during the Boolean operation. The final argument specifies if the path is
