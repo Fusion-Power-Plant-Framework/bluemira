@@ -72,9 +72,10 @@ class TestMakeFS:
         cls.yz_plane = BluemiraPlane.from_3_points(
             [0, 0, cls.o_point.z], [1, 0, cls.o_point.z], [1, 1, cls.o_point.z]
         )
-        cls.first_wall = Coordinates(
-            {"x": [5.5, 15, 15, 5.5, 5.5], "z": [-7.5, -7.5, 7.5, 7.5, -7.5]}
-        )
+        cls.first_wall = Coordinates({
+            "x": [5.5, 15, 15, 5.5, 5.5],
+            "z": [-7.5, -7.5, 7.5, 7.5, -7.5],
+        })
 
     def test_make_flux_surfaces_ibob(self):
         x_sep_omp, x_out_omp = _get_sep_out_intersection(
