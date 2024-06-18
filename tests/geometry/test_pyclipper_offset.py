@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._pyclipper_offset import offset_clipper
+from bluemira.geometry._pyclipr_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import distance_to, make_polygon
