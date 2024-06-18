@@ -1,113 +1,220 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""
+Discretised offset operations used in case of failure in primitive offsetting.
+"""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from enum import Enum, auto
+
 import numpy as np
+import numpy.typing as npt
 import pyclipr
 
-# Tuple definition of a path
-path = [(0.0, 0.0), (0, 105.1234), (100, 105.1234), (100, 0), (0, 0)]
-path2 = [(1.0, 1.0), (1.0, 50), (100, 50), (100, 1.0), (1.0, 1.0)]
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
+from bluemira.geometry.error import GeometryError
 
-# Create an offsetting object
-po = pyclipr.ClipperOffset()
-
-# Set the scale factor to convert to internal integer representation
-po.scaleFactor = 1000
-
-# add the path - ensuring to use Polygon for the endType argument
-# addPaths is required when working with polygon - this is a list of correctly orientated paths for exterior
-# and interior holes
-po.addPaths([np.array(path)], pyclipr.JoinType.Miter, pyclipr.EndType.Polygon)
-
-# Apply the offsetting operation using a delta.
-offsetSquare = po.execute(10.0)
-
-# Create a clipping object
-pc = pyclipr.Clipper()
-pc.scaleFactor = 1000
-
-# Add the paths to the clipping object. Ensure the subject and clip arguments are set to differentiate
-# the paths during the Boolean operation. The final argument specifies if the path is
-# open.
-pc.addPaths(offsetSquare, pyclipr.Subject)
-pc.addPath(np.array(path2), pyclipr.Clip)
-
-""" Test Polygon Clipping """
-# Below returns paths
-out = pc.execute(pyclipr.Intersection, pyclipr.FillRule.EvenOdd)
-out2 = pc.execute(pyclipr.Union, pyclipr.FillRule.EvenOdd)
-out3 = pc.execute(pyclipr.Difference, pyclipr.FillRule.EvenOdd)
-out4 = pc.execute(pyclipr.Xor, pyclipr.FillRule.EvenOdd)
-
-# Using execute2 returns a PolyTree structure that provides hierarchical information inflormation
-# if the paths are interior or exterior
-outB = pc.execute2(pyclipr.Intersection, pyclipr.FillRule.EvenOdd)
-
-# An alternative equivalent name is executeTree
-outB = pc.executeTree(pyclipr.Intersection, pyclipr.FillRule.EvenOdd)
+__all__ = ["offset_clipper"]
 
 
-""" Test Open Path Clipping """
-# Pyclipr can be used for clipping open paths.  This remains simple to complete using the Clipper2 library
+class OffsetClipperMethodType(Enum):
+    """Enumeration of types of offset methods."""
 
-pc2 = pyclipr.Clipper()
-pc2.scaleFactor = int(1e5)
+    SQUARE = auto()
+    ROUND = auto()
+    MITER = auto()
 
-# The open path is added as a subject (note the final argument is set to True)
-pc2.addPath(((40, -10), (50, 130)), pyclipr.Subject, True)
+    @classmethod
+    def _missing_(cls, value: str | OffsetClipperMethodType) -> OffsetClipperMethodType:
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise GeometryError(
+                f"{cls.__name__} has no method {value}."
+                f"please select from {(*cls._member_names_,)}"
+            ) from None
 
-# The clipping object is usually set to the Polygon
-pc2.addPaths(offsetSquare, pyclipr.Clip, False)
 
-""" Test the return types for open path clipping with option enabled"""
-# The returnOpenPaths argument is set to True to return the open paths. Note this function only works
-# well using the Boolean intersection option
-outC = pc2.execute(pyclipr.Intersection, pyclipr.FillRule.NonZero)
-outC2, openPathsC = pc2.execute(
-    pyclipr.Intersection, pyclipr.FillRule.NonZero, returnOpenPaths=True
-)
+def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
+    """
+    Transforms a pyclipper path into a bluemira Coordinates object
 
-outD = pc2.execute2(pyclipr.Intersection, pyclipr.FillRule.NonZero)
-outD2, openPathsD = pc2.execute2(
-    pyclipr.Intersection, pyclipr.FillRule.NonZero, returnOpenPaths=True
-)
+    Parameters
+    ----------
+    path:
+        The vertex polygon path formatting used in pyclipper
 
-# Plot the results
-pathPoly = np.array(path)
+    Returns
+    -------
+    The Coordinates from the path object
+    """
+    # p2 = scale_from_clipper(np.array(path).T)
+    return Coordinates({"x": path[0], "y": 0, "z": path[1]})
 
-import matplotlib.pyplot as plt
 
-plt.figure()
-plt.axis("equal")
+class PyCliprOffsetter:
+    def __init__(
+        self,
+        coordinates: Coordinates,
+        method: OffsetClipperMethodType,
+        miter_limit: float = 2.0,
+    ):
+        if not coordinates.is_planar:
+            raise GeometryError("Cannot offset non-planar coordinates.")
 
-# Plot the original polygon
-plt.fill(
-    pathPoly[:, 0],
-    pathPoly[:, 1],
-    "b",
-    alpha=0.1,
-    linewidth=1.0,
-    linestyle="dashed",
-    edgecolor="#000",
-)
+        if not coordinates.closed:
+            raise GeometryError(
+                "Open Coordinates are not supported by PyCliprOffsetter."
+            )
 
-# Plot the offset square
-plt.fill(
-    offsetSquare[0][:, 0],
-    offsetSquare[0][:, 1],
-    linewidth=1.0,
-    linestyle="dashed",
-    edgecolor="#333",
-    facecolor="none",
-)
+        coordinates = deepcopy(coordinates)
+        com = coordinates.center_of_mass
 
-# Plot the intersection
-plt.fill(out[0][:, 0], out[0][:, 1], facecolor="#75507b")
+        t_coordinates = transform_coordinates_to_xz(
+            coordinates, tuple(-np.array(com)), np.array([0.0, 1.0, 0.0])
+        )
+        clipr_path = t_coordinates.xz.T
 
-# Plot the open path intersection
-plt.plot(
-    openPathsC[0][:, 0],
-    openPathsC[0][:, 1],
-    color="#222",
-    linewidth=1.0,
-    linestyle="dashed",
-    marker=".",
-    markersize=20.0,
-)
+        self._coord_scale = self._calculate_scale(clipr_path, coordinates)
+        self._coordinates = coordinates
+
+        # Create an offsetting object
+        pco = pyclipr.ClipperOffset()
+
+        pco.miterLimit = miter_limit
+        # Set the scale factor to convert to internal integer representation
+        pco.scaleFactor = 1000  # ?
+
+        match method:
+            case OffsetClipperMethodType.SQUARE:
+                pco.addPaths(
+                    [clipr_path], pyclipr.JoinType.Square, pyclipr.EndType.Polygon
+                )
+            case OffsetClipperMethodType.ROUND:
+                pco.addPaths(
+                    [clipr_path], pyclipr.JoinType.Round, pyclipr.EndType.Polygon
+                )
+            case OffsetClipperMethodType.MITER:
+                pco.addPaths(
+                    [clipr_path], pyclipr.JoinType.Miter, pyclipr.EndType.Polygon
+                )
+        self._pco = pco
+
+    @staticmethod
+    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> float:
+        """
+        Calculate the pyclipper scaling to integers
+        """
+        # Find the first non-zero dimension (low number of iterations)
+        for i in range(len(path) - 1):
+            if path[i][0] != 0:
+                return path[i][0] / coordinates.x[i]
+            if path[i][1] != 0:
+                return path[i][1] / coordinates.z[i]
+        raise GeometryError(
+            "Could not calculate scale factor for pyclipper. "
+            "Path is empty or only (0, 0)'s."
+        )
+
+    def _transform_offset_result(
+        self, result: list[npt.NDArray[np.float64]]
+    ) -> list[Coordinates]:
+        """
+        Transforms the offset solution into a Coordinates object
+        """
+        if not result:
+            raise GeometryError("Offset operation resulted in no geometry.")
+
+        com = self._coordinates.center_of_mass
+        norm_v = self._coordinates.normal_vector
+
+        res_coords_t = [pyclippath_to_coordinates(p) for p in result]
+        return [transform_coordinates_to_original(c, com, norm_v) for c in res_coords_t]
+
+    def perform(self, delta: float) -> list[Coordinates]:
+        delta = int(round(delta * self._coord_scale))
+        offset_result = self._pco.execute(delta)
+        return self._transform_offset_result(offset_result)
+
+
+def offset_clipper(
+    coordinates: Coordinates,
+    delta: float,
+    method: str = "square",
+    miter_limit: float = 2.0,
+) -> Coordinates:
+    """
+    Carries out an offset operation on the Coordinates using the ClipperLib library.
+    Only supports closed Coordinates.
+
+    Parameters
+    ----------
+    coordinates:
+        The Coordinates upon which to perform the offset operation
+    delta:
+        The value of the offset [m]. Positive for increasing size, negative for
+        decreasing
+    method:
+        The type of offset to perform ['square', 'round', 'miter']
+    miter_limit:
+        The ratio of delta to use when mitering acute corners. Only used if
+        method == 'miter'
+
+    Returns
+    -------
+    The offset Coordinates result
+
+    Raises
+    ------
+    GeometryError:
+        If the Coordinates are not planar
+        If the Coordinates are not closed
+    """
+    tool = PyCliprOffsetter(coordinates, OffsetClipperMethodType(method), miter_limit)
+    result = tool.perform(delta)
+
+    if len(result) > 1:
+        bluemira_warn(
+            f"Offset operation with delta={delta} has produced multiple 'islands'; only"
+            " returning the biggest one!"
+        )
+
+    return result[0]
+
+
+def transform_coordinates_to_xz(
+    coordinates: Coordinates, base: tuple[float, float, float], direction: np.ndarray
+) -> Coordinates:
+    """
+    Rotate coordinates to the x-z plane.
+    """
+    coordinates.translate(base)
+    if abs(coordinates.normal_vector[1]) == 1.0:
+        return coordinates
+
+    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
+    x, y, z = r.T @ coordinates
+
+    return Coordinates({"x": x, "y": y, "z": z})
+
+
+def transform_coordinates_to_original(
+    coordinates: Coordinates,
+    base: tuple[float, float, float],
+    original_normal: np.ndarray,
+) -> Coordinates:
+    """
+    Rotate coordinates back to original plane
+    """
+    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
+    x, y, z = r.T @ coordinates
+    coordinates = Coordinates({"x": x, "y": y, "z": z})
+    coordinates.translate(base)
+    return coordinates
