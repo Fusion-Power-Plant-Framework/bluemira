@@ -294,13 +294,13 @@ class LifeCycle:
         results that violate the tolerances.
         """
         life = self.fpy / self.params.A_global
-        actual_life = (
+        actual_life = S_TO_YR * (
             self.t_on_total
             + self.total_ramptime
             + self.t_interdown
             + self.total_planned_maintenance
-            + self.t_unplanned_m,
-        ) * S_TO_YR
+            + self.t_unplanned_m
+        )
         actual_lf = self.fpy / actual_life
         delt = abs_rel_difference(actual_life, life)
         delta2 = abs_rel_difference(actual_lf, self.params.A_global)
