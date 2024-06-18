@@ -12,7 +12,8 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._pyclipr_offset import offset_clipper
+from bluemira.geometry._pyclipper_offset import offset_clipper
+from bluemira.geometry._pyclipr_offset import offset_clipper as offset_clipper2
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import distance_to, make_polygon
@@ -63,7 +64,7 @@ class TestClipperOffset:
         coordinates = Coordinates(data)
         offsets = []
         for m in ["miter", "square", "round"]:  # round very slow...
-            offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
+            offset_coordinates = offset_clipper2(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
             # Too damn slow!!
             # distance = self._calculate_offset(coordinates, offset_coordinates)
