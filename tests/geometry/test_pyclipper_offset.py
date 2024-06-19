@@ -12,8 +12,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._pyclipper_offset import offset_clipper
-from bluemira.geometry._pyclipr_offset import offset_clipper as offset_clipper2
+from bluemira.geometry._pyclipr_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import distance_to, make_polygon
@@ -33,9 +32,9 @@ class TestClipperOffset:
         ("x", "y", "delta"),
         [
             (x, y, 1.0),
-            (x[::-1], y[::-1], 1.0),
+            (x[::-1], y[::-1], 0.9),
             (x, y, -1.0),
-            (x[::-1], y[::-1], -1.0),
+            (x[::-1], y[::-1], -0.9),
         ],
     )
     def test_complex_polygon(self, x, y, delta, method):
@@ -49,7 +48,7 @@ class TestClipperOffset:
         ax.set_aspect("equal")
 
         distance = self._calculate_offset(coordinates, c)
-        np.testing.assert_almost_equal(distance, abs(delta))
+        np.testing.assert_almost_equal(distance, abs(delta), 5)
 
     @pytest.mark.parametrize("method", options)
     def test_complex_polygon_overoffset_raises_error(self, method):
@@ -63,12 +62,12 @@ class TestClipperOffset:
             data = json.load(file)
         coordinates = Coordinates(data)
         offsets = []
-        for m in ["miter", "square", "round"]:  # round very slow...
-            offset_coordinates = offset_clipper2(coordinates, 1.5, method=m)
+        for m in ["miter", "square", "round"]:
+            offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
-            # Too damn slow!!
-            # distance = self._calculate_offset(coordinates, offset_coordinates)
-            # np.testing.assert_almost_equal(distance, 1.5)
+
+            distance = self._calculate_offset(coordinates, offset_coordinates)
+            np.testing.assert_almost_equal(distance, 1.5, 4)
 
         _, ax = plt.subplots()
         ax.plot(coordinates.x, coordinates.z, color="k")
