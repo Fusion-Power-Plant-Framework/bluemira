@@ -12,8 +12,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._pyclipper_offset import offset_clipper
-from bluemira.geometry._pyclipr_offset import offset_clipper as offset_clipper2
+from bluemira.geometry._pyclipr_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import distance_to, make_polygon
@@ -30,7 +29,16 @@ class TestClipperOffset:
     @pytest.mark.parametrize("method", options)
     @pytest.mark.parametrize(
         ("x", "y", "delta"),
+<<<<<<< HEAD
         [(x, y, 1.0), (x[::-1], y[::-1], 1.0), (x, y, -1.0), (x[::-1], y[::-1], -1.0)],
+=======
+        [
+            (x, y, 1.0),
+            (x[::-1], y[::-1], 0.9),
+            (x, y, -1.0),
+            (x[::-1], y[::-1], -0.9),
+        ],
+>>>>>>> f5ab8a1c (it's working, but one test no longer throws)
     )
     def test_complex_polygon(self, x, y, delta, method):
         rng = np.random.default_rng()

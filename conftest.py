@@ -10,7 +10,9 @@ Used by pytest for configuration like adding command line options.
 
 import doctest
 import os
+from contextlib import suppress
 from pathlib import Path
+from unittest import mock
 
 import matplotlib as mpl
 import numpy as np
