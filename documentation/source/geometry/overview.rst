@@ -73,6 +73,7 @@ A basic example for the creation of the geometrical objects:
         from operator import itemgetter
         from bluemira.geometry.face import BluemiraFace
         from bluemira.geometry.shell import BluemiraShell
+        from bluemira.geometry.tools import make_polygon
 
         vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
                     (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
