@@ -24,7 +24,7 @@ from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
-from bluemira.base.file import force_file_extension, get_bluemira_path
+from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -124,7 +124,12 @@ def _make_debug_file(name: str) -> Path:
     """
     Make a new file in the geometry debugging folder.
     """
-    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+    path = try_get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+
+    if path is None:
+        path = Path.cwd() / "naughty_geometry"
+        Path.mkdir(path, exist_ok=True)
+
     now = datetime.datetime.now()
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
