@@ -7,8 +7,11 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from bluemira.geometry.coordinates import vector_intersect, vector_lengthnorm
-from eudemo.blanket.panelling._pivot_string import make_pivoted_string
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    vector_intersect,
+    vector_lengthnorm,
+)
 
 
 class Paneller:
@@ -44,11 +47,10 @@ class Paneller:
         else:
             # Build the initial guess of our panels, these points are the
             # coordinates of where the panels tangent the boundary
-            _, idx = make_pivoted_string(
-                boundary_points.T,
-                max_angle=max_angle,
-                dx_min=dx_min,
-            )
+            _, idx = Coordinates({
+                "x": boundary_points[0],
+                "z": boundary_points[1],
+            }).simplify(max_angle=max_angle, dx_min=dx_min)
             self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
 
     @property
