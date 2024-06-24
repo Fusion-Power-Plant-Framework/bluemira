@@ -68,20 +68,26 @@ class ReactorConfig:
 
         reactor_config = ReactorConfig(
             {
-                "params": {"a": 10},
+                "params": {"a": {"value": 10, "unit": 'm'}},
                 "comp A": {
-                    "params": {"a": 5, "b": 5},
+                    "params": {
+                        "a": {"value": 5, "unit": 'm'},
+                        "b": {"value": 5, "unit": 'm'},
+                    },
                     "designer": {
-                        "params": {"a": 1},
+                        "params": {"a": {"value": 1, "unit": 'm'}},
                         "some_config": "some_value",
                     },
                     "builder": {
-                        "params": {"b": 1, "c": 1},
+                        "params": {
+                            "b": {"value": 1, "unit": 'm'},
+                            "c": {"value": 1, "unit": 'm'},
+                        },
                         "another_config": "another_value",
                     },
                 },
                 "comp B": {
-                    "params": {"b": 5},
+                    "params": {"b": {"value": 1, "unit": 'm'}},
                     "builder": {
                         "third_config": "third_value",
                     },

@@ -187,7 +187,7 @@ history of the optimisation parameters
 (this is off by default, as it impacts run time performance).
 
 .. code-block:: pycon
-
+    >>> from bluemira.optimisation import optimise
     >>> result = optimise(
     ...     f_objective,
     ...     df_objective=df_objective,
@@ -210,7 +210,7 @@ history of the optimisation parameters
     ...     ],
     ... )
     >>> print(result)
-    OptimiserResult(x=array([0.33333528, 0.29629148]), n_evals=18)
+    OptimiserResult(f_x=0.54..., x=array([0.333..., 0.29...]), n_evals=..., constraints_satisfied=True)
 
 The Optimisation Problem Class
 ------------------------------

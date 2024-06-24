@@ -282,7 +282,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             found_nodes = found_nodes[0]
         return found_nodes
 
-    def add_child(self, child: Component) -> Component:
+    def add_child(self, child: Component):
         """
         Add a single child to this node
 
@@ -300,14 +300,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = [*list(self.children), child]
 
-        return self
-
     def add_children(
         self,
         children: Component | list[Component] | None,
         *,
         merge_trees: bool = False,
-    ) -> Component | None:
+    ):
         """
         Add multiple children to this node
 
@@ -344,7 +342,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             )
         self.children = list(self.children) + children
 
-        return self
+        return None
 
     def prune_child(self, name: str):
         """

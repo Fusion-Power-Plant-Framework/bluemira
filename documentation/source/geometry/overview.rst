@@ -5,10 +5,11 @@ A basic example for the creation of the geometrical objects:
 * a `BluemiraWire` through a list of points:
 
     .. code-block:: pycon
-
+        >>> from bluemira.geometry.tools import make_polygon
         >>> pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0,.0)]
-        >>> wire1 = geometry.tools.make_polygon(pntslist, label="wire1")
-        Out: ([BluemiraWire] = Label: wire1,  length: 3.0,  area: 0.0,  volume: 0.0, )
+        >>> wire1 = make_polygon(pntslist, label="wire1")
+        >>> print(wire1)
+        ([BluemiraWire] = Label: wire1, length: 3.0, area: 0.0, volume: 0.0)
 
 
     It is possible to force the closure of the wire setting the parameter `closed` of
@@ -17,10 +18,11 @@ A basic example for the creation of the geometrical objects:
     .. code-block:: pycon
 
         >>> pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-        >>> wire1 = geometry.tools.make_polygon(pntslist, label="wire1", closed=True)
-        Out: ([BluemiraWire] = Label: wire1,  length: 4.0,  area: 0.0,  volume: 0.0, )
+        >>> wire1 = make_polygon(pntslist, label="wire1", closed=True)
+        >>> print(wire1)
+        ([BluemiraWire] = Label: wire1, length: 4.0, area: 0.0, volume: 0.0)
         >>> wire1.is_closed()
-        Out: True
+        True
 
     The same procedure can be applied to ``make_bezier`` and ``make_bspline`` to generate
     bezier and bspline curves, respectively.
@@ -37,22 +39,25 @@ A basic example for the creation of the geometrical objects:
 
     .. code-block:: pycon
 
-        >>> from bluemira.geometry.tools import make_polygon
         >>> from bluemira.geometry.face import BluemiraFace
+        >>> from bluemira.geometry.tools import make_polygon
 
         >>> pntslist_out = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0,0.0)]
         >>> delta = 0.25
-        >>> pntslist_in = [ (1.0 - delta, 1.0 - delta, 0.0),
-                            (0.0 + delta, 1.0 - delta, 0.0),
-                            (0.0 + delta, 0.0 + delta, 0.0),
-                            (1.0 - delta, 0.0 + delta, 0.0),
-                          ]
+        >>> pntslist_in = [
+        ...                 (1.0 - delta, 1.0 - delta, 0.0),
+        ...                 (0.0 + delta, 1.0 - delta, 0.0),
+        ...                 (0.0 + delta, 0.0 + delta, 0.0),
+        ...                 (1.0 - delta, 0.0 + delta, 0.0),
+        ...               ]
         >>> wire_out = make_polygon(pntslist_out, label="wire_out",closed=True)
         >>> bmface = BluemiraFace(wire_out)
-        Out: ([BluemiraFace] = Label: wire_out,  length: 4.0,  area: 1.0,  volume: 0.0, )
+        >>> print(bmface)
+        ([BluemiraFace] = Label: , length: 4.0, area: 1.0, volume: 0.0)
         >>> wire_in = make_polygon(pntslist_in, label="wire_in", closed=True)
         >>> bmface_with_hole = BluemiraFace([wire_out, wire_in],label="face_with_hole")
-        Out: ([BluemiraFace] = Label: face_with_hole,  length: 6.0,  area: 0.75,volume: 0.0, )
+        >>> print(bmface_with_hole)
+        ([BluemiraFace] = Label: face_with_hole, length: 6.0, area: 0.75, volume: 0.0)
 
     .. note:: the length of the face is equal to the total length of the boundary.
 
@@ -65,6 +70,9 @@ A basic example for the creation of the geometrical objects:
         moment, so the check is on the user.
 
     .. code-block:: python
+        from operator import itemgetter
+        from bluemira.geometry.face import BluemiraFace
+        from bluemira.geometry.shell import BluemiraShell
 
         vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
                     (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
@@ -72,10 +80,10 @@ A basic example for the creation of the geometrical objects:
         faces = []
         v_index = [(0,1,2,3),(5,4,7,6),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
         for ind, value in enumerate(v_index):
-            wire = geo.tools.make_polygon(list(itemgetter(*value)(vertexes)),closed=True)
-            faces.append(geo.face.BluemiraFace(wire, "face"+str(ind)))
+            wire = make_polygon(list(itemgetter(*value)(vertexes)),closed=True)
+            faces.append(BluemiraFace(wire, "face"+str(ind)))
         # shell creation
-        shell = geo.shell.BluemiraShell(faces, "shell")
+        shell = BluemiraShell(faces, "shell")
 
 
 * a `BluemiraSolid`
@@ -84,9 +92,10 @@ A basic example for the creation of the geometrical objects:
     BluemiraShell object.
 
     .. code-block:: python
+        from bluemira.geometry.solid import BluemiraSolid
 
         # solid creation from shell
-        solid = geo.solid.BluemiraSolid(shell, "solid")
+        solid = BluemiraSolid(shell, "solid")
 
 Shape operations
 ----------------
@@ -103,21 +112,20 @@ Shape operations that, when applied, create a new shape topology are implemented
 by revolving a face of 30 degrees along the z-axis:
 
     .. code-block:: python
-
+        from bluemira.geometry.tools import revolve_shape
         base = (0., 0., 0.)
         direction = (0., 0., 1.)
         degree = 30
-        bmsolid = bluemira.geometry.tools.revolve(bmface, base, direction, degree)
+        bmsolid = revolve_shape(bmface, base, direction, degree)
 
 Exporting
 ---------
-Each bluemira geometry object can be exported as step file (list of objects are
-exported as a single compound):
+Each bluemira geometry object can be exported as step file:
 
     .. code-block:: python
+        from bluemira.geometry.tools import save_cad
 
-        bluemira.geometry.tools.save_as_STP(bmface, "face.step")
-        bluemira.geometry.tools.save_as_STP([bmface1, bmface2], "compound.step")
+        save_cad(bmface, "face.step")
 
 
 FreeCAD objects
