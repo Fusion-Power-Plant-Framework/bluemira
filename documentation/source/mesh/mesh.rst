@@ -68,16 +68,17 @@ Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ s
 is integrated into bluemira.
 
 .. code-block:: python
-    # doctest: +SKIP
 
+    # TODO fix
     from bluemira.mesh.tools import import_mesh
+    from bluemira.base.file import get_bluemira_path
 
-    mesh, boundaries, subdomains, labels = import_mesh(
-        "Mesh",
-        directory=".",
-        subdomains=True,
-    )
-    print(mesh.coordinates())
+    # mesh, boundaries, subdomains, labels = import_mesh(
+    #     "ReferenceMesh",
+    #     directory=get_bluemira_path('mesh/test_data', subfolder='tests'),
+    #     subdomains=True,
+    # )
+    # print(mesh.coordinates())
 
 
 .. _Fenics: https://fenicsproject.org/

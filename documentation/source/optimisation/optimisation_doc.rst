@@ -187,6 +187,7 @@ history of the optimisation parameters
 (this is off by default, as it impacts run time performance).
 
 .. code-block:: pycon
+
     >>> from bluemira.optimisation import optimise
     >>> result = optimise(
     ...     f_objective,

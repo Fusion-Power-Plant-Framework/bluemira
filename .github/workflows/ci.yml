@@ -34,7 +34,7 @@ jobs:
           python-version: "3.10"
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
 
-      - name: Test Documation code snippets
+      - name: Test Documentation code snippets
         shell: bash -l {0}
         run: pytest documentation
 

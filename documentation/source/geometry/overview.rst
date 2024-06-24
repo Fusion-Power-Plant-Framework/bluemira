@@ -5,6 +5,7 @@ A basic example for the creation of the geometrical objects:
 * a `BluemiraWire` through a list of points:
 
     .. code-block:: pycon
+
         >>> from bluemira.geometry.tools import make_polygon
         >>> pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0,.0)]
         >>> wire1 = make_polygon(pntslist, label="wire1")
@@ -70,6 +71,7 @@ A basic example for the creation of the geometrical objects:
         moment, so the check is on the user.
 
     .. code-block:: python
+
         from operator import itemgetter
         from bluemira.geometry.face import BluemiraFace
         from bluemira.geometry.shell import BluemiraShell
@@ -92,6 +94,7 @@ A basic example for the creation of the geometrical objects:
     BluemiraShell object.
 
     .. code-block:: python
+
         from bluemira.geometry.solid import BluemiraSolid
 
         # solid creation from shell
@@ -112,6 +115,7 @@ Shape operations that, when applied, create a new shape topology are implemented
 by revolving a face of 30 degrees along the z-axis:
 
     .. code-block:: python
+
         from bluemira.geometry.tools import revolve_shape
         base = (0., 0., 0.)
         direction = (0., 0., 1.)
@@ -123,6 +127,7 @@ Exporting
 Each bluemira geometry object can be exported as step file:
 
     .. code-block:: python
+
         from bluemira.geometry.tools import save_cad
 
         save_cad(bmface, (tmp_path/"face.step").as_posix())
