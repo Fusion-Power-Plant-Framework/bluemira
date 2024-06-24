@@ -20,7 +20,7 @@ meshio==5.3.5
 numba==0.60.0
 numba-scipy==0.4.0
 numexpr==2.10.0
-numpy==1.26.4
+numpy==2.0.0
 openmc_data==2.2.10
 packaging==24.1
 pandas==2.2.2
