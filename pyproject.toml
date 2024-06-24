@@ -69,6 +69,7 @@ dev = [
     "sphinx-autoapi",
     "sphinx_copybutton",
     "sphinx-rtd-theme",
+    "sybil",
 ]
 examples = ["notebook", "jupytext"]
 pinned = [
@@ -127,7 +128,8 @@ markers = [
     "classplot: Show and close figures after running all tests in class",
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
-filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
+filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning',
+                  'ignore:FigureCanvasAgg is non-interactive:UserWarning']
 pythonpath = ['.', 'eudemo']
 
 [tool.ruff]
