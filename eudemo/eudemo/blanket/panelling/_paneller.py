@@ -47,9 +47,10 @@ class Paneller:
         else:
             # Build the initial guess of our panels, these points are the
             # coordinates of where the panels tangent the boundary
-            _, idx = Coordinates(boundary_points).simplify(
-                max_angle=max_angle, dx_min=dx_min
-            )
+            _, idx = Coordinates({
+                "x": boundary_points[0],
+                "z": boundary_points[1],
+            }).simplify(max_angle=max_angle, dx_min=dx_min)
             self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
 
     @property
