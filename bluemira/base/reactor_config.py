@@ -259,7 +259,7 @@ class ReactorConfig:
         -----
             This mutates the passed in dict.
         """
-        for k in d:
+        for k in d:  # noqa: PLC0206
             d[k], rel_path_from = self._extract_and_expand_file_data_if_needed(
                 d[k], rel_path
             )
