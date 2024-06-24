@@ -29,9 +29,12 @@ mixtures.json in subsequent sections:
 .. code-block:: python
 
     from bluemira.materials import MaterialCache
+    from bluemira.base.file import get_bluemira_path
+
+    path = get_bluemira_path('materials', subfolder='data')
     material_cache = MaterialCache()
-    material_cache.load_from_file("materials.json")
-    material_cache.load_from_file("mixtures.json")
+    material_cache.load_from_file(path + "/materials.json")
+    material_cache.load_from_file(path + "/mixtures.json")
 
 Materials are then retrieved from the cache by name, allowing the relevant material to be
 accessed dynamically depending on how a particular component or analysis is configured at

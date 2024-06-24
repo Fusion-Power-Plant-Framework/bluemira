@@ -45,7 +45,11 @@ use a simple dictionary with `lcar` and `physical_group` keys.
 
         poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
-        m = Mesh()
+        m = Mesh(
+            meshfile=[
+                (tmp_path / mf).as_posix() for mf in ("Mesh.geo_unrolled", "Mesh.msh")
+            ]
+        )
         m(poly)
 
 
@@ -63,7 +67,7 @@ fenics import
 Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ solver,
 is integrated into bluemira.
 
-.. code-block:: python
+.. code-block:: python  # doctest: +SKIP
 
     from bluemira.mesh.tools import import_mesh
 

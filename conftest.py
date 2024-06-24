@@ -53,6 +53,7 @@ rest_examples = Sybil(
     ],
     patterns=["*.py", "*.rst"],
     excludes=["index.rst"],  # autoapi files would be tested twice
+    fixtures=["tmp_path"],
     setup=setup_sybil_namespace,
 )
 

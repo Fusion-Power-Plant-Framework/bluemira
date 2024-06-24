@@ -125,7 +125,7 @@ Each bluemira geometry object can be exported as step file:
     .. code-block:: python
         from bluemira.geometry.tools import save_cad
 
-        save_cad(bmface, "face.step")
+        save_cad(bmface, (tmp_path/"face.step").as_posix())
 
 
 FreeCAD objects
