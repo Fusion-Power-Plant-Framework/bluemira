@@ -8,6 +8,7 @@
 Used by pytest for configuration like adding command line options.
 """
 
+import doctest
 import os
 from contextlib import suppress
 from pathlib import Path
@@ -18,7 +19,7 @@ import numpy as np
 import pytest
 from sybil import Sybil
 from sybil.parsers.rest import (
-    DocTestDirectiveParser,
+    DocTestParser,
     PythonCodeBlockParser,
 )
 
@@ -47,7 +48,7 @@ def setup_sybil_namespace(namespace):
 
 rest_examples = Sybil(
     parsers=[
-        DocTestDirectiveParser(),
+        DocTestParser(doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE),
         PythonCodeBlockParser(),
     ],
     patterns=["*.py", "*.rst"],
