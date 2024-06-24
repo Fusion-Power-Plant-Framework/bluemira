@@ -36,7 +36,7 @@ jobs:
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
-        run: pytest documentation
+        run: pytest bluemira documentation eudemo/eudemo
 
       - name: Build Documentation bluemira
         shell: bash -l {0}
