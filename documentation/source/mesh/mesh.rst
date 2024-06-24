@@ -67,7 +67,8 @@ fenics import
 Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ solver,
 is integrated into bluemira.
 
-.. code-block:: python  # doctest: +SKIP
+.. code-block:: python
+    # doctest: +SKIP
 
     from bluemira.mesh.tools import import_mesh
 
