@@ -50,6 +50,6 @@ sqlalchemy==2.0.30
 toml==0.10.2
 tomli==2.0.1
 typing_extensions==4.12.2
-urllib3==2.2.1
+urllib3==2.2.2
 virtualenv==20.26.3
 zipp==3.19.2
