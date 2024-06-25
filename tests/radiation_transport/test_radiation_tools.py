@@ -11,7 +11,10 @@ from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
     calculate_z_species,
     exponential_decay,
+    filtering_in_or_out,
     gaussian_decay,
+    interpolated_field_values,
+    linear_interpolator,
 )
 
 
@@ -46,3 +49,34 @@ def test_calculate_line_radiation_loss():
     frac = 0.01
     rad = calculate_line_radiation_loss(ne, p_loss, frac)
     assert rad == pytest.approx(0.796, abs=1e-3)
+
+
+def test_interpolated_field_values():
+    x = np.array([0, 1, 1, 0])
+    z = np.array([0, 0, 1, 1])
+    field = np.array([0, 1, 2, 3])
+
+    interpolator = linear_interpolator(x, z, field)
+    x_new = np.array([0.5, 1.5])
+    z_new = np.array([0.5, 1.5])
+
+    field_grid = interpolated_field_values(x_new, z_new, interpolator)
+
+    assert field_grid.shape == (2, 2)
+    assert np.isclose(field_grid[0, 0], interpolator(0.5, 0.5))
+    assert np.isclose(field_grid[1, 1], interpolator(1.5, 1.5))
+
+
+def test_filtering_in_or_out():
+    test_domain_x = [1.0, 2.0, 3.0]
+    test_domain_z = [4.0, 5.0, 6.0]
+
+    include_func = filtering_in_or_out(test_domain_x, test_domain_z, include_points=True)
+    assert include_func([2.0, 5.0])
+    assert not include_func([0.0, 0.0])
+
+    exclude_func = filtering_in_or_out(
+        test_domain_x, test_domain_z, include_points=False
+    )
+    assert not exclude_func([2.0, 5.0])
+    assert exclude_func([0.0, 0.0])

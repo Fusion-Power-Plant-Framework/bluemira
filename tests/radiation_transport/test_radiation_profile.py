@@ -22,6 +22,7 @@ from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
     electron_density_and_temperature_sol_decay,
     ion_front_distance,
+    pfr_filter,
     radiative_loss_function_values,
     target_temperature,
     upstream_temperature,
@@ -296,3 +297,11 @@ class TestCoreRadiation:
         lvals = np.array([imp_data_l_ref[1], imp_data_l_ref[3]])
         l1 = radiative_loss_function_values(tvals, t_ref, l_ref)
         np.testing.assert_allclose(l1, lvals, rtol=2e-1)
+
+    def test_pfr_filter(self):
+        x_point_z = self.source.sol_rad.points["x_point"]["z_low"]
+        pfr_x_down, pfr_z_down = pfr_filter(self.source.sol_rad.separatrix, x_point_z)
+        assert pfr_x_down.shape == (59,)
+        assert pfr_z_down.shape == (59,)
+
+        assert np.all(pfr_z_down < x_point_z - 0.01)
