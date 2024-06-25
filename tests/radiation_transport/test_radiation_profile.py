@@ -22,6 +22,7 @@ from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
     electron_density_and_temperature_sol_decay,
     ion_front_distance,
+    make_wall_detectors,
     pfr_filter,
     radiative_loss_function_values,
     target_temperature,
@@ -305,3 +306,12 @@ class TestCoreRadiation:
         assert pfr_z_down.shape == (59,)
 
         assert np.all(pfr_z_down < x_point_z - 0.01)
+
+    def test_make_wall_detectors(self):
+        max_wall_len = 10.0e-2
+        X_WIDTH = 0.01
+        wall_detectors = make_wall_detectors(
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
+        )
+        assert all(detector[2] <= max_wall_len for detector in wall_detectors)
+        assert all(detector[1] == X_WIDTH for detector in wall_detectors)
