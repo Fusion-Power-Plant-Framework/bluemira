@@ -49,3 +49,20 @@ On MacOS the ``envsubst`` command cannot be found
     installing ``gettext`` with homebrew should install ``envsubst``::
 
         brew install gettext
+
+.. _wsl:
+
+WSL installation
+----------------
+
+.. note::
+
+    This installation was tested on Windows 11 only (25/06/2024). It should work on Windows 10 but we give no guarantees.
+
+
+The default WSL Linux distribution is a specially modified version of Ubuntu that is missing a few packages that come with a normal Ubuntu install.
+There are certain sections of the graphics stack that are needed for many GUI applcations to function correctly within WSL. To install these packages please run
+
+.. code-block:: bash
+
+    sudo apt install mesa-utils x11-apps libxinerama1 libgl1 libx11-dev
