@@ -118,7 +118,7 @@
     "plot_axis": "xz",
     "plot_pixel_per_metre": 100,
     "neutronics_output_path": "$path_expand:./neutronics",
-    "show_plot": false
+    "show_data": false
   },
   "TF coils": {
     "run_mode": "run",

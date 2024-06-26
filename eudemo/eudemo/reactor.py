@@ -28,6 +28,7 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
+from bluemira.base.look_and_feel import bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -491,8 +492,9 @@ if __name__ == "__main__":
         )
     )
 
-    if reactor_config.config_for("Neutronics")["show_plot"]:
+    if reactor_config.config_for("Neutronics")["show_data"]:
         reactor.neutronics.plot()
+        bluemira_print_clean(f"{reactor.neutronics}")
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
