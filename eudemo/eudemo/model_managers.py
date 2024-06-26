@@ -9,12 +9,17 @@ EUDEMO model manager classes
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
     from bluemira.equilibria.run import Snapshot
-
-from bluemira.base.look_and_feel import bluemira_warn
 
 
 class EquilibriumManager:
@@ -51,18 +56,15 @@ class EquilibriumManager:
 
 
 class NeutronicsManager:
+    """Manager for neutronics"""
+
     def __init__(self, csg_reactor, results):
         self.csg_reactor = csg_reactor
         self.results = results
 
     def plot(self):
-        from pathlib import Path
-
-        import matplotlib.pyplot as plt
-        import numpy as np
-        from PIL import Image
-
-        fig, ax = plt.subplots()
+        """Plot neutronics results"""
+        _f, ax = plt.subplots()
         ax.axis("off")
         ax.imshow(
             np.asarray(
