@@ -158,7 +158,7 @@ def log_geometry_on_failure(func):
             return func(*args, **kwargs)
         except cadapi.FreeCADError:
             # Dump the data in the file
-            if LogLevel(get_log_level(as_str=False)) == LogLevel.DEBUG:
+            if LogLevel(int(get_log_level(as_str=False) * 10)) == LogLevel.DEBUG:
                 data = _reconstruct_function_call(signature, *args, **kwargs)
                 filename = _make_debug_file(func_name)
                 try:

@@ -7,12 +7,17 @@
 
 """Logging system setup and control."""
 
+from __future__ import annotations
+
 import logging
 import sys
-from collections.abc import Iterable
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from bluemira.base.error import LogsError
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class LogLevel(Enum):
@@ -24,6 +29,17 @@ class LogLevel(Enum):
     INFO = 20
     DEBUG = 10
     NOTSET = 0
+
+    @classmethod
+    def _missing_(cls, value: int | str) -> LogLevel:
+        if isinstance(value, int) and value < cls.DEBUG.value:
+            return cls(value * 10)
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise LogsError(
+                f"Unknown severity level: {value}. Choose from: {(*cls._member_names_,)}"
+            ) from None
 
 
 def logger_setup(
@@ -46,15 +62,11 @@ def logger_setup(
     root_logger = logging.getLogger("")
     bm_logger = logging.getLogger("bluemira")
 
-    py_level = _convert_log_level(level).value
-
     # what will be shown on screen
-
     on_screen_handler = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler.setLevel(py_level)
+    on_screen_handler.setLevel(LogLevel(level).value)
 
     # what will be written to a file
-
     recorded_handler = logging.FileHandler(logfilename)
     recorded_formatter = logging.Formatter(
         fmt="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
@@ -93,8 +105,12 @@ def set_log_level(
         logger = logging.getLogger(logger_name)
 
         current_level = logger.getEffectiveLevel() if increase else 0
-        new_level = _convert_log_level(verbose, current_level)
-        _modify_handler(new_level, logger)
+        _modify_handler(
+            LogLevel(verbose)
+            if isinstance(verbose, str)
+            else LogLevel(int(current_level + (verbose * 10))),
+            logger,
+        )
 
 
 def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str | int:
@@ -117,31 +133,6 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
     if as_str:
         return LogLevel(max_level).name
     return max_level // 10
-
-
-def _convert_log_level(level: str | int, current_level: int = 0) -> LogLevel:
-    """
-    Convert the provided logging level to a LogLevel objects.
-
-    Parameters
-    ----------
-    level:
-        The bluemira logging level.
-    current_level:
-        The current bluemira logging level to increment from.
-
-    """
-    try:
-        if isinstance(level, str):
-            new_level = LogLevel[level]
-        else:
-            value = int(current_level + (level * 10))
-            new_level = LogLevel(value)
-    except ValueError:
-        raise LogsError(f"Unknown severity level - {value}") from None
-    except KeyError:
-        raise LogsError(f"Unknown severity level - {level}") from None
-    return new_level
 
 
 def _modify_handler(new_level: LogLevel, logger: logging.Logger):
