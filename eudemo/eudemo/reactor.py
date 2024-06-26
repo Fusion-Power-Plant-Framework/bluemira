@@ -491,7 +491,8 @@ if __name__ == "__main__":
         )
     )
 
-    reactor.neutronics.plot()
+    if reactor_config.config_for("Neutronics")["show_plot"]:
+        reactor.neutronics.plot()
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),

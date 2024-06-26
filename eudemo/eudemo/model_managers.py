@@ -19,7 +19,9 @@ from PIL import Image
 from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
+    from bluemira.codes.openmc.output import OpenMCResult
     from bluemira.equilibria.run import Snapshot
+    from eudemo.eudemo.neutronics.run import EUDEMONeutronicsCSGReactor
 
 
 class EquilibriumManager:
@@ -58,7 +60,11 @@ class EquilibriumManager:
 class NeutronicsManager:
     """Manager for neutronics"""
 
-    def __init__(self, csg_reactor, results):
+    def __init__(
+        self,
+        csg_reactor: EUDEMONeutronicsCSGReactor,
+        results: OpenMCResult | dict[int, float],
+    ):
         self.csg_reactor = csg_reactor
         self.results = results
 
@@ -81,3 +87,10 @@ class NeutronicsManager:
         self.csg_reactor.plot_2d()
 
         plt.show()
+
+    def __str__(self) -> str:
+        """String Representation"""
+        if hasattr(self.results, "_tabulate"):
+            # Avoid openmc related import
+            return self.results.__str__()
+        return super().__str__()
