@@ -18,6 +18,7 @@ from numpy.linalg import norm
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
+from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
@@ -604,6 +605,13 @@ class TestLogFailedGeometryOperationSerialisation:
         PictureFrame().create_shape(),
         TripleArc().create_shape(),
     )
+
+    def setup_method(self):
+        self._log_level = get_log_level()
+        set_log_level("DEBUG")
+
+    def teardown_method(self):
+        set_log_level(self._log_level)
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     @pytest.mark.parametrize("wire", wires)

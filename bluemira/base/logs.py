@@ -36,7 +36,7 @@ class LogLevel(Enum):
             return cls(value * 10)
         try:
             return cls[value.upper()]
-        except KeyError:
+        except (KeyError, AttributeError):
             raise LogsError(
                 f"Unknown severity level: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
