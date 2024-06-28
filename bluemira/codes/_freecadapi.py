@@ -418,9 +418,7 @@ def interpolate_bspline(
             pntslist.pop()
         else:
             # len == 2 and first == last
-            _err = (
-                "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"
-            )
+            _err = "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"
             raise InvalidCADInputsError(_err)
 
     kwargs = {}
@@ -439,12 +437,10 @@ def interpolate_bspline(
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
     except Part.OCCError as error:
-        msg = "\n".join(
-            [
-                "FreeCAD was unable to make a spline:",
-                f"{error.args[0]}",
-            ]
-        )
+        msg = "\n".join([
+            "FreeCAD was unable to make a spline:",
+            f"{error.args[0]}",
+        ])
         raise FreeCADError(msg) from error
     return wire
 
@@ -563,12 +559,8 @@ def make_ellipse(
     FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(
-        center
-    )
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(
-        center
-    )
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
@@ -643,12 +635,10 @@ def offset_wire(
             ),
         )
     except Base.FreeCADError as error:
-        msg = "\n".join(
-            [
-                "FreeCAD was unable to make an offset of wire:",
-                f"{error.args[0]['sErrMsg']}",
-            ]
-        )
+        msg = "\n".join([
+            "FreeCAD was unable to make an offset of wire:",
+            f"{error.args[0]['sErrMsg']}",
+        ])
         raise FreeCADError(msg) from None
 
     fix_wire(wire)
@@ -1386,9 +1376,7 @@ def meshed_exporter(
     """Meshing and then exporting CAD in certain formats."""
 
     @wraps(export_func)
-    def wrapper(
-        objs: Part.Feature, filename: str, *, tessellate: float = 0.5, **kwargs
-    ):
+    def wrapper(objs: Part.Feature, filename: str, *, tessellate: float = 0.5, **kwargs):
         """
         Tessellation should happen on a copied object
         """
@@ -1502,12 +1490,10 @@ def save_cad(
 
     filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
 
-    _freecad_save_config(
-        **{
-            k: kwargs.pop(k)
-            for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
-        }
-    )
+    _freecad_save_config(**{
+        k: kwargs.pop(k)
+        for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
+    })
 
     objs = list(_setup_document(shapes, labels, rotate=False))
 
@@ -2046,9 +2032,7 @@ def _wire_edges_tangent(wire):
 
     if wire.isClosed():
         # Check last and first edge tangency
-        edges_tangent.append(
-            _edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0])
-        )
+        edges_tangent.append(_edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0]))
 
     return all(edges_tangent)
 
