@@ -249,8 +249,8 @@ def fit_sink_data(
     if plot:
         y_fit = fit_func(x, *p_opt[0])
 
-        true_integral = np.trapz(y)
-        fit_integral = np.trapz(y_fit)
+        true_integral = np.trapezoid(y)
+        fit_integral = np.trapezoid(y_fit)
 
         _f, ax = plt.subplots()
         ax.set_xlabel("Time [years]")

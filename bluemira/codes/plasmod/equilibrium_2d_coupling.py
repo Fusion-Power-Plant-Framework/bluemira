@@ -554,10 +554,10 @@ def calc_metric_coefficients(
         y3_data = 1 / (fs.coords.x**2 * bp)
         y2_data = grad_vol_norm_2 * y3_data
 
-        denom = np.trapz(y0_data, x_data)
-        g1[i + 1] = np.trapz(y1_data, x_data) / denom
-        g2[i + 1] = np.trapz(y2_data, x_data) / denom
-        g3[i + 1] = np.trapz(y3_data, x_data) / denom
+        denom = np.trapezoid(y0_data, x_data)
+        g1[i + 1] = np.trapezoid(y1_data, x_data) / denom
+        g2[i + 1] = np.trapezoid(y2_data, x_data) / denom
+        g3[i + 1] = np.trapezoid(y3_data, x_data) / denom
         # NOTE: To future self, g1 is not used (right now), and the calculation could
         # be removed to speed things up.
 

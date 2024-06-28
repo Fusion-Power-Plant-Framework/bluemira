@@ -248,7 +248,7 @@ def integrate_dx_dz(func, d_x, d_z):
     integral: float
         The integral value of the field in 2-D
     """
-    return np.trapz(np.trapz(func)) * d_x * d_z
+    return np.trapezoid(np.trapezoid(func)) * d_x * d_z
 
 
 @nb.jit(nopython=True, cache=True)
