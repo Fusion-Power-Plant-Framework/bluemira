@@ -44,9 +44,10 @@ However if you want to change the source the :py:meth:`set_value` method can be 
 .. code-block:: pycon
 
    >>> r_0.value = 6000
-   >>> print(r_0, r_0.source)
-   <Parameter(R_0=6000 cm)> Input
+   >>> print(r_0, r_0.source or None)
+   <Parameter(R_0=6000 cm)> None
    >>> r_0.set_value(20, "New Input")
+   >>> print(r_0, r_0.source or None)
    <Parameter(R_0=20 cm)> New Input
 
 If you want to access the value of the :py:class:`Parameter` in a different unit,
@@ -64,7 +65,7 @@ which can be useful to understand why a :py:class:`Parameter` value changed.
 
     >>> r_0.history()
     [ParameterValue(value=5000, source='Input'),
-     ParameterValue(value=6000, source='Input'),
+     ParameterValue(value=6000, source=''),
      ParameterValue(value=20, source='New Input')]
 
 

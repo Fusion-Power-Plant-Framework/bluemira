@@ -785,17 +785,13 @@ class TestMakePivotedString:
         The code used to generate the test data:
 
         .. code-block:: python
-
-            from BLUEPRINT.geometry.stringgeom import String
             from bluemira.geometry.parameterisations import PrincetonD
 
             shape = PrincetonD().create_shape()
-            points = shape.discretise()
-            s = String(points, angle=20, dx_min=0.5, dx_max=2.5)
+            points, _ = shape.discretise().simplify(max_angle=20, dx_min=0.5, dx_max=2.5)
 
-            np.save("panelling_ref_data.npy", s.new_points)
+            np.save(tmp_path / "panelling_data.npy", points.xyz.T)
 
-        Using bluemira 437a1c10, and BLUEPRINT e3fb8d1c.
         """
         boundary = PrincetonD({
             "x1": {"value": 4},

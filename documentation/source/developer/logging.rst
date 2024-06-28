@@ -49,13 +49,14 @@ There are a few actions that should be taken:
         def my_function(verbosity=get_log_level(as_str=False) < 2):
             if verbosity:
                 # Do stuff
-
+                ...
 
         # A cleaner but less customisable version
         def my_function():
             loglevel = get_log_level()
             if loglevel == "DEBUG":
                 # Do stuff
+                ...
 
 * For updated text (e.g. progress bars) there are a few functions that do not print newlines
 

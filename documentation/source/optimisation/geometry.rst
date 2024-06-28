@@ -17,6 +17,7 @@ representing our circle.
 
 .. code-block:: python
 
+    from dataclasses import dataclass
     from typing import Dict, Optional, Union
 
     from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -67,6 +68,7 @@ but note that it could be any closed wire.
 .. code-block:: python
 
     from bluemira.display import plot_2d
+    from bluemira.geometry.tools import make_polygon
 
     zone = make_polygon({"x": [-2, -2, 3, 3], "z": [0, 1, 1, 0]}, closed=True)
 
@@ -96,7 +98,7 @@ function to run the optimisation.
 
 .. code-block:: python
 
-    from bluemira.optimisation import optimise_geometry
+    from bluemira.geometry.optimisation import optimise_geometry
 
     result = optimise_geometry(
         geom=circle,

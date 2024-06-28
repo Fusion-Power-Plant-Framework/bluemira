@@ -47,6 +47,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.7
 sphinxcontrib-serializinghtml==1.1.10
 sqlalchemy==2.0.31
+sybil==6.1.1
 toml==0.10.2
 tomli==2.0.1
 typing_extensions==4.12.2

@@ -22,7 +22,7 @@ def combine_text_mock_write_calls(open_mock: mock.MagicMock) -> str:
 
     You may have created a suitable mock object using the following
 
-    .. code-block:: python
+    .. code-block:: python  # doctest: +SKIP
 
         with mock.patch("builtins.open", new_callable=mock.mock_open) as open_mock:
             # write a file
@@ -46,7 +46,7 @@ def file_exists(good_file_path: str, isfile_ref: str):
     several files, but you want to mock such that only one of those
     files exists.
 
-    .. code-block:: python
+    .. code-block:: python  # doctest: +SKIP
 
         with file_exists("some/file", "module.under.test.os.path.isfile"):
             # do some work pretending "some/file" is a file

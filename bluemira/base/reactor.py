@@ -396,7 +396,7 @@ class Reactor(BaseManager):
             def get_ripple(self):
                 '''Calculate the ripple in the TF coils.'''
 
-        reactor = MyReactor("My Reactor")
+        reactor = MyReactor("My Reactor", n_sectors=1)
         reactor.plasma = build_plasma()
         reactor.tf_coils = build_tf_coils()
         reactor.show_cad()
