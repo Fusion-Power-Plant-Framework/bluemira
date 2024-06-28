@@ -426,7 +426,8 @@ def make_bsplinesurface(
             weights=weights,
             periodic=periodic,
             check_rational=check_rational,
-        )
+        ),
+        label=label,
     )
 
 
