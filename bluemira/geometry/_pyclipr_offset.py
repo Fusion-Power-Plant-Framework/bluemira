@@ -203,6 +203,8 @@ def pyclippath_to_coordinates(path: np.ndarray, *, close=True) -> Coordinates:
     ----------
     path:
         The vertex polygon path formatting used in pyclipper
+    close:
+        Whether to close the path
 
     Returns
     -------
