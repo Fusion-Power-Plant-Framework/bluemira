@@ -366,6 +366,71 @@ def make_bspline(
     )
 
 
+def make_bsplinesurface(
+    poles: list | np.ndarray,
+    mults_u: list | np.ndarray,
+    mults_v: list | np.ndarray,
+    knot_vector_u: list | np.ndarray,
+    knot_vector_v: list | np.ndarray,
+    degree_u: int,
+    degree_v: int,
+    weights: list | np.ndarray,
+    *,
+    periodic: bool,
+    check_rational: bool,
+    label: str = "",
+) -> BluemiraWire:
+    """
+    Builds a B-SplineSurface by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles:
+        Array of poles (control points).
+    mults_u:
+        list of integers for the u-multiplicity
+    mults_v:
+        list of integers for the u-multiplicity
+    knot_vector_u:
+        list of u-knots
+    knot_vector_v:
+        list of v-knots
+    degree_u:
+        degree of NURBS in u-direction
+    degree_v:
+        degree of NURBS in v-direction
+    weights:
+        point weights.
+    periodic:
+        Whether or not the spline is periodic (same curvature at start and end points)
+    check_rational:
+        Whether or not to check if the BSpline is rational (not sure)
+
+    Returns
+    -------
+    A FreeCAD object that contours the bsplinesurface
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    """
+    return convert(
+        cadapi.make_bsplinesurface(
+            poles,
+            mults_v,
+            mults_u,
+            knot_vector_u,
+            knot_vector_v,
+            degree_u=degree_u,
+            degree_v=degree_v,
+            weights=weights,
+            periodic=periodic,
+            check_rational=check_rational,
+        ),
+        label=label,
+    )
+
+
 def _make_polygon_fallback(
     points,
     label="",
@@ -414,7 +479,10 @@ def interpolate_bspline(
     points = Coordinates(points)
     return BluemiraWire(
         cadapi.interpolate_bspline(
-            points.T, closed=closed, start_tangent=start_tangent, end_tangent=end_tangent
+            points.T,
+            closed=closed,
+            start_tangent=start_tangent,
+            end_tangent=end_tangent,
         ),
         label=label,
     )
@@ -714,7 +782,8 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire),
+        label=label,
     )
 
 
@@ -1185,7 +1254,9 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+    convex_bm_wire: BluemiraWire,
+    plane: BluemiraPlane,
+    cut_direction: npt.NDArray[float],
 ) -> npt.NDArray[float]:
     """
     Cut a wire using a plane.
