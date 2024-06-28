@@ -176,7 +176,10 @@ def log_geometry_on_failure(func):
                     )
 
             else:
-                bluemira_warn("Set logging level to debug to serialise function call")
+                bluemira_warn(
+                    "Set logging level to debug to save the geometry"
+                    "and other function arguments to json"
+                )
 
             raise
 
