@@ -26,7 +26,8 @@ from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
-from bluemira.base.file import force_file_extension, get_bluemira_path
+from bluemira.base.file import force_file_extension, try_get_bluemira_path
+from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -129,7 +130,12 @@ def _make_debug_file(name: str) -> Path:
     """
     Make a new file in the geometry debugging folder.
     """
-    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+    path = try_get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+
+    if path is None:
+        path = Path.cwd() / "naughty_geometry"
+        Path.mkdir(path, exist_ok=True)
+
     now = datetime.datetime.now()
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
@@ -156,21 +162,28 @@ def log_geometry_on_failure(func):
         try:
             return func(*args, **kwargs)
         except cadapi.FreeCADError:
-            data = _reconstruct_function_call(signature, *args, **kwargs)
-            filename = _make_debug_file(func_name)
-
             # Dump the data in the file
-            try:
-                with open(filename, "w") as file:
-                    json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
+            if LogLevel(int(get_log_level(as_str=False) * 10)) == LogLevel.DEBUG:
+                data = _reconstruct_function_call(signature, *args, **kwargs)
+                filename = _make_debug_file(func_name)
+                try:
+                    with open(filename, "w") as file:
+                        json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
-                bluemira_debug(
-                    f"Function call {func_name} failed. Debugging information was saved"
-                    f" to: {filename}"
-                )
-            except Exception:  # noqa: BLE001
+                    bluemira_debug(
+                        f"Function call {func_name} failed."
+                        f" Debugging information was saved to: {filename}"
+                    )
+                except Exception:  # noqa: BLE001
+                    bluemira_warn(
+                        "Failed to save the failed geometry operation"
+                        f" {func_name} to JSON."
+                    )
+
+            else:
                 bluemira_warn(
-                    f"Failed to save the failed geometry operation {func_name} to JSON."
+                    "Set logging level to debug to save the geometry"
+                    "and other function arguments to json"
                 )
 
             raise
