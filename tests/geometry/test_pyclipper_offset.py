@@ -29,16 +29,7 @@ class TestClipperOffset:
     @pytest.mark.parametrize("method", options)
     @pytest.mark.parametrize(
         ("x", "y", "delta"),
-<<<<<<< HEAD
         [(x, y, 1.0), (x[::-1], y[::-1], 1.0), (x, y, -1.0), (x[::-1], y[::-1], -1.0)],
-=======
-        [
-            (x, y, 1.0),
-            (x[::-1], y[::-1], 0.9),
-            (x, y, -1.0),
-            (x[::-1], y[::-1], -0.9),
-        ],
->>>>>>> f5ab8a1c (it's working, but one test no longer throws)
     )
     def test_complex_polygon(self, x, y, delta, method):
         rng = np.random.default_rng()
