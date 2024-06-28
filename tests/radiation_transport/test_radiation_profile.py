@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from bluemira.base import constants
+from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -20,8 +21,13 @@ from bluemira.radiation_transport.midplane_temperature_density import (
 )
 from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
+    DetectedRadiation,
+    FirstWallRadiationSolver,
     electron_density_and_temperature_sol_decay,
+    grid_interpolator,
+    interpolated_field_values,
     ion_front_distance,
+    linear_interpolator,
     make_wall_detectors,
     pfr_filter,
     radiative_loss_function_values,
@@ -94,6 +100,7 @@ class TestCoreRadiation:
             sol_impurities=cls.config["f_imp_sol"],
         )
         source.analyse(firstwall_geom=fw_shape)
+        source.rad_map(fw_shape)
 
         cls.profiles = profiles
         cls.source = source
@@ -315,3 +322,32 @@ class TestCoreRadiation:
         )
         assert all(detector[2] <= max_wall_len for detector in wall_detectors)
         assert all(detector[1] == X_WIDTH for detector in wall_detectors)
+        assert len(wall_detectors) == 532
+
+    def test_FirstWallRadiationSolver(self):
+        # Coversion required for CHERAB
+        f_sol = linear_interpolator(
+            self.source.sol_rad.x_tot,
+            self.source.sol_rad.z_tot,
+            raw_uc(self.source.sol_rad.rad_tot, "MW", "W"),
+        )
+
+        # SOL radiation grid
+        x_sol = np.linspace(min(self.fw_shape.x), max(self.fw_shape.x), 1000)
+        z_sol = np.linspace(min(self.fw_shape.z), max(self.fw_shape.z), 1500)
+
+        rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
+        func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
+        solver = FirstWallRadiationSolver(
+            source_func=func, firstwall_shape=self.fw_shape
+        )
+        assert solver.fw_shape == self.fw_shape
+
+        wall_loads = solver.solve(plot=False)
+
+        # check return types
+        assert isinstance(wall_loads, DetectedRadiation)
+        assert isinstance(wall_loads.total_power, float)
+
+        # check if the arrays are of same length
+        assert len(wall_loads.detector_numbers) == len(wall_loads.detected_power)
