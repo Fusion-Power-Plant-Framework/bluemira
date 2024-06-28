@@ -206,16 +206,8 @@ def target_temperature(
     # Finding roots of the target temperature quadratic equation
     roots = np.roots([1, 2 * (eps_cool / gamma) - f_ev, (eps_cool**2) / (gamma**2)])
 
-    if roots.dtype == complex:
-        t_tar = f_ion_t
-    else:
-        # Excluding unstable solution
-        sol_i = np.where(roots > t_crit)[0][0]
-
-        # Target temperature
-        t_tar = roots[sol_i]
-
-    return t_tar
+    # Target temperature excluding unstable solution
+    return f_ion_t if roots.dtype == complex else roots[np.where(roots > t_crit)[0][0]]
 
 
 def specific_point_temperature(

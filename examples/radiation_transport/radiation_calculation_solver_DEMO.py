@@ -18,7 +18,9 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
+from bluemira.radiation_transport.midplane_temperature_density import (
+    midplane_profiles,
+)
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSource,
     interpolated_field_values,
@@ -117,10 +119,7 @@ config = {
 # Get core midplane profiles
 # %%
 
-Profiles = MidplaneProfiles(params=params)
-psi_n = Profiles.psi_n
-ne_mp = Profiles.ne_mp
-te_mp = Profiles.te_mp
+profiles = midplane_profiles(params=params)
 
 # %% [markdown]
 #
@@ -131,9 +130,7 @@ source = RadiationSource(
     eq=eq,
     firstwall_shape=fw_shape,
     params=params,
-    psi_n=psi_n,
-    ne_mp=ne_mp,
-    te_mp=te_mp,
+    midplane_profiles=profiles,
     core_impurities=config["f_imp_core"],
     sol_impurities=config["f_imp_sol"],
 )
