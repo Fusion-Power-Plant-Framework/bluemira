@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import copy
 import enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     import numpy as np
@@ -65,6 +65,9 @@ class _Orientation(enum.Enum):
     REVERSED = "Reversed"
 
 
+BluemiraGeoT = TypeVar("BluemiraGeoT", bound="BluemiraGeo")
+
+
 class BluemiraGeo(ABC, GeoMeshable):
     """
     Abstract base class for geometry.
@@ -81,12 +84,12 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def __init__(
         self,
-        boundary: BluemiraGeo | list[BluemiraGeo],
+        boundary: BluemiraGeoT | list[BluemiraGeoT],
         label: str = "",
-        boundary_classes: BluemiraGeo | None = None,
+        boundary_classes: list[type[BluemiraGeoT]] | None = None,
     ):
         super().__init__()
-        self._boundary_classes = boundary_classes
+        self._boundary_classes = boundary_classes or []
         self.__orientation = _Orientation.FORWARD
         self.label = label
         self._set_boundary(boundary)

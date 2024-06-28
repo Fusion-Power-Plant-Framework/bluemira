@@ -8,9 +8,11 @@
 Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes.
 """
 
+from __future__ import annotations
+
 import abc
-from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 
@@ -24,6 +26,14 @@ from bluemira.balance_of_plant.plotting import BalanceOfPlantPlotter
 from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+
+
+CoolantPumpingT = TypeVar("CoolantPumpingT", bound="CoolantPumping")
 
 
 class CoolantPumping(abc.ABC):
@@ -141,6 +151,11 @@ class H2OPumping(CoolantPumping):
         return p_pump, p_electric
 
 
+PowerCycleEfficiencyCalcT = TypeVar(
+    "PowerCycleEfficiencyCalcT", bound="PowerCycleEfficiencyCalc"
+)
+
+
 class PowerCycleEfficiencyCalc(abc.ABC):
     """
     Power cycle efficiency calculation abstract base class
@@ -214,6 +229,9 @@ class SuperheatedRankine(PowerCycleEfficiencyCalc):
         )
 
 
+FractionSplitStrategyT = TypeVar("FractionSplitStrategyT", bound="FractionSplitStrategy")
+
+
 class FractionSplitStrategy(abc.ABC):
     """
     Strategy ABC for splitting flows according to fractions.
@@ -225,7 +243,7 @@ class FractionSplitStrategy(abc.ABC):
         Split flows somehow.
         """
 
-    def check_fractions(self, fractions: Iterable[float]) -> bool:
+    def check_fractions(self, fractions: Iterable[float]):
         """
         Check that fractions sum to 1.0
 
@@ -482,15 +500,16 @@ class BalanceOfPlantModel:
     """
 
     _plotter = BalanceOfPlantPlotter
+    params: BoPModelParams
 
     def __init__(
         self,
-        params: dict[str, float] | BoPModelParams,
-        rad_sep_strat: FractionSplitStrategy,
-        neutron_strat: FractionSplitStrategy,
-        blanket_pump_strat: CoolantPumping,
-        divertor_pump_strat: CoolantPumping,
-        bop_cycle_strat: PowerCycleEfficiencyCalc,
+        params: ParameterFrameLike,
+        rad_sep_strat: FractionSplitStrategyT,
+        neutron_strat: FractionSplitStrategyT,
+        blanket_pump_strat: CoolantPumpingT,
+        divertor_pump_strat: CoolantPumpingT,
+        bop_cycle_strat: PowerCycleEfficiencyCalcT,
         parasitic_load_strat: ParasiticLoadStrategy,
     ):
         self.params = make_parameter_frame(params, BoPModelParams)
@@ -500,7 +519,6 @@ class BalanceOfPlantModel:
         self.divertor_pump_strat = divertor_pump_strat
         self.bop_strat = bop_cycle_strat
         self.parasitic_strat = parasitic_load_strat
-        self.flow_dict = None
 
     def build(self):
         """
@@ -623,7 +641,7 @@ class BalanceOfPlantModel:
                 " lost somewhere."
             )
 
-    def plot(self, title: str | None = None, **kwargs):
+    def plot(self, title: str = "", **kwargs):
         """
         Plot the BalanceOfPlant object.
 

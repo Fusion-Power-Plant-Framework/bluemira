@@ -31,6 +31,7 @@ from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import optimise
 
 if TYPE_CHECKING:
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
     from bluemira.geometry.optimisation.typing import GeomConstraintT
     from bluemira.geometry.parameterisations import GeometryParameterisation
     from bluemira.geometry.wire import BluemiraWire
@@ -439,7 +440,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         algorithm: str,
         opt_conditions: dict[str, float],
         opt_parameters: dict[str, float],
-        params: ParameterFrame,
+        params: ParameterFrameLike,
         wp_cross_section: BluemiraWire,
         ripple_wire: BluemiraWire,
         ripple_selector: RipplePointSelector | None = None,

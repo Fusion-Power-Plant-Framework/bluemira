@@ -12,23 +12,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bluemira.display.palettes import ColorPalette
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from bluemira.geometry.solid import BluemiraSolid
-    from bluemira.geometry.wire import BluemiraWire
-    from bluemira.materials.material import SerialisedMaterial
-
 import numpy as np
 from anytree import PreOrderIter
 
-import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
+from bluemira.display.palettes import ColorPalette
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -43,6 +34,14 @@ from bluemira.geometry.tools import (
     slice_shape,
     sweep_shape,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.components import ComponentT
+    from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
+    from bluemira.materials.material import Material
 
 __all__ = [
     "apply_component_display_options",
@@ -99,14 +98,14 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
 
 
 def circular_pattern_component(
-    component: bm_comp.Component | list[bm_comp.Component],
+    component: ComponentT | list[ComponentT],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-) -> list[bm_comp.Component]:
+) -> list[ComponentT]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 
@@ -132,8 +131,8 @@ def circular_pattern_component(
     degree:
         The angular extent of the patterning in degrees, by default 360.
     """
-    component = [component] if isinstance(component, bm_comp.Component) else component
-    sectors = [bm_comp.Component(f"{parent_prefix}") for _ in range(n_children)]
+    component = [component] if isinstance(component, Component) else component
+    sectors = [Component(f"{parent_prefix}") for _ in range(n_children)]
     # build sector trees by assigning copies of each component to sec. parents
     for c in component:
         for parent_sc in sectors:
@@ -146,11 +145,11 @@ def circular_pattern_component(
         for comp in sector_index:
             comp.name = f"{comp.name} {sec_i + 1}"
 
-    faux_sec_comp = bm_comp.Component(f"{parent_prefix} X")
+    faux_sec_comp = Component(f"{parent_prefix} X")
     faux_sec_comp.children = component
 
     for search_index_i, comp in enumerate(PreOrderIter(faux_sec_comp)):
-        if isinstance(comp, bm_comp.PhysicalComponent):
+        if isinstance(comp, PhysicalComponent):
             shapes = bm_geo.tools.circular_pattern(
                 comp.shape,
                 n_shapes=n_children,
@@ -162,7 +161,7 @@ def circular_pattern_component(
             # which should be the copy of the PhysicalComponent
             for sector_index, shape in zip(sector_tree_indexs, shapes, strict=False):
                 phy_comp = sector_index[search_index_i]
-                if not isinstance(phy_comp, bm_comp.PhysicalComponent):
+                if not isinstance(phy_comp, PhysicalComponent):
                     raise ComponentError(
                         "Could not find corresponding PhysicalComponent in "
                         f"sector index: {sector_index}, "
@@ -358,7 +357,7 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 def build_sectioned_xy(
     face: BluemiraFace,
     plot_colour: tuple[float],
-    material: SerialisedMaterial | None = None,
+    material: Material | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -395,14 +394,14 @@ def build_sectioned_xy(
 
 
 def build_sectioned_xyz(
-    face: BluemiraFace,
-    name: str,
+    face: BluemiraFace | list[BluemiraFace],
+    name: str | list[str],
     n_TF: int,
-    plot_colour: tuple[float],
+    plot_colour: tuple[float] | list[tuple[float]],
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
-    material: SerialisedMaterial | None = None,
+    material: Material | list[Material | None] | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component

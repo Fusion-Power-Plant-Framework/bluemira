@@ -8,7 +8,10 @@
 Plotting for balance of plant
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,6 +20,12 @@ from scipy.optimize import minimize
 
 from bluemira.base.constants import raw_uc
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 class SuperSankey(Sankey):
@@ -30,16 +39,16 @@ class SuperSankey(Sankey):
 
     def add(  # noqa: D102
         self,
-        patchlabel="",
-        flows=None,
-        orientations=None,
-        labels="",
-        trunklength=1.0,
-        pathlengths=0.25,
-        prior=None,
-        future=None,
-        connect=(0, 0),
-        rotation=0,
+        patchlabel: str = "",
+        flows: Iterable[float] | None = None,
+        orientations: Iterable[float] | None = None,
+        labels: str | None | list[str | None] = "",
+        trunklength: float = 1.0,
+        pathlengths: float | list[float] = 0.25,
+        prior: int | None = None,
+        future: int | None = None,
+        connect: tuple[int, int] | list[tuple[int, int]] = (0, 0),
+        rotation: float = 0,
         **kwargs,
     ):
         __doc__ = super().__doc__  # noqa: A001, F841
@@ -77,16 +86,16 @@ class SuperSankey(Sankey):
 
     def _double_connect(
         self,
-        patchlabel,
-        flows,
-        orientations,
-        labels,
-        trunklength,
-        pathlengths,
-        prior,
-        future,
-        connect,
-        rotation,
+        patchlabel: str,
+        flows: Iterable[float] | None,
+        orientations: Iterable[float] | None,
+        labels: str | None | list[str | None],
+        trunklength: float,
+        pathlengths: list[float],
+        prior: int | None,
+        future: int | None,
+        connect: list[tuple[int, int]],
+        rotation: float,
         **kwargs,
     ):
         """
@@ -94,9 +103,9 @@ class SuperSankey(Sankey):
 
         Parameters
         ----------
-        future: int
+        future:
             The index of the diagram to connect to
-        connect: List[Tuple]
+        connect:
             The list of (int, int) connections.
             - connect[0] is a (prior, this) tuple indexing the flow of the
             prior diagram and the flow of this diagram to connect.
@@ -128,15 +137,23 @@ class SuperSankey(Sankey):
             facecolor=kwargs.get("facecolor", None),
         )
 
-    def _opt_connect(self, flows, orient, prior, future, connect, trunklength):
+    def _opt_connect(
+        self,
+        flows: Iterable[float] | None,
+        orient: Iterable[float] | None,
+        prior: int | None,
+        future: int | None,
+        connect: list[tuple[int, int]],
+        trunklength: float,
+    ) -> tuple[float, float]:
         """
         Optimises the second connection between Sankey diagrams.
 
         Returns
         -------
-        dx: float
+        dx:
             The x pathlength to use to match the tips
-        dy:float
+        dy:
             The y pathlength to use to match the tips
 
         Notes
@@ -148,7 +165,7 @@ class SuperSankey(Sankey):
         """
         future_index, this_f_index = connect[1]
         labels = [None] * len(flows)
-        pathlengths = [0] * len(flows)
+        pathlengths = [0.0] * len(flows)
 
         # Make a local copy of the Sankey.extent attribute to override any
         # modifications during optimisation
@@ -228,10 +245,8 @@ class BalanceOfPlantPlotter:
 
     def __init__(self, **kwargs):
         self.plot_options = {**self.plot_options, **kwargs}
-        self.fig = None
-        self.sankey = None
 
-    def _scale_flows(self, flow_dict):
+    def _scale_flows(self, flow_dict: dict[str, list[float]]) -> dict[str, list[float]]:
         plot_unit = self.plot_options.get("unit", "MW")
         flow_unit = "W"
 
@@ -239,7 +254,7 @@ class BalanceOfPlantPlotter:
             flow_dict[k] = [raw_uc(vi, flow_unit, plot_unit) for vi in v]
         return flow_dict
 
-    def plot(self, flow_dict, title=None):
+    def plot(self, flow_dict: dict[str, list[float]], title: str = "") -> Axes:
         """
         Plots the BalanceOfPlant system, based on the inputs and flows.
 
@@ -254,30 +269,35 @@ class BalanceOfPlantPlotter:
         """
         flow_dict = self._scale_flows(flow_dict)
         # Build the base figure object
-        self.fig = plt.figure(
+        fig = plt.figure(
             figsize=self.plot_options["figsize"],
             facecolor=self.plot_options["facecolor"],
         )
-        ax = self.fig.add_subplot(1, 1, 1, xticks=[], yticks=[])
+        ax = fig.add_subplot(1, 1, 1, xticks=[], yticks=[])
         plt.axis("off")
 
-        self.sankey = SuperSankey(
-            ax=ax,
-            scale=self.plot_options["scale"],
-            format=self.plot_options["format"],
-            unit=self.plot_options["unit"],
-            gap=self.plot_options["gap"],
-            radius=self.plot_options["radius"],
-            shoulder=self.plot_options["shoulder"],
-            head_angle=self.plot_options["head_angle"],
+        sankey = self._build_diagram(
+            flow_dict,
+            SuperSankey(
+                ax=ax,
+                scale=self.plot_options["scale"],
+                format=self.plot_options["format"],
+                unit=self.plot_options["unit"],
+                gap=self.plot_options["gap"],
+                radius=self.plot_options["radius"],
+                shoulder=self.plot_options["shoulder"],
+                head_angle=self.plot_options["head_angle"],
+            ),
         )
-        self._build_diagram(flow_dict)
-        self._polish()
-        self.fig.suptitle(
+        self._polish(fig, sankey)
+        fig.suptitle(
             title, color=self.plot_options["font_color"], fontsize=24, weight="bold"
         )
+        return ax
 
-    def _build_diagram(self, flow_dict):
+    def _build_diagram(
+        self, flow_dict: dict[str, list[float]], sankey: SuperSankey
+    ) -> SuperSankey:
         """
         Builds the Sankey diagram. This is much more verbose than looping over
         some structs, but that's how it used to be and it was hard to modify.
@@ -288,7 +308,7 @@ class BalanceOfPlantPlotter:
         l_m = self.plot_options["medium_length"]
 
         # 0: Plasma
-        self.sankey.add(
+        sankey.add(
             patchlabel="Plasma",
             labels=["Fusion Power", None, "Neutrons", "Alphas + Aux"],
             flows=flow_dict["Plasma"],
@@ -300,7 +320,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["blue"].as_hex(),
         )
         # 1: H&CD (first block)
-        self.sankey.add(
+        sankey.add(
             patchlabel="H&CD",
             labels=["", "H&CD power", "Losses"],
             flows=flow_dict["H&CD"],
@@ -312,7 +332,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["pink"].as_hex(),
         )
         # 2: Neutrons
-        self.sankey.add(
+        sankey.add(
             patchlabel="Neutrons",
             labels=[None, "Energy Multiplication", "Blanket n", "Divertor n", "Aux n"],
             flows=flow_dict["Neutrons"],
@@ -324,7 +344,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["orange"].as_hex(),
         )
         # 3: Radiation and separatrix
-        self.sankey.add(
+        sankey.add(
             patchlabel="Radiation and\nseparatrix",
             labels=[None, "", "Divertor rad and\n charged p"],
             flows=flow_dict["Radiation and \nseparatrix"],
@@ -336,7 +356,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["red"].as_hex(),
         )
         # 4: Blanket
-        self.sankey.add(
+        sankey.add(
             patchlabel="Blanket",
             labels=[None, "", "", "Decay heat", ""],
             flows=flow_dict["Blanket"],
@@ -348,7 +368,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["yellow"].as_hex(),
         )
         # 5: Divertor
-        self.sankey.add(
+        sankey.add(
             patchlabel="Divertor",
             labels=[None, None, ""],
             flows=flow_dict["Divertor"],
@@ -360,7 +380,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["cyan"].as_hex(),
         )
         # 6: First wall
-        self.sankey.add(
+        sankey.add(
             patchlabel="First wall",
             labels=[None, "Auxiliary \n FW", None],
             flows=flow_dict["First wall"],
@@ -373,7 +393,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["grey"].as_hex(),
         )
         # 7: BoP
-        self.sankey.add(
+        sankey.add(
             patchlabel="BoP",
             labels=[None, None, "Losses", None],
             flows=flow_dict["BoP"],
@@ -404,7 +424,7 @@ class BalanceOfPlantPlotter:
             labels[-1] = "Grid"
             orientations[-1] = 1
 
-        self.sankey.add(
+        sankey.add(
             patchlabel="Electricity",
             labels=labels,
             flows=flow_dict["Electricity"],
@@ -426,7 +446,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 9: H&CD return leg
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, "H&CD Power"],
             flows=flow_dict["_H&CD loop"],
@@ -438,7 +458,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 10: Divertor (second block)
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, None],
             flows=flow_dict["_Divertor 2"],
@@ -451,7 +471,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["cyan"].as_hex(),
         )
         # 11: H&CD return leg (second half)
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, None],
             flows=flow_dict["_H&CD loop 2"],
@@ -464,7 +484,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 12: Divertor back into BoP
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, "", ""],
             flows=flow_dict["_DIV to BOP"],
@@ -477,7 +497,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["cyan"].as_hex(),
         )
         # 13: BB electrical pumping loss turn leg
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, "Losses", "BB coolant \n pumping"],
             flows=flow_dict["_BB coolant loop turn"],
@@ -489,7 +509,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 14: BB electrical pumping return leg into blanket
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, None],
             flows=flow_dict["_BB coolant loop blanket"],
@@ -502,7 +522,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 15: Divertor electrical pumping loss turn leg
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, "Losses", "Div coolant \n pumping"],
             flows=flow_dict["_DIV coolant loop turn"],
@@ -514,7 +534,7 @@ class BalanceOfPlantPlotter:
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
         # 16: Divertor electrical pumping return into divertor
-        self.sankey.add(
+        sankey.add(
             patchlabel="",
             labels=[None, None],
             flows=flow_dict["_DIV coolant loop divertor"],
@@ -526,12 +546,13 @@ class BalanceOfPlantPlotter:
             pathlengths=[0, 0],
             facecolor=BLUEMIRA_PALETTE["green"].as_hex(),
         )
+        return sankey
 
-    def _polish(self):
+    def _polish(self, fig: Figure, sankey: SuperSankey):
         """
         Finish up and polish figure, and format text
         """
-        diagrams = self.sankey.finish()
+        diagrams = sankey.finish()
         for diagram in diagrams:
             diagram.text.set_fontweight(self.plot_options["font_weight"])
             diagram.text.set_fontsize(self.plot_options["font_size"])
@@ -540,4 +561,4 @@ class BalanceOfPlantPlotter:
                 text.set_fontsize(self.plot_options["flow_font_size"])
                 text.set_color(self.plot_options["font_color"])
 
-        self.fig.tight_layout()
+        fig.tight_layout()
