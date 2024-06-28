@@ -11,60 +11,40 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 @dataclass
 class MidplaneProfilesParams(ParameterFrame):
     """Midplane profiles parameters"""
 
-    sep_corrector: Parameter[float]
-    """Separation correction for double and single null plasma"""
     alpha_n: Parameter[float]
     """Density profile factor"""
     alpha_t: Parameter[float]
     """Temperature profile index"""
-    det_t: Parameter[float]
-    """Detachment target temperature"""
-    eps_cool: Parameter[float]
-    """electron energy loss"""
-    f_ion_t: Parameter[float]
-    """Hydrogen first ionization"""
-    fw_lambda_q_far_imp: Parameter[float]
-    """Lambda_q far SOL imp"""
-    fw_lambda_q_far_omp: Parameter[float]
-    """Lambda_q far SOL omp"""
-    fw_lambda_q_near_imp: Parameter[float]
-    """Lambda_q near SOL imp"""
-    fw_lambda_q_near_omp: Parameter[float]
-    """Lambda_q near SOL omp"""
-    gamma_sheath: Parameter[float]
-    """sheath heat transmission coefficient"""
-    k_0: Parameter[float]
-    """material's conductivity"""
-    lfs_p_fraction: Parameter[float]
-    """lfs fraction of SoL power"""
     n_e_0: Parameter[float]
     """Electron density on axis"""
     n_e_ped: Parameter[float]
     """Electron density pedestal height"""
     n_e_sep: Parameter[float]
     """Electron density at separatrix"""
-    P_sep: Parameter[float]
-    """Radiation power"""
     rho_ped_n: Parameter[float]
     """Density pedestal r/a location"""
     rho_ped_t: Parameter[float]
     """Temperature pedestal r/a location"""
-    n_points_core_95: Parameter[float]
-    """rho discretization to 95% of core"""
-    n_points_core_99: Parameter[float]
-    """rho discretization to 99% of core"""
-    n_points_mantle: Parameter[float]
-    """rho discretization to separatrix"""
+    n_points_core_95: Parameter[int]
+    """rho discretisation to 95% of core"""
+    n_points_core_99: Parameter[int]
+    """rho discretisation to 99% of core"""
+    n_points_mantle: Parameter[int]
+    """rho discretisation to separatrix"""
     t_beta: Parameter[float]
     """Temperature profile index beta"""
     T_e_0: Parameter[float]
@@ -73,128 +53,129 @@ class MidplaneProfilesParams(ParameterFrame):
     """Electron temperature pedestal height"""
     T_e_sep: Parameter[float]
     """Electron temperature at separatrix"""
-    theta_inner_target: Parameter[float]
-    """Inner divertor poloidal angle with the separatrix flux line"""
-    theta_outer_target: Parameter[float]
-    """Outer divertor poloidal angle with the separatrix flux line"""
 
 
+@dataclass
 class MidplaneProfiles:
+    """midplane profiles"""
+
+    psi_n: npt.NDArray[np.float64]
+    """squared dimensionless core radius"""
+    ne: npt.NDArray[np.float64]
+    """electron densities at the mid-plane. Unit [1/m^3]"""
+    te: npt.NDArray[np.float64]
+    """electron temperature at the mid-plane. Unit [keV]"""
+
+
+def midplane_profiles(params: dict | ParameterFrame):
     """
-    Specific class to calculate the core radiation source.
+    Calculate the core radiation source profiles.
+
     Temperature and density are assumed to be constant along a
     single flux tube.
     """
+    params = make_parameter_frame(params, MidplaneProfilesParams)
+    rho_ped = (params.rho_ped_n.value + params.rho_ped_t.value) / 2
 
-    param_cls = MidplaneProfilesParams
+    # A dimensionless radius at the mid-plane.
+    # From the core to the last closed flux surface
+    rho_core = collect_rho_core_values(
+        rho_ped,
+        params.n_points_core_95.value,
+        params.n_points_core_99.value,
+        params.n_points_mantle.value,
+    )
 
-    def __init__(
-        self,
-        params: dict | ParameterFrame,
-    ):
-        self.params = make_parameter_frame(params, self.param_cls)
+    # For each flux tube, density and temperature at the mid-plane
+    return core_electron_density_temperature_profile(params, rho_core, rho_ped)
 
-        # Adimensional radius at the mid-plane.
-        # From the core to the last closed flux surface
-        rho_core = self.collect_rho_core_values()
 
-        # For each flux tube, density and temperature at the mid-plane
-        (
-            self.ne_mp,
-            self.te_mp,
-            self.psi_n,
-        ) = self.core_electron_density_temperature_profile(rho_core)
+def collect_rho_core_values(
+    rho_ped: np.ndarray,
+    n_points_core_95: int,
+    n_points_core_99: int,
+    n_points_mantle: int,
+) -> np.ndarray:
+    """
+    Calculation of core dimensionless radial coordinate rho (between 0 and 1).
 
-    def collect_rho_core_values(self) -> np.ndarray:
-        """
-        Calculation of core dimensionless radial coordinate rho.
+    Parameters
+    ----------
+    rho_ped:
+        dimensionless pedestal radius. Values between 0 and 1
+    n_points_core_95:
+        no of discretisation points to 95% of core
+    n_points_core_99:
+        no of discretisation points to 99% of core
+    n_points_mantle:
+        no of discretisation points to separatrix
 
-        Returns
-        -------
-        rho_core:
-            dimensionless core radius. Values between 0 and 1
-        """
-        # The plasma bulk is divided into plasma core and plasma mantle according to rho
-        # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (self.params.rho_ped_n.value + self.params.rho_ped_t.value) / 2.0
-        # Plasma core for rho < rho_core
-        rho_core1 = np.linspace(
-            0.01, 0.95 * self.rho_ped, int(self.params.n_points_core_95.value)
-        )
-        rho_core2 = np.linspace(
-            0.95 * self.rho_ped, self.rho_ped, int(self.params.n_points_core_99.value)
-        )
-        rho_core = np.append(rho_core1, rho_core2)
+    Notes
+    -----
+    The plasma bulk is divided into plasma core and plasma mantle according to rho
+    rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
+    """
+    # Plasma core for rho < rho_core
+    rho_core1 = np.linspace(0.01, 0.95 * rho_ped, n_points_core_95)
+    rho_core2 = np.linspace(0.95 * rho_ped, rho_ped, n_points_core_99)
+    rho_core = np.append(rho_core1, rho_core2)
 
-        # Plasma mantle for rho_core < rho < 1
-        rho_sep = np.linspace(self.rho_ped, 0.99, int(self.params.n_points_mantle.value))
+    # Plasma mantle for rho_core < rho < 1
+    rho_sep = np.linspace(rho_ped, 0.99, n_points_mantle)
 
-        return np.append(rho_core, rho_sep)
+    return np.append(rho_core, rho_sep)
 
-    def core_electron_density_temperature_profile(
-        self, rho_core: np.ndarray
-    ) -> tuple[np.ndarray, ...]:
-        """
-        Calculation of electron density and electron temperature,
-        as function of rho, from the magnetic axis to the separatrix,
-        along the midplane.
 
-        Parameters
-        ----------
-        rho_core:
-            dimensionless core radius. Values between 0 and 1
+def core_electron_density_temperature_profile(
+    params: MidplaneProfilesParams, rho_core: np.ndarray, rho_ped: np.ndarray
+) -> MidplaneProfiles:
+    """
+    Calculation of electron density and electron temperature,
+    as function of rho, from the magnetic axis to the separatrix,
+    along the midplane.
 
-        Returns
-        -------
-        ne:
-            electron densities at the mid-plane. Unit [1/m^3]
-        te:
-            electron temperature at the mid-plane. Unit [keV]
-        psi_n:
-            rho_core**2
+    Parameters
+    ----------
+    params:
+        midplane parameters
+    rho_core:
+        dimensionless core radius. Values between 0 and 1
+    rho_ped:
+        dimensionless pedestal radius. Values between 0 and 1
 
-        Notes
-        -----
-        The region that extends through the plasma core until its
-        outer layer is referred as core.
-        The region that extends from the pedestal to the separatrix
-        is referred as pedestal.
-        """
-        i_core = np.where((rho_core > 0) & (rho_core <= self.rho_ped))[0]
-        te0_keV = self.params.T_e_0.value_as("keV")
-        teped_keV = self.params.T_e_ped.value_as("keV")
-        tesep_keV = self.params.T_e_sep.value_as("keV")
 
-        n_grad_ped0 = self.params.n_e_0.value - self.params.n_e_ped.value
-        t_grad_ped0 = te0_keV - teped_keV
+    Notes
+    -----
+    The region that extends through the plasma core until its
+    outer layer is referred as core.
+    The region that extends from the pedestal to the separatrix
+    is referred as pedestal.
+    """
+    i_core = np.where((rho_core > 0) & (rho_core <= rho_ped))[0]
+    te0_keV = params.T_e_0.value_as("keV")
+    teped_keV = params.T_e_ped.value_as("keV")
+    tesep_keV = params.T_e_sep.value_as("keV")
 
-        rho_ratio_n = (
-            1 - ((rho_core[i_core] ** 2) / (self.rho_ped**2))
-        ) ** self.params.alpha_n.value
+    n_grad_ped0 = params.n_e_0.value - params.n_e_ped.value
+    t_grad_ped0 = te0_keV - teped_keV
 
-        rho_ratio_t = (
-            1
-            - (
-                (rho_core[i_core] ** self.params.t_beta.value)
-                / (self.rho_ped**self.params.t_beta.value)
-            )
-        ) ** self.params.alpha_t.value
+    rho_ratio_n = (1 - ((rho_core[i_core] ** 2) / (rho_ped**2))) ** params.alpha_n.value
 
-        ne_i = self.params.n_e_ped.value + (n_grad_ped0 * rho_ratio_n)
-        te_i = teped_keV + (t_grad_ped0 * rho_ratio_t)
+    rho_ratio_t = (
+        1 - ((rho_core[i_core] ** params.t_beta.value) / (rho_ped**params.t_beta.value))
+    ) ** params.alpha_t.value
 
-        i_pedestal = np.where((rho_core > self.rho_ped) & (rho_core < 1))[0]
+    ne_i = params.n_e_ped.value + (n_grad_ped0 * rho_ratio_n)
+    te_i = teped_keV + (t_grad_ped0 * rho_ratio_t)
 
-        n_grad_sepped = self.params.n_e_ped.value - self.params.n_e_sep.value
-        t_grad_sepped = teped_keV - tesep_keV
+    i_pedestal = np.where((rho_core > rho_ped) & (rho_core < 1))[0]
 
-        rho_ratio = (1 - rho_core[i_pedestal]) / (1 - self.rho_ped)
+    n_grad_sepped = params.n_e_ped.value - params.n_e_sep.value
+    t_grad_sepped = teped_keV - tesep_keV
 
-        ne_e = self.params.n_e_sep.value + (n_grad_sepped * rho_ratio)
-        te_e = tesep_keV + (t_grad_sepped * rho_ratio)
+    rho_ratio = (1 - rho_core[i_pedestal]) / (1 - rho_ped)
 
-        ne_core = np.append(ne_i, ne_e)
-        te_core = np.append(te_i, te_e)
-        psi_n = rho_core**2
+    ne_e = params.n_e_sep.value + (n_grad_sepped * rho_ratio)
+    te_e = tesep_keV + (t_grad_sepped * rho_ratio)
 
-        return ne_core, te_core, psi_n
+    return MidplaneProfiles(rho_core**2, np.append(ne_i, ne_e), np.append(te_i, te_e))

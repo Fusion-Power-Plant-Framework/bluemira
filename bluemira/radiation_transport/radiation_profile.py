@@ -44,9 +44,14 @@ from bluemira.radiation_transport.radiation_tools import (
 )
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
+    from bluemira.radiation_transport.midplane_temperature_density import (
+        MidplaneProfiles,
+    )
 
 
 @dataclass
@@ -346,9 +351,7 @@ class CoreRadiation(Radiation):
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        psi_n,
-        ne_mp,
-        te_mp,
+        midplane_profiles: MidplaneProfiles,
         impurity_content,
         impurity_data,
     ):
@@ -366,10 +369,7 @@ class CoreRadiation(Radiation):
         ]
         self.impurity_symbols = impurity_content.keys()
 
-        # Midplane profiles
-        self.psi_n = psi_n
-        self.ne_mp = ne_mp
-        self.te_mp = te_mp
+        self.profiles = midplane_profiles
 
     def calculate_mp_radiation_profile(self):
         """
@@ -378,7 +378,7 @@ class CoreRadiation(Radiation):
         """
         # Radiative loss function values for each impurity species
         loss_f = [
-            radiative_loss_function_values(self.te_mp, t_ref, l_ref)
+            radiative_loss_function_values(self.profiles.te, t_ref, l_ref)
             for t_ref, l_ref in zip(
                 self.imp_data_t_ref, self.imp_data_l_ref, strict=False
             )
@@ -386,7 +386,7 @@ class CoreRadiation(Radiation):
 
         # Line radiation loss. Mid-plane distribution through the SoL
         self.rad_mp = [
-            calculate_line_radiation_loss(self.ne_mp, loss, fi)
+            calculate_line_radiation_loss(self.profiles.ne, loss, fi)
             for loss, fi in zip(loss_f, self.impurities_content, strict=False)
         ]
 
@@ -395,7 +395,7 @@ class CoreRadiation(Radiation):
         Plot one dimensional behaviour of line radiation
         against the adimensional radius
         """
-        self.mp_profile_plot(self.psi_n, self.rad_mp, self.impurity_symbols)
+        self.mp_profile_plot(self.profiles.psi_n, self.rad_mp, self.impurity_symbols)
 
     def calculate_core_distribution(self) -> list[list[np.ndarray]]:
         """
@@ -409,18 +409,18 @@ class CoreRadiation(Radiation):
             For specie and each closed flux line in the core
         """
         # Closed flux tubes within the separatrix
-        self.flux_tubes = self.collect_flux_tubes(self.psi_n)
+        self.flux_tubes = self.collect_flux_tubes(self.profiles.psi_n)
 
         # For each flux tube, poloidal density profile.
         self.ne_pol = [
             self.flux_tube_pol_n(ft, n, core=True)
-            for ft, n in zip(self.flux_tubes, self.ne_mp, strict=False)
+            for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
         ]
 
         # For each flux tube, poloidal temperature profile.
         self.te_pol = [
             self.flux_tube_pol_t(ft, t, core=True)
-            for ft, t in zip(self.flux_tubes, self.te_mp, strict=False)
+            for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
         ]
 
         # For each impurity species and for each flux tube,
@@ -1368,50 +1368,46 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Returns
         -------
-        t_and_n_pol["lfs_low"]: array
+        t_and_n_pol["lfs_low"]:
             temperature and density poloidal profile along each
             flux tube within the lfs lower divertor set
-        t_and_n_pol["lfs_up"]: array
+        t_and_n_pol["lfs_up"]:
             temperature and density poloidal profile along each
             flux tube within the lfs upper divertor set
-        t_and_n_pol["hfs_low"]: array
+        t_and_n_pol["hfs_low"]:
             temperature and density poloidal profile along each
             flux tube within the hfs lower divertor set
-        t_and_n_pol["hfs_up"]: array
+        t_and_n_pol["hfs_up"]:
             temperature and density poloidal profile along each
             flux tube within the hfs upper divertor set
         """
-        t_and_n_pol_inputs = {
-            f"{side}_{low_up}": {
-                "flux_tubes": getattr(self, f"flux_tubes_{side}_{low_up}"),
-                "x_strike": getattr(self, f"x_strike_{side}"),
-                "z_strike": getattr(self, f"z_strike_{side}"),
-                "main_ext": None,
-                "firstwall_geom": firstwall_geom,
-                "pfr_ext": None,
-                "rec_ext": 2,
-                "x_point_rad": False,
-                "detachment": False,
-                "lfs": side == "lfs",
-                "low_div": low_up == "low",
-                "main_chamber_rad": True,
-            }
+        self.t_and_n_pol = {
+            f"{side}_{low_up}": self.calculate_sector_distributions(
+                flux_tubes=getattr(self, f"flux_tubes_{side}_{low_up}"),
+                x_strike=getattr(self, f"x_strike_{side}"),
+                z_strike=getattr(self, f"z_strike_{side}"),
+                main_ext=None,
+                firstwall_geom=firstwall_geom,
+                pfr_ext=None,
+                rec_ext=2,
+                x_point_rad=False,
+                detachment=False,
+                lfs=side == "lfs",
+                low_div=low_up == "low",
+                main_chamber_rad=True,
+            )
             for side in ["lfs", "hfs"]
             for low_up in ["low", "up"]
         }
-
-        self.t_and_n_pol = {}
-        for side, var in t_and_n_pol_inputs.items():
-            self.t_and_n_pol[side] = self.calculate_sector_distributions(**var)
 
         return self.t_and_n_pol
 
     def calculate_sol_radiation_distribution(
         self,
-        t_and_n_pol_lfs_low,
-        t_and_n_pol_lfs_up,
-        t_and_n_pol_hfs_low,
-        t_and_n_pol_hfs_up,
+        lfs_low,
+        lfs_up,
+        hfs_low,
+        hfs_up,
     ):
         """
         Radiation profiles calculation.
@@ -1420,130 +1416,126 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        t_and_n_pol_lfs_low: array
+        lfs_low:
             temperature and density poloidal profile along each
             flux tube within the lfs lower divertor set
-        t_and_n_pol_lfs_up: array
+        lfs_up:
             temperature and density poloidal profile along each
             flux tube within the lfs upper divertor set
-        t_and_n_pol_hfs_low: array
+        hfs_low:
             temperature and density poloidal profile along each
             flux tube within the hfs lower divertor set
-        t_and_n_pol_hfs_up: array
+        hfs_up:
             temperature and density poloidal profile along each
             flux tube within the hfs upper divertor set
 
         Returns
         -------
-        rad["lfs_low"]: array
+        rad["lfs_low"]:
             radiation poloidal profile along each
             flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
+        rad["lfs_up"]:
             radiation poloidal profile along each
             flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
+        rad["hfs_low"]:
             radiation poloidal profile along each
             flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+        rad["hfs_up"]:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
         """
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
         # Values along the open flux tubes
-        loss = {
-            "lfs_low": t_and_n_pol_lfs_low[0],
-            "lfs_up": t_and_n_pol_lfs_up[0],
-            "hfs_low": t_and_n_pol_hfs_low[0],
-            "hfs_up": t_and_n_pol_hfs_up[0],
+        loss_data = {
+            "lfs_low": lfs_low[0],
+            "lfs_up": lfs_up[0],
+            "hfs_low": hfs_low[0],
+            "hfs_up": hfs_up[0],
         }
 
-        for side, t_pol in loss.items():
-            # print(t_pol)
-            loss[side] = [
+        loss = {
+            side: [
                 [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
                 for t_ref, l_ref in zip(
                     self.imp_data_t_ref, self.imp_data_l_ref, strict=False
                 )
             ]
+            for side, t_pol in loss_data.items()
+        }
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the line radiation loss.
         # Values along the open flux tubes
-        rad_data = {
-            "lfs_low": {"density": t_and_n_pol_lfs_low[1], "loss": loss["lfs_low"]},
-            "lfs_up": {"density": t_and_n_pol_lfs_up[1], "loss": loss["lfs_up"]},
-            "hfs_low": {"density": t_and_n_pol_hfs_low[1], "loss": loss["hfs_low"]},
-            "hfs_up": {"density": t_and_n_pol_hfs_up[1], "loss": loss["hfs_up"]},
+        ft_density = {
+            "lfs_low": lfs_low[1],
+            "lfs_up": lfs_up[1],
+            "hfs_low": hfs_low[1],
+            "hfs_up": hfs_up[1],
         }
-        self.rad = {}
-        for side, ft in rad_data.items():
-            self.rad[side] = [
+        self.rad = {
+            side: [
                 [
                     calculate_line_radiation_loss(n, l_f, fi)
-                    for n, l_f in zip(ft["density"], f, strict=False)
+                    for n, l_f in zip(ft_density[side], f, strict=False)
                 ]
-                for f, fi in zip(ft["loss"], self.impurities_content, strict=False)
+                for f, fi in zip(loss[side], self.impurities_content, strict=False)
             ]
+            for side in ft_density
+        }
 
         return self.rad
 
-    def calculate_sol_radiation_map(
-        self, rad_lfs_low, rad_lfs_up, rad_hfs_low, rad_hfs_up
-    ):
+    def calculate_sol_radiation_map(self, lfs_low, lfs_up, hfs_low, hfs_up):
         """
         Scrape off layer radiation map calculation.
 
         Parameters
         ----------
-        rad["lfs_low"]: array
+        lfs_low:
             radiation poloidal profile along each
             flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
+        lfs_up:
             radiation poloidal profile along each
             flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
+        hfs_low:
             radiation poloidal profile along each
             flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+        hfs_up:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
-        firstwall_geom: grid
-            first wall geometry
         """
         # total line radiation loss along the open flux tubes
-        self.total_rad_lfs_low = np.sum(
-            np.array(rad_lfs_low, dtype=object), axis=0
-        ).tolist()
-        self.total_rad_lfs_up = np.sum(
-            np.array(rad_lfs_up, dtype=object), axis=0
-        ).tolist()
-        self.total_rad_hfs_low = np.sum(
-            np.array(rad_hfs_low, dtype=object), axis=0
-        ).tolist()
-        self.total_rad_hfs_up = np.sum(
-            np.array(rad_hfs_up, dtype=object), axis=0
-        ).tolist()
+        self.total_rad_lfs_low = np.sum(np.array(lfs_low, dtype=object), axis=0).tolist()
+        self.total_rad_lfs_up = np.sum(np.array(lfs_up, dtype=object), axis=0).tolist()
+        self.total_rad_hfs_low = np.sum(np.array(hfs_low, dtype=object), axis=0).tolist()
+        self.total_rad_hfs_up = np.sum(np.array(hfs_up, dtype=object), axis=0).tolist()
 
-        rads = [
-            self.total_rad_lfs_low,
-            self.total_rad_hfs_low,
-            self.total_rad_lfs_up,
-            self.total_rad_hfs_up,
-        ]
-        power = functools.reduce(operator.iadd, rads, [])
-
-        flux_tubes = [
-            self.flux_tubes_lfs_low,
-            self.flux_tubes_hfs_low,
-            self.flux_tubes_lfs_up,
-            self.flux_tubes_hfs_up,
-        ]
-        flux_tubes = functools.reduce(operator.iadd, flux_tubes, [])
+        flux_tubes = functools.reduce(
+            operator.iadd,
+            [
+                self.flux_tubes_lfs_low,
+                self.flux_tubes_hfs_low,
+                self.flux_tubes_lfs_up,
+                self.flux_tubes_hfs_up,
+            ],
+            [],
+        )
 
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
-        self.rad_tot = np.concatenate(power)
+        self.rad_tot = np.concatenate(
+            functools.reduce(
+                operator.iadd,
+                [
+                    self.total_rad_lfs_low,
+                    self.total_rad_hfs_low,
+                    self.total_rad_lfs_up,
+                    self.total_rad_hfs_up,
+                ],
+                [],
+            )
+        )
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
         """
@@ -1552,7 +1544,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        firstwall: Grid
+        firstwall_geom:
             first wall geometry
         """
         self.radiation_distribution_plot(
@@ -1641,7 +1633,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def calculate_sol_distribution(self, firstwall_geom: Grid):
+    def calculate_sol_distribution(
+        self, firstwall_geom: Grid
+    ) -> dict[str, npt.NDArray[np.float64]]:
         """
         Temperature and density profiles calculation.
         For each scrape-off layer sector, it gives temperature
@@ -1649,52 +1643,40 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        firstwall_geom: grid
+        firstwall_geom:
             first wall geometry
 
         Returns
         -------
-        t_and_n_pol["lfs_low"]: array
+        t_and_n_pol["lfs"]:
             temperature and density poloidal profile along each
-            flux tube within the lfs lower divertor set
-        t_and_n_pol["lfs_up"]: array
+            flux tube within the lfs divertor set
+        t_and_n_pol["hfs"]:
             temperature and density poloidal profile along each
-            flux tube within the lfs upper divertor set
-        t_and_n_pol["hfs_low"]: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs lower divertor set
-        t_and_n_pol["hfs_up"]: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs upper divertor set
+            flux tube within the hfs divertor set
         """
-        t_and_n_pol_inputs = {
-            f"{side}": {
-                "flux_tubes": getattr(self, f"flux_tubes_{side}"),
-                "x_strike": getattr(self, f"x_strike_{side}"),
-                "z_strike": getattr(self, f"z_strike_{side}"),
-                "main_ext": 1,
-                "firstwall_geom": firstwall_geom,
-                "pfr_ext": None,
-                "rec_ext": 2,
-                "x_point_rad": False,
-                "detachment": False,
-                "lfs": side == "lfs",
-                "low_div": True,
-                "main_chamber_rad": True,
-            }
+        return {
+            side: self.calculate_sector_distributions(
+                flux_tubes=getattr(self, f"flux_tubes_{side}"),
+                x_strike=getattr(self, f"x_strike_{side}"),
+                z_strike=getattr(self, f"z_strike_{side}"),
+                main_ext=1,
+                firstwall_geom=firstwall_geom,
+                pfr_ext=None,
+                rec_ext=2,
+                x_point_rad=False,
+                detachment=False,
+                lfs=side == "lfs",
+                low_div=True,
+                main_chamber_rad=True,
+            )
             for side in ["lfs", "hfs"]
         }
 
-        self.t_and_n_pol = {}
-        for side, var in t_and_n_pol_inputs.items():
-            self.t_and_n_pol[side] = self.calculate_sector_distributions(**var)
-
-        return self.t_and_n_pol
-
     def calculate_sol_radiation_distribution(
         self,
-        t_and_n_pol_lfs: np.ndarray,
-        t_and_n_pol_hfs: np.ndarray,
+        lfs: np.ndarray,
+        hfs: np.ndarray,
     ) -> dict[str, list[list[np.ndarray]]]:
         """
         Radiation profiles calculation.
@@ -1703,35 +1685,26 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        t_and_n_pol_lfs:
+        lfs:
             temperature and density poloidal profile along each
             flux tube within the lfs divertor set
-        t_and_n_pol_hfs:
+        hfs:
             temperature and density poloidal profile along each
             flux tube within the hfs divertor set
 
         Returns
         -------
-        rad["lfs_low"]:
+        rad["lfs"]:
             radiation poloidal profile along each
-            flux tube within the lfs lower divertor set
-        rad["lfs_up"]:
+            flux tube within the lfs divertor set
+        rad["hfs"]:
             radiation poloidal profile along each
-            flux tube within the lfs upper divertor set
-        rad["hfs_low"]:
-            radiation poloidal profile along each
-            flux tube within the hfs lower divertor set
-        rad["hfs_up"]:
-            radiation poloidal profile along each
-            flux tube within the hfs upper divertor set
+            flux tube within the hfs divertor set
         """
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
         # Values along the open flux tubes
-        loss = {
-            "lfs": t_and_n_pol_lfs[0],
-            "hfs": t_and_n_pol_hfs[0],
-        }
+        loss = {"lfs": lfs[0], "hfs": hfs[0]}
 
         for side, t_pol in loss.items():
             loss[side] = [
@@ -1745,8 +1718,8 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         # poloidal distribution of the line radiation loss.
         # Values along the open flux tubes
         rad_data = {
-            "lfs": {"density": t_and_n_pol_lfs[1], "loss": loss["lfs"]},
-            "hfs": {"density": t_and_n_pol_hfs[1], "loss": loss["hfs"]},
+            "lfs": {"density": lfs[1], "loss": loss["lfs"]},
+            "hfs": {"density": hfs[1], "loss": loss["hfs"]},
         }
         self.rad = {}
         for side, ft in rad_data.items():
@@ -1759,32 +1732,32 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             ]
         return self.rad
 
-    def calculate_sol_radiation_map(self, rad_lfs: np.ndarray, rad_hfs: np.ndarray):
+    def calculate_sol_radiation_map(self, lfs: np.ndarray, hfs: np.ndarray):
         """
         Scrape off layer radiation map calculation.
 
         Parameters
         ----------
-        rad_lfs:
+        lfs:
             radiation poloidal profile along each
             flux tube within the lfs divertor set
-        rad_hfs:
+        hfs:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
         """
         # total line radiation loss along the open flux tubes
-        self.total_rad_lfs = np.sum(np.array(rad_lfs, dtype=object), axis=0).tolist()
-        self.total_rad_hfs = np.sum(np.array(rad_hfs, dtype=object), axis=0).tolist()
+        self.total_rad_lfs = np.sum(np.array(lfs, dtype=object), axis=0).tolist()
+        self.total_rad_hfs = np.sum(np.array(hfs, dtype=object), axis=0).tolist()
 
-        rads = [self.total_rad_lfs, self.total_rad_hfs]
-        power = functools.reduce(operator.iadd, rads, [])
-
-        flux_tubes = [self.flux_tubes_lfs, self.flux_tubes_hfs]
-        flux_tubes = functools.reduce(operator.iadd, flux_tubes, [])
+        flux_tubes = functools.reduce(
+            operator.iadd, [self.flux_tubes_lfs, self.flux_tubes_hfs], []
+        )
 
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
-        self.rad_tot = np.concatenate(power)
+        self.rad_tot = np.concatenate(
+            functools.reduce(operator.iadd, [self.total_rad_lfs, self.total_rad_hfs], [])
+        )
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Coordinates):
         """
@@ -1815,9 +1788,7 @@ class RadiationSource:
         eq: Equilibrium,
         firstwall_shape: BluemiraWire,
         params: ParameterFrame,
-        psi_n,
-        ne_mp,
-        te_mp,
+        midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
     ):
@@ -1836,10 +1807,7 @@ class RadiationSource:
         self.imp_data_sol = impurity_data_sol
         self.lcfs = self.eq.get_LCFS()
 
-        # Midplane parameters
-        self.psi_n = psi_n
-        self.ne_mp = ne_mp
-        self.te_mp = te_mp
+        self.midplane_profiles = midplane_profiles
 
         # To be calculated calling analyse
         self.core_rad = None
@@ -1861,32 +1829,23 @@ class RadiationSource:
             equilibrium=eq, first_wall=firstwall_shape, dx_mp=0.001
         )
 
-    def analyse(self, firstwall_geom: Coordinates):
+    def analyse(
+        self, firstwall_geom: Coordinates
+    ) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
         """
         Using core radiation model and sol radiation model
         to calculate the radiation source at all points
 
         Parameters
         ----------
-        first_wall:
+        firstwall_geom:
             The closed first wall geometry
 
-        Returns
-        -------
-        x_all: np.array
-            The x coordinates of all the points included within the flux surfaces
-        z_all: np.array
-            The z coordinates of all the points included within the flux surfaces
-        rad_all: np.array
-            The local radiation source at all points included within
-            the flux surfaces [MW/m^3]
         """
         self.core_rad = CoreRadiation(
             self.eq,
             self.params,
-            self.psi_n,
-            self.ne_mp,
-            self.te_mp,
+            self.midplane_profiles,
             self.imp_content_core,
             self.imp_data_core,
         )
@@ -1935,16 +1894,13 @@ class RadiationSource:
         core_rad = CoreRadiation(
             self.eq,
             self.params,
-            self.psi_n,
-            self.ne_mp,
-            self.te_mp,
+            self.midplane_profiles,
             self.imp_content_core,
             self.imp_data_core,
         )
         core_rad.calculate_mp_radiation_profile()
         rad_tot = np.sum(np.array(core_rad.rad_mp, dtype=object), axis=0)
-        f_rad = interp1d(core_rad.psi_n, rad_tot)
-        return f_rad(psi_n)
+        return interp1d(self.midplane_profiles.psi_n, rad_tot)(psi_n)
 
     def rad_core_by_points(self, x, z):
         """
@@ -1952,14 +1908,14 @@ class RadiationSource:
 
         Parameters
         ----------
-        x: float (list)
+        x:
             The x coordinate(s) of desired radiation source point(s)
-        z: float(list)
+        z:
             The z coordinate(s) of desired radiation source point(s)
 
         Returns
         -------
-        self.rad_core_by_psi_n(psi_n): float (list)
+        self.rad_core_by_psi_n(psi_n):
             Local radiation source value(s) associated to the point(s)
         """
         psi = self.eq.psi(x, z)
@@ -1993,9 +1949,9 @@ class RadiationSource:
 
         Parameters
         ----------
-        x: float (list)
+        x:
             The x coordinate(s) of desired radiation source point(s)
-        z: float(list)
+        z:
             The z coordinate(s) of desired radiation source point(s)
 
         Returns
@@ -2015,12 +1971,12 @@ class RadiationSource:
 
         Parameters
         ----------
-        psi_n: float (list)
+        psi_n:
             The normalised magnetic flux value(s)
 
         Returns
         -------
-        rad_any: float (list)
+        rad_any:
             Local radiation source value(s) associated to the given psi_n
         """
         if psi_n < 1:
@@ -2033,14 +1989,14 @@ class RadiationSource:
 
         Parameters
         ----------
-        x: float (list)
+        x:
             The x coordinate(s) of desired radiation source point(s)
-        z: float(list)
+        z:
             The z coordinate(s) of desired radiation source point(s)
 
         Returns
         -------
-        rad_any: float (list)
+        rad_any:
             Local radiation source value(s) associated to the point(s)
         """
         f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
@@ -2056,9 +2012,9 @@ class RadiationSource:
 
         t_and_n_sol_profiles = self.sol_rad.calculate_sol_distribution(firstwall_geom)
         rad_sector_profiles = self.sol_rad.calculate_sol_radiation_distribution(
-            *t_and_n_sol_profiles.values()
+            **t_and_n_sol_profiles
         )
-        self.sol_rad.calculate_sol_radiation_map(*rad_sector_profiles.values())
+        self.sol_rad.calculate_sol_radiation_map(**rad_sector_profiles)
 
         self.x_tot = np.concatenate([self.core_rad.x_tot, self.sol_rad.x_tot])
         self.z_tot = np.concatenate([self.core_rad.z_tot, self.sol_rad.z_tot])

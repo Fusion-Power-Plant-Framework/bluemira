@@ -14,7 +14,10 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
+from bluemira.radiation_transport.midplane_temperature_density import (
+    collect_rho_core_values,
+    midplane_profiles,
+)
 from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
     electron_density_and_temperature_sol_decay,
@@ -39,10 +42,24 @@ class TestCoreRadiation:
         filename = Path(TEST_PATH, fw_name)
         fw_shape = Coordinates.from_json(filename)
 
-        cls.params = {
-            "sep_corrector": {"value": 5e-3, "unit": "dimensionless"},
+        midplane_params = {
             "alpha_n": {"value": 1.15, "unit": "dimensionless"},
             "alpha_t": {"value": 1.905, "unit": "dimensionless"},
+            "n_e_0": {"value": 21.93e19, "unit": "1/m^3"},
+            "n_e_ped": {"value": 8.117e19, "unit": "1/m^3"},
+            "n_e_sep": {"value": 1.623e19, "unit": "1/m^3"},
+            "rho_ped_n": {"value": 0.94, "unit": "dimensionless"},
+            "rho_ped_t": {"value": 0.976, "unit": "dimensionless"},
+            "n_points_core_95": {"value": 30, "unit": "dimensionless"},
+            "n_points_core_99": {"value": 15, "unit": "dimensionless"},
+            "n_points_mantle": {"value": 10, "unit": "dimensionless"},
+            "t_beta": {"value": 2.0, "unit": "dimensionless"},
+            "T_e_0": {"value": 21.442, "unit": "keV"},
+            "T_e_ped": {"value": 5.059, "unit": "keV"},
+            "T_e_sep": {"value": 0.16, "unit": "keV"},
+        }
+        cls.params = {
+            "sep_corrector": {"value": 5e-3, "unit": "dimensionless"},
             "det_t": {"value": 0.0015, "unit": "keV"},
             "eps_cool": {"value": 25.0, "unit": "eV"},
             "f_ion_t": {"value": 0.01, "unit": "keV"},
@@ -53,21 +70,10 @@ class TestCoreRadiation:
             "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
             "k_0": {"value": 2000.0, "unit": "dimensionless"},
             "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
-            "n_e_0": {"value": 21.93e19, "unit": "1/m^3"},
-            "n_e_ped": {"value": 8.117e19, "unit": "1/m^3"},
-            "n_e_sep": {"value": 1.623e19, "unit": "1/m^3"},
             "P_sep": {"value": 100, "unit": "MW"},
-            "rho_ped_n": {"value": 0.94, "unit": "dimensionless"},
-            "rho_ped_t": {"value": 0.976, "unit": "dimensionless"},
-            "n_points_core_95": {"value": 30, "unit": "dimensionless"},
-            "n_points_core_99": {"value": 15, "unit": "dimensionless"},
-            "n_points_mantle": {"value": 10, "unit": "dimensionless"},
-            "t_beta": {"value": 2.0, "unit": "dimensionless"},
-            "T_e_0": {"value": 21.442, "unit": "keV"},
-            "T_e_ped": {"value": 5.059, "unit": "keV"},
-            "T_e_sep": {"value": 0.16, "unit": "keV"},
             "theta_inner_target": {"value": 5.0, "unit": "deg"},
             "theta_outer_target": {"value": 5.0, "unit": "deg"},
+            **midplane_params,
         }
 
         cls.config = {
@@ -75,18 +81,13 @@ class TestCoreRadiation:
             "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
         }
 
-        profiles = MidplaneProfiles(params=cls.params)
-        psi_n = profiles.psi_n
-        ne_mp = profiles.ne_mp
-        te_mp = profiles.te_mp
+        profiles = midplane_profiles(params=midplane_params)
 
         source = RadiationSource(
             eq=eq,
             firstwall_shape=fw_shape,
             params=cls.params,
-            psi_n=psi_n,
-            ne_mp=ne_mp,
-            te_mp=te_mp,
+            midplane_profiles=profiles,
             core_impurities=cls.config["f_imp_core"],
             sol_impurities=cls.config["f_imp_sol"],
         )
@@ -102,19 +103,18 @@ class TestCoreRadiation:
         assert len(ft) == 5
 
     def test_rho_core(self):
-        rho_core = self.profiles.collect_rho_core_values()
+        rho_ped = (
+            self.params["rho_ped_n"]["value"] + self.params["rho_ped_t"]["value"]
+        ) / 2
+        rho_core = collect_rho_core_values(rho_ped, 30, 15, 10)
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
     def test_core_electron_density_temperature_profile(self):
-        rho_core = self.profiles.collect_rho_core_values()
-        ne_core, te_core, psi_n = (
-            self.profiles.core_electron_density_temperature_profile(rho_core)
-        )
-
-        assert len(ne_core) == len(rho_core)
-        assert len(te_core) == len(rho_core)
-        assert len(psi_n) == len(rho_core)
+        ne_core = self.profiles.ne
+        te_core = self.profiles.te
+        psi_n = self.profiles.psi_n
+        assert len(ne_core) == len(te_core) == len(psi_n)
 
         # Ensure values are within expected ranges
         assert np.all(ne_core >= self.params["n_e_sep"]["value"])
