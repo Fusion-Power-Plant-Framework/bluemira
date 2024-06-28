@@ -32,6 +32,8 @@ Setting up the environment and installing
 ``Bluemira`` can be installed into a conda environment using mambaforge by running the
 following steps in a mac or Ubuntu command terminal.
 
+If you are using WSL please see the :ref:`additional instruction step <wsl>`.
+
 .. code-block:: bash
 
     # Install curl if its not available (eg vanilla Ubuntu 22.04)
