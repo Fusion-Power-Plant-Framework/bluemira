@@ -88,9 +88,15 @@ class NeutronicsManager:
 
         plt.show()
 
+    def tabulate(self) -> str:
+        """Tabulate results"""
+        if hasattr(self.results, "_tabulate"):
+            return str(self.results)
+        raise NotImplementedError("Tabulate not available for volume calculation")
+
     def __str__(self) -> str:
         """String Representation"""
-        if hasattr(self.results, "_tabulate"):
-            # Avoid openmc related import
-            return self.results.__str__()
-        return super().__str__()
+        try:
+            return self.tabulate()
+        except NotImplementedError:
+            return super().__str__()
