@@ -66,7 +66,7 @@ class ReactorConfig:
 
     .. code-block:: python
 
-        from bluemira.base.parameter_frame import Parameter
+        from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
         @dataclass
         class GlobalParams(ParameterFrame):
