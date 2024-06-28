@@ -1097,9 +1097,7 @@ def fillet_chamfer_decorator(*, chamfer: bool):
             edges = wire.shape.OrderedEdges
             func_name = "chamfer" if chamfer else "fillet"
             if len(edges) < 2:  # noqa: PLR2004
-                raise GeometryError(
-                    f"Cannot {func_name} a wire with less than 2 edges!"
-                )
+                raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
             if not cadapi._wire_is_planar(wire.shape):
                 raise GeometryError(f"Cannot {func_name} a non-planar wire!")
             if radius == 0:
@@ -1499,13 +1497,11 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
         b = w - e * _nb_clip(_nb_dot_2D(w, e) / _nb_dot_2D(e, e), 0.0, 1.0)
         d = min(_nb_dot_2D(b, b), d)
 
-        cond = np.array(
-            [
-                point[1] >= polygon[i][1],
-                point[1] < polygon[j][1],
-                e[0] * w[1] > e[1] * w[0],
-            ]
-        )
+        cond = np.array([
+            point[1] >= polygon[i][1],
+            point[1] < polygon[j][1],
+            e[0] * w[1] > e[1] * w[0],
+        ])
         if np.all(cond) or np.all(~cond):
             sign = -sign
 
@@ -1623,9 +1619,7 @@ def raise_error_if_overlap(
         # but only by just a little. So a small negative number is included in the check.
         raise GeometryError(f"{origin_name} likely intersects {target_name} !")
     if check_overlaps > 0:
-        raise GeometryError(
-            f"{origin_name} and {target_name} partially/fully overlaps!"
-        )
+        raise GeometryError(f"{origin_name} and {target_name} partially/fully overlaps!")
 
 
 # ======================================================================================
