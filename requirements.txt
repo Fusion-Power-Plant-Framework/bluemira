@@ -10,7 +10,7 @@ eqdsk==0.4.0
 fonttools==4.53.0
 fortranformat==2.0.0
 gmsh==4.13.1
-imageio==2.34.1
+imageio==2.34.2
 joblib==1.4.2
 kiwisolver==1.4.5
 llvmlite==0.43.0
