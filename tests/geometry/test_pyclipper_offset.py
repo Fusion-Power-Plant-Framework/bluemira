@@ -54,6 +54,7 @@ class TestClipperOffset:
     def test_complex_polygon_overoffset_raises_error(self, method):
         coordinates = Coordinates({"x": self.x, "y": self.y, "z": 0})
         with pytest.raises(GeometryError):
+            # this does not raise because it does not do negative offsets
             offset_clipper(coordinates, -30, method=method)
 
     def test_blanket_offset(self):
