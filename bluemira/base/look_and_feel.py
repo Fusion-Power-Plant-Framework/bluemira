@@ -55,8 +55,8 @@ def get_git_version(directory: str) -> str:
     str
         The git version bytestring
     """
-    return subprocess.check_output(
-        ["git", "describe", "--tags", "--always"],  # noqa: S603, S607
+    return subprocess.check_output(  # noqa: S603
+        ["git", "describe", "--tags", "--always"],  # noqa: S607
         cwd=directory,
     ).strip()
 
@@ -76,8 +76,8 @@ def get_git_branch(directory: str) -> str:
         The git branch string
     """
     return (
-        subprocess.check_output(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S603, S607
+        subprocess.check_output(  # noqa: S603
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
             cwd=directory,
         )
         .strip()
@@ -102,8 +102,8 @@ def get_git_files(directory: str, branch: str) -> list[str]:
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(
-            ["git", "ls-tree", "-r", branch, "--name-only"],  # noqa: S603, S607
+        subprocess.check_output(  # noqa: S603
+            ["git", "ls-tree", "-r", branch, "--name-only"],  # noqa: S607
             cwd=directory,
         )
         .decode("utf-8")
