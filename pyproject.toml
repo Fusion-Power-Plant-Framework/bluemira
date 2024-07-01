@@ -78,7 +78,7 @@ pinned = [
     "numba-scipy==0.4.0",
     "numpy==1.26.4",
     "matplotlib==3.9.0",
-    "scipy==1.10.1",
+    "scipy==1.14.0",
 ]
 openmc = ["openmc>=0.14.0", "openmc_data"]
 polyscope = ["polyscope"]
