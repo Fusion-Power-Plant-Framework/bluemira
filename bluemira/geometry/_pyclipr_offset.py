@@ -87,7 +87,7 @@ class PyCliprOffsetter:
         miter_limit: float = 2.0,
     ):
         self.miter_limit = miter_limit
-        self.offset_scale = 100000  # ? what to set to
+        self.offset_scale = 1  # ? what to set to
         match method:
             case OffsetClipperMethodType.SQUARE:
                 self._jt = JoinType.Square
@@ -128,8 +128,10 @@ class PyCliprOffsetter:
     ) -> npt.NDArray[np.float64]:
         # Create an offsetting object
         pco = ClipperOffset()
+
+        # causes it to error
         # pco.miterLimit = self.miter_limit
-        pco.scaleFactor = self.offset_scale
+        pco.scaleFactor = int(self.offset_scale)
 
         pco.addPath(path, self._jt, self._et)
         offset_result = pco.execute(delta)
