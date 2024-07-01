@@ -215,11 +215,11 @@ def run_subprocess(
     kwargs["cwd"] = run_directory
     kwargs.pop("shell", None)  # Protect against user input
 
-    with subprocess.Popen(
+    with subprocess.Popen(  # noqa: S603
         command,
         stdout=stdout,
         stderr=stderr,
-        shell=False,  # noqa: S603
+        shell=False,
         **kwargs,
     ) as s:
         stdout.close()

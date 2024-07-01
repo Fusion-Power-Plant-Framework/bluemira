@@ -15,9 +15,7 @@ from rich.progress import Progress
 
 async def get_size(url: str, timeout: int = 10) -> int:  # noqa: RUF029
     """Get size of file"""
-    response = requests.head(  # noqa: ASYNC100
-        url, allow_redirects=True, timeout=timeout
-    )
+    response = requests.head(url, allow_redirects=True, timeout=timeout)  # noqa: ASYNC210
     return int(response.headers["Content-Length"])
 
 
@@ -78,7 +76,7 @@ async def _download(
 
         await asyncio.wait(tasks)
 
-    with open(output, "wb") as o:  # noqa: ASYNC101
+    with open(output, "wb") as o:  # noqa: ASYNC230
         for i in range(len(chunks)):
             chunk_path = Path(f"{output}.part{i}")
             o.write(Path(chunk_path).read_bytes())
