@@ -102,6 +102,7 @@ class TestMakeFS:
             x_out_imp,
             outboard=False,
         )
+        # Test that we find the expected number of flux surfaces in our list.
         assert len(lower_fs_ob) == 1070
         assert len(upper_fs_ob) == 1070
         assert len(lower_fs_ib) == 1672
