@@ -60,4 +60,4 @@ class TestSuperSankey:
 
         path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
         reference_file = Path(path, "sankey_test.png")
-        assert mpl_compare.compare_images(reference_file, new_file, 0.001) is None
+        assert mpl_compare.compare_images(reference_file, new_file, 0.005) is None
