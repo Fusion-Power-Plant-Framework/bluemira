@@ -122,6 +122,14 @@ def pytest_configure(config):
         "markexpr",
         " and ".join([f"not {name}" for name, value in options.items() if not value]),
     )
+    if not config.option.markexpr:
+        config.option.markexpr = " and ".join([
+            f"not {name}" for name, value in options.items() if not value
+        ])
+
+    if "private" not in config.option.markexpr and not options["private"]:
+        config.option.markexpr += "and not private"
+
     config.option.basetemp = (
         basetemp
         if (basetemp := os.environ.get("PYTEST_TMPDIR", config.option.basetemp))
