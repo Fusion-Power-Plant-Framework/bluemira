@@ -493,7 +493,7 @@ class TestMakeBSpline:
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
-            e = spline.shape.Edges[0]
+            e = spline.shape.OrderedEdges[0]
             np.testing.assert_allclose(
                 e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
             )
@@ -510,7 +510,7 @@ class TestMakeBSpline:
             points, closed=True, start_tangent=st, end_tangent=et
         )
         if st and et:
-            e = spline.shape.Edges[0]
+            e = spline.shape.OrderedEdges[0]
             np.testing.assert_allclose(
                 e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
             )

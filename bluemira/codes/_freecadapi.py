@@ -769,13 +769,13 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
 
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""
-    point = obj.Edges[0].firstVertex().Point
+    point = obj.OrderedEdges[0].firstVertex().Point
     return vector_to_numpy(point)
 
 
 def end_point(obj: apiShape) -> np.ndarray:
     """The end point of the object"""
-    point = obj.Edges[-1].lastVertex().Point
+    point = obj.OrderedEdges[-1].lastVertex().Point
     return vector_to_numpy(point)
 
 
