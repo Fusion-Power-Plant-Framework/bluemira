@@ -228,7 +228,7 @@ def _make_flux_surfaces_ibob(
     dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
 ):
     """
-    Make the flux surfaces on the outboard.
+    Make the flux surfaces on the inboard or outboard.
     """
     sign = 1 if outboard else -1
 
