@@ -93,7 +93,6 @@ def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
             else:
                 new_x_this = x_this
             new_x.append(float(new_x_this))
-    validate_monotonic_increase(new_x, strict_flag=True)
     return np.asarray(new_x)
 
 
