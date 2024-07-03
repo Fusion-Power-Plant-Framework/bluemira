@@ -369,7 +369,7 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         """
         Read in a fixed boundary equilibrium
         """
-        data = EQDSKInterface.from_file(self.file_path, from_cocos=17)
+        data = EQDSKInterface.from_file(self.file_path, from_cocos=3)
         lcfs_coords = Coordinates({"x": data.xbdry, "y": 0, "z": data.zbdry})
         lcfs_coords.close()
 

@@ -69,7 +69,7 @@ class TestEquilibriumInput:
     @classmethod
     def setup_class(cls):
         eq_name = "eqref_OOB.json"
-        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=17)
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=3)
         cls.coilset = cls.eq.coilset
         cls.vector = cls.coilset.current
         cls.scale = 1.0

@@ -145,7 +145,7 @@ def test_collocation_points():
 
 def test_coils_outside_sphere_vacuum_psi():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=17
+        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=3
     )
 
     sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
@@ -168,7 +168,7 @@ def test_coils_outside_sphere_vacuum_psi():
 
 def test_get_psi_harmonic_amplitudes():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=17
+        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=3
     )
 
     test_colocation = collocation_points(
@@ -211,7 +211,7 @@ def test_get_psi_harmonic_amplitudes():
 
 def test_spherical_harmonic_approximation():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=17
+        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=3
     )
 
     (
@@ -321,7 +321,7 @@ def test_SphericalHarmonicConstraintFunction():
 
 def test_SphericalHarmonicConstraint():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=17
+        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=3
     )
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)

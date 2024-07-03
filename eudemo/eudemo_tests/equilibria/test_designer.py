@@ -48,7 +48,7 @@ class TestEquilibriumDesigner:
 
         eq = designer.execute()
 
-        ref_eq = Equilibrium.from_eqdsk(eqdsk, from_cocos=17)
+        ref_eq = Equilibrium.from_eqdsk(eqdsk, from_cocos=3)
         assert eq.analyse_plasma() == ref_eq.analyse_plasma()
 
     def test_ValueError_on_init_given_read_mode_and_no_file_path(self):
