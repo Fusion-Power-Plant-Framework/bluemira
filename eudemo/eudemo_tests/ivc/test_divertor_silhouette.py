@@ -42,7 +42,7 @@ class TestDivertorSilhouetteDesigner:
 
     @classmethod
     def setup_class(cls):
-        cls.eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"))
+        cls.eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=17)
         cls.separatrix = make_polygon(cls.eq.get_separatrix().xyz.T)
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import numpy.typing as npt
 import tabulate
+from eqdsk import EQDSKInterface
 from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
@@ -28,7 +29,6 @@ from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
     Opoint,
     Xpoint,
@@ -118,6 +118,9 @@ class MHDState:
     def _get_eqdsk(
         cls,
         filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = None,
+        **kwargs,
     ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
@@ -142,7 +145,9 @@ class MHDState:
         limiter:
             Limiter instance if any limiters are in file
         """
-        e = EQDSKInterface.from_file(filename)
+        e = EQDSKInterface.from_file(
+            filename, from_cocos_index=from_cocos, to_cocos_index=to_cocos, **kwargs
+        )
         if "equilibria" in e.name:
             psi = e.psi
         elif "SCENE" in e.name and not isinstance(cls, Breakdown):
@@ -232,7 +237,13 @@ class FixedPlasmaEquilibrium(MHDState):
         self.filename = filename
 
     @classmethod
-    def from_eqdsk(cls, filename: Path | str):
+    def from_eqdsk(
+        cls,
+        filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = None,
+        **kwargs,
+    ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
@@ -250,7 +261,12 @@ class FixedPlasmaEquilibrium(MHDState):
         lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
         lcfs.close()
 
-        profiles = CustomProfile.from_eqdsk(filename)
+        profiles = CustomProfile.from_eqdsk(
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            **kwargs,
+        )
 
         cls._eqdsk = e
         return cls(
@@ -386,9 +402,12 @@ class CoilSetMHDState(MHDState):
     def _get_eqdsk(
         cls,
         filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = None,
         *,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
+        **kwargs,
     ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
@@ -416,7 +435,9 @@ class CoilSetMHDState(MHDState):
         limiter:
             Limiter instance if any limiters are in file
         """
-        e, psi, grid = super()._get_eqdsk(filename)
+        e, psi, grid = super()._get_eqdsk(
+            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
+        )
         coilset = user_coils if user_coils is not None else CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
@@ -557,9 +578,12 @@ class Breakdown(CoilSetMHDState):
     def from_eqdsk(
         cls,
         filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = None,
         *,
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
+        **kwargs,
     ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
@@ -576,7 +600,12 @@ class Breakdown(CoilSetMHDState):
             Set current, j_max and b_max to zero in user_coils.
         """
         cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
-            filename, force_symmetry=force_symmetry, user_coils=user_coils
+            filename,
+            from_cocos,
+            to_cocos,
+            force_symmetry=force_symmetry,
+            user_coils=user_coils,
+            **kwargs,
         )
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
@@ -880,9 +909,12 @@ class Equilibrium(CoilSetMHDState):
     def from_eqdsk(
         cls,
         filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = None,
         *,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
+        **kwargs,
     ):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
@@ -904,11 +936,19 @@ class Equilibrium(CoilSetMHDState):
         """
         e, psi, coilset, grid, limiter = super()._get_eqdsk(
             filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
+            **kwargs,
         )
 
-        profiles = CustomProfile.from_eqdsk(filename)
+        profiles = CustomProfile.from_eqdsk(
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            **kwargs,
+        )
 
         cls._eqdsk = e
 

@@ -56,7 +56,7 @@ class TestTFCoilDesigner:
 
     @classmethod
     def setup_class(cls):
-        cls.eq = Equilibrium.from_eqdsk(Path(EQDATA, "eqref_OOB.json"))
+        cls.eq = Equilibrium.from_eqdsk(Path(EQDATA, "eqref_OOB.json"), from_cocos=17)
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
         cls.lcfs = make_polygon(cls.eq.get_LCFS().xyz, closed=True)
         cls.vvts_koz = make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0))

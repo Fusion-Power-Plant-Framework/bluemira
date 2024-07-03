@@ -77,7 +77,8 @@
       "nz": 127,
       "grid_scale_x": 1.6,
       "grid_scale_z": 1.7
-    }
+    },
+    "cocos": 17
   },
   "IVC": {
     "Wall silhouette": {

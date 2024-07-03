@@ -55,7 +55,7 @@ PARAMS = {
 class TestWallSilhouetteDesigner:
     @classmethod
     def setup_class(cls):
-        cls.eq = Equilibrium.from_eqdsk(Path(EQDATA, "eqref_OOB.json"))
+        cls.eq = Equilibrium.from_eqdsk(Path(EQDATA, "eqref_OOB.json"), from_cocos=17)
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 
     def test_parameterisation_read(self):

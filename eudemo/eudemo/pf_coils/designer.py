@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
+from eqdsk import EQDSKInterface
 
 from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
@@ -133,7 +133,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
 
         # TODO: Load up equilibria from files and add states to manager
 
-        eqdsk = EQDSKInterface(**data[next(iter(data))])
+        eqdsk = EQDSKInterface(**data[next(iter(data))], from_cocos=17)
         return CoilSet.from_group_vecs(eqdsk)
 
     def run(self) -> CoilSet:

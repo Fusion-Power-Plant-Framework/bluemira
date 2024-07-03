@@ -144,7 +144,8 @@ class TestCoilsetOptimiser:
             Path(
                 get_bluemira_path("equilibria/test_data", subfolder="tests"),
                 "DN-DEMO_eqref.json",
-            ).as_posix()
+            ).as_posix(),
+            from_cocos=17,
         )
         _dummy_eq_partial = deepcopy(_dummy_eq_none)
         _dummy_eq_sym = deepcopy(_dummy_eq_partial)
