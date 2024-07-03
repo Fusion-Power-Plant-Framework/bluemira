@@ -1097,6 +1097,8 @@ class FirstWallRadiationSolver:
 
     def solve(self, *, plot=True):
         """Solve first wall radiation problem"""
+        shift = translate(0, 0, np.min(self.fw_shape.z))
+        height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
         rad_3d = AxisymmetricMapper(self.rad_source)
         ray_stepsize = 1.0  # 2.0e-4
         emitter = VolumeTransform(
@@ -1106,8 +1108,8 @@ class FirstWallRadiationSolver:
         world = World()
         Cylinder(
             np.max(self.fw_shape.x),
-            2.0 * np.max(self.fw_shape.z),
-            transform=translate(0, 0, np.min(self.fw_shape.z)),
+            height,
+            transform=shift,
             parent=world,
             material=emitter,
         )

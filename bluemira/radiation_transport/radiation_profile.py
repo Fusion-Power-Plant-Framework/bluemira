@@ -674,17 +674,17 @@ class ScrapeOffLayerRadiation(Radiation):
         )
         if z_main > z_pfr:
             reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z >= z_pfr))[0]
-            i_in = np.argmax(sep_loop.z[reg_i])
-            i_out = np.argmin(sep_loop.z[reg_i])
+            i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
+            i_out = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
         else:
             reg_i = np.where((sep_loop.z > z_main) & (sep_loop.z <= z_pfr))[0]
-            i_in = np.argmin(sep_loop.z[reg_i])
-            i_out = np.argmax(sep_loop.z[reg_i])
+            i_in = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
+            i_out = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
 
         entrance_x, entrance_z = sep_loop.x[i_in], sep_loop.z[i_in]
         exit_x, exit_z = sep_loop.x[i_out], sep_loop.z[i_out]
 
-        return entrance_x, entrance_z, exit_x, exit_z
+        return entrance_x[0], entrance_z[0], exit_x[0], exit_z[0]
 
     @staticmethod
     def radiation_region_points(
@@ -964,7 +964,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=25,
+                rec_ext=1,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -974,7 +974,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=1,
+                rec_ext=0.2,
             )
             pfr_ext = abs(ion_front_z)
 
