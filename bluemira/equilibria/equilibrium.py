@@ -24,7 +24,7 @@ from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import PSI_NORM_TOL
@@ -119,9 +119,11 @@ class MHDState:
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = 3,
+        *,
+        full_coil: bool = False,
         **kwargs,
-    ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
+    ) -> tuple[EQDSKInterface, Grid]:
         """
         Get eqdsk data from file for read in
 
@@ -129,8 +131,15 @@ class MHDState:
         ----------
         filename:
             Filename
-        force_symmetry:
-            Whether or not to force symmetrisation in the CoilSet
+        from_cocos_index:
+            The COCOS index of the EQDSK file. Used when the determined
+            COCOS is ambiguous. Will raise if given and not one of
+            the determined COCOS indices.
+        to_cocos_index:
+            The COCOS index to convert the EQDSK file to.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
 
         Returns
         -------
@@ -148,23 +157,19 @@ class MHDState:
         e = EQDSKInterface.from_file(
             filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
         )
-        if "equilibria" in e.name:
-            psi = e.psi
-        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
-            psi = e.psi
-            e.dxc /= 2
-            e.dzc /= 2
-        elif "fiesta" in e.name.lower():
-            psi = e.psi
-        else:  # CREATE
-            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e.dxc /= 2
-            e.dzc /= 2
-            e.cplasma = abs(e.cplasma)
+        if "SCENE" in e.name and not isinstance(cls, Breakdown):
+            bluemira_warn(
+                "eqdsk name is SCENE assuming coil dx and dz in the file"
+                " represent the full width and height of the coil"
+            )
+            full_coil = True
 
+        if full_coil:
+            e.dxc /= 2
+            e.dzc /= 2
         grid = Grid.from_eqdsk(e)
 
-        return e, psi, grid
+        return e, grid
 
     def to_eqdsk(
         self,
@@ -242,6 +247,8 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        *,
+        full_coil: bool = False,
         **kwargs,
     ):
         """
@@ -252,10 +259,23 @@ class FixedPlasmaEquilibrium(MHDState):
         ----------
         filename:
             Filename
-        force_symmetry:
-            Whether or not to force symmetrisation in the CoilSet
+        from_cocos_index:
+            The COCOS index of the EQDSK file. Used when the determined
+            COCOS is ambiguous. Will raise if given and not one of
+            the determined COCOS indices.
+        to_cocos_index:
+            The COCOS index to convert the EQDSK file to.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
         """
-        e, psi, grid = super()._get_eqdsk(filename)
+        e, grid = super()._get_eqdsk(
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            full_coil=full_coil,
+            **kwargs,
+        )
         psi_ax = e.psimag
         psi_b = e.psibdry
         lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
@@ -270,7 +290,13 @@ class FixedPlasmaEquilibrium(MHDState):
 
         cls._eqdsk = e
         return cls(
-            grid, lcfs, profiles, psi=psi, psi_ax=psi_ax, psi_b=psi_b, filename=filename
+            grid,
+            lcfs,
+            profiles,
+            psi=e.psi,
+            psi_ax=psi_ax,
+            psi_b=psi_b,
+            filename=filename,
         )
 
     def get_LCFS(self) -> Coordinates:
@@ -407,8 +433,9 @@ class CoilSetMHDState(MHDState):
         *,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
+        full_coil: bool = False,
         **kwargs,
-    ) -> tuple[EQDSKInterface, npt.NDArray[np.float64], CoilSet, Grid, Limiter | None]:
+    ) -> tuple[EQDSKInterface, CoilSet, Grid, Limiter | None]:
         """
         Get eqdsk data from file for read in
 
@@ -416,11 +443,20 @@ class CoilSetMHDState(MHDState):
         ----------
         filename:
             Filename
+        from_cocos_index:
+            The COCOS index of the EQDSK file. Used when the determined
+            COCOS is ambiguous. Will raise if given and not one of
+            the determined COCOS indices.
+        to_cocos_index:
+            The COCOS index to convert the EQDSK file to.
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
 
         Returns
         -------
@@ -435,21 +471,20 @@ class CoilSetMHDState(MHDState):
         limiter:
             Limiter instance if any limiters are in file
         """
-        e, psi, grid = super()._get_eqdsk(
-            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
+        e, grid = super()._get_eqdsk(
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            full_coil=full_coil,
+            **kwargs,
         )
         coilset = user_coils if user_coils is not None else CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
 
-        if e.nlim == 0:
-            limiter = None
-        elif e.nlim < 5:  # noqa: PLR2004
-            limiter = Limiter(e.xlim, e.zlim)
-        else:
-            limiter = None  # CREATE..
+        limiter = None if e.nlim > 5 or e.nlim == 0 else Limiter(e.xlim, e.zlim)  # noqa: PLR2004
 
-        return e, psi, coilset, grid, limiter
+        return e, coilset, grid, limiter
 
     def _remap_greens(self):
         """
@@ -583,6 +618,7 @@ class Breakdown(CoilSetMHDState):
         *,
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
+        full_coil: bool = False,
         **kwargs,
     ):
         """
@@ -593,21 +629,31 @@ class Breakdown(CoilSetMHDState):
         ----------
         filename:
             Filename
+        from_cocos_index:
+            The COCOS index of the EQDSK file. Used when the determined
+            COCOS is ambiguous. Will raise if given and not one of
+            the determined COCOS indices.
+        to_cocos_index:
+            The COCOS index to convert the EQDSK file to.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
         """
-        cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
+        cls._eqdsk, coilset, grid, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
             to_cocos,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
+            full_coil=full_coil,
             **kwargs,
         )
-        return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
+        return cls(coilset, grid, limiter=limiter, psi=cls._eqdsk.psi, filename=filename)
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -914,6 +960,7 @@ class Equilibrium(CoilSetMHDState):
         *,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
+        full_coil: bool = False,
         **kwargs,
     ):
         """
@@ -928,18 +975,28 @@ class Equilibrium(CoilSetMHDState):
         ----------
         filename:
             Filename
+        from_cocos_index:
+            The COCOS index of the EQDSK file. Used when the determined
+            COCOS is ambiguous. Will raise if given and not one of
+            the determined COCOS indices.
+        to_cocos_index:
+            The COCOS index to convert the EQDSK file to.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
         """
-        e, psi, coilset, grid, limiter = super()._get_eqdsk(
+        e, coilset, grid, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
+            full_coil=full_coil,
             **kwargs,
         )
 
@@ -952,8 +1009,8 @@ class Equilibrium(CoilSetMHDState):
 
         cls._eqdsk = e
 
-        o_points, x_points = find_OX_points(grid.x, grid.z, psi, limiter=limiter)
-        jtor = profiles.jtor(grid.x, grid.z, psi, o_points=o_points, x_points=x_points)
+        o_points, x_points = find_OX_points(grid.x, grid.z, e.psi, limiter=limiter)
+        jtor = profiles.jtor(grid.x, grid.z, e.psi, o_points=o_points, x_points=x_points)
 
         return cls(
             coilset,
@@ -961,7 +1018,7 @@ class Equilibrium(CoilSetMHDState):
             profiles=profiles,
             vcontrol=None,
             limiter=limiter,
-            psi=psi,
+            psi=e.psi,
             jtor=jtor,
             filename=filename,
         )
@@ -1050,7 +1107,7 @@ class Equilibrium(CoilSetMHDState):
     def to_eqdsk(
         self,
         filename: Path | str,
-        header: str = "BP_equilibria",
+        header: str = "bluemira_equilibria",
         directory: str | None = None,
         filetype: str = "json",
         qpsi_calcmode: int = 0,
