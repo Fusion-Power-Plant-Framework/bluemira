@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+    from eqdsk.cocos import Sign
+
     from bluemira.equilibria.find import Opoint, Xpoint
 
 __all__ = [
@@ -804,13 +806,18 @@ class CustomProfile(Profile):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        qpsi_sign: Sign | int | None = None,
         **kwargs,
     ) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk file
         """
         e = EQDSKInterface.from_file(
-            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
+            **kwargs,
         )
         return cls(
             e.pprime,

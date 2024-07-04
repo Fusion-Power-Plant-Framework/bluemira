@@ -8,6 +8,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
+from eqdsk.cocos import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import (
@@ -146,6 +147,7 @@ class TestCoilsetOptimiser:
                 "DN-DEMO_eqref.json",
             ).as_posix(),
             from_cocos=3,
+            qpsi_sign=Sign.NEGATIVE,
         )
         _dummy_eq_partial = deepcopy(_dummy_eq_none)
         _dummy_eq_sym = deepcopy(_dummy_eq_partial)

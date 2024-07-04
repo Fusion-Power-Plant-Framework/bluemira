@@ -15,6 +15,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from eqdsk import EQDSKInterface
+from eqdsk.cocos import Sign
 
 from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
@@ -142,7 +143,9 @@ class EquilibriumDesigner(Designer[Equilibrium]):
     def read(self) -> Equilibrium:
         """Load an equilibrium from a file."""
         eq = Equilibrium.from_eqdsk(
-            self.file_path, from_cocos=self.build_config.get("cocos")
+            self.file_path,
+            from_cocos=self.build_config.get("cocos"),
+            qpsi_sign=self.build_config.get("qpsi", Sign.NEGATIVE),
         )
         self._update_params_from_eq(eq)
         return eq
@@ -369,7 +372,12 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         """
         Read in a fixed boundary equilibrium
         """
-        data = EQDSKInterface.from_file(self.file_path, from_cocos=3)
+        data = EQDSKInterface.from_file(
+            self.file_path,
+            clockwise_phi=False,
+            volt_seconds_per_radian=True,
+            qpsi_sign=Sign.NEGATIVE,
+        )
         lcfs_coords = Coordinates({"x": data.xbdry, "y": 0, "z": data.zbdry})
         lcfs_coords.close()
 

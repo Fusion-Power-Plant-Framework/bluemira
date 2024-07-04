@@ -11,6 +11,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from eqdsk import EQDSKInterface
+from eqdsk.cocos import Sign
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
@@ -330,14 +331,18 @@ class TestSolveEquilibrium:
 class TestEquilibrium:
     def test_double_null(self):
         path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        dn = Equilibrium.from_eqdsk(Path(path, "DN-DEMO_eqref.json"), from_cocos=3)
+        dn = Equilibrium.from_eqdsk(
+            Path(path, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+        )
         assert dn.is_double_null
-        sn = Equilibrium.from_eqdsk(Path(path, "eqref_OOB.json"), from_cocos=3)
+        sn = Equilibrium.from_eqdsk(Path(path, "eqref_OOB.json"), from_cocos=7)
         assert not sn.is_double_null
 
     def test_qpsi_calculation_modes(self):
         path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        dn = Equilibrium.from_eqdsk(Path(path, "DN-DEMO_eqref.json"), from_cocos=3)
+        dn = Equilibrium.from_eqdsk(
+            Path(path, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+        )
         with patch.object(dn, "q") as eq_q:
             res = dn.to_dict(qpsi_calcmode=0)
             assert eq_q.call_count == 0
@@ -370,7 +375,7 @@ class TestEquilibrium:
             get_bluemira_path("equilibria/test_data", subfolder="tests"),
             "DN-DEMO_eqref_withCoilNames.json",
         )
-        e = Equilibrium.from_eqdsk(testfile, from_cocos=3)
+        e = Equilibrium.from_eqdsk(testfile, from_cocos=3, qpsi_sign=Sign.NEGATIVE)
         assert e.coilset.name == [
             *("PF_1", "PF_2", "PF_3", "PF_4", "PF_5", "PF_6"),
             *("CS_1", "CS_2", "CS_3", "CS_4", "CS_5"),
@@ -388,7 +393,7 @@ class TestEqReadWrite:
         new_file_name = f"eqref_OOB_temp1.{file_format}"
         new_file_path = Path(data_path, new_file_name)
 
-        eq = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=3)
+        eq = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
         eq.to_eqdsk(
             directory=data_path,
             filename=new_file_name,
@@ -397,7 +402,7 @@ class TestEqReadWrite:
         )
         d1 = eq.to_dict(qpsi_calcmode=qpsi_calcmode)
 
-        eq2 = Equilibrium.from_eqdsk(new_file_path, from_cocos=3)
+        eq2 = Equilibrium.from_eqdsk(new_file_path, from_cocos=7)
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
         new_file_path.unlink()
         if file_format == "eqdsk":
@@ -416,7 +421,7 @@ class TestQBenchmark:
         jetto = EQDSKInterface.from_file(Path(path, jetto_file), from_cocos=11)
         cls.q_ref = jetto.qpsi
         eq_file = "SPR-008_3_Outputs_STEP_eqref.eqdsk"
-        cls.eq = Equilibrium.from_eqdsk(Path(path, eq_file), from_cocos=3)
+        cls.eq = Equilibrium.from_eqdsk(Path(path, eq_file), from_cocos=7)
 
     def test_q_benchmark(self):
         n = len(self.q_ref)

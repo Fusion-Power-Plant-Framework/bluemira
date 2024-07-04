@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from eqdsk.cocos import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -61,7 +62,7 @@ def test_inv_2x2_jacobian():
 
 class TestFindLCFSSeparatrix:
     def test_other_grid(self):
-        sof = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=3)
+        sof = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=7)
         psi = sof.psi()
         o_points, x_points = sof.get_OX_points(psi)
         grid_tol = np.hypot(sof.grid.dx, sof.grid.dz)
@@ -83,7 +84,9 @@ class TestFindLCFSSeparatrix:
             assert np.amin(distances) <= grid_tol
 
     def test_double_null(self):
-        sof = Equilibrium.from_eqdsk(Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3)
+        sof = Equilibrium.from_eqdsk(
+            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+        )
         psi = sof.psi()
         o_points, x_points = sof.get_OX_points(psi)
         grid_tol = np.hypot(sof.grid.dx, sof.grid.dz)
@@ -126,9 +129,9 @@ class TestInPlasma:
 class TestGetLegs:
     @classmethod
     def setup_class(cls):
-        cls.sn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=3)
+        cls.sn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=7)
         cls.dn_eq = Equilibrium.from_eqdsk(
-            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3
+            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
         )
         cls.falsified_dn_eq = deepcopy(cls.sn_eq)
 

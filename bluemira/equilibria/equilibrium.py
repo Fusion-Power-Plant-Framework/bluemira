@@ -62,6 +62,7 @@ from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 if TYPE_CHECKING:
+    from eqdsk.cocos import Sign
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.find import Lpoint
@@ -120,6 +121,7 @@ class MHDState:
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = 3,
+        qpsi_sign: Sign | int | None = None,
         *,
         full_coil: bool = False,
         **kwargs,
@@ -155,7 +157,11 @@ class MHDState:
             Limiter instance if any limiters are in file
         """
         e = EQDSKInterface.from_file(
-            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
+            **kwargs,
         )
         if "SCENE" in e.name and not isinstance(cls, Breakdown):
             bluemira_warn(
@@ -167,9 +173,8 @@ class MHDState:
         if full_coil:
             e.dxc /= 2
             e.dzc /= 2
-        grid = Grid.from_eqdsk(e)
 
-        return e, grid
+        return e, Grid.from_eqdsk(e)
 
     def to_eqdsk(
         self,
@@ -247,6 +252,7 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        qpsi_sign: Sign | int | None = None,
         *,
         full_coil: bool = False,
         **kwargs,
@@ -274,6 +280,7 @@ class FixedPlasmaEquilibrium(MHDState):
             from_cocos=from_cocos,
             to_cocos=to_cocos,
             full_coil=full_coil,
+            qpsi_sign=qpsi_sign,
             **kwargs,
         )
         psi_ax = e.psimag
@@ -430,12 +437,13 @@ class CoilSetMHDState(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        qpsi_sign: Sign | int | None = None,
         *,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
         full_coil: bool = False,
         **kwargs,
-    ) -> tuple[EQDSKInterface, CoilSet, Grid, Limiter | None]:
+    ) -> tuple[EQDSKInterface, Grid, CoilSet, Limiter | None]:
         """
         Get eqdsk data from file for read in
 
@@ -475,6 +483,7 @@ class CoilSetMHDState(MHDState):
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
             full_coil=full_coil,
             **kwargs,
         )
@@ -484,7 +493,7 @@ class CoilSetMHDState(MHDState):
 
         limiter = None if e.nlim > 5 or e.nlim == 0 else Limiter(e.xlim, e.zlim)  # noqa: PLR2004
 
-        return e, coilset, grid, limiter
+        return e, grid, coilset, limiter
 
     def _remap_greens(self):
         """
@@ -615,6 +624,7 @@ class Breakdown(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        qpsi_sign: Sign | int | None = None,
         *,
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
@@ -644,10 +654,11 @@ class Breakdown(CoilSetMHDState):
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
         """
-        cls._eqdsk, coilset, grid, limiter = super()._get_eqdsk(
+        cls._eqdsk, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
             to_cocos,
+            qpsi_sign=qpsi_sign,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
@@ -957,6 +968,7 @@ class Equilibrium(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = None,
+        qpsi_sign: Sign | int | None = None,
         *,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
@@ -990,10 +1002,11 @@ class Equilibrium(CoilSetMHDState):
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
         """
-        e, coilset, grid, limiter = super()._get_eqdsk(
+        e, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
@@ -1004,6 +1017,7 @@ class Equilibrium(CoilSetMHDState):
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
             **kwargs,
         )
 
