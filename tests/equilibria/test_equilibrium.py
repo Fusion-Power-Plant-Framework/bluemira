@@ -355,7 +355,7 @@ class TestEquilibrium:
     @pytest.mark.parametrize("grouping", [CoilSet, CoilGroup])
     def test_woops_no_coils(self, grouping):
         testfile = Path(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out")
-        e = EQDSKInterface.from_file(testfile, from_cocos_index=11)
+        e = EQDSKInterface.from_file(testfile, from_cocos=11)
         coil = grouping.from_group_vecs(e)
         assert isinstance(coil, grouping), "Check classmethod is making the right class"
         assert coil.current.any() == 0
@@ -413,7 +413,7 @@ class TestQBenchmark:
         root = try_get_bluemira_private_data_root()
         path = Path(root, "equilibria", "STEP_SPR_08")
         jetto_file = "SPR-008_3_Inputs_jetto.eqdsk_out"
-        jetto = EQDSKInterface.from_file(Path(path, jetto_file), from_cocos_index=11)
+        jetto = EQDSKInterface.from_file(Path(path, jetto_file), from_cocos=11)
         cls.q_ref = jetto.qpsi
         eq_file = "SPR-008_3_Outputs_STEP_eqref.eqdsk"
         cls.eq = Equilibrium.from_eqdsk(Path(path, eq_file), from_cocos=3)

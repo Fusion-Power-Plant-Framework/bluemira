@@ -146,7 +146,7 @@ class MHDState:
             Limiter instance if any limiters are in file
         """
         e = EQDSKInterface.from_file(
-            filename, from_cocos_index=from_cocos, to_cocos_index=to_cocos, **kwargs
+            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
         )
         if "equilibria" in e.name:
             psi = e.psi

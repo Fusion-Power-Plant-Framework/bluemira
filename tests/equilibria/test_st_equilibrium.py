@@ -52,7 +52,7 @@ class TestSTEquilibrium:
         jeq_name = "jetto.eqdsk_out"
         filename = Path(private, jeq_name)
         cls.profiles = CustomProfile.from_eqdsk(filename, from_cocos=11)
-        cls.jeq_dict = EQDSKInterface.from_file(filename, from_cocos_index=11)
+        cls.jeq_dict = EQDSKInterface.from_file(filename, from_cocos=11)
 
     def test_equilibrium(self):
         build_tweaks = {

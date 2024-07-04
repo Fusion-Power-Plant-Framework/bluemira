@@ -810,7 +810,7 @@ class CustomProfile(Profile):
         Initialises a CustomProfile object from an eqdsk file
         """
         e = EQDSKInterface.from_file(
-            filename, from_cocos_index=from_cocos, to_cocos_index=to_cocos, **kwargs
+            filename, from_cocos=from_cocos, to_cocos=to_cocos, **kwargs
         )
         return cls(
             e.pprime,
