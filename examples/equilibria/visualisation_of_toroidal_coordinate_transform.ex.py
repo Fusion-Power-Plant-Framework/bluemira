@@ -38,7 +38,7 @@ using the Bluemira functions 'cylindrical_to_toroidal' and 'toroidal_to_cylindri
 #
 
 # %% [markdown]
-# ##### Imports
+# Imports
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
