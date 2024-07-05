@@ -165,6 +165,7 @@ Mesh_linkfile.json
 *.gif
 !documentation/**/images/*.gif
 !documentation/**/images/**/*.gif
+!examples/equilibria/images/*.png
 
 # Ignore example output json files
 examples/systems/config_data/*_out.json
