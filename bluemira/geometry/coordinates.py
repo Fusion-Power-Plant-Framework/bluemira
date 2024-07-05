@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from enum import Enum, auto
-from itertools import starmap
+from itertools import count, starmap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -1466,6 +1466,87 @@ class Coordinates:
 
         self._array += vector.reshape(3, 1)
         self._update_plane_props()
+
+    def simplify(
+        self,
+        max_angle: float,
+        dx_min: float,
+        dx_max: float = np.inf,
+    ) -> tuple[Coordinates, npt.NDArray[np.int64]]:
+        """
+        Generate a set of pivot points along the given boundary.
+
+        Given a set of boundary points, some maximum angle, and minimum and
+        maximum segment length, this function derives a set of pivot points
+        along the boundary, that define a 'string'. You might picture a
+        'string' as a thread wrapped around some nails (pivot points) on a
+        board.
+
+        Parameters
+        ----------
+        angle: float
+            Maximum turning angle [degree]
+        dx_min: float
+            Minimum segment length
+        dx_max: float
+            Maximum segment length
+
+        Returns
+        -------
+        new_points:
+            The pivot points' coordinates.
+        index:
+            The indices of the pivot points into the input points.
+        """
+        if dx_min > dx_max:
+            raise ValueError(
+                f"'dx_min' cannot be greater than 'dx_max': '{dx_min} > {dx_max}'"
+            )
+        points = self._array.copy().T
+
+        if len(points) < 3:  # noqa: PLR2004
+            return Coordinates(points), np.array([], dtype=int)
+
+        t_vector = points[1:] - points[:-1]  # tangent vector
+        t_vec_norm = np.linalg.norm(t_vector, axis=1)
+        t_vec_norm[t_vec_norm == 0] = 1e-36  # protect zero division
+        median_dt = np.median(t_vec_norm)  # average step length
+        t_vector /= t_vec_norm.reshape(-1, 1) * np.ones((1, np.shape(t_vector)[1]))
+
+        new_points = np.zeros_like(points)
+        index = np.zeros(len(points), dtype=int)
+
+        delta_x, delta_turn = np.zeros((2, len(points)))
+        t0, p0 = t_vector[0], points[0]
+
+        new_points[0] = p0
+        angle_crit = np.sin(max_angle * np.pi / 180)
+
+        k = count(1)
+        for i, (p, t) in enumerate(zip(points[1:], t_vector, strict=False)):
+            c_mag = np.linalg.norm(np.cross(t0, t))
+            dx = np.linalg.norm(p - p0)  # segment length
+            if (c_mag > angle_crit and dx > dx_min) or dx + median_dt > dx_max:
+                j = next(k)
+                new_points[j] = points[i]  # pivot point
+                index[j] = i + 1  # pivot index
+
+                delta_x[j - 1] = dx  # panel length
+                delta_turn[j - 1] = np.arcsin(c_mag) * 180 / np.pi
+                t0, p0 = t, p  # update
+
+        if dx > dx_min:
+            j = next(k)
+            delta_x[j - 1] = dx  # last segment length
+        else:
+            delta_x[j - 1] += dx  # last segment length
+        new_points[j] = p  # replace / append last point
+        new_points = new_points[: j + 1]  # trim
+
+        index[j] = i + 1  # replace/append last point index
+        index = index[: j + 1]  # trim
+
+        return Coordinates(new_points), index
 
     # =============================================================================
     # Dunders (with different behaviour to array)

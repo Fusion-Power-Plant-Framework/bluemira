@@ -8,10 +8,11 @@ inputs:
 
 runs:
   using: "composite"
-  env:
-    GITHUB_TOKEN: ${{ inputs.token }}
   steps:
     - name: Rebase develop_dependencies
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      shell: bash
       run: |
         # Rebase develop_dependencies on develop, so that it's up-to-date and
         # we don't run into conflicts next time we merge.
@@ -21,6 +22,9 @@ runs:
         git push --force-with-lease origin develop_dependencies:develop_dependencies
 
     - name: Create PR to update dependencies
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+      shell: bash
       run: |
         PR_URL=$(gh pr create \
           --head develop_dependencies \

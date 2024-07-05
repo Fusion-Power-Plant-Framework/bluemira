@@ -28,6 +28,7 @@ A :py:class:`~bluemira.base.components.Component` can be used as shown below:
 
 .. code-block:: pycon
 
+    >>> from bluemira.base.components import Component, PhysicalComponent
     >>> reactor = Component("My Reactor")
     >>> plasma = PhysicalComponent("Plasma", plasma_shape)
     >>> blanket = Component("Blanket")
@@ -35,7 +36,7 @@ A :py:class:`~bluemira.base.components.Component` can be used as shown below:
     >>> blanket.add_child(PhysicalComponent("Breeding Zone", breeding_zone_shape))
     >>> reactor.add_child(plasma)
     >>> reactor.add_child(blanket)
-    >>> reactor.tree()
+    >>> print(reactor.tree())
     My Reactor (Component)
     ├── Plasma (PhysicalComponent)
     └── Blanket (Component)
@@ -91,7 +92,7 @@ enabling functionality that needs to interact with multiple :py:class:`~bluemira
         def get_ripple(self):
             '''Calculate the ripple in the TF coils.'''
 
-    reactor = MyReactor("My Reactor")
+    reactor = MyReactor("My Reactor", n_sectors=1)
     reactor.plasma = build_plasma()
     reactor.tf_coils = build_tf_coils()
     reactor.show_cad()

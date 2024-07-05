@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
+    from bluemira.codes.openmc.output import OpenMCResult
     from bluemira.codes.openmc.params import PlasmaSourceParameters
     from bluemira.geometry.wire import BluemiraWire
     from eudemo.blanket import Blanket
@@ -62,7 +63,7 @@ def run_neutronics(
     ivc_shapes: IVCShapes,
     source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
     tally_function=None,
-):
+) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
     """Runs the neutronics model"""
     # TODO get these materials from the componentmanager or something similar
     breeder_materials, tokamak_geometry = get_preset_physical_properties(

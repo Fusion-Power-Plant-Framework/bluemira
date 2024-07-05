@@ -122,7 +122,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         if x0 is None:
             x0 = self._get_initial_vector()
 
-        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
             f_objective=self.objective,
             x0=x0,
@@ -307,7 +307,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         if x0 is None:
             x0 = self._get_initial_vector()
 
-        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
             f_objective=lambda vector: self.objective(vector, verbose=verbose),
             x0=x0,

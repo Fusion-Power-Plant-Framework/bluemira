@@ -8,7 +8,10 @@
 Radiation shield builder
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -23,6 +26,10 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
 
 
 @dataclass
@@ -44,11 +51,12 @@ class RadiationShieldBuilder(Builder):
     RS = "RS"
     BODY = "Body"
     param_cls: type[RadiationShieldBuilderParams] = RadiationShieldBuilderParams
+    params: RadiationShieldBuilderParams
 
     def __init__(
         self,
-        params: ParameterFrame | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         cryo_vv: BluemiraFace,
     ):
         super().__init__(params, build_config)

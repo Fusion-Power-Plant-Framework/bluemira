@@ -8,6 +8,8 @@
 Useful functions for bluemira geometries.
 """
 
+from __future__ import annotations
+
 import datetime
 import enum
 import functools
@@ -16,7 +18,7 @@ import json
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numba as nb
 import numpy as np
@@ -24,7 +26,8 @@ from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
-from bluemira.base.file import force_file_extension, get_bluemira_path
+from bluemira.base.file import force_file_extension, try_get_bluemira_path
+from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
@@ -33,16 +36,19 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.utilities.tools import iterable_to_list
 
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.geometry.plane import BluemiraPlane
+
 
 @cadapi.catch_caderr(GeometryError)
-def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
+def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
@@ -85,7 +91,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: BluemiraGeo | np.ndarray | Any):
+    def default(self, obj: BluemiraGeoT | np.ndarray | Any):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -124,7 +130,12 @@ def _make_debug_file(name: str) -> Path:
     """
     Make a new file in the geometry debugging folder.
     """
-    path = get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+    path = try_get_bluemira_path("generated_data/naughty_geometry", subfolder="")
+
+    if path is None:
+        path = Path.cwd() / "naughty_geometry"
+        Path.mkdir(path, exist_ok=True)
+
     now = datetime.datetime.now()
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
@@ -151,21 +162,28 @@ def log_geometry_on_failure(func):
         try:
             return func(*args, **kwargs)
         except cadapi.FreeCADError:
-            data = _reconstruct_function_call(signature, *args, **kwargs)
-            filename = _make_debug_file(func_name)
-
             # Dump the data in the file
-            try:
-                with open(filename, "w") as file:
-                    json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
+            if LogLevel(int(get_log_level(as_str=False) * 10)) == LogLevel.DEBUG:
+                data = _reconstruct_function_call(signature, *args, **kwargs)
+                filename = _make_debug_file(func_name)
+                try:
+                    with open(filename, "w") as file:
+                        json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
-                bluemira_debug(
-                    f"Function call {func_name} failed. Debugging information was saved"
-                    f" to: {filename}"
-                )
-            except Exception:  # noqa: BLE001
+                    bluemira_debug(
+                        f"Function call {func_name} failed."
+                        f" Debugging information was saved to: {filename}"
+                    )
+                except Exception:  # noqa: BLE001
+                    bluemira_warn(
+                        "Failed to save the failed geometry operation"
+                        f" {func_name} to JSON."
+                    )
+
+            else:
                 bluemira_warn(
-                    f"Failed to save the failed geometry operation {func_name} to JSON."
+                    "Set logging level to debug to save the geometry"
+                    "and other function arguments to json"
                 )
 
             raise
@@ -228,6 +246,7 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
     """
 
     def decorator(func: Callable) -> BluemiraWire:
+        @functools.wraps(func)
         def wrapper(
             points: list | np.ndarray | dict, label: str = "", *, closed: bool = False
         ) -> BluemiraWire:
@@ -246,7 +265,6 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
                 wire = cadapi.close_wire(wire)
             return BluemiraWire(wire, label=label)
 
-        wrapper.__doc__ = func.__doc__
         return wrapper
 
     return decorator
@@ -366,6 +384,71 @@ def make_bspline(
     )
 
 
+def make_bsplinesurface(
+    poles: list | np.ndarray,
+    mults_u: list | np.ndarray,
+    mults_v: list | np.ndarray,
+    knot_vector_u: list | np.ndarray,
+    knot_vector_v: list | np.ndarray,
+    degree_u: int,
+    degree_v: int,
+    weights: list | np.ndarray,
+    *,
+    periodic: bool,
+    check_rational: bool,
+    label: str = "",
+) -> BluemiraWire:
+    """
+    Builds a B-SplineSurface by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles:
+        Array of poles (control points).
+    mults_u:
+        list of integers for the u-multiplicity
+    mults_v:
+        list of integers for the u-multiplicity
+    knot_vector_u:
+        list of u-knots
+    knot_vector_v:
+        list of v-knots
+    degree_u:
+        degree of NURBS in u-direction
+    degree_v:
+        degree of NURBS in v-direction
+    weights:
+        point weights.
+    periodic:
+        Whether or not the spline is periodic (same curvature at start and end points)
+    check_rational:
+        Whether or not to check if the BSpline is rational (not sure)
+
+    Returns
+    -------
+    A FreeCAD object that contours the bsplinesurface
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    """
+    return convert(
+        cadapi.make_bsplinesurface(
+            poles,
+            mults_v,
+            mults_u,
+            knot_vector_u,
+            knot_vector_v,
+            degree_u=degree_u,
+            degree_v=degree_v,
+            weights=weights,
+            periodic=periodic,
+            check_rational=check_rational,
+        ),
+        label=label,
+    )
+
+
 def _make_polygon_fallback(
     points,
     label="",
@@ -414,7 +497,10 @@ def interpolate_bspline(
     points = Coordinates(points)
     return BluemiraWire(
         cadapi.interpolate_bspline(
-            points.T, closed=closed, start_tangent=start_tangent, end_tangent=end_tangent
+            points.T,
+            closed=closed,
+            start_tangent=start_tangent,
+            end_tangent=end_tangent,
         ),
         label=label,
     )
@@ -714,7 +800,8 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire),
+        label=label,
     )
 
 
@@ -854,12 +941,12 @@ def partial_diff_of_volume(
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
-    shape: BluemiraGeo,
+    shape: BluemiraGeoT,
     base: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
-) -> BluemiraGeo:
+) -> BluemiraGeoT:
     """
     Apply the revolve (base, dir, degree) to this shape
 
@@ -981,6 +1068,40 @@ def sweep_shape(
     )
 
     return convert(result, label=label)
+
+
+def loft_shape(
+    profiles: Iterable[BluemiraWire],
+    *,
+    solid: bool = True,
+    ruled: bool = False,
+    label: str = "",
+) -> BluemiraSolid | BluemiraShell:
+    """
+    Loft between a set of profiles.
+
+    Parameters
+    ----------
+    profiles:
+        Profile(s) to loft between
+    solid:
+        Whether or not to create a Solid
+    ruled:
+        Create a ruled shape, see https://en.wikipedia.org/wiki/Ruled_surface
+        for explanation.
+
+    Returns
+    -------
+    Lofted geometry object
+    """
+    return convert(
+        cadapi.loft(
+            [p.shape for p in profiles],
+            solid=solid,
+            ruled=ruled,
+        ),
+        label=label,
+    )
 
 
 def fillet_chamfer_decorator(*, chamfer: bool):
@@ -1151,7 +1272,9 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+    convex_bm_wire: BluemiraWire,
+    plane: BluemiraPlane,
+    cut_direction: npt.NDArray[float],
 ) -> npt.NDArray[float]:
     """
     Cut a wire using a plane.
@@ -1274,7 +1397,7 @@ def is_convex(points: npt.NDArray):
 # # Save functions
 # # =============================================================================
 def save_as_STP(
-    shapes: BluemiraGeo | Iterable[BluemiraGeo],
+    shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
     unit_scale: str = "metre",
     **kwargs,
@@ -1294,13 +1417,13 @@ def save_as_STP(
     filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
-        shapes = [shapes]
+        shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
 
     cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
 
 
 def save_cad(
-    shapes: BluemiraGeo | list[BluemiraGeo],
+    shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
@@ -1323,7 +1446,7 @@ def save_cad(
         arguments passed to cadapi save function
     """
     if not isinstance(shapes, list):
-        shapes = [shapes]
+        shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
     if names is not None and not isinstance(names, list):
         names = [names]
 
@@ -1561,8 +1684,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
 
 def boolean_cut(
-    shape: BluemiraGeo, tools: BluemiraGeo | Iterable[BluemiraGeo]
-) -> BluemiraGeo | Iterable[BluemiraGeo]:
+    shape: BluemiraGeoT, tools: BluemiraGeoT | Iterable[BluemiraGeoT]
+) -> BluemiraGeoT | list[BluemiraGeoT]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1628,7 +1751,7 @@ def boolean_fragments(
     return convert(compound), converted
 
 
-def point_inside_shape(point: Iterable[float], shape: BluemiraGeo) -> bool:
+def point_inside_shape(point: Iterable[float], shape: BluemiraGeoT) -> bool:
     """
     Check whether or not a point is inside a shape.
 
@@ -1678,7 +1801,7 @@ def point_on_plane(
 # # =============================================================================
 # # Serialise and Deserialise
 # # =============================================================================
-def serialise_shape(shape: BluemiraGeo):
+def serialise_shape(shape: BluemiraGeoT):
     """
     Serialise a BluemiraGeo object.
     """
@@ -1700,7 +1823,7 @@ def serialise_shape(shape: BluemiraGeo):
     raise NotImplementedError(f"Serialisation non implemented for {type_}")
 
 
-def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
+def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
     """
     Deserialise a BluemiraGeo object obtained from serialise_shape.
 
@@ -1725,7 +1848,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
-    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeo]) -> BluemiraGeo:
+    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeoT]) -> BluemiraGeoT:
         label = shape_dict["label"]
         boundary = shape_dict["boundary"]
 
@@ -1760,7 +1883,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
 # # =============================================================================
 # # shape utils
 # # =============================================================================
-def get_shape_by_name(shape: BluemiraGeo, name: str) -> list[BluemiraGeo]:
+def get_shape_by_name(shape: BluemiraGeoT, name: str) -> list[BluemiraGeoT]:
     """
     Search through the boundary of the shape and get any shapes with a label
     corresponding to the provided name. Includes the shape itself if the name matches

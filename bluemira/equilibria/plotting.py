@@ -497,6 +497,8 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
     Utility class for FixedPlasmaEquilibrium plotting
     """
 
+    eq: FixedPlasmaEquilibrium
+
     def __init__(
         self, equilibrium: FixedPlasmaEquilibrium, ax=None, *, field: bool = False
     ):
@@ -529,6 +531,8 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
     """
     Utility class for Equilibrium plotting
     """
+
+    eq: Equilibrium
 
     def __init__(
         self,

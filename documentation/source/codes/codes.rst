@@ -55,7 +55,7 @@ and a shared '`MappedParameterFrame <#mappedparameterframes>`_'.
 
 Below is an example of how one would use a :py:class:`.CodesSolver`.
 
-.. code-block::python
+.. code-block::python  # doctest: +SKIP
 
     import bluemira.codes.my_code as my_code
 
@@ -147,7 +147,7 @@ The simplest interface definition would look something like the below:
 
     from enum import auto
 
-    from bluemira.codes.interface import RunMode as BaseRunMode
+    from bluemira.codes.interface import BaseRunMode
     from bluemira.codes.interface import CodesSolver, CodesTeardown, CodesSetup, CodesTask
 
 
@@ -164,13 +164,13 @@ The simplest interface definition would look something like the below:
 
     class Run(CodesTask):
 
-        def run(self):
-            self._run_subprocess(self.binary)
-
+        def run(self, inputs):
+            # eg self._run_subprocess(self.binary)
+            pass
 
     class Teardown(CodesTeardown):
 
-        def run(self):
+        def run(self, inputs):
             # read results from the output file
             pass
 
@@ -193,6 +193,8 @@ The simplest interface definition would look something like the below:
             self.binary = build_config.get("binary", None),
             # problem settings are parameters passed directly to the external program
             self.problem_settings = build_config.get("problem_settings", None)
+
+    Solver(params=None, build_config={}).execute('run')
 
 APIs
 ^^^^

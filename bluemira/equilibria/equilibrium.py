@@ -8,13 +8,14 @@
 Plasma MHD equilibrium and state objects
 """
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import tabulate
@@ -59,6 +60,11 @@ from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from bluemira.equilibria.find import Lpoint
 
 
 class VerticalPositionControlType(Enum):
@@ -187,6 +193,10 @@ class MHDState:
             filename = Path(directory, filename)
 
         self.filename = filename  # Convenient
+        if data.get("coil_types") is not None:
+            data["coil_types"] = [
+                ct if isinstance(ct, str) else ct.name for ct in data["coil_types"]
+            ]
         eqdsk = EQDSKInterface(**data)
         eqdsk.write(filename.as_posix(), file_format=filetype, **kwargs)
 
@@ -353,7 +363,7 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: plt.Axes | None = None, *, field: bool = False):
+    def plot(self, ax: Axes | None = None, *, field: bool = False):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
         """
@@ -594,6 +604,8 @@ class Breakdown(CoilSetMHDState):
             "Bz": self.Bz(),
             "Bp": self.Bp(),
             "ncoil": self.coilset.n_coils(),
+            "coil_names": self.coilset.name,
+            "coil_types": self.coilset.ctype,
             "xc": xc,
             "zc": zc,
             "dxc": dxc,
@@ -766,7 +778,7 @@ class Breakdown(CoilSetMHDState):
         b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
-    def plot(self, ax: plt.Axes | None = None, *, Bp: bool = False):
+    def plot(self, ax: Axes | None = None, *, Bp: bool = False):
         """
         Plots the breakdown object onto `ax`
         """
@@ -974,6 +986,8 @@ class Equilibrium(CoilSetMHDState):
             "xbdry": lcfs.x,
             "zbdry": lcfs.z,
             "ncoil": self.coilset.n_coils(),
+            "coil_names": self.coilset.name,
+            "coil_types": self.coilset.ctype,
             "xc": x_c,
             "zc": z_c,
             "dxc": dxc,
@@ -1575,7 +1589,7 @@ class Equilibrium(CoilSetMHDState):
 
     def get_OX_points(
         self, psi: npt.NDArray[np.float64] | None = None, *, force_update: bool = False
-    ) -> tuple[Iterable, Iterable]:
+    ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
         Returns list of [[O-points], [X-points]]
         """
@@ -1732,14 +1746,14 @@ class Equilibrium(CoilSetMHDState):
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: plt.Axes | None = None, *, plasma: bool = False, show_ox: bool = True
+        self, ax: Axes | None = None, *, plasma: bool = False, show_ox: bool = True
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
         return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
-    def plot_field(self, ax: plt.Axes | None = None, *, show_ox: bool = True):
+    def plot_field(self, ax: Axes | None = None, *, show_ox: bool = True):
         """
         Plot the equilibrium field structure onto `ax`.
         """

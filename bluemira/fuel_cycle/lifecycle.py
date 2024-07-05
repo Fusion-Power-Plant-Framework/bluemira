@@ -175,7 +175,7 @@ class LifeCycle:
         self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
         tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
         if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux * S_TO_YR, 2)
+            self.tf_lifeend = round(self.params.tf_fluence / (tf_ins_nflux * YR_TO_S), 2)
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
             bluemira_warn(
                 f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
@@ -230,7 +230,7 @@ class LifeCycle:
         Calculate the number of pulses per phase.
         """
         self.n_pulse_p = [
-            int(YR_TO_S * phases[i][0] // self.t_flattop)
+            int((phases[i][0] * YR_TO_S) // self.t_flattop)
             for i in range(len(phases))
             if phases[i][1].startswith("Phase P")
         ]
@@ -337,7 +337,7 @@ class LifeCycle:
                 self.inputs,
             )  # Phoenix
 
-        if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
+        if self.params.A_global > self.fpy / (self.fpy + self.min_downtime * S_TO_YR):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
         self.params.A_global = actual_lf

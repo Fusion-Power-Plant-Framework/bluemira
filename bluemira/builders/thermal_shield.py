@@ -8,7 +8,10 @@
 Thermal shield builders
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -35,8 +38,12 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -58,11 +65,12 @@ class VVTSBuilder(Builder):
     VVTS = "VVTS"
     VOID = "VVTS voidspace"
     param_cls: type[VVTSBuilderParams] = VVTSBuilderParams
+    params: VVTSBuilderParams
 
     def __init__(
         self,
-        params: VVTSBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         keep_out_zone: BluemiraWire,
     ):
         super().__init__(params, build_config)
@@ -176,11 +184,12 @@ class CryostatTSBuilder(Builder):
     VOID = "Cryostat voidspace"
 
     param_cls: type[CryostatTSBuilderParams] = CryostatTSBuilderParams
+    params: CryostatTSBuilderParams
 
     def __init__(
         self,
-        params: CryostatTSBuilderParams | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         pf_keep_out_zones: list[BluemiraWire],
         tf_keep_out_zone: BluemiraWire,
     ):
@@ -206,7 +215,7 @@ class CryostatTSBuilder(Builder):
 
     def build_xz(
         self, pf_kozs: list[BluemiraWire], tf_koz: BluemiraWire
-    ) -> PhysicalComponent:
+    ) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the thermal shield.
         """

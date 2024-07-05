@@ -8,7 +8,10 @@
 Builder for making a parameterised EU-DEMO divertor.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -20,7 +23,11 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.face import BluemiraFace
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.geometry.face import BluemiraFace
 
 
 @dataclass
@@ -44,11 +51,12 @@ class DivertorBuilder(Builder):
     CASETTES = "cassettes"
     SEGMENT_PREFIX = "segment"
     param_cls: type[DivertorBuilderParams] = DivertorBuilderParams
+    params: DivertorBuilderParams
 
     def __init__(
         self,
-        params: ParameterFrame | dict,
-        build_config: dict,
+        params: ParameterFrameLike,
+        build_config: BuildConfig,
         divertor_silhouette: BluemiraFace,
     ):
         super().__init__(params, build_config)

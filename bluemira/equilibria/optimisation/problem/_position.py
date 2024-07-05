@@ -115,7 +115,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             )
             x0 = np.concatenate((initial_mapped_positions, cs_opt_state.currents))
 
-        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
             f_objective=self.objective,
             x0=x0,
@@ -163,7 +163,11 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         objective = RegularisedLsqObjective(
-            scale=self.scale, a_mat=a_mat, b_vec=b_vec, gamma=self.gamma
+            scale=self.scale,
+            a_mat=a_mat,
+            b_vec=b_vec,
+            gamma=self.gamma,
+            currents_expand_mat=self.coilset._opt_currents_expand_mat,
         )
         return objective.f_objective(opt_currents)
 

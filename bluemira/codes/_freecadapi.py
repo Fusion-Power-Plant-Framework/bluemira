@@ -61,6 +61,7 @@ apiFace = Part.Face  # noqa: N816
 apiShell = Part.Shell  # noqa: N816
 apiSolid = Part.Solid  # noqa: N816
 apiShape = Part.Shape  # noqa: N816
+apiSurface = Part.BSplineSurface  # noqa:  N816
 apiPlacement = Base.Placement  # noqa:  N816
 apiPlane = Part.Plane  # noqa: N816
 apiCompound = Part.Compound  # noqa: N816
@@ -305,6 +306,71 @@ def make_bspline(
         poles, mults, knots, periodic, degree, weights, check_rational
     )
     return apiWire(bspline.toShape())
+
+
+def make_bsplinesurface(
+    poles: np.ndarray,
+    mults_u: np.ndarray,
+    mults_v: np.ndarray,
+    knot_vector_u: np.ndarray,
+    knot_vector_v: np.ndarray,
+    degree_u: np.ndarray,
+    degree_v: np.ndarray,
+    weights: np.ndarray,
+    *,
+    periodic: bool = False,
+    check_rational: bool = False,
+) -> apiSurface:
+    """
+    Builds a B-SplineSurface by a lists of Poles, Mults, Knots
+
+    Parameters
+    ----------
+    poles:
+        poles (sequence of Base.Vector).
+    mults_u:
+        list of integers for the u-multiplicity
+    mults_v:
+        list of integers for the u-multiplicity
+    knot_vector_u:
+        list of u-knots
+    knot_vector_v:
+        list of v-knots
+    degree_u:
+        degree of NURBS in u-direction
+    degree_v:
+        degree of NURBS in v-direction
+    weights:
+        pole weights (sequence of float).
+    periodic:
+        Whether or not the spline is periodic (same curvature at start and end points)
+    check_rational:
+        Whether or not to check if the BSpline is rational (not sure)
+
+    Returns
+    -------
+    A FreeCAD object that contours the bsplinesurface
+
+    Notes
+    -----
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    """
+    # Create base vectors from poles
+    poles = [[Base.Vector(p[0], p[1], p[2]) for p in row] for row in poles]
+    bsplinesurface = Part.BSplineSurface()
+    bsplinesurface.buildFromPolesMultsKnots(
+        poles,
+        mults_u,
+        mults_v,
+        knot_vector_u,
+        knot_vector_v,
+        periodic,
+        check_rational,
+        degree_u,
+        degree_v,
+        weights,
+    )
+    return bsplinesurface.toShape()
 
 
 def interpolate_bspline(
@@ -1692,6 +1758,32 @@ def sweep_shape(
     if solid:
         return solid_result
     return solid_result.Shells[0]
+
+
+def loft(
+    profiles: Iterable[apiWire], *, solid: bool = False, ruled: bool = False
+) -> apiShell | apiSolid:
+    """
+    Loft between a set of profiles.
+
+    Parameters
+    ----------
+    profiles:
+        Profile(s) to loft between
+    solid:
+        Whether or not to create a Solid
+    ruled:
+        Create a ruled shape
+
+    Returns
+    -------
+    Lofted geometry object
+    """
+    lofted_shape = Part.makeLoft(profiles, solid, ruled)
+
+    if solid:
+        return lofted_shape.Solids[0]
+    return lofted_shape.Shells[0]
 
 
 def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> apiWire:

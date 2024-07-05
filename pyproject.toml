@@ -69,14 +69,15 @@ dev = [
     "sphinx-autoapi",
     "sphinx_copybutton",
     "sphinx-rtd-theme",
+    "sybil",
 ]
 examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.59.1",
+    "numba==0.60.0",
     "numba-scipy==0.4.0",
     "numpy==1.26.4",
-    "matplotlib==3.8.4",
+    "matplotlib==3.9.0",
     "scipy==1.10.1",
 ]
 openmc = ["openmc>=0.14.0", "openmc_data"]
@@ -127,7 +128,8 @@ markers = [
     "classplot: Show and close figures after running all tests in class",
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
-filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
+filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning',
+                  'ignore:FigureCanvasAgg is non-interactive:UserWarning']
 pythonpath = ['.', 'eudemo']
 
 [tool.ruff]

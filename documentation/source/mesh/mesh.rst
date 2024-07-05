@@ -45,7 +45,11 @@ use a simple dictionary with `lcar` and `physical_group` keys.
 
         poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
-        m = Mesh()
+        m = Mesh(
+            meshfile=[
+                (tmp_path / mf).as_posix() for mf in ("Mesh.geo_unrolled", "Mesh.msh")
+            ]
+        )
         m(poly)
 
 
@@ -65,14 +69,16 @@ is integrated into bluemira.
 
 .. code-block:: python
 
+    # TODO fix
     from bluemira.mesh.tools import import_mesh
+    from bluemira.base.file import get_bluemira_path
 
-    mesh, boundaries, subdomains, labels = import_mesh(
-        "Mesh",
-        directory=".",
-        subdomains=True,
-    )
-    print(mesh.coordinates())
+    # mesh, boundaries, subdomains, labels = import_mesh(
+    #     "ReferenceMesh",
+    #     directory=get_bluemira_path('mesh/test_data', subfolder='tests'),
+    #     subdomains=True,
+    # )
+    # print(mesh.coordinates())
 
 
 .. _Fenics: https://fenicsproject.org/

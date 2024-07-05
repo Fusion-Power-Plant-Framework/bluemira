@@ -132,12 +132,12 @@ def _clip_flux_surfaces(first_wall, flux_surfaces):
     are found.
     """
     for group in flux_surfaces:
-        for flux_surface in group:
+        for i, flux_surface in enumerate(group):
             flux_surface.clip(first_wall)
-            if flux_surface.alpha is not None:
+            if flux_surface.alpha is None:
                 # No intersection detected between flux surface and first wall
                 # Drop the flux surface from the group
-                break
+                group.pop(i)
     return flux_surfaces
 
 
@@ -228,7 +228,7 @@ def _make_flux_surfaces_ibob(
     dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
 ):
     """
-    Make the flux surfaces on the outboard.
+    Make the flux surfaces on the inboard or outboard.
     """
     sign = 1 if outboard else -1
 

@@ -30,6 +30,7 @@ from bluemira.geometry.coordinates import (
     vector_lengthnorm,
 )
 from bluemira.geometry.error import CoordinatesError
+from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.plane import BluemiraPlane
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
@@ -773,3 +774,47 @@ def test_vector_lengthnorm_gives_expected_lengths_3d():
     expected /= expected[-1]
     np.testing.assert_allclose(lengths, expected)
     np.testing.assert_allclose(lengths, expected)
+
+
+class TestMakePivotedString:
+    def test_returns_points_matching_snapshot(self):
+        """
+        This tests that the function returns the same thing as the
+        equivalent class method in BLUEPRINT.
+
+        The code used to generate the test data:
+
+        .. code-block:: python
+            from bluemira.geometry.parameterisations import PrincetonD
+
+            shape = PrincetonD().create_shape()
+            points, _ = shape.discretise().simplify(max_angle=20, dx_min=0.5, dx_max=2.5)
+
+            np.save(tmp_path / "panelling_data.npy", points.xyz.T)
+
+        """
+        boundary = PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        }).create_shape()
+        boundary_points = boundary.discretise().T
+
+        new_points, _ = Coordinates(boundary_points).simplify(
+            max_angle=20, dx_min=0.5, dx_max=2.5
+        )
+
+        ref_data = np.load(Path(TEST_PATH, "panelling_ref_data.npy"))
+        np.testing.assert_almost_equal(new_points.xyz.T, ref_data)
+
+    @pytest.mark.parametrize("dx_max", [0, 0.5, 0.9999])
+    def test_ValueError_given_dx_min_gt_dx_max(self, dx_max):
+        boundary = PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        }).create_shape()
+        boundary_points = boundary.discretise().T
+
+        with pytest.raises(ValueError):  # noqa: PT011
+            Coordinates(boundary_points).simplify(max_angle=20, dx_min=1, dx_max=dx_max)

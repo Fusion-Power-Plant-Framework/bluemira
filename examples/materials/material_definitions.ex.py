@@ -66,12 +66,14 @@ material_dict = {
             "temp_min_celsius": 20.0,
             "temp_max_celsius": 400.0,
         },
+        "electrical_resistivity": 2e-6,
     },
     "Cream": {
         "material_class": "MassFractionMaterial",
         "elements": {"C": 0.4, "H": 0.3, "O": 0.3},
         "density": 700,
         "poissons_ratio": 0.233,
+        "electrical_resistivity": 1e-6,
     },
 }
 
@@ -81,7 +83,7 @@ mixture_dict = {
         # Define the mixing class
         "material_class": "HomogenisedMixture",
         # State which materials are to be used and in what volume fractions
-        "materials": {"Strawberry": 0.7, "Cream": 0.3},
+        "materials": {"Strawberry": 0.6, "Cream": 0.4},
         # Set the temperature of the mixture
         "temperature": 290,
     },
@@ -110,6 +112,7 @@ material_cache.load_from_dict("StrawberriesAndCream", mixture_dict)
 
 # %%
 strawberry = material_cache.get_material("Strawberry")
+cream = material_cache.get_material("Cream")
 strawberries_and_cream = material_cache.get_material("StrawberriesAndCream")
 another_strawberry = material_cache.get_material("Strawberry")
 summer_time = material_cache.get_material("StrawberriesAndCream")
@@ -145,3 +148,23 @@ print(cached_strawberry.temperature)
 # cached_strawberry.temperature = 273.15
 # print(another_strawberry == cached_strawberry)
 # print(material_cache.get_material("Strawberry") == another_strawberry)
+
+# %% [markdown]
+# Material properties of default mixed materials are calculated using a homogenized
+# approach. For instance, electrical resistivity is determined by considering the
+# material as a parallel combination of its constituent materials.
+
+# %%
+ref_temperature = 200
+print(
+    f"Strawberry electrical resistivity @ {ref_temperature}: "
+    f"{strawberry.erho(ref_temperature)}"
+)
+print(
+    f"Cream electrical resistivity @ {ref_temperature}: "
+    f"{cream.erho(ref_temperature)}"
+)
+print(
+    f"StrawberriesAndCream electrical resistivity @ {ref_temperature}: "
+    f"{strawberries_and_cream.erho(ref_temperature)}"
+)

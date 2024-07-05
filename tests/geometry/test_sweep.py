@@ -8,10 +8,12 @@ import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError
+from bluemira.display import show_cad
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import (
+    loft_shape,
     make_circle,
     make_polygon,
     offset_wire,
@@ -187,3 +189,25 @@ class TestRevolve:
         true_volume = 2 * np.pi * x_c * (4**2 - 2**2)
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
+
+
+class TestLoft:
+    @pytest.mark.parametrize("ruled", [True, False])
+    @pytest.mark.parametrize("solid", [True, False])
+    def test_loft(self, solid, ruled):
+        profile_1 = make_polygon(
+            [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], closed=True
+        )
+        profile_2 = make_circle(
+            axis=[0, 0, 1], center=[0, 0, 5], radius=1, start_angle=0, end_angle=360
+        )
+        profile_3 = make_circle(
+            axis=[0, 0, 1], center=[0, 0, 10], radius=2, start_angle=0, end_angle=360
+        )
+        shape = loft_shape(
+            [profile_1, profile_2, profile_3], solid=solid, ruled=ruled, label="test"
+        )
+        assert shape.is_valid()
+        assert shape.label == "test"
+
+        show_cad(shape)

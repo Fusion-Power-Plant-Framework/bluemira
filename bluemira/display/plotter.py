@@ -39,9 +39,11 @@ from bluemira.geometry.coordinates import (
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
-    from bluemira.geometry.base import BluemiraGeo
+    from matplotlib.axes import Axes
+
+    from bluemira.geometry.base import BluemiraGeoT
 
 UNIT_LABEL = "[m]"
 X_LABEL = f"x {UNIT_LABEL}"
@@ -245,7 +247,6 @@ class BasePlotter(ABC):
         self._data = []
         # modified discretisation points for plotting (e.g. after view transformation)
         self._data_to_plot = []
-        self.ax = None
         self.options = (
             PlotOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
         )
@@ -259,6 +260,17 @@ class BasePlotter(ABC):
         else:
             DisplayError(f"{view} is not a valid view")
 
+    @property
+    def ax(self) -> Axes:
+        """Axes object"""
+        try:
+            return self._ax
+        except AttributeError:
+            fig = plt.figure()
+            self._ax = fig.add_subplot()
+
+        return self._ax
+
     @abstractmethod
     def _check_obj(self, obj):
         """Internal function that check if obj is an instance of the correct class"""
@@ -271,9 +283,9 @@ class BasePlotter(ABC):
         """Initialise the plot environment"""
         if ax is None:
             fig = plt.figure()
-            self.ax = fig.add_subplot()
+            self._ax = fig.add_subplot()
         else:
-            self.ax = ax
+            self._ax = ax
 
     @staticmethod
     def show():
@@ -330,7 +342,7 @@ class BasePlotter(ABC):
         self._check_obj(obj)
 
         if not self._check_options():
-            self.ax = ax
+            self._ax = ax
         else:
             self.initialise_plot_2d(ax)
             self._populate_data(obj)
@@ -349,9 +361,9 @@ class BasePlotter(ABC):
         """Initialise the plot environment"""
         if ax is None:
             fig = plt.figure()
-            self.ax = fig.add_subplot(projection="3d")
+            self._ax = fig.add_subplot(projection="3d")
         else:
-            self.ax = ax
+            self._ax = ax
 
     @abstractmethod
     def _make_plot_3d(self):
@@ -364,7 +376,7 @@ class BasePlotter(ABC):
         self._check_obj(obj)
 
         if not self._check_options():
-            self.ax = ax
+            self._ax = ax
         else:
             self.initialise_plot_3d(ax=ax)
             # this function can be common to 2D and 3D plot
@@ -454,7 +466,7 @@ class WirePlotter(BasePlotter):
             self.ax.plot(*self._data_to_plot, **self.options.wire_options)
 
         if self.options.show_points:
-            self._pplotter.ax = self.ax
+            self._pplotter._ax = self.ax
             self._pplotter._make_plot_2d()
         self._set_aspect_2d()
 
@@ -463,7 +475,7 @@ class WirePlotter(BasePlotter):
             self.ax.plot(*self._data.T, **self.options.wire_options)
 
         if self.options.show_points:
-            self._pplotter.ax = self.ax
+            self._pplotter._ax = self.ax
             self._pplotter._make_plot_3d()
         self._set_aspect_3d()
 
@@ -520,9 +532,9 @@ class FacePlotter(BasePlotter):
             else:
                 self.ax.fill(*self._data_to_plot, **face_opts)
 
-        for w in self._wplotters:
-            w.ax = self.ax
-            w._make_plot_2d()
+        for plotter in self._wplotters:
+            plotter._ax = self.ax
+            plotter._make_plot_2d()
         self._set_aspect_2d()
 
     def _make_plot_3d(self):
@@ -530,9 +542,9 @@ class FacePlotter(BasePlotter):
             poly = a3.art3d.Poly3DCollection([self._data], **self.options.face_options)
             self.ax.add_collection3d(poly)
 
-        for w in self._wplotters:
-            w.ax = self.ax
-            w._make_plot_3d()
+        for plotter in self._wplotters:
+            plotter._ax = self.ax
+            plotter._make_plot_3d()
         self._set_aspect_3d()
 
 
@@ -583,7 +595,7 @@ class ComponentPlotter(BasePlotter):
 
     def _make_plot_2d(self):
         for plotter in self._cplotters:
-            plotter.ax = self.ax
+            plotter._ax = self.ax
             plotter._make_plot_2d()
         self._set_aspect_2d()
 
@@ -593,14 +605,16 @@ class ComponentPlotter(BasePlotter):
         self._data_to_plot, so _populate_data should be called before.
         """
         for plotter in self._cplotters:
-            plotter.ax = self.ax
+            plotter._ax = self.ax
             plotter._make_plot_3d()
 
     def _set_aspect_3d(self):
         pass
 
 
-def _validate_plot_inputs(parts, options):
+def _validate_plot_inputs(
+    parts, options
+) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
     Validate the lists of parts and options, applying some default options.
     """
@@ -642,8 +656,8 @@ def _get_plotter_class(part):
 
 
 def plot_2d(
-    parts: BluemiraGeo | list[BluemiraGeo],
-    options: PlotOptions | list[PlotOptions] | None = None,
+    parts: BluemiraGeoT | Iterable[BluemiraGeoT],
+    options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
     ax=None,
     *,
     show: bool = True,
@@ -678,8 +692,8 @@ def plot_2d(
 
 
 def plot_3d(
-    parts: BluemiraGeo | list[BluemiraGeo],
-    options: PlotOptions | list[PlotOptions] | None = None,
+    parts: BluemiraGeoT | Iterable[BluemiraGeoT],
+    options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
     ax=None,
     *,
     show: bool = True,

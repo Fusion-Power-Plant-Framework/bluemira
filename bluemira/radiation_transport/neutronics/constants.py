@@ -35,14 +35,11 @@ def to_cm3(m3):
     return raw_uc(m3, "m^3", "cm^3")
 
 
-# Amount of energy released in a single dt fusion reaction, in MeV.
-energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
-
 # Amount of energy carried away by the neutron, which is about 4/5 of that.
 ALHPA_MOLAR_MASS = HE_MOLAR_MASS - ELECTRON_MOLAR_MASS
 
 # ignoring the binding energy of the electron, too minute.
-dt_neutron_energy = energy_per_dt * (
+dt_neutron_energy = E_DT_fusion() * (
     ALHPA_MOLAR_MASS / (ALHPA_MOLAR_MASS + NEUTRON_MOLAR_MASS)
 )  # [J]
 

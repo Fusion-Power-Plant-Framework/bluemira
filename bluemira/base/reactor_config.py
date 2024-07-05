@@ -5,27 +5,32 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Class to hold parameters and config values."""
 
+from __future__ import annotations
+
 import json
 import pprint
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import make_parameter_frame
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.parameter_frame._parameter import ParamDictT
+    from bluemira.base.parameter_frame.typing import ParameterFrameT
 
 
 @dataclass
 class ConfigParams:
     """Container for the global and local parameters of a `ReactorConfig`."""
 
-    global_params: ParameterFrame
-    local_params: dict
+    global_params: ParameterFrameT
+    local_params: dict[str, ParamDictT]
 
-
-_PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 _PARAMETERS_KEY = "params"
 _FILEPATH_PREFIX = "$path:"
@@ -61,6 +66,8 @@ class ReactorConfig:
 
     .. code-block:: python
 
+        from bluemira.base.parameter_frame import Parameter, ParameterFrame
+
         @dataclass
         class GlobalParams(ParameterFrame):
             a: Parameter[int]
@@ -68,20 +75,26 @@ class ReactorConfig:
 
         reactor_config = ReactorConfig(
             {
-                "params": {"a": 10},
+                "params": {"a": {"value": 10, "unit": 'm'}},
                 "comp A": {
-                    "params": {"a": 5, "b": 5},
+                    "params": {
+                        "a": {"value": 5, "unit": 'm'},
+                        "b": {"value": 5, "unit": 'm'},
+                    },
                     "designer": {
-                        "params": {"a": 1},
+                        "params": {"a": {"value": 1, "unit": 'm'}},
                         "some_config": "some_value",
                     },
                     "builder": {
-                        "params": {"b": 1, "c": 1},
+                        "params": {
+                            "b": {"value": 1, "unit": 'm'},
+                            "c": {"value": 1, "unit": 'm'},
+                        },
                         "another_config": "another_value",
                     },
                 },
                 "comp B": {
-                    "params": {"b": 5},
+                    "params": {"b": {"value": 1, "unit": 'm'}},
                     "builder": {
                         "third_config": "third_value",
                     },
@@ -95,7 +108,7 @@ class ReactorConfig:
     def __init__(
         self,
         config_path: str | Path | dict,
-        global_params_type: type[_PfT],
+        global_params_type: type[ParameterFrameT],
         *,
         warn_on_duplicate_keys: bool = False,
         warn_on_empty_local_params: bool = False,
@@ -259,7 +272,7 @@ class ReactorConfig:
         -----
             This mutates the passed in dict.
         """
-        for k in d:
+        for k in d:  # noqa: PLC0206
             d[k], rel_path_from = self._extract_and_expand_file_data_if_needed(
                 d[k], rel_path
             )
@@ -271,7 +284,7 @@ class ReactorConfig:
 
     def _extract_and_expand_file_data_if_needed(
         self, value: Any, rel_path: Path
-    ) -> tuple[Any | dict, str]:
+    ) -> tuple[Any | dict, Path]:
         """
         Returns the file data and the path to the file if value is a path.
 

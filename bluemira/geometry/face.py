@@ -40,7 +40,7 @@ class BluemiraFace(BluemiraGeo):
         Label to assign to the BluemiraFace
     """
 
-    def __init__(self, boundary: list[BluemiraWire], label: str = ""):
+    def __init__(self, boundary: BluemiraWire | list[BluemiraWire], label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
 

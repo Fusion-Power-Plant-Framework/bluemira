@@ -49,7 +49,7 @@ in this instance you would just have a :py:class:`~bluemira.base.builder.Builder
         A: Parameter[float]
 
 
-    class MyDesigner(Designer[float])
+    class MyDesigner(Designer[float]):
 
         param_cls = DesignerPF
 
@@ -106,6 +106,7 @@ the :py:meth:`build` method is called to create the :py:class:`~bluemira.base.co
     from dataclasses import dataclass
 
     from bluemira.base.builder import Builder
+    from bluemira.base.components import Component
     from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
     @dataclass
@@ -117,7 +118,7 @@ the :py:meth:`build` method is called to create the :py:class:`~bluemira.base.co
 
         param_cls = BuilderPF
 
-        def build(self) -> Component
+        def build(self) -> Component:
             return self.component_tree(
                 xz=[self.build_xz()],
                 xy=[self.build_xy()],
