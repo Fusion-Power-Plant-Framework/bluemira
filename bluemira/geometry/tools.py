@@ -17,6 +17,7 @@ import inspect
 import json
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
+from itertools import pairwise
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -32,7 +33,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -1303,6 +1304,53 @@ def get_wire_plane_intersect(
         final_intersection = np.argmax(np.dot(intersection_points, cut_direction))
         return intersection_points[final_intersection]
     return intersection_points[0]
+
+
+def overlaps_point(
+    wire: BluemiraWire | Coordinates, point: npt.NDArray[float] | Coordinates
+) -> bool:
+    """Check if the a wire or a point contains another point."""
+    return abs(signed_distance(wire, Coordinates(point))) <= EPS_FREECAD
+
+
+def cut_wire(
+    wire: BluemiraWire, cut_points: Iterable[npt.NDArray[float]]
+) -> list[BluemiraWire]:
+    """
+    Given n points, cut the wire (closed or open) into n-1 segments.
+
+    Returns
+    -------
+    wire_list:
+        A list of Bluemira Wires, oriented in the direction according to the cut_points
+        such that wire_list[0].start_point() == cut_points[0],
+        wire_list[0].end_point() == cut_points[1], etc.
+    """
+    if wire.is_closed():
+        reformed_wire = BluemiraWire(split_wire(wire, cut_points[0])[::-1])
+    else:
+        # assume wire does not self-intersect and that there are no
+        wire_before, wire_after = split_wire(wire, cut_points[0])
+        if all(overlaps_point(wire_after, c) for c in cut_points[1:]):
+            reformed_wire = wire_after
+        elif all(overlaps_point(wire_before, c) for c in cut_points[1:]):
+            reformed_wire = wire_before
+        else:
+            raise GeometryError("Cut points must lie on the wire!")
+
+    wire_list = []
+    for prev_cut, curr_cut in pairwise(cut_points):
+        wire_before, wire_after = split_wire(reformed_wire, curr_cut)
+        if overlaps_point(wire_before, prev_cut):
+            wire_list.append(wire_before)
+            reformed_wire = wire_after
+        elif overlaps_point(wire_after, prev_cut):
+            wire_list.append(wire_after)
+            reformed_wire = wire_before
+        # reverse the wire if it is oriented wrong.
+        if not overlaps_point(wire_list[-1].start_point(), prev_cut):
+            wire_list[-1] = wire_list[-1].reversed()
+    return wire_list
 
 
 def circular_pattern(
