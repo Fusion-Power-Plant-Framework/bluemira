@@ -27,7 +27,7 @@ from bluemira.geometry.error import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    import numpy as np
+    from numpy import typing as npt
 
 __all__ = ["BluemiraWire"]
 
@@ -124,6 +124,13 @@ class BluemiraWire(BluemiraGeo):
         if not self.is_closed():
             raise NotClosedWireError("The open boundary has not been closed.")
 
+    def reversed(self) -> None:
+        """
+        Return a copy of wire with reversed orientation, such that
+        new_wire.parameter_at(point_on_wire) == 1-old_wire.parameter_at(point_on_wire).
+        """
+        pass
+
     def discretise(
         self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> Coordinates:
@@ -155,7 +162,7 @@ class BluemiraWire(BluemiraGeo):
 
     def value_at(
         self, alpha: float | None = None, distance: float | None = None
-    ) -> np.ndarray:
+    ) -> npt.NDArray[float]:
         """
         Get a point along the wire at a given parameterised length or length.
 

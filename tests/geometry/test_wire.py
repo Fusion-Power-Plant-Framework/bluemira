@@ -6,6 +6,7 @@
 import numpy as np
 import pytest
 
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_bezier, make_circle, make_polygon
@@ -91,6 +92,31 @@ class TestWire:
         np.testing.assert_allclose(vertexes[:, 0], p1)
         np.testing.assert_allclose(vertexes[:, 1], p2)
         np.testing.assert_allclose(vertexes[:, 2], p3)
+
+    def test_3_vertices_disjointed(self):
+        """Test the case where the wires are incorrectly aligned"""
+        p1 = [0, 0, 0]
+        p2 = [1, 0, 1]
+        p3 = [-1, 0, 1]
+        w1 = make_polygon([p1, p2])
+        w2 = make_polygon([p1, p3])  # INCORRECT ordering!
+        # EITHER
+        with pytest.raises(GeometryError):
+            wire = BluemiraWire([w1, w2])  # w1 needs to be reversed manually.
+        # OR
+        wire = BluemiraWire([w1, w2])  # w1 is reversed automatically.
+        np.testing.assert_allclose(
+            wire.value_at(0.5 - 1e-7),
+            wire.value_at(0.5 + 1e-7),
+            rtol=0,
+            atol=D_TOLERANCE,
+        )
+        assert not np.isclose(
+            wire.parameter_at(p2), wire.parameter_at(p3), rtol=0, atol=EPS_FREECAD
+        ), (
+            "p2 and p3 are NOT neighbouring points,"
+            " therefore should not have nearby parameter values."
+        )
 
 
 class ValueParameterBase:
