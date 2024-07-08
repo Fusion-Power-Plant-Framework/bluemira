@@ -46,6 +46,7 @@ from bluemira.radiation_transport.radiation_tools import (
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
@@ -199,17 +200,19 @@ class Radiation:
         if core is True:
             return te
 
-        if rad_i is not None and len(rad_i) == 1:
-            te[rad_i] = t_rad_in
-        elif rad_i is not None and len(rad_i) > 1:
-            te[rad_i] = gaussian_decay(t_rad_in, t_rad_out, len(rad_i), decay=True)
+        if rad_i is not None:
+            if len(rad_i) == 1:
+                te[rad_i] = t_rad_in
+            elif len(rad_i) > 1:
+                te[rad_i] = gaussian_decay(t_rad_in, t_rad_out, len(rad_i), decay=True)
 
-        if rec_i is not None and x_point_rad:
-            te[rec_i] = exponential_decay(
-                t_rad_out * 0.95, t_tar, len(rec_i), decay=True
-            )
-        elif rec_i is not None and x_point_rad is False:
-            te[rec_i] = t_tar
+        if rec_i is not None:
+            if x_point_rad:
+                te[rec_i] = exponential_decay(
+                    t_rad_out * 0.95, t_tar, len(rec_i), decay=True
+                )
+            else:
+                te[rec_i] = t_tar
 
         if main_chamber_rad:
             if rad_i is None or rec_i is None:
@@ -1781,13 +1784,14 @@ class RadiationSource:
     Simplified solver to easily access the radiation model location inputs.
     """
 
-    param_cls = RadiationSourceParams
+    params: RadiationSourceParams
+    param_cls: type[RadiationSourceParams] = RadiationSourceParams
 
     def __init__(
         self,
         eq: Equilibrium,
         firstwall_shape: BluemiraWire,
-        params: ParameterFrame,
+        params: ParameterFrameLike,
         midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],

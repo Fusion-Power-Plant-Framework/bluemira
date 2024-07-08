@@ -20,6 +20,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+
 
 @dataclass
 class MidplaneProfilesParams(ParameterFrame):
@@ -67,7 +69,7 @@ class MidplaneProfiles:
     """electron temperature at the mid-plane. Unit [keV]"""
 
 
-def midplane_profiles(params: dict | ParameterFrame):
+def midplane_profiles(params: ParameterFrameLike):
     """
     Calculate the core radiation source profiles.
 

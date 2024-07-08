@@ -7,11 +7,19 @@
 Module containing functions to generate variable offset curves
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import find_clockwise_angle_2d, interpolate_bspline
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from bluemira.geometry.wire import BluemiraWire
 
 
 def varied_offset(
@@ -83,7 +91,9 @@ def varied_offset(
     return _2d_coords_to_wire(new_shape_coords)
 
 
-def _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree):
+def _throw_if_inputs_invalid(
+    wire: BluemiraWire, inboard_offset_degree: float, outboard_offset_degree: float
+):
     if not wire.is_closed():
         raise GeometryError(
             "Cannot create a variable offset from a wire that is not closed."
@@ -100,20 +110,20 @@ def _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree
 
 
 def _sort_coords_by_angle(
-    angles: np.ndarray, coords: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
+    angles: npt.NDArray[np.float64], coords: npt.NDArray[np.float64]
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Sort the given angles and use that to re-order the coords."""
     angle_sort_idx = np.argsort(angles)
     return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
 
 def _calculate_offset_magnitudes(
-    angles,
-    inboard_offset_degree,
-    outboard_offset_degree,
-    inboard_offset,
-    outboard_offset,
-):
+    angles: npt.NDArray[np.float64],
+    inboard_offset_degree: float,
+    outboard_offset_degree: float,
+    inboard_offset: float,
+    outboard_offset: float,
+) -> npt.NDArray[np.float64]:
     """Calculate the magnitude of the offset at each angle."""
     offsets = np.empty_like(angles)
     # All angles less than inboard_offset_degree set to min offset
@@ -142,8 +152,12 @@ def _calculate_offset_magnitudes(
 
 
 def _calculate_variable_offset_magnitudes(
-    angles, start_angle, end_angle, inboard_offset, outboard_offset
-):
+    angles: npt.NDArray[np.float64],
+    start_angle: float,
+    end_angle: float,
+    inboard_offset: float,
+    outboard_offset: float,
+) -> npt.NDArray[np.float64]:
     """
     Calculate the variable offset magnitude for each of the given angles.
 
@@ -155,7 +169,9 @@ def _calculate_variable_offset_magnitudes(
     return inboard_offset + angle_fraction * (outboard_offset - inboard_offset)
 
 
-def _calculate_normals_2d(wire_coords: np.ndarray) -> np.ndarray:
+def _calculate_normals_2d(
+    wire_coords: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Calculate the unit normals to the tangents at each of the given
     coordinates.
@@ -169,7 +185,7 @@ def _calculate_normals_2d(wire_coords: np.ndarray) -> np.ndarray:
     return normals / np.linalg.norm(normals, axis=0)
 
 
-def _2d_coords_to_wire(coords_2d):
+def _2d_coords_to_wire(coords_2d: npt.NDArray[np.float64]) -> BluemiraWire:
     """
     Build a wire from a 2D array of coordinates using a bspline.
     """

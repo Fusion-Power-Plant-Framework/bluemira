@@ -117,8 +117,9 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
     if clean:
         for fp in ims:
             fp.unlink()
-    kwargs = {"duration": 0.5, "loop": 3}
-    imageio.mimsave(Path(folder, f"{figname}.gif"), images, "GIF-FI", **kwargs)
+    imageio.mimsave(
+        Path(folder, f"{figname}.gif"), images, "GIF-FI", duration=0.5, loop=3
+    )
 
 
 def save_figure(

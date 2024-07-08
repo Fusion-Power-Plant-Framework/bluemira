@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.components import ComponentT
+    from bluemira.geometry.base import BluemiraGeoT
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
@@ -73,6 +74,8 @@ class BaseManager(abc.ABC):
         cad_format:
             CAD file format
         """
+        shapes: list[BluemiraGeoT]
+        names: list[str]
         shapes, names = get_properties_from_components(components, ("shape", "name"))
         save_cad(shapes, filename, cad_format, names, **kwargs)
 
@@ -205,9 +208,9 @@ class FilterMaterial:
 
     def __call__(self, node: anytree.Node) -> bool:
         """Filter node based on material include and exclude rules"""
-        if not hasattr(node, "material"):
-            return True
-        return self._apply_filters(node.material)
+        if hasattr(node, "material"):
+            return self._apply_filters(node.material)
+        return True
 
     def __setattr__(self, name: str, value: Any):
         """
