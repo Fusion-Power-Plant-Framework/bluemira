@@ -801,7 +801,7 @@ class CustomProfile(Profile):
         return super().fRBpol(psinorm)
 
     @classmethod
-    def from_eqdsk(
+    def from_eqdsk_file(
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
@@ -819,12 +819,19 @@ class CustomProfile(Profile):
             qpsi_sign=qpsi_sign,
             **kwargs,
         )
+        return cls.from_eqdsk(e)
+
+    @classmethod
+    def from_eqdsk(cls, eq: EQDSKInterface) -> CustomProfile:
+        """
+        Initialises a CustomProfile object from an eqdsk object
+        """
         return cls(
-            e.pprime,
-            e.ffprime,
-            R_0=e.xcentre,
-            B_0=abs(e.bcentre),
-            p_func=e.pressure,
-            f_func=e.fpol,
-            I_p=abs(e.cplasma),
+            eq.pprime,
+            eq.ffprime,
+            R_0=eq.xcentre,
+            B_0=eq.bcentre,
+            p_func=eq.pressure,
+            f_func=eq.fpol,
+            I_p=eq.cplasma,
         )

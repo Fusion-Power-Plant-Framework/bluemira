@@ -12,12 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.find import Opoint, Xpoint
-
 import numpy as np
 import numpy.typing as npt
 from scipy.interpolate import RectBivariateSpline
@@ -25,6 +19,12 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.find import Opoint, Xpoint
 
 
 def calc_psi_norm(

@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -50,6 +49,8 @@ from bluemira.optimisation import Algorithm, AlgorithmType
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    import numpy.typing as npt
 
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.grid import Grid

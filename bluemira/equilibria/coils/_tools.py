@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from bluemira.equilibria.coils import CoilSet
-
 import numpy as np
 
 from bluemira.magnetostatics.greens import circular_coil_inductance_elliptic, greens_psi
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
 
 
 def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:

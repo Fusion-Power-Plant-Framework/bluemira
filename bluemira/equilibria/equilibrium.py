@@ -288,12 +288,7 @@ class FixedPlasmaEquilibrium(MHDState):
         lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
         lcfs.close()
 
-        profiles = CustomProfile.from_eqdsk(
-            filename,
-            from_cocos=from_cocos,
-            to_cocos=to_cocos,
-            **kwargs,
-        )
+        profiles = CustomProfile.from_eqdsk(e)
 
         cls._eqdsk = e
         return cls(
@@ -1013,13 +1008,7 @@ class Equilibrium(CoilSetMHDState):
             **kwargs,
         )
 
-        profiles = CustomProfile.from_eqdsk(
-            filename,
-            from_cocos=from_cocos,
-            to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
-            **kwargs,
-        )
+        profiles = CustomProfile.from_eqdsk(e)
 
         cls._eqdsk = e
 

@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
-import numpy.typing as npt
 from contourpy import LineType, contour_generator
 from scipy.interpolate import RectBivariateSpline
 
@@ -30,6 +29,8 @@ from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    import numpy.typing as npt
 
     from bluemira.equilibria.limiter import Limiter
 
