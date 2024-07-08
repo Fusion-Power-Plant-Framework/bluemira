@@ -153,7 +153,7 @@ def core_electron_density_temperature_profile(
     The region that extends from the pedestal to the separatrix
     is referred as pedestal.
     """
-    i_core = np.where((rho_core > 0) & (rho_core <= rho_ped))[0]
+    i_core = np.nonzero((rho_core > 0) & (rho_core <= rho_ped))[0]
     te0_keV = params.T_e_0.value_as("keV")
     teped_keV = params.T_e_ped.value_as("keV")
     tesep_keV = params.T_e_sep.value_as("keV")
@@ -170,7 +170,7 @@ def core_electron_density_temperature_profile(
     ne_i = params.n_e_ped.value + (n_grad_ped0 * rho_ratio_n)
     te_i = teped_keV + (t_grad_ped0 * rho_ratio_t)
 
-    i_pedestal = np.where((rho_core > rho_ped) & (rho_core < 1))[0]
+    i_pedestal = np.nonzero((rho_core > rho_ped) & (rho_core < 1))[0]
 
     n_grad_sepped = params.n_e_ped.value - params.n_e_sep.value
     t_grad_sepped = teped_keV - tesep_keV

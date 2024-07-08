@@ -577,8 +577,8 @@ class ScrapeOffLayerRadiation(Radiation):
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
         else:
-            ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
-            ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
+            ob_ind = np.nonzero(self.separatrix.x > self.points["x_point"]["x"])
+            ib_ind = np.nonzero(self.separatrix.x < self.points["x_point"]["x"])
             self.sep_ob = Coordinates({
                 "x": self.separatrix.x[ob_ind],
                 "z": self.separatrix.z[ob_ind],
@@ -676,13 +676,13 @@ class ScrapeOffLayerRadiation(Radiation):
             else (self.sep_ob if lfs else self.sep_ib)
         )
         if z_main > z_pfr:
-            reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z >= z_pfr))[0]
-            i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
-            i_out = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
+            reg_i = np.nonzero((sep_loop.z < z_main) & (sep_loop.z >= z_pfr))[0]
+            i_in = np.nonzero(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
+            i_out = np.nonzero(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
         else:
-            reg_i = np.where((sep_loop.z > z_main) & (sep_loop.z <= z_pfr))[0]
-            i_in = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
-            i_out = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
+            reg_i = np.nonzero((sep_loop.z > z_main) & (sep_loop.z <= z_pfr))[0]
+            i_in = np.nonzero(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
+            i_out = np.nonzero(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
 
         entrance_x, entrance_z = sep_loop.x[i_in], sep_loop.z[i_in]
         exit_x, exit_z = sep_loop.x[i_out], sep_loop.z[i_out]
@@ -720,11 +720,11 @@ class ScrapeOffLayerRadiation(Radiation):
             indexes pf the points within the recycling region
         """
         if lower:
-            rad_i = np.where((flux_tube.z < z_main) & (flux_tube.z >= z_pfr))[0]
-            rec_i = np.where(flux_tube.z < z_pfr)[0]
+            rad_i = np.nonzero((flux_tube.z < z_main) & (flux_tube.z >= z_pfr))[0]
+            rec_i = np.nonzero(flux_tube.z < z_pfr)[0]
         else:
-            rad_i = np.where((flux_tube.z > z_main) & (flux_tube.z <= z_pfr))[0]
-            rec_i = np.where(flux_tube.z > z_pfr)[0]
+            rad_i = np.nonzero((flux_tube.z > z_main) & (flux_tube.z <= z_pfr))[0]
+            rec_i = np.nonzero(flux_tube.z > z_pfr)[0]
 
         return rad_i, rec_i
 
