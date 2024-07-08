@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from pathlib import Path
+from unittest import mock
 
 from matplotlib.testing import compare as mpl_compare
 
@@ -55,9 +56,10 @@ class TestSuperSankey:
         )
         sankey.finish()
         figure = sankey.ax.figure
-        new_file = tmp_path / "sankey_test.png"
+        new_file = tmp_path / "sankey_test.eps"
         figure.savefig(new_file)
 
         path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
-        reference_file = Path(path, "sankey_test.png")
-        assert mpl_compare.compare_images(reference_file, new_file, 0.005) is None
+        reference_file = Path(path, "sankey_test.eps")
+        with mock.patch("pytest.skip"):
+            assert mpl_compare.compare_images(reference_file, new_file, 0.005) is None
