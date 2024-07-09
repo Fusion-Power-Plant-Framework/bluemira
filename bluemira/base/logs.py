@@ -34,6 +34,8 @@ class LogLevel(Enum):
     @classmethod
     def _missing_(cls, value: int | str) -> LogLevel:
         if isinstance(value, int):
+            if cls.CRITICAL.value < value < 10:  # noqa: PLR2004
+                return cls.CRITICAL
             value = max(value // 10 + value % 10, 0)
             if value <= cls.CRITICAL.value:
                 return cls(value)
@@ -138,7 +140,7 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
     max_level = 0
     for handler in logger.handlers or logger.parent.handlers:
         if not isinstance(handler, logging.FileHandler) and handler.level > max_level:
-            max_level = handler.level
+            max_level = LogLevel(handler.level).value
     if as_str:
         return LogLevel(max_level).name
     return max_level
