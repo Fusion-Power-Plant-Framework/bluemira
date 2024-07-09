@@ -101,10 +101,16 @@ class WireInfoList:
     def __init__(self, info_list: Iterable[WireInfo]):
         self.info_list = list(info_list)
         for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
+<<<<<<< HEAD
             distance = np.linalg.norm(
                 np.array(prev_wire.key_points[1]) - np.array(curr_wire.key_points[0])
             )
             if distance > EPS_FREECAD:
+=======
+            if not np.array_equal(
+                prev_wire.key_points[1], curr_wire.key_points[0]
+            ):  # cannot be mixed type wires: either all Coordinates or all NDArray.
+>>>>>>> 41fee1c3 (Minor updates to docstrings)
                 raise GeometryError(f"wire {i + 1} must start where the wire {i} stops.")
 
     def __len__(self) -> int:
