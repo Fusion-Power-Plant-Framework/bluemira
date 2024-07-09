@@ -102,7 +102,12 @@ class TestWire:
         np.testing.assert_allclose(vertexes[:, 2], p3)
 
     def test_end_points(self):
-        """Test SHOULD FAIL after change of behaviour"""
+        """
+        Test to make sure that the .end_point() is actually the end point, rather than
+        somewhere in the middle of the wire.
+        Potentially needs to be removed after the next API-breaking change where wires
+        are only allowed to be joined when they're oriented correctly.
+        """
         # Toughest case
         rightmost_point = [10.538050403959396, 0.0, -5.974513810642086]
         straight_line_end = {
