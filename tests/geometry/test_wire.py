@@ -11,7 +11,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import (
-    deserialize_shape,
+    deserialise_shape,
     make_bezier,
     make_circle,
     make_polygon,
@@ -133,8 +133,8 @@ class TestWire:
                 "BluemiraWire": {"label": label, "boundary": [{"Wire": [cadapi_item]}]}
             }
 
-        w1 = deserialize_shape(wrap_as_BMWdict(straight_line_end))
-        w2 = deserialize_shape(wrap_as_BMWdict(arc_start))
+        w1 = deserialise_shape(wrap_as_BMWdict(straight_line_end))
+        w2 = deserialise_shape(wrap_as_BMWdict(arc_start))
         wrong_wire = BluemiraWire([
             w1,
             w2,
