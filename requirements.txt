@@ -13,7 +13,7 @@ imageio==2.34.2
 joblib==1.4.2
 kiwisolver==1.4.5
 llvmlite==0.43.0
-matplotlib==3.9.0
+matplotlib==3.9.1
 neutronics-material-maker==1.2.0
 nlopt==2.7.1
 meshio==5.3.5
