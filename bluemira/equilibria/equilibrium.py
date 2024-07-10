@@ -133,12 +133,15 @@ class MHDState:
         ----------
         filename:
             Filename
-        from_cocos_index:
+        from_cocos:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos_index:
+        to_cocos:
             The COCOS index to convert the EQDSK file to.
+        qpsi_sign:
+            The sign of the qpsi, required for identification
+            when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
@@ -265,12 +268,15 @@ class FixedPlasmaEquilibrium(MHDState):
         ----------
         filename:
             Filename
-        from_cocos_index:
+        from_cocos:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos_index:
+        to_cocos:
             The COCOS index to convert the EQDSK file to.
+        qpsi_sign:
+            The sign of the qpsi, required for identification
+            when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
@@ -446,12 +452,15 @@ class CoilSetMHDState(MHDState):
         ----------
         filename:
             Filename
-        from_cocos_index:
+        from_cocos:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos_index:
+        to_cocos:
             The COCOS index to convert the EQDSK file to.
+        qpsi_sign:
+            The sign of the qpsi, required for identification
+            when qpsi is not present in the file.
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
@@ -634,12 +643,15 @@ class Breakdown(CoilSetMHDState):
         ----------
         filename:
             Filename
-        from_cocos_index:
+        from_cocos:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos_index:
+        to_cocos:
             The COCOS index to convert the EQDSK file to.
+        qpsi_sign:
+            The sign of the qpsi, required for identification
+            when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
@@ -982,12 +994,15 @@ class Equilibrium(CoilSetMHDState):
         ----------
         filename:
             Filename
-        from_cocos_index:
+        from_cocos:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos_index:
+        to_cocos:
             The COCOS index to convert the EQDSK file to.
+        qpsi_sign:
+            The sign of the qpsi, required for identification
+            when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
