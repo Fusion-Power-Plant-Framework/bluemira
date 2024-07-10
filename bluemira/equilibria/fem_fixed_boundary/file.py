@@ -145,7 +145,7 @@ def save_fixed_boundary_to_file(
         pressure=pressure,
         pprime=p_prime,
         psi=psi,
-        psibdry=np.zeros(nbdry),
+        psibdry=0,
         psimag=psi_mag,
         xbdry=xbdry,
         xc=np.array([]),
