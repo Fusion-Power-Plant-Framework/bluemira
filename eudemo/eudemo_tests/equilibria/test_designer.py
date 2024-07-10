@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 import pytest
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium

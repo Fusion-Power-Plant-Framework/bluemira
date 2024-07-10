@@ -8,7 +8,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import (

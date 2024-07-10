@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.file import get_bluemira_path
@@ -74,7 +74,7 @@ class TestChargedParticleRecursionSN:
     def setup_class(cls):
         eq_name = "EU-DEMO_EOF.json"
         filename = Path(EQ_PATH, eq_name)
-        eq = Equilibrium.from_eqdsk(filename, from_cocos=7)
+        eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_sign=Sign.NEGATIVE)
         fw_name = "first_wall.json"
         filename = Path(TEST_PATH, fw_name)
         fw = Coordinates.from_json(filename)

@@ -11,7 +11,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from eqdsk import EQDSKInterface
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
@@ -394,6 +394,7 @@ class TestEqReadWrite:
         new_file_path = Path(data_path, new_file_name)
 
         eq = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
+        # Note we have recalculated the qpsi data here
         eq.to_eqdsk(
             directory=data_path,
             filename=new_file_name,
@@ -402,7 +403,11 @@ class TestEqReadWrite:
         )
         d1 = eq.to_dict(qpsi_calcmode=qpsi_calcmode)
 
-        eq2 = Equilibrium.from_eqdsk(new_file_path, from_cocos=7)
+        eq2 = Equilibrium.from_eqdsk(
+            new_file_path,
+            from_cocos=7 if qpsi_calcmode else 3,
+            qpsi_sign=None if qpsi_calcmode else Sign.NEGATIVE,
+        )
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
         new_file_path.unlink()
         if file_format == "eqdsk":

@@ -62,7 +62,7 @@ from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 if TYPE_CHECKING:
-    from eqdsk.cocos import Sign
+    from eqdsk.models import Sign
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.find import Lpoint

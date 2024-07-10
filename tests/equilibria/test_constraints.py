@@ -6,7 +6,7 @@
 
 import os
 
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path

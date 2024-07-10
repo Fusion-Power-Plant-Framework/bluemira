@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 
 from bluemira.base import constants
 from bluemira.base.file import get_bluemira_path

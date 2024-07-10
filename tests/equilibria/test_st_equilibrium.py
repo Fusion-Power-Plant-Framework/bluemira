@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 from eqdsk import EQDSKInterface
+from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
@@ -47,7 +48,7 @@ class TestSTEquilibrium:
         private = Path(private, "bluemira-private-data/equilibria/STEP_SPR_08")
         eq_name = "STEP_SPR08_BLUEPRINT.json"
         cls.eq_blueprint = Equilibrium.from_eqdsk(
-            Path(private, eq_name), from_cocos=7, to_cocos=11
+            Path(private, eq_name), from_cocos=3, to_cocos=11, qpsi_sign=Sign.NEGATIVE
         )
         jeq_name = "jetto.eqdsk_out"
         filename = Path(private, jeq_name)

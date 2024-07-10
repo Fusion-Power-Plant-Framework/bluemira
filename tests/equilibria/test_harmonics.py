@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from eqdsk.models import Sign
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
@@ -145,7 +146,9 @@ def test_collocation_points():
 
 def test_coils_outside_sphere_vacuum_psi():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=7
+        Path(TEST_PATH, "SH_test_file.json").as_posix(),
+        from_cocos=3,
+        qpsi_sign=Sign.NEGATIVE,
     )
 
     sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
@@ -168,7 +171,9 @@ def test_coils_outside_sphere_vacuum_psi():
 
 def test_get_psi_harmonic_amplitudes():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=7
+        Path(TEST_PATH, "SH_test_file.json").as_posix(),
+        from_cocos=3,
+        qpsi_sign=Sign.NEGATIVE,
     )
 
     test_colocation = collocation_points(
@@ -211,7 +216,9 @@ def test_get_psi_harmonic_amplitudes():
 
 def test_spherical_harmonic_approximation():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=7
+        Path(TEST_PATH, "SH_test_file.json").as_posix(),
+        from_cocos=3,
+        qpsi_sign=Sign.NEGATIVE,
     )
 
     (
@@ -321,7 +328,9 @@ def test_SphericalHarmonicConstraintFunction():
 
 def test_SphericalHarmonicConstraint():
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, "SH_test_file.json").as_posix(), from_cocos=7
+        Path(TEST_PATH, "SH_test_file.json").as_posix(),
+        from_cocos=3,
+        qpsi_sign=Sign.NEGATIVE,
     )
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)

@@ -15,7 +15,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from eqdsk import EQDSKInterface
-from eqdsk.cocos import Sign
+from eqdsk.models import Sign
 
 from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root

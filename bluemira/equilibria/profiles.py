@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from eqdsk.cocos import Sign
+    from eqdsk.models import Sign
 
     from bluemira.equilibria.find import Opoint, Xpoint
 

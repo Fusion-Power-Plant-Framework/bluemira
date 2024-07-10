@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from eqdsk.models import Sign
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
@@ -38,7 +39,7 @@ class TestOpenFluxSurfaceStuff:
     @classmethod
     def setup_class(cls):
         eq_name = "eqref_OOB.json"
-        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=17)
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=7)
 
     def test_bad_geometry(self):
         closed_coords = Coordinates({"x": [0, 4, 5, 8, 0], "z": [1, 2, 3, 4, 1]})
@@ -145,7 +146,7 @@ class TestFieldLine:
     @classmethod
     def setup_class(cls):
         eq_name = "eqref_OOB.json"
-        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=17)
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=7)
         cls.flt = FieldLineTracer(cls.eq)
         cls.field_line = cls.flt.trace_field_line(13, 0, n_points=1000)
 
@@ -219,7 +220,9 @@ class TestFieldLine:
 
 def test_poloidal_angle():
     eq_name = "DN-DEMO_eqref.json"
-    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name), from_cocos=17)
+    eq = Equilibrium.from_eqdsk(
+        Path(TEST_PATH, eq_name), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+    )
     # Building inputs
     x_strike = 10.0
     z_strike = -7.5
