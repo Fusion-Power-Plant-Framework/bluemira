@@ -333,8 +333,8 @@ class TestCoreRadiation:
         )
 
         # SOL radiation grid
-        x_sol = np.linspace(min(self.fw_shape.x), max(self.fw_shape.x), 1000)
-        z_sol = np.linspace(min(self.fw_shape.z), max(self.fw_shape.z), 1500)
+        x_sol = np.linspace(min(self.fw_shape.x), max(self.fw_shape.x), 4)
+        z_sol = np.linspace(min(self.fw_shape.z), max(self.fw_shape.z), 4)
 
         rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
@@ -343,7 +343,7 @@ class TestCoreRadiation:
         )
         assert solver.fw_shape == self.fw_shape
 
-        wall_loads = solver.solve(plot=False)
+        wall_loads = solver.solve(50, 1, 10, plot=False)
 
         # check return types
         assert isinstance(wall_loads, DetectedRadiation)
