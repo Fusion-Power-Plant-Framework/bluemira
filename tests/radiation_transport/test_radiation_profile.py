@@ -351,3 +351,7 @@ class TestCoreRadiation:
 
         # check if the arrays are of same length
         assert len(wall_loads.detector_numbers) == len(wall_loads.detected_power)
+
+        # the solver gives slightly different powers in each run
+        # so just asserting the order of total power
+        assert 10**8 <= wall_loads.total_power <= 10**9
