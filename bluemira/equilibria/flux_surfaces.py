@@ -31,7 +31,9 @@ from scipy.integrate import solve_ivp
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import (
+    find_flux_surface_through_point,
+)
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -409,7 +411,7 @@ class OpenFluxSurface(FluxSurface):
 
         # Pick the first intersection, travelling from the o_point outwards
         deltas = x_inter - o_point.x
-        arg_inter = np.argmax(deltas > 0)
+        arg_inter = np.argmax(deltas >= 0)
         x_mp = x_inter[arg_inter]
         z_mp = o_point.z
 
@@ -487,7 +489,9 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
+            self.coords.points[1],
+            self.coords.points[0],
+            first_wall.points[fw_arg],
         )
 
     def flux_expansion(self, eq: Equilibrium) -> float:
@@ -816,6 +820,7 @@ def calculate_connection_length_fs(
     *,
     forward: bool = True,
     first_wall=Coordinates | Grid | None,
+    f_s: Coordinates | None,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -833,6 +838,8 @@ def calculate_connection_length_fs(
         Whether or not to follow the field line forwards or backwards
     first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
+    f_s:
+        Coordniates of flux surface through x and z.
 
     Returns
     -------
@@ -851,12 +858,18 @@ def calculate_connection_length_fs(
     passing through Coils, but really they should be intercepted beforehand!
     """
     if first_wall is None:
-        x1, x2 = eq.grid.x_min, eq.grid.x_max
-        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        x1, x2 = eq.grid.x_min + 0.01, eq.grid.x_max - 0.01
+        z1, z2 = eq.grid.z_min + 0.01, eq.grid.z_max - 0.01
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
-    xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z))
-    f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
+    if f_s is None:
+        xfs, zfs = find_flux_surface_through_point(
+            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
+        )
+        f_s = Coordinates({"x": xfs, "z": zfs})
+    if f_s.closed:
+        return 0.0
+    f_s = OpenFluxSurface(f_s)
 
     class Point:
         def __init__(self, x, z):
