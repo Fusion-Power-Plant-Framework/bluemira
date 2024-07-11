@@ -354,4 +354,4 @@ class TestCoreRadiation:
 
         # the solver gives slightly different powers in each run
         # so just asserting the order of total power
-        assert 10**8 <= wall_loads.total_power <= 10**9
+        assert np.isclose(wall_loads.total_power, 3.14e8, rtol=0.05)
