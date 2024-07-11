@@ -1095,7 +1095,15 @@ class FirstWallRadiationSolver:
         self.rad_source = source_func
         self.fw_shape = firstwall_shape
 
-    def solve(self, *, plot=True):
+    def solve(
+        self,
+        max_wall_len: float = 1e-3,
+        x_width: float = 0.01,
+        n_samples: int = 500,
+        *,
+        plot: bool = True,
+        verbose: bool = False,
+    ):
         """Solve first wall radiation problem"""
         shift = translate(0, 0, np.min(self.fw_shape.z))
         height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
@@ -1113,12 +1121,10 @@ class FirstWallRadiationSolver:
             parent=world,
             material=emitter,
         )
-        max_wall_len = 10.0e-2
-        X_WIDTH = 0.01
         wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, debug=verbose
         )
-        wall_loads = detect_radiation(wall_detectors, 500, world)
+        wall_loads = detect_radiation(wall_detectors, n_samples, world, verbose=verbose)
 
         if plot:
             plot_radiation_loads(
