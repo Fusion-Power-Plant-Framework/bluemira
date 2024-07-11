@@ -27,8 +27,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from os import PathLike
 
-    import anytree
-
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.components import ComponentT
 
@@ -203,7 +201,7 @@ class FilterMaterial:
         super().__setattr__("keep_material", keep_material)
         super().__setattr__("reject_material", reject_material)
 
-    def __call__(self, node: anytree.Node) -> bool:
+    def __call__(self, node: ComponentT) -> bool:
         """Filter node based on material include and exclude rules"""
         if not hasattr(node, "material"):
             return True
