@@ -82,7 +82,12 @@ def capture_output(caplog, func, *inputs):
         func(*inputs)
 
     # Flatten in the case where we have multiple messages and split by line
-    result = [line for message in caplog.messages for line in message.split(os.linesep)]
+    result = [
+        line
+        for message in caplog.messages
+        for line in message.split(os.linesep)
+        if line != ""
+    ]
     caplog.clear()
     return result
 
