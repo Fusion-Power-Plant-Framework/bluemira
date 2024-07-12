@@ -42,6 +42,22 @@ class LogLevel(Enum):
             ) from None
 
 
+class Formatter(logging.Formatter):
+    """Custom formatter for our logging"""
+
+    flush_previous = False
+
+    def format(self, record) -> str:
+        """Format logging strings"""
+        if record.msg.startswith("\r"):
+            self.flush_previous = True
+        elif self.flush_previous:
+            record.msg = f"\n{record.msg}"
+            self.flush_previous = False
+
+        return super().format(record)
+
+
 def logger_setup(
     logfilename: str = "bluemira.log", *, level: str | int = "INFO"
 ) -> logging.Logger:
@@ -65,6 +81,7 @@ def logger_setup(
     # what will be shown on screen
     on_screen_handler = logging.StreamHandler(stream=sys.stderr)
     on_screen_handler.setLevel(LogLevel(level).value)
+    on_screen_handler.setFormatter(Formatter())
 
     # what will be written to a file
     recorded_handler = logging.FileHandler(logfilename)
