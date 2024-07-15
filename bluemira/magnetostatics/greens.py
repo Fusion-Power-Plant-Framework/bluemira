@@ -101,6 +101,24 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
     Returns
     -------
     The self-inductance of the circular coil [H]
+
+    Notes
+    -----
+    The equations used in this function are:
+
+    .. math::
+        k = \\frac{4 \\cdot radius \\cdot (radius - rc)}~
+        {(2 \\cdot radius - rc)^2}
+
+    .. math::
+        k = clip_{nb}(k, GREENS_{ZERO}, 1.0 - GREENS_{ZERO})
+
+    .. math::
+        Inductance = \\mu_{0} \\cdot (2 \\cdot radius - rc)~
+        \\cdot ((1 - k^2 / 2) \\cdot ellipk_{nb}(k) - ellipe_{nb}(k))
+
+    where :math:`\\mu_{0}` is the vacuum permeability
+
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
     k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
@@ -119,6 +137,14 @@ def circular_coil_inductance_kirchhoff(radius: float, rc: float) -> float:
     Returns
     -------
     The self-inductance of the circular coil [H]
+
+    Notes
+    -----
+
+    .. math::
+        Inductance = \\mu_{0} * radius * (log(8 * radius / rc) - 2 + 0.25)
+
+    where :math:`\\mu_{0}` is the vacuum permeability
     """
     return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
 
