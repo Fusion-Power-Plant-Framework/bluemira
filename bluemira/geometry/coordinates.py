@@ -893,23 +893,21 @@ def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray:
+    np.ndarray
         The array of 2-D normal vectors of each side of a polygon
         (shape: (2, N)).
 
     Notes
     -----
     The normal vector `a` is calculated using the formula:
+
     .. math::
-        \\mathbf{a} = -\frac{
-                \begin{bmatrix}
-                -\text{y} \\
-                \text{x}
-                \\end{bmatrix}
-            }{
-            \\sqrt{\text{x}^2 + \text{y}^2}
-            }
-    where x and y are the x and y components of the side vectors, respectively.
+
+            \\mathbf{a} = -\\frac{-[\\mathbf{v}[1],~
+            \\mathbf{v}[0]]}{\\sqrt{\\mathbf{v}[0]^2~
+            + \\mathbf{v}[1]^2}}
+
+    where :math:`\\mathbf{v}` are the side vectors.
     """
     a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
         side_vectors[0] ** 2 + side_vectors[1] ** 2
@@ -949,8 +947,10 @@ def vector_intersect(
 
     Otherwise:
         - Calculates the intersection point using vector algebra:
+
         .. math::
-            \text{point} = \frac{
+
+            \\text{point} = \\frac{
                 \\mathbf{dap} \\cdot (\\mathbf{p1} - \\mathbf{p3})
             }{
             \\mathbf{dap} \\cdot (\\mathbf{p4} - \\mathbf{p3})
