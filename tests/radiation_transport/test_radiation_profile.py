@@ -321,7 +321,7 @@ class TestCoreRadiation:
             self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
         )
         assert all(detector[2] <= max_wall_len for detector in wall_detectors)
-        assert all(detector[1] == X_WIDTH for detector in wall_detectors)
+        assert all(np.isclose(detector[1], X_WIDTH) for detector in wall_detectors)
         assert len(wall_detectors) == 532
 
     def test_FirstWallRadiationSolver(self):
