@@ -18,7 +18,7 @@ import json
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numba as nb
 import numpy as np
@@ -240,17 +240,37 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
+class GeometryCreation(Protocol):
+    """Typing for closed_wire_wrapper"""
+
+    def __call__(
+        self,
+        points: Coordinates | npt.ArrayLike | dict[str, npt.ArrayLike],
+        label: str = "",
+        *,
+        closed: bool = False,
+    ) -> BluemiraWire:
+        """Typing for coordinates wrapping"""
+        ...
+
+
+def closed_wire_wrapper(
+    *, drop_closure_point: bool
+) -> Callable[[GeometryCreation], GeometryCreation]:
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
 
-    def decorator(func: Callable) -> BluemiraWire:
+    def decorator(func: GeometryCreation) -> GeometryCreation:
         @functools.wraps(func)
         def wrapper(
-            points: list | np.ndarray | dict, label: str = "", *, closed: bool = False
+            points: npt.ArrayLike | dict[str, npt.ArrayLike] | Coordinates,
+            label: str = "",
+            *,
+            closed: bool = False,
         ) -> BluemiraWire:
-            points = Coordinates(points)
+            if not isinstance(points, Coordinates):
+                points = Coordinates(points)
             if points.closed:
                 if closed is False:
                     bluemira_warn(
@@ -260,7 +280,7 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
                 closed = True
                 if drop_closure_point:
                     points = Coordinates(points.xyz[:, :-1])
-            wire = func(points, label=label, closed=closed)
+            wire: cadapi.apiWire = func(points, label=label, closed=closed)
             if closed:
                 wire = cadapi.close_wire(wire)
             return BluemiraWire(wire, label=label)
@@ -272,7 +292,7 @@ def closed_wire_wrapper(*, drop_closure_point: bool) -> BluemiraWire:
 
 @closed_wire_wrapper(drop_closure_point=True)
 def make_polygon(
-    points: list | np.ndarray,
+    points: Coordinates,
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001
@@ -305,7 +325,7 @@ def make_polygon(
 
 @closed_wire_wrapper(drop_closure_point=False)
 def make_bezier(
-    points: list | np.ndarray,
+    points: Coordinates,
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001

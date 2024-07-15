@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import sys
 from enum import Enum
+from types import DynamicClassAttribute
 from typing import TYPE_CHECKING
 
 from bluemira.base.error import LogsError
@@ -23,23 +24,33 @@ if TYPE_CHECKING:
 class LogLevel(Enum):
     """Linking level names and corresponding numbers."""
 
-    CRITICAL = 50
-    ERROR = 40
-    WARNING = 30
-    INFO = 20
-    DEBUG = 10
+    CRITICAL = 5
+    ERROR = 4
+    WARNING = 3
+    INFO = 2
+    DEBUG = 1
     NOTSET = 0
 
     @classmethod
     def _missing_(cls, value: int | str) -> LogLevel:
-        if isinstance(value, int) and value < cls.DEBUG.value:
-            return cls(value * 10)
+        if isinstance(value, int):
+            if cls.CRITICAL.value < value < 10:  # noqa: PLR2004
+                return cls.CRITICAL
+            value = max(value // 10 + value % 10, 0)
+            if value <= cls.CRITICAL.value:
+                return cls(value)
+            return cls.CRITICAL
         try:
             return cls[value.upper()]
         except (KeyError, AttributeError):
             raise LogsError(
                 f"Unknown severity level: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
+
+    @DynamicClassAttribute
+    def _value_for_logging(self) -> int:
+        """Return builtin logging level value"""
+        return int(self.value * 10)
 
 
 class Formatter(logging.Formatter):
@@ -125,7 +136,7 @@ def set_log_level(
         _modify_handler(
             LogLevel(verbose)
             if isinstance(verbose, str)
-            else LogLevel(int(current_level + (verbose * 10))),
+            else LogLevel(int(current_level + verbose)),
             logger,
         )
 
@@ -146,10 +157,10 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
     max_level = 0
     for handler in logger.handlers or logger.parent.handlers:
         if not isinstance(handler, logging.FileHandler) and handler.level > max_level:
-            max_level = handler.level
+            max_level = LogLevel(handler.level).value
     if as_str:
         return LogLevel(max_level).name
-    return max_level // 10
+    return max_level
 
 
 def _modify_handler(new_level: LogLevel, logger: logging.Logger):
@@ -165,7 +176,7 @@ def _modify_handler(new_level: LogLevel, logger: logging.Logger):
     """
     for handler in logger.handlers or logger.parent.handlers:
         if not isinstance(handler, logging.FileHandler):
-            handler.setLevel(new_level.value)
+            handler.setLevel(new_level._value_for_logging)
 
 
 class LoggingContext:

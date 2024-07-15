@@ -55,23 +55,26 @@ class XZGeometryInterpolator(abc.ABC):
 
     @abc.abstractmethod
     def to_xz(
-        self, l_value: npt.ArrayLike
+        self, l_values: npt.ArrayLike
     ) -> tuple[float, float] | tuple[np.ndarray, np.ndarray]:
         """
         Convert parametric-space 'L' values to physical x-z space.
         """
+        ...
 
     @abc.abstractmethod
     def to_L(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Convert physical x-z space values to parametric-space 'L' values.
         """
+        ...
 
     @abc.abstractproperty
     def dimension(self) -> int:
         """
         The dimension of the parametric space
         """
+        ...
 
 
 class PathInterpolator(XZGeometryInterpolator):
@@ -183,7 +186,8 @@ class RegionInterpolator(XZGeometryInterpolator):
             )
 
     def to_xz(
-        self, l_values: tuple[float, float] | tuple[np.ndarray, np.ndarray]
+        self,
+        l_values: npt.ArrayLike | tuple[float, float] | tuple[np.ndarray, np.ndarray],
     ) -> tuple[float, float] | tuple[np.ndarray, np.ndarray]:
         """
         Convert parametric-space 'L' values to physical x-z space.
@@ -347,7 +351,7 @@ class PositionMapper:
             list_values.append(values)
         return list_values
 
-    def to_xz(self, l_values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def to_xz(self, l_values: np.ndarray) -> npt.NDArray[np.float64]:
         """
         Convert a set of parametric-space values to physical x-z coordinates.
 

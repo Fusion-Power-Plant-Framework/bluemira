@@ -149,7 +149,7 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
-    def update_from_dict(self, new_values: ParamDictT):
+    def update_from_dict(self, new_values: dict[str, ParamDictT]):
         """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
             if "name" in value:
@@ -296,7 +296,7 @@ class ParameterFrame:
     def _member_data_to_parameter(
         cls,
         member: str,
-        member_param_data: dict,
+        member_param_data: ParamDictT,
     ) -> Parameter:
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
@@ -388,7 +388,7 @@ def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
     return get_args(member_type)
 
 
-def _validate_units(param_data: dict, value_type: Iterable[type]):
+def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
@@ -569,7 +569,7 @@ class EmptyFrame(ParameterFrame):
 
 def make_parameter_frame(
     params: ParameterFrameLike,
-    param_cls: type[ParameterFrameT],
+    param_cls: type[ParameterFrameT] | None,
 ) -> ParameterFrameT | None:
     """
     Factory function to generate a `ParameterFrame` of a specific type.

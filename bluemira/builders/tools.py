@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 from anytree import PreOrderIter
 
-import bluemira.geometry as bm_geo
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
@@ -150,7 +149,7 @@ def circular_pattern_component(
 
     for search_index_i, comp in enumerate(PreOrderIter(faux_sec_comp)):
         if isinstance(comp, PhysicalComponent):
-            shapes = bm_geo.tools.circular_pattern(
+            shapes = circular_pattern(
                 comp.shape,
                 n_shapes=n_children,
                 origin=origin,

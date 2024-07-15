@@ -55,13 +55,13 @@ class NumpyJSONEncoder(JSONEncoder):
     A JSON encoder that can handle numpy arrays.
     """
 
-    def default(self, obj):
+    def default(self, o):
         """
         Override the JSONEncoder default object handling behaviour for np.arrays.
         """
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super().default(obj)
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        return super().default(o)
 
 
 def json_writer(
@@ -69,7 +69,7 @@ def json_writer(
     file: PathLike | str | None = None,
     *,
     return_output: bool = False,
-    cls: JSONEncoder = NumpyJSONEncoder,
+    cls: type[JSONEncoder] = NumpyJSONEncoder,
     **kwargs,
 ) -> str | None:
     """
@@ -158,15 +158,15 @@ def write_csv(
             "\n".join([comment_prefix + line for line in metadata.split("\n")]) + "\n"
         )
 
-    # Add column headings
-    metadata += ",".join(col_names)
+        # Add column headings
+        metadata += ",".join(col_names)
 
     np.savetxt(
         filename,
         data,
         fmt="%.5e",
         delimiter=",",
-        header=metadata,
+        header=metadata or "",
         footer="",
         comments="",
     )
@@ -712,7 +712,7 @@ def slope(arr: np.ndarray) -> float:
     return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
 
 
-def yintercept(arr: np.ndarray) -> tuple[float]:
+def yintercept(arr: np.ndarray) -> tuple[float, float]:
     """Calculate the y intercept and gradient of an array"""
     s = slope(arr)
     return arr[0, 1] - s * arr[0, 0], s

@@ -202,10 +202,10 @@ def file_name_maker(filename: str | os.PathLike, *, lowercase: bool = False) -> 
     -------
     Full filename or path, corrected
     """
-    filename = Path(filename.replace(" ", "_"))
+    filename = Path(str(filename).replace(" ", "_"))
     if lowercase:
         split = filename.parts
-        filename = Path(split[:-1], split[-1].lower())
+        filename = Path(*split[:-1], split[-1].lower())
     return filename.as_posix()
 
 

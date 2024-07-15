@@ -207,7 +207,7 @@ def target_temperature(
     roots = np.roots([1, 2 * (eps_cool / gamma) - f_ev, (eps_cool**2) / (gamma**2)])
 
     # Target temperature excluding unstable solution
-    return f_ion_t if roots.dtype == complex else roots[np.where(roots > t_crit)[0][0]]
+    return f_ion_t if roots.dtype == complex else roots[np.nonzero(roots > t_crit)[0][0]]
 
 
 def specific_point_temperature(
@@ -421,7 +421,7 @@ def gaussian_decay(
     dec_param = max_value * (np.exp((-(h**2)) * ((x - mu) ** 2)))
     if decay is False:
         dec_param = dec_param[::-1]
-    i_near_minimum = np.where(dec_param < min_value)
+    i_near_minimum = np.nonzero(dec_param < min_value)
     dec_param[i_near_minimum[0]] = min_value
 
     return dec_param
@@ -575,7 +575,7 @@ def radiative_loss_function_values(
     -------
         interpolated local values of the radiative power loss function [W m^3]
     """
-    te_i = np.where(te < min(t_ref))
+    te_i = np.nonzero(te < min(t_ref))
     te[te_i] = min(t_ref) + (np.finfo(float).eps)
 
     return interp1d(t_ref, l_ref)(te)
@@ -746,7 +746,8 @@ def pfr_filter(
         separatrix = [separatrix]
     # Selecting points between null and targets (avoiding the x-point singularity)
     z_ind = [
-        np.where((halves.z * fact) < (x_point_z * fact - 0.01)) for halves in separatrix
+        np.nonzero((halves.z * fact) < (x_point_z * fact - 0.01))
+        for halves in separatrix
     ]
     domains_x = [
         halves.x[list_ind] for list_ind, halves in zip(z_ind, separatrix, strict=False)

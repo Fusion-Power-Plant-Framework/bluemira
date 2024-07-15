@@ -10,7 +10,7 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import anytree
@@ -222,7 +222,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component_properties(
         self,
-        properties: Iterable[str] | str,
+        properties: Sequence[str] | str,
         *,
         first: bool = True,
         full_tree: bool = False,
@@ -500,8 +500,8 @@ class MagneticComponent(PhysicalComponent):
 
 
 def get_properties_from_components(
-    comps: ComponentT | Iterable[ComponentT], properties: str | Iterable[str]
-) -> tuple[list[Any]] | list[Any] | Any:
+    comps: ComponentT | Iterable[ComponentT], properties: str | Sequence[str]
+) -> tuple[list[Any], ...] | list[Any] | Any:
     """
     Get properties from Components
 

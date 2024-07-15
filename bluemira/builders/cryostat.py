@@ -92,6 +92,7 @@ class CryostatBuilder(Builder):
     """
 
     CRYO = "Cryostat VV"
+    params: CryostatBuilderParams
     param_cls: type[CryostatBuilderParams] = CryostatBuilderParams
 
     def __init__(
