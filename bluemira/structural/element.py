@@ -76,6 +76,29 @@ def _k_array(
     Returns
     -------
     The local member stiffness matrix
+
+    Notes
+    -----
+    The matrix is given by
+
+    .. math::
+        \\small{
+        \\left[
+        \\begin{array}{cccccccccccc}
+        k11 & 0 & 0 & 0 & 0 & 0 & -k11 & 0 & 0 & 0 & 0 & 0 \\\\
+        0 & k22 & 0 & 0 & 0 & k26 & 0 & -k22 & 0 & 0 & 0 & k26 \\\\
+        0 & 0 & k33 & 0 & k35 & 0 & 0 & 0 & -k33 & 0 & k35 & 0 \\\\
+        0 & 0 & 0 & k44 & 0 & 0 & 0 & 0 & 0 & -k44 & 0 & 0 \\\\
+        0 & 0 & k35 & 0 & k55 & 0 & 0 & 0 & -k35 & 0 & k511 & 0 \\\\
+        0 & k26 & 0 & 0 & 0 & k66 & 0 & -k26 & 0 & 0 & 0 & k612 \\\\
+        -k11 & 0 & 0 & 0 & 0 & 0 & k11 & 0 & 0 & 0 & 0 & 0 \\\\
+        0 & -k22 & 0 & 0 & 0 & -k26 & 0 & k22 & 0 & 0 & 0 & -k26 \\\\
+        0 & 0 & -k33 & 0 & -k35 & 0 & 0 & 0 & k33 & 0 & -k35 & 0 \\\\
+        0 & 0 & 0 & -k44 & 0 & 0 & 0 & 0 & 0 & k44 & 0 & 0 \\\\
+        0 & 0 & k35 & 0 & k511 & 0 & 0 & 0 & -k35 & 0 & k55 & 0 \\\\
+        0 & k26 & 0 & 0 & 0 & k612 & 0 & -k26 & 0 & 0 & 0 & k66 \\\\
+        \\end{array}
+        \\right]}
     """
     return np.array([
         [k11, 0, 0, 0, 0, 0, -k11, 0, 0, 0, 0, 0],
@@ -132,6 +155,32 @@ def local_k_shear(
     Returns
     -------
     The local member stiffness matrix
+
+    Notes
+    -----
+    The shear deformation parameters are calculated by
+
+    .. math::
+
+        \\phi_{y} = 24 (1 + \\nu) \\left(\\frac{A}{A_{sy}}\\right)~
+        \\left(\\frac{r_{z}}{L}\\right)^2
+
+        \\phi_{z} = 24 (1 + \\nu) \\left(\\frac{A}{A_{sz}}\\right)~
+        \\left(\\frac{r_{y}}{L}\\right)^2
+
+    The equations for different k-values are
+
+    .. math:: k_{11} = \\frac{EA}{L} \\\\
+    .. math:: k_{22} = \\frac{12 EI_{zz}}{L^3 (1 + \\phi_{y})} \\\\
+    .. math:: k_{33} = \\frac{12 EI_{yy}}{L^3 (1 + \\phi_{z})} \\\\
+    .. math:: k_{44} = \\frac{GJ}{L} \\\\
+    .. math:: k_{55} = \\frac{(4 + \\phi_{z}) EI_{yy}}{L (1 + \\phi_{z})} \\\\
+    .. math:: k_{66} = \\frac{(4 + \\phi_{y}) EI_{zz}}{L (1 + \\phi_{y})} \\\\
+    .. math:: k_{35} = \\frac{-6 EI_{yy}}{L^2 (1 + \\phi_{z})} \\\\
+    .. math:: k_{26} = \\frac{6 EI_{zz}}{L^2 (1 + \\phi_{y})} \\\\
+    .. math:: k_{511} = \\frac{(2 - \\phi_{z}) EI_{yy}}{L (1 + \\phi_{z})} \\\\
+    .. math:: k_{612} = \\frac{(2 - \\phi_{y}) EI_{zz}}{L (1 + \\phi_{y})} \\\\
+
     """
     phi_y = 24 * (1 + nu) * (A / A_sy) * (rz / L) ** 2  # y shear deformation parameter
     phi_z = 24 * (1 + nu) * (A / A_sz) * (ry / L) ** 2  # z shear deformation parameter
@@ -175,6 +224,22 @@ def local_k(
     Returns
     -------
     The local member stiffness matrix
+
+    Notes
+    -----
+    The equations for different k-values are
+
+    .. math:: k_{11} = \\frac{EA}{L} \\\\
+    .. math:: k_{22} = \\frac{12 EI_{zz}}{L^3} \\\\
+    .. math:: k_{33} = \\frac{12 EI_{yy}}{L^3} \\\\
+    .. math:: k_{44} = \\frac{GJ}{L} \\\\
+    .. math:: k_{55} = \\frac{4 EI_{yy}}{L} \\\\
+    .. math:: k_{66} = \\frac{4 EI_{zz}}{L} \\\\
+    .. math:: k_{35} = \\frac{-6 EI_{yy}}{L^2} \\\\
+    .. math:: k_{26} = \\frac{6 EI_{zz}}{L^2} \\\\
+    .. math:: k_{511} = \\frac{2 EI_{yy}}{L} \\\\
+    .. math:: k_{612} = \\frac{2 EI_{zz}}{L} \\\\
+
     """
     k11 = EA / L
     k22 = 12 * EIzz / L**3
