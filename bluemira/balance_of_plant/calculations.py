@@ -148,6 +148,19 @@ def H2O_pumping(  # noqa: N802
         The isentropic pumping power (added to the working fluid)
     P_pump_el:
         The eletrical pumping power (parasitic load)
+
+    Notes
+    -----
+    The equations used in this function are:
+
+    .. math::
+        f_{pump} = \\frac{f_{pump}}{\\eta_{isen}}
+
+    .. math::
+        P_{pump\\_is} = \\frac{f_{pump} \\cdot p_{blanket}}{1 - f_{pump}}
+
+    .. math::
+        P_{pump\\_el} = \\frac{P_{pump\\_is}}{\\eta_{el}}
     """
     # TODO: Add proper pump model
     f_pump /= eta_isen
@@ -178,6 +191,22 @@ def superheated_rankine(
     Returns
     -------
     Efficiency of a superheated Rankine cycle
+
+    Notes
+    -----
+    The equations used in this function are:
+
+    .. math::
+        t_{turb} = bb_{outlet\\_temp} - \\delta_{t\\_turbine}
+
+    .. math::
+        f_{lgh} = \\frac{div_{power}}{blanket_{power} + div_{power}}
+
+    .. math::
+        \\delta_{\\eta} = 0.339 \\cdot f_{lgh}
+
+    .. math::
+        Efficiency = 0.1802 \\cdot log(t_{turb}) - 0.7823 - \\delta_{\\eta}
     """
     t_turb = bb_outlet_temp - delta_t_turbine
     if t_turb < 657 or t_turb > 915:  # noqa: PLR2004
