@@ -24,7 +24,7 @@ class GeomOptimiserObjective(Protocol):
 class GeomOptimiserCallable(Protocol):
     """Form for a geometry optimiser function (derivative, constraint, etc.)."""
 
-    def __call__(self, geom: GeometryParameterisation) -> np.ndarray:
+    def __call__(self, geom: GeometryParameterisation) -> np.ndarray | float:
         """Call the geometry optimiser function."""
         ...
 
