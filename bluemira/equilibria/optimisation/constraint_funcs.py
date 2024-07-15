@@ -46,6 +46,7 @@ import abc
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+from numpy._typing import NDArray
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -280,7 +281,135 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         return max(lcfs.x) - self.radius
 
 
-class CoilForceConstraint(ConstraintFunction):
+class CoilForceConstraintFunctions:
+    """
+    Constraint function to constrain the force applied to the coils
+
+    Parameters
+    ----------
+    a_mat:
+        Response matrix
+    b_vec:
+        Target value vector
+    n_PF:
+        Number of PF coils
+    n_CS:
+        Number of CS coils
+    scale:
+        Current scale with which to calculate the constraints
+    """
+
+    def __init__(
+            self,
+            a_mat: npt.NDArray[np.float64],
+            b_vec: npt.NDArray[np.float64],
+            n_PF: int,
+            n_CS: int,
+            scale: float,
+            ):
+        self.a_mat = a_mat
+        self.b_vec = b_vec
+        self.n_PF = n_PF
+        self.n_CS = n_CS
+        self.scale = scale
+        if self.n_CS == 0 and self.n_PF == 0:
+            raise ValueError(
+                "n_PF and n_CS are both 0. Make sure the coils in the coilset "
+                "have the correct ctype set."
+            )
+        self.n_coils = self.n_CS + self.n_PF
+        self._constraint = np.zeros(self.n_coils)
+        self._grad = np.zeros((self.n_coils, self.n_coils))
+
+    @property
+    def constraint(self):
+        """FIXME"""
+        return self._constraint
+
+    @constraint.setter
+    def constraint(self, value):
+        self._constraint = value
+
+    @property
+    def grad(self):
+        """FIXME"""
+        return self._grad
+
+    @grad.setter
+    def grad(self, value):
+        self._grad = value
+
+    def calc_f_matx(self, currents):
+        """FIXME."""
+        # get coil force and jacobian
+        F = np.zeros((self.n_coils, 2))
+        for i in range(2):  # coil force
+            # NOTE: * Hadamard matrix product
+            F[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
+        return F / self.scale  # Scale down to MN
+
+    def calc_df_matx(self, currents):
+        """FIXME."""
+        dF = np.zeros((self.n_coils, self.n_coils, 2))
+        im = currents.reshape(-1, 1) @ np.ones((1, self.n_coils))  # current matrix
+        for i in range(2):
+            dF[:, :, i] = im * self.a_mat[:, :, i]
+            diag = (
+                self.a_mat[:, :, i] @ currents
+                + currents * np.diag(self.a_mat[:, :, i])
+                + self.b_vec[:, i]
+            )
+            np.fill_diagonal(dF[:, :, i], diag)
+        return dF
+
+    def cs_fz(self, f_matx):
+        """Vertical forces on CS coils."""
+        return f_matx[self.n_PF :, 1]
+
+    def pf_z_constraint(self, f_matx, max_value):
+        """Constraint Function: Absolute vertical force constraint on PF coils."""
+        scaled_max_value = max_value / self.scale
+        self.constraint[: self.n_PF] = f_matx[: self.n_PF, 1] ** 2 - scaled_max_value**2
+
+    def pf_z_constraint_grad(self, df_matx):
+        """Constraint Derivative: Absolute vertical force constraint on PF coils."""
+        self.grad[: self.n_PF] = 2 * df_matx[: self.n_PF, :, 1]
+
+    def cs_z_constraint(self, f_matx, max_value):
+        """
+        Constraint Function:
+        Absolute sum of vertical force constraint on entire CS stack.
+        """
+        scaled_max_value = max_value / self.scale
+        # vertical force on CS stack
+        cs_z_sum = np.sum(self.cs_fz(f_matx))
+        self.constraint[self.n_PF] = cs_z_sum**2 - scaled_max_value**2
+
+    def cs_z_grad(self, df_matx):
+        """
+        Constraint Derivative:
+        Absolute sum of vertical force constraint on entire CS stack
+        """
+        self.grad[self.n_PF] = 2 * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
+
+    def cs_z_sep_constraint(self, f_matx, max_value):
+        """Constraint Function: CS separation constraints."""
+        scaled_max_value = max_value / self.scale
+        cs_fz = self.cs_fz(f_matx)
+        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
+            f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
+            self.constraint[self.n_PF + 1 + i] = f_sep - scaled_max_value
+
+    def cs_z_sep_grad(self, df_matx):
+        """Constraint Derivative: CS separation constraints."""
+        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
+            # CS separation constraint Jacobians
+            f_up = np.sum(df_matx[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
+            f_down = np.sum(df_matx[self.n_PF + i + 1 :, :, 1], axis=0)
+            self.grad[self.n_PF + 1 + i] = f_up - f_down
+
+
+class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
     """
     Constraint function to constrain the force applied to the coils
 
@@ -314,88 +443,30 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
-        name: str | None = None,
-    ):
-        self.a_mat = a_mat
-        self.b_vec = b_vec
-        self.n_PF = n_PF
-        self.n_CS = n_CS
+        name: str | None = None
+        ):
+        super().__init__(a_mat, b_vec, n_PF, n_CS, scale)
         self.PF_Fz_max = PF_Fz_max
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
-        self.scale = scale
         self.name = name
 
-        if self.n_CS == 0 and self.n_PF == 0:
-            raise ValueError(
-                "n_PF and n_CS are both 0. Make sure the coils in the coilset "
-                "have the correct ctype set."
-            )
-
-    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def f_constraint(self, vector):
         """Constraint function"""
         currents = self.scale * vector
-
-        n_coils = self.n_CS + self.n_PF
-        constraint = np.zeros(n_coils)
-
-        # get coil force and jacobian
-        F = np.zeros((n_coils, 2))
-        PF_Fz_max = self.PF_Fz_max / self.scale
-        CS_Fz_sep_max = self.CS_Fz_sep_max / self.scale
-        CS_Fz_sum_max = self.CS_Fz_sum_max / self.scale
-
-        for i in range(2):  # coil force
-            # NOTE: * Hadamard matrix product
-            F[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
-
-        F /= self.scale  # Scale down to MN
-
-        # Absolute vertical force constraint on PF coils
-        constraint[: self.n_PF] = F[: self.n_PF, 1] ** 2 - PF_Fz_max**2
-
+        f_matx = self.calc_f_matx(currents)
+        self.pf_z_constraint(f_matx, self.PF_Fz_max)
         if self.n_CS != 0:
-            # vertical forces on CS coils
-            cs_fz = F[self.n_PF :, 1]
-            # vertical force on CS stack
-            cs_z_sum = np.sum(cs_fz)
-            # Absolute sum of vertical force constraint on entire CS stack
-            constraint[self.n_PF] = cs_z_sum**2 - CS_Fz_sum_max**2
-            for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
-                # CS separation constraints
-                f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
-                constraint[self.n_PF + 1 + i] = f_sep - CS_Fz_sep_max
-        return constraint
+            self.cs_z_constraint(f_matx, self.CS_Fz_sum_max)
+            self.cs_z_sep_constraint(f_matx, self.CS_Fz_sep_max)
+        return self.constraint
 
-    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def df_constraint(self, vector):
         """Constraint derivative"""
         currents = self.scale * vector
-
-        n_coils = self.n_CS + self.n_PF
-        grad = np.zeros((n_coils, n_coils))
-        dF = np.zeros((n_coils, n_coils, 2))  # noqa: N806
-
-        im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
-        for i in range(2):
-            dF[:, :, i] = im * self.a_mat[:, :, i]
-            diag = (
-                self.a_mat[:, :, i] @ currents
-                + currents * np.diag(self.a_mat[:, :, i])
-                + self.b_vec[:, i]
-            )
-            np.fill_diagonal(dF[:, :, i], diag)
-
-        # Absolute vertical force constraint on PF coils
-        grad[: self.n_PF] = 2 * dF[: self.n_PF, :, 1]
-
+        df_matx = self.calc_df_matx(currents)
+        self.pf_z_constraint_grad(df_matx)
         if self.n_CS != 0:
-            # Absolute sum of vertical force constraint on entire CS stack
-            grad[self.n_PF] = 2 * np.sum(dF[self.n_PF :, :, 1], axis=0)
-
-            for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
-                # CS separation constraint Jacobians
-                f_up = np.sum(dF[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
-                f_down = np.sum(dF[self.n_PF + i + 1 :, :, 1], axis=0)
-                grad[self.n_PF + 1 + i] = f_up - f_down
-
-        return grad
+            self.cs_z_grad(df_matx)
+            self.cs_z_sep_grad(df_matx)
+        return self.grad
