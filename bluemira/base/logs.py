@@ -91,7 +91,7 @@ def logger_setup(
 
     # what will be shown on screen
     on_screen_handler = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler.setLevel(LogLevel(level).value)
+    on_screen_handler.setLevel(LogLevel(level)._value_for_logging)
     on_screen_handler.setFormatter(Formatter())
 
     # what will be written to a file
