@@ -36,6 +36,7 @@ asteval_user_symbols = {
     "PropsSI": PropsSI,
     "to_celsius": to_celsius,
     "to_kelvin": to_kelvin,
+    "polynomial": np.polynomial,
 }
 
 
