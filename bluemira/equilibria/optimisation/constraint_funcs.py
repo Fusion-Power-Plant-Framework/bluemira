@@ -283,7 +283,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
 
 class CoilForceConstraintFunctions:
     """
-    Constraint function to constrain the force applied to the coils
+    Constraint functions to constrain the force applied to the coils
 
     Parameters
     ----------
@@ -323,7 +323,7 @@ class CoilForceConstraintFunctions:
 
     @property
     def constraint(self):
-        """FIXME"""
+        """Constraint"""
         return self._constraint
 
     @constraint.setter
@@ -332,7 +332,7 @@ class CoilForceConstraintFunctions:
 
     @property
     def grad(self):
-        """FIXME"""
+        """Constraint Gradient"""
         return self._grad
 
     @grad.setter
@@ -340,8 +340,7 @@ class CoilForceConstraintFunctions:
         self._grad = value
 
     def calc_f_matx(self, currents):
-        """FIXME."""
-        # get coil force and jacobian
+        """Force"""
         F = np.zeros((self.n_coils, 2))
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
@@ -349,7 +348,7 @@ class CoilForceConstraintFunctions:
         return F / self.scale  # Scale down to MN
 
     def calc_df_matx(self, currents):
-        """FIXME."""
+        """Jacobian"""
         dF = np.zeros((self.n_coils, self.n_coils, 2))
         im = currents.reshape(-1, 1) @ np.ones((1, self.n_coils))  # current matrix
         for i in range(2):
@@ -411,7 +410,10 @@ class CoilForceConstraintFunctions:
 
 class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
     """
-    Constraint function to constrain the force applied to the coils
+    Combined onstraint function for:
+        - PF vertical force,
+        - CS vertical force,
+        - and CS separation.
 
     Parameters
     ----------
