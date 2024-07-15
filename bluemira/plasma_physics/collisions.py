@@ -34,6 +34,29 @@ def debye_length(temperature: float, density: float) -> float:
     Returns
     -------
     Debye length [m]
+
+    Notes
+    -----
+    Debye length is given by the formula:
+
+    .. math::
+        \\lambda_D = \\sqrt{\\frac{\\varepsilon_0 k_B T}{n e^2}}
+
+    where:
+
+    - :math:`\\varepsilon_0` is the vacuum permittivity,
+
+    - :math:`k_B` is the Boltzmann constant,
+
+    - :math:`T` is the temperature in Kelvin,
+
+    - :math:`n` is the number density of particles,
+
+    - :math:`e` is the elementary charge.
+
+    The conversion of the temperature from Kelvin to Joules
+    implicitly includes the Boltzmann constant (:math:`k_B`).
+
     """
     return np.sqrt(
         EPS_0 * raw_uc(temperature, "K", "J") / (ELEMENTARY_CHARGE**2 * density)
@@ -54,6 +77,17 @@ def reduced_mass(mass_1: float, mass_2: float) -> float:
     Returns
     -------
     Reduced mass
+
+    Notes
+    -----
+    Reduced mass of a two-particle system :
+
+    .. math::
+
+        \\mu_{AB} = \\frac{m_A m_B}{m_A + m_B}
+
+    where :math:`m_A` and :math:`m_B` are the masses
+    of the particles.
     """
     return (mass_1 * mass_2) / (mass_1 + mass_2)
 
@@ -73,8 +107,18 @@ def thermal_velocity(temperature: float, mass: float) -> float:
 
     Notes
     -----
-    The sqrt(2) term is for a 3-dimensional system and the most probable velocity in
-    the particle velocity distribution.
+    The thremal velocity is calculated as
+
+     .. math::
+
+        \\sqrt{\\frac{2 k_B T}{m}}
+
+    The conversion of the temperature from Kelvin to Joules
+    implicitly includes the Boltzmann constant (  :math:`k_B` ).
+
+    The  :math:`\\sqrt 2` term is for a 3-dimensional system and the
+    most probable velocity in the particle velocity distribution.
+
     """
     return np.sqrt(2) * np.sqrt(
         raw_uc(temperature, "K", "J")  # = Joule = kg*m^2/s^2
@@ -96,6 +140,17 @@ def de_broglie_length(velocity: float, mu_12: float) -> float:
     Returns
     -------
     De Broglie wavelength [m]
+
+    Notes
+    -----
+    The de Broglie length is given by
+
+    .. math::
+
+        \\frac{h}{2 \\cdot \\mu_{12} \\cdot velocity}
+
+    where  :math:`h` is the Planck Constant.
+
     """
     return H_PLANCK / (2 * mu_12 * velocity)
 
@@ -114,6 +169,23 @@ def impact_parameter_perp(velocity: float, mu_12: float) -> float:
     Returns
     -------
     Perpendicular impact parameter [m]
+
+    Notes
+    -----
+
+    .. math::
+
+        b_{90} = \\frac{e^2}{4 \\pi \\epsilon_0 \\mu_{12} v^2}
+
+    where:
+
+    - :math:`e` is the elementary charge (absolute charge of an electron)
+
+    - :math:`\\epsilon_0` is the vacuum permittivity,
+
+    - :math:`\\mu_{12}` is the reduced mass,
+
+    - :math:`v` is the relative velocity.
     """
     return ELEMENTARY_CHARGE**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
 
@@ -132,6 +204,23 @@ def coulomb_logarithm(temperature: float, density: float) -> float:
     Returns
     -------
     Coulomb logarithm value
+
+    Notes
+    -----
+    The Coulomb logarithm is calculated using the formula:
+
+    .. math::
+
+        \\ln{\\Lambda} = \\ln{\\left(1 + \\left(\\frac{\\lambda_{Debye}}
+        {b_{min}}\\right)^2\\right)^{1/2}}
+
+    where:
+
+    - :math:`\\lambda_{Debye}` is the Debye length,
+
+    - :math:`b_{min}` is the minimum impact parameter,
+    which is the maximum of the de Broglie wavelength~
+    and the perpendicular impact parameter.
     """
     lambda_debye = debye_length(temperature, density)
     mu_12 = reduced_mass(ELECTRON_MASS, PROTON_MASS)
