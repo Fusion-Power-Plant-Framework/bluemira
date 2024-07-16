@@ -47,7 +47,6 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import NDArray
 
 from bluemira.base.look_and_feel import bluemira_warn
 
@@ -300,13 +299,13 @@ class CoilForceConstraintFunctions:
     """
 
     def __init__(
-            self,
-            a_mat: npt.NDArray[np.float64],
-            b_vec: npt.NDArray[np.float64],
-            n_PF: int,
-            n_CS: int,
-            scale: float,
-            ):
+        self,
+        a_mat: npt.NDArray[np.float64],
+        b_vec: npt.NDArray[np.float64],
+        n_PF: int,
+        n_CS: int,
+        scale: float,
+    ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.n_PF = n_PF
@@ -445,8 +444,8 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
-        name: str | None = None
-        ):
+        name: str | None = None,
+    ):
         super().__init__(a_mat, b_vec, n_PF, n_CS, scale)
         self.PF_Fz_max = PF_Fz_max
         self.CS_Fz_sum_max = CS_Fz_sum_max
