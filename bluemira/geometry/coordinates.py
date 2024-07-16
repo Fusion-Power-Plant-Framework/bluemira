@@ -888,14 +888,13 @@ def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    side_vectors: np.ndarray
+    side_vectors:
         The side vectors of a polygon (shape: (N, 2)).
 
     Returns
     -------
-    np.ndarray
-        The array of 2-D normal vectors of each side of a polygon
-        (shape: (2, N)).
+    The array of 2-D normal vectors of each side of a polygon
+    (shape: (2, N)).
 
     Notes
     -----
@@ -925,18 +924,17 @@ def vector_intersect(
 
     Parameters
     ----------
-    p1: np.ndarray
+    p1:
         The first point on the first vector (shape: (2,)).
-    p2: np.ndarray
+    p2:
         The second point on the first vector (shape: (2,)).
-    p3: np.ndarray
+    p3:
         The first point on the second vector (shape: (2,)).
-    p4: np.ndarray
+    p4:
         The second point on the second vector (shape: (2,)).
 
     Returns
     -------
-    point: np.ndarray
     The point of the intersection between the two vectors (shape: (2,)).
 
     Notes
@@ -982,20 +980,20 @@ def get_bisection_line(
 
     Parameters
     ----------
-    p1: npt.NDArray
+    p1:
         The first point on the first vector (shape: (2,)).
-    p2: npt.NDArray
+    p2:
         The second point on the first vector (shape: (2,)).
-    p3: npt.NDArray
+    p3:
         The first point on the second vector (shape: (2,)).
-    p4: npt.NDArray
+    p4:
         The second point on the second vector (shape: (2,)).
 
     Returns
     -------
-    origin: npt.NDArray
+    origin:
         A point on that bisection line. (shape: (2,))
-    direction: npt.NDArray
+    direction:
         A normal vector that the bisection line points in (shape: (2,))
 
     Notes
