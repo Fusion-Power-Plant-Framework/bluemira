@@ -30,11 +30,11 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions i
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
 )
-from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics import (
+from bluemira.geometry.coordinates import Coordinates, in_polygon
+from bluemira.utilities.tools import (
     cylindrical_to_toroidal,
     toroidal_to_cylindrical,
 )
-from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 

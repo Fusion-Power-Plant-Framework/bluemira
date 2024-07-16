@@ -45,7 +45,7 @@ import numpy as np
 from IPython.display import display
 from PIL import Image
 
-from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics import (
+from bluemira.utilities.tools import (
     cylindrical_to_toroidal,
     toroidal_to_cylindrical,
 )
