@@ -4,12 +4,9 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from pathlib import Path
-
-from matplotlib.testing import compare as mpl_compare
+from numpy.testing import assert_allclose, assert_array_equal
 
 from bluemira.balance_of_plant.plotting import SuperSankey
-from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 
 
@@ -53,11 +50,22 @@ class TestSuperSankey:
             pathlengths=[l_medium, l_standard],
             connect=[(2, 0), (1, 1)],
         )
-        sankey.finish()
-        figure = sankey.ax.figure
-        new_file = tmp_path / "sankey_test.png"
-        figure.savefig(new_file)
+        sf = sankey.finish()[0]
 
-        path = get_bluemira_path("balance_of_plant/test_data", subfolder="tests")
-        reference_file = Path(path, "sankey_test.png")
-        assert mpl_compare.compare_images(reference_file, new_file, 0.005) is None
+        assert_array_equal(sf.flows, [1000, 500, -1500])
+        assert sf.angles == [0, 1, 0]
+        assert all(
+            text.get_text() == f"{res}"
+            for res, text in zip([1000, 500, 1500], sf.texts, strict=False)
+        ), [
+            text.get_text()
+            for res, text in zip([1000, 500, 1500], sf.texts, strict=False)
+        ]
+        assert_allclose(
+            sf.tips,
+            [(-1.58045022, 0.25), (-0.75, -1.14022509), (1.90449771, 0.0)],
+        )
+
+        figure = sankey.ax.figure
+        new_file = tmp_path / "sankey_test.svg"
+        figure.savefig(new_file)

@@ -25,14 +25,14 @@ digraph {
     subgraph cluster_0 {
         label="Designer";
         tooltip="Designer";
-        href="../base/design_build.html#designers"
+        href="base/design_build.html#designers"
         target="_parent"
         fontcolor="#2980b9"
         a[
             group=g1,
             label="ParameterFrame",
             tooltip="ParameterFrame",
-            href="../base/parameter.html#parameterframes",
+            href="base/parameter.html#parameterframes",
             target="_parent",
             fontcolor="#2980b9"
         ];
@@ -41,14 +41,14 @@ digraph {
     subgraph cluster_1 {
         label="Builder";
         tooltip="Builder";
-        href="../base/design_build.html#builders"
+        href="base/design_build.html#builders"
         target="_parent"
         fontcolor="#2980b9"
         d[
             group=g1,
             label="ParameterFrame",
             tooltip="ParameterFrame",
-            href="../base/parameter.html#parameterframes",
+            href="base/parameter.html#parameterframes",
             target="_parent",
             fontcolor="#2980b9"
         ];
@@ -57,13 +57,13 @@ digraph {
         label="ComponentManager";
         labelloc="b"
         tooltip="ComponentManager"
-        href="../base/components.html#componentmanagers"
+        href="base/components.html#componentmanagers"
         target="_parent"
         fontcolor="#2980b9"
         e[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#reactors-components-and-managers",
+            href="base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
@@ -73,13 +73,13 @@ digraph {
         label="ComponentManager";
         labelloc="b"
         tooltip="ComponentManager"
-        href="../base/components.html#componentmanagers"
+        href="base/components.html#componentmanagers"
         target="_parent"
         fontcolor="#2980b9"
         f[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#reactors-components-and-managers",
+            href="base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
@@ -92,7 +92,7 @@ digraph {
 
     reac[
            label="Reactor", tooltip="Reactor",
-           href="../base/components.html#reactor",
+           href="base/components.html#reactor",
            target="_parent",
            fontcolor="#2980b9"
     ]

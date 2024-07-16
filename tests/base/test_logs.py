@@ -44,7 +44,7 @@ class TestLoggingLevel:
     def setup_method(self):
         self.LOGGER = logger_setup()
 
-    @pytest.mark.parametrize("input_level", [6, "INF"])
+    @pytest.mark.parametrize("input_level", ["INF"])
     def test_raise_error(self, input_level):
         """Testing if errors for invalid log levels are caught."""
         with pytest.raises(LogsError) as exc_info:
@@ -65,16 +65,19 @@ class TestLoggingLevel:
     @pytest.mark.parametrize(
         ("input_level", "expected"),
         [
-            ("DEBUG", 10),
-            (1, 10),
-            ("INFO", 20),
-            (2, 20),
-            ("WARNING", 30),
-            (3, 30),
-            ("ERROR", 40),
-            (4, 40),
-            ("CRITICAL", 50),
-            (5, 50),
+            ("DEBUG", 1),
+            (1, 1),
+            ("INFO", 2),
+            (2, 2),
+            ("WARNING", 3),
+            (3, 3),
+            ("ERROR", 4),
+            (4, 4),
+            ("CRITICAL", 5),
+            (5, 5),
+            (6, 5),
+            (10, 1),
+            (60, 5),
         ],
     )
     def test_level_change(self, input_level, expected):
@@ -82,7 +85,12 @@ class TestLoggingLevel:
         set_log_level(input_level)
         for handler in self.LOGGER.handlers or self.LOGGER.parent.handlers:
             if not isinstance(handler, logging.FileHandler):
-                assert handler.level == expected
+                assert handler.level // 10 == expected
+        if not isinstance(input_level, str):
+            if input_level >= 10:
+                input_level //= 10
+            if 5 < input_level < 10:
+                input_level = 5
         assert get_log_level(as_str=isinstance(input_level, str)) == input_level
 
 
