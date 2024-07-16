@@ -46,8 +46,8 @@ import abc
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
-from numpy._typing import NDArray
 import numpy.typing as npt
+from numpy._typing import NDArray
 
 from bluemira.base.look_and_feel import bluemira_warn
 
@@ -341,25 +341,25 @@ class CoilForceConstraintFunctions:
 
     def calc_f_matx(self, currents):
         """Force"""
-        F = np.zeros((self.n_coils, 2))
+        f_matx = np.zeros((self.n_coils, 2))
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
-            F[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
-        return F / self.scale  # Scale down to MN
+            f_matx[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
+        return f_matx / self.scale  # Scale down to MN
 
     def calc_df_matx(self, currents):
         """Jacobian"""
-        dF = np.zeros((self.n_coils, self.n_coils, 2))
+        df_matx = np.zeros((self.n_coils, self.n_coils, 2))
         im = currents.reshape(-1, 1) @ np.ones((1, self.n_coils))  # current matrix
         for i in range(2):
-            dF[:, :, i] = im * self.a_mat[:, :, i]
+            df_matx[:, :, i] = im * self.a_mat[:, :, i]
             diag = (
                 self.a_mat[:, :, i] @ currents
                 + currents * np.diag(self.a_mat[:, :, i])
                 + self.b_vec[:, i]
             )
-            np.fill_diagonal(dF[:, :, i], diag)
-        return dF
+            np.fill_diagonal(df_matx[:, :, i], diag)
+        return df_matx
 
     def cs_fz(self, f_matx):
         """Vertical forces on CS coils."""
