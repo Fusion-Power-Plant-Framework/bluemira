@@ -202,6 +202,9 @@ class NloptOptimiser(Optimiser):
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
 
+        #import pdb
+        #pdb.set_trace()
+
         try:
             x_star = self._opt.optimize(x0)
             f_x = self._objective.f(x_star)

@@ -132,6 +132,8 @@ class Constraint(_NloptFunction):
         """
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
+        #import pdb
+        #pdb.set_trace()
         result[:] = self.f(x)
         self.f0 = result
         if grad.size > 0:
