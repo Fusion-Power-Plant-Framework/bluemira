@@ -409,7 +409,7 @@ class CoilForceConstraintFunctions:
 
 class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
     """
-    Combined onstraint function for:
+    Combined constraint function for:
         - PF vertical force,
         - CS vertical force,
         - and CS separation.
