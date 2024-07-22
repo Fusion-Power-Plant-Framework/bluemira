@@ -257,7 +257,7 @@ class CoilGroupFieldsMixin:
                 # Not called for circuits as they will always be a mixture
                 return self._response_analytical(semianalytic_func, x, z)
             return self._combined_control(inside, x, z, greens_func, semianalytic_func)
-        return greens_func(x, z)
+        return self._response_greens(greens_func, x, z)
 
     def _combined_control(
         self,
