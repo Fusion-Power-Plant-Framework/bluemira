@@ -216,9 +216,12 @@ def coulomb_logarithm(temperature: float, density: float) -> float:
 
     where:
 
-    - :math:`\\lambda_{Debye}` is the Debye length,
+    :math:`\\lambda_{Debye}` is the Debye length,
 
-    - :math:`b_{min}` is the minimum impact parameter
+    :math:`b_{min}` is the minimum impact parameter, which
+    is defined as the maximum value between :math:`b_{90}`
+    (the perpendicular impact parameter) and the de Broglie
+    wavelegth :math:`\\lambda_{th}`
 
     """
     lambda_debye = debye_length(temperature, density)
