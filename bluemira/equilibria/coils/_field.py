@@ -51,12 +51,6 @@ class CoilGroupFieldsMixin:
         """
         return self.psi_response(x, z) * self.current
 
-    def _psi_greens(self, pgreen: float | np.ndarray):
-        """
-        Calculate plasma psi from Greens functions and current
-        """
-        return self.current * pgreen
-
     def psi_response(self, x, z):
         return self._mix_control_method(x, z, greens_psi, semianalytic_psi)
 
@@ -65,12 +59,6 @@ class CoilGroupFieldsMixin:
         Calculate radial magnetic field Bx at (x, z)
         """
         return self.Bx_response(x, z) * self.current
-
-    def _Bx_greens(self, bgreen: float | np.ndarray):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
 
     def Bx_response(
         self, x: float | np.ndarray, z: float | np.ndarray
@@ -99,12 +87,6 @@ class CoilGroupFieldsMixin:
         """
         return self.Bz_response(x, z) * self.current
 
-    def _Bz_greens(self, bgreen: float | np.ndarray):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
-
     def Bz_response(
         self, x: float | np.ndarray, z: float | np.ndarray
     ) -> float | np.ndarray:
@@ -131,6 +113,104 @@ class CoilGroupFieldsMixin:
         Calculate poloidal magnetic field Bp at (x, z)
         """
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
+
+    def F(self, eqcoil: CoilGroup) -> np.ndarray:
+        """
+        Calculate the force response at the coil centre including the coil
+        self-force.
+
+        .. math::
+
+             \\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}
+            F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)
+            F_z = -IBx
+        """  # noqa: W505, E501
+        multiplier = self.current * 2 * np.pi * self.x
+        cr = self._current_radius
+        if any(cr != 0):
+            # true divide errors for zero current coils
+            cr_ind = np.nonzero(cr)
+            fx = np.zeros_like(cr)
+            fx[cr_ind] = (
+                MU_0
+                * self.current[cr_ind] ** 2
+                / (4 * np.pi * self.x[cr_ind])
+                * (np.log(8 * self.x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+            )
+        else:
+            fx = 0
+
+        return np.array([
+            multiplier * (eqcoil.Bz(self.x, self.z) + fx),
+            -multiplier * eqcoil.Bx(self.x, self.z),
+        ]).T
+
+    def control_F(self, coil_grp: CoilGroup) -> np.ndarray:
+        """
+        Returns the Green's matrix element for the coil mutual force.
+
+        \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
+        """
+        # TODO Vectorise
+        x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
+        pos = np.array([x, z])
+        response = np.zeros((x.size, coil_grp.x.size, 2))
+        for j, coil in enumerate(coil_grp.all_coils()):
+            xw = np.nonzero(x == coil.x)[0]
+            zw = np.nonzero(z == coil.z)[0]
+            same_pos = np.nonzero(xw == zw)[0]
+            if same_pos.size > 0:
+                # self inductance
+                # same_pos could be an array that is indexed from zw.
+                # This loops over zw and creates an index in xw where xw == zw
+                # better ways welcome!
+                xxw = []
+                for _z in zw:
+                    if (_pos := np.nonzero(_z == xw)[0]).size > 0:
+                        xxw.extend(_pos)
+                cr = self._current_radius[np.array(xxw)]
+                Bz = np.zeros((x.size, 1))
+                Bx = Bz.copy()  # Should be 0 anyway
+                mask = np.zeros_like(Bz, dtype=bool)
+                mask[same_pos] = True
+                if any(cr != 0):
+                    cr_ind = np.nonzero(cr)
+                    Bz[mask][cr_ind] = (
+                        MU_0
+                        / (4 * np.pi * x[cr_ind])
+                        * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                    )
+                if False in mask:
+                    Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
+                    Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
+
+            else:
+                Bz = coil.Bz_response(x, z)
+                Bx = coil.Bx_response(x, z)
+
+            # 1 cross B
+            response[:, j, :] = (
+                2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
+            )
+        return response
+
+    def _psi_greens(self, pgreen: float | np.ndarray):
+        """
+        Calculate plasma psi from Greens functions and current
+        """
+        return self.current * pgreen
+
+    def _Bx_greens(self, bgreen: float | np.ndarray):
+        """
+        Uses the Greens mapped dict to quickly compute the Bx
+        """
+        return self.current * bgreen
+
+    def _Bz_greens(self, bgreen: float | np.ndarray):
+        """
+        Uses the Greens mapped dict to quickly compute the Bx
+        """
+        return self.current * bgreen
 
     def _mix_control_method(
         self,
@@ -407,86 +487,6 @@ class CoilGroupFieldsMixin:
                 d_zc=coil_dz[np.newaxis],
             )
         )
-
-    def F(self, eqcoil: CoilGroup) -> np.ndarray:
-        """
-        Calculate the force response at the coil centre including the coil
-        self-force.
-
-        .. math::
-
-             \\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}
-            F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)
-            F_z = -IBx
-        """  # noqa: W505, E501
-        multiplier = self.current * 2 * np.pi * self.x
-        cr = self._current_radius
-        if any(cr != 0):
-            # true divide errors for zero current coils
-            cr_ind = np.nonzero(cr)
-            fx = np.zeros_like(cr)
-            fx[cr_ind] = (
-                MU_0
-                * self.current[cr_ind] ** 2
-                / (4 * np.pi * self.x[cr_ind])
-                * (np.log(8 * self.x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
-            )
-        else:
-            fx = 0
-
-        return np.array([
-            multiplier * (eqcoil.Bz(self.x, self.z) + fx),
-            -multiplier * eqcoil.Bx(self.x, self.z),
-        ]).T
-
-    def control_F(self, coil_grp: CoilGroup) -> np.ndarray:
-        """
-        Returns the Green's matrix element for the coil mutual force.
-
-        \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
-        """
-        # TODO Vectorise
-        x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
-        pos = np.array([x, z])
-        response = np.zeros((x.size, coil_grp.x.size, 2))
-        for j, coil in enumerate(coil_grp.all_coils()):
-            xw = np.nonzero(x == coil.x)[0]
-            zw = np.nonzero(z == coil.z)[0]
-            same_pos = np.nonzero(xw == zw)[0]
-            if same_pos.size > 0:
-                # self inductance
-                # same_pos could be an array that is indexed from zw.
-                # This loops over zw and creates an index in xw where xw == zw
-                # better ways welcome!
-                xxw = []
-                for _z in zw:
-                    if (_pos := np.nonzero(_z == xw)[0]).size > 0:
-                        xxw.extend(_pos)
-                cr = self._current_radius[np.array(xxw)]
-                Bz = np.zeros((x.size, 1))
-                Bx = Bz.copy()  # Should be 0 anyway
-                mask = np.zeros_like(Bz, dtype=bool)
-                mask[same_pos] = True
-                if any(cr != 0):
-                    cr_ind = np.nonzero(cr)
-                    Bz[mask][cr_ind] = (
-                        MU_0
-                        / (4 * np.pi * x[cr_ind])
-                        * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
-                    )
-                if False in mask:
-                    Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
-                    Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
-
-            else:
-                Bz = coil.Bz_response(x, z)
-                Bx = coil.Bx_response(x, z)
-
-            # 1 cross B
-            response[:, j, :] = (
-                2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
-            )
-        return response
 
 
 class CoilSetFieldsMixin(CoilGroupFieldsMixin):
