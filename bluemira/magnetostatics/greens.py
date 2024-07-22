@@ -15,6 +15,7 @@ from scipy.special import ellipe, ellipk
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 
 __all__ = [
+    "circular_coil_inductance_elliptic",
     "greens_Bx",
     "greens_Bz",
     "greens_all",
@@ -104,21 +105,21 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
 
     Notes
     -----
-    The equations used in this function are:
+    The inductance is given by
 
     .. math::
-        k = \\frac{4 \\cdot radius \\cdot (radius - rc)}~
-        {(2 \\cdot radius - rc)^2}
+        L = \\mu_{0} (2 r - r_c) \\Biggl((1 - k^2 / 2)~
+        \\int_0^{\\frac{\\pi}{2}} \\frac{d\\theta}{\\sqrt{1 - k~
+        \\sin (\\theta)^2}} - \\int_0^{\\frac{\\pi}{2}}~
+        \\sqrt{1 - k \\sin (\\theta)^2} \\, d\\theta\\Biggr)
+
+    where :math:`r` is the radius, :math:`\\mu_{0}` is the vacuum
+    permeability, and
 
     .. math::
-        k = clip_{nb}(k, GREENS_{ZERO}, 1.0 - GREENS_{ZERO})
-
-    .. math::
-        Inductance = \\mu_{0} \\cdot (2 \\cdot radius - rc)~
-        \\cdot ((1 - k^2 / 2) \\cdot ellipk_{nb}(k) - ellipe_{nb}(k))
-
-    where :math:`\\mu_{0}` is the vacuum permeability
-
+        k = \\max\\left(10^{-8}, \\min~
+        \\left(\\frac{4r(r - r_c)}{(2r - r_c)^2}~
+        , 1.0 - 10^{-8}\\right)\\right)
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
     k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
