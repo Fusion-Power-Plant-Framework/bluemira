@@ -15,7 +15,6 @@ from scipy.special import ellipe, ellipk
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 
 __all__ = [
-    "circular_coil_inductance_elliptic",
     "greens_Bx",
     "greens_Bz",
     "greens_all",
