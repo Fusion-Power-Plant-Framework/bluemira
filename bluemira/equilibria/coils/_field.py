@@ -17,7 +17,11 @@ import numpy as np
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import X_TOLERANCE
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.magnetostatics.semianalytic_2d import (
+    semianalytic_Bx,
+    semianalytic_Bz,
+    semianalytic_psi,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -53,31 +57,8 @@ class CoilGroupFieldsMixin:
         """
         return self.current * pgreen
 
-    def psi_response(self, x: float | np.ndarray, z: float | np.ndarray):
-        """
-        Calculate poloidal flux at (x, z) due to a unit current
-        """
-        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-
-        ind = np.nonzero(self._quad_weighting)
-        out = np.zeros((*x.shape, *self._quad_x.shape))
-
-        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(
-            self._quad_x[ind][np.newaxis],
-            self._quad_z[ind][np.newaxis],
-            x[..., np.newaxis],
-            z[..., np.newaxis],
-            self._quad_dx[ind][np.newaxis],
-            self._quad_dz[ind][np.newaxis],
-        )
-
-        return np.squeeze(
-            np.einsum(
-                self._einsum_str,
-                out,
-                self._quad_weighting[np.newaxis],
-            )
-        )
+    def psi_response(self, x, z):
+        return self._mix_control_method(x, z, greens_psi, semianalytic_psi)
 
     def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -110,9 +91,7 @@ class CoilGroupFieldsMixin:
         -------
         The radial magnetic field response at the x, z coordinates.
         """
-        return self._mix_control_method(
-            x, z, self._Bx_response_greens, self._Bx_response_analytical
-        )
+        return self._mix_control_method(x, z, greens_Bx, semianalytic_Bx)
 
     def Bz(self, x: float | np.ndarray, z: float | np.ndarray) -> float | np.ndarray:
         """
@@ -145,9 +124,7 @@ class CoilGroupFieldsMixin:
         -------
         The vertical magnetic field response at the x, z coordinates.
         """
-        return self._mix_control_method(
-            x, z, self._Bz_response_greens, self._Bz_response_analytical
-        )
+        return self._mix_control_method(x, z, greens_Bz, semianalytic_Bz)
 
     def Bp(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -195,10 +172,10 @@ class CoilGroupFieldsMixin:
                 self._points_inside_coil(x, z), ~zero_coil_size[np.newaxis]
             )
             if np.all(~inside):
-                return greens_func(x, z)
+                return self._response_greens(greens_func, x, z)
             if np.all(inside):
                 # Not called for circuits as they will always be a mixture
-                return semianalytic_func(x, z)
+                return self._response_analytical(semianalytic_func, x, z)
             return self._combined_control(inside, x, z, greens_func, semianalytic_func)
         return greens_func(x, z)
 
@@ -248,7 +225,8 @@ class CoilGroupFieldsMixin:
             )
         ):
             if np.any(~points):
-                response[~points, coil] = greens_func(
+                response[~points, coil] = self._response_greens(
+                    greens_func,
                     x[~points],
                     z[~points],
                     split=True,
@@ -258,7 +236,8 @@ class CoilGroupFieldsMixin:
                 )
 
             if np.any(points):
-                response[points, coil] = semianalytic_func(
+                response[points, coil] = self._response_analytical(
+                    semianalytic_func,
                     x[points],
                     z[points],
                     split=True,
@@ -314,7 +293,7 @@ class CoilGroupFieldsMixin:
             & (z <= z_max[np.newaxis])
         )
 
-    def _B_response_greens(
+    def _response_greens(
         self,
         greens: Callable,
         x: float | np.ndarray,
@@ -373,96 +352,7 @@ class CoilGroupFieldsMixin:
             )
         )
 
-    def _Bx_response_greens(
-        self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
-        *,
-        split: bool = False,
-        _quad_x: np.ndarray | None = None,
-        _quad_z: np.ndarray | None = None,
-        _quad_weight: np.ndarray | None = None,
-    ) -> float | np.ndarray:
-        """
-        Calculate radial magnetic field Bx response at (x, z) due to a unit
-        current using Green's functions.
-
-        Parameters
-        ----------
-        greens:
-            greens function
-        x:
-            The x values at which to calculate the response at
-        z:
-            The z values at which to calculate the response at
-        split:
-            Flag for if :meth:_combined_control is used
-        _quad_x:
-            :meth:_combined_control x positions
-        _quad_z:
-            :meth:_combined_control z positions
-        _quad_weight:
-            :meth:_combined_control weighting
-
-        Returns
-        -------
-        Radial magnetic field response
-        """
-        return self._B_response_greens(
-            greens_Bx,
-            x,
-            z,
-            split=split,
-            _quad_x=_quad_x,
-            _quad_z=_quad_z,
-            _quad_weight=_quad_weight,
-        )
-
-    def _Bz_response_greens(
-        self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
-        *,
-        split: bool = False,
-        _quad_x: np.ndarray | None = None,
-        _quad_z: np.ndarray | None = None,
-        _quad_weight: np.ndarray | None = None,
-    ) -> float | np.ndarray:
-        """
-        Calculate vertical magnetic field Bz at (x, z) due to a unit current
-
-        Parameters
-        ----------
-        greens:
-            greens function
-        x:
-            The x values at which to calculate the response at
-        z:
-            The z values at which to calculate the response at
-        split:
-            Flag for if :meth:_combined_control is used
-        _quad_x:
-            :meth:_combined_control x positions
-        _quad_z:
-            :meth:_combined_control z positions
-        _quad_weight:
-            :meth:_combined_control weighting
-
-        Returns
-        -------
-        Vertical magnetic field response
-        """
-        return self._B_response_greens(
-            greens_Bz,
-            x,
-            z,
-            split=split,
-            _quad_x=_quad_x,
-            _quad_z=_quad_z,
-            _quad_weight=_quad_weight,
-        )
-
-    def _B_response_analytical(
+    def _response_analytical(
         self,
         semianalytic: Callable,
         x: np.ndarray,
@@ -516,100 +406,6 @@ class CoilGroupFieldsMixin:
                 d_xc=coil_dx[np.newaxis],
                 d_zc=coil_dz[np.newaxis],
             )
-        )
-
-    def _Bx_response_analytical(
-        self,
-        x: np.ndarray,
-        z: np.ndarray,
-        *,
-        split: bool = False,
-        coil_x: np.ndarray | None = None,
-        coil_z: np.ndarray | None = None,
-        coil_dx: np.ndarray | None = None,
-        coil_dz: np.ndarray | None = None,
-    ) -> np.ndarray:
-        """
-        Calculate radial magnetic field Bx response at (x, z) due to a unit
-        current using semi-analytic method.
-
-        Parameters
-        ----------
-        x:
-            The x values at which to calculate the response at
-        z:
-            The z values at which to calculate the response at
-        split:
-            Flag for if :meth:_combined_control is used
-        coil_x:
-            :meth:_combined_control x positions
-        coil_z:
-            :meth:_combined_control z positions
-        coil_dx:
-            :meth:_combined_control x positions
-        coil_dz:
-            :meth:_combined_control z positions
-
-        Returns
-        -------
-        Radial magnetic field response
-        """
-        return self._B_response_analytical(
-            semianalytic_Bx,
-            x,
-            z,
-            split=split,
-            coil_x=coil_x,
-            coil_z=coil_z,
-            coil_dx=coil_dx,
-            coil_dz=coil_dz,
-        )
-
-    def _Bz_response_analytical(
-        self,
-        x: np.ndarray,
-        z: np.ndarray,
-        *,
-        split: bool = False,
-        coil_x: np.ndarray | None = None,
-        coil_z: np.ndarray | None = None,
-        coil_dx: np.ndarray | None = None,
-        coil_dz: np.ndarray | None = None,
-    ) -> np.ndarray:
-        """
-        Calculate vertical magnetic field Bz response at (x, z) due to a unit
-        current using semi-analytic method.
-
-        Parameters
-        ----------
-        x:
-            The x values at which to calculate the response at
-        z:
-            The z values at which to calculate the response at
-        split:
-            Flag for if :meth:_combined_control is used
-        coil_x:
-            :meth:_combined_control x positions
-        coil_z:
-            :meth:_combined_control z positions
-        coil_dx:
-            :meth:_combined_control x positions
-        coil_dz:
-            :meth:_combined_control z positions
-
-        Returns
-        -------
-        Vertical magnetic field response
-        """
-        return self._B_response_analytical(
-            semianalytic_Bz,
-            x,
-            z,
-            split=split,
-            coil_x=coil_x,
-            coil_z=coil_z,
-            coil_dx=coil_dx,
-            coil_dz=coil_dz,
         )
 
     def F(self, eqcoil: CoilGroup) -> np.ndarray:
@@ -991,8 +787,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         )
         return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
 
-    @staticmethod
     def _combined_control(
+        self,
         inside: np.ndarray,
         x: np.ndarray,
         z: np.ndarray,
@@ -1026,10 +822,14 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         points = inside[..., 0]
 
         if np.any(~points):
-            response[~points] = greens_func(x[~points], z[~points])
+            response[~points] = self._response_greens(
+                greens_func, x[~points], z[~points]
+            )
 
         if np.any(points):
-            response[points] = semianalytic_func(x[points], z[points])
+            response[points] = self._response_analytical(
+                semianalytic_func, x[points], z[points]
+            )
 
         return response
 
