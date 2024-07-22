@@ -132,12 +132,13 @@ def _clip_flux_surfaces(first_wall, flux_surfaces):
     are found.
     """
     for group in flux_surfaces:
-        for i, flux_surface in enumerate(group):
-            flux_surface.clip(first_wall)
-            if flux_surface.alpha is None:
-                # No intersection detected between flux surface and first wall
-                # Drop the flux surface from the group
-                group.pop(i)
+        if group:
+            for i, flux_surface in enumerate(group):
+                flux_surface.clip(first_wall)
+                if flux_surface.alpha is None:
+                    # No intersection detected between flux surface and first wall
+                    # Drop the flux surface from the group
+                    group.pop(i)  # noqa: B909
     return flux_surfaces
 
 

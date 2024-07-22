@@ -22,6 +22,7 @@ from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
+from bluemira.radiation_transport.flux_surfaces_maker import _clip_flux_surfaces
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -201,19 +202,15 @@ class ChargedParticleSolver:
         Clip the flux surfaces to a first wall. Catch the cases where no intersections
         are found.
         """
-        for group in [
-            self.flux_surfaces_ob_down,
-            self.flux_surfaces_ob_up,
-            self.flux_surfaces_ib_down,
-            self.flux_surfaces_ib_up,
-        ]:
-            if group:
-                for i, flux_surface in enumerate(group):
-                    flux_surface.clip(first_wall)
-                    if flux_surface.alpha is None:
-                        # No intersection detected between flux surface and first wall
-                        # Drop the flux surface from the group
-                        group.pop(i)
+        _clip_flux_surfaces(
+            first_wall,
+            [
+                self.flux_surfaces_ob_down,
+                self.flux_surfaces_ob_up,
+                self.flux_surfaces_ib_down,
+                self.flux_surfaces_ib_up,
+            ],
+        )
 
     def analyse(self, first_wall: Coordinates):
         """
