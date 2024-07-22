@@ -949,7 +949,7 @@ def vector_intersect(
         .. math::
 
             \\text{point} = \\frac{
-                \\mathbf{dap} \\cdot (\\mathbf{p1} - \\mathbf{p3})
+                \\lVert \\mathbf{p2} - \\mathbf{p1} \\rVert \\cdot (\\mathbf{p1} - \\mathbf{p3})
             }{
             \\mathbf{dap} \\cdot (\\mathbf{p4} - \\mathbf{p3})
             } (\\mathbf{p4} - \\mathbf{p3}) + \\mathbf{p3}
