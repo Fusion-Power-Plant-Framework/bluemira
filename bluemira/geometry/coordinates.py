@@ -895,6 +895,18 @@ def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
     -------
     The array of 2-D normal vectors of each side of a polygon
     (shape: (2, N)).
+
+    Notes
+    -----
+    The normal vector `a` is calculated using the formula:
+
+    .. math::
+
+            \\mathbf{a} = -\\frac{-[\\mathbf{v}[1],~
+            \\mathbf{v}[0]]}{\\sqrt{\\mathbf{v}[0]^2~
+            + \\mathbf{v}[1]^2}}
+
+    where :math:`\\mathbf{v}` are the side vectors.
     """
     a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
         side_vectors[0] ** 2 + side_vectors[1] ** 2
@@ -924,6 +936,25 @@ def vector_intersect(
     Returns
     -------
     The point of the intersection between the two vectors (shape: (2,)).
+
+    Notes
+    -----
+    If the vectors are parallel:
+        - The vectors do not intersect.
+        - The function returns p2
+
+    Otherwise:
+        - Calculates the intersection point using vector algebra:
+
+        .. math::
+
+            \\text{point} = \\frac{
+                \\lVert \\mathbf{p2} - \\mathbf{p1} \\rVert~
+                \\cdot (\\mathbf{p1} - \\mathbf{p3})
+            }{
+            \\lVert \\mathbf{p2} - \\mathbf{p1} \\rVert~
+            \\cdot (\\mathbf{p4} - \\mathbf{p3})
+            } (\\mathbf{p4} - \\mathbf{p3}) + \\mathbf{p3}
     """
     da = p2 - p1
     db = p4 - p3
@@ -966,6 +997,12 @@ def get_bisection_line(
         A point on that bisection line. (shape: (2,))
     direction:
         A normal vector that the bisection line points in (shape: (2,))
+
+    Notes
+    -----
+    The intersection point is calculated using vector algebra, and the
+    direction is the normalized sum of the normalized vectors of da and db.
+
     """
     origin = vector_intersect(p1, p2, p3, p4)
     da = p2 - p1

@@ -339,8 +339,13 @@ def semianalytic_psi(
 
     Notes
     -----
-    Integrates x*Bz to resolve psi. More analytical approaches are possible and
-    will no doubt be faster.
+    The function returns
+
+    .. math::
+        2 \\times 10^{-7} {\\frac{1}{4 d_{xc} d_{zc}}} \\psi
+
+    The function integrates :math:`x B_z` to resolve psi. More analytical
+    approaches are possible and will no doubt be faster.
     """
     j_tor = 1 / (4 * d_xc * d_zc)  # Keep current out of the equation
     psi = n_integrate(_full_psi_integrand, (xc, zc, z, d_xc, d_zc), [[0, x], [0, np.pi]])
