@@ -147,7 +147,7 @@ def de_broglie_length(velocity: float, mu_12: float) -> float:
 
     .. math::
 
-        \\frac{h}{2 \\cdot \\mu_{12} \\cdot velocity}
+        \\lambda_{th} = \\frac{h}{2 \\cdot \\mu_{12} \\cdot velocity}
 
     where  :math:`h` is the Planck Constant.
 
