@@ -268,7 +268,7 @@ class CoilGroupFieldsMixin:
         semianalytic_func: Callable,
     ) -> float | np.ndarray:
         """
-        Combine semianalytic and greens function calculation of magnetic field
+        Combine semianalytic and greens function calculation of [psi, Bx, Bz]
 
         Used for situation where there are calculation points both inside and
         outside the coil boundaries.
@@ -385,7 +385,7 @@ class CoilGroupFieldsMixin:
         _quad_weight: np.ndarray | None = None,
     ) -> float | np.ndarray:
         """
-        Calculate magnetic field B response at (x, z) due to a unit
+        Calculate [psi, Bx, Bz] response at (x, z) due to a unit
         current using Green's functions.
 
         Parameters
@@ -407,7 +407,7 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Magnetic field response
+        Greens response
         """
         if not split:
             _quad_x = self._quad_x
@@ -445,7 +445,7 @@ class CoilGroupFieldsMixin:
         coil_dz: np.ndarray | None = None,
     ) -> np.ndarray:
         """
-        Calculate magnetic field Bx response at (x, z) due to a unit
+        Calculate [psi, Bx, Bz] response at (x, z) due to a unit
         current using semi-analytic method.
 
         Parameters
@@ -469,7 +469,7 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Magnetic field response
+        Analytical response
         """
         if not split:
             coil_x = self.x
@@ -833,7 +833,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         return response
 
-    def _B_response_analytical(
+    def _response_analytical(
         self,
         semianalytic: Callable,
         x: np.ndarray,
@@ -858,7 +858,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         -------
         Analytical response
         """
-        return super()._B_response_analytical(
+        return super()._response_analytical(
             semianalytic,
             x,
             z,
