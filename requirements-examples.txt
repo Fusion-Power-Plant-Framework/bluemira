@@ -36,7 +36,7 @@ prometheus-client==0.20.0
 prompt-toolkit==3.0.47
 psutil==6.0.0
 ptyprocess==0.7.0
-pure-eval==0.2.2
+pure-eval==0.2.3
 pycparser==2.22
 Pygments==2.18.0
 pyzmq==26.0.3
