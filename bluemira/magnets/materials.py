@@ -9,39 +9,54 @@ Material database used for magnets
 """
 
 import math
+from abc import ABC, abstractmethod
 
 
-class OperationalPoint(dict):
-    def __init__(self, *args, **kwargs):
-        # Set default values {'T': 0, 'B': 0}
-        if "T" not in kwargs:
-            kwargs["T"] = None
-        if "B" not in kwargs:
-            kwargs["B"] = None
-        super().__init__(*args, **kwargs)
+class ABCMaterial(ABC):
+    """Abstract Material class"""
+
+    @abstractmethod
+    def density(self, **kwargs):
+        """Density"""
+        pass
+
+    @abstractmethod
+    def E(self, **kwargs):  # noqa: N802
+        """Young's module"""
+        pass
+
+    @abstractmethod
+    def erho(self, **kwargs):
+        """Electrical Resistivity"""
+        pass
+
+    @abstractmethod
+    def cp_v(self, **kwargs):
+        """Specific heat (constant volume)"""
+        pass
 
 
-class Material:
+class Material(ABCMaterial):
     """Generic Material"""
 
-    def density(self, **kwargs):
+    def density(self, **kwargs):  # noqa: ARG002
         """Density"""
         return 0
 
-    def E(self, **kwargs):
+    def E(self, **kwargs):  # noqa: N802, ARG002
         """Young's module"""
         return 1e-6
 
-    def erho(self, **kwargs):
+    def erho(self, **kwargs):  # noqa: ARG002
         """Electrical Resistivity"""
         return 1e6
 
-    def cp_v(self, **kwargs):
+    def cp_v(self, **kwargs):  # noqa: ARG002
         """Specific heat (constant volume)"""
         return 0
 
 
-class AISI_316LN(Material):
+class AISI_316LN(Material):  # noqa: N801
     """
     Stainless steel (316 LN, with extra low carbon content, aged)
 
@@ -53,18 +68,18 @@ class AISI_316LN(Material):
 
     """
 
-    def density(self, **kwargs):
+    def density(self, **kwargs):  # noqa: ARG002
         """Material density [kg/m³]"""
         return 7890.0
 
-    def E(self, T: float, **kwargs):
+    def E(self, T: float, **kwargs):  # noqa: N802, N803, ARG002
         """
         Young's module
 
         Ref
         ---
-        Data fits from N. Mitchell, “Finite element simulations of elasto-plastic processes”
-        Cryogenics 45 (2005) 501–515
+        Data fits from N. Mitchell, “Finite element simulations of elasto-plastic
+        processes” Cryogenics 45 (2005) 501–515
 
         Parameters
         ----------
@@ -81,7 +96,7 @@ class AISI_316LN(Material):
             E = 208.5 * 1e9
         return E
 
-    def erho(self, T: float, **kwargs):
+    def erho(self, T: float, **kwargs):  # noqa: N803
         """
         Electrical Resistivity
 
@@ -122,7 +137,8 @@ class Copper100(Material):
         self.gamma = 0.011
         # beta: Grueneisen fit parameter for Cp calculation [J/K**4/kg]
         self.beta = 0.0011
-        # RRR: Residual-resistance ratio (ratio of the resistivity of a material at room temperature and at 0 K)
+        # RRR: Residual-resistance ratio (ratio of the resistivity of a material at
+        # room temperature and at 0 K)
         self.RRR = 100
 
     def density(self, **kwargs):
@@ -136,8 +152,8 @@ class Copper100(Material):
         Ref
         ---
         NIST MONOGRAPH 177 J.Simon, E.S.Drexler and R.P.Reed, "Properties of
-        Copper and Copper Alloys at Cryogenic Temperatures", 850 pages, February 1992, U.S.
-        Government Printing Office, Washington, DC 20402-9325
+        Copper and Copper Alloys at Cryogenic Temperatures", 850 pages, February 1992,
+        U.S. Government Printing Office, Washington, DC 20402-9325
 
         Parameters
         ----------
@@ -151,13 +167,13 @@ class Copper100(Material):
             float  [Ohm m]
         """
         rho1 = (1.171 * (10 ** -17) * (T ** 4.49)) / (
-                1 + (4.5 * (10 ** -7) * (T ** 3.35) * (math.exp(-((50. / T) ** 6.428))))
+                1 + (4.5 * (10 ** -7) * (T ** 3.35) * (math.exp(-((50.0 / T) ** 6.428))))
         )
         rho2 = (
                 (1.69 * (10 ** -8) / self.RRR)
                 + rho1
                 + 0.4531 * ((1.69 * (10 ** -8) * rho1) / (
-                self.RRR * rho1 + 1.69 * (10 ** -8)))
+                    self.RRR * rho1 + 1.69 * (10 ** -8)))
         )
         A = math.log10(1.553 * (10 ** -8) * B / rho2)
         a = (
@@ -214,7 +230,8 @@ class Copper300(Material):
         self.gamma = 0.011
         # beta: Grueneisen fit parameter for Cp calculation [J/K**4/kg]
         self.beta = 0.0011
-        # RRR: Residual-resistance ratio (ratio of the resistivity of a material at room temperature and at 0 K)
+        # RRR: Residual-resistance ratio (ratio of the resistivity of a material at
+        # room temperature and at 0 K)
         self.RRR = 300
 
     def density(self, **kwargs):
@@ -228,8 +245,8 @@ class Copper300(Material):
         Ref
         ---
         NIST MONOGRAPH 177 J.Simon, E.S.Drexler and R.P.Reed, "Properties of
-        Copper and Copper Alloys at Cryogenic Temperatures", 850 pages, February 1992, U.S.
-        Government Printing Office, Washington, DC 20402-9325
+        Copper and Copper Alloys at Cryogenic Temperatures", 850 pages, February 1992,
+        U.S. Government Printing Office, Washington, DC 20402-9325
 
         Parameters
         ----------
@@ -249,7 +266,7 @@ class Copper300(Material):
                 (1.69 * (10 ** -8) / self.RRR)
                 + rho1
                 + 0.4531 * ((1.69 * (10 ** -8) * rho1) / (
-                self.RRR * rho1 + 1.69 * (10 ** -8)))
+                    self.RRR * rho1 + 1.69 * (10 ** -8)))
         )
         A = math.log10(1.553 * (10 ** -8) * B / rho2)
         a = (
@@ -271,8 +288,8 @@ class Copper300(Material):
 
         Note
         ----
-        The specific heat over the whole temperature range is obtained through fitting the function to the
-        known low temperature and high temperature data.
+        The specific heat over the whole temperature range is obtained through
+        fitting the function to the known low temperature and high temperature data.
 
         Parameters
         ----------
@@ -317,13 +334,14 @@ class Nb3Sn(Material):
 
         Ref
         ---
-        ITER DRG1 Annex, Superconducting Material Database, Article 5, N 11 FDR 42 01-07-05 R 0.1,
-        Thermal, Electrical and Mechanical Properties of Materials at Cryogenic Temperatures
+        ITER DRG1 Annex, Superconducting Material Database, Article 5, N 11 FDR
+        42 01-07-05 R 0.1, Thermal, Electrical and Mechanical Properties of Materials
+        at Cryogenic Temperatures
 
         Note
         ----
-            Most specific heat data are listed in J/K/kg units. To represent the data in the J/K/m3 units
-            a density of 8040 kg/m3 was assumed.
+            Most specific heat data are listed in J/K/kg units. To represent the data
+            in the J/K/m3 units a density of 8040 kg/m3 was assumed.
 
         Parameters
         ----------
@@ -394,8 +412,8 @@ class NbTi(Material):
 
         Note
         ----
-            Most specific heat data are listed in J/K/kg units. To represent the data in the J/K/m3 units
-            a density of 8570 kg/m3 was assumed.
+            Most specific heat data are listed in J/K/kg units. To represent the data
+            in the J/K/m3 units a density of 8570 kg/m3 was assumed.
 
         Parameters
         ----------
@@ -417,10 +435,10 @@ class NbTi(Material):
 
         Ref
         ---
-        data-point discussed in Larbalestier’s article in “Superconducting Material
-        Properties” is 50 mWm, at 10 K. This value is 2 times higher than those from MATPRO.
-        We therefore suggest the use of the CRYOCOMP resistivities, which can be fitted with
-        the following polynomial
+        data-point discussed in Larbalestier’s article in 'Superconducting Material
+        Properties' is 50 mWm, at 10 K. This value is 2 times higher than those from
+        MATPRO. We therefore suggest the use of the CRYOCOMP resistivities, which can
+        be fitted with the following polynomial
 
         Parameters
         ----------

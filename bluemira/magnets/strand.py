@@ -6,8 +6,6 @@
 
 """Strand class"""
 
-from typing import List, Union
-
 import numpy as np
 
 from bluemira.magnets.materials import Copper100, Material, Nb3Sn, NbTi
@@ -21,8 +19,8 @@ class Strand:
 
     def __init__(
             self,
-            materials: List[Material],
-            percentage: Union[np.array, List[float]],
+            materials: list[Material],
+            percentage: np.array,
             d_strand: float = 0.82e-3,
     ):
         """
@@ -83,7 +81,8 @@ class Strand:
 
     def cp_v(self, **kwargs) -> float:
         """
-        Calculates the equivalent specific heat based on the series connection of strand components.
+        Calculates the equivalent specific heat based on the series connection of
+        strand components.
 
         Parameters
         ----------
@@ -98,6 +97,63 @@ class Strand:
             x.cp_v(**kwargs) * self.percentage[i] for i, x in enumerate(self.materials)
         ]
         return serie_r(specific_heat)
+
+
+class SuperconductingStrand(Strand):
+    """
+    Represents a superconducting strand with a circular cross-section.
+    """
+
+    def __init__(
+            self,
+            materials: list[Material],
+            percentage: np.array,
+            d_strand: float = 0.82e-3,
+    ):
+        """
+        Initialize a Strand instance.
+
+        Parameters
+        ----------
+        materials:
+            List of materials inside the strand. First material is the
+            superconducting material.
+        percentage:
+            Percentage of each material (with the same ordering of materials).
+        d_strand:
+            Strand diameter in meters.
+        """
+        super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
+
+    @property
+    def sc_area(self):
+        return self.area * self.percentage[0]
+
+    def Jc(
+            self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
+            **kwargs
+    ) -> float:
+        """
+        Returns the critical current density.
+
+        Parameters
+        ----------
+        B:
+            Operating magnetic field in Teslas.
+        T:
+            Operating temperature in Kelvins.
+        esps:
+            Total applied measured strain in percentage. Default is 0.55.
+        T_margin:
+            Strand temperature margin in operation in Kelvins. Default is 1.5.
+        **kwargs:
+            Additional parameters.
+
+        Returns
+        -------
+        Critical current density in Amperes/m².
+        """
+        return 0
 
     def Ic(
             self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
@@ -121,12 +177,12 @@ class Strand:
 
         Returns
         -------
-        Critical current in Amperes.
+        Critical current density in Amperes.
         """
-        return 0
+        return self.Jc(B=B, T=T, strain=strain, T_margin=T_margin) * self.sc_area
 
 
-class Wire_Nb3Sn(Strand):
+class WireNb3Sn(SuperconductingStrand):
     """Represents an Nb3Sn strand made of 50% Copper100 and 50% Nb3Sn."""
 
     # superconducting parameters for the calculation of Ic
@@ -143,7 +199,7 @@ class Wire_Nb3Sn(Strand):
 
     def __init__(self, d_strand: float = 0.82e-3):
         """
-        Initialize a Wire_Nb3Sn instance.
+        Initialize a WireNb3Sn instance.
 
         Parameters
         ----------
@@ -151,21 +207,18 @@ class Wire_Nb3Sn(Strand):
             Strand diameter in meters. Default is 0.82e-3.
         """
         copper_100 = Copper100()
-        mat_Nb3Sn = Nb3Sn()
-        materials = [copper_100, mat_Nb3Sn]
+        mat_Nb3Sn = Nb3Sn()  # noqa: N806
+        # materials: first material is the SC, then the other materials
+        materials = [mat_Nb3Sn, copper_100]
         percentage = [0.5, 0.5]
         super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
-        # percentage of copper with respect to superconducting material
-        self._CunonCu = self.percentage[0] / self.percentage[1]
-        # area of superconducting material
-        self._superc_area = np.pi * self.d_strand ** 2 / (4 * (1 + self._CunonCu))
 
-    def Ic(
+    def Jc(
             self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5,
             **kwargs
     ) -> float:
         """
-        Returns the strand critical current.
+        Returns the strand critical current density.
 
         Parameters
         ----------
@@ -182,9 +235,8 @@ class Wire_Nb3Sn(Strand):
         -------
         Strand current density in Amperes per square meter.
         """
-        T_ = T + T_margin
-        # Todo: check the sign of eps_m in this equation
-        int_eps = -strain / 100  # + eps_m
+        T_ = T + T_margin  # noqa: N806
+        int_eps = -strain / 100
         eps_sh = self.Ca2 * self.eps_0a / (np.sqrt(self.Ca1 ** 2 - self.Ca2 ** 2))
         s_eps = 1 + (
                 self.Ca1
@@ -195,16 +247,16 @@ class Wire_Nb3Sn(Strand):
                 - self.Ca2 * int_eps
         ) / (1 - self.Ca1 * self.eps_0a)
         Bc0_eps = self.Bc20max * s_eps
-        Tc0_eps = self.Tc0max * (s_eps) ** (1 / 3)
+        Tc0_eps = self.Tc0max * (s_eps) ** (1 / 3)  # noqa: N806
         t = T_ / Tc0_eps
         BcT_eps = Bc0_eps * (1 - t ** (1.52))
         b = B / BcT_eps
-        hT = (1 - t ** (1.52)) * (1 - t ** 2)
-        fPb = (b ** self.p) * (1 - b) ** self.q
-        return self.c_ * (self.C / B) * s_eps * fPb * hT * self._superc_area
+        hT = (1 - t ** (1.52)) * (1 - t ** 2)  # noqa: N806
+        fPb = (b ** self.p) * (1 - b) ** self.q  # noqa: N806
+        return self.c_ * (self.C / B) * s_eps * fPb * hT
 
 
-class Wire_NbTi(Strand):
+class Wire_NbTi(SuperconductingStrand):  # noqa: N801
     """Represents an NbTi strand."""
 
     # superconducting parameters for the calculation of Ic
@@ -231,18 +283,15 @@ class Wire_NbTi(Strand):
             Strand diameter in meters. Default is 0.82e-3.
         """
         copper_100 = Copper100()
-        mat_NbTi = NbTi()
-        materials = [copper_100, mat_NbTi]
+        mat_NbTi = NbTi()  # noqa: N806
+        materials = [mat_NbTi, copper_100]
         percentage = [0.5, 0.5]
         super().__init__(materials=materials, percentage=percentage, d_strand=d_strand)
-        # percentage of copper with respect to superconducting material
-        self._CunonCu = self.percentage[0] / self.percentage[1]
-        # area of superconducting material
-        self._superc_area = np.pi * self.d_strand ** 2 / (4 * (1 + self._CunonCu))
 
-    def Ic(self, B: float, T: float, T_margin: float = 1.5, **kwargs):
+    def Jc(self, B: float, T: float, T_margin: float = 1.5, **kwargs):  # noqa:
+        # ARG002, N803
         """
-        NbTi critical current.
+        NbTi critical current density.
 
         Parameters
         ----------
@@ -255,26 +304,35 @@ class Wire_NbTi(Strand):
 
         Returns
         -------
-        Critical current in Amperes.
+        Critical current in Amperes per square meter.
 
         References
         ----------
-        - Pinning Properties of Commercial Nb-Ti Wires Described by a 2-Components Model, Luigi Muzzi, Gianluca De Marzi, et al.
+        - Pinning Properties of Commercial Nb-Ti Wires Described by a 2-Components Model,
+        Luigi Muzzi, Gianluca De Marzi, et al.
         - Fit data from DTT TF strand.
         """
         t = (T + T_margin) / self.Tc0_K
-        b = B / self.Bc20_T
+        # b = B / self.Bc20_T
         tt = 1 - t ** self.n
-        G = (self.a1 / (self.a1 + self.b1)) ** self.a1
-        GG = (self.b1 / (self.a1 + self.b1)) ** self.b1
-        GGG = G * GG
+        G = (self.a1 / (self.a1 + self.b1)) ** self.a1  # noqa: N806
+        GG = (self.b1 / (self.a1 + self.b1)) ** self.b1  # noqa: N806
+        GGG = G * GG  # noqa: N806
         F = (self.a2 / (self.a2 + self.b2)) ** self.a2
-        FF = (self.b2 / (self.a2 + self.b2)) ** self.b2
-        FFF = F * FF
-        Jc = (
-                     self.C0 * self.C1 / (B * GGG) * (self.b / tt) ** self.a1 * (
-                     1 - self.b / tt) ** self.b1 * tt ** self.g1
-                     + self.C0 * self.C2 / (B * FFF) * (self.b / tt) ** self.a2 * (
-                             1 - self.b / tt) ** self.b2 * tt ** self.g2
+        FF = (self.b2 / (self.a2 + self.b2)) ** self.b2  # noqa: N806
+        FFF = F * FF  # noqa: N806
+        Jc = (  # noqa: N806
+                     self.C0
+                     * self.C1
+                     / (B * GGG)
+                     * (self.b / tt) ** self.a1
+                     * (1 - self.b / tt) ** self.b1
+                     * tt ** self.g1
+                     + self.C0
+                     * self.C2
+                     / (B * FFF)
+                     * (self.b / tt) ** self.a2
+                     * (1 - self.b / tt) ** self.b2
+                     * tt ** self.g2
              ) * 1e6
-        return Jc * self._superc_area
+        return Jc  # noqa: RET504
