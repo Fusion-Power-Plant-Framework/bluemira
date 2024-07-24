@@ -59,7 +59,7 @@ display(toroidal_image)
 # [Wolfram MathWorld](https://mathworld.wolfram.com/ToroidalCoordinates.html) and shows a
 #  toroidal coordinate system. It uses $(u, v, \phi)$ whereas we use $(\tau, \sigma,
 # \phi)$.
-#
+
 # In toroidal coordinates, surfaces of constant $\tau$ are non-intersecting tori of
 # different radii, and surfaces of constant $\sigma$ are non-concentric spheres of
 # different radii which intersect the focal ring.
