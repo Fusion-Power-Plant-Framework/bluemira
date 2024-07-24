@@ -232,4 +232,4 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
 .. toctree::
     :maxdepth: 1
 
-    doc_visualisation_of_toroidal_coordinate_transform.py
+    doc_visualisation_of_toroidal_coordinate_transform
