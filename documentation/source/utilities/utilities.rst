@@ -70,15 +70,49 @@ This unit circle is centered at the point (2,0) in the poloidal plane.
 
 Original circle:
 
+    .. code-block:: python
+
+        theta = np.linspace(-np.pi, np.pi, 100)
+        x = 2 + np.cos(theta)
+        y = np.sin(theta)
+        plt.plot(x, y)
+        plt.title("Unit circle centered at (2,0) in cylindrical coordinates")
+        plt.xlabel("R")
+        plt.ylabel("z")
+        plt.axis("square")
+        plt.show()
+
 .. figure:: images/original-unit-circle-example.png
     :name: fig:original-unit-circle
 
 Convert this circle to toroidal coordinates:
 
+    .. code-block:: python
+
+        tau_sig_list = cylindrical_to_toroidal(R=x, R_0=2, Z=y, z_0=0)
+        tau = tau_sig_list[0]
+        sigma = tau_sig_list[1]
+        plt.plot(tau, sigma)
+        plt.title("Unit circle converted to toroidal coordinates")
+        plt.xlabel(r"$\tau$")
+        plt.ylabel(r"$\sigma$")
+        plt.show()
+
 .. figure:: images/unit-circle-converted-toroidal.png
     :name: fig:unit-circle-converted-toroidal
 
 Convert this back to cylindrical coordinates to recover the original unit circle centered at (2,0) in the poloidal plane:
+
+    .. code-block:: python
+
+        rzlist = toroidal_to_cylindrical(R_0=2, z_0=0, tau=tau, sigma=sigma)
+        rs = rzlist[0]
+        zs = rzlist[1]
+        plt.plot(rs, zs)
+        plt.title("Unit circle centered at (2,0) converted back to cylindrical coordinates")
+        plt.xlabel("R")
+        plt.ylabel("z")
+        plt.axis("square")
 
 .. figure:: images/unit-circle-back-to-cylindrical.png
     :name: fig:unit-circle-converted-back-cylindrical
@@ -93,10 +127,51 @@ non-intersecting circles that surround the focus :math:`(R_0, z_0)`, and curves 
 
 Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of constant :math:`\tau` in cylindrical coordinates
 
+    .. code-block:: python
+
+        # Define the focus point
+        R_0 = 1
+        z_0 = 0
+
+        # Create array of 6 tau values, 6 curves of constant tau will be plotted
+        tau = np.linspace(0.5, 2, 6)
+        sigma = np.linspace(-np.pi, np.pi, 200)
+
+        rlist = []
+        zlist = []
+        # Plot the curve in cylindrical coordinates for each constant value of tau
+        for t in tau:
+            rzlist = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=sigma, tau=t)
+            rlist.append(rzlist[0])
+            zlist.append(rzlist[1])
+            plt.plot(rzlist[0], rzlist[1])
+
+        plt.axis("square")
+        plt.xlabel("R")
+        plt.ylabel("z")
+        plt.title(r"$\tau$ isosurfaces: curves of constant $\tau$ in cylindrical coordinates")
+        plt.show()
+
+
 .. figure:: images/constant-tau-cylindrical.png
     :name: fig:constant-tau-cylindrical
 
 Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - here curves of constant :math:`\tau` are straight lines
+
+    .. code-block:: python
+
+        taulist = []
+        sigmalist = []
+        for i in range(len(rlist)):
+            tausiglist = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
+            taulist.append(tausiglist[0])
+            sigmalist.append(tausiglist[1])
+            plt.plot(tausiglist[0], tausiglist[1])
+
+        plt.xlabel(r"$\tau$")
+        plt.ylabel(r"$\sigma$")
+        plt.title(r"$\tau$ isosurfaces: curves of constant $\tau$ in toroidal coordinates")
+        plt.show()
 
 .. figure:: images/constant-tau-toroidal.png
     :name: fig:constant-tau-toroidal
@@ -105,10 +180,56 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
 
 Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of constant :math:`\sigma` in cylindrical coordinates
 
+    .. code-block:: python
+
+        # Define the focus point
+        R_0 = 1
+        z_0 = 0
+
+        # Create array of 6 sigma values, 6 curves of constant sigma will be plotted
+        sigma = np.linspace(0.5, np.pi / 2, 6)
+        tau = np.linspace(0, 5, 200)
+
+        rlist = []
+        zlist = []
+        # Plot the curve in cylindrical coordinates for each constant value of sigma
+        for s in sigma:
+            rzlist = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=s, tau=tau)
+            rlist.append(rzlist[0])
+            zlist.append(rzlist[1])
+            plt.plot(rzlist[0], rzlist[1])
+        plt.axis("square")
+        plt.xlabel("R")
+        plt.ylabel("z")
+        plt.title(
+            r"$\sigma$ isosurfaces: curves of constant $\sigma$ in cylindrical coordinates"
+        )
+        plt.show()
+
 .. figure:: images/constant-sigma-cylindrical.png
     :name: fig:constant-sigma-cylindrical
 
 Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - here curves of constant :math:`\sigma` are straight lines
 
+    .. code-block:: python
+
+        taulist = []
+        sigmalist = []
+        for i in range(len(rlist)):
+            tausiglist = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
+            taulist.append(tausiglist[0])
+            sigmalist.append(tausiglist[1])
+            plt.plot(tausiglist[0], tausiglist[1])
+
+        plt.xlabel(r"$\tau$")
+        plt.ylabel(r"$\sigma$")
+        plt.title(r"$\sigma$ isosurfaces: curves of constant $\sigma$ in toroidal coordinates")
+        plt.show()
+
 .. figure:: images/constant-sigma-toroidal.png
     :name: fig:constant-sigma-toroidal
+
+.. toctree::
+    :maxdepth: 1
+
+    doc_visualisation_of_toroidal_coordinate_transform.py
