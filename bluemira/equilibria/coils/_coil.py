@@ -287,6 +287,13 @@ class Coil(CoilFieldsMixin):
         Returns
         -------
         The cross-sectional area of the coil [m^2]
+
+        Notes
+        -----
+
+        .. math::
+            \\text{area} = 4 \\cdot dx \\cdot dz
+
         """
         return 4 * self.dx * self.dz
 
@@ -298,6 +305,12 @@ class Coil(CoilFieldsMixin):
         Returns
         -------
         The volume of the coil [m^3]
+
+        Notes
+        -----
+
+        .. math::
+            \\text{volume} =\\text{area} \\cdot 2 \\pi x
         """
         return self.area * 2 * np.pi * self.x
 
