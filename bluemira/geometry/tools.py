@@ -1095,6 +1095,7 @@ def loft_shape(
     *,
     solid: bool = True,
     ruled: bool = False,
+    closed: bool = False,
     label: str = "",
 ) -> BluemiraSolid | BluemiraShell:
     """
@@ -1119,6 +1120,7 @@ def loft_shape(
             [p.shape for p in profiles],
             solid=solid,
             ruled=ruled,
+            closed=closed,
         ),
         label=label,
     )

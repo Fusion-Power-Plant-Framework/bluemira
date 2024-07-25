@@ -1761,7 +1761,11 @@ def sweep_shape(
 
 
 def loft(
-    profiles: Iterable[apiWire], *, solid: bool = False, ruled: bool = False
+    profiles: Iterable[apiWire],
+    *,
+    solid: bool = False,
+    ruled: bool = False,
+    closed: bool = False,
 ) -> apiShell | apiSolid:
     """
     Loft between a set of profiles.
@@ -1779,7 +1783,7 @@ def loft(
     -------
     Lofted geometry object
     """
-    lofted_shape = Part.makeLoft(profiles, solid, ruled)
+    lofted_shape = Part.makeLoft(profiles, solid, ruled, closed)
 
     if solid:
         return lofted_shape.Solids[0]
