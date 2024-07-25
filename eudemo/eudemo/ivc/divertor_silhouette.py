@@ -23,6 +23,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
+    interpolate_bspline,
     make_circle,
     make_polygon,
 )
@@ -231,7 +232,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         dome[(0, 2), 1:-1] = dome_contour
         dome[(0, 2), -1] = end_coord.T
 
-        return make_polygon(dome, label=label)
+        return interpolate_bspline(dome, label=label)
 
     @staticmethod
     def _make_baffle(

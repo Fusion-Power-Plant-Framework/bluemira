@@ -558,7 +558,7 @@ def force_wire_to_spline(
     original_n_edges = len(wire.edges)
     if original_n_edges < n_edges_max:
         bluemira_debug(
-            f"Wire already has {original_n_edges} < {n_edges_max=}. No point forcing to"
+            f"Wire already has {original_n_edges=} < {n_edges_max=}. No point forcing to"
             " a spline."
         )
         return wire
