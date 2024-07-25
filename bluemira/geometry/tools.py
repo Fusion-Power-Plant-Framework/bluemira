@@ -984,31 +984,39 @@ def revolve_shape(
     Returns
     -------
     The revolved shape.
+
     """
     if degree > 360:  # noqa: PLR2004
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
 
-    if degree == 360:  # noqa: PLR2004
-        # We split into two separate revolutions of 180 degree and fuse them
-        if isinstance(shape, BluemiraWire):
-            shape = BluemiraFace(shape).shape
-            flag_shell = True
-        else:
-            shape = shape.shape
-            flag_shell = False
+    try:
+        return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
+    except cadapi.FreeCADError:
+        if degree == 360:  # noqa: PLR2004
+            # We split into two separate revolutions of 180 degree and fuse them
+            bluemira_warn(
+                "FreeCAD failed to rotate by 360"
+                " falling back to 2 fused 180 degree rotations"
+            )
 
-        shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
-        shape_2 = shape_1.copy()
-        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
-        result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
+            if isinstance(shape, BluemiraWire):
+                if shape.is_closed():
+                    shape = BluemiraFace(shape)
+                flag_shell = True
+            else:
+                flag_shell = False
 
-        if flag_shell:
-            result = result.Shells[0]
+            shape_1 = cadapi.revolve_shape(shape.shape, base, direction, degree=180)
+            shape_2 = shape_1.copy()
+            shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
+            result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
 
-        return convert(result, label)
+            if flag_shell:
+                result = result.Shells[0]
 
-    return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
+            return convert(result, label)
+        raise
 
 
 def extrude_shape(
