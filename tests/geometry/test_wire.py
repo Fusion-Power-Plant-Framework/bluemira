@@ -3,13 +3,22 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+
 import numpy as np
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import make_bezier, make_circle, make_polygon
+from bluemira.geometry.tools import (
+    deserialise_shape,
+    make_bezier,
+    make_circle,
+    make_polygon,
+)
 from bluemira.geometry.wire import BluemiraWire
+
+TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
 
 class TestWire:
@@ -91,6 +100,48 @@ class TestWire:
         np.testing.assert_allclose(vertexes[:, 0], p1)
         np.testing.assert_allclose(vertexes[:, 1], p2)
         np.testing.assert_allclose(vertexes[:, 2], p3)
+
+    def test_end_points(self):
+        """
+        Test to make sure that the .end_point() is actually the end point, rather than
+        somewhere in the middle of the wire.
+        Potentially needs to be removed after the next API-breaking change where wires
+        are only allowed to be joined when they're oriented correctly.
+        """
+        # Toughest case
+        rightmost_point = [10.538050403959396, 0.0, -5.974513810642086]
+        straight_line_end = {
+            "LineSegment": {
+                "StartPoint": [9.598817369491535, 0.0, -5.72284707755179],
+                "EndPoint": rightmost_point,
+            }
+        }
+        arc_start = {
+            "ArcOfCircle": {
+                "Radius": 0.8508213264708893,
+                "Center": [9.558782242701866, 0.0, -6.572725961982168],
+                "Axis": [-0.0, 1.0, -0.0],
+                "StartAngle": 180.0,
+                "EndAngle": 272.69703056741383,
+                "StartPoint": [8.707960916230977, 0.0, -6.572725961982168],
+                "EndPoint": [9.598817369491535, 0.0, -5.722847077551793],
+            }
+        }
+
+        def wrap_as_BMWdict(cadapi_item, label=""):
+            return {
+                "BluemiraWire": {"label": label, "boundary": [{"Wire": [cadapi_item]}]}
+            }
+
+        w1 = deserialise_shape(wrap_as_BMWdict(straight_line_end))
+        w2 = deserialise_shape(wrap_as_BMWdict(arc_start))
+        wrong_wire = BluemiraWire([
+            w1,
+            w2,
+        ])  # we expect this line to potentially throw an error in future versions??
+        right_wire = BluemiraWire([w2, w1])
+        np.testing.assert_allclose(wrong_wire.end_point(), Coordinates(rightmost_point))
+        np.testing.assert_allclose(right_wire.end_point(), Coordinates(rightmost_point))
 
 
 class ValueParameterBase:

@@ -103,7 +103,7 @@ class TestGeometry:
             major_radius=major_radius,
             minor_radius=minor_radius,
         )
-        edge = bm_ellipse.boundary[0].Edges[0]
+        edge = bm_ellipse.boundary[0].OrderedEdges[0]
 
         # ellispe eccentricity
         eccentricity = math.sqrt(1 - (minor_radius / major_radius) ** 2)
