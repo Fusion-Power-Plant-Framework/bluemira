@@ -344,14 +344,14 @@ class TestSolidFacePlaneIntersect:
             f"{sl.length}, {length}" for sl in _slice
         ]
 
-    def test_solid_nested_donut(self):
+    @pytest.mark.parametrize("degree", [360, 359, 180, 150, 90])
+    def test_solid_nested_donut(self, degree):
         circ = make_circle(self.small, [0, 0, self.centre], axis=[0, 1, 0])
         circ2 = make_circle(self.big, [0, 0, self.centre], axis=[0, 1, 0])
 
         face = BluemiraFace([circ2, circ])
 
-        # cant join a face to itself atm 20/12/21
-        donut = revolve_shape(face, direction=[1, 0, 0], degree=359)
+        donut = revolve_shape(face, direction=[1, 0, 0], degree=degree)
 
         _slice = slice_shape(donut, self.xz_plane)
 
@@ -364,8 +364,8 @@ class TestSolidFacePlaneIntersect:
             except AssertionError:  # noqa: PERF203
                 assert np.isclose(sl.length / self.twopi, self.small)
                 no_small += 1
-        assert no_big == 2
-        assert no_small == 2
+        assert no_big == len(_slice) // 2
+        assert no_small == len(_slice) // 2
 
     def test_primitive_cut(self):
         path = PrincetonD({"x2": {"value": self.big}}).create_shape()
