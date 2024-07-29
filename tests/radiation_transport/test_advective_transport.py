@@ -49,14 +49,13 @@ class TestChargedParticleInputs:
     def test_TypeError_given_unknown_parameter(self):
         params = {"not_a_param": 0.1}
 
-        with pytest.raises(TypeError) as type_error:
+        with pytest.raises(ValueError, match="not_a_param"):
             ChargedParticleSolver(params, None)
-        assert "not_a_param" in str(type_error)
 
     def test_convert_params_to_ChargedParticleSolverParams(self):
         params = "not a config"
 
-        with pytest.raises(TypeError) as type_error:
+        with pytest.raises(TypeError):
             ChargedParticleSolver._make_params(params)
 
         params = {

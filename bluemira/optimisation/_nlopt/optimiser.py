@@ -151,6 +151,11 @@ class NloptOptimiser(Optimiser):
         Add an equality constraint.
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_eq_constraint`.
+
+        Raises
+        ------
+        OptimisationError
+            Algorithm does not support equality constraints
         """
         if self.algorithm not in {Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES}:
             raise OptimisationError(
@@ -177,6 +182,11 @@ class NloptOptimiser(Optimiser):
         Add an inequality constraint.
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_ineq_constraint`.
+
+        Raises
+        ------
+        OptimisationError
+            Algorithm does not support inequality constraints
         """
         if self.algorithm not in {Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES}:
             raise OptimisationError(
@@ -198,6 +208,13 @@ class NloptOptimiser(Optimiser):
         Run the optimisation.
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.optimise`.
+
+        Raises
+        ------
+        KeyboardInterrupt
+            Optimisation halted by user
+        OptimisationError
+            low level optimisation error
         """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
@@ -343,15 +360,17 @@ class NloptOptimiser(Optimiser):
 
 def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
     """Validate, and convert, the given algorithm."""
-    if isinstance(algorithm, str):
-        return Algorithm[algorithm]
-    if isinstance(algorithm, Algorithm):
-        return algorithm
-    raise TypeError(f"Cannot set algorithm with object of type '{type(algorithm)}'.")
+    return Algorithm(algorithm)
 
 
 def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
-    """Validate that the bounds have the correct dimensions."""
+    """Validate that the bounds have the correct dimensions.
+
+    Raises
+    ------
+    ValueError
+        New bounds in not 1D and does not have a size of n_dims
+    """
     if new_bounds.ndim != 1 or new_bounds.size != n_dims:
         raise ValueError(
             f"Cannot set bounds with shape '{new_bounds.shape}', "
