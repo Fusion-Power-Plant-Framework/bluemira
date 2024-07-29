@@ -23,7 +23,6 @@ dependencies:
   - fenics-dolfinx=0.7.3
   - freecad=0.21.2
   - h5py
-  - c-blosc2=2.14.3
   - openmc>=0.14.0
   - graphviz
   - pip
