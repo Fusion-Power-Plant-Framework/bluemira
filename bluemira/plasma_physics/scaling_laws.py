@@ -51,6 +51,11 @@ class PowerLawScaling:
     def __call__(self, *args):
         """
         Call the PowerLawScaling object for a set of arguments.
+
+        Raises
+        ------
+        ValueError
+            Number of arguments not equal to number of exponents
         """
         if len(args) != len(self):
             raise ValueError(
@@ -80,6 +85,11 @@ class PowerLawScaling:
             Minimum value of the power law according to the specified errors
         max_value:
             Maximum value of the power law according to the specified errors
+
+        Raises
+        ------
+        ValueError
+            No constant error or error ranges
         """
         if self.constant_err == 0.0 and self.errors is None:
             raise ValueError(
