@@ -292,6 +292,11 @@ class ReactorConfig:
 
         rel_path is the path to the file that the value is in.
 
+        Raises
+        ------
+        FileNotFoundError
+            Cannot find provided path
+
         Notes
         -----
         If the value is not a path, returns the value and the passed in rel_path.

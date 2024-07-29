@@ -302,6 +302,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         Returns
         -------
         This component.
+
+        Raises
+        ------
+        ComponentError
+            Child already in tree
         """
         # TODO: Support merge_trees here too.
         if child in self.children or child.name in (ch.name for ch in self.children):
@@ -325,6 +330,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         Returns
         -------
         This component.
+
+        Raises
+        ------
+        ComponentError
+            Duplicate entries
         """
         if children is None:
             return None

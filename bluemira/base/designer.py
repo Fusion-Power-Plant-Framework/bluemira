@@ -103,7 +103,13 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         return self.build_config.get(self.KEY_RUN_MODE, "run")
 
     def _get_run_func(self, mode: str) -> Callable:
-        """Retrieve the function corresponding to the given run mode."""
+        """Retrieve the function corresponding to the given run mode.
+
+        Raises
+        ------
+        ValueError
+            Run mode doesnt exist
+        """
         try:
             return getattr(self, mode)
         except AttributeError:
