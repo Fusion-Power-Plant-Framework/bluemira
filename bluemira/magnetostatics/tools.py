@@ -42,6 +42,11 @@ __all__ = [
 def process_xyz_array(func):
     """
     Decorator for coordinate input handling in array-return functions and methods.
+
+    Raises
+    ------
+    MagnetostaticsError
+        Coordinates must be the same length and 1D or 2D
     """
 
     def wrapper(cls, x, y, z):
@@ -84,6 +89,11 @@ def process_coords_array(shape: np.ndarray | Coordinates) -> np.ndarray:
     ----------
     shape:
         The Coordinates or array to make into a coordinate array
+
+    Raises
+    ------
+    MagnetostaticsError
+        Unknown Type
 
     Returns
     -------
@@ -224,6 +234,11 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
     Returns
     -------
     The value of the integral of the function between the bounds
+
+    Raises
+    ------
+    MagnetostaticsIntegrationError
+        Integration failed
     """
     warnings.filterwarnings("error", category=IntegrationWarning)
     try:

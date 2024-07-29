@@ -215,10 +215,15 @@ class FemMagnetostatic2d:
         interpolation_eltype:
             dolfinx element type for interpolation
 
-        Note: code from Fenics_tutorial (
-        https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
+        Raises
+        ------
+        ValueError
+            Cannot calculate B for a given element
 
-        Warning: it is important to
+        Notes
+        -----
+        code from Fenics_tutorial (
+        https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
         degree = self.V.ufl_element().degree()
 
