@@ -187,60 +187,12 @@ class SkipAlreadyDocumented:
 
     def __init__(self):
         skip_list = [
-            "bluemira.codes.process.api.ENABLED",
             "bluemira.codes.process.api.PROCESS_DICT",
-            "bluemira.codes._polyscope.DefaultDisplayOptions.colour",
-            "bluemira.codes._freecadapi.DefaultDisplayOptions.colour",
-            "bluemira.geometry.optimisation._optimise.optimise_geometry",
-            "bluemira.balance_of_plant.plotting.BalanceOfPlantPlotter.plot_options",
-            "bluemira.balance_of_plant.steady_state.BalanceOfPlantModel.params",
-            # possibly bug in autoapi with these ones
-            "bluemira.base.builder.Builder.build",
-            "bluemira.base.components.Component.name",
-            "bluemira.base.components.PhysicalComponent.shape",
-            "bluemira.base.components.PhysicalComponent.material",
-            "bluemira.base.components.MagneticComponent.conductor",
-            "bluemira.base.file.FileManager._reactor_name",
-            "bluemira.base.file.FileManager._reference_data_root",
-            "bluemira.base.file.FileManager._generated_data_root",
-            "bluemira.base.parameter_frame._parameter.Parameter.value",
-            "bluemira.base.reactor_config.ReactorConfig.config_data",
-            "bluemira.codes.interface.CodesSolver.params",
-            "bluemira.codes.openmc.solver.OpenMCNeutronicsSolver.params",
-            "bluemira.codes.openmc.solver.OpenMCNeutronicsSolver.source",
-            "bluemira.codes.openmc.solver.OpenMCNeutronicsSolver.tally_function",
-            "bluemira.equilibria.coils._coil.Coil.x",
-            "bluemira.equilibria.coils._coil.Coil.z",
-            "bluemira.equilibria.coils._coil.Coil.ctype",
-            "bluemira.equilibria.coils._coil.Coil.dx",
-            "bluemira.equilibria.coils._coil.Coil.dz",
-            "bluemira.equilibria.coils._coil.Coil.current",
-            "bluemira.equilibria.coils._coil.Coil.j_max",
-            "bluemira.equilibria.coils._coil.Coil.b_max",
-            "bluemira.equilibria.coils._coil.Coil.discretisation",
-            "bluemira.equilibria.coils._grouping.CoilSet.control",
-            "bluemira.equilibria.optimisation.problem._breakdown.BreakdownCOP.bounds",
-            "bluemira.equilibria.plotting.EquilibriumPlotter.eq",
-            "bluemira.equilibria.run.PulsedCoilsetDesign.bd_settings",
-            "bluemira.equilibria.run.PulsedCoilsetDesign.eq_settings",
-            "bluemira.equilibria.run.OptimisedPulsedCoilsetDesign.pos_settings",
             "bluemira.fuel_cycle.timeline.Timeline.t",
             "bluemira.fuel_cycle.timeline.Timeline.ft",
             "bluemira.fuel_cycle.timeline.Timeline.DD_rate",
             "bluemira.fuel_cycle.timeline.Timeline.DT_rate",
             "bluemira.fuel_cycle.timeline.Timeline.bci",
-            "bluemira.fuel_cycle.timeline.Timeline.phases",
-            "bluemira.magnetostatics.baseclass.SourceGroup.sources",
-            "bluemira.magnetostatics.baseclass.SourceGroup._points",
-            "bluemira.mesh.meshing.Mesh.meshfile",
-            "bluemira.optimisation._nlopt.optimiser.NloptOptimiser.opt_conditions",
-            "bluemira.optimisation._nlopt.optimiser.NloptOptimiser.opt_parameters",
-            "bluemira.radiation_transport.neutronics.neutronics_axisymmetric.PreCellStage.old_vv_wire",
-            "bluemira.radiation_transport.neutronics.neutronics_axisymmetric.PreCellStage.in_wire",
-            "bluemira.radiation_transport.neutronics.neutronics_axisymmetric.PreCellStage.vv_wire",
-            "bluemira.radiation_transport.neutronics.neutronics_axisymmetric.PreCellStage.ex_wire",
-            "bluemira.radiation_transport.neutronics.neutronics_axisymmetric.PreCellStage.blanket",
-            "bluemira.radiation_transport.radiation_profile.RadiationSource.params",
             "bluemira.structural.model.FiniteElementModel.geometry",
             "bluemira.structural.model.FiniteElementModel.load_case",
             "bluemira.structural.model.FiniteElementModel.n_fixed_dofs",
@@ -258,40 +210,3 @@ class SkipAlreadyDocumented:
                 skip = True
             self.skip_dict[name] += 1
         return skip
-
-
-# autoapi inheritance diagram hack
-import sphinx.ext.inheritance_diagram as inheritance_diagram  # noqa: E402
-
-_old_html_visit_inheritance_diagram = inheritance_diagram.html_visit_inheritance_diagram
-
-
-def html_visit_inheritance_diagram(self, node):
-    """
-    Hacks the uri of the inheritance diagram if its an autoapi diagram
-
-    By default the refuri link is to ../../<expected file>.html whereas
-    the actual file lives at autoapi/bluemira/<expected file>.html.
-
-    refuri is used for parent classes outside of the current file.
-
-    The original function appends a further ../ to the refuri which has the
-    effect of returning to the root directory of the built documentation.
-
-    I havent found a method to set the default expected path and it seems to
-    be a slight incompatibility between autoapi and inheritance-diagram
-
-    This replaces the wrong path with a corrected path to the autoapi folder,
-    otherwise we get 404 links from the diagram links.
-    """
-    current_filename = self.builder.current_docname + self.builder.out_suffix
-    if "autoapi" in current_filename:
-        for n in node:
-            refuri = n.get("refuri")
-            if refuri is not None:
-                n["refuri"] = f"autoapi/bluemira/{refuri[6:]}"
-
-    return _old_html_visit_inheritance_diagram(self, node)
-
-
-inheritance_diagram.html_visit_inheritance_diagram = html_visit_inheritance_diagram
