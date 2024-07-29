@@ -77,3 +77,6 @@ MIN_N_DISCR = 10
 # Minimum discretisation of a coil [m], limit imposed to avoid massive memory
 # usage
 COIL_DISCR = 0.05
+
+# bluemira default cocos
+BLUEMIRA_DEFAULT_COCOS = 3

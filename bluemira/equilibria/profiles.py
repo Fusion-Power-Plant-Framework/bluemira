@@ -22,6 +22,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
 from bluemira.base.constants import MU_0
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
@@ -805,7 +806,7 @@ class CustomProfile(Profile):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         **kwargs,
     ) -> CustomProfile:

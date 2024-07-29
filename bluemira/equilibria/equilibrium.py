@@ -27,7 +27,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
-from bluemira.equilibria.constants import PSI_NORM_TOL
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     Opoint,
@@ -120,7 +120,7 @@ class MHDState:
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = 3,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         *,
         full_coil: bool = False,
@@ -254,7 +254,7 @@ class FixedPlasmaEquilibrium(MHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         *,
         full_coil: bool = False,
@@ -437,7 +437,7 @@ class CoilSetMHDState(MHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         *,
         user_coils: CoilSet | None = None,
@@ -627,7 +627,7 @@ class Breakdown(CoilSetMHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         *,
         force_symmetry: bool,
@@ -974,7 +974,7 @@ class Equilibrium(CoilSetMHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = None,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         qpsi_sign: Sign | int | None = None,
         *,
         force_symmetry: bool = False,
