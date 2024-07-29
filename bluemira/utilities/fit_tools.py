@@ -45,6 +45,11 @@ def surface_fit(
     r2:
         The R^2 score of the fit
 
+    Raises
+    ------
+    ValueError
+        x, y and z are not of equal length
+
     Notes
     -----
     The coefficients are ordered by power, and by x and y. For an order = 2

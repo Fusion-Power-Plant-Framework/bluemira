@@ -124,21 +124,25 @@ def write_csv(
 
     Parameters
     ----------
-    data : numpy.ndarray
+    data:
         Array of data to be written to csv file. Will raise an error if the
         dimensionality of the data is not two
-    base_name : str
+    base_name:
         Name of file to write to, minus the extension.
-    col_names : list(str)
+    col_names:
         List of strings for column headings for each data field provided.
-    metadata: str
+    metadata:
         Optional argument for metadata to be written as a header.
-    ext : str
+    ext:
         Optional argument for file extension, defaults to ".csv".
-    comment_char : str
+    comment_char:
         Optional argument to specify character(s) to prepend to metadata lines
         as a comment character (defaults to "#").
 
+    Raises
+    ------
+    ValueError
+        Columns names not available for all columns
     """
     # Fetch number of cols
     shape = data.shape
@@ -149,7 +153,7 @@ def write_csv(
 
     # Write column names
     if len(col_names) != n_cols:
-        raise RuntimeError("Column names must be provided for all data fields")
+        raise ValueError("Column names must be provided for all data fields")
 
     # Add comment characters and newline to existing metadata
     if metadata:
@@ -191,6 +195,10 @@ def asciistr(length: int) -> str:
     -------
     str of length specified
 
+    Raises
+    ------
+    ValueError
+        String length > 52 characters
     """
     if length > 52:  # noqa: PLR2004
         raise ValueError("Unsupported string length")
@@ -273,6 +281,11 @@ class EinsumWrapper:
             Array to perform norm on
         axis:
             axis for the norm to occur on
+
+        Raises
+        ------
+        ValueError
+            Matrix dimensions >2 unsupported
         """
         try:
             return np.sqrt(np.einsum(self.norm_strs[axis], ix, ix))
@@ -303,6 +316,11 @@ class EinsumWrapper:
             Second array
         out:
             output array for inplace dot product
+
+        Raises
+        ------
+        ValueError
+            Undefined dot product behaviour for array shapes
         """
         # Ordered hopefully by most used
         dim_sw = 2
@@ -859,6 +877,13 @@ def _loadfromspec(name: str) -> ModuleType:
     Returns
     -------
     Loaded module
+
+    Raises
+    ------
+    ImportError
+        Unable to import module
+    FileNotFoundError
+        Cant find specified module file
     """
     full_dirname = name.rsplit("/", 1)
     dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]
@@ -927,6 +952,11 @@ def get_class_from_module(name: str, default_module: str = "") -> type:
     Returns
     -------
     Loaded class
+
+    Raises
+    ------
+    ImportError
+        Unable to import class from module
     """
     module = default_module
     class_name = name

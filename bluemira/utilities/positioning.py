@@ -206,7 +206,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Raises
         ------
-        GeometryError
+        PositionerError
             When loop is not a Convex Hull
 
         """
@@ -335,6 +335,11 @@ class PositionMapper:
     def _check_length(self, thing):
         """
         Check that something is the same length as the number of available interpolators.
+
+        Raises
+        ------
+        PositionerError
+            the number of iterators is not equal to the number of objects
         """
         if len(thing) != len(self.interpolators):
             raise PositionerError(
