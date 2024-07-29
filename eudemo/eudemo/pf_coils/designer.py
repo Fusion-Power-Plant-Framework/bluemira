@@ -124,7 +124,13 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self.eq_manager = equilibrium_manager
 
     def read(self) -> CoilSet:
-        """Read in a coilset."""
+        """Read in a coilset.
+
+        Raises
+        ------
+        ValueError
+            file_path not specified in config
+        """
         if self.file_path is None:
             raise ValueError("No file path to read from!")
 

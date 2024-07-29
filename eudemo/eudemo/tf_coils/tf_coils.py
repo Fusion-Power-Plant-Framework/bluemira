@@ -300,6 +300,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         """
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
+
+        Raises
+        ------
+        ValueError
+            No problem class specified in config or no separatrix specified
         """
         parameterisation = self._get_parameterisation()
         wp_cross_section = self._make_wp_xs(self.params.r_tf_current_ib.value)
@@ -368,6 +373,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         """
         Read in a file to set up a specified GeometryParameterisation and extract the
         current centreline.
+
+        Raises
+        ------
+        ValueError
+            file_path not specified in config
         """
         if not self.file_path:
             raise ValueError(
@@ -791,6 +801,11 @@ class TFCoilBuilder(Builder):
     def _make_cas_xz(solid: BluemiraSolid) -> tuple[BluemiraFace, BluemiraFace]:
         """
         Make the casing x-z cross-section from a 3-D volume.
+
+        Raises
+        ------
+        BuilderError
+            Unexpected TF coil cross section
         """
         wires = slice_shape(
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])

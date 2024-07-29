@@ -60,6 +60,11 @@ def make_castellated_plug(
     Returns
     -------
     BluemiraSolid of a castellated port plug
+
+    Raises
+    ------
+    ValueError
+        offsets not consistent with the supplied number of distances or castellations
     """
     # Normalise vec
     vec = np.array(vec) / np.linalg.norm(vec)
@@ -79,7 +84,7 @@ def make_castellated_plug(
     elif len(offsets) == len(dist_iter):
         off_iter = offsets
     else:
-        raise ValueError("Length of offsets doesn't match distances/n_cast")
+        raise ValueError("Length of offsets doesn't match distances/n_castellations")
 
     parameter_array = list(zip(dist_iter, off_iter, strict=False))
     parameter_array.append((length, 0.0))

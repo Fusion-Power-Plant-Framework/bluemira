@@ -199,7 +199,13 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
 
     @staticmethod
     def _cut_geom(geom: _GeomT, cut_tool: BluemiraFace) -> tuple[_GeomT, _GeomT]:
-        """Cut the given geometry into two using the given cutting tool."""
+        """Cut the given geometry into two using the given cutting tool.
+
+        Raises
+        ------
+        BuilderError
+            boolean cut returns too few segments
+        """
         parts = boolean_cut(geom, cut_tool)
         if len(parts) < 2:  # noqa: PLR2004
             raise BuilderError(

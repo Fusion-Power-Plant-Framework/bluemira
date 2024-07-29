@@ -378,6 +378,11 @@ def make_upper_port_xy_face(
     xy_face:
         x-y face of the upper port
 
+    Raises
+    ------
+    BuilderError
+        Port dimensions too small to construct
+
     Notes
     -----
     the port koz is slightly trimmed to allow for square ends to the port

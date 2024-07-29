@@ -563,7 +563,9 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     """
 
     params: ReferenceFreeBoundaryEquilibriumDesignerParams
-    param_cls = ReferenceFreeBoundaryEquilibriumDesignerParams
+    param_cls: type[ReferenceFreeBoundaryEquilibriumDesignerParams] = (
+        ReferenceFreeBoundaryEquilibriumDesignerParams
+    )
 
     def __init__(
         self,
@@ -595,7 +597,18 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     def run(self) -> Equilibrium:
         """
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
+
+        Raises
+        ------
+        ValueError
+            No file_path specified in config to save eqdsk
         """
+        if (save := self.build_config.get("save", False)) and self.file_path is None:
+            raise ValueError(
+                "Cannot execute save equilibrium: "
+                "'file_path' missing from build config."
+            )
+
         lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
 
         # Make dummy tf coil boundary
@@ -648,12 +661,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             self.opt_problem.targets.plot(ax=ax)
             plt.show()
 
-        if self.build_config.get("save", False):
-            if self.file_path is None:
-                raise ValueError(
-                    "Cannot execute save equilibrium: "
-                    "'file_path' missing from build config."
-                )
+        if save:
             eq.to_eqdsk(self.file_path, directory=str(Path().cwd()))
 
         self._update_params_from_eq(eq)

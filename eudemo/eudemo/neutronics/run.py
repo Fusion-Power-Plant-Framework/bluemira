@@ -64,7 +64,13 @@ def run_neutronics(
     source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
     tally_function=None,
 ) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
-    """Runs the neutronics model"""
+    """Runs the neutronics model
+
+    Raises
+    ------
+    NeutronicsError
+        Can't import default neutron source
+    """
     # TODO get these materials from the componentmanager or something similar
     breeder_materials, tokamak_geometry = get_preset_physical_properties(
         build_config.pop("blanket_type")
