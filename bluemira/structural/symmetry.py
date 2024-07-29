@@ -12,9 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from bluemira.structural.geometry import Geometry
-
 import numpy as np
 
 from bluemira.geometry.coordinates import (
@@ -24,6 +21,9 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.structural.error import StructuralError
 from bluemira.structural.matrixops import cyclic_decomposition
+
+if TYPE_CHECKING:
+    from bluemira.structural.geometry import Geometry
 
 
 class CyclicSymmetry:

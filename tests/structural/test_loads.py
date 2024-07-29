@@ -6,7 +6,7 @@
 
 import pytest
 
-from bluemira.structural.constants import LOAD_TYPES
+from bluemira.structural.constants import LoadType
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import distributed_load, point_load
 
@@ -17,7 +17,7 @@ class TestPointLoad:
             point_load(100, 0.15, 5, "Fxy")
 
     def test_good(self):
-        for load_type in LOAD_TYPES:
+        for load_type in LoadType:
             r = point_load(100, 0.14, 10, load_type)
             assert len(r) == 12
 
