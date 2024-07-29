@@ -177,6 +177,7 @@ ignore = [
     "D301",
     "D400",
     "D401",
+    "DOC502",  # Omit non-explicit exceptions from docstrings
     "DTZ005",  # datetime timezone arg
     "E203",    # black/ruff format conflicts
     "FIX002",  # Line contains todo
@@ -190,6 +191,7 @@ ignore = [
     "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "SLF001",  # private method use
+    "DOC501",  # have raise in docstring
 
 ]
 
