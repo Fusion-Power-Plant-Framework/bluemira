@@ -13,7 +13,6 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -22,6 +21,7 @@ from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.radiation_transport.error import RadiationTransportError
 
 __all__ = ["analyse_first_wall_flux_surfaces"]
 
@@ -180,6 +180,11 @@ def get_array_alpha(flux_surfaces):
 def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard=True):
     """
     Find the middle and maximum outboard mid-plane psi norm values
+
+    Raises
+    ------
+    RadiationTransportError
+        Separatrix doesnt cross midplane
     """
     sep = LegFlux(eq)
 
@@ -203,7 +208,7 @@ def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
         else:
-            raise BluemiraError("Your seperatrix does not cross the midplane.")
+            raise RadiationTransportError("Your seperatrix does not cross the midplane.")
 
     out_intersections = coords_plane_intersect(first_wall, yz_plane)
     x_out_mp = (

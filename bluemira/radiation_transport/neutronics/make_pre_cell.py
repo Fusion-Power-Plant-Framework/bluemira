@@ -69,6 +69,11 @@ def ratio_of_distances(
     -------
     dist_to_1, dist_to_2:
         ratio of distances. Sum of these two numbers should yield unity (1.0).
+
+    Raises
+    ------
+    GeometryError
+        distance not on positive side of line
     """
     dist_to_1 = (point_of_interest - anchor1) @ normal1
     dist_to_2 = (point_of_interest - anchor2) @ normal2
@@ -96,6 +101,11 @@ def find_equidistant_point(
     -------
     intersection1, intersection2:
         The two intersection points of circle1 and circle2.
+
+    Raises
+    ------
+    GeometryError
+        Points too close
     """
     mid_point = (point1 + point2) / 2
     sep = point2 - point1
@@ -358,10 +368,18 @@ class PreCellArray:
     ----------
     list_of_pre_cells:
         An adjacent list of pre-cells
+
+    Raises
+    ------
+    GeometryError
+        Precells must share corners
+
+    Notes
+    -----
+    The list of pre-cells must be adjacent to each other.
     """
 
     def __init__(self, list_of_pre_cells: list[PreCell]):
-        """The list of pre-cells must be ajacent to each other."""
         self.pre_cells = list(list_of_pre_cells)
         for this_cell, next_cell in pairwise(self.pre_cells):
             # perform check that they are actually adjacent
@@ -382,7 +400,13 @@ class PreCellArray:
         self.check_convexity()
 
     def check_convexity(self):
-        """Check that the outermost points of self forms a convex hull."""
+        """Check that the outermost points of self forms a convex hull.
+
+        Raises
+        ------
+        GeometryError
+            PreCellArray is not convex
+        """
         if not is_convex(self.exterior_vertices()[:, ::2]):
             raise GeometryError(f"{self} must have convex exterior wires!")
 
@@ -504,7 +528,13 @@ class PreCellArray:
             self.pre_cells[index_or_slice] = new_pre_cell.pre_cells
 
     def __add__(self, other_array) -> PreCellArray:
-        """Adding two list together to create a new one."""
+        """Adding two list together to create a new one.
+
+        Raises
+        ------
+        TypeError
+            Operation not possible between types
+        """
         if isinstance(other_array, PreCellArray):
             return PreCellArray(self.pre_cells + other_array.pre_cells)
         raise TypeError(
@@ -517,7 +547,7 @@ class PreCellArray:
 
     def copy(self):
         """
-        NOT a deepcopy, each element of the new_copy.pre_cells list points to the same
+        Each element of the new_copy.pre_cells list points to the same
         items as the self.pre_cells
 
         Returns
@@ -682,7 +712,13 @@ class DivertorPreCell:
 
 
 class DivertorPreCellArray:
-    """An array of Divertor pre-cells"""
+    """An array of Divertor pre-cells
+
+    Raises
+    ------
+    GeometryError
+        Divertor precells must share corners
+    """
 
     def __init__(self, list_of_div_pc: list[DivertorPreCell]):
         self.pre_cells = list(list_of_div_pc)
@@ -696,7 +732,13 @@ class DivertorPreCellArray:
         self.check_convexity()
 
     def check_convexity(self):
-        """Check that the outermost points of self forms a convex hull."""
+        """Check that the outermost points of self forms a convex hull.
+
+        Raises
+        ------
+        GeometryError
+            Precell array is not convex
+        """
         if not is_convex(self.exterior_vertices()[:, ::2]):
             raise GeometryError(f"{self} must have convex exterior vertices!")
 

@@ -49,6 +49,11 @@ class CellWalls:
             where N = number of cells, so the axis=0 describes the N+1 walls on either
             side of each cell, the axis=1 describes the the start and end points, and
             axis=2 describes the r and z coordinates.
+
+        Raises
+        ------
+        ValueError
+            Array shape not correct
         """
         self.cell_walls = np.array(cell_walls)
         if np.shape(self.cell_walls)[1:] != (2, 2):
@@ -198,6 +203,11 @@ class CellWalls:
         """
         Ensure all cells have positive volumes, to minimise the risk of self-intersecting
         lines and negative lengths
+
+        Raises
+        ------
+        GeometryError
+            Cell has non positive volume
         """
         if not (all(self.volumes > 0) and all(self.lengths > 0)):
             raise GeometryError("At least 1 cell has non-positive volumes!")
