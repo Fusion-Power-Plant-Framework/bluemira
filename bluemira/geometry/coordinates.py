@@ -205,6 +205,11 @@ def get_normal_vector(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
     Returns
     -------
     The normalised normal vector
+
+    Raises
+    ------
+    CoordinatesError
+        Cannot find normal vector or arrays not of equal length >= 3
     """
     if len(x) < DIM:
         raise CoordinatesError(
@@ -1024,6 +1029,11 @@ def _parse_to_xyz_array(
 ) -> npt.NDArray:
     """
     Make a 3, N xyz array out of just about anything.
+
+    Raises
+    ------
+    CoordinatesError
+        Cannot instantiate coordinates
     """
     if isinstance(xyz_array, np.ndarray):
         xyz_array = _parse_array(xyz_array)
@@ -1145,6 +1155,11 @@ class Coordinates:
         ----------
         filename:
             Full path file name of the data
+
+        Raises
+        ------
+        CoordinatesError
+            Cannot read json file
         """
         try:
             with open(filename) as data:
@@ -1203,6 +1218,11 @@ class Coordinates:
         Whether or not the Coordinates are ordered in the counter-clockwise direction
         about a specified axis. If None is specified, the Coordinates normal vector will
         be used.
+
+        Raises
+        ------
+        CoordinatesError
+            axis must be of size 3
         """
         if len(self) < DIM:
             return False
@@ -1471,6 +1491,11 @@ class Coordinates:
             The direction vector
         degree:
             rotation angle [degrees]
+
+        Raises
+        ------
+        CoordinatesError
+            Base and direction must be of size 3
         """
         if degree == 0.0:
             return
@@ -1496,6 +1521,11 @@ class Coordinates:
         """
         Translate this shape with the vector. This function modifies the self
         object.
+
+        Raises
+        ------
+        CoordinatesError
+            vector must be of size 3
         """
         vector = np.array(vector)
         if vector.size != DIM:
@@ -1534,6 +1564,11 @@ class Coordinates:
             The pivot points' coordinates.
         index:
             The indices of the pivot points into the input points.
+
+        Raises
+        ------
+        ValueError
+            dx_min > dx_maz
         """
         if dx_min > dx_max:
             raise ValueError(

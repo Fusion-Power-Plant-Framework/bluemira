@@ -71,6 +71,11 @@ class BluemiraPlacement:
             Third point
         label:
             Label of the placement
+
+        Raises
+        ------
+        GeometryError
+            Points are co-linear
         """
         p1 = np.array(point_1)
         p2 = np.array(point_2)
@@ -188,7 +193,13 @@ class BluemiraPlacement:
 
     @classmethod
     def _create(cls, obj: cadapi.apiPlacement, label: str = "") -> BluemiraPlacement:
-        """Create a placement from a cadapi Placement"""
+        """Create a placement from a cadapi Placement
+
+        Raises
+        ------
+        TypeError
+            Can only be created with cadapi placement
+        """
         if isinstance(obj, cadapi.apiPlacement):
             placement = BluemiraPlacement(label=label)
             placement._shape = obj

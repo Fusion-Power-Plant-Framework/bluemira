@@ -12,21 +12,18 @@ from __future__ import annotations
 
 import copy
 import enum
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
+
+from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.bound_box import BoundingBox
+from bluemira.mesh import meshing
 
 if TYPE_CHECKING:
     import numpy as np
 
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.placement import BluemiraPlacement
-
-# import for abstract class
-from abc import ABC, abstractmethod
-
-# import freecad api
-from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.bound_box import BoundingBox
-from bluemira.mesh import meshing
 
 
 class GeoMeshable(meshing.Meshable):
@@ -120,6 +117,11 @@ class BluemiraGeo(ABC, GeoMeshable):
         Check if objects objs can be used as boundaries.
 
         Note: empty BluemiraGeo are allowed in case of objs == None.
+
+        Raises
+        ------
+        TypeError
+            Only given boundary classes can be the boundary
         """
         if objs is None:
             return objs

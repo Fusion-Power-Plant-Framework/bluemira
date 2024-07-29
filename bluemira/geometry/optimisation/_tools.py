@@ -123,7 +123,13 @@ def calculate_signed_distance(
 
 
 def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
-    """Make a keep-out zone inequality constraint from a wire."""
+    """Make a keep-out zone inequality constraint from a wire.
+
+    Raises
+    ------
+    GeometryOptimisationError
+        Koz wire is not closed
+    """
     if not koz.wire.is_closed():
         raise GeometryOptimisationError(
             f"Keep-out zone with label '{koz.wire.label}' is not closed."

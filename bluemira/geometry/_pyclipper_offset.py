@@ -272,9 +272,10 @@ def offset_clipper(
 
     Raises
     ------
-    GeometryError:
+    GeometryError
         If the Coordinates are not planar
         If the Coordinates are not closed
+        Results in no geometry
     """
     if not coordinates.is_planar:
         raise GeometryError("Cannot offset non-planar coordinates.")

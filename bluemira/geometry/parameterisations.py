@@ -138,6 +138,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         parameterisation. This is used when internal consistency between different
         un-fixed variables is required.
 
+        Raises
+        ------
+        GeometryParameterisationError
+            No inequality constraints
         """
         if self.n_ineq_constraints < 1:
             raise GeometryParameterisationError(
@@ -538,6 +542,11 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
             The x coordinates of the Princeton D shape
         z:
             The z coordinates of the Princeton D shape
+
+        Raises
+        ------
+        GeometryParameterisationError
+            Input parameters cannot create shape
 
         Notes
         -----
@@ -1630,6 +1639,11 @@ class PictureFrameTools:
         Returns
         -------
         CAD Wire of the geometry
+
+        Raises
+        ------
+        GeometryParameterisationError
+            Input parameters cannot create shape
         """
         # Pre-calculations necessary
         if not (z_bot < -z_taper < 0 < z_taper < z_top):
