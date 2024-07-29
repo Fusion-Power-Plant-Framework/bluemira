@@ -393,7 +393,9 @@ class TestEqReadWrite:
         new_file_name = f"eqref_OOB_temp1.{file_format}"
         new_file_path = Path(data_path, new_file_name)
 
-        eq = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
+        eq = Equilibrium.from_eqdsk(
+            Path(data_path, file_name), from_cocos=7, to_cocos=None
+        )
         # Note we have recalculated the qpsi data here
         eq.to_eqdsk(
             directory=data_path,
@@ -406,6 +408,7 @@ class TestEqReadWrite:
         eq2 = Equilibrium.from_eqdsk(
             new_file_path,
             from_cocos=7 if qpsi_calcmode else 3,
+            to_cocos=None,
             qpsi_sign=None if qpsi_calcmode else Sign.NEGATIVE,
         )
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
