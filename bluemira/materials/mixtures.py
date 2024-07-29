@@ -283,6 +283,11 @@ class HomogenisedMixture:
         Returns
         -------
         The mixture
+
+        Raises
+        ------
+        MaterialsError
+            No materials in material dictionary
         """
         mat_dict = copy.deepcopy(material_dict[name])
         if "materials" not in material_dict[name]:

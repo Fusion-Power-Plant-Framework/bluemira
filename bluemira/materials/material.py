@@ -409,7 +409,13 @@ class MassFractionMaterial:
     def __post_init__(
         self,
     ):
-        """Value checking for required args marked as optional"""
+        """Value checking for required args marked as optional
+
+        Raises
+        ------
+        MaterialsError
+            Neither elements or nuclides provided
+        """
         if not (self.elements or self.nuclides):
             raise MaterialsError("No elements or nuclides specified.")
 
