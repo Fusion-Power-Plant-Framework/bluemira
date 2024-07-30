@@ -88,7 +88,13 @@ class ViewDescriptor:
         return getattr(obj, self._name, self._default)
 
     def __set__(self, obj: Any, value: str | tuple | _placement.BluemiraPlacement):
-        """Set the view"""
+        """Set the view
+
+        Raises
+        ------
+        DisplayError
+            View not known
+        """
         if isinstance(value, str):
             if value.startswith("xy"):
                 value = _placement.XYZ
@@ -617,6 +623,11 @@ def _validate_plot_inputs(
 ) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
     Validate the lists of parts and options, applying some default options.
+
+    Raises
+    ------
+    DisplayError
+        Number of options not equal to number of parts
     """
     if not isinstance(parts, list):
         parts = [parts]
@@ -637,6 +648,11 @@ def _validate_plot_inputs(
 def _get_plotter_class(part):
     """
     Get the plotting class for a BluemiraGeo object.
+
+    Raises
+    ------
+    DisplayError
+        No plotter available for type of part
     """
     import bluemira.base.components  # noqa: PLC0415
 
