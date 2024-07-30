@@ -32,7 +32,7 @@ class TestReactionEnergies:
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _xfail_DD_He3p_erratum_erratum(request):
     """
     As far as I can tell, there is either something wrong with the parameterisation,

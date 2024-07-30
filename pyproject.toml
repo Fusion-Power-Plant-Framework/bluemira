@@ -78,7 +78,7 @@ pinned = [
     "numba==0.60.0",
     "numba-scipy==0.4.0",
     "numpy==1.26.4",
-    "matplotlib==3.9.0",
+    "matplotlib==3.9.1",
     "scipy==1.10.1",
 ]
 openmc = ["openmc>=0.14.0", "openmc_data"]
@@ -136,7 +136,7 @@ pythonpath = ['.', 'eudemo']
 [tool.ruff]
 target-version = "py310"
 line-length = 89
-
+output-format= "concise"
 exclude = [
     ".git",
     "__pycache__",
@@ -177,6 +177,7 @@ ignore = [
     "D301",
     "D400",
     "D401",
+    "DOC502",  # Omit non-explicit exceptions from docstrings
     "DTZ005",  # datetime timezone arg
     "E203",    # black/ruff format conflicts
     "FIX002",  # Line contains todo
@@ -190,6 +191,7 @@ ignore = [
     "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "SLF001",  # private method use
+    "DOC501",  # have raise in docstring
 
 ]
 
