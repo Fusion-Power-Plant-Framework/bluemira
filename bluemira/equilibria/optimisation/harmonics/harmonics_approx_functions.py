@@ -41,7 +41,7 @@ def ten_power(x):
     """Get the power for the base ten notation, set 0 to 0."""
     tp = np.array(np.floor(np.log10(np.abs(x))))
     # zero correct
-    tp[(x == 0)] = 0.
+    tp[(x == 0)] = 0.0
     return tp
 
 
@@ -62,8 +62,8 @@ def sig_fig_round(x, s, low_lim=-16):
 
     """
     tp = ten_power(x)
-    x_round = np.round(x / 10.**tp, s - 1) * 10.**tp
-    return (x_round * (tp >= low_lim))
+    x_round = np.round(x / 10.0**tp, s - 1) * 10.0**tp
+    return x_round * (tp >= low_lim)
 
 
 def coil_harmonic_amplitude_matrix(
@@ -355,14 +355,8 @@ def collocation_points(
         collocation_z = sig_fig_round(rect_grid.z[mask == 1], 8)
 
         # Spherical coordinates
-        collocation_r = sig_fig_round(
-            np.sqrt(collocation_x**2 + collocation_z**2),
-            8
-            )
-        collocation_theta = sig_fig_round(
-            np.arctan2(collocation_x, collocation_z),
-            8
-        )
+        collocation_r = sig_fig_round(np.sqrt(collocation_x**2 + collocation_z**2), 8)
+        collocation_theta = sig_fig_round(np.arctan2(collocation_x, collocation_z), 8)
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
@@ -681,8 +675,7 @@ def spherical_harmonic_approximation(
 
         # Calculate the coilset SH amplitudes for use in optimisation
         coil_current_harmonic_amplitudes = sig_fig_round(
-            currents2harmonics[:, :] @ currents,
-            8
+            currents2harmonics[:, :] @ currents, 8
         )
 
         # Set currents in coilset
