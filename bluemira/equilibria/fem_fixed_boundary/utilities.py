@@ -345,6 +345,11 @@ def get_flux_surfaces_from_mesh(
     flux_surfaces:
         The list of closed flux surfaces
 
+    Raises
+    ------
+    ValueError
+        nx or x_1d must be provided
+
     Notes
     -----
     x_1d is returned, as it is not always possible to return a flux surface for

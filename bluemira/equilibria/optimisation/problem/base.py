@@ -128,6 +128,11 @@ class CoilsetOptimisationProblem(abc.ABC):
         current_bounds: (np.narray, np.narray)
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
+
+        Raises
+        ------
+        EquilibriaError
+            Number of max currents not equal to number of optimisable currents
         """
         cc = coilset.get_control_coils()
 
@@ -171,6 +176,11 @@ class CoilsetOptimisationProblem(abc.ABC):
         ----------
         max_currents:
             Vector of maximum currents [A]
+
+        Raises
+        ------
+        ValueError
+            Length of max current vector must be equal to controls
         """
         n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         if len(max_currents) != n_control_currents:

@@ -447,6 +447,11 @@ class Profile:
         mask:
             The numpy array of 0/1 denoting the out/in points of the plasma in
             the grid
+
+        Raises
+        ------
+        EquilibriaError
+            O and X point are needed with LCFS or no o points found
         """
         if lcfs is not None:
             # This is for fixed boundary equilibrium handling
@@ -733,6 +738,11 @@ class CustomProfile(Profile):
     def parse_to_callable(unknown):
         """
         Make a callable out of an unknown input type
+
+        Raises
+        ------
+        TypeError
+            Cannot make opject callable
         """
         if callable(unknown):
             return unknown

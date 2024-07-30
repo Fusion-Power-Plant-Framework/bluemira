@@ -86,7 +86,13 @@ class RegularisedLsqObjective(ObjectiveFunction):
         self.gamma = gamma
 
     def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
-        """Objective function for an optimisation."""
+        """Objective function for an optimisation.
+
+        Raises
+        ------
+        EquilibriaError
+            Least squares result < 0 or NaN
+        """
         vector = vector * self.scale  # nlopt read only  # noqa: PLR6104
         fom, _ = regularised_lsq_fom(vector, self.a_mat, self.b_vec, self.gamma)
         if fom <= 0:
@@ -218,6 +224,11 @@ def regularised_lsq_fom(
         ||(Ax - b)||²/ len(b)] + ||Γx||²
     residual:
         Residual vector (Ax - b)
+
+    Raises
+    ------
+    EquilibriaError
+        Least squares result < 0 or NaN
     """
     residual = np.dot(a_mat, x) - b_vec
     number_of_targets = float(len(residual))

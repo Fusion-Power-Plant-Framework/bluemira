@@ -401,6 +401,11 @@ def find_OX_points(
 def _parse_OXp(x, z, psi, o_points, x_points):  # noqa: N802
     """
     Handles Op and Xp retrieval, depending on combinations of None/not None
+
+    Raises
+    ------
+    EquilibriaError
+        Not x-points and plasma not limited
     """
     if o_points is None and x_points is None:
         # The plasma is diverted
@@ -535,6 +540,11 @@ def find_flux_surf(
     The flux surface coordinate array
 
     \t:math:`{\\Psi}_{N} = {\\psi}_{O}-N({\\psi}_{O}-{\\psi}_{X})`
+
+    Raises
+    ------
+    EquilibriaError
+        No flux surface found at psi_norm
 
     Notes
     -----

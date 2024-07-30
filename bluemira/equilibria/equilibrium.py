@@ -190,6 +190,11 @@ class MHDState:
     ):
         """
         Writes the Equilibrium Object to an eqdsk file
+
+        Raises
+        ------
+        ValueError
+            Cant find data directory
         """
         filename = Path(filename)
         data["name"] = f"{filename}_{header}"
@@ -1229,8 +1234,13 @@ class Equilibrium(CoilSetMHDState):
         psi:
             The poloidal magnetic flux on the finite difference grid [V.s/rad]
 
-        Note
-        ----
+        Raises
+        ------
+        EquilibriaError
+            No O-point found
+
+        Notes
+        -----
         Modifies the following in-place:
             .plasma_psi
             .psi_func
@@ -1277,8 +1287,15 @@ class Equilibrium(CoilSetMHDState):
         psi:
             The 2-D array of poloidal magnetic flux at each (x, z) point (optional)
 
-        Note
-        ----
+        Raises
+        ------
+        EquilibriaError
+            No BetaLiIpProfile found
+        StopIteration
+            stop iterating
+
+        Notes
+        -----
         Modifies the following in-place:
 
             .plasma_psi
@@ -1302,6 +1319,11 @@ class Equilibrium(CoilSetMHDState):
         def minimise_dli(x):
             """
             The minimisation function to obtain the correct l_i
+
+            Raises
+            ------
+            StopIteration
+                Stop iterating
             """
             self.profiles.shape.adjust_parameters(x)
             jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
