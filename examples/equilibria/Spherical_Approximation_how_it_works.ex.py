@@ -272,7 +272,8 @@ collocation_psivac = psi_func.ev(collocation.x, collocation.z)
 # is set to be equal to number of collocation points - 1.
 
 # %%
-# The maximum number of degrees (max_degree) is set in the bluemira SH code but we need it here
+# The maximum number of degrees (max_degree) is set in the bluemira SH code
+# but we need it here
 max_degree = 12
 
 # Construct matrix from harmonic amplitudes for flux function at collocation points

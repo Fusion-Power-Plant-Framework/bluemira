@@ -149,8 +149,9 @@ plt.show()
 # ## Use in Optimisation Problem
 #
 # Now we will use the approximation to set up constraints for an optimisation problem.
-# We use the minimal current coilset optimisation problem with SH as the only constraints.
-# This will try to minimise the sum of the currents squared while constraining the coil contribution to the core psi.
+# We use minimal current coilset optimisation problem with SH as the only constraints.
+# This will try to minimise the sum of the currents squared while constraining the coil
+# contribution to the core psi.
 
 # %%
 # Use results of the spherical harmonic approximation to create a set of coil constraints
@@ -159,8 +160,8 @@ sh_constraint = SphericalHarmonicConstraint(
     r_t=r_t,
     sh_coil_names=sh_coil_names,
 )
-# Make sure we only optimise with coils outside the sphere containing the core plasma by setting
-# control coils using the list of appropriate coils
+# Make sure we only optimise with coils outside the sphere containing the core plasma by
+# setting control coils using the list of appropriate coils
 eq.coilset.control = list(sh_coil_names)
 
 # %%
@@ -177,7 +178,8 @@ _ = sh_con_len_opt.optimise()
 sh_eq.solve()
 
 # %%
-# We should not need to solve the GS equation while optimising if the SH approximation is sufficiently good, but we can have a look at what happens.
+# We should not need to solve the GS equation while optimising if the SH approximation
+# is sufficiently good, but we can have a look at what happens.
 sh_eq_solved = deepcopy(eq)
 sh_con_len_opt = MinimalCurrentCOP(
     eq=sh_eq_solved,
