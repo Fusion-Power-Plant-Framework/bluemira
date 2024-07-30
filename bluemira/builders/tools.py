@@ -129,6 +129,11 @@ def circular_pattern_component(
         the positive z axis, resulting in a counter clockwise circle in the x-y plane.
     degree:
         The angular extent of the patterning in degrees, by default 360.
+
+    Raises
+    ------
+    ComponentError
+        Could not find PhysicalComponent for a given sector
     """
     component = [component] if isinstance(component, Component) else component
     sectors = [Component(f"{parent_prefix}") for _ in range(n_children)]
@@ -333,6 +338,11 @@ def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]
 def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
     """
     Make a circular annulus in the x-y plane (z=0)
+
+    Raises
+    ------
+    BuilderError
+        Radii must not be negative and thicker than D_TOLERANCE
     """
     centre = (0, 0, 0)
     axis = (0, 0, 1)
@@ -425,6 +435,11 @@ def build_sectioned_xyz(
     Returns
     -------
     List of PhysicalComponents
+
+    Raises
+    ------
+    ValueError
+        The lengths of face, name, plot_colour, and material must be equal
 
     Notes
     -----

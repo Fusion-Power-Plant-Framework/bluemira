@@ -129,6 +129,11 @@ class CryostatBuilder(Builder):
         z_top:
             z coordinate extremity
 
+        Raises
+        ------
+        ValueError
+            Only internal kink supported
+
         Notes
         -----
         Only designed for an inward kink, outward kinks will fail

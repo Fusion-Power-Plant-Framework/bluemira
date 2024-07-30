@@ -62,6 +62,11 @@ def varied_offset(
     Returns
     -------
     New wire at a variable offset to the input.
+
+    Raises
+    ------
+    GeometryError
+        Wire must be planar
     """
     _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
     coordinates = wire.discretise(num_points, byedges=True)
