@@ -43,12 +43,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 from bluemira.display.plotter import Zorder
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    AutoConstraints,
-    FieldNullConstraint,
-    IsofluxConstraint,
-    MagneticConstraintSet,
-)
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
     spherical_harmonic_approximation,
@@ -58,8 +52,6 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.problem import (
     MinimalCurrentCOP,
-    TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.solve import (
     DudsonConvergence,

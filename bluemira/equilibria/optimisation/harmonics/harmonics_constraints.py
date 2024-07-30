@@ -63,11 +63,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
             tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
-            np.nan_to_num(tolerance,
-                          nan=smallest_tol,
-                          posinf=smallest_tol,
-                          neginf=smallest_tol
-                          )
+            np.nan_to_num(
+                tolerance, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
+            )
         elif is_num(tolerance):
             tolerance *= np.ones(len(ref_harmonics))
         elif len(tolerance) != len(ref_harmonics):
