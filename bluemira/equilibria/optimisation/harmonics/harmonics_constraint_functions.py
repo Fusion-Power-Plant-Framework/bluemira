@@ -54,4 +54,4 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
 
     def df_constraint(self, _vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
-        return self.scale * self.a_mat[:,]
+        return self.scale * self.a_mat
