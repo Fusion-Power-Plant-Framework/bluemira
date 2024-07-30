@@ -18,7 +18,6 @@ from bluemira.utilities.tools import (
     NumpyJSONEncoder,
     asciistr,
     cartesian_to_polar,
-    clip,
     compare_dicts,
     consec_repeat_elem,
     cross,
@@ -260,32 +259,6 @@ class TestCompareDicts:
             "c": "test",
         }
         assert compare_dicts(a, c, almost_equal=True, verbose=False)
-
-
-class TestClip:
-    def test_clip_array(self):
-        test_array = [0.1234, 1.0, 0.3, 1, 0.0, 0.756354, 1e-8, 0]
-        test_array = np.array(test_array)
-        test_array = clip(test_array, 1e-8, 1 - 1e-8)
-        expected_array = [0.1234, 1 - 1e-8, 0.3, 1 - 1e-8, 1e-8, 0.756354, 1e-8, 1e-8]
-        expected_array = np.array(expected_array)
-        assert np.allclose(test_array, expected_array)
-
-    def test_clip_float(self):
-        test_float = 0.1234
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 0.1234
-        assert np.allclose(test_float, expected_float)
-
-        test_float = 0.0
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 1e-8
-        assert np.allclose(test_float, expected_float)
-
-        test_float = 1.0
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 1 - 1e-8
-        assert np.allclose(test_float, expected_float)
 
 
 def test_consec_repeat_elem():

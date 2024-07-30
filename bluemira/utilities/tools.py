@@ -630,39 +630,6 @@ def compare_dicts(
     return the_same
 
 
-def clip(
-    val: npt.ArrayLike,
-    val_min: npt.ArrayLike,
-    val_max: npt.ArrayLike,
-) -> float | npt.NDArray[np.float64]:
-    """
-    Clips (limits) val between val_min and val_max.
-    This function wraps the numpy core umath minimum and maximum functions
-    in order to avoid the standard numpy clip function, as described in:
-    https://github.com/numpy/numpy/issues/14281
-
-    Handles scalars using built-ins.
-
-    Parameters
-    ----------
-    val:
-        The value to be clipped.
-    val_min:
-        The minimum value.
-    val_max:
-        The maximum value.
-
-    Returns
-    -------
-    The clipped values.
-    """
-    if isinstance(val, np.ndarray):
-        np.core.umath.clip(val, val_min, val_max, out=val)
-    else:
-        val = val_min if val < val_min else min(val, val_max)
-    return val
-
-
 def flatten_iterable(iters):
     """
     Expands a nested iterable structure, flattening it into one iterable
