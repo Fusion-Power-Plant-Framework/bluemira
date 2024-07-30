@@ -22,7 +22,13 @@ except ImportError:
 
 
 def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
-    """Make a plasma source"""
+    """Make a plasma source
+
+    Raises
+    ------
+    SourceError
+        Source not found
+    """
     if not PPS_ISO_INSTALLED:
         raise SourceError("pps_isotropic installation not found")
     return create_parametric_plasma_source(

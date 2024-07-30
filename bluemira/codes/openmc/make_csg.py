@@ -333,6 +333,10 @@ def choose_halfspace(
     surface:
         an openmc surface
 
+    Raises
+    ------
+    GeometryError
+        Point is directly on surface
     """
     pt = np.mean(to_cm(choice_points), axis=0)
     value = surface.evaluate(pt)
@@ -356,6 +360,10 @@ def choose_plane_cylinders(
     choice_points: np.ndarray of shape (N, 3)
         a list of points representing the vertices of a convex polygon in RZ plane
 
+    Raises
+    ------
+    GeometryError
+        Points on both sides of surface
     """
     x, y, z = np.array(to_cm(choice_points)).T
     values = surface.evaluate([x, y, z])
@@ -558,6 +566,11 @@ def make_coils(
     z_min
         z-coordinate of the the bottom z-plane shared by both cylinders
         (cs and tf coil)
+
+    Raises
+    ------
+    GeometryError
+        Thickness of TF coil and solenoid must be positive
     """
     if tf_coil_thick <= 0 or solenoid_radius <= 0:
         raise GeometryError(
@@ -622,7 +635,13 @@ def blanket_and_divertor_outer_regions(
 
 
 def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
-    """Get the plasma chamber's poloidal cross-section"""
+    """Get the plasma chamber's poloidal cross-section
+
+    Raises
+    ------
+    GeometryError
+        Geometry must be convex
+    """
     blanket_interior_pts = blanket.interior_vertices()
     dividing_surface = make_dividing_surface(csg, blanket)
     if not is_convex(blanket_interior_pts):
@@ -979,6 +998,11 @@ class BluemiraNeutronicsCSG:
         region
             openmc.Region, specifically (openmc.Halfspace) or
             (openmc.Union of 2 openmc.Halfspaces)
+
+        Raises
+        ------
+        GeometryError
+            cone construction invalid
         """
         # shrink to avoid floating point number comparison imprecision issues.
         # Especially important when the choice point sits exactly on the surface.
@@ -1183,6 +1207,11 @@ class BlanketCell(openmc.Cell):
             see :class:`openmc.Cell`
         fill
             see :class:`openmc.Cell`
+
+        Raises
+        ------
+        GeometryError
+            Ordering of wires results in negative volume
         """
         self.exterior_surface = exterior_surface
         self.ccw_surface = ccw_surface
@@ -1231,6 +1260,11 @@ class BlanketCellStack:
             BreedingZoneCell
             ManifoldCell
             VacuumVesselCell
+
+        Raises
+        ------
+        ValueError
+            Contiguous stack of cells expected
         """
         self.cell_stack = cell_stack
         for int_cell, ext_cell in pairwise(cell_stack):
@@ -1271,6 +1305,11 @@ class BlanketCellStack:
             (i.e. number of layers in the blanket). Each point has two dimensions
         direction_vector:
             direction that these points are all supposed to go towards.
+
+        Raises
+        ------
+        GeometryError
+            Crossing surfaces
         """
         direction = direction_vector / np.linalg.norm(direction_vector)
         projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction)
@@ -1320,6 +1359,11 @@ class BlanketCellStack:
         control_id
             Passed as argument onto
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
+
+        Raises
+        ------
+        GeometryError
+            Vertices must be convex
         """
         vertices = np.vstack((
             self.cell_stack[0].vertex.T[(1, 2),],
@@ -1377,6 +1421,11 @@ class BlanketCellStack:
         blanket_stack_num
             An optional number indexing the current stack. Used for labelling.
             If None: we will not be controlling the cell and surfaces id.
+
+        Raises
+        ------
+        TypeError
+            Incorrect number of edges on external wire
         """
         # check exterior wire is correct
         ext_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
@@ -1522,6 +1571,11 @@ class BlanketCellArray:
     ):
         """
         Create array from a list of BlanketCellStack
+
+        Raises
+        ------
+        GeometryError
+            Neighbouring cell stack not aligned
         """
         self.blanket_cell_array = blanket_cell_array
         self.poloidal_surfaces = [self.blanket_cell_array[0].ccw_surface]
@@ -1618,6 +1672,11 @@ class BlanketCellArray:
         control_id
             Passed as argument onto
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+
+        Raises
+        ------
+        GeometryError
+            Vertices must be convex
         """
         exclusion_zone_by_stack = []
         for stack in self.blanket_cell_array:
@@ -1775,6 +1834,11 @@ class DivertorCell(openmc.Cell):
     def get_volume(self):
         """
         Get the volume using the BluemiraWire of its own outline.
+
+        Raises
+        ------
+        GeometryError
+            Volume is negative
         """
         half_solid = BluemiraSolid(revolve_shape(self.outline))
         cm3_volume = to_cm3(half_solid.volume * 2)
@@ -1815,6 +1879,11 @@ class DivertorCell(openmc.Cell):
         control_id
             Passed as argument onto
             :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
+
+        Raises
+        ------
+        GeometryError
+            Interior and exterior wire vertices must be convex
         """
         if away_from_plasma:
             vertices_array = self.interior_wire.get_3D_coordinates()
@@ -1943,6 +2012,11 @@ class DivertorCellStack:
         control_id
             Passed as argument onto
             :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
+
+        Raises
+        ------
+        GeometryError
+            All vertices myst be convex
         """
         all_vertices = self.get_all_vertices()
         if not is_convex(all_vertices):
@@ -2071,7 +2145,13 @@ class DivertorCellArray:
     """Turn the divertor into a cell array"""
 
     def __init__(self, cell_array: list[DivertorCellStack]):
-        """Create array from a list of DivertorCellStack."""
+        """Create array from a list of DivertorCellStack.
+
+        Raises
+        ------
+        GeometryError
+            Neighbouring cell stack dont share the same poloidal wall
+        """
         self.cell_array = cell_array
         self.poloidal_surfaces = [self.cell_array[0].cw_surface]
         self.radial_surfaces = []

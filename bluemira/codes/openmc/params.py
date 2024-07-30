@@ -101,7 +101,15 @@ class PlasmaSourceParameters:
     plasma_physics_units: PlasmaSourceParameters | None = None
 
     def __post_init__(self):
-        """Check dimensionless variables are sensible."""
+        """Check dimensionless variables are sensible.
+
+        Raises
+        ------
+        GeometryError
+            Elongation and aspect ratio must be greater than 1
+        ValueError
+            Peaking factor >= 1
+        """
         if self.peaking_factor < 1.0:
             raise ValueError(
                 "Peaking factor (peak heat load/avg. heat load) "

@@ -83,7 +83,7 @@ class MappedParameterFrame(ParameterFrame):
 
         Raises
         ------
-        CodesError:
+        CodesError
             If a parameter name in the input does not match the name of
             a parameter in this frame.
         """
@@ -169,6 +169,13 @@ class ParameterMapping:
             Attribute to set (name can only be set on init)
         value:
             Value of attribute
+
+        Raises
+        ------
+        KeyError
+            Cannot set attribute
+        ValueError
+            Attribute must be a boolean
         """
         if (
             attr not in {"send", "recv", "name", "out_name", "unit", "_frozen"}

@@ -40,6 +40,11 @@ class BaseRunMode(enum.Enum):
         ----------
         mode_str:
             The run mode's name.
+
+        Raises
+        ------
+        ValueError
+            Unknown run mode
         """
         for run_mode_str, enum_value in cls.__members__.items():
             if run_mode_str.lower() == mode_str.lower():
@@ -65,6 +70,11 @@ class CodesTask(abc.ABC):
         """
         Run a subprocess command and raise a CodesError if it returns a
         non-zero exit code.
+
+        Raises
+        ------
+        CodesError
+            Non zero exit code
         """
         return_code = run_subprocess(command, **kwargs)
         if return_code != 0:
@@ -112,6 +122,11 @@ class CodesSetup(CodesTask):
         -------
         Keys are external code parameter names, values are the input
         values for those parameters.
+
+        Raises
+        ------
+        TypeError
+            remapper must be callable or a dictionary
         """
         _inputs = {}
 

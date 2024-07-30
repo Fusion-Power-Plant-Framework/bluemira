@@ -228,6 +228,11 @@ class Solver(CodesSolver):
         Returns
         -------
         The scalar plasmod outputs.
+
+        Raises
+        ------
+        CodesError
+            plasmod must be run before there are outputs
         """
         try:
             return self._teardown.outputs

@@ -121,6 +121,11 @@ class Setup(CodesSetup):
     def _write_input(self):
         """
         Write inputs to file to be read by plasmod.
+
+        Raises
+        ------
+        CodesError
+            Cannot write input file
         """
         try:
             with open(self.plasmod_input_file, "w") as io_stream:

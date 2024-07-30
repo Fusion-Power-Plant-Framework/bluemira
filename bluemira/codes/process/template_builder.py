@@ -86,6 +86,11 @@ class PROCESSTemplateBuilder:
     def set_maximisation_objective(self, objective: Objective):
         """
         Set the maximisation objective equation to use when running PROCESS
+
+        Raises
+        ------
+        ValueError
+            Objective can only be a minimisation
         """
         minmax = objective.value
         if minmax in OBJECTIVE_MIN_ONLY:
@@ -127,6 +132,11 @@ class PROCESSTemplateBuilder:
     ):
         """
         Add an f-value constraint to the PROCESS run
+
+        Raises
+        ------
+        ValueError
+            Constraint not an f-value constraint
         """
         if constraint.value not in FV_CONSTRAINT_ITVAR_MAPPING:
             raise ValueError(
@@ -149,6 +159,11 @@ class PROCESSTemplateBuilder:
     ):
         """
         Add an iteration variable to the PROCESS run
+
+        Raises
+        ------
+        ValueError
+            Iteration variable not found
         """
         itvar = ITERATION_VAR_MAPPING.get(name, None)
         if not itvar:
@@ -183,6 +198,11 @@ class PROCESSTemplateBuilder:
     ):
         """
         Adjust an iteration variable in the PROCESS run
+
+        Raises
+        ------
+        ValueError
+            No iteration variable found
         """
         itvar = ITERATION_VAR_MAPPING.get(name, None)
         if not itvar:
