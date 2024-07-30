@@ -37,6 +37,35 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
 
 
+def ten_power(x):
+    """Get the power for the base ten notation, set 0 to 0."""
+    tp = np.array(np.floor(np.log10(np.abs(x))))
+    # zero correct
+    tp[(x == 0)] = 0.
+    return tp
+
+
+def sig_fig_round(x, s, low_lim=-16):
+    """
+    Fuction to round to a given number of significant figures,
+    with any number below a lower limit set to zero.
+
+    Parameters
+    ----------
+    x:
+        value or values to round.
+    s:
+        number of significant figures
+    low_lim:
+        power below which values are set to 0,
+        default: low_lim = -16 (i.e, numbers below 1e-16)
+
+    """
+    tp = ten_power(x)
+    x_round = np.round(x / 10.**tp, s - 1) * 10.**tp
+    return (x_round * (tp >= low_lim))
+
+
 def coil_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     max_degree: int,
@@ -110,7 +139,7 @@ def coil_harmonic_amplitude_matrix(
         / np.sqrt(degrees * (degrees + 1))
     )
 
-    return np.array(currents2harmonics, dtype=np.float32)
+    return sig_fig_round(currents2harmonics, 8)
 
 
 def harmonic_amplitude_marix(
@@ -169,7 +198,7 @@ def harmonic_amplitude_marix(
         / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
     )
 
-    return np.array(harmonics2collocation, dtype=np.float32)
+    return sig_fig_round(harmonics2collocation, 8)
 
 
 class PointType(Enum):
@@ -322,19 +351,18 @@ def collocation_points(
         mask = in_zone(
             rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
         )
-        collocation_x = np.array(rect_grid.x[mask == 1], dtype=np.float32)
-        collocation_z = np.array(rect_grid.z[mask == 1], dtype=np.float32)
+        collocation_x = sig_fig_round(rect_grid.x[mask == 1], 8)
+        collocation_z = sig_fig_round(rect_grid.z[mask == 1], 8)
 
         # Spherical coordinates
-        collocation_r = np.array(
+        collocation_r = sig_fig_round(
             np.sqrt(collocation_x**2 + collocation_z**2),
-            dtype=np.float32
+            8
             )
-        collocation_theta = np.array(
+        collocation_theta = sig_fig_round(
             np.arctan2(collocation_x, collocation_z),
-            dtype=np.float32
-            )
-
+            8
+        )
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
@@ -490,14 +518,14 @@ def get_psi_harmonic_amplitudes(
     )
 
     # Account for matrix condition number
-    cond_num_h2c = np.floor(np.log10(np.abs(np.linalg.cond(harmonics2collocation))))
+    cond_num_h2c = ten_power(np.linalg.cond(harmonics2collocation))
     rcond = min(1e-8, 1e-16 - 10**cond_num_h2c)
     # Fit harmonics to match values at collocation points
     psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
         harmonics2collocation, collocation_psivac, rcond=rcond
     )
 
-    return np.array(psi_harmonic_amplitudes, dtype=np.float32)
+    return sig_fig_round(psi_harmonic_amplitudes, 8)
 
 
 def spherical_harmonic_approximation(
@@ -644,7 +672,7 @@ def spherical_harmonic_approximation(
         )
 
         # Account for matrix condition number
-        cond_num_c2h = np.floor(np.log10(np.abs(np.linalg.cond(currents2harmonics))))
+        cond_num_c2h = ten_power(np.linalg.cond(currents2harmonics))
         rcond = min(1e-8, 1e-16 - 10**cond_num_c2h)
         # Calculate necessary coil currents
         currents, _residual, _rank, _s = np.linalg.lstsq(
@@ -652,9 +680,9 @@ def spherical_harmonic_approximation(
         )
 
         # Calculate the coilset SH amplitudes for use in optimisation
-        coil_current_harmonic_amplitudes = np.array(
+        coil_current_harmonic_amplitudes = sig_fig_round(
             currents2harmonics[:, :] @ currents,
-            dtype=np.float32
+            8
         )
 
         # Set currents in coilset

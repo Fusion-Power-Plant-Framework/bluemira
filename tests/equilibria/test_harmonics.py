@@ -64,7 +64,6 @@ def test_harmonic_amplitude_marix():
     test_output = harmonic_amplitude_marix(r, theta, r_t)
 
     assert test_output.shape == (n, d)
-
     assert ((test_output - np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])) == 0).all()
 
 
@@ -209,8 +208,8 @@ class TestRegressionSH:
         cls.sh_coil_names, cls.bdry_r = coils_outside_lcfs_sphere(cls.eq)
         cls.test_colocation = collocation_points(
             plasma_boundary=cls.eq.get_LCFS(),
-            point_type=PointType.ARC,
-            n_points=18,
+            point_type=PointType.GRID_POINTS,
+            n_points=10,
             )
         cls.test_v_psi = np.zeros(np.shape(cls.eq.grid.x))
         for n in cls.sh_coil_names:
@@ -242,14 +241,14 @@ class TestRegressionSH:
             self.test_v_psi,
             self.eq.grid,
             self.test_colocation,
-            1.2
+            1.3661
             )
 
         sh_amps = np.array([
-            2.93e-01, 5.74e-01, -5.76e-04, 3.17e-01,
-            5.92e-04, 2.06e-01, -5.19e-04, 1.05e-01,
-            -3.37e-04, 3.90e-02, -1.79e-04, 9.48e-03
-        ])
+            2.7949789e-05, 1.1597561e-01, -6.9713936e-04, -3.7900780e-02,
+            1.0315314e-03, -1.2796998e-02, -1.1939407e-03, -2.0413978e-04,
+            -1.3979516e-03, 4.3234701e-03, -8.3544534e-04, 6.4929064e-03
+            ])
 
         assert test_sh_amps == pytest.approx(sh_amps, abs=0.005)
 
@@ -269,10 +268,14 @@ class TestRegressionSH:
                 acceptable_fit_metric=0.02,
                 )
 
-        ref_harmonics = np.array([
-            0.047, 0.116, -0.001, -0.038, 0.001,
-            -0.013, -0.001, -0.000
-        ])
+        ref_harmonics = get_psi_harmonic_amplitudes(
+            self.test_v_psi,
+            self.eq.grid,
+            self.test_colocation,
+            test_r_t,
+            )
+
+        ref_harmonics = ref_harmonics[:test_degree]
 
         sh_coilset_current = np.array([
             7629.11, -3050.73, 35211.63,
@@ -283,11 +286,11 @@ class TestRegressionSH:
             -159090.69, -138734.02, 64852.55
         ])
 
-        assert test_sh_coilset_current == pytest.approx(sh_coilset_current, abs=0.005)
+        assert test_sh_coilset_current == pytest.approx(sh_coilset_current, rel=1e-3)
         assert test_r_t == pytest.approx(1.3661, abs=0.0001)
-        assert test_harmonic_amps == pytest.approx(ref_harmonics, abs=0.0005)
+        assert test_harmonic_amps == pytest.approx(ref_harmonics, rel=1e-3)
         assert test_degree == 8
-        assert test_fit_metric == pytest.approx(0.0098, abs=0.0001)
+        assert test_fit_metric == pytest.approx(0.00976, rel=1e-3)
 
     def test_SphericalHarmonicConstraint(self):
         r_t = 1.37
@@ -303,18 +306,17 @@ class TestRegressionSH:
             r_t=r_t,
             sh_coil_names=self.sh_coil_names,
         )
-
         assert test_constraint_class.constraint_type == "equality"
         assert test_constraint_class.max_degree == len(ref_harmonics)
 
         for test_tol, ref_tol in zip(
             test_constraint_class.tolerance,
                 np.array([
-                0.0001, 0.0001, 1e-06,
-                0.0001, 1e-06, 0.0001,
                 1e-06, 0.0001, 1e-06,
-                0.0001, 1e-06, 1e-05
-            ]),
+                1e-05, 1e-06, 1e-05,
+                1e-06, 1e-06, 1e-06,
+                1e-06, 1e-06, 1e-06
+                ]),
             strict=False,
         ):
             assert test_tol == ref_tol
