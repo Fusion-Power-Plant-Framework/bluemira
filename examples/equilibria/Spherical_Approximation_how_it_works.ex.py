@@ -272,16 +272,22 @@ collocation_psivac = psi_func.ev(collocation.x, collocation.z)
 # is set to be equal to number of collocation points - 1.
 
 # %%
-# max_degree is set in the bluemira SH code but we need it here
-max_degree = len(collocation.x) - 1
+# The maximum number of degrees (max_degree) is set in the bluemira SH code
+# but we need it here
+max_degree = 12
 
 # Construct matrix from harmonic amplitudes for flux function at collocation points
 harmonics2collocation = harmonic_amplitude_marix(collocation.r, collocation.theta, r_t)
 
+# Account for matrix condition number
+cond_num_h2c = np.floor(np.log10(np.abs(np.linalg.cond(harmonics2collocation))))
+rcond = min(1e-8, 1e-16 - 10**cond_num_h2c)
+
 # Fit harmonics to match values at collocation points
 psi_harmonic_amplitudes, _, _, _ = np.linalg.lstsq(
-    harmonics2collocation, collocation_psivac, rcond=None
+    harmonics2collocation, collocation_psivac, rcond=rcond
 )
+psi_harmonic_amplitudes = np.array(psi_harmonic_amplitudes, dtype=np.float32)
 
 # %% [markdown]
 # ### Selecting the required degrees for the approximation
@@ -440,9 +446,13 @@ for degree in np.arange(min_degree, max_degree):  # + 1):
         sh_coil_names,
     )
 
+    # Account for matrix condition number
+    cond_num_c2h = np.floor(np.log10(np.abs(np.linalg.cond(currents2harmonics))))
+    rcond = min(1e-8, 1e-16 - 10**cond_num_c2h)
+
     # Calculate necessary coil currents
     currents, _, _, _ = np.linalg.lstsq(
-        currents2harmonics[1:, :], (psi_harmonic_amplitudes[1:degree]), rcond=None
+        currents2harmonics[1:, :], (psi_harmonic_amplitudes[1:degree]), rcond=rcond
     )
 
     # Calculate the coefficients (amplitudes) of spherical harmonics
@@ -478,7 +488,7 @@ for degree in np.arange(min_degree, max_degree):  # + 1):
     # Compare staring equilibrium to new approximate equilibrium
     fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
 
-    print("fit metric = ", fit_metric_value, "degree required = ", degree)
+    print("fit metric = ", fit_metric_value, "number of degrees required = ", degree)
 
     if fit_metric_value <= acceptable:
         break

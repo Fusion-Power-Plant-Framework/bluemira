@@ -37,6 +37,35 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
 
 
+def ten_power(x):
+    """Get the power for the base ten notation, set 0 to 0."""
+    tp = np.array(np.floor(np.log10(np.abs(x))))
+    # zero correct
+    tp[(x == 0)] = 0.0
+    return tp
+
+
+def sig_fig_round(x, s, low_lim=-16):
+    """
+    Fuction to round to a given number of significant figures,
+    with any number below a lower limit set to zero.
+
+    Parameters
+    ----------
+    x:
+        value or values to round.
+    s:
+        number of significant figures
+    low_lim:
+        power below which values are set to 0,
+        default: low_lim = -16 (i.e, numbers below 1e-16)
+
+    """
+    tp = ten_power(x)
+    x_round = np.round(x / 10.0**tp, s - 1) * 10.0**tp
+    return x_round * (tp >= low_lim)
+
+
 def coil_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     max_degree: int,
@@ -110,7 +139,7 @@ def coil_harmonic_amplitude_matrix(
         / np.sqrt(degrees * (degrees + 1))
     )
 
-    return currents2harmonics
+    return sig_fig_round(currents2harmonics, 8)
 
 
 def harmonic_amplitude_marix(
@@ -147,16 +176,20 @@ def harmonic_amplitude_marix(
         Matrix of harmonic amplitudes (to get spherical harmonic coefficients
         use matrix @ coefficients = vector psi_vacuum at collocation points)
     """
-    # Maximum degree of harmonic to calculate up to = n_collocation - 1
+    # Maximum number of degree of harmonic to calculate up to is n_collocation - 1
+    # or 12 (i.e., l=11) if there are lots of collocation points,
+    # do not need to go higher (see Bardsley et al, 2024,  Plasma Phys. Control. Fusion)
+    # in order to acheive a vary low fit metric for the approximation.
     # [number of points, number of degrees]
     n = len(collocation_r)
-    harmonics2collocation = np.zeros([n, n - 1])
+    n_deg = min(n - 1, 12)
+    harmonics2collocation = np.zeros([n, n_deg])
     # First 'harmonic' is constant (this line avoids Nan issues)
     harmonics2collocation[:, 0] = 1
 
     # SH coefficient matrix
     # SH coefficients = harmonics2collocation \ vector psi_vacuum at collocation points
-    degrees = np.arange(1, n - 1)[None]
+    degrees = np.arange(1, n_deg)[None]
     ones = np.ones_like(degrees)
     harmonics2collocation[:, 1:] = (
         collocation_r[:, None] ** (degrees + 1)
@@ -165,7 +198,7 @@ def harmonic_amplitude_marix(
         / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
     )
 
-    return harmonics2collocation
+    return sig_fig_round(harmonics2collocation, 8)
 
 
 class PointType(Enum):
@@ -318,13 +351,12 @@ def collocation_points(
         mask = in_zone(
             rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
         )
-        collocation_x = rect_grid.x[mask == 1]
-        collocation_z = rect_grid.z[mask == 1]
+        collocation_x = sig_fig_round(rect_grid.x[mask == 1], 8)
+        collocation_z = sig_fig_round(rect_grid.z[mask == 1], 8)
 
         # Spherical coordinates
-        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
-        collocation_theta = np.arctan2(collocation_x, collocation_z)
-
+        collocation_r = sig_fig_round(np.sqrt(collocation_x**2 + collocation_z**2), 8)
+        collocation_theta = sig_fig_round(np.arctan2(collocation_x, collocation_z), 8)
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
@@ -479,12 +511,15 @@ def get_psi_harmonic_amplitudes(
         collocation.r, collocation.theta, r_t
     )
 
+    # Account for matrix condition number
+    cond_num_h2c = ten_power(np.linalg.cond(harmonics2collocation))
+    rcond = min(1e-8, 1e-16 - 10**cond_num_h2c)
     # Fit harmonics to match values at collocation points
     psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
-        harmonics2collocation, collocation_psivac, rcond=None
+        harmonics2collocation, collocation_psivac, rcond=rcond
     )
 
-    return psi_harmonic_amplitudes
+    return sig_fig_round(psi_harmonic_amplitudes, 8)
 
 
 def spherical_harmonic_approximation(
@@ -609,7 +644,7 @@ def spherical_harmonic_approximation(
     # Set min to save some time
     min_degree = 2
     # Can't have more degrees then sampled psi
-    max_degree = len(collocation.x) - 1
+    max_degree = min(len(collocation.x) - 1, 12)
 
     sh_eq = deepcopy(eq)
 
@@ -630,13 +665,18 @@ def spherical_harmonic_approximation(
             eq.coilset, degree, r_t, sh_coil_names
         )
 
+        # Account for matrix condition number
+        cond_num_c2h = ten_power(np.linalg.cond(currents2harmonics))
+        rcond = min(1e-8, 1e-16 - 10**cond_num_c2h)
         # Calculate necessary coil currents
         currents, _residual, _rank, _s = np.linalg.lstsq(
-            currents2harmonics[1:, :], (psi_harmonic_amplitudes[1:degree]), rcond=None
+            currents2harmonics[:, :], (psi_harmonic_amplitudes[:degree]), rcond=rcond
         )
 
         # Calculate the coilset SH amplitudes for use in optimisation
-        coil_current_harmonic_amplitudes = currents2harmonics[1:, :] @ currents
+        coil_current_harmonic_amplitudes = sig_fig_round(
+            currents2harmonics[:, :] @ currents, 8
+        )
 
         # Set currents in coilset
         for n, i in zip(sh_coil_names, currents, strict=False):

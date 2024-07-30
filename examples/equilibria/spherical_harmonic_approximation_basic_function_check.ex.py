@@ -31,10 +31,9 @@ Usage of the 'spherical_harmonic_approximation' function.
 # Bluemira spherical harmonics approximation function
 # (spherical_harmonic_approximation) which can be used
 # in coilset current and position optimisation for spherical tokamaks.
-# For an example of how spherical_harmonic_approximation is used
-# please see, <TODO add link>
 
 # %%
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -48,6 +47,16 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     PointType,
     spherical_harmonic_approximation,
 )
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
+    SphericalHarmonicConstraint,
+)
+from bluemira.equilibria.optimisation.problem import (
+    MinimalCurrentCOP,
+)
+from bluemira.equilibria.solve import (
+    DudsonConvergence,
+    PicardIterator,
+)
 
 plot_defaults()
 
@@ -58,9 +67,8 @@ plot_defaults()
 file_path = Path(
     get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
 )
-
-# Plot
 eq = Equilibrium.from_eqdsk(file_path.as_posix())
+# Plot
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
@@ -96,7 +104,7 @@ plt.show()
     eq,
     n_points=10,
     point_type=PointType.GRID_POINTS,
-    acceptable_fit_metric=0.01,
+    acceptable_fit_metric=0.02,
     seed=15,
     plot=True,
 )
@@ -135,4 +143,70 @@ plot.set_title("approx_total_psi")
 plot.contour(
     eq.grid.x, eq.grid.z, psi, levels=levels, cmap="viridis", zorder=Zorder.PSI.value
 )
+plt.show()
+
+# %% [markdown]
+# ## Use in Optimisation Problem
+#
+# Now we will use the approximation to set up constraints for an optimisation problem.
+# We use minimal current coilset optimisation problem with SH as the only constraints.
+# This will try to minimise the sum of the currents squared while constraining the coil
+# contribution to the core psi.
+
+# %%
+# Use results of the spherical harmonic approximation to create a set of coil constraints
+sh_constraint = SphericalHarmonicConstraint(
+    ref_harmonics=coil_current_harmonic_amplitudes,
+    r_t=r_t,
+    sh_coil_names=sh_coil_names,
+)
+# Make sure we only optimise with coils outside the sphere containing the core plasma by
+# setting control coils using the list of appropriate coils
+eq.coilset.control = list(sh_coil_names)
+
+# %%
+# Make a copy of the equilibria
+sh_eq = deepcopy(eq)
+# Set up a coilset optimisation problem using the spherical harmonic constraint
+sh_con_len_opt = MinimalCurrentCOP(
+    eq=sh_eq, coilset=sh_eq.coilset, max_currents=6.0e8, constraints=[sh_constraint]
+)
+# Find the optimised coilset
+_ = sh_con_len_opt.optimise()
+
+# Update plasma - one solve
+sh_eq.solve()
+
+# %%
+# We should not need to solve the GS equation while optimising if the SH approximation
+# is sufficiently good, but we can have a look at what happens.
+sh_eq_solved = deepcopy(eq)
+sh_con_len_opt = MinimalCurrentCOP(
+    eq=sh_eq_solved,
+    coilset=sh_eq_solved.coilset,
+    max_currents=6.0e8,
+    constraints=[sh_constraint],
+)
+
+# SOLVE
+program = PicardIterator(
+    sh_eq_solved,
+    sh_con_len_opt,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-2),
+    relaxation=0.1,
+    maxiter=100,
+    plot=False,
+)
+program()
+
+# %%
+# Plot the two approches
+f, (ax_1, ax_2) = plt.subplots(1, 2)
+
+sh_eq.plot(ax=ax_1)
+ax_1.set_title("Coils Optimised")
+
+sh_eq_solved.plot(ax=ax_2)
+ax_2.set_title("Coils Optimised while GS solved")
 plt.show()
