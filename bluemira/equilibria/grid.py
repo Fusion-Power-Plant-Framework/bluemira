@@ -21,7 +21,11 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import get_area_2d, get_centroid_2d
 
 if TYPE_CHECKING:
-    from bluemira.equilibria.file import EQDSKInterface
+    from collections.abc import Iterable
+
+    import numpy.typing as npt
+    from eqdsk import EQDSKInterface
+
 
 __all__ = ["Grid", "integrate_dx_dz", "revolved_volume", "volume_integral"]
 
@@ -33,17 +37,17 @@ class Grid:
 
     Parameters
     ----------
-    x_min: float > 0
-        Minimum x grid coordinate [m]
-    x_max: float
+    x_min:
+        Minimum x grid coordinate (>0) [m]
+    x_max:
         Maximum x grid coordinate [m]
-    z_min: float
+    z_min:
         Minimum z grid coordinate [m]
-    z_max: float
+    z_max:
         Maximum z grid coordinate [m]
-    nx: int
+    nx:
         Number of x grid points
-    nz: int
+    nz:
         Number of z grid points
     """
 
@@ -68,12 +72,13 @@ class Grid:
         "z_size",
     )
 
-    def __init__(self, x_min, x_max, z_min, z_max, nx, nz):
+    def __init__(
+        self, x_min: float, x_max: float, z_min: float, z_max: float, nx: int, nz: int
+    ):
         if x_min == x_max or z_min == z_max:
             raise EquilibriaError("Invalid Grid dimensions specified.")
 
         if x_min > x_max:
-            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"x_min should be < x_max {x_min:.2f} > {x_max:.2f}. Switching x_min and"
                 " x_max."
@@ -81,7 +86,6 @@ class Grid:
             x_min, x_max = x_max, x_min
 
         if z_min > z_max:
-            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"z_min should be < z_max {z_min:.2f} > {z_max:.2f}. Switching z_min and"
                 " z_max."
@@ -92,14 +96,12 @@ class Grid:
             x_min = X_AXIS_MIN
 
         if nx < MIN_N_DISCR:
-            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"Insufficient nx discretisation: {nx}, setting to {MIN_N_DISCR}."
             )
             nx = MIN_N_DISCR
 
         if nz < MIN_N_DISCR:
-            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"Insufficient nx discretisation: {nz}, setting to {MIN_N_DISCR}."
             )
@@ -131,7 +133,7 @@ class Grid:
         ])
 
     @classmethod
-    def from_eqdict(cls, e):
+    def from_eqdict(cls, e) -> Grid:
         """
         Initialise a Grid object from an EQDSK dictionary.
 
@@ -150,13 +152,13 @@ class Grid:
         )
 
     @classmethod
-    def from_eqdsk(cls, e: EQDSKInterface):
+    def from_eqdsk(cls, e: EQDSKInterface) -> Grid:
         """
         Initialise a Grid object from an EQDSKInterface.
 
         Parameters
         ----------
-        e: EQDSKInterface
+        e:
 
         """
         return cls(
@@ -168,15 +170,15 @@ class Grid:
             e.nz,
         )
 
-    def point_inside(self, x, z=None):
+    def point_inside(self, x: float | Iterable[float], z: float | None = None) -> bool:
         """
         Determine if a point is inside the rectangular grid (includes edges).
 
         Parameters
         ----------
-        x: Union[float, Iterable]
+        x:
             The x coordinate of the point. Or the 2-D point.
-        z: Optional[float]
+        z:
             The z coordinate of the point
 
         Returns
@@ -193,20 +195,22 @@ class Grid:
             and (z <= self.z_max)
         )
 
-    def distance_to(self, x, z=None):
+    def distance_to(
+        self, x: float | Iterable[float], z: float | None = None
+    ) -> npt.NDArray[np.float64]:
         """
         Get the distances of a point to the edges of the Grid.
 
         Parameters
         ----------
-        x: Union[float, Iterable]
+        x:
             The x coordinate of the point. Or the 2-D point.
-        z: Optional[float]
+        z:
             The z coordinate of the point
 
         Returns
         -------
-        distances: np.ndarray
+        distances:
             Distances to the edges of the Grid.
         """
         if z is None:

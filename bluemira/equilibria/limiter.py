@@ -8,13 +8,18 @@
 Limiter object class
 """
 
+from __future__ import annotations
+
 from itertools import cycle
+from typing import TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
-from matplotlib.pyplot import Axes
 
 from bluemira.equilibria.plotting import LimiterPlotter
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.pyplot import Axes
 
 __all__ = ["Limiter"]
 

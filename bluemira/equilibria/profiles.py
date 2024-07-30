@@ -16,13 +16,14 @@ import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import numpy.typing as npt
+from eqdsk import EQDSKInterface
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
 from bluemira.base.constants import MU_0
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
 from bluemira.equilibria.plotting import ProfilePlotter
@@ -31,7 +32,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from bluemira.equilibria.find import Opoint, Optional, Xpoint
+    from eqdsk.models import Sign
+
+    from bluemira.equilibria.find import Opoint, Xpoint
 
 __all__ = [
     "BetaIpProfile",
@@ -50,7 +53,7 @@ __all__ = [
 def fitfunc(
     func: Callable[[float], float],
     data: npt.NDArray[np.float64],
-    order: Optional[int] = None,
+    order: int | None = None,
 ) -> npt.NDArray[np.float64]:
     """
     Uses scipy's curve_fit to fit 1-D data to a custom function
@@ -217,7 +220,7 @@ class ShapeFunction:
     """
 
     @classmethod
-    def from_datafit(cls, data: npt.NDArray[np.float64], order: Optional[int] = None):
+    def from_datafit(cls, data: npt.NDArray[np.float64], order: int | None = None):
         """
         Defines function from a dataset, fit using scipy curve_fit
         """
@@ -417,7 +420,7 @@ class Profile:
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
         x_points: list[Xpoint],
-        lcfs: Optional[np.ndarray] = None,
+        lcfs: np.ndarray | None = None,
     ) -> tuple[float, float, npt.NDArray[np.float64]]:
         """
         Do-not-repeat-yourself utility
@@ -534,7 +537,7 @@ class BetaIpProfile(Profile):
         I_p: float,
         R_0: float,
         B_0: float,
-        shape: Optional[ShapeFunction] = None,
+        shape: ShapeFunction | None = None,
     ):
         self.betap = betap
         self.I_p = I_p
@@ -672,7 +675,7 @@ class BetaLiIpProfile(BetaIpProfile):
         I_p: float,
         R_0: float,
         B_0: float,
-        shape: Optional[ShapeFunction] = None,
+        shape: ShapeFunction | None = None,
         li_rel_tol: float = 0.015,
         li_min_iter: int = 5,
     ):
@@ -708,9 +711,9 @@ class CustomProfile(Profile):
         ffprime_func: npt.NDArray[np.float64] | Callable[[float]] | float,
         R_0: float,
         B_0: float,
-        p_func: Optional[npt.NDArray[np.float64] | Callable[[float]] | float] = None,
-        f_func: Optional[npt.NDArray[np.float64] | Callable[[float]] | float] = None,
-        I_p: Optional[float] = None,
+        p_func: npt.NDArray[np.float64] | Callable[[float]] | float | None = None,
+        f_func: npt.NDArray[np.float64] | Callable[[float]] | float | None = None,
+        I_p: float | None = None,
     ):
         self._pprime_in = self.parse_to_callable(pprime_func)
         self._ffprime_in = self.parse_to_callable(ffprime_func)
@@ -799,17 +802,37 @@ class CustomProfile(Profile):
         return super().fRBpol(psinorm)
 
     @classmethod
-    def from_eqdsk(cls, filename: Path | str) -> CustomProfile:
+    def from_eqdsk_file(
+        cls,
+        filename: Path | str,
+        from_cocos: int | None = 11,
+        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
+        qpsi_sign: Sign | int | None = None,
+        **kwargs,
+    ) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk file
         """
-        e = EQDSKInterface.from_file(filename)
+        e = EQDSKInterface.from_file(
+            filename,
+            from_cocos=from_cocos,
+            to_cocos=to_cocos,
+            qpsi_sign=qpsi_sign,
+            **kwargs,
+        )
+        return cls.from_eqdsk(e)
+
+    @classmethod
+    def from_eqdsk(cls, eq: EQDSKInterface) -> CustomProfile:
+        """
+        Initialises a CustomProfile object from an eqdsk object
+        """
         return cls(
-            e.pprime,
-            e.ffprime,
-            R_0=e.xcentre,
-            B_0=abs(e.bcentre),
-            p_func=e.pressure,
-            f_func=e.fpol,
-            I_p=abs(e.cplasma),
+            eq.pprime,
+            eq.ffprime,
+            R_0=eq.xcentre,
+            B_0=eq.bcentre,
+            p_func=eq.pressure,
+            f_func=eq.fpol,
+            I_p=eq.cplasma,
         )

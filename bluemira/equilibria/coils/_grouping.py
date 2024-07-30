@@ -36,9 +36,8 @@ from bluemira.utilities.tools import flatten_iterable, yintercept
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from eqdsk import EQDSKInterface
     from matplotlib.axes import Axes
-
-    from bluemira.equilibria.file import EQDSKInterface
 
 
 def symmetrise_coilset(coilset: CoilSet) -> CoilSet:

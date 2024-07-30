@@ -68,8 +68,7 @@ class TestSimpleABConstraintFuntions:
 class TestEquilibriumInput:
     @classmethod
     def setup_class(cls):
-        eq_name = "eqref_OOB.json"
-        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name))
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "eqref_OOB.json"), from_cocos=7)
         cls.coilset = cls.eq.coilset
         cls.vector = cls.coilset.current
         cls.scale = 1.0

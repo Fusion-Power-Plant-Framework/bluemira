@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import (
@@ -29,6 +28,8 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    import numpy.typing as npt
 
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.optimisation.problem import CoilsetOptimisationProblem

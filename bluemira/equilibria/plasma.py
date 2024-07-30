@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-import numpy.typing as npt
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.equilibria.constants import J_TOR_MIN
@@ -23,6 +22,8 @@ from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.grid import Grid
 
 

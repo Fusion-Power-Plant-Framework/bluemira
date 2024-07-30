@@ -14,6 +14,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from eqdsk import EQDSKInterface
+from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
@@ -25,7 +27,6 @@ from bluemira.equilibria import (
     PicardIterator,
     SymmetricCircuit,
 )
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.optimisation.constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
@@ -46,11 +47,13 @@ class TestSTEquilibrium:
         private = os.path.split(root)[0]
         private = Path(private, "bluemira-private-data/equilibria/STEP_SPR_08")
         eq_name = "STEP_SPR08_BLUEPRINT.json"
-        cls.eq_blueprint = Equilibrium.from_eqdsk(Path(private, eq_name))
+        cls.eq_blueprint = Equilibrium.from_eqdsk(
+            Path(private, eq_name), from_cocos=3, to_cocos=11, qpsi_sign=Sign.NEGATIVE
+        )
         jeq_name = "jetto.eqdsk_out"
         filename = Path(private, jeq_name)
-        cls.profiles = CustomProfile.from_eqdsk(filename)
-        cls.jeq_dict = EQDSKInterface.from_file(filename)
+        cls.jeq_dict = EQDSKInterface.from_file(filename, from_cocos=11)
+        cls.profiles = CustomProfile.from_eqdsk(cls.jeq_dict)
 
     def test_equilibrium(self):
         build_tweaks = {

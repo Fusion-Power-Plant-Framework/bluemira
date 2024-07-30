@@ -15,14 +15,6 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from bluemira.utilities.tools import floatify
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.find import PsiPoint
-
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -44,6 +36,13 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import _signed_distance_2D
+from bluemira.utilities.tools import floatify
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.find import PsiPoint
 
 
 @nb.jit(nopython=True, cache=True)
