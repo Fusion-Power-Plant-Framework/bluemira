@@ -47,7 +47,7 @@ from bluemira.equilibria.optimisation.constraints import (
     AutoConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
-    MagneticConstraintSet,    
+    MagneticConstraintSet,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
@@ -59,10 +59,10 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 from bluemira.equilibria.optimisation.problem import (
     MinimalCurrentCOP,
     TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentGradientCOP
+    UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.solve import (
-    DudsonConvergence, 
+    DudsonConvergence,
     PicardIterator,
 )
 
@@ -156,12 +156,12 @@ plt.show()
 # %% [markdown]
 # ## Use in Optimisation Problem
 #
-# Now we will use the approximation to set up constraints for an optimisation problem. 
-# We use the minimal current coilset optimisation problem with SH as the only constraints. 
-# This will try to minimise the sum of the currents squared while constraining the coil contribution to the core psi. 
+# Now we will use the approximation to set up constraints for an optimisation problem.
+# We use the minimal current coilset optimisation problem with SH as the only constraints.
+# This will try to minimise the sum of the currents squared while constraining the coil contribution to the core psi.
 
 # %%
-# Use results of the spherical harmonic approximation to create a set of coil constraints 
+# Use results of the spherical harmonic approximation to create a set of coil constraints
 sh_constraint = SphericalHarmonicConstraint(
     ref_harmonics=coil_current_harmonic_amplitudes,
     r_t=r_t,
@@ -176,10 +176,7 @@ eq.coilset.control = list(sh_coil_names)
 sh_eq = deepcopy(eq)
 # Set up a coilset optimisation problem using the spherical harmonic constraint
 sh_con_len_opt = MinimalCurrentCOP(
-    eq=sh_eq,
-    coilset=sh_eq.coilset,
-    max_currents=6.0e8,
-    constraints=[sh_constraint]
+    eq=sh_eq, coilset=sh_eq.coilset, max_currents=6.0e8, constraints=[sh_constraint]
 )
 # Find the optimised coilset
 _ = sh_con_len_opt.optimise()
@@ -188,13 +185,13 @@ _ = sh_con_len_opt.optimise()
 sh_eq.solve()
 
 # %%
-# We should not need to solve the GS equation while optimising if the SH approximation is sufficiently good, but we can have a look at what happens.  
+# We should not need to solve the GS equation while optimising if the SH approximation is sufficiently good, but we can have a look at what happens.
 sh_eq_solved = deepcopy(eq)
 sh_con_len_opt = MinimalCurrentCOP(
     eq=sh_eq_solved,
     coilset=sh_eq_solved.coilset,
     max_currents=6.0e8,
-    constraints=[sh_constraint]
+    constraints=[sh_constraint],
 )
 
 # SOLVE
