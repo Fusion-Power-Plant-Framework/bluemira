@@ -118,7 +118,8 @@ When plotting in cylindrical coordinates, curves of constant :math:`\tau` corres
 non-intersecting circles that surround the focus :math:`(R_0, z_0)`, and curves of constant
 :math:`\sigma` correspond to non-concentric circles that intersect at the focus.
 
-1. Curves of constant :math:`\tau` plotted in both cylindrical and toroidal coordinates
+Curves of constant :math:`\tau` plotted in both cylindrical and toroidal coordinates
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of constant :math:`\tau` in cylindrical coordinates
 
