@@ -7,7 +7,7 @@ Toroidal coordinate transform
 This is a demonstration of the conversion between cylindrical and toroidal coordinate systems
 using the Bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`. We denote toroidal coordinates by (:math:`\tau`, :math:`\sigma`, :math:`\phi`) and cylindrical coordinates by (:math:`R`, :math:`z`, :math:`\phi`).
 
-Imports
+The snippets in this document use these imports
     .. code-block:: python
 
         import matplotlib.pyplot as plt
