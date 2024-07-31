@@ -1,7 +1,7 @@
 utilities
 =========
 
-Example of toroidal coordinate transform
+Toroidal coordinate transform
 ----------------------------------------
 
 Demonstrate  the conversion between cylindrical and toroidal coordinate systems
