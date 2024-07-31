@@ -197,6 +197,13 @@ class Mesh:
     def _check_meshfile(meshfile: str | list) -> list[str]:
         """
         Check the mesh file input.
+
+        Raises
+        ------
+        ValueError
+            Meshfile list is empty
+        TypeError
+            Meshfile must be a string or list of strings
         """
         # todo: should be implemented also a check on the file extension. Only a
         # limited type of file extensions is allowed by gmsh.
@@ -223,6 +230,11 @@ class Mesh:
     def __call__(self, obj: Component | Meshable, dim: int = 2):
         """
         Generate the mesh and save it to file.
+
+        Raises
+        ------
+        TypeError
+            Objects not meshable
         """
         bluemira_print("Starting mesh process...")
 
@@ -269,6 +281,11 @@ class Mesh:
     def __mesh_obj(self, obj, dim: int):
         """
         Function to mesh the object.
+
+        Raises
+        ------
+        ValueError
+            Meshing not implemented for geometry type
         """
         from bluemira.geometry.tools import serialise_shape  # noqa: PLC0415
 
@@ -520,6 +537,11 @@ class Mesh:
         """
         Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
         tag)) format.
+
+        Raises
+        ------
+        ValueError
+            No object to mesh
         """
         if isinstance(file_format, str):
             file_format = GmshFileType[file_format.upper()]
