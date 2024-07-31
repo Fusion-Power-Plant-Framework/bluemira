@@ -394,17 +394,17 @@ class CoilForceConstraintFunctions:
         """Constraint Function: CS separation constraints."""
         scaled_max_value = max_value / self.scale
         cs_fz = self.cs_fz(f_matx)
-        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
-            f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
-            self.constraint[self.n_PF + 1 + i] = f_sep - scaled_max_value
+        for i in range(1, self.n_CS):  # evaluate each gap in CS stack
+            f_sep = np.sum(cs_fz[:i]) - np.sum(cs_fz[i:])
+            self.constraint[self.n_PF + i] = f_sep - scaled_max_value
 
     def cs_z_sep_grad(self, df_matx):
         """Constraint Derivative: CS separation constraints."""
-        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
+        for i in range(1, self.n_CS):  # evaluate each gap in CS stack
             # CS separation constraint Jacobians
-            f_up = np.sum(df_matx[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
-            f_down = np.sum(df_matx[self.n_PF + i + 1 :, :, 1], axis=0)
-            self.grad[self.n_PF + 1 + i] = f_up - f_down
+            f_up = np.sum(df_matx[self.n_PF : self.n_PF + i, :, 1], axis=0)
+            f_down = np.sum(df_matx[self.n_PF + i :, :, 1], axis=0)
+            self.grad[self.n_PF + i] = f_up - f_down
 
 
 class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
