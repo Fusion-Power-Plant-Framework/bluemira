@@ -30,7 +30,6 @@ In toroidal coordinates, surfaces of constant :math:`\tau` are non-intersecting 
 different radii, and surfaces of constant :math:`\sigma` are non-concentric spheres of
 different radii which intersect the focal ring.
 
-
 We are working in the poloidal plane, so we set :math:`\phi = 0`, and so are looking at a
 bipolar coordinate system. We are transforming about a focus :math:`(R_0, z_0)` in the
 poloidal plane.
