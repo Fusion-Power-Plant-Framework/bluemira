@@ -172,7 +172,8 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
 .. figure:: images/constant-tau-toroidal.png
     :name: fig:constant-tau-toroidal
 
-2. Curves of constant :math:`\sigma` plotted in both cylindrical and toroidal coordinates:
+Curves of constant :math:`\sigma` plotted in both cylindrical and toroidal coordinates
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of constant :math:`\sigma` in cylindrical coordinates
 
