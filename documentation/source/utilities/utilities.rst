@@ -62,7 +62,7 @@ where we have
     d_2^2 = (R - R_0)^2 + (z - z_0)^2
 
 Converting a unit circle
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 We will start with an example of converting a unit circle in cylindrical coordinates to
 toroidal coordinates and then converting back to cylindrical using the Bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`.
 This unit circle is centered at the point (2,0) in the poloidal plane.
