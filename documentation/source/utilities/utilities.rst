@@ -113,7 +113,7 @@ Convert this back to cylindrical coordinates to recover the original unit circle
     :name: fig:unit-circle-converted-back-cylindrical
 
 Curves of constant :math:`\tau` and :math:`\sigma`
---------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 When plotting in cylindrical coordinates, curves of constant :math:`\tau` correspond to
 non-intersecting circles that surround the focus :math:`(R_0, z_0)`, and curves of constant
 :math:`\sigma` correspond to non-concentric circles that intersect at the focus.
