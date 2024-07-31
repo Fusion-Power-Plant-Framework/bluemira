@@ -807,7 +807,7 @@ def toroidal_to_cylindrical(R_0: float, z_0: float, tau: np.ndarray, sigma: np.n
     Returns
     -------
     R, Z:
-        Tuble of transformed coordinates in cylindrical form
+        Tuple of transformed coordinates in cylindrical form
     """
     R = R_0 * np.sinh(tau) / (np.cosh(tau) - np.cos(sigma))  # noqa: N806
     Z = R_0 * np.sin(sigma) / (np.cosh(tau) - np.cos(sigma)) + z_0  # noqa: N806
