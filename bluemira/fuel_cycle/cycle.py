@@ -13,9 +13,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from bluemira.fuel_cycle.timeline import Timeline
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
@@ -30,6 +27,9 @@ from bluemira.fuel_cycle.tools import (
     find_noisy_locals,
     legal_limit,
 )
+
+if TYPE_CHECKING:
+    from bluemira.fuel_cycle.timeline import Timeline
 
 
 class EUDEMOFuelCycleModel:
@@ -539,9 +539,8 @@ class EUDEMOFuelCycleModel:
         """
         Plot correction for compressed time inventories
         """
-        idx = np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2
         inventory = inventory.copy()
-        for i in idx:
+        for i in np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2:
             inventory[i + 1] = inventory[i]
         return inventory
 
@@ -568,8 +567,7 @@ class EUDEMOFuelCycleModel:
         else:
             arg_t_d = len(self.t) - arg_t_d_temp
             # Check a little around
-            # TODO: This single line of code is now the worst offender (0.066s)
-            if True not in [x > t_req for x in self.m_T[arg_t_d - 10 : arg_t_d + 10]]:
+            if any(x <= t_req for x in self.m_T[arg_t_d - 10 : arg_t_d + 10]):
                 return None, float("Inf")
         try:
             return arg_t_d, self.t[arg_t_d]

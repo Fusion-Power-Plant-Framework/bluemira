@@ -11,17 +11,17 @@ Fuel cycle analysis class for Monte Carlo statistics
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
-
-if TYPE_CHECKING:
-    from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 from enum import Enum, auto
+from typing import TYPE_CHECKING, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
 from rich.progress import track
 
 from bluemira.base.look_and_feel import bluemira_warn
+
+if TYPE_CHECKING:
+    from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 
 __all__ = ["FuelCycleAnalysis"]
 
