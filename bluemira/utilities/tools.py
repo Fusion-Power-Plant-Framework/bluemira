@@ -806,12 +806,12 @@ def toroidal_to_cylindrical(R_0: float, z_0: float, tau: np.ndarray, sigma: np.n
 
     Returns
     -------
-    [R, Z]:
-        Array containing transformed coordinates in cylindrical form
+    R, Z:
+        Tuble of transformed coordinates in cylindrical form
     """
     R = R_0 * np.sinh(tau) / (np.cosh(tau) - np.cos(sigma))  # noqa: N806
     Z = R_0 * np.sin(sigma) / (np.cosh(tau) - np.cos(sigma)) + z_0  # noqa: N806
-    return [R, Z]
+    return R, Z
 
 
 def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray):  # noqa: N803
@@ -842,8 +842,8 @@ def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray
 
     Returns
     -------
-    [tau, sigma]:
-        Array containing transformed coordinates in toroidal form
+    tau, sigma:
+        Tuple of transformed coordinates in toroidal form
     """
     d_1 = np.sqrt((R + R_0) ** 2 + (Z - z_0) ** 2)
     d_2 = np.sqrt((R - R_0) ** 2 + (Z - z_0) ** 2)
@@ -851,7 +851,7 @@ def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray
     sigma = np.sign(Z - z_0) * np.arccos(
         (d_1**2 + d_2**2 - 4 * R_0**2) / (2 * d_1 * d_2)
     )
-    return [tau, sigma]
+    return tau, sigma
 
 
 # ======================================================================================

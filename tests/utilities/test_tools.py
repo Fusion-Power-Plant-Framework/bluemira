@@ -611,11 +611,9 @@ def test_toroidal_coordinate_transform():
     # tau isosurface test:
     tau_input = [0.5]
     sigma_input = np.linspace(-np.pi, np.pi, 200)
-    rzlist = toroidal_to_cylindrical(
+    rs, zs = toroidal_to_cylindrical(
         R_0=R_0_test, z_0=z_0_test, sigma=sigma_input, tau=tau_input
     )
-    rs = rzlist[0]
-    zs = rzlist[1]
     rs_max = np.max(rs)
     rs_min = np.min(rs)
     zs_max = np.max(zs)
@@ -628,11 +626,9 @@ def test_toroidal_coordinate_transform():
     # sigma isosurface test
     sigma_input = [0.5]
     tau_input = np.linspace(0, 5, 200)
-    rzlist = toroidal_to_cylindrical(
+    rs, zs = toroidal_to_cylindrical(
         R_0=R_0_test, z_0=z_0_test, sigma=sigma_input, tau=tau_input
     )
-    rs = rzlist[0]
-    zs = rzlist[1]
     rs_max = np.max(rs)
     rs_min = np.min(rs)
     zs_max = np.max(zs)

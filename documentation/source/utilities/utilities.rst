@@ -89,9 +89,7 @@ Convert this circle to toroidal coordinates:
 
     .. code-block:: python
 
-        tau_sig_list = cylindrical_to_toroidal(R=x, R_0=2, Z=y, z_0=0)
-        tau = tau_sig_list[0]
-        sigma = tau_sig_list[1]
+        tau, sigma = cylindrical_to_toroidal(R=x, R_0=2, Z=y, z_0=0)
         plt.plot(tau, sigma)
         plt.title("Unit circle converted to toroidal coordinates")
         plt.xlabel(r"$\tau$")
@@ -105,9 +103,7 @@ Convert this back to cylindrical coordinates to recover the original unit circle
 
     .. code-block:: python
 
-        rzlist = toroidal_to_cylindrical(R_0=2, z_0=0, tau=tau, sigma=sigma)
-        rs = rzlist[0]
-        zs = rzlist[1]
+        rs, zs = toroidal_to_cylindrical(R_0=2, z_0=0, tau=tau, sigma=sigma)
         plt.plot(rs, zs)
         plt.title("Unit circle centered at (2,0) converted back to cylindrical coordinates")
         plt.xlabel("R")
@@ -141,10 +137,10 @@ Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of consta
         zlist = []
         # Plot the curve in cylindrical coordinates for each constant value of tau
         for t in tau:
-            rzlist = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=sigma, tau=t)
-            rlist.append(rzlist[0])
-            zlist.append(rzlist[1])
-            plt.plot(rzlist[0], rzlist[1])
+            rs, zs = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=sigma, tau=t)
+            rlist.append(rs)
+            zlist.append(zs)
+            plt.plot(rs, zs)
 
         plt.axis("square")
         plt.xlabel("R")
@@ -163,10 +159,10 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
         taulist = []
         sigmalist = []
         for i in range(len(rlist)):
-            tausiglist = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
-            taulist.append(tausiglist[0])
-            sigmalist.append(tausiglist[1])
-            plt.plot(tausiglist[0], tausiglist[1])
+            tau, sigma = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
+            taulist.append(tau)
+            sigmalist.append(sigma)
+            plt.plot(tau, sigma)
 
         plt.xlabel(r"$\tau$")
         plt.ylabel(r"$\sigma$")
@@ -194,10 +190,11 @@ Set the focus point to be :math:`(R_0, z_0) = (1,0)`. We plot 6 curves of consta
         zlist = []
         # Plot the curve in cylindrical coordinates for each constant value of sigma
         for s in sigma:
-            rzlist = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=s, tau=tau)
-            rlist.append(rzlist[0])
-            zlist.append(rzlist[1])
-            plt.plot(rzlist[0], rzlist[1])
+            rs, zs = toroidal_to_cylindrical(R_0=R_0, z_0=z_0, sigma=s, tau=tau)
+            rlist.append(rs)
+            zlist.append(zs)
+            plt.plot(rs, zs)
+
         plt.axis("square")
         plt.xlabel("R")
         plt.ylabel("z")
@@ -216,10 +213,10 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
         taulist = []
         sigmalist = []
         for i in range(len(rlist)):
-            tausiglist = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
-            taulist.append(tausiglist[0])
-            sigmalist.append(tausiglist[1])
-            plt.plot(tausiglist[0], tausiglist[1])
+            tau, sigma = cylindrical_to_toroidal(R_0=R_0, z_0=z_0, R=rlist[i], Z=zlist[i])
+            taulist.append(tau)
+            sigmalist.append(sigma)
+            plt.plot(tau, sigma)
 
         plt.xlabel(r"$\tau$")
         plt.ylabel(r"$\sigma$")
@@ -228,8 +225,3 @@ Now convert to toroidal coordinates using `cylindrical_to_toroidal` and plot - h
 
 .. figure:: images/constant-sigma-toroidal.png
     :name: fig:constant-sigma-toroidal
-
-.. toctree::
-    :maxdepth: 1
-
-    doc_visualisation_of_toroidal_coordinate_transform
