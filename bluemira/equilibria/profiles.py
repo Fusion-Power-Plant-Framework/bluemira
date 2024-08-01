@@ -831,8 +831,8 @@ class CustomProfile(Profile):
             eq.pprime,
             eq.ffprime,
             R_0=eq.xcentre,
-            B_0=eq.bcentre,
+            B_0=abs(eq.bcentre),
             p_func=eq.pressure,
             f_func=eq.fpol,
-            I_p=eq.cplasma,
+            I_p=abs(eq.cplasma),
         )
