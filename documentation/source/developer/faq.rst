@@ -66,3 +66,14 @@ There are certain sections of the graphics stack that are needed for many GUI ap
 .. code-block:: bash
 
     sudo apt install mesa-utils x11-apps libxinerama1 libgl1 libx11-dev
+
+
+Render docs locally
+-------------------
+
+.. code-block:: bash
+
+    sphinx-build documentation/source documentation/build
+    python -m http.server
+
+Then `ctrl+click` on the web address. Go to `documentation/` then `build/` and then you can view the docs locally.
