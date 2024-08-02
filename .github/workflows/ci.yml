@@ -72,8 +72,9 @@ jobs:
 
       - name: Install PROCESS
         if: ${{ matrix.with-process }}
-        shell: bash -l {0}
-        run: bash scripts/install-process.sh
+        uses: ./.github/workflows/actions/process
+        with:
+          version: "v3.1.0"
 
       - name: Run pytest bluemira
         shell: bash -l {0}

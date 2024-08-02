@@ -1,0 +1,31 @@
+name: Install Process
+
+inputs:
+  version:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout process
+      uses: actions/checkout@v4
+      with:
+        repository: "ukaea/process"
+        path: "./process"
+
+    - name: Move process and install dependencies
+      shell: bash -l {0}
+      run: |
+        mv process ../process
+        apt update && apt install -y ninja-build build-essential
+        pip install cmake
+
+    - name: Install process
+      working-directory: "/home/runner/work/process"
+      shell: bash -l {0}
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        git checkout $VERSION
+        cmake -G Ninja -S . -B build -DRELEASE=TRUE
+        cmake --build build
