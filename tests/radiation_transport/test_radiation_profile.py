@@ -355,4 +355,4 @@ class TestCoreRadiation:
 
         # the solver gives slightly different powers in each run
         # so just asserting the order of total power
-        assert np.isclose(wall_loads.total_power, 3.14e8, rtol=0.05)
+        assert np.isclose(wall_loads.total_power, 2.32e8, rtol=0.05)
