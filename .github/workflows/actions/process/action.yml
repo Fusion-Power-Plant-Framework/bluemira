@@ -12,20 +12,20 @@ runs:
       with:
         repository: "ukaea/process"
         path: "./process"
+        ref: ${{ inputs.version }}
 
     - name: Move process and install dependencies
+      id: deps
       shell: bash -l {0}
       run: |
         mv process ../process
-        apt update && apt install -y ninja-build build-essential
+        sudo apt-get update && sudo apt-get install -y ninja-build build-essential
         pip install cmake
 
     - name: Install process
-      working-directory: "/home/runner/work/process"
+      working-directory: "/home/runner/work/"
       shell: bash -l {0}
-      env:
-        VERSION: ${{ inputs.version }}
       run: |
-        git checkout $VERSION
+        cd bluemira/process
         cmake -G Ninja -S . -B build -DRELEASE=TRUE
         cmake --build build

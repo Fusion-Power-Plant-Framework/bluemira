@@ -48,13 +48,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.10", "3.11"]
-        with-process: [true]
-        with-artifact: ["true"]
-        include:
-          - os: "ubuntu-latest"
-            python-version: "3.10"
-            with-process: false
-            with-artifact: "false"
+        with-process: ["v3.1.0", "process_disabled"]
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -68,13 +62,13 @@ jobs:
           os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-          with-artifact: ${{ matrix.with-artifact }}
+          with-artifact: ${{ matrix.with-process == 'process_disabled' && 'false' || 'true' }}
 
       - name: Install PROCESS
-        if: ${{ matrix.with-process }}
+        if: ${{ matrix.with-process != 'process_disabled' }}
         uses: ./.github/workflows/actions/process
         with:
-          version: "v3.1.0"
+          version: ${{ matrix.with-process }}
 
       - name: Run pytest bluemira
         shell: bash -l {0}
@@ -96,7 +90,7 @@ jobs:
 
       - name: Upload test report
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.with-process }}
+        if: ${{ matrix.with-process != 'process_disabled' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
