@@ -46,7 +46,7 @@ from bluemira.radiation_transport.radiation_tools import (
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire

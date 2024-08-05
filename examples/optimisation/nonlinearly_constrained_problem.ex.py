@@ -166,8 +166,7 @@ plt.show()
 # optimisation problem, using the `OptimisationProblem` base class.
 
 # %%
-from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation import ConstraintT, OptimisationProblem
 
 
 class NonLinearConstraintOP(OptimisationProblem):

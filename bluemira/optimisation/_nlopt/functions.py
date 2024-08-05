@@ -9,7 +9,7 @@ from collections.abc import Callable
 import numpy as np
 
 from bluemira.optimisation._tools import approx_derivative
-from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
 _FloatOrArrayT = np.ndarray | float
 

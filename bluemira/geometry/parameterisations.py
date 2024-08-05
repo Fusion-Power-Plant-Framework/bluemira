@@ -223,7 +223,8 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         Returns
         -------
         CAD Wire of the geometry
-        """
+        """  # noqa: DOC202
+        ...
 
     def to_json(self, file: str):
         """

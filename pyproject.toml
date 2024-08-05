@@ -65,7 +65,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.5.5",
+    "ruff==0.5.6",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -318,7 +318,7 @@ ignore-names = [
 "scripts/*" = ["INP001", "CPY001", "T201"]
 "setup.py" = ["CPY001"]
 "documentation/source/*" = ["D100", "D101"]
-"examples/*" = ["INP001", "T201"]
+"examples/*" = ["INP001", "T201", "DOC201"]
 "examples/geometry/optimisation_tutorial.ex.py" = ["W505", "E501"]
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = ["E402", "W505"]
@@ -347,6 +347,7 @@ ignore-names = [
     "D404",
     "D406",
     "D409",
+    "DOC201",
     "DOC501",
     "N802",
     "PLC2701",
@@ -356,3 +357,23 @@ ignore-names = [
 "tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
+# TODO remove
+"eudemo/eudemo/*" = ["DOC201"]  #186
+# see above for actual line
+# "examples/*" = ["DOC201"]  # 51
+"bluemira/utilities/*" = ["DOC201"]  # 38
+"bluemira/structural/*" = ["DOC201"]  # 29
+"bluemira/radiation_transport/*" = ["DOC201"]  # 103
+"bluemira/plasma_physics/*" = ["DOC201"]  # 4
+"bluemira/optimisation/*" = ["DOC201"]  # 24
+"bluemira/mesh/*" = ["DOC201"]  # 10
+"bluemira/materials/*" = ["DOC201"]  # 62
+"bluemira/magnetostatics/*" = ["DOC201"]  # 45
+"bluemira/geometry/*" = ["DOC201"]  # 109
+"bluemira/fuel_cycle/*" = ["DOC201"]  # 19
+"bluemira/equilibria/*" = ["DOC201"]  # 217
+"bluemira/display/*" = ["DOC201"]  # 25
+"bluemira/codes/*" = ["DOC201"]  # 242
+"bluemira/builders/*" = ["DOC201"]  # 69
+"bluemira/base/*" = ["DOC201"]  # 56
+"bluemira/balance_of_plant/*" = ["DOC201"]  # 56

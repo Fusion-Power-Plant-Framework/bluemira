@@ -299,10 +299,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         child:
             The child to be added
 
-        Returns
-        -------
-        This component.
-
         Raises
         ------
         ComponentError

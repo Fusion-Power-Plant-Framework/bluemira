@@ -26,7 +26,7 @@ from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.geometry.wire import BluemiraWire
 
 

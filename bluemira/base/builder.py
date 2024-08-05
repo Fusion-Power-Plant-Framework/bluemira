@@ -20,7 +20,7 @@ from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
     from bluemira.base.components import ComponentT
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
 """
