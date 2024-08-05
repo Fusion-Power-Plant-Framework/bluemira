@@ -12,18 +12,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
+
+from bluemira.structural.geometry import DeformedGeometry
+from bluemira.structural.transformation import cyclic_pattern
+from bluemira.utilities.plot_tools import Plot3D
+
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
 
     from bluemira.structural.geometry import Geometry
     from bluemira.structural.loads import LoadCase
     from bluemira.structural.symmetry import CyclicSymmetry
-
-import numpy as np
-
-from bluemira.structural.geometry import DeformedGeometry
-from bluemira.structural.transformation import cyclic_pattern
-from bluemira.utilities.plot_tools import Plot3D
 
 
 class Result:

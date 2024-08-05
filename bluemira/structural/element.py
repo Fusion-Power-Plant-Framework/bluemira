@@ -10,16 +10,15 @@ Finite element class
 
 from __future__ import annotations
 
-from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.base.constants import GRAVITY
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.structural.constants import NU, N_INTERP, SD_LIMIT
+from bluemira.structural.constants import NU, N_INTERP, SD_LIMIT, LoadKind
 from bluemira.structural.error import StructuralError
-from bluemira.structural.loads import distributed_load, point_load
+from bluemira.structural.loads import Load, distributed_load, point_load
 from bluemira.structural.node import get_midpoint
 from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
@@ -34,22 +33,6 @@ if TYPE_CHECKING:
 # Test some existing stuff (functools?), and your own custom class.
 # Check speed and so on.
 # Only bother doing this if you don't rewrite in C++
-class LoadType(Enum):
-    """Enumeration of types of loads."""
-
-    ELEMENT_LOAD = auto()
-    DISTRIBUTED_LOAD = auto()
-    NODE_LOAD = auto()
-
-    @classmethod
-    def _missing_(cls, value: str | LoadType) -> LoadType:
-        try:
-            return cls[value.replace(" ", "_").upper()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no load type {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
 
 
 # @nb.jit(nopython=True, cache=True)
@@ -475,6 +458,11 @@ class Element:
         """
         Transformation (direction cosine) matrix
 
+        Raises
+        ------
+        StructuralError
+            Nodes are coincident
+
         Notes
         -----
         This matrix is cached but involves properties that may be externally
@@ -491,7 +479,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: dict[str, float]):
+    def add_load(self, load: Load | dict[str, float | str]):
         """
         Applies a load to the Element object.
 
@@ -500,7 +488,7 @@ class Element:
         load:
             The dictionary of load values (in local coordinates)
         """
-        self.loads.append(load)
+        self.loads.append(load if isinstance(load, Load) else Load(**load))
 
     def clear_loads(self):
         """
@@ -552,11 +540,10 @@ class Element:
         """
         enf = np.zeros(12)
         for load in self.loads:
-            load_type = LoadType(load["type"])
-            if load_type is LoadType.ELEMENT_LOAD:
-                enf += point_load(load["Q"], load["x"], self.length, load["sub_type"])
-            elif load_type is LoadType.DISTRIBUTED_LOAD:
-                enf += distributed_load(load["w"], self.length, load["sub_type"])
+            if load.kind is LoadKind.ELEMENT_LOAD:
+                enf += point_load(load.Q, load.x, self.length, load.subtype)
+            elif load.kind is LoadKind.DISTRIBUTED_LOAD:
+                enf += distributed_load(load.w, self.length, load.subtype)
 
         return enf
 

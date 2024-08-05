@@ -10,16 +10,8 @@ Structural module plotting tools
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-
-    from bluemira.structural.element import Element
-    from bluemira.structural.geometry import DeformedGeometry, Geometry
-    from bluemira.structural.node import Node
-
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
@@ -29,12 +21,18 @@ from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
-    LOAD_INT_VECTORS,
-    LOAD_STR_VECTORS,
     STRESS_COLOR,
+    LoadKind,
+    LoadType,
 )
-from bluemira.structural.element import LoadType
 from bluemira.utilities.plot_tools import Plot3D
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+
+    from bluemira.structural.element import Element
+    from bluemira.structural.geometry import DeformedGeometry, Geometry
+    from bluemira.structural.node import Node
 
 DEFAULT_STRUCT_PLOT_OPTIONS = {
     "bound_scale": 1.1,
@@ -220,14 +218,13 @@ class BasePlotter:
             loads = []
             for element in self.geometry.elements:
                 for load in element.loads:
-                    load_type = LoadType(load["type"].replace(" ", "_"))
-                    if load_type is LoadType.ELEMENT_LOAD:
-                        loads.append(load["Q"])
-                    elif load_type is LoadType.DISTRIBUTED_LOAD:
-                        loads.append(load["w"] / element.length)
+                    if load.kind is LoadKind.ELEMENT_LOAD:
+                        loads.append(load.Q)
+                    elif load.kind is LoadKind.DISTRIBUTED_LOAD:
+                        loads.append(load.w / element.length)
 
             for node in self.geometry.nodes:
-                loads.extend(load["Q"] for load in node.loads)
+                loads.extend(load.Q for load in node.loads)
 
             self._force_size = np.max(np.abs(loads))
 
@@ -287,12 +284,12 @@ class BasePlotter:
         length = lengths.min() / 5
         for node in self.geometry.nodes:
             if node.supports.any():
-                for i, support in enumerate(node.supports):
-                    vector = length * LOAD_INT_VECTORS[i]
-                    if support and i < 3:  # noqa: PLR2004
+                for support, load_type in zip(node.supports, LoadType, strict=False):
+                    vector = length * load_type.vector
+                    if support and load_type < 3:  # noqa: PLR2004
                         # Linear support (single black arrow)
                         _plot_force(self.ax, node, vector, color="k")
-                    elif support and i >= 3:  # noqa: PLR2004
+                    elif support and load_type >= 3:  # noqa: PLR2004
                         # Moment support (double red arrow, offset to enable overlap)
                         _plot_moment(self.ax, node, vector, support=True, color="g")
 
@@ -368,25 +365,24 @@ class BasePlotter:
 
         for element in self.geometry.elements:
             for load in element.loads:
-                load_type = LoadType(load["type"].replace(" ", "_"))
-                if load_type is LoadType.ELEMENT_LOAD:
+                if load.kind is LoadKind.ELEMENT_LOAD:
                     self._plot_element_load(element, load)
-                elif load_type is LoadType.DISTRIBUTED_LOAD:
+                elif load.kind is LoadKind.DISTRIBUTED_LOAD:
                     self._plot_distributed_load(element, load)
 
     def _plot_node_load(self, node, load):
-        load_value = load["Q"] * LOAD_STR_VECTORS[load["sub_type"]]
+        load_value = load.Q * load.sub_type.vector
 
         load_value = arrow_scale(load_value, 10 * self.unit_length, self.force_size)
 
-        if "F" in load["sub_type"]:
+        if "F" in load.subtype:
             _plot_force(self.ax, node, load_value, color="r")
 
         elif "M" in load["sub_type"]:
             _plot_moment(self.ax, node, load_value, color="r")
 
     def _plot_element_load(self, element, load):
-        load = load["Q"] * LOAD_STR_VECTORS[load["sub_type"]]
+        load = load.Q * load.sub_type.vector
 
         load = arrow_scale(load, 10 * self.unit_length, self.force_size)
 
@@ -395,7 +391,7 @@ class BasePlotter:
         point = np.array(
             [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
-        point += (np.array([1.0, 0.0, 0.0]) * float(load["x"])) @ dcm
+        point += (np.array([1.0, 0.0, 0.0]) * float(load.x)) @ dcm
         self.ax.quiver(*point - load, *load, color="r")
 
     def _plot_distributed_load(self, element, load):
@@ -403,7 +399,7 @@ class BasePlotter:
         n = int(length * 10)
         dcm = element.lambda_matrix[0:3, 0:3]
 
-        load = load["w"] * LOAD_STR_VECTORS[load["sub_type"]] / length
+        load = load.w * load.subtype.vector / length
         load = arrow_scale(load, 10 * self.unit_length, self.force_size) @ dcm
         load = (load * np.ones((n, 3))).T
 

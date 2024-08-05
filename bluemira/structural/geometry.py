@@ -114,6 +114,11 @@ class Geometry:
         Returns
         -------
         The node ID
+
+        Raises
+        ------
+        StructuralError
+            Node not found in model
         """
         a = np.array(self.node_xyz)
         b = np.array([x, y, z])
@@ -471,7 +476,7 @@ class Geometry:
             if old.loads:
                 loads = []
                 for load in old.loads:
-                    load["element_id"] = new.id_number
+                    load.element_id = new.id_number
                     loads.append(load)
                 new.loads = loads
 

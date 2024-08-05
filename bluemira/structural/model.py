@@ -19,8 +19,7 @@ from scipy.sparse.linalg import spsolve
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.structural.constants import R_LARGE_DISP
-from bluemira.structural.element import LoadType
+from bluemira.structural.constants import R_LARGE_DISP, LoadKind
 from bluemira.structural.error import StructuralError
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
@@ -390,19 +389,16 @@ class FiniteElementModel:
             The list of loads to apply to the model
         """
         for load in load_case:
-            load_type = LoadType(load["type"])
-            if load_type is LoadType.NODE_LOAD:
-                node = self.geometry.nodes[load["node_id"]]
+            if load.kind is LoadKind.NODE_LOAD:
+                node = self.geometry.nodes[load.node_id]
                 node.add_load(load)
 
             elif (
-                load_type is LoadType.ELEMENT_LOAD
-                or load_type is LoadType.DISTRIBUTED_LOAD
+                load.kind is LoadKind.ELEMENT_LOAD
+                or load.kind is LoadKind.DISTRIBUTED_LOAD
             ):
-                element = self.geometry.elements[load["element_id"]]
+                element = self.geometry.elements[load.element_id]
                 element.add_load(load)
-            else:
-                raise StructuralError(f'Unknown load type "{load["type"]}"')
 
     def _get_nodal_forces(self) -> np.ndarray:
         """
@@ -461,6 +457,11 @@ class FiniteElementModel:
         ----------
         k_matrix:
             The global stiffness matrix to be checked ((6*n_nodes, 6*n_nodes))
+
+        Raises
+        ------
+        StructuralError
+            DOFs less than 6 or never constrianed
         """
         if self.n_fixed_dofs < 6:  # noqa: PLR2004
             # TODO: check dimensionality of problem (1-D, 2-D, 3-D) and reduce

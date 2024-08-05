@@ -10,9 +10,9 @@ Finite element Node object
 
 import numpy as np
 
-from bluemira.structural.constants import D_TOLERANCE
+from bluemira.structural.constants import D_TOLERANCE, LoadKind
 from bluemira.structural.error import StructuralError
-from bluemira.structural.loads import node_load
+from bluemira.structural.loads import Load, node_load
 
 
 class Node:
@@ -97,7 +97,7 @@ class Node:
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load: dict[str, float]):
+    def add_load(self, load: Load | dict[str, float | str]):
         """
         Applies a load to the Node object.
 
@@ -106,7 +106,7 @@ class Node:
         load:
             The dictionary of nodal load values (always in global coordinates)
         """
-        self.loads.append(load)
+        self.loads.append(load if isinstance(load, Load) else Load(**load))
 
     def clear_loads(self):
         """
@@ -164,15 +164,18 @@ class Node:
         -------
         nfv: np.array(6)
             The global nodal force vector
+
+        Raises
+        ------
+        StructuralError
+            Cannot apply load type to a node
         """
         nfv = np.zeros(6)
         for load in self.loads:
-            if load["type"] == "Node Load":
-                nfv += node_load(load["Q"], load["sub_type"])
+            if load.kind is LoadKind.NODE_LOAD:
+                nfv += node_load(load.Q, load.subtype)
             else:
-                raise StructuralError(
-                    f'Cannot apply load type "{load["type"]}" to a Node.'
-                )
+                raise StructuralError(f'Cannot apply load type "{load.kind}" to a Node.')
         return nfv
 
     def __eq__(self, other) -> bool:

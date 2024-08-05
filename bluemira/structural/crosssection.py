@@ -339,6 +339,11 @@ class IBeam(CrossSection):
     def check_dimensions(base: float, depth: float, flange: float, web: float):
         """
         Edge case eradication
+
+        Raises
+        ------
+        StructuralError
+            Inputs not consistent with I-Beam
         """
         if (
             (depth - 2 * flange <= 0)
