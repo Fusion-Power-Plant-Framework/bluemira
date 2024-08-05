@@ -11,7 +11,8 @@ Automatic configuration some plot defaults
 import functools
 import os
 import sys
-from multiprocessing import Pool, TimeoutError
+from multiprocessing import Pool
+from multiprocessing import TimeoutError as mpTimeoutError
 
 import numpy as np
 import seaborn as sns
@@ -44,7 +45,7 @@ def get_primary_screen_size(timeout: float = 3):
         result = pool.apply_async(_get_primary_screen_size)
         try:
             val = result.get(timeout=timeout)
-        except TimeoutError:
+        except mpTimeoutError:
             pool.terminate()
             bluemira_warn(
                 "Unable to get screensize, please check your X server."

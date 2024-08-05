@@ -18,7 +18,7 @@ from bluemira.optimisation._optimise import (
     optimise,
     validate_constraints,
 )
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation.typed import ConstraintT
 
 
 class OptimisationProblemBase:
