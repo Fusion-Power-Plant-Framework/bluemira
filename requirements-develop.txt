@@ -16,7 +16,7 @@ importlib-metadata==8.2.0
 iniconfig==2.0.0
 Jinja2==3.1.4
 jupyter-cache==1.0.0
-jupytext==1.16.3
+jupytext==1.16.4
 MarkupSafe==2.1.5
 mypy-extensions==1.0.0
 myst-nb==1.1.1
