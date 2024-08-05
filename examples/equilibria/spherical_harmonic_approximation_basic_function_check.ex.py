@@ -67,7 +67,7 @@ plot_defaults()
 file_path = Path(
     get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
 )
-eq = Equilibrium.from_eqdsk(file_path.as_posix())
+eq = Equilibrium.from_eqdsk(file_path.as_posix(), from_cocos=3, qpsi_sign=-1)
 # Plot
 f, ax = plt.subplots()
 eq.plot(ax=ax)

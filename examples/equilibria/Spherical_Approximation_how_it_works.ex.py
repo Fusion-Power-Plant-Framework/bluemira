@@ -89,7 +89,7 @@ file_path = Path(
     get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
 )
 
-eq = Equilibrium.from_eqdsk(file_path)
+eq = Equilibrium.from_eqdsk(file_path, from_cocos=3, qpsi_sign=-1)
 
 # Get the necessary boundary locations and length scale
 # for use in spherical harmonic approximations.
