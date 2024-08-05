@@ -20,7 +20,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame import ParameterFrameLike
 
 
 @dataclass

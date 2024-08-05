@@ -23,7 +23,7 @@ from bluemira.optimisation._algorithm import (
 )
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation.typing import (
+from bluemira.optimisation._typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,

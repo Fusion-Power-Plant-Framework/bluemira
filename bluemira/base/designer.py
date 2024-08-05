@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
+    from bluemira.base.parameter_frame import ParameterFrameLike, ParameterFrameT
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 

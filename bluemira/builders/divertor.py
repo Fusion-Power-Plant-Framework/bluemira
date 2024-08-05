@@ -26,7 +26,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame import ParameterFrameLike
     from bluemira.geometry.face import BluemiraFace
 
 

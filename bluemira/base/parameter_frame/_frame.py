@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
     from types import GenericAlias
 
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
+    from bluemira.base.parameter_frame._typing import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
 
 

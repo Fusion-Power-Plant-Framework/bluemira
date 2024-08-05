@@ -20,8 +20,8 @@ from bluemira.base.parameter_frame import make_parameter_frame
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from bluemira.base.parameter_frame import ParameterFrameT
     from bluemira.base.parameter_frame._parameter import ParamDictT
-    from bluemira.base.parameter_frame.typing import ParameterFrameT
 
 
 @dataclass
@@ -329,7 +329,7 @@ class ReactorConfig:
 
         for next_idx, current_arg_key in enumerate(arg_keys, start=1):
             current_layer = current_layer.get(current_arg_key, {})
-            next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None  # noqa: PLR1736
+            next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
             to_extract = current_layer
             if not is_config:

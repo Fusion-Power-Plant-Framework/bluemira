@@ -11,10 +11,13 @@ from bluemira.base.parameter_frame._frame import (
     make_parameter_frame,
 )
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.base.parameter_frame._typing import ParameterFrameLike, ParameterFrameT
 
 __all__ = [
     "EmptyFrame",
     "Parameter",
     "ParameterFrame",
+    "ParameterFrameLike",
+    "ParameterFrameT",
     "make_parameter_frame",
 ]

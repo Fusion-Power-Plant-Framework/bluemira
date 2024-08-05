@@ -47,8 +47,8 @@ from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
-    from bluemira.optimisation.typing import ConstraintT
+    from bluemira.base.parameter_frame import ParameterFrameLike
+    from bluemira.optimisation import ConstraintT
 
 
 @dataclass
