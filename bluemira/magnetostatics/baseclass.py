@@ -68,7 +68,8 @@ class CurrentSource(ABC):
         Returns
         -------
         The magnetic field vector {Bx, By, Bz} in [T]
-        """
+        """  # noqa: DOC202
+        ...
 
     @abstractmethod
     def plot(self, ax: Axes | None, **kwargs):

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from bluemira.optimisation.typing import OptimiserCallable
+from bluemira.optimisation.typed import OptimiserCallable
 
 
 @dataclass
@@ -147,7 +147,8 @@ class Optimiser(abc.ABC):
         The result of the optimisation, containing the optimised
         parameters ``x``, as well as other information about the
         optimisation.
-        """
+        """  # noqa: DOC202
+        ...
 
     @abc.abstractmethod
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
