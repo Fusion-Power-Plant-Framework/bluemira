@@ -68,7 +68,11 @@ class CurrentSource(ABC):
         Returns
         -------
         The magnetic field vector {Bx, By, Bz} in [T]
+<<<<<<< HEAD
         """
+=======
+        """  # noqa: DOC202
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
         ...
 
     @abstractmethod

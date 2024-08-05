@@ -12,7 +12,11 @@ repos:
         exclude: test_data
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
+<<<<<<< HEAD
     rev: v0.6.2
+=======
+    rev: v0.5.6
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
     hooks:
       - id: ruff
         args: [--fix]

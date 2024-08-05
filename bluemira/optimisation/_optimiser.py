@@ -147,7 +147,11 @@ class Optimiser(abc.ABC):
         The result of the optimisation, containing the optimised
         parameters ``x``, as well as other information about the
         optimisation.
+<<<<<<< HEAD
         """
+=======
+        """  # noqa: DOC202
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
         ...
 
     @abc.abstractmethod

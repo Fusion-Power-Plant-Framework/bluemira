@@ -52,7 +52,11 @@ class BreakdownZoneStrategy(abc.ABC):
             Radial coordinate of the breakdown point
         z_c:
             Vertical coordinate of the breakdown point
+<<<<<<< HEAD
         """
+=======
+        """  # noqa: DOC202
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
         ...
 
     @abc.abstractproperty

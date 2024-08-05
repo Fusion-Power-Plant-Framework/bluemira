@@ -436,7 +436,11 @@ class ParasiticLoadStrategy(abc.ABC):
             Parasitic loads to power the tritium plant
         p_other:
             Parasitic loads to power other miscellaneous things
+<<<<<<< HEAD
         """
+=======
+        """  # noqa: DOC202
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
         ...
 
 

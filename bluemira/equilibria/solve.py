@@ -88,7 +88,11 @@ class ConvergenceCriterion(ABC):
         Returns
         -------
         True if the convergence criterion is met, else False.
+<<<<<<< HEAD
         """
+=======
+        """  # noqa: DOC202
+>>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
         ...
 
     def check_converged(self, value: float) -> bool:
