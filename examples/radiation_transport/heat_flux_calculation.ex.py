@@ -45,7 +45,7 @@ DOUBLE_NULL = False
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "DN-DEMO_eqref.json" if DOUBLE_NULL else "EU-DEMO_EOF.json"
 eq_name = Path(read_path, eq_name)
-eq = Equilibrium.from_eqdsk(eq_name)
+eq = Equilibrium.from_eqdsk(eq_name, from_cocos=3, qpsi_sign=-1)
 
 # %% [markdown]
 #
