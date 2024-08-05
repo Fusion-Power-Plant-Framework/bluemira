@@ -92,6 +92,11 @@ def _filter_members(
 ) -> list[tarfile.TarInfo] | list[zipfile.ZipInfo]:
     """Filter archive contents to only extract wanted files
 
+    Returns
+    -------
+    A filtered list of filepaths based on user selection
+    for a given data library
+
     Raises
     ------
     ValueError
@@ -131,7 +136,12 @@ def _filter(
     datakeys: list[str],
     filt: Callable,
 ) -> list[tarfile.TarInfo] | list[zipfile.ZipInfo]:
-    """Filter archive members"""
+    """Filter archive members
+
+    Returns
+    -------
+    A filtered list of filepaths based on user selection
+    """
     filtered_members = []
     mem_keys = members.keys()
     if datakeys == "*":
@@ -202,7 +212,12 @@ def download_data(
 
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
-    """Parse arguments"""
+    """Parse arguments
+
+    Returns
+    -------
+    parsed argument namespace
+    """
     parser = argparse.ArgumentParser("Bluemira Neutronics data downloader")
 
     parser.add_argument("-l", "--location", default=Path.cwd() / "bluemira_openmc_data")

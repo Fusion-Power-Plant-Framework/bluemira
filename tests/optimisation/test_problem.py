@@ -5,8 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import numpy as np
 
-from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation import ConstraintT, OptimisationProblem
 
 
 class SimpleOptProblem(OptimisationProblem):

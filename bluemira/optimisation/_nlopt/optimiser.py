@@ -26,7 +26,7 @@ from bluemira.utilities.error import OptVariablesError
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+    from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,

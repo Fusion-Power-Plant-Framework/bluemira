@@ -14,7 +14,12 @@ from rich.progress import Progress
 
 
 async def get_size(url: str, timeout: int = 10) -> int:  # noqa: RUF029, ASYNC109
-    """Get size of file"""
+    """Get size of file
+
+    Returns
+    -------
+    length in bytes of file
+    """
     response = requests.head(url, allow_redirects=True, timeout=timeout)  # noqa: ASYNC210
     return int(response.headers["Content-Length"])
 
