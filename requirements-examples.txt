@@ -19,7 +19,7 @@ jsonschema==4.23.0
 jupyter-client==8.6.2
 jupyter-core==5.7.2
 jupyterlab-pygments==0.3.0
-jupytext==1.16.3
+jupytext==1.16.4
 MarkupSafe==2.1.5
 matplotlib-inline==0.1.7
 mistune==3.0.2
