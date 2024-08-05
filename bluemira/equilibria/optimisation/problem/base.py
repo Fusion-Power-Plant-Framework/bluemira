@@ -25,7 +25,7 @@ from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditio
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.optimisation._optimiser import OptimiserResult
-    from bluemira.optimisation._typing import ConstraintT
+    from bluemira.optimisation.typed import ConstraintT
 
 
 @dataclass

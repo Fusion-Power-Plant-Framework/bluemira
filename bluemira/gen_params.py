@@ -27,7 +27,7 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
     print_banner,
 )
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
 

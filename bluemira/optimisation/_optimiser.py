@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from bluemira.optimisation._typing import OptimiserCallable
+from bluemira.optimisation.typed import OptimiserCallable
 
 
 @dataclass

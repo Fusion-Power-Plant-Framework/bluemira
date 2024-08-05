@@ -20,8 +20,8 @@ from bluemira.base.parameter_frame import make_parameter_frame
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.base.parameter_frame import ParameterFrameT
     from bluemira.base.parameter_frame._parameter import ParamDictT
+    from bluemira.base.parameter_frame.typed import ParameterFrameT
 
 
 @dataclass

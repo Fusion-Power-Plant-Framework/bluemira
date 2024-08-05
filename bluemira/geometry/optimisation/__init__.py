@@ -6,13 +6,13 @@
 """Optimisation for geometry"""
 
 from bluemira.geometry.optimisation._optimise import KeepOutZone, optimise_geometry
-from bluemira.geometry.optimisation._typing import (
+from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
+from bluemira.geometry.optimisation.typed import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
-from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 
 __all__ = [
     "GeomClsOptimiserCallable",

@@ -16,7 +16,7 @@ from bluemira.geometry.optimisation._optimise import (
     KeepOutZone,
     optimise_geometry,
 )
-from bluemira.geometry.optimisation._typing import GeomConstraintT
+from bluemira.geometry.optimisation.typed import GeomConstraintT
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation.problem import OptimisationProblemBase

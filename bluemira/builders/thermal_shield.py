@@ -42,7 +42,7 @@ from bluemira.materials.cache import Void
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.geometry.wire import BluemiraWire
 
 

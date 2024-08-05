@@ -29,7 +29,7 @@ from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, off
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
-    from bluemira.base.parameter_frame import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 @dataclass

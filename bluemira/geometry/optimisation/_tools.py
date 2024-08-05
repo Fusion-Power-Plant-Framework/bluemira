@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from bluemira.geometry.optimisation._typing import (
+from bluemira.geometry.optimisation.typed import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,
