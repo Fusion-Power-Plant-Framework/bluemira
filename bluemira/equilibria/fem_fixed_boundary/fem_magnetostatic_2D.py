@@ -281,6 +281,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             Toroidal field at R_0 [T]. Used when saving to file.
         R_0:
             Major radius [m]. Used when saving to file.
+
+        Raises
+        ------
+        TypeError
+            p_prime and ff_prime must be functions
         """
         # Note: pprime and ffprime have been limited to a Callable,
         # because otherwise it is necessary to provide also psi_norm_1D

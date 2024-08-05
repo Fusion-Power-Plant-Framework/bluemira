@@ -547,8 +547,8 @@ def _temp_check(unit: Unit, val: complex | Quantity):
 
     Raises
     ------
-    ValueError if below absolute zero
-
+    ValueError
+        if below absolute zero
     """
     if unit.dimensionality == UnitsContainer({"[temperature]": 1}) and np.any(
         np.less(

@@ -257,6 +257,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         end:
             The position (in x-z) to stop drawing the baffle, e.g., the
             position to the upper part of the first wall.
+
+        Raises
+        ------
+        ValueError
+            Baffle internal and external radii are not equal
         """
 
         def grad_xz(x1, x2, z1, z2):

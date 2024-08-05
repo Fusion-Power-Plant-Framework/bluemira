@@ -102,7 +102,13 @@ class BluemiraWire(BluemiraGeo):
         return wires
 
     def __add__(self, other: BluemiraWire) -> BluemiraWire:
-        """Add two wires"""
+        """Add two wires
+
+        Raises
+        ------
+        TypeError
+            Must be BluemiraWire
+        """
         output = None
         if isinstance(other, BluemiraWire):
             output = BluemiraWire([self, other])
@@ -114,6 +120,11 @@ class BluemiraWire(BluemiraGeo):
         """
         Close the shape with a line segment between shape's end and start point.
         This function modifies the object boundary.
+
+        Raises
+        ------
+        NotClosedWireError
+            Wire has not been closed
         """
         if not self.is_closed():
             closure = BluemiraWire(cadapi.wire_closure(self.shape), label)
@@ -169,6 +180,11 @@ class BluemiraWire(BluemiraGeo):
         Returns
         -------
         Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
+
+        Raises
+        ------
+        GeometryError
+            Alpha or distance must be specified
         """
         if alpha is None and distance is None:
             raise GeometryError("Must specify one of alpha or distance.")
@@ -209,7 +225,7 @@ class BluemiraWire(BluemiraGeo):
 
         Raises
         ------
-        GeometryError:
+        GeometryError
             If the vertex is further away to the wire than the specified tolerance
         """
         try:

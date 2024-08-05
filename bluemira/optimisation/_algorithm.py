@@ -17,18 +17,7 @@ import enum
 from dataclasses import asdict, dataclass, field
 
 
-class _AlgorithmMeta(enum.EnumMeta):
-    def __getitem__(self, s: str) -> Algorithm:
-        try:
-            return super().__getitem__(s)
-        except KeyError:
-            if s == "DIRECT-L":
-                # special case for backward compatibility
-                return super().__getitem__("DIRECT_L")
-            raise ValueError(f"No such Algorithm value '{s}'.") from None
-
-
-class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
+class Algorithm(enum.Enum):
     """Enumeration of available optimisation algorithms."""
 
     SLSQP = enum.auto()
@@ -40,6 +29,16 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     DIRECT_L = enum.auto()
     CRS = enum.auto()
     ISRES = enum.auto()
+
+    @classmethod
+    def _missing_(cls, value: str) -> Algorithm:
+        try:
+            value = value.upper()
+            if value == "DIRECT-L":
+                return cls.DIRECT_L
+            return cls[value]
+        except (KeyError, AttributeError):
+            raise ValueError(f"No such Algorithm value '{value}'.") from None
 
 
 AlgorithmType = str | Algorithm

@@ -118,6 +118,11 @@ class OptVariable:
     def value(self, value):
         """
         Set the value of the variable, enforcing bounds.
+
+        Raises
+        ------
+        OptVariablesError
+            OptVariable is fixed
         """
         if self.fixed:
             raise OptVariablesError("Cannot set the value of a fixed variable.")
@@ -173,6 +178,11 @@ class OptVariable:
         strict_bounds:
             If True, will raise errors if values are outside the bounds. If False, the
             bounds are dynamically adjusted to match the value.
+
+        Raises
+        ------
+        OptVariablesError
+            OptVariable is fixed
         """
         if self.fixed:
             raise OptVariablesError(f"'{self.name}' is fixed and cannot be adjusted.")
@@ -282,7 +292,13 @@ class OptVariable:
         return f"{self.name} = {self.value}{bound}{descr}"
 
     def __add__(self, other: OptVariable):
-        """The sum of two OptVariables is the sum of their values"""
+        """The sum of two OptVariables is the sum of their values
+
+        Raises
+        ------
+        TypeError
+            Cannot perform operation on value
+        """
         if isinstance(other, OptVariable):
             return self.value + other.value
         if isinstance(other, int | float | np.floating):
@@ -290,7 +306,13 @@ class OptVariable:
         raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
     def __sub__(self, other: OptVariable):
-        """The subtraction of two OptVariables is the subtraction of their values"""
+        """The subtraction of two OptVariables is the subtraction of their values
+
+        Raises
+        ------
+        TypeError
+            Cannot perform operation on value
+        """
         if isinstance(other, OptVariable):
             return self.value - other.value
         if isinstance(other, int | float | np.floating):
@@ -301,6 +323,11 @@ class OptVariable:
         """
         The multiplication of two OptVariables is
         the multiplication of their values
+
+        Raises
+        ------
+        TypeError
+            Cannot perform operation on value
         """
         if isinstance(other, OptVariable):
             return self.value * other.value
@@ -334,6 +361,14 @@ class OptVariablesFrame:
     def __new__(cls, *_args, **_kwargs):
         """
         Prevent instantiation of this class.
+
+        Raises
+        ------
+        TypeError
+            Direct initialisation of OptVariableFrame;
+            Subclass not a dataclass;
+            OptVariable not a field;
+            OptVariable field name not consistent.
         """
         if cls == OptVariablesFrame:
             raise TypeError(
@@ -441,6 +476,11 @@ class OptVariablesFrame:
         strict_bounds: bool
             If True, will raise errors if values are outside the bounds. If False, the
             bounds are dynamically adjusted to match the value.
+
+        Raises
+        ------
+        OptVariablesError
+            var_dict structure not correct
         """
         if var_dict is not None:
             for k, v in var_dict.items():
@@ -509,6 +549,11 @@ class OptVariablesFrame:
         -------
         x_true: np.ndarray
             Array of actual values in units
+
+        Raises
+        ------
+        OptVariablesError
+            Number of free variables is not equal to the size of x_norm
         """
         if len(x_norm) != self.n_free_variables:
             raise OptVariablesError(

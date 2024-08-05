@@ -424,6 +424,11 @@ def make_mixed_face(
     Returns
     -------
     The BluemiraFace of the mixed polygon/spline coordinates
+
+    Raises
+    ------
+    MixedFaceAreaError
+        Face and coordinates area are not close
     """
     mfm = MixedFaceMaker(
         x,
@@ -703,6 +708,11 @@ class MixedFaceMaker:
         -------
         The list of start and end tuples of the polygon segments
         list([start, end], [start, end])
+
+        Raises
+        ------
+        GeometryError
+            Not a good candidate for splining
         """
         sequences = []
 

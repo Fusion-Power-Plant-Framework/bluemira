@@ -62,6 +62,11 @@ class ParameterFrame:
     def __new__(cls, *args, **kwargs):  # noqa: ARG003
         """
         Prevent instantiation of this class.
+
+        Raises
+        ------
+        TypeError
+            Initialising ParameterFrame directly
         """
         if cls == ParameterFrame:
             raise TypeError(
@@ -74,7 +79,13 @@ class ParameterFrame:
         return super().__new__(cls)
 
     def __post_init__(self):
-        """Get types from frame"""
+        """Get types from frame
+
+        Raises
+        ------
+        TypeError
+            Inconsistent Parameter name or wrong type
+        """
         self._types = self._get_types()
 
         for field, field_name, value_type in zip(
@@ -134,7 +145,13 @@ class ParameterFrame:
                 self.update_values(new_values)
 
     def get_values(self, *names: str) -> tuple[ParameterValueType, ...]:
-        """Get values of a set of Parameters"""
+        """Get values of a set of Parameters
+
+        Raises
+        ------
+        AttributeError
+            Unknown Parameter name
+        """
         try:
             return tuple(getattr(self, n).value for n in names)
         except AttributeError as ae:
@@ -195,7 +212,13 @@ class ParameterFrame:
         *,
         allow_unknown=False,
     ) -> ParameterFrameT:
-        """Initialise an instance from a dictionary."""
+        """Initialise an instance from a dictionary.
+
+        Raises
+        ------
+        ValueError
+            Parameter data not found or unknown parameter
+        """
         data = copy.deepcopy(data)
         kwargs: dict[str, Parameter] = {}
         for member in cls.__dataclass_fields__:
@@ -219,7 +242,13 @@ class ParameterFrame:
     def from_frame(
         cls: type[ParameterFrameT], frame: ParameterFrameT
     ) -> ParameterFrameT:
-        """Initialise an instance from another ParameterFrame."""
+        """Initialise an instance from another ParameterFrame.
+
+        Raises
+        ------
+        ValueError
+            Cannot find Parameter in provided frame
+        """
         kwargs = {}
         for field in cls.__dataclass_fields__:
             try:
@@ -235,7 +264,13 @@ class ParameterFrame:
     def from_json(
         cls: type[ParameterFrameT], json_in: str | json.SupportsRead
     ) -> ParameterFrameT:
-        """Initialise an instance from a JSON file, string, or reader."""
+        """Initialise an instance from a JSON file, string, or reader.
+
+        Raises
+        ------
+        TypeError
+            Cannot read json data
+        """
         if hasattr(json_in, "read"):
             # load from file stream
             return cls.from_dict(json.load(json_in))
@@ -264,6 +299,11 @@ class ParameterFrame:
         local_params, when defined in both.
         All references to Parameters in global_params are maintained
         (i.e. there's no copying).
+
+        Raises
+        ------
+        ValueError
+            Parameter data not found
         """
         kwargs = {}
 
@@ -501,6 +541,10 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
 
     Angle units are dimensionless and conversions between them are not robust
 
+    Raises
+    ------
+    ValueError
+        Multiple angle units provided
     """
     unit_str = f"{orig_unit:C}"
 
@@ -610,6 +654,13 @@ def make_parameter_frame(
     -------
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
+
+    Raises
+    ------
+    ValueError
+        No params or param_cls provided
+    TypeError
+        Cannot interpret params type
     """
     from bluemira.base.reactor_config import ConfigParams  # noqa: PLC0415
 

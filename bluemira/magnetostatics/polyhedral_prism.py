@@ -459,6 +459,12 @@ class PolyhedralPrismCurrentSource(
     def _check_angle_values(self, alpha, beta, bypass_endcap_error, endcap_warning):
         """
         Check that end-cap angles are acceptable.
+
+        Raises
+        ------
+        MagnetostaticsError
+            alpha and beta must be within bound [0, 180°)
+            Endcaps must be equal
         """
         if bypass_endcap_error is True:
             if not (0 <= abs(alpha) < 0.5 * np.pi):

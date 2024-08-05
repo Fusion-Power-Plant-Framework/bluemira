@@ -107,6 +107,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
+
+        Raises
+        ------
+        ValueError
+            Constraint requires fixed coils
         """
         if len(equilibrium.coilset.control) != len(self.sh_coil_names):
             bluemira_warn(

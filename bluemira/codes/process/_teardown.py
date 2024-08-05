@@ -112,6 +112,11 @@ class Teardown(CodesTeardown):
         Returns
         -------
         The parameter values.
+
+        Raises
+        ------
+        CodesError
+            Cannot read output before creation or cannot get mapping
         """
         if not self._mfile_wrapper:
             raise CodesError(
@@ -259,6 +264,11 @@ class _MFileWrapper:
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
         Derive radial build parameters that PROCESS does not directly calculate.
+
+        Raises
+        ------
+        CodesError
+            Cannot derive required parameters from data
 
         Notes
         -----

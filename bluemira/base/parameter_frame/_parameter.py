@@ -18,7 +18,10 @@ from bluemira.base.constants import raw_uc, units_compatible
 
 def type_fail(exc, memo):  # noqa: ARG001
     """
-    Raise TypeError on wrong type
+    Raises
+    ------
+    TypeError
+        Wrong type
 
     Notes
     -----
@@ -178,6 +181,11 @@ class Parameter(Generic[ParameterValueType]):
     def value_as(self, unit: str | pint.Unit) -> ParameterValueType | None:
         """
         Return the current value in a given unit
+
+        Raises
+        ------
+        ValueError
+            Unit conversion failed
 
         Notes
         -----

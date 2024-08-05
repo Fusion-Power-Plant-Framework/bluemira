@@ -79,6 +79,11 @@ class DisplayCADOptions(Options):
 def _validate_display_inputs(parts, options, labels):
     """
     Validate the lists of parts and options, applying some default options.
+
+    Raises
+    ------
+    DisplayError
+        Number of options not equal to number of parts
     """
     if parts is None:
         bluemira_debug("No new parts to display")
@@ -178,6 +183,11 @@ class BaseDisplayer(ABC):
 def _get_displayer_class(part):
     """
     Get the displayer class for an object.
+
+    Raises
+    ------
+    DisplayError
+        Cannot display specific type
     """
     import bluemira.base.components  # noqa: PLC0415
 

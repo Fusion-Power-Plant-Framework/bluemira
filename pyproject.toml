@@ -146,17 +146,6 @@ exclude = [
     ".pytest_cache",
     "htmlcov",
     "generated_data",
-    # Deprecated modules
-    "bluemira/utilities/optimiser.py",
-    "bluemira/utilities/opt_tools.py",
-    "bluemira/utilities/opt_problems.py",
-    "bluemira/equilibria/positioner.py",
-    "bluemira/equilibria/opt_problems.py",
-    "bluemira/equilibria/opt_constraints.py",
-    "bluemira/equilibria/opt_constraint_funcs.py",
-    "bluemira/equilibria/opt_objectives.py",
-    "bluemira/codes/_nlopt_api.py",
-    "tests/equilibria/test_constraints.py",
 ]
 
 [tool.ruff.format]
@@ -191,7 +180,6 @@ ignore = [
     "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "SLF001",  # private method use
-    "DOC501",  # have raise in docstring
 
 ]
 
@@ -355,6 +343,7 @@ ignore-names = [
     "D404",
     "D406",
     "D409",
+    "DOC501",
     "N802",
     "PLC2701",
     "PT023",

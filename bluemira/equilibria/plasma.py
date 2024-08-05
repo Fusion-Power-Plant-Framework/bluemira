@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 def treat_xz_array(func):
     """
     Decorator for handling array calls to PlasmaCoil methods.
+
+    Raises
+    ------
+    EquilibriaError
+        x and z must be specified and the same dimension
     """
 
     def wrapper(self, x=None, z=None):
@@ -113,6 +118,11 @@ class PlasmaCoil:
         """
         Map a Green's function across the grid at a point, without crashing or
         running out of memory.
+
+        Raises
+        ------
+        EquilibriaError
+            No known toroidal current distribution
         """
         if self._j_tor is None:
             raise EquilibriaError(

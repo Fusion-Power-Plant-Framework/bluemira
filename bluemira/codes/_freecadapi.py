@@ -129,7 +129,8 @@ def check_data_type(data_type):
 
     Raises
     ------
-    TypeError: If args[0] objects are not instances of data_type
+    TypeError
+        If args[0] objects are not instances of data_type
     """
 
     def _apply_to_list(func):
@@ -399,6 +400,13 @@ def interpolate_bspline(
     Returns
     -------
     A FreeCAD wire that contains the bspline curve
+
+    Raises
+    ------
+    InvalidCADInputsError
+        Not enough points to interpolate
+    FreeCADError
+        Unable to make spline
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -605,6 +613,13 @@ def offset_wire(
     Returns
     -------
     Offset wire
+
+    Raises
+    ------
+    InvalidCADInputsError
+        Wire must be planar and cannot be straight
+    FreeCADError
+        offset failed
     """
     if thickness == 0.0:
         return wire.copy()
@@ -745,7 +760,7 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
 
     Raises
     ------
-    ValueError:
+    ValueError
         If the tolerance is <= 0.0
 
     Returns
@@ -880,7 +895,7 @@ def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
 
     Raises
     ------
-    ValueError:
+    ValueError
         If ndiscr < 2
         If dl <= 0.0
     """
@@ -922,6 +937,11 @@ def discretise_by_edges(
     Returns
     -------
     Array of points
+
+    Raises
+    ------
+    ValueError
+        dl <= 0
 
     Notes
     -----
@@ -1079,7 +1099,7 @@ def split_wire(
 
     Raises
     ------
-    FreeCADError:
+    FreeCADError
         If the vertex is further away to the wire than the specified tolerance
     """
 
@@ -1211,6 +1231,11 @@ def _setup_document(
 
     Converts shapes to FreeCAD Part.Features to enable saving and viewing
 
+    Raises
+    ------
+    ValueError
+        Number of objects not equal to number of labels
+
     Notes
     -----
     TODO the rotate flag should be removed. We should fix it in the camera of the viewer
@@ -1340,7 +1365,13 @@ class CADFileType(enum.Enum):
 
     @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
-        """Get exporter module for each filetype"""
+        """Get exporter module for each filetype
+
+        Raises
+        ------
+        FreeCADError
+            Unable to save file type
+        """
         try:
             export_func = __import__(self.module).export
         except AttributeError:
@@ -1405,6 +1436,11 @@ def save_as_STP(
         Full path filename of the STP assembly
     unit_scale:
         The scale in which to save the Shape objects
+
+    Raises
+    ------
+    FreeCADError
+        Shape is null
 
     Notes
     -----
@@ -1474,6 +1510,11 @@ def save_cad(
         unit to save the objects as.
     kwargs:
         passed to freecad preferences configuration
+
+    Raises
+    ------
+    FreeCADError
+        Unable to save to format
 
     Notes
     -----
@@ -1729,6 +1770,11 @@ def sweep_shape(
     Returns
     -------
     Swept geometry object
+
+    Raises
+    ------
+    FreeCADError
+        Wires must be all open or all closed and edges must be consecutively tangent
     """
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
@@ -1845,8 +1891,12 @@ def boolean_fuse(
 
     Raises
     ------
-    error: GeometryError
+    FreeCADError
         In case the boolean operation fails.
+    TypeError
+        Shapes must be in a list
+    ValueError
+        At least 2 shapes must be given
     """
     if not isinstance(shapes, list):
         raise TypeError(f"{shapes} is not a list.")
@@ -1898,7 +1948,7 @@ def boolean_fuse(
                 )
             return merged_shape.Solids[0]
 
-        raise ValueError(  # noqa: TRY301
+        raise NotImplementedError(  # noqa: TRY301
             f"Fuse function still not implemented for {_type} instances."
         )
     except Exception as e:
@@ -1923,11 +1973,6 @@ def boolean_cut(
     Returns
     -------
     Result of the boolean operation.
-
-    Raises
-    ------
-    error: GeometryError
-        In case the boolean operation fails.
     """
     _type = type(shape)
 
@@ -1950,7 +1995,7 @@ def boolean_cut(
     elif _type == apiSolid:
         output = cut_shape.Solids
     else:
-        raise ValueError(f"Cut function not implemented for {_type} objects.")
+        raise NotImplementedError(f"Cut function not implemented for {_type} objects.")
     return output
 
 
@@ -1974,6 +2019,11 @@ def boolean_fragments(
     fragment_map:
         An ordered list of groups of solid Boolean fragments (ordered in terms of
         input ordering)
+
+    Raises
+    ------
+    FreeCADError
+        Boolean operation failed
     """
     try:
         compound, fragment_map = shapes[0].generalFuse(shapes[1:], tolerance)
@@ -2072,6 +2122,11 @@ def _is_wire_or_face(shape_type):
 def _check_shapes_same_type(shapes):
     """
     Check that all the shapes are of the same type.
+
+    Raises
+    ------
+    ValueError
+        shapes must all be the same type
     """
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
@@ -2171,6 +2226,11 @@ def make_placement_from_matrix(matrix: np.ndarray) -> apiPlacement:
     ----------
     matrix:
         4 x 4 matrix from which to make the placement
+
+    Raises
+    ------
+    FreeCADError
+        Must be 4x4 matrix
 
     Notes
     -----
@@ -2468,6 +2528,11 @@ def show_cad(
         The options to use to display the parts.
     labels:
         labels to use for each part object
+
+    Raises
+    ------
+    FreeCADError
+        Number of parts and options must be equal
     """
     if isinstance(parts, apiShape):
         parts = [parts]

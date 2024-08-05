@@ -18,7 +18,6 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0, RNGSeeds
-from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.display.plotter import Zorder
 from bluemira.equilibria.coils import CoilSet
@@ -598,6 +597,11 @@ def spherical_harmonic_approximation(
     sh_eq.coilset.current:
         Coil currents found using the spherical harmonic approximation
 
+    Raises
+    ------
+    EquilibriaError
+        Problem not setup for harmonics
+
     """
     # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
@@ -605,7 +609,7 @@ def spherical_harmonic_approximation(
     original_LCFS = eq.get_LCFS()
 
     if eq.grid is None or eq.plasma is None:
-        raise BluemiraError("eq not setup for SH approximation.")
+        raise EquilibriaError("eq not setup for SH approximation.")
 
     # Grid keep the same as input equilibrium
     grid = eq.grid
@@ -774,6 +778,11 @@ def plot_psi_comparision(
     plot1, plot2, plot3, plot4:
         The Matplotlib Axes objects for each subplot.
 
+    Raises
+    ------
+    ValueError
+        4 plots must be provided
+
     """
     tot_psi_org = eq.psi(grid.x, grid.z)
     vac_psi_org = eq.coilset.psi(grid.x, grid.z)
@@ -786,7 +795,7 @@ def plot_psi_comparision(
 
     if axes is not None:
         if len(axes) != n_ax:
-            raise BluemiraError(
+            raise ValueError(
                 f"There are 4 subplots, you have provided settings for {len(axes)}."
             )
         plot1, plot2, plot3, plot4 = axes[0], axes[1], axes[2], axes[3]

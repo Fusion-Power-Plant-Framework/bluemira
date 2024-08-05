@@ -221,6 +221,11 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         Returns
         -------
         Operational availabilities at each operational phase
+
+        Raises
+        ------
+        FuelCycleError
+            Number of phases should be equal to the number of operational availabilities
         """
         if len(op_durations) != len(self.operational_availabilities):
             raise FuelCycleError(
@@ -290,6 +295,11 @@ class GompertzLearningStrategy(LearningStrategy):
         Returns
         -------
         Operational availabilities at each operational phase
+
+        Raises
+        ------
+        FuelCycleError
+            Input lifetimes must be in range
         """
         if not self.min_op_a < lifetime_op_availability < self.max_op_a:
             raise FuelCycleError(

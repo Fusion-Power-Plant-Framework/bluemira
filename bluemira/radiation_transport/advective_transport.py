@@ -96,6 +96,11 @@ class ChargedParticleSolver:
     def _check_params(self):
         """
         Check input fractions for validity.
+
+        Raises
+        ------
+        AdvectionTransportError
+            Sum of total power fractions is not ~= 1
         """
         # Check lower power fractions
         lower_power = self.params.f_lfs_lower_target + self.params.f_hfs_lower_target
@@ -459,7 +464,15 @@ class ChargedParticleSolver:
 
     @staticmethod
     def _make_params(config):
-        """Convert the given params to ``ChargedParticleSolverParams``"""
+        """Convert the given params to ``ChargedParticleSolverParams``
+
+        Raises
+        ------
+        TypeError
+            Unsupported config type
+        ValueError
+            Unknown configuration parameters
+        """
         if isinstance(config, dict):
             try:
                 return ChargedParticleSolverParams(**config)
@@ -467,7 +480,7 @@ class ChargedParticleSolver:
                 unknown = [
                     k for k in config if k not in fields(ChargedParticleSolverParams)
                 ]
-                raise TypeError(
+                raise ValueError(
                     f"Unknown config parameter(s) {str(unknown)[1:-1]}"
                 ) from None
         elif isinstance(config, ChargedParticleSolverParams):

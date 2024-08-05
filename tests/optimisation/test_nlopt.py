@@ -349,8 +349,8 @@ class TestNloptOptimiser:
         np.testing.assert_allclose(err_res.x, hist[error_on - 1][0])
 
     @pytest.mark.parametrize("bad_alg", [0, ["SLSQP"]])
-    def test_TypeError_setting_alg_with_invalid_type(self, bad_alg):
-        with pytest.raises(TypeError):
+    def test_ValueError_setting_alg_with_invalid_type(self, bad_alg):
+        with pytest.raises(ValueError, match="No such Algorithm"):
             NloptOptimiser(bad_alg, 2, no_op)
 
     def test_ValueError_setting_lower_bounds_with_wrong_dims(self):

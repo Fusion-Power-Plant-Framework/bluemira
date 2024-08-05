@@ -61,6 +61,11 @@ class Model(Enum):
 def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
     """
     Read json file or raise CodesError
+
+    Raises
+    ------
+    CodesError
+        Cannot open mock file
     """
     try:
         with open(file_path) as f:

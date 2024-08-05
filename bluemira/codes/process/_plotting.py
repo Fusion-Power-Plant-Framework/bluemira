@@ -176,6 +176,11 @@ def setup_radial_build(run: dict[str, Any], width: float = 1.0):
 def process_RB_fromOUT(f):
     """
     Parse PROCESS radial build from an OUT.DAT file.
+
+    Raises
+    ------
+    OSError
+        Cannot read file
     """
     # If the input is a string, treat as file name, and ensure it is closed.
     if isinstance(f, str | Path):
@@ -241,6 +246,11 @@ def plot_radial_build(
     Returns
     -------
     The plot Axes object.
+
+    Raises
+    ------
+    CodesError
+        Cannot find OUT.DAT
     """
     filename = Path(sys_code_dir, "OUT.DAT")
 

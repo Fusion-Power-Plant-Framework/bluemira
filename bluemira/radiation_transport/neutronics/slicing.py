@@ -83,6 +83,11 @@ def cut_curve(
         `[wire.value_at(t) for t in params_range]`
         is a list of points (sufficient to built up a series of (discretisation_level-1)
         straight lines that approximate that segment)
+
+    Raises
+    ------
+    GeometryError
+        Point inconsitencies
     """
     cut_params = [wire.parameter_at(cp) for cp in cut_points]
     # for reference: cut_params has range:
@@ -121,6 +126,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     Raise GeometryError if the BluemiraWire has an unexpected data storage structure.
     Then, get only the key information (start/end points and tangent) of each segment of
     the wire.
+
+
+    Raises
+    ------
+    GeometryError
+        Wire has too many edges
     """
     wire_container = []
 
@@ -217,6 +228,11 @@ def turned_morethan_180(
     direction_sign: signed integer
         +1: evaluate rotation required in the counter-clockwise direction.
         -1: evaluate rotation required in the clockwise direction.
+
+    Raises
+    ------
+    GeometryError
+        Tangent not connected to plane
     """
     if xyz_vector1[1] != 0 or xyz_vector2[1] != 0:
         raise GeometryError("Tangent vector points out of plane!")
@@ -354,6 +370,11 @@ class PanelsAndExteriorCurve:
         vv_interior:
             A BluemiraWire that runs clockwise, showing the vacuum vessel on the RHHP
             cross-section of the tokamak.
+
+        Raises
+        ------
+        ValueError
+            panel_break_points array shape incorrect
         """
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior

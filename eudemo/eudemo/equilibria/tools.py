@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -195,6 +196,22 @@ def make_grid(
     return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
 
+class DivertorLocation(Enum):
+    """Divertor location options"""
+
+    UPPER_INNER = auto()
+    UPPER_OUTER = auto()
+    LOWER_INNER = auto()
+    LOWER_OUTER = auto()
+
+    @classmethod
+    def _missing_(cls, value: str) -> DivertorLocation:
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            return super()._missing_(value)
+
+
 class DivertorLegCalculator:
     """
     Straight line divertor leg mixin calculator.
@@ -209,19 +226,28 @@ class DivertorLegCalculator:
         zn = np.linspace(p1[1], p2[1], int(n))
         return xn, zn
 
-    def calc_divertor_leg(self, x_point, angle, length, n, loc="lower", pos="outer"):
+    def calc_divertor_leg(
+        self, x_point, angle, length, n, loc=DivertorLocation.LOWER_OUTER
+    ):
         """
         Calculate the position of a straight line divertor leg.
-        """
-        if loc not in {"upper", "lower"}:
-            raise ValueError(
-                f"Please specify loc: 'upper' or 'lower' X-point, not: {loc}"
-            )
-        if pos not in {"inner", "outer"}:
-            raise ValueError(f"Please specify pos: 'inner' or 'outer' X leg, not: {pos}")
 
-        loc_sign = 1 if loc == "upper" else -1
-        pos_sign = 1 if pos == "outer" else -1
+        Raises
+        ------
+        ValueError
+
+        """
+        loc = DivertorLocation(loc)
+        loc_sign = (
+            1
+            if loc in {DivertorLocation.UPPER_INNER, DivertorLocation.UPPER_OUTER}
+            else -1
+        )
+        pos_sign = (
+            1
+            if loc in {DivertorLocation.LOWER_OUTER, DivertorLocation.UPPER_OUTER}
+            else -1
+        )
 
         angle = np.deg2rad(angle)
         x = x_point[0] + pos_sign * length * np.cos(angle)
@@ -286,11 +312,11 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval, tolerance=psibtol))
 
         x_leg1, z_leg1 = self.calc_divertor_leg(
-            x_point, 50, div_l_ob, int(n / 10), loc="lower", pos="outer"
+            x_point, 50, div_l_ob, int(n / 10), loc=DivertorLocation.LOWER_OUTER
         )
 
         x_leg2, z_leg2 = self.calc_divertor_leg(
-            x_point, 40, div_l_ib, int(n / 10), loc="lower", pos="inner"
+            x_point, 40, div_l_ib, int(n / 10), loc=DivertorLocation.LOWER_INNER
         )
 
         x_legs = np.append(x_leg1, x_leg2)

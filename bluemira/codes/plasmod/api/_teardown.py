@@ -91,6 +91,11 @@ class Teardown(CodesTeardown):
     def _get_data(self, output_file: str | Path, profiles_file: str | Path):
         """
         Get data for read or run modes
+
+        Raises
+        ------
+        CodesError
+            Cannot read output file
         """
         try:
             with open(output_file) as scalar_hdl, open(profiles_file) as profiles_hdl:

@@ -39,7 +39,13 @@ def extractor(
     extraction_dir: Path,
     del_compressed_file: bool,  # noqa: FBT001
 ):
-    """Customisable extractor"""
+    """Customisable extractor
+
+    Raises
+    ------
+    ValueError
+        Unsupported file type
+    """
     Path.mkdir(extraction_dir, parents=True, exist_ok=True)
 
     if not isinstance(compressed_files, Iterable):
@@ -84,7 +90,13 @@ def _filter_members(
     filename: str,
     members: dict[str, tarfile.TarInfo | zipfile.ZipInfo],
 ) -> list[tarfile.TarInfo] | list[zipfile.ZipInfo]:
-    """Filter archive contents to only extract wanted files"""
+    """Filter archive contents to only extract wanted files
+
+    Raises
+    ------
+    ValueError
+        If archive filename not known
+    """
     import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
     from openmc_data import all_release_details as ard  # noqa: PLC0415
 

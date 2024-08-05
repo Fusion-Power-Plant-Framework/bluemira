@@ -136,6 +136,11 @@ class Impurities(Enum):
     def files(self) -> dict[str, Path]:
         """
         Get PROCESS impurity data file path
+
+        Raises
+        ------
+        CodesError
+            Impurity directory not found
         """
         with resources.path(
             "process.data.lz_non_corona_14_elements", "Ar_lz_tau.dat"

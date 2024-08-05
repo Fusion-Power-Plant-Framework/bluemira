@@ -69,7 +69,8 @@ def process_scipy_result(res):
 
     Raises
     ------
-    OptimisationError if an error code returned without a usable result.
+    OptimisationError
+        if an error code returned without a usable result.
     """
     if res.success:
         return res.x

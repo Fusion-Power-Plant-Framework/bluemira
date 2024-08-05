@@ -104,6 +104,11 @@ class PlanarCircuit(SourceGroup):
     ) -> Coordinates:
         """
         Checks that the shape is planar
+
+        Raises
+        ------
+        MagnetostaticsError
+            Shape must be planar
         """
         shape = process_to_coordinates(shape)
         if not shape.is_planar:

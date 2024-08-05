@@ -404,6 +404,11 @@ def _reactivity_plasmod(
     Returns
     -------
     Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Raises
+    ------
+    ValueError
+        Reaction type not supported
     """
     if reaction == Reactions.D_T:
         t3 = temp_kev ** (-1 / 3)
@@ -441,6 +446,11 @@ def _reactivity_johner(
     Returns
     -------
     Reactivity of the reaction at the specified temperature(s) [m^3/s]
+
+    Raises
+    ------
+    ValueError
+        Reaction type not supported
 
     Notes
     -----

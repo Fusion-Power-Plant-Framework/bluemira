@@ -45,7 +45,13 @@ async def _download(
     chunk_size: int = 10000000,
     timeout: int = 10,  # noqa: ASYNC109
 ):
-    """Downloader event loop"""
+    """Downloader event loop
+
+    Raises
+    ------
+    ValueError
+        Non http url
+    """
     if not url.startswith(("http:", "https:")):
         raise ValueError("Must be an http or https url")
 
@@ -96,7 +102,13 @@ def downloader(
     max_workers: int = 5,
     timeout: int = 10,
 ):
-    """Asynchronous multithreaded downloader"""
+    """Asynchronous multithreaded downloader
+
+    Raises
+    ------
+    OSError
+        Mismatched checksum
+    """
     if output_filename is None:
         output_filename = Path(url.rsplit("/", 1)[-1])
 

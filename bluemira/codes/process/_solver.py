@@ -161,6 +161,11 @@ class Solver(CodesSolver):
             The run mode to execute the solver in. See the
             :func:`~bluemira.codes.process._solver.Solver.__init__`
             docstring for details of the behaviour of each run mode.
+
+        Raises
+        ------
+        CodesError
+            install not found
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
@@ -205,6 +210,11 @@ class Solver(CodesSolver):
         Returns
         -------
         The parameter values.
+
+        Raises
+        ------
+        CodesError
+            Cannot read output before creation
         """
         if self._teardown:
             return self._teardown.get_raw_outputs(params)

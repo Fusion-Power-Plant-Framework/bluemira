@@ -206,6 +206,11 @@ class PlasmodInputs:
         """
         Convert plasmod model fortran values to their corresponding enum
         values.
+
+        Raises
+        ------
+        CodesError
+            Invalid model value
         """
         for model, enum_cls in MODEL_MAP.items():
             current_value = getattr(self, model)
@@ -226,6 +231,11 @@ class PlasmodInputs:
 
         Throw a value error if the given value does not correspond to an
         enumeration value in the enum class.
+
+        Raises
+        ------
+        ValueError
+            Cannot convert value to enum
         """
         for enum_val in enum_cls:
             # Let's us specify using the enum value (usually an int)

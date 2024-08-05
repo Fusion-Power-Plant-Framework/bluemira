@@ -63,7 +63,7 @@ def msh_to_xdmf(
 
     Raises
     ------
-    MeshConversionError:
+    MeshConversionError
         * If the file does not exist
         * If the dimensionality != [2, 3]
         * If no domain physical groups are found
@@ -113,6 +113,11 @@ def import_mesh(
         Dolfin MeshFunctionSizet object containing the geometry
     link_dict:
         Link dictionary between MSH and XDMF objects
+
+    Raises
+    ------
+    FileNotFoundError
+        no mesh file(s) found
     """
     domain_file = Path(directory, f"{file_prefix}_{DOMAIN_SUFFIX}")
     boundary_file = Path(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}")
@@ -124,7 +129,7 @@ def import_mesh(
         msg = "\n".join([
             fn.as_posix() for fn, exist in zip(files, exists, strict=False) if not exist
         ])
-        raise MeshConversionError(f"No mesh file(s) found:\n {msg}")
+        raise FileNotFoundError(f"No mesh file(s) found:\n {msg}")
 
     mesh = Mesh()
 
@@ -175,6 +180,11 @@ def _check_dimensions(dimensions: int | list[int]) -> tuple[int]:
 def _export_domain(mesh, file_prefix, directory, dimensions):
     """
     Export the domain of a mesh to XDMF.
+
+    Raises
+    ------
+    MeshConversionError
+        No domain physical group found
     """
     dimensions = _check_dimensions(dimensions)
 

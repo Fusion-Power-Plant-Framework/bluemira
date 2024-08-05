@@ -219,6 +219,12 @@ class PrismEndCapMixin:
     def _check_angle_values(self, alpha: float, beta: float):
         """
         Check that end-cap angles are acceptable.
+
+        Raises
+        ------
+        MagnetostaticsError
+            Endcap angles must have the same sign
+            alpha and beta must be within [0, 180°)
         """
         sign_alpha = np.sign(alpha)
         sign_beta = np.sign(beta)
@@ -244,6 +250,11 @@ class PrismEndCapMixin:
     ):
         """
         Check for bad combinations of source length and end-cap angles.
+
+        Raises
+        ------
+        MagnetostaticsError
+            Self intersection of trapezoidal segments
         """
         a = np.tan(alpha) * breadth
         b = np.tan(beta) * breadth

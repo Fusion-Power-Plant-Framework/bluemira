@@ -194,6 +194,11 @@ class Radiation:
         -------
         te:
             poloidal distribution of electron temperature
+
+        Raises
+        ------
+        ValueError
+            Required inputs not provided
         """
         te = np.array([te_mp] * len(flux_tube))
 
@@ -268,6 +273,11 @@ class Radiation:
         -------
         ne:
             poloidal distribution of electron density
+
+        Raises
+        ------
+        ValueError
+            Required inputs not provided
         """
         # initializing ne with same values all along the flux tube
         ne = np.array([ne_mp] * len(flux_tube))
@@ -955,6 +965,11 @@ class ScrapeOffLayerRadiation(Radiation):
         n_pol:
             density poloidal profile along each
             flux tube within the specified set [1/m^3]
+
+        Raises
+        ------
+        ValueError
+            Required inputs not provided
         """
         f_ion_t_eV = self.params.f_ion_t.value_as("eV")
 

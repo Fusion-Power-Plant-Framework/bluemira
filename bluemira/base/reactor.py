@@ -122,6 +122,11 @@ class BaseManager(abc.ABC):
     def _validate_cad_dims(*dims: str) -> tuple[str, ...]:
         """
         Validate showable CAD dimensions
+
+        Raises
+        ------
+        ComponentError
+            Unknown plot dimension
         """
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
@@ -138,6 +143,11 @@ class BaseManager(abc.ABC):
     def _validate_plot_dims(*dims) -> tuple[str, ...]:
         """
         Validate showable plot dimensions
+
+        Raises
+        ------
+        ComponentError
+            Unknown plot dimension
         """
         # give dims_to_show a default value
         dims_to_show = ("xz",) if len(dims) == 0 else dims
@@ -218,6 +228,11 @@ class FilterMaterial:
         can be modified or added by standard methods.
 
         See #2236 discussion_r1191246003 for further details
+
+        Raises
+        ------
+        AttributeError
+            FilterMaterial is immutable
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
@@ -427,7 +442,13 @@ class Reactor(BaseManager):
         self,
         with_components: list[ComponentManager] | None = None,
     ) -> Component:
-        """Build the component tree from this class's annotations."""
+        """Build the component tree from this class's annotations.
+
+        Raises
+        ------
+        ComponentError
+            Initialising Reactor directly
+        """
         if not hasattr(self, "__annotations__"):
             raise ComponentError(
                 "This reactor is ill-defined. "

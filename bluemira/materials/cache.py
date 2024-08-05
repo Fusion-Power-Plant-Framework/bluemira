@@ -94,6 +94,11 @@ class MaterialCache:
             The name of the material or mixture.
         mat_dict:
             The dictionary containing the material or mixture attributes to be loaded.
+
+        Raises
+        ------
+        MaterialsError
+            Unknown material class
         """
         if (
             material_class := mats_dict[mat_name]["material_class"]

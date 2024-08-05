@@ -16,6 +16,11 @@ from bluemira.geometry.wire import BluemiraWire
 def cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWire:
     """
     Remove the parts of the wire below the given value in the z-axis.
+
+    Raises
+    ------
+    ValueError
+        No parts of shape found about the x points
     """
     # Create a box that surrounds the wall below the given z
     # coordinate, then perform a boolean cut to remove that portion

@@ -38,7 +38,7 @@ from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -571,6 +571,11 @@ def create_j_function(
     a dolfinx function on the function space (mesh, eltype) with the values of
     the density current to be applied at each cell
 
+    Raises
+    ------
+    ValueError
+        value not callable or a number
+
     Notes
     -----
     If multiple functions are defined on the same subdomain, the contributions
@@ -602,7 +607,7 @@ def create_j_function(
 
             J.x.array[dofs] += temp.x.array[dofs]
         else:
-            raise Warning(f"Tag {value.tag} is not in boundaries")
+            bluemira_warn(f"Tag {value.tag} is not in boundaries")
     return J
 
 

@@ -71,6 +71,11 @@ class GSOperator:
             The discretisation of the 2-D field in X
         nz:
             The discretisation of the 2-D field in Z
+
+        Raises
+        ------
+        EquilibriaError
+            Underlying limits are not symmetric
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
@@ -143,6 +148,11 @@ class DirectSolver:
         b:
             Numpy array containing RHS of equation system.
             Converted to 1D before linear solve applied..
+
+        Raises
+        ------
+        EquilibriaError
+            Matrix inversion problem in GS solver
         """
         b1d = np.reshape(b, -1)
         x = self.solve(b1d)

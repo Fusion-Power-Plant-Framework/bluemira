@@ -53,6 +53,11 @@ def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
     Returns
     -------
     New CoilSet with SymmetricCircuits where appropriate
+
+    Raises
+    ------
+    EquilibriaError
+        Superposition of coils or unrecognised type
     """
     if not check_coilset_symmetric(coilset):
         bluemira_warn(
@@ -194,6 +199,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         If kwargs are passed they will be passed to all function calls as is.
         If args are passed an attempt is made to push the right shaped argument to a
         given function.
+
+        Raises
+        ------
+        ValueError
+            Number of arguments not equal to number og coil groups
         """
         if not args:
             for ff in self.__list_getter(func):
@@ -230,6 +240,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         Returns
         -------
         Removed names if not at top level of nested stack
+
+        Raises
+        ------
+        EquilibriaError
+            Unknown coils
 
         Notes
         -----
@@ -418,7 +433,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         values: CoilType | float | Iterable[CoilType | float],
         dtype: type | None = None,
     ):
-        """Set attributes on coils"""
+        """Set attributes on coils
+
+        Raises
+        ------
+        ValueError
+            Number of elements < number of coils
+        """
         values = np.atleast_1d(values)
         if dtype not in {None, object}:
             values.dtype = np.dtype(dtype)
@@ -494,7 +515,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._einsum_str = "...j, ...j -> ..."
 
     def _find_coil(self, name):
-        """Find coil by name"""
+        """Find coil by name
+
+        Raises
+        ------
+        KeyError
+            Coil not found in group
+        """
         for c in self._coils:
             if isinstance(c, CoilGroup):
                 try:
@@ -587,6 +614,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         -------
         Coil or CoilGroup
             The coil or coil group with the given coil name in it
+
+        Raises
+        ------
+        ValueError
+            No coil found with given name
         """
         for coil_or_group in self._coils:
             if isinstance(coil_or_group, CoilGroup):
@@ -1246,7 +1278,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         Raises
         ------
-        ValueError:
+        ValueError
             If a name in `coil_names` in not in `all_current_optimisable_coils`.
         """
         if coil_names is None:
@@ -1286,6 +1318,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         This matrix is used to convert the optimisable currents to the full set of
         currents in the CoilSet.
+
+        Raises
+        ------
+        ValueError
+            Number of optimisable coils not equal number of groups/coils
         """
         cc = self.get_control_coils()
 
@@ -1331,6 +1368,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def _opt_currents(self, values: np.ndarray):
         """
         Set the currents for the optimisable coils.
+
+        Raises
+        ------
+        ValueError
+            Number of values not equal to number of optimisable currents
         """
         n_all_coils = self.n_coils()
 
@@ -1382,12 +1424,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the coils that can be position optimised.
 
-
         Parameters
         ----------
         coil_names:
             The names of the coils to get the positions of.
             If None, all position optimisable coils are returned.
+
+        Raises
+        ------
+        ValueError
+            Coil's position not optimisable
         """
         if coil_names is None:
             return self.all_position_optimisable_coils

@@ -554,6 +554,11 @@ class PicardIterator:
     def __next__(self):
         """
         Perform an iteration of the solver.
+
+        Raises
+        ------
+        StopIteration
+            if converged
         """
         if not hasattr(self, "_psi"):
             self._setup()
@@ -582,6 +587,11 @@ class PicardIterator:
     def iterate_once(self) -> CoilsetOptimiserResult:
         """
         Perform a single iteration and handle convergence.
+
+        Raises
+        ------
+        StopIteration
+            if converged
         """
         try:
             next(self)

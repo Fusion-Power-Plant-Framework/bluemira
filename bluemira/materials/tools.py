@@ -26,6 +26,11 @@ def matproperty(t_min: float, t_max: float):
     Material property decorator object.
 
     Checks that input T vector is within bounds. Handles floats and arrays.
+
+    Raises
+    ------
+    ValueError
+        Temperature outside of range
     """
 
     def decorator(f):

@@ -153,6 +153,11 @@ def optimise(
     -------
     The result of the optimisation; including the optimised parameters
     and the number of iterations.
+
+    Raises
+    ------
+    ValueError
+        x0 or dimension not provided or sizes differ
     """
     if dimensions is None:
         if x0 is not None:
@@ -276,7 +281,13 @@ def _make_optimiser(
 def _process_bounds(
     bounds: tuple[npt.ArrayLike, npt.ArrayLike] | None, dims: int
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Handle bounds converting ``None`` to +/-inf and expanding scalar bounds."""
+    """Handle bounds converting ``None`` to +/-inf and expanding scalar bounds.
+
+    Raises
+    ------
+    ValueError
+        Length of bounds is not 2
+    """
     if bounds is None:
         return (np.full(dims, -np.inf), np.full(dims, np.inf))
     bounds = tuple(bounds)

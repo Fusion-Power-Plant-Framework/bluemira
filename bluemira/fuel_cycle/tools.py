@@ -200,8 +200,29 @@ def piecewise_sqrt_threshold(
     )
 
 
+class FitMethod(Enum):
+    """Sink Data fit methods"""
+
+    LINEAR = auto()
+    SQRT = auto()
+
+    @classmethod
+    def _missing_(cls, value: str):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"No known fitting method {value}"
+                f"please select from {(*cls._member_names_,)}"
+            ) from None
+
+
 def fit_sink_data(
-    x: np.ndarray, y: np.ndarray, method: str = "sqrt", *, plot: bool = True
+    x: np.ndarray,
+    y: np.ndarray,
+    method: str | FitMethod = FitMethod.SQRT,
+    *,
+    plot: bool = True,
 ) -> tuple[float, float]:
     """
     Function used to determine simplified tritium sink model parameters, from
@@ -224,22 +245,20 @@ def fit_sink_data(
         The slope of the fitted piecewise linear threshold function
     threshold:
         The threshold of the fitted piecewise linear threshold function
+
     """
+    method = FitMethod(method)
     x, y = np.array(x), np.array(y)
     arg = np.nonzero(y > 0.98 * max(y))[0][0]
     kink_point = x[arg]
 
-    if method == "linear":
+    if method is FitMethod.LINEAR:
         fit_func = piecewise_linear_threshold
         bounds = []
-
-    elif method == "sqrt":
+    elif method is FitMethod.SQRT:
         fit_func = piecewise_sqrt_threshold
 
         bounds = [[-np.inf, kink_point - 1, -np.inf], [np.inf, kink_point + 1, np.inf]]
-
-    else:
-        raise FuelCycleError(f"Fitting method '{method}' not recgonised.")
 
     p_opt = curve_fit(fit_func, x, y, bounds=bounds)
 
@@ -447,6 +466,11 @@ def legal_limit(
     -------
     legal_limit:
         release rate of T [kg/yr]
+
+    Raises
+    ------
+    FuelCycleError
+        Fusion power or burn rate must be specified
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")
@@ -482,6 +506,11 @@ def _dec_I_mdot(  # noqa: N802
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\sum_{t=0}^{{\\Delta}t}e^{-\\lambda(T-t)}`
 
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}({\\Delta}t+1/2)}-1\\big)}{e^{\\lambda}-1}`
+
+    Raises
+    ------
+    ValueError
+        Output inventory < 0
     """  # noqa: W505, E501
     # intuitive hack for 1/2... maths says it should be 1
     dt = t_out - t_in
@@ -605,6 +634,14 @@ def _fountain_linear_sink(
         Accountancy parameter to calculate the total value lost to a sink
     decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
+
+    Raises
+    ------
+    ValueError
+        Undefined behaviour for inventory > maximum
+        Outflow greater than inflow
+        Negative inventory
+        Negative outflow
     """
     dt = t_out - t_in
     if dt == 0:

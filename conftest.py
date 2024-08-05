@@ -97,6 +97,11 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     """
     Configures pytest with the plotting and longrun command line options.
+
+    Raises
+    ------
+    ValueError
+        if private test actived without access to the data
     """
     if not config.option.plotting_on:
         # We're not displaying plots so use a display-less backend

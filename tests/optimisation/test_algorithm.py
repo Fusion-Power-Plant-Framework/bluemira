@@ -14,8 +14,8 @@ class TestAlgorithm:
         assert Algorithm[alg.name] == alg
 
     def test_direct_l_can_be_made_from_str_with_hyphen(self):
-        assert Algorithm["DIRECT-L"] == Algorithm.DIRECT_L
+        assert Algorithm("DIRECT-L") == Algorithm.DIRECT_L
 
     def test_ValueError_given_unknown_algorithm_str(self):
         with pytest.raises(ValueError):  # noqa: PT011
-            Algorithm["NOT_AN_ALG"]
+            Algorithm("NOT_AN_ALG")

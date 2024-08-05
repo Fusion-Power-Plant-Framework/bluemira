@@ -62,6 +62,11 @@ def make_solenoid(
     Returns
     -------
     List of solenoid coil(s)
+
+    Raises
+    ------
+    BuilderError
+        Solenoid input configurations are not consistent
     """
 
     def make_CS_coil(z_coil, dz_coil, i):

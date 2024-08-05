@@ -277,7 +277,13 @@ class PulsedCoilsetDesign(ABC):
         )
 
     def run_premagnetisation(self):
-        """Run the breakdown optimisation problem."""
+        """Run the breakdown optimisation problem.
+
+        Raises
+        ------
+        EquilibriaError
+            Unable to relax breakdown for given coil sizes
+        """
         R_0 = self.params.R_0.value
         strategy = self.bd_settings.strategy(
             R_0, self.params.A.value, self.params.tk_sol_ib.value

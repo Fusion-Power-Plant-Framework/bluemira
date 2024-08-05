@@ -62,6 +62,11 @@ class Limiter:
     def __next__(self):
         """
         Hacky phoenix iterator
+
+        Raises
+        ------
+        StopIteration
+            stop iterating at end of object
         """
         if self._i >= len(self):
             raise StopIteration

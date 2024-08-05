@@ -84,6 +84,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def execute(self) -> GeometryParameterisation:
         """
         Execute method of WallSilhouetteDesigner
+
+        Raises
+        ------
+        DesignError
+            First wall does not enclose separatrix x points
         """
         result = super().execute()
 
@@ -105,6 +110,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def read(self) -> GeometryParameterisation:
         """
         Read method of WallSilhouetteDesigner
+
+        Raises
+        ------
+        ValueError
+            file_path not found in config
         """
         if not self.file_path:
             raise ValueError(

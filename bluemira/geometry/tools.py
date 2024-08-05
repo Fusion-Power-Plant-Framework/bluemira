@@ -49,7 +49,13 @@ if TYPE_CHECKING:
 
 @cadapi.catch_caderr(GeometryError)
 def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
-    """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
+    """Convert a FreeCAD shape into the corresponding BluemiraGeo object.
+
+    Raises
+    ------
+    TypeError
+        Cannot convert to BluemiraGeo
+    """
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
     elif isinstance(apiobj, cadapi.apiFace):
@@ -226,6 +232,11 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     Returns
     -------
     Vertex at the point
+
+    Raises
+    ------
+    GeometryError
+        Shape must a single point
     """
     if isinstance(point, Coordinates):
         if np.shape(point) != (3, 1):
@@ -844,6 +855,11 @@ def convex_hull_wires_2d(
         The plane to perform the hull in. One of: 'xz', 'xy', 'yz'.
         Default is 'xz'.
 
+    Raises
+    ------
+    ValueError
+        not enough wires
+
     Returns
     -------
     A wire forming a convex hull around the input wires in the given
@@ -891,6 +907,11 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     ----------
     polygon:
         Stores the x-z coordinate pairs of the four coordinates.
+
+    Raises
+    ------
+    ValueError
+        shape must be (N, 2)
 
     Notes
     -----
@@ -1138,6 +1159,11 @@ def fillet_chamfer_decorator(*, chamfer: bool):
     """
     Decorator for fillet and chamfer operations, checking for validity of wire
     and radius.
+
+    Raises
+    ------
+    GeometryError
+        Number of edges >= 2, radius >= 0 and planar
     """
 
     def decorator(func):
@@ -1393,7 +1419,8 @@ def mirror_shape(
 
     Raises
     ------
-    GeometryError: if the norm of the direction tuple is <= 3*EPS
+    GeometryError
+        if the norm of the direction tuple is <= 3*EPS
     """
     if np.linalg.norm(direction) <= 3 * EPS:
         raise GeometryError("Direction vector cannot have a zero norm.")
@@ -1654,7 +1681,10 @@ def raise_error_if_overlap(
     target_name: str = "",
 ):
     """
-    Raise an error if two wires/points intersects overlaps.
+    Raises
+    ------
+    GeometryError
+        if two wires/points intersects overlaps.
     """
     check_overlaps = signed_distance(origin, target)
     if check_overlaps < -D_TOLERANCE:
@@ -1691,8 +1721,10 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
     Raises
     ------
-    error: GeometryError
+    GeometryError
         In case the boolean operation fails.
+    ValueError
+        All shapes (2 or more) must be the same type
     """
     shapes = iterable_to_list(shapes)
 
@@ -1957,6 +1989,13 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     Returns
     -------
     The clockwise angle between the two vectors in degrees.
+
+    Raises
+    ------
+    TypeError
+        both base and vector must be arrays
+    ValueError
+        Array shapes must be (2, N)
     """
     if not isinstance(base, np.ndarray) or not isinstance(vector, np.ndarray):
         raise TypeError(

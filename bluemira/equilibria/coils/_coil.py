@@ -55,6 +55,11 @@ class CoilNumber:
         Returns
         -------
         Coil number
+
+        Raises
+        ------
+        ValueError
+            Unknown coil type
         """
         if ctype == CoilType.NONE:
             idx = CoilNumber.__no_counter
