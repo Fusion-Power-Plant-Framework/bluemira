@@ -161,7 +161,8 @@ class LearningStrategy(abc.ABC):
         Returns
         -------
         Operational availabilities at each operational phase
-        """
+        """  # noqa: DOC202
+        ...
 
 
 class UniformLearningStrategy(LearningStrategy):
@@ -351,7 +352,8 @@ class OperationalAvailabilityStrategy(abc.ABC):
         Returns
         -------
         The distribution of size n and of the correct integral value
-        """
+        """  # noqa: DOC202
+        ...
 
 
 class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
