@@ -1810,6 +1810,7 @@ class RadiationSource:
         midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
+        confinement_time: float = 0.1,
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -1817,8 +1818,12 @@ class RadiationSource:
         # Get impurity data
         impurities_list_core = list(core_impurities)
         impurities_list_sol = list(sol_impurities)
-        impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
-        impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
+        impurity_data_core = get_impurity_data(
+            impurities_list=impurities_list_core, confinement_time_ms=confinement_time
+        )
+        impurity_data_sol = get_impurity_data(
+            impurities_list=impurities_list_sol, confinement_time_ms=confinement_time
+        )
 
         self.imp_content_core = core_impurities
         self.imp_data_core = impurity_data_core
