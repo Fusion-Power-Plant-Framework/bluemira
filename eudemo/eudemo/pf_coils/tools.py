@@ -12,6 +12,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,

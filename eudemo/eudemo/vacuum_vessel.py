@@ -43,6 +43,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
     Wrapper around a Vacuum Vessel component tree.
     """
 
+    @property
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire giving the vessel's boundary in the xz plane."""
         return (

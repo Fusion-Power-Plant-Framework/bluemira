@@ -48,6 +48,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
