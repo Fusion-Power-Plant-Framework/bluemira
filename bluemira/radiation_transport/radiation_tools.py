@@ -56,7 +56,7 @@ except ImportError:
 class WallDetector:
     """Dataclass for wall detectors"""
 
-    id: int
+    detector_id: int
     x_width: float
     y_width: float
     detector_center: Point3D
@@ -880,7 +880,7 @@ def detect_radiation(
             [power_data],
             x_width=detector.x_width,
             y_width=detector.y_width,
-            name=f"pixel-{detector.id}",
+            name=f"pixel-{detector.detector_id}",
             spectral_bins=1,
             transform=translate(
                 detector.detector_center.x,
@@ -996,7 +996,7 @@ def make_wall_detectors(
                     # to populate it step by step
                     wall_detectors.append(
                         WallDetector(
-                            id=ctr,
+                            detector_id=ctr,
                             x_width=x_width,
                             y_width=y_width,
                             detector_center=detector_center,
@@ -1017,7 +1017,7 @@ def make_wall_detectors(
                 # to populate it step by step
                 wall_detectors.append(
                     WallDetector(
-                        id=ctr,
+                        detector_id=ctr,
                         x_width=x_width,
                         y_width=y_width,
                         detector_center=detector_center,
