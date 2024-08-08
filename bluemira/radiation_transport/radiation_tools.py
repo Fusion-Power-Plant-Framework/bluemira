@@ -52,6 +52,18 @@ except ImportError:
     bluemira_error("Cherab not installed")
 
 
+@dataclass
+class WallDetector:
+    """Dataclass for wall detectors"""
+
+    id: int
+    x_width: float
+    y_width: float
+    detector_center: Point3D
+    normal_vector: Vector3D
+    y_vector: Vector3D
+
+
 def upstream_temperature(
     b_pol: float,
     b_tot: float,
@@ -828,7 +840,13 @@ class DetectedRadiation:
 
 
 # Adapted functions from Stuart
-def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False):
+def detect_radiation(
+    wall_detectors: list[WallDetector],
+    n_samples: int,
+    world: World,
+    *,
+    verbose: bool = False,
+):
     """
     To sample the wall and detect radiation
     """
@@ -846,13 +864,13 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     quiet = not verbose
 
     # Loop over each tile detector
-    for i, (_, x_width, y_width, centre_point, normal_vector, y_vector) in track(
-        enumerate(wall_detectors),
+    for detector in track(
+        wall_detectors,
         total=len(wall_detectors),
         description="Radiation detectors...",
     ):
         # extract the dimensions and orientation of the tile
-        pixel_area = x_width * y_width
+        pixel_area = detector.x_width * detector.y_width
 
         # Use the power pipeline to record total power arriving at the surface
         power_data = PowerPipeline0D()
@@ -860,12 +878,16 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
         # Use pixel_samples argument to increase amount of sampling and reduce noise
         pixel = Pixel(
             [power_data],
-            x_width=x_width,
-            y_width=y_width,
-            name=f"pixel-{i}",
+            x_width=detector.x_width,
+            y_width=detector.y_width,
+            name=f"pixel-{detector.id}",
             spectral_bins=1,
-            transform=translate(centre_point.x, centre_point.y, centre_point.z)
-            * rotate_basis(normal_vector, y_vector),
+            transform=translate(
+                detector.detector_center.x,
+                detector.detector_center.y,
+                detector.detector_center.z,
+            )
+            * rotate_basis(detector.normal_vector, detector.y_vector),
             parent=world,
             pixel_samples=n_samples,
             quiet=quiet,
@@ -877,7 +899,9 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
         pixel.observe()
 
         # Append the collected data to the storage lists
-        detector_radius = np.sqrt(centre_point.x**2 + centre_point.y**2)
+        detector_radius = np.sqrt(
+            detector.detector_center.x**2 + detector.detector_center.y**2
+        )
 
         detector_area.append(pixel_area)
         power_density.append(
@@ -886,20 +910,22 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
 
         power_density_stdev.append(np.sqrt(power_data.value.variance) / pixel_area)
         detected_power.append(
-            power_data.value.mean / pixel_area * (y_width * 2 * np.pi * detector_radius)
+            power_data.value.mean
+            / pixel_area
+            * (detector.y_width * 2 * np.pi * detector_radius)
         )
         detected_power_stdev.append(np.sqrt(power_data.value.variance))
 
-        running_distance += 0.5 * y_width  # with Y_WIDTH instead of y_width
+        running_distance += 0.5 * detector.y_width  # with Y_WIDTH instead of y_width
         distance.append(running_distance)
-        running_distance += 0.5 * y_width  # with Y_WIDTH instead of y_width
+        running_distance += 0.5 * detector.y_width  # with Y_WIDTH instead of y_width
 
         # For checking energy conservation.
         # Revolve this tile around the CYLINDRICAL z-axis
         # to get total power collected by these tiles.
         # Add up all the tile contributions to get total power collected.
         cherab_total_power += (power_data.value.mean / pixel_area) * (
-            y_width * 2 * np.pi * detector_radius
+            detector.y_width * 2 * np.pi * detector_radius
         )
 
     return DetectedRadiation(
@@ -914,7 +940,9 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     )
 
 
-def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, *, debug=False):
+def make_wall_detectors(
+    wall_r, wall_z, max_wall_len, x_width, *, debug=False
+) -> list[WallDetector]:
     """
     To make the detectors on the wall
     """
@@ -966,17 +994,16 @@ def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, *, debug=False):
                     )
 
                     # to populate it step by step
-                    wall_detectors = [
-                        *wall_detectors,
-                        (
-                            ctr,
-                            x_width,
-                            y_width,
-                            detector_center,
-                            normal_vector,
-                            y_vector,
-                        ),
-                    ]
+                    wall_detectors.append(
+                        WallDetector(
+                            id=ctr,
+                            x_width=x_width,
+                            y_width=y_width,
+                            detector_center=detector_center,
+                            normal_vector=normal_vector,
+                            y_vector=y_vector,
+                        )
+                    )
 
             else:
                 # evaluate normal_vector
@@ -988,10 +1015,16 @@ def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, *, debug=False):
                 detector_center = Point3D(0.5 * (p1x + p2x), 0, 0.5 * (p1y + p2y))
 
                 # to populate it step by step
-                wall_detectors = [
-                    *wall_detectors,
-                    (ctr, x_width, y_width, detector_center, normal_vector, y_vector),
-                ]
+                wall_detectors.append(
+                    WallDetector(
+                        id=ctr,
+                        x_width=x_width,
+                        y_width=y_width,
+                        detector_center=detector_center,
+                        normal_vector=normal_vector,
+                        y_vector=y_vector,
+                    )
+                )
 
                 if debug:
                     ax.plot([p1x, p2x], [p1y, p2y], "k")
@@ -1037,9 +1070,9 @@ def plot_radiation_loads(
 
     segs = []
 
-    for _, _, y_width, wall_cen, _, y_vector in wall_detectors:
-        end1 = wall_cen - 0.5 * y_width * y_vector
-        end2 = wall_cen + 0.5 * y_width * y_vector
+    for detector in wall_detectors:
+        end1 = detector.detector_center - 0.5 * detector.y_width * detector.y_vector
+        end2 = detector.detector_center + 0.5 * detector.y_width * detector.y_vector
 
         segs.append([[end1.x, end1.z], [end2.x, end2.z]])
 
