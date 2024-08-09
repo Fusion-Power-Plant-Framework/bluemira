@@ -1,51 +1,105 @@
-# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
-# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
-# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
-#
-# SPDX-License-Identifier: LGPL-2.1-or-later
-"""Defines the interface for an Optimiser."""
+from __future__ import annotations
 
-import abc
-from dataclasses import dataclass, field
+from enum import Enum, auto
+from types import DynamicClassAttribute
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
+from eqdsk.file import dataclass
+from scipy.optimize import Bounds, minimize, show_options
 
-from bluemira.optimisation.typing import OptimiserCallable
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
+from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    import numpy as np
+
+    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 
 @dataclass
-class OptimiserResult:
-    """Container for optimiser results."""
-
-    f_x: float
-    """The evaluation of the optimised parameterisation."""
-    x: np.ndarray
-    """The optimised parameterisation."""
-    n_evals: int
-    """The number of evaluations of the objective function in the optimisation."""
-    history: list[tuple[np.ndarray, float]] = field(repr=False)
-    """
-    The history of the parametrisation at each iteration.
-
-    The first element of each tuple is the parameterisation (x), the
-    second is the evaluation of the objective function at x (f(x)).
-    """
-    constraint_history: list[tuple[np.ndarray, ...]] = field(repr=False)
-    """
-    Constraint history
-    """
-    constraints_satisfied: bool | None = None
-    """
-    Whether all constraints have been satisfied to within the required tolerance.
-
-    Is ``None`` if constraints have not been checked.
-    """
+class Constraint:
+    f_constraint: OptimiserCallable
+    tolerance: np.ndarray
+    type: str
+    df_constraint: OptimiserCallable | None = None
 
 
-class Optimiser(abc.ABC):
-    """Interface for an optimiser supporting bounds and constraints."""
+class ScipyAlgorithm(Enum):
+    NELDER_MEAD = auto()
+    POWELL = auto()
+    CG = auto()
+    BFGS = auto()
+    NEWTON_CG = auto()
+    L_BFGS_B = auto()
+    TNC = auto()
+    COBYLA = auto()
+    SLSQP = auto()
+    TRUST_CONSTR = auto()
+    DOGLEG = auto()
+    TRUST_NCG = auto()
+    TRUST_EXACT = auto()
+    TRUST_KRYLOV = auto()
 
-    @abc.abstractmethod
+    @DynamicClassAttribute
+    def scipy_name(self) -> str:
+        return self.name.replace("_", "-").lower()
+
+    @classmethod
+    def _missing_(cls, value: str) -> ScipyAlgorithm:
+        try:
+            return cls[value.upper()]
+        except (KeyError, AttributeError):
+            raise ValueError(f"No such Algorithm value '{value}'.") from None
+
+
+SCIPY_ALG_MAPPING = {
+    Algorithm.NELDER_MEAD: ScipyAlgorithm.NELDER_MEAD,
+    Algorithm.POWELL: ScipyAlgorithm.POWELL,
+    Algorithm.CG: ScipyAlgorithm.CG,
+    Algorithm.BFGS_SCIPY: ScipyAlgorithm.BFGS,
+    Algorithm.NEWTON_CG: ScipyAlgorithm.NEWTON_CG,
+    Algorithm.L_BFGS_B: ScipyAlgorithm.L_BFGS_B,
+    Algorithm.TNC: ScipyAlgorithm.TNC,
+    Algorithm.COBYLA_SCIPY: ScipyAlgorithm.COBYLA,
+    Algorithm.SLSQP_SCIPY: ScipyAlgorithm.SLSQP,
+    Algorithm.TRUST_CONSTR: ScipyAlgorithm.TRUST_CONSTR,
+    Algorithm.DOGLEG: ScipyAlgorithm.DOGLEG,
+    Algorithm.TRUST_NCG: ScipyAlgorithm.TRUST_NCG,
+    Algorithm.TRUST_EXACT: ScipyAlgorithm.TRUST_EXACT,
+    Algorithm.TRUST_KRYLOV: ScipyAlgorithm.TRUST_KRYLOV,
+}
+
+
+COBYLA_OPS = ["tol", "catol", "maxiter"]
+SLSQP_OPS = ["ftol", "eps", "maxiter", "finite_diff_rel_step"]
+
+show_options
+
+
+class ScipyOptimiser(Optimiser):
+    def __init__(
+        self,
+        algorithm: AlgorithmType,
+        n_variables: int,
+        f_objective: ObjectiveCallable,
+        df_objective: OptimiserCallable | None = None,
+        opt_conditions: Mapping[str, int | float] | None = None,
+        opt_parameters: Mapping[str, Any] | None = None,
+        *,
+        keep_history: bool = False,
+    ):
+        self.algorithm = ScipyAlgorithm(SCIPY_ALG_MAPPING[algorithm])
+        self.n_variables = n_variables
+        self.f_objective = f_objective
+        self.df_objective = df_objective
+        self.opt_conditions = opt_conditions or {}
+        self.opt_parameters = opt_parameters or {}
+        self.keep_history = keep_history
+        self.eq_constraint = []
+        self.ineq_constraint = []
+
     def add_eq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -88,8 +142,10 @@ class Optimiser(abc.ABC):
             * ISRES
 
         """
+        self.eq_constraint.append(
+            Constraint(f_constraint, tolerance, "eq", df_constraint)
+        )
 
-    @abc.abstractmethod
     def add_ineq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -132,8 +188,10 @@ class Optimiser(abc.ABC):
             * ISRES
 
         """
+        self.ineq_constraint.append(
+            Constraint(f_constraint, tolerance, "ineq", df_constraint)
+        )
 
-    @abc.abstractmethod
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
         """
         Run the optimiser.
@@ -152,19 +210,37 @@ class Optimiser(abc.ABC):
         parameters ``x``, as well as other information about the
         optimisation.
         """
+        result = minimize(
+            fun=self.f_objective,
+            x0=x0,
+            method=self.algorithm.scipy_name,
+            jac=self.df_objective,
+            bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
+            constraints=[
+                *(constr.as_dict() for constr in self.eq_constraint),
+                *(constr.as_dict() for constr in self.ineq_constraint),
+            ],
+            options={**self.opt_parameters, **self.opt_conditions},
+        )
+        return OptimiserResult(
+            f_x=result.fun,
+            x=result.x,
+            n_evals=result.nit,
+            history=None,
+        )
 
-    @abc.abstractmethod
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
+        self._lower_bounds = bounds
 
-    @abc.abstractmethod
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the upper bound for each optimisation parameter.
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
+        self._upper_bounds = bounds

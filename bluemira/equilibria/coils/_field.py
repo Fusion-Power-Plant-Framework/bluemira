@@ -942,6 +942,13 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             super()._Bz_greens(bgreen), sum_coils=sum_coils, control=control
         )
 
+    def control_F(
+        self, coil_grp: CoilGroup, *, sum_coils: bool = True, control: bool = False
+    ) -> np.ndarray:
+        inds = self._control_ind if control else slice(None)
+
+        return super().control_F(coil_grp)[inds][:, inds]
+
 
 class CoilFieldsMixin(CoilGroupFieldsMixin):
     """

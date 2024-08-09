@@ -287,7 +287,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
     def optimise(
-        self, x0: npt.NDArray | None = None, *, verbose: bool = False
+        self,
+        x0: npt.NDArray | None = None,
+        *,
+        verbose: bool = False,
+        keep_history: bool = False,
+        check_constraints: bool = False,
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP
@@ -318,6 +323,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=verbose,
         )
 
         optimal_positions = opt_result.x

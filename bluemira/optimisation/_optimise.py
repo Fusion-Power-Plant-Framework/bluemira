@@ -21,8 +21,15 @@ from bluemira.optimisation._algorithm import (
     AlgorithmDefaultConditions,
     AlgorithmType,
 )
+from bluemira.optimisation._debug_opt import DebugOptimiser
 from bluemira.optimisation._nlopt import NloptOptimiser
+from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._scipy_opt import (
+    SCIPY_ALG_MAPPING,
+    ScipyAlgorithm,
+    ScipyOptimiser,
+)
 from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
@@ -251,7 +258,16 @@ def _make_optimiser(
     keep_history: bool = False,
 ) -> Optimiser:
     """Make a new optimiser object."""
-    opt = NloptOptimiser(
+    if (alg := Algorithm(algorithm)).DEBUG:
+        optimiser = DebugOptimiser
+    elif alg in NLOPT_ALG_MAPPING:
+        optimiser = NloptOptimiser
+    elif alg in SCIPY_ALG_MAPPING:
+        optimiser = ScipyOptimiser
+    else:
+        raise
+
+    opt = optimiser(
         algorithm,
         dimensions,
         f_objective=f_objective,

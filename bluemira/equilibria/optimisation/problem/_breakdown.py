@@ -204,7 +204,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
 
         self._args = {
             "c_psi_mat": np.array(
-                coilset.psi_response(*breakdown_strategy.breakdown_point)
+                coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
             ),
             "scale": self.scale,
         }
@@ -222,7 +222,15 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         max_currents = np.atleast_1d(max_currents)
         self.bounds = (-max_currents / self.scale, max_currents / self.scale)
 
-    def optimise(self, x0=None, *, fixed_coils=True):
+    def optimise(
+        self,
+        x0=None,
+        *,
+        fixed_coils: bool = True,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+        verbose: bool = False,
+    ):
         """
         Solve the optimisation problem.
         """
@@ -245,6 +253,9 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=verbose,
         )
 
         opt_currents = opt_result.x

@@ -276,7 +276,9 @@ class PulsedCoilsetDesign(ABC):
             eq, coilset, problem, profiles, limiter=self.limiter
         )
 
-    def run_premagnetisation(self):
+    def run_premagnetisation(
+        self, *, keep_history: bool = False, check_constraints: bool = False
+    ):
         """Run the breakdown optimisation problem.
 
         Raises
@@ -290,16 +292,18 @@ class PulsedCoilsetDesign(ABC):
         )
 
         i_max = 30
-        relaxed = all(self.coilset._flag_sizefix)
+        relaxed = all(self.coilset.get_control_coils()._flag_sizefix)
         for i in range(i_max):
             coilset = deepcopy(self.coilset)
             breakdown = Breakdown(coilset, self.grid)
             constraints = deepcopy(self._coil_cons)
 
             if relaxed:
-                max_currents = self.coilset.get_max_current(0)
+                max_currents = self.coilset.get_control_coils().get_max_current(0)
             else:
-                max_currents = self.coilset.get_max_current(self.params.I_p.value)
+                max_currents = self.coilset.get_control_coils().get_max_current(
+                    self.params.I_p.value
+                )
                 coilset.get_control_coils().current = max_currents
                 coilset.discretisation = self.eq_settings.coil_mesh_size
 
@@ -315,7 +319,11 @@ class PulsedCoilsetDesign(ABC):
                 opt_conditions=self.bd_settings.opt_conditions,
                 constraints=constraints,
             )
-            result = problem.optimise(fixed_coils=False)
+            result = problem.optimise(
+                fixed_coils=False,
+                keep_history=keep_history,
+                check_constraints=check_constraints,
+            )
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
 
@@ -387,7 +395,7 @@ class PulsedCoilsetDesign(ABC):
         """Calculate the SOF and EOF plasma boundary fluxes."""
         if psi_premag is None:
             if self.BREAKDOWN not in self.snapshots:
-                self.run_premagnetisation()
+                self.run_premagnetisation(keep_history=True, check_constraints=True)
             psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
 
         psi_sof = calc_psib(
@@ -401,7 +409,8 @@ class PulsedCoilsetDesign(ABC):
         return psi_sof, psi_eof
 
     def _get_max_currents(self, coilset: CoilSet) -> npt.NDArray[np.float64]:
-        return coilset.get_max_current(
+        cc = coilset.get_control_coils()
+        return cc.get_max_current(
             self.eq_settings.peak_PF_current_factor * self.params.I_p.value
         )
 
@@ -624,7 +633,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise(self, *, verbose: bool = False) -> CoilSet:
+    def optimise(
+        self,
+        *,
+        verbose: bool = False,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+    ) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """
@@ -642,7 +657,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self.pos_settings.opt_conditions,
             constraints=None,
         )
-        result = pos_opt_problem.optimise(verbose=verbose)
+        result = pos_opt_problem.optimise(
+            verbose=verbose,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+        )
         optimised_coilset = self._consolidate_coilset(result.coilset, sub_opt_problems)
 
         self.converge_and_snapshot(sub_opt_problems)

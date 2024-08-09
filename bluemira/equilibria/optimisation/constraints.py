@@ -238,7 +238,8 @@ class CoilFieldConstraints(FieldConstraints):
         B_max: float | np.ndarray,
         tolerance: float | np.ndarray | None = None,
     ):
-        n_coils = coilset.n_coils()
+        cc = coilset.get_control_coils()
+        n_coils = cc.n_coils()
         if is_num(B_max):
             B_max *= np.ones(n_coils)
         if len(B_max) != n_coils:
@@ -252,6 +253,7 @@ class CoilFieldConstraints(FieldConstraints):
 
     @staticmethod
     def _get_constraint_points(coilset):
+        coilset = coilset.get_control_coils()
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(
@@ -365,20 +367,19 @@ class CoilForceConstraints(UpdateableConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.control_F(coilset)
+        return coilset.control_F(coilset, control=True)
 
     @staticmethod
     def evaluate(equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        fp = np.zeros((equilibrium.coilset.n_coils(), 2))
-        current = equilibrium.coilset.current
+        cc = equilibrium.coilset.get_control_coils()
+        fp = np.zeros((cc.n_coils(), 2))
+        current = cc.current
         non_zero = np.nonzero(current)[0]
         if non_zero.size:
-            fp[non_zero] = (
-                equilibrium.coilset.F(equilibrium)[non_zero] / current[non_zero][:, None]
-            )
+            fp[non_zero] = cc.F(equilibrium)[non_zero] / current[non_zero][:, None]
         return fp
 
     def f_constraint(self) -> CoilForceConstraintFunction:
@@ -855,7 +856,9 @@ class MagneticConstraintSet:
         i = 0
         for constraint in self.constraints:
             n = len(constraint)
-            self.A[i : i + n, :] = constraint.control_response(self.coilset)
+            self.A[i : i + n, :] = constraint.control_response(
+                self.coilset.get_control_coils()
+            )
             i += n
 
     def build_target(self):
