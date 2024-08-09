@@ -50,6 +50,9 @@ import numpy.typing as npt
 
 from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.coils._tools import make_mutual_inductance_matrix
+
+# from bluemira.utilities.tools import np.round
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -389,6 +392,7 @@ class CoilForceConstraintFunctions:
         Constraint Derivative:
         Absolute sum of vertical force constraint on entire CS stack
         """
+        # TODO(je-cook) is this right, only applying the grad at one point
         self.grad[self.n_PF] = 2 * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
 
     def cs_z_sep_constraint(self, f_matx, max_value):
@@ -472,3 +476,35 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
             self.cs_z_grad(df_matx)
             self.cs_z_sep_grad(df_matx)
         return np.round(self.grad, 10)
+
+
+class StabilityConstraintFunction(FieldConstraintFunction):
+    """
+    Stability constriant function
+
+    Parameters
+    ----------
+    offset:
+        < 1 plasma mass becomes a factor
+        = 1 massless plasma solution not valid (said to represent MHD effects)
+        > 1 displacement growth dominated by L/R of passive system
+
+    Notes
+    -----
+    See https://doi.org/10.13182/FST89-A39747 for further explanation
+    offset ~ 1.5 considered optimal and controllable
+    """
+
+    def __init__(self, *args, offset=1.4):
+        self.offset = offset
+
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """Constraint function"""
+        # mutual inductance of a coilset
+        M = make_mutual_inductance_matrix(coilset.get_coiltype(CoilType.NONE))
+        # stabilising force/ destabilising force differentiated wrt to z coord
+        # f = -d_fs / d_fd
+
+        return (i_p.T * m_dpdz_given_s * inv(m_dsdz_given_s) * m_dsdz_given_p * i_p) / (
+            di_p_dt.T * m_d2pdt_given_ef * i_ef
+        ) - self.offset

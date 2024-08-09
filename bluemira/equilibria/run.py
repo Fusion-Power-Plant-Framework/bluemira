@@ -384,6 +384,8 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
             plot=False,
+            keep_history=True,
+            check_constraints=True,
         )
         program()
 

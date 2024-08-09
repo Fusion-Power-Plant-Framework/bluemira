@@ -183,9 +183,8 @@ class DebugOptimiser(Optimiser):
         import pprint
 
         pprint.pprint(self.__dict__)
-        import ipdb
 
-        ipdb.set_trace()
+        # ipdb.set_trace()
         return self.opt_result
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
