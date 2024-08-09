@@ -23,6 +23,8 @@ from bluemira.equilibria.coils import (
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
+from bluemira.magnetostatics.greens import greens_Bx, greens_Bz
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 
 def callable_tester(f_callable, coils=1):
@@ -240,8 +242,16 @@ class TestSemiAnalytic:
             self.grid2.x, self.grid2.z, np.sum(gp_analytic[2], axis=-1), levels=levels
         )
 
-    @pytest.mark.parametrize("fd", ["Bx", "Bz"])
-    def test_bfield(self, fd):
+    @pytest.mark.parametrize(
+        ("fd", "gfunc", "anfunc"),
+        zip(
+            ["Bx", "Bz"],
+            [greens_Bx, greens_Bz],
+            [semianalytic_Bx, semianalytic_Bz],
+            strict=False,
+        ),
+    )
+    def test_bfield(self, fd, gfunc, anfunc):
         gp_greens = []
         gp_analytic = []
         gp = []
@@ -250,8 +260,8 @@ class TestSemiAnalytic:
             [self.cg1, self.grid],
             [self.cg2, self.grid2],
         ]:
-            gp_greens.append(getattr(cl, f"_{fd}_response_greens")(grid.x, grid.z))
-            gp_analytic.append(getattr(cl, f"_{fd}_response_analytical")(grid.x, grid.z))
+            gp_greens.append(cl._response_greens(gfunc, grid.x, grid.z))
+            gp_analytic.append(cl._response_analytical(anfunc, grid.x, grid.z))
             gp.append(getattr(cl, f"{fd}_response")(grid.x, grid.z))
 
         self._plotter(gp, gp_greens, gp_analytic)

@@ -348,6 +348,10 @@ def semianalytic_psi(
     approaches are possible and will no doubt be faster.
     """
     j_tor = 1 / (4 * d_xc * d_zc)  # Keep current out of the equation
-    psi = n_integrate(_full_psi_integrand, (xc, zc, z, d_xc, d_zc), [[0, x], [0, np.pi]])
+    psi = n_integrate(
+        _full_psi_integrand,
+        (floatify(xc), floatify(zc), floatify(z), floatify(d_xc), floatify(d_zc)),
+        [[0, floatify(x)], [0, np.pi]],
+    )
 
     return 2e-7 * j_tor * psi  # MU_0/(2*np.pi)
