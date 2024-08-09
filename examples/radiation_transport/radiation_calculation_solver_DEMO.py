@@ -110,6 +110,7 @@ params = {
 config = {
     "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": tungsten_fraction},
     "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
+    "confinement": 0.1,
 }
 
 
@@ -133,6 +134,7 @@ source = RadiationSource(
     midplane_profiles=profiles,
     core_impurities=config["f_imp_core"],
     sol_impurities=config["f_imp_sol"],
+    confinement_time=config["confinement"],
 )
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
