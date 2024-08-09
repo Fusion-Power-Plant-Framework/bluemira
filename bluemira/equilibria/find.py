@@ -12,13 +12,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 from contourpy import LineType, contour_generator
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
+from bluemira.equilibria.constants import B_TOLERANCE, DPI_GIF, PLT_PAUSE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.equilibria.limiter import Limiter
+from bluemira.utilities.plot_tools import save_figure, xz_plot_setup
 
 __all__ = [
     "Lpoint",
@@ -673,6 +675,10 @@ def find_LCFS_separatrix(
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
     rtol: float = 1e-3,
+    plot: bool = False,
+    gif: bool = False,
+    figure_folder: Optional[str] = None,
+    plot_name: str = "default_0",
 ) -> tuple[Coordinates, Coordinates | list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -729,9 +735,41 @@ def find_LCFS_separatrix(
 
     delta = high - low
 
+    def update_plot(
+        i: int,
+        plot_dict: Dict,
+        flux_surfaces: list[Coordinates],
+        double_null_separatrix: bool = False,
+    ):
+        from bluemira.equilibria.plotting import FluxSurfacePlotter  # forgive me
+
+        plot_dict["ax"].clear()
+        FluxSurfacePlotter(
+            flux_surfaces=flux_surfaces,
+            zoom_point=x_points[0],
+            ax=plot_dict["ax"],
+            double_null_separatrix=double_null_separatrix,
+        )
+        plt.pause(PLT_PAUSE)
+        save_figure(
+            plot_dict["f"],
+            plot_dict["pname"] + str(i),
+            save=plot_dict["save"],
+            folder=plot_dict["folder"],
+            dpi=DPI_GIF,
+        )
+
+    if plot:
+        plot_dict = xz_plot_setup(plot_name, figure_folder, gif)
+
+    i = 0
     while delta > psi_n_tol:
         middle = low + delta / 2
         flux_surface = get_flux_loop(middle)
+
+        if plot:
+            plot_flux_surfaces = [get_flux_loop(low), flux_surface, get_flux_loop(high)]
+            update_plot(i, plot_dict, plot_flux_surfaces)
 
         if flux_surface.closed:
             # Middle flux surface is still closed, shift search bounds
@@ -742,6 +780,7 @@ def find_LCFS_separatrix(
             high = middle
 
         delta = high - low
+        i += 0
 
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
@@ -757,23 +796,39 @@ def find_LCFS_separatrix(
         delta = high - low
         # Need to find two open Coordinates, not just the first open one...
         z_ref = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
+
+        i = 0
         while delta > psi_n_tol:
             middle = low + delta / 2
             flux_surface = get_flux_loop(middle)
             z_new = min(abs(min(flux_surface.z)), abs(max(flux_surface.z)))
+
+            if plot:
+                plot_flux_surfaces = [
+                    get_flux_loop(low),
+                    flux_surface,
+                    get_flux_loop(high),
+                ]
+                update_plot(
+                    i, plot_dict, plot_flux_surfaces, double_null_separatrix=True
+                )
+
             if np.isclose(z_new, z_ref, rtol=rtol):
                 # Flux surface only open at one end
                 low = middle
+
             else:
                 # Flux surface open at both ends
                 high = middle
 
             delta = high - low
+            i += 1
 
         coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
         loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
+
     return lcfs, separatrix
 
 

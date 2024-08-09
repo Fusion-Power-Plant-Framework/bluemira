@@ -13,7 +13,8 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional, Union
+from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
@@ -120,6 +121,44 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
     imageio.mimsave(
         Path(folder, f"{figname}.gif"), images, "GIF-FI", duration=0.5, loop=3
     )
+
+
+def xz_plot_setup(pname, folder, save=False) -> Dict:
+    """Set up for an xz plot (poloidal slice)."""
+    if folder is None:
+        folder = try_get_bluemira_path(
+            "", subfolder="generated_data", allow_missing=not save
+        )
+    f, ax = plt.subplots()
+    ax.set_xlabel("$x$ [m]")
+    ax.set_ylabel("$z$ [m]")
+    ax.set_aspect("equal")
+    return {
+        "f": f,
+        "ax": ax,
+        "pname": pname,
+        "folder": folder,
+        "save": save,
+    }
+
+
+def xz_plot_setup(pname, folder, save=False) -> Dict:
+    """Set up for an xz plot (poloidal slice)."""
+    if folder is None:
+        folder = try_get_bluemira_path(
+            "", subfolder="generated_data", allow_missing=not save
+        )
+    f, ax = plt.subplots()
+    ax.set_xlabel("$x$ [m]")
+    ax.set_ylabel("$z$ [m]")
+    ax.set_aspect("equal")
+    return {
+        "f": f,
+        "ax": ax,
+        "pname": pname,
+        "folder": folder,
+        "save": save,
+    }
 
 
 def save_figure(

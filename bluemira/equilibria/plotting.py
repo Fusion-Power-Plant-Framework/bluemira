@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from itertools import cycle
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +23,7 @@ from bluemira.base.constants import CoilType, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
-from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
+from bluemira.equilibria.find import PsiPoint, Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import smooth_contour_fill, str_to_latex
 
@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         FixedPlasmaEquilibrium,
     )
     from bluemira.equilibria.grid import Grid
+    from bluemira.geometry.coordinates import Coordinates
 
 __all__ = [
     "BreakdownPlotter",
@@ -118,6 +119,111 @@ class Plotter:
         self.ax.set_xlabel("$x$ [m]")
         self.ax.set_ylabel("$z$ [m]")
         self.ax.set_aspect("equal")
+
+
+class FluxSurfacePlotter(Plotter):
+    """
+    Utility class for plotting an examination of flux surface finding.
+    """
+
+    def __init__(
+        self,
+        flux_surfaces: list[Coordinates],
+        zoom_point: Optional[Union[PsiPoint, tuple]] = None,
+        ax: Optional[plt.Axes] = None,
+        zoom_width: float = 0.1,
+        zoom_plot_size: float = 0.3,
+        zoom_plot_loc: Optional[tuple[float, float]] = None,
+        find_LCFS: bool = True,
+        double_null_separatrix: bool = False,
+    ):
+        super().__init__(ax)
+
+        self.flux_surfaces = flux_surfaces
+        self.zoom_point = zoom_point
+        self.zoom_width = zoom_width
+        self.zoom_plot_size = zoom_plot_size
+        self.zoom_plot_loc = zoom_plot_loc
+        self.ax = ax
+
+        if find_LCFS and double_null_separatrix:
+            self.plot_find_LCFS_separatrix(double_null_separatrix=double_null_separatrix)
+        elif find_LCFS and not double_null_separatrix:
+            self.plot_find_LCFS_separatrix()
+        else:
+            pass
+
+    def plot_find_LCFS_separatrix(self, double_null_separatrix=False):
+        """
+        Plotting function for closer examination of flux surface finding.
+
+        """
+        if self.ax is None:
+            _f, self.ax = plt.subplots()
+            self.ax.set_xlabel("$x$ [m]")
+            self.ax.set_ylabel("$z$ [m]")
+            self.ax.set_aspect("equal")
+        colours = ["m", "r", "m"] if double_null_separatrix else ["c", "b", "c"]
+        linestyle = ["dashed", "solid", "dashed"]
+
+        if self.zoom_point is not None:
+            x0, x1 = self.ax.get_xlim()
+            y0, y1 = self.ax.get_ylim()
+            w, h = x1 - x0, y1 - y0
+            in_ax_x0, in_ax_z0 = (
+                w * (1 - self.zoom_plot_size),
+                h * (1 - self.zoom_plot_size)
+                if self.zoom_plot_loc is None
+                else self.zoom_plot_loc,
+            )
+            in_ax = self.ax.inset_axes(
+                bounds=[
+                    in_ax_x0,
+                    in_ax_z0,
+                    w * self.zoom_plot_size,
+                    h * self.zoom_plot_size,
+                ]
+            )
+            in_ax.tick_params(axis="both", which="major", labelsize=10)
+            if isinstance(self.zoom_point, tuple):
+                zoom_x0, zoom_z0 = self.zoom_point
+            if isinstance(self.zoom_point, PsiPoint):
+                zoom_x0, zoom_z0 = self.zoom_point.x, self.zoom_point.z
+            in_ax.locator_params(axis="x", nbins=4)
+            in_ax.locator_params(axis="y", nbins=8)
+
+        # sort low to high
+        self.flux_surfaces.sort(key=lambda fs: fs.x[0])
+
+        for fs, c, style in zip(self.flux_surfaces, colours, linestyle):
+            self.ax.plot(
+                fs.x,
+                fs.z,
+                color=c,
+                linewidth=1,
+                linestyle=style,
+                zorder=9,
+            )
+
+            if self.zoom_point is not None:
+                if isinstance(self.zoom_point, tuple):
+                    zoom_x0, zoom_z0 = self.zoom_point
+                if isinstance(self.zoom_point, PsiPoint):
+                    zoom_x0, zoom_z0 = self.zoom_point.x, self.zoom_point.z
+                zoom_x = (fs.x >= zoom_x0 - self.zoom_width) * (
+                    fs.x <= zoom_x0 + self.zoom_width
+                )
+                zoom_z = (fs.z >= zoom_z0 - self.zoom_width) * (
+                    fs.z <= zoom_z0 + self.zoom_width
+                )
+                in_ax.plot(
+                    fs.x[zoom_x * zoom_z],
+                    fs.z[zoom_x * zoom_z],
+                    color=c,
+                    linewidth=1,
+                    linestyle=style,
+                    zorder=9,
+                )
 
 
 class GridPlotter(Plotter):
