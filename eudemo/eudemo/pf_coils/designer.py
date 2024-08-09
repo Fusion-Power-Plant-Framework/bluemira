@@ -114,11 +114,13 @@ class PFCoilsDesigner(Designer[CoilSet]):
         build_config: dict,
         equilibrium_manager: EquilibriumManager,
         tf_coil_boundary: BluemiraWire,
+        firstwall: BluemiraWire,
         keep_out_zones: Iterable[BluemiraFace],
     ):
         super().__init__(params, build_config)
         self.ref_eq = equilibrium_manager.get_state(equilibrium_manager.REFERENCE)
         self.tf_coil_boundary = tf_coil_boundary
+        self.firstwall = firstwall
         self.keep_out_zones = keep_out_zones
         self.file_path = self.build_config.get("file_path", None)
         self.eq_manager = equilibrium_manager
@@ -163,7 +165,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
+        result = opt_problem.optimise(
+            verbose=self.build_config.get("verbose", False),
+            keep_history=self.build_config.get("keep_history", False),
+            check_constraints=self.build_config.get("check_constraints", False),
+        )
         self._save_equilibria(opt_problem)
         if self.build_config.get("plot", False):
             opt_problem.plot()
@@ -314,7 +320,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_field_constraints = [
-            CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6),
+            CoilFieldConstraints(
+                coilset, coilset.get_control_coils().b_max, tolerance=1e-6
+            ),
             CoilForceConstraints(
                 coilset,
                 self.params.F_pf_zmax.value,
@@ -365,4 +373,5 @@ class PFCoilsDesigner(Designer[CoilSet]):
             CS_bmax=self.params.CS_bmax.value,
             PF_jmax=self.params.PF_jmax.value,
             PF_bmax=self.params.PF_bmax.value,
+            firstwall_points=self.firstwall.discretise(50),
         )

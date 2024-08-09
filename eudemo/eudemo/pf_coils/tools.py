@@ -180,6 +180,7 @@ def make_coilset(
     CS_bmax: float,
     PF_jmax: float,
     PF_bmax: float,
+    firstwall_points: Coordinates | None = None,
 ) -> CoilSet:
     """
     Make an initial EU-DEMO-like coilset.
@@ -195,28 +196,38 @@ def make_coilset(
         tf_boundary, 1, fallback_method="miter", fallback_force_spline=True
     )
 
-    x_c, z_c = make_PF_coil_positions(
-        tf_track,
-        n_PF,
-        R_0,
-        kappa,
-        delta,
-    )
-    pf_coils = []
-    for i, (x, z) in enumerate(zip(x_c, z_c, strict=False)):
-        coil = Coil(
-            x,
-            z,
-            current=0,
-            ctype="PF",
-            name=f"PF_{i + 1}",
-            j_max=PF_jmax,
-            b_max=PF_bmax,
+    pf_coils = [
+        Coil(
+            x, z, current=0, ctype="PF", name=f"PF_{i + 1}", j_max=PF_jmax, b_max=PF_bmax
         )
-        pf_coils.append(coil)
+        for i, (x, z) in enumerate(
+            zip(
+                *make_PF_coil_positions(tf_track, n_PF, R_0, kappa, delta),
+                strict=False,
+            )
+        )
+    ]
+
     coilset = CoilSet(*pf_coils + solenoid, control_names=True)
     coilset.assign_material("PF", j_max=PF_jmax, b_max=PF_bmax)
     coilset.assign_material("CS", j_max=CS_jmax, b_max=CS_bmax)
+
+    if firstwall_points is not None:
+        coilset.add_coil(
+            *(
+                Coil(
+                    x,
+                    z,
+                    dx=0,
+                    dz=0,
+                    current=0,
+                    ctype="None",
+                    name=f"FW_{i + 1}",
+                )
+                for i, (x, _y, z) in enumerate(zip(*firstwall_points, strict=False))
+            )
+        )
+
     return coilset
 
 

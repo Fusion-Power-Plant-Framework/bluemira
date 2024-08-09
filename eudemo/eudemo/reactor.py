@@ -235,6 +235,7 @@ def build_pf_coils(
     build_config,
     equilibrium_manager,
     tf_coil_boundary,
+    firstwall,
     pf_coil_keep_out_zones=(),
 ) -> PFCoil:
     """
@@ -257,6 +258,7 @@ def build_pf_coils(
         build_config,
         equilibrium_manager,
         tf_coil_boundary,
+        firstwall,
         pf_coil_keep_out_zones_new,
     )
 
@@ -536,6 +538,7 @@ if __name__ == "__main__":
         reactor_config.config_for("PF coils"),
         reactor.equilibria,
         reactor.tf_coils.xz_outer_boundary,
+        reactor.blanket.complete_inboard_xz,
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
