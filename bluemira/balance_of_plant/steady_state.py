@@ -436,7 +436,7 @@ class ParasiticLoadStrategy(abc.ABC):
             Parasitic loads to power the tritium plant
         p_other:
             Parasitic loads to power other miscellaneous things
-        """  # noqa: DOC202
+        """
         ...
 
 

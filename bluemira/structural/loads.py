@@ -204,7 +204,12 @@ class LoadCase:
         self._data = [*data]
 
     def __iter__(self) -> Iterator[Load]:
-        """Iterate over loads"""
+        """Iterate over loads
+
+        Yields
+        ------
+        Each Load
+        """
         yield from self._data
 
     def add_node_load(self, node_id: int, load: float, load_type: str):

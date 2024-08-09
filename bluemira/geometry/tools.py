@@ -1006,6 +1006,10 @@ def revolve_shape(
     -------
     The revolved shape.
 
+    Raises
+    ------
+    FreeCADError
+        Cannot revolve shape
     """
     if degree > 360:  # noqa: PLR2004
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
