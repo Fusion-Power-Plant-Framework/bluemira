@@ -1479,7 +1479,13 @@ class CADFileType(enum.Enum):
 
     @DynamicClassAttribute
     def importer(self) -> ImporterProtocol:
-        """Get importer module for each filetype"""
+        """Get importer module for each filetype
+
+        Raises
+        ------
+        FreeCADError
+            Unable to import file type
+        """
         if self.import_module is None:
             # Assume CADFileType.FREECAD
             def FreeCADreader(filename, document, **kwargs):  # noqa: ARG001
