@@ -224,7 +224,7 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
 
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
-        return B - self.B_max
+        return np.round(B - self.B_max, 10)
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
@@ -236,7 +236,7 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
         Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return (Bx + Bz) / (B * self.scale**2)
+        return np.round((Bx + Bz) / (B * self.scale**2), 10)
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -461,7 +461,7 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         if self.n_CS != 0:
             self.cs_z_constraint(f_matx, self.CS_Fz_sum_max)
             self.cs_z_sep_constraint(f_matx, self.CS_Fz_sep_max)
-        return self.constraint
+        return np.round(self.constraint, 10)
 
     def df_constraint(self, vector):
         """Constraint derivative"""
@@ -471,4 +471,4 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         if self.n_CS != 0:
             self.cs_z_grad(df_matx)
             self.cs_z_sep_grad(df_matx)
-        return self.grad
+        return np.round(self.grad, 10)

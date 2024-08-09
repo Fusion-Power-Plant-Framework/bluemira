@@ -138,7 +138,7 @@ def coil_harmonic_amplitude_matrix(
         / np.sqrt(degrees * (degrees + 1))
     )
 
-    return sig_fig_round(currents2harmonics, 8)
+    return np.round(currents2harmonics, 8)
 
 
 def harmonic_amplitude_marix(
@@ -197,7 +197,7 @@ def harmonic_amplitude_marix(
         / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
     )
 
-    return sig_fig_round(harmonics2collocation, 8)
+    return np.round(harmonics2collocation, 8)
 
 
 class PointType(Enum):
@@ -350,12 +350,12 @@ def collocation_points(
         mask = in_zone(
             rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
         )
-        collocation_x = sig_fig_round(rect_grid.x[mask == 1], 8)
-        collocation_z = sig_fig_round(rect_grid.z[mask == 1], 8)
+        collocation_x = np.round(rect_grid.x[mask == 1], 8)
+        collocation_z = np.round(rect_grid.z[mask == 1], 8)
 
         # Spherical coordinates
-        collocation_r = sig_fig_round(np.sqrt(collocation_x**2 + collocation_z**2), 8)
-        collocation_theta = sig_fig_round(np.arctan2(collocation_x, collocation_z), 8)
+        collocation_r = np.round(np.sqrt(collocation_x**2 + collocation_z**2), 8)
+        collocation_theta = np.round(np.arctan2(collocation_x, collocation_z), 8)
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
@@ -518,7 +518,7 @@ def get_psi_harmonic_amplitudes(
         harmonics2collocation, collocation_psivac, rcond=rcond
     )
 
-    return sig_fig_round(psi_harmonic_amplitudes, 8)
+    return np.round(psi_harmonic_amplitudes, 8)
 
 
 def spherical_harmonic_approximation(
@@ -678,7 +678,7 @@ def spherical_harmonic_approximation(
         )
 
         # Calculate the coilset SH amplitudes for use in optimisation
-        coil_current_harmonic_amplitudes = sig_fig_round(
+        coil_current_harmonic_amplitudes = np.round(
             currents2harmonics[:, :] @ currents, 8
         )
 

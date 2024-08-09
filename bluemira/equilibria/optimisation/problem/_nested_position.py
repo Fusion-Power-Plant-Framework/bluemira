@@ -194,6 +194,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         initial_currents=None,
         *,
         debug: bool = False,
+        keep_history: bool = True,
+        check_constraints: bool = True,
     ):
         self.coilset = coilset
         self.position_mapper = position_mapper
