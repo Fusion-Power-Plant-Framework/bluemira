@@ -754,7 +754,7 @@ def _offset_wire_discretised(
         If the wire is not closed. This function cannot handle the offet of an open
         wire.
     """
-    from bluemira.geometry._pyclipper_offset import offset_clipper  # noqa: PLC0415
+    from bluemira.geometry._pyclipr_offset import offset_clipper  # noqa: PLC0415
 
     if not wire.is_closed() and not open_wire:
         wire = wire.deepcopy()
