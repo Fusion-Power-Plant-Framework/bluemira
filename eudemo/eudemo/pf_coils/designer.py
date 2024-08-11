@@ -316,7 +316,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_field_constraints = [
-            CoilFieldConstraints(coilset, coilset.b_max, tolerance=1e-6),
+            CoilFieldConstraints(
+                coilset, coilset.get_control_coils().b_max, tolerance=1e-6
+            ),
             CoilForceConstraints(
                 coilset,
                 self.params.F_pf_zmax.value,

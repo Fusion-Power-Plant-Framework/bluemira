@@ -24,12 +24,14 @@ class PFCoil(ComponentManager):
         """
         return self._coilset
 
+    @property
     def xz_boundary(self):
         """
         Boundaries of the coils in xz
         """
-        return self.PF_xz_boundary() + self.CS_xz_boundary()
+        return self.PF_xz_boundary + self.CS_xz_boundary
 
+    @property
     def PF_xz_boundary(self):
         """
         Boundaries of the PF coils in xz
@@ -41,6 +43,7 @@ class PFCoil(ComponentManager):
             .get_component("xz", first=False)
         ]
 
+    @property
     def CS_xz_boundary(self):
         """
         Boundaries of the CS coils in xz

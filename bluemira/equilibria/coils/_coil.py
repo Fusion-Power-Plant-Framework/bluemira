@@ -369,11 +369,7 @@ class Coil(CoilFieldsMixin):
     @ctype.setter
     def ctype(self, value: str | np.ndarray | CoilType):
         """Set coil type"""
-        self._ctype = (
-            value
-            if isinstance(value, CoilType)
-            else CoilType[value[0] if isinstance(value, np.ndarray) else value]
-        )
+        self._ctype = CoilType(value[0] if isinstance(value, np.ndarray) else value)
 
     @dx.setter
     def dx(self, value: float | None):

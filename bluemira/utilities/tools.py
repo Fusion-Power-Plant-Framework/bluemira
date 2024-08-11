@@ -703,6 +703,35 @@ def yintercept(arr: np.ndarray) -> tuple[float, float]:
     return arr[0, 1] - s * arr[0, 0], s
 
 
+def ten_power(x):
+    """Get the power for the base ten notation, set 0 to 0."""
+    tp = np.array(np.floor(np.log10(np.abs(x))))
+    # zero correct
+    tp[(x == 0)] = 0.0
+    return tp
+
+
+def sig_fig_round(x, s, low_lim=-16):
+    """
+    Fuction to round to a given number of significant figures,
+    with any number below a lower limit set to zero.
+
+    Parameters
+    ----------
+    x:
+        value or values to round.
+    s:
+        number of significant figures
+    low_lim:
+        power below which values are set to 0,
+        default: low_lim = -16 (i.e, numbers below 1e-16)
+
+    """
+    tp = ten_power(x)
+    x_round = np.round(x / 10.0**tp, s - 1) * 10.0**tp
+    return x_round * (tp >= low_lim)
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================

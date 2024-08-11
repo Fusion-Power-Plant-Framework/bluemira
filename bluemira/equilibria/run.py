@@ -276,6 +276,12 @@ class PulsedCoilsetDesign(ABC):
             eq, coilset, problem, profiles, limiter=self.limiter
         )
 
+    def _get_psi_premag(self):
+        if bd_snap := self.snapshots.get(self.BREAKDOWN):
+            return 2 * np.pi * bd_snap.eq.breakdown_psi
+        bluemira_warn("Premagnetisation not calculated")
+        return np.inf
+
     def run_premagnetisation(self):
         """Run the breakdown optimisation problem.
 
@@ -290,18 +296,20 @@ class PulsedCoilsetDesign(ABC):
         )
 
         i_max = 30
-        relaxed = all(self.coilset._flag_sizefix)
+        relaxed = all(self.coilset.get_control_coils()._flag_sizefix)
         for i in range(i_max):
             coilset = deepcopy(self.coilset)
             breakdown = Breakdown(coilset, self.grid)
             constraints = deepcopy(self._coil_cons)
 
+            cc = coilset.get_control_coils()
+
             if relaxed:
-                max_currents = self.coilset.get_max_current(0)
+                max_currents = cc.get_max_current(0)
             else:
-                max_currents = self.coilset.get_max_current(self.params.I_p.value)
-                coilset.get_control_coils().current = max_currents
-                coilset.discretisation = self.eq_settings.coil_mesh_size
+                max_currents = cc.get_max_current(self.params.I_p.value)
+                cc.current = max_currents
+                cc.discretisation = self.eq_settings.coil_mesh_size
 
             problem = self.bd_settings.problem(
                 breakdown.coilset,
@@ -329,10 +337,9 @@ class PulsedCoilsetDesign(ABC):
                 "Unable to relax the breakdown optimisation for coil sizes."
             )
 
-        bluemira_print(f"Premagnetisation flux = {2 * np.pi * psi_premag:.2f} V.s")
-
-        self._psi_premag = 2 * np.pi * psi_premag
         self.take_snapshot(self.BREAKDOWN, breakdown, result.coilset, problem)
+
+        bluemira_print(f"Premagnetisation flux = {self._get_psi_premag():.2f} V.s")
 
     def run_reference_equilibrium(self):
         """Run a reference equilibrium."""
@@ -385,13 +392,11 @@ class PulsedCoilsetDesign(ABC):
         self, psi_premag: float | None = None
     ) -> tuple[float, float]:
         """Calculate the SOF and EOF plasma boundary fluxes."""
-        if psi_premag is None:
-            if self.BREAKDOWN not in self.snapshots:
-                self.run_premagnetisation()
-            psi_premag = self.snapshots[self.BREAKDOWN].eq.breakdown_psi
+        if psi_premag is None and self.BREAKDOWN not in self.snapshots:
+            self.run_premagnetisation()
 
         psi_sof = calc_psib(
-            2 * np.pi * psi_premag,
+            psi_premag or self._get_psi_premag(),
             self.params.R_0.value,
             self.params.I_p.value,
             self.params.l_i.value,
@@ -401,7 +406,8 @@ class PulsedCoilsetDesign(ABC):
         return psi_sof, psi_eof
 
     def _get_max_currents(self, coilset: CoilSet) -> npt.NDArray[np.float64]:
-        return coilset.get_max_current(
+        cc = coilset.get_control_coils()
+        return cc.get_max_current(
             self.eq_settings.peak_PF_current_factor * self.params.I_p.value
         )
 
@@ -425,10 +431,9 @@ class PulsedCoilsetDesign(ABC):
                 current_constraints += deepcopy(self._coil_cons)
 
             eq_constraints = deepcopy(self.eq_constraints)
-            for constraints in (eq_constraints, current_constraints):
-                for con in constraints:
-                    if isinstance(con, PsiBoundaryConstraint | PsiConstraint):
-                        con.target_value = psi_boundary / (2 * np.pi)
+            for constraint in (*eq_constraints, *current_constraints):
+                if isinstance(constraint, PsiBoundaryConstraint | PsiConstraint):
+                    constraint.target_value = psi_boundary / (2 * np.pi)
 
             opt_problems.append(
                 self._make_opt_problem(
@@ -648,13 +653,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self.converge_and_snapshot(sub_opt_problems)
 
         # Re-run breakdown
-        psi_bd_orig = self._psi_premag
+        psi_bd_orig = self._get_psi_premag()
         self.coilset = optimised_coilset
         self.run_premagnetisation()
-        if self._psi_premag < psi_bd_orig - 2.0:
+        if (psi_premag := self._get_psi_premag()) < psi_bd_orig - 2.0:
             bluemira_warn(
                 "Breakdown flux significantly lower with optimised coil positions: "
-                f"{self._psi_premag:.2f} < {psi_bd_orig:.2f}"
+                f"{psi_premag:.2f} < {psi_bd_orig:.2f}"
             )
         return optimised_coilset
 

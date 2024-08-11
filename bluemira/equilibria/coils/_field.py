@@ -679,6 +679,27 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
 
+    def control_F(self, coil_grp: CoilGroup, *, control: bool = False) -> np.ndarray:
+        """
+        Returns the Green's matrix element for the coil mutual force.
+
+        \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
+
+        Parameters
+        ----------
+        coil_grp`:
+            the coil group to calculate against
+        control:
+            operations on control coils only
+        """
+        if control:
+            inds = self._control_ind
+            inds2 = coil_grp._control_ind
+        else:
+            inds = inds2 = slice(None)
+
+        return super().control_F(coil_grp)[inds][:, inds2]
+
     def _stored_greens(
         self, bgreen: np.ndarray, *, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:

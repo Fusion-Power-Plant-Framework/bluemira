@@ -36,6 +36,7 @@ class VacuumVesselThermalShield(ComponentManager):
     Wrapper around a VVTS component tree.
     """
 
+    @property
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the VVTS poloidal silhouette."""
         return (
@@ -51,6 +52,7 @@ class CryostatThermalShield(ComponentManager):
     Wrapper around a VVTS component tree.
     """
 
+    @property
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the VVTS poloidal silhouette."""
         return (
@@ -194,12 +196,14 @@ class ThermalShield(PortManagerMixin, ComponentManager):
     Wrapper around a Thermal Shield component tree.
     """
 
+    @property
     def vacuum_vessel_thermal_shield(self) -> Component:
         """
         Get the vacuum vessel thermal shield component
         """
         return self.component().get_component("VVTS")
 
+    @property
     def cryostat_thermal_shield(self) -> Component:
         """
         Get the cryostat thermal shield component
@@ -238,8 +242,8 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         """
         Add ports to the thermal shield
         """
-        vvts = self.vacuum_vessel_thermal_shield()
-        cts = self.cryostat_thermal_shield()
+        vvts = self.vacuum_vessel_thermal_shield
+        cts = self.cryostat_thermal_shield
 
         vvts_xyz = vvts.get_component("xyz")
         vv_xyz = vvts_xyz.get_component("Sector 1")
@@ -288,8 +292,8 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         cts_sector_void,
         n_TF: int,
     ):
-        vvts = self.vacuum_vessel_thermal_shield()
-        cts = self.cryostat_thermal_shield()
+        vvts = self.vacuum_vessel_thermal_shield
+        cts = self.cryostat_thermal_shield
         angle = 180 / n_TF
         apply_component_display_options(vvts_sector_body, color=BLUE_PALETTE["TS"][0])
         apply_component_display_options(vvts_sector_void, color=(0, 0, 0))
@@ -334,6 +338,7 @@ class Cryostat(PlugManagerMixin, ComponentManager):
     Wrapper around a Cryostat component tree.
     """
 
+    @property
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the Cryostat poloidal silhouette."""
         return (
@@ -357,6 +362,7 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
     Wrapper around a RadiationShield component tree.
     """
 
+    @property
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the RadiationShield poloidal silhouette."""
         return (

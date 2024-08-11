@@ -482,31 +482,32 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    reactor.neutronics = NeutronicsManager(
-        *run_neutronics(
-            reactor_config.params_for("Neutronics"),
-            reactor_config.config_for("Neutronics"),
-            blanket=reactor.blanket,
-            vacuum_vessel=reactor.vacuum_vessel,
-            ivc_shapes=ivc_shapes,
+    if reactor_config.config_for("Neutronics").get("enabled", False):
+        reactor.neutronics = NeutronicsManager(
+            *run_neutronics(
+                reactor_config.params_for("Neutronics"),
+                reactor_config.config_for("Neutronics"),
+                blanket=reactor.blanket,
+                vacuum_vessel=reactor.vacuum_vessel,
+                ivc_shapes=ivc_shapes,
+            )
         )
-    )
 
-    if reactor_config.config_for("Neutronics")["show_data"]:
-        reactor.neutronics.plot()
-        bluemira_print_clean(f"{reactor.neutronics}")
+        if reactor_config.config_for("Neutronics")["show_data"]:
+            reactor.neutronics.plot()
+            bluemira_print_clean(f"{reactor.neutronics}")
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "VVTS"),
-        reactor.vacuum_vessel.xz_boundary(),
+        reactor.vacuum_vessel.xz_boundary,
     )
 
     reactor.tf_coils = build_tf_coils(
         reactor_config.params_for("TF coils"),
         reactor_config.config_for("TF coils"),
         reactor.plasma.lcfs(),
-        vv_thermal_shield.xz_boundary(),
+        vv_thermal_shield.xz_boundary,
     )
 
     eq_port_designer = EquatorialPortKOZDesigner(
@@ -527,7 +528,7 @@ if __name__ == "__main__":
         reactor_config.config_for("Lower Port"),
         ivc_shapes.divertor_face,
         ivc_shapes.div_wall_join_pt,
-        reactor.tf_coils.xz_outer_boundary(),
+        reactor.tf_coils.xz_outer_boundary,
     ).execute()
 
     reactor.pf_coils = build_pf_coils(
@@ -545,8 +546,8 @@ if __name__ == "__main__":
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "Cryostat"),
-        reactor.pf_coils.xz_boundary(),
-        reactor.tf_coils.xz_outer_boundary(),
+        reactor.pf_coils.xz_boundary,
+        reactor.tf_coils.xz_outer_boundary,
     )
 
     reactor.thermal_shield = assemble_thermal_shield(
@@ -556,8 +557,8 @@ if __name__ == "__main__":
     reactor.coil_structures = build_coil_structures(
         reactor_config.params_for("Coil structures"),
         reactor_config.config_for("Coil structures"),
-        tf_coil_xz_face=reactor.tf_coils.xz_face(),
-        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
+        tf_coil_xz_face=reactor.tf_coils.xz_face,
+        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary,
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
@@ -568,13 +569,13 @@ if __name__ == "__main__":
     reactor.cryostat = build_cryostat(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
-        cryostat_thermal_shield.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary,
     )
 
     reactor.radiation_shield = build_radiation_shield(
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
-        reactor.cryostat.xz_boundary(),
+        reactor.cryostat.xz_boundary,
     )
 
     # Incorporate ports
@@ -586,12 +587,12 @@ if __name__ == "__main__":
         reactor_config.config_for("Upper Port"),
         upper_port_koz_xz,
         reactor.pf_coils,
-        cryostat_thermal_shield.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary,
     )
     ts_eq_port, vv_eq_port = build_equatorial_port(
         reactor_config.params_for("Equatorial Port"),
         reactor_config.config_for("Equatorial Port"),
-        cryostat_thermal_shield.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary,
     )
 
     ts_lower_port, vv_lower_port = build_lower_port(
@@ -599,7 +600,7 @@ if __name__ == "__main__":
         reactor_config.config_for("Lower Port"),
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
-        reactor.cryostat.xz_boundary(),
+        reactor.cryostat.xz_boundary,
     )
 
     reactor.vacuum_vessel.add_ports(
@@ -616,14 +617,14 @@ if __name__ == "__main__":
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
         [ts_upper_port, ts_eq_port, ts_lower_port],
-        reactor.cryostat.xz_boundary(),
+        reactor.cryostat.xz_boundary,
     )
 
     rs_plugs = build_radiation_plugs(
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
         cr_plugs,
-        reactor.radiation_shield.xz_boundary(),
+        reactor.radiation_shield.xz_boundary,
     )
 
     reactor.cryostat.add_plugs(

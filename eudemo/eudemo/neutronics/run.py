@@ -49,9 +49,9 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
         return (
             TokamakDimensions.from_parameterframe(self.params, blanket.r_inner_cut),
             ivc_shapes.div_internal_boundary,
-            blanket.panel_points().T,
+            blanket.panel_points.T,
             ivc_shapes.outer_boundary,
-            vacuum_vessel.xz_boundary(),
+            vacuum_vessel.xz_boundary,
         )
 
 
