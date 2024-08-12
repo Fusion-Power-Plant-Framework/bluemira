@@ -567,7 +567,7 @@ class EUDEMOFuelCycleModel:
         else:
             arg_t_d = len(self.t) - arg_t_d_temp
             # Check a little around
-            if any(x <= t_req for x in self.m_T[arg_t_d - 10 : arg_t_d + 10]):
+            if not any(x > t_req for x in self.m_T[arg_t_d - 10 : arg_t_d + 10]):
                 return None, float("Inf")
         try:
             return arg_t_d, self.t[arg_t_d]
