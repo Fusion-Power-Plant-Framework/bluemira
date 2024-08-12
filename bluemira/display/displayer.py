@@ -33,7 +33,15 @@ class ViewerBackend(Enum):
 
     @lru_cache(2)
     def get_module(self):
-        """Load viewer module"""
+        """Load viewer module
+
+        Raises
+        ------
+        ModuleNotFoundError
+            Cannot find backend
+        FileNotFoundError
+            Cannot find backend
+        """
         try:
             return get_module(self.value)
         except (ModuleNotFoundError, FileNotFoundError):
