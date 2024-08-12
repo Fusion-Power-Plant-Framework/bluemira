@@ -36,7 +36,7 @@ class TestBlanket:
         )
 
         blanket = Blanket(component, panel_points, io_cut)
-        ib_face = blanket.inboard_xz_face()
+        ib_face = blanket.inboard_xz_face
 
         assert ib_face is segments.inboard
 
@@ -49,6 +49,6 @@ class TestBlanket:
         )
 
         blanket = Blanket(component, panel_points, io_cut)
-        ob_face = blanket.outboard_xz_face()
+        ob_face = blanket.outboard_xz_face
 
         assert ob_face is segments.outboard

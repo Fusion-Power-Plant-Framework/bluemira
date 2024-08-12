@@ -394,6 +394,8 @@ class PulsedCoilsetDesign(ABC):
         """Calculate the SOF and EOF plasma boundary fluxes."""
         if psi_premag is None and self.BREAKDOWN not in self.snapshots:
             self.run_premagnetisation()
+        elif psi_premag is not None:
+            psi_premag *= 2 * np.pi
 
         psi_sof = calc_psib(
             psi_premag or self._get_psi_premag(),
