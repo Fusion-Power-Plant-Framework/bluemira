@@ -103,28 +103,28 @@ class BluemiraSolid(BluemiraGeo):
         """
         The edges of the solid.
         """
-        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
+        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
 
     @property
     def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the solid.
         """
-        return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
+        return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
     def faces(self) -> tuple[BluemiraFace]:
         """
         The faces of the solid.
         """
-        return tuple([BluemiraFace._create(o) for o in cadapi.faces(self.shape)])
+        return tuple(BluemiraFace._create(o) for o in cadapi.faces(self.shape))
 
     @property
     def shells(self) -> tuple[BluemiraShell]:
         """
         The shells of the solid.
         """
-        return tuple([BluemiraShell._create(o) for o in cadapi.shells(self.shape)])
+        return tuple(BluemiraShell._create(o) for o in cadapi.shells(self.shape))
 
     @property
     def solids(self) -> tuple[BluemiraSolid]:

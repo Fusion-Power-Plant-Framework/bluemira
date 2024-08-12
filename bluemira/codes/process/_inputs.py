@@ -709,6 +709,10 @@ class ProcessInputs:
 
         The order is based on the order in which the values were
         declared.
+
+        Yields
+        ------
+        the field name and its value
         """
         for _field in fields(self):
             yield _field.name, getattr(self, _field.name)

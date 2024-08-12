@@ -67,6 +67,10 @@ class PsiPoint:
     def __iter__(self):
         """
         Imbue PsiPoint with generator-like behaviour
+
+        Yields
+        ------
+        x z psi in order
         """
         yield self.x
         yield self.z

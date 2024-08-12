@@ -39,8 +39,8 @@ def read_rb_line(line: str):
             if i > 0:
                 line[0] = " ".join([line[0], v])  # noqa: B909
         elif is_num(v) is True:
-            line[1] = float(v)  # noqa: B909
-            line[2] = float(line[i + 1])  # noqa: B909
+            line[1] = float(v)
+            line[2] = float(line[i + 1])
             return line[:3]
     return None
 

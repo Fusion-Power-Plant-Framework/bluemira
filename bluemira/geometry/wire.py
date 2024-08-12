@@ -266,9 +266,9 @@ class BluemiraWire(BluemiraGeo):
         """
         The ordered edges of the wire.
         """
-        return tuple([
+        return tuple(
             BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)
-        ])
+        )
 
     @property
     def wires(self) -> tuple[BluemiraWire]:

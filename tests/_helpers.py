@@ -51,6 +51,9 @@ def file_exists(good_file_path: str, isfile_ref: str):
         with file_exists("some/file", "module.under.test.os.path.isfile"):
             # do some work pretending "some/file" is a file
 
+    Yields
+    ------
+    Mocked file
     """
 
     def new_isfile(path: str) -> bool:
