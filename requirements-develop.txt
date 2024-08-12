@@ -36,7 +36,7 @@ PyYAML==6.0.1
 requests==2.32.3
 ruff==0.5.6
 snowballstemmer==2.2.0
-Sphinx==7.4.7
+Sphinx==8.0.2
 sphinx-autoapi==3.2.1
 sphinx-copybutton==0.5.2
 sphinx-rtd-theme==2.0.0
