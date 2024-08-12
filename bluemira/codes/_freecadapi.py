@@ -1236,6 +1236,10 @@ def _setup_document(
     ValueError
         Number of objects not equal to number of labels
 
+    Yields
+    ------
+    Each document object
+
     Notes
     -----
     TODO the rotate flag should be removed. We should fix it in the camera of the viewer

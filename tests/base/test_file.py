@@ -58,6 +58,10 @@ def test_try_get_bluemira_path_raises(path, subfolder):
 def file_manager_good(tmp_path_factory):
     """
     Create a FileManager to run some tests on.
+
+    Yields
+    ------
+    file manager
     """
     file_gen_path = tmp_path_factory.mktemp("file_manager_gen")
     file_manager = FileManager(
