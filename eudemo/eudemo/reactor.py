@@ -28,7 +28,6 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -79,7 +78,6 @@ from eudemo.maintenance.port_plug import (
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager, NeutronicsManager
-from eudemo.neutronics.run import run_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -408,6 +406,20 @@ def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary)
     return builder.build()
 
 
+def build_cad_neutronics_model(
+    params: dict | ParameterFrame,
+    build_config: dict,
+    blanket: Blanket,
+    vacuum_vessel: VacuumVessel,
+    ivc_shapes: Coordinates,
+):
+    """
+    Build the DAGMC model for the openmc neutronics analysis.
+    """
+    vacuum_vessel.save_cad()
+    pass
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
@@ -482,19 +494,19 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    reactor.neutronics = NeutronicsManager(
-        *run_neutronics(
-            reactor_config.params_for("Neutronics"),
-            reactor_config.config_for("Neutronics"),
-            blanket=reactor.blanket,
-            vacuum_vessel=reactor.vacuum_vessel,
-            ivc_shapes=ivc_shapes,
-        )
-    )
+    # reactor.neutronics = NeutronicsManager(
+    #     *run_neutronics(
+    #         reactor_config.params_for("Neutronics"),
+    #         reactor_config.config_for("Neutronics"),
+    #         blanket=reactor.blanket,
+    #         vacuum_vessel=reactor.vacuum_vessel,
+    #         ivc_shapes=ivc_shapes,
+    #     )
+    # )
 
-    if reactor_config.config_for("Neutronics")["show_data"]:
-        reactor.neutronics.plot()
-        bluemira_print_clean(f"{reactor.neutronics}")
+    # if reactor_config.config_for("Neutronics")["show_data"]:
+    #     reactor.neutronics.plot()
+    #     bluemira_print_clean(f"{reactor.neutronics}")
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
