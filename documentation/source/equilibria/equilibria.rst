@@ -772,36 +772,36 @@ current optimiser.
 Circuits
 ********
 
-``CoilSets`` may contain ``Coil`` objects as well as ``Circuit`` objects. ``Circuits`` are a way to
+CoilSets may contain ``Coil`` objects as well as ``Circuit`` objects. Circuits are a way to
 group coils together (they are derrived from a ``CoilGroup`` object), to make them share
 a current value. This reduces the number of degrees of freedom in a
-current optimisation as the number of optimisable currents for each ``Circuit`` in a ``CoilSet``
-is reduced to 1, no matter the number of coils in the ``Circuit``.
+current optimisation as the number of optimisable currents for each Circuit in a CoilSet
+is reduced to 1, no matter the number of coils in the Circuit.
 
-Additionally, when the ``current`` value of a ``Circuit`` is set, the current value of all
-coils in the ``Circuit`` is set to the same value.
+Additionally, when the current value of a Circuit is set, the current value of all
+coils in the Circuit is set to the same value.
 
 SymmetricCircuit
 *****************
 
 In the case where one wants to solve a double null equilibrium, it is expected that the
-equilibrium should be symmetrical about ``z=0``.
+equilibrium should be symmetrical about :math:`z=0`.
 
 The ``SymmetricCircuit`` class has been devoloped as a specical case of a ``Circuit``,
 which coitains only two coils, where the coil's postions are
-mirrored about the ``z=0`` plane (as well as sharing the same current).
+mirrored about the :math:`z=0` plane (as well as sharing the same current).
 This further reduces the number of degrees of freedom in a position optimisation process,
-by the number of ``SymmetricCircuits`` in the ``CoilSet``.
+by the number of SymmetricCircuits in the CoilSet.
 
 Say you have a dobule-null equilibria and 14 up-down symmetric Coils.
-You can model this using a ``CoilSet`` with 7 ``SymmetricCircuits``,
+You can model this using a CoilSet with 7 SymmetricCircuits,
 where each coil pair is the same SymmetricCircuit.
 
-The array of optimisable postions in such as ``CoilSet`` would have 7 values, one for each
-``SymmetricCircuit`` and the array of optimable currents would also have 7 values.
+The array of optimisable postions in such as CoilSet would have 7 values, one for each
+SymmetricCircuit and the array of optimable currents would also have 7 values.
 
 This would half the number of degrees of freedom in both a current and postion optimisations,
-compared to using 14 ``Coils`` which may aid in convergence and performance,
+compared to using 14 Coils which may aid in convergence and performance,
 as well as ensuring perfect up-down symmetry in the final equilibrium.
 
 .. Note::
@@ -814,18 +814,21 @@ as well as ensuring perfect up-down symmetry in the final equilibrium.
       SymmetricCircuit.
 
       However, specical care is needed when implementing a figure of merit (FoM),
-      in a CoilsetOptimisation (COP) class that operates on the current vector.
+      in a ``CoilsetOptimisation`` (COP) class that operates on the current vector.
       FoMs are implemented ina more ebspoke fashion than constraints are and
       are flexable. Usually one has access to the full Equilibrium object when
       implementing the FoM function and may use the ``_opt_currents_expand_mat``
       from a CoilSet to expand the reduced state vector to the full state vector, if needed.
 
+      :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.Tikhonov` is an example of a FoM
+      that uses the ``_opt_currents_expand_mat`` CoilSet property.
+
 .. Note::
-    When solving purely symmetric equilibria with a symmetric ``CoilSet`` (using only
-    ``SymmetricCircuits``), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
+    When solving purely symmetric equilibria with a symmetric CoilSet (using only
+    SymmetricCircuits), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
     This solves the Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
     half, resulting in a more stable solution. This approach presently only works for
-    grids centred around ``z = 0``.
+    grids centred around :math:`z=0`.
 
     Experiment with the ``force_symmetry`` flag to see if it improves convergence in your case.
 
