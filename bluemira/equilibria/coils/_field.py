@@ -62,7 +62,7 @@ class CoilGroupFieldsMixin:
         ind = np.nonzero(self._quad_weighting)
         out = np.zeros((*x.shape, *self._quad_x.shape))
 
-        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(
+        out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(  # noqa: RUF031
             self._quad_x[ind][np.newaxis],
             self._quad_z[ind][np.newaxis],
             x[..., np.newaxis],
@@ -358,7 +358,7 @@ class CoilGroupFieldsMixin:
         ind = np.nonzero(_quad_weight)
         out = np.zeros((*x.shape, *_quad_x.shape))
 
-        out[(*(slice(None) for _ in x.shape), *ind)] = greens(
+        out[(*(slice(None) for _ in x.shape), *ind)] = greens(  # noqa: RUF031
             _quad_x[ind][np.newaxis],
             _quad_z[ind][np.newaxis],
             x[..., np.newaxis],
