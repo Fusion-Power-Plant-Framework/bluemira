@@ -162,10 +162,14 @@ class LearningStrategy(abc.ABC):
         -------
         Operational availabilities at each operational phase
 <<<<<<< HEAD
+<<<<<<< HEAD
         """
 =======
         """  # noqa: DOC202
 >>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
+=======
+        """
+>>>>>>> 56b6c547 (Bump ruff from 0.5.6 to 0.5.7 (#3513))
         ...
 
 
@@ -357,10 +361,14 @@ class OperationalAvailabilityStrategy(abc.ABC):
         -------
         The distribution of size n and of the correct integral value
 <<<<<<< HEAD
+<<<<<<< HEAD
         """
 =======
         """  # noqa: DOC202
 >>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
+=======
+        """
+>>>>>>> 56b6c547 (Bump ruff from 0.5.6 to 0.5.7 (#3513))
         ...
 
 

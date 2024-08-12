@@ -89,10 +89,14 @@ class ConvergenceCriterion(ABC):
         -------
         True if the convergence criterion is met, else False.
 <<<<<<< HEAD
+<<<<<<< HEAD
         """
 =======
         """  # noqa: DOC202
 >>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
+=======
+        """
+>>>>>>> 56b6c547 (Bump ruff from 0.5.6 to 0.5.7 (#3513))
         ...
 
     def check_converged(self, value: float) -> bool:

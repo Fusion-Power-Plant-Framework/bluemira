@@ -224,10 +224,14 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         -------
         CAD Wire of the geometry
 <<<<<<< HEAD
+<<<<<<< HEAD
         """
 =======
         """  # noqa: DOC202
 >>>>>>> 869259a7 (Bump ruff from 0.5.5 to 0.5.6 (#3501))
+=======
+        """
+>>>>>>> 56b6c547 (Bump ruff from 0.5.6 to 0.5.7 (#3513))
         ...
 
     def to_json(self, file: str):
