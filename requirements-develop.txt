@@ -20,7 +20,7 @@ jupytext==1.16.4
 MarkupSafe==2.1.5
 mypy-extensions==1.0.0
 myst-nb==1.1.1
-myst-parser==3.0.1
+myst-parser==4.0.0
 nbclient==0.10.0
 nodeenv==1.9.1
 platformdirs==4.2.2
