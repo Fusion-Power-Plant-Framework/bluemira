@@ -705,10 +705,11 @@ def yintercept(arr: np.ndarray) -> tuple[float, float]:
 
 def ten_power(x):
     """Get the power for the base ten notation, set 0 to 0."""
-    tp = np.array(np.floor(np.log10(np.abs(x))))
-    # zero correct
-    tp[(x == 0)] = 0.0
-    return tp
+    x = np.atleast_1d(x)
+    tp = np.zeros_like(x)
+    ind = np.nonzero(x != 0)
+    tp[ind] = np.floor(np.log10(np.abs(x[ind])))
+    return tp if x.size > 1 else tp.item()
 
 
 def sig_fig_round(x, s, low_lim=-16):
