@@ -46,7 +46,7 @@ sphinxcontrib-htmlhelp==2.1.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
-sqlalchemy==2.0.31
+sqlalchemy==2.0.32
 sybil==6.1.1
 toml==0.10.2
 tomli==2.0.1
