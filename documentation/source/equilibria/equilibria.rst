@@ -781,6 +781,62 @@ is reduced to 1, no matter the number of coils in the Circuit.
 Additionally, when the current value of a Circuit is set, the current value of all
 coils in the Circuit is set to the same value.
 
+Using Circuits in an optimisation
+*********************************
+
+When using Circuits in an equilibria optimisation,
+the reduced current state used by the optimiser is expanded in the following way,
+when calling each constraint function:
+
+.. code-block:: python
+
+   if coilset._contains_circuits:
+         # wrap the constraint function
+         @functools.wraps(f.f_constraint)
+         def wrapped_f_c(x, f=f):
+            return f.f_constraint(coilset._opt_currents_expand_mat @ x)
+
+         f_c = wrapped_f_c
+
+         if df_c is not None:
+            # wrap the derivative function
+            @functools.wraps(f.df_constraint)
+            def wrapped_df_c(x, f=f):
+               df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
+               return df_res @ coilset._opt_currents_expand_mat
+
+            df_c = wrapped_df_c
+
+The ::pycode:`_opt_currents_expand_mat` property of a CoilSet is a matrix with 1'S in the
+columns corresponding to the coils in each Circuit and 0's elsewhere. Refer to
+:py:meth:`~bluemira.equilibria.optimisation.base._make_numerical_constraints`.
+
+When implementing a constraint, no specical consideration is needed for the shape of the
+state-vector passed into the constraint. It must be assumed that the full current vector
+(i.e. length equal to the number of coils) is passed into the constraint function.
+
+However, specical care is needed when implementing a figure of merit (FoM),
+in a  :py:class:`~bluemira.equilibria.optimisation.problem.base.CoilsetOptimisationProblem` (COP)
+class that operates on the current vector.
+
+FoMs in COPs are implemented in a more bespoke fashion than constraints are and thus are
+more flexable. Usually one has access to the full Equilibrium object when
+implementing the FoM function and may use the ``_opt_currents_expand_mat``
+from a CoilSet
+
+Refer to :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.Tikhonov` for an example of a FoM
+that uses the ``_opt_currents_expand_mat`` CoilSet property.
+
+.. Note::
+      It should be noted that the derivative vector returned by the ``df_constraint`` function
+      is matmul'd by the ``_opt_currents_expand_mat`` matrix, which effectively sums the
+      derivatives of the coils in each Circuit. This is valid you are taking the derivative
+      with respect to the same current value, per coil in each circuit.
+
+      This converts the derivative vector into the correct shape for the optimiser to use.
+
+      Refer to this pull request for more (`PR #3292 <https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/3292>`_.).
+
 SymmetricCircuit
 *****************
 
@@ -803,25 +859,6 @@ SymmetricCircuit and the array of optimable currents would also have 7 values.
 This would half the number of degrees of freedom in both a current and postion optimisations,
 compared to using 14 Coils which may aid in convergence and performance,
 as well as ensuring perfect up-down symmetry in the final equilibrium.
-
-.. Note::
-      For developers implementing their own optimisation constraints, no specical
-      consideration is needed in terms of the shape of the state-vector
-      passed into the constraint. One must assume the full current vector
-      (length equal to the number of coils) is passed into the constrain function.
-      Under the hood, the reduced state vector (used by the optimiser) is expanded
-      to the full state vector by repeating the current value for each coil in a Circuit or
-      SymmetricCircuit.
-
-      However, specical care is needed when implementing a figure of merit (FoM),
-      in a ``CoilsetOptimisation`` (COP) class that operates on the current vector.
-      FoMs are implemented ina more ebspoke fashion than constraints are and
-      are flexable. Usually one has access to the full Equilibrium object when
-      implementing the FoM function and may use the ``_opt_currents_expand_mat``
-      from a CoilSet to expand the reduced state vector to the full state vector, if needed.
-
-      :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.Tikhonov` is an example of a FoM
-      that uses the ``_opt_currents_expand_mat`` CoilSet property.
 
 .. Note::
     When solving purely symmetric equilibria with a symmetric CoilSet (using only
