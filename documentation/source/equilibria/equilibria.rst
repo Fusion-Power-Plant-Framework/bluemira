@@ -772,35 +772,62 @@ current optimiser.
 Circuits
 ********
 
-If one wants to run the solver for double null equilibria, it might be
-expected that such an equilibrium should be symmetrical about :math:`z = 0`.
-In this case, it makes sense for the coil positions to be up-down symmetric
-and for them to carry the same current. In reality, these coils might be in an actual circuit
-that allows them to be controlled simultaneously and maintain proportional currents.
-To replicate this setup, a Circuit class treating a pair of up-down symmetric
-coils as one has been developed. We instantiate a Circuit by specifying the position,
-dimensions, and current of a coil in the upper half plane. A *virtual* coil (with the same parameterisation
-except mirrored position) is then considered in calculations by the equilibrium solver.
-This second coil is considered identical in every way to the coil in the
-upper half plane except with negative :math:`z` position.
+``CoilSets`` may contain ``Coil`` objects as well as ``Circuit`` objects. ``Circuits`` are a way to
+group coils together (they are derrived from a ``CoilGroup`` object), to make them share
+a current value. This reduces the number of degrees of freedom in a
+current optimisation as the number of optimisable currents for each ``Circuit`` in a ``CoilSet``
+is reduced to 1, no matter the number of coils in the ``Circuit``.
 
-A Coilset object can then be populated with Circuits such that when the solver
-intends to use a coil from this coilset for a calculation, it will take into
-consideration a second identical coil that will influence the result. In particular,
-this is useful when calculating fields semi-analytically or through the use of Green's functions
-and can be used throughout the solver to reduce the number of degrees of
-freedom by halving the number of currents used to populate matrices used in optimisation calculations.
-Throughout each iteration of the solver, each *virtual* coil in the lower
-half plane will maintain the same current as its symmetrical counterpart,
-resulting in a converged (or not) equilbrium that should be symmetric as a result
-of a perfectly symmetrical system of coils to aid in convergence.
+Additionally, when the ``current`` value of a ``Circuit`` is set, the current value of all
+coils in the ``Circuit`` is set to the same value.
+
+SymmetricCircuit
+*****************
+
+In the case where one wants to solve a double null equilibrium, it is expected that the
+equilibrium should be symmetrical about ``z=0``.
+
+The ``SymmetricCircuit`` class has been devoloped as a specical case of a ``Circuit``,
+which coitains only two coils, where the coil's postions are
+mirrored about the ``z=0`` plane (as well as sharing the same current).
+This further reduces the number of degrees of freedom in a position optimisation process,
+by the number of ``SymmetricCircuits`` in the ``CoilSet``.
+
+Say you have a dobule-null equilibria and 14 up-down symmetric Coils.
+You can model this using a ``CoilSet`` with 7 ``SymmetricCircuits``,
+where each coil pair is the same SymmetricCircuit.
+
+The array of optimisable postions in such as ``CoilSet`` would have 7 values, one for each
+``SymmetricCircuit`` and the array of optimable currents would also have 7 values.
+
+This would half the number of degrees of freedom in both a current and postion optimisations,
+compared to using 14 ``Coils`` which may aid in convergence and performance,
+as well as ensuring perfect up-down symmetry in the final equilibrium.
 
 .. Note::
-    When solving purely symmetric equilibria with a symmetric ``CoilSet``, we recommend
-    you use the ``force_symmetry`` flag in ``Equilibrium``. This solves the
-    Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
+      For developers implementing their own optimisation constraints, no specical
+      consideration is needed in terms of the shape of the state-vector
+      passed into the constraint. One must assume the full current vector
+      (length equal to the number of coils) is passed into the constrain function.
+      Under the hood, the reduced state vector (used by the optimiser) is expanded
+      to the full state vector by repeating the current value for each coil in a Circuit or
+      SymmetricCircuit.
+
+      However, specical care is needed when implementing a figure of merit (FoM),
+      in a CoilsetOptimisation (COP) class that operates on the current vector.
+      FoMs are implemented ina more ebspoke fashion than constraints are and
+      are flexable. Usually one has access to the full Equilibrium object when
+      implementing the FoM function and may use the ``_opt_currents_expand_mat``
+      from a CoilSet to expand the reduced state vector to the full state vector, if needed.
+
+.. Note::
+    When solving purely symmetric equilibria with a symmetric ``CoilSet`` (using only
+    ``SymmetricCircuits``), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
+    This solves the Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
     half, resulting in a more stable solution. This approach presently only works for
     grids centred around ``z = 0``.
+
+    Experiment with the ``force_symmetry`` flag to see if it improves convergence in your case.
 
 Appendix 1: Green’s functions and discretised coils
 ---------------------------------------------------
