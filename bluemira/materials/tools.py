@@ -84,7 +84,12 @@ def import_nmm():
 
 @contextmanager
 def patch_nmm_openmc():
-    """Avoid creating openmc material until necessary"""
+    """Avoid creating openmc material until necessary
+
+    Yields
+    ------
+    NeutronicsMaterialMaker package
+    """
     nmm = import_nmm()
     if value := nmm.material.OPENMC_AVAILABLE:
         nmm.material.OPENMC_AVAILABLE = False

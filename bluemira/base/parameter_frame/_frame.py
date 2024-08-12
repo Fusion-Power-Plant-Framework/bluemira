@@ -127,6 +127,10 @@ class ParameterFrame:
 
         The order is based on the order in which the parameters were
         declared.
+
+        Yields
+        ------
+        Each parameter in the frame
         """
         for field in fields(self):
             yield getattr(self, field.name)

@@ -884,6 +884,8 @@ def _loadfromspec(name: str) -> ModuleType:
         Unable to import module
     FileNotFoundError
         Cant find specified module file
+    ModuleNotFoundError
+        Cant find module
     """
     full_dirname = name.rsplit("/", 1)
     dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]

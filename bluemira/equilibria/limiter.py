@@ -47,6 +47,10 @@ class Limiter:
     def __iter__(self):
         """
         Hacky phoenix iterator
+
+        Yields
+        ------
+        next element of xz
         """
         i = 0
         while i < len(self):

@@ -147,7 +147,7 @@ class Optimiser(abc.ABC):
         The result of the optimisation, containing the optimised
         parameters ``x``, as well as other information about the
         optimisation.
-        """  # noqa: DOC202
+        """
         ...
 
     @abc.abstractmethod

@@ -186,6 +186,8 @@ class Parameter(Generic[ParameterValueType]):
         ------
         ValueError
             Unit conversion failed
+        TypeError
+            If the wrong unit type is passed in
 
         Notes
         -----

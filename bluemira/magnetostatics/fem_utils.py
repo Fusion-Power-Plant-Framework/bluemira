@@ -285,7 +285,12 @@ def integrate_f(
 # for a better future implementation.
 @contextmanager
 def pyvista_plot_show_save(filename: str = "field.svg"):
-    """Show or save figure from pyvista"""
+    """Show or save figure from pyvista
+
+    Yields
+    ------
+    the pyvista plotter
+    """
     import pyvista  # noqa: PLC0415
 
     if pyvista.OFF_SCREEN:

@@ -57,7 +57,13 @@ class MaterialCache:
         }
 
     def __getattr__(self, value: str):
-        """Allow attribute access to cached materials"""
+        """Allow attribute access to cached materials
+
+        Raises
+        ------
+        AttributeError
+            No attribute found
+        """
         try:
             super().__getattribute__(value)
         except AttributeError:

@@ -403,6 +403,10 @@ class OptVariablesFrame:
 
         The order is based on the order in which the parameters were
         declared.
+
+        Yields
+        ------
+        Each optimisation variable
         """
         for field_name in self.__dataclass_fields__:  # type: ignore[attr-defined]
             yield getattr(self, field_name)

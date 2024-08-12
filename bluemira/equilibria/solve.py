@@ -88,7 +88,7 @@ class ConvergenceCriterion(ABC):
         Returns
         -------
         True if the convergence criterion is met, else False.
-        """  # noqa: DOC202
+        """
         ...
 
     def check_converged(self, value: float) -> bool:
