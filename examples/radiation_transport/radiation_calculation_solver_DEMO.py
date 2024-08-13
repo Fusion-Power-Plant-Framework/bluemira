@@ -57,7 +57,9 @@ else:
 
 
 eq = Equilibrium.from_eqdsk(
-    Path(get_bluemira_path("equilibria", subfolder="data"), eq_name)
+    Path(get_bluemira_path("equilibria", subfolder="data"), eq_name),
+    qpsi_sign=-1,
+    from_cocos=3,
 )
 
 

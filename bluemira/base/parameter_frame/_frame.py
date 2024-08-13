@@ -614,6 +614,8 @@ class EmptyFrame(ParameterFrame):
 def make_parameter_frame(
     params: ParameterFrameLike,
     param_cls: type[ParameterFrameT] | None,
+    *,
+    allow_unknown: bool = False,
 ) -> ParameterFrameT | None:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
@@ -670,7 +672,7 @@ def make_parameter_frame(
             return params
         raise ValueError("Cannot process parameters, 'param_cls' is None.")
     if isinstance(params, dict):
-        return param_cls.from_dict(params)
+        return param_cls.from_dict(params, allow_unknown=allow_unknown)
     if isinstance(params, param_cls):
         return params
     if isinstance(params, str):
