@@ -205,7 +205,7 @@ class Mesh:
         TypeError
             Meshfile must be a string or list of strings
         """
-        # todo: should be implemented also a check on the file extension. Only a
+        # TODO @ivanmaione: should be implemented also a check on the file extension. Only a
         # limited type of file extensions is allowed by gmsh.
         if isinstance(meshfile, str):
             meshfile = [meshfile]

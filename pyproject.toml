@@ -181,7 +181,7 @@ ignore = [
     "FURB152",  # 3.14 != pi
     "PIE790",  # TMP for false positive ...
     # should remove
-    "TD",  # standardise TODOs
+    # "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "SLF001",  # private method use
 
@@ -323,6 +323,8 @@ ignore-names = [
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = ["E402", "W505"]
 "eudemo/eudemo/reactor.py" = ["ARG001"]
+"bluemira/codes/plasmod/mapping.py" = ["TD"]
+"bluemira/balance_of_plant/calculations.py" = ["TD"]
 "{tests,eudemo/eudemo_tests}/*" = [
     "INP001",
     "PLR2004",

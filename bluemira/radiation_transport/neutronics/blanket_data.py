@@ -147,7 +147,7 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
         percent_type="ao",
         packing_fraction=0.642,
     )  # combination fraction type is by atom fraction
-    # todo: check if this packing fraction is correct (as set above)
+    # TODO: check if this packing fraction is correct (as set above)
     # KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  # applying packing fraction
 
 

@@ -304,7 +304,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         ComponentError
             Child already in tree
         """
-        # TODO: Support merge_trees here too.
+        # TODO @CoronelBuendia: Support merge_trees here too.
+        # 3524
         if child in self.children or child.name in (ch.name for ch in self.children):
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = [*list(self.children), child]
