@@ -420,6 +420,7 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
 # And don't even get me started on how much things can get simplified when ~ is involved.
 # It is possible that boolean expressions get condensed appropriately before getting
 # parsed onto openmc. I can't tell either way.
+# 3530
 
 
 def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
@@ -1729,6 +1730,7 @@ class BlanketCellArray:
         """
         cell_walls = pre_cell_array.cell_walls
         # TODO @je-cook: when contorl_id, we're forced to start at id=0
+        # 3531
 
         # left wall
         ccw_surf = csg.surface_from_2points(

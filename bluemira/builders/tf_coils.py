@@ -208,9 +208,9 @@ class RipplePointSelector:
         self.solver.update_cage(wire)
         ripple = self.solver.ripple(*self.points)
         # TODO @hsaunders1904: This print will call every time now,
-        # 3526
         # Might be a case of explicitly
         # defining a df_constraint on this class, would be good for me to play with.
+        # 3526
         bluemira_debug_flush(f"Max ripple: {max(ripple)}")
         return ripple - self.TF_ripple_limit
 
