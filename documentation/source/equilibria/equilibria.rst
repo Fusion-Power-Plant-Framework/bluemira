@@ -773,7 +773,7 @@ Circuits
 ********
 
 CoilSets may contain ``Coil`` objects as well as ``Circuit`` objects. Circuits are a way to
-group coils together (they are derrived from a ``CoilGroup`` object), to make them share
+group coils together (they are derived from a ``CoilGroup`` object), to make them share
 a current value. This reduces the number of degrees of freedom in a
 current optimisation as the number of optimisable currents for each Circuit in a CoilSet
 is reduced to 1, no matter the number of coils in the Circuit.
@@ -796,31 +796,31 @@ when calling each constraint function:
          def wrapped_f_c(x, f=f):
             return f.f_constraint(coilset._opt_currents_expand_mat @ x)
 
-         f_c = wrapped_f_c
+ f_c = wrapped_f_c
 
          if df_c is not None:
             # wrap the derivative function
             @functools.wraps(f.df_constraint)
             def wrapped_df_c(x, f=f):
-               df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
+ df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
                return df_res @ coilset._opt_currents_expand_mat
 
-            df_c = wrapped_df_c
+ df_c = wrapped_df_c
 
 The ::pycode:`_opt_currents_expand_mat` property of a CoilSet is a matrix with 1'S in the
 columns corresponding to the coils in each Circuit and 0's elsewhere. Refer to
 :py:meth:`~bluemira.equilibria.optimisation.base._make_numerical_constraints`.
 
-When implementing a constraint, no specical consideration is needed for the shape of the
-state-vector passed into the constraint. It must be assumed that the full current vector
+When implementing a constraint, no special consideration is needed for the shape of the
+state vector passed into the constraint. It must be assumed that the full current vector
 (i.e. length equal to the number of coils) is passed into the constraint function.
 
-However, specical care is needed when implementing a figure of merit (FoM),
+However, special care is needed when implementing a figure of merit (FoM),
 in a  :py:class:`~bluemira.equilibria.optimisation.problem.base.CoilsetOptimisationProblem` (COP)
 class that operates on the current vector.
 
 FoMs in COPs are implemented in a more bespoke fashion than constraints are and thus are
-more flexable. Usually one has access to the full Equilibrium object when
+more flexible. Usually, one has access to the full Equilibrium object when
 implementing the FoM function and may use the ``_opt_currents_expand_mat``
 from a CoilSet
 
@@ -828,14 +828,14 @@ Refer to :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.Tikhonov
 that uses the ``_opt_currents_expand_mat`` CoilSet property.
 
 .. Note::
-      It should be noted that the derivative vector returned by the ``df_constraint`` function
-      is matmul'd by the ``_opt_currents_expand_mat`` matrix, which effectively sums the
-      derivatives of the coils in each Circuit. This is valid you are taking the derivative
-      with respect to the same current value, per coil in each circuit.
+ It should be noted that the derivative vector returned by the ``df_constraint`` function
+ is matmul'd by the ``_opt_currents_expand_mat`` matrix, which effectively sums the
+ derivatives of the coils in each Circuit. This is valid you are taking the derivative
+ with respect to the same current value, per coil in each circuit.
 
-      This converts the derivative vector into the correct shape for the optimiser to use.
+ This converts the derivative vector into the correct shape the optimiser expects.
 
-      Refer to this pull request for more (`PR #3292 <https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/3292>`_.).
+ Refer to this pull request for more (`PR #3292 <https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/3292>`_.).
 
 SymmetricCircuit
 *****************
@@ -843,31 +843,31 @@ SymmetricCircuit
 In the case where one wants to solve a double null equilibrium, it is expected that the
 equilibrium should be symmetrical about :math:`z=0`.
 
-The ``SymmetricCircuit`` class has been devoloped as a specical case of a ``Circuit``,
-which coitains only two coils, where the coil's postions are
+The ``SymmetricCircuit`` class has been developed as a special case of a ``Circuit``,
+which contains only two coils, where the coil's positions are
 mirrored about the :math:`z=0` plane (as well as sharing the same current).
 This further reduces the number of degrees of freedom in a position optimisation process,
 by the number of SymmetricCircuits in the CoilSet.
 
-Say you have a dobule-null equilibria and 14 up-down symmetric Coils.
+Say you have a double-null equilibria and 14 up-down symmetric Coils.
 You can model this using a CoilSet with 7 SymmetricCircuits,
 where each coil pair is the same SymmetricCircuit.
 
-The array of optimisable postions in such as CoilSet would have 7 values, one for each
-SymmetricCircuit and the array of optimable currents would also have 7 values.
+The array of optimisable positions in such as CoilSet would have 7 values, one for each
+SymmetricCircuit and the array of optimisable currents would also have 7 values.
 
-This would half the number of degrees of freedom in both a current and postion optimisations,
+This would halve the number of degrees of freedom in both a current and position optimisations,
 compared to using 14 Coils which may aid in convergence and performance,
 as well as ensuring perfect up-down symmetry in the final equilibrium.
 
 .. Note::
-    When solving purely symmetric equilibria with a symmetric CoilSet (using only
-    SymmetricCircuits), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
-    This solves the Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
-    half, resulting in a more stable solution. This approach presently only works for
-    grids centred around :math:`z=0`.
+ When solving purely symmetric equilibria with a symmetric CoilSet (using only
+ SymmetricCircuits), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
+ This solves the Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
+ half, resulting in a more stable solution. This approach presently only works for
+ grids centred around :math:`z=0`.
 
-    Experiment with the ``force_symmetry`` flag to see if it improves convergence in your case.
+ Experiment with the ``force_symmetry`` flag to see if it improves convergence in your case.
 
 Appendix 1: Green’s functions and discretised coils
 ---------------------------------------------------
