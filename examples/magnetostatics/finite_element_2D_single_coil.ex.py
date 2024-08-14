@@ -174,7 +174,7 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_meshtags(ct, mesh.geometry)
 
 with warnings.catch_warnings() as w:
-    warnings.simplefilter("error")
+    warnings.simplefilter("error", UserWarning)
     try:
         with pyvista_plot_show_save("cell_tags.png") as plotter:
             grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))

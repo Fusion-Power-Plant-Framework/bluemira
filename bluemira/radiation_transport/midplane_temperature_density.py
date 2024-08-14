@@ -76,7 +76,7 @@ def midplane_profiles(params: ParameterFrameLike):
     Temperature and density are assumed to be constant along a
     single flux tube.
     """
-    params = make_parameter_frame(params, MidplaneProfilesParams)
+    params = make_parameter_frame(params, MidplaneProfilesParams, allow_unknown=True)
     rho_ped = (params.rho_ped_n.value + params.rho_ped_t.value) / 2
 
     # A dimensionless radius at the mid-plane.

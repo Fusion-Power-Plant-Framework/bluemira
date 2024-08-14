@@ -13,6 +13,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.10", "3.11"]
+        process-version: ["v3.1.0"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -34,6 +35,11 @@ jobs:
         shell: bash -l {0}
         run: pip install -e .
 
+      - name: Install PROCESS
+        uses: ./.github/workflows/actions/process
+        with:
+          version: ${{ matrix.process-version }}
+
       - name: Run examples
         shell: bash -l {0}
         run: |
@@ -41,17 +47,13 @@ jobs:
           # to the CI runners
           # Reasons:
           # requires plasmod
-          # requires process
+          # doesnt currently converge
           # requires plasmod
           # not an example
-          # requires process
           # needs improvement #2999
-          # weird pyvista import bug
           python ./scripts/run_examples.py \
             -e 'plasmod_example' \
             -e 'process_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
-            -e 'radiation_transport/radiation_calculation_solver_DEMO' \
             -e 'mesh/mesh_tutorial' \
-            -e 'magnetostatics/finite_element_2D_single_coil'

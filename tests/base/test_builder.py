@@ -16,7 +16,7 @@ class ParamClass:
         self.param_2 = param_2
 
     @classmethod
-    def from_dict(cls, d):
+    def from_dict(cls, d, *, allow_unknown: bool = False):  # noqa: ARG003
         return cls(**d)
 
 

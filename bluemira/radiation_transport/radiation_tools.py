@@ -1131,7 +1131,7 @@ class FirstWallRadiationSolver:
 
     def solve(
         self,
-        max_wall_len: float = 1e-3,
+        max_wall_len: float = 0.1,
         x_width: float = 0.01,
         n_samples: int = 500,
         *,
