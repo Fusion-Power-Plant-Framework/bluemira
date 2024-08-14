@@ -210,7 +210,7 @@ class ParameterFrame:
         cls: type[ParameterFrameT],
         data: dict[str, ParamDictT],
         *,
-        allow_unknown=False,
+        allow_unknown: bool = False,
     ) -> ParameterFrameT:
         """Initialise an instance from a dictionary.
 
@@ -262,7 +262,10 @@ class ParameterFrame:
 
     @classmethod
     def from_json(
-        cls: type[ParameterFrameT], json_in: str | json.SupportsRead
+        cls: type[ParameterFrameT],
+        json_in: str | json.SupportsRead,
+        *,
+        allow_unknown: bool = False,
     ) -> ParameterFrameT:
         """Initialise an instance from a JSON file, string, or reader.
 
@@ -273,15 +276,15 @@ class ParameterFrame:
         """
         if hasattr(json_in, "read"):
             # load from file stream
-            return cls.from_dict(json.load(json_in))
+            return cls.from_dict(json.load(json_in), allow_unknown=allow_unknown)
         if not isinstance(json_in, str):
             raise TypeError(f"Cannot read JSON from type '{type(json_in).__name__}'.")
         if not json_in.startswith("{"):
             # load from file
             with open(json_in) as f:
-                return cls.from_dict(json.load(f))
+                return cls.from_dict(json.load(f), allow_unknown=allow_unknown)
         # load from a JSON string
-        return cls.from_dict(json.loads(json_in))
+        return cls.from_dict(json.loads(json_in), allow_unknown=allow_unknown)
 
     @classmethod
     def from_config_params(
@@ -649,8 +652,11 @@ def make_parameter_frame(
                 This is intended for internal use, to aid in validation
                 of parameters in `Builder`\\s and `Designer`\\s.
 
-    param_cls: type[ParameterFrame]
+    param_cls:
         The `ParameterFrame` class to create a new instance of.
+    allow_unknown:
+        Dictionary and json input checks if unknown parameters are passed
+        in. By default this will error unless this flag is set to true
 
     Returns
     -------
@@ -676,7 +682,7 @@ def make_parameter_frame(
     if isinstance(params, param_cls):
         return params
     if isinstance(params, str):
-        return param_cls.from_json(params)
+        return param_cls.from_json(params, allow_unknown=allow_unknown)
     if isinstance(params, ParameterFrame):
         return param_cls.from_frame(params)
     if isinstance(params, ConfigParams):
