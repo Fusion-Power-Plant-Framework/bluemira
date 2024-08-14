@@ -115,7 +115,7 @@ def write_csv(
     data: np.ndarray,
     base_name: str,
     col_names: list[str],
-    metadata: str | None = "",
+    metadata: str = "",
     ext: str = ".csv",
     comment_char: str = "#",
 ):
@@ -163,7 +163,7 @@ def write_csv(
         )
 
         # Add column headings
-        metadata += ",".join(col_names)
+    metadata += ",".join(col_names)
 
     np.savetxt(
         filename,
