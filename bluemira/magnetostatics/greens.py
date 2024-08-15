@@ -196,15 +196,9 @@ def greens_psi(
     \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
     \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
-    k2 = 4 * x * xc / ((x + xc) ** 2 + (z - zc) ** 2)
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    return (
-        MU_0_2PI
-        * np.sqrt(x * xc)
-        * ((2 - k2) * ellipk_nb(k2) - 2 * ellipe_nb(k2))
-        / np.sqrt(k2)
-    )
+    _, k2 = calc_a_k2(xc, zc, x, z)
+    e, k = calc_e_k(k2)
+    return MU_0_2PI * np.sqrt(x * xc) * ((2 - k2) * k - 2 * e) / np.sqrt(k2)
 
 
 @nb.jit(nopython=True)
@@ -256,12 +250,8 @@ def greens_dpsi_dx(
 
     The implementation used here refactors the above to avoid some zero divisions.
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    i1 = ellipk_nb(k2) / a
-    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+    a, k2 = calc_a_k2(xc, zc, x, z)
+    i1, i2 = calc_i1_i2(a, k2)
     return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
 
 
@@ -314,12 +304,44 @@ def greens_dpsi_dz(
 
     The implementation used here refactors the above to avoid some zero divisions.
     """
-    a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a**2
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    i1 = ellipk_nb(k2) / a
-    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
+    a, k2 = calc_a_k2(xc, zc, x, z)
+    i1, i2 = calc_i1_i2(a, k2)
     return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
+
+
+@nb.jit(nopython=True)
+def calc_a_k2(
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
+):
+    a = np.hypot((x + xc), (z - zc))
+    k2 = 4 * x * xc / a**2
+    # Avoid NaN when coil on grid point
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    return a, k2
+
+
+@nb.jit(nopython=True)
+def calc_e_k(
+    k2: float | np.ndarray,
+):
+    return ellipe_nb(k2), ellipk_nb(k2)
+
+
+@nb.jit(nopython=True)
+def calc_i1_i2(
+    a: float | np.ndarray,
+    k2: float | np.ndarray,
+    e: float | np.ndarray | None = None,
+    k: float | np.ndarray | None = None,
+):
+    if (e is None) or (k is None):
+        e, k = calc_e_k(k2)
+    i1 = k / a
+    i2 = e / (a**3 * (1 - k2))
+    return i1, i2
 
 
 @nb.jit(nopython=True)
@@ -450,16 +472,14 @@ def greens_all(
         if xc <= 0
         if x <= 0
     """
-    a = np.hypot((x + xc), (z - zc))
-    k2 = 4 * x * xc / a**2
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    e, k = ellipe_nb(k2), ellipk_nb(k2)
-    i_1 = 4 * k / a
-    i_2 = 4 * e / (a**3 * (1 - k2))
+    a, k2 = calc_a_k2(xc, zc, x, z)
+    e, k = calc_e_k(k2)
+    i1, i2 = calc_i1_i2(a, k2, e, k)
+    i1 *= 4
+    i2 *= 4
     a_part = (z - zc) ** 2 + x**2 + xc**2
     b_part = -2 * x * xc
-    g_bx = MU_0_4PI * xc * (z - zc) * (i_1 - i_2 * a_part) / b_part
-    g_bz = MU_0_4PI * xc * ((xc + x * a_part / b_part) * i_2 - i_1 * x / b_part)
+    g_bx = MU_0_4PI * xc * (z - zc) * (i1 - i2 * a_part) / b_part
+    g_bz = MU_0_4PI * xc * ((xc + x * a_part / b_part) * i2 - i1 * x / b_part)
     g_psi = MU_0_4PI * a * ((2 - k2) * k - 2 * e)
     return g_psi, g_bx, g_bz
