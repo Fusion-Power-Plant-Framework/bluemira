@@ -16,6 +16,7 @@ from bluemira.magnetostatics.greens import (
     ellipk_nb,
     greens_Bx,
     greens_Bz,
+    greens_all,
     greens_dpsi_dx,
     greens_dpsi_dz,
     greens_psi,
@@ -108,13 +109,29 @@ def greens_Bz_old(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa: ARG001
     return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
 
 
+def test_greens_vs_greens_all():
+    nx, nz = 100, 100
+    x_coil, z_coil = 4, 0
+
+    x_1d = np.linspace(0.1, 10, nx)
+    z_1d = np.linspace(-5, 5, nz)
+    x_2d, z_2d = np.meshgrid(x_1d, z_1d, indexing="ij")
+
+    # Analytical field values
+    psi, Bx, Bz = greens_all(x_coil, z_coil, x_2d, z_2d)
+    Bx2 = greens_Bx(x_coil, z_coil, x_2d, z_2d)
+    Bz2 = greens_Bz(x_coil, z_coil, x_2d, z_2d)
+    psi2 = greens_psi(x_coil, z_coil, x_2d, z_2d)
+
+    np.testing.assert_allclose(Bx, Bx2)
+    np.testing.assert_allclose(Bz, Bz2)
+    np.testing.assert_allclose(psi, psi2)
+
+
 class TestGreenFieldsRegression:
     rng = np.random.default_rng(846023420)
     fixtures = []  # noqa: RUF012
-    for _ in range(5):  # Tested with 2000, with one failure in Bz:
-        # Mismatched elements: 1 / 10000 (0.01%)
-        # Max absolute difference: 4.01456646e-13
-        # Max relative difference: 4.87433464e-07
+    for _ in range(5):  # Tested with 8000, no failures
         fixtures.append(  # noqa: PERF401
             [
                 10 * np.clip(rng.random(), 0.01, None),
