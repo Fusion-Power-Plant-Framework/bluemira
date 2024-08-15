@@ -339,8 +339,8 @@ def calc_i1_i2(
 ):
     if (e is None) or (k is None):
         e, k = calc_e_k(k2)
-    i1 = k / a
-    i2 = e / (a**3 * (1 - k2))
+    i1 = 4 * k / a
+    i2 = 4 * e / (a**3 * (1 - k2))
     return i1, i2
 
 
