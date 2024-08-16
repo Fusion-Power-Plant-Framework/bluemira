@@ -26,12 +26,13 @@ from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.constants import DPI_GIF, J_TOR_MIN, M_PER_MN, PLT_PAUSE
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
-from bluemira.utilities.plot_tools import smooth_contour_fill, save_figure, str_to_latex
+from bluemira.utilities.plot_tools import save_figure, smooth_contour_fill, str_to_latex
 
 if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
 
+    from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import (
         Equilibrium,
         FixedPlasmaEquilibrium,

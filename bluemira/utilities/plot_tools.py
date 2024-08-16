@@ -25,7 +25,7 @@ from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
@@ -125,8 +125,9 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
 def xz_plot_setup(
     pname,
     folder,
-    save=False,
-    split_psi_plots: bool | None = False,
+    *,
+    save: bool = False,
+    split_psi_plots: bool = False,
 ) -> dict:
     """Set up for an xz plot (poloidal slice)."""
     if folder is None:
