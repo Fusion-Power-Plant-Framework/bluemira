@@ -82,7 +82,8 @@ class TFCoil(ComponentManager):
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         return self._field_solver.field(x, y, z)
 
@@ -90,7 +91,8 @@ class TFCoil(ComponentManager):
         """
         Returns
         -------
-        the outer xz-boundary of the TF Coils.
+        :
+            the outer xz-boundary of the TF Coils.
         """
         return (
             self.component()
@@ -104,7 +106,8 @@ class TFCoil(ComponentManager):
         """
         Returns
         -------
-        the x-z face of the TF Coils.
+        :
+            the x-z face of the TF Coils.
         """
         outer = self.xz_outer_boundary()
         inner = (
@@ -231,7 +234,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Returns
         -------
-        Winding pack cross-section wire
+        :
+            Winding pack cross-section wire
         """
         d_xc = 0.5 * self.params.tk_tf_wp.value
         d_yc = np.full(4, 0.5 * self.params.tk_tf_wp_y.value)
@@ -249,7 +253,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Returns
         -------
-        keep-out-zone wire
+        :
+            keep-out-zone wire
         """
         # The keep-out zone is for the TF WP centreline, so we need to add to it to
         # prevent clashes when the winding pack thickness and casing are added.
@@ -319,7 +324,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Returns
         -------
-        the parameterisation and the winding pack cross section
+        :
+            the parameterisation and the winding pack cross section
 
         Raises
         ------
@@ -396,7 +402,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Returns
         -------
-        the parameterisation and the winding pack cross section
+        :
+            the parameterisation and the winding pack cross section
 
         Raises
         ------
@@ -422,7 +429,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         Returns
         -------
-        the parameterisation and the winding pack cross section
+        :
+            the parameterisation and the winding pack cross section
         """
         parameterisation = self._get_parameterisation()
         return parameterisation, self._make_wp_xs(
@@ -488,7 +496,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        TF coil component tree
+        :
+            TF coil component tree
         """
         ins_inner_face, ins_outer_face = self._make_ins_xsec()
         y_in, ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
@@ -512,7 +521,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        XZ components
+        :
+            XZ components
         """
         wp_inner, wp_outer, winding_pack = self._build_xz_wp()
 
@@ -534,7 +544,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        XY components
+        :
+            XY components
         """
         return circular_pattern_component(
             [
@@ -560,7 +571,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        The case shape and the xyz components
+        :
+            The case shape and the xyz components
         """
         # Minimum angle per TF coil (nudged by a tiny length since we start counting a
         # sector at theta=0). This means we can draw a sector as 360 / n_TF and get one
@@ -592,7 +604,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        the xz winding pack inner and outer wires and component
+        :
+            the xz winding pack inner and outer wires and component
         """
         wp_outer = offset_wire(self.centreline, 0.5 * self.wp_x_size, join="arc")
         wp_inner = offset_wire(self.centreline, -0.5 * self.wp_x_size, join="arc")
@@ -608,7 +621,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        XZ insulation component
+        :
+            XZ insulation component
         """
         offset_tk = self.params.tk_tf_ins.value + self.params.tk_tf_insgap.value
 
@@ -629,7 +643,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        XZ case component
+        :
+            XZ case component
         """
         cas_inner, cas_outer = self._make_cas_xz(xyz_shape)
 
@@ -645,7 +660,8 @@ class TFCoilBuilder(Builder):
         """
         Returns
         -------
-        Winding pack x-y component
+        :
+            Winding pack x-y component
         """
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
@@ -668,7 +684,8 @@ class TFCoilBuilder(Builder):
         """
         Returns
         -------
-        Insulation x-y component
+        :
+            Insulation x-y component
         """
         ib_ins_comp = PhysicalComponent(self.INB, ins_inner_face)
         ob_ins_comp = PhysicalComponent(self.OUTB, ins_outer_face)
@@ -688,7 +705,8 @@ class TFCoilBuilder(Builder):
         """
         Returns
         -------
-        Casing x-y component
+        :
+            Casing x-y component
         """
         cas_inner_face = BluemiraFace([
             ib_cas_wire,
@@ -714,7 +732,8 @@ class TFCoilBuilder(Builder):
         """
         Returns
         -------
-        Winding pack x-y-z
+        :
+            Winding pack x-y-z
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(self.WP, wp_solid)
@@ -731,7 +750,8 @@ class TFCoilBuilder(Builder):
         """
         Returns
         -------
-        Insulation x-y-z
+        :
+            Insulation x-y-z
         """
         ins_solid = boolean_cut(
             sweep_shape(ins_inner_face.boundary[0], self.centreline), wp_solid
@@ -757,7 +777,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        the casing component
+        :
+            the casing component
         """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
@@ -801,7 +822,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        inner and outer cross-section faces
+        :
+            inner and outer cross-section faces
         """
         ins_outer = offset_wire(
             self.wp_cross_section,
@@ -826,7 +848,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        xy casing cross-section
+        :
+            xy casing cross-section
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
 
@@ -881,7 +904,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        The two xz cross-sections
+        :
+            The two xz cross-sections
 
         Raises
         ------
@@ -912,7 +936,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        The swept casing shape
+        :
+            The swept casing shape
         """
         # Make inner xs into a rectangle
         bb = inner_xs.bounding_box
@@ -1003,7 +1028,8 @@ class TFCoilBuilder(Builder):
 
         Returns
         -------
-        The field solver
+        :
+            The field solver
         """
         circuit = ArbitraryPlanarRectangularXSCircuit(
             self.centreline.discretise(byedges=True, ndiscr=100),

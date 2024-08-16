@@ -47,7 +47,8 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         """
         Returns
         -------
-        A wire giving the vessel's boundary in the xz plane.
+        :
+            A wire giving the vessel's boundary in the xz plane.
 
         """
         return (
@@ -157,7 +158,8 @@ class VacuumVesselBuilder(Builder):
 
         Returns
         -------
-        The built component tree
+        :
+            The built component tree
         """
         xz_vv, xz_vacuum = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
@@ -177,7 +179,8 @@ class VacuumVesselBuilder(Builder):
 
         Returns
         -------
-        The xz component parts
+        :
+            The xz component parts
         """
         inner_vv = _offset_wire_discretised(
             self.ivc_koz,
@@ -214,7 +217,8 @@ class VacuumVesselBuilder(Builder):
 
         Returns
         -------
-        the xy component parts
+        :
+            the xy component parts
         """
         return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 
@@ -226,7 +230,8 @@ class VacuumVesselBuilder(Builder):
 
         Returns
         -------
-        The xyz component parts
+        :
+            The xyz component parts
         """
         return build_sectioned_xyz(
             [vv_face, vacuum_face],
