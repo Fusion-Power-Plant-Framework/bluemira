@@ -200,7 +200,7 @@ def create_mesh(solovev, LCFS, lcar):
 
 class TestSolovevZheng:
     @pytest.fixture(scope="class", autouse=True)
-    def setup_class(self, tmp_path_factory):  # noqa: PT004
+    def setup_class(self, tmp_path_factory):
         cls = type(self)
         tmp_path = tmp_path_factory.mktemp("Solvev")
         # set problem parameters
