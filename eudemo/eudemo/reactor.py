@@ -121,6 +121,11 @@ def build_reference_equilibrium(
     """
     Build the reference equilibrium for the tokamak and store in
     the equilibrium manager
+
+    Returns
+    -------
+    :
+        the reference equilibrium
     """
     designer = ReferenceFreeBoundaryEquilibriumDesigner(
         params,
@@ -147,7 +152,13 @@ def build_reference_equilibrium(
 
 
 def build_plasma(params, build_config: dict, eq: Equilibrium) -> Plasma:
-    """Build EUDEMO plasma from an equilibrium."""
+    """Build EUDEMO plasma from an equilibrium.
+
+    Returns
+    -------
+    :
+        Plasma component manager
+    """
     lcfs_loop = eq.get_LCFS()
     lcfs_wire = interpolate_bspline({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
     builder = PlasmaBuilder(params, build_config, lcfs_wire)
@@ -155,7 +166,13 @@ def build_plasma(params, build_config: dict, eq: Equilibrium) -> Plasma:
 
 
 def build_vacuum_vessel(params, build_config, ivc_koz) -> VacuumVessel:
-    """Build the vacuum vessel around the given IVC keep-out zone."""
+    """Build the vacuum vessel around the given IVC keep-out zone.
+
+    Returns
+    -------
+    :
+        Vacuum vessel component manager
+    """
     vv_builder = VacuumVesselBuilder(params, build_config, ivc_koz)
     return VacuumVessel(vv_builder.build())
 
@@ -163,7 +180,13 @@ def build_vacuum_vessel(params, build_config, ivc_koz) -> VacuumVessel:
 def build_vacuum_vessel_thermal_shield(
     params, build_config, vv_koz
 ) -> VacuumVesselThermalShield:
-    """Build the vacuum vessel thermal shield around the given  VV keep-out zone"""
+    """Build the vacuum vessel thermal shield around the given  VV keep-out zone
+
+    Returns
+    -------
+    :
+        Vacuum Vessel thermal shield component manager
+    """
     vvts_builder = VVTSBuilder(params, build_config, vv_koz)
     return VacuumVesselThermalShield(vvts_builder.build())
 
@@ -171,6 +194,11 @@ def build_vacuum_vessel_thermal_shield(
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
     """
     Build the Cryostat thermal shield for the reactor.
+
+    Returns
+    -------
+    :
+        Cryostat thermal shield component manager
     """
     cts_builder = CryostatTSBuilder(
         params,
@@ -184,6 +212,11 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
 def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
     """
     Assemble the thermal shield component for the reactor.
+
+    Returns
+    -------
+    :
+        Thermal shield component manager
     """
     component = Component(
         name="Thermal Shield",
@@ -193,7 +226,13 @@ def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
-    """Build the divertor given a silhouette of a sector."""
+    """Build the divertor given a silhouette of a sector.
+
+    Returns
+    -------
+    :
+        Divertor component manager
+    """
     builder = DivertorBuilder(params, build_config, div_silhouette)
     return Divertor(builder.build())
 
@@ -206,7 +245,13 @@ def build_blanket(
     r_inner_cut: float,
     cut_angle: float,
 ) -> Blanket:
-    """Build the blanket given a silhouette of a sector."""
+    """Build the blanket given a silhouette of a sector.
+
+    Returns
+    -------
+    :
+        Blanket component manager
+    """
     designer = BlanketDesigner(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
@@ -216,7 +261,13 @@ def build_blanket(
 
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
-    """Design and build the TF coils for the reactor."""
+    """Design and build the TF coils for the reactor.
+
+    Returns
+    -------
+    :
+        TF coil component manager
+    """
     centreline, wp_cross_section = run_designer(
         TFCoilDesigner,
         params,
@@ -239,6 +290,11 @@ def build_pf_coils(
 ) -> PFCoil:
     """
     Design and build the PF coils for the reactor.
+
+    Returns
+    -------
+    :
+        PF coil component manager
     """
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
@@ -274,6 +330,11 @@ def build_coil_structures(
 ) -> CoilStructures:
     """
     Design and build the coil structures for the reactor.
+
+    Returns
+    -------
+    :
+        coil structures
     """
     component = build_coil_structures_component(
         params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
@@ -287,9 +348,14 @@ def build_upper_port(
     upper_port_koz: BluemiraFace,
     pf_coils,
     cryostat_ts_xz_boundary: BluemiraFace,
-):
+) -> tuple[Component, ...]:
     """
     Build the upper port for the reactor.
+
+    Returns
+    -------
+    :
+        upper port components
     """
     ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
     ts_upper_port = ts_builder.build()
@@ -298,9 +364,16 @@ def build_upper_port(
     return ts_upper_port, vv_upper_port
 
 
-def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
+def build_equatorial_port(
+    params, build_config, cryostat_ts_xz_boundary
+) -> tuple[Component, ...]:
     """
     Build the equatorial port for the reactor.
+
+    Returns
+    -------
+    :
+        equatorial port components
     """
     builder = VVEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
     vv_eq_port = builder.build()
@@ -315,8 +388,14 @@ def build_lower_port(
     lp_duct_angled_nowall_extrude_boundary,
     lp_duct_straight_nowall_extrude_boundary,
     cryostat_xz_boundary,
-):
-    """Builder for the Lower Port and Duct"""
+) -> tuple[Component, ...]:
+    """Builder for the Lower Port and Duct
+
+    Returns
+    -------
+    :
+        lower port components
+    """
     offset = params.global_params.tk_cr_vv.value + params.global_params.g_cr_ts.value
     x_straight_end = cryostat_xz_boundary.bounding_box.x_max - offset
     builder = TSLowerPortDuctBuilder(
@@ -342,6 +421,11 @@ def build_lower_port(
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
     """
     Design and build the Cryostat for the reactor.
+
+    Returns
+    -------
+    :
+        Cryostat component manager
     """
     cryod = CryostatDesigner(params, cryostat_thermal_koz)
     return Cryostat(CryostatBuilder(params, build_config, *cryod.execute()).build())
@@ -350,6 +434,11 @@ def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
 def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShield:
     """
     Design and build the Radiation shield for the reactor.
+
+    Returns
+    -------
+    :
+        Radiation Shield component manager
     """
     return RadiationShield(
         RadiationShieldBuilder(params, build_config, BluemiraFace(cryostat_koz)).build()
@@ -358,9 +447,14 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
 
 def build_cryostat_plugs(
     params, build_config, ts_ports, cryostat_xz_boundary: BluemiraFace
-):
+) -> Component:
     """
     Build the port plugs for the cryostat.
+
+    Returns
+    -------
+    :
+        The cyrostat plugs
     """
     closest_faces = []
     for port in ts_ports:
@@ -384,9 +478,16 @@ def build_cryostat_plugs(
     return builder.build()
 
 
-def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary):
+def build_radiation_plugs(
+    params, build_config, cr_ports, radiation_xz_boundary
+) -> Component:
     """
     Build the port plugs for the radiation shield.
+
+    Returns
+    -------
+    :
+        The radiation plugs
     """
     closest_faces = []
     xyz = cr_ports.get_component("xyz")

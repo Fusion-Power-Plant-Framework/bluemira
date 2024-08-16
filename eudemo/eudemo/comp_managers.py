@@ -37,7 +37,12 @@ class VacuumVesselThermalShield(ComponentManager):
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
+        """
+        Returns
+        -------
+        :
+            A wire representing the VVTS poloidal silhouette.
+        """
         return (
             self.component()
             .get_component("xz")
@@ -48,11 +53,16 @@ class VacuumVesselThermalShield(ComponentManager):
 
 class CryostatThermalShield(ComponentManager):
     """
-    Wrapper around a VVTS component tree.
+    Wrapper around a CryostatTS component tree.
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
+        """
+        Returns
+        -------
+        :
+            A wire representing the VVTS poloidal silhouette.
+        """
         return (
             self.component()
             .get_component("xz")
@@ -196,13 +206,19 @@ class ThermalShield(PortManagerMixin, ComponentManager):
 
     def vacuum_vessel_thermal_shield(self) -> Component:
         """
-        Get the vacuum vessel thermal shield component
+        Returns
+        -------
+        :
+            The vacuum vessel thermal shield component
         """
         return self.component().get_component("VVTS")
 
     def cryostat_thermal_shield(self) -> Component:
         """
-        Get the cryostat thermal shield component
+        Returns
+        -------
+        :
+            The cryostat thermal shield component
         """
         return self.component().get_component("CryostatTS")
 
@@ -335,7 +351,12 @@ class Cryostat(PlugManagerMixin, ComponentManager):
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the Cryostat poloidal silhouette."""
+        """
+        Returns
+        -------
+        :
+            a wire representing the Cryostat poloidal silhouette.
+        """
         return (
             self.component()
             .get_component("xz")
@@ -358,7 +379,12 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the RadiationShield poloidal silhouette."""
+        """
+        Returns
+        -------
+        :
+            A wire representing the RadiationShield poloidal silhouette.
+        """
         return (
             self.component()
             .get_component("xz")
