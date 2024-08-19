@@ -109,7 +109,13 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
     def _remove_gap_and_merge(
         ib_panels: Coordinates, ob_panels: Coordinates
     ) -> Coordinates:
-        """Merge two sets of coordinates."""
+        """Merge two sets of coordinates.
+
+        Returns
+        -------
+        :
+            Merged coordinates
+        """
         sm_dist = np.inf
         closest_points = None
         for ib_pt in ib_panels.points:
@@ -132,7 +138,18 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         return Coordinates(new_coords)
 
     def run(self) -> tuple[BluemiraFace, BluemiraFace, Coordinates]:
-        """Run the blanket design problem."""
+        """
+        Run the blanket design problem.
+
+        Returns
+        -------
+        cut_ib:
+            Inboard blanket face
+        cut_ob:
+            Outboard blanket face
+        panel_points:
+            the panel points of the blanket
+        """
         segments = self.segment_blanket()
         # Inboard
         ib_panels = self.panel_boundary(segments.inboard_boundary)
@@ -164,8 +181,9 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
 
         Returns
         -------
-        An instance of :class:`.BlanketSegments` containing the
-        blanket segment geometries.
+        :
+            An instance of :class:`.BlanketSegments` containing the
+            blanket segment geometries.
         """
         cut_zone = self._make_cutting_face()
         ib_face, ob_face = self._cut_geom(self.silhouette, cut_zone)
@@ -178,14 +196,28 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         )
 
     def panel_boundary(self, boundary: BluemiraWire) -> BluemiraWire:
-        """Create the panel shapes for the given boundary."""
+        """
+        Create the panel shapes for the given boundary.
+
+        Returns
+        -------
+        :
+            The panel boundary
+        """
         panel_coords = PanellingDesigner(self.params, boundary).run()
         return make_polygon(
             {"x": panel_coords[0], "z": panel_coords[1]}, label="panels", closed=True
         )
 
     def _make_cutting_face(self) -> BluemiraFace:
-        """Make a face that can be used to cut the blanket into inboard & outboard."""
+        """
+        Make a face that can be used to cut the blanket into inboard & outboard.
+
+        Returns
+        -------
+        cut_zone:
+            the face cut for the inboard outboard split
+        """
         p0 = get_inner_cut_point(self.silhouette, self.r_inner_cut)
         p1 = [p0[0], 0, p0[2] + VERY_BIG]
         p2 = [p0[0] - self.params.c_rm.value, 0, p1[2]]
@@ -200,6 +232,13 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
     @staticmethod
     def _cut_geom(geom: _GeomT, cut_tool: BluemiraFace) -> tuple[_GeomT, _GeomT]:
         """Cut the given geometry into two using the given cutting tool.
+
+        Returns
+        -------
+        inboard:
+            inboard geometry
+        outboard:
+            outboard geometry
 
         Raises
         ------

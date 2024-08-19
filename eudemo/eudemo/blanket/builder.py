@@ -70,6 +70,11 @@ class BlanketBuilder(Builder):
     def build(self) -> Component:
         """
         Build the blanket component.
+
+        Returns
+        -------
+        :
+            The component tree
         """
         segments = self.get_segments(self.ib_silhouette, self.ob_silhouette)
         return self.component_tree(
@@ -81,6 +86,11 @@ class BlanketBuilder(Builder):
     def build_xz(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
         """
         Build the x-z components of the blanket.
+
+        Returns
+        -------
+        :
+            The xz component
         """
         ibs = PhysicalComponent(self.IBS, ibs_silhouette)
         obs = PhysicalComponent(self.OBS, obs_silhouette)
@@ -91,6 +101,11 @@ class BlanketBuilder(Builder):
     def build_xy(self, segments: list[PhysicalComponent]):
         """
         Build the x-y components of the blanket.
+
+        Returns
+        -------
+        :
+            the xy components
         """
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
@@ -109,6 +124,11 @@ class BlanketBuilder(Builder):
     def build_xyz(self, segments: list[PhysicalComponent], degree: float = 360.0):
         """
         Build the x-y-z components of the blanket.
+
+        Returns
+        -------
+        :
+            the xyz components
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
@@ -122,6 +142,11 @@ class BlanketBuilder(Builder):
     def get_segments(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
         """
         Create segments of the blanket from inboard and outboard silhouettes
+
+        Returns
+        -------
+        :
+            blanket segments
         """
         ibs_shapes = pattern_revolved_silhouette(
             ibs_silhouette,

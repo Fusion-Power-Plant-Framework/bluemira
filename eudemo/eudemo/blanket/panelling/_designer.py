@@ -105,8 +105,9 @@ class PanellingDesigner(Designer[np.ndarray]):
 
         Returns
         -------
-        The coordinates of the panel end points (or joints). Has
-        shape (2, N).
+        :
+            The coordinates of the panel end points (or joints). Has
+            shape (2, N).
         """
         boundary = self.wall_boundary.discretise(
             ndiscr=self._n_boundary_discr, byedges=True
@@ -139,6 +140,12 @@ class PanellingDesigner(Designer[np.ndarray]):
         This guarantees that panels will always fully contain the given
         boundary, but does not guarantee the maximum angle and minimum
         length constraints are honoured.
+
+        Returns
+        -------
+        :
+            The coordinates of the panel end points (or joints). Has
+            shape (2, N).
         """
         boundary = self.wall_boundary.discretise(
             ndiscr=self._n_boundary_discr, byedges=True
@@ -160,9 +167,16 @@ class PanellingDesigner(Designer[np.ndarray]):
         If the optimisation fails, retry with an extra panel
         ``max_retries`` times.
 
-        Return ``None`` as the first return value if the final
-        optimisation crashes with a 'more than iter SQP iterations'
-        error (which it often does given an infeasible problem).
+        Returns
+        -------
+        xopt:
+             ``None`` as the first return value if the final
+            optimisation crashes with a 'more than iter SQP iterations'
+            error (which it often does given an infeasible problem). Otherwise the result
+        opt_problem:
+            the panelling optimsation problem
+        iter_num:
+            the number of iterationd
         """
         try:
             x_opt = opt_problem.optimise(
@@ -204,7 +218,14 @@ class PanellingDesigner(Designer[np.ndarray]):
     def _set_up_opt_problem(
         self, boundary: np.ndarray, fix_num_panels: int | None = None
     ) -> PanellingOptProblem:
-        """Set up an instance of the minimise panel length optimisation problem."""
+        """
+        Set up an instance of the minimise panel length optimisation problem.
+
+        Returns
+        -------
+        :
+            The panelling optimisation object
+        """
         paneller = Paneller(
             boundary,
             self.params.fw_a_max.value,

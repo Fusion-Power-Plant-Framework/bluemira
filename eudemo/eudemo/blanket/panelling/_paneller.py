@@ -55,7 +55,12 @@ class Paneller:
 
     @property
     def n_panels(self) -> int:
-        """The number of panels defined by this paneller."""
+        """
+        Returns
+        -------
+        :
+            The number of panels defined by this paneller.
+        """
         return len(self.x0) + 2
 
     def joints(self, dists: np.ndarray) -> np.ndarray:
@@ -67,6 +72,11 @@ class Paneller:
         dists:
             The normalised distances along the boundary at which there
             are panel-boundary tangent points.
+
+        Returns
+        -------
+        joints:
+            the joint coordinates
         """
         # Add the start and end panel joints at distances 0 & 1
         dists = np.hstack((0, dists, 1))
@@ -92,14 +102,24 @@ class Paneller:
     # 'length' and 'angles', which both call out to 'joints'.
     # For a potential optimisation we could cache the result of 'joints'.
     def length(self, dists: np.ndarray) -> float:
-        """The cumulative length of the panels."""
+        """
+        Returns
+        -------
+        :
+            The cumulative length of the panels.
+        """
         return self.panel_lengths(dists).sum()
 
     def angles(self, dists: np.ndarray) -> np.ndarray:
         """
-        Return the angles of rotation between each set of adjacent panels.
+        Returns
+        -------
+        :
+            the angles of rotation between each set of adjacent panels.
 
-        Note that this is the tail-tail angle between the panel vectors,
+        Notes
+        -----
+        This is the tail-tail angle between the panel vectors,
         not the head-tail angles.
         """
         joints = self.joints(dists)
@@ -112,7 +132,12 @@ class Paneller:
         return np.degrees(np.arccos(np.clip(dots, -1.0, 1.0)), out=dots)
 
     def panel_lengths(self, dists: np.ndarray) -> np.ndarray:
-        """Return the lengths of each panel."""
+        """
+        Returns
+        -------
+        :
+            the lengths of each panel.
+        """
         panel_vecs = np.diff(self.joints(dists))
         return np.hypot(panel_vecs[0], panel_vecs[1])
 
@@ -138,19 +163,47 @@ class LengthNormBoundary:
         )
 
     def x(self, dist: float | np.ndarray) -> np.ndarray:
-        """Find x at the given normalised distance along the boundary."""
+        """
+        Find x at the given normalised distance along the boundary.
+
+        Returns
+        -------
+        :
+            x at distance along boundary
+        """
         return self._x_spline(dist)
 
     def z(self, dist: float | np.ndarray) -> np.ndarray:
-        """Find z at the given normalised distance along the boundary."""
+        """
+        Find z at the given normalised distance along the boundary.
+
+        Returns
+        -------
+        :
+            z at distance along boundary
+        """
         return self._z_spline(dist)
 
     def x_tangent(self, dist: float | np.ndarray) -> np.ndarray:
-        """Find x at the tangent vector a given distance along the boundary."""
+        """
+        Find x at the tangent vector a given distance along the boundary.
+
+        Returns
+        -------
+        :
+            x of the tangent at distance along boundary
+        """
         return self._x_tangent_spline(dist)
 
     def z_tangent(self, dist: float | np.ndarray) -> np.ndarray:
-        """Find z at the tangent vector a given distance along the boundary."""
+        """
+        Find z at the tangent vector a given distance along the boundary.
+
+        Returns
+        -------
+        :
+            x of the tangent at distance along boundary
+        """
         return self._z_tangent_spline(dist)
 
 
@@ -166,7 +219,8 @@ def norm_tangents(points: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    The normalised vector of tangents.
+    :
+        The normalised vector of tangents.
     """
     grad = np.gradient(points, axis=1)
     magnitudes = np.hypot(grad[0], grad[1])
