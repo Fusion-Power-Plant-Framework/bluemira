@@ -17,6 +17,11 @@ def cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWir
     """
     Remove the parts of the wire below the given value in the z-axis.
 
+    Returns
+    -------
+    wall_piece:
+        the section of the wall above the x point
+
     Raises
     ------
     ValueError
