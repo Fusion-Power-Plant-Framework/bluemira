@@ -35,7 +35,7 @@ def parameterisation_fixture_not_fully_init(
 @pytest.mark.classplot
 class TestFemGradShafranovFixedBoundary:
     @pytest.fixture(autouse=True)
-    def setup_method(self, tmp_path):  # noqa: PT004
+    def setup_method(self, tmp_path):
         lcfs_shape = make_polygon({"x": [7, 10, 7], "z": [-4, 0, 4]}, closed=True)
         lcfs_face = BluemiraFace(lcfs_shape)
         plasma = PhysicalComponent("plasma", lcfs_face)
