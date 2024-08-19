@@ -6,6 +6,7 @@
 """Functions related to EUDEMO PF coils."""
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
@@ -149,10 +150,17 @@ def _get_intersections_from_angles(boundary, ref_x, ref_z, angles):
     return x_c, z_c
 
 
-def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
+def make_PF_coil_positions(
+    tf_boundary, n_PF, R_0, kappa, delta
+) -> tuple[npt.NDArray, ...]:
     """
     Make a set of PF coil positions crudely with respect to the intended plasma
     shape.
+
+    Returns
+    -------
+    :
+        locations of pf coils
     """
     # Project plasma centroid through plasma upper and lower extrema
     angle_upper = np.arctan2(kappa, -delta)
@@ -182,6 +190,11 @@ def make_coilset(
 ) -> CoilSet:
     """
     Make an initial EU-DEMO-like coilset.
+
+    Returns
+    -------
+    :
+        initial coilset for eudemo
     """
     bb = tf_boundary.bounding_box
     z_min = bb.z_min
@@ -232,6 +245,11 @@ def make_reference_coilset(
 ) -> CoilSet:
     """
     Make a reference coilset.
+
+    Returns
+    -------
+    :
+        reference coilset for eudemo
     """
     bb = tf_track.bounding_box
     z_min = bb.z_min
@@ -296,7 +314,8 @@ def make_coil_mapper(
 
     Returns
     -------
-    Position mapper for coil position interpolation
+    :
+        Position mapper for coil position interpolation
 
     Notes
     -----
@@ -337,9 +356,14 @@ def make_coil_mapper(
     return PositionMapper(interpolator_dict)
 
 
-def _split_segment(segment, split_positions):
+def _split_segment(segment, split_positions) -> list[BluemiraWire]:
     """
     Split a segment into sub-segments at various split positions
+
+    Returns
+    -------
+    sub_segs:
+        sub segments of wire
     """
     sub_segs = []
     for split_pos in split_positions:
@@ -368,7 +392,8 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
 
     Returns
     -------
-    Path along which the PF coil centroids should be positioned
+    :
+        Path along which the PF coil centroids should be positioned
     """
     tf_offset = offset_wire(
         tf_boundary, offset_value, fallback_method="miter", fallback_force_spline=True
