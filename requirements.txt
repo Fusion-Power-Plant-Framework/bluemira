@@ -40,7 +40,7 @@ scikit-learn==1.5.1
 scipy==1.10.1
 seaborn==0.13.2
 six==1.16.0
-tables==3.9.2
+tables==3.10.1
 tabulate==0.9.0
 threadpoolctl==3.5.0
 typeguard==4.3.0
