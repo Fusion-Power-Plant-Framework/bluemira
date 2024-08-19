@@ -55,6 +55,11 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
     def run(self) -> BluemiraWire:
         """
         Run the IVC Boundary designer
+
+        Returns
+        -------
+        :
+            first wall boundary
         """
         return varied_offset(
             self.wall_shape,

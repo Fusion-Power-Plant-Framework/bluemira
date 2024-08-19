@@ -41,7 +41,12 @@ class Divertor(ComponentManager):
     """
 
     def silhouette(self) -> BluemiraWire:
-        """Return a wire representing the divertor poloidal silhouette."""
+        """
+        Returns
+        -------
+        :
+            A wire representing the divertor poloidal silhouette.
+        """
         return (
             self.component()
             .get_component("xz")
@@ -84,6 +89,11 @@ def get_separatrix_legs(
 ) -> dict[LegPosition, list[BluemiraWire]]:
     """
     Find the separatrix legs for the given equilibrium.
+
+    Returns
+    -------
+    :
+        Legs for given position on separatrix
     """
     # A flag specifying which end of the plasma (i.e., upper or lower)
     # we want the legs from will need to be added
@@ -139,6 +149,20 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     def run(self) -> tuple[BluemiraWire, ...]:
         """
         Run method of DivertorSilhouetteDesigner
+
+
+        Returns
+        -------
+        :
+            inner baffle
+        :
+            inner target
+        :
+            dome
+        :
+            outer target
+        :
+            outer baffle
         """
         # Build the targets for each separatrix leg
         inner_target = self.make_target(LegPosition.INNER, self.INNER_TARGET)
@@ -166,6 +190,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     def make_target(self, leg: LegPosition, label: str) -> BluemiraWire:
         """
         Make a divertor target for a the given leg.
+
+        Returns
+        -------
+        :
+            Divertor target
         """
         sols = self._get_sols_for_leg(leg)
 
@@ -187,6 +216,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     ) -> BluemiraWire:
         """
         Make a dome between the two given points.
+
+        Returns
+        -------
+        :
+            Divertor dome
 
         Notes
         -----
@@ -257,6 +291,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         end:
             The position (in x-z) to stop drawing the baffle, e.g., the
             position to the upper part of the first wall.
+
+        Returns
+        -------
+        :
+            the baffle
 
         Raises
         ------
@@ -345,6 +384,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     ) -> BluemiraWire:
         """
         Build the inner baffle to join with the given target.
+
+        Returns
+        -------
+        :
+            inner baffle
         """
         if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
@@ -365,6 +409,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     ) -> BluemiraWire:
         """
         Build the outer baffle to join with the given target.
+
+        Returns
+        -------
+        :
+            outer baffle
         """
         if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
@@ -382,6 +431,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     ) -> list[BluemiraWire]:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
+
+        Returns
+        -------
+        :
+            separatrix legs
         """
         return [self.separatrix_legs[leg][layer] for layer in layers]
 
@@ -390,6 +444,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         """
         Get the coordinates of the end of a wire with largest value in
         the given dimension
+
+        Returns
+        -------
+        :
+            wire end point
         """
         return DivertorSilhouetteDesigner._get_wire_end(wire, axis, operator.lt)
 
@@ -398,6 +457,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         """
         Get the coordinates of the end of a wire with largest value in
         the given dimension
+
+        Returns
+        -------
+        :
+            wire end point
         """
         return DivertorSilhouetteDesigner._get_wire_end(wire, axis, operator.gt)
 
@@ -406,6 +470,11 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         """
         Get the coordinates of the end of a wire whose coordinate in the
         given axis satisfies the comparison function.
+
+        Returns
+        -------
+        :
+            wire end point
         """
         axis = WireEndAxis[axis.upper()].name.lower()
 
