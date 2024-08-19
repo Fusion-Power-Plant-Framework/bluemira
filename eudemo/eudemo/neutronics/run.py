@@ -66,6 +66,13 @@ def run_neutronics(
 ) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
     """Runs the neutronics model
 
+    Returns
+    -------
+    neutronics_csg:
+        The neutronics CSG reactor model
+    res:
+        the result of the neutronics run
+
     Raises
     ------
     NeutronicsError
