@@ -72,7 +72,13 @@ class TSUpperPortDuctBuilder(Builder):
         self.y_offset = self.params.tf_wp_depth.value + self.params.g_ts_tf.value
 
     def build(self) -> Component:
-        """Build upper port"""
+        """Build upper port
+
+        Returns
+        -------
+        :
+            The upper port component tree
+        """
         xy_face = make_upper_port_xy_face(
             self.params.n_TF.value,
             self.x_min,
@@ -87,7 +93,14 @@ class TSUpperPortDuctBuilder(Builder):
         )
 
     def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
-        """Build upper port xyz"""
+        """
+        Build upper port xyz
+
+        Returns
+        -------
+        :
+            The xyz components
+        """
         xy_voidface = BluemiraFace(xy_face.boundary[1])
         xy_outface = BluemiraFace(xy_face.boundary[0])
         port = extrude_shape(xy_face, (0, 0, self.z_max))
@@ -105,7 +118,14 @@ class TSUpperPortDuctBuilder(Builder):
         return [comp, void]
 
     def build_xy(self, face: BluemiraFace) -> PhysicalComponent:
-        """Build upport port xy face"""
+        """
+        Build upport port xy face
+
+        Returns
+        -------
+        :
+            The xy component
+        """
         comp = PhysicalComponent(self.name, face)
         apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
         return comp
@@ -145,7 +165,14 @@ class TSEquatorialPortDuctBuilder(Builder):
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
 
     def build(self) -> Component:
-        """Build equatorial port"""
+        """
+        Build equatorial port
+
+        Returns
+        -------
+        :
+            the component tree
+        """
         offset = (
             self.params.tk_vv_single_wall.value
             + self.params.g_vv_ts.value
@@ -165,8 +192,15 @@ class TSEquatorialPortDuctBuilder(Builder):
 
         return self.component_tree(None, None, self.build_xyz(yz_face))
 
-    def build_xyz(self, yz_face: BluemiraFace) -> PhysicalComponent:
-        """Build equatorial port xyz"""
+    def build_xyz(self, yz_face: BluemiraFace) -> list[PhysicalComponent]:
+        """
+        Build equatorial port xyz
+
+        Returns
+        -------
+        :
+            the xyz components
+        """
         yz_voidface = BluemiraFace(yz_face.boundary[1])
         degree = 180 / self.params.n_TF.value
         vec = (self.params.R_0.value - self.x_max, 0, 0)
@@ -229,7 +263,14 @@ class VVUpperPortDuctBuilder(Builder):
         )
 
     def build(self) -> Component:
-        """Build upper port"""
+        """
+        Build upper port
+
+        Returns
+        -------
+        :
+            The upper port component tree
+        """
         xy_face = make_upper_port_xy_face(
             self.params.n_TF.value,
             self.x_min,
@@ -245,8 +286,15 @@ class VVUpperPortDuctBuilder(Builder):
             self.build_xyz(xy_face),
         )
 
-    def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
-        """Build upper port xyz"""
+    def build_xyz(self, xy_face: BluemiraFace) -> list[PhysicalComponent]:
+        """
+        Build upper port xyz
+
+        Returns
+        -------
+        :
+            The xyz components
+        """
         xy_voidface = BluemiraFace(xy_face.boundary[1])
         xy_outface = BluemiraFace(xy_face.boundary[0])
         port = extrude_shape(xy_face, (0, 0, self.z_max))
@@ -264,8 +312,15 @@ class VVUpperPortDuctBuilder(Builder):
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
 
-    def build_xy(self, xy_face: BluemiraFace) -> PhysicalComponent:
-        """Build upper port xy face"""
+    def build_xy(self, xy_face: BluemiraFace) -> list[PhysicalComponent]:
+        """
+        Build upper port xy face
+
+        Returns
+        -------
+        :
+            The xy components
+        """
         xy_voidface = BluemiraFace(xy_face.boundary[1])
         comp = PhysicalComponent(self.name, xy_face)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
@@ -306,7 +361,14 @@ class VVEquatorialPortDuctBuilder(Builder):
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
 
     def build(self) -> Component:
-        """Build equatorial port"""
+        """
+        Build equatorial port
+
+        Returns
+        -------
+        :
+            The component tree
+        """
         y_val = 0.5 * self.params.ep_width.value
         z_ref = self.params.ep_z_position.value
         z_val = 0.5 * self.params.ep_height.value
@@ -326,7 +388,14 @@ class VVEquatorialPortDuctBuilder(Builder):
         )
 
     def build_xyz(self, yz_face: BluemiraFace) -> PhysicalComponent:
-        """Build equatorial port xyz"""
+        """
+        Build equatorial port xyz
+
+        Returns
+        -------
+        :
+            the xyz shapes of the equatorial port duct
+        """
         yz_voidface = BluemiraFace(yz_face.boundary[1])
         degree = 180 / self.params.n_TF.value
         vec = (self.params.R_0.value - self.x_max, 0, 0)

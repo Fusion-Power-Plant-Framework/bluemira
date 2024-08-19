@@ -29,7 +29,12 @@ class EquatorialPort(ComponentManager):
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Returns a wire defining the x-z boundary of the Equatorial Port"""
+        """
+        Returns
+        -------
+        :
+            A wire defining the x-z boundary of the Equatorial Port
+        """
         return (
             self.component.get_component("xz")
             .get_component(EquatorialPortDuctBuilder.NAME)
@@ -101,6 +106,11 @@ class EquatorialPortKOZDesigner(Designer):
     def run(self) -> BluemiraWire:
         """
         Design the xz keep-out zone profile of the equatorial port
+
+        Returns
+        -------
+        :
+            The xz keep out zone
         """
         z_h = 0.5 * self.params.ep_height.value + self.koz_offset
         z_o = self.z_pos
@@ -146,7 +156,14 @@ class EquatorialPortDuctBuilder(Builder):
         self.offset = equatorial_port_wall_thickness
 
     def build(self) -> Component:
-        """Build the Equatorial Port"""
+        """
+        Build the Equatorial Port
+
+        Returns
+        -------
+        :
+            The equatorial port component tree
+        """
         self.z_h = self.params.ep_height.value
         self.r_rad = self.params.cst_r_corner.value
         hole = offset_wire(self.outer, -self.offset)
@@ -161,7 +178,12 @@ class EquatorialPortDuctBuilder(Builder):
 
     def build_xz(self) -> PhysicalComponent:
         """
-        Build the xy representation of the Equatorial Port
+        Build the xz representation of the Equatorial Port
+
+        Returns
+        -------
+        :
+            the xz of the equatorial port
         """
         port = slice_shape(
             extrude_shape(BluemiraFace(self.outer), (self.length, 0, 0)),
@@ -174,6 +196,11 @@ class EquatorialPortDuctBuilder(Builder):
     def build_xy(self) -> PhysicalComponent:
         """
         Build the cross-sectional representation of the Equatorial Port
+
+        Returns
+        -------
+        :
+            the xy of the equatorial port
         """
         body = PhysicalComponent(self.NAME, self.profile)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
@@ -182,6 +209,11 @@ class EquatorialPortDuctBuilder(Builder):
     def build_xyz(self) -> PhysicalComponent:
         """
         Build the 3D representation of the Equatorial Port
+
+        Returns
+        -------
+        :
+            the xyz of the equatorial port
         """
         body = PhysicalComponent(self.NAME, self.port)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
