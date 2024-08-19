@@ -46,6 +46,10 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         List of optimisation constraints to apply to the optimisation problem
     plot:
         Whether or not to plot
+    reference_eq:
+        For plotting only.
+        Equilibrium object to compare to current state of eq during optimisation.
+        Will use initial state if None is chosen.
     diag_ops:
         Diagnostic plotting options for Equilibrium
     """
@@ -61,6 +65,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         constraints: list[UpdateableConstraint] | None = None,
         *,
         plot: bool | None = False,
+        reference_eq: Equilibrium | None = None,
         diag_ops: EqDiagnosticOptions | None = None,
     ):
         self.coilset = coilset
@@ -72,13 +77,16 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self._constraints = [] if constraints is None else constraints
 
         self.plotting_enabled = plot
-
+        # TODO @geograham: Should we have diagnostic plotting as an option for all COPs?
+        # 3798
         if self.plotting_enabled:
+            eq_copy = deepcopy(self.eq)
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
-                diag_ops=EqDiagnosticOptions(reference_eq=deepcopy(self.eq))
-                if diag_ops is None
-                else diag_ops,
+                reference_equilibrium=Equilibrium(eq=eq_copy, label="Reference")
+                if reference_eq is None
+                else reference_eq,
+                diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
             )
 
     def optimise(

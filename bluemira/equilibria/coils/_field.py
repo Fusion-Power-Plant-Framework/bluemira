@@ -200,31 +200,28 @@ class CoilGroupFieldsMixin:
         for j, coil in enumerate(coil_grp.all_coils()):
             xw = np.nonzero(x == coil.x)[0]
             zw = np.nonzero(z == coil.z)[0]
-            same_pos = np.nonzero(xw == zw)[0]
-            if same_pos.size > 0:
-                # self inductance
-                # same_pos could be an array that is indexed from zw.
-                # This loops over zw and creates an index in xw where xw == zw
-                # better ways welcome!
-                xxw = []
-                for _z in zw:
-                    if (_pos := np.nonzero(_z == xw)[0]).size > 0:
-                        xxw.extend(_pos)
-                cr = self._current_radius[np.array(xxw)]
-                Bz = np.zeros((x.size, 1))
-                Bx = Bz.copy()  # Should be 0 anyway
-                mask = np.zeros_like(Bz, dtype=bool)
-                mask[same_pos] = True
-                if any(cr != 0):
-                    cr_ind = np.nonzero(cr)
-                    Bz[mask][cr_ind] = (
-                        MU_0
-                        / (4 * np.pi * x[cr_ind])
-                        * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
-                    )
-                if False in mask:
-                    Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
-                    Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
+            # For self inductance:
+            # same_pos is an array of bools set to true when
+            # the coil has the same x and z position.
+            # NOTE assymetric coilsets will sometimes have xw.size != zw.size.
+            same_pos = np.full(shape=x.size, fill_value=False)
+            for w in xw:
+                if w in zw:
+                    same_pos[w] = True
+            cr = self._current_radius[np.nonzero(same_pos)[0]]
+            Bz = np.zeros((x.size, 1))
+            Bx = Bz.copy()  # Should be 0 anyway
+            mask = same_pos[:, None]  # size to match Bz
+            if any(cr != 0):
+                cr_ind = np.nonzero(cr)
+                Bz[mask][cr_ind] = (
+                    MU_0
+                    / (4 * np.pi * x[cr_ind])
+                    * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                )
+            if False in mask:
+                Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
+                Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
 
             else:
                 Bz = coil.Bz_response(x, z)
