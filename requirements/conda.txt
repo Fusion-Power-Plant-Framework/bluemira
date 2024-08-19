@@ -3,6 +3,6 @@ h5py==3.11.0
 pybind11==2.13.1
 pybind11-global==2.13.1
 PySide2==5.15.8
-pytools==2024.1.11
+pytools==2024.1.13
 shiboken2==5.15.8
 vtk==9.2.6
