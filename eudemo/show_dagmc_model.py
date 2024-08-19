@@ -1,4 +1,4 @@
-from dagmc_geometry_slice_plotter import plot_axis_slice, plot_slice
+from dagmc_geometry_slice_plotter import plot_axis_slice
 
 fn = "dagmc_models/mac.h5m"
 

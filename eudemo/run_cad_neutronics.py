@@ -17,8 +17,6 @@
 #     implicit_complement_material_tag="air",
 # )
 # %%
-import math
-from os import write
 from pathlib import Path
 
 import openmc

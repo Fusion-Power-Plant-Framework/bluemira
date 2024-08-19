@@ -26,7 +26,6 @@ from bluemira.builders.tools import (
     compound_from_components,
     connect_components,
 )
-from bluemira.codes._freecadapi import make_compound
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.tools import save_cad

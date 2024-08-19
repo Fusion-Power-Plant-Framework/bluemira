@@ -26,7 +26,6 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     circular_pattern,
-    connect_shapes,
     extrude_shape,
     make_circle,
     make_compound,
