@@ -125,7 +125,13 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             )
 
     def run(self) -> Equilibrium:
-        """Run the designer's optimisation problem."""
+        """Run the designer's optimisation problem.
+
+        Returns
+        -------
+        :
+            optimised equilibrium
+        """
         eq = self._make_equilibrium()
         opt_problem = self._make_opt_problem(eq)
         iterator_program = PicardIterator(
@@ -141,7 +147,13 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         return eq
 
     def read(self) -> Equilibrium:
-        """Load an equilibrium from a file."""
+        """Load an equilibrium from a file.
+
+        Returns
+        -------
+        :
+            Equilibrium from file
+        """
         eq = Equilibrium.from_eqdsk(
             self.file_path,
             from_cocos=self.build_config.get("cocos"),
@@ -168,6 +180,11 @@ class EquilibriumDesigner(Designer[Equilibrium]):
     def _make_equilibrium(self) -> Equilibrium:
         """
         Make a reference MHD equilibrium for the plasma.
+
+        Returns
+        -------
+        :
+            reference equilibrium
         """
         return make_equilibrium(
             EquilibriumParams.from_frame(self.params),
@@ -179,9 +196,16 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             self.build_config.get("grid_settings", {}),
         )
 
-    def _make_opt_problem(self, eq: Equilibrium):
+    def _make_opt_problem(
+        self, eq: Equilibrium
+    ) -> UnconstrainedTikhonovCurrentGradientCOP:
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
+
+        Returns
+        -------
+        :
+            The optimisation problem
         """
         kappa = 1.12 * self.params.kappa_95.value
         kappa_ul_tweak = 0.05
@@ -217,6 +241,11 @@ def _make_tf_boundary(
 ) -> BluemiraWire:
     """
     Make an initial TF coil shape to guide an equilibrium calculation.
+
+    Returns
+    -------
+    :
+        Boundary
     """
     rin, rout = r_tf_in_centre, r_tf_out_centre
     # TODO: Handle other TF coil parameterisations?
@@ -233,6 +262,13 @@ def _flatten_shape(x, z):
     """
     Flattens a shape by dragging the lowest and highest point to the minimum
     radius point.
+
+    Returns
+    -------
+    xx:
+        x points
+    zz:
+        z points
     """
     amin, amax = np.argmin(z), np.argmax(z)
     num_elements = amax - amin + 2
@@ -254,6 +290,11 @@ def _flatten_shape(x, z):
 def get_plasmod_binary_path():
     """
     Get the path to the PLASMOD binary.
+
+    Returns
+    -------
+    :
+        plasmod path
     """
     if plasmod_binary := shutil.which("plasmod"):
         PLASMOD_PATH = Path(plasmod_binary).parent
@@ -319,6 +360,13 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
     def run(self) -> tuple[Coordinates, CustomProfile]:
         """
         Run the FixedEquilibriumDesigner.
+
+        Returns
+        -------
+        lcfs_coords:
+            lcfs coordinate positions
+        profiles:
+            equilibria profiles
         """
         # Get geometry parameterisation
         geom_parameterisation = self._get_geometry_parameterisation()
@@ -371,6 +419,13 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
     def read(self) -> tuple[Coordinates, CustomProfile]:
         """
         Read in a fixed boundary equilibrium
+
+        Returns
+        -------
+        lcfs_coords:
+            lcfs coordinate positions
+        profiles:
+            equilibria profiles
         """
         data = EQDSKInterface.from_file(
             self.file_path,
@@ -479,6 +534,13 @@ class DummyFixedEquilibriumDesigner(Designer[tuple[Coordinates, Profile]]):
     def run(self) -> tuple[Coordinates, Profile]:
         """
         Run the DummyFixedEquilibriumDesigner.
+
+        Returns
+        -------
+        lcfs_coords:
+            lcfs coordinate positions
+        profiles:
+            equilibria profiles
         """
         param_cls = self.build_config.get(
             "param_class", "bluemira.equilibria.shapes.JohnerLCFS"
@@ -598,6 +660,11 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         """
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
 
+        Returns
+        -------
+        :
+            the optimised equilibrium
+
         Raises
         ------
         ValueError
@@ -669,7 +736,13 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         return eq
 
     def read(self) -> Equilibrium:
-        """Load an equilibrium from a file."""
+        """Load an equilibrium from a file.
+
+        Returns
+        -------
+        :
+            the equilibrium read in
+        """
         eq = Equilibrium.from_eqdsk(self.file_path, qpsi_sign=-1, from_cocos=3)
         self._update_params_from_eq(eq)
         return eq
@@ -708,9 +781,14 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     @staticmethod
     def _make_fbe_opt_problem(
         eq: Equilibrium, lcfs_shape: BluemiraWire, n_points: int, gamma: float
-    ):
+    ) -> UnconstrainedTikhonovCurrentGradientCOP:
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.
+
+        Returns
+        -------
+        :
+            Optimisation problem
         """
         eq_targets = ReferenceConstraints(lcfs_shape, n_points)
         return UnconstrainedTikhonovCurrentGradientCOP(

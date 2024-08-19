@@ -44,7 +44,8 @@ def estimate_kappa95(A: float, m_s_limit: float) -> float:
 
     Returns
     -------
-    The maximum elongation for the specified input values
+    :
+        The maximum elongation for the specified input values
 
     Notes
     -----
@@ -119,7 +120,8 @@ def handle_lcfs_shape_input(
 
     Returns
     -------
-    Input dictionary for the initialisation of the specified GeometryParameterisation
+    :
+        Input dictionary for the initialisation of the specified GeometryParameterisation
     """
     defaults = {
         "f_kappa_l": 1.0,
@@ -177,7 +179,8 @@ def make_grid(
 
     Returns
     -------
-    Finite difference grid for an Equilibrium
+    :
+        Finite difference grid for an Equilibrium
     """
     defaults = {
         "grid_scale_x": 2.0,
@@ -218,19 +221,29 @@ class DivertorLegCalculator:
     """
 
     @staticmethod
-    def calc_line(p1, p2, n):
+    def calc_line(p1, p2, n) -> tuple[np.ndarray]:
         """
         Calculate a linearly spaced series of points on a line between p1 and p2.
+
+        Returns
+        -------
+        :
+            x points
+        :
+            z points
         """
-        xn = np.linspace(p1[0], p2[0], int(n))
-        zn = np.linspace(p1[1], p2[1], int(n))
-        return xn, zn
+        return np.linspace(p1[0], p2[0], int(n)), np.linspace(p1[1], p2[1], int(n))
 
     def calc_divertor_leg(
         self, x_point, angle, length, n, loc=DivertorLocation.LOWER_OUTER
     ):
         """
         Calculate the position of a straight line divertor leg.
+
+        Returns
+        -------
+        :
+            position of divertor
 
         Raises
         ------
