@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 from bluemira.builders.tools import (
     apply_component_display_options,
     build_sectioned_xy,
@@ -42,6 +42,10 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
     """
     Wrapper around a Vacuum Vessel component tree.
     """
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:  # noqa: D102
+        return ComponentConstructionType.CONTINUOUS
 
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire giving the vessel's boundary in the xz plane."""

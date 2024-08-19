@@ -26,8 +26,10 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     circular_pattern,
+    connect_shapes,
     extrude_shape,
     make_circle,
+    make_compound,
     make_polygon,
     revolve_shape,
     slice_shape,
@@ -174,6 +176,69 @@ def circular_pattern_component(
                 phy_comp.shape = shape
 
     return sectors
+
+
+def compound_from_components(
+    components: list[ComponentT],
+    name: str,
+    *,
+    material: Material | None = None,
+) -> PhysicalComponent:
+    """
+    Imprints and fuses (boolean merge) all PhysicalComponents of a list of
+    components into a single PhysicalComponent.
+
+    Parameters
+    ----------
+    components:
+        List of components to imprint and fuse
+    name:
+        Name of the new PhysicalComponent.
+    material:
+        Optional material to apply to the new PhysicalComponent
+
+    Returns
+    -------
+    PhysicalComponent
+    """
+    faux_sec_comp = Component(f"{name} X")
+    faux_sec_comp.children = components
+    itr = PreOrderIter(faux_sec_comp)
+    phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
+    comp = make_compound(phy_comps_shape, name)
+    return PhysicalComponent(name, comp, material=material)
+
+
+def connect_components(
+    components: list[ComponentT],
+    name: str,
+    *,
+    material: Material | None = None,
+) -> PhysicalComponent:
+    """
+    Imprints and fuses (boolean merge) all PhysicalComponents of a list of
+    components into a single PhysicalComponent.
+
+    Parameters
+    ----------
+    components:
+        List of components to imprint and fuse
+    name:
+        Name of the new PhysicalComponent.
+    material:
+        Optional material to apply to the new PhysicalComponent
+
+    Returns
+    -------
+    PhysicalComponent
+    """
+    faux_sec_comp = Component(f"{name} X")
+    faux_sec_comp.children = components
+    itr = PreOrderIter(faux_sec_comp)
+    phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
+    # imprinted = connect_shapes(phy_comps_shape, 0.1, name)
+    imprinted = boolean_fuse(phy_comps_shape, name)
+    return PhysicalComponent(name, imprinted, material=material)
 
 
 def pattern_revolved_silhouette(

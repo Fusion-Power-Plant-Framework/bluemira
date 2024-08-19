@@ -18,7 +18,7 @@ import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux
@@ -39,6 +39,10 @@ class Divertor(ComponentManager):
     """
     Wrapper around a divertor component tree.
     """
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:  # noqa: D102
+        return ComponentConstructionType.COMPOUND
 
     def silhouette(self) -> BluemiraWire:
         """Return a wire representing the divertor poloidal silhouette."""

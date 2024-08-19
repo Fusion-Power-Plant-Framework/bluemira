@@ -29,7 +29,7 @@ from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.base.reactor import Reactor
+from bluemira.base.reactor import FilterMaterial, Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
 from bluemira.builders.divertor import DivertorBuilder
@@ -43,6 +43,7 @@ from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.materials.material import Void
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -78,6 +79,7 @@ from eudemo.maintenance.port_plug import (
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager, NeutronicsManager
+from eudemo.neutronics.run import run_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -492,6 +494,17 @@ if __name__ == "__main__":
         ivc_shapes.blanket_face,
         r_inner_cut,
         cut_angle,
+    )
+
+    # reactor.show_cad(
+    #     with_components=[reactor.blanket, reactor.vacuum_vessel, reactor.divertor],
+    #     component_filter=FilterMaterial(reject_material=Void),
+    # )
+
+    reactor.save_cad(
+        with_components=[reactor.vacuum_vessel, reactor.blanket, reactor.divertor],
+        cad_format="step",
+        component_filter=FilterMaterial(reject_material=Void),
     )
 
     # reactor.neutronics = NeutronicsManager(

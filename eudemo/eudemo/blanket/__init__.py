@@ -6,7 +6,7 @@
 """Builders, designers, and components for an EUDEMO blanket."""
 
 from bluemira.base.components import Component
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
@@ -25,6 +25,10 @@ class Blanket(ComponentManager):
         self.r_inner_cut = r_inner_cut
         self._panel_points = panel_points
         super().__init__(component_tree)
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:  # noqa: D102
+        return ComponentConstructionType.COMPOUND
 
     def panel_points(self) -> Coordinates:
         """The panel points of the blanket."""

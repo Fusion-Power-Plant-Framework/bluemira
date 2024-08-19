@@ -9,15 +9,24 @@ from __future__ import annotations
 
 import abc
 import time
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, get_type_hints
 
 from rich.progress import track
 
-from bluemira.base.components import Component, get_properties_from_components
+from bluemira.base.components import (
+    Component,
+    get_properties_from_components,
+)
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.builders.tools import circular_pattern_component
+from bluemira.builders.tools import (
+    circular_pattern_component,
+    compound_from_components,
+    connect_components,
+)
+from bluemira.codes._freecadapi import make_compound
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.tools import save_cad
@@ -248,6 +257,16 @@ class FilterMaterial:
         return bool_store
 
 
+class ComponentConstructionType(Enum):
+    """
+    Enum for construction types for components
+    """
+
+    CONTINUOUS = "continuous"
+    COMPOUND = "compound"
+    PATTERNABLE = "patternable"
+
+
 class ComponentManager(BaseManager):
     """
     A wrapper around a component tree.
@@ -274,6 +293,13 @@ class ComponentManager(BaseManager):
 
     def __init__(self, component_tree: ComponentT) -> None:
         self._component = component_tree
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.PATTERNABLE
 
     def component(self) -> ComponentT:
         """
@@ -483,12 +509,6 @@ class Reactor(BaseManager):
         with_components: list[ComponentManager] | None = None,
         n_sectors: int = 1,
     ):
-        xyzs = reactor_component.get_component(
-            "xyz",
-            first=False,
-        )
-        xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
-
         comp_names = (
             "all"
             if not with_components
@@ -498,12 +518,31 @@ class Reactor(BaseManager):
             f"Constructing xyz CAD for display with {n_sectors} sectors and components:"
             f" {comp_names}"
         )
-        for xyz in track(xyzs):
-            xyz.children = circular_pattern_component(
+
+        for c in track(reactor_component.children):
+            comp_manager = next(
+                (cm for cm in with_components if cm.component().name == c.name), None
+            )
+            if not isinstance(comp_manager, ComponentManager):
+                raise ComponentError(
+                    f"Component manager not found for component {c.name}"
+                )
+            xyz = c.get_component("xyz", first=True)
+            if not isinstance(xyz, Component):
+                raise ComponentError(
+                    f"Component {c.name} does not have an xyz view, "
+                    "or there are multiple"
+                )
+            patterned = circular_pattern_component(
                 list(xyz.children),
                 n_sectors,
                 degree=(360 / self.n_sectors) * n_sectors,
             )
+            if comp_manager.construction_type == ComponentConstructionType.CONTINUOUS:
+                patterned = [connect_components(patterned, c.name)]
+            elif comp_manager.construction_type == ComponentConstructionType.COMPOUND:
+                patterned = [compound_from_components(patterned, c.name)]
+            xyz.children = patterned
 
     def _filter_and_reconstruct(
         self,
