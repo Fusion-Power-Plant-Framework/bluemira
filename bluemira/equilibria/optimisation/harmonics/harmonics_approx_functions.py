@@ -322,12 +322,19 @@ def collocation_points(
         mask = in_zone(
             rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
         )
-        collocation_x = sig_fig_round(rect_grid.x[mask == 1], 8)
-        collocation_z = sig_fig_round(rect_grid.z[mask == 1], 8)
+        collocation_x = rect_grid.x[mask == 1]
+        collocation_z = rect_grid.z[mask == 1]
 
         # Spherical coordinates
-        collocation_r = sig_fig_round(np.sqrt(collocation_x**2 + collocation_z**2), 8)
-        collocation_theta = sig_fig_round(np.arctan2(collocation_x, collocation_z), 8)
+        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+        collocation_theta = np.arctan2(collocation_x, collocation_z)
+    
+    # Going to round everything to 3 decimal places, as we do not need to sample at higher presision
+    # x,z,r are all in m, and theta is in radians.
+    collocation_r = np.round(collocation_r, 3)
+    collocation_theta = np.round(collocation_theta, 3)
+    collocation_x = np.round(collocation_x, 3)
+    collocation_z = np.round(collocation_z, 3)
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
