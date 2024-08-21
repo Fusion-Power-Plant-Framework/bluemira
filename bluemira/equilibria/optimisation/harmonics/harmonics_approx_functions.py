@@ -494,8 +494,7 @@ def get_psi_harmonic_amplitudes(
     psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
         harmonics2collocation, collocation_psivac, rcond=rcond
     )
-
-    return sig_fig_round(psi_harmonic_amplitudes, 8)
+    return sig_fig_round(psi_harmonic_amplitudes, 15)
 
 
 def spherical_harmonic_approximation(
