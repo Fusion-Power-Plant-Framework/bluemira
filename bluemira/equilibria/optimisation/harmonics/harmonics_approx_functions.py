@@ -109,8 +109,7 @@ def coil_harmonic_amplitude_matrix(
         * lpmv(ones, degrees, np.cos(theta_f)[None, :])
         / np.sqrt(degrees * (degrees + 1))
     )
-
-    return sig_fig_round(currents2harmonics, 8)
+    return sig_fig_round(currents2harmonics, 15)
 
 
 def harmonic_amplitude_marix(
@@ -168,8 +167,7 @@ def harmonic_amplitude_marix(
         * lpmv(ones, degrees, np.cos(collocation_theta)[:, None])
         / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
     )
-
-    return sig_fig_round(harmonics2collocation, 8)
+    return sig_fig_round(harmonics2collocation, 15)
 
 
 class PointType(Enum):
