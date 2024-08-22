@@ -487,13 +487,14 @@ def get_psi_harmonic_amplitudes(
         collocation.r, collocation.theta, r_t
     )
 
-    # Account for matrix condition number
-    cond_num_h2c = ten_power(np.linalg.cond(harmonics2collocation))
-    rcond = min(1e-8, 1e-16 - 10**cond_num_h2c)
+    # matrix condition number for debug invetigations
+    _cond_num_h2c = np.linalg.cond(harmonics2collocation)
     # Fit harmonics to match values at collocation points
+    # rcond=None for default of machine precision times max(harmonics2collocation)
     psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
-        harmonics2collocation, collocation_psivac, rcond=rcond
+        harmonics2collocation, collocation_psivac, rcond=None
     )
+    
     return sig_fig_round(psi_harmonic_amplitudes, 15)
 
 
@@ -645,18 +646,26 @@ def spherical_harmonic_approximation(
             eq.coilset, degree, r_t, sh_coil_names
         )
 
-        # Account for matrix condition number
-        cond_num_c2h = ten_power(np.linalg.cond(currents2harmonics))
-        rcond = min(1e-8, 1e-16 - 10**cond_num_c2h)
+        # matrix condition number
+        cond_num_c2h= np.linalg.cond(currents2harmonics)
+
+        # SH amplitudes to be returned (and used as constraints)
+        # Set even harmonics to 0 -> should be very small already
+        coil_current_harmonic_amplitudes = psi_harmonic_amplitudes[:degree]
+        coil_current_harmonic_amplitudes[0::2] = 0.
+        
         # Calculate necessary coil currents
         currents, _residual, _rank, _s = np.linalg.lstsq(
-            currents2harmonics[:, :], (psi_harmonic_amplitudes[:degree]), rcond=rcond
+            currents2harmonics[:, :], coil_current_harmonic_amplitudes, rcond=None
         )
 
-        # Calculate the coilset SH amplitudes for use in optimisation
-        coil_current_harmonic_amplitudes = sig_fig_round(
-            currents2harmonics[:, :] @ currents, 8
-        )
+        currents = sig_fig_round(currents, int(15-ten_power(cond_num_c2h)))
+        
+        # Test harmonic amplitudes obtained agaist default tolerances 
+        test_coil_current_harmonic_amplitudes = currents2harmonics[:, :] @ currents
+        tol = ten_power(psi_harmonic_amplitudes[:degree])-3
+        # Check here but print warning (if applicable) after degree and fit metric info
+        check_tol = ten_power(psi_harmonic_amplitudes[:degree] - test_coil_current_harmonic_amplitudes) > tol
 
         # Set currents in coilset
         for n, i in zip(sh_coil_names, currents, strict=False):
@@ -689,6 +698,13 @@ def spherical_harmonic_approximation(
         bluemira_print(
             f"Fit metric value = {fit_metric_value} using" f" {degree} degrees."
         )
+        if any(check_tol):
+            bluemira_warn(
+                " Sensitivity of coil_harmonic_amplitude_matrix is high,"
+                " consider using fewer degrees in your approximation to ensure" 
+                " numerical reproducability across machines."
+            )   
+
         if fit_metric_value <= acceptable_fit_metric:
             break
         if degree == max_degree:
