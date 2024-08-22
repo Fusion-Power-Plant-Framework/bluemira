@@ -148,6 +148,10 @@ class Coil(CoilFieldsMixin):
         b_max: float = np.nan,
         discretisation: float = np.nan,
         n_turns: int = 1,
+        *,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
     ):
         self._dx = None
         self._dz = None
@@ -179,6 +183,10 @@ class Coil(CoilFieldsMixin):
         if not self._flag_sizefix and None in {self.dx, self.dz}:
             self._dx, self._dz = 0, 0
             self._re_discretise()
+
+        super().__init__(
+            psi_analytic=psi_analytic, Bx_analytic=Bx_analytic, Bz_analytic=Bz_analytic
+        )
 
     def __repr__(self):
         """

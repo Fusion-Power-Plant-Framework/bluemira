@@ -81,8 +81,20 @@ class TestCoil:
         assert dum_coil._number == self.dum_coil._number + 1
         assert no_coil._number == self.no_coil._number + 1
 
-    def test_field(self):
-        c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Should produce 5 T on axis
+    @pytest.mark.parametrize("Bx_an", [True, False])
+    @pytest.mark.parametrize("Bz_an", [True, False])
+    @pytest.mark.parametrize("psi_an", [True, False])
+    def test_field(self, Bx_an, Bz_an, psi_an):
+        c = Coil(
+            x=1,
+            z=0,
+            current=1591550,
+            dx=0,
+            dz=0,
+            Bx_analytic=Bx_an,
+            Bz_analytic=Bz_an,
+            psi_analytic=psi_an,
+        )  # Should produce 5 T on axis
         Bx, Bz = 0, MU_0 * c.current / (2 * c.x)
 
         assert c.Bx(0.001, 0) == Bx
@@ -143,16 +155,22 @@ class TestCoil:
         ax.set_xlim([2, 6])
         ax.set_ylim([-3, 3])
 
-    def test_bx(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_bx(self, analytic):
+        self.coil._Bx_analytic = analytic
         callable_tester(self.coil.Bx)
 
-    def test_bz(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_bz(self, analytic):
+        self.coil._Bz_analytic = analytic
         callable_tester(self.coil.Bz)
 
     def test_bp(self):
         callable_tester(self.coil.Bp)
 
-    def test_psi(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_psi(self, analytic):
+        self.coil._psi_analytic = analytic
         callable_tester(self.coil.psi)
 
     def test_point_in_coil(self):
@@ -323,13 +341,19 @@ class TestCoilGroup:
         with pytest.raises(ValueError):  # noqa: PT011
             self.group.resize([10, 10])
 
-    def test_psi(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_psi(self, analytic):
+        self.group._psi_analytic = analytic
         callable_tester(self.group.psi, self.group.n_coils())
 
-    def test_bx(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_bx(self, analytic):
+        self.group._Bx_analytic = analytic
         callable_tester(self.group.Bx, self.group.n_coils())
 
-    def test_bz(self):
+    @pytest.mark.parametrize("analytic", [True, False])
+    def test_bz(self, analytic):
+        self.group._Bz_analytic = analytic
         callable_tester(self.group.Bz, self.group.n_coils())
 
     def test_bp(self):

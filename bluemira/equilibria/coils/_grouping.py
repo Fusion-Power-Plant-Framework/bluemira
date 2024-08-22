@@ -101,11 +101,20 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     __slots__ = ("_coils", "_pad_size")
 
-    def __init__(self, *coils: Coil | CoilGroup):
+    def __init__(
+        self,
+        *coils: Coil | CoilGroup,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
+    ):
         if any(not isinstance(c, Coil | CoilGroup) for c in coils):
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
+        super().__init__(
+            psi_analytic=psi_analytic, Bx_analytic=Bx_analytic, Bz_analytic=Bz_analytic
+        )
 
     def __repr__(self):
         """

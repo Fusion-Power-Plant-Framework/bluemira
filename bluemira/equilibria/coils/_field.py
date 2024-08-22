@@ -37,13 +37,27 @@ class CoilGroupFieldsMixin:
     """
 
     __slots__ = (
+        "_Bx_analytic",
+        "_Bz_analytic",
         "_einsum_str",
+        "_psi_analytic",
         "_quad_dx",
         "_quad_dz",
         "_quad_weighting",
         "_quad_x",
         "_quad_z",
     )
+
+    def __init__(
+        self,
+        *,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
+    ):
+        self._psi_analytic = psi_analytic
+        self._Bx_analytic = Bx_analytic
+        self._Bz_analytic = Bz_analytic
 
     def psi(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -52,7 +66,9 @@ class CoilGroupFieldsMixin:
         return self.psi_response(x, z) * self.current
 
     def psi_response(self, x, z):
-        return self._mix_control_method(x, z, greens_psi, semianalytic_psi)
+        return self._mix_control_method(
+            x, z, greens_psi, semianalytic_psi, disable_analytic=not self._psi_analytic
+        )
 
     def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -79,7 +95,9 @@ class CoilGroupFieldsMixin:
         -------
         The radial magnetic field response at the x, z coordinates.
         """
-        return self._mix_control_method(x, z, greens_Bx, semianalytic_Bx)
+        return self._mix_control_method(
+            x, z, greens_Bx, semianalytic_Bx, disable_analytic=not self._Bx_analytic
+        )
 
     def Bz(self, x: float | np.ndarray, z: float | np.ndarray) -> float | np.ndarray:
         """
@@ -106,7 +124,9 @@ class CoilGroupFieldsMixin:
         -------
         The vertical magnetic field response at the x, z coordinates.
         """
-        return self._mix_control_method(x, z, greens_Bz, semianalytic_Bz)
+        return self._mix_control_method(
+            x, z, greens_Bz, semianalytic_Bz, disable_analytic=not self._Bz_analytic
+        )
 
     def Bp(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -206,6 +226,8 @@ class CoilGroupFieldsMixin:
         z: float | np.ndarray,
         greens_func: Callable,
         semianalytic_func: Callable,
+        *,
+        disable_analytic: bool = False,
     ) -> float | np.ndarray:
         """
         Boiler-plate helper function to mixed the Green's function responses
@@ -239,7 +261,7 @@ class CoilGroupFieldsMixin:
             inside = np.logical_and(
                 self._points_inside_coil(x, z), ~zero_coil_size[np.newaxis]
             )
-            if np.all(~inside):
+            if np.all(~inside) or disable_analytic:
                 return self._response_greens(greens_func, x, z)
             if np.all(inside):
                 # Not called for circuits as they will always be a mixture
