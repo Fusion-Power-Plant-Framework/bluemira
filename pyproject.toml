@@ -35,6 +35,7 @@ dependencies = [
     "pint",
     "periodictable",
     "pyclipper",
+    "pyclipr",
     "pypet",
     "pyvista",
     "rich",
