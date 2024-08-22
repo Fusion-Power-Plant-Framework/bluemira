@@ -99,7 +99,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         Coils and groups of Coils to group
     """
 
-    __slots__ = ("_coils", "_pad_size")
+    __slots__ = (
+        "_Bx_analytic",
+        "_Bz_analytic",
+        "_coils",
+        "_pad_size",
+        "_psi_analytic",
+    )
 
     def __init__(
         self,
@@ -849,8 +855,20 @@ class Circuit(CoilGroup):
 
     __slots__ = ()
 
-    def __init__(self, *coils: Coil | CoilGroup, current: float | None = None):
-        super().__init__(*coils)
+    def __init__(
+        self,
+        *coils: Coil | CoilGroup,
+        current: float | None = None,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
+    ):
+        super().__init__(
+            *coils,
+            psi_analytic=psi_analytic,
+            Bx_analytic=Bx_analytic,
+            Bz_analytic=Bz_analytic,
+        )
         self.current = self._get_current() if current is None else current
 
     def _get_current(self):
@@ -905,6 +923,9 @@ class SymmetricCircuit(Circuit):
     def __init__(
         self,
         *coils: Coil | CoilGroup,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
     ):
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
@@ -913,7 +934,12 @@ class SymmetricCircuit(Circuit):
                 f"Wrong number of coils to create a {type(self).__name__}"
             )
 
-        super().__init__(*coils)
+        super().__init__(
+            *coils,
+            psi_analytic=psi_analytic,
+            Bx_analytic=Bx_analytic,
+            Bz_analytic=Bz_analytic,
+        )
 
         symmetry_line = np.array([[0, 0], [1, 0]])
 
@@ -1084,8 +1110,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self,
         *coils: Coil | CoilGroup,
         control_names: list | bool | None = None,
+        psi_analytic: bool = False,
+        Bx_analytic: bool = True,
+        Bz_analytic: bool = True,
     ):
-        super().__init__(*coils)
+        super().__init__(
+            *coils,
+            psi_analytic=psi_analytic,
+            Bx_analytic=Bx_analytic,
+            Bz_analytic=Bz_analytic,
+        )
         self.control = control_names
 
     def remove_coil(self, *coil_name: str, _top_level: bool = True) -> None | list:
