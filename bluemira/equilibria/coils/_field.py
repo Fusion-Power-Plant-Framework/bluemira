@@ -194,23 +194,11 @@ class CoilGroupFieldsMixin:
             )
         return response
 
-    def _psi_greens(self, pgreen: float | np.ndarray):
+    def _stored_greens(self, green: float | np.ndarray):
         """
-        Calculate plasma psi from Greens functions and current
+        Quickly calculate plasma psi, Bx or Bz from Greens functions and current
         """
-        return self.current * pgreen
-
-    def _Bx_greens(self, bgreen: float | np.ndarray):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
-
-    def _Bz_greens(self, bgreen: float | np.ndarray):
-        """
-        Uses the Greens mapped dict to quickly compute the Bx
-        """
-        return self.current * bgreen
+        return self.current * green
 
     def _mix_control_method(
         self,
@@ -669,34 +657,11 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
 
-    def _psi_greens(
-        self, psigreens: np.ndarray, *, sum_coils: bool = True, control: bool = False
-    ) -> np.ndarray:
-        """
-        Uses the Greens mapped dict to quickly compute the psi
-
-        Parameters
-        ----------
-        psigreens:
-            The unit psi response
-        sum_coils:
-            sum over coils
-        control:
-            operations on control coils only
-
-        Returns
-        -------
-        Cached Greens psi response
-        """
-        return self._sum(
-            super()._psi_greens(psigreens), sum_coils=sum_coils, control=control
-        )
-
-    def _Bx_greens(
+    def _stored_greens(
         self, bgreen: np.ndarray, *, sum_coils: bool = True, control: bool = False
     ) -> np.ndarray:
         """
-        Uses the Greens mapped dict to quickly compute the Bx
+        Uses the Greens mapped dict to quickly compute the Bx,Bz or psi
 
         Parameters
         ----------
@@ -709,33 +674,11 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Cached Greens Bx response
+        :
+            Cached Greens response
         """
         return self._sum(
-            super()._Bx_greens(bgreen), sum_coils=sum_coils, control=control
-        )
-
-    def _Bz_greens(
-        self, bgreen: np.ndarray, *, sum_coils: bool = True, control: bool = False
-    ) -> np.ndarray:
-        """
-        Uses the Greens mapped dict to quickly compute the Bz
-
-        Parameters
-        ----------
-        bgreen:
-            The unit Bz response
-        sum_coils:
-            sum over coils
-        control:
-            operations on control coils only
-
-        Returns
-        -------
-        Cached Greens Bs response
-        """
-        return self._sum(
-            super()._Bz_greens(bgreen), sum_coils=sum_coils, control=control
+            super()._stored_greens(bgreen), sum_coils=sum_coils, control=control
         )
 
 
