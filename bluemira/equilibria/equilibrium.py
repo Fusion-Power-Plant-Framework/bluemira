@@ -774,7 +774,7 @@ class Breakdown(CoilSetMHDState):
         Radial magnetic field at x, z
         """
         if x is None and z is None:
-            return self.coilset._Bx_greens(self._bx_green)
+            return self.coilset._stored_greens(self._bx_green)
 
         return self.coilset.Bx(x, z)
 
@@ -800,7 +800,7 @@ class Breakdown(CoilSetMHDState):
         Vertical magnetic field at x, z
         """
         if x is None and z is None:
-            return self.coilset._Bz_greens(self._bz_green)
+            return self.coilset._stored_greens(self._bz_green)
 
         return self.coilset.Bz(x, z)
 
@@ -827,8 +827,8 @@ class Breakdown(CoilSetMHDState):
         """
         if x is None and z is None:
             return np.hypot(
-                self.coilset._Bx_greens(self._bx_green),
-                self.coilset._Bz_greens(self._bz_green),
+                self.coilset._stored_greens(self._bx_green),
+                self.coilset._stored_greens(self._bz_green),
             )
 
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
@@ -856,7 +856,7 @@ class Breakdown(CoilSetMHDState):
         Poloidal magnetic flux at x, z
         """
         if x is None and z is None:
-            return self.coilset._psi_greens(self._psi_green)
+            return self.coilset._stored_greens(self._psi_green)
 
         return self.coilset.psi(x, z)
 
@@ -1435,7 +1435,7 @@ class Equilibrium(CoilSetMHDState):
         Radial magnetic field at x, z
         """
         if x is None and z is None:
-            return self.plasma.Bx() + self.coilset._Bx_greens(self._bx_green)
+            return self.plasma.Bx() + self.coilset._stored_greens(self._bx_green)
 
         return self.plasma.Bx(x, z) + self.coilset.Bx(x, z)
 
@@ -1461,7 +1461,7 @@ class Equilibrium(CoilSetMHDState):
         Vertical magnetic field at x, z
         """
         if x is None and z is None:
-            return self.plasma.Bz() + self.coilset._Bz_greens(self._bz_green)
+            return self.plasma.Bz() + self.coilset._stored_greens(self._bz_green)
 
         return self.plasma.Bz(x, z) + self.coilset.Bz(x, z)
 
@@ -1532,7 +1532,7 @@ class Equilibrium(CoilSetMHDState):
                 self.controller.stabilise()
             return (
                 self.plasma.psi()
-                + self.coilset._psi_greens(self._psi_green)
+                + self.coilset._stored_greens(self._psi_green)
                 + self.controller.psi()
             )
 
