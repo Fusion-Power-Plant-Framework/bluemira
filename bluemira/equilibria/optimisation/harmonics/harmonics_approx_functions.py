@@ -579,6 +579,14 @@ def spherical_harmonic_approximation(
     EquilibriaError
         Problem not setup for harmonics
 
+    Note
+    ----
+    The coil_harmonic_amplitude_matrix often has a high sensitivity to small numbers.
+    To address numerical reproducability across different machines:
+    - Even harmonic amplitudes are set to zero.
+    - Currents found using lstsq are rounded before being used to calculate the LCFS
+      fit metric.
+
     """
     # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
@@ -647,25 +655,18 @@ def spherical_harmonic_approximation(
         )
 
         # matrix condition number
-        cond_num_c2h= np.linalg.cond(currents2harmonics)
+        cond_num_c2h = np.linalg.cond(currents2harmonics)
 
         # SH amplitudes to be returned (and used as constraints)
         # Set even harmonics to 0 -> should be very small already
         coil_current_harmonic_amplitudes = psi_harmonic_amplitudes[:degree]
         coil_current_harmonic_amplitudes[0::2] = 0.
-        
+
         # Calculate necessary coil currents
         currents, _residual, _rank, _s = np.linalg.lstsq(
             currents2harmonics[:, :], coil_current_harmonic_amplitudes, rcond=None
         )
-
-        currents = sig_fig_round(currents, int(15-ten_power(cond_num_c2h)))
-        
-        # Test harmonic amplitudes obtained agaist default tolerances 
-        test_coil_current_harmonic_amplitudes = currents2harmonics[:, :] @ currents
-        tol = ten_power(psi_harmonic_amplitudes[:degree])-3
-        # Check here but print warning (if applicable) after degree and fit metric info
-        check_tol = ten_power(psi_harmonic_amplitudes[:degree] - test_coil_current_harmonic_amplitudes) > tol
+        currents = sig_fig_round(currents, int(15 - ten_power(cond_num_c2h)))
 
         # Set currents in coilset
         for n, i in zip(sh_coil_names, currents, strict=False):
@@ -698,12 +699,6 @@ def spherical_harmonic_approximation(
         bluemira_print(
             f"Fit metric value = {fit_metric_value} using" f" {degree} degrees."
         )
-        if any(check_tol):
-            bluemira_warn(
-                " Sensitivity of coil_harmonic_amplitude_matrix is high,"
-                " consider using fewer degrees in your approximation to ensure" 
-                " numerical reproducability across machines."
-            )   
 
         if fit_metric_value <= acceptable_fit_metric:
             break
