@@ -90,9 +90,16 @@ def logger_setup(
     bm_logger = logging.getLogger("bluemira")
 
     # what will be shown on screen
-    on_screen_handler = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler.setLevel(LogLevel(level)._value_for_logging)
-    on_screen_handler.setFormatter(Formatter())
+    formatter = Formatter()
+    on_screen_handler_out = logging.StreamHandler(stream=sys.stdout)
+    on_screen_handler_out.setLevel(LogLevel(level)._value_for_logging)
+    on_screen_handler_out.setFormatter(formatter)
+    on_screen_handler_out.addFilter(lambda record: record.levelno < logging.WARNING)
+
+    on_screen_handler_err = logging.StreamHandler(stream=sys.stderr)
+    on_screen_handler_err.setLevel(LogLevel(level)._value_for_logging)
+    on_screen_handler_err.setFormatter(formatter)
+    on_screen_handler_err.addFilter(lambda record: record.levelno >= logging.WARNING)
 
     # what will be written to a file
     recorded_handler = logging.FileHandler(logfilename)
@@ -104,7 +111,8 @@ def logger_setup(
 
     bm_logger.setLevel(logging.DEBUG)
 
-    root_logger.addHandler(on_screen_handler)
+    root_logger.addHandler(on_screen_handler_out)
+    root_logger.addHandler(on_screen_handler_err)
     root_logger.addHandler(recorded_handler)
 
     return bm_logger
