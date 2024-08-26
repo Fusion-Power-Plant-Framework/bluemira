@@ -6,7 +6,7 @@ on:
       - develop_dependencies
     permissions:
       teams:
-        - repo-review
+        - Fusion-Power-Plant-Framework/repo-review
 
 jobs:
   dep_pr:
