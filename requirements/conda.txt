@@ -7,5 +7,5 @@ pytools==2024.1.11
 PyYAML==6.0.1
 shiboken2==5.15.8
 typing_extensions==4.12.2
-vtk==9.2.6
+vtk==9.3.1
 zipp==3.19.2
