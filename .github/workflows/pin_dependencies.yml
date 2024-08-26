@@ -1,7 +1,12 @@
-name: Update pinned dependencies
+name: Update transient dependencies
 
 on:
   workflow_dispatch:
+    branches:
+      - develop_dependencies
+    permissions:
+      teams:
+        - repo-review
 
 jobs:
   dep_pr:
@@ -42,7 +47,7 @@ jobs:
         shell: bash
         run: |
           PR_URL=$(gh pr create \
-            --head sub_dependencies \
+            --head fppf/sub_dependencies \
             --base develop_dependencies \
             --title "Sub-dependency update" \
             --body "Update transient dependency pinning")
