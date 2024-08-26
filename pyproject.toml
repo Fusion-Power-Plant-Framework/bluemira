@@ -65,11 +65,11 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff",
+    "ruff==0.5.5",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
-    "sphinx-rtd-theme",
+    "sphinx-rtd-theme>=2.0.0",
     "sybil",
 ]
 examples = ["notebook", "jupytext"]
