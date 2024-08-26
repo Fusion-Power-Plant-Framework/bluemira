@@ -52,7 +52,7 @@ llvmlite==0.43.0
     # via numba
 markdown-it-py==3.0.0
     # via rich
-matplotlib==3.9.1
+matplotlib==3.9.2
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
@@ -187,5 +187,7 @@ tzdata==2024.1
     # via pandas
 urllib3==2.2.2
     # via requests
-vtk==9.3.1
-    # via pyvista
+vtk==9.2.6
+    # via
+    #   bluemira (pyproject.toml)
+    #   pyvista

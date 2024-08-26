@@ -26,7 +26,6 @@ dependencies:
   - openmc>=0.14.0
   - mpi4py<4
   - graphviz
-  - vtk=9.3.1
   - pip
   - pip:
       - -r ../requirements/all.txt

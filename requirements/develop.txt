@@ -140,7 +140,7 @@ markdown-it-py==3.0.0
     #   rich
 markupsafe==2.1.5
     # via jinja2
-matplotlib==3.9.1
+matplotlib==3.9.2
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
@@ -434,8 +434,10 @@ urllib3==2.2.2
     # via requests
 virtualenv==20.26.3
     # via pre-commit
-vtk==9.3.1
-    # via pyvista
+vtk==9.2.6
+    # via
+    #   bluemira (pyproject.toml)
+    #   pyvista
 wcwidth==0.2.13
     # via prompt-toolkit
 zipp==3.19.2
