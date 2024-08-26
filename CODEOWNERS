@@ -30,8 +30,5 @@
 /conftest.py @Fusion-Power-Plant-Framework/repo-review
 /LICENSE @Fusion-Power-Plant-Framework/repo-review
 /pyproject.toml @Fusion-Power-Plant-Framework/repo-review
-/pytest.ini @Fusion-Power-Plant-Framework/repo-review
-/requirements* @Fusion-Power-Plant-Framework/repo-review
+/requirements/* @Fusion-Power-Plant-Framework/repo-review
 /scripts/ @Fusion-Power-Plant-Framework/repo-review
-/setup.* @Fusion-Power-Plant-Framework/repo-review
-/versioneer.py @Fusion-Power-Plant-Framework/repo-review
