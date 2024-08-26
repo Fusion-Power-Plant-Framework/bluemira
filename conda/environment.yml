@@ -28,6 +28,6 @@ dependencies:
   - graphviz
   - pip
   - pip:
-      - -r ../requirements/all.txt
+      - -r ../requirements/uv/all.txt
       - -r ../requirements/conda.txt
       - -e ../
