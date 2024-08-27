@@ -295,11 +295,11 @@ class TestPlasmodTeardown:
 class TestPlasmodSolver:
     def setup_method(self):
         self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
-        self.build_config = {
-            "input_file": tempfile.NamedTemporaryFile("w").name,
-            "output_file": tempfile.NamedTemporaryFile("w").name,
-            "profiles_file": tempfile.NamedTemporaryFile("w").name,
-        }
+        self.build_config = {}
+
+        for key in ("input_file", "output_file", "profiles_file"):
+            with tempfile.NamedTemporaryFile("w") as tf:
+                self.build_config[key] = tf.name
 
     @classmethod
     def setup_class(cls):
