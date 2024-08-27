@@ -84,7 +84,7 @@ pinned = [
 ]
 
 conda_pinned = ["fenics-dolfinx==0.7.3", "freecad==0.21.2"]
-openmc = ["openmc>=0.14.0", "openmc_data"]
+openmc = ["openmc>=0.14.0", "openmc_data==2.2.10"]
 process = ["process==3.1.0"]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
