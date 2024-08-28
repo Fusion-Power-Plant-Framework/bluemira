@@ -19,8 +19,9 @@ import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.flux_surfaces_maker import _clip_flux_surfaces
 
@@ -126,8 +127,7 @@ class ChargedParticleSolver:
                 " in either the lower or upper directions."
             )
 
-    @staticmethod
-    def _process_first_wall(first_wall):
+    def _process_first_wall(self, first_wall):
         """
         Force working first wall geometry to be closed and counter-clockwise.
         """
@@ -142,7 +142,11 @@ class ChargedParticleSolver:
         if not first_wall.closed:
             bluemira_warn("First wall should be a closed geometry. Closing it.")
             first_wall.close()
-        return first_wall
+
+        int_intersection = coords_plane_intersect(first_wall, self._yz_plane)[0]
+        out_intersection = coords_plane_intersect(first_wall, self._yz_plane)[1]
+
+        return first_wall, int_intersection, out_intersection
 
     @staticmethod
     def _get_arrays(flux_surfaces):
@@ -217,6 +221,33 @@ class ChargedParticleSolver:
             ],
         )
 
+    def _no_wall_intersection_region(
+        self, x_up_inter, z_up_inter, x_down_inter, z_down_inter, *, lfs=True
+    ):
+        """
+        Get first wall mid-plane region between with no flux line inetrsections.
+        """
+        up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
+        down_end_i = self.first_wall.argmin(
+            np.array([x_down_inter[-1], 0, z_down_inter[-1]])
+        )
+
+        reg_i = np.nonzero(
+            (self.first_wall.z < self.first_wall.z[up_end_i])
+            & (self.first_wall.z >= self.first_wall.z[down_end_i])
+            & (self.first_wall.x > self._o_point.x)
+            if lfs
+            else (self.first_wall.x < self._o_point.x)
+        )[0]
+
+        x_reg_inter = self.first_wall.x[reg_i]
+        z_reg_inter = self.first_wall.z[reg_i]
+
+        reg_wire = make_polygon(self.first_wall.T[reg_i])
+        wire_length = reg_wire.length
+
+        return x_reg_inter, z_reg_inter, wire_length
+
     def analyse(self, first_wall: Coordinates):
         """
         Perform the calculation to obtain charged particle heat fluxes on the
@@ -236,7 +267,11 @@ class ChargedParticleSolver:
         heat_flux: np.array
             The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
-        self.first_wall = self._process_first_wall(first_wall)
+        (
+            self.first_wall,
+            self.imp_int,
+            self.omp_int,
+        ) = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
             x, z, hf = self._analyse_DN()
@@ -293,7 +328,7 @@ class ChargedParticleSolver:
             f_correct_power * np.append(heat_flux_lfs, heat_flux_hfs),
         )
 
-    def _analyse_DN(self):
+    def _analyse_DN(self):  # noqa: PLR0914
         """
         Calculation for the case of double nulls.
         """
@@ -336,7 +371,8 @@ class ChargedParticleSolver:
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
-        # Parallel power at the outboard and inboard midplane
+        # Parallel power set-up at the outboard and inboard midplane
+        # Note that the power is not split yet into hfs and lfs rates
         q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
         q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
 
@@ -347,6 +383,7 @@ class ChargedParticleSolver:
         Bp_hfs_up = self.eq.Bp(x_hfs_up_inter, z_hfs_up_inter)
 
         # Calculate parallel power at the intersections
+        # Each q_par_* stores full P_sep_particle
         # Note that flux expansion terms cancel down to this
         q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
         q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
@@ -354,6 +391,7 @@ class ChargedParticleSolver:
         q_par_hfs_up = q_par_imp * Bp_hfs_up / B_imp
 
         # Calculate perpendicular heat fluxes
+        # Here P_sep_particle actually gets distributed over the four targets
         heat_flux_lfs_down = (
             self.params.f_lfs_lower_target * q_par_lfs_down * np.sin(alpha_lfs_down)
         )
@@ -367,44 +405,64 @@ class ChargedParticleSolver:
             self.params.f_hfs_upper_target * q_par_hfs_up * np.sin(alpha_hfs_up)
         )
 
-        # Correct power (energy conservation)
-        q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
-        q_imp_int = 2 * np.pi * np.sum(q_par_imp * Bp_imp / B_imp * self.dx_mp * x_imp)
-
+        # Find FW portion for perpendicular power
+        x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
+            x_lfs_up_inter, z_lfs_up_inter, x_lfs_down_inter, z_lfs_down_inter
+        )
+        x_in_inter, z_in_inter, inb_length = self._no_wall_intersection_region(
+            x_hfs_up_inter, z_hfs_up_inter, x_hfs_down_inter, z_hfs_down_inter, lfs=False
+        )
+        # Calculating missing power from parallel transport
         total_power = self.params.P_sep_particle
         f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
         f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
-        f_correct_lfs_down = (
-            total_power * self.params.f_lfs_lower_target / f_outboard
-        ) / q_omp_int
-        f_correct_lfs_up = (
-            total_power * self.params.f_lfs_upper_target / f_outboard
-        ) / q_omp_int
-        f_correct_hfs_down = (
-            total_power * self.params.f_hfs_lower_target / f_inboard
-        ) / q_imp_int
-        f_correct_hfs_up = (
-            total_power * self.params.f_hfs_upper_target / f_inboard
-        ) / q_imp_int
+        q_omp_int = (
+            2
+            * np.pi
+            * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
+            * f_outboard
+        )
+        q_imp_int = (
+            2
+            * np.pi
+            * np.sum(q_par_imp * Bp_imp / B_imp * self.dx_mp * x_imp)
+            * f_inboard
+        )
+        miss_omp = (total_power * f_outboard) - q_omp_int
+        miss_imp = (total_power * f_inboard) - q_imp_int
+        outb_surf = outb_length * 2 * np.pi * self.omp_int[0]
+        inb_surf = inb_length * 2 * np.pi * self.imp_int[0]
+
+        # Calculating mid-outboard and mid-inboard heat flux
+        heat_flux_x_outb = miss_omp / outb_surf
+        heat_flux_x_inb = miss_imp / inb_surf
+        heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+        heat_flux_x_inb = [heat_flux_x_inb] * len(x_in_inter)
 
         return (
             np.concatenate([
+                x_out_inter,
                 x_lfs_down_inter,
                 x_lfs_up_inter,
+                x_in_inter,
                 x_hfs_down_inter,
                 x_hfs_up_inter,
             ]),
             np.concatenate([
+                z_out_inter,
                 z_lfs_down_inter,
                 z_lfs_up_inter,
+                z_in_inter,
                 z_hfs_down_inter,
                 z_hfs_up_inter,
             ]),
             np.concatenate([
-                f_correct_lfs_down * heat_flux_lfs_down,
-                f_correct_lfs_up * heat_flux_lfs_up,
-                f_correct_hfs_down * heat_flux_hfs_down,
-                f_correct_hfs_up * heat_flux_hfs_up,
+                heat_flux_x_outb,
+                heat_flux_lfs_down,
+                heat_flux_lfs_up,
+                heat_flux_x_inb,
+                heat_flux_hfs_down,
+                heat_flux_hfs_up,
             ]),
         )
 
