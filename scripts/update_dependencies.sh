@@ -24,18 +24,16 @@ echo "Bluemira directory is $BLUEMIRA_ROOT"
 GIT_CMD="git -C ""$BLUEMIRA_ROOT"
 
 # check that the requirements files havent changed
-$GIT_CMD diff --exit-code requirements.txt \
-     || { echo "requirements.txt modified on this branch, exiting" && exit 1; }
-$GIT_CMD diff --exit-code requirements-develop.txt \
-     || { echo "requirements-develop.txt modified on this branch, exiting" && exit 1; }
+$GIT_CMD diff --exit-code requirements/uv/all.txt \
+     || { echo "requirements/uv/all.txt modified on this branch, exiting" && exit 1; }
 
 # checkout dependencies from develop
-$GIT_CMD checkout $REQ_BRANCH requirements.txt requirements-develop.txt
+$GIT_CMD checkout $REQ_BRANCH requirements
 
 # install dependencies
-pip install -r "$BLUEMIRA_ROOT/requirements.txt" || { echo "pip update failed" && exit 1; }
-pip install -r "$BLUEMIRA_ROOT/requirements-develop.txt" || { echo "pip update failed" && exit 1; }
+pip install -r "$BLUEMIRA_ROOT/requirements/uv/all.txt" || { echo "pip update failed" && exit 1; }
+pip install -r "$BLUEMIRA_ROOT/requirements/conda.txt" || { echo "pip update failed" && exit 1; }
 
 CURR_BRANCH=$($GIT_CMD rev-parse --abbrev-ref HEAD)
 # revert checkout of dependencies files
-$GIT_CMD checkout $CURR_BRANCH requirements.txt requirements-develop.txt
+$GIT_CMD checkout $CURR_BRANCH requirements

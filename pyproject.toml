@@ -65,11 +65,11 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff",
+    "ruff==0.5.5",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
-    "sphinx-rtd-theme",
+    "sphinx-rtd-theme>=2.0.0",
     "sybil",
 ]
 examples = ["notebook", "jupytext"]
@@ -78,10 +78,14 @@ pinned = [
     "numba==0.60.0",
     "numba-scipy==0.4.0",
     "numpy==1.26.4",
-    "matplotlib==3.9.1",
+    "matplotlib==3.9.2",
     "scipy==1.10.1",
+    "vtk==9.2.6",  # needed for uv resolution
 ]
-openmc = ["openmc>=0.14.0", "openmc_data"]
+
+conda_pinned = ["fenics-dolfinx==0.7.3", "freecad==0.21.2"]
+openmc = ["openmc>=0.14.0", "openmc_data==2.2.10"]
+process = ["process==3.1.0"]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
 

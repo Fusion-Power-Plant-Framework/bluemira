@@ -19,17 +19,15 @@ variables:
   PYTHONIOENCODING: "utf-8"
 
 dependencies:
-  - python  >=3.10,<3.12
+  - python >=3.10,<3.12
   - fenics-dolfinx=0.7.3
   - freecad=0.21.2
   - h5py
   - openmc>=0.14.0
-  - mpi4py=3.1.6
+  - mpi4py<4
   - graphviz
   - pip
   - pip:
-      - -r ../requirements.txt
-      - -r ../requirements-develop.txt
-      - -r ../requirements-conda.txt
-      - -r ../requirements-examples.txt
-      - -e ../
+      - -r ../requirements/uv/all.txt
+      - -r ../requirements/conda.txt
+      - -e ../[openmc]

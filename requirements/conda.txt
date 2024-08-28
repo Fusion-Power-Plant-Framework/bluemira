@@ -1,12 +1,8 @@
 gmsh-interop==2024.1
 h5py==3.11.0
-importlib-metadata==8.2.0
 pybind11==2.13.1
 pybind11-global==2.13.1
 PySide2==5.15.8
 pytools==2024.1.11
-PyYAML==6.0.1
 shiboken2==5.15.8
-typing_extensions==4.12.2
 vtk==9.2.6
-zipp==3.19.2

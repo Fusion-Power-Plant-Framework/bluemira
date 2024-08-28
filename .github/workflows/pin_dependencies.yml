@@ -1,0 +1,53 @@
+name: Update transient dependencies
+
+on:
+  workflow_dispatch:
+    branches:
+      - develop_dependencies
+    permissions:
+      teams:
+        - Fusion-Power-Plant-Framework/repo-review
+
+jobs:
+  dep_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
+      - name: Permissions Check
+        uses: ./.github/workflows/actions/permission_check
+        with:
+          token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.10
+
+      - name: Run uv
+        env:
+          GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install uv
+          uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/base.txt
+          uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/develop.txt --extra dev
+          uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/examples.txt --extra examples
+          uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/all.txt --extra dev --extra polyscope --extra radiation --extra examples
+          git checkout -b fppf/sub_dependencies
+          git add requirements
+          git commit -S -m "Updated transient dependencies"
+
+      - name: Create PR to update transient dependencies
+        env:
+          GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
+        shell: bash
+        run: |
+          PR_URL=$(gh pr create \
+            --head fppf/sub_dependencies \
+            --base develop_dependencies \
+            --title "Sub-dependency update" \
+            --body "Update transient dependency pinning")
