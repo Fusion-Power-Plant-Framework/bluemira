@@ -42,7 +42,7 @@ class _NloptFunction:
         """
         Returns
         -------
-        np.ndarray :
+        :
             The approximated derivative of the function at `x`.
         """
         return approx_derivative(self.f, x, bounds=self.bounds, f0=self.f0)
@@ -88,7 +88,7 @@ class ObjectiveFunction(_NloptFunction):
 
         Returns
         -------
-        float :
+        :
             The value of the objective function at `x`.
         """
         if not np.any(np.isnan(x)):
@@ -101,7 +101,7 @@ class ObjectiveFunction(_NloptFunction):
 
         Returns
         -------
-        float :
+        :
             The value of the objective function at `x`,
             with the iteration history recorded.
         """
@@ -116,7 +116,7 @@ class ObjectiveFunction(_NloptFunction):
 
         Returns
         -------
-        float :
+        :
             The value of the objective function at `x`.
         """
         # Cache f(x) so we do not need to recalculate it if we're using

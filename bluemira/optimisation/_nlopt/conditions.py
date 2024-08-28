@@ -61,7 +61,7 @@ class NLOptConditions:
 
         Returns
         -------
-        bool :
+        :
             `True` if all stopping conditions are `None`, otherwise `False`.
         """
         return all(

@@ -42,7 +42,7 @@ class Algorithm(enum.Enum):
 
         Returns
         -------
-        Algorithm
+        :
             The corresponding algorithm.
 
         Raises
@@ -78,7 +78,7 @@ class AlgorithmConditions:
         """
         Returns
         -------
-        dict:
+        :
             Converted dictionary without Nones
         """
         return {k: v for k, v in asdict(self).items() if v is not None}

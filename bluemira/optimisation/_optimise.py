@@ -253,7 +253,7 @@ def _make_optimiser(
     """
     Returns
     -------
-    Optimiser:
+    :
         a new optimiser object.
     """
     opt = NloptOptimiser(
@@ -316,9 +316,9 @@ def _check_constraints(
 
     Returns
     -------
-    list[str]:
+    :
         a list of formatted warnings. If there are no warnings, there
-    are no violations.
+        are no violations.
     """
 
     def _check_constraint(

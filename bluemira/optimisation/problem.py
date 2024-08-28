@@ -58,7 +58,7 @@ class OptimisationProblemBase:
 
         Returns
         -------
-        bool:
+        :
             true if the given method is a member of this base class else false
         """
         try:
@@ -144,7 +144,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
 
         Returns
         -------
-        OptimiserResult:
+        :
             the result of optimisation
         """
         df_objective = self._overridden_or_default(

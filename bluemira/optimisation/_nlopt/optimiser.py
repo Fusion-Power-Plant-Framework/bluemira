@@ -121,7 +121,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        Algorithm:
+        :
             the optimiser's algorithm.
         """
         return self._algorithm
@@ -131,7 +131,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        dict:
+        :
             the optimiser's stopping conditions.
         """
         return self._opt_conditions.to_dict()
@@ -141,7 +141,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        Mapping[str, int | float]:
+        :
             the optimiser algorithms's parameters.
         """
         return self._opt_parameters
@@ -151,7 +151,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        np.ndarray:
+        :
             the lower bounds for the optimisation parameters.
         """
         return self._opt.get_lower_bounds().copy()
@@ -161,7 +161,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        np.ndarray:
+        :
             the upper bounds for the optimisation parameters.
         """
         return self._opt.get_upper_bounds().copy()
@@ -243,7 +243,7 @@ class NloptOptimiser(Optimiser):
 
         Returns
         -------
-        OptimiserResult:
+        :
             The result of optimisation
         """
         if x0 is None:
@@ -315,7 +315,7 @@ class NloptOptimiser(Optimiser):
         """
         Returns
         -------
-        tuple[np.ndarray, float]:
+        :
             the parameterisation and result from the previous iteration.
         """
         x_star = self._objective.prev_iter
@@ -331,7 +331,7 @@ class NloptOptimiser(Optimiser):
 
         Returns
         -------
-        tuple[np.ndarray, float]:
+        :
             the parameterisation and result from the previous iteration
             with a warning
         """
@@ -405,7 +405,7 @@ def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
 
     Returns
     -------
-    Algorithm:
+    :
         validated and converted algorithm
     """
     return Algorithm(algorithm)
@@ -434,7 +434,7 @@ def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarr
 
     Returns
     -------
-    np.ndarray:
+    :
         Initial guess based on the midpoint of the provided bounds.
     """
     bounds = np.array([lower, upper])
