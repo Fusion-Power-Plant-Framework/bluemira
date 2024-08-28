@@ -68,7 +68,7 @@ ndindex==1.8
     # via blosc2
 neutronics-material-maker==1.2.0
     # via bluemira (pyproject.toml)
-nlopt==2.7.1
+nlopt==2.8.0
     # via bluemira (pyproject.toml)
 numba==0.60.0
     # via
