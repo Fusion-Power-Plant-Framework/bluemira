@@ -38,6 +38,11 @@ class OptimisationProblemBase:
         the method is possible, but not necessary. We want it to appear in the class
         interface, but we want to be able to tell if it's been overridden so we can
         use an approximate gradient if it has not been.
+
+        Returns
+        -------
+        :
+            overridden or default object
         """
         if self.__is_method(f, cls):
             return f
@@ -50,6 +55,11 @@ class OptimisationProblemBase:
 
         Note that ``f`` must be a bound method, i.e., it needs the
         ``__func__`` dunder method.
+
+        Returns
+        -------
+        bool:
+            true if the given method is a member of this base class else false
         """
         try:
             this_f = getattr(cls, f.__name__)
@@ -83,17 +93,32 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         """The gradient of the objective function at ``x``."""
 
     def eq_constraints(self) -> list[ConstraintT]:  # noqa: PLR6301
-        """The equality constraints on the optimisation."""
+        """
+        Returns
+        -------
+        :
+            The equality constraints on the optimisation.
+        """
         return []
 
     def ineq_constraints(self) -> list[ConstraintT]:  # noqa: PLR6301
-        """The inequality constraints on the optimisation."""
+        """
+        Returns
+        -------
+        :
+            The inequality constraints on the optimisation.
+        """
         return []
 
     def bounds(self) -> tuple[npt.ArrayLike, npt.ArrayLike]:  # noqa: PLR6301
         """
-        The lower and upper bounds of the optimisation parameters.
+        Returns
+        -------
+        :
+            The lower and upper bounds of the optimisation parameters.
 
+        Note
+        -------
         Each set of bounds must be convertible to a numpy array of
         floats. If the lower or upper bound is a scalar value, that
         value is set as the bound for each of the optimisation
@@ -116,6 +141,11 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         Perform the optimisation.
 
         See :func:`.optimise` for more function parameter details.
+
+        Returns
+        -------
+        OptimiserResult:
+            the result of optimisation
         """
         df_objective = self._overridden_or_default(
             self.df_objective, OptimisationProblem, None

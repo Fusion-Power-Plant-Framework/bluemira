@@ -32,13 +32,31 @@ class Algorithm(enum.Enum):
 
     @classmethod
     def _missing_(cls, value: str) -> Algorithm:
+        """
+        Handle cases where the algorithm type provided is not a valid algorithm.
+
+        Parameters
+        ----------
+        value : str
+            The string representation of the algorithm type.
+
+        Returns
+        -------
+        Algorithm
+            The corresponding algorithm.
+
+        Raises
+        ------
+        ValueError
+            If the algorithm type is not a valid algorithm.
+        """
         try:
             value = value.upper()
             if value == "DIRECT-L":
                 return cls.DIRECT_L
             return cls[value]
         except (KeyError, AttributeError):
-            raise ValueError(f"No such Algorithm value '{value}'.") from None
+            raise ValueError(f"No such Algorithm '{value}'.") from None
 
 
 AlgorithmType = str | Algorithm
@@ -57,7 +75,12 @@ class AlgorithmConditions:
     stop_val: float | None = None
 
     def to_dict(self) -> dict[str, float]:
-        """Convert to dictionary without Nones"""
+        """
+        Returns
+        -------
+        dict:
+            Converted dictionary without Nones
+        """
         return {k: v for k, v in asdict(self).items() if v is not None}
 
 
