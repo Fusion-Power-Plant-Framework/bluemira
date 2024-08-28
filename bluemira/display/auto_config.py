@@ -59,6 +59,13 @@ def get_primary_screen_size(timeout: float = 3):
 def _get_primary_screen_size():
     """
     Direct run of screen size check without subprocess
+
+    Returns
+    -------
+    width: Union[int, None]
+        width of the primary screen in pixels. If there is no screen returns None
+    height: Union[int, None]
+        height of the primary screen in pixels. If there is no screen returns None
     """
     if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
         bluemira_debug(
