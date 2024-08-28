@@ -225,7 +225,7 @@ class ChargedParticleSolver:
         self, x_up_inter, z_up_inter, x_down_inter, z_down_inter, *, lfs=True
     ):
         """
-        Get first wall mid-plane region between with no flux line inetrsections.
+        Get first wall mid-plane region with no flux line inetrsections.
         """
         up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
         down_end_i = self.first_wall.argmin(
@@ -235,9 +235,11 @@ class ChargedParticleSolver:
         reg_i = np.nonzero(
             (self.first_wall.z < self.first_wall.z[up_end_i])
             & (self.first_wall.z >= self.first_wall.z[down_end_i])
-            & (self.first_wall.x > self._o_point.x)
-            if lfs
-            else (self.first_wall.x < self._o_point.x)
+            & (
+                (self.first_wall.x > self._o_point.x)
+                if lfs
+                else (self.first_wall.x < self._o_point.x)
+            )
         )[0]
 
         x_reg_inter = self.first_wall.x[reg_i]
@@ -319,13 +321,24 @@ class ChargedParticleSolver:
         heat_flux_lfs = self.params.f_lfs_lower_target * q_par_lfs * np.sin(alpha_lfs)
         heat_flux_hfs = self.params.f_hfs_lower_target * q_par_hfs * np.sin(alpha_hfs)
 
-        # Correct power (energy conservation)
-        q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
-        f_correct_power = self.params.P_sep_particle / q_omp_int
+        # Find FW portion for perpendicular power
+        x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
+            x_hfs_inter, z_hfs_inter, x_lfs_inter, z_lfs_inter, lfs=True
+        )
+
+        # Calculating missing power from parallel transport
+        q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
+        miss_omp = self.params.P_sep_particle - q_omp_int
+        outb_surf = outb_length * 2 * np.pi * self.omp_int[0]
+
+        # Calculating mid-outboard and mid-inboard heat flux
+        heat_flux_x_outb = miss_omp / outb_surf
+        heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+
         return (
-            np.append(x_lfs_inter, x_hfs_inter),
-            np.append(z_lfs_inter, z_hfs_inter),
-            f_correct_power * np.append(heat_flux_lfs, heat_flux_hfs),
+            np.append(x_out_inter, x_lfs_inter, x_hfs_inter),
+            np.append(z_out_inter, z_lfs_inter, z_hfs_inter),
+            np.append(heat_flux_x_outb, heat_flux_lfs, heat_flux_hfs),
         )
 
     def _analyse_DN(self):  # noqa: PLR0914
@@ -407,37 +420,38 @@ class ChargedParticleSolver:
 
         # Find FW portion for perpendicular power
         x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
-            x_lfs_up_inter, z_lfs_up_inter, x_lfs_down_inter, z_lfs_down_inter
+            x_lfs_up_inter, z_lfs_up_inter, x_lfs_down_inter, z_lfs_down_inter, lfs=True
         )
         x_in_inter, z_in_inter, inb_length = self._no_wall_intersection_region(
             x_hfs_up_inter, z_hfs_up_inter, x_hfs_down_inter, z_hfs_down_inter, lfs=False
         )
         # Calculating missing power from parallel transport
-        total_power = self.params.P_sep_particle
-        f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
-        f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         q_omp_int = (
             2
             * np.pi
             * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
-            * f_outboard
+            * (self.params.f_lfs_lower_target + self.params.f_lfs_upper_target)
         )
         q_imp_int = (
             2
             * np.pi
             * np.sum(q_par_imp * Bp_imp / B_imp * self.dx_mp * x_imp)
-            * f_inboard
+            * (self.params.f_hfs_lower_target + self.params.f_hfs_upper_target)
         )
-        miss_omp = (total_power * f_outboard) - q_omp_int
-        miss_imp = (total_power * f_inboard) - q_imp_int
+        miss_omp = (
+            self.params.P_sep_particle
+            * (self.params.f_lfs_lower_target + self.params.f_lfs_upper_target)
+        ) - q_omp_int
+        miss_imp = (
+            self.params.P_sep_particle
+            * (self.params.f_hfs_lower_target + self.params.f_hfs_upper_target)
+        ) - q_imp_int
         outb_surf = outb_length * 2 * np.pi * self.omp_int[0]
         inb_surf = inb_length * 2 * np.pi * self.imp_int[0]
 
         # Calculating mid-outboard and mid-inboard heat flux
-        heat_flux_x_outb = miss_omp / outb_surf
-        heat_flux_x_inb = miss_imp / inb_surf
-        heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
-        heat_flux_x_inb = [heat_flux_x_inb] * len(x_in_inter)
+        heat_flux_x_outb = [miss_omp / outb_surf] * len(x_out_inter)
+        heat_flux_x_inb = [miss_imp / inb_surf] * len(x_in_inter)
 
         return (
             np.concatenate([
