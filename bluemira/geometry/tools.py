@@ -55,6 +55,11 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
     ------
     TypeError
         Cannot convert to BluemiraGeo
+
+    Returns
+    -------
+    :
+        BluemiraGeo object of inputted FreeCAD shape.
     """
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
@@ -100,6 +105,11 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     def default(self, obj: BluemiraGeoT | np.ndarray | Any):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
+
+        Returns
+        -------
+        :
+            List from Bluemira shape or numpy array.
         """
         if isinstance(obj, BluemiraGeo):
             return serialise_shape(obj)
@@ -111,6 +121,11 @@ class BluemiraGeoEncoder(json.JSONEncoder):
 def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
     """
     Reconstruct the call of a function with inputs arguments and defaults.
+
+    Returns
+    -------
+    :
+        Dictionary of data from a function with inputs arguments and defaults.
     """
     data = {}
 
@@ -135,6 +150,11 @@ def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
 def _make_debug_file(name: str) -> Path:
     """
     Make a new file in the geometry debugging folder.
+
+    Returns
+    -------
+    :
+        Filename for new file in the geometry debugging folder.
     """
     path = try_get_bluemira_path("generated_data/naughty_geometry", subfolder="")
 
@@ -160,6 +180,11 @@ def _make_debug_file(name: str) -> Path:
 def log_geometry_on_failure(func):
     """
     Decorator for debugging of failed geometry operations.
+
+    Returns
+    -------
+    :
+        Decorator for debugging of failed geometry operations.
     """
     signature = inspect.signature(func)
     func_name = func.__name__
@@ -200,6 +225,11 @@ def log_geometry_on_failure(func):
 def fallback_to(fallback_func, exception):
     """
     Decorator for a fallback to an alternative geometry operation.
+
+    Returns
+    -------
+    :
+        Decorator for fallback function.
     """
 
     def decorator(func):
@@ -270,6 +300,11 @@ def closed_wire_wrapper(
 ) -> Callable[[GeometryCreation], GeometryCreation]:
     """
     Decorator for checking / enforcing closures on wire creation functions.
+
+    Returns
+    -------
+    :
+        Decorator on wire creation functions.
     """
 
     def decorator(func: GeometryCreation) -> GeometryCreation:
@@ -489,6 +524,11 @@ def _make_polygon_fallback(
 ) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
+
+    Returns
+    -------
+    :
+        Closed BluemiraWire from points.
     """
     return make_polygon(points, label, closed=closed)
 
@@ -753,6 +793,11 @@ def _offset_wire_discretised(
     GeometryError
         If the wire is not closed. This function cannot handle the offet of an open
         wire.
+
+    Returns
+    -------
+    :
+        The offset wire.
     """
     from bluemira.geometry._pyclipper_offset import offset_clipper  # noqa: PLC0415
 
@@ -913,6 +958,11 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     ValueError
         shape must be (N, 2)
 
+    Returns
+    -------
+    :
+        Volume of revolved polygon
+
     Notes
     -----
     Consider one edge of the polygon, which has two vertices, $p$ and $c$.
@@ -955,6 +1005,11 @@ def partial_diff_of_volume(
         are anchor vertices that cannot be adjusted. shape (3, 2)
     normalised_direction_vector:
         Direction that the point is allowed to move in. shape = (2,)
+
+    Returns
+    -------
+    :
+        Partial differential of volume
 
     Notes
     -----
@@ -1004,7 +1059,13 @@ def revolve_shape(
 
     Returns
     -------
-    The revolved shape.
+    :
+        The revolved shape.
+
+    Raises
+    ------
+    FreeCADError
+        If failed to revolve shape when angle between 0 and 360.
 
     Raises
     ------
@@ -1168,6 +1229,11 @@ def fillet_chamfer_decorator(*, chamfer: bool):
     ------
     GeometryError
         Number of edges >= 2, radius >= 0 and planar
+
+    Returns
+    -------
+    :
+        Decorator for fillet and chamfer operations.
     """
 
     def decorator(func):
@@ -1528,7 +1594,10 @@ def save_cad(
 @nb.jit(nopython=True, cache=True)
 def _nb_dot_2D(v_1, v_2):
     """
-    Numba 2-D dot product
+    Returns
+    -------
+    :
+        Numba 2-D dot product
     """
     return v_1[0] * v_2[0] + v_1[1] * v_2[1]
 
@@ -1536,7 +1605,10 @@ def _nb_dot_2D(v_1, v_2):
 @nb.jit(nopython=True, cache=True)
 def _nb_clip(val, a_min, a_max):
     """
-    Numba 1-D clip
+    Returns
+    -------
+    :
+        Numba 1-D clip.
     """
     return a_min if val < a_min else min(val, a_max)
 
@@ -1870,6 +1942,11 @@ def point_on_plane(
 def serialise_shape(shape: BluemiraGeoT):
     """
     Serialise a BluemiraGeo object.
+
+    Returns
+    -------
+    :
+        A serialised BluemiraGeo object.
     """
     type_ = type(shape)
 

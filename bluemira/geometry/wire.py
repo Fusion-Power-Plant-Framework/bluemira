@@ -78,7 +78,12 @@ class BluemiraWire(BluemiraGeo):
         return wrapper
 
     def _create_shape(self) -> cadapi.apiWire:
-        """apiWire: shape of the object as a single wire"""
+        """
+        Returns
+        -------
+        apiWire:
+            shape of the object as a single wire
+        """
         return self._create_wire()
 
     def _create_wire(self, *, check_reverse: bool = True):
@@ -88,7 +93,12 @@ class BluemiraWire(BluemiraGeo):
         return wire
 
     def _get_wires(self) -> list[cadapi.apiWire]:
-        """list(apiWire): list of wires of which the shape consists of."""
+        """
+        Returns
+        -------
+        list(apiWire):
+            List of wires of which the shape consists of.
+        """
         wires = []
         for o in self.boundary:
             if isinstance(o, cadapi.apiWire):
@@ -108,6 +118,12 @@ class BluemiraWire(BluemiraGeo):
         ------
         TypeError
             Must be BluemiraWire
+
+        Returns
+        -------
+        :
+            Wire resulting from combining two wires.
+
         """
         output = None
         if isinstance(other, BluemiraWire):
@@ -237,13 +253,19 @@ class BluemiraWire(BluemiraGeo):
 
     def start_point(self) -> Coordinates:
         """
-        Get the coordinates of the start of the wire.
+        Returns
+        -------
+        :
+            Get the coordinates of the start of the wire.
         """
         return Coordinates(cadapi.start_point(self.shape))
 
     def end_point(self) -> Coordinates:
         """
-        Get the coordinates of the end of the wire.
+        Returns
+        -------
+        :
+            Get the coordinates of the end of the wire.
         """
         return Coordinates(cadapi.end_point(self.shape))
 
