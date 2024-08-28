@@ -495,17 +495,6 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    # reactor.show_cad(
-    #     with_components=[reactor.blanket, reactor.vacuum_vessel, reactor.divertor],
-    #     component_filter=FilterMaterial(reject_material=Void),
-    # )
-
-    reactor.save_cad(
-        with_components=[reactor.vacuum_vessel, reactor.blanket, reactor.divertor],
-        cad_format="step",
-        component_filter=FilterMaterial(reject_material=Void),
-    )
-
     # reactor.neutronics = NeutronicsManager(
     #     *run_neutronics(
     #         reactor_config.params_for("Neutronics"),
@@ -599,6 +588,22 @@ if __name__ == "__main__":
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
         reactor.cryostat.xz_boundary(),
+    )
+
+    reactor.save_cad(
+        with_components=[
+            reactor.vacuum_vessel,
+            reactor.blanket,
+            reactor.divertor,
+            reactor.tf_coils,
+            reactor.pf_coils,
+            reactor.thermal_shield,
+            # reactor.coil_structures,
+            reactor.cryostat,
+            reactor.radiation_shield,
+        ],
+        cad_format="stp",
+        component_filter=FilterMaterial(reject_material=Void),
     )
 
     # Incorporate ports

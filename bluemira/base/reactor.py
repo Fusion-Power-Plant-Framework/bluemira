@@ -507,41 +507,68 @@ class Reactor(BaseManager):
         reactor_component: ComponentT,
         with_components: list[ComponentManager] | None = None,
         n_sectors: int = 1,
+        *,
+        compound_simplify: bool = True,
     ):
         comp_names = (
             "all"
             if not with_components
-            else ", ".join([cm.component().name for cm in with_components])
+            else ", ".join([w_comp.component().name for w_comp in with_components])
         )
         bluemira_print(
             f"Constructing xyz CAD for display with {n_sectors} sectors and components:"
             f" {comp_names}"
         )
 
-        for c in track(reactor_component.children):
+        for r_comp in track(reactor_component.children):
+            # get the matching component manager
             comp_manager = next(
-                (cm for cm in with_components if cm.component().name == c.name), None
+                (
+                    w_comp
+                    for w_comp in with_components
+                    if w_comp.component().name == r_comp.name
+                ),
+                None,
             )
             if not isinstance(comp_manager, ComponentManager):
                 raise ComponentError(
-                    f"Component manager not found for component {c.name}"
+                    f"Component manager not found for component {r_comp.name}"
                 )
-            xyz = c.get_component("xyz", first=True)
-            if not isinstance(xyz, Component):
-                raise ComponentError(
-                    f"Component {c.name} does not have an xyz view, "
-                    "or there are multiple"
+
+            # get all the xyz components
+            # there may be multiple if grouped that way (ex. coils)
+            xyzs = r_comp.get_component("xyz", first=False)
+            if isinstance(xyzs, Component):
+                xyz = [xyzs]
+
+            xyz_procd_children = []
+            for xyz in xyzs:
+                xyz: Component
+                patterned = circular_pattern_component(
+                    list(xyz.children),
+                    n_sectors,
+                    degree=(360 / self.n_sectors) * n_sectors,
                 )
-            patterned = circular_pattern_component(
-                list(xyz.children),
-                n_sectors,
-                degree=(360 / self.n_sectors) * n_sectors,
-            )
-            if comp_manager.construction_type == ComponentConstructionType.CONTINUOUS:
-                patterned = [connect_components(patterned, c.name)]
-            elif comp_manager.construction_type == ComponentConstructionType.COMPOUND:
-                patterned = [compound_from_components(patterned, c.name)]
-            xyz.children = patterned
+
+                if (
+                    comp_manager.construction_type
+                    == ComponentConstructionType.CONTINUOUS
+                ):
+                    if r_comp.name == "Poloidal Coils":
+                        pass
+                    patterned = connect_components(patterned, xyz.parent.name)
+                elif (
+                    comp_manager.construction_type == ComponentConstructionType.COMPOUND
+                ):
+                    patterned = compound_from_components(patterned, xyz.parent.name)
+                xyz_procd_children.append(patterned)
+
+            if compound_simplify and len(xyz_procd_children) > 1:
+                xyz_procd_children = [
+                    compound_from_components(xyz_procd_children, r_comp.name)
+                ]
+
+            xyz.children = xyz_procd_children
 
     def _filter_and_reconstruct(
         self,

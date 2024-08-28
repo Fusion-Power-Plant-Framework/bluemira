@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Component Manager for PF coils."""
 
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 
 
 class PFCoil(ComponentManager):
@@ -16,6 +16,13 @@ class PFCoil(ComponentManager):
     def __init__(self, component, coilset):
         super().__init__(component)
         self._coilset = coilset
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.CONTINUOUS
 
     @property
     def coilset(self):

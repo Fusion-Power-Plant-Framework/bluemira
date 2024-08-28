@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 from bluemira.base.tools import _timing  # noqa: PLC2701
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
@@ -194,6 +194,13 @@ class ThermalShield(PortManagerMixin, ComponentManager):
     Wrapper around a Thermal Shield component tree.
     """
 
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.COMPOUND
+
     def vacuum_vessel_thermal_shield(self) -> Component:
         """
         Get the vacuum vessel thermal shield component
@@ -334,6 +341,13 @@ class Cryostat(PlugManagerMixin, ComponentManager):
     Wrapper around a Cryostat component tree.
     """
 
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.CONTINUOUS
+
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the Cryostat poloidal silhouette."""
         return (
@@ -356,6 +370,13 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
     """
     Wrapper around a RadiationShield component tree.
     """
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.COMPOUND
 
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the RadiationShield poloidal silhouette."""

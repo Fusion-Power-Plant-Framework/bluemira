@@ -24,7 +24,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.reactor import ComponentManager
+from bluemira.base.reactor import ComponentConstructionType, ComponentManager
 from bluemira.builders.tf_coils import EquispacedSelector
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -61,6 +61,13 @@ class TFCoil(ComponentManager):
     def __init__(self, component, field_solver):
         super().__init__(component)
         self._field_solver = field_solver
+
+    @property
+    def construction_type(self) -> ComponentConstructionType:
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return ComponentConstructionType.COMPOUND
 
     def field(
         self,

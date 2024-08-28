@@ -1,11 +1,11 @@
 from dagmc_geometry_slice_plotter import plot_axis_slice
 
-fn = "dagmc_models/mac.h5m"
+fn = "dagmc_models/EUDEMO-wt.h5m"
 
 plot = plot_axis_slice(
     dagmc_file_or_trimesh_object=fn,
     view_direction="y",
-    plane_origin=[0, 200, 0],
+    # plane_origin=[0, 200, 0],
 )
 # plot = plot_slice(
 #     dagmc_file_or_trimesh_object=fn,
