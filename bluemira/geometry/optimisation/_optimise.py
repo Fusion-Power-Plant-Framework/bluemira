@@ -252,6 +252,11 @@ def _to_koz(koz: BluemiraWire | KeepOutZoneDict | KeepOutZone) -> KeepOutZone:
     ------
     TypeError
         Not a valid keep out zone
+
+    Returns
+    -------
+    :
+        The KeepOutZone.
     """
     if isinstance(koz, BluemiraWire):
         return KeepOutZone(koz)

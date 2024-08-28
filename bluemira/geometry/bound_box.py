@@ -69,6 +69,11 @@ class BoundingBox:
             y coordinates from which to create the bounding box
         z:
             z coordinates from which to create the bounding box
+
+        Returns
+        -------
+        :
+            A BoundingBox from a set of coordinates.
         """
         x_max, x_min = np.max(x), np.min(x)
         y_max, y_min = np.max(y), np.min(y)
