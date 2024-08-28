@@ -38,6 +38,7 @@ if [ -d build ]; then
   rm -rf build
 fi
 
+pip install -U 'setuptools<74'
 # Do the PROCESS build
 cmake -G Ninja -S . -B build -DRELEASE=TRUE
 cmake --build build

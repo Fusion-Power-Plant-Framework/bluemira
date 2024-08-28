@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.10
+          python-version: "3.10"
 
       - name: Run uv
         env:
@@ -37,9 +37,12 @@ jobs:
           uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/develop.txt --extra dev
           uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/examples.txt --extra examples
           uv pip compile pyproject.toml --upgrade --python-version=3.10 --extra pinned -o requirements/uv/all.txt --extra dev --extra polyscope --extra radiation --extra examples
+          git config user.email "107038218+fppf-bot@users.noreply.github.com"
+          git config user.name "fppf-bot"
           git checkout -b fppf/sub_dependencies
           git add requirements
-          git commit -S -m "Updated transient dependencies"
+          git commit -m "Updated transient dependencies"
+          git push --set-upstream origin fppf/sub_dependencies
 
       - name: Create PR to update transient dependencies
         env:
