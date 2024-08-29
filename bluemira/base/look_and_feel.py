@@ -249,6 +249,11 @@ def colourise(string: str, width: int = 73, color: str = "blue") -> str:
         The width of the box, default = 73 (leave this alone for best results)
     color:
         The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
+
+    Returns
+    -------
+    :
+        The text in a coloured box
     """
     text = _bm_print(string, width=width)
     return _print_color(text, color)
@@ -257,6 +262,16 @@ def colourise(string: str, width: int = 73, color: str = "blue") -> str:
 def bluemira_critical(string: str):
     """
     Standard template for bluemira critical errors.
+
+    Parameters
+    ----------
+    string:
+        The string to log at critical level
+
+    Returns
+    -------
+    :
+        The critical error logged string
     """
     return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
@@ -264,6 +279,16 @@ def bluemira_critical(string: str):
 def bluemira_error(string: str):
     """
     Standard template for bluemira errors.
+
+    Parameters
+    ----------
+    string:
+        The string to log at error level
+
+    Returns
+    -------
+    :
+        The error logged string
     """
     return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
 
@@ -271,6 +296,16 @@ def bluemira_error(string: str):
 def bluemira_warn(string: str):
     """
     Standard template for bluemira warnings.
+
+    Parameters
+    ----------
+    string:
+        The string to log at warning level
+
+    Returns
+    -------
+    :
+        The warning logged string
     """
     return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
 
@@ -278,6 +313,16 @@ def bluemira_warn(string: str):
 def bluemira_print(string: str):
     """
     Standard template for bluemira information messages.
+
+    Parameters
+    ----------
+    string:
+        The string to log at info level
+
+    Returns
+    -------
+    :
+        The info logged string
     """
     return LOGGER.info(colourise(string, color="blue"))
 
@@ -285,6 +330,16 @@ def bluemira_print(string: str):
 def bluemira_debug(string: str):
     """
     Standard template for bluemira debugging.
+
+    Parameters
+    ----------
+    string:
+        The string to log at debug level
+
+    Returns
+    -------
+    :
+        The debug logged string
     """
     return LOGGER.debug(colourise(string, color="green"))
 
