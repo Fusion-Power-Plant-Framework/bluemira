@@ -40,5 +40,7 @@ jobs:
           git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
           git config user.name "dependabot[bot]"
           git add requirements
-          git commit -m "Updated dependencies in requirements files"
-          git push
+          if [[ -n $(git status --porcelain) ]] ; then
+            git commit -m "Updated dependencies in requirements files"
+            git push
+          fi

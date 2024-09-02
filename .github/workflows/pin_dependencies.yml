@@ -27,6 +27,7 @@ jobs:
           python-version: "3.10"
 
       - name: Run uv
+        id: uv
         env:
           GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
         shell: bash
@@ -41,10 +42,16 @@ jobs:
           git config user.name "fppf-bot"
           git checkout -b fppf/sub_dependencies
           git add requirements
-          git commit -m "Updated transient dependencies"
-          git push --set-upstream origin fppf/sub_dependencies
+          if [[ -n $(git status --porcelain) ]] ; then
+            git commit -m "Updated transient dependencies"
+            git push --set-upstream origin fppf/sub_dependencies
+            echo new_commit='1' >> $GITHUB_OUTPUT
+          else
+            echo new_commit='' >> $GITHUB_OUTPUT
+          fi
 
       - name: Create PR to update transient dependencies
+        if: steps.uv.outputs.new_commit != ''
         env:
           GITHUB_TOKEN: ${{ secrets.FPPF_BOT_AUTH_KEY }}
         shell: bash
