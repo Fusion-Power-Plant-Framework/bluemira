@@ -67,7 +67,8 @@ class CurrentSource(ABC):
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         ...
 
