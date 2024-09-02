@@ -130,7 +130,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         Returns
         -------
         :
-            optimised equilibrium
+            Optimised equilibrium
         """
         eq = self._make_equilibrium()
         opt_problem = self._make_opt_problem(eq)
@@ -184,7 +184,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         Returns
         -------
         :
-            reference equilibrium
+            Reference equilibrium
         """
         return make_equilibrium(
             EquilibriumParams.from_frame(self.params),
@@ -294,7 +294,7 @@ def get_plasmod_binary_path():
     Returns
     -------
     :
-        plasmod path
+        Plasmod path
     """
     if plasmod_binary := shutil.which("plasmod"):
         PLASMOD_PATH = Path(plasmod_binary).parent
@@ -364,9 +364,9 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         Returns
         -------
         lcfs_coords:
-            lcfs coordinate positions
+            LCFS coordinate positions
         profiles:
-            equilibria profiles
+            Equilibria profiles
         """
         # Get geometry parameterisation
         geom_parameterisation = self._get_geometry_parameterisation()
@@ -423,9 +423,9 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         Returns
         -------
         lcfs_coords:
-            lcfs coordinate positions
+            LCFS coordinate positions
         profiles:
-            equilibria profiles
+            Equilibria profiles
         """
         data = EQDSKInterface.from_file(
             self.file_path,
@@ -538,9 +538,9 @@ class DummyFixedEquilibriumDesigner(Designer[tuple[Coordinates, Profile]]):
         Returns
         -------
         lcfs_coords:
-            lcfs coordinate positions
+            LCFS coordinate positions
         profiles:
-            equilibria profiles
+            Equilibria profiles
         """
         param_cls = self.build_config.get(
             "param_class", "bluemira.equilibria.shapes.JohnerLCFS"
@@ -663,7 +663,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         Returns
         -------
         :
-            the optimised equilibrium
+            The optimised equilibrium
 
         Raises
         ------
@@ -741,7 +741,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         Returns
         -------
         :
-            the equilibrium read in
+            The equilibrium read in
         """
         eq = Equilibrium.from_eqdsk(self.file_path, qpsi_sign=-1, from_cocos=3)
         self._update_params_from_eq(eq)

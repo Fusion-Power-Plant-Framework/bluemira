@@ -103,9 +103,9 @@ class LowerPortKOZDesigner(Designer):
         duct_outer_xz:
             Outer duct xz
         duct_angled_inner_extrude_boundary:
-            angled extruded boundary
+            Angled extruded boundary
         duct_straight_inner_extrude_boundary:
-            straight extruded boundary
+            Straight extruded boundary
         """
         # ib -> inboard
         # ob -> outboard

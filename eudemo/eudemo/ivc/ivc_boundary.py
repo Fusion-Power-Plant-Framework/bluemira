@@ -59,7 +59,7 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
         Returns
         -------
         :
-            first wall boundary
+            First wall boundary
         """
         return varied_offset(
             self.wall_shape,

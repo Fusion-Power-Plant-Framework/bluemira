@@ -183,7 +183,7 @@ class EquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the xz of the equatorial port
+            The xz of the equatorial port
         """
         port = slice_shape(
             extrude_shape(BluemiraFace(self.outer), (self.length, 0, 0)),
@@ -200,7 +200,7 @@ class EquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the xy of the equatorial port
+            The xy of the equatorial port
         """
         body = PhysicalComponent(self.NAME, self.profile)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
@@ -213,7 +213,7 @@ class EquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the xyz of the equatorial port
+            The xyz of the equatorial port
         """
         body = PhysicalComponent(self.NAME, self.port)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])

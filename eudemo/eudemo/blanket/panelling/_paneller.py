@@ -76,7 +76,7 @@ class Paneller:
         Returns
         -------
         joints:
-            the joint coordinates
+            The joint coordinates
         """
         # Add the start and end panel joints at distances 0 & 1
         dists = np.hstack((0, dists, 1))

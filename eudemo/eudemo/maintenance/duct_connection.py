@@ -171,7 +171,7 @@ class TSEquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the component tree
+            The component tree
         """
         offset = (
             self.params.tk_vv_single_wall.value
@@ -199,7 +199,7 @@ class TSEquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the xyz components
+            The xyz components
         """
         yz_voidface = BluemiraFace(yz_face.boundary[1])
         degree = 180 / self.params.n_TF.value
@@ -394,7 +394,7 @@ class VVEquatorialPortDuctBuilder(Builder):
         Returns
         -------
         :
-            the xyz shapes of the equatorial port duct
+            The xyz shapes of the equatorial port duct
         """
         yz_voidface = BluemiraFace(yz_face.boundary[1])
         degree = 180 / self.params.n_TF.value

@@ -125,7 +125,7 @@ def build_reference_equilibrium(
     Returns
     -------
     :
-        the reference equilibrium
+        The reference equilibrium
     """
     designer = ReferenceFreeBoundaryEquilibriumDesigner(
         params,
@@ -334,7 +334,7 @@ def build_coil_structures(
     Returns
     -------
     :
-        coil structures
+        Coil structures
     """
     component = build_coil_structures_component(
         params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones

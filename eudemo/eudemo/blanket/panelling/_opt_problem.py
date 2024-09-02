@@ -40,7 +40,7 @@ class PanellingOptProblem(OptimisationProblem):
         Returns
         -------
         :
-            the objective result
+            The objective result
         """
         return self.paneller.length(x)
 
@@ -51,9 +51,9 @@ class PanellingOptProblem(OptimisationProblem):
         Returns
         -------
         :
-            the lower bound
+            The lower bound
         :
-            the upper bound
+            The upper bound
         """
         return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
 
@@ -67,7 +67,7 @@ class PanellingOptProblem(OptimisationProblem):
         Returns
         -------
         :
-            the list of inequality constraints
+            The list of inequality constraints
         """
         return [
             {
@@ -123,7 +123,7 @@ class PanellingOptProblem(OptimisationProblem):
         Returns
         -------
         :
-            the constraint
+            The constraint
         """
         n_panels = self.paneller.n_panels
         constraint = np.empty(self.n_constraints, dtype=float)

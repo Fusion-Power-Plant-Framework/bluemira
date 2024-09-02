@@ -71,7 +71,7 @@ def run_neutronics(
     neutronics_csg:
         The neutronics CSG reactor model
     res:
-        the result of the neutronics run
+        The result of the neutronics run
 
     Raises
     ------

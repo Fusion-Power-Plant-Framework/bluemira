@@ -88,7 +88,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            the geometry parameterisation
+            The geometry parameterisation
 
         Raises
         ------
@@ -156,7 +156,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             Returns
             -------
             :
-                the geometry length
+                The geometry length
             """
             return geom.create_shape().length
 
@@ -235,7 +235,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            first wall keep out zone
+            First wall keep out zone
         """
         geom_offset = self.params.tk_sol_ib.value
         psi_n = self.params.fw_psi_n.value
@@ -269,7 +269,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            flux surface keep out zone
+            Flux surface keep out zone
         """
         # TODO: This is currently called three times once here, once above
         # and once for setup of the remaining ivc

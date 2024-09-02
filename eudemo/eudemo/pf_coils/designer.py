@@ -158,7 +158,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         Returns
         -------
         :
-            an optimised coilset
+            An optimised coilset
         """
         coilset = self._make_coilset()
         coil_mapper = self._make_coil_mapper(coilset)

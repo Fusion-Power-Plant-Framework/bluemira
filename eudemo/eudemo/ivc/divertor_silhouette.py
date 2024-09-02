@@ -154,15 +154,15 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            inner baffle
+            Inner baffle
         :
-            inner target
+            Inner target
         :
-            dome
+            Dome
         :
-            outer target
+            Outer target
         :
-            outer baffle
+            Outer baffle
         """
         # Build the targets for each separatrix leg
         inner_target = self.make_target(LegPosition.INNER, self.INNER_TARGET)
@@ -295,7 +295,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            the baffle
+            The baffle
 
         Raises
         ------
@@ -388,7 +388,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            inner baffle
+            Inner baffle
         """
         if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
@@ -413,7 +413,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            outer baffle
+            Outer baffle
         """
         if self.params.div_open.value:
             raise NotImplementedError("Open divertor baffles not yet supported")
@@ -435,7 +435,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            separatrix legs
+            Separatrix legs
         """
         return [self.separatrix_legs[leg][layer] for layer in layers]
 
@@ -448,7 +448,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            wire end point
+            Wire end point
         """
         return DivertorSilhouetteDesigner._get_wire_end(wire, axis, operator.lt)
 
@@ -461,7 +461,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            wire end point
+            Wire end point
         """
         return DivertorSilhouetteDesigner._get_wire_end(wire, axis, operator.gt)
 
@@ -474,7 +474,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         Returns
         -------
         :
-            wire end point
+            Wire end point
         """
         axis = WireEndAxis[axis.upper()].name.lower()
 

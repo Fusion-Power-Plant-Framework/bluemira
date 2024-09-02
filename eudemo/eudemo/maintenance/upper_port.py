@@ -86,7 +86,7 @@ class UpperPortOP(OptimisationProblem):
         Returns
         -------
         :
-            list of inequality constraints
+            List of inequality constraints
         """
         return [
             {"f_constraint": self.constrain_blanket_cut, "tolerance": np.full(3, 1e-6)}
@@ -99,9 +99,9 @@ class UpperPortOP(OptimisationProblem):
         Returns
         -------
         :
-            the lower bound
+            The lower bound
         :
-            the upper bound
+            The upper bound
         """
         lower = [self.r_ib_min - self.c_rm, self.R_0, self.r_ib_min + self.tk_bb_ib, 0]
         upper = [
@@ -157,7 +157,7 @@ class UpperPortOP(OptimisationProblem):
         Returns
         -------
         :
-            the contraint array
+            The contraint array
         """
         ri, ro, ci, gamma = x
         co = self.get_outer_cut_point(ci, gamma)[0]
@@ -252,9 +252,9 @@ class UpperPortKOZDesigner(Designer[tuple[BluemiraFace, float, float]]):
         :
             The xy face of the upper port
         :
-            the radius of the blanket cut point
+            The radius of the blanket cut point
         :
-            the angle of the blanekt cut point
+            The angle of the blanekt cut point
         """
         opt_problem = UpperPortOP(
             bb=self.blanket_face,

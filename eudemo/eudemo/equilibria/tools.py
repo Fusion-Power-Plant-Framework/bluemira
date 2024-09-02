@@ -243,7 +243,7 @@ class DivertorLegCalculator:
         Returns
         -------
         :
-            position of divertor
+            Position of divertor
 
         Raises
         ------

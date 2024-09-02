@@ -355,7 +355,7 @@ class Cryostat(PlugManagerMixin, ComponentManager):
         Returns
         -------
         :
-            a wire representing the Cryostat poloidal silhouette.
+            A wire representing the Cryostat poloidal silhouette.
         """
         return (
             self.component()

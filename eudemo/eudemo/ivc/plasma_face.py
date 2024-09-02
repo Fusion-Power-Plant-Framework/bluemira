@@ -69,11 +69,11 @@ class PlasmaFaceDesigner(
         Returns
         -------
         blanket_face:
-            the blanket face
+            The blanket face
         divertor_face:
-            the divertor face
+            The divertor face
         div_wall_join_pt:
-            the divertor blanket join point
+            The divertor blanket join point
         """
         # For double null this and self.divertor_silhouette need a structure
         # to accommodate two divertors
@@ -156,7 +156,7 @@ def _make_clearance_face(
     Returns
     -------
     :
-        clearance face
+        Clearance face
     """
     x_coords = np.zeros(4)
     x_coords[:2] = x_min
@@ -181,9 +181,9 @@ def _cut_vessel_shape(
     Returns
     -------
     blanket_face:
-        cut blanket face
+        Cut blanket face
     divertor_face:
-        cut divertor face
+        Cut divertor face
     """
     pieces = boolean_cut(in_vessel_face, cutter_faces)
     blanket_face = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]

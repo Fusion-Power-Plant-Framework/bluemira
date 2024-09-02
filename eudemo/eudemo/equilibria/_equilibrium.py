@@ -120,7 +120,7 @@ def make_reference_equilibrium(
     Returns
     -------
     :
-        the equilibrium
+        The equilibrium
     """
     if isinstance(_params, dict):
         params = ReferenceEquilibriumParams.from_dict(_params)

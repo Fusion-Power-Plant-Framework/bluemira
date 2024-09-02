@@ -160,7 +160,7 @@ def make_PF_coil_positions(
     Returns
     -------
     :
-        locations of pf coils
+        Locations of pf coils
     """
     # Project plasma centroid through plasma upper and lower extrema
     angle_upper = np.arctan2(kappa, -delta)
@@ -194,7 +194,7 @@ def make_coilset(
     Returns
     -------
     :
-        initial coilset for eudemo
+        Initial coilset for eudemo
     """
     bb = tf_boundary.bounding_box
     z_min = bb.z_min
@@ -249,7 +249,7 @@ def make_reference_coilset(
     Returns
     -------
     :
-        reference coilset for eudemo
+        Reference coilset for eudemo
     """
     bb = tf_track.bounding_box
     z_min = bb.z_min
@@ -363,7 +363,7 @@ def _split_segment(segment, split_positions) -> list[BluemiraWire]:
     Returns
     -------
     sub_segs:
-        sub segments of wire
+        Sub segments of wire
     """
     sub_segs = []
     for split_pos in split_positions:
