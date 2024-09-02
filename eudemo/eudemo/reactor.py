@@ -355,7 +355,7 @@ def build_upper_port(
     Returns
     -------
     :
-        upper port components
+        Upper port components
     """
     ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
     ts_upper_port = ts_builder.build()
@@ -373,7 +373,7 @@ def build_equatorial_port(
     Returns
     -------
     :
-        equatorial port components
+        Equatorial port components
     """
     builder = VVEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
     vv_eq_port = builder.build()
@@ -394,7 +394,7 @@ def build_lower_port(
     Returns
     -------
     :
-        lower port components
+        Lower port components
     """
     offset = params.global_params.tk_cr_vv.value + params.global_params.g_cr_ts.value
     x_straight_end = cryostat_xz_boundary.bounding_box.x_max - offset

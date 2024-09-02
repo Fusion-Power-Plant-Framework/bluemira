@@ -92,7 +92,7 @@ class TFCoil(ComponentManager):
         Returns
         -------
         :
-            the outer xz-boundary of the TF Coils.
+            The outer xz-boundary of the TF Coils.
         """
         return (
             self.component()
@@ -107,7 +107,7 @@ class TFCoil(ComponentManager):
         Returns
         -------
         :
-            the x-z face of the TF Coils.
+            The x-z face of the TF Coils.
         """
         outer = self.xz_outer_boundary()
         inner = (
@@ -254,7 +254,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            keep-out-zone wire
+            Keep-out-zone wire
         """
         # The keep-out zone is for the TF WP centreline, so we need to add to it to
         # prevent clashes when the winding pack thickness and casing are added.

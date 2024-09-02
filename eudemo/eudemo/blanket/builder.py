@@ -105,7 +105,7 @@ class BlanketBuilder(Builder):
         Returns
         -------
         :
-            the xy components
+            The xy components
         """
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
@@ -128,7 +128,7 @@ class BlanketBuilder(Builder):
         Returns
         -------
         :
-            the xyz components
+            The xyz components
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
@@ -146,7 +146,7 @@ class BlanketBuilder(Builder):
         Returns
         -------
         :
-            blanket segments
+            Blanket segments
         """
         ibs_shapes = pattern_revolved_silhouette(
             ibs_silhouette,
