@@ -174,9 +174,9 @@ class PanellingDesigner(Designer[np.ndarray]):
             optimisation crashes with a 'more than iter SQP iterations'
             error (which it often does given an infeasible problem). Otherwise the result
         opt_problem:
-            the panelling optimsation problem
+            The panelling optimsation problem
         iter_num:
-            the number of iterationd
+            The number of iterations
         """
         try:
             x_opt = opt_problem.optimise(
