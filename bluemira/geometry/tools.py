@@ -1062,10 +1062,6 @@ def revolve_shape(
     :
         The revolved shape.
 
-    Raises
-    ------
-    FreeCADError
-        If failed to revolve shape when angle between 0 and 360.
 
     Raises
     ------
