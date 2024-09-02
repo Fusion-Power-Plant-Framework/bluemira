@@ -218,7 +218,7 @@ class VacuumVesselBuilder(Builder):
         Returns
         -------
         :
-            the xy component parts
+            The xy component parts
         """
         return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 

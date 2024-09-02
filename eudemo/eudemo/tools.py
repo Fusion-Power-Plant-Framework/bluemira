@@ -25,7 +25,7 @@ def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     Returns
     -------
     :
-        the inner cut point
+        The inner cut point
     """
     cut_plane = BluemiraPlane.from_3_points(
         [r_inner_cut, 0, 0], [r_inner_cut, 0, 1], [r_inner_cut, 1, 1]

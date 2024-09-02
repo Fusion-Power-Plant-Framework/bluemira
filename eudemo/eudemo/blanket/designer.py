@@ -148,7 +148,7 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         cut_ob:
             Outboard blanket face
         panel_points:
-            the panel points of the blanket
+            The panel points of the blanket
         """
         segments = self.segment_blanket()
         # Inboard
@@ -216,7 +216,7 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         Returns
         -------
         cut_zone:
-            the face cut for the inboard outboard split
+            The face cut for the inboard outboard split
         """
         p0 = get_inner_cut_point(self.silhouette, self.r_inner_cut)
         p1 = [p0[0], 0, p0[2] + VERY_BIG]
@@ -236,9 +236,9 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         Returns
         -------
         inboard:
-            inboard geometry
+            Inboard geometry
         outboard:
-            outboard geometry
+            Outboard geometry
 
         Raises
         ------

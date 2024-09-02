@@ -325,7 +325,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            the parameterisation and the winding pack cross section
+            The parameterisation and the winding pack cross section
 
         Raises
         ------
@@ -403,7 +403,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            the parameterisation and the winding pack cross section
+            The parameterisation and the winding pack cross section
 
         Raises
         ------
@@ -430,7 +430,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         Returns
         -------
         :
-            the parameterisation and the winding pack cross section
+            The parameterisation and the winding pack cross section
         """
         parameterisation = self._get_parameterisation()
         return parameterisation, self._make_wp_xs(
@@ -605,7 +605,7 @@ class TFCoilBuilder(Builder):
         Returns
         -------
         :
-            the xz winding pack inner and outer wires and component
+            The xz winding pack inner and outer wires and component
         """
         wp_outer = offset_wire(self.centreline, 0.5 * self.wp_x_size, join="arc")
         wp_inner = offset_wire(self.centreline, -0.5 * self.wp_x_size, join="arc")
@@ -778,7 +778,7 @@ class TFCoilBuilder(Builder):
         Returns
         -------
         :
-            the casing component
+            The casing component
         """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
@@ -823,7 +823,7 @@ class TFCoilBuilder(Builder):
         Returns
         -------
         :
-            inner and outer cross-section faces
+            Inner and outer cross-section faces
         """
         ins_outer = offset_wire(
             self.wp_cross_section,
