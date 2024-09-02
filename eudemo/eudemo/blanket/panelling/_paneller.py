@@ -115,7 +115,7 @@ class Paneller:
         Returns
         -------
         :
-            the angles of rotation between each set of adjacent panels.
+            The angles of rotation between each set of adjacent panels.
 
         Notes
         -----
@@ -136,7 +136,7 @@ class Paneller:
         Returns
         -------
         :
-            the lengths of each panel.
+            The lengths of each panel.
         """
         panel_vecs = np.diff(self.joints(dists))
         return np.hypot(panel_vecs[0], panel_vecs[1])
