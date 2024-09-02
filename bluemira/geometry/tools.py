@@ -1064,7 +1064,6 @@ def revolve_shape(
     :
         The revolved shape.
 
-
     Raises
     ------
     FreeCADError

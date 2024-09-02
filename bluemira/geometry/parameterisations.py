@@ -222,7 +222,8 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         Returns
         -------
-        CAD Wire of the geometry
+        :
+            CAD Wire of the geometry
         """
         ...
 

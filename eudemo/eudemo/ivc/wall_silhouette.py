@@ -85,6 +85,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         """
         Execute method of WallSilhouetteDesigner
 
+        Returns
+        -------
+        :
+            The geometry parameterisation
+
         Raises
         ------
         DesignError
@@ -104,12 +109,22 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def mock(self) -> GeometryParameterisation:
         """
         Mock method of WallSilhouetteDesigner
+
+        Returns
+        -------
+        :
+            A mocked geometry parameterisation
         """
         return self._get_parameterisation()
 
     def read(self) -> GeometryParameterisation:
         """
         Read method of WallSilhouetteDesigner
+
+        Returns
+        -------
+        :
+            A read in geometry parameterisation
 
         Raises
         ------
@@ -126,11 +141,23 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def run(self) -> GeometryParameterisation:
         """
         Optimise the shape using the provided parameterisation and optimiser.
+
+        Returns
+        -------
+        :
+            Optimised geometry parameterisation
         """
         parameterisation = self._get_parameterisation()
 
         def f_objective(geom: GeometryParameterisation) -> float:
-            """Objective function to minimise a shape's length."""
+            """
+            Objective function to minimise a shape's length.
+
+            Returns
+            -------
+            :
+                The geometry length
+            """
             return geom.create_shape().length
 
         bluemira_print("Solving WallSilhouette optimisation")
@@ -194,7 +221,14 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         return shape_params
 
     def _derive_polyspline_height(self) -> float:
-        """Derive the PolySpline height from relevant parameters."""
+        """
+        Derive the PolySpline height from relevant parameters.
+
+        Returns
+        -------
+        :
+            Calculated height
+        """
         r_minor = self.params.R_0.value / self.params.A.value
         return (self.params.kappa_95.value * r_minor) * 2
 
@@ -202,6 +236,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         """
         Create a "keep-out zone" to be used as a constraint in the
         wall shape optimiser.
+
+        Returns
+        -------
+        :
+            First wall keep out zone
         """
         geom_offset = self.params.tk_sol_ib.value
         psi_n = self.params.fw_psi_n.value
@@ -219,6 +258,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
         """
         Make a "keep-out zone" from a geometric offset of the LCFS.
+
+        Returns
+        -------
+        :
+            Offset LCFS keep out zone
         """
         lcfs = make_polygon(self.equilibrium.get_LCFS().xyz, closed=True)
         return offset_wire(lcfs, offset, join="arc")
@@ -226,6 +270,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def _make_flux_surface_keep_out_zone(self, psi_n: float) -> BluemiraWire:
         """
         Make a "keep-out zone" from an equilibrium's flux surface.
+
+        Returns
+        -------
+        :
+            Flux surface keep out zone
         """
         # TODO: This is currently called three times once here, once above
         # and once for setup of the remaining ivc
@@ -242,6 +291,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     ) -> BluemiraWire:
         """
         Make a "keep-out zone" from an equilibrium's divertor legs
+
+        Returns
+        -------
+        :
+            Divertor keep out zone
         """
         # TODO move to plasma component manager
         legs = LegFlux(self.equilibrium).get_legs(n_layers=1, dx_off=0.0)

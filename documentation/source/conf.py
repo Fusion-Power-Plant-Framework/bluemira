@@ -4,7 +4,9 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 """Configuration file for the Sphinx documentation builder."""
+
 from __future__ import annotations
+
 import os
 import sys
 from importlib.metadata import version as get_version
@@ -18,12 +20,13 @@ from sphinx.util.docutils import SphinxDirective
 if TYPE_CHECKING:
     from sphinx.util.typing import OptionSpec
 
+
 def setup(app):
     """Setup function for sphinx"""
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
     # app.add_config_value('extlinks', {}, 'env')  # needed if extlinks extension removed
-    app.connect('builder-inited', setup_link_roles)
+    app.connect("builder-inited", setup_link_roles)
     app.connect("autoapi-skip-member", SkipAlreadyDocumented())
 
 
@@ -125,7 +128,7 @@ myst_enable_extensions = ["amsmath", "dollarmath"]
 # --- Configuration for extlinks ---
 
 extlinks = {
-    'doi': ('https://dx.doi.org/%s', 'DOI: %s'),
+    "doi": ("https://dx.doi.org/%s", "DOI: %s"),
 }
 extlinks_detect_hardcoded_links = True
 
@@ -135,26 +138,27 @@ def setup_link_roles(app: Sphinx):
     for name, (base_url, caption) in app.config.extlinks.items():
         app.add_directive(name, link_directive(name, base_url, caption))
 
+
 def link_directive(name: str, base_url: str, caption: str):
     """Class factory for link directives"""
+
     class LinkDirective(SphinxDirective):
         """A directive to create doi link"""
 
         has_content = True
         required_arguments = 1
 
-        option_spec: ClassVar[OptionSpec] = {
-            'title': str
-        }
+        option_spec: ClassVar[OptionSpec] = {"title": str}
 
         def run(self) -> list[nodes.Node]:
             part = utils.unescape(self.arguments[0])
-            title = utils.unescape(self.options.get('title', caption % part))
+            title = utils.unescape(self.options.get("title", caption % part))
             pnode = nodes.reference(title, title, internal=False, refuri=base_url % part)
             pnode["classes"].append(f"extlink-{name}")
             wrapper = nodes.paragraph()
             wrapper.append(pnode)
             return [wrapper]
+
     return LinkDirective
 
 
