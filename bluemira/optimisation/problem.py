@@ -117,8 +117,8 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         :
             The lower and upper bounds of the optimisation parameters.
 
-        Note
-        -------
+        Notes
+        -----
         Each set of bounds must be convertible to a numpy array of
         floats. If the lower or upper bound is a scalar value, that
         value is set as the bound for each of the optimisation
