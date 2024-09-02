@@ -369,7 +369,6 @@ ignore-names = [
 "bluemira/mesh/*" = ["DOC201"]  # 10
 "bluemira/materials/*" = ["DOC201"]  # 62
 "bluemira/magnetostatics/*" = ["DOC201"]  # 45
-"bluemira/geometry/*" = ["DOC201"]  # 109
 "bluemira/fuel_cycle/*" = ["DOC201"]  # 19
 "bluemira/equilibria/*" = ["DOC201"]  # 217
 "bluemira/display/*" = ["DOC201"]  # 25
