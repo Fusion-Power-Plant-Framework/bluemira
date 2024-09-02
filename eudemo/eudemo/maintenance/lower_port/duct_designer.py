@@ -93,7 +93,20 @@ class LowerPortKOZDesigner(Designer):
         self.port_width = self.params.lp_width.value
 
     def run(self) -> tuple[BluemiraFace, BluemiraFace, BluemiraWire, BluemiraWire]:
-        """Run method of Designer"""
+        """
+        Run method of Designer
+
+        Returns
+        -------
+        duct_inner_xz:
+            Inner duct xz
+        duct_outer_xz:
+            Outer duct xz
+        duct_angled_inner_extrude_boundary:
+            Angled extruded boundary
+        duct_straight_inner_extrude_boundary:
+            Straight extruded boundary
+        """
         # ib -> inboard
         # ob -> outboard
         # inner -> closer to the center (or without the duct wall)
@@ -183,6 +196,11 @@ class LowerPortKOZDesigner(Designer):
 
         This takes the straight duct inner (no wall) top and bottom
         inboard points and uses the port width to make the boundary.
+
+        Returns
+        -------
+        :
+            Inner yz wire of straight duct
         """
         x_point = straight_top_inner_pt[0]
 
@@ -296,9 +314,12 @@ class LowerPortKOZDesigner(Designer):
 
     def _angled_duct_xz_boundary(self, ib_pt: tuple, ob_pt: tuple):
         """
-        Returns a rectangular face at the duct angle,
-        starting at the inboard and outboard points
-        of the padded points from the divertor.
+        Returns
+        -------
+        :
+            A rectangular face at the duct angle,
+            starting at the inboard and outboard points
+            of the padded points from the divertor.
         """
         r_search = 40  # must just be large
 
@@ -413,11 +434,14 @@ class LowerPortKOZDesigner(Designer):
         starting_xz_point: tuple | list,
         gradient: float,
         distance: float,
-    ) -> tuple:
+    ) -> tuple[list[float], list[float]]:
         """
-        Returns two points, the first being in the negative x quadrant,
-        the second in the positive x quadrant, at a distance away from
-        from the starting point, along the line with the given gradient.
+        Returns
+        -------
+        :
+            Two points, the first being in the negative x quadrant,
+            the second in the positive x quadrant, at a distance away from
+            from the starting point, along the line with the given gradient.
         """
         s_x = starting_xz_point[0]
         s_z = starting_xz_point[1]

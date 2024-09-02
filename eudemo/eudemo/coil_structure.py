@@ -54,6 +54,11 @@ def build_coil_structures_component(
 ):
     """
     Build the coil structures super-component.
+
+    Returns
+    -------
+    :
+        The coil structure component
     """
     params = make_parameter_frame(params, CoilStructuresParameters)
     ois_designer = StraightOISDesigner(

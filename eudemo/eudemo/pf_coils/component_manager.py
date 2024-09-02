@@ -5,7 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Component Manager for PF coils."""
 
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.reactor import ComponentManager
+from bluemira.equilibria.coils._grouping import CoilSet
 
 
 class PFCoil(ComponentManager):
@@ -18,21 +20,32 @@ class PFCoil(ComponentManager):
         self._coilset = coilset
 
     @property
-    def coilset(self):
+    def coilset(self) -> CoilSet:
         """
-        The poloidal coilset
+        Returns
+        -------
+        :
+            The poloidal coilset
         """
         return self._coilset
 
-    def xz_boundary(self):
+    def xz_boundary(self) -> list[PhysicalComponent]:
         """
         Boundaries of the coils in xz
+
+        Returns
+        -------
+        :
+            The boundaries of the PF an CS coils
         """
         return self.PF_xz_boundary() + self.CS_xz_boundary()
 
-    def PF_xz_boundary(self):
+    def PF_xz_boundary(self) -> list[PhysicalComponent]:
         """
-        Boundaries of the PF coils in xz
+        Returns
+        -------
+        :
+            Boundaries of the PF coils in xz
         """
         return [
             pf.get_component("Casing").shape.boundary[0]
@@ -41,9 +54,12 @@ class PFCoil(ComponentManager):
             .get_component("xz", first=False)
         ]
 
-    def CS_xz_boundary(self):
+    def CS_xz_boundary(self) -> list[PhysicalComponent]:
         """
-        Boundaries of the CS coils in xz
+        Returns
+        -------
+        :
+            Boundaries of the CS coils in xz
         """
         return [
             pf.get_component("Casing").shape.boundary[0]
