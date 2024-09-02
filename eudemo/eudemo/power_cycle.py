@@ -106,7 +106,7 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
         p_cryo:
             Cryo power
         p_t_plant:
-            tritium plant power
+            Tritium plant power
         p_other:
             "other" power loads
         """
@@ -149,9 +149,9 @@ class SteadyStatePowerCycleSetup(Task):
         neutron_power_strat:
             Neutron power strategy
         blanket_pump_strat
-            blanket pumping strategy
+            Blanket pumping strategy
         divertor_pump_strat:
-            divertor pumping stategy
+            Divertor pumping stategy
         bop_cycle:
             Power cycle effeciency calculation
         parasitic_load_strat:
@@ -224,7 +224,7 @@ class SteadyStatePowerCycleRun(Task):
         Returns
         -------
         bop:
-            the model
+            The model
         """
         params = make_parameter_frame(self.params, BoPModelParams)
         bop = BalanceOfPlantModel(params, *setup_result)
@@ -247,7 +247,7 @@ class SteadyStatePowerCycleTeardown(Task):
         power_cycle:
             the powercycle model
         :
-            a dictionary of net electric power, steady state eta
+            A dictionary of net electric power, steady state eta
             and the recirculating fraction
         """
         power_cycle = run_result
@@ -281,7 +281,7 @@ class SteadyStatePowerCycleSolver(CodesSolver):
         Returns
         -------
         :
-            a dictionary of net electric power, steady state eta
+            A dictionary of net electric power, steady state eta
             and the recirculating fraction
         """
         power_cycle, result = super().execute(SteadyStatePowerCycleRunMode.RUN)
