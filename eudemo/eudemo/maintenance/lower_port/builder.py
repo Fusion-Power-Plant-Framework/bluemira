@@ -62,6 +62,11 @@ class TSLowerPortDuctBuilder(Builder):
     def build(self) -> Component:
         """
         Build the thermal shield lower port.
+
+        Returns
+        -------
+        :
+            The lower port component tree
         """
         return self.component_tree(
             xz=None,
@@ -72,6 +77,11 @@ class TSLowerPortDuctBuilder(Builder):
     def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the thermal shield lower port in x-y-z.
+
+        Returns
+        -------
+        :
+            The components of the lower port
         """
         duct, void = build_lower_port_xyz(
             self.duct_angled_boundary,
@@ -130,6 +140,11 @@ class VVLowerPortDuctBuilder(Builder):
     def build(self) -> Component:
         """
         Build the vacuum vessel lower port.
+
+        Returns
+        -------
+        :
+            The lower port component tree
         """
         return self.component_tree(
             xz=None,
@@ -140,6 +155,11 @@ class VVLowerPortDuctBuilder(Builder):
     def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the vacuum vessel lower port in x-y-z.
+
+        Returns
+        -------
+        :
+            The components of the lower port
         """
         duct, void = build_lower_port_xyz(
             self.duct_angled_boundary,

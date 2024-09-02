@@ -8,6 +8,8 @@
 Simple steady-state EU-DEMO balance of plant model
 """
 
+from __future__ import annotations
+
 import enum
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -17,10 +19,12 @@ import numpy as np
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlantModel,
     BoPModelParams,
+    CoolantPumping,
     H2OPumping,
     HePumping,
     NeutronPowerStrategy,
     ParasiticLoadStrategy,
+    PowerCycleEfficiencyCalc,
     PredeterminedEfficiency,
     RadChargedPowerStrategy,
     SuperheatedRankine,
@@ -91,9 +95,20 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
         self.p_t_plant = 15.5e6
         self.p_other = 31e6
 
-    def calculate(self, p_fusion):
+    def calculate(self, p_fusion) -> tuple[float, ...]:
         """
         Because we were told to do this. Nobody trusts models.
+
+        Returns
+        -------
+        p_mag:
+            Magnetic power
+        p_cryo:
+            Cryo power
+        p_t_plant:
+            Tritium plant power
+        p_other:
+            "other" power loads
         """
         f_norm = p_fusion / self.p_fusion_ref
         p_mag = f_norm * self.p_mag
@@ -114,9 +129,33 @@ class SteadyStatePowerCycleSetup(Task):
     Setup task for the steady-state power cycle model.
     """
 
-    def run(self):
+    def run(
+        self,
+    ) -> tuple[
+        RadChargedPowerStrategy,
+        NeutronPowerStrategy,
+        CoolantPumping,
+        H2OPumping,
+        PowerCycleEfficiencyCalc,
+        EUDEMOReferenceParasiticLoadStrategy,
+    ]:
         """
         Run the setup task.
+
+        Returns
+        -------
+        rad_sep_strat:
+            Radiative charge power strategy
+        neutron_power_strat:
+            Neutron power strategy
+        blanket_pump_strat
+            Blanket pumping strategy
+        divertor_pump_strat:
+            Divertor pumping stategy
+        bop_cycle:
+            Power cycle effeciency calculation
+        parasitic_load_strat:
+            Parasistic load strategy
         """
         self.params = make_parameter_frame(self.params, SteadyStatePowerCycleParams)
         params = self.params  # avoid constant 'self' lookup
@@ -178,9 +217,14 @@ class SteadyStatePowerCycleRun(Task):
     Run task for the steady-state power cycle model.
     """
 
-    def run(self, setup_result):
+    def run(self, setup_result) -> BalanceOfPlantModel:
         """
         Run the run task. (o.O)
+
+        Returns
+        -------
+        bop:
+            The model
         """
         params = make_parameter_frame(self.params, BoPModelParams)
         bop = BalanceOfPlantModel(params, *setup_result)
@@ -194,9 +238,17 @@ class SteadyStatePowerCycleTeardown(Task):
     """
 
     @staticmethod
-    def run(run_result):
+    def run(run_result) -> tuple[BalanceOfPlantModel, dict[str, float]]:
         """
         Run the teardown task.
+
+        Returns
+        -------
+        power_cycle:
+            the powercycle model
+        :
+            A dictionary of net electric power, steady state eta
+            and the recirculating fraction
         """
         power_cycle = run_result
         flow_dict = power_cycle.flow_dict
@@ -222,9 +274,15 @@ class SteadyStatePowerCycleSolver(CodesSolver):
     teardown_cls = SteadyStatePowerCycleTeardown
     run_mode_cls = SteadyStatePowerCycleRunMode
 
-    def execute(self):
+    def execute(self) -> dict[str, float]:
         """
         Execute the solver.
+
+        Returns
+        -------
+        :
+            A dictionary of net electric power, steady state eta
+            and the recirculating fraction
         """
         power_cycle, result = super().execute(SteadyStatePowerCycleRunMode.RUN)
         self.model = power_cycle

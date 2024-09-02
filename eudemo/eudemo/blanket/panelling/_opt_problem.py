@@ -35,11 +35,26 @@ class PanellingOptProblem(OptimisationProblem):
         self.paneller = paneller
 
     def objective(self, x: np.ndarray) -> float:
-        """Objective function to minimise the total panel length."""
+        """Objective function to minimise the total panel length.
+
+        Returns
+        -------
+        :
+            The objective result
+        """
         return self.paneller.length(x)
 
     def bounds(self) -> tuple[np.ndarray, np.ndarray]:
-        """The normalised bounds of the parameterisation."""
+        """
+        The normalised bounds of the parameterisation.
+
+        Returns
+        -------
+        :
+            The lower bound
+        :
+            The upper bound
+        """
         return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
 
     def ineq_constraints(self) -> list[ConstraintT]:
@@ -48,6 +63,11 @@ class PanellingOptProblem(OptimisationProblem):
 
         We are constraining the tail-to-tail angle between panels and
         the minimum panel length.
+
+        Returns
+        -------
+        :
+            The list of inequality constraints
         """
         return [
             {
@@ -65,6 +85,11 @@ class PanellingOptProblem(OptimisationProblem):
         length each panel tangents the boundary (normalised to between
         0 and 1). We exclude the panel's start and end points, which are
         fixed.
+
+        Returns
+        -------
+        :
+            Number of optimisation parameters
         """
         # exclude start and end points; hence 'N - 2'
         return self.paneller.n_panels - 2
@@ -80,13 +105,26 @@ class PanellingOptProblem(OptimisationProblem):
             - the angle between each panel
               (no. of angles = no. of panels - 1)
 
-        Note that we exclude the start and end touch points which are
+        Returns
+        -------
+        :
+            Number of constraints
+
+        Notes
+        -----
+        We exclude the start and end touch points which are
         fixed.
         """
         return 2 * self.paneller.n_panels - 1
 
     def constrain_min_length_and_angles(self, x: np.ndarray) -> np.ndarray:
-        """Constraint function function for the optimiser."""
+        """Constraint function function for the optimiser.
+
+        Returns
+        -------
+        :
+            The constraint
+        """
         n_panels = self.paneller.n_panels
         constraint = np.empty(self.n_constraints, dtype=float)
         constraint[:n_panels] = self._constrain_min_length(x)
@@ -101,6 +139,11 @@ class PanellingOptProblem(OptimisationProblem):
         return self.paneller.angles(x) - self.paneller.max_angle
 
     def constraints_violated_by(self, x: np.ndarray, atol: float) -> bool:
-        """Return True if any constraints are violated by more that ``atol``."""
+        """
+        Returns
+        -------
+        :
+            True if any constraints are violated by more that ``atol``.
+        """
         constraint = self.constrain_min_length_and_angles(x)
         return np.any(constraint > atol)

@@ -63,21 +63,46 @@ class UpperPortOP(OptimisationProblem):
         self.gradient = np.array([-1, 1, 0, 1], dtype=float)
 
     def objective(self, x: np.ndarray) -> float:
-        """The objective function of the optimisation."""
+        """
+        Returns
+        -------
+        :
+            The objective function of the optimisation.
+        """
         return self.port_size(x)
 
     def df_objective(self, x: np.ndarray) -> np.ndarray:
-        """The gradient of the objective function."""
+        """
+        Returns
+        -------
+        :
+            The gradient of the objective function.
+        """
         return self.df_port_size(x)
 
     def ineq_constraints(self) -> list[ConstraintT]:
-        """Inequality constraints for the problem."""
+        """Inequality constraints for the problem.
+
+        Returns
+        -------
+        :
+            List of inequality constraints
+        """
         return [
             {"f_constraint": self.constrain_blanket_cut, "tolerance": np.full(3, 1e-6)}
         ]
 
     def bounds(self) -> tuple[np.ndarray, np.ndarray]:
-        """The bounds for the optimisation parameters."""
+        """
+        The bounds for the optimisation parameters.
+
+        Returns
+        -------
+        :
+            The lower bound
+        :
+            The upper bound
+        """
         lower = [self.r_ib_min - self.c_rm, self.R_0, self.r_ib_min + self.tk_bb_ib, 0]
         upper = [
             self.R_0,
@@ -89,7 +114,12 @@ class UpperPortOP(OptimisationProblem):
 
     @staticmethod
     def port_size(x: np.ndarray) -> float:
-        """Return the port size given parameterisation ``x``."""
+        """
+        Returns
+        -------
+        :
+            The port size given parameterisation ``x``.
+        """
         ri, ro, _, gamma = x
         return ro - ri + gamma
 
@@ -105,7 +135,8 @@ class UpperPortOP(OptimisationProblem):
 
         Returns
         -------
-        The gradient of the port size parameterisation, with shape (3,).
+        :
+            The gradient of the port size parameterisation, with shape (3,).
         """
         return self.gradient
 
@@ -122,6 +153,11 @@ class UpperPortOP(OptimisationProblem):
         c3. There should be enough vertically accessible space on the
             inboard blanket to connect pipes and a remote attachment
             point.
+
+        Returns
+        -------
+        :
+            The contraint array
         """
         ri, ro, ci, gamma = x
         co = self.get_outer_cut_point(ci, gamma)[0]
@@ -130,12 +166,17 @@ class UpperPortOP(OptimisationProblem):
         c3 = (ri + 0.5 * abs(ci - self.r_ib_min)) - ci
         return np.array([c1, c2, c3])
 
-    def get_outer_cut_point(self, ci: float, gamma: float):
+    def get_outer_cut_point(self, ci: float, gamma: float) -> float:
         """
         Get the coordinate of the outer blanket cut point.
 
         The outer cut point radius of the cutting plane with the
         breeding blanket geometry.
+
+        Returns
+        -------
+        :
+            The radius of the outer cut point
         """
         intersection = get_inner_cut_point(self.bb, ci)
         x, y, z = intersection
@@ -202,8 +243,19 @@ class UpperPortKOZDesigner(Designer[tuple[BluemiraFace, float, float]]):
         }
         self.upper_port_extrema = upper_port_extrema
 
-    def run(self):
-        """Run the design problem to minimise the port size."""
+    def run(self) -> tuple[BluemiraFace, float, float]:
+        """
+        Run the design problem to minimise the port size.
+
+        Returns
+        -------
+        :
+            The xy face of the upper port
+        :
+            The radius of the blanket cut point
+        :
+            The angle of the blanekt cut point
+        """
         opt_problem = UpperPortOP(
             bb=self.blanket_face,
             c_rm=self.params.c_rm.value,
@@ -257,7 +309,8 @@ def build_upper_port_zone(
 
     Returns
     -------
-    Face representing the upper port void space in the x-z plane
+    :
+        Face representing the upper port void space in the x-z plane
     """
     x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
     z = [z_min, z_min, z_max, z_max]
