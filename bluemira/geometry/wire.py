@@ -96,7 +96,7 @@ class BluemiraWire(BluemiraGeo):
         """
         Returns
         -------
-        list(apiWire):
+        :
             List of wires of which the shape consists of.
         """
         wires = []
