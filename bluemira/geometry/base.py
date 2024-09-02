@@ -44,6 +44,11 @@ class GeoMeshable(meshing.Meshable):
     def print_mesh_options(self, *, recursive: bool = True) -> list:  # noqa: ARG002
         """
         Print the mesh options for this object.
+
+        Returns
+        -------
+        :
+            The mesh options.
         """
         # TODO: improve the output of this function
         output = []
@@ -109,6 +114,11 @@ class BluemiraGeo(ABC, GeoMeshable):
     def _converter(func):
         """
         Function used in __getattr__ to modify the added functions.
+
+        Returns
+        -------
+        :
+            Function used in __getattr__ to modify the added functions.
         """
         return func
 
@@ -122,6 +132,11 @@ class BluemiraGeo(ABC, GeoMeshable):
         ------
         TypeError
             Only given boundary classes can be the boundary
+
+        Returns
+        -------
+        :
+            The objects that can be used as boundaries.
         """
         if objs is None:
             return objs
@@ -225,6 +240,11 @@ class BluemiraGeo(ABC, GeoMeshable):
         tolerance:
             Tolerance with which to tesselate the BluemiraGeo before calculating the
             bounding box.
+
+        Returns
+        -------
+        :
+            The optimised bounding box of the shape.
         """
         auto_copy = self.deepcopy()
         auto_copy._tessellate(tolerance)
@@ -233,24 +253,44 @@ class BluemiraGeo(ABC, GeoMeshable):
     def is_null(self) -> bool:
         """
         Check if the shape is null.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is null.
         """
         return cadapi.is_null(self.shape)
 
     def is_closed(self) -> bool:
         """
         Check if the shape is closed.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is closed.
         """
         return cadapi.is_closed(self.shape)
 
     def is_valid(self) -> bool:
         """
         Check if the shape is valid.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is valid.
         """
         return cadapi.is_valid(self.shape)
 
     def is_same(self, obj: BluemiraGeo) -> bool:
         """
         Check if obj has the same shape as self
+
+        Returns
+        -------
+        :
+            A boolean for if the obj is the same shape as self.
         """
         return cadapi.is_same(self.shape, obj.shape)
 
@@ -393,6 +433,11 @@ class BluemiraGeo(ABC, GeoMeshable):
         """Deepcopy for BluemiraGeo.
 
         FreeCAD shapes cannot be deepcopied on versions >=0.21
+
+        Returns
+        -------
+        :
+            A deepcopy of the BluemiraGeo.
         """
         cls = self.__class__
         result = cls.__new__(cls)
@@ -413,6 +458,11 @@ class BluemiraGeo(ABC, GeoMeshable):
     def copy(self, label: str | None = None) -> BluemiraGeo:
         """
         Make a copy of the BluemiraGeo.
+
+        Returns
+        -------
+        :
+            A copy of the BluemiraGeo.
         """
         geo_copy = copy.copy(self)
         if label is not None:
@@ -424,6 +474,11 @@ class BluemiraGeo(ABC, GeoMeshable):
     def deepcopy(self, label: str | None = None) -> BluemiraGeo:
         """
         Make a deepcopy of the BluemiraGeo.
+
+        Returns
+        -------
+        :
+            A deepcopy of the BluemiraGeo.
         """
         geo_copy = copy.deepcopy(self)
         if label is not None:

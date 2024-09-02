@@ -47,6 +47,11 @@ class BluemiraSolid(BluemiraGeo):
         ------
         DisjointedSolidError
             Solid is disjointed (2 solids created)
+
+        Returns
+        -------
+        :
+            Created FreeCAD solid.
         """
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
         solid = cadapi.apiSolid(new_shell)
@@ -64,7 +69,12 @@ class BluemiraSolid(BluemiraGeo):
         return solid
 
     def _create_shape(self):
-        """Part.Solid: shape of the object as a single solid"""
+        """
+        Returns
+        -------
+        Part.Solid:
+            shape of the object as a single solid
+        """
         return self._create_solid()
 
     @classmethod
