@@ -63,11 +63,23 @@ class BluemiraFace(BluemiraGeo):
             yield BluemiraWire(w)
 
     def copy(self):
-        """Make a copy of the BluemiraFace"""
+        """Make a copy of the BluemiraFace
+
+        Returns
+        -------
+        :
+            A copy of the BluemiraFace.
+        """
         return BluemiraFace(self.boundary, self.label)
 
     def deepcopy(self, label: str | None = None) -> BluemiraFace:
-        """Make a copy of the BluemiraFace"""
+        """Make a copy of the BluemiraFace
+
+        Returns
+        -------
+        :
+            A deepcopy of the BluemiraFace.
+        """
         boundary = []
         for o in self.boundary:
             boundary += [o.deepcopy(o.label)]
@@ -87,6 +99,11 @@ class BluemiraFace(BluemiraGeo):
             Only wires are allowed as boundaries
         NotClosedWireError
             not all boundary wires are closed
+
+        Returns
+        -------
+        :
+            Inputted object if correct type for class or None when input is None.
         """
         if objs is None:
             return objs
@@ -112,6 +129,11 @@ class BluemiraFace(BluemiraGeo):
         ------
         DisjointedFaceError
             More than 1 face created
+
+        Returns
+        -------
+        :
+            The primitive face.
         """
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
@@ -129,7 +151,12 @@ class BluemiraFace(BluemiraGeo):
         return face
 
     def _create_shape(self) -> cadapi.apiFace:
-        """Part.Face: shape of the object as a primitive face"""
+        """
+        Returns
+        -------
+        Part.Face:
+            Shape of the object as a primitive face
+        """
         return self._create_face()
 
     @classmethod
@@ -185,6 +212,11 @@ class BluemiraFace(BluemiraGeo):
         """
         Get the normal vector of the face at a parameterised point in space. For
         planar faces, the normal is the same everywhere.
+
+        Returns
+        -------
+        :
+            The normal vector of the face at a parameterised point in space.
         """
         return cadapi.normal_at(self.shape, alpha_1, alpha_2)
 

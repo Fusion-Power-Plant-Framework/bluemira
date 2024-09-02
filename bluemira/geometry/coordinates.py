@@ -63,6 +63,12 @@ def xyz_process(func):
     """
     Decorator for parsing x, y, z coordinates to numpy float arrays and dimension
     checking.
+
+    Returns
+    -------
+    :
+        Decorator for parsing x, y, z coordinates to numpy float arrays and dimension
+        checking.
     """
 
     def wrapper(x, y, z=None):
@@ -548,6 +554,11 @@ def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
     def get_rational(i, array):
         """
         Gets rid of infinity and nan coordinates
+
+        Returns
+        -------
+        :
+            Array without infinity and nan coordinates.
         """
         args = np.argwhere(np.isfinite(array))
         if len(args) == 0:
@@ -570,6 +581,11 @@ def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
 def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> float:
     """
     Angle between points. P1 is vertex of angle. ONly tested in 2d
+
+    Returns
+    -------
+    :
+        The angle between points.
     """
     if not all(isinstance(p, np.ndarray) for p in [p0, p1, p2]):
         p0, p1, p2 = np.array(p0), np.array(p1), np.array(p2)
@@ -677,6 +693,11 @@ def rotation_matrix(
 def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     """
     Get a rotation matrix based off two vectors.
+
+    Returns
+    -------
+    :
+        A roational matrix based off two vectors.
     """
     v1 /= np.linalg.norm(v1)
     v2 /= np.linalg.norm(v2)
@@ -725,6 +746,11 @@ def project_point_axis(point: npt.ArrayLike, axis: npt.ArrayLike) -> np.ndarray:
 def principal_components(xyz_array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Principal component analysis.
+
+    Returns
+    -------
+    :
+        Eigenvalues and eigenvectors or an xyz array.
     """
     mean = np.mean(xyz_array, axis=1)
     xyz_shift = xyz_array - mean.reshape((3, 1))
@@ -1034,6 +1060,11 @@ def _parse_to_xyz_array(
     ------
     CoordinatesError
         Cannot instantiate coordinates
+
+    Returns
+    -------
+    :
+        A 3, N xyz array.
     """
     if isinstance(xyz_array, np.ndarray):
         xyz_array = _parse_array(xyz_array)
@@ -1160,6 +1191,11 @@ class Coordinates:
         ------
         CoordinatesError
             Cannot read json file
+
+        Returns
+        -------
+        :
+            Coordinate object.
         """
         try:
             with open(filename) as data:
@@ -1223,6 +1259,12 @@ class Coordinates:
         ------
         CoordinatesError
             axis must be of size 3
+
+        Returns
+        -------
+        :
+            The check for whether the Coordinates are ordered in counter-clockwise or
+            not.
         """
         if len(self) < DIM:
             return False
@@ -1357,6 +1399,11 @@ class Coordinates:
     def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str:
         """
         Save the Coordinates as a JSON file.
+
+        Returns
+        -------
+        :
+            The Coordinates as a JSON file.
         """
         return json_writer(
             self.as_dict(), Path(filename).with_suffix("").with_suffix(".json"), **kwargs
@@ -1633,6 +1680,11 @@ class Coordinates:
         other:
             The other Coordinates to compare against
 
+        Returns
+        -------
+        :
+            The check of the Coordinates for equality with other Coordinates.
+
         Notes
         -----
         Coordinates with identical coordinates but different orderings will not be
@@ -1643,12 +1695,23 @@ class Coordinates:
         return False
 
     def __hash__(self):
-        """Hash of Coordinates"""
+        """Hash of Coordinates
+
+        Returns
+        -------
+        :
+            The hash of Coordinates.
+        """
         return hash((self._array, self._is_planar, self._normal_vector))
 
     def __len__(self) -> int:
         """
         The number of points in the Coordinates.
+
+        Returns
+        -------
+        :
+            The number of points in the Coordinates.
         """
         return self.shape[1]
 
@@ -1659,6 +1722,11 @@ class Coordinates:
     def __repr__(self) -> str:
         """
         Representation of the Coordinates.
+
+        Returns
+        -------
+        :
+            Representation of the Coordinates.
         """
         r = repr(self._array)
         return f"{self.__class__.__name__}{r[5:]}"
@@ -1666,12 +1734,22 @@ class Coordinates:
     def __getitem__(self, *args, **kwargs):
         """
         Array-like indexing and slicing.
+
+        Returns
+        -------
+        :
+            Indexed or sliced array.
         """
         return self._array.__getitem__(*args, **kwargs)
 
     def __iter__(self):
         """
         Array-like unpacking.
+
+        Returns
+        -------
+        :
+            Unpacked array.
         """
         return iter(self._array)
 
@@ -1924,6 +2002,11 @@ def choose_direction(
     Flip the vector to the correct side (multiply by +1 or -1) so that
     when lower_pt is projected onto the vector, it has a smaller value than
     when higher_pt is projected onto the vector.
+
+    Returns
+    -------
+    :
+        The flipped vector.
     """
     if (vector @ lower_pt) > (vector @ higher_pt):
         return -vector

@@ -246,6 +246,11 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         ----------
         file:
             The path to the file, or an open file handle that supports reading.
+
+        Returns
+        -------
+        :
+            The GeometryParameterisation from a json file.
         """
         if isinstance(file, Path | str):
             with open(file) as fh:
@@ -353,6 +358,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         shape:
             parameterisation wire
 
+        Returns
+        -------
+        :
+            Labels to parameterisation plots.
         """
         offset_ar_x = 0
         offset_ar_z: float = 0
@@ -398,6 +407,11 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             Label variables on figure
         kwargs: Dict
             Passed to matplotlib Axes.plot function
+
+        Returns
+        -------
+        :
+            The geometry parameterisation.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -504,13 +518,27 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint for PrincetonD."""
+        """
+        Inequality constraint for PrincetonD.
+
+        Returns
+        -------
+        :
+            Inequality constraint for PrincetonD.
+        """
         free_vars = self.variables.get_normalised_values()
         x1, x2, _ = self.process_x_norm_fixed(free_vars)
         return np.array([x1 - x2])
 
     def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint gradient for PrincetonD."""
+        """
+        Inequality constraint gradient for PrincetonD.
+
+        Returns
+        -------
+        :
+            Inequality constraint gradient for PrincetonD.
+        """
         opt_vars = self.variables
         free_vars = opt_vars.get_normalised_values()
         grad = np.zeros((1, len(free_vars)))
@@ -685,6 +713,11 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         Inequality constraint for TripleArc.
 
         Constrain such that a1 + a2 is less than or equal to 180 degrees.
+
+        Returns
+        -------
+        :
+            Inequality constraint for TripleArc.
         """
         norm_vals = self.variables.get_normalised_values()
         x_actual = self.process_x_norm_fixed(norm_vals)
@@ -692,7 +725,14 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         return np.array([a1 + a2 - 180])
 
     def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint gradient for TripleArc."""
+        """
+        Inequality constraint gradient for TripleArc.
+
+        Returns
+        -------
+        :
+            Inequality constraint gradient for TripleArc.
+        """
         free_vars = self.variables.get_normalised_values()
         g = np.zeros((1, len(free_vars)))
         if not self.variables.a1.fixed:
@@ -790,6 +830,10 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         shape:
             parameterisation wire
 
+        Returns
+        -------
+        :
+            Labels to parameterisation plots.
         """
         # TODO @je-cook: Labels for f1, f2 and a1, a2
         # 3588
@@ -917,6 +961,11 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         Constrain such that sum of the 5 angles is less than or equal to 360
         degrees.
+
+        Returns
+        -------
+        :
+            Inequality constraint for TripleArc.
         """
         x_norm = self.variables.get_normalised_values()
         x_actual = self.process_x_norm_fixed(x_norm)
@@ -924,7 +973,13 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
     def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint gradient for TripleArc."""
+        """Inequality constraint gradient for TripleArc.
+
+        Returns
+        -------
+        :
+            Inequality constraint gradient for TripleArc.
+        """
         x_norm = self.variables.get_normalised_values()
         gradient = np.zeros((1, len(x_norm)))
         for var in ["a1", "a2", "a3", "a4", "a5"]:
@@ -1340,6 +1395,11 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Make 2 Bézier spline control points between two vertices.
+
+        Returns
+        -------
+        :
+            Two Bézier spline control points.
         """
         dl = np.sqrt(np.sum((np.array(p3) - np.array(p0)) ** 2))
 
@@ -1748,6 +1808,11 @@ class PFrameSection(Enum):
     def __call__(self, *args, **kwargs):
         """
         Call linked function on access
+
+        Returns
+        -------
+        :
+            Linked function.
         """
         return self.value(*args, **kwargs)
 
@@ -1934,7 +1999,13 @@ class PictureFrame(
         super().__init__(variables)
 
     def __deepcopy__(self, memo) -> PictureFrame:
-        """Picture Frame deepcopy"""
+        """Picture Frame deepcopy
+
+        Returns
+        -------
+        :
+            Deepcopy of Picture Frame.
+        """
         cls = type(self)
         result = cls.__new__(cls)
         memo[id(self)] = result
