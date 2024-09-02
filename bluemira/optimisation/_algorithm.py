@@ -37,7 +37,7 @@ class Algorithm(enum.Enum):
 
         Parameters
         ----------
-        value : str
+        value :
             The string representation of the algorithm type.
 
         Returns
