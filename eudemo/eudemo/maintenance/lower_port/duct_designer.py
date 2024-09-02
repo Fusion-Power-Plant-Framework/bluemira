@@ -98,13 +98,13 @@ class LowerPortKOZDesigner(Designer):
 
         Returns
         -------
-        :
+        duct_inner_xz:
             Inner duct xz
-        :
+        duct_outer_xz:
             Outer duct xz
-        :
+        duct_angled_inner_extrude_boundary:
             angled extruded boundary
-        :
+        duct_straight_inner_extrude_boundary:
             straight extruded boundary
         """
         # ib -> inboard
