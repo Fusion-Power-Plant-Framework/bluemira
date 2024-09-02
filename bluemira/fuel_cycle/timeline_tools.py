@@ -351,7 +351,8 @@ class OperationalAvailabilityStrategy(abc.ABC):
 
         Returns
         -------
-        The distribution of size n and of the correct integral value
+        :
+            The distribution of size n and of the correct integral value
         """
         ...
 

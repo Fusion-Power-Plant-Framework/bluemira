@@ -27,25 +27,50 @@ class Blanket(ComponentManager):
         super().__init__(component_tree)
 
     def panel_points(self) -> Coordinates:
-        """The panel points of the blanket."""
+        """
+        Returns
+        -------
+        :
+            The panel points of the blanket.
+        """
         return self._panel_points
 
     def inboard_xz_face(self) -> BluemiraFace:
-        """The poloidal plane face of the inboard blanket segment."""
+        """
+        Returns
+        -------
+        :
+            The poloidal plane face of the inboard blanket segment.
+        """
         return (
             self.component().get_component("xz").get_component(BlanketBuilder.IBS).shape
         )
 
     def outboard_xz_face(self) -> BluemiraFace:
-        """The poloidal plane face of the outboard blanket segment."""
+        """
+        Returns
+        -------
+        :
+            The poloidal plane face of the outboard blanket segment.
+        """
         return (
             self.component().get_component("xz").get_component(BlanketBuilder.OBS).shape
         )
 
     def inboard_xz_boundary(self) -> BluemiraWire:
-        """The toroidal plane silhouette of the inboard blanket segment."""
+        """
+        Returns
+        -------
+        :
+            The toroidal plane silhouette of the inboard blanket segment.
+        """
         return self.inboard_xz_face().boundary[0]
 
     def outboard_xz_boundary(self) -> BluemiraWire:
-        """The poloidal plane silhouette of the outboard blanket segment."""
+        """
+        Returns
+        -------
+        :
+            The poloidal plane silhouette of the outboard blanket segment.
+        """
         return self.outboard_xz_face().boundary[0]
