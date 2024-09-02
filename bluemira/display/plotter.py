@@ -374,7 +374,7 @@ class BasePlotter(ABC):
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axes with the plotted data.
 
         """
@@ -416,7 +416,7 @@ class BasePlotter(ABC):
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axes with the plotted data.
 
         """
@@ -454,7 +454,7 @@ class PointsPlotter(BasePlotter):
         """
         Returns
         -------
-        bool
+        :
            Always returns True.
 
         Notes
@@ -470,7 +470,7 @@ class PointsPlotter(BasePlotter):
 
         Returns
         -------
-        bool
+        :
             True if the `show_points` option is set to True, otherwise False.
         """
         return bool(self.options.show_points)
@@ -507,7 +507,7 @@ class WirePlotter(BasePlotter):
         """
         Returns
         -------
-        bool
+        :
             Always returns True if the object is a `BluemiraWire`.
 
         Raises
@@ -525,7 +525,7 @@ class WirePlotter(BasePlotter):
 
         Returns
         -------
-        bool
+        :
             True if nothing has to be plotted, otherwise False.
         """
         return not (not self.options.show_points and not self.options.show_wires)
@@ -572,7 +572,7 @@ class FacePlotter(BasePlotter):
         """
         Returns
         -------
-        bool
+        :
             Always returns True if the object is a `BluemiraFace`.
 
         Raises
@@ -590,7 +590,7 @@ class FacePlotter(BasePlotter):
 
         Returns
         -------
-        bool:
+        :
             True if nothing has to be plotted, otherwise False.
         """
         return not (
@@ -658,7 +658,7 @@ class ComponentPlotter(BasePlotter):
         """
         Returns
         -------
-        bool
+        :
             Always returns True if the object is a `BluemiraComponent`.
 
         Raises
@@ -678,7 +678,7 @@ class ComponentPlotter(BasePlotter):
 
         Returns
         -------
-        bool
+        :
             True if nothing has to be plotted, otherwise False.
         """
         return not (
@@ -817,7 +817,7 @@ def plot_2d(
 
     Returns
     -------
-    matplotlib.axes.Axes
+    :
         The axes with the plotted data.
     """
     parts, options = _validate_plot_inputs(parts, options)
@@ -858,7 +858,7 @@ def plot_3d(
 
     Returns
     -------
-    matplotlib.axes.Axes
+    :
         The axes with the plotted data.
     """
     parts, options = _validate_plot_inputs(parts, options)
@@ -916,7 +916,7 @@ class Plottable:
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axes with the plotted data.
         """
         return self._plotter.plot_2d(self, ax=ax, show=show)
@@ -927,7 +927,7 @@ class Plottable:
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axes with the plotted data.
         """
         return self._plotter.plot_3d(self, ax=ax, show=show)
@@ -937,7 +937,7 @@ def _get_ndim(coords):
     """
     Returns
     -------
-    int
+    :
         The number of dimensions in the coordinate data. Returns at least 2.
     """
     count = 0
@@ -953,7 +953,7 @@ def _get_plan_dims(array):
     """
     Returns
     -------
-    list[str]
+    :
         A sorted list of axis labels ("x", "y", "z") indicating which
         dimensions have variability.
     """

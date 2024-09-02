@@ -62,9 +62,9 @@ def _get_primary_screen_size():
 
     Returns
     -------
-    width: Union[int, None]
+    width:
         width of the primary screen in pixels. If there is no screen returns None
-    height: Union[int, None]
+    height:
         height of the primary screen in pixels. If there is no screen returns None
     """
     if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
