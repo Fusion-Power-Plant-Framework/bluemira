@@ -47,6 +47,11 @@ def approx_derivative(
         Lower and upper bounds on individual variables.
     args:
         Additional positional arguments to ``func``.
+
+    Returns
+    -------
+    :
+        approximate gradient of the function about a point.
     """
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args

@@ -250,7 +250,12 @@ def _make_optimiser(
     *,
     keep_history: bool = False,
 ) -> Optimiser:
-    """Make a new optimiser object."""
+    """
+    Returns
+    -------
+    :
+        a new optimiser object.
+    """
     opt = NloptOptimiser(
         algorithm,
         dimensions,
@@ -281,12 +286,16 @@ def _make_optimiser(
 def _process_bounds(
     bounds: tuple[npt.ArrayLike, npt.ArrayLike] | None, dims: int
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Handle bounds converting ``None`` to +/-inf and expanding scalar bounds.
-
+    """
     Raises
     ------
     ValueError
         Length of bounds is not 2
+
+    Returns
+    -------
+    :
+        bounds converting ``None`` to +/-inf and expanding scalar bounds.
     """
     if bounds is None:
         return (np.full(dims, -np.inf), np.full(dims, np.inf))
@@ -305,8 +314,11 @@ def _check_constraints(
     """
     Check if any of the given constraints are violated by the parameterisation.
 
-    Returns a list of formatted warnings. If there are no warnings, there
-    are no violations.
+    Returns
+    -------
+    :
+        a list of formatted warnings. If there are no warnings, there
+        are no violations.
     """
 
     def _check_constraint(
@@ -314,7 +326,12 @@ def _check_constraints(
         constraint: ConstraintT,
         condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
     ) -> tuple[str | None, np.ndarray, np.ndarray, np.ndarray] | None:
-        """Return the items in the constraint vector that violate the condition."""
+        """
+        Returns
+        -------
+        :
+            the items in the constraint vector that violate the condition.
+        """
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
         c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
@@ -348,12 +365,22 @@ def _check_constraints(
 
 
 def _eq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
-    """Condition under which an equality constraint is violated."""
+    """
+    Returns
+    -------
+    :
+        Condition under which an equality constraint is violated.
+    """
     return ~np.isclose(c_value, 0, atol=tols)
 
 
 def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
-    """Condition under which an inequality constraint is violated."""
+    """
+    Returns
+    -------
+    :
+        Condition under which an inequality constraint is violated.
+    """
     return c_value > tols
 
 
@@ -361,6 +388,12 @@ def _set_default_termination_conditions(
     algorithm: AlgorithmType,
     opt_conditions: Mapping[str, int | float] | None = None,
 ) -> Mapping[str, int | float] | None:
+    """
+    Returns
+    -------
+    :
+        The termination conditions, either provided or default
+    """
     if opt_conditions is None:
         if isinstance(algorithm, str):
             algorithm = Algorithm[algorithm]

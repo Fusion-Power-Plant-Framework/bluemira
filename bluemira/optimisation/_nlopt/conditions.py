@@ -27,7 +27,12 @@ class NLOptConditions:
         self._validate()
 
     def to_dict(self) -> dict[str, float]:
-        """Return the data in dictionary form."""
+        """
+        Returns
+        -------
+        :
+            The data in dictionary form.
+        """
         return asdict(self)
 
     def _validate(self) -> None:
@@ -51,6 +56,14 @@ class NLOptConditions:
             self.max_eval = int(self.max_eval)
 
     def _no_stopping_condition_set(self) -> bool:
+        """
+        Checks if all stopping conditions are unset.
+
+        Returns
+        -------
+        :
+            `True` if all stopping conditions are `None`, otherwise `False`.
+        """
         return all(
             condition is None
             for condition in [
