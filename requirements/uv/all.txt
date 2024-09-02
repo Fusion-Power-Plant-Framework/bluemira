@@ -42,7 +42,7 @@ bleach==6.1.0
     # via nbconvert
 blosc2==2.7.1
     # via tables
-certifi==2024.7.4
+certifi==2024.8.30
     # via
     #   httpcore
     #   httpx
@@ -91,7 +91,7 @@ exceptiongroup==1.2.2
     #   anyio
     #   ipython
     #   pytest
-executing==2.0.1
+executing==2.1.0
     # via stack-data
 fastjsonschema==2.20.0
     # via nbformat
@@ -141,7 +141,7 @@ ipykernel==6.29.5
     # via
     #   jupyterlab
     #   myst-nb
-ipython==8.26.0
+ipython==8.27.0
     # via
     #   ipykernel
     #   myst-nb
@@ -515,7 +515,7 @@ sphinx==7.4.7
     #   sphinx-copybutton
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx-autoapi==3.2.1
+sphinx-autoapi==3.3.1
     # via bluemira (pyproject.toml)
 sphinx-copybutton==0.5.2
     # via bluemira (pyproject.toml)
