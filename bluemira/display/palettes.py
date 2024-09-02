@@ -43,12 +43,20 @@ class ColorPalette:
         self._cycle = cycle(color_list)
 
     def keys(self):
-        """Keys of ColorPalette"""
+        """
+        Returns
+        -------
+        :
+            Keys of ColorPalette
+        """
         return self._dict.keys()
 
     def __next__(self):
         """
-        Get the next color in the ColorPalette
+        Returns
+        -------
+        :
+            the next color in the ColorPalette
         """
         return next(self._cycle)
 
@@ -99,6 +107,14 @@ class ColorPalette:
         return None
 
     def _hex_horizontal(self) -> list[str] | list[list[str]]:
+        """
+        Returns
+        -------
+        :
+            A list of strings representing a horizontal row of hex colors,
+            or a list of lists of strings where each inner list represents
+            a row of hex colors.
+        """
         _hex = self.as_hex()
         if isinstance(_hex, str):
             _hex = [_hex]
@@ -111,6 +127,12 @@ class ColorPalette:
 
     def _repr_html(self) -> str:
         def html_str(_hex: list[str] | list[list[str]], y: int = 0) -> str:
+            """
+            Returns
+            -------
+            :
+                an HTML string of rectangles representing hex colors.
+            """
             string = ""
             x = 0
             for col in _hex:
@@ -135,7 +157,13 @@ class ColorPalette:
         return f'<svg  width="{(len(self)) * s}" height="{m * s}">{colours}</svg>'
 
     def _repr_colour_str(self, _hex: list[str] | list[list[str]]) -> str:
-        """Create colourful representation in terminal"""
+        """
+
+        Returns
+        -------
+        :
+            colourful representation in terminal
+        """
         string = ""
         for col in _hex:
             if isinstance(col, list):
@@ -148,7 +176,11 @@ class ColorPalette:
 
     def __repr__(self) -> str:
         """
-        Create a representation of the ColorPalette
+
+        Returns
+        -------
+        :
+            a representation of the ColorPalette
         """
         try:
             g_ipy = get_ipython()
@@ -163,12 +195,21 @@ class ColorPalette:
         return ""
 
     def __len__(self) -> int:
-        """Get the length of the ColorPalette"""
+        """
+        Returns
+        -------
+        :
+            the length of the ColorPalette
+        """
         return len(self._palette)
 
     def as_hex(self) -> list[str] | list[list[str]] | str:
         """
-        Get the hex representation of the palette
+
+        Returns
+        -------
+        :
+            the hex representation of the palette
         """
         hex_list = []
         if isinstance(self._palette, list):
@@ -185,7 +226,12 @@ class ColorPalette:
 
 
 def background_colour_string(hexstring: str, sqlen=2) -> str:
-    """Create ANSI background colour string for hex colour"""
+    """
+    Returns
+    -------
+    :
+        ANSI background colour string for hex colour
+    """
     hexstring = hexstring.strip("#")
     a, b, c = (1, 2, 3) if len(hexstring) == 3 else (2, 4, 6)  # noqa: PLR2004
     return (
@@ -239,7 +285,8 @@ def make_alpha_palette(
 
     Returns
     -------
-    Colour palette from the base color. The first color is the base color
+    :
+        Colour palette from the base color. The first color is the base color
     """
     if isinstance(color, ColorPalette):
         color = color._palette[0]
