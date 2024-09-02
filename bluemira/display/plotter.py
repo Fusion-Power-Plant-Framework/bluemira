@@ -82,7 +82,14 @@ class ViewDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj: Any, _) -> tuple[np.ndarray, np.ndarray, float, str]:
-        """Get the view tuple"""
+        """
+        Get the view tuple
+
+        Returns
+        -------
+        :
+            the view attributes from the instance or defaults.
+        """
         if obj is None:
             return self._default
 
@@ -145,7 +152,12 @@ class DictOptionsDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj: Any, _) -> Callable[[], dict[str, Any]] | dict[str, Any]:
-        """Get the options dictionary"""
+        """
+        Returns
+        -------
+        :
+            the options dictionary
+        """
         if obj is None:
             return lambda: self.default
 
@@ -217,7 +229,12 @@ class DefaultPlotOptions:
 
     @property
     def view_placement(self) -> BluemiraPlacement:
-        """Get view as BluemiraPlacement"""
+        """
+        Returns
+        -------
+        :
+            the view as BluemiraPlacement
+        """
         return BluemiraPlacement(*self.view)
 
 
@@ -235,7 +252,10 @@ class PlotOptions(Options):
 
 def get_default_options() -> PlotOptions:
     """
-    Returns the default plot options.
+    Returns
+    -------
+    :
+        the default plot options.
     """
     return PlotOptions()
 
@@ -279,7 +299,12 @@ class BasePlotter(ABC):
 
     @property
     def ax(self) -> Axes:
-        """Axes object"""
+        """
+        Returns
+        -------
+        :
+            the axes object
+        """
         try:
             return self._ax
         except AttributeError:
@@ -362,7 +387,15 @@ class BasePlotter(ABC):
         *,
         show: bool = True,
     ) -> Axes:
-        """2D plotting method"""
+        """
+        2D plotting method
+
+        Returns
+        -------
+        :
+            The axes with the plotted data.
+
+        """
         self._check_obj(obj)
 
         if not self._check_options():
@@ -402,7 +435,15 @@ class BasePlotter(ABC):
         *,
         show: bool = True,
     ) -> Axes:
-        """3D plotting method"""
+        """
+        3D plotting method
+
+        Returns
+        -------
+        :
+            The axes with the plotted data.
+
+        """
         self._check_obj(obj)
 
         if not self._check_options():
@@ -432,13 +473,30 @@ class PointsPlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):  # noqa: ARG004
+        """
+        Returns
+        -------
+        :
+           Always returns True.
+
+        Notes
+        -----
+        This method currently always returns True.
+        """
         # TODO @DanShort12: create a function that checks if the obj is a
         # cloud of 3D or 2D points
         # 3573
         return True
 
     def _check_options(self):
-        # Check if nothing has to be plotted
+        """
+        Check if nothing has to be plotted
+
+        Returns
+        -------
+        :
+            True if the `show_points` option is set to True, otherwise False.
+        """
         return bool(self.options.show_points)
 
     def _populate_data(self, obj: npt.ArrayLike):
@@ -470,12 +528,30 @@ class WirePlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):
+        """
+        Returns
+        -------
+        :
+            Always returns True if the object is a `BluemiraWire`.
+
+        Raises
+        ------
+        TypeError
+            If the object is not an instance of `BluemiraWire`.
+        """
         if not isinstance(obj, BluemiraWire):
             raise TypeError(f"{obj} must be a BluemiraWire")
         return True
 
     def _check_options(self):
-        # Check if nothing has to be plotted
+        """
+        Check if nothing has to be plotted
+
+        Returns
+        -------
+        :
+            True if nothing has to be plotted, otherwise False.
+        """
         return not (not self.options.show_points and not self.options.show_wires)
 
     def _populate_data(self, obj: BluemiraWire):
@@ -514,12 +590,30 @@ class FacePlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj: BluemiraFace):
+        """
+        Returns
+        -------
+        :
+            Always returns True if the object is a `BluemiraFace`.
+
+        Raises
+        ------
+        TypeError
+            If the object is not an instance of `BluemiraFace`.
+        """
         if not isinstance(obj, BluemiraFace):
             raise TypeError(f"{obj} must be a BluemiraFace")
         return True
 
     def _check_options(self):
-        # Check if nothing has to be plotted
+        """
+        Check if nothing has to be plotted
+
+        Returns
+        -------
+        :
+            True if nothing has to be plotted, otherwise False.
+        """
         return not (
             not self.options.show_points
             and not self.options.show_wires
@@ -577,6 +671,17 @@ class ComponentPlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj: Component):
+        """
+        Returns
+        -------
+        :
+            Always returns True if the object is a `BluemiraComponent`.
+
+        Raises
+        ------
+        TypeError
+            If the object is not an instance of `BluemiraComponent`.
+        """
         import bluemira.base.components  # noqa: PLC0415
 
         if not isinstance(obj, bluemira.base.components.Component):
@@ -584,7 +689,14 @@ class ComponentPlotter(BasePlotter):
         return True
 
     def _check_options(self):
-        # Check if nothing has to be plotted
+        """
+        Check if nothing has to be plotted
+
+        Returns
+        -------
+        :
+            True if nothing has to be plotted, otherwise False.
+        """
         return not (
             not self.options.show_points
             and not self.options.show_wires
@@ -641,6 +753,11 @@ def _validate_plot_inputs(
     ------
     DisplayError
         Number of options not equal to number of parts
+
+    Returns
+    -------
+    :
+        validated lists of parts and options
     """
     if not isinstance(parts, list):
         parts = [parts]
@@ -662,7 +779,10 @@ def _get_plotter_class(
     part: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
 ):
     """
-    Get the plotting class for a BluemiraGeo object.
+    Returns
+    -------
+    :
+        the plotting class for a BluemiraGeo object.
 
     Raises
     ------
@@ -709,6 +829,11 @@ def plot_2d(
         Whether or not to show the plot immediately (default=True). Note
         that if using iPython or Jupyter, this has no effect; the plot is shown
         automatically.
+
+    Returns
+    -------
+    :
+        The axes with the plotted data.
     """
     parts, options = _validate_plot_inputs(parts, options)
 
@@ -745,6 +870,11 @@ def plot_3d(
         Whether or not to show the plot immediately in the console. (default=True). Note
         that if using iPython or Jupyter, this has no effect; the plot is shown
         automatically.
+
+    Returns
+    -------
+    :
+        The axes with the plotted data.
     """
     parts, options = _validate_plot_inputs(parts, options)
 
@@ -801,8 +931,8 @@ class Plottable:
 
         Returns
         -------
-        axes
-            The axes that the plot has been displayed onto.
+        :
+            The axes with the plotted data.
         """
         return self._plotter.plot_2d(self, ax=ax, show=show)
 
@@ -812,13 +942,19 @@ class Plottable:
 
         Returns
         -------
-        axes
-            The axes that the plot has been displayed onto.
+        :
+            The axes with the plotted data.
         """
         return self._plotter.plot_3d(self, ax=ax, show=show)
 
 
 def _get_ndim(coords: Coordinates) -> int:
+    """
+    Returns
+    -------
+    :
+        The number of dimensions in the coordinate data. Returns at least 2.
+    """
     count = 0
     length = coords.shape[1]
     for c in coords.xyz:
@@ -829,6 +965,14 @@ def _get_ndim(coords: Coordinates) -> int:
 
 
 def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
+    """
+    Returns
+    -------
+    :
+        A sorted list of axis labels ("x", "y", "z") indicating which
+        dimensions have variability.
+    """
+    length = array.shape[1]
     axes = ["x", "y", "z"]
     dims = [k for i, k in enumerate(axes) if not np.allclose(array[i][0], array[i])]
     if len(dims) == 1:

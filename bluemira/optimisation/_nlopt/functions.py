@@ -39,6 +39,12 @@ class _NloptFunction:
         self.bounds = bounds
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
+        """
+        Returns
+        -------
+        :
+            The approximated derivative of the function at `x`.
+        """
         return approx_derivative(self.f, x, bounds=self.bounds, f0=self.f0)
 
     def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
@@ -77,20 +83,42 @@ class ObjectiveFunction(_NloptFunction):
         self.prev_iter = np.zeros(n_variables, dtype=float)
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function."""
+        """
+        Execute the NLOpt objective function.
+
+        Returns
+        -------
+        :
+            The value of the objective function at `x`.
+        """
         if not np.any(np.isnan(x)):
             self._store_x(x)
         return self._call_inner(x, grad)
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function, recording the iteration history."""
+        """
+        Execute the NLOpt objective function, recording the iteration history.
+
+        Returns
+        -------
+        :
+            The value of the objective function at `x`,
+            with the iteration history recorded.
+        """
         f_x = self._call_inner(x, grad)
         self.history.append((np.copy(x), f_x))
         self.prev_iter = self.history[-1][0]
         return f_x
 
     def _call_inner(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the objective function in the form required by NLOpt."""
+        """
+        Execute the objective function in the form required by NLOpt.
+
+        Returns
+        -------
+        :
+            The value of the objective function at `x`.
+        """
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
         self.f0 = self.f(x)
