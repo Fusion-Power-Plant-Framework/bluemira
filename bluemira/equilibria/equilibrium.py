@@ -301,8 +301,7 @@ class FixedPlasmaEquilibrium(MHDState):
 
         profiles = CustomProfile.from_eqdsk(e)
 
-        cls._eqdsk = e
-        return cls(
+        self = cls(
             grid,
             lcfs,
             profiles,
@@ -311,6 +310,8 @@ class FixedPlasmaEquilibrium(MHDState):
             psi_b=psi_b,
             filename=filename,
         )
+        self._eqdsk = e
+        return self
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -666,7 +667,7 @@ class Breakdown(CoilSetMHDState):
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
         """
-        cls._eqdsk, grid, coilset, limiter = super()._get_eqdsk(
+        eqdsk, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
             to_cocos,
@@ -676,7 +677,9 @@ class Breakdown(CoilSetMHDState):
             full_coil=full_coil,
             **kwargs,
         )
-        return cls(coilset, grid, limiter=limiter, psi=cls._eqdsk.psi, filename=filename)
+        self = cls(coilset, grid, limiter=limiter, psi=eqdsk.psi, filename=filename)
+        self._eqdsk = eqdsk
+        return self
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -1029,13 +1032,10 @@ class Equilibrium(CoilSetMHDState):
         )
 
         profiles = CustomProfile.from_eqdsk(e)
-
-        cls._eqdsk = e
-
         o_points, x_points = find_OX_points(grid.x, grid.z, e.psi, limiter=limiter)
         jtor = profiles.jtor(grid.x, grid.z, e.psi, o_points=o_points, x_points=x_points)
 
-        return cls(
+        self = cls(
             coilset,
             grid,
             profiles=profiles,
@@ -1045,6 +1045,10 @@ class Equilibrium(CoilSetMHDState):
             jtor=jtor,
             filename=filename,
         )
+
+        self._eqdsk = e
+
+        return self
 
     def to_dict(self, qpsi_calcmode: int = 0) -> dict[str, Any]:
         """
