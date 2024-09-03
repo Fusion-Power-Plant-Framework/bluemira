@@ -18,7 +18,12 @@ class BluemiraError(Exception):
 
     def __str__(self) -> str:
         """
-        Prettier handling of the Exception strings
+        Prettier handling of the Exception strings.
+
+        Returns
+        -------
+        :
+            The formatted exception string.
         """
         return fill(dedent(self.args[0]))
 

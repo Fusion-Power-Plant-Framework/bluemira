@@ -78,7 +78,7 @@ class LoggerAdapter(logging.Logger):
         **kwargs,
     ):
         loglevel = LogLevel(func.__name__)
-        return self._terminator_handler(
+        self._terminator_handler(
             func,
             colourise(
                 msg,
@@ -94,27 +94,25 @@ class LoggerAdapter(logging.Logger):
 
     def debug(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Debug"""
-        return self._base(super().debug, msg, *args, flush=flush, fmt=fmt, **kwargs)
+        self._base(super().debug, msg, *args, flush=flush, fmt=fmt, **kwargs)
 
     def info(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Info"""
-        return self._base(super().info, msg, *args, flush=flush, fmt=fmt, **kwargs)
+        self._base(super().info, msg, *args, flush=flush, fmt=fmt, **kwargs)
 
     def warning(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Warning"""
-        return self._base(
+        self._base(
             super().warning, f"WARNING: {msg}", *args, flush=flush, fmt=fmt, **kwargs
         )
 
     def error(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Error"""
-        return self._base(
-            super().error, f"ERROR: {msg}", *args, flush=flush, fmt=fmt, **kwargs
-        )
+        self._base(super().error, f"ERROR: {msg}", *args, flush=flush, fmt=fmt, **kwargs)
 
     def critical(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Critical"""
-        return self._base(
+        self._base(
             super().critical, f"CRITICAL: {msg}", *args, flush=flush, fmt=fmt, **kwargs
         )
 
@@ -128,9 +126,7 @@ class LoggerAdapter(logging.Logger):
     ):
         """Unmodified logging"""
         func = getattr(super(), LogLevel(loglevel).name.lower())
-        return self._base(
-            func, msg, *args, flush=flush, fmt=False, _clean=True, **kwargs
-        )
+        self._base(func, msg, *args, flush=flush, fmt=False, _clean=True, **kwargs)
 
     @staticmethod
     def _terminator_handler(
@@ -252,6 +248,11 @@ def colourise(
         The width of the box, default = 73 (leave this alone for best results)
     colour:
         The colour to print the text in from `bluemira.base.constants.ANSI_COLOR`
+
+    Returns
+    -------
+    :
+        colourised string
     """
     text = _bm_print(string, width=width, single_flush=flush) if fmt else string
 
@@ -292,9 +293,14 @@ def logger_setup(
     level:
         The initial logging level to be printed to the console, default = INFO.
 
+    Returns
+    -------
+    :
+        The logger object.
+
     Notes
     -----
-    set to debug initially
+    set to debug initially.
     """
     logging.setLoggerClass(LoggerAdapter)
     root_logger = logging.getLogger("")
@@ -370,6 +376,11 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
         The named logger to get the level for.
     as_str
         If True then return the logging level as a string, else as an int.
+
+    Returns
+    -------
+    :
+        The logging level.
     """
     logger = logging.getLogger(logger_name)
 

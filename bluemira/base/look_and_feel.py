@@ -184,36 +184,61 @@ def count_slocs(
 def bluemira_critical(string: str):
     """
     Standard template for bluemira critical errors.
+
+    Parameters
+    ----------
+    string:
+        The string to log at critical level
     """
-    return LOGGER.critical(string)
+    LOGGER.critical(string)
 
 
 def bluemira_error(string: str):
     """
     Standard template for bluemira errors.
+
+    Parameters
+    ----------
+    string:
+        The string to log at error level
     """
-    return LOGGER.error(string)
+    LOGGER.error(string)
 
 
 def bluemira_warn(string: str):
     """
     Standard template for bluemira warnings.
+
+    Parameters
+    ----------
+    string:
+        The string to log at warning level
     """
-    return LOGGER.warning(string)
+    LOGGER.warning(string)
 
 
 def bluemira_print(string: str):
     """
     Standard template for bluemira information messages.
+
+    Parameters
+    ----------
+    string:
+        The string to log at info level
     """
-    return LOGGER.info(string)
+    LOGGER.info(string)
 
 
 def bluemira_debug(string: str):
     """
     Standard template for bluemira debugging.
+
+    Parameters
+    ----------
+    string:
+        The string to log at debug level
     """
-    return LOGGER.debug(string)
+    LOGGER.debug(string)
 
 
 def _bluemira_clean_flush(
