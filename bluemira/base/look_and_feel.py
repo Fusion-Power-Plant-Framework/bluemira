@@ -267,13 +267,8 @@ def bluemira_critical(string: str):
     ----------
     string:
         The string to log at critical level
-
-    Returns
-    -------
-    :
-        The critical error logged string
     """
-    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
+    LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
 
 def bluemira_error(string: str):
@@ -284,13 +279,8 @@ def bluemira_error(string: str):
     ----------
     string:
         The string to log at error level
-
-    Returns
-    -------
-    :
-        The error logged string
     """
-    return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
+    LOGGER.error(colourise(f"ERROR: {string}", color="red"))
 
 
 def bluemira_warn(string: str):
@@ -301,13 +291,8 @@ def bluemira_warn(string: str):
     ----------
     string:
         The string to log at warning level
-
-    Returns
-    -------
-    :
-        The warning logged string
     """
-    return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
+    LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
 
 
 def bluemira_print(string: str):
@@ -318,13 +303,8 @@ def bluemira_print(string: str):
     ----------
     string:
         The string to log at info level
-
-    Returns
-    -------
-    :
-        The info logged string
     """
-    return LOGGER.info(colourise(string, color="blue"))
+    LOGGER.info(colourise(string, color="blue"))
 
 
 def bluemira_debug(string: str):
@@ -335,13 +315,8 @@ def bluemira_debug(string: str):
     ----------
     string:
         The string to log at debug level
-
-    Returns
-    -------
-    :
-        The debug logged string
     """
-    return LOGGER.debug(colourise(string, color="green"))
+    LOGGER.debug(colourise(string, color="green"))
 
 
 def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue") -> str:
