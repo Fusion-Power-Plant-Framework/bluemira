@@ -830,7 +830,7 @@ that uses the ``_opt_currents_expand_mat`` CoilSet property.
 .. Note::
  It should be noted that the derivative vector returned by the ``df_constraint`` function
  is matmul'd by the ``_opt_currents_expand_mat`` matrix, which effectively sums the
- derivatives of the coils in each Circuit. This is valid you are taking the derivative
+ derivatives of the coils in each Circuit. This is valid as you are taking the derivative
  with respect to the same current value, per coil in each circuit.
 
  This converts the derivative vector into the correct shape the optimiser expects.
@@ -849,7 +849,7 @@ mirrored about the :math:`z=0` plane (as well as sharing the same current).
 This further reduces the number of degrees of freedom in a position optimisation process,
 by the number of SymmetricCircuits in the CoilSet.
 
-Say you have a double-null equilibria and 14 up-down symmetric Coils.
+Say you have a double-null equilibria and 2N up-down symmetric Coils.
 You can model this using a CoilSet with 7 SymmetricCircuits,
 where each coil pair is the same SymmetricCircuit.
 
