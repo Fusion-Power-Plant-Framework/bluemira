@@ -406,7 +406,19 @@ S_TO_YR = ureg.Quantity(1, ureg.second).to(ureg.year).magnitude
 
 def units_compatible(unit_1: str, unit_2: str) -> bool:
     """
-    Test if units are compatible
+    Test if units are compatible.
+
+    Parameters
+    ----------
+    unit_1:
+        unit 1 string
+    unit_2:
+        unit 2 string
+
+    Returns
+    -------
+    :
+        True if compatible, False otherwise
     """
     try:
         raw_uc(1, unit_1, unit_2)

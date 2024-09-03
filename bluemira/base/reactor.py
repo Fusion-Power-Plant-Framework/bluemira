@@ -114,14 +114,24 @@ class BaseManager(abc.ABC):
 
     def tree(self) -> str:
         """
-        Get the component tree
+        Get the component tree.
+
+        Returns
+        -------
+        :
+            The component tree as a string.
         """
         return self.component().tree()
 
     @staticmethod
     def _validate_cad_dims(*dims: str) -> tuple[str, ...]:
         """
-        Validate showable CAD dimensions
+        Validate showable CAD dimensions.
+
+        Returns
+        -------
+        :
+            The validated dimensions
 
         Raises
         ------
@@ -142,7 +152,12 @@ class BaseManager(abc.ABC):
     @staticmethod
     def _validate_plot_dims(*dims) -> tuple[str, ...]:
         """
-        Validate showable plot dimensions
+        Validate showable plot dimensions.
+
+        Returns
+        -------
+        :
+            The validated dimensions
 
         Raises
         ------
@@ -167,7 +182,12 @@ class BaseManager(abc.ABC):
         component_filter: Callable[[ComponentT], bool] | None,
     ) -> ComponentT:
         """
-        Filter a component tree
+        Filter a component tree.
+
+        Returns
+        -------
+        :
+            The filtered component tree.
 
         Notes
         -----
@@ -215,7 +235,18 @@ class FilterMaterial:
         super().__setattr__("reject_material", reject_material)
 
     def __call__(self, node: ComponentT) -> bool:
-        """Filter node based on material include and exclude rules"""
+        """Filter node based on material include and exclude rules.
+
+        Parameters
+        ----------
+        node:
+            The node to filter.
+
+        Returns
+        -------
+        :
+            True if the node should be kept, False otherwise.
+        """
         if hasattr(node, "material"):
             return self._apply_filters(node.material)
         return True
@@ -278,6 +309,11 @@ class ComponentManager(BaseManager):
     def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
+
+        Returns
+        -------
+        :
+            The underlying component, with all descendants.
         """
         return self._component
 
@@ -429,12 +465,28 @@ class Reactor(BaseManager):
         self,
         with_components: list[ComponentManager] | None = None,
     ) -> Component:
-        """Return the component tree."""
+        """Return the component tree.
+
+        Parameters
+        ----------
+        with_components:
+            The components to include in the tree. If None, all components
+
+        Returns
+        -------
+        :
+            The list of components.
+        """
         return self._build_component_tree(with_components)
 
     def time_since_init(self) -> float:
         """
-        Get time since initialisation
+        Get time since initialisation.
+
+        Returns
+        -------
+        :
+            The time since initialisation.
         """
         return time.perf_counter() - self.start_time
 
@@ -443,6 +495,11 @@ class Reactor(BaseManager):
         with_components: list[ComponentManager] | None = None,
     ) -> Component:
         """Build the component tree from this class's annotations.
+
+        Returns
+        -------
+        :
+            The component tree.
 
         Raises
         ------

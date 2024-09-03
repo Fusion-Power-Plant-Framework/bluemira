@@ -63,6 +63,11 @@ class ParameterFrame:
         """
         Prevent instantiation of this class.
 
+        Returns
+        -------
+        ParameterFrame
+            The new instance of the class
+
         Raises
         ------
         TypeError
@@ -117,7 +122,13 @@ class ParameterFrame:
 
     @classmethod
     def _get_types(cls) -> dict[str, GenericAlias]:
-        """Gets types for the frame even with annotations imported"""
+        """Gets types for the frame even with annotations imported.
+
+        Returns
+        -------
+        :
+            The field name to type mapping of the frame
+        """
         frame_type_hints = get_type_hints(cls)
         return {f.name: frame_type_hints[f.name] for f in fields(cls)}
 
@@ -150,7 +161,17 @@ class ParameterFrame:
                 self.update_values(new_values)
 
     def get_values(self, *names: str) -> tuple[ParameterValueType, ...]:
-        """Get values of a set of Parameters
+        """Get values of a set of Parameters.
+
+        Parameters
+        ----------
+        names
+            The names of the Parameters to get the values of.
+
+        Returns
+        -------
+        :
+            The values of the Parameters in the order they were requested.
 
         Raises
         ------
@@ -219,6 +240,11 @@ class ParameterFrame:
     ) -> ParameterFrameT:
         """Initialise an instance from a dictionary.
 
+        Returns
+        -------
+        :
+            A new ParameterFrame instance
+
         Raises
         ------
         ValueError
@@ -249,6 +275,11 @@ class ParameterFrame:
     ) -> ParameterFrameT:
         """Initialise an instance from another ParameterFrame.
 
+        Returns
+        -------
+        :
+            A new ParameterFrame instance
+
         Raises
         ------
         ValueError
@@ -273,6 +304,11 @@ class ParameterFrame:
         allow_unknown: bool = False,
     ) -> ParameterFrameT:
         """Initialise an instance from a JSON file, string, or reader.
+
+        Returns
+        -------
+        :
+            A new ParameterFrame instance
 
         Raises
         ------
@@ -307,6 +343,11 @@ class ParameterFrame:
         local_params, when defined in both.
         All references to Parameters in global_params are maintained
         (i.e. there's no copying).
+
+        Returns
+        -------
+        :
+            A new ParameterFrame instance
 
         Raises
         ------
@@ -346,6 +387,18 @@ class ParameterFrame:
         member: str,
         member_param_data: ParamDictT,
     ) -> Parameter:
+        """Convert a member's data to a Parameter object.
+
+        Returns
+        -------
+        :
+            The Parameter object
+
+        Raises
+        ------
+        ValueError
+            Unit conversion failed
+        """
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
             _validate_units(member_param_data, value_type)
@@ -358,7 +411,13 @@ class ParameterFrame:
         )
 
     def to_dict(self) -> dict[str, dict[str, Any]]:
-        """Serialise this ParameterFrame to a dictionary."""
+        """Serialise this ParameterFrame to a dictionary.
+
+        Returns
+        -------
+        :
+            The serialised data
+        """
         out = {}
         for param_name in self.__dataclass_fields__:
             if self.__dataclass_fields__[param_name].type == ClassVar:
@@ -423,7 +482,12 @@ class ParameterFrame:
 
     def __str__(self) -> str:
         """
-        Pretty print ParameterFrame
+        Pretty print ParameterFrame.
+
+        Returns
+        -------
+        :
+            The formatted ParameterFrame
         """
         return self.tabulate()
 
@@ -487,7 +551,19 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
 
 
 def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
-    """Reconstruct unit from its dimensionality"""
+    """
+    Reconstruct unit from its dimensionality.
+
+    Parameters
+    ----------
+    dimensionality:
+        The dimensionality of the unit
+
+    Returns
+    -------
+    :
+        The reconstructed unit
+    """
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
     return pint.Unit(
@@ -496,7 +572,18 @@ def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
 
 
 def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
-    """Converts base unit to a composite unit if they exist in the defaults"""
+    """Converts base unit to a composite unit if they exist in the defaults.
+
+    Parameters
+    ----------
+    unit:
+        The unit to convert
+
+    Returns
+    -------
+    :
+        The converted unit
+    """
     dim_keys = list(combined_unit_dimensions.keys())
     dim_val = list(combined_unit_dimensions.values())
     with suppress(ValueError):
@@ -525,6 +612,10 @@ def _convert_angle_units(
     angle_unit
         the angle unit in `orig_unit`
 
+    Returns
+    -------
+    :
+        The converted unit
     """
     breaking_units = ["steradian", "square_degree"]
     new_angle_unit = base_unit_defaults["[angle]"]
@@ -548,6 +639,11 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
     need to be readded to units as they will be removed by the dimensionality conversion.
 
     Angle units are dimensionless and conversions between them are not robust
+
+    Returns
+    -------
+    :
+        The fixed unit
 
     Raises
     ------
@@ -584,6 +680,11 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
     is therefore dealt with after other standard unit conversions.
 
     Only first order of both of these units is dealt with.
+
+    Returns
+    -------
+    :
+        The converted unit
     """
     dpa_str = (
         ("dpa." if "displacements_per_atom" in numerator else "dpa^-1.") if dpa else ""

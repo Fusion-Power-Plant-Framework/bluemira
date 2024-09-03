@@ -54,12 +54,18 @@ class LogLevel(Enum):
 
 
 class Formatter(logging.Formatter):
-    """Custom formatter for our logging"""
+    """Custom formatter for our logging."""
 
     flush_previous = False
 
     def format(self, record) -> str:
-        """Format logging strings"""
+        """Format logging strings.
+
+        Returns
+        -------
+        :
+            The formatted log string.
+        """
         if record.msg.startswith("\r"):
             self.flush_previous = True
         elif self.flush_previous:
@@ -82,9 +88,14 @@ def logger_setup(
     level:
         The initial logging level to be printed to the console, default = INFO.
 
+    Returns
+    -------
+    :
+        The logger object.
+
     Notes
     -----
-    set to debug initially
+    set to debug initially.
     """
     root_logger = logging.getLogger("")
     bm_logger = logging.getLogger("bluemira")
@@ -159,6 +170,11 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
         The named logger to get the level for.
     as_str
         If True then return the logging level as a string, else as an int.
+
+    Returns
+    -------
+    :
+        The logging level.
     """
     logger = logging.getLogger(logger_name)
 
