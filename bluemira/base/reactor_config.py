@@ -300,6 +300,7 @@ class ReactorConfig:
 
         Returns
         -------
+        :
             Tuple of the file data and the path to the file if value is a path.
 
         Raises
@@ -309,7 +310,7 @@ class ReactorConfig:
 
         Notes
         -----
-            If the value is not a path, returns the value and the passed in rel_path.
+        If the value is not a path, returns the value and the passed in rel_path.
         """
         if not isinstance(value, str):
             return value, rel_path
