@@ -770,37 +770,112 @@ From this inscribed rectangle the maximum current can be calculated and fed into
 current optimiser.
 
 Circuits
-********
+""""""""
 
-If one wants to run the solver for double null equilibria, it might be
-expected that such an equilibrium should be symmetrical about :math:`z = 0`.
-In this case, it makes sense for the coil positions to be up-down symmetric
-and for them to carry the same current. In reality, these coils might be in an actual circuit
-that allows them to be controlled simultaneously and maintain proportional currents.
-To replicate this setup, a Circuit class treating a pair of up-down symmetric
-coils as one has been developed. We instantiate a Circuit by specifying the position,
-dimensions, and current of a coil in the upper half plane. A *virtual* coil (with the same parameterisation
-except mirrored position) is then considered in calculations by the equilibrium solver.
-This second coil is considered identical in every way to the coil in the
-upper half plane except with negative :math:`z` position.
+:py:class:`~bluemira.equilibria.coils._grouping.CoilSet` s
+may contain :py:class:`~bluemira.equilibria.coils._coil.Coil` objects as well as
+:py:class:`~bluemira.equilibria.coils._grouping.Circuit` objects. Circuits are a way to
+group coils together (they are derived from a :py:class:`~bluemira.equilibria.coils._grouping.CoilGroup` object),
+to make them share a current value.
 
-A Coilset object can then be populated with Circuits such that when the solver
-intends to use a coil from this coilset for a calculation, it will take into
-consideration a second identical coil that will influence the result. In particular,
-this is useful when calculating fields semi-analytically or through the use of Green's functions
-and can be used throughout the solver to reduce the number of degrees of
-freedom by halving the number of currents used to populate matrices used in optimisation calculations.
-Throughout each iteration of the solver, each *virtual* coil in the lower
-half plane will maintain the same current as its symmetrical counterpart,
-resulting in a converged (or not) equilbrium that should be symmetric as a result
-of a perfectly symmetrical system of coils to aid in convergence.
+When the current value of a Circuit is set, the current value of all coils in the Circuit will be set to the same value.
+
+Using Circuits in an optimisation
+*********************************
+
+When performing an equilbrium current optimisation using a CoilSet with Circuits in it,
+the fact that all Coils in a Circuit share the same current value means the
+number of degress of freedom of the CoilSet will be reduced by the number of Coils in each Circuit.
+
+This reduced current state vector is used by the optimiser to optimise the currents of the CoilSet.
+However, when calculating optmisation constraints and the figure of merit,
+this reduced vector is **expanded** into the full current vector by multiplying it with the
+``_opt_currents_expand_mat`` property of the CoilSet.
+
+The following is a code snippet of how this is done (see the note below for why
+the derrivtive function is wrapped this way):
+
+.. code-block::
+
+    if coilset._contains_circuits:
+        # wrap the constraint function
+        @functools.wraps(f.f_constraint)
+        def wrapped_f_c(x, f=f):
+            return f.f_constraint(coilset._opt_currents_expand_mat @ x)
+
+        f_c = wrapped_f_c
+
+        if df_c is not None:
+            # wrap the derivative function
+            @functools.wraps(f.df_constraint)
+            def wrapped_df_c(x, f=f):
+                df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
+                return df_res @ coilset._opt_currents_expand_mat
+
+            df_c = wrapped_df_c
+
+[Refer to :py:meth:`~bluemira.equilibria.optimisation.problem.base.CoilsetOptimisationProblem._make_numerical_constraints`]
+
+The ``_opt_currents_expand_mat`` is a matrix with 1'S in the columns corresponding to the Coils in each Circuit and 0's elsewhere.
+
+When implementing a constraint, it should be assumed that the full current vector
+(i.e. length equal to the number of coils) is passed into the constraint function.
+
+Special care is needed, however, when implementing a figure of merit (FoM),
+in a :py:class:`~bluemira.equilibria.optimisation.problem.base.CoilsetOptimisationProblem` (COP)
+class that operates on the current vector.
+
+FoMs in COPs are implemented in a more bespoke fashion than constraints are and thus are
+more flexible. Usually, one has access to the full :py:class:`~bluemira.equilibria.equilbrium.Equilibrium` object when
+implementing the FoM function and may use the ``_opt_currents_expand_mat``
+from a CoilSet
+
+Refer to :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.Tikhonov` for an example of a FoM
+that uses the ``_opt_currents_expand_mat`` CoilSet property.
 
 .. Note::
-    When solving purely symmetric equilibria with a symmetric ``CoilSet``, we recommend
-    you use the ``force_symmetry`` flag in ``Equilibrium``. This solves the
-    Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
+    It should be noted that the derivative vector returned by the ``df_constraint`` function
+    is multiplied by the ``_opt_currents_expand_mat`` matrix, which effectively sums the
+    derivatives of the coils in each Circuit. This is valid as as you are taking the derivative
+    with respect to the same current value, per coil in each circuit.
+
+    This converts the derivative vector into the correct shape the optimiser expects.
+
+    Refer to `PR #3292 <https://github.com/Fusion-Power-Plant-Framework/bluemira/pull/3292>`_ for more information.
+
+SymmetricCircuit
+*****************
+
+In the case where one wants to solve a double null equilibrium, it is expected that the
+equilibrium should be symmetrical about :math:`z=0`.
+
+The :py:class:`~bluemira.equilibria.coils._grouping.SymmetricCircuit` class has
+been developed as a special case of a :py:class:`~bluemira.equilibria.coils._grouping.Circuit`.
+It can contain only two coils, where the coil's positions are
+mirrored about the :math:`z=0` plane and they share the same current.
+
+This reduces the degrees of freedom in a coil position optimisation,
+by the number of SymmetricCircuits in the CoilSet.
+
+Say you have a double-null equilibria and N up-down symmetric Coils.
+You can model this using a CoilSet with N/2 SymmetricCircuits,
+where each coil pair is in the same SymmetricCircuit.
+
+The array of optimisable positions in such as CoilSet would have N/2 values, one for each
+SymmetricCircuit and the array of optimisable currents would also have N/2 values.
+
+Halving the number of degrees of freedom in both a current and position optimisations
+can aid in the convergence and performance of the optimsation, as well as ensuring
+perfect up-down symmetry in the final equilibrium.
+
+.. Note::
+    When solving purely symmetric equilibria with a symmetric CoilSet (using only
+    SymmetricCircuits), one may also set the ``force_symmetry`` flag in ``Equilibrium`` to ``True``.
+    This solves the Grad-Shafranov equation on half of the FD grid and mirrors the result to the other
     half, resulting in a more stable solution. This approach presently only works for
-    grids centred around ``z = 0``.
+    grids centred around :math:`z=0`.
+
+    Experiment with the ``force_symmetry`` flag to see if it improves convergence in your case.
 
 Appendix 1: Green’s functions and discretised coils
 ---------------------------------------------------
