@@ -792,9 +792,10 @@ However, when calculating optmisation constraints and the figure of merit,
 this reduced vector is **expanded** into the full current vector by multiplying it with the
 ``_opt_currents_expand_mat`` property of the CoilSet.
 
-The following is a code snippet of how this is done (see the note below why it is done this way for the derrivtive function):
+The following is a code snippet of how this is done (see the note below for why
+the derrivtive function is wrapped this way):
 
-.. code-block:: python
+.. code-block::
 
     if coilset._contains_circuits:
         # wrap the constraint function

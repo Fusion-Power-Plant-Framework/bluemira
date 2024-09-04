@@ -26,7 +26,6 @@ from sybil.parsers.rest import (
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.base.reactor import ComponentManager
-from bluemira.equilibria.coils import CoilSet
 from bluemira.geometry.tools import make_circle
 
 
@@ -44,7 +43,6 @@ def setup_sybil_namespace(namespace):
     namespace["plasma_shape"] = make_circle()
     namespace["wall_shape"] = make_circle()
     namespace["breeding_zone_shape"] = make_circle()
-    namespace["coilset"] = CoilSet()
     return namespace
 
 
