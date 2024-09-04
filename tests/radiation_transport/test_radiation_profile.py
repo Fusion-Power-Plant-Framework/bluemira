@@ -157,9 +157,9 @@ class TestCoreRadiation:
     def test_calculate_core_distribution(self):
         # calls calculate_core_distribution() internally
         self.source.core_rad.calculate_core_radiation_map()
-        assert np.isclose(np.sum(self.source.core_rad.rad_tot), 273.55834367261707)
-        assert np.isclose(np.sum(self.source.core_rad.x_tot), 55614.05333940474)
-        assert np.isclose(np.sum(self.source.core_rad.z_tot), 239.84335614864912)
+        assert np.sum(self.source.core_rad.rad_tot) == pytest.approx(273.5583)
+        assert np.sum(self.source.core_rad.x_tot) == pytest.approx(55614.0533)
+        assert np.sum(self.source.core_rad.z_tot) == pytest.approx(239.84336)
 
     def test_core_flux_tube_pol_t(self):
         flux_tube = self.source.eq.get_flux_surface(0.99)
