@@ -122,6 +122,16 @@ class TestCoreRadiation:
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
+    def test_rad_sol_by_psi_n(self):
+        rad_centre = self.source.rad_sol_by_psi_n(0.1).max()
+        rad_edge = self.source.rad_sol_by_psi_n(0.9).max()
+        assert rad_centre > rad_edge
+
+    def test_rad_by_psi_n(self):
+        rad_centre = self.source.rad_by_psi_n(0.1).max()
+        rad_edge = self.source.rad_by_psi_n(0.9).max()
+        assert rad_centre > rad_edge
+
     def test_core_electron_density_temperature_profile(self):
         ne_core = self.profiles.ne
         te_core = self.profiles.te
