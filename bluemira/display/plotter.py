@@ -388,8 +388,9 @@ class BasePlotter(ABC):
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
             # self._data_to_plot is used for 2D plot
-            # TODO: probably better to rename self._data_to_plot into
+            # TODO @je-cook:  probably better to rename self._data_to_plot into
             #  self._projected_data or self._data2d
+            # 3572
             self._populate_data(obj)
             self._make_plot_3d()
             self._set_aspect_3d()
@@ -410,7 +411,9 @@ class PointsPlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):  # noqa: ARG004
-        # TODO: create a function that checks if the obj is a cloud of 3D or 2D points
+        # TODO @DanShort12: create a function that checks if the obj is a
+        # cloud of 3D or 2D points
+        # 3573
         return True
 
     def _check_options(self):
@@ -508,9 +511,10 @@ class FacePlotter(BasePlotter):
     def _populate_data(self, face):
         self._data = []
         self._wplotters = []
-        # TODO: the for must be done using face.shape.Wires because FreeCAD
+        # TODO @ivanmaione: the for must be done using face.shape.Wires because FreeCAD
         #  re-orient the Wires in the correct way for display. Find another way to do
         #  it (maybe adding this function to the freecadapi.
+        # 3574
         for w in face.shape.Wires:
             boundary = wire.BluemiraWire(w)
             wplotter = WirePlotter(self.options)
