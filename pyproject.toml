@@ -325,6 +325,7 @@ ignore-names = [
 "eudemo/eudemo/reactor.py" = ["ARG001"]
 "bluemira/codes/plasmod/mapping.py" = ["TD"]
 "bluemira/balance_of_plant/calculations.py" = ["TD"]
+"bluemira/fuel_cycle/*" = ["TD"]
 "{tests,eudemo/eudemo_tests}/*" = [
     "INP001",
     "PLR2004",
