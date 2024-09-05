@@ -122,6 +122,16 @@ class TestCoreRadiation:
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
+    def test_rad_sol_by_psi_n(self):
+        rad_centre = self.source.rad_sol_by_psi_n(0.1).max()
+        rad_edge = self.source.rad_sol_by_psi_n(0.9).max()
+        assert rad_centre > rad_edge
+
+    def test_rad_by_psi_n(self):
+        rad_centre = self.source.rad_by_psi_n(0.1).max()
+        rad_edge = self.source.rad_by_psi_n(0.9).max()
+        assert rad_centre > rad_edge
+
     def test_core_electron_density_temperature_profile(self):
         ne_core = self.profiles.ne
         te_core = self.profiles.te
@@ -143,6 +153,13 @@ class TestCoreRadiation:
         rad_tot = np.sum(np.array(self.source.core_rad.rad_mp, dtype=object), axis=0)
         assert len(self.source.core_rad.rad_mp) == 4
         assert rad_tot[0] > rad_tot[-1]
+
+    def test_calculate_core_distribution(self):
+        # calls calculate_core_distribution() internally
+        self.source.core_rad.calculate_core_radiation_map()
+        assert np.sum(self.source.core_rad.rad_tot) == pytest.approx(273.5583)
+        assert np.sum(self.source.core_rad.x_tot) == pytest.approx(55614.0533)
+        assert np.sum(self.source.core_rad.z_tot) == pytest.approx(239.84336)
 
     def test_core_flux_tube_pol_t(self):
         flux_tube = self.source.eq.get_flux_surface(0.99)
