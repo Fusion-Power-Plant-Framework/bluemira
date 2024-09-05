@@ -171,7 +171,8 @@ class CoilGroupFieldsMixin:
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
         """
-        # TODO Vectorise
+        # TODO @je-cook: Vectorise
+        # 3575
         x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
         pos = np.array([x, z])
         response = np.zeros((x.size, coil_grp.x.size, 2))
