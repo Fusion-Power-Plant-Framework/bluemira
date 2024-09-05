@@ -413,7 +413,7 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
     return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
 
 
-# TODO @je-cook: Raise issue/papercut to check if simplifying the
+# TODO @OceanNuclear : Raise issue/papercut to check if simplifying the
 # boolean expressions can yield
 # speedup or not, and if so, we should attempt to simplify it further.
 # E.g. the expression (-1 ((-1107 -1) | -1108)) can be simplified to (-1107 | -1108) -1;
