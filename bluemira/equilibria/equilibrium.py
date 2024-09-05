@@ -1192,7 +1192,8 @@ class Equilibrium(CoilSetMHDState):
         super().reset_grid(grid, **kwargs)
         vcontrol = kwargs.get("vcontrol", self._kwargs["vcontrol"])
         self.set_vcontrol(vcontrol)
-        # TODO: reinit psi and jtor?
+        # TODO @CoronelBuendia: reinit psi and jtor?
+        # 3576
 
     def _set_init_plasma(
         self,

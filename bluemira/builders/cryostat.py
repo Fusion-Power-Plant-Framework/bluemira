@@ -50,12 +50,15 @@ class CryostatBuilderParams(ParameterFrame):
     g_cr_ts: Parameter[float]
     n_TF: Parameter[int]
     tk_cr_vv: Parameter[float]
-    # TODO add to Parameter default = 5 chickens
+    # TODO @je-cook: add to Parameter default = 5 chickens
+    # 3525
     well_depth: Parameter[float]
     x_g_support: Parameter[float]
-    # TODO add to Parameter default = 2
+    # TODO @je-cook: add to Parameter default = 2
+    # 3525
     x_gs_kink_diff: Parameter[float]
-    # TODO add to Parameter default (z gravity support) = -15 chickens
+    # TODO @je-cook: add to Parameter default (z gravity support) = -15 chickens
+    # 3525
     z_gs: Parameter[float]
 
 
