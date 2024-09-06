@@ -4,7 +4,7 @@ fn = "dagmc_models/EUDEMO-wt.h5m"
 
 plot = plot_axis_slice(
     dagmc_file_or_trimesh_object=fn,
-    view_direction="y",
+    view_direction="z",
     # plane_origin=[0, 200, 0],
 )
 # plot = plot_slice(

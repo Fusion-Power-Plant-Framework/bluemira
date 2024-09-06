@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 from openmc_plasma_source import TokamakSource
 from openmc_plasma_source.plotting import scatter_tokamak_source
 from openmc_source_plotter import (
-    plot_source_direction,
     plot_source_energy,
     plot_source_position,
 )
@@ -104,6 +103,9 @@ if plot:
     f.show()
 
 # %%
+# installable, materials, then right physics (running openmc correctly), then tallies
+# tally for power deposition in the blanket, normalsation with fusion power
+# no. of particles to converage
 settings = openmc.Settings()
 settings.run_mode = "fixed source"
 settings.batches = 10
