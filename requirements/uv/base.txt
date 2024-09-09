@@ -46,7 +46,7 @@ imageio==2.35.1
     # via bluemira (pyproject.toml)
 joblib==1.4.2
     # via scikit-learn
-kiwisolver==1.4.5
+kiwisolver==1.4.7
     # via matplotlib
 llvmlite==0.43.0
     # via numba
@@ -118,7 +118,7 @@ pillow==10.4.0
     #   pyvista
 pint==0.24.3
     # via bluemira (pyproject.toml)
-platformdirs==4.2.2
+platformdirs==4.3.2
     # via pooch
 pooch==1.8.2
     # via pyvista

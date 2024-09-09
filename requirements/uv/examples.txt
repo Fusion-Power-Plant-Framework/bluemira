@@ -41,7 +41,7 @@ certifi==2024.8.30
     #   httpcore
     #   httpx
     #   requests
-cffi==1.17.0
+cffi==1.17.1
     # via argon2-cffi-bindings
 charset-normalizer==3.3.2
     # via requests
@@ -165,7 +165,7 @@ jupyterlab-server==2.27.3
     #   notebook
 jupytext==1.16.4
     # via bluemira (pyproject.toml)
-kiwisolver==1.4.5
+kiwisolver==1.4.7
     # via matplotlib
 llvmlite==0.43.0
     # via numba
@@ -284,7 +284,7 @@ pillow==10.4.0
     #   pyvista
 pint==0.24.3
     # via bluemira (pyproject.toml)
-platformdirs==4.2.2
+platformdirs==4.3.2
     # via
     #   jupyter-core
     #   pooch
@@ -381,7 +381,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==74.0.0
+setuptools==74.1.2
     # via jupyterlab
 six==1.16.0
     # via
@@ -440,7 +440,7 @@ traitlets==5.14.3
     #   nbformat
 typeguard==4.3.0
     # via bluemira (pyproject.toml)
-types-python-dateutil==2.9.0.20240821
+types-python-dateutil==2.9.0.20240906
     # via arrow
 typing-extensions==4.12.2
     # via
