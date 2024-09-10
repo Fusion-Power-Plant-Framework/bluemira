@@ -43,6 +43,7 @@ def parse_args(sys_args: list[str]) -> Args:
 
     Returns
     -------
+    :
         Parsed arguments
     """
     parser = ArgumentParser(description=__doc__)
@@ -76,7 +77,8 @@ def find_python_files(examples_dir: str, exclude_patterns: list[str]) -> list[st
 
     Returns
     -------
-        python paths in directory
+    :
+        Python paths in directory
     """
     return sorted([
         path
@@ -90,7 +92,8 @@ def run_example(file_path: str) -> bool:
 
     Returns
     -------
-    True if no errors, else False.
+    :
+        True if no errors, else False.
     """
     source = Path(file_path).read_text()
     try:
@@ -111,9 +114,10 @@ def run_examples(
 
     Returns
     -------
-    the list of examples run, along with a boolean indicating
-    whether there were any errors when running the example (True
-    indicating no errors, and False the opposite).
+    :
+        The list of examples run, along with a boolean indicating
+        whether there were any errors when running the example (True
+        indicating no errors, and False the opposite).
     """
     if not plotting_on:
         mpl.use("Agg")

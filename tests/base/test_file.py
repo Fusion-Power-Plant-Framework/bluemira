@@ -61,7 +61,8 @@ def file_manager_good(tmp_path_factory):
 
     Yields
     ------
-    file manager
+    :
+        File manager
     """
     file_gen_path = tmp_path_factory.mktemp("file_manager_gen")
     file_manager = FileManager(

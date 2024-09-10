@@ -53,7 +53,8 @@ def file_exists(good_file_path: str, isfile_ref: str):
 
     Yields
     ------
-    Mocked file
+    :
+        Mocked file
     """
 
     def new_isfile(path: str) -> bool:

@@ -34,7 +34,8 @@ def setup_sybil_namespace(namespace):
 
     Returns
     -------
-    expanded namespace for docstring code blocks
+    :
+        Expanded namespace for docstring code blocks
     """
     namespace["MyPlasma"] = type("MyPlasma", (ComponentManager,), {})
     namespace["MyTfCoils"] = type("MyTfCoils", (ComponentManager,), {})

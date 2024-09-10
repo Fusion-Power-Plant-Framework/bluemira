@@ -88,7 +88,8 @@ def patch_nmm_openmc():
 
     Yields
     ------
-    NeutronicsMaterialMaker package
+    :
+        NeutronicsMaterialMaker package
     """
     nmm = import_nmm()
     if value := nmm.material.OPENMC_AVAILABLE:

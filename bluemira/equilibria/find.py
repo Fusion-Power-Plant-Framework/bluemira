@@ -28,7 +28,7 @@ from bluemira.geometry.coordinates import (
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     import numpy.typing as npt
 
@@ -64,13 +64,14 @@ class PsiPoint:
         self.x, self.z = x, z
         self.psi = psi
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[float]:
         """
         Imbue PsiPoint with generator-like behaviour
 
         Yields
         ------
-        x z psi in order
+        :
+            x z psi in order
         """
         yield self.x
         yield self.z

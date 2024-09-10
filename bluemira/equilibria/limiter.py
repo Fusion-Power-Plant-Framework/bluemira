@@ -18,6 +18,8 @@ import numpy as np
 from bluemira.equilibria.plotting import LimiterPlotter
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     import numpy.typing as npt
     from matplotlib.pyplot import Axes
 
@@ -44,13 +46,14 @@ class Limiter:
         self.xz = cycle(np.array([x, z]).T)
         self._i = 0
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[npt.NDArray]:
         """
         Hacky phoenix iterator
 
         Yields
         ------
-        next element of xz
+        :
+            next element of xz
         """
         i = 0
         while i < len(self):

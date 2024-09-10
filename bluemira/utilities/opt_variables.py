@@ -16,9 +16,6 @@ from dataclasses import MISSING, Field, field
 from pathlib import Path
 from typing import TYPE_CHECKING, TextIO, TypedDict
 
-if TYPE_CHECKING:
-    import numpy.typing as npt
-
 import numpy as np
 from tabulate import tabulate
 from typing_extensions import NotRequired
@@ -28,7 +25,9 @@ from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.tools import json_writer
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Iterator
+
+    import numpy.typing as npt
 
 
 class OptVarVarDictValueT(TypedDict, total=False):
@@ -397,7 +396,7 @@ class OptVariablesFrame:
 
         return super().__new__(cls)
 
-    def __iter__(self) -> Generator[OptVariable, None, None]:
+    def __iter__(self) -> Iterator[OptVariable]:
         """
         Iterate over this frame's parameters.
 
@@ -406,7 +405,8 @@ class OptVariablesFrame:
 
         Yields
         ------
-        Each optimisation variable
+        :
+            Each optimisation variable
         """
         for field_name in self.__dataclass_fields__:  # type: ignore[attr-defined]
             yield getattr(self, field_name)

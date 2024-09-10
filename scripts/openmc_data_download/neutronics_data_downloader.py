@@ -94,8 +94,9 @@ def _filter_members(
 
     Returns
     -------
-    A filtered list of filepaths based on user selection
-    for a given data library
+    :
+        A filtered list of filepaths based on user selection
+        for a given data library
 
     Raises
     ------
@@ -140,7 +141,8 @@ def _filter(
 
     Returns
     -------
-    A filtered list of filepaths based on user selection
+    :
+        A filtered list of filepaths based on user selection
     """
     filtered_members = []
     mem_keys = members.keys()
@@ -216,7 +218,8 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
 
     Returns
     -------
-    parsed argument namespace
+    :
+        Parsed argument namespace
     """
     parser = argparse.ArgumentParser("Bluemira Neutronics data downloader")
 

@@ -289,7 +289,8 @@ def pyvista_plot_show_save(filename: str = "field.svg"):
 
     Yields
     ------
-    the pyvista plotter
+    :
+        the pyvista plotter
     """
     import pyvista  # noqa: PLC0415
 

@@ -37,7 +37,8 @@ class Warning:  # noqa: A001
 
         Returns
         -------
-        Formatted string
+        :
+            Formatted string
         """
         return f"{self.filename}:{self.lineno}: {self.category}: {self.message}"
 
@@ -47,7 +48,8 @@ def parse_args(sys_args: list[str]) -> argparse.Namespace:
 
     Returns
     -------
-    Parsed argument namespace
+    :
+        Parsed argument namespace
     """
     parser = argparse.ArgumentParser(PROG, description=__doc__)
     parser.add_argument("report_file", help="path to .report.json to parse")
@@ -65,7 +67,8 @@ def load_warnings(file_path: str) -> set[Warning]:
 
     Returns
     -------
-    A set of warnings in from file
+    :
+        A set of warnings in from file
     """
     with open(file_path) as f:
         data = json.load(f)
@@ -80,7 +83,8 @@ def format_warnings_list(warnings: Iterable[Warning]) -> list[str]:
 
     Returns
     -------
-    Formatted list of warnings
+    :
+        Formatted list of warnings
     """
     whens: dict[str, list[Warning]] = {}
     for warning in warnings:
@@ -101,7 +105,8 @@ def make_collapsable(md_lines: list[str], summary: str) -> list[str]:
 
     Returns
     -------
-    Formatted list of strings
+    :
+        Formatted list of strings
     """
     lines = [
         "<details>\n",
@@ -117,7 +122,8 @@ def elements_not_in(head: Iterable[Any], ref: Iterable[Any]) -> list:
 
     Returns
     -------
-    elements not in ref
+    :
+        Elements not in ref
     """
     return [head_el for head_el in head if head_el not in ref]
 
@@ -144,7 +150,8 @@ def format_warning_report(sys_args: list[str]) -> int:
 
     Returns
     -------
-    exit code
+    :
+        Exit code
     """
     inputs = parse_args(sys_args)
     warnings = load_warnings(inputs.report_file)

@@ -38,7 +38,8 @@ def def_param() -> dict[str, str]:
 
     Returns
     -------
-    the default parameter keys and types
+    :
+        The default parameter keys and types
     """
     dp = deepcopy(ParamDictT.__annotations__)
     del dp["name"]
@@ -78,7 +79,8 @@ def create_parameterframe(
 
     Returns
     -------
-    Python parameter frame as a string
+    :
+        Python parameter frame as a string
 
     """
     param_cls = (
@@ -109,7 +111,8 @@ def parse_args():
 
     Returns
     -------
-    parsed argument namespace
+    :
+        Parsed argument namespace
     """
     parser = argparse.ArgumentParser(
         description="Generate ParameterFrame files from module or package"
@@ -149,7 +152,8 @@ def get_param_classes(module) -> dict:
 
     Returns
     -------
-    all found ParameterFrames
+    :
+        All found ParameterFrames
     """
     return {
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
@@ -164,7 +168,8 @@ def find_modules(path: str) -> set:
 
     Returns
     -------
-    all found modules
+    :
+        All found modules
     """
     modules = set()
     for pkg in find_packages(path):

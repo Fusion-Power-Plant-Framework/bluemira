@@ -7,7 +7,7 @@
 Parameter classes/structures for Process
 """
 
-from collections.abc import Generator
+from collections.abc import Iterator
 from dataclasses import dataclass, fields
 
 from bluemira.codes.process.api import _INVariable
@@ -703,7 +703,7 @@ class ProcessInputs:
     ims: int | None = None
     ifci: int | None = None
 
-    def __iter__(self) -> Generator[tuple[str, float | list | dict], None, None]:
+    def __iter__(self) -> Iterator[tuple[str, float | list | dict]]:
         """
         Iterate over this dataclass
 
@@ -712,7 +712,8 @@ class ProcessInputs:
 
         Yields
         ------
-        the field name and its value
+        :
+            the field name and its value
         """
         for _field in fields(self):
             yield _field.name, getattr(self, _field.name)

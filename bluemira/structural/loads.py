@@ -208,7 +208,8 @@ class LoadCase:
 
         Yields
         ------
-        Each Load
+        :
+            Each Load
         """
         yield from self._data
 

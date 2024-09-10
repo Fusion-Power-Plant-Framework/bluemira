@@ -18,7 +18,8 @@ async def get_size(url: str, timeout: int = 10) -> int:
 
     Returns
     -------
-    length in bytes of file
+    :
+        Length in bytes of file
     """
     loop = asyncio.get_running_loop()
     response = await loop.run_in_executor(
