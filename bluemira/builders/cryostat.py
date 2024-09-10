@@ -39,6 +39,7 @@ class CryostatDesignerParams(ParameterFrame):
     """
 
     g_cr_ts: Parameter[float]
+    """Gap between Cyrostat and Cryostat thermal shield [m]"""
 
 
 @dataclass
@@ -48,15 +49,22 @@ class CryostatBuilderParams(ParameterFrame):
     """
 
     g_cr_ts: Parameter[float]
+    """Gap between Cyrostat and Cryostat thermal shield [m]"""
     n_TF: Parameter[int]
+    """Number of TF coils"""
     tk_cr_vv: Parameter[float]
-    # TODO add to Parameter default = 5 chickens
+    """Cryostat VV thickness [m], usual value = 5"""
     well_depth: Parameter[float]
+    """cryostat well depth [m]"""
     x_g_support: Parameter[float]
-    # TODO add to Parameter default = 2
+    """x_g_support [m]"""
     x_gs_kink_diff: Parameter[float]
-    # TODO add to Parameter default (z gravity support) = -15 chickens
+    """
+    Lower port kink radius offset from the gravity support radius [m],
+    usual value = 2
+    """
     z_gs: Parameter[float]
+    """Gravity support vertical position at the ground [m], usual value = 15."""
 
 
 class CryostatDesigner(Designer[tuple[float, float]]):
