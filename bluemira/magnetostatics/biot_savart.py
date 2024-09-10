@@ -125,7 +125,8 @@ class BiotSavartFilament(CurrentSource):
 
         Returns
         -------
-        The vector potential at the point due to the arbitrarily shaped Coordinates
+        :
+            The vector potential at the point due to the arbitrarily shaped Coordinates
         """
         point = np.array([x, y, z])
         r = point - self._points
@@ -161,7 +162,8 @@ class BiotSavartFilament(CurrentSource):
 
         Returns
         -------
-        The field at the point(s) due to the arbitrarily shaped Coordinates
+        :
+            The field at the point(s) due to the arbitrarily shaped Coordinates
 
         Notes
         -----
@@ -191,7 +193,8 @@ class BiotSavartFilament(CurrentSource):
 
         Returns
         -------
-        The total inductance (including self-inductance of reference Coordinates) [H]
+        :
+            The total inductance (including self-inductance of reference Coordinates) [H]
 
         Notes
         -----
@@ -299,7 +302,8 @@ def Bz_coil_axis(
 
     Returns
     -------
-    Vertical magnetic field on the axis [T]
+    :
+        Vertical magnetic field on the axis [T]
 
     Notes
     -----
