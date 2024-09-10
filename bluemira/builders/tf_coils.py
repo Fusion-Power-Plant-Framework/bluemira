@@ -31,8 +31,8 @@ from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import optimise
 
 if TYPE_CHECKING:
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
-    from bluemira.geometry.optimisation.typing import GeomConstraintT
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.geometry.optimisation import GeomConstraintT
     from bluemira.geometry.parameterisations import GeometryParameterisation
     from bluemira.geometry.wire import BluemiraWire
 

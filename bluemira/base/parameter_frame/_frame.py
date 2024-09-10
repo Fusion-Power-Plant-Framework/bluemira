@@ -36,10 +36,10 @@ from bluemira.base.parameter_frame._parameter import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Iterable, Iterator
     from types import GenericAlias
 
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike, ParameterFrameT
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
 
 
@@ -121,12 +121,17 @@ class ParameterFrame:
         frame_type_hints = get_type_hints(cls)
         return {f.name: frame_type_hints[f.name] for f in fields(cls)}
 
-    def __iter__(self) -> Generator[Parameter, None, None]:
+    def __iter__(self) -> Iterator[Parameter]:
         """
         Iterate over this frame's parameters.
 
         The order is based on the order in which the parameters were
         declared.
+
+        Yields
+        ------
+        :
+            Each parameter in the frame
         """
         for field in fields(self):
             yield getattr(self, field.name)

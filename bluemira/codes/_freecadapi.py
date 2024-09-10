@@ -14,7 +14,7 @@ import enum
 import math
 import os
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
@@ -1225,7 +1225,7 @@ def _setup_document(
     labels: Iterable[str] | None = None,
     *,
     rotate: bool = False,
-) -> Iterable[Part.Feature]:
+) -> Iterator[Part.Feature]:
     """
     Setup FreeCAD document.
 
@@ -1235,6 +1235,11 @@ def _setup_document(
     ------
     ValueError
         Number of objects not equal to number of labels
+
+    Yields
+    ------
+    :
+        Each document object
 
     Notes
     -----

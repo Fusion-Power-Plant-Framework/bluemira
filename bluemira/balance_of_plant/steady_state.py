@@ -30,7 +30,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.base.parameter_frame.typing import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 CoolantPumpingT = TypeVar("CoolantPumpingT", bound="CoolantPumping")
@@ -437,6 +437,7 @@ class ParasiticLoadStrategy(abc.ABC):
         p_other:
             Parasitic loads to power other miscellaneous things
         """
+        ...
 
 
 @dataclass

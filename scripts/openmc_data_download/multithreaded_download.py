@@ -13,9 +13,19 @@ import requests
 from rich.progress import Progress
 
 
-async def get_size(url: str, timeout: int = 10) -> int:  # noqa: RUF029, ASYNC109
-    """Get size of file"""
-    response = requests.head(url, allow_redirects=True, timeout=timeout)  # noqa: ASYNC210
+async def get_size(url: str, timeout: int = 10) -> int:
+    """Get size of file
+
+    Returns
+    -------
+    :
+        Length in bytes of file
+    """
+    loop = asyncio.get_running_loop()
+    response = await loop.run_in_executor(
+        None,
+        functools.partial(requests.head, url, allow_redirects=True, timeout=timeout),
+    )
     return int(response.headers["Content-Length"])
 
 
@@ -43,7 +53,7 @@ async def _download(
     output: Path,
     *,
     chunk_size: int = 10000000,
-    timeout: int = 10,  # noqa: ASYNC109
+    timeout: int = 10,
 ):
     """Downloader event loop
 

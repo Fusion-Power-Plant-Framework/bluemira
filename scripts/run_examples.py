@@ -39,7 +39,13 @@ class Args:
 
 
 def parse_args(sys_args: list[str]) -> Args:
-    """Parse command line arguments"""
+    """Parse command line arguments
+
+    Returns
+    -------
+    :
+        Parsed arguments
+    """
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
         "--examples-dir",
@@ -67,7 +73,13 @@ def parse_args(sys_args: list[str]) -> Args:
 
 
 def find_python_files(examples_dir: str, exclude_patterns: list[str]) -> list[str]:
-    """Glob for Python files in the given directory."""
+    """Glob for Python files in the given directory.
+
+    Returns
+    -------
+    :
+        Python paths in directory
+    """
     return sorted([
         path
         for path in Path(examples_dir).rglob("*.py")
@@ -76,7 +88,13 @@ def find_python_files(examples_dir: str, exclude_patterns: list[str]) -> list[st
 
 
 def run_example(file_path: str) -> bool:
-    """Run the given Python file; return True if no errors, else False."""
+    """Run the given Python file
+
+    Returns
+    -------
+    :
+        True if no errors, else False.
+    """
     source = Path(file_path).read_text()
     try:
         exec(compile(source, file_path, "exec"), globals())  # noqa: S102
@@ -94,9 +112,12 @@ def run_examples(
     """
     Run the given example files.
 
-    Returns the list of examples run, along with a boolean indicating
-    whether there were any errors when running the example (True
-    indicating no errors, and False the opposite).
+    Returns
+    -------
+    :
+        The list of examples run, along with a boolean indicating
+        whether there were any errors when running the example (True
+        indicating no errors, and False the opposite).
     """
     if not plotting_on:
         mpl.use("Agg")

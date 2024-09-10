@@ -313,9 +313,6 @@ def make_mixed_wire(
         The z coordinates of points to be converted to a BluemiraWire object
     label:
         The label for the resulting BluemiraWire object
-
-    Other Parameters
-    ----------------
     median_factor:
         The factor of the median for which to filter segment lengths
         (below median_factor*median_length --> spline)
@@ -338,6 +335,11 @@ def make_mixed_wire(
     Returns
     -------
     The BluemiraWire of the mixed polygon/spline coordinates
+
+    Raises
+    ------
+    RuntimeError
+        Cannot create mixed face
     """
     mfm = MixedFaceMaker(
         x,
@@ -429,6 +431,8 @@ def make_mixed_face(
     ------
     MixedFaceAreaError
         Face and coordinates area are not close
+    RuntimeError
+        Can make mixed face
     """
     mfm = MixedFaceMaker(
         x,

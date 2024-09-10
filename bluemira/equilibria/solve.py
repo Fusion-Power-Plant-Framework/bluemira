@@ -89,6 +89,7 @@ class ConvergenceCriterion(ABC):
         -------
         True if the convergence criterion is met, else False.
         """
+        ...
 
     def check_converged(self, value: float) -> bool:
         """

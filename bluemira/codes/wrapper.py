@@ -17,6 +17,7 @@ from bluemira.codes.utilities import get_code_interface
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame import Parameter as ParameterFrame
+    from bluemira.codes._typing import TransportSolver
     from bluemira.codes.interface import CodesSolver
     from bluemira.codes.params import MappedParameterFrame
 
@@ -86,7 +87,7 @@ def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
     module: str = "PLASMOD",
-) -> CodesSolver:
+) -> TransportSolver:
     """
     Transport solver
 

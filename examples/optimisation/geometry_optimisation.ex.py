@@ -138,8 +138,7 @@ plot_2d(boundary, ax=ax, show=True)
 
 # %%
 
-from bluemira.geometry.optimisation import GeomOptimisationProblem
-from bluemira.geometry.optimisation.typing import GeomConstraintT
+from bluemira.geometry.optimisation import GeomConstraintT, GeomOptimisationProblem
 
 
 class ContractLengthGOP(GeomOptimisationProblem):

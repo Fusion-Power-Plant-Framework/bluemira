@@ -27,14 +27,19 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
     print_banner,
 )
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
 
 
-def def_param() -> dict:
+def def_param() -> dict[str, str]:
     """
     Get the default parameter json skeleton
+
+    Returns
+    -------
+    :
+        The default parameter keys and types
     """
     dp = deepcopy(ParamDictT.__annotations__)
     del dp["name"]
@@ -72,6 +77,11 @@ def create_parameterframe(
     header: bool
         add import header
 
+    Returns
+    -------
+    :
+        Python parameter frame as a string
+
     """
     param_cls = (
         "from dataclasses import dataclass\n\n"
@@ -98,6 +108,11 @@ def create_parameterframe(
 def parse_args():
     """
     Parse arguments
+
+    Returns
+    -------
+    :
+        Parsed argument namespace
     """
     parser = argparse.ArgumentParser(
         description="Generate ParameterFrame files from module or package"
@@ -134,6 +149,11 @@ def parse_args():
 def get_param_classes(module) -> dict:
     """
     Get all ParameterFrame classes
+
+    Returns
+    -------
+    :
+        All found ParameterFrames
     """
     return {
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
@@ -144,7 +164,13 @@ def get_param_classes(module) -> dict:
 
 
 def find_modules(path: str) -> set:
-    """Recursively get modules from package"""
+    """Recursively get modules from package
+
+    Returns
+    -------
+    :
+        All found modules
+    """
     modules = set()
     for pkg in find_packages(path):
         if "test" in pkg:

@@ -53,6 +53,7 @@ class BreakdownZoneStrategy(abc.ABC):
         z_c:
             Vertical coordinate of the breakdown point
         """
+        ...
 
     @abc.abstractproperty
     def breakdown_radius(self) -> float:

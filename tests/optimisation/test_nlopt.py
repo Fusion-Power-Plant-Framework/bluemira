@@ -23,7 +23,7 @@ from tests.optimisation.tools import rosenbrock
 NLOPT_OPT_REF = "bluemira.optimisation._nlopt.optimiser.nlopt.opt"
 
 
-def no_op(x):  # noqa: ARG001
+def no_op(x):
     # No op for use as a dummy function within tests
     pass
 

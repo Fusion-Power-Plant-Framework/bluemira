@@ -162,6 +162,7 @@ class LearningStrategy(abc.ABC):
         -------
         Operational availabilities at each operational phase
         """
+        ...
 
 
 class UniformLearningStrategy(LearningStrategy):
@@ -352,6 +353,7 @@ class OperationalAvailabilityStrategy(abc.ABC):
         -------
         The distribution of size n and of the correct integral value
         """
+        ...
 
 
 class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):

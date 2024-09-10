@@ -27,5 +27,7 @@ runs:
       shell: bash -l {0}
       run: |
         cd bluemira/process
+        pip install -U cmake
+        pip install -U 'setuptools<74'
         cmake -G Ninja -S . -B build -DRELEASE=TRUE
         cmake --build build

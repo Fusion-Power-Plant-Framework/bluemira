@@ -30,7 +30,13 @@ from bluemira.geometry.tools import make_circle
 
 
 def setup_sybil_namespace(namespace):
-    """Sybil namespace base creation"""
+    """Sybil namespace base creation
+
+    Returns
+    -------
+    :
+        Expanded namespace for docstring code blocks
+    """
     namespace["MyPlasma"] = type("MyPlasma", (ComponentManager,), {})
     namespace["MyTfCoils"] = type("MyTfCoils", (ComponentManager,), {})
     namespace["build_plasma"] = lambda: namespace["MyPlasma"](

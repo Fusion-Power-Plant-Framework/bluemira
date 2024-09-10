@@ -224,6 +224,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         -------
         CAD Wire of the geometry
         """
+        ...
 
     def to_json(self, file: str):
         """
@@ -1902,11 +1903,11 @@ class PictureFrame(
 
     """
 
-    __slots__ = tuple([
+    __slots__ = tuple(
         f"{leg}{var}"
         for leg in ["inner", "upper", "lower", "outer"]
         for var in ["", "_vars"]
-    ])
+    )
 
     def __init__(
         self,
