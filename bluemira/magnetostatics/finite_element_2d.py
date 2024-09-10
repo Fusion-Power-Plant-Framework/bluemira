@@ -198,7 +198,14 @@ class FemMagnetostatic2d:
         )
 
     def solve(self) -> BluemiraFemFunction:
-        """Solve Fem problem"""
+        """
+        Solve Fem problem
+
+        Returns
+        -------
+        psi:
+            Magnetic flux
+        """
         self.psi = self.problem.solve()
 
         return self.psi
@@ -214,6 +221,11 @@ class FemMagnetostatic2d:
         ----------
         interpolation_eltype:
             dolfinx element type for interpolation
+        
+        Returns
+        -------
+        B:
+            magnetic field intensity 
 
         Raises
         ------
