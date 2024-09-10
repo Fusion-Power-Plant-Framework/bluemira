@@ -9,6 +9,7 @@ A simplified 2-D solver for calculating charged particle heat loads.
 """
 
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -22,6 +23,11 @@ from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.error import RadiationTransportError
+
+if TYPE_CHECKING:
+    from numpy import typing as npt
+
+    from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurfaces
 
 __all__ = ["analyse_first_wall_flux_surfaces"]
 
@@ -126,10 +132,18 @@ def _analyse_DN(first_wall, dx_mp, equilibrium: Equilibrium, o_point, yz_plane):
     )
 
 
-def _clip_flux_surfaces(first_wall, flux_surfaces):
+def _clip_flux_surfaces(
+    first_wall: Coordinates, flux_surfaces: list[PartialOpenFluxSurfaces]
+) -> list[PartialOpenFluxSurfaces]:
     """
     Clip the flux surfaces to a first wall. Catch the cases where no intersections
     are found.
+
+    Returns
+    -------
+    flux_surfaces:
+        A list of flux surface groups. Each group only contains flux surfaces that
+        intersect the first_wall.
     """
     for group in flux_surfaces:
         if group:
@@ -139,47 +153,74 @@ def _clip_flux_surfaces(first_wall, flux_surfaces):
                     # No intersection detected between flux surface and first wall
                     # Drop the flux surface from the group
                     group.pop(i)  # noqa: B909
+                    # TODO: fix this ^ B909 error
     return flux_surfaces
 
 
-def get_array_x_mp(flux_surfaces):
+def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
     """
     Get x_mp array of flux surface values.
+
+    Returns
+    -------
+    :
+        np.array of x_mp.
+
     """
     return np.array([fs.x_start for fs in flux_surfaces])
 
 
-def get_array_z_mp(flux_surfaces):
+def get_array_z_mp(flux_surfaces) -> npt.NDArray[float]:
     """
     Get z_mp array of flux surface values.
+
+    Returns
+    -------
+    :
+        np.array of z_mp.
     """
     return np.array([fs.z_start for fs in flux_surfaces])
 
 
-def get_array_x_fw(flux_surfaces):
+def get_array_x_fw(flux_surfaces) -> npt.NDArray[float]:
     """
     Get x_fw array of flux surface values.
+
+    Returns
+    -------
+    :
+        np.array of x_fw.
     """
     return np.array([fs.x_end for fs in flux_surfaces])
 
 
-def get_array_z_fw(flux_surfaces):
+def get_array_z_fw(flux_surfaces) -> npt.NDArray[float]:
     """
     Get z_fw array of flux surface values.
+
+    Returns
+    -------
+    :
+        np.array of z_fw.
     """
     return np.array([fs.z_end for fs in flux_surfaces])
 
 
-def get_array_alpha(flux_surfaces):
+def get_array_alpha(flux_surfaces) -> npt.NDArray[float]:
     """
     Get alpha angle array of flux surface values.
+
+    Returns
+    -------
+    :
+        np.array of alpha.
     """
     return np.array([fs.alpha for fs in flux_surfaces])
 
 
 def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard=True):
     """
-    Find the middle and maximum outboard mid-plane psi norm values
+    Find the middle and maximum inboard/outboard mid-plane psi norm values.
 
     Raises
     ------
@@ -221,6 +262,11 @@ def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard
 def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
     """
     Make individual PartialOpenFluxSurfaces through a point.
+
+    Returns
+    -------
+    :
+        The PartialOpenFluxSurfaces that passes through the point.
     """
     coords = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
@@ -232,9 +278,16 @@ def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
 
 def _make_flux_surfaces_ibob(
     dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
-):
+) -> tuple[list]:
     """
     Make the flux surfaces on the inboard or outboard.
+
+    Returns
+    -------
+    flux_surfaces_lfs:
+        inboard flux surfaces
+    flux_surfaces_hfs:
+        outboard flux surfaces
     """
     sign = 1 if outboard else -1
 
