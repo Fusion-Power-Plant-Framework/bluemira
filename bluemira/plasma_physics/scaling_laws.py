@@ -52,6 +52,11 @@ class PowerLawScaling:
         """
         Call the PowerLawScaling object for a set of arguments.
 
+        Returns
+        -------
+        :
+            power law scaling
+
         Raises
         ------
         ValueError
@@ -67,6 +72,11 @@ class PowerLawScaling:
     def calculate(self, *args, constant=None, exponents=None):
         """
         Call the PowerLawScaling object for a set of arguments.
+
+        Returns
+        -------
+        :
+            power law scaling
         """
         if constant is None:
             constant = self.c
@@ -114,6 +124,11 @@ class PowerLawScaling:
     def __len__(self) -> int:
         """
         Get the length of the PowerLawScaling object.
+
+        Returns
+        -------
+        :
+            length of PowerLawScaling object
         """
         return len(self.exponents)
 
@@ -141,7 +156,12 @@ def lambda_q(
 
     Returns
     -------
-    Scrape-off layer width at the outboard midplane [m]
+    value:
+        Scrape-off layer width at the outboard midplane [m]
+    min_value:
+        (if error) Minimum value of the power law according to the specified errors
+    max_value:
+        (if error) Maximum value of the power law according to the specified errors
 
     Notes
     -----
@@ -184,7 +204,13 @@ def P_LH(  # noqa: N802
 
     Returns
     -------
-    Power required to access H-mode [W]
+    value:
+        Power required to access H-mode [W]
+    min_value:
+        (if error) Minimum value of the power law according to the specified errors
+    max_value:
+        (if error) Maximum value of the power law according to the specified errors
+
 
     Notes
     -----
@@ -245,7 +271,8 @@ def IPB98y2(  # noqa: N802
 
     Returns
     -------
-    Energy confinement time [s]
+    :
+        Energy confinement time [s]
 
     Notes
     -----

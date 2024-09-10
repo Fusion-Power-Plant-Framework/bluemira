@@ -37,7 +37,8 @@ def estimate_loop_voltage(
 
     Returns
     -------
-    Loop voltage during burn [V]
+    :
+        Loop voltage during burn [V]
 
     Notes
     -----
@@ -75,7 +76,8 @@ def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
 
     Returns
     -------
-    Normalised plasma external inductance
+    :
+        Normalised plasma external inductance
 
     Notes
     -----
@@ -111,7 +113,8 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
 
     Returns
     -------
-    Plasma mutual inductance
+    :
+        Plasma mutual inductance
 
     Notes
     -----
@@ -148,7 +151,8 @@ def calc_cyl_safety_factor(R_0: float, A: float, B_0: float, I_p: float) -> floa
 
     Returns
     -------
-    Cylindrical safety factor
+    :
+        Cylindrical safety factor
 
     Notes
     -----
@@ -182,7 +186,8 @@ def calc_qstar_freidberg(
 
     Returns
     -------
-    Kink safety factor
+    :
+        Kink safety factor
 
     Notes
     -----
@@ -216,7 +221,8 @@ def calc_qstar_uckan(
 
     Returns
     -------
-    Cylindrical equivalent safety factor
+    :
+        Cylindrical equivalent safety factor
 
     Notes
     -----
@@ -249,6 +255,11 @@ def estimate_q95_uckan(
     delta:
         Plasma triangularity
 
+    Returns
+    -------
+    :
+        Estimate of 95th percentile safty factor
+
     Notes
     -----
     Uckan et al., ITER Physics Design Guidelines, 1989, sec. 2.3
@@ -277,7 +288,8 @@ def estimate_li_wesson(
 
     Returns
     -------
-    Normalised lasma internal inductance
+    :
+        Normalised lasma internal inductance
 
     Notes
     -----

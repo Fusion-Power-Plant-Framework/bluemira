@@ -48,7 +48,14 @@ old_m_to_m = gmshio.model_to_mesh
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
-    """Convert points to array"""
+    """
+    Convert points to array
+
+    Returns
+    -------
+    x:
+        Array of points.
+    """
     x = np.asarray(x)
     if len(x.shape) == 1:
         if len(x) == 2:  # noqa: PLR2004
@@ -66,7 +73,15 @@ def model_to_mesh(
     gdim: int | Iterable[int] = 3,
     **kwargs,
 ):
-    """Convert gmsh model to dolfinx mesh
+    """
+    Convert gmsh model to dolfinx mesh.
+
+    Returns
+    -------
+    result:
+        Dolfinx mesh.
+    labels:
+        Associated names.
 
     Notes
     -----
@@ -99,10 +114,16 @@ def extract_geometry(
     dimensions: Iterable[int],
     model: type[gmsh.model],
 ):
-    """Extract model geometry
+    """
+    Extract model geometry
 
     Designed to call dolfinx.io.gmshio.extract_geometry but patch for non
     sequential dimensions
+
+    Returns
+    -------
+    x:
+        Extracted model geometry.
     """
     x = func(model)
     if any(dimensions != np.arange(len(dimensions))):
@@ -111,7 +132,14 @@ def extract_geometry(
 
 
 def calc_bb_tree(mesh: Mesh, padding: float = 0.0) -> geometry.BoundingBoxTree:
-    """Calculate the BoundingBoxTree of a dolfinx mesh"""
+    """
+    Calculate the BoundingBoxTree of a dolfinx mesh
+
+    Returns
+    -------
+    :
+        Bounding box tree.
+    """
     return geometry.bb_tree(mesh, mesh.topology.dim, padding=padding)
 
 
