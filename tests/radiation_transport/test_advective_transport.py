@@ -108,20 +108,22 @@ class TestChargedParticleRecursionSN:
 
     def test_recursion(self):
         assert np.isclose(np.max(self.hf), 5.379, rtol=1e-2)
-        assert np.argmax(self.hf) == 0
+        assert np.argmax(self.hf) == 1
         assert np.isclose(np.sum(self.hf), 399, rtol=1e-2)
 
     def test_n_intersections(self):
         """
         Because it is a single null, we expect the same number of flux surfaces LFS and
         HFS.
+        The final number of intersection points may still be higher than the number of
+        flux surfaces as there are additional points in the mid-plane region
         """
         len_ob_lfs = len(self.solver.flux_surfaces_ob_down)
         len_ob_hfs = len(self.solver.flux_surfaces_ob_up)
 
         assert len_ob_hfs == len_ob_lfs
-        assert len_ob_lfs + len_ob_hfs == len(self.x)
-        assert len(self.solver.flux_surfaces) == len(self.x)
+        assert len_ob_lfs + len_ob_hfs <= len(self.x)
+        assert len(self.solver.flux_surfaces) <= len(self.x)
 
     def test_integrals(self):
         n_fs = len(self.solver.flux_surfaces)
@@ -235,8 +237,8 @@ class TestChargedParticleRecursionDN:
         assert caplog.records[0].levelname == "WARNING"
 
     def test_recursion(self):
-        assert np.isclose(np.max(self.hf), 86.194, rtol=1e-2)
-        assert np.isclose(np.sum(self.hf), 830.6, rtol=1e-2)
+        assert np.isclose(np.max(self.hf), 130.992, rtol=1e-2)
+        assert np.isclose(np.sum(self.hf), 1254.656, rtol=1e-2)
 
     def test_analyse_DN(self, caplog):
         fw = deepcopy(self.solver.first_wall)

@@ -268,6 +268,17 @@ class ChargedParticleSolver:
             The z coordinates of the flux surface intersections
         heat_flux: np.array
             The perpendicular heat fluxes at the intersection points [MW/m^2]
+
+        Notes
+        -----
+        The heat flux model assumes pure parallel transport and fudges
+        the perpendicular transport via the power decay length, lambda.
+        This approach, while is widely used, leads to no power deposited
+        on the wall at the mid-plane.
+        _analyse_SN and _analyse_DN assume, in the area in proximity of
+        the mid-plane, where the outermost flux tube is open, that the
+        remaining power of from the exponential decay is deposited on
+        the wall perpendicularly.
         """
         (
             self.first_wall,
@@ -286,6 +297,7 @@ class ChargedParticleSolver:
     def _analyse_SN(self):
         """
         Calculation for the case of single nulls.
+
         """
         self._make_flux_surfaces_ob()
 
@@ -322,9 +334,19 @@ class ChargedParticleSolver:
         heat_flux_hfs = self.params.f_hfs_lower_target * q_par_hfs * np.sin(alpha_hfs)
 
         # Find FW portion for perpendicular power
-        x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
-            x_hfs_inter, z_hfs_inter, x_lfs_inter, z_lfs_inter, lfs=True
-        )
+        if self.first_wall.argmin(
+            np.array([x_hfs_inter[-1], 0, z_hfs_inter[-1]])
+        ) != self.first_wall.argmin(np.array([x_lfs_inter[-1], 0, z_lfs_inter[-1]])):
+            x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
+                x_hfs_inter, z_hfs_inter, x_lfs_inter, z_lfs_inter, lfs=True
+            )
+        else:
+            mid_i = self.first_wall.argmin(
+                np.array([x_lfs_inter[-1], 0, z_lfs_inter[-1]])
+            )
+            x_out_inter = self.first_wall.x[mid_i]
+            z_out_inter = self.first_wall.z[mid_i]
+            outb_length = 1
 
         # Calculating missing power from parallel transport
         q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
@@ -333,12 +355,17 @@ class ChargedParticleSolver:
 
         # Calculating mid-outboard and mid-inboard heat flux
         heat_flux_x_outb = miss_omp / outb_surf
-        heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+        if outb_length != 1:
+            heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
 
         return (
-            np.append(x_out_inter, x_lfs_inter, x_hfs_inter),
-            np.append(z_out_inter, z_lfs_inter, z_hfs_inter),
-            np.append(heat_flux_x_outb, heat_flux_lfs, heat_flux_hfs),
+            np.concatenate([np.atleast_1d(x_out_inter), x_lfs_inter, x_hfs_inter]),
+            np.concatenate([np.atleast_1d(z_out_inter), z_lfs_inter, z_hfs_inter]),
+            np.concatenate([
+                np.atleast_1d(heat_flux_x_outb),
+                heat_flux_lfs,
+                heat_flux_hfs,
+            ]),
         )
 
     def _analyse_DN(self):  # noqa: PLR0914
