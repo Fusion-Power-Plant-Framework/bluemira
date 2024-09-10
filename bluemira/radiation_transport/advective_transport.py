@@ -10,6 +10,7 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 from copy import deepcopy
 from dataclasses import dataclass, fields
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,6 +24,9 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.flux_surfaces_maker import _clip_flux_surfaces
+
+if TYPE_CHECKING:
+    from bluemira import PartialOpenFluxSurfaces
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -74,13 +78,13 @@ class ChargedParticleSolver:
         self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
 
     @property
-    def flux_surfaces(self):
+    def flux_surfaces(self) -> list[PartialOpenFluxSurface]:
         """
         All flux surfaces in the ChargedParticleSolver.
 
         Returns
         -------
-        flux_surfaces: List[PartialOpenFluxSurface]
+        flux_surfaces: list[PartialOpenFluxSurface]
         """
         flux_surfaces = []
         for group in [
@@ -202,10 +206,14 @@ class ChargedParticleSolver:
             )
         )
 
-    def _clip_flux_surfaces(self, first_wall):
+    def _clip_flux_surfaces(self, first_wall) -> list[PartialOpenFluxSurfaces]:
         """
         Clip the flux surfaces to a first wall. Catch the cases where no intersections
         are found.
+
+        Returns
+        -------
+        list of PartialOpenFluxSurfaces
         """
         _clip_flux_surfaces(
             first_wall,
@@ -249,6 +257,16 @@ class ChargedParticleSolver:
     def _analyse_SN(self):
         """
         Calculation for the case of single nulls.
+
+        Returns
+        -------
+        x: np.array
+            The x coordinates of the flux surface intersections
+        z: np.array
+            The z coordinates of the flux surface intersections
+        heat_flux: np.array
+            The perpendicular heat fluxes at the intersection points [MW/m^2]
+
         """
         self._make_flux_surfaces_ob()
 
@@ -296,6 +314,15 @@ class ChargedParticleSolver:
     def _analyse_DN(self):
         """
         Calculation for the case of double nulls.
+
+        Returns
+        -------
+        x: np.array
+            The x coordinates of the flux surface intersections
+        z: np.array
+            The z coordinates of the flux surface intersections
+        heat_flux: np.array
+            The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
         self._make_flux_surfaces_ob()
         self._make_flux_surfaces_ib()
@@ -411,6 +438,11 @@ class ChargedParticleSolver:
     def _q_par(self, x, dx, B, Bp, *, outboard=True):
         """
         Calculate the parallel power at the midplane.
+
+        Returns
+        -------
+        :
+            parallel power at the midplane
         """
         p_sol_near = self.params.P_sep_particle * self.params.f_p_sol_near
         p_sol_far = self.params.P_sep_particle * (1 - self.params.f_p_sol_near)
@@ -432,6 +464,11 @@ class ChargedParticleSolver:
     def plot(self, ax: Axes = None, *, show=False) -> Axes:
         """
         Plot the ChargedParticleSolver results.
+
+        Returns
+        -------
+        :
+            The axes object on which the ChargedParticleSolver is plotted.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -472,6 +509,11 @@ class ChargedParticleSolver:
             Unsupported config type
         ValueError
             Unknown configuration parameters
+
+        Returns
+        -------
+        :
+            a ChargedParticleSolverParams object
         """
         if isinstance(config, dict):
             try:
