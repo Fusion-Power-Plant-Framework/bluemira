@@ -43,6 +43,11 @@ def process_xyz_array(func):
     """
     Decorator for coordinate input handling in array-return functions and methods.
 
+    Returns
+    -------
+    wrapper:
+        decorator
+    
     Raises
     ------
     MagnetostaticsError
@@ -97,7 +102,8 @@ def process_coords_array(shape: np.ndarray | Coordinates) -> np.ndarray:
 
     Returns
     -------
-    Array in proper dimensions
+    shape:
+        Array in proper dimensions
     """
     if isinstance(shape, np.ndarray):
         pass
@@ -116,6 +122,11 @@ def process_coords_array(shape: np.ndarray | Coordinates) -> np.ndarray:
 def process_to_coordinates(shape: np.ndarray | dict | Coordinates) -> Coordinates:
     """
     Parse input to Coordinates
+
+    Returns
+    -------
+    :
+        Coordinates
 
     Raises
     ------
@@ -137,7 +148,8 @@ def jit_llc7(f_integrand: Callable) -> LowLevelCallable:
 
     Returns
     -------
-    The decorated integrand function as a LowLevelCallable
+    :
+        The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -159,7 +171,8 @@ def jit_llc5(f_integrand: Callable) -> LowLevelCallable:
 
     Returns
     -------
-    The decorated integrand function as a LowLevelCallable
+    :
+        The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -181,7 +194,8 @@ def jit_llc4(f_integrand: Callable) -> LowLevelCallable:
 
     Returns
     -------
-    The decorated integrand function as a LowLevelCallable
+    :
+        The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -203,7 +217,8 @@ def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
 
     Returns
     -------
-    The decorated integrand function as a LowLevelCallable
+    :
+        The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -233,7 +248,8 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
 
     Returns
     -------
-    The value of the integral of the function between the bounds
+    :
+        The value of the integral of the function between the bounds
 
     Raises
     ------
@@ -278,7 +294,8 @@ def n_integrate(
 
     Returns
     -------
-    The value of the integral of the function between the bounds
+    :
+        The value of the integral of the function between the bounds
     """
     return nquad(func, bounds, args=args)[0]
 
@@ -296,6 +313,7 @@ def reduce_coordinates(coordinates: np.ndarray) -> Coordinates:
 
     Returns
     -------
+    :
         A reduced array of points
     """
     points = coordinates.T
