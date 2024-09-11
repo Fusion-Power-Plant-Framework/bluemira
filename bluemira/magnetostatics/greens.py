@@ -66,7 +66,7 @@ def ellipe_nb(k: float | np.ndarray) -> float | np.ndarray:
     ----------
     k:
         parameter of the elliptic integral
-    
+
     Returns
     -------
     :
@@ -121,7 +121,7 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
 
     Returns
     -------
-    :   
+    :
         The self-inductance of the circular coil [H]
 
     Notes
@@ -310,7 +310,7 @@ def greens_dpsi_dz(
 
     Returns
     -------
-    : 
+    :
         Vertical derivative of the poloidal flux response at (x, z)
 
     Notes
@@ -386,7 +386,7 @@ def calc_e_k(
     -------
     :
         elliptic integral of the second kind, elliptic integral of the first kind
-    
+
     """
     return ellipe_nb(k2), ellipk_nb(k2)
 
@@ -411,14 +411,14 @@ def calc_i1_i2(
         elliptic integral of the second kind
     k:
         elliptic integral of the first kind
-    
+
     Returns
     -------
     i1:
         \t:math:`\\dfrac{\\mathbf{K}}/{a}
     i2:
         \t:math:`\\dfrac{\\mathbf{E}}/{a^{3} (1-k^{2})}
-    
+
     """
     if (e is None) or (k is None):
         e, k = calc_e_k(k2)

@@ -47,7 +47,7 @@ def process_xyz_array(func):
     -------
     wrapper:
         decorator
-    
+
     Raises
     ------
     MagnetostaticsError

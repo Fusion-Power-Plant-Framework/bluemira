@@ -648,8 +648,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Get the radius of the CircularArcCurrentSource
 
-        Return
-        ------
+        Returns
+        -------
         :
             Radius of the CircularArcCurrentSource
         """
@@ -673,8 +673,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Get the breadth of the CircularArcCurrentSource.
 
-        Return
-        ------
+        Returns
+        -------
         :
             Breadth of the CircularArcCurrentSource
         """
@@ -705,8 +705,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Convert from local to cylindrical coordinates.
 
-        Return
-        ------
+        Returns
+        -------
         :
             Cylindrical coordinates of point.
         """
@@ -719,8 +719,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Convert from local cylindrical coordinates to working coordinates.
 
-        Return
-        ------
+        Returns
+        -------
         :
             r +- breadth and z +- depth.
         """
@@ -732,8 +732,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Calculate the field at a point in local coordinates.
 
-        Return
-        ------
+        Returns
+        -------
         :
             (Bx, By, Bz) at a point
 
@@ -783,8 +783,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         Calculate extrema points of the current source for plotting and debugging.
 
-        Return
-        ------
+        Returns
+        -------
         :
             extrema points
         """

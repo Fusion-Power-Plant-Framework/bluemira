@@ -48,8 +48,8 @@ class PlanarCircuit(SourceGroup):
         """
         Generate the sources of a given class along the discretised shape
 
-        Return
-        ------
+        Returns
+        -------
         sources:
             Generated sources
         """
@@ -110,8 +110,8 @@ class PlanarCircuit(SourceGroup):
         """
         Checks that the shape is planar
 
-        Return
-        ------
+        Returns
+        -------
         shape:
             Coordinates of input shape as Coordinates object.
 
@@ -133,8 +133,8 @@ class PlanarCircuit(SourceGroup):
         """
         Get the first and second half-angles (transformed to the x-z plane)
 
-        Return
-        ------
+        Returns
+        -------
         :
             First and second half-angles
         """
@@ -171,8 +171,8 @@ class PlanarCircuit(SourceGroup):
         """
         Transform shape to the x-z plane.
 
-        Return
-        ------
+        Returns
+        -------
         :
             Tranformed coordinates.
         """
@@ -193,8 +193,8 @@ class PlanarCircuit(SourceGroup):
         """
         Get the half angle between three points, respecting winding direction.
 
-        Return
-        ------
+        Returns
+        -------
         angle:
             Half angle between three points.
         """
@@ -239,8 +239,8 @@ class PlanarCircuit(SourceGroup):
         Determine whether or not the point is in the polygon - accounts
         for clockwise ordered coordinates.
 
-        Return
-        ------
+        Returns
+        -------
         :
             Whether or not the point is in the polygon
         """
@@ -345,8 +345,8 @@ class HelmholtzCage(SourceGroup):
         """
         Pattern the CurrentSource axisymmetrically.
 
-        Return
-        ------
+        Returns
+        -------
         :
             List of arranged sources
         """

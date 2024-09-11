@@ -621,8 +621,8 @@ class PolyhedralPrismCurrentSource(
         Calculate extrema points of the current source for integration and plotting
         purposes
 
-        Return
-        ------
+        Returns
+        -------
         :
             extrema points
         """

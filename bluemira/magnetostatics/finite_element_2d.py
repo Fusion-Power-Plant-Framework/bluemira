@@ -222,11 +222,11 @@ class FemMagnetostatic2d:
         ----------
         interpolation_eltype:
             dolfinx element type for interpolation
-        
+
         Returns
         -------
         B:
-            magnetic field intensity 
+            magnetic field intensity
 
         Raises
         ------
