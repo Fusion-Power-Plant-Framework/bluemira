@@ -32,8 +32,8 @@ def _partial_x_integrand(phi: float, rr: float, zz: float) -> float:
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
 
-    Return 
-    ------
+    Returns
+    -------
     result:
         partial x itergrand
     """
@@ -59,8 +59,8 @@ def _full_x_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
     \t:math:`P_{x}(R, Z) = \\int_{0}^{\\pi}[R_{0}+cos(\\phi)ln(R_{0}+R`
     \t:math:`-cos(\\phi))]cos(\\phi)d\\phi`
 
-    Return
-    ------
+    Returns
+    -------
     :
         P_x primitive integral
     """
@@ -77,8 +77,8 @@ def _partial_z_integrand_nojit(phi: float, rr: float, zz: float) -> float:
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
 
-    Return 
-    ------
+    Returns
+    -------
     result:
         partial z itergrand
     """
@@ -112,9 +112,9 @@ def _full_z_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
     \t:math:`P_{z}(R, Z) = \\int_{0}^{\\pi} [Zln(R_{0}+R-cos(\\phi)`
     \t:math:`+\\dfrac{1}{2}cos(\\phi)ln(\\dfrac{R_{0}-Z}{R_{0}+Z})`
     \t:math:`-sin(\\phi)arctan(\\dfrac{Z[R-cos(\\phi)]}{R_{0}sin(\\phi)})]d\\phi`
-    
-    Return 
-    ------
+
+    Returns
+    -------
     :
         P_z primitive integral
     """
@@ -132,8 +132,8 @@ def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
 
     This can be used as a fallback if the full integration fails.
 
-    Return 
-    ------
+    Returns
+    -------
     :
         result of itergration
     """
@@ -152,7 +152,7 @@ def _get_working_coords(
     """
     Convert coil and global coordinates to working coordinates.
 
-    Parameters 
+    Parameters
     ----------
     xc:
         Coil x coordinate [m]
@@ -163,8 +163,8 @@ def _get_working_coords(
     z:
         Calculation z location
 
-    Return 
-    ------
+    Returns
+    -------
     :
         working coords
     """
@@ -179,8 +179,8 @@ def _array_dispatcher(func):
     """
     Decorator for float and array handling.
 
-    Return
-    ------
+    Returns
+    -------
     wrapper:
         decorator
     """
@@ -341,8 +341,8 @@ def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
     """
     Integrand for psi = xBz
 
-    Return
-    ------
+    Returns
+    -------
     :
         integrand
     """

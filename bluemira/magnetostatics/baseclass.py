@@ -166,6 +166,11 @@ class CrossSectionCurrentSource(CurrentSource):
     ) -> npt.NDArray[np.float64]:
         """
         Convert global x, y, z point coordinates to local x', y', z' point coordinates.
+
+        Returns
+        -------
+        :
+            Local coordinates
         """
         return np.array([(self._dcm @ (p - self._origin)) for p in points])
 

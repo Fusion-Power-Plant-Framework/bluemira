@@ -424,7 +424,7 @@ def error_L2(  # noqa: N802
 
     Returns
     -------
-    : 
+    :
         integral error
     """
     # Create higher order function space
@@ -473,7 +473,7 @@ def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
     -------
     values:
         values of the function at the specified points
-    points_on_proc: 
+    points_on_proc:
         specified points
 
     """
@@ -705,8 +705,8 @@ def compute_B_from_Psi(
     eltype:
         Element type identified (e.g. ("P", 1)) for the magnetic flux density function
 
-    Return
-    ------
+    Returns
+    -------
     B:
         Magnetic flux density function in the mesh domain
     """
