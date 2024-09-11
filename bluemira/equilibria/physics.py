@@ -33,6 +33,8 @@ def calc_psi_norm(
     """
     Calculate normalised magnetic flux.
 
+    \t:math:`\\dfrac{\\psi_{O}-\\psi}{\\psi_{O}-\\psi_{X}}`
+
     Parameters
     ----------
     psi:
@@ -54,6 +56,8 @@ def calc_psi(
 ) -> float | npt.NDArray[np.float64]:
     """
     Calculate the absolute psi values from normalised psi values
+
+    \t:math:`\\psi_{O}-\\psi_{norm}(\\psi_{O}-\\psi_{X})`
 
     Parameters
     ----------
@@ -273,6 +277,8 @@ def calc_li3minargs(
     """
     Calculate the normalised plasma internal inductance with arguments only.
 
+    \t:math:`\\dfrac{2 B_{p, average}}{R_{0} (\\mu_{0} I_{p})**2}`
+
     Used in the optimisation of the plasma profiles.
     """
     if mask is None:
@@ -368,7 +374,8 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
 
 def calc_summary(eq: Equilibrium) -> dict[str, float]:
     """
-    Calculates interesting values in one go
+    Calculates interesting values in one go.
+    Uses functions (or components of functions) contained within this file.
     """
     R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
     mask = in_plasma(eq.x, eq.z, eq.psi())
@@ -466,6 +473,8 @@ def beta_N_to_beta(  # noqa: N802
 def calc_infinite_solenoid_flux(r_cs_min: float, r_cs_max: float, B_max: float) -> float:
     """
     Calculate the maximum flux achievable from an infinite solenoid given a peak field.
+
+    \t:math:`B_{max} \\dfrac{\\pi}{3} (r_{cs, max}**2 r_{cs, min}**2 + r_{cs, max} r_{cs, min})`
 
     Parameters
     ----------
