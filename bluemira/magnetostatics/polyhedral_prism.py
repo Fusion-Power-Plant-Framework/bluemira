@@ -71,14 +71,24 @@ class Fabbri(PolyhedralKernel):
     @staticmethod
     def field(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Magnetic field
+        Fabbri magnetic field
+
+        Returns
+        -------
+        :
+            magnetic field
         """
         return _field_fabbri(*args)
 
     @staticmethod
     def vector_potential(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Vector potential
+        Fabbri vector potential
+
+        Returns
+        -------
+        :
+            vector potential
         """
         return _vector_potential_fabbri(*args)
 
@@ -93,14 +103,24 @@ class Bottura(PolyhedralKernel):
     @staticmethod
     def field(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Magnetic field
+        Bottura magnetic field
+
+        Returns
+        -------
+        :
+            magnetic field
         """
         return _field_bottura(*args)
 
     @staticmethod
     def vector_potential(*args: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
-        Vector potential
+        Bottura vector potential
+
+        Returns
+        -------
+        :
+            vector potential
         """
         return _vector_potential_bottura(*args)
 
@@ -122,7 +142,8 @@ def _vector_norm_eps(r: npt.NDArray[np.float64]) -> float:
 
     Returns
     -------
-    Vector norm
+    :
+        Vector norm
 
     Notes
     -----
@@ -156,7 +177,8 @@ def _omega_t(
 
     Returns
     -------
-    Solid angle [rad]
+    :
+        Solid angle [rad]
 
     Notes
     -----
@@ -208,7 +230,8 @@ def _edge_integral_fabbri(
 
     Returns
     -------
-    Value of the edge integral w_e(r)
+    :
+        Value of the edge integral w_e(r)
 
     Notes
     -----
@@ -226,6 +249,11 @@ def _edge_integral_fabbri(
 def _get_face_midpoint(face_points: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Get an arbitrary point on the face
+
+    Returns
+    -------
+    :
+        face midpoints
     """
     return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
 
@@ -234,6 +262,11 @@ def _get_face_midpoint(face_points: npt.NDArray[np.float64]) -> npt.NDArray[np.f
 def _get_face_normal(face_points: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Get the normal of a face
+
+    Returns
+    -------
+    :
+        normal of a face
     """
     normal = np.cross(face_points[1] - face_points[0], face_points[2] - face_points[1])
     return normal / np.linalg.norm(normal)
@@ -266,7 +299,8 @@ def _surface_integral_fabbri(
 
     Returns
     -------
-    Value of the surface integral W_f(r)
+    :
+        Value of the surface integral W_f(r)
 
     Notes
     -----
@@ -319,7 +353,8 @@ def _vector_potential_fabbri(
 
     Returns
     -------
-    Vector potential at the point (response to unit current density)
+    :
+        Vector potential at the point (response to unit current density)
     """
     integral = np.zeros(3)
     for i in range(len(face_normals)):
@@ -364,7 +399,8 @@ def _field_fabbri(
 
     Returns
     -------
-    Magnetic field vector at the point (response to unit current density)
+    :
+        Magnetic field vector at the point (response to unit current density)
     """
     field = np.zeros(3)
     for i in range(len(face_normals)):
@@ -531,7 +567,8 @@ class PolyhedralPrismCurrentSource(
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.field(
@@ -564,7 +601,8 @@ class PolyhedralPrismCurrentSource(
 
         Returns
         -------
-        The vector potential {Ax, Ay, Az} in [T]
+        :
+            The vector potential {Ax, Ay, Az} in [T]
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.vector_potential(
@@ -580,6 +618,11 @@ class PolyhedralPrismCurrentSource(
         """
         Calculate extrema points of the current source for integration and plotting
         purposes
+
+        Return
+        ------
+        :
+            extrema points
         """
         # Lower shape
         n_rect_faces = len(self._xs) - 1
@@ -701,7 +744,8 @@ def _vector_potential_bottura(
 
     Returns
     -------
-    Vector potential at the point (response to unit current density)
+    :
+        Vector potential at the point (response to unit current density)
     """
     A = 0.0
 
@@ -744,7 +788,8 @@ def _field_bottura(
 
     Returns
     -------
-    Magnetic field vector at the point (response to unit current density)
+    :
+        Magnetic field vector at the point (response to unit current density)
     """
     B = np.zeros(3)
 
@@ -780,7 +825,8 @@ def _surface_integral_bottura(
 
     Returns
     -------
-    Value of the surface integral W_f(r)
+    integral:
+        Value of the surface integral W_f(r)
 
     Notes
     -----
@@ -827,7 +873,8 @@ def _line_integral_bottura(x: float, y: float, z: float) -> float:
 
     Returns
     -------
-    Value of the line integral I_1(x, y, z)
+    :
+        Value of the line integral I_1(x, y, z)
 
     Notes
     -----

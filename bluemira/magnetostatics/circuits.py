@@ -192,6 +192,7 @@ class PlanarCircuit(SourceGroup):
     ) -> float:
         """
         Get the half angle between three points, respecting winding direction.
+
         Return
         ------
         angle:
