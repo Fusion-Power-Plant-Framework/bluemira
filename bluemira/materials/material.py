@@ -674,7 +674,13 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
     @property
     def eps_sh(self):
-        """EPS_sh"""
+        """
+        EPS_sh, shear strain
+
+        .. math::
+            \\dfrac{C_{a2} \\epsilon_{0,a}}{\\sqrt{C_{a1}**2 - C_{a2}**2}}
+
+        """
         return self.c_a2 * self.eps_0a / np.sqrt(self.c_a1**2 - self.c_a2**2)
 
     def Tc_star(self, B: float, eps: float) -> float:  # noqa: N802
