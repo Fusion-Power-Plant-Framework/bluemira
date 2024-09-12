@@ -85,7 +85,8 @@ class ChargedParticleSolver:
 
         Returns
         -------
-        flux_surfaces: list[PartialOpenFluxSurface]
+        flux_surfaces:
+            The list of partially open flux surfaces.
         """
         flux_surfaces = []
         for group in [
