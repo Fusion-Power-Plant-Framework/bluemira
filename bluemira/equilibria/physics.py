@@ -475,7 +475,7 @@ def calc_infinite_solenoid_flux(r_cs_min: float, r_cs_max: float, B_max: float) 
     Calculate the maximum flux achievable from an infinite solenoid given a peak field.
 
     .. math::
-        B_{max} \\dfrac{\\pi}{3} (r_{cs, max}**2 r_{cs, min}**2 
+        B_{max} \\dfrac{\\pi}{3} (r_{cs, max}**2 r_{cs, min}**2
         + r_{cs, max} r_{cs, min})
 
     Parameters
