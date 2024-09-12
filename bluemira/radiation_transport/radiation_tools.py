@@ -595,7 +595,7 @@ def radiative_loss_function_values(
 
 def radiative_loss_function_plot(
     t_ref: np.ndarray, lz_val: Iterable[np.ndarray], species: Iterable[str]
-):
+) -> plt.Axes:
     """
     Radiative loss function plot for a set of given impurities.
 
@@ -606,7 +606,12 @@ def radiative_loss_function_plot(
     l_z:
         radiative power loss reference [Wm^3]
     species:
-        name species
+        species names
+
+    Returns
+    -------
+    ax: plt.Axes
+        The axes object on which radiative loss function is plotted.
     """
     _fig, ax = plt.subplots()
     plt.title("Radiative loss functions vs Electron Temperature")
@@ -808,9 +813,16 @@ def filtering_in_or_out(
 
 def get_impurity_data(
     impurities_list: Iterable[str] = ("H", "He"), confinement_time_ms: float = 0.1
-):
+) -> dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]]:
     """
     Function getting the PROCESS impurity data
+
+    Returns
+    -------
+    impurity_data:
+        The dictionary of impurities at the defined time, sorted by species, then sorted
+        by "T_ref" v.s. "L_ref", where "T_ref" = reference ion temperature [eV], "L_ref"
+        = the loss function value $L_z(n_e, T_e)$ [W m^3].
     """
     # This is a function
     imp_data_getter = get_code_interface("PROCESS").Solver.get_species_data
@@ -846,9 +858,14 @@ def detect_radiation(
     world: World,
     *,
     verbose: bool = False,
-):
+) -> DetectedRadiation:
     """
     To sample the wall and detect radiation
+
+    Returns
+    -------
+    :
+        DetectedRadiation object describing the radiation data.
     """
     # Storage lists for results
     power_density = []
@@ -945,6 +962,11 @@ def make_wall_detectors(
 ) -> list[WallDetector]:
     """
     To make the detectors on the wall
+
+    Returns
+    -------
+    wall_detectors:
+        list of WallDetectors
     """
     # number of detectors
     num = np.shape(wall_r)[0] - 2
@@ -1044,7 +1066,7 @@ def plot_radiation_loads(
     radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
 ):
     """
-    To plot the radiation on the wall as MW/m^2
+    To plot the radiation on the wall as [MW/m^2]
     """
     min_r = min(fw_shape.x)
     max_r = max(fw_shape.x)
@@ -1137,8 +1159,19 @@ class FirstWallRadiationSolver:
         *,
         plot: bool = True,
         verbose: bool = False,
-    ):
-        """Solve first wall radiation problem"""
+    ) -> DetectedRadiation:
+        """
+        Solve first wall radiation problem
+
+        Plots
+        -----
+        Plot and show the radiation on the wall [MW/m^2], if plot=True.
+
+        Returns
+        -------
+        wall_loads: DetectedRadiation
+            Detected radiation data.
+        """
         shift = translate(0, 0, np.min(self.fw_shape.z))
         height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
         rad_3d = AxisymmetricMapper(self.rad_source)

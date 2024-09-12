@@ -9,43 +9,58 @@ A simplified 2-D solver for calculating charged particle heat loads.
 """
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
 
 import numpy as np
+from numpy import typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
-from bluemira.equilibria.flux_surfaces import OpenFluxSurface
+from bluemira.equilibria.flux_surfaces import OpenFluxSurface, PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.error import RadiationTransportError
-
-if TYPE_CHECKING:
-    from numpy import typing as npt
-
-    from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurfaces
 
 __all__ = ["analyse_first_wall_flux_surfaces"]
 
 
 def analyse_first_wall_flux_surfaces(
     equilibrium: Equilibrium, first_wall: BluemiraWire, dx_mp: float
-):
+) -> tuple[
+    npt.NDArray[float],
+    npt.NDArray[float] | None,
+    list[PartialOpenFluxSurface],
+    float,
+    float | None,
+]:
     """
     A simplified charged particle transport model along open field lines.
 
     Parameters
     ----------
-    equilibrium:
+    equilibrium: Equilibrium
         The equilibrium defining flux surfaces.
     first_wall:
-    dx_mp:
+    dx_mp: float
         The midplane spatial resolution between flux surfaces [m]
         (default: 0.001).
+
+
+    Returns
+    -------
+    dx_omp: np.ndarray
+        The midplane spatial resolution between flux surfaces at the outboard [m]
+    dx_imp: np.ndarray or None
+        The midplane spatial resolution between flux surfaces at the inboard [m]
+    flux_surfaces: list[PartialOpenFluxSurface]
+        list of flux surfaces, all of which terminating at the first walls.
+    x_sep_omp: float
+        intersection between the separatrix outboard and mid-plane.
+    x_sep_imp: float or None
+        intersection between the separatrix inboard and mid-plane.
     """
     o_point = equilibrium.get_OX_points()[0][0]  # 1st o_point
     z = o_point.z
@@ -69,6 +84,11 @@ def analyse_first_wall_flux_surfaces(
 def _process_first_wall(first_wall: Coordinates) -> Coordinates:
     """
     Force working first wall geometry to be closed and counter-clockwise.
+
+    Returns
+    -------
+    first_wall: Coordinates
+        A closed first wall geometry, running counter clockwise.
     """
     first_wall = deepcopy(first_wall)
 
@@ -82,9 +102,20 @@ def _process_first_wall(first_wall: Coordinates) -> Coordinates:
     return first_wall
 
 
-def _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
+def _analyse_SN(
+    first_wall, dx_mp, equilibrium, o_point, yz_plane
+) -> tuple[npt.NDArray[float], list[PartialOpenFluxSurface], float]:
     """
     Calculation for the case of single nulls.
+
+    Returns
+    -------
+    :
+        horizontal distances between outboard flux surfaces and outboard separatrix.
+    :
+        list of flux surfaces, all of which terminating at the first walls.
+    x_sep_omp: float
+        intersection between the separatrix outboard and mid-plane.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
         equilibrium, first_wall, yz_plane, outboard=True
@@ -103,9 +134,26 @@ def _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     )
 
 
-def _analyse_DN(first_wall, dx_mp, equilibrium: Equilibrium, o_point, yz_plane):
+def _analyse_DN(
+    first_wall: Coordinates, dx_mp, equilibrium: Equilibrium, o_point, yz_plane
+) -> tuple[
+    npt.NDArray[float], npt.NDArray[float], list[PartialOpenFluxSurface], float, float
+]:
     """
     Calculation for the case of double nulls.
+
+    Returns
+    -------
+    :
+        horizontal distances between outboard flux surfaces and outboard separatrix.
+    :
+        horizontal distances between inboard flux surfaces and inboard separatrix.
+    :
+        list of flux surfaces, all of which terminating at the first walls.
+    x_sep_omp: float
+        intersection between the separatrix outboard and mid-plane.
+    x_sep_imp: float
+        intersection between the separatrix inboard and mid-plane.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
         equilibrium, first_wall, yz_plane, outboard=True
@@ -133,15 +181,15 @@ def _analyse_DN(first_wall, dx_mp, equilibrium: Equilibrium, o_point, yz_plane):
 
 
 def _clip_flux_surfaces(
-    first_wall: Coordinates, flux_surfaces: list[PartialOpenFluxSurfaces]
-) -> list[PartialOpenFluxSurfaces]:
+    first_wall: Coordinates, flux_surfaces: list[PartialOpenFluxSurface]
+) -> list[PartialOpenFluxSurface]:
     """
     Clip the flux surfaces to a first wall. Catch the cases where no intersections
     are found.
 
     Returns
     -------
-    flux_surfaces:
+    flux_surfaces: list[PartialOpenFluxSurface]
         A list of flux surface groups. Each group only contains flux surfaces that
         intersect the first_wall.
     """
@@ -159,12 +207,12 @@ def _clip_flux_surfaces(
 
 def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
     """
-    Get x_mp array of flux surface values.
+    Get the x-coordinate of the mid-plane intersection point for each flux surface.
 
     Returns
     -------
     :
-        np.array of x_mp.
+        np.ndarray of mid-plane intersection point x-coordinate.
 
     """
     return np.array([fs.x_start for fs in flux_surfaces])
@@ -172,60 +220,72 @@ def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
 
 def get_array_z_mp(flux_surfaces) -> npt.NDArray[float]:
     """
-    Get z_mp array of flux surface values.
+    Get the z-coordinate of the mid-plane intersection point for each flux surface.
 
     Returns
     -------
     :
-        np.array of z_mp.
+        np.ndarray of mid-plane intersection point z-coordinate.
     """
     return np.array([fs.z_start for fs in flux_surfaces])
 
 
 def get_array_x_fw(flux_surfaces) -> npt.NDArray[float]:
     """
-    Get x_fw array of flux surface values.
+    Get the x-coordinate of the first-wall intersection point for each flux surface.
 
     Returns
     -------
     :
-        np.array of x_fw.
+        np.ndarray of first-wall intersection point x-coordinate.
     """
     return np.array([fs.x_end for fs in flux_surfaces])
 
 
 def get_array_z_fw(flux_surfaces) -> npt.NDArray[float]:
     """
-    Get z_fw array of flux surface values.
+    Get the z-coordinate of the first-wall intersection point for each flux surface.
 
     Returns
     -------
     :
-        np.array of z_fw.
+        np.ndarray of first-wall intersection point z-coordinate.
     """
     return np.array([fs.z_end for fs in flux_surfaces])
 
 
 def get_array_alpha(flux_surfaces) -> npt.NDArray[float]:
     """
-    Get alpha angle array of flux surface values.
+    Get the alpha angle for each flux surface.
 
     Returns
     -------
     :
-        np.array of alpha.
+        np.ndarray of alpha.
     """
     return np.array([fs.alpha for fs in flux_surfaces])
 
 
-def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard=True):
+def _get_sep_out_intersection(
+    eq: Equilibrium, first_wall, yz_plane, *, outboard=True
+) -> tuple[float, float]:
     """
-    Find the middle and maximum inboard/outboard mid-plane psi norm values.
+    Find the x-coordinate of where the mid-plane intersect the separatrix and at
+    the inboard/outboard.
 
     Raises
     ------
     RadiationTransportError
         Separatrix doesnt cross midplane
+
+    Returns
+    -------
+    x_sep_mp: float
+        the x-coordinate of the intersection point between the inboard-side separatrix
+        (outboard=False)/outboard-side separatrix (inboard=True) and the mid-plane.
+    x_out_mp: float
+        the x-coordinate of the intersection point between the inboard first wall
+        (outboard=False)/outboard first wall (outboard=True), and the mid-plane.
     """
     sep = LegFlux(eq)
 
@@ -261,12 +321,12 @@ def _get_sep_out_intersection(eq: Equilibrium, first_wall, yz_plane, *, outboard
 
 def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
     """
-    Make individual PartialOpenFluxSurfaces through a point.
+    Make individual PartialOpenFluxSurface through a point.
 
     Returns
     -------
     :
-        The PartialOpenFluxSurfaces that passes through the point.
+        The PartialOpenFluxSurface that passes through the point.
     """
     coords = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
