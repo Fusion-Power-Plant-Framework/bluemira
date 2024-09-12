@@ -130,7 +130,8 @@ def calc_cyl_safety_factor(R_0: float, A: float, B_0: float, I_p: float) -> floa
     """
     Calculate the cylindrical safety factor.
 
-    \t:math:`\\dfrac{2\\pi}{\\mu_{0}} \\dfrac{R_{0}}{A}**2 \\dfrac{B_{0}}{R_{0} I_{p}}'
+    .. math::
+        \\dfrac{2\\pi}{\\mu_{0}} \\dfrac{R_{0}}{A}**2 \\dfrac{B_{0}}{R_{0} I_{p}}
 
     Parameters
     ----------
