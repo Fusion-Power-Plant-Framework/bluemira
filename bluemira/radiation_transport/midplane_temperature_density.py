@@ -69,12 +69,18 @@ class MidplaneProfiles:
     """electron temperature at the mid-plane. Unit [keV]"""
 
 
-def midplane_profiles(params: ParameterFrameLike):
+def midplane_profiles(params: ParameterFrameLike) -> MidplaneProfiles:
     """
     Calculate the core radiation source profiles.
 
     Temperature and density are assumed to be constant along a
     single flux tube.
+
+    Returns
+    -------
+    :
+        Electron density and electron temperature as function of rho, from the magnetic
+        axis to the separatrix along the midplane.
     """
     params = make_parameter_frame(params, MidplaneProfilesParams, allow_unknown=True)
     rho_ped = (params.rho_ped_n.value + params.rho_ped_t.value) / 2
@@ -112,6 +118,11 @@ def collect_rho_core_values(
     n_points_mantle:
         no of discretisation points to separatrix
 
+    Returns
+    -------
+    :
+        radial coordinate rho [dimensionless].
+
     Notes
     -----
     The plasma bulk is divided into plasma core and plasma mantle according to rho
@@ -145,6 +156,10 @@ def core_electron_density_temperature_profile(
     rho_ped:
         dimensionless pedestal radius. Values between 0 and 1
 
+    Returns
+    -------
+    :
+        electron density and electron temperature, stored as a MidplaneProfiles object.
 
     Notes
     -----

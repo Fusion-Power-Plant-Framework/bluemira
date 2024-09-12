@@ -8,25 +8,25 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-from copy import deepcopy
 from dataclasses import dataclass, fields
-from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
+from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
+from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
-from bluemira.radiation_transport.flux_surfaces_maker import _clip_flux_surfaces
-
-if TYPE_CHECKING:
-    from bluemira import PartialOpenFluxSurfaces
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    _clip_flux_surfaces,
+    _process_first_wall,
+)
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -76,6 +76,7 @@ class ChargedParticleSolver:
         self._o_point = o_points[0]
         z = self._o_point.z
         self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
+        self._process_first_wall = staticmethod(_process_first_wall)
 
     @property
     def flux_surfaces(self) -> list[PartialOpenFluxSurface]:
@@ -131,27 +132,30 @@ class ChargedParticleSolver:
             )
 
     @staticmethod
-    def _process_first_wall(first_wall):
-        """
-        Force working first wall geometry to be closed and counter-clockwise.
-        """
-        first_wall = deepcopy(first_wall)
-
-        if not first_wall.check_ccw(axis=[0, 1, 0]):
-            bluemira_warn(
-                "First wall should be oriented counter-clockwise. Reversing it."
-            )
-            first_wall.reverse()
-
-        if not first_wall.closed:
-            bluemira_warn("First wall should be a closed geometry. Closing it.")
-            first_wall.close()
-        return first_wall
-
-    @staticmethod
-    def _get_arrays(flux_surfaces):
+    def _get_arrays(
+        flux_surfaces,
+    ) -> tuple[
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+    ]:
         """
         Get arrays of flux surface values.
+
+        Returns
+        -------
+        x_mp: npt.NDArray[float]
+            the array of mid-plane intersection point x-coordinate for each flux surface
+        z_mp: npt.NDArray[float]
+            the array of mid-plane intersection point z-coordinate for each flux surface
+        x_fw: npt.NDArray[float]
+            the array of first-wall intersection point x-coordinate for each flux surface
+        z_fw: npt.NDArray[float]
+            the array of first-wall intersection point z-coordinate for each flux surface
+        alpha: npt.NDArray[float]
+            the array of alpha angle for each flux surface
         """
         x_mp = np.array([fs.x_start for fs in flux_surfaces])
         z_mp = np.array([fs.z_start for fs in flux_surfaces])
@@ -160,7 +164,7 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _make_flux_surfaces_ob(self):
+    def _make_flux_surfaces_ob(self) -> None:
         """
         Make the flux surfaces on the outboard.
         """
@@ -206,14 +210,10 @@ class ChargedParticleSolver:
             )
         )
 
-    def _clip_flux_surfaces(self, first_wall) -> list[PartialOpenFluxSurfaces]:
+    def _clip_flux_surfaces(self, first_wall):
         """
         Clip the flux surfaces to a first wall. Catch the cases where no intersections
         are found.
-
-        Returns
-        -------
-        list of PartialOpenFluxSurfaces
         """
         _clip_flux_surfaces(
             first_wall,
