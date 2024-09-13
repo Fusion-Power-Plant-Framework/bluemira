@@ -30,6 +30,10 @@ class OptimiserResult:
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).
     """
+    constraint_history: list[tuple[np.ndarray, ...]] = field(repr=False)
+    """
+    Constraint history
+    """
     constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
