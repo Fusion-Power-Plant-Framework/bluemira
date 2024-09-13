@@ -45,7 +45,13 @@ class KeepOutZone:
 def to_objective(
     geom_objective: GeomOptimiserObjective, geom: GeometryParameterisation
 ) -> ObjectiveCallable:
-    """Convert a geometry objective function to a normal objective function."""
+    """Convert a geometry objective function to a normal objective function.
+
+    Returns
+    -------
+    :
+        The objective function converted from a geometry objective function.
+    """
 
     def f(x):
         geom.variables.set_values_from_norm(x)
@@ -62,6 +68,11 @@ def to_optimiser_callable(
     Convert a geometry optimiser function to a normal optimiser function.
 
     For example, a gradient or constraint.
+
+    Returns
+    -------
+    :
+        The optimiser function converted from a geometry optimiser function.
     """
 
     def f(x):
@@ -79,6 +90,11 @@ def to_optimiser_callable_from_cls(
     Convert a geometry optimiser function to a normal optimiser function.
 
     For example, a gradient or constraint.
+
+    Returns
+    -------
+    :
+        The optimiser function converted from a geometry optimiser function.
     """
 
     def f(x):
@@ -91,7 +107,13 @@ def to_optimiser_callable_from_cls(
 def to_constraint(
     geom_constraint: GeomConstraintT, geom: GeometryParameterisation
 ) -> ConstraintT:
-    """Convert a geometry constraint to a normal one."""
+    """Convert a geometry constraint to a normal one.
+
+    Returns
+    -------
+    :
+        The consatraint constructed from the geometry constraint.
+    """
     constraint: ConstraintT = {
         "f_constraint": to_optimiser_callable(geom_constraint["f_constraint"], geom),
         "df_constraint": None,
@@ -109,6 +131,11 @@ def calculate_signed_distance(
 ) -> np.ndarray:
     """
     Signed distance from the parameterised shape to the keep-out/in zone.
+
+    Returns
+    -------
+    :
+        Signed distance from the parameterised shape to the keep-out/in zone.
     """
     shape = parameterisation.create_shape()
     # Note that we do not discretise by edges here, as the number of
@@ -125,6 +152,11 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     ------
     GeometryOptimisationError
         Koz wire is not closed
+
+    Returns
+    -------
+    :
+        The inequality constraint for the keep-out zone.
     """
     if not koz.wire.is_closed():
         raise GeometryOptimisationError(
@@ -152,6 +184,11 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[Constraint
     Retrieve the inequality constraints registered for the given parameterisation.
 
     If no constraints are registered, return an empty list.
+
+    Returns
+    -------
+    :
+        The inequality constraints registered for the given parameterisation.
     """
     if geom.n_ineq_constraints < 1:
         return []

@@ -44,7 +44,13 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire giving the vessel's boundary in the xz plane."""
+        """
+        Returns
+        -------
+        :
+            A wire giving the vessel's boundary in the xz plane.
+
+        """
         return (
             self.component()
             .get_component("xz")
@@ -149,6 +155,11 @@ class VacuumVesselBuilder(Builder):
     def build(self) -> Component:
         """
         Build the vacuum vessel component.
+
+        Returns
+        -------
+        :
+            The built component tree
         """
         xz_vv, xz_vacuum = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
@@ -162,9 +173,14 @@ class VacuumVesselBuilder(Builder):
 
     def build_xz(
         self,
-    ) -> PhysicalComponent:
+    ) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the vacuum vessel.
+
+        Returns
+        -------
+        :
+            The xz component parts
         """
         inner_vv = _offset_wire_discretised(
             self.ivc_koz,
@@ -198,6 +214,11 @@ class VacuumVesselBuilder(Builder):
     def build_xy(self, vv_face: BluemiraFace) -> list[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel.
+
+        Returns
+        -------
+        :
+            The xy component parts
         """
         return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 
@@ -206,6 +227,11 @@ class VacuumVesselBuilder(Builder):
     ) -> PhysicalComponent:
         """
         Build the x-y-z components of the vacuum vessel.
+
+        Returns
+        -------
+        :
+            The xyz component parts
         """
         return build_sectioned_xyz(
             [vv_face, vacuum_face],

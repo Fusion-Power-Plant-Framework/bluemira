@@ -47,7 +47,8 @@ def clip_nb(
 
     Returns
     -------
-    The clipped values.
+    :
+        The clipped values.
     """
     if val < val_min:
         return val_min
@@ -60,6 +61,16 @@ def clip_nb(
 def ellipe_nb(k: float | np.ndarray) -> float | np.ndarray:
     """
     Vectorised scipy ellipe
+
+    Parameters
+    ----------
+    k:
+        parameter of the elliptic integral
+
+    Returns
+    -------
+    :
+        elliptic integral of the second kind
 
     Notes
     -----
@@ -75,6 +86,16 @@ ellipe_nb.__doc__ += ellipe.__doc__
 def ellipk_nb(k: float | np.ndarray) -> float | np.ndarray:
     """
     Vectorised scipy ellipk
+
+    Parameters
+    ----------
+    k:
+        parameter of the elliptic integral
+
+    Returns
+    -------
+    :
+        elliptic integral of the first kind
 
     Notes
     -----
@@ -100,7 +121,8 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
 
     Returns
     -------
-    The self-inductance of the circular coil [H]
+    :
+        The self-inductance of the circular coil [H]
 
     Notes
     -----
@@ -136,7 +158,8 @@ def circular_coil_inductance_kirchhoff(radius: float, rc: float) -> float:
 
     Returns
     -------
-    The self-inductance of the circular coil [H]
+    :
+        The self-inductance of the circular coil [H]
 
     Notes
     -----
@@ -179,7 +202,8 @@ def greens_psi(
 
     Returns
     -------
-    Poloidal magnetic flux per radian response at (x, z)
+    :
+        Poloidal magnetic flux per radian response at (x, z)
 
     Raises
     ------
@@ -231,7 +255,8 @@ def greens_dpsi_dx(
 
     Returns
     -------
-    Radial derivative of the poloidal flux response at (x, z)
+    :
+        Radial derivative of the poloidal flux response at (x, z)
 
     Notes
     -----
@@ -285,7 +310,8 @@ def greens_dpsi_dz(
 
     Returns
     -------
-    Vertical derivative of the poloidal flux response at (x, z)
+    :
+        Vertical derivative of the poloidal flux response at (x, z)
 
     Notes
     -----
@@ -316,6 +342,27 @@ def calc_a_k2(
     x: float | np.ndarray,
     z: float | np.ndarray,
 ):
+    """
+    Find xc, zc, x, z terms which are repeatedly used in greens calculations.
+
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+
+    Returns
+    -------
+    a:
+        \t:math:`\\sqrt{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    k2:
+        \t:math:`\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    """
     a = np.hypot((x + xc), (z - zc))
     k2 = 4 * x * xc / a**2
     # Avoid NaN when coil on grid point
@@ -327,6 +374,20 @@ def calc_a_k2(
 def calc_e_k(
     k2: float | np.ndarray,
 ):
+    """
+    Calculate the elliptic integral of both the first and second kind.
+
+    Parameters
+    ----------
+    k2:
+        parameter of the elliptic integral
+
+    Returns
+    -------
+    :
+        elliptic integral of the second kind, elliptic integral of the first kind
+
+    """
     return ellipe_nb(k2), ellipk_nb(k2)
 
 
@@ -337,6 +398,28 @@ def calc_i1_i2(
     e: float | np.ndarray | None = None,
     k: float | np.ndarray | None = None,
 ):
+    """
+    Find a, k2, e, k terms which are repeatedly used in greens calculations.
+
+    Parameters
+    ----------
+    a:
+        \t:math:`\\sqrt{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    k2:
+        \t:math:`\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    e:
+        elliptic integral of the second kind
+    k:
+        elliptic integral of the first kind
+
+    Returns
+    -------
+    i1:
+        \t:math:`\\dfrac{\\mathbf{K}}/{a}
+    i2:
+        \t:math:`\\dfrac{\\mathbf{E}}/{a^{3} (1-k^{2})}
+
+    """
     if (e is None) or (k is None):
         e, k = calc_e_k(k2)
     i1 = k / a
@@ -374,7 +457,8 @@ def greens_Bx(
 
     Returns
     -------
-    Radial magnetic field response at (x, z)
+    :
+        Radial magnetic field response at (x, z)
 
     Raises
     ------
@@ -420,7 +504,8 @@ def greens_Bz(
 
     Returns
     -------
-    Vertical magnetic field response at (x, z)
+    :
+        Vertical magnetic field response at (x, z)
 
     Raises
     ------

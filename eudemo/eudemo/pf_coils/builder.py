@@ -29,9 +29,14 @@ class PFCoilsBuilderParams(ParameterFrame):
     r_cs_corner: Parameter[float]
 
 
-def build_pf_coils_component(params, build_config, coilset):
+def build_pf_coils_component(params, build_config, coilset) -> Component:
     """
     Build the PF coils component
+
+    Returns
+    -------
+    :
+        The PF coil component tree
     """
     params = make_parameter_frame(params, PFCoilsBuilderParams)
 

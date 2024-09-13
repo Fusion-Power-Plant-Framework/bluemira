@@ -118,27 +118,52 @@ class NloptOptimiser(Optimiser):
 
     @property
     def algorithm(self) -> Algorithm:
-        """Return the optimiser's algorithm."""
+        """
+        Returns
+        -------
+        :
+            the optimiser's algorithm.
+        """
         return self._algorithm
 
     @property
     def opt_conditions(self) -> dict[str, float]:
-        """Return the optimiser's stopping conditions."""
+        """
+        Returns
+        -------
+        :
+            the optimiser's stopping conditions.
+        """
         return self._opt_conditions.to_dict()
 
     @property
     def opt_parameters(self) -> Mapping[str, int | float]:
-        """Return the optimiser algorithms's parameters."""
+        """
+        Returns
+        -------
+        :
+            the optimiser algorithms's parameters.
+        """
         return self._opt_parameters
 
     @property
     def lower_bounds(self) -> np.ndarray:
-        """Return the lower bounds for the optimisation parameters."""
+        """
+        Returns
+        -------
+        :
+            the lower bounds for the optimisation parameters.
+        """
         return self._opt.get_lower_bounds().copy()
 
     @property
     def upper_bounds(self) -> np.ndarray:
-        """Return the upper bounds for the optimisation parameters."""
+        """
+        Returns
+        -------
+        :
+            the upper bounds for the optimisation parameters.
+        """
         return self._opt.get_upper_bounds().copy()
 
     def add_eq_constraint(
@@ -215,6 +240,11 @@ class NloptOptimiser(Optimiser):
             Optimisation halted by user
         OptimisationError
             low level optimisation error
+
+        Returns
+        -------
+        :
+            The result of optimisation
         """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
@@ -282,7 +312,12 @@ class NloptOptimiser(Optimiser):
             constraint.set_approx_derivative_upper_bound(bounds)
 
     def _get_previous_iter_result(self) -> tuple[np.ndarray, float]:
-        """Get the parameterisation and result from the previous iteration."""
+        """
+        Returns
+        -------
+        :
+            the parameterisation and result from the previous iteration.
+        """
         x_star = self._objective.prev_iter
         f_x = self._objective.f(x_star) if x_star.size else np.inf
         return x_star, f_x
@@ -293,6 +328,12 @@ class NloptOptimiser(Optimiser):
 
         It's likely the last call was a decent solution, so return that
         (with a warning).
+
+        Returns
+        -------
+        :
+            the parameterisation and result from the previous iteration
+            with a warning
         """
         bluemira_warn(
             "optimisation: round-off error occurred. "
@@ -359,7 +400,14 @@ class NloptOptimiser(Optimiser):
 
 
 def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
-    """Validate, and convert, the given algorithm."""
+    """
+    Validate, and convert, the given algorithm.
+
+    Returns
+    -------
+    :
+        validated and converted algorithm
+    """
     return Algorithm(algorithm)
 
 
@@ -383,6 +431,11 @@ def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarr
     Derive an initial guess for the optimiser.
 
     Takes the center of the bounds for each parameter.
+
+    Returns
+    -------
+    :
+        Initial guess based on the midpoint of the provided bounds.
     """
     bounds = np.array([lower, upper])
     # bounds are +/- inf by default, change to real numbers so

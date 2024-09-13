@@ -49,7 +49,8 @@ def primitive_sxn_bound(
 
     Returns
     -------
-    The value of the primitive function at integral bound t
+    result:
+        The value of the primitive function at integral bound t
 
     Notes
     -----
@@ -98,7 +99,8 @@ def primitive_sxn(theta: float, r: float, q: float, l1: float, l2: float) -> flo
 
     Returns
     -------
-    The value of the integral of the Bx function primitive
+    :
+        The value of the integral of the Bx function primitive
     """
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     return primitive_sxn_bound(cos_theta, sin_theta, r, q, l2) - primitive_sxn_bound(
@@ -128,7 +130,8 @@ def primitive_szn_bound(
 
     Returns
     -------
-    The value of the primitive function at integral bound t
+    result:
+        The value of the primitive function at integral bound t
 
     Notes
     -----
@@ -192,7 +195,8 @@ def primitive_szn(theta: float, r: float, ll: float, q1: float, q2: float) -> fl
 
     Returns
     -------
-    The value of the integral of the Bx function primitive
+    :
+        The value of the integral of the Bx function primitive
     """
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     return primitive_szn_bound(cos_theta, sin_theta, r, ll, q2) - primitive_szn_bound(
@@ -236,7 +240,8 @@ def Bx_analytical_prism(
 
     Returns
     -------
-    The magnetic field response in the x coordinate direction
+    :
+        The magnetic field response in the x coordinate direction
     """
     return (
         primitive_sxn(alpha, r1, q2, l1, l2)
@@ -282,7 +287,8 @@ def Bz_analytical_prism(
 
     Returns
     -------
-    The magnetic field response in the z coordinate direction
+    :
+        The magnetic field response in the z coordinate direction
     """
     return (
         primitive_szn(alpha, r1, l2, q1, q2)
@@ -361,6 +367,11 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     ) -> tuple[float, float, float, float, float, float]:
         """
         Convert local x, y, z coordinates to working coordinates.
+
+        Returns
+        -------
+        :
+            Working coordinates
         """
         b = self._length
         c = self._depth
@@ -377,6 +388,15 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     def _BxByBz(self, point: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
+
+        Returns
+        -------
+        :
+            (Bx, By, Bz) at a point
+
+        Note
+        ----
+            By set to 0.
         """
         l1, l2, q1, q2, r1, r2 = self._xyzlocal_to_rql(*point)
         bx = Bx_analytical_prism(self._alpha, self._beta, l1, l2, q1, q2, r1, r2)
@@ -404,7 +424,8 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
         # Convert to local coordinates
@@ -417,6 +438,11 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Calculate extrema points of the current source for plotting and debugging.
+
+        Returns
+        -------
+        :
+            extrema points
         """
         b = self._halflength
         c = self._depth

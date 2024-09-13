@@ -144,9 +144,10 @@ class Optimiser(abc.ABC):
 
         Returns
         -------
-        The result of the optimisation, containing the optimised
-        parameters ``x``, as well as other information about the
-        optimisation.
+        :
+            The result of the optimisation, containing the optimised
+            parameters ``x``, as well as other information about the
+            optimisation.
         """
         ...
 

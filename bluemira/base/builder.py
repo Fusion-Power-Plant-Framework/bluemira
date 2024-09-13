@@ -89,6 +89,11 @@ class Builder(abc.ABC):
             xy view of component
         xyz:
             xyz view of component
+
+        Returns
+        -------
+        component:
+            The component tree
         """
         component = Component(self.name)
         component.add_child(Component("xz", children=xz))

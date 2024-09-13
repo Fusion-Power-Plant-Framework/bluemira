@@ -132,7 +132,13 @@ class ReactorConfig:
             bluemira_warn("Empty global params")
 
     def __str__(self) -> str:
-        """Returns config_data as a nicely pretty formatted string"""
+        """Returns config_data as a nicely pretty formatted string.
+
+        Returns
+        -------
+        :
+            The pretty formatted string of the config_data.
+        """
         return self._pprint_dict(self.config_data)
 
     @staticmethod
@@ -291,6 +297,11 @@ class ReactorConfig:
         Otherwise, returns value and rel_path that was passed in.
 
         rel_path is the path to the file that the value is in.
+
+        Returns
+        -------
+        :
+            Tuple of the file data and the path to the file if value is a path.
 
         Raises
         ------

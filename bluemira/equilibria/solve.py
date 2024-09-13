@@ -87,7 +87,8 @@ class ConvergenceCriterion(ABC):
 
         Returns
         -------
-        True if the convergence criterion is met, else False.
+        :
+            True if the convergence criterion is met, else False.
         """
         ...
 

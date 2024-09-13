@@ -21,6 +21,11 @@ from bluemira.geometry.tools import slice_shape
 def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     """
     Get the inner cut point of the breeding blanket geometry.
+
+    Returns
+    -------
+    :
+        The inner cut point
     """
     cut_plane = BluemiraPlane.from_3_points(
         [r_inner_cut, 0, 0], [r_inner_cut, 0, 1], [r_inner_cut, 1, 1]
@@ -49,7 +54,8 @@ def make_2d_view_components(
 
     Returns
     -------
-    List of PhysicalComponents in the desired view plane
+    :
+        List of PhysicalComponents in the desired view plane
 
     Raises
     ------

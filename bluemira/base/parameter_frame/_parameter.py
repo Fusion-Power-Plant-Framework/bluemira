@@ -119,7 +119,13 @@ class Parameter(Generic[ParameterValueType]):
         return value
 
     def __repr__(self) -> str:
-        """String repr of class instance."""
+        """String repr of class instance.
+
+        Returns
+        -------
+        :
+            The string representation of the class instance.
+        """
         return f"<{type(self).__name__}({self.name}={self.value} {self.unit})>"
 
     def __eq__(self, o: object, /) -> bool:
@@ -128,6 +134,11 @@ class Parameter(Generic[ParameterValueType]):
 
         Parameters are equal if their names and values (with matching
         units) are equal.
+
+        Returns
+        -------
+        :
+            True if the parameters are equal, False otherwise.
         """
         if not isinstance(o, Parameter):
             return NotImplemented
@@ -142,7 +153,13 @@ class Parameter(Generic[ParameterValueType]):
         return hash((self._name, self._description, self._long_name))
 
     def history(self) -> list[ParameterValue[ParameterValueType]]:
-        """Return the history of this parameter's value."""
+        """Return the history of this parameter's value.
+
+        Returns
+        -------
+        :
+            A list of ParameterValue objects, the history of this parameter's value.
+        """
         return copy.deepcopy(self._history)
 
     @typechecked
@@ -153,7 +170,13 @@ class Parameter(Generic[ParameterValueType]):
         self._add_history_record()
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialise the parameter to a dictionary."""
+        """Serialise the parameter to a dictionary.
+
+        Returns
+        -------
+        :
+            A dictionary representation of the parameter.
+        """
         out = {
             "name": self.name,
             "value": self.value,
@@ -181,6 +204,16 @@ class Parameter(Generic[ParameterValueType]):
     def value_as(self, unit: str | pint.Unit) -> ParameterValueType | None:
         """
         Return the current value in a given unit
+
+        Parameters
+        ----------
+        unit:
+            The unit to convert the value to
+
+        Returns
+        -------
+        :
+            The value in the new unit
 
         Raises
         ------

@@ -75,7 +75,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def __repr__(self) -> str:
         """
-        The string representation of the instance
+        The string representation of the instance.
+
+        Returns
+        -------
+        :
+            The name of the instance and its class name.
         """
         return self.name + " (" + self.__class__.__name__ + ")"
 
@@ -125,6 +130,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def tree(self) -> str:
         """
         Get the tree of descendants of this instance.
+
+        Returns
+        -------
+        :
+            The tree of descendants of this instance as a string.
         """
         return str(RenderTree(self))
 
@@ -409,6 +419,16 @@ class PhysicalComponent(Component):
         This only creates copies of each Component,
         the shape and material instances (for a PhysicalComponent for ex.)
         are shared (i.e. are the same instance).
+
+        Parameters
+        ----------
+        parent:
+            The component to set as the copy's parent
+
+        Returns
+        -------
+        self_copy:
+            The copied component
         """
         # Initially copy self with None children
         self_copy = PhysicalComponent(
@@ -475,6 +495,16 @@ class MagneticComponent(PhysicalComponent):
         This only creates copies of each Component,
         the shape and material instances (for a PhysicalComponent for ex.)
         are shared (i.e. are the same instance).
+
+        Parameters
+        ----------
+        parent:
+            The component to set as the copy's parent
+
+        Returns
+        -------
+        self_copy:
+            The copied component
         """
         # Initially copy self with None children
         self_copy = MagneticComponent(
@@ -520,9 +550,10 @@ def get_properties_from_components(
 
     Returns
     -------
-    If multiple properties specified returns a tuple of the list of properties,
-    otherwise returns a list of the property.
-    If only one node has the property returns the value(s).
+    property_lists:
+        If multiple properties specified returns a tuple of the list of properties,
+        otherwise returns a list of the property.
+        If only one node has the property returns the value(s).
     """
     if isinstance(properties, str):
         properties = [properties]

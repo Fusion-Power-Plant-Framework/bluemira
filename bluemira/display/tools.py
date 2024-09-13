@@ -36,7 +36,10 @@ class Options:
 
     def __getattribute__(self, attr: str):
         """
-        Get attributes or from "_options" dict
+        Returns
+        -------
+        :
+            the attributes or from "_options" dict
         """
         try:
             return super().__getattribute__(attr)
@@ -55,12 +58,18 @@ class Options:
 
     def as_dict(self) -> dict[str, Any]:
         """
-        Returns the instance as a dictionary.
+        Returns
+        -------
+        :
+            the instance as a dictionary.
         """
         return asdict(self._options)
 
     def __repr__(self) -> str:
         """
-        Representation string of the DisplayOptions.
+        Returns
+        -------
+        :
+            representation string of the DisplayOptions.
         """
         return f"{type(self).__name__}({pprint.pformat(self.as_dict())}\n)"

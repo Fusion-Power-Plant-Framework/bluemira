@@ -54,6 +54,11 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
 
         See :func:`.optimise_geometry` for a description of the form
         these constraints should take.
+
+        Returns
+        -------
+        :
+            List of equality constraints for the optimisation.
         """
         return []
 
@@ -63,6 +68,11 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
 
         See :func:`.optimise_geometry` for a description of the form
         these constraints should take.
+
+        Returns
+        -------
+        :
+            List of inequality constraints for the optimisation.
         """
         return []
 
@@ -72,6 +82,11 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
 
         An iterable of keep-out zones: closed wires that the geometry
         must not intersect.
+
+        Returns
+        -------
+        :
+            List of geometric keep-out zones.
         """
         return []
 

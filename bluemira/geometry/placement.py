@@ -76,6 +76,11 @@ class BluemiraPlacement:
         ------
         GeometryError
             Points are co-linear
+
+        Returns
+        -------
+        :
+            A BluemiraPlacement from three points.
         """
         p1 = np.array(point_1)
         p2 = np.array(point_2)
@@ -99,6 +104,11 @@ class BluemiraPlacement:
             4 x 4 matrix from which to make the placement
         label:
             Label of the placement
+
+        Returns
+        -------
+        :
+            A BluemiraPlacement from a 4 x 4 matrix
         """
         obj = cls.__new__(cls)
         obj._shape = cadapi.make_placement_from_matrix(matrix)
@@ -157,11 +167,22 @@ class BluemiraPlacement:
         self._shape.Angle = value
 
     def to_matrix(self) -> np.ndarray:
-        """Returns a matrix (quaternion) representing the Placement's transformation"""
+        """
+        Returns
+        -------
+        :
+           A matrix (quaternion) representing the Placement's transformation
+        """
         return np.array(self._shape.Matrix.A).reshape(4, 4)
 
     def inverse(self) -> BluemiraPlacement:
-        """Returns the inverse placement"""
+        """Returns the inverse placement
+
+        Returns
+        -------
+        :
+            An inverted placement.
+        """
         return BluemiraPlacement._create(
             self._shape.inverse(), label=self.label + "_inverse"
         )
@@ -179,7 +200,13 @@ class BluemiraPlacement:
         )
 
     def copy(self, label: str | None = None) -> BluemiraPlacement:
-        """Make a copy of the BluemiraPlacement"""
+        """Make a copy of the BluemiraPlacement
+
+        Returns
+        -------
+        :
+            A copy of the BluemiraPlacement.
+        """
         placement_copy = BluemiraPlacement(self.base, self.axis, self.angle)
         if label is not None:
             placement_copy.label = label
@@ -188,7 +215,13 @@ class BluemiraPlacement:
         return placement_copy
 
     def deepcopy(self, label: str | None = None) -> BluemiraPlacement:  # noqa: ARG002
-        """Make a deepcopy of the BluemiraPlacement"""
+        """Make a deepcopy of the BluemiraPlacement
+
+        Returns
+        -------
+        :
+            A deepcopy of the BluemiraPlacement.
+        """
         return self.copy()
 
     @classmethod
@@ -199,6 +232,11 @@ class BluemiraPlacement:
         ------
         TypeError
             Can only be created with cadapi placement
+
+        Returns
+        -------
+        :
+            A Bluemira placement from a FreeCAD placement.
         """
         if isinstance(obj, cadapi.apiPlacement):
             placement = BluemiraPlacement(label=label)
@@ -210,7 +248,13 @@ class BluemiraPlacement:
         )
 
     def mult_vec(self, vec: Iterable[float]) -> np.ndarray:
-        """Transform a vector into the local placement"""
+        """Transform a vector into the local placement
+
+        Returns
+        -------
+        :
+            A placement from a vector.
+        """
         return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
 
     def extract_plane(
@@ -241,15 +285,30 @@ class BluemiraPlacement:
         return BluemiraPlane.from_3_points(base, p1, p2)
 
     def xy_plane(self):
-        """Returns the corresponding placement xy plane"""
+        """
+        Returns
+        -------
+        :
+            The corresponding placement xy plane
+        """
         return self.extract_plane(v1=np.array([1, 0, 0]), v2=np.array([0, 1, 0]))
 
     def yz_plane(self):
-        """Returns the corresponding placement yz plane"""
+        """
+        Returns
+        -------
+        :
+            The corresponding placement yz plane
+        """
         return self.extract_plane(v1=np.array([0, 1, 0]), v2=np.array([0, 0, 1]))
 
     def xz_plane(self):
-        """Returns the corresponding placement xz plane"""
+        """
+        Returns
+        -------
+        :
+            The corresponding placement xz plane
+        """
         return self.extract_plane(v1=np.array([1, 0, 0]), v2=np.array([0, 0, 1]))
 
 

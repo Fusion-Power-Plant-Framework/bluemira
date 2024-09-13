@@ -126,6 +126,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
     def read(self) -> CoilSet:
         """Read in a coilset.
 
+        Returns
+        -------
+        :
+            A coilset from file
+
         Raises
         ------
         ValueError
@@ -149,6 +154,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
 
         Create an initial coilset, grid and equilibria profile, and use
         these to solve an :class:`OptimisedPulsedCoilsetDesign` problem.
+
+        Returns
+        -------
+        :
+            An optimised coilset
         """
         coilset = self._make_coilset()
         coil_mapper = self._make_coil_mapper(coilset)

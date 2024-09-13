@@ -33,7 +33,8 @@ def debye_length(temperature: float, density: float) -> float:
 
     Returns
     -------
-    Debye length [m]
+    :
+        Debye length [m]
 
     Notes
     -----
@@ -76,7 +77,8 @@ def reduced_mass(mass_1: float, mass_2: float) -> float:
 
     Returns
     -------
-    Reduced mass
+    :
+        Reduced mass
 
     Notes
     -----
@@ -103,7 +105,8 @@ def thermal_velocity(temperature: float, mass: float) -> float:
 
     Returns
     -------
-    Thermal velocity [m/s]
+    :
+        Thermal velocity [m/s]
 
     Notes
     -----
@@ -139,7 +142,8 @@ def de_broglie_length(velocity: float, mu_12: float) -> float:
 
     Returns
     -------
-    De Broglie wavelength [m]
+    :
+        De Broglie wavelength [m]
 
     Notes
     -----
@@ -168,7 +172,8 @@ def impact_parameter_perp(velocity: float, mu_12: float) -> float:
 
     Returns
     -------
-    Perpendicular impact parameter [m]
+    :
+        Perpendicular impact parameter [m]
 
     Notes
     -----
@@ -203,7 +208,8 @@ def coulomb_logarithm(temperature: float, density: float) -> float:
 
     Returns
     -------
-    Coulomb logarithm value
+    :
+        Coulomb logarithm value
 
     Notes
     -----
@@ -249,7 +255,8 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
 
     Returns
     -------
-    Plasma resistivity [1/Ohm/m]
+    :
+        Plasma resistivity [1/Ohm/m]
 
     Notes
     -----

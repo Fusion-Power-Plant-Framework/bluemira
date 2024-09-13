@@ -29,7 +29,12 @@ def _timing(
     debug_info_str: bool = False,
 ) -> Callable[..., _T]:
     """
-    Time a function and push to logging
+    Time a function and push to logging.
+
+    Returns
+    -------
+    :
+        Wrapped function
 
     Parameters
     ----------
@@ -45,7 +50,13 @@ def _timing(
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        """Time a function wrapper"""
+        """Time a function wrapper.
+
+        Returns
+        -------
+        :
+            Output of the function
+        """
         if debug_info_str:
             bluemira_debug(info_str)
         else:
@@ -62,6 +73,17 @@ def _timing(
 def create_compound_from_component(comp: Component) -> BluemiraCompound:
     """
     Creates a BluemiraCompound from the children's shapes of a component.
+
+    Parameters
+    ----------
+    comp:
+        Component to create the compound from
+
+    Returns
+    -------
+    :
+        The BluemiraCompound component
+
     """
     if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
         boundary = [comp.shape]
@@ -77,6 +99,16 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 def serialise_component(comp: Component) -> dict:
     """
     Serialise a Component object.
+
+    Parameters
+    ----------
+    comp:
+        The Component object to serialise
+
+    Returns
+    -------
+    :
+        The serialised Component object as a dictionary
     """
     type_ = type(comp)
 

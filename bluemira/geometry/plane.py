@@ -75,6 +75,11 @@ class BluemiraPlane:
             Third point
         label:
             Label of the plane
+
+        Returns
+        -------
+        :
+            A Bluemira plane.
         """
         plane = BluemiraPlane()
         plane._shape = cadapi.make_plane_from_3_points(point_1, point_2, point_3)
@@ -122,6 +127,11 @@ class BluemiraPlane:
     def __repr__(self) -> str:
         """
         Plane __repr__
+
+        Returns
+        -------
+        :
+            Plane __repr__.
         """
         return (
             f"([{type(self).__name__}] = Label: {self.label},"
@@ -132,6 +142,11 @@ class BluemiraPlane:
     def copy(self, label: str | None = None) -> BluemiraPlane:
         """
         Make a copy of the BluemiraGeo.
+
+        Returns
+        -------
+        :
+            Copy of the plane.
         """
         plane_copy = copy.copy(self)
         if label is not None:
@@ -141,7 +156,13 @@ class BluemiraPlane:
         return plane_copy
 
     def deepcopy(self, label: str | None = None) -> BluemiraPlane:
-        """Make a deepcopy of the BluemiraPlane"""
+        """Make a deepcopy of the BluemiraPlane
+
+        Returns
+        -------
+        :
+            Deepcopy of the plane.
+        """
         plane_copy = BluemiraPlane(self.base, self.axis)
         if label is not None:
             plane_copy.label = label
@@ -155,6 +176,11 @@ class BluemiraPlane:
         """
         Convert the plane to a face with dimension (width, height) and centred into
         the plane base position.
+
+        Returns
+        -------
+        :
+            A face centred into the plane base position.
         """
         face = cadapi.face_from_plane(self._shape, width, height)
         return BluemiraFace._create(face, label)
@@ -162,6 +188,11 @@ class BluemiraPlane:
     def to_placement(self) -> BluemiraPlacement:
         """
         Convert the plane into a placement
+
+        Returns
+        -------
+        :
+            A placement from a plane.
         """
         from bluemira.geometry.placement import BluemiraPlacement  # noqa: PLC0415
 
@@ -178,6 +209,11 @@ def xz_plane_from_2_points(
     ----------
     point1, point2:
         npt.NDArray of shape (3,)
+
+    Returns
+    -------
+    :
+        A plane that is perpendicular to the RZ plane.
     """
     # Draw an extra leg in the Y-axis direction to make an L shape.
     point1 = np.array([point1[0], 0, point1[-1]])
@@ -187,13 +223,25 @@ def xz_plane_from_2_points(
 
 
 def x_plane(x: float):
-    """Make a vertical plane (perpendicular to X) at a specified value of x."""
+    """Make a vertical plane (perpendicular to X) at a specified value of x.
+
+    Returns
+    -------
+    :
+        A vertical plane at a specified value of x.
+    """
     # Simply draw an L shape in the YZ plane
     return BluemiraPlane.from_3_points([x, 0, 0], [x, 0, 1], [x, 1, 0])
 
 
 def z_plane(z: float):
-    """Make a horizontal plane (perpendicular to Z) at a specified value of z."""
+    """Make a horizontal plane (perpendicular to Z) at a specified value of z.
+
+    Returns
+    -------
+    :
+        A horizontal plane at a specified value of z.
+    """
     # Simply draw an L shape in the XY plane
     return BluemiraPlane.from_3_points([0, 0, z], [0, 1, z], [1, 0, z])
 

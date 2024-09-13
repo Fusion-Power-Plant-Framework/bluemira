@@ -124,6 +124,19 @@ def try_get_bluemira_path(
 def make_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
     """
     Create a new folder in the path, provided one does not already exist.
+
+    Parameters
+    ----------
+    path:
+        The desired path from which to create a full path
+    subfolder:
+        The subfolder (from the bluemira root) in which to create a path
+        Defaults to the source code folder, but can be e.g. 'tests', or 'data'
+
+    Returns
+    -------
+    :
+        The full path to the desired `path` in the subfolder
     """
     root = get_bluemira_root()
     if "egg" in root:

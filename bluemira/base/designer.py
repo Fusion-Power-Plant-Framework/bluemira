@@ -62,6 +62,11 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         Execute the designer with the run mode specified by the build config.
 
         By default the run mode is 'run'.
+
+        Returns
+        -------
+        :
+            The result of the designer's run_mode method.
         """
         return _timing(
             self._get_run_func(self.run_mode),
@@ -105,6 +110,16 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     def _get_run_func(self, mode: str) -> Callable:
         """Retrieve the function corresponding to the given run mode.
 
+        Parameters
+        ----------
+        mode:
+            The run mode to retrieve the function for.
+
+        Returns
+        -------
+        :
+            The function corresponding to the given run mode.
+
         Raises
         ------
         ValueError
@@ -124,6 +139,23 @@ def run_designer(
     build_config: dict,
     **kwargs,
 ) -> _DesignerReturnT:
-    """Make and run a designer, returning the result."""
+    """Make and run a designer, returning the result.
+
+    Parameters
+    ----------
+    designer_cls:
+        The designer class to use.
+    params:
+        The parameters required by the designer.
+    build_config:
+        The build configuration options for the designer.
+    kwargs:
+        Additional keyword arguments to pass to the designer.
+
+    Returns
+    -------
+    :
+        The result of the designer's run_mode method.
+    """
     designer = designer_cls(params, build_config, **kwargs)
     return designer.execute()

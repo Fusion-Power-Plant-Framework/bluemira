@@ -59,7 +59,8 @@ def make_castellated_plug(
 
     Returns
     -------
-    BluemiraSolid of a castellated port plug
+    :
+        BluemiraSolid of a castellated port plug
 
     Raises
     ------
@@ -221,7 +222,14 @@ class CryostatPortPlugBuilder(Builder):
         self.cryostat_xz_boundary = cryostat_xz_boundary
 
     def build(self) -> Component:
-        """Build the Cryostat port plugs"""
+        """
+        Build the Cryostat port plugs
+
+        Returns
+        -------
+        :
+            The port plug component tree
+        """
         return self.component_tree(
             xz=None,
             xy=None,
@@ -231,6 +239,11 @@ class CryostatPortPlugBuilder(Builder):
     def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the Cryostat port plugs
+
+        Returns
+        -------
+        :
+            A list of the port plug components
         """
         plugs, voids = make_onion_layer_plug_void(
             self.outer_profiles,
@@ -293,7 +306,14 @@ class RadiationPortPlugBuilder(Builder):
         self.radiation_xz_boundary = radiation_xz_boundary
 
     def build(self) -> Component:
-        """Build the radiation shield port plugs"""
+        """
+        Build the radiation shield port plugs
+
+        Returns
+        -------
+        :
+            The port plug component tree
+        """
         return self.component_tree(
             xz=None,
             xy=None,
@@ -303,6 +323,11 @@ class RadiationPortPlugBuilder(Builder):
     def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the radiation shield port plugs
+
+        Returns
+        -------
+        :
+            A list of the port plug components
         """
         plugs, voids = make_onion_layer_plug_void(
             self.outer_profiles,

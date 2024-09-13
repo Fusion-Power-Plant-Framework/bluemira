@@ -199,7 +199,8 @@ def reactivity(
 
     Returns
     -------
-    Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    :
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     if not isinstance(reaction, Reactions):
         reaction = Reactions[reaction.replace("-", "_")]
@@ -403,7 +404,8 @@ def _reactivity_plasmod(
 
     Returns
     -------
-    Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    :
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Raises
     ------
@@ -445,7 +447,8 @@ def _reactivity_johner(
 
     Returns
     -------
-    Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    sigma_v:
+        Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Raises
     ------

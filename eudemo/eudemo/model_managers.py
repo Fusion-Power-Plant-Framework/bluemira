@@ -52,7 +52,11 @@ class EquilibriumManager:
 
     def get_state(self, name: str) -> None | Snapshot:
         """
-        Get an equilibrium state from the Equilibrium manager.
+        Returns
+        -------
+        :
+            An equilibrium state from the Equilibrium manager.
+
         """
         return self.states.get(name, None)
 
@@ -89,13 +93,23 @@ class NeutronicsManager:
         plt.show()
 
     def tabulate(self) -> str:
-        """Tabulate results"""
+        """
+        Returns
+        -------
+        :
+            Tabulated results
+        """
         if hasattr(self.results, "_tabulate"):
             return str(self.results)
         raise NotImplementedError("Tabulate not available for volume calculation")
 
     def __str__(self) -> str:
-        """String Representation"""
+        """
+        Returns
+        -------
+        :
+            String representation
+        """
         try:
             return self.tabulate()
         except NotImplementedError:

@@ -48,7 +48,8 @@ def brc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float
 
     Returns
     -------
-    The result of the integrand at a single point
+    :
+        The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -646,6 +647,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def radius(self) -> float:
         """
         Get the radius of the CircularArcCurrentSource
+
+        Returns
+        -------
+        :
+            Radius of the CircularArcCurrentSource
         """
         return self._radius
 
@@ -666,6 +672,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def breadth(self) -> float:
         """
         Get the breadth of the CircularArcCurrentSource.
+
+        Returns
+        -------
+        :
+            Breadth of the CircularArcCurrentSource
         """
         return self._breadth
 
@@ -693,6 +704,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def _local_to_cylindrical(point: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Convert from local to cylindrical coordinates.
+
+        Returns
+        -------
+        :
+            Cylindrical coordinates of point.
         """
         x, y, z = point
         rho = np.sqrt(x**2 + y**2)
@@ -702,6 +718,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def _cylindrical_to_working(self, zp: float) -> tuple[float, float, float, float]:
         """
         Convert from local cylindrical coordinates to working coordinates.
+
+        Returns
+        -------
+        :
+            r +- breadth and z +- depth.
         """
         z1 = zp + self._depth
         z2 = zp - self._depth
@@ -710,6 +731,15 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def _BxByBz(self, rp: float, tp: float, zp: float) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
+
+        Returns
+        -------
+        :
+            (Bx, By, Bz) at a point
+
+        Note
+        ----
+            By set to 0.
         """
         r1, r2, z1, z2 = self._cylindrical_to_working(zp)
         bx = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
@@ -737,7 +767,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
@@ -751,6 +782,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Calculate extrema points of the current source for plotting and debugging.
+
+        Returns
+        -------
+        :
+            extrema points
         """
         r = self.radius
         a = self.breadth

@@ -358,22 +358,15 @@ ignore-names = [
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
 # TODO remove
-"eudemo/eudemo/*" = ["DOC201"]  #186
 # see above for actual line
 # "examples/*" = ["DOC201"]  # 51
 "bluemira/utilities/*" = ["DOC201"]  # 38
 "bluemira/structural/*" = ["DOC201"]  # 29
 "bluemira/radiation_transport/*" = ["DOC201"]  # 103
-"bluemira/plasma_physics/*" = ["DOC201"]  # 4
-"bluemira/optimisation/*" = ["DOC201"]  # 24
 "bluemira/mesh/*" = ["DOC201"]  # 10
 "bluemira/materials/*" = ["DOC201"]  # 62
-"bluemira/magnetostatics/*" = ["DOC201"]  # 45
-"bluemira/geometry/*" = ["DOC201"]  # 109
 "bluemira/fuel_cycle/*" = ["DOC201"]  # 19
 "bluemira/equilibria/*" = ["DOC201"]  # 217
-"bluemira/display/*" = ["DOC201"]  # 25
 "bluemira/codes/*" = ["DOC201"]  # 242
 "bluemira/builders/*" = ["DOC201"]  # 69
-"bluemira/base/*" = ["DOC201"]  # 56
 "bluemira/balance_of_plant/*" = ["DOC201"]  # 56
