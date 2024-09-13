@@ -77,7 +77,8 @@ def upstream_temperature(
     connection_length: float | None = None,
 ) -> float:
     """
-    Calculate the upstream temperature, as suggested from "Pitcher, 1997".
+    Calculate the upstream temperature, as suggested from 
+    "Pitcher et al., Plasma Physics and Controlled Fusion 39.6 (1997): 779".
     Knowing the power entering the SOL, and assuming large temperature gradient
     between upstream and target.
 
