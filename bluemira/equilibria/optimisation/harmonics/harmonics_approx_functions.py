@@ -235,10 +235,8 @@ def collocation_points(
 
     Returns
     -------
-    Collocation:
-        - "x" and "z" values of collocation points.
-        - "r" and "theta" values of collocation points.
-
+    :
+        Collocation points
     """
     if seed is None:
         seed = RNGSeeds.equilibria_harmonics.value
@@ -326,8 +324,9 @@ def collocation_points(
         # Spherical coordinates
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
         collocation_theta = np.arctan2(collocation_x, collocation_z)
-    
-    # Going to round everything to 3 decimal places, as we do not need to sample at higher presision
+
+    # Going to round everything to 3 decimal places,
+    # as we do not need to sample at higher precision
     # x,z,r are all in m, and theta is in radians.
     collocation_r = np.round(collocation_r, 3)
     collocation_theta = np.round(collocation_theta, 3)
@@ -494,7 +493,7 @@ def get_psi_harmonic_amplitudes(
     psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
         harmonics2collocation, collocation_psivac, rcond=None
     )
-    
+
     return sig_fig_round(psi_harmonic_amplitudes, 15)
 
 
@@ -583,9 +582,10 @@ def spherical_harmonic_approximation(
     ----
     The coil_harmonic_amplitude_matrix often has a high sensitivity to small numbers.
     To address numerical reproducability across different machines:
-    - Even harmonic amplitudes are set to zero.
-    - Currents found using lstsq are rounded before being used to calculate the LCFS
-      fit metric.
+
+        - Even harmonic amplitudes are set to zero.
+        - Currents found using lstsq are rounded before being used to calculate the LCFS
+          fit metric.
 
     """
     # Get the necessary boundary locations and length scale
@@ -660,7 +660,7 @@ def spherical_harmonic_approximation(
         # SH amplitudes to be returned (and used as constraints)
         # Set even harmonics to 0 -> should be very small already
         coil_current_harmonic_amplitudes = psi_harmonic_amplitudes[:degree]
-        coil_current_harmonic_amplitudes[0::2] = 0.
+        coil_current_harmonic_amplitudes[0::2] = 0.0
 
         # Calculate necessary coil currents
         currents, _residual, _rank, _s = np.linalg.lstsq(
