@@ -232,21 +232,35 @@ class ChargedParticleSolver:
             np.array([x_down_inter[-1], 0, z_down_inter[-1]])
         )
 
-        reg_i = np.nonzero(
-            (self.first_wall.z < self.first_wall.z[up_end_i])
-            & (self.first_wall.z >= self.first_wall.z[down_end_i])
-            & (
-                (self.first_wall.x > self._o_point.x)
-                if lfs
-                else (self.first_wall.x < self._o_point.x)
+        if up_end_i != down_end_i:
+            reg_i = np.nonzero(
+                (self.first_wall.z < self.first_wall.z[up_end_i])
+                & (self.first_wall.z >= self.first_wall.z[down_end_i])
+                & (
+                    (self.first_wall.x > self._o_point.x)
+                    if lfs
+                    else (self.first_wall.x < self._o_point.x)
+                )
+            )[0]
+
+            x_reg_inter = self.first_wall.x[reg_i]
+            z_reg_inter = self.first_wall.z[reg_i]
+
+            reg_wire = make_polygon(self.first_wall.T[reg_i])
+            wire_length = reg_wire.length
+
+        else:
+            mid_i = self.first_wall.argmin(
+                np.array([x_down_inter[-1], 0, z_down_inter[-1]])
             )
-        )[0]
-
-        x_reg_inter = self.first_wall.x[reg_i]
-        z_reg_inter = self.first_wall.z[reg_i]
-
-        reg_wire = make_polygon(self.first_wall.T[reg_i])
-        wire_length = reg_wire.length
+            x_reg_inter = self.first_wall.x[mid_i]
+            z_reg_inter = self.first_wall.z[mid_i]
+            reg_wire = make_polygon([
+                [x_up_inter[-1], 0, z_up_inter[-1]],
+                [x_reg_inter, 0, z_reg_inter],
+                [x_down_inter[-1], 0, z_down_inter[-1]],
+            ])
+            wire_length = reg_wire.length
 
         return x_reg_inter, z_reg_inter, wire_length
 
@@ -334,19 +348,9 @@ class ChargedParticleSolver:
         heat_flux_hfs = self.params.f_hfs_lower_target * q_par_hfs * np.sin(alpha_hfs)
 
         # Find FW portion for perpendicular power
-        if self.first_wall.argmin(
-            np.array([x_hfs_inter[-1], 0, z_hfs_inter[-1]])
-        ) != self.first_wall.argmin(np.array([x_lfs_inter[-1], 0, z_lfs_inter[-1]])):
-            x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
-                x_hfs_inter, z_hfs_inter, x_lfs_inter, z_lfs_inter, lfs=True
-            )
-        else:
-            mid_i = self.first_wall.argmin(
-                np.array([x_lfs_inter[-1], 0, z_lfs_inter[-1]])
-            )
-            x_out_inter = self.first_wall.x[mid_i]
-            z_out_inter = self.first_wall.z[mid_i]
-            outb_length = 1
+        x_out_inter, z_out_inter, outb_length = self._no_wall_intersection_region(
+            x_hfs_inter, z_hfs_inter, x_lfs_inter, z_lfs_inter, lfs=True
+        )
 
         # Calculating missing power from parallel transport
         q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
@@ -355,7 +359,7 @@ class ChargedParticleSolver:
 
         # Calculating mid-outboard and mid-inboard heat flux
         heat_flux_x_outb = miss_omp / outb_surf
-        if outb_length != 1:
+        if hasattr(x_out_inter, "__len__"):
             heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
 
         return (
@@ -477,31 +481,35 @@ class ChargedParticleSolver:
         inb_surf = inb_length * 2 * np.pi * self.imp_int[0]
 
         # Calculating mid-outboard and mid-inboard heat flux
-        heat_flux_x_outb = [miss_omp / outb_surf] * len(x_out_inter)
-        heat_flux_x_inb = [miss_imp / inb_surf] * len(x_in_inter)
+        heat_flux_x_outb = miss_omp / outb_surf
+        heat_flux_x_inb = miss_imp / inb_surf
+        if hasattr(x_out_inter, "__len__"):
+            heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+        if hasattr(x_in_inter, "__len__"):
+            heat_flux_x_inb = [heat_flux_x_inb] * len(x_in_inter)
 
         return (
             np.concatenate([
-                x_out_inter,
+                np.atleast_1d(x_out_inter),
                 x_lfs_down_inter,
                 x_lfs_up_inter,
-                x_in_inter,
+                np.atleast_1d(x_in_inter),
                 x_hfs_down_inter,
                 x_hfs_up_inter,
             ]),
             np.concatenate([
-                z_out_inter,
+                np.atleast_1d(z_out_inter),
                 z_lfs_down_inter,
                 z_lfs_up_inter,
-                z_in_inter,
+                np.atleast_1d(z_in_inter),
                 z_hfs_down_inter,
                 z_hfs_up_inter,
             ]),
             np.concatenate([
-                heat_flux_x_outb,
+                np.atleast_1d(heat_flux_x_outb),
                 heat_flux_lfs_down,
                 heat_flux_lfs_up,
-                heat_flux_x_inb,
+                np.atleast_1d(heat_flux_x_inb),
                 heat_flux_hfs_down,
                 heat_flux_hfs_up,
             ]),
