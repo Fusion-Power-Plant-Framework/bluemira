@@ -169,7 +169,10 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_equality_mconstraint(constraint.call, constraint.tolerance)
+        self._opt.add_equality_mconstraint(
+            constraint.call_with_history if self._keep_history else constraint.call,
+            constraint.tolerance,
+        )
         self._eq_constraints.append(constraint)
 
     def add_ineq_constraint(
@@ -200,7 +203,10 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
+        self._opt.add_inequality_mconstraint(
+            constraint.call_with_history if self._keep_history else constraint.call,
+            constraint.tolerance,
+        )
         self._ineq_constraints.append(constraint)
 
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
@@ -247,7 +253,14 @@ class NloptOptimiser(Optimiser):
             x=x_star,
             n_evals=self._opt.get_numevals(),
             history=self._objective.history,
+            constraint_history=self._get_constraint_history(),
         )
+
+    def _get_constraint_history(self):
+        return [
+            constraint.history
+            for constraint in self._eq_constraints + self._ineq_constraints
+        ]
 
     def set_lower_bounds(self, bounds: npt.ArrayLike) -> None:
         """
