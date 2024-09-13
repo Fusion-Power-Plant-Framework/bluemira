@@ -22,7 +22,7 @@ variables:
 dependencies:
   - python >=3.10,<3.12
   - fenics-dolfinx=0.7.3
-  - freecad=0.22.pre
+  - freecad=1.0rc1
   - h5py
   - openmc>=0.14.0
   - mpi4py<4
