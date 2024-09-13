@@ -1,10 +1,10 @@
 {
   "params": "$path:params.json",
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
-    "plot": true
+    "plot": false
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
@@ -47,7 +47,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
@@ -82,6 +82,7 @@
   },
   "IVC": {
     "Wall silhouette": {
+      "run_mode": "read",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": {
@@ -91,7 +92,6 @@
           "value": "r_fw_ob_in"
         }
       },
-      "run_mode": "run",
       "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": {
         "n_koz_points": 100
@@ -107,6 +107,7 @@
     "Divertor silhouette": {}
   },
   "Neutronics": {
+    "enabled": false,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 16800,
     "batches": 3,
@@ -122,7 +123,7 @@
     "show_data": false
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -149,6 +150,8 @@
     "run_mode": "run",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "verbose": false,
+    "keep_history": true,
+    "check_constraints": true,
     "plot": true,
     "grid_settings": {
       "nx": 127,

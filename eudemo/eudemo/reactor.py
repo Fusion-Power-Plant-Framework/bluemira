@@ -26,9 +26,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import Component
+from bluemira.base.constants import CoilType
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -41,6 +42,7 @@ from bluemira.display.displayer import show_cad
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
+from bluemira.equilibria.vertical_stability import calculate_rzip_stability_criterion
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
@@ -89,6 +91,8 @@ from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 BUILD_CONFIG_FILE_PATH = Path(CONFIG_DIR, "build_config.json").as_posix()
+
+set_log_level("DEBUG")
 
 
 class EUDEMO(Reactor):
@@ -233,8 +237,9 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
 def build_pf_coils(
     params,
     build_config,
-    equilibrium_manager,
+    equilibrium_manager: EquilibriumManager,
     tf_coil_boundary,
+    vv,
     pf_coil_keep_out_zones=(),
 ) -> PFCoil:
     """
@@ -257,11 +262,20 @@ def build_pf_coils(
         build_config,
         equilibrium_manager,
         tf_coil_boundary,
+        vv,
         pf_coil_keep_out_zones_new,
     )
 
     coilset = pf_designer.execute()
-    component = build_pf_coils_component(params, build_config, coilset)
+
+    stability_crit = calculate_rzip_stability_criterion(
+        equilibrium_manager.get_state(equilibrium_manager.SOF).eq
+    )
+    bluemira_print(f"RZIp stability criterion: {stability_crit}")
+
+    component = build_pf_coils_component(
+        params, build_config, coilset.get_coiltype(CoilType.CS, CoilType.PF)
+    )
     return PFCoil(component, coilset)
 
 

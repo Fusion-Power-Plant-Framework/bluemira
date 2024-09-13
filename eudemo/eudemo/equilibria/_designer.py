@@ -670,7 +670,11 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
 
     def read(self) -> Equilibrium:
         """Load an equilibrium from a file."""
-        eq = Equilibrium.from_eqdsk(self.file_path, qpsi_sign=-1, from_cocos=3)
+        eq = Equilibrium.from_eqdsk(
+            self.file_path,
+            from_cocos=self.build_config.get("cocos"),
+            qpsi_sign=self.build_config.get("qpsi", Sign.NEGATIVE),
+        )
         self._update_params_from_eq(eq)
         return eq
 

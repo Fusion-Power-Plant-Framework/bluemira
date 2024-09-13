@@ -137,6 +137,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             current_scale=self.scale,
         )
 
+        # ipdb.set_trace()
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
 

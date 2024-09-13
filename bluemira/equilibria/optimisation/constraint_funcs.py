@@ -43,14 +43,18 @@ use in derivative based algorithms, such as those utilising gradient descent.
 from __future__ import annotations
 
 import abc
+from copy import deepcopy
 from typing import TYPE_CHECKING, Literal
 
+import matplotlib.pyplot as plt
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.vertical_stability import RZIp
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.equilibrium import Equilibrium
 
 
@@ -395,6 +399,7 @@ class CoilForceConstraintFunctions:
         Constraint Derivative:
         Absolute sum of vertical force constraint on entire CS stack
         """
+        # TODO(je-cook) is this right, only applying the grad at one point
         self.grad[self.n_PF] = 2 * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
 
     def cs_z_sep_constraint(self, f_matx, max_value):
@@ -485,3 +490,32 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
             self.cs_z_grad(df_matx)
             self.cs_z_sep_grad(df_matx)
         return np.round(self.grad, self._round_dp)
+
+
+class RZIpStabilityConstraintFunction(ConstraintFunction):
+    """
+    Stability constriant function using RZIp model
+
+    Parameters
+    ----------
+    offset:
+        < 1 plasma mass becomes a factor
+        = 1 massless plasma solution not valid (said to represent MHD effects)
+        > 1 displacement growth dominated by L/R of passive system
+
+    """
+
+    def __init__(
+        self, name: str, equilibrium: Equilibrium, scale, offset=1.4, max_eigens=40
+    ):
+        self.name = name
+        self.eq = deepcopy(equilibrium)
+        self.scale = scale
+        self.offset = offset
+        self.max_eigens = max_eigens
+        f, self.ax = plt.subplots()
+        self.rzip = RZIp(self.eq.coilset)
+
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> float:
+        """Constraint function"""
+        return self.rzip(self.eq, vector * self.scale) - self.offset

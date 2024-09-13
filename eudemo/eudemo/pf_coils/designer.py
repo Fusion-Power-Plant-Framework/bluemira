@@ -27,6 +27,7 @@ from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     PsiConstraint,
+    StabilityConstraint,
 )
 from bluemira.equilibria.optimisation.problem import PulsedNestedPositionCOP
 from bluemira.equilibria.run import (
@@ -114,11 +115,13 @@ class PFCoilsDesigner(Designer[CoilSet]):
         build_config: dict,
         equilibrium_manager: EquilibriumManager,
         tf_coil_boundary: BluemiraWire,
+        vacuum_vessel: BluemiraWire,
         keep_out_zones: Iterable[BluemiraFace],
     ):
         super().__init__(params, build_config)
         self.ref_eq = equilibrium_manager.get_state(equilibrium_manager.REFERENCE)
         self.tf_coil_boundary = tf_coil_boundary
+        self.vessel = vacuum_vessel
         self.keep_out_zones = keep_out_zones
         self.file_path = self.build_config.get("file_path", None)
         self.eq_manager = equilibrium_manager
@@ -165,7 +168,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
+        result = opt_problem.optimise(
+            verbose=self.build_config.get("verbose", False),
+            keep_history=self.build_config.get("keep_history", False),
+            check_constraints=self.build_config.get("check_constraints", False),
+        )
         self._save_equilibria(opt_problem)
         if self.build_config.get("plot", False):
             opt_problem.plot()
@@ -251,7 +258,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             position_mapper,
             grid,
             current_opt_constraints=[constraints["psi_inner"]],
-            coil_constraints=constraints["coil_field"],
+            coil_constraints=constraints["coil_field"] + [constraints["rzip"]],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
             breakdown_settings=BreakdownCOPSettings(
@@ -332,6 +339,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "psi_inner": psi_inner,
             "x_point": x_point,
             "coil_field": coil_field_constraints,
+            "rzip": StabilityConstraint(target_value=1.4, tolerance=1e-3),
         }
 
     def _make_coil_mapper(self, coilset):
@@ -369,4 +377,5 @@ class PFCoilsDesigner(Designer[CoilSet]):
             CS_bmax=self.params.CS_bmax.value,
             PF_jmax=self.params.PF_jmax.value,
             PF_bmax=self.params.PF_bmax.value,
+            vessel_points=self.vessel.discretise(50),
         )

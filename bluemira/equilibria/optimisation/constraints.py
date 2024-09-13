@@ -22,6 +22,7 @@ from bluemira.equilibria.optimisation.constraint_funcs import (
     ConstraintFunction,
     FieldConstraintFunction,
     L2NormConstraint,
+    RZIpStabilityConstraintFunction,
 )
 from bluemira.equilibria.optimisation.constraint_funcs import (
     CoilForceConstraint as CoilForceConstraintFunction,
@@ -755,6 +756,67 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
             linestyle="None",
             zorder=Zorder.CONSTRAINT.value,
         )
+
+
+class StabilityConstraint(AbsoluteMagneticConstraint):
+    def __init__(
+        self,
+        target_value: float = 1.4,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray | None = None,
+    ):
+        self._target_value = target_value
+        super().__init__(
+            5,
+            0,
+            target_value,
+            weights,
+            tolerance,
+            f_constraint=RZIpStabilityConstraintFunction,
+            constraint_type="inequality",
+        )
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        return np.hypot(
+            coilset.Bx_response(self.x, self.z, control=True),
+            coilset.Bz_response(self.x, self.z, control=True),
+        )
+
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return np.array([eq.Bp(self.x, self.z)])
+
+    def __len__(self) -> int:
+        """
+        The mathematical size of the constraint.
+        """
+        return 1
+
+    def prepare(
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
+    ):
+        self.eq = equilibrium
+
+        super().prepare(equilibrium, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+
+    def f_constraint(self) -> FieldConstraintFunction:
+        """Calculate the constraint function"""
+        f_constraint = RZIpStabilityConstraintFunction(
+            name=self.name, equilibrium=self.eq, scale=1e-6, offset=self.target_value
+        )
+        f_constraint.constraint_type = self.constraint_type
+        return f_constraint
+
+    def plot(self): ...
 
 
 class MagneticConstraintSet:

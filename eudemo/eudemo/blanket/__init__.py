@@ -9,6 +9,7 @@ from bluemira.base.components import Component
 from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket.builder import BlanketBuilder
 from eudemo.blanket.designer import BlanketDesigner
@@ -54,3 +55,8 @@ class Blanket(ComponentManager):
     def outboard_xz_boundary(self) -> BluemiraWire:
         """The poloidal plane silhouette of the outboard blanket segment."""
         return self.outboard_xz_face.boundary[0]
+
+    @property
+    def complete_inboard_xz(self) -> BluemiraWire:
+        """The inner surface of the blanket in xz"""
+        return make_polygon(self.panel_points)
