@@ -18,6 +18,7 @@ from bluemira.optimisation._algorithm import (
     AlgorithmDefaultConditions,
     AlgorithmType,
 )
+from bluemira.optimisation._debug_opt import DebugOptimiser
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
@@ -266,7 +267,9 @@ def _make_optimiser(
     :
         Configured optimiser.
     """
-    if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
+    if (alg := Algorithm(algorithm)).DEBUG:
+        optimiser = DebugOptimiser
+    elif alg in NLOPT_ALG_MAPPING:
         optimiser = NloptOptimiser
     elif alg in SCIPY_REGISTRY:
         optimiser = ScipyOptimiser
