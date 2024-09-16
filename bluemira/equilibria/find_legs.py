@@ -12,6 +12,8 @@ from enum import Enum, auto
 
 import numpy as np
 
+from bluemira.base.error import BluemiraError
+
 from bluemira.equilibria.equilibrium import Equilibrium, Grid
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -21,6 +23,8 @@ from bluemira.equilibria.find import (
 from bluemira.equilibria.flux_surfaces import (
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    calculate_connection_length_flt,
+    calculate_connection_length_fs,
 )
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -31,6 +35,8 @@ from bluemira.geometry.coordinates import (
 class NumNull(Enum):
     """
     Class for use with LegFlux.
+    Double Null (DN)
+    Single Null (SN)
     """
 
     DN = auto()
@@ -40,6 +46,8 @@ class NumNull(Enum):
 class SortSplit(Enum):
     """
     Class for use with LegFlux.
+    Split the flux in x-direction (X)
+    Split the flux in z-direction (Z)
     """
 
     X = auto()
@@ -56,6 +64,10 @@ class LegFlux:
         Input Equilibrium
     psi_n_tol:
         The normalised psi tolerance to use
+    delta_start:
+        Search range value for finding LCFS. Will search for the transition from a
+        "closed" to "open" flux surface for normalised flux values
+        between 1 - delta_start and 1 + delta_start.
     rtol:
         Relative tolerance used for finding configuration of
         separatrix split for double null
@@ -66,7 +78,7 @@ class LegFlux:
         eq: Equilibrium,
         psi_n_tol: float = 1e-6,
         delta_start: float = 0.01,
-        rtol: float = 1e-1,
+        rtol: float = 1e-3,
     ):
         self.eq = eq
         o_points, x_points = eq.get_OX_points()
@@ -95,8 +107,7 @@ class LegFlux:
         Determine how to find and sort legs.
         For a double null this function:
         - sorts the x-points by lower then upper
-        - sorts the separatrix list by inner then outer for sort_split="X"
-        - keeps the separatrix list sorted by longest then shortest for sort_split="Z"
+        - keeps the separatrix list sorted by longest then shortest
 
         Returns
         -------
@@ -165,9 +176,11 @@ class LegFlux:
         dx_off:
             Total span in radial space of the flux surfaces to extract
         delta:
-
+            intersection point x value +- delta is used to find starting point
+            of leg flux see '_extract_leg'.
         delta_offsets:
-
+            intersection point x value +- delta_offsets is used to find starting point
+            of offsets leg flux see '_extract_offsets'.
 
         Returns
         -------
@@ -234,25 +247,42 @@ class LegFlux:
         return leg_dict
 
 
-def get_legs_length(
+def get_legs_length_and_angle(
     eq: Equilibrium,
     leg_dict: dict,
     plasma_facing_boundary: Grid | Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary."""
     length_dict = {}
-    for n, leg_list in leg_dict.items():
-        if not isinstance(leg_list[0], Coordinates):
+    angle_dict = {}
+    for name, leg_list in leg_dict.items():
+        if not leg_list:
             lengths = [0.0]
+            angles = [180.0]
         else:
             lengths = []
+            angles = []
             for leg in leg_list:
-                leg_fs = PartialOpenFluxSurface(leg)
-                if plasma_facing_boundary is not None:
-                    leg_fs.clip(plasma_facing_boundary)
-                lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
-        length_dict.update({n: lengths})
-    return length_dict
+                if leg is None:
+                    con_length = 0.0
+                    grazing_ang = 180.0
+                else:
+                    leg_fs = PartialOpenFluxSurface(leg)
+                    if plasma_facing_boundary is not None:
+                        leg_fs.clip(plasma_facing_boundary)
+                    con_length = OpenFluxSurface(leg_fs.coords).connection_length(eq)
+                    alpha = leg_fs.alpha
+                    if alpha is None:
+                        grazing_ang = 180.0
+                    elif alpha <= np.pi:
+                        grazing_ang = alpha
+                    else:
+                        grazing_ang = 2 * np.pi - alpha
+                lengths.append(con_length)
+                angles.append(grazing_ang)
+        length_dict.update({name: lengths})
+        angle_dict.update({name: angles})
+    return length_dict, angle_dict
 
 
 def get_single_null_legs(separatrix, delta, x_points, o_point):
@@ -273,6 +303,7 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
 
     """
     # Separatrix list is sorted by INNER then OUTER
+    separatrix.sort(key=lambda separatrix: separatrix.x[0])
     legs = []
     for half_sep in separatrix:
         for x_p in x_points:
@@ -468,3 +499,74 @@ def _extract_leg_using_index_value(
     if not flux_legs:
         flux_legs = None
     return flux_legs
+
+
+class CalcMethod(Enum):
+    """
+    Class for use with calculate_connection_length function.
+    User can choose how the connection length is calculated
+    """
+
+    FIELD_LINE_TRACER = auto()
+    FLUX_SURFACE_GEOMETRY = auto()
+
+def calculate_connection_length(
+    eq: Equilibrium,
+    x: float | None = None,
+    z: float | None = None,
+    first_wall: Coordinates | Grid | None = None,
+    forward: bool = True,
+    psi_n_tol: float = 1e-6,
+    delta_start: float = 0.01,
+    rtol: float = 1e-1,
+    n_turns_max: int = 50,
+    calculation_method: str = "flux_surface_geometry",
+):
+    """
+    Calculate the parallel connection length from a starting point to a flux-intercepting
+    surface using either flux surface geometry or a field line tracer.
+    If no starting point is selected then use the separatrix at the Outboard Midplane.
+    """
+    calculation_method = CalcMethod[calculation_method.upper()]
+
+    # Use Separatrix and OM if x,z not chosen
+    if (x is None) or (z is None):
+        legflux = LegFlux(
+            eq=eq,
+            psi_n_tol=psi_n_tol,
+            delta_start=delta_start,
+            rtol=rtol,
+        )
+
+        if legflux.n_null == NumNull.DN:
+            if legflux.sort_split == SortSplit.X:
+                legflux.separatrix.sort(key=lambda leg: -leg.x[0])
+            f_s = legflux.separatrix[0]
+        else:
+            f_s = legflux.separatrix
+
+        z_abs = np.abs(f_s.z)
+        z = np.min(z_abs)
+        x = np.max(f_s.x[z_abs == np.min(z_abs)])
+
+    if calculation_method == CalcMethod.FIELD_LINE_TRACER:
+        return calculate_connection_length_flt(
+            eq=eq,
+            x=x,
+            z=z,
+            forward=forward,
+            first_wall=first_wall,
+            n_turns_max=n_turns_max,
+        )
+
+    if calculation_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
+        return calculate_connection_length_fs(
+            eq=eq,
+            x=x,
+            z=z,
+            forward=forward,
+            first_wall=first_wall,
+            f_s=f_s,
+        )
+
+    raise BluemiraError("Please select a valid calculation_method option.")
