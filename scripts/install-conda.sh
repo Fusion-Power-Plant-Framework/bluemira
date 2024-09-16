@@ -9,15 +9,15 @@ fi
 
 # Get and install mambaforge
 if [ ! -d "$HOME/mambaforge" ]; then
-  curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh
-  bash Mambaforge-$(uname)-$(uname -m).sh -b -p "$HOME/mambaforge"
-  rm Mambaforge-$(uname)-$(uname -m).sh
+  curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
+  bash Miniforge3-$(uname)-$(uname -m).sh -b -p "$HOME/miniforge"
+  rm Miniforge3-$(uname)-$(uname -m).sh
 fi
 
 # Make an init file so we don't need to edit bashrc
 # Note this will currently work for bash terminals
-envsubst '$HOME' < conda/mambaforge-init.sh > ~/.mambaforge-init.sh
-source ~/.mambaforge-init.sh
+envsubst '$HOME' < conda/miniforge-init.sh > ~/.miniforge-init.sh
+source ~/.miniforge-init.sh
 
 # Create the bluemira conda environment
 sed s/".*python.*"/"  - python="$PYTHON_VERSION/g ./conda/environment.yml > ./conda/tmp_env.yml
