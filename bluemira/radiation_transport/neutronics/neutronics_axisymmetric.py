@@ -282,6 +282,6 @@ class NeutronicsReactor(ABC):
         divertor: ComponentManager,
         blanket: ComponentManager,
         vacuum_vessel: ComponentManager,
-    ) -> tuple[
-        TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire
-    ]: ...
+    ) -> tuple[TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
+        """Get wires from components"""
+        ...
