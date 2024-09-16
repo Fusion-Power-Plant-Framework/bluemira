@@ -1077,6 +1077,11 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
             parameter = edge.getParameterByLength(floatify(new_distance))
             point = edge.valueAt(parameter)
             break
+    else:
+        # This catches floating point less thans when new_length ~= distance
+        # for the last wire
+        edge = wire.OrderedEdges[-1]
+        point = edge.valueAt(edge.LastParameter)
 
     return np.array(point)
 
