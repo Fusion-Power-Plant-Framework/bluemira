@@ -584,7 +584,8 @@ class Superconductor(abc.ABC):
         ax.view_init(30, 45)
 
     @abc.abstractmethod
-    def Jc(self):  # noqa: N802, D102
+    def Jc(self):  # noqa: N802
+        """Jc"""
         ...
 
 
