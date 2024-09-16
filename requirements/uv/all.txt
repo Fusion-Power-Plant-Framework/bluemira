@@ -16,7 +16,7 @@ argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 arrow==1.3.0
     # via isoduration
-asteval==1.0.2
+asteval==1.0.4
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
@@ -111,7 +111,7 @@ fqdn==1.5.1
     # via jsonschema
 gmsh==4.13.1
     # via bluemira (pyproject.toml)
-greenlet==3.0.3
+greenlet==3.1.0
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
@@ -119,9 +119,9 @@ httpcore==1.0.5
     # via httpx
 httpx==0.27.2
     # via jupyterlab
-identify==2.6.0
+identify==2.6.1
     # via pre-commit
-idna==3.8
+idna==3.10
     # via
     #   anyio
     #   httpx
@@ -131,7 +131,7 @@ imageio==2.35.1
     # via bluemira (pyproject.toml)
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.4.0
+importlib-metadata==8.5.0
     # via
     #   jupyter-cache
     #   myst-nb
@@ -237,7 +237,7 @@ matplotlib-inline==0.1.7
     # via
     #   ipykernel
     #   ipython
-mdit-py-plugins==0.4.1
+mdit-py-plugins==0.4.2
     # via
     #   jupytext
     #   myst-parser
@@ -247,7 +247,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 mistune==3.0.2
     # via nbconvert
-msgpack==1.0.8
+msgpack==1.1.0
     # via blosc2
 mypy==1.11.2
     # via bluemira (pyproject.toml)
@@ -355,7 +355,7 @@ pillow==10.4.0
     #   pyvista
 pint==0.24.3
     # via bluemira (pyproject.toml)
-platformdirs==4.3.2
+platformdirs==4.3.3
     # via
     #   jupyter-core
     #   pooch
@@ -400,7 +400,7 @@ pyparsing==3.1.4
     #   periodictable
 pypet==0.6.1
     # via bluemira (pyproject.toml)
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   bluemira (pyproject.toml)
     #   pytest-cov
@@ -426,7 +426,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==2.0.7
     # via jupyter-events
-pytz==2024.1
+pytz==2024.2
     # via pandas
 pyvista==0.44.1
     # via bluemira (pyproject.toml)
@@ -464,7 +464,7 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.8.0
+rich==13.8.1
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -474,7 +474,7 @@ rpds-py==0.20.0
     #   referencing
 ruff==0.6.5
     # via bluemira (pyproject.toml)
-scikit-learn==1.5.1
+scikit-learn==1.5.2
     # via bluemira (pyproject.toml)
 scipy==1.10.1
     # via
@@ -489,7 +489,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==74.1.2
+setuptools==75.0.0
     # via jupyterlab
 six==1.16.0
     # via
@@ -539,7 +539,7 @@ sqlalchemy==2.0.34
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sybil==6.1.1
+sybil==7.1.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
     # via
@@ -610,7 +610,7 @@ tzdata==2024.1
     # via pandas
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.2.2
+urllib3==2.2.3
     # via requests
 virtualenv==20.26.4
     # via pre-commit
@@ -628,5 +628,5 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.8.0
     # via jupyter-server
-zipp==3.20.1
+zipp==3.20.2
     # via importlib-metadata
