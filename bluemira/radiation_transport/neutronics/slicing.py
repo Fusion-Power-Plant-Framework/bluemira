@@ -541,8 +541,8 @@ class PanelsAndExteriorCurve:
     def execute_curve_cut(
         self,
         discretisation_level: int,
-        starting_cut: npt.NDArray[np.float64] | None = None,
-        ending_cut: npt.NDArray[np.float64] | None = None,
+        starting_cut: npt.NDArray[np.float64],
+        ending_cut: npt.NDArray[np.float64],
         snap_to_horizontal_angle: float = 30.0,
     ) -> tuple[list[BluemiraWire], ...]:
         """
@@ -747,8 +747,8 @@ class DivertorWireAndExteriorCurve:
 
     def calculate_cut_points(
         self,
-        starting_cut: npt.NDArray[np.float64] | None,
-        ending_cut: npt.NDArray[np.float64] | None,
+        starting_cut: npt.NDArray[np.float64],
+        ending_cut: npt.NDArray[np.float64],
     ) -> tuple[list[npt.NDArray[np.float64]], ...]:
         """
         Cut the curves up into N segments to match the N convex chunks of the
@@ -827,8 +827,8 @@ class DivertorWireAndExteriorCurve:
     def execute_curve_cut(
         self,
         discretisation_level: int,
-        starting_cut: npt.NDArray[np.float64] | None,
-        ending_cut: npt.NDArray[np.float64] | None,
+        starting_cut: npt.NDArray[np.float64],
+        ending_cut: npt.NDArray[np.float64],
     ) -> tuple[list[WireInfoList], ...]:
         """
         Cut the vacuum vessel curves into a series return these segments.
