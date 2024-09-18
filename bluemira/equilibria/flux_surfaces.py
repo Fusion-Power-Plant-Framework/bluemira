@@ -486,8 +486,8 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords.points[1],
-            self.coords.points[0],
+            self.coords.points[-2],
+            self.coords.points[-1],
             first_wall.points[fw_arg],
         )
 
