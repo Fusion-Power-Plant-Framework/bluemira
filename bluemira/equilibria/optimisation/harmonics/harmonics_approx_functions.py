@@ -116,7 +116,10 @@ def coil_harmonic_amplitude_matrix(
 
 
 def harmonic_amplitude_marix(
-    collocation_r: np.ndarray, collocation_theta: np.ndarray, r_t: float, sig_figures: int = 15,
+    collocation_r: np.ndarray,
+    collocation_theta: np.ndarray,
+    r_t: float,
+    sig_figures: int = 15,
 ) -> np.ndarray:
     """
     Construct matrix from harmonic amplitudes at given points (in spherical coords).
@@ -454,7 +457,11 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
 
 
 def get_psi_harmonic_amplitudes(
-    vacuum_psi: np.ndarray, grid: Grid, collocation: Collocation, r_t: float, sig_figures: int = 15,
+    vacuum_psi: np.ndarray,
+    grid: Grid,
+    collocation: Collocation, r_t:
+    float,
+    sig_figures: int = 15,
 ) -> np.ndarray:
     """
     Calculate the Spherical Harmonic (SH) amplitudes/coefficients needed to produce
