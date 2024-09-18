@@ -415,7 +415,7 @@ class PanelsAndExteriorCurve:
                 "Expected an input np.ndarray of breakpoints of shape = "
                 f"(N+1, 2). Instead received shape = {np.shape(panel_break_points)}."
             )
-        if not is_convex(self.interior_panels[:, ::2]):
+        if not is_convex(self.interior_panels[:, ::2]):  # this enforce STRICT convexity.
             raise GeometryError(
                 "The first wall panels outline is expected to form a convex hull!"
             )
