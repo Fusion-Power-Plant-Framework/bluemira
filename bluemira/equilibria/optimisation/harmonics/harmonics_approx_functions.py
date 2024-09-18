@@ -42,6 +42,7 @@ def coil_harmonic_amplitude_matrix(
     max_degree: int,
     r_t: float,
     sh_coil_names: list,
+    sig_figures: int = 15,
 ) -> np.ndarray:
     """
     Construct matrix from harmonic amplitudes at given coil locations.
@@ -74,6 +75,8 @@ def coil_harmonic_amplitude_matrix(
         Typical length scale (e.g. radius at outer midplane)
     sh_coil_names:
         Names of the coils to use with SH approximation (always located outside bdry_r)
+    sig_figures:
+        Number of significant figures for rounding currents2harmonics values 
 
     Returns
     -------
@@ -109,11 +112,11 @@ def coil_harmonic_amplitude_matrix(
         * lpmv(ones, degrees, np.cos(theta_f)[None, :])
         / np.sqrt(degrees * (degrees + 1))
     )
-    return sig_fig_round(currents2harmonics, 15)
+    return sig_fig_round(currents2harmonics, sig_figures)
 
 
 def harmonic_amplitude_marix(
-    collocation_r: np.ndarray, collocation_theta: np.ndarray, r_t: float
+    collocation_r: np.ndarray, collocation_theta: np.ndarray, r_t: float, sig_figures: int = 15,
 ) -> np.ndarray:
     """
     Construct matrix from harmonic amplitudes at given points (in spherical coords).
@@ -139,6 +142,8 @@ def harmonic_amplitude_marix(
         Theta values of collocation points
     r_t:
         Typical length scale (e.g. radius at outer midplane)
+    sig_figures:
+        Number of significant figures for rounding harmonics2collocation values 
 
     Returns
     -------
@@ -167,7 +172,7 @@ def harmonic_amplitude_marix(
         * lpmv(ones, degrees, np.cos(collocation_theta)[:, None])
         / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
     )
-    return sig_fig_round(harmonics2collocation, 15)
+    return sig_fig_round(harmonics2collocation, sig_figures)
 
 
 class PointType(Enum):
@@ -449,7 +454,7 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
 
 
 def get_psi_harmonic_amplitudes(
-    vacuum_psi: np.ndarray, grid: Grid, collocation: Collocation, r_t: float
+    vacuum_psi: np.ndarray, grid: Grid, collocation: Collocation, r_t: float, sig_figures: int = 15,
 ) -> np.ndarray:
     """
     Calculate the Spherical Harmonic (SH) amplitudes/coefficients needed to produce
@@ -468,6 +473,9 @@ def get_psi_harmonic_amplitudes(
     r_t:
         Typical length scale for spherical harmonic approximation
         (default = maximum x value of LCFS).
+    sig_figures:
+        Number of significant figures for rounding psi_harmonic_amplitudes values 
+    
 
     Returns
     -------
@@ -494,7 +502,7 @@ def get_psi_harmonic_amplitudes(
         harmonics2collocation, collocation_psivac, rcond=None
     )
 
-    return sig_fig_round(psi_harmonic_amplitudes, 15)
+    return sig_fig_round(psi_harmonic_amplitudes, sig_figures)
 
 
 def spherical_harmonic_approximation(
@@ -505,6 +513,7 @@ def spherical_harmonic_approximation(
     acceptable_fit_metric: float = 0.01,
     nlevels: int = 50,
     seed: int | None = None,
+    sig_figures: int = 15,
     *,
     plot: bool = False,
 ) -> tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
@@ -553,6 +562,8 @@ def spherical_harmonic_approximation(
         Plot setting, higher n = greater number of contour lines
     seed:
         Seed value to use with random point distribution
+    sig_figures:
+        Number of significant figures for rounding during SH approximation
     plot:
         Whether or not to plot the results
 
@@ -627,7 +638,7 @@ def spherical_harmonic_approximation(
 
     # SH amplitudes needed to produce an approximation of vacuum psi contribution
     psi_harmonic_amplitudes = get_psi_harmonic_amplitudes(
-        vacuum_psi, grid, collocation, r_t
+        vacuum_psi, grid, collocation, r_t, sig_figures
     )
 
     # Set min to save some time
@@ -651,7 +662,7 @@ def spherical_harmonic_approximation(
     for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
-            eq.coilset, degree, r_t, sh_coil_names
+            eq.coilset, degree, r_t, sh_coil_names, sig_figures
         )
 
         # matrix condition number
@@ -666,7 +677,7 @@ def spherical_harmonic_approximation(
         currents, _residual, _rank, _s = np.linalg.lstsq(
             currents2harmonics[:, :], coil_current_harmonic_amplitudes, rcond=None
         )
-        currents = sig_fig_round(currents, int(15 - ten_power(cond_num_c2h)))
+        currents = sig_fig_round(currents, int(sig_figures - ten_power(cond_num_c2h)))
 
         # Set currents in coilset
         for n, i in zip(sh_coil_names, currents, strict=False):
