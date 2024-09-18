@@ -24,7 +24,7 @@ from bluemira.geometry.plane import (
     xz_plane_from_2_points,
     z_plane,
 )
-from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.tools import get_wire_plane_intersect, is_convex, make_polygon
 from bluemira.radiation_transport.neutronics.constants import (
     DISCRETISATION_LEVEL,
     TOLERANCE_DEGREES,
@@ -403,6 +403,8 @@ class PanelsAndExteriorCurve:
         ------
         ValueError
             panel_break_points array shape incorrect
+        GeometryError
+            panel_break_points array is not convex
         """
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior
@@ -412,6 +414,10 @@ class PanelsAndExteriorCurve:
             raise ValueError(
                 "Expected an input np.ndarray of breakpoints of shape = "
                 f"(N+1, 2). Instead received shape = {np.shape(panel_break_points)}."
+            )
+        if not is_convex(self.interior_panels[:, ::2]):
+            raise GeometryError(
+                "The first wall panels outline is expected to form a convex hull!"
             )
 
     def get_bisection_line(
