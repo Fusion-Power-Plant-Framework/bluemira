@@ -13,7 +13,6 @@ from enum import Enum, auto
 import numpy as np
 
 from bluemira.base.error import BluemiraError
-
 from bluemira.equilibria.equilibrium import Equilibrium, Grid
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -216,8 +215,8 @@ class LegFlux:
             leg_dict = get_single_null_legs(
                 self.separatrix,
                 self.delta,
-                self.x_points,
                 self.o_point,
+                x_points=self.x_points,
             )
             if self.dx_offsets is not None:
                 return self.get_leg_offsets(leg_dict)
@@ -285,13 +284,14 @@ def get_legs_length_and_angle(
     return length_dict, angle_dict
 
 
-def get_single_null_legs(separatrix, delta, x_points, o_point):
+def get_single_null_legs(separatrix, delta, o_point, x_points=None, imin=None):
     """Get the legs from a single null separatrix and return as a dictionary."""
     sorted_legs = get_leg_list(
         separatrix,
         delta,
         o_p=o_point,
         x_p=x_points,
+        imin=imin,
     )
     return add_pair_to_dict(sorted_legs, x_p=x_points, o_p=o_point)
 
@@ -510,10 +510,10 @@ class CalcMethod(Enum):
     FIELD_LINE_TRACER = auto()
     FLUX_SURFACE_GEOMETRY = auto()
 
+
 def calculate_connection_length(
     eq: Equilibrium,
-    x: float | None = None,
-    z: float | None = None,
+    div_target_start_point: Coordinates | None = None,
     first_wall: Coordinates | Grid | None = None,
     forward: bool = True,
     psi_n_tol: float = 1e-6,
@@ -526,11 +526,16 @@ def calculate_connection_length(
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using either flux surface geometry or a field line tracer.
     If no starting point is selected then use the separatrix at the Outboard Midplane.
+
+    Raises
+    ------
+    BluemiraError:
+        If an invalid option calculation_method is selected.
     """
     calculation_method = CalcMethod[calculation_method.upper()]
 
-    # Use Separatrix and OM if x,z not chosen
-    if (x is None) or (z is None):
+    # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
+    if div_target_start_point is None:
         legflux = LegFlux(
             eq=eq,
             psi_n_tol=psi_n_tol,
@@ -545,9 +550,21 @@ def calculate_connection_length(
         else:
             f_s = legflux.separatrix
 
-        z_abs = np.abs(f_s.z)
-        z = np.min(z_abs)
-        x = np.max(f_s.x[z_abs == np.min(z_abs)])
+    else:
+        xfs, zfs = find_flux_surface_through_point(
+            eq.x,
+            eq.z,
+            eq.psi(),
+            div_target_start_point.x,
+            div_target_start_point.z,
+            eq.psi(div_target_start_point.x, div_target_start_point.z),
+        )
+        f_s = Coordinates({"x": xfs, "z": zfs})
+
+    # OMP is taken to be start point regardless of input
+    z_abs = np.abs(f_s.z)
+    z = np.min(z_abs)
+    x = np.max(f_s.x[z_abs == np.min(z_abs)])
 
     if calculation_method == CalcMethod.FIELD_LINE_TRACER:
         return calculate_connection_length_flt(
