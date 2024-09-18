@@ -220,7 +220,7 @@ def fallback_to(fallback_func, exception):
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
-def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
+def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     """
     Make a vertex.
 
@@ -367,13 +367,13 @@ def make_bezier(
 
 
 def make_bspline(
-    poles: list | np.ndarray,
-    mults: list | np.ndarray,
-    knots: list | np.ndarray,
+    poles: npt.ArrayLike,
+    mults: npt.ArrayLike,
+    knots: npt.ArrayLike,
     *,
     periodic: bool,
     degree: int,
-    weights: list | np.ndarray,
+    weights: npt.ArrayLike,
     check_rational: bool,
     label: str = "",
 ) -> BluemiraWire:
@@ -416,14 +416,14 @@ def make_bspline(
 
 
 def make_bsplinesurface(
-    poles: list | np.ndarray,
-    mults_u: list | np.ndarray,
-    mults_v: list | np.ndarray,
-    knot_vector_u: list | np.ndarray,
-    knot_vector_v: list | np.ndarray,
+    poles: npt.ArrayLike,
+    mults_u: npt.ArrayLike,
+    mults_v: npt.ArrayLike,
+    knot_vector_u: npt.ArrayLike,
+    knot_vector_v: npt.ArrayLike,
     degree_u: int,
     degree_v: int,
-    weights: list | np.ndarray,
+    weights: npt.ArrayLike,
     *,
     periodic: bool,
     check_rational: bool,
@@ -496,7 +496,7 @@ def _make_polygon_fallback(
 @fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
 @log_geometry_on_failure
 def interpolate_bspline(
-    points: list | np.ndarray,
+    points: npt.ArrayLike,
     label: str = "",
     *,
     closed: bool = False,
@@ -525,10 +525,9 @@ def interpolate_bspline(
     -------
     Bluemira wire that contains the bspline
     """
-    points = Coordinates(points)
     return BluemiraWire(
         cadapi.interpolate_bspline(
-            points.T,
+            Coordinates(points).T,
             closed=closed,
             start_tangent=start_tangent,
             end_tangent=end_tangent,
@@ -601,10 +600,10 @@ def force_wire_to_spline(
 
 def make_circle(
     radius: float = 1.0,
-    center: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    center: npt.ArrayLike = (0.0, 0.0, 0.0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
-    axis: Iterable[float] = (0.0, 0.0, 1.0),
+    axis: npt.ArrayLike = (0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -631,7 +630,9 @@ def make_circle(
     -------
     Bluemira wire that contains the arc or circle
     """
-    output = cadapi.make_circle(radius, center, start_angle, end_angle, axis)
+    output = cadapi.make_circle(
+        radius, tuple(center), start_angle, end_angle, tuple(axis)
+    )
     return BluemiraWire(output, label=label)
 
 
@@ -664,11 +665,11 @@ def make_circle_arc_3P(  # noqa: N802
 
 
 def make_ellipse(
-    center: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    center: npt.ArrayLike = (0.0, 0.0, 0.0),
     major_radius: float = 2.0,
     minor_radius: float = 1.0,
-    major_axis: tuple[float, float, float] = (1, 0, 0),
-    minor_axis: tuple[float, float, float] = (0, 1, 0),
+    major_axis: npt.ArrayLike = (1, 0, 0),
+    minor_axis: npt.ArrayLike = (0, 1, 0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
     label: str = "",
@@ -701,11 +702,11 @@ def make_ellipse(
     Bluemira wire that contains the arc or ellipse
     """
     output = cadapi.make_ellipse(
-        center,
+        tuple(center),
         major_radius,
         minor_radius,
-        major_axis,
-        minor_axis,
+        tuple(major_axis),
+        tuple(minor_axis),
         start_angle,
         end_angle,
     )
@@ -732,17 +733,17 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
 
 
 def _offset_wire_discretised(
-    wire,
-    thickness,
+    wire: BluemiraWire,
+    thickness: float,
     /,
     join: str = "intersect",  # noqa: ARG001
     *,
     open_wire: bool = True,
-    label="",
-    fallback_method="square",
-    fallback_force_spline=False,
-    byedges=True,
-    ndiscr=200,
+    label: str = "",
+    fallback_method: str = "square",
+    fallback_force_spline: bool = False,
+    byedges: bool = True,
+    ndiscr: int = 200,
     **fallback_kwargs,
 ) -> BluemiraWire:
     """
@@ -789,9 +790,9 @@ def offset_wire(
     *,
     open_wire: bool = True,
     label: str = "",
-    fallback_method="square",  # noqa: ARG001
-    byedges=True,  # noqa: ARG001
-    ndiscr=400,  # noqa: ARG001
+    fallback_method: str = "square",  # noqa: ARG001
+    byedges: bool = True,  # noqa: ARG001
+    ndiscr: int = 400,  # noqa: ARG001
     **fallback_kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
@@ -927,7 +928,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     side would cancel out the excess positive volume from the other, such that
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
-    polygon = np.array(polygon)
+    polygon = np.asarray(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
         raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
     previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
@@ -983,8 +984,8 @@ def partial_diff_of_volume(
 # # =============================================================================
 def revolve_shape(
     shape: BluemiraGeoT,
-    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: npt.ArrayLike = (0.0, 0.0, 0.0),
+    direction: npt.ArrayLike = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ) -> BluemiraGeoT:
@@ -1011,6 +1012,9 @@ def revolve_shape(
     FreeCADError
         Cannot revolve shape
     """
+    base = tuple(base)
+    direction = tuple(direction)
+
     if degree > 360:  # noqa: PLR2004
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
@@ -1045,7 +1049,7 @@ def revolve_shape(
 
 
 def extrude_shape(
-    shape: BluemiraGeo, vec: tuple[float, float, float], label=""
+    shape: BluemiraGeo, vec: npt.ArrayLike, label: str = ""
 ) -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
@@ -1066,7 +1070,7 @@ def extrude_shape(
     if not label:
         label = shape.label
 
-    return convert(cadapi.extrude_shape(shape.shape, vec), label)
+    return convert(cadapi.extrude_shape(shape.shape, tuple(vec)), label)
 
 
 class SweepShapeTransition(enum.IntEnum):
@@ -1231,7 +1235,7 @@ def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
 
 def distance_to(
-    geo1: Iterable[float] | BluemiraGeo, geo2: Iterable[float] | BluemiraGeo
+    geo1: npt.ArrayLike | BluemiraGeo, geo2: npt.ArrayLike | BluemiraGeo
 ) -> tuple[float, list[tuple[float, float, float]]]:
     """
     Calculate the distance between two BluemiraGeos.
@@ -1258,7 +1262,7 @@ def distance_to(
 
 
 def split_wire(
-    wire: BluemiraWire, vertex: Iterable[float], tolerance: float = EPS * 10
+    wire: BluemiraWire, vertex: npt.ArrayLike, tolerance: float = EPS * 10
 ) -> tuple[None | BluemiraWire, None | BluemiraWire]:
     """
     Split a wire at a given vertex.
@@ -1284,7 +1288,7 @@ def split_wire(
     GeometryError:
         If the vertex is further away to the wire than the specified tolerance
     """
-    wire_1, wire_2 = cadapi.split_wire(wire.shape, vertex, tolerance=tolerance)
+    wire_1, wire_2 = cadapi.split_wire(wire.shape, tuple(vertex), tolerance=tolerance)
     if wire_1:
         wire_1 = BluemiraWire(wire_1)
     if wire_2:
@@ -1367,8 +1371,8 @@ def get_wire_plane_intersect(
 
 def circular_pattern(
     shape: BluemiraGeo,
-    origin: tuple[float, float, float] = (0, 0, 0),
-    direction: tuple[float, float, float] = (0, 0, 1),
+    origin: npt.ArrayLike = (0, 0, 0),
+    direction: npt.ArrayLike = (0, 0, 1),
     degree: float = 360,
     n_shapes: int = 10,
 ) -> list[BluemiraGeo]:
@@ -1397,13 +1401,13 @@ def circular_pattern(
     shapes = [shape]
     for i in range(1, n_shapes):
         new_shape = shape.deepcopy()
-        new_shape.rotate(origin, direction, i * angle)
+        new_shape.rotate(tuple(origin), tuple(direction), i * angle)
         shapes.append(new_shape)
     return shapes
 
 
 def mirror_shape(
-    shape: BluemiraGeo, base: tuple, direction: tuple, label=""
+    shape: BluemiraGeo, base: npt.ArrayLike, direction: npt.ArrayLike, label=""
 ) -> BluemiraGeo:
     """
     Get a mirrored copy of a shape about a plane.
@@ -1428,7 +1432,9 @@ def mirror_shape(
     """
     if np.linalg.norm(direction) <= 3 * EPS:
         raise GeometryError("Direction vector cannot have a zero norm.")
-    return convert(cadapi.mirror_shape(shape.shape, base, direction), label=label)
+    return convert(
+        cadapi.mirror_shape(shape.shape, tuple(base), tuple(direction)), label=label
+    )
 
 
 def is_convex(points: npt.NDArray):
