@@ -153,7 +153,7 @@ class TestGetLegs:
             double_null=True,
             psi_n_tol=1e-6,
         )
-        test_falsified_dn_eq = LegFlux(self.falsified_dn_eq)
+        test_falsified_dn_eq = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         test_falsified_dn_eq.x_points = x_points[:2]
         test_falsified_dn_eq.separatrix = separatrix
         n_null, sort_split = test_falsified_dn_eq.which_legs()
@@ -240,7 +240,7 @@ class TestGetLegs:
             double_null=True,
             psi_n_tol=1e-6,
         )
-        legflux = LegFlux(self.falsified_dn_eq)
+        legflux = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
         legflux.n_null, legflux.sort_split = legflux.which_legs()
@@ -265,7 +265,7 @@ class TestGetLegs:
             double_null=True,
             psi_n_tol=1e-6,
         )
-        legflux = LegFlux(self.falsified_dn_eq)
+        legflux = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
         legflux.n_null, legflux.sort_split = legflux.which_legs()
