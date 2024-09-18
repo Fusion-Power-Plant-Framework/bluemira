@@ -76,7 +76,7 @@ def coil_harmonic_amplitude_matrix(
     sh_coil_names:
         Names of the coils to use with SH approximation (always located outside bdry_r)
     sig_figures:
-        Number of significant figures for rounding currents2harmonics values 
+        Number of significant figures for rounding currents2harmonics values
 
     Returns
     -------
@@ -146,7 +146,7 @@ def harmonic_amplitude_marix(
     r_t:
         Typical length scale (e.g. radius at outer midplane)
     sig_figures:
-        Number of significant figures for rounding harmonics2collocation values 
+        Number of significant figures for rounding harmonics2collocation values
 
     Returns
     -------
@@ -459,8 +459,8 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
 def get_psi_harmonic_amplitudes(
     vacuum_psi: np.ndarray,
     grid: Grid,
-    collocation: Collocation, r_t:
-    float,
+    collocation: Collocation,
+    r_t: float,
     sig_figures: int = 15,
 ) -> np.ndarray:
     """
@@ -481,8 +481,8 @@ def get_psi_harmonic_amplitudes(
         Typical length scale for spherical harmonic approximation
         (default = maximum x value of LCFS).
     sig_figures:
-        Number of significant figures for rounding psi_harmonic_amplitudes values 
-    
+        Number of significant figures for rounding psi_harmonic_amplitudes values
+
 
     Returns
     -------
