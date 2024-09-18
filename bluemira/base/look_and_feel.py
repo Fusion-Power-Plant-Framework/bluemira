@@ -16,10 +16,8 @@ import subprocess  # noqa: S404
 from collections.abc import Callable
 from getpass import getuser
 from pathlib import Path
-from textwrap import dedent, wrap
 
 from bluemira import __version__
-from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import logger_setup
 
@@ -185,135 +183,48 @@ def count_slocs(
 # =============================================================================
 
 
-def _print_color(string: str, color: str) -> str:
-    """
-    Create text to print. NOTE: Does not call print command
-
-    Parameters
-    ----------
-    string:
-        The text to colour
-    color:
-        The color to make the color-string for
-
-    Returns
-    -------
-    str
-        The string with ANSI color decoration
-    """
-    return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
-
-
-def _bm_print(string: str, width: int = 73) -> str:
-    """
-    Create the text string for boxed text to print to the console.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-
-    Returns
-    -------
-    str
-        The text string of the boxed text
-    """
-    strings = [
-        " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
-        for i, s in enumerate(string.splitlines(keepends=True))
-    ]
-    bw = width - 4
-    t = [
-        wrap(s, width=bw, replace_whitespace=False, drop_whitespace=False)
-        for s in strings
-    ]
-
-    s = [dedent(item) for sublist in t for item in sublist]
-    lines = ["".join(["| "] + [i] + [" "] * (width - 2 - len(i)) + [" |"]) for i in s]
-    h = "".join(["+", "-" * width, "+"])
-    return h + "\n" + "\n".join(lines) + "\n" + h
-
-
-def colourise(string: str, width: int = 73, color: str = "blue") -> str:
-    """
-    Print coloured, boxed text to the console. Default template for bluemira
-    information.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-    color:
-        The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
-    """
-    text = _bm_print(string, width=width)
-    return _print_color(text, color)
-
-
 def bluemira_critical(string: str):
     """
     Standard template for bluemira critical errors.
     """
-    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
+    return LOGGER.critical(string)
 
 
 def bluemira_error(string: str):
     """
     Standard template for bluemira errors.
     """
-    return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
+    return LOGGER.error(string)
 
 
 def bluemira_warn(string: str):
     """
     Standard template for bluemira warnings.
     """
-    return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
+    return LOGGER.warning(string)
 
 
 def bluemira_print(string: str):
     """
     Standard template for bluemira information messages.
     """
-    return LOGGER.info(colourise(string, color="blue"))
+    return LOGGER.info(string)
 
 
 def bluemira_debug(string: str):
     """
     Standard template for bluemira debugging.
     """
-    return LOGGER.debug(colourise(string, color="green"))
+    return LOGGER.debug(string)
 
 
-def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue") -> str:
-    """
-    Create the text string for coloured, boxed text to flush print to the
-    console.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-    color:
-        The color to print the text in, one of ['blue', 'red', 'green']
-
-    Returns
-    -------
-    str
-        The text string of the boxed coloured text to flush print
-    """
-    a = width - len(string) - 2
-    text = "| " + string + a * " " + " |"
-    return _print_color(text, color)
-
-
-def _bluemira_clean_flush(string, func: Callable[[str], None] = LOGGER.info):
+def _bluemira_clean_flush(
+    string,
+    func: Callable[[str], None] = LOGGER.info,
+    *,
+    clean: bool = True,
+    flush: bool = False,
+):
     """
     Print and flush string. Useful for updating information.
 
@@ -324,10 +235,14 @@ def _bluemira_clean_flush(string, func: Callable[[str], None] = LOGGER.info):
     func:
         The function to use for logging, by default LOGGER.info
     """
-    _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
+    _terminator_handler(
+        func, string, fhterm=logging.StreamHandler.terminator, flush=flush, clean=clean
+    )
 
 
-def _terminator_handler(func: Callable[[str], None], string: str, *, fhterm: str = ""):
+def _terminator_handler(
+    func: Callable[[str], None], string: str, *, fhterm: str = "", **kwargs
+):
     """
     Log string allowing modification to handler terminator
 
@@ -344,7 +259,7 @@ def _terminator_handler(func: Callable[[str], None], string: str, *, fhterm: str
     logging.StreamHandler.terminator = ""
     logging.FileHandler.terminator = fhterm
     try:
-        func(string)
+        func(string, **kwargs)
     finally:
         logging.StreamHandler.terminator = original_terminator
         logging.FileHandler.terminator = original_terminator
@@ -360,7 +275,7 @@ def bluemira_print_flush(string: str):
     string:
         The string to colour flush print
     """
-    _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
+    _bluemira_clean_flush(string, func=LOGGER.info, flush=True, clean=False)
 
 
 def bluemira_debug_flush(string: str):
@@ -373,9 +288,7 @@ def bluemira_debug_flush(string: str):
     string:
         The string to colour flush print for debug messages.
     """
-    _bluemira_clean_flush(
-        _bm_print_singleflush(string, color="green"), func=LOGGER.debug
-    )
+    _bluemira_clean_flush(string, func=LOGGER.debug, flush=True, clean=False)
 
 
 def bluemira_print_clean(string: str):
@@ -388,7 +301,7 @@ def bluemira_print_clean(string: str):
     string:
         The string to print
     """
-    _terminator_handler(LOGGER.info, string)
+    _terminator_handler(LOGGER.info, string, clean=True, fmt=False)
 
 
 def bluemira_error_clean(string: str):
@@ -401,7 +314,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    _terminator_handler(LOGGER.error, _print_color(string, "red"))
+    _terminator_handler(LOGGER.error, string, fmt=False)
 
 
 # =============================================================================
@@ -423,7 +336,7 @@ def print_banner():
     """
     Print the initial banner to the console upon running the bluemira code.
     """
-    LOGGER.info(_print_color(BLUEMIRA_ASCII, color="blue"))
+    LOGGER.info(BLUEMIRA_ASCII, fmt=False)
     v = version_banner()
     v.extend(user_banner())
     bluemira_print("\n".join(v))

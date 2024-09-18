@@ -12,9 +12,11 @@ from __future__ import annotations
 import logging
 import sys
 from enum import Enum
+from textwrap import dedent, wrap
 from types import DynamicClassAttribute
 from typing import TYPE_CHECKING
 
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.error import LogsError
 
 if TYPE_CHECKING:
@@ -69,6 +71,167 @@ class Formatter(logging.Formatter):
         return super().format(record)
 
 
+class LoggerAdapter(logging.Logger):
+    """Adapt the base logging class for our uses"""
+
+    def debug(
+        self,
+        msg,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        clean: bool = False,
+        **kwargs,
+    ):
+        """Debug"""
+        return super().debug(
+            msg if clean else colourise(msg, color="green", flush=flush, fmt=fmt),
+            *args,
+            **kwargs,
+        )
+
+    def info(
+        self,
+        msg,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        clean: bool = False,
+        **kwargs,
+    ):
+        """Info"""
+        return super().info(
+            msg if clean else colourise(msg, color="blue", flush=flush, fmt=fmt),
+            *args,
+            **kwargs,
+        )
+
+    def warning(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+        """Warning"""
+        return super().warning(
+            colourise(f"WARNING: {msg}", color="orange", flush=flush, fmt=fmt),
+            *args,
+            **kwargs,
+        )
+
+    def error(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+        """Error"""
+        return super().error(
+            colourise(f"ERROR: {msg}", color="red", flush=flush, fmt=fmt),
+            *args,
+            **kwargs,
+        )
+
+    def critical(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+        """Critical"""
+        return super().critical(
+            colourise(f"CRITICAL: {msg}", color="darkred", flush=flush, fmt=fmt),
+            *args,
+            **kwargs,
+        )
+
+
+def _bm_print(string: str, width: int = 73) -> str:
+    """
+    Create the text string for boxed text to print to the console.
+
+    Parameters
+    ----------
+    string:
+        The string of text to colour and box
+    width:
+        The width of the box, default = 73 (leave this alone for best results)
+
+    Returns
+    -------
+    :
+        The text string of the boxed text
+    """
+    strings = [
+        " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
+        for i, s in enumerate(string.splitlines(keepends=True))
+    ]
+    bw = width - 4
+    t = [
+        wrap(s, width=bw, replace_whitespace=False, drop_whitespace=False)
+        for s in strings
+    ]
+
+    s = [dedent(item) for sublist in t for item in sublist]
+    lines = ["".join(["| "] + [i] + [" "] * (width - 2 - len(i)) + [" |"]) for i in s]
+    h = "".join(["+", "-" * width, "+"])
+    return h + "\n" + "\n".join(lines) + "\n" + h
+
+
+def _bm_print_singleflush(string: str, width: int = 73) -> str:
+    """
+    Create the text string for coloured, boxed text to flush print to the
+    console.
+
+    Parameters
+    ----------
+    string:
+        The string of text to colour and box
+    width:
+        The width of the box, default = 73 (leave this alone for best results)
+
+    Returns
+    -------
+    :
+        The text string of the boxed coloured text to flush print
+    """
+    a = width - len(string) - 2
+    return "| " + string + a * " " + " |"
+
+
+def colourise(
+    string: str,
+    width: int = 73,
+    color: str = "blue",
+    *,
+    flush: bool = False,
+    fmt: bool = True,
+) -> str:
+    """
+    Print coloured, boxed text to the console. Default template for bluemira
+    information.
+
+    Parameters
+    ----------
+    string:
+        The string of text to colour and box
+    width:
+        The width of the box, default = 73 (leave this alone for best results)
+    color:
+        The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
+    """
+    if fmt:
+        text = _bm_print_singleflush(string) if flush else _bm_print(string, width=width)
+    else:
+        text = string
+
+    return ("\r" if flush else "") + _print_color(text, color)
+
+
+def _print_color(string: str, color: str) -> str:
+    """
+    Create text to print. NOTE: Does not call print command
+
+    Parameters
+    ----------
+    string:
+        The text to colour
+    color:
+        The color to make the color-string for
+
+    Returns
+    -------
+    :
+        The string with ANSI color decoration
+    """
+    return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
+
+
 def logger_setup(
     logfilename: str = "bluemira.log", *, level: str | int = "INFO"
 ) -> logging.Logger:
@@ -86,6 +249,7 @@ def logger_setup(
     -----
     set to debug initially
     """
+    logging.setLoggerClass(LoggerAdapter)
     root_logger = logging.getLogger("")
     bm_logger = logging.getLogger("bluemira")
 
