@@ -195,6 +195,10 @@ class FieldConstraintFunction(ConstraintFunction):
         Maximum fields inside the coils
     scale:
         Current scale with which to calculate the constraints
+    name:
+        name of constraint (used in error reporting)
+    round_dp:
+        round the output of the constraint (to maintain numerical stability)
     """
 
     def __init__(
@@ -206,6 +210,8 @@ class FieldConstraintFunction(ConstraintFunction):
         B_max: npt.NDArray[np.float64],
         scale: float,
         name: str | None = None,
+        *,
+        round_dp: int = 16,
     ):
         self.ax_mat = ax_mat
         self.az_mat = az_mat
@@ -214,6 +220,7 @@ class FieldConstraintFunction(ConstraintFunction):
         self.B_max = B_max
         self.scale = scale
         self.name = name
+        self._round_dp = round_dp
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
@@ -223,7 +230,7 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
 
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
-        return B - self.B_max
+        return np.round(B - self.B_max, self._round_dp)
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
@@ -235,7 +242,7 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
         Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return (Bx + Bz) / (B * self.scale**2)
+        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -394,17 +401,17 @@ class CoilForceConstraintFunctions:
         """Constraint Function: CS separation constraints."""
         scaled_max_value = max_value / self.scale
         cs_fz = self.cs_fz(f_matx)
-        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
-            f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
-            self.constraint[self.n_PF + 1 + i] = f_sep - scaled_max_value
+        for i in range(1, self.n_CS):  # evaluate each gap in CS stack
+            f_sep = np.sum(cs_fz[:i]) - np.sum(cs_fz[i:])
+            self.constraint[self.n_PF + i] = f_sep - scaled_max_value
 
     def cs_z_sep_grad(self, df_matx):
         """Constraint Derivative: CS separation constraints."""
-        for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
+        for i in range(1, self.n_CS):  # evaluate each gap in CS stack
             # CS separation constraint Jacobians
-            f_up = np.sum(df_matx[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
-            f_down = np.sum(df_matx[self.n_PF + i + 1 :, :, 1], axis=0)
-            self.grad[self.n_PF + 1 + i] = f_up - f_down
+            f_up = np.sum(df_matx[self.n_PF : self.n_PF + i, :, 1], axis=0)
+            f_down = np.sum(df_matx[self.n_PF + i :, :, 1], axis=0)
+            self.grad[self.n_PF + i] = f_up - f_down
 
 
 class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
@@ -432,6 +439,10 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         The individual maximum force in the z direction for the CS coils
     scale:
         Current scale with which to calculate the constraints
+    name:
+        name of constraint (used in error reporting)
+    round_dp:
+        round the output of the constraint (to maintain numerical stability)
     """
 
     def __init__(
@@ -445,12 +456,15 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         CS_Fz_sep_max: float,
         scale: float,
         name: str | None = None,
+        *,
+        round_dp: int = 16,
     ):
         super().__init__(a_mat, b_vec, n_PF, n_CS, scale)
         self.PF_Fz_max = PF_Fz_max
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.name = name
+        self._round_dp = round_dp
 
     def f_constraint(self, vector):
         """Constraint function"""
@@ -460,7 +474,7 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         if self.n_CS != 0:
             self.cs_z_constraint(f_matx, self.CS_Fz_sum_max)
             self.cs_z_sep_constraint(f_matx, self.CS_Fz_sep_max)
-        return self.constraint
+        return np.round(self.constraint, self._round_dp)
 
     def df_constraint(self, vector):
         """Constraint derivative"""
@@ -470,4 +484,4 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         if self.n_CS != 0:
             self.cs_z_grad(df_matx)
             self.cs_z_sep_grad(df_matx)
-        return self.grad
+        return np.round(self.grad, self._round_dp)

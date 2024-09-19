@@ -205,7 +205,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
 
         self._args = {
             "c_psi_mat": np.array(
-                coilset.psi_response(*breakdown_strategy.breakdown_point)
+                coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
             ),
             "scale": self.scale,
         }

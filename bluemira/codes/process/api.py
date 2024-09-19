@@ -11,7 +11,7 @@ PROCESS api
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum, auto
 from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeVar
@@ -21,7 +21,7 @@ from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Sequence
 
 
 # Create dummy PROCESS objects. Required for docs to build properly and
@@ -113,25 +113,25 @@ class _INVariable:
         self._value = new_value
 
 
-class Impurities(Enum):
+class Impurities(IntEnum):
     """
     PROCESS impurities Enum
     """
 
-    H = 1
-    He = 2
-    Be = 3
-    C = 4
-    N = 5
-    O = 6  # noqa: E741
-    Ne = 7
-    Si = 8
-    Ar = 9
-    Fe = 10
-    Ni = 11
-    Kr = 12
-    Xe = 13
-    W = 14
+    H = auto()
+    He = auto()
+    Be = auto()
+    C = auto()
+    N = auto()
+    O = auto()  # noqa: E741
+    Ne = auto()
+    Si = auto()
+    Ar = auto()
+    Fe = auto()
+    Ni = auto()
+    Kr = auto()
+    Xe = auto()
+    W = auto()
 
     def files(self) -> dict[str, Path]:
         """
@@ -162,8 +162,8 @@ class Impurities(Enum):
         return f"fimp({self.value:02})"
 
     def read_impurity_files(
-        self, filetype: Iterable[Literal["lz", "z2", "z"]]
-    ) -> tuple[list[ImpurityDataHeader]]:
+        self, filetype: Sequence[Literal["lz", "z2", "z"]]
+    ) -> tuple[list[ImpurityDataHeader], ...]:
         """Get contents of impurity data files"""
         files = self.files()
         return tuple(

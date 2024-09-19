@@ -115,9 +115,13 @@ class TestPulsedCoilSetDesign:
             # all the same because calc_psib is mocked
             out_val = mypcs.calculate_sof_eof_fluxes()
             np.testing.assert_allclose(out_val, (0, -63))
+
+            # change psi_premag, call with no args
             r_premag(mypcs, 2)
             mypcs.calculate_sof_eof_fluxes()
             np.testing.assert_allclose(out_val, (0, -63))
+
+            # change psi_premag, call with args
             mypcs.calculate_sof_eof_fluxes(3)
             np.testing.assert_allclose(out_val, (0, -63))
 

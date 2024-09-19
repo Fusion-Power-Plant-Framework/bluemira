@@ -285,30 +285,31 @@ class TestRegressionSH:
 
         sh_coilset_current = np.array([
             7629.11,
-            -3050.73,
-            35211.63,
-            127127.43,
-            51966.15,
-            27968.25,
-            -173896.19,
-            -119241.84,
-            59982.21,
+            -9301.684,
+            31443.84,
+            131204.70,
+            49954.62,
+            32081.58,
+            -174210.2,
+            -127567.9,
+            64428.81,
             12076.32,
-            -8612.46,
-            32388.96,
-            128677.73,
-            60747.42,
-            13703.61,
-            -159090.69,
-            -138734.02,
-            64852.55,
+            -10068.75,
+            32112.56,
+            133528.9,
+            57743.38,
+            14104.47,
+            -162735.4,
+            -131556.2,
+            68837.19,
         ])
 
         assert test_sh_coilset_current == pytest.approx(sh_coilset_current, rel=1e-3)
         assert test_r_t == pytest.approx(1.3661, abs=0.0001)
-        assert test_harmonic_amps == pytest.approx(ref_harmonics, rel=1e-3)
+        # Even numbered harmonics zero'd out
+        assert test_harmonic_amps[1::2] == pytest.approx(ref_harmonics[1::2], rel=1e-3)
         assert test_degree == 8
-        assert test_fit_metric == pytest.approx(0.00976, rel=1e-3)
+        assert test_fit_metric == pytest.approx(0.01048, rel=1e-3)
 
     def test_SphericalHarmonicConstraint(self):
         r_t = 1.37
