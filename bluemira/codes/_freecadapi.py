@@ -51,7 +51,10 @@ from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.display.palettes import ColorPalette
+
 
 apiVertex = Part.Vertex  # noqa: N816
 apiVector = Base.Vector  # noqa: N816
@@ -264,13 +267,13 @@ def make_bezier(points: list | np.ndarray) -> apiWire:
 
 
 def make_bspline(
-    poles: np.ndarray,
-    mults: np.ndarray,
-    knots: np.ndarray,
+    poles: npt.ArrayLike,
+    mults: npt.ArrayLike,
+    knots: npt.ArrayLike,
     *,
     periodic: bool,
     degree: int,
-    weights: np.ndarray,
+    weights: npt.ArrayLike,
     check_rational: bool,
 ) -> apiWire:
     """
@@ -301,7 +304,7 @@ def make_bspline(
     -----
     This function wraps the FreeCAD function of bsplines buildFromPolesMultsKnots
     """
-    poles = [Base.Vector(p) for p in poles]
+    poles = [Base.Vector(p) for p in np.asarray(poles)]
     bspline = Part.BSplineCurve()
     bspline.buildFromPolesMultsKnots(
         poles, mults, knots, periodic, degree, weights, check_rational
@@ -310,14 +313,14 @@ def make_bspline(
 
 
 def make_bsplinesurface(
-    poles: np.ndarray,
-    mults_u: np.ndarray,
-    mults_v: np.ndarray,
-    knot_vector_u: np.ndarray,
-    knot_vector_v: np.ndarray,
-    degree_u: np.ndarray,
-    degree_v: np.ndarray,
-    weights: np.ndarray,
+    poles: npt.ArrayLike,
+    mults_u: npt.ArrayLike,
+    mults_v: npt.ArrayLike,
+    knot_vector_u: npt.ArrayLike,
+    knot_vector_v: npt.ArrayLike,
+    degree_u: int,
+    degree_v: int,
+    weights: npt.ArrayLike,
     *,
     periodic: bool = False,
     check_rational: bool = False,
@@ -357,7 +360,7 @@ def make_bsplinesurface(
     This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
     """
     # Create base vectors from poles
-    poles = [[Base.Vector(p[0], p[1], p[2]) for p in row] for row in poles]
+    poles = [[Base.Vector(p[0], p[1], p[2]) for p in row] for row in np.asarray(poles)]
     bsplinesurface = Part.BSplineSurface()
     bsplinesurface.buildFromPolesMultsKnots(
         poles,
