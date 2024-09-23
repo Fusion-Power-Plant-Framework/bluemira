@@ -10,7 +10,7 @@ asteval==1.0.4
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
-astroid==3.3.2
+astroid==3.3.3
     # via sphinx-autoapi
 asttokens==2.4.1
     # via stack-data
@@ -68,7 +68,7 @@ executing==2.1.0
     # via stack-data
 fastjsonschema==2.20.0
     # via nbformat
-filelock==3.16.0
+filelock==3.16.1
     # via virtualenv
 flexcache==0.3
     # via pint
@@ -82,7 +82,7 @@ fortranformat==2.0.0
     #   eqdsk
 gmsh==4.13.1
     # via bluemira (pyproject.toml)
-greenlet==3.1.0
+greenlet==3.1.1
     # via sqlalchemy
 identify==2.6.1
     # via pre-commit
@@ -120,7 +120,7 @@ jsonschema-specifications==2023.12.1
     # via jsonschema
 jupyter-cache==1.0.0
     # via myst-nb
-jupyter-client==8.6.2
+jupyter-client==8.6.3
     # via
     #   ipykernel
     #   nbclient
@@ -231,7 +231,7 @@ packaging==24.1
     #   pytest
     #   sphinx
     #   tables
-pandas==2.2.2
+pandas==2.2.3
     # via
     #   pypet
     #   seaborn
@@ -248,7 +248,7 @@ pillow==10.4.0
     #   pyvista
 pint==0.24.3
     # via bluemira (pyproject.toml)
-platformdirs==4.3.3
+platformdirs==4.3.6
     # via
     #   jupyter-core
     #   pooch
@@ -389,11 +389,11 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.34
+sqlalchemy==2.0.35
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sybil==7.1.0
+sybil==8.0.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
     # via
@@ -445,7 +445,7 @@ tzdata==2024.1
     # via pandas
 urllib3==2.2.3
     # via requests
-virtualenv==20.26.4
+virtualenv==20.26.5
     # via pre-commit
 vtk==9.2.6
     # via
