@@ -105,7 +105,7 @@ packaging==24.1
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.2.2
+pandas==2.2.3
     # via
     #   pypet
     #   seaborn
@@ -118,7 +118,7 @@ pillow==10.4.0
     #   pyvista
 pint==0.24.3
     # via bluemira (pyproject.toml)
-platformdirs==4.3.3
+platformdirs==4.3.6
     # via pooch
 pooch==1.8.2
     # via pyvista
