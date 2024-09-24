@@ -535,7 +535,7 @@ if __name__ == "__main__":
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reactor.equilibria,
-        reactor.tf_coils.xz_outer_boundary(),
+        reactor.tf_coils.xz_outer_boundary,
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
@@ -638,7 +638,7 @@ if __name__ == "__main__":
     )
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-    debug.extend(reactor.pf_coils.xz_boundary())
+    debug.extend(reactor.pf_coils.xz_boundary)
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.
     show_cad(debug)
