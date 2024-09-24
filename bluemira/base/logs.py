@@ -20,7 +20,7 @@ from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.error import LogsError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class LogLevel(Enum):
@@ -80,14 +80,11 @@ class LoggerAdapter(logging.Logger):
         *args,
         flush: bool = False,
         fmt: bool = True,
-        clean: bool = False,
         **kwargs,
     ):
         """Debug"""
         return super().debug(
-            msg if clean else colourise(msg, color="green", flush=flush, fmt=fmt),
-            *args,
-            **kwargs,
+            colourise(msg, colour="green", flush=flush, fmt=fmt), *args, **kwargs
         )
 
     def info(
@@ -96,42 +93,127 @@ class LoggerAdapter(logging.Logger):
         *args,
         flush: bool = False,
         fmt: bool = True,
-        clean: bool = False,
         **kwargs,
     ):
         """Info"""
         return super().info(
-            msg if clean else colourise(msg, color="blue", flush=flush, fmt=fmt),
-            *args,
-            **kwargs,
+            colourise(msg, colour="blue", flush=flush, fmt=fmt), *args, **kwargs
         )
 
-    def warning(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def warning(
+        self,
+        msg,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        **kwargs,
+    ):
         """Warning"""
         return super().warning(
-            colourise(f"WARNING: {msg}", color="orange", flush=flush, fmt=fmt),
+            colourise(f"WARNING: {msg}", colour="orange", flush=flush, fmt=fmt),
             *args,
             **kwargs,
         )
 
-    def error(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def error(
+        self,
+        msg,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        **kwargs,
+    ):
         """Error"""
         return super().error(
-            colourise(f"ERROR: {msg}", color="red", flush=flush, fmt=fmt),
+            colourise(f"ERROR: {msg}", colour="red", flush=flush, fmt=fmt),
             *args,
             **kwargs,
         )
 
-    def critical(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def critical(
+        self,
+        msg,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        **kwargs,
+    ):
         """Critical"""
         return super().critical(
-            colourise(f"CRITICAL: {msg}", color="darkred", flush=flush, fmt=fmt),
+            colourise(f"CRITICAL: {msg}", colour="darkred", flush=flush, fmt=fmt),
             *args,
             **kwargs,
         )
 
+    def info_clean(self, msg, *args, **kwargs):
+        """Info no modification"""
+        return self._terminator_handler(super().info, msg, *args, **kwargs)
 
-def _bm_print(string: str, width: int = 73) -> str:
+    def error_clean(self, msg, *args, **kwargs):
+        """Error colour modification only"""
+        return self._terminator_handler(
+            super().error, _print_colour(msg, "red"), *args, **kwargs
+        )
+
+    def clean_flush(self, msg, *args, **kwargs):
+        """Unmodified flush"""
+        return self._terminator_handler(
+            super().info,
+            colourise(msg, colour=None, flush=True, fmt=False),
+            *args,
+            fhterm=logging.StreamHandler.terminator,
+            **kwargs,
+        )
+
+    def info_flush(self, msg, *args, **kwargs):
+        """Info coloured flush"""
+        return self._terminator_handler(
+            self.info,
+            msg,
+            *args,
+            fhterm=logging.StreamHandler.terminator,
+            flush=True,
+            **kwargs,
+        )
+
+    def debug_flush(self, msg, *args, **kwargs):
+        """Debug coloured flush"""
+        return self._terminator_handler(
+            self.debug,
+            msg,
+            *args,
+            fhterm=logging.StreamHandler.terminator,
+            flush=True,
+            **kwargs,
+        )
+
+    @staticmethod
+    def _terminator_handler(
+        func: Callable[[str], None], string: str, *args, fhterm: str = "", **kwargs
+    ):
+        """
+        Log string allowing modification to handler terminator
+
+        Parameters
+        ----------
+        func:
+            The function to use for logging (e.g LOGGER.info)
+        string:
+            The string to colour flush print
+        fhterm:
+            FileHandler Terminator
+        """
+        original_terminator = logging.StreamHandler.terminator
+        logging.StreamHandler.terminator = ""
+        logging.FileHandler.terminator = fhterm
+        try:
+            func(string, *args, **kwargs)
+        finally:
+            logging.StreamHandler.terminator = original_terminator
+            logging.FileHandler.terminator = original_terminator
+
+
+def _bm_print(string: str, width: int = 73, *, single_flush: bool = False) -> str:
     """
     Create the text string for boxed text to print to the console.
 
@@ -147,26 +229,27 @@ def _bm_print(string: str, width: int = 73) -> str:
     :
         The text string of the boxed text
     """
+    if single_flush:
+        return _bm_print_singleflush(string, width)
+
     strings = [
         " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
         for i, s in enumerate(string.splitlines(keepends=True))
     ]
-    bw = width - 4
     t = [
-        wrap(s, width=bw, replace_whitespace=False, drop_whitespace=False)
+        wrap(s, width=width - 4, replace_whitespace=False, drop_whitespace=False)
         for s in strings
     ]
 
     s = [dedent(item) for sublist in t for item in sublist]
-    lines = ["".join(["| "] + [i] + [" "] * (width - 2 - len(i)) + [" |"]) for i in s]
     h = "".join(["+", "-" * width, "+"])
-    return h + "\n" + "\n".join(lines) + "\n" + h
+    lines = "\n".join([_bm_print_singleflush(i, width) for i in s])
+    return f"{h}\n{lines}\n{h}"
 
 
 def _bm_print_singleflush(string: str, width: int = 73) -> str:
-    """
-    Create the text string for coloured, boxed text to flush print to the
-    console.
+    r"""
+    Wrap the string in \| \|.
 
     Parameters
     ----------
@@ -178,7 +261,7 @@ def _bm_print_singleflush(string: str, width: int = 73) -> str:
     Returns
     -------
     :
-        The text string of the boxed coloured text to flush print
+        The wrapped text string
     """
     a = width - len(string) - 2
     return "| " + string + a * " " + " |"
@@ -187,7 +270,7 @@ def _bm_print_singleflush(string: str, width: int = 73) -> str:
 def colourise(
     string: str,
     width: int = 73,
-    color: str = "blue",
+    colour: str | None = "blue",
     *,
     flush: bool = False,
     fmt: bool = True,
@@ -202,18 +285,17 @@ def colourise(
         The string of text to colour and box
     width:
         The width of the box, default = 73 (leave this alone for best results)
-    color:
-        The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
+    colour:
+        The colour to print the text in from `bluemira.base.constants.ANSI_COLOR`
     """
-    if fmt:
-        text = _bm_print_singleflush(string) if flush else _bm_print(string, width=width)
-    else:
-        text = string
+    text = _bm_print(string, width=width, single_flush=flush) if fmt else string
 
-    return ("\r" if flush else "") + _print_color(text, color)
+    return ("\r" if flush else "") + (
+        text if colour is None else _print_colour(text, colour)
+    )
 
 
-def _print_color(string: str, color: str) -> str:
+def _print_colour(string: str, colour: str) -> str:
     """
     Create text to print. NOTE: Does not call print command
 
@@ -221,15 +303,15 @@ def _print_color(string: str, color: str) -> str:
     ----------
     string:
         The text to colour
-    color:
-        The color to make the color-string for
+    colour:
+        The colour to make the colour-string for
 
     Returns
     -------
     :
-        The string with ANSI color decoration
+        The string with ANSI colour decoration
     """
-    return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
+    return f"{ANSI_COLOR[colour]}{string}{EXIT_COLOR}"
 
 
 def logger_setup(

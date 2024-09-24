@@ -8,12 +8,10 @@
 Aesthetic and ambiance functions.
 """
 
-import logging
 import os
 import platform
 import shutil
 import subprocess  # noqa: S404
-from collections.abc import Callable
 from getpass import getuser
 from pathlib import Path
 
@@ -220,10 +218,6 @@ def bluemira_debug(string: str):
 
 def _bluemira_clean_flush(
     string,
-    func: Callable[[str], None] = LOGGER.info,
-    *,
-    clean: bool = True,
-    flush: bool = False,
 ):
     """
     Print and flush string. Useful for updating information.
@@ -232,37 +226,8 @@ def _bluemira_clean_flush(
     ----------
     string:
         The string to colour flush print
-    func:
-        The function to use for logging, by default LOGGER.info
     """
-    _terminator_handler(
-        func, string, fhterm=logging.StreamHandler.terminator, flush=flush, clean=clean
-    )
-
-
-def _terminator_handler(
-    func: Callable[[str], None], string: str, *, fhterm: str = "", **kwargs
-):
-    """
-    Log string allowing modification to handler terminator
-
-    Parameters
-    ----------
-    func:
-        The function to use for logging (e.g LOGGER.info)
-    string:
-        The string to colour flush print
-    fhterm:
-        FileHandler Terminator
-    """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = fhterm
-    try:
-        func(string, **kwargs)
-    finally:
-        logging.StreamHandler.terminator = original_terminator
-        logging.FileHandler.terminator = original_terminator
+    LOGGER.clean_flush(string)
 
 
 def bluemira_print_flush(string: str):
@@ -275,7 +240,7 @@ def bluemira_print_flush(string: str):
     string:
         The string to colour flush print
     """
-    _bluemira_clean_flush(string, func=LOGGER.info, flush=True, clean=False)
+    LOGGER.info_flush(string)
 
 
 def bluemira_debug_flush(string: str):
@@ -288,7 +253,7 @@ def bluemira_debug_flush(string: str):
     string:
         The string to colour flush print for debug messages.
     """
-    _bluemira_clean_flush(string, func=LOGGER.debug, flush=True, clean=False)
+    LOGGER.debug_flush(string)
 
 
 def bluemira_print_clean(string: str):
@@ -301,7 +266,7 @@ def bluemira_print_clean(string: str):
     string:
         The string to print
     """
-    _terminator_handler(LOGGER.info, string, clean=True, fmt=False)
+    LOGGER.info_clean(string)
 
 
 def bluemira_error_clean(string: str):
@@ -314,7 +279,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    _terminator_handler(LOGGER.error, string, fmt=False)
+    LOGGER.error_clean(string)
 
 
 # =============================================================================

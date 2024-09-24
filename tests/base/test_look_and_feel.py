@@ -14,10 +14,14 @@ from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import LoggingContext
 from bluemira.base.look_and_feel import (
+    _bluemira_clean_flush,
     bluemira_critical,
     bluemira_debug,
+    bluemira_debug_flush,
     bluemira_error,
+    bluemira_error_clean,
     bluemira_print,
+    bluemira_print_clean,
     bluemira_print_flush,
     bluemira_warn,
     count_slocs,
@@ -132,17 +136,37 @@ def test_bluemira_log(caplog, method, text, colour, default_text):
     assert EXIT_COLOR in result[-1]
 
 
-def test_bluemira_print_flush(caplog):
+@pytest.mark.parametrize(
+    "func", [bluemira_print_flush, bluemira_debug_flush, _bluemira_clean_flush]
+)
+def test_bluemira_flush(func, caplog):
+    caplog.set_level("DEBUG")
     text = "First pass"
-    result = capture_output(caplog, bluemira_print_flush, text)
+    result = capture_output(caplog, func, text)
     assert text in result[0]
     assert "\r" in result[0]
     assert os.linesep not in result[0]
 
     text = "Second pass"
-    result = capture_output(caplog, bluemira_print_flush, text)
+    result = capture_output(caplog, func, text)
     assert text in result[0]
     assert "\r" in result[0]
+    assert os.linesep not in result[0]
+
+
+@pytest.mark.parametrize(
+    ("func", "prefix", "suffix"),
+    [(bluemira_print_clean, "", ""), (bluemira_error_clean, "\x1b[31m", "\x1b[0m")],
+)
+def test_bluemira_clean(func, prefix, suffix, caplog):
+    text = "First pass"
+    result = capture_output(caplog, func, text)
+    assert f"{prefix}{text}{suffix}" == result[0]
+    assert os.linesep not in result[0]
+
+    text = "Second pass"
+    result = capture_output(caplog, func, text)
+    assert f"{prefix}{text}{suffix}" == result[0]
     assert os.linesep not in result[0]
 
 
