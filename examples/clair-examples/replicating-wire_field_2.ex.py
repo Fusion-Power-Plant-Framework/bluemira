@@ -147,121 +147,106 @@ print("R = ", R)
 print("Z = ", Z)
 
 # %%
-# Check matlab factorial_term is same as term in paper
-m_max = 5
-
-
-from math import factorial
-
-from scipy.special import factorial2
-
-print(factorial(0))
-print(factorial(10))
-
-matlab_values = []
-paper_values = []
-for m in range(m_max):
-    print("Current m = ", m)
-    print("Comparing factorial_term from MATLAB to paper")
-    if m == 0:  # noqa: SIM108
-        factorial_term = 1
-    else:
-        factorial_term = np.prod(1 + 0.5 / np.arange(1, m + 1))
-    print("factorial term from MATLAB = ", factorial_term)
-    missing_term_from_paper = 1 / (2**m) * (factorial2(2 * m + 1) / factorial(m))
-    print("term missing from paper = ", missing_term_from_paper)
-    matlab_values.append(factorial_term)
-    paper_values.append(missing_term_from_paper)
-print("matlab values = ", matlab_values)
-print("paper values = ", paper_values)
+# # Check matlab factorial_term is same as term in paper
+# m_max = 5
+# from math import factorial
+# from scipy.special import factorial2
+# print(factorial(0))
+# print(factorial(10))
+# matlab_values = []
+# paper_values = []
+# for m in range(m_max):
+#     print("Current m = ", m)
+#     print("Comparing factorial_term from MATLAB to paper")
+#     if m == 0:  # noqa: SIM108
+#         factorial_term = 1
+#     else:
+#         factorial_term = np.prod(1 + 0.5 / np.arange(1, m + 1))
+#     print("factorial term from MATLAB = ", factorial_term)
+#     missing_term_from_paper = 1 / (2**m) * (factorial2(2 * m + 1) / factorial(m))
+#     print("term missing from paper = ", missing_term_from_paper)
+#     matlab_values.append(factorial_term)
+#     paper_values.append(missing_term_from_paper)
+# print("matlab values = ", matlab_values)
+# print("paper values = ", paper_values)
 
 # TODO need to put numbers in and compare the factorial_term from matlab to that which
 # comes from the paper to see if they're the same?
 # ^ They are the same, will ask Oliver to explain how/why it simplifies to the
 # factorial_term
 
+# # %%
+# # Calc coeffs - uses eq (19) from paper
+
+# m_max = 5
+# Am_cos = np.zeros(m_max)
+# Am_sin = np.zeros(m_max)
+
+# for m in range(m_max):
+#     if m == 0:
+#         factorial_term = 1
+#     else:
+#         factorial_term = np.prod(1 + 0.5 / np.arange(1, m + 1))
+#     A_m = (
+#         (MU_0 * I_c / 2 ** (5 / 2)) * factorial_term * (np.sinh(tau_c) / np.sqrt(Deltac))
+#         # * legendreP
+#     )  # TODO do legendre P
+#     print("m = ", m, "A_m (without legendre yet) = ", A_m)
+# print(MU_0)
+
+
 # %%
-# Calc coeffs - uses eq (19) from paper
+# Legendre P and Q half integer - copied across from replicating_legendre_fns_from_matlab_work.ex.py
 
-m_max = 5
-Am_cos = np.zeros(m_max)
-Am_sin = np.zeros(m_max)
+from math import factorial
 
-for m in range(m_max):
-    if m == 0:
-        factorial_term = 1
-    else:
-        factorial_term = np.prod(1 + 0.5 / np.arange(1, m + 1))
-    A_m = (
-        (MU_0 * I_c / 2 ** (5 / 2)) * factorial_term * (np.sinh(tau_c) / np.sqrt(Deltac))
-        # * legendreP
-    )  # TODO do legendre P
-    print("m = ", m, "A_m (without legendre yet) = ", A_m)
-print(MU_0)
+from scipy.special import gamma, poch
 
 
-# %%
-# Legendre P and Q half integer - using matlab versions
-
-# Legendre P
-# attempt 1 - using poch and creating a fn for the F fn in paper
-from scipy.special import gamma
-
-# # TODO this doesn't work, can't sum to infinity...
-
-# def F_fn(a, b, c, z):
-#     summation = 0
-#     for s in range(np.inf):
-#         sum_value = ((poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s))) * z**s
-#         summation += sum_value
-#         print(sum_value)
+# first try with built in functions
+# F fn used in both legendreP and legendreQ
+def F_hypergeometric(a, b, c, z, n_max):
+    F = 0
+    for s in range(n_max + 1):
+        F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
+    return F
 
 
-# F_fn(1, 2, 3, 4)
-
-
-# attempt 2 - follow the matlab approach
+# set default n_max = 20 to match matlab
 def myLegendreP(lam, mu, x, n_max=20):
-    # initialise arrays (all length n_max+1)
-    n = np.arange(0, n_max)
-    an = np.zeros_like(n)
-    bn = np.zeros_like(n)
-    cn = np.zeros_like(n)
-    nfactorial = np.zeros_like(n)
-    # TODO args for F from eq (29)
     a = 1 / 2 * (mu - lam)
     b = 1 / 2 * (mu - lam + 1)
     c = mu + 1
+    z = 1 - 1 / (x**2)
+    F_sum = F_hypergeometric(a=a, b=b, c=c, z=z, n_max=n_max)  # noqa: N806
+    legP = 2 ** (-mu) * x ** (lam - mu) * (x**2 - 1) ** (mu / 2) * F_sum  # noqa: N806
+    return legP
 
-    # set first entry of arrays (corresponds to s=0)
-    an[0] = 1
-    bn[0] = 1
-    cn[0] = gamma(c)
-    # ^why is this? is it because on denominator of frac when s=0 it has just gamma(c)?
 
-    # instead of using this and recurrence relation, just use factorial function?
-    # nfactorial[0] = factorial(0)  # = 1
-    for i in n:
-        nfactorial[i] = factorial(i)
+def myLegendreQ(lam, mu, x, n_max=20):
+    a = 1 / 2 * (lam + mu) + 1
+    b = 1 / 2 * (lam + mu + 1)
+    c = lam + 3 / 2
+    z = 1 / (x**2)
+    F_sum = F_hypergeometric(a=a, b=b, c=c, z=z, n_max=n_max)  # noqa: N806
+    legQ = (
+        (np.pi ** (1 / 2) * (x**2 - 1) ** (mu / 2))
+        / (2 ** (lam + 1) * x ** (lam + mu + 1))
+        * F_sum
+    )
+    if type(legQ) == np.float64:
+        if x == 1:
+            legQ == np.inf
+    else:
+        legQ[x == 1] = np.inf
+    return legQ
 
-    # recurrence relations (worked out on paper to get them to make sense)
-    for i in range(1, len(n)):
-        an[i] = (a + n[i] - 1) * an[i - 1]
-        bn[i] = (b + n[i] - 1) * bn[i - 1]
-        cn[i] = (c + n[i] - 1) * cn[i - 1]
-        # nfactorial[i] = n[i] * nfactorial[i-1] # commented b/c using factorial fn now
-        # instead of recurrence relation?
+# %%
 
-    # create array of coeffs = (a)s (b)s / (gamma(c+s) * s!) (here n = s)
-    coeffs = an * bn / (cn * nfactorial)
-    print(coeffs)
-    x_dims = np.shape(x)
-    # issues with reshaping (from working through things in interactive nb on rhs)
-    coeffs = np.reshape(coeffs, [[1] * x_dims, len(n)])
-    print("reshaped coeffs = ", coeffs)
-    n = np.reshape(n, [])
-    # TODO continue on this bit (getting errors with my reshape attempts)
 
+m_max = 5
+
+for m in range(m_max):
 
 # %%
 # Will compare to the values from Coilset1 initially (instead of fiesta output)

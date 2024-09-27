@@ -37,10 +37,12 @@ from bluemira.utilities.tools import cylindrical_to_toroidal
 
 r = np.linspace(0, 6, 100)
 z = np.linspace(-6, 6, 100)
+print(f"r = {r}")
+print(f"z = {z}")
 R, Z = np.meshgrid(r, z)
 
 R_0 = 3.0
-Z_0 = 0.0
+Z_0 = 1.0
 
 tau, sigma = cylindrical_to_toroidal(R_0=R_0, R=R, z_0=Z_0, Z=Z)
 print(f"tau = {tau}")
@@ -75,7 +77,7 @@ from scipy.special import gamma, poch
 def F_hypergeometric(a, b, c, z, n_max):
     F = 0
     # print("F initial = ", F)
-    for s in range(n_max):
+    for s in range(n_max + 1):
         F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
         # print(f"summed F at stage {s} = {F}")
     return F
@@ -112,20 +114,32 @@ def myLegendreQ(lam, mu, x, n_max=20):
     F_sum = F_hypergeometric(a=a, b=b, c=c, z=z, n_max=n_max)  # noqa: N806
     print("in LegendreQ:")
     print(f"f_sum = {F_sum}")
-    for value in x:
-        if value == 1:
-            ind = x.index(value)
-            legQ[ind] = np.inf
-        else:
-            legQ = (
-                (np.pi ** (1 / 2) * (x**2 - 1) ** (mu / 2))
-                / (2 ** (lam + 1) * x ** (lam + mu + 1))
-                * F_sum
-            )
+    legQ = (
+        (np.pi ** (1 / 2) * (x**2 - 1) ** (mu / 2))
+        / (2 ** (lam + 1) * x ** (lam + mu + 1))
+        * F_sum
+    )
     print(f"shape x = {x.shape}")
     print(f"shape legQ = {legQ.shape}")
+    print(f"non-edited legendreQ = {legQ}")
+    if type(legQ) == np.float64:
+        if x == 1:
+            legQ == np.inf
+    else:
+        legQ[x == 1] = np.inf
+    legQcopy = legQ
+    # np.nan_to_num(legQcopy, nan=10)
     print(f"legendreQ = {legQ}")
     return legQ
+
+
+# NOTE: see a small difference in the values between here and the matlab eg matlab
+# has -1.6961e-2 and python has 1.68837940e-2 so are close but not entirely the same
+
+
+# TODO debug and replace nans with something else mid run then see how it changes the
+# plot eg set all to 1
+# TODO zoom in on centre to see what's going on
 
 
 print("legendreQ cosh tauc:")
@@ -135,8 +149,8 @@ x = np.cosh(tau)
 print("legendreq cosh tau (array)")
 ans = myLegendreQ(1 - 1 / 2, 1, x)
 
-print(np.cosh(tau)[1][0])
-print(ans[1][0])
+# print(np.cosh(tau)[1][0])
+# print(ans[1][0])
 
 
 # %%
@@ -145,10 +159,18 @@ print(ans[1][0])
 
 nu = np.arange(0, 5)
 fig_sin, axs_sin = plt.subplots(1, len(nu))
+# for ax in axs_sin:
+#     ax.set_xlim([2.5, 3.5])
+#     ax.set_ylim([-1, 1])
 fig_sin.suptitle("sin plots")
 fig_cos, axs_cos = plt.subplots(1, len(nu))
-fig_cos.suptitle("cos plots")
+# for ax in axs_cos:
 
+#     ax.set_xlim([2.5, 3.5])
+#     ax.set_ylim([-1, 1])
+fig_cos.suptitle("cos plots")
+psi_sin_python = []
+psi_cos_python = []
 for i_nu in range(len(nu)):
     foo = (
         R
@@ -157,78 +179,230 @@ for i_nu in range(len(nu)):
     )
     psi_sin = foo * np.sin(nu[i_nu] * sigma)
     psi_cos = foo * np.cos(nu[i_nu] * sigma)
+    psi_sin_python.append(psi_sin)
+    psi_cos_python.append(psi_cos)
     axs_sin[i_nu].contour(R, Z, psi_sin, 50)
     axs_cos[i_nu].contour(R, Z, psi_cos, 50)
-
+print(f"psi_sin = {psi_sin_python}")
+print(f"psi_cos = {psi_cos_python}")
 
 # %%
 # # next try recursively to match matlab (and compare to above)
-def mylegendreQ_recursive(lam, mu, x, n_max=20):  # noqa: N802
-    n = np.arange(0, n_max)
-    an = np.zeros_like(n)
-    bn = np.zeros_like(n)
-    cn = np.zeros_like(n)
-    nfactorial = np.zeros_like(n)
-    # args for F from eq (29)
-    a = 1 / 2 * (lam + mu) + 1
-    b = 1 / 2 * (lam + mu + 1)
-    c = lam + 3 / 2
+# def mylegendreQ_recursive(lam, mu, x, n_max=20):
+#     n = np.arange(0, n_max)
+#     an = np.zeros_like(n)
+#     bn = np.zeros_like(n)
+#     cn = np.zeros_like(n)
+#     nfactorial = np.zeros_like(n)
+#     # args for F from eq (29)
+#     a = 1 / 2 * (lam + mu) + 1
+#     b = 1 / 2 * (lam + mu + 1)
+#     c = lam + 3 / 2
 
-    # set first entry of arrays (corresponds to s=0)
+#     # set first entry of arrays (corresponds to s=0)
+#     an[0] = 1
+#     bn[0] = 1
+#     cn[0] = gamma(c)
+#     # instead of using this and recurrence relation, just use factorial function?
+#     # nfactorial[0] = factorial(0)  # = 1
+#     for i in n:
+#         nfactorial[i] = factorial(i)
+#         # recurrence relations (worked out on paper to get them to make sense)
+#     for i in range(1, len(n)):
+#         an[i] = (a + n[i] - 1) * an[i - 1]
+#         bn[i] = (b + n[i] - 1) * bn[i - 1]
+#         cn[i] = (c + n[i] - 1) * cn[i - 1]
+#         # nfactorial[i] = n[i] * nfactorial[i-1] # commented b/c using factorial fn now
+#         # instead of recurrence relation?
+
+#         # create array of coeffs = (a)s (b)s / (gamma(c+s) * s!) (here n = s)
+#     coeffs = an * bn / (cn * nfactorial)
+#     print(coeffs)
+#     print("coeffs shape = ", coeffs.shape)
+#     print("x shape = ", x.shape)
+
+#     # TODO reshaping stuff from the matlab
+#     dims_x = len(x.shape)
+#     coeffs = np.reshape(coeffs, (1,) * dims_x + (len(n),))
+#     n = np.reshape(n, (1,) * dims_x + (len(n),))
+
+#     y = np.sum(coeffs * x ** (-2 * n), axis=-1)
+#     y = (
+#         np.sqrt(np.pi)
+#         * (x**2 - 1) ** (0.5 * mu)
+#         / (2 ** (lam + 1) * x ** (lam + mu + 1))
+#         * y
+#     )
+
+#     # Singular at x=1
+#     y[x == 1] = np.inf
+#     # TODO - 18th sept - just use my version and see if it matches oliver's recursive one
+
+# copied from matlab to python converter
+import numpy as np
+
+
+def mylegendreQ_copied(lambda_, mu, x, n_max=20):
+    # Evaluate coefficients in sum; gamma functions so simple recurrence relations
+    n = np.arange(n_max + 1)
+    an = np.zeros_like(n, dtype=float)
+    bn = np.zeros_like(n, dtype=float)
+    cn = np.zeros_like(n, dtype=float)
+    nfactorial = np.zeros_like(n, dtype=float)
+
+    a = 0.5 * mu + 0.5 * lambda_ + 1
+    b = 0.5 * mu + 0.5 * lambda_ + 0.5
+    c = lambda_ + 1.5
+
     an[0] = 1
     bn[0] = 1
     cn[0] = gamma(c)
-    # instead of using this and recurrence relation, just use factorial function?
-    # nfactorial[0] = factorial(0)  # = 1
-    for i in n:
-        nfactorial[i] = factorial(i)
-        # recurrence relations (worked out on paper to get them to make sense)
+    nfactorial[0] = 1
+
     for i in range(1, len(n)):
         an[i] = (a + n[i] - 1) * an[i - 1]
         bn[i] = (b + n[i] - 1) * bn[i - 1]
         cn[i] = (c + n[i] - 1) * cn[i - 1]
-        # nfactorial[i] = n[i] * nfactorial[i-1] # commented b/c using factorial fn now
-        # instead of recurrence relation?
+        nfactorial[i] = n[i] * nfactorial[i - 1]
+    return an, bn, cn, nfactorial
+    # coeffts = an * bn / (cn * nfactorial)
 
-        # create array of coeffs = (a)s (b)s / (gamma(c+s) * s!) (here n = s)
-    coeffs = an * bn / (cn * nfactorial)
-    print(coeffs)
-    print("coeffs shape = ", coeffs.shape)
-    print("x shape = ", x.shape)
+    # # Apply coeffts
+    # dims_x = len(x.shape)
+    # coeffts = coeffts.reshape(*(1 for _ in range(dims_x)), len(n))
+    # print(f"coeffts shape = {coeffts.shape}")
+    # n = n.reshape(*(1 for _ in range(dims_x)), len(n))
 
-    # TODO reshaping stuff from the matlab
-    dims_x = len(x.shape)
-    coeffs = np.reshape(coeffs, (1,) * dims_x + (len(n),))
-    n = np.reshape(n, (1,) * dims_x + (len(n),))
+    # y = np.sum(coeffts * x ** (-2 * n), axis=-1)
+    # y = (
+    #     np.sqrt(np.pi)
+    #     * (x**2 - 1) ** (0.5 * mu)
+    #     / (2 ** (lambda_ + 1) * x ** (lambda_ + mu + 1))
+    #     * y
+    # )
 
-    y = np.sum(coeffs * x ** (-2 * n), axis=-1)
-    y = (
-        np.sqrt(np.pi)
-        * (x**2 - 1) ** (0.5 * mu)
-        / (2 ** (lam + 1) * x ** (lam + mu + 1))
-        * y
-    )
+    # # Singular at x=1
+    # y[x == 1] = np.inf
 
-    # Singular at x=1
-    y[x == 1] = np.inf
-    # TODO - 18th sept - just use my version and see if it matches oliver's recursive one
+    # return y
 
 
-nu = np.arange(0, 5)
-fig_sin, axs_sin = plt.subplots(1, len(nu))
-fig_sin.suptitle("sin plots")
-fig_cos, axs_cos = plt.subplots(1, len(nu))
-fig_cos.suptitle("cos plots")
+# print("python legendreQ cosh tauc:")
+# myLegendreQ(1 - 1 / 2, 1, np.cosh(tau_c))
 
-for i_nu in range(len(nu)):
-    foo = (
-        R
-        * np.sqrt(np.cosh(tau) - np.cos(sigma))
-        * mylegendreQ_recursive(nu[i_nu] - 1 / 2, 1, np.cosh(tau))
-    )
-    psi_sin = foo * np.sin(nu[i_nu] * sigma)
-    psi_cos = foo * np.cos(nu[i_nu] * sigma)
-    axs_sin[i_nu].contour(R, Z, psi_sin, 50)
-    axs_cos[i_nu].contour(R, Z, psi_cos, 50)
+# x = np.cosh(tau)
+# print("python legendreq cosh tau (array)")
+# ans = myLegendreQ(1 - 1 / 2, 1, x)
+
+print("legendreQ cosh tauc:")
+mylegendreQ_copied(1 - 1 / 2, 1, np.cosh(tau_c))
+
+x = np.cosh(tau)
+print("legendreq cosh tau (array)")
+mylegendreQ_copied(1 - 1 / 2, 1, x)
+
+# %%
+# nu = np.arange(0, 5)
+# fig_sin, axs_sin = plt.subplots(1, len(nu))
+# fig_sin.suptitle("sin plots")
+# fig_cos, axs_cos = plt.subplots(1, len(nu))
+# fig_cos.suptitle("cos plots")
+
+# for i_nu in range(len(nu)):
+#     foo = (
+#         R
+#         * np.sqrt(np.cosh(tau) - np.cos(sigma))
+#         * mylegendreQ_copied(nu[i_nu] - 1 / 2, 1, np.cosh(tau))
+#     )
+#     psi_sin = foo * np.sin(nu[i_nu] * sigma)
+#     psi_cos = foo * np.cos(nu[i_nu] * sigma)
+#     axs_sin[i_nu].contour(R, Z, psi_sin, 50)
+#     axs_cos[i_nu].contour(R, Z, psi_cos, 50)
 # %%
 # Legendre Q
+
+
+# %%
+# trying to get matlab variables saved in python
+# from scipy.io import loadmat
+
+# loadmat("/home/clair/development/matlab-stuff/toroidal_harmonics2")
+
+# want to use the matlab values to compare
+
+from oct2py import octave
+
+octave.addpath("/home/clair/development/matlab-stuff")
+
+# %%
+x = np.cosh(tau)
+x_c = np.cosh(tau_c)
+# y = octave.legendreQ(0.5, 1, x_c)
+y_octave = octave.legendreQ(0.5, 1, x)
+plt.plot(x, y_octave)
+print(repr(y_octave))
+
+fig1, axs1 = plt.subplots(1, len(nu))
+fig1.suptitle("sin plots MATLAB")
+
+fig2, axs2 = plt.subplots(1, len(nu))
+fig2.suptitle("cos plots MATLAB")
+
+# nu = [0, 1, 2, 3, 4]
+# for i_nu in range(len(nu)):
+#     legenQ = octave.legendreQ(nu[i_nu] - 0.5, 1, np.cosh(tau))
+#     foo = R * np.sqrt(np.cosh(tau) - np.cos(sigma)) * legenQ
+#     psi_sin = foo * np.sin(nu[i_nu] * sigma)
+#     psi_cos = foo * np.cos(nu[i_nu] * sigma)
+#     axs1[i_nu].contour(R, Z, psi_sin, 50)
+#     axs2[i_nu].contour(R, Z, psi_cos, 50)
+
+# %%
+# octave.run("toroidal_harmonics.m")
+
+[
+    psi_sin_octave_1,
+    psi_sin_octave_2,
+    psi_sin_octave_3,
+    psi_sin_octave_4,
+    psi_sin_octave_5,
+    psi_cos_octave_1,
+    psi_cos_octave_2,
+    psi_cos_octave_3,
+    psi_cos_octave_4,
+    psi_cos_octave_5,
+] = octave.toroidal_harmonics(R_0, Z_0, nout=10)
+
+
+# %%
+psi_sin_octave_arry = np.array([
+    psi_sin_octave_1,
+    psi_sin_octave_2,
+    psi_sin_octave_3,
+    psi_sin_octave_4,
+    psi_sin_octave_5,
+])
+
+psi_cos_octave_arry = np.array([
+    psi_cos_octave_1,
+    psi_cos_octave_2,
+    psi_cos_octave_3,
+    psi_cos_octave_4,
+    psi_cos_octave_5,
+])
+
+fig1, axs1 = plt.subplots(1, len(nu))
+fig1.suptitle("sin plots MATLAB")
+
+fig2, axs2 = plt.subplots(1, len(nu))
+fig2.suptitle("cos plots MATLAB")
+for i in range(5):
+    axs1[i].contour(R, Z, psi_sin_octave_arry[i], 50)
+    axs2[i].contour(R, Z, psi_cos_octave_arry[i], 50)
+
+
+# why are there always lines going through the focus?
+
+# %%
+for i in range(100):
+    plt.plot(r, psi_sin_octave_arry[0][0][i])
