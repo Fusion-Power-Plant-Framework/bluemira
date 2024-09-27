@@ -74,122 +74,76 @@ class Formatter(logging.Formatter):
 class LoggerAdapter(logging.Logger):
     """Adapt the base logging class for our uses"""
 
-    def debug(
-        self,
-        msg,
-        *args,
-        flush: bool = False,
-        fmt: bool = True,
-        **kwargs,
+    def _base(
+        self, func, msg, colour, *args, flush: bool = False, fmt: bool = True, **kwargs
     ):
+        return self._terminator_handler(
+            func,
+            colourise(msg, colour=colour, flush=flush, fmt=fmt),
+            *args,
+            fhterm=logging.StreamHandler.terminator if flush else "",
+            shterm="" if flush or kwargs.pop("clean", False) else "\n",
+            **kwargs,
+        )
+
+    def debug(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Debug"""
-        return super().debug(
-            colourise(msg, colour="green", flush=flush, fmt=fmt), *args, **kwargs
+        return self._base(
+            super().debug, msg, "green", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def info(
-        self,
-        msg,
-        *args,
-        flush: bool = False,
-        fmt: bool = True,
-        **kwargs,
-    ):
+    def info(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Info"""
-        return super().info(
-            colourise(msg, colour="blue", flush=flush, fmt=fmt), *args, **kwargs
+        return self._base(
+            super().info, msg, "blue", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def warning(
-        self,
-        msg,
-        *args,
-        flush: bool = False,
-        fmt: bool = True,
-        **kwargs,
-    ):
+    def warning(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Warning"""
-        return super().warning(
-            colourise(f"WARNING: {msg}", colour="orange", flush=flush, fmt=fmt),
-            *args,
-            **kwargs,
+        msg = f"WARNING: {msg}"
+        return self._base(
+            super().warning, msg, "orange", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def error(
-        self,
-        msg,
-        *args,
-        flush: bool = False,
-        fmt: bool = True,
-        **kwargs,
-    ):
+    def error(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Error"""
-        return super().error(
-            colourise(f"ERROR: {msg}", colour="red", flush=flush, fmt=fmt),
-            *args,
-            **kwargs,
+        msg = f"ERROR: {msg}"
+        return self._base(
+            super().warning, msg, "red", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def critical(
-        self,
-        msg,
-        *args,
-        flush: bool = False,
-        fmt: bool = True,
-        **kwargs,
-    ):
+    def critical(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Critical"""
-        return super().critical(
-            colourise(f"CRITICAL: {msg}", colour="darkred", flush=flush, fmt=fmt),
-            *args,
-            **kwargs,
+        msg = f"CRITICAL: {msg}"
+        return self._base(
+            super().warning, msg, "darkred", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def info_clean(self, msg, *args, **kwargs):
-        """Info no modification"""
-        return self._terminator_handler(super().info, msg, *args, **kwargs)
-
-    def error_clean(self, msg, *args, **kwargs):
-        """Error colour modification only"""
-        return self._terminator_handler(
-            super().error, _print_colour(msg, "red"), *args, **kwargs
-        )
-
-    def clean_flush(self, msg, *args, **kwargs):
+    def clean(
+        self, msg, *args, colour: str | None = None, flush: bool = False, **kwargs
+    ):
         """Unmodified flush"""
-        return self._terminator_handler(
+        if colour is not None:
+            msg = _print_colour(msg, colour)
+        return self._base(
             super().info,
-            colourise(msg, colour=None, flush=True, fmt=False),
-            *args,
-            fhterm=logging.StreamHandler.terminator,
-            **kwargs,
-        )
-
-    def info_flush(self, msg, *args, **kwargs):
-        """Info coloured flush"""
-        return self._terminator_handler(
-            self.info,
             msg,
+            colour,
             *args,
-            fhterm=logging.StreamHandler.terminator,
-            flush=True,
-            **kwargs,
-        )
-
-    def debug_flush(self, msg, *args, **kwargs):
-        """Debug coloured flush"""
-        return self._terminator_handler(
-            self.debug,
-            msg,
-            *args,
-            fhterm=logging.StreamHandler.terminator,
-            flush=True,
+            flush=flush,
+            clean=True,
+            fmt=False,
             **kwargs,
         )
 
     @staticmethod
     def _terminator_handler(
-        func: Callable[[str], None], string: str, *args, fhterm: str = "", **kwargs
+        func: Callable[[str], None],
+        string: str,
+        *args,
+        fhterm: str = "",
+        shterm: str = "",
+        **kwargs,
     ):
         """
         Log string allowing modification to handler terminator
@@ -202,9 +156,11 @@ class LoggerAdapter(logging.Logger):
             The string to colour flush print
         fhterm:
             FileHandler Terminator
+        shterm:
+            StreamHandler Terminator
         """
         original_terminator = logging.StreamHandler.terminator
-        logging.StreamHandler.terminator = ""
+        logging.StreamHandler.terminator = shterm
         logging.FileHandler.terminator = fhterm
         try:
             func(string, *args, **kwargs)

@@ -227,7 +227,7 @@ def _bluemira_clean_flush(
     string:
         The string to colour flush print
     """
-    LOGGER.clean_flush(string)
+    LOGGER.clean(string, flush=True)
 
 
 def bluemira_print_flush(string: str):
@@ -240,7 +240,7 @@ def bluemira_print_flush(string: str):
     string:
         The string to colour flush print
     """
-    LOGGER.info_flush(string)
+    LOGGER.info(string, flush=True)
 
 
 def bluemira_debug_flush(string: str):
@@ -253,7 +253,7 @@ def bluemira_debug_flush(string: str):
     string:
         The string to colour flush print for debug messages.
     """
-    LOGGER.debug_flush(string)
+    LOGGER.debug(string, flush=True)
 
 
 def bluemira_print_clean(string: str):
@@ -266,7 +266,7 @@ def bluemira_print_clean(string: str):
     string:
         The string to print
     """
-    LOGGER.info_clean(string)
+    LOGGER.clean(string)
 
 
 def bluemira_error_clean(string: str):
@@ -279,7 +279,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    LOGGER.error_clean(string)
+    LOGGER.clean(string, colour="red")
 
 
 # =============================================================================

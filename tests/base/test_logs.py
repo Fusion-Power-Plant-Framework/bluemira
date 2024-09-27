@@ -18,6 +18,7 @@ from bluemira.base.logs import (
     logger_setup,
     set_log_level,
 )
+from bluemira.base.look_and_feel import LOGGER
 
 
 class TestLoggingLevel:
@@ -100,3 +101,39 @@ class TestLoggingContext:
         with LoggingContext(original_log_level + 1):
             assert original_log_level != get_log_level(as_str=False)
         assert get_log_level(as_str=False) == original_log_level
+
+
+class TestLoggerClass:
+    @pytest.mark.parametrize(
+        "logfunc",
+        [LOGGER.debug, LOGGER.info, LOGGER.warning, LOGGER.error, LOGGER.critical],
+    )
+    @pytest.mark.parametrize("flush", [False, True])
+    @pytest.mark.parametrize("fmt", [True, False])
+    def test_basics(self, logfunc, flush, fmt, caplog):
+        logfunc("string1", flush=flush, fmt=fmt)
+        logfunc("string2", flush=flush, fmt=fmt)
+
+        if flush:
+            assert all(c.startswith("\r") for c in caplog.messages)
+        else:
+            assert all(not c.startswith("\r") for c in caplog.messages)
+
+        if fmt:
+            if flush:
+                assert all(len(c.split("|")) == 3 for c in caplog.messages)
+            else:
+                assert all(c.split("\n")[1].endswith("|") for c in caplog.messages)
+        else:
+            assert any("|" not in c for c in caplog.messages)
+
+    @pytest.mark.parametrize("flush", [False, True])
+    @pytest.mark.parametrize("colour", [None, "red"])
+    def test_clean(self, flush, colour, caplog):
+        LOGGER.clean("string1", flush=flush, colour=colour)
+        LOGGER.clean("string2", flush=flush, colour=colour)
+        if flush:
+            assert all(c.startswith("\r") for c in caplog.messages)
+        else:
+            assert all(not c.startswith("\r") for c in caplog.messages)
+        assert any("|" not in c for c in caplog.messages)
