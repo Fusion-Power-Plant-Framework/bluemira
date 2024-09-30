@@ -134,7 +134,7 @@ class SuperSankey(Sankey):
             trunklength=trunklength,
             pathlengths=pathlengths,
             rotation=rotation,
-            facecolor=kwargs.get("facecolor", None),
+            facecolor=kwargs.get("facecolor"),
         )
 
     def _opt_connect(

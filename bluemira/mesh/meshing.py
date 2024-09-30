@@ -125,9 +125,9 @@ class MeshOptions:
         """
         Function to override meshing options.
         """
-        for k in kwargs:
+        for k, v in kwargs.items():
             if hasattr(self._options, k):
-                setattr(self._options, k, kwargs[k])
+                setattr(self._options, k, v)
 
     def __repr__(self) -> str:
         """
