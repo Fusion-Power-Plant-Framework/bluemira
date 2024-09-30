@@ -4,7 +4,7 @@ anytree==2.12.1
     # via bluemira (pyproject.toml)
 appdirs==1.4.4
     # via pint
-asteval==1.0.4
+asteval==1.0.5
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.3.1
     # via pint
-fonttools==4.53.1
+fonttools==4.54.1
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -64,7 +64,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.0
     # via blosc2
-ndindex==1.8
+ndindex==1.9.2
     # via blosc2
 neutronics-material-maker==1.2.0
     # via bluemira (pyproject.toml)
@@ -184,7 +184,7 @@ typing-extensions==4.12.2
     #   pyvista
     #   tables
     #   typeguard
-tzdata==2024.1
+tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via requests

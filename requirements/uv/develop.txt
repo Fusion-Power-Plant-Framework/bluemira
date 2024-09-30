@@ -6,11 +6,11 @@ anytree==2.12.1
     # via bluemira (pyproject.toml)
 appdirs==1.4.4
     # via pint
-asteval==1.0.4
+asteval==1.0.5
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
-astroid==3.3.3
+astroid==3.3.4
     # via sphinx-autoapi
 asttokens==2.4.1
     # via stack-data
@@ -47,7 +47,7 @@ coverage==7.6.1
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.5
+debugpy==1.8.6
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -74,7 +74,7 @@ flexcache==0.3
     # via pint
 flexparser==0.3.1
     # via pint
-fonttools==4.53.1
+fonttools==4.54.1
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -168,7 +168,7 @@ mypy==1.11.2
     # via bluemira (pyproject.toml)
 mypy-extensions==1.0.0
     # via mypy
-myst-nb==1.1.1
+myst-nb==1.1.2
     # via bluemira (pyproject.toml)
 myst-parser==4.0.0
     # via myst-nb
@@ -182,7 +182,7 @@ nbformat==5.10.4
     #   jupytext
     #   myst-nb
     #   nbclient
-ndindex==1.8
+ndindex==1.9.2
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
@@ -259,7 +259,7 @@ pooch==1.8.2
     # via pyvista
 pre-commit==3.8.0
     # via bluemira (pyproject.toml)
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via ipython
 psutil==6.0.0
     # via ipykernel
@@ -369,7 +369,7 @@ sphinx==7.4.7
     #   sphinx-copybutton
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx-autoapi==3.3.1
+sphinx-autoapi==3.3.2
     # via bluemira (pyproject.toml)
 sphinx-copybutton==0.5.2
     # via bluemira (pyproject.toml)
@@ -441,11 +441,11 @@ typing-extensions==4.12.2
     #   sqlalchemy
     #   tables
     #   typeguard
-tzdata==2024.1
+tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via requests
-virtualenv==20.26.5
+virtualenv==20.26.6
     # via pre-commit
 vtk==9.2.6
     # via
