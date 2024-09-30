@@ -11,7 +11,10 @@ PROCESS run functions
 import numpy as np
 from rich.progress import Progress, TextColumn
 
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import (
+    bluemira_debug_flush,
+    bluemira_print,
+)
 from bluemira.codes.interface import CodesTask
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
@@ -80,6 +83,7 @@ class Run(CodesTask):
     def flush_printer(self, line: str):
         description, convergence = line.rsplit(":", 1)
         description = f"{convergence} | {description.split('|')[0]}"
+        bluemira_debug_flush(f"Convergence {description}")
         self._progress.update(
             self._task,
             description=description,
