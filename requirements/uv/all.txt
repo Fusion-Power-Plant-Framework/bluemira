@@ -253,7 +253,7 @@ mypy==1.11.2
     # via bluemira (pyproject.toml)
 mypy-extensions==1.0.0
     # via mypy
-myst-nb==1.1.2
+myst-nb==1.1.1
     # via bluemira (pyproject.toml)
 myst-parser==4.0.0
     # via myst-nb
