@@ -621,7 +621,7 @@ class Breakdown(CoilSetMHDState):
         self.set_grid(grid)
         self._set_init_plasma(grid, psi)
         self.plasma = NoPlasmaCoil(grid)
-        self.limiter = kwargs.get("limiter", None)
+        self.limiter = kwargs.get("limiter")
 
         # Set default breakdown point to grid centre
         x_mid = grid.x_min + 0.5 * (grid.x_max + grid.x_min)
