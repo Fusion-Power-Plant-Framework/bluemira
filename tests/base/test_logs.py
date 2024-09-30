@@ -18,15 +18,23 @@ from bluemira.base.logs import (
     logger_setup,
     set_log_level,
 )
-from bluemira.base.look_and_feel import LOGGER
+
+
+def _get_logger():
+    """Avoid adding extra handlers"""
+    handler_names = {"BM stream stdout", "BM stream stderr", "BM file out"}
+
+    if (
+        handler_names.intersection([h.name for h in logging.getLogger("").handlers])
+        == handler_names
+    ):
+        return logging.getLogger("bluemira")
+    return logger_setup()
 
 
 class TestLoggingLevel:
     @classmethod
     def setup_class(cls):
-        # The logger needs to be reset after testing otherwise
-        # extra handlers are added to the logger leading to double printing
-        # if pytest is run with capturing switched off
         cls.orig_log = logging.getLogger("")
         cls.original_handlers = list(
             cls.orig_log.handlers or cls.orig_log.parent.handlers
@@ -34,16 +42,12 @@ class TestLoggingLevel:
         cls.original_level = LogLevel(
             max(handler.level for handler in cls.original_handlers)
         )
+        cls.LOGGER = _get_logger()
+        set_log_level("NOTSET")
 
     @classmethod
     def teardown_class(cls):
-        for handler in cls.orig_log.handlers or cls.orig_log.parent.handlers:
-            if handler not in cls.original_handlers:
-                cls.orig_log.removeHandler(handler)
         set_log_level(cls.original_level.name)
-
-    def setup_method(self):
-        self.LOGGER = logger_setup()
 
     @pytest.mark.parametrize("input_level", ["INF"])
     def test_raise_error(self, input_level):
@@ -104,6 +108,24 @@ class TestLoggingContext:
 
 
 class TestLoggerClass:
+    LOGGER = _get_logger()
+
+    @classmethod
+    def setup_class(cls):
+        cls.orig_log = logging.getLogger("")
+        cls.original_handlers = list(
+            cls.orig_log.handlers or cls.orig_log.parent.handlers
+        )
+        cls.original_level = LogLevel(
+            max(handler.level for handler in cls.original_handlers)
+        )
+        cls.LOGGER = logging.getLogger("bluemira")
+        set_log_level("NOTSET")
+
+    @classmethod
+    def teardown_class(cls):
+        set_log_level(cls.original_level.name)
+
     @pytest.mark.parametrize(
         "logfunc",
         [LOGGER.debug, LOGGER.info, LOGGER.warning, LOGGER.error, LOGGER.critical],
@@ -111,6 +133,7 @@ class TestLoggerClass:
     @pytest.mark.parametrize("flush", [False, True])
     @pytest.mark.parametrize("fmt", [True, False])
     def test_basics(self, logfunc, flush, fmt, caplog):
+        caplog.set_level("DEBUG")
         logfunc("string1", flush=flush, fmt=fmt)
         logfunc("string2", flush=flush, fmt=fmt)
 
@@ -128,10 +151,10 @@ class TestLoggerClass:
             assert any("|" not in c for c in caplog.messages)
 
     @pytest.mark.parametrize("flush", [False, True])
-    @pytest.mark.parametrize("colour", [None, "red"])
-    def test_clean(self, flush, colour, caplog):
-        LOGGER.clean("string1", flush=flush, colour=colour)
-        LOGGER.clean("string2", flush=flush, colour=colour)
+    @pytest.mark.parametrize("loglevel", ["info", "error"])
+    def test_clean(self, flush, loglevel, caplog):
+        self.LOGGER.clean("string1", flush=flush, loglevel=loglevel)
+        self.LOGGER.clean("string2", flush=flush, loglevel=loglevel)
         if flush:
             assert all(c.startswith("\r") for c in caplog.messages)
         else:

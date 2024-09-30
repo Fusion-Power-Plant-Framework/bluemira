@@ -17,7 +17,7 @@ from pathlib import Path
 
 from bluemira import __version__
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
-from bluemira.base.logs import logger_setup
+from bluemira.base.logs import LogLevel, logger_setup
 
 LOGGER = logger_setup()
 
@@ -279,7 +279,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    LOGGER.clean(string, colour="red")
+    LOGGER.clean(string, loglevel=LogLevel.ERROR)
 
 
 # =============================================================================

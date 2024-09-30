@@ -26,12 +26,21 @@ if TYPE_CHECKING:
 class LogLevel(Enum):
     """Linking level names and corresponding numbers."""
 
-    CRITICAL = 5
-    ERROR = 4
-    WARNING = 3
-    INFO = 2
-    DEBUG = 1
-    NOTSET = 0
+    CRITICAL = (5, "darkred")
+    ERROR = (4, "red")
+    WARNING = (3, "orange")
+    INFO = (2, "blue")
+    DEBUG = (1, "green")
+    NOTSET = (0, None)
+
+    def __new__(cls, *args, **kwds):  # noqa: ARG003
+        """Create Enum from first half of tuple"""
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
+
+    def __init__(self, _, colour: str | None = ""):
+        self.colour = colour
 
     @classmethod
     def _missing_(cls, value: int | str) -> LogLevel:
@@ -55,85 +64,72 @@ class LogLevel(Enum):
         return int(self.value * 10)
 
 
-class Formatter(logging.Formatter):
-    """Custom formatter for our logging"""
-
-    flush_previous = False
-
-    def format(self, record) -> str:
-        """Format logging strings"""
-        if record.msg.startswith("\r"):
-            self.flush_previous = True
-        elif self.flush_previous:
-            record.msg = f"\n{record.msg}"
-            self.flush_previous = False
-
-        return super().format(record)
-
-
 class LoggerAdapter(logging.Logger):
     """Adapt the base logging class for our uses"""
 
     def _base(
-        self, func, msg, colour, *args, flush: bool = False, fmt: bool = True, **kwargs
+        self,
+        func: Callable[[str]],
+        msg: str,
+        *args,
+        flush: bool = False,
+        fmt: bool = True,
+        _clean: bool = False,
+        **kwargs,
     ):
+        loglevel = LogLevel(func.__name__)
         return self._terminator_handler(
             func,
-            colourise(msg, colour=colour, flush=flush, fmt=fmt),
+            colourise(
+                msg,
+                colour=None if _clean and loglevel is LogLevel.INFO else loglevel.colour,
+                flush=flush,
+                fmt=fmt,
+            ),
             *args,
-            fhterm=logging.StreamHandler.terminator if flush else "",
-            shterm="" if flush or kwargs.pop("clean", False) else "\n",
+            fhterm=logging.StreamHandler.terminator if flush or not _clean else "",
+            shterm="" if flush or _clean else logging.StreamHandler.terminator,
             **kwargs,
         )
 
-    def debug(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def debug(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Debug"""
-        return self._base(
-            super().debug, msg, "green", *args, flush=flush, fmt=fmt, **kwargs
-        )
+        return self._base(super().debug, msg, *args, flush=flush, fmt=fmt, **kwargs)
 
-    def info(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def info(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Info"""
-        return self._base(
-            super().info, msg, "blue", *args, flush=flush, fmt=fmt, **kwargs
-        )
+        return self._base(super().info, msg, *args, flush=flush, fmt=fmt, **kwargs)
 
-    def warning(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def warning(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Warning"""
-        msg = f"WARNING: {msg}"
         return self._base(
-            super().warning, msg, "orange", *args, flush=flush, fmt=fmt, **kwargs
+            super().warning, f"WARNING: {msg}", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def error(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def error(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Error"""
-        msg = f"ERROR: {msg}"
         return self._base(
-            super().warning, msg, "red", *args, flush=flush, fmt=fmt, **kwargs
+            super().error, f"ERROR: {msg}", *args, flush=flush, fmt=fmt, **kwargs
         )
 
-    def critical(self, msg, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def critical(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
         """Critical"""
-        msg = f"CRITICAL: {msg}"
         return self._base(
-            super().warning, msg, "darkred", *args, flush=flush, fmt=fmt, **kwargs
+            super().critical, f"CRITICAL: {msg}", *args, flush=flush, fmt=fmt, **kwargs
         )
 
     def clean(
-        self, msg, *args, colour: str | None = None, flush: bool = False, **kwargs
+        self,
+        msg: str,
+        loglevel: str | LogLevel = LogLevel.INFO,
+        *args,
+        flush: bool = False,
+        **kwargs,
     ):
-        """Unmodified flush"""
-        if colour is not None:
-            msg = _print_colour(msg, colour)
+        """Unmodified logging"""
+        func = getattr(super(), LogLevel(loglevel).name.lower())
         return self._base(
-            super().info,
-            msg,
-            colour,
-            *args,
-            flush=flush,
-            clean=True,
-            fmt=False,
-            **kwargs,
+            func, msg, *args, flush=flush, fmt=False, _clean=True, **kwargs
         )
 
     @staticmethod
@@ -158,6 +154,19 @@ class LoggerAdapter(logging.Logger):
             FileHandler Terminator
         shterm:
             StreamHandler Terminator
+
+        Notes
+        -----
+        This deals with some formatting issues when flushing or using external programs.
+        Extra new line characters are added by default (this removes that behaviour):
+
+            - When trying to flush text
+            - When wrapped external printing
+
+        For the file handler newlines are desired in all cases apart from when wrapping
+        external programs
+        For the stream handler newlines are only desired for normal logging
+
         """
         original_terminator = logging.StreamHandler.terminator
         logging.StreamHandler.terminator = shterm
@@ -292,16 +301,15 @@ def logger_setup(
     bm_logger = logging.getLogger("bluemira")
 
     # what will be shown on screen
-    formatter = Formatter()
     on_screen_handler_out = logging.StreamHandler(stream=sys.stdout)
     on_screen_handler_out.setLevel(LogLevel(level)._value_for_logging)
-    on_screen_handler_out.setFormatter(formatter)
     on_screen_handler_out.addFilter(lambda record: record.levelno < logging.WARNING)
+    on_screen_handler_out.name = "BM stream stdout"
 
     on_screen_handler_err = logging.StreamHandler(stream=sys.stderr)
     on_screen_handler_err.setLevel(LogLevel(level)._value_for_logging)
-    on_screen_handler_err.setFormatter(formatter)
     on_screen_handler_err.addFilter(lambda record: record.levelno >= logging.WARNING)
+    on_screen_handler_err.name = "BM stream stderr"
 
     # what will be written to a file
     recorded_handler = logging.FileHandler(logfilename)
@@ -310,6 +318,7 @@ def logger_setup(
     )
     recorded_handler.setLevel(logging.DEBUG)
     recorded_handler.setFormatter(recorded_formatter)
+    recorded_handler.name = "BM file out"
 
     bm_logger.setLevel(logging.DEBUG)
 
