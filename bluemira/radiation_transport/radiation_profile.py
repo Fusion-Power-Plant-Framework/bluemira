@@ -29,6 +29,7 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
 )
 from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
+    calculate_total_radiated_power,
     electron_density_and_temperature_sol_decay,
     exponential_decay,
     gaussian_decay,
@@ -59,7 +60,9 @@ if TYPE_CHECKING:
 class RadiationSourceParams(ParameterFrame):
     """Radiaition source parameter frame"""
 
-    sep_corrector: Parameter[float]
+    sep_corrector_omp: Parameter[float]
+    """Separation correction for double and single null plasma"""
+    sep_corrector_imp: Parameter[float]
     """Separation correction for double and single null plasma"""
     alpha_n: Parameter[float]
     """Density profile factor"""
@@ -192,7 +195,7 @@ class Radiation:
 
         Returns
         -------
-        te:
+        te [keV]:
             poloidal distribution of electron temperature
 
         Raises
@@ -370,18 +373,36 @@ class CoreRadiation(Radiation):
     ):
         super().__init__(eq, params)
 
-        self.H_content = impurity_content["H"]
+        exclude_species = ["Ar"]
+
+        # Construct impurity contents, excluding Argon
         self.impurities_content = [
-            frac for key, frac in impurity_content.items() if key != "Ar"
+            frac for key, frac in impurity_content.items() if key not in exclude_species
         ]
+
+        # Extract impurity data, excluding Argon
         self.imp_data_t_ref = [
-            data["T_ref"] for key, data in impurity_data.items() if key != "Ar"
+            [t / 1000.0 for t in data["T_ref"]]
+            for key, data in impurity_data.items()
+            if key not in exclude_species
         ]
         self.imp_data_l_ref = [
-            data["L_ref"] for key, data in impurity_data.items() if key != "Ar"
+            data["L_ref"]
+            for key, data in impurity_data.items()
+            if key not in exclude_species
         ]
-        self.impurity_symbols = impurity_content.keys()
+        self.imp_data_z_ref = [
+            data["z_ref"]
+            for key, data in impurity_data.items()
+            if key not in exclude_species
+        ]
 
+        # Store impurity symbols, excluding Argon
+        self.impurity_symbols = [
+            key for key in impurity_content if key not in exclude_species
+        ]
+
+        # Store the midplane profiles
         self.profiles = midplane_profiles
 
     def calculate_mp_radiation_profile(self):
@@ -410,34 +431,59 @@ class CoreRadiation(Radiation):
         """
         self.mp_profile_plot(self.profiles.psi_n, self.rad_mp, self.impurity_symbols)
 
-    def calculate_core_distribution(self) -> list[list[np.ndarray]]:
+    def calculate_core_distribution(self, scaling) -> list[list[np.ndarray]]:
         """
         Build poloidal distribution (distribution along the field lines) of
         line radiation loss in the plasma core.
 
         Returns
         -------
-        rad:
-            Line core radiation.
-            For specie and each closed flux line in the core
+        rad : list[list[np.ndarray]]
+            Line core radiation for each impurity species
+            and for each closed flux line in the core.
         """
-        # Closed flux tubes within the separatrix
+        # Collect closed flux tubes within the separatrix
         self.flux_tubes = self.collect_flux_tubes(self.profiles.psi_n)
 
-        # For each flux tube, poloidal density profile.
-        self.ne_pol = [
-            self.flux_tube_pol_n(ft, n, core=True)
-            for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
-        ]
+        if scaling:
+            # Calculate scaling factors for temperature and density along each flux tube
+            self.scaling_pol_t = [
+                self.scaling_factor_core(ft, alpha=0.5) for ft in self.flux_tubes
+            ]
+            self.scaling_pol_n = [
+                self.scaling_factor_core(ft, alpha=0.5) for ft in self.flux_tubes
+            ]
+            # Calculate poloidal density profile for each flux tube
+            # and apply scaling factor
+            self.ne_pol = [
+                self.flux_tube_pol_n(ft, n, core=True) / scaling
+                for ft, n, scaling in zip(
+                    self.flux_tubes, self.profiles.ne, self.scaling_pol_n, strict=False
+                )
+            ]
 
-        # For each flux tube, poloidal temperature profile.
-        self.te_pol = [
-            self.flux_tube_pol_t(ft, t, core=True)
-            for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
-        ]
+            # Calculate poloidal temperature profile for each flux tube
+            # and apply scaling factor
+            self.te_pol = [
+                self.flux_tube_pol_t(ft, t, core=True) * scaling
+                for ft, t, scaling in zip(
+                    self.flux_tubes, self.profiles.te, self.scaling_pol_t, strict=False
+                )
+            ]
+        else:
+            # Calculate poloidal density profile for each flux tube
+            self.ne_pol = [
+                self.flux_tube_pol_n(ft, n, core=True)
+                for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
+            ]
+            # Calculate poloidal temperature profile for each flux tube
+            self.te_pol = [
+                self.flux_tube_pol_t(ft, t, core=True)
+                for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
+            ]
 
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the radiative power loss function.
+        # Calculate the radiative power loss function for each impurity
+        # species and for each flux tube
         self.loss_f = [
             [radiative_loss_function_values(t, t_ref, l_ref) for t in self.te_pol]
             for t_ref, l_ref in zip(
@@ -445,28 +491,80 @@ class CoreRadiation(Radiation):
             )
         ]
 
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the line radiation loss.
+        # Calculate the line radiation loss for each impurity species
+        # and for each flux tube
         self.rad = [
             [
                 calculate_line_radiation_loss(n, l_f, fi)
-                for n, l_f in zip(self.ne_pol, ft, strict=False)
+                for n, l_f in zip(self.ne_pol, loss_per_species, strict=False)
             ]
-            for ft, fi in zip(self.loss_f, self.impurities_content, strict=False)
+            for loss_per_species, fi in zip(
+                self.loss_f, self.impurities_content, strict=False
+            )
         ]
 
         return self.rad
+
+    def scaling_factor_core(self, flux_tube, alpha=1):
+        """
+        Calculate the scaling factor for temperature or density based on the ratio
+        of local magnetic field to the magnetic field at the outboard midplane.
+
+        The scaling factor is computed as (B_local / B_mp) ** alpha for each point
+        along a flux tube, where B_local is the total magnetic field at a given point
+        and B_mp is the total magnetic field at the outboard midplane.
+
+        Parameters
+        ----------
+        flux_tube : FluxTube
+            The flux tube object containing x and z coordinates along the flux surface.
+        alpha : float, optional
+            The exponent used for scaling. Default is 1.
+
+        Returns
+        -------
+        np.ndarray
+            Scaling factor for each point along the flux tube.
+
+        Notes
+        -----
+        The scaling factor is based on the assumption that the temperature or density
+        scales with the local magnetic field relative to the outboard midplane.
+        """
+        # Find index of the point closest to the outboard midplane (z ≈ 0)
+        mp_indices = np.where(flux_tube.z == 0)[0]
+
+        # If multiple points, use the last one; otherwise, use the single point
+        mp_i = mp_indices[-1] if len(mp_indices) > 1 else mp_indices[0]
+
+        # Total magnetic field at the outboard midplane
+        x_mp, z_mp = flux_tube.x[mp_i], flux_tube.z[mp_i]
+        b_pol_mp = self.eq.Bp(x_mp, z_mp)
+        b_tor_mp = self.eq.Bt(x_mp)
+        b_mp = np.hypot(b_pol_mp, b_tor_mp)
+
+        # Calculate local magnetic field along the flux tube
+        b_local = [
+            np.hypot(self.eq.Bp(x, z), self.eq.Bt(x))
+            for x, z in zip(flux_tube.x, flux_tube.z, strict=False)
+        ]
+
+        # Calculate scaling factor for each point along the flux tube
+        return np.array((np.array(b_local) / b_mp) ** alpha)
 
     def calculate_core_radiation_map(self):
         """
         Build core radiation map.
         """
-        rad = self.calculate_core_distribution()
+        rad = self.calculate_core_distribution(scaling=False)
         self.total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
 
         self.x_tot = np.concatenate([flux_tube.x for flux_tube in self.flux_tubes])
         self.z_tot = np.concatenate([flux_tube.z for flux_tube in self.flux_tubes])
         self.rad_tot = np.concatenate(self.total_rad)
+
+        # Calculate the total radiated power
+        return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
     def radiation_distribution_plot(
         self, flux_tubes: np.ndarray, power_density: np.ndarray, ax=None
@@ -599,14 +697,14 @@ class ScrapeOffLayerRadiation(Radiation):
             })
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector.value
+        self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector_omp.value
         # magnetic field components at the midplane
         self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
         b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
         self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
 
         if self.eq.is_double_null:
-            self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector.value
+            self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector_imp.value
             self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
@@ -961,7 +1059,7 @@ class ScrapeOffLayerRadiation(Radiation):
         -------
         t_pol:
             temperature poloidal profile along each
-            flux tube within the specified set [eV]
+            flux tube within the specified set [keV]
         n_pol:
             density poloidal profile along each
             flux tube within the specified set [1/m^3]
@@ -982,7 +1080,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=1,
+                rec_ext=1.5,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -992,7 +1090,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=0.2,
+                rec_ext=0.15,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -1020,6 +1118,7 @@ class ScrapeOffLayerRadiation(Radiation):
             alpha = self.alpha_lfs
             b_tot_tar = self.b_tot_out_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
+            sep_corrector = self.params.sep_corrector_omp.value
         else:
             t_u_kev = self.t_imp
             b_pol_tar = self.b_pol_inn_tar
@@ -1029,6 +1128,7 @@ class ScrapeOffLayerRadiation(Radiation):
             alpha = self.alpha_hfs
             b_tot_tar = self.b_tot_inn_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
+            sep_corrector = self.params.sep_corrector_imp.value
 
         # Coverting needed parameter units
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
@@ -1055,9 +1155,9 @@ class ScrapeOffLayerRadiation(Radiation):
             r_sep_mp,
             self.points["o_point"]["z"],
             self.params.k_0.value,
-            self.params.sep_corrector.value,
+            sep_corrector,
             firstwall_geom,
-            lfs,
+            lfs=lfs,
         )
 
         # exit of radiation region
@@ -1101,12 +1201,12 @@ class ScrapeOffLayerRadiation(Radiation):
             t_u_ev,
             lfs=lfs,
         )
+
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
             detachment=detachment,
         )
-
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
@@ -1309,7 +1409,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
         ]
-
         self.imp_data_t_ref = [
             data["T_ref"] for key, data in impurity_data.items() if key != "H"
         ]
@@ -1404,7 +1503,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 flux_tubes=getattr(self, f"flux_tubes_{side}_{low_up}"),
                 x_strike=getattr(self, f"x_strike_{side}"),
                 z_strike=getattr(self, f"z_strike_{side}"),
-                main_ext=None,
+                main_ext=3,
                 firstwall_geom=firstwall_geom,
                 pfr_ext=None,
                 rec_ext=2,
@@ -1554,6 +1653,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 [],
             )
         )
+
+        # Calculate the total radiated power
+        return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
         """
@@ -1810,7 +1912,8 @@ class RadiationSource:
         midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
-        confinement_time: float = 0.1,
+        confinement_time_core: float = np.inf,
+        confinement_time_sol: float = 10,
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -1819,10 +1922,11 @@ class RadiationSource:
         impurities_list_core = list(core_impurities)
         impurities_list_sol = list(sol_impurities)
         impurity_data_core = get_impurity_data(
-            impurities_list=impurities_list_core, confinement_time_ms=confinement_time
+            impurities_list=impurities_list_core,
+            confinement_time_ms=confinement_time_core,
         )
         impurity_data_sol = get_impurity_data(
-            impurities_list=impurities_list_sol, confinement_time_ms=confinement_time
+            impurities_list=impurities_list_sol, confinement_time_ms=confinement_time_sol
         )
 
         self.imp_content_core = core_impurities
