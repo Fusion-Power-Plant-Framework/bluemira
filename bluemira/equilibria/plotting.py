@@ -805,9 +805,9 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             vmax = np.amax(self.total_psi)
 
         title_type = "Difference "
-        if PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
             title_type = "Relative difference "
-        if PsiPlotType.PSI_ABS_DIFF:
+        if self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
             title_type = "Absolute difference "
 
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
@@ -936,9 +936,9 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             vmax = np.amax(self.total_psi)
 
         title_type = "Difference "
-        if PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
             title_type = "Relative difference "
-        if PsiPlotType.PSI_ABS_DIFF:
+        if self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
             title_type = "Absolute difference "
 
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
