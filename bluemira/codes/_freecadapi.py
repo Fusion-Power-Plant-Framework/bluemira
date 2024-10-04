@@ -1278,8 +1278,6 @@ class Document:
         self,
         parts: Iterable[apiShape],
         labels: Iterable[str] | None = None,
-        *,
-        rotate: bool = False,
     ) -> Iterator[Part.Feature]:
         """
         Setup FreeCAD document.
@@ -1312,8 +1310,6 @@ class Document:
 
         for part, label in zip(parts, labels, strict=False):
             new_part = part.copy()
-            if rotate:
-                new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
             obj = self.doc.addObject("Part::FeaturePython", label)
             obj.Shape = new_part
             self.doc.recompute()
@@ -1740,7 +1736,7 @@ def save_cad(
     })
 
     with Document() as doc:
-        objs = list(doc.setup(shapes, labels, rotate=False))
+        objs = list(doc.setup(shapes, labels))
 
         # Part is always built in mm but some formats are unitless
         if cad_format not in CADFileType.unitless_formats():
@@ -2743,6 +2739,7 @@ def show_cad(
     parts: apiShape | list[apiShape],
     options: dict | list[dict | None] | None = None,
     labels: list[str] | None = None,
+    camera_rotation: Iterable = (270, 0, 0),
     **kwargs,  # noqa: ARG001
 ):
     """
@@ -2756,6 +2753,10 @@ def show_cad(
         The options to use to display the parts.
     labels:
         labels to use for each part object
+    camera_rotation:
+        rotation in degrees of camera around object,
+        axes are freecad axes not bluemira axes.
+        Default looks at the bluemira xz plane.
 
     Raises
     ------
@@ -2785,9 +2786,7 @@ def show_cad(
     root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
 
     with Document() as doc:
-        for obj, option in zip(
-            doc.setup(parts, labels, rotate=True), options, strict=False
-        ):
+        for obj, option in zip(doc.setup(parts, labels), options, strict=False):
             subgraph = FreeCADGui.subgraphFromObject(obj)
             _colourise(subgraph, option)
             root.addChild(subgraph)
@@ -2798,8 +2797,44 @@ def show_cad(
         viewer.setSceneGraph(root)
 
         viewer.setWindowTitle("Bluemira Display")
+
+        rotate_into_position(viewer, *(np.deg2rad(i) for i in camera_rotation))
+
         viewer.show()
         app.exec_()
+
+
+def rotate_into_position(
+    scene: quarter.QuarterWidget, x_ang: float, y_ang: float, z_ang: float
+):
+    """Rotate camera around object"""
+    axes = []
+    for i_ang, i in zip((x_ang, y_ang, z_ang), ("X", "Y", "Z"), strict=False):
+        mat = Base.Matrix()
+        getattr(mat, f"rotate{i}")(i_ang)
+        axes.append(Base.Placement(mat).Rotation)
+
+    cam = scene.getSoEventManager().getCamera()
+    rot_camera = Base.Rotation(*cam.orientation.getValue().getValue())
+    # scene.fitAll()
+
+    # the camera's position, i.e. the user's eye point
+    position = Base.Vector(*cam.position.getValue().getValue())
+    distance = cam.focalDistance.getValue()
+
+    # view direction
+    vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+
+    # this is the point on the screen the camera looks at
+    # when rotating the camera we should make this point fix
+    lookat = position + vec * distance
+
+    for axis in axes:
+        rot_camera = axis.multiply(rot_camera)
+        cam.orientation.setValue(*rot_camera.Q)
+        vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+        pos = lookat - vec * distance
+        cam.position.setValue(pos.x, pos.y, pos.z)
 
 
 def embedLight(scene, lightdir: tuple[float], intensity: float) -> coin.SoSeparator:
