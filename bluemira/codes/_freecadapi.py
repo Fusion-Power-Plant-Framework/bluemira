@@ -2782,6 +2782,7 @@ def show_cad(
         app = QApplication([])
 
     root = coin.SoSeparator()
+    root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
 
     with Document() as doc:
         for obj, option in zip(
@@ -2799,6 +2800,41 @@ def show_cad(
         viewer.setWindowTitle("Bluemira Display")
         viewer.show()
         app.exec_()
+
+
+def embedLight(scene, lightdir: tuple[float], intensity: float) -> coin.SoSeparator:
+    """
+    Embeds a given coin node
+    inside a shadow group with directional light with the
+    given direction (x,y,z) tuple.
+
+    Returns
+    -------
+    :
+        the final coin node
+
+    Notes
+    -----
+    Modified from BIM.OfflineRendingerUtils::embedLight
+    """
+    buf = f"""
+    #Inventor V2.1 ascii
+    ShadowGroup {{
+        quality 1
+        precision 1
+        ShadowDirectionalLight {{
+            direction {lightdir[0]} {lightdir[1]} {lightdir[2]}
+            intensity {intensity}
+            # enable this to reduce the shadow view distance
+            maxShadowDistance 1
+        }}
+    }}"""
+
+    inp = coin.SoInput()
+    inp.setBuffer(buf)
+    sgroup = coin.SoDB.readAll(inp)
+    sgroup.addChild(scene)
+    return sgroup
 
 
 # # =============================================================================
