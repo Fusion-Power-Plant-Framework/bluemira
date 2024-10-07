@@ -13,36 +13,36 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-)
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d as a3
 import numpy as np
 from matplotlib.patches import PathPatch, Polygon
+from mpl_toolkits.mplot3d import art3d
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.tools import Options
-from bluemira.geometry import bound_box, face, wire
-from bluemira.geometry import placement as _placement
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import (
     Coordinates,
     _parse_to_xyz_array,
     get_centroid_3d,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.placement import XYZ, XZY, YZX, BluemiraPlacement
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Iterator
 
+    import numpy.typing as npt
     from matplotlib.axes import Axes
 
+    from bluemira.base.components import Component
     from bluemira.geometry.base import BluemiraGeoT
 
 UNIT_LABEL = "[m]"
@@ -63,6 +63,7 @@ class Zorder(Enum):
     OXPOINT = 11
     FACE = 20
     WIRE = 30
+    POINTS = 35
     RADIATION = 40
     CONSTRAINT = 45
     TEXT = 100
@@ -73,7 +74,7 @@ class ViewDescriptor:
 
     def __init__(self):
         self._default = tuple(
-            getattr(_placement.XZY, attr) for attr in ("base", "axis", "angle", "label")
+            getattr(XZY, attr) for attr in ("base", "axis", "angle", "label")
         )
 
     def __set_name__(self, _, name: str):
@@ -87,7 +88,7 @@ class ViewDescriptor:
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: str | tuple | _placement.BluemiraPlacement):
+    def __set__(self, obj: Any, value: str | tuple | BluemiraPlacement):
         """Set the view
 
         Raises
@@ -97,16 +98,16 @@ class ViewDescriptor:
         """
         if isinstance(value, str):
             if value.startswith("xy"):
-                value = _placement.XYZ
+                value = XYZ
             elif value.startswith("xz"):
-                value = _placement.XZY
+                value = XZY
             elif value.startswith("yz"):
-                value = _placement.YZX
+                value = YZX
             else:
                 raise DisplayError(f"{value} is not a valid view")
 
         if isinstance(value, tuple):
-            value = _placement.BluemiraPlacement(*value)
+            value = BluemiraPlacement(*value)
 
         setattr(
             obj,
@@ -199,7 +200,7 @@ class DefaultPlotOptions:
             "s": 10,
             "facecolors": "red",
             "edgecolors": "black",
-            "zorder": 30,
+            "zorder": Zorder.POINTS.value,
         }
     )
     wire_options: DictOptionsDescriptor = DictOptionsDescriptor(
@@ -215,9 +216,9 @@ class DefaultPlotOptions:
     view: ViewDescriptor = ViewDescriptor()
 
     @property
-    def view_placement(self) -> _placement.BluemiraPlacement:
+    def view_placement(self) -> BluemiraPlacement:
         """Get view as BluemiraPlacement"""
-        return _placement.BluemiraPlacement(*self.view)
+        return BluemiraPlacement(*self.view)
 
 
 class PlotOptions(Options):
@@ -248,20 +249,30 @@ class BasePlotter(ABC):
 
     _CLASS_PLOT_OPTIONS: ClassVar = {}
 
-    def __init__(self, options: PlotOptions | None = None, **kwargs):
-        # discretisation points representing the shape in global coordinate system
-        self._data = []
-        # modified discretisation points for plotting (e.g. after view transformation)
-        self._data_to_plot = []
+    def __init__(
+        self,
+        options: PlotOptions | None = None,
+        *,
+        data: npt.ArrayLike | Coordinates | BluemiraGeoT | Component | None = None,
+        **kwargs,
+    ):
         self.options = (
             PlotOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
         )
         self.options.modify(**kwargs)
         self.set_view(self.options._options.view)
 
-    def set_view(self, view):
+        if data is not None:
+            self._populate_data(data)
+        else:
+            # discretisation points representing the shape in global coordinate system
+            self.data = []
+            # modified discretisation points for plotting (e.g. after view transformation)
+            self._data_to_plot = []
+
+    def set_view(self, view: str | BluemiraPlacement):
         """Set the plotting view"""
-        if isinstance(view, str | _placement.BluemiraPlacement):
+        if isinstance(view, str | BluemiraPlacement):
             self.options._options.view = view
         else:
             DisplayError(f"{view} is not a valid view")
@@ -272,8 +283,7 @@ class BasePlotter(ABC):
         try:
             return self._ax
         except AttributeError:
-            fig = plt.figure()
-            self._ax = fig.add_subplot()
+            _fig, self._ax = plt.subplots()
 
         return self._ax
 
@@ -299,7 +309,9 @@ class BasePlotter(ABC):
         plt.show(block=True)
 
     @abstractmethod
-    def _populate_data(self, obj):
+    def _populate_data(
+        self, obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component
+    ):
         """
         Internal function that makes the plot. It fills self._data and
         self._data_to_plot
@@ -333,17 +345,23 @@ class BasePlotter(ABC):
 
     def _set_aspect_3d(self):
         # This was the only way I found to get 3-D plots to look right in matplotlib
-        x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*self._data.T).get_box_arrays()
+        x_bb, y_bb, z_bb = BoundingBox.from_xyz(*self._data.T).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb, strict=False):
             self.ax.plot([x], [y], [z], color="w")
 
     def _set_label_3d(self):
-        offset = "\n\n"  # To keep labels from interfering with the axes
-        self.ax.set_xlabel(offset + X_LABEL)
-        self.ax.set_ylabel(offset + Y_LABEL)
-        self.ax.set_zlabel(offset + Z_LABEL)
+        offset = "\n\n{}"  # To keep labels from interfering with the axes
+        self.ax.set_xlabel(offset.format(X_LABEL))
+        self.ax.set_ylabel(offset.format(Y_LABEL))
+        self.ax.set_zlabel(offset.format(Z_LABEL))
 
-    def plot_2d(self, obj, ax=None, *, show: bool = True):
+    def plot_2d(
+        self,
+        obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
+        ax: None | Axes = None,
+        *,
+        show: bool = True,
+    ) -> Axes:
         """2D plotting method"""
         self._check_obj(obj)
 
@@ -377,7 +395,13 @@ class BasePlotter(ABC):
         self._data_to_plot, so _populate_data should be called before.
         """
 
-    def plot_3d(self, obj, ax=None, *, show: bool = True):
+    def plot_3d(
+        self,
+        obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
+        ax: None | Axes = None,
+        *,
+        show: bool = True,
+    ) -> Axes:
         """3D plotting method"""
         self._check_obj(obj)
 
@@ -417,14 +441,14 @@ class PointsPlotter(BasePlotter):
         # Check if nothing has to be plotted
         return bool(self.options.show_points)
 
-    def _populate_data(self, points):
-        points = _parse_to_xyz_array(points).T
+    def _populate_data(self, obj: npt.ArrayLike):
+        points = _parse_to_xyz_array(obj).T
         self._data = points
         # apply rotation matrix given by options['view']
-        rot = self.options.view_placement.to_matrix().T
-        temp_data = np.c_[self._data, np.ones(len(self._data))]
-        self._data_to_plot = temp_data.dot(rot).T
-        self._data_to_plot = self._data_to_plot[0:2]
+        self._data_to_plot = np.dot(
+            np.c_[self._data, np.ones(len(self._data))],
+            self.options.view_placement.to_matrix().T,
+        ).T[0:2]
 
     def _make_plot_2d(self):
         if self.options.show_points:
@@ -446,7 +470,7 @@ class WirePlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):
-        if not isinstance(obj, wire.BluemiraWire):
+        if not isinstance(obj, BluemiraWire):
             raise TypeError(f"{obj} must be a BluemiraWire")
         return True
 
@@ -454,16 +478,13 @@ class WirePlotter(BasePlotter):
         # Check if nothing has to be plotted
         return not (not self.options.show_points and not self.options.show_wires)
 
-    def _populate_data(self, wire):
-        self._pplotter = PointsPlotter(self.options)
-        new_wire = wire.deepcopy()
-        # # change of view integrated in PointsPlotter2D. Not necessary here.
-        # new_wire.change_placement(self.options._options['view'])
+    def _populate_data(self, obj: BluemiraWire):
+        new_wire = obj.deepcopy()
         pointsw = new_wire.discretise(
             ndiscr=self.options._options.ndiscr,
             byedges=self.options._options.byedges,
         ).T
-        self._pplotter._populate_data(pointsw)
+        self._pplotter = PointsPlotter(self.options, data=pointsw)
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
 
@@ -492,8 +513,8 @@ class FacePlotter(BasePlotter):
     _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": False, "show_wires": False}
 
     @staticmethod
-    def _check_obj(obj):
-        if not isinstance(obj, face.BluemiraFace):
+    def _check_obj(obj: BluemiraFace):
+        if not isinstance(obj, BluemiraFace):
             raise TypeError(f"{obj} must be a BluemiraFace")
         return True
 
@@ -545,7 +566,7 @@ class FacePlotter(BasePlotter):
 
     def _make_plot_3d(self):
         if self.options.show_faces:
-            poly = a3.art3d.Poly3DCollection([self._data], **self.options.face_options)
+            poly = art3d.Poly3DCollection([self._data], **self.options.face_options)
             self.ax.add_collection3d(poly)
 
         for plotter in self._wplotters:
@@ -560,7 +581,7 @@ class ComponentPlotter(BasePlotter):
     _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": False, "show_wires": False}
 
     @staticmethod
-    def _check_obj(obj):
+    def _check_obj(obj: Component):
         import bluemira.base.components  # noqa: PLC0415
 
         if not isinstance(obj, bluemira.base.components.Component):
@@ -575,29 +596,25 @@ class ComponentPlotter(BasePlotter):
             and not self.options.show_faces
         )
 
-    def _populate_data(self, comp):
-        self._cplotters = []
-
-        def _populate_plotters(comp):
-            if comp.is_leaf and getattr(comp, "shape", None) is not None:
-                if comp.plot_options.face_options["color"] in flatten_iterable(
-                    BLUE_PALETTE.as_hex()
-                ):
-                    if self.options.face_options["color"] == "blue":
-                        options = comp.plot_options
-                    else:
-                        # not possible with ComponentPlotter only plot_2d
-                        options = self.options
-                else:
+    def _create_plotters(self, comp: Component) -> Iterator[BasePlotter]:
+        if comp.is_leaf and getattr(comp, "shape", None) is not None:
+            if comp.plot_options.face_options["color"] in flatten_iterable(
+                BLUE_PALETTE.as_hex()
+            ):
+                if self.options.face_options["color"] == "blue":
                     options = comp.plot_options
-                plotter = _get_plotter_class(comp.shape)(options)
-                plotter._populate_data(comp.shape)
-                self._cplotters.append(plotter)
+                else:
+                    # not possible with ComponentPlotter only plot_2d
+                    options = self.options
             else:
-                for child in comp.children:
-                    _populate_plotters(child)
+                options = comp.plot_options
+            yield _get_plotter_class(comp.shape)(options, data=comp.shape)
+        else:
+            for child in comp.children:
+                self._create_plotters(child)
 
-        _populate_plotters(comp)
+    def _populate_data(self, comp: Component):
+        self._cplotters = list(self._create_plotters(comp))
 
     def _make_plot_2d(self):
         for plotter in self._cplotters:
@@ -619,7 +636,8 @@ class ComponentPlotter(BasePlotter):
 
 
 def _validate_plot_inputs(
-    parts, options
+    parts: BluemiraGeoT | list[BluemiraGeoT],
+    options: None | PlotOptions | list[None] | list[PlotOptions],
 ) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
     Validate the lists of parts and options, applying some default options.
@@ -645,7 +663,9 @@ def _validate_plot_inputs(
     return parts, options
 
 
-def _get_plotter_class(part):
+def _get_plotter_class(
+    part: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
+):
     """
     Get the plotting class for a BluemiraGeo object.
 
@@ -658,9 +678,9 @@ def _get_plotter_class(part):
 
     if isinstance(part, list | np.ndarray | Coordinates):
         plot_class = PointsPlotter
-    elif isinstance(part, wire.BluemiraWire):
+    elif isinstance(part, BluemiraWire):
         plot_class = WirePlotter
-    elif isinstance(part, face.BluemiraFace):
+    elif isinstance(part, BluemiraFace):
         plot_class = FacePlotter
     elif isinstance(part, bluemira.base.components.Component):
         plot_class = ComponentPlotter
@@ -674,23 +694,23 @@ def _get_plotter_class(part):
 def plot_2d(
     parts: BluemiraGeoT | Iterable[BluemiraGeoT],
     options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
-    ax=None,
+    ax: Axes | None = None,
     *,
     show: bool = True,
     **kwargs,
-):
+) -> Axes:
     """
     The implementation of the display API for BluemiraGeo parts.
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
+    parts:
         The parts to display.
-    options: Optional[Union[PlotOptions, List[PlotOptions]]]
+    options:
         The options to use to display the parts.
-    ax: Optional[Axes]
+    ax:
         The axes onto which to plot
-    show: bool
+    show:
         Whether or not to show the plot immediately (default=True). Note
         that if using iPython or Jupyter, this has no effect; the plot is shown
         automatically.
@@ -710,11 +730,11 @@ def plot_2d(
 def plot_3d(
     parts: BluemiraGeoT | Iterable[BluemiraGeoT],
     options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
-    ax=None,
+    ax: Axes | None = None,
     *,
     show: bool = True,
     **kwargs,
-):
+) -> Axes:
     """
     The implementation of the display API for BluemiraGeo parts.
 
@@ -779,7 +799,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax=None, *, show: bool = True) -> None:
+    def plot_2d(self, ax: None | Axes = None, *, show: bool = True) -> Axes:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -791,7 +811,7 @@ class Plottable:
         """
         return self._plotter.plot_2d(self, ax=ax, show=show)
 
-    def plot_3d(self, ax=None, *, show: bool = True) -> None:
+    def plot_3d(self, ax: Axes | None = None, *, show: bool = True) -> Axes:
         """
         Function to 3D plot a component.
 
@@ -803,33 +823,25 @@ class Plottable:
         return self._plotter.plot_3d(self, ax=ax, show=show)
 
 
-def _get_ndim(coords):
+def _get_ndim(coords: Coordinates) -> int:
     count = 0
     length = coords.shape[1]
     for c in coords.xyz:
-        if len(c) == length and not np.allclose(c, c[0] * np.ones(length)):
+        if len(c) == length and not np.allclose(c, c[0]):
             count += 1
 
     return max(count, 2)
 
 
-def _get_plan_dims(array):
-    length = array.shape[1]
+def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
     axes = ["x", "y", "z"]
-    dims = []
-    for i, k in enumerate(axes):
-        c = array[i]
-        if not np.allclose(c[0] * np.ones(length), c):
-            dims.append(k)
+    dims = [k for i, k in enumerate(axes) if not np.allclose(array[i][0], array[i])]
 
     if len(dims) == 1:
         # Stops error when flat lines are given (same coords in two axes)
         axes.remove(dims[0])  # remove variable axis
-        temp = []
-        for i, k in enumerate(axes):  # both all equal to something
-            c = array[i]
-            if c[0] != 0.0:
-                temp.append(k)
+        # both all equal to something
+        temp = [k for i, k in enumerate(axes) if array[i][0] != 0.0]
         if len(temp) == 1:
             dims.append(temp[0])
         else:
@@ -842,7 +854,9 @@ def _get_plan_dims(array):
     return sorted(dims)
 
 
-def plot_coordinates(coords, ax=None, *, points=False, **kwargs):
+def plot_coordinates(
+    coords: Coordinates, ax: Axes | None = None, *, points: bool = False, **kwargs
+):
     """
     Plot Coordinates.
 
@@ -898,9 +912,7 @@ def plot_coordinates(coords, ax=None, *, points=False, **kwargs):
     ax.set_xlabel(a + " [m]")
     ax.set_ylabel(b + " [m]")
     if fill:
-        poly = coordinates_to_path(x, y)
-        p = PathPatch(poly, color=fc, alpha=alpha)
-        ax.add_patch(p)
+        ax.add_patch(PathPatch(coordinates_to_path(x, y), color=fc, alpha=alpha))
 
     ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
 
@@ -911,7 +923,7 @@ def plot_coordinates(coords, ax=None, *, points=False, **kwargs):
     ax.set_aspect("equal")
 
 
-def _plot_3d(coords, ax=None, **kwargs):
+def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
     from bluemira.utilities.plot_tools import (  # noqa: PLC0415
         BluemiraPathPatch3D,
         Plot3D,
@@ -922,7 +934,7 @@ def _plot_3d(coords, ax=None, **kwargs):
         ax = Plot3D()
         # Now we re-arrange a little so that matplotlib can show us something a little
         # more correct
-        x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*coords.xyz).get_box_arrays()
+        x_bb, y_bb, z_bb = BoundingBox.from_xyz(*coords.xyz).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb, strict=False):
             ax.plot([x], [y], [z], color="w")
 
@@ -931,9 +943,9 @@ def _plot_3d(coords, ax=None, **kwargs):
         if not coords.is_planar:
             bluemira_warn("Cannot fill plot of non-planar Coordinates.")
             return
-        dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0]))
+        dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0])).T
 
-        xyz = dcm.T @ coords.xyz
+        xyz = dcm @ coords.xyz
         center_of_mass = get_centroid_3d(*xyz)
 
         xyz -= center_of_mass

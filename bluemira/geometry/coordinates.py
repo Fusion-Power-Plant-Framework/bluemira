@@ -701,7 +701,7 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     return matrix
 
 
-def project_point_axis(point: np.ndarray, axis: np.ndarray) -> np.ndarray:
+def project_point_axis(point: npt.ArrayLike, axis: npt.ArrayLike) -> np.ndarray:
     """
     Project a 3-D point onto a 3-D axis.
     \t:math:`\\mathbf{p_{proj}} = \\dfrac{\\mathbf{p}\\cdot\\mathbf{a}}{\\mathbf{a}\\cdot\\mathbf{a}}\\mathbf{a}`
