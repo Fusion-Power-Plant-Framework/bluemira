@@ -2571,7 +2571,7 @@ def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
 
     Note
     ----
-    Face is centered on the Plane Position. With respect to the global coordinate
+    Face is centred on the Plane Position. With respect to the global coordinate
     system, the face placement is given by a simple rotation of the z axis.
 
     Parameters
@@ -2651,15 +2651,15 @@ def collect_verts_faces(
     solid: apiShape, tesselation: float = 0.1
 ) -> tuple[np.ndarray | None, ...]:
     """
-    Collects verticies and faces of parts and tessellates them
+    Collects vertices and faces of parts and tessellates them
     for the CAD viewer
 
     Parameters
     ----------
     solid:
         FreeCAD Part
-    tesselation:
-        amount of tesselation for the mesh
+    tessellation:
+        amount of tessellation for the mesh
 
     Returns
     -------
@@ -2674,7 +2674,7 @@ def collect_verts_faces(
 
     # collect
     for face in solid.Faces:
-        # tesselation is likely to be the most expensive part of this
+        # tessellation is likely to be the most expensive part of this
         v, f = face.tessellate(tesselation)
 
         if v != []:
@@ -2690,7 +2690,7 @@ def collect_verts_faces(
 
 def collect_wires(solid: apiShape, **kwds) -> tuple[np.ndarray, np.ndarray]:
     """
-    Collects verticies and edges of parts and discretises them
+    Collects vertices and edges of parts and discretises them
     for the CAD viewer
 
     Parameters
