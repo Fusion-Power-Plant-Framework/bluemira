@@ -34,23 +34,25 @@ from bluemira.geometry.coordinates import (
 class NumNull(Enum):
     """
     Class for use with LegFlux.
-    Double Null (DN)
-    Single Null (SN)
     """
 
     DN = auto()
+    # Double Null
     SN = auto()
+    # Single Null
 
 
 class SortSplit(Enum):
     """
     Class for use with LegFlux.
-    Split the flux in x-direction (X)
-    Split the flux in z-direction (Z)
+     (X)
+
     """
 
     X = auto()
+    # Split the flux in x-direction
     Z = auto()
+    # Split the flux in z-direction
 
 
 class LegFlux:
@@ -257,14 +259,14 @@ def get_legs_length_and_angle(
     for name, leg_list in leg_dict.items():
         if not leg_list:
             lengths = [0.0]
-            angles = [180.0]
+            angles = [np.pi]
         else:
             lengths = []
             angles = []
             for leg in leg_list:
                 if leg is None:
                     con_length = 0.0
-                    grazing_ang = 180.0
+                    grazing_ang = np.pi
                 else:
                     leg_fs = PartialOpenFluxSurface(leg)
                     if plasma_facing_boundary is not None:
@@ -272,11 +274,11 @@ def get_legs_length_and_angle(
                     con_length = OpenFluxSurface(leg_fs.coords).connection_length(eq)
                     alpha = leg_fs.alpha
                     if alpha is None:
-                        grazing_ang = 180.0
-                    elif alpha <= np.pi:
+                        grazing_ang = np.pi
+                    elif alpha <= 0.5 * np.pi:
                         grazing_ang = alpha
                     else:
-                        grazing_ang = 2 * np.pi - alpha
+                        grazing_ang = np.pi - alpha
                 lengths.append(con_length)
                 angles.append(grazing_ang)
         length_dict.update({name: lengths})
@@ -515,7 +517,7 @@ def calculate_connection_length(
     eq: Equilibrium,
     div_target_start_point: Coordinates | None = None,
     first_wall: Coordinates | Grid | None = None,
-    forward: bool = True,
+    forward: bool = True,  # noqa: FBT001, FBT002
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
     rtol: float = 1e-1,
@@ -529,7 +531,7 @@ def calculate_connection_length(
 
     Raises
     ------
-    BluemiraError:
+    BluemiraError
         If an invalid option calculation_method is selected.
     """
     calculation_method = CalcMethod[calculation_method.upper()]

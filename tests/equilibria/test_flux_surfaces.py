@@ -16,6 +16,11 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find_legs import (
+    LegFlux,
+    calculate_connection_length,
+    get_legs_length_and_angle,
+)
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
     FieldLineTracer,
@@ -89,6 +94,60 @@ class TestOpenFluxSurfaceStuff:
         print(len(l_flt_lfs.coords))
         assert np.isclose(l_flt_lfs.connection_length, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
+
+        # Check the calculate_connection_length function, that calls either
+        # method, returns the same result for the same selected point
+        xz = Coordinates({"x": [12], "z": [0]})
+        l_fsg = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt = calculate_connection_length(
+            self.eq, div_target_start_point=xz, calculation_method="field_line_tracer"
+        )
+        assert np.isclose(l_fsg, l_lfs, rtol=2e-2)
+        assert np.isclose(l_flt, l_flt_lfs.connection_length, rtol=2e-2)
+
+    def test_legflux(self):
+        """
+        Check the LegFlux functionality that relies on
+        OpenFluxSurfece or PartialOpenFluxSurface
+        """
+        # Get the legs from the equilibria
+        leg_dict = LegFlux(self.eq).get_legs()
+        # Add the upper legs as 'None' for testing
+        leg_dict["upper_inner"] = [None]
+        leg_dict["upper_outer"] = [None]
+        # Get dictionary of calculated lengts and angles
+        length_dict, angle_dict = get_legs_length_and_angle(self.eq, leg_dict)
+        # Get dictionary of calculated lengts and angles with FW intersection
+        fw = Coordinates({"x": [10, 0, 0, 10, 10], "z": [-7.5, -7.5, 7.5, 7.5, -7.5]})
+        length_dict_intersected, angle_dict_intersected = get_legs_length_and_angle(
+            self.eq, leg_dict, plasma_facing_boundary=fw
+        )
+        expected_l_dict = {
+            "lower_inner": 72.216,
+            "lower_outer": 73.209,
+            "upper_inner": 0.0,
+            "upper_outer": 0.0,
+        }
+        expected_a_dict = {
+            "lower_inner": 0.7463,
+            "lower_outer": 1.116,
+            "upper_inner": np.pi,
+            "upper_outer": np.pi,
+        }
+        assert length_dict["lower_inner"] > length_dict_intersected["lower_inner"]
+        assert length_dict["lower_outer"] > length_dict_intersected["lower_outer"]
+        for key in leg_dict:
+            assert np.isclose(angle_dict[key], np.pi, rtol=1e-6)
+            assert np.isclose(
+                length_dict_intersected[key], expected_l_dict[key], rtol=5e-3
+            )
+            assert np.isclose(
+                angle_dict_intersected[key], expected_a_dict[key], rtol=5e-3
+            )
 
 
 class TestClosedFluxSurface:

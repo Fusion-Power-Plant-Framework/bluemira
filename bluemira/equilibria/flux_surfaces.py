@@ -486,9 +486,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords.points[-2],
-            self.coords.points[-1],
-            first_wall.points[fw_arg],
+            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
         )
 
     def flux_expansion(self, eq: Equilibrium) -> float:
