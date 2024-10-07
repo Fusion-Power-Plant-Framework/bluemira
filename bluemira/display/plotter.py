@@ -267,7 +267,7 @@ class BasePlotter(ABC):
         else:
             # discretisation points representing the shape in global coordinate system
             self.data = []
-            # modified discretisation points for plotting (e.g. after view transformation)
+            # modified discretisation points for plotting (e.g. view transformation)
             self._data_to_plot = []
 
     def set_view(self, view: str | BluemiraPlacement):
@@ -526,18 +526,13 @@ class FacePlotter(BasePlotter):
             and not self.options.show_faces
         )
 
-    def _populate_data(self, face):
+    def _populate_data(self, obj: BluemiraFace):
         self._data = []
         self._wplotters = []
-        # TODO: the for must be done using face.shape.Wires because FreeCAD
-        #  re-orient the Wires in the correct way for display. Find another way to do
-        #  it (maybe adding this function to the freecadapi.
-        for w in face.shape.Wires:
-            boundary = wire.BluemiraWire(w)
-            wplotter = WirePlotter(self.options)
-            self._wplotters.append(wplotter)
-            wplotter._populate_data(boundary)
+        for boundary in obj._plotting_wires():
+            wplotter = WirePlotter(self.options, data=boundary)
             self._data.extend(wplotter._data.tolist())
+            self._wplotters.append(wplotter)
         self._data = np.array(self._data)
 
         self._data_to_plot = [[], []]
