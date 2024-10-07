@@ -369,18 +369,21 @@ class OpenFluxSurface(FluxSurface):
         super().__init__(coords)
 
     def split(
-        self, o_point: PsiPoint, plane: BluemiraPlane | None = None
+        self, psi_point: PsiPoint, plane: BluemiraPlane | None = None
     ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.
 
+        N.B.  The magnetic centre of the plasma (O-point) is often the
+        value that is used for the PsiPoint and X-Y plane.
+
         Parameters
         ----------
-        o_point:
-            The magnetic centre of the plasma
+        psi_point:
+            Point at which to make the split.
         plane:
-            The x-y cutting plane. Will default to the O-point x-y plane
+            The x-y cutting plane. Will default to the psi_point x-y plane
 
         Returns
         -------
@@ -397,9 +400,9 @@ class OpenFluxSurface(FluxSurface):
 
         if plane is None:
             plane = BluemiraPlane.from_3_points(
-                [o_point.x, 0, o_point.z],
-                [o_point.x + 1, 0, o_point.z],
-                [o_point.x, 1, o_point.z],
+                [psi_point.x, 0, psi_point.z],
+                [psi_point.x + 1, 0, psi_point.z],
+                [psi_point.x, 1, psi_point.z],
             )
 
         ref_coords = deepcopy(self.coords)
@@ -407,15 +410,15 @@ class OpenFluxSurface(FluxSurface):
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
-        deltas = x_inter - o_point.x
+        deltas = x_inter - psi_point.x
         arg_inter = np.argmax(deltas >= 0)
         x_mp = x_inter[arg_inter]
-        z_mp = o_point.z
+        z_mp = psi_point.z
 
         # Split the flux surface geometry into LFS and HFS geometries
 
-        delta = 1e-1 if o_point.x < x_mp else -1e-1
-        radial_line = Coordinates({"x": [o_point.x, x_mp + delta], "z": [z_mp, z_mp]})
+        delta = 1e-1 if psi_point.x < x_mp else -1e-1
+        radial_line = Coordinates({"x": [psi_point.x, x_mp + delta], "z": [z_mp, z_mp]})
         # Add the intersection point to the Coordinates
         arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
 
