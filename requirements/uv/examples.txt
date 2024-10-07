@@ -89,7 +89,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 h11==0.14.0
     # via httpcore
-httpcore==1.0.5
+httpcore==1.0.6
     # via httpx
 httpx==0.27.2
     # via jupyterlab
@@ -103,7 +103,7 @@ imageio==2.35.1
     # via bluemira (pyproject.toml)
 ipykernel==6.29.5
     # via jupyterlab
-ipython==8.27.0
+ipython==8.28.0
     # via ipykernel
 isoduration==20.11.0
     # via jsonschema
@@ -212,7 +212,7 @@ ndindex==1.9.2
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
-neutronics-material-maker==1.2.0
+neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
@@ -359,7 +359,7 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.8.1
+rich==13.9.2
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -412,7 +412,7 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tinycss2==1.3.0
     # via nbconvert
-tomli==2.0.1
+tomli==2.0.2
     # via
     #   jupyterlab
     #   jupytext
@@ -440,7 +440,7 @@ traitlets==5.14.3
     #   nbformat
 typeguard==4.3.0
     # via bluemira (pyproject.toml)
-types-python-dateutil==2.9.0.20240906
+types-python-dateutil==2.9.0.20241003
     # via arrow
 typing-extensions==4.12.2
     # via
@@ -451,6 +451,7 @@ typing-extensions==4.12.2
     #   ipython
     #   pint
     #   pyvista
+    #   rich
     #   tables
     #   typeguard
 tzdata==2024.2

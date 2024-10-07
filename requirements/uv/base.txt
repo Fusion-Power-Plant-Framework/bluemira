@@ -66,7 +66,7 @@ msgpack==1.1.0
     # via blosc2
 ndindex==1.9.2
     # via blosc2
-neutronics-material-maker==1.2.0
+neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
@@ -146,7 +146,7 @@ pyvista==0.44.1
     # via bluemira (pyproject.toml)
 requests==2.32.3
     # via pooch
-rich==13.8.1
+rich==13.9.2
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -182,6 +182,7 @@ typing-extensions==4.12.2
     #   flexparser
     #   pint
     #   pyvista
+    #   rich
     #   tables
     #   typeguard
 tzdata==2024.2
