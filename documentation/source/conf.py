@@ -77,7 +77,7 @@ html_static_path = ["_static"]
 html_theme_options = {
     "canonical_url": "",
     "logo_only": False,
-    "display_version": True,
+    "version_selector": True,
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
     # Toc options
