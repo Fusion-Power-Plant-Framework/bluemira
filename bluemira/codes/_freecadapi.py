@@ -2739,7 +2739,7 @@ def show_cad(
     parts: apiShape | list[apiShape],
     options: dict | list[dict | None] | None = None,
     labels: list[str] | None = None,
-    camera_rotation: Iterable = (270, 0, 0),
+    camera_rotation: Iterable = (90, 0, 0),
     **kwargs,  # noqa: ARG001
 ):
     """
@@ -2755,7 +2755,6 @@ def show_cad(
         labels to use for each part object
     camera_rotation:
         rotation in degrees of camera around object,
-        axes are freecad axes not bluemira axes.
         Default looks at the bluemira xz plane.
 
     Raises
@@ -2783,7 +2782,9 @@ def show_cad(
         app = QApplication([])
 
     root = coin.SoSeparator()
-    root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
+
+    # Works for 3D, transparency and 2D doesnt work...
+    # root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
 
     with Document() as doc:
         for obj, option in zip(doc.setup(parts, labels), options, strict=False):
@@ -2799,6 +2800,10 @@ def show_cad(
         viewer.setWindowTitle("Bluemira Display")
 
         rotate_into_position(viewer, *(np.deg2rad(i) for i in camera_rotation))
+
+        light = viewer.getHeadlight()
+        light.direction = (0, 0.3, -0.8)
+        light.intensity = 1.2
 
         viewer.show()
         app.exec_()
