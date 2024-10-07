@@ -375,32 +375,23 @@ class CoreRadiation(Radiation):
 
         exclude_species = ["Ar"]
 
-        # Construct impurity contents, excluding Argon
-        self.impurities_content = [
-            frac for key, frac in impurity_content.items() if key not in exclude_species
+        # Filtering out excluded species
+        included_species = [key for key in impurity_data if key not in exclude_species]
+
+        # Using the filtered list to build other lists
+        self.impurities_content = [impurity_content[key] for key in included_species]
+
+        self.imp_data_t_ref = [
+            constants.raw_uc(impurity_data[key]["T_ref"], "eV", "keV")
+            for key in included_species
         ]
 
-        # Extract impurity data, excluding Argon
-        self.imp_data_t_ref = [
-            [t / 1000.0 for t in data["T_ref"]]
-            for key, data in impurity_data.items()
-            if key not in exclude_species
-        ]
-        self.imp_data_l_ref = [
-            data["L_ref"]
-            for key, data in impurity_data.items()
-            if key not in exclude_species
-        ]
-        self.imp_data_z_ref = [
-            data["z_ref"]
-            for key, data in impurity_data.items()
-            if key not in exclude_species
-        ]
+        self.imp_data_l_ref = [impurity_data[key]["L_ref"] for key in included_species]
+
+        self.imp_data_z_ref = [impurity_data[key]["z_ref"] for key in included_species]
 
         # Store impurity symbols, excluding Argon
-        self.impurity_symbols = [
-            key for key in impurity_content if key not in exclude_species
-        ]
+        self.impurity_symbols = impurity_content.keys() - exclude_species
 
         # Store the midplane profiles
         self.profiles = midplane_profiles
@@ -438,7 +429,7 @@ class CoreRadiation(Radiation):
 
         Returns
         -------
-        rad : list[list[np.ndarray]]
+        rad :
             Line core radiation for each impurity species
             and for each closed flux line in the core.
         """
