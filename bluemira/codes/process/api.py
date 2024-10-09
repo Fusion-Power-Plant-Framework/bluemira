@@ -16,7 +16,7 @@ from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeVar
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import flatten_iterable
 
@@ -194,7 +194,7 @@ def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
     process_name = _nested_check(process_map_name)
 
     if process_name is not None and process_name != process_map_name:
-        bluemira_print(
+        bluemira_warn(
             f"Obsolete {process_map_name} PROCESS mapping name."
             f"The current PROCESS name is {process_name}"
         )

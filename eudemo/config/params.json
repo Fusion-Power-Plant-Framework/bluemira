@@ -947,6 +947,7 @@
   "F_cs_sepmax": {
     "value": 350,
     "unit": "MN",
+    "source": "Input",
     "long_name": "Maximum separation force between CS modules"
   },
   "F_cs_ztotmax": {
@@ -957,81 +958,97 @@
   "F_pf_zmax": {
     "value": 450,
     "unit": "MN",
+    "source": "Input",
     "long_name": "Maximum vertical force on a single PF coil"
   },
   "blanket_type": {
     "value": "HCPB",
     "unit": "",
+    "source": "Input",
     "long_name": "Blanket Type"
   },
   "bb_p_inlet": {
     "value": 8e6,
     "unit": "Pa",
+    "source": "Input",
     "long_name": "Breeding blanket inlet pressure"
   },
   "bb_p_outlet": {
     "value": 7.5e6,
     "unit": "Pa",
+    "source": "Input",
     "long_name": "Breeding blanket outlet pressure"
   },
   "bb_pump_eta_el": {
     "value": 0.87,
     "unit": "",
+    "source": "Input",
     "long_name": "Breeding blanket pumping electrical efficiency"
   },
   "bb_pump_eta_isen": {
     "value": 0.9,
     "unit": "",
+    "source": "Input",
     "long_name": "Breeding blanket pumping isentropic efficiency"
   },
   "bb_t_inlet": {
     "value": 573.15,
     "unit": "K",
+    "source": "Input",
     "long_name": "Breeding blanket inlet temperature"
   },
   "bb_t_outlet": {
     "value": 773.15,
     "unit": "K",
+    "source": "Input",
     "long_name": "Breeding blanket outlet temperature"
   },
   "div_pump_eta_el": {
     "value": 0.87,
     "unit": "",
+    "source": "Input",
     "long_name": "Divertor pumping electrical efficiency"
   },
   "div_pump_eta_isen": {
     "value": 0.99,
     "unit": "",
+    "source": "Input",
     "long_name": "Divertor pumping isentropic efficiency"
   },
   "f_core_rad_fw": {
     "value": 0.9,
     "unit": "",
+    "source": "Input",
     "long_name": "Fraction of core radiation power that is distributed to the blanket FW"
   },
   "f_fw_aux": {
     "value": 0.09,
     "unit": "",
+    "source": "Input",
     "long_name": "Fraction of first wall power that goes into auxiliary systems"
   },
   "f_sol_ch_fw": {
     "value": 0.8,
     "unit": "",
+    "source": "Input",
     "long_name": "Fraction of SOL charged particle power that is distributed to the blanket FW"
   },
   "f_sol_rad": {
     "value": 0.75,
     "unit": "",
+    "source": "Input",
     "long_name": "Fraction of SOL power radiated"
   },
   "f_sol_rad_fw": {
     "value": 0.8,
     "unit": "",
+    "source": "Input",
     "long_name": "Fraction of radiated SOL power that is distributed to the blanket FW"
   },
   "P_hcd_ss_el": {
     "value": 150,
     "unit": "MW",
+    "source": "Input",
     "long_name": "Steady-state heating and current drive electrical power"
   },
   "eta_ecrh": {
