@@ -29,7 +29,7 @@ Otherwise, you can clone with HTTPS:
 Setting up the environment and installing
 -----------------------------------------
 
-``Bluemira`` can be installed into a conda environment using mambaforge by running the
+``Bluemira`` can be installed into a conda environment using miniforge by running the
 following steps in a mac or Ubuntu command terminal.
 
 If you are using WSL please see the :ref:`additional instruction step <wsl>`.
@@ -39,10 +39,10 @@ If you are using WSL please see the :ref:`additional instruction step <wsl>`.
     # Install curl if its not available (eg vanilla Ubuntu 22.04)
     sudo apt install -y curl gettext-base
     # Run the conda installation script
-    # This installs mambaforge, if not already present, and sets up a bluemira environment
+    # This installs miniforge, if not already present, and sets up a bluemira environment
     bash scripts/install-conda.sh
     # To activate conda's base environment
-    source ~/.mambaforge-init.sh
+    source ~/.miniforge-init.sh
     # To activate your bluemira environment
     conda activate bluemira
 
@@ -51,12 +51,12 @@ If you are using WSL please see the :ref:`additional instruction step <wsl>`.
     pre-commit install -f
 
 When you want to activate your ``bluemira`` environment after closing your terminal (or
-after ``conda deactivate``) then you can initialise mambaforge and activate your
+after ``conda deactivate``) then you can initialise miniforge and activate your
 ``bluemira`` environment by running:
 
 .. code-block:: bash
 
-    source ~/.mambaforge-init.sh
+    source ~/.miniforge-init.sh
     conda activate bluemira
 
 This may result in a(n otherwise harmless) warning about ``overwriting variable {'LANG'}``.
