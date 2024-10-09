@@ -4,14 +4,14 @@
 set -e
 
 REQUIRED_PKG="build-essential ninja-build"
-PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep -zoP "install ok installed\ninstall ok installed")
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep -zoP "install ok installed\ninstall ok installed" | tr -d '\0')
 if [ "" = "$PKG_OK" ]; then
   echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
   sudo apt --yes install $REQUIRED_PKG
 fi
 
 # Ensure we are working in the (bluemira) conda environment
-source ~/.mambaforge-init.sh && conda activate bluemira
+source ~/.miniforge-init.sh && conda activate bluemira
 
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
