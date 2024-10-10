@@ -56,6 +56,12 @@ class BluemiraFace(BluemiraGeo):
 
         return wrapper
 
+    def _plotting_wires(self):
+        # the for must be done using face.shape.Wires because FreeCAD
+        # re-orient the Wires in the correct way for display.
+        for w in self.shape.Wires:
+            yield BluemiraWire(w)
+
     def copy(self):
         """Make a copy of the BluemiraFace"""
         return BluemiraFace(self.boundary, self.label)

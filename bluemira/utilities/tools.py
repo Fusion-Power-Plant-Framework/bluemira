@@ -648,7 +648,7 @@ def compare_dicts(
     return the_same
 
 
-def flatten_iterable(iters):
+def flatten_iterable(iters: Iterable[Any]):
     """
     Expands a nested iterable structure, flattening it into one iterable
 
