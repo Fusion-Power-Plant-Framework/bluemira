@@ -282,7 +282,9 @@ class PulsedCoilsetDesign(ABC):
         bluemira_warn("Premagnetisation not calculated")
         return np.inf
 
-    def run_premagnetisation(self):
+    def run_premagnetisation(
+        self, *, keep_history: bool = False, check_constraints: bool = False
+    ):
         """Run the breakdown optimisation problem.
 
         Raises
@@ -323,7 +325,11 @@ class PulsedCoilsetDesign(ABC):
                 opt_conditions=self.bd_settings.opt_conditions,
                 constraints=constraints,
             )
-            result = problem.optimise(fixed_coils=False)
+            result = problem.optimise(
+                fixed_coils=False,
+                keep_history=keep_history,
+                check_constraints=check_constraints,
+            )
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
 
@@ -383,6 +389,8 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
             plot=False,
+            keep_history=True,
+            check_constraints=True,
         )
         program()
 
@@ -631,7 +639,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise(self, *, verbose: bool = False) -> CoilSet:
+    def optimise(
+        self,
+        *,
+        verbose: bool = False,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+    ) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """
@@ -649,7 +663,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self.pos_settings.opt_conditions,
             constraints=None,
         )
-        result = pos_opt_problem.optimise(verbose=verbose)
+        result = pos_opt_problem.optimise(
+            verbose=verbose,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+        )
         optimised_coilset = self._consolidate_coilset(result.coilset, sub_opt_problems)
 
         self.converge_and_snapshot(sub_opt_problems)
