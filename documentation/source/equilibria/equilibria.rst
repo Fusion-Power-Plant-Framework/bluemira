@@ -1025,7 +1025,7 @@ where:
 
 -  :math:`\mathbf{B_{p_{x}}}` is the :math`n_C` response vector of the passive coil radial field contributions (including the plasma)
 
--  :math:`\mathbf{B_{p_{z}}}` is the :math:`$n_C` response vector of the passive coil vertical field contributions (including the plasma)
+-  :math:`\mathbf{B_{p_{z}}}` is the :math:`n_C` response vector of the passive coil vertical field contributions (including the plasma)
 
 Deterministic optimisation algorithms require information on the
 gradient of the objective function and constraints. In the absence of
