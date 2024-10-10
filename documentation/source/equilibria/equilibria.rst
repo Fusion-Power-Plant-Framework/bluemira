@@ -194,7 +194,7 @@ boundary:
 
 .. math:: \overline{\psi}=\dfrac{\psi-\psi_a}{\psi_b-\psi_a}
 
-Common flux function parameterisations include double power functions, Luxon exponentials [Luxon_1982]_, and Lao polynomials [Lao_1985]_. In the following, a double power flux function parameterisation is used as it is usually appropriate for H-mode plasmas with high :math:`\beta_p` and monotonically increasing :math:`q` profiles.
+Common flux function parameterisations include double power functions, Luxon exponentials [Luxon_1982]_, and Lao polynomials [Lao_1985]_.
 
 .. math::
    :label: g1
@@ -204,16 +204,18 @@ Common flux function parameterisations include double power functions, Luxon exp
 .. math::
    :label: g2
 
-   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \sum_{n=0}^{N}\alpha_{n+1}\overline{\psi}^{~n+1}-\overline{\psi}^{~N+1}\sum_{n=0}^{N} \alpha_{n+1}
+   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \textrm{exp}\bigg(-\alpha_1^2\overline{\psi}^{~2}\bigg)
 
 .. math::
    :label: g3
 
-   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \textrm{exp}\bigg(-\alpha_1^2\overline{\psi}^{~2}\bigg)
+   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \sum_{n=0}^{N}\alpha_{n+1}\overline{\psi}^{~n+1}-\overline{\psi}^{~N+1}\sum_{n=0}^{N} \alpha_{n+1}
 
 
 where :math:`\boldsymbol{\alpha} = (\alpha_1, \alpha_2, .., \alpha_N)` is the vector of flux
 function shaping parameters.
+
+A double power flux function parameterisation is often used as it is usually appropriate for H-mode plasmas with high :math:`\beta_p` and monotonically increasing :math:`q` profiles.
 
 Free boundary equilibrium solver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
