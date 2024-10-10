@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
 
-from bluemira.magnets.cable import Cable
+from bluemira.magnets.cable import ABCCable
 from bluemira.magnets.materials import Material
 from bluemira.magnets.utils import (
     parall_k,
@@ -25,7 +25,7 @@ from bluemira.magnets.utils import (
 class Conductor:
     def __init__(
             self,
-            cable: Cable,
+            cable: ABCCable,
             mat_jacket: Material,
             mat_ins: Material,
             dx_jacket: float,
@@ -476,7 +476,7 @@ class Conductor:
 class SquareConductor(Conductor):
     def __init__(
             self,
-            cable: Cable,
+            cable: ABCCable,
             mat_jacket: Material,
             mat_ins: Material,
             dx_jacket: float,

@@ -266,58 +266,13 @@ class CaseTF:
             If the optimization process did not converge.
         """
 
-        def sigma_difference(
-                dy_vault: float,
-                pm: float,
-                fz: float,
-                T: float,  # noqa: N803
-                B: float,
-                case: CaseTF,
-                allowable_sigma: float,
-        ):
-            """
-            Fitness function for the optimization problem. It calculates the absolute
-            difference between
-            the Tresca stress and the allowable stress.
-
-            Parameters
-            ----------
-            dy_vault :
-                The thickness of the vault in the direction perpendicular to the
-                applied pressure(m).
-            pm :
-                The magnetic pressure applied along the radial direction (Pa).
-            fz :
-                The force applied in the z direction, perpendicular to the case
-                cross-section (N).
-            T :
-                The temperature (K) at which the conductor operates.
-            B :
-                The magnetic field (T) at which the conductor operates.
-            allowable_sigma :
-                The allowable stress (Pa) for the vault material.
-
-            Returns
-            -------
-                The absolute difference between the calculated Tresca stress and the
-                allowable stress (Pa).
-
-            Notes
-            -----
-                This function modifies the case's vault thickness
-                using the value provided in jacket_thickness.
-            """
-            case.dy_vault = dy_vault
-            sigma = case._tresca_stress(pm, fz, T=T, B=B)
-            return abs(sigma - allowable_sigma)
-
         method = None
         if bounds is not None:
             method = "bounded"
 
         result = minimize_scalar(
-            fun=sigma_difference,
-            args=(pm, fz, T, B, self, allowable_sigma),
+            fun=self._sigma_difference,
+            args=(pm, fz, T, B, allowable_sigma),
             bounds=bounds,
             method=method,
             options={"xatol": 1e-4},
@@ -330,6 +285,52 @@ class CaseTF:
         # print(f"Tresca sigma: {self._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
 
         return result
+
+    def _sigma_difference(
+            self,
+            dy_vault: float,
+            pm: float,
+            fz: float,
+            T: float,
+            B: float,
+            allowable_sigma: float,
+    ):
+        """
+        Fitness function for the optimization problem. It calculates the absolute
+        difference between
+        the Tresca stress and the allowable stress.
+
+        Parameters
+        ----------
+        dy_vault :
+            The thickness of the vault in the direction perpendicular to the
+            applied pressure(m).
+        pm :
+            The magnetic pressure applied along the radial direction (Pa).
+        fz :
+            The force applied in the z direction, perpendicular to the case
+            cross-section (N).
+        T :
+            The temperature (K) at which the conductor operates.
+        B :
+            The magnetic field (T) at which the conductor operates.
+        allowable_sigma :
+            The allowable stress (Pa) for the vault material.
+
+        Returns
+        -------
+            The absolute difference between the calculated Tresca stress and the
+            allowable stress (Pa).
+
+        Notes
+        -----
+            This function modifies the case's vault thickness
+            using the value provided in jacket_thickness.
+        """
+        self.dy_vault = dy_vault
+        sigma = self._tresca_stress(pm, fz, T=T, B=B)
+        return abs(sigma - allowable_sigma)
+
 
     def plot(self, ax=None, *, show: bool = False, homogenized: bool = False):
         """
@@ -454,7 +455,7 @@ class CaseTF:
             if remaining_conductors < 0:
                 bluemira_warn(
                     f"{abs(remaining_conductors)} have been added"
-                    f"to complete the last layer."
+                    f" to complete the last layer."
                 )
 
             R_wp_i -= n_turns_max * cond.dy  # noqa: N806

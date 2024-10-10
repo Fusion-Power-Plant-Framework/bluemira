@@ -7,20 +7,26 @@
 """Strand class"""
 
 import numpy as np
-
+import matplotlib.pyplot as plt
+from bluemira.base.look_and_feel import bluemira_error
 from bluemira.magnets.materials import Copper100, Material, Nb3Sn, NbTi
 from bluemira.magnets.utils import parall_r, serie_r
+from bluemira.geometry.tools import make_circle
+from bluemira.geometry.face import BluemiraFace
+from bluemira import display
+from bluemira.display.plotter import PlotOptions
 
 
 class Strand:
     """
     Represents a strand with a circular cross-section.
     """
+    # Todo: discuss if it could be worth to consider the Strand as a PhysicalComponent
 
     def __init__(
             self,
             materials: list[Material],
-            percentage: np.array,
+            percentage: np.ndarray,
             d_strand: float = 0.82e-3,
     ):
         """
@@ -31,27 +37,70 @@ class Strand:
         materials:
             List of materials inside the strand.
         percentage:
-            Percentage of each material (with the same ordering of materials).
+            Percentage of each material (with the same ordering of materials). The sum of all percentages
+            must be equal to 1.
         d_strand:
             Strand diameter in meters.
         """
+        self._materials = None
+        self._percentage = None
+        self._d_strand = d_strand
+        self._shape = None
+
         self.materials = materials
         self.percentage = percentage
         self.d_strand = d_strand
+
+    @property
+    def materials(self):
+        return self._materials
+
+    @materials.setter
+    def materials(self, value: list[Material]):
+        if len(value) < 1:
+            msg = f"At least one material must be provided."
+            bluemira_error(msg)
+            raise ValueError(msg)
+        self._materials = value
+
+    @property
+    def percentage(self):
+        return self._percentage
+
+    @percentage.setter
+    def percentage(self, value: np.ndarray):
+        if len(value) != len(self.materials):
+            msg = f"Percentage and Materials must have the same length."
+            bluemira_error(msg)
+            raise ValueError(msg)
+
+        if all(v>0 for v in value) and sum(value) != 1.0:
+            msg = f"Percentages must be positive and their sum must be equal to 1.0."
+            bluemira_error(msg)
+            raise ValueError(msg)
+
+        self._percentage = value
+
+    @property
+    def d_strand(self):
+        return self._d_strand
+
+    @d_strand.setter
+    def d_strand(self, value: float):
+        if value < 0.0:
+            msg = f"Strand diameter must be positive."
+            bluemira_error(msg)
+            raise ValueError(msg)
+        self._d_strand = value
 
     @property
     def area(self) -> float:
         """Returns the area of the strand cross-section in square meters."""
         return np.pi * self.d_strand ** 2 / 4
 
-    def E(self, **kwargs) -> float:
+    def E(self) -> float:
         """
-        Young's modulus.
-
-        Parameters
-        ----------
-        **kwargs:
-            Additional parameters (e.g., temperature).
+        Young's modulus (dummy value)
 
         Returns
         -------
@@ -97,6 +146,20 @@ class Strand:
             x.cp_v(**kwargs) * self.percentage[i] for i, x in enumerate(self.materials)
         ]
         return serie_r(specific_heat)
+
+    def _create_shape(self):
+        self._shape = BluemiraFace([make_circle(self.d_strand)])
+
+    @property
+    def shape(self):
+        return self._create_shape()
+
+    def plot(self, ax=None, *, show: bool = True, **kwargs,):
+        # Todo: plot approach to be discussed (also in view of using PhysicalComponents).
+        plot_options = PlotOptions()
+        plot_options.view = "xy"
+        ax = display.plot_2d(self.shape, options = plot_options, ax=ax, show=show, **kwargs)
+        return ax
 
 
 class SuperconductingStrand(Strand):
@@ -181,6 +244,26 @@ class SuperconductingStrand(Strand):
         """
         return self.Jc(B=B, T=T, strain=strain, T_margin=T_margin) * self.sc_area
 
+
+    def plot_Ic_B(self, B: np.ndarray, T: float, strain: float = 0.55, T_margin: float = 1.5, ax = None, show: bool = True):
+        """
+            Plot the critical current in a range of B
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        Ic_sc = self.Ic(B=B , T=T, T_margin=T_margin)
+        ax.plot(B, Ic_sc)
+        # Adding the plot title and axis labels
+        plt.title(f"Critical current for {self.__class__.__name__}\n"
+                  f"T = {T} [K], Tmargin = {T_margin} [K], strain = {strain}")  # Title
+        plt.xlabel('B [T]')            # X-axis label
+        plt.ylabel('Ic [A]')           # Y-axis label
+        # Enabling the grid
+        plt.grid(True)
+        if show:
+            plt.show()
+        return ax
 
 class WireNb3Sn(SuperconductingStrand):
     """Represents an Nb3Sn strand made of 50% Copper100 and 50% Nb3Sn."""
@@ -313,7 +396,7 @@ class Wire_NbTi(SuperconductingStrand):  # noqa: N801
         - Fit data from DTT TF strand.
         """
         t = (T + T_margin) / self.Tc0_K
-        # b = B / self.Bc20_T
+        b = B / self.Bc20_T
         tt = 1 - t ** self.n
         G = (self.a1 / (self.a1 + self.b1)) ** self.a1  # noqa: N806
         GG = (self.b1 / (self.a1 + self.b1)) ** self.b1  # noqa: N806
@@ -325,14 +408,14 @@ class Wire_NbTi(SuperconductingStrand):  # noqa: N801
                      self.C0
                      * self.C1
                      / (B * GGG)
-                     * (self.b / tt) ** self.a1
-                     * (1 - self.b / tt) ** self.b1
+                     * (b / tt) ** self.a1
+                     * (1 - b / tt) ** self.b1
                      * tt ** self.g1
                      + self.C0
                      * self.C2
                      / (B * FFF)
-                     * (self.b / tt) ** self.a2
-                     * (1 - self.b / tt) ** self.b2
+                     * (b / tt) ** self.a2
+                     * (1 - b / tt) ** self.b2
                      * tt ** self.g2
              ) * 1e6
         return Jc  # noqa: RET504

@@ -6,6 +6,7 @@
 
 """Cable class"""
 
+from abc import ABC, abstractmethod
 from typing import Callable
 
 import matplotlib.pyplot as plt
@@ -14,15 +15,20 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
 from bluemira.magnets.materials import Material
-from bluemira.magnets.strand import Strand
+from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.magnets.utils import parall_r, serie_r
 
+from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
+from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.geometry.face import BluemiraFace
+from bluemira import display
+from bluemira.display.plotter import PlotOptions
 
-class Cable(Material):
+
+class ABCCable(Material, ABC):
     def __init__(
             self,
-            dx: float,
-            sc_strand: Strand,
+            sc_strand: SuperconductingStrand,
             stab_strand: Strand,
             n_sc_strand: int,
             n_stab_strand: int,
@@ -35,10 +41,12 @@ class Cable(Material):
         Representation of a cable. Only the x-dimension of the cable is given as
         input. The y-dimension is calculated on the basis of the cable design.
 
+        Notes
+        -----
+        Cooling material not implemented.
+
         Parameters
         ----------
-        dx:
-            x-dimension of the cable [m]
         sc_strand:
             strand of the superconductor
         stab_strand:
@@ -55,20 +63,47 @@ class Cable(Material):
             corrective factor that consider the twist of the cable
         name:
             cable string identifier
-
-        Notes:
-        Cooling material not implemented.
         """
+        # initialize private variables
+        self._d_cooling_channel = None
+        self._void_fraction = None
+        self._n_sc_strand = None
+        self._n_stab_strand = None
+        self._cos_theta = None
+        self._shape = None
+
+        # assign
         self.name = name
-        self._dx = dx
         self.sc_strand = sc_strand
         self.stab_strand = stab_strand
         self.void_fraction = void_fraction
         self.d_cooling_channel = d_cooling_channel
-        self.n_sc_strand = int(n_sc_strand)
-        self._n_stab_strand = int(n_stab_strand)
+        self.n_sc_strand = n_sc_strand
+        self.n_stab_strand = n_stab_strand
         self.cos_theta = cos_theta
-        self._check_consistency()
+
+    @property
+    @abstractmethod
+    def dx(self):
+        pass
+
+    @property
+    @abstractmethod
+    def dy(self):
+        pass
+
+    @property
+    def n_sc_strand(self):
+        """Number of stabilizing strands"""
+        return self._n_sc_strand
+
+    @n_sc_strand.setter
+    def n_sc_strand(self, value: int):
+        if value < 0:
+            msg = f"The number of superconducting strands must be positive, got {value}"
+            bluemira_error(msg)
+            raise ValueError(msg)
+        self._n_sc_strand = int(np.ceil(value))
 
     @property
     def n_stab_strand(self):
@@ -77,7 +112,50 @@ class Cable(Material):
 
     @n_stab_strand.setter
     def n_stab_strand(self, value: int):
+        if value < 0:
+            msg = f"The number of stabilizing strands must be positive, got {value}"
+            bluemira_error(msg)
+            raise ValueError(msg)
         self._n_stab_strand = int(np.ceil(value))
+
+    @property
+    def d_cooling_channel(self):
+        return self._d_cooling_channel
+
+    @d_cooling_channel.setter
+    def d_cooling_channel(self, value: float):
+        if value < 0:
+            msg = f"diameter of the cooling channel must be positive, got {value}"
+            bluemira_error(msg)
+            raise ValueError(msg)
+
+        self._d_cooling_channel = value
+
+    @property
+    def void_fraction(self):
+        return self._void_fraction
+
+    @void_fraction.setter
+    def void_fraction(self, value: float):
+        if value < 0 or value > 1:
+            msg = f"void_fraction must be between 0 and 1, got {value}"
+            bluemira_error(msg)
+            raise ValueError(msg)
+
+        self._void_fraction = value
+
+    @property
+    def cos_theta(self):
+        return self._cos_theta
+
+    @cos_theta.setter
+    def cos_theta(self, value: float):
+        if value <= 0 or value > 1:
+            msg = f"cos theta must be in the interval ]0, 1], got {value}"
+            bluemira_error(msg)
+            raise ValueError(msg)
+
+        self._cos_theta = value
 
     def erho(self, **kwargs):
         """
@@ -120,13 +198,6 @@ class Cable(Material):
         ])
         return serie_r(weighted_specific_heat) / (self.area_sc + self.area_stab)
 
-    def _check_consistency(self):
-        """Check consistency and return True if all checks are passed."""
-        if self.dx <= self.d_cooling_channel or self.dy <= self.d_cooling_channel:
-            print("WARNING: inconsistency between dx, dy and d_cooling_channel")
-            return False
-        return True
-
     @property
     def area_stab(self):
         """Area of the stabilizer region"""
@@ -149,32 +220,45 @@ class Cable(Material):
                 self.area_sc + self.area_stab
         ) / self.void_fraction / self.cos_theta + self.area_cc
 
-    @property
-    def dx(self):
-        """Cable dimension in the x direction [m]"""
-        return self._dx
-
-    @dx.setter
-    def dx(self, value: float):
-        self._dx = value
-
-    @property
-    def dy(self):
-        """Cable dimension in the y direction [m]"""
-        return self.area / self.dx
-
     def E(self, **kwargs):
         """Young's moduli"""
         return 0
 
-    # OD homogenized structural properties
-    def Kx(self, **kwargs):
-        """Total equivalent stiffness along x-axis"""
-        return self.E(**kwargs) * self.dy / self.dx
+    def _heat_balance_model_cable(self, t: float, T: float, B: Callable, I: Callable):
+        """
+        Calculate the derivative of temperature (dT/dt) for a 0D heat balance problem.
 
-    def Ky(self, **kwargs):
-        """Total equivalent stiffness along y-axis"""
-        return self.E(**kwargs) * self.dx / self.dy
+        Parameters
+        ----------
+            t : float
+                The current time in seconds.
+            T : float
+                The current temperature in Celsius.
+            B : Callable
+                The magnetic field [T] as time function
+            I : Callable
+                The current [A] flowing through the conductor as time function
+            cable : Cable
+                the superconducting cable
+
+        Returns
+        -------
+            dTdt : float
+                The derivative of temperature with respect to time (dT/dt).
+        """
+        # Calculate the rate of heat generation (Joule dissipation)
+        if isinstance(T, np.ndarray):
+            T = T[0]
+
+        Q_gen = (I(t) / self.area) ** 2 * self.erho(B=B(t), T=T)
+
+        # Calculate the rate of heat absorption by conductor components
+        Q_abs = self.cp_v(T=T)
+
+        # Calculate the derivative of temperature with respect to time (dT/dt)
+        dTdt = Q_gen / Q_abs
+
+        return dTdt
 
     def optimize_n_stab_ths(
             self,
@@ -221,55 +305,18 @@ class Cable(Material):
             Cooling material contribution is neglected when applying the hot spot criteria.
         """
 
-        def _heat_balance_model_cable(t, T, B: Callable, I: Callable, cable: Cable):
-            """
-            Calculate the derivative of temperature (dT/dt) for a 0D heat balance problem.
-
-            Parameters
-            ----------
-                t : float
-                    The current time in seconds.
-                T : float
-                    The current temperature in Celsius.
-                B : Callable
-                    The magnetic field [T] as time function
-                I : Callable
-                    The current [A] flowing through the conductor as time function
-                cable : Cable
-                    the superconducting cable
-
-            Returns
-            -------
-                dTdt : float
-                    The derivative of temperature with respect to time (dT/dt).
-            """
-            # Calculate the rate of heat generation (Joule dissipation)
-            if isinstance(T, np.ndarray):
-                T = T[0]
-
-            Q_gen = (I(t) / cable.area) ** 2 * cable.erho(B=B(t), T=T)
-
-            # Calculate the rate of heat absorption by conductor components
-            Q_abs = cable.cp_v(T=T)
-
-            # Calculate the derivative of temperature with respect to time (dT/dt)
-            dTdt = Q_gen / Q_abs
-
-            return dTdt
-
         def _temperature_evolution(
                 t0: float,
                 tf: float,
                 initial_temperature: float,
                 B: Callable,
                 I: Callable,
-                cable: Cable,
         ):
             solution = solve_ivp(
-                _heat_balance_model_cable,
+                self._heat_balance_model_cable,
                 [t0, tf],
                 [initial_temperature],
-                args=(B, I, cable),
+                args=(B, I),
                 dense_output=True,
             )
 
@@ -291,7 +338,6 @@ class Cable(Material):
 
             solution = _temperature_evolution(
                 t0=t0, tf=tf, initial_temperature=initial_temperature, B=B, I=I,
-                cable=self
             )
             final_T = float(solution.y[0][-1])
             diff = abs(final_T - target_temperature)
@@ -313,7 +359,7 @@ class Cable(Material):
                 "n_stab optimization did not converge. Check your input parameters or initial bracket."
             )
 
-        solution = _temperature_evolution(t0, tf, initial_temperature, B, I, self)
+        solution = _temperature_evolution(t0, tf, initial_temperature, B, I)
         final_temperature = solution.y[0][-1]
 
         print(f"Optimal n_stab: {self.n_stab_strand}")
@@ -321,12 +367,38 @@ class Cable(Material):
 
         if show:
             _, ax = plt.subplots()
-            ax.plot(solution.t, solution.y[0], "r")
+            ax.plot(solution.t, solution.y[0], "r*")
             time_steps = np.linspace(t0, tf, 100)
             ax.plot(time_steps, solution.sol(time_steps)[0], "b")
+            plt.grid(True)
+            plt.xlabel("Time [s]")
+            plt.ylabel("Temperature [K]")
+            plt.title("Quench temperature evoltuion")
+
+            # *** Additional info ***
+            additional_info = [f"Hot spot temp. = {target_temperature} [K]",
+                               f"Initial temp. = {initial_temperature} [K]",
+                               f"Sc. strand = {self.sc_strand.__class__.__name__}",
+                               f"n. sc. strand = {self.n_sc_strand}",
+                               f"Stab. strand = {self.stab_strand.__class__.__name__}",
+                               f"n. stab. strand = {self.n_stab_strand}"]
+
+            additional_info = '\n'.join(additional_info)
+            plt.text(50, 80, additional_info)
             plt.show()
 
         return result
+
+    # OD homogenized structural properties
+    @abstractmethod
+    def Kx(self, **kwargs):
+        """Total equivalent stiffness along x-axis"""
+        pass
+
+    @abstractmethod
+    def Ky(self, **kwargs):
+        """Total equivalent stiffness along y-axis"""
+        pass
 
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
         """
@@ -373,10 +445,98 @@ class Cable(Material):
         return ax
 
 
-class SquareCable(Cable):
+class RectangularCable(ABCCable):
     def __init__(
             self,
-            sc_strand: Strand,
+            dx: float,
+            sc_strand: SuperconductingStrand,
+            stab_strand: Strand,
+            n_sc_strand: int,
+            n_stab_strand: int,
+            d_cooling_channel: float,
+            void_fraction: float = 0.725,
+            cos_theta: float = 0.97,
+            name: str = "",
+    ):
+        """
+        Representation of a cable. Only the x-dimension of the cable is given as
+        input. The y-dimension is calculated on the basis of the cable design.
+
+        Notes
+        -----
+        Cooling material not implemented.
+
+        Parameters
+        ----------
+        dx:
+            x-dimension of the cable [m]
+        sc_strand:
+            strand of the superconductor
+        stab_strand:
+            strand of the stabilizer
+        d_cooling_channel:
+            diameter of the cooling channel
+        n_sc_strand:
+            number of superconducting strands
+        n_stab_strand:
+            number of stabilizer strands
+        void_fraction:
+            void fraction defined as material_volume/total_volume
+        cos_theta:
+            corrective factor that consider the twist of the cable
+        name:
+            cable string identifier
+        """
+        super().__init__(
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
+            name=name,
+        )
+
+        # initialize private variables
+        self._dx = None
+
+        # assign
+        self.dx = dx
+
+
+    @property
+    def dx(self):
+        """Cable dimension in the x direction [m]"""
+        return self._dx
+
+    @dx.setter
+    def dx(self, value: float):
+        if value < 0:
+            msg = "dx must be positive"
+            bluemira_error(msg)
+            raise ValueError(msg)
+        self._dx = value
+
+    @property
+    def dy(self):
+        """Cable dimension in the y direction [m]"""
+        return self.area / self.dx
+
+    # OD homogenized structural properties
+    def Kx(self, **kwargs):
+        """Total equivalent stiffness along x-axis"""
+        return self.E(**kwargs) * self.dy / self.dx
+
+    def Ky(self, **kwargs):
+        """Total equivalent stiffness along y-axis"""
+        return self.E(**kwargs) * self.dx / self.dy
+
+
+class SquareCable(ABCCable):
+    def __init__(
+            self,
+            sc_strand: SuperconductingStrand,
             stab_strand: Strand,
             n_sc_strand: int,
             n_stab_strand: int,
@@ -415,9 +575,7 @@ class SquareCable(Cable):
         -----
         Cooling material not implemented
         """
-        dx = 0.1
         super().__init__(
-            dx=dx,
             sc_strand=sc_strand,
             stab_strand=stab_strand,
             n_sc_strand=n_sc_strand,
@@ -437,6 +595,15 @@ class SquareCable(Cable):
     def dy(self):
         """Cable dimension in the y direction [m]"""
         return self.dx
+
+    # OD homogenized structural properties
+    def Kx(self, **kwargs):
+        """Total equivalent stiffness along x-axis"""
+        return self.E(**kwargs) * self.dy / self.dx
+
+    def Ky(self, **kwargs):
+        """Total equivalent stiffness along y-axis"""
+        return self.E(**kwargs) * self.dx / self.dy
 
 
 class DummySquareCableHTS(SquareCable):
@@ -497,10 +664,10 @@ class DummySquareCableLTS(SquareCable):
         return 0.1e9
 
 
-class RoundCable(Cable):
+class RoundCable(ABCCable):
     def __init__(
             self,
-            sc_strand: Strand,
+            sc_strand: SuperconductingStrand,
             stab_strand: Strand,
             n_sc_strand: int,
             n_stab_strand: int,
@@ -533,9 +700,7 @@ class RoundCable(Cable):
 
 
         """
-        dx = 0.1
         super().__init__(
-            dx=dx,
             sc_strand=sc_strand,
             stab_strand=stab_strand,
             n_sc_strand=n_sc_strand,
@@ -556,6 +721,59 @@ class RoundCable(Cable):
         """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
         return self.dx
 
+    # OD homogenized structural properties
+    # Todo: check if the rectangular approximation is fine also for this case
+    def Kx(self, **kwargs):
+        """Total equivalent stiffness along x-axis"""
+        return self.E(**kwargs) * self.dy / self.dx
+
+    def Ky(self, **kwargs):
+        """Total equivalent stiffness along y-axis"""
+        return self.E(**kwargs) * self.dx / self.dy
+
+    def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
+        """
+        Schematic plot of the cable cross-section.
+
+        Parameters
+        ----------
+        xc:
+            x coordinate of the cable center in the considered coordinate system
+        yc:
+            y coordinate of the cable center in the considered coordinate system
+        show:
+            if True, the plot is displayed
+        ax:
+            Matplotlib Axis on which the plot shall be displayed. If None,
+            a new figure is created
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+
+        pc = np.array([xc, yc])
+
+        points_ext = (
+                np.array([
+                    np.array([np.cos(theta), np.sin(theta)]) * self.dx / 2
+                    for theta in np.linspace(0, np.radians(360), 19)
+                ])
+                + pc
+        )
+
+        points_cc = (
+                np.array([
+                    np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
+                    for theta in np.linspace(0, np.radians(360), 19)
+                ])
+                + pc
+        )
+
+        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
+        ax.fill(points_cc[:, 0], points_cc[:, 1], "r")
+
+        if show:
+            plt.show()
+        return ax
 
 class DummyRoundCableHTS(RoundCable):
     """
