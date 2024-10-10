@@ -189,31 +189,43 @@ where:
    normalised poloidal magnetic flux, :math:`\overline{\psi}`, (i.e. a
    flux function - see below).
 
-:math:`\overline{\psi}` is 0 at the magnetic axis, and 1 at the plasma
-boundary:
+:math:`\overline{\psi}` is 0 at the magnetic axis, and 1 at the plasma boundary:
 
 .. math:: \overline{\psi}=\dfrac{\psi-\psi_a}{\psi_b-\psi_a}
 
-Common flux function parameterisations include double power functions, Luxon exponentials [Luxon_1982]_, and Lao polynomials [Lao_1985]_.
+To express the quantities that varies smoothly with respect to :math:`\overline{\psi}`,
+they are typically parametrised as an analytical function that drops off smoothly as
+:math:`\overline{\psi}` increases. Common choices of flux function parameterisations
+include the following:
+
+1. Double power functions, parametrised by two flux function shaping parameters
+:math:`\alpha_1` and :math:`\alpha_2`:
 
 .. math::
    :label: g1
 
-   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \bigg(1-{\overline{\psi}}^{~\alpha_1}\bigg)^{\alpha_2}
+   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \bigg(1-{\overline{\psi}}^{~\alpha_1}\bigg)^{\alpha_2}\,,
+
+2. Luxon exponentials [Luxon_1982]_, parametrised by a single flux function shaping
+parameter :math:`\alpha_1`,
 
 .. math::
    :label: g2
 
-   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \textrm{exp}\bigg(-\alpha_1^2\overline{\psi}^{~2}\bigg)
+   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \textrm{exp}\bigg(-\alpha_1^2\overline{\psi}^{~2}\bigg)\,,
+
+
+3. and Lao polynomials [Lao_1985]_, parametrised by an arbitrarily long vector of flux
+function shaping parameters
+:math:`\boldsymbol{\alpha} = (\alpha_0, \alpha_1, ..., \alpha_N)`:
 
 .. math::
    :label: g3
 
-   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \sum_{n=0}^{N}\alpha_{n+1}\overline{\psi}^{~n+1}-\overline{\psi}^{~N+1}\sum_{n=0}^{N} \alpha_{n+1}
+   g\big(\overline{\psi},\boldsymbol{\alpha}\big) = \sum_{n=0}^{N}\alpha_{n}\overline{\psi}^{~n}-\overline{\psi}^{~N}\sum_{n=0}^{N} \alpha_{n+1}\,,
 
-
-where :math:`\boldsymbol{\alpha} = (\alpha_1, \alpha_2, .., \alpha_N)` is the vector of flux
-function shaping parameters.
+but typically only 3 terms are needed in the flux function shaping parameters vector of
+Lao polynomials (i.e. :math:`N=2`).
 
 A double power flux function parameterisation is often used as it is usually appropriate for H-mode plasmas with high :math:`\beta_p` and monotonically increasing :math:`q` profiles.
 
