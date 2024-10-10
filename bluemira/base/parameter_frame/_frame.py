@@ -171,11 +171,13 @@ class ParameterFrame:
             param: Parameter = getattr(self, key)
             param.set_value(value, source)
 
-    def update_from_dict(self, new_values: dict[str, ParamDictT]):
+    def update_from_dict(self, new_values: dict[str, ParamDictT], source: str = ""):
         """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
             if "name" in value:
                 del value["name"]
+            if source:
+                value["source"] = source
             self._set_param(
                 key,
                 Parameter(

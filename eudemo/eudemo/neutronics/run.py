@@ -78,12 +78,18 @@ def run_neutronics(
     material_library = create_materials(breeder_materials)
 
     csg_params = NeutronicsReactorParameterFrame.from_config_params(params)
-    csg_params.update_from_dict({
-        "inboard_fw_tk": {"value": tokamak_geometry.inb_fw_thick, "unit": "m"},
-        "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
-        "outboard_fw_tk": {"value": tokamak_geometry.outb_fw_thick, "unit": "m"},
-        "outboard_breeding_tk": {"value": tokamak_geometry.outb_bz_thick, "unit": "m"},
-    })
+    csg_params.update_from_dict(
+        {
+            "inboard_fw_tk": {"value": tokamak_geometry.inb_fw_thick, "unit": "m"},
+            "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
+            "outboard_fw_tk": {"value": tokamak_geometry.outb_fw_thick, "unit": "m"},
+            "outboard_breeding_tk": {
+                "value": tokamak_geometry.outb_bz_thick,
+                "unit": "m",
+            },
+        },
+        source="Neutronics",
+    )
     neutronics_csg = EUDEMONeutronicsCSGReactor(
         csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
