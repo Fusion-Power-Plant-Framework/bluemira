@@ -53,7 +53,7 @@ pm = B_TF_i ** 2 / (2 * MU_0)  # magnetic pressure on the inner TF leg
 # i.e. half of the whole F_Z
 t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2
 
-Iop = 9.0e3  # operational current in each conductor
+Iop = 90.0e3  # operational current in each conductor
 # n_cond = int(np.ceil(I_TF / Iop))  # number of necessary conductors
 
 n_cond = np.floor(I_TF / Iop)
@@ -177,7 +177,7 @@ max_niter = 10
 eps = 1e-3
 i = 0
 tot_err = 100 * eps
-
+layout = "layer"
 while i < max_niter and tot_err > eps:
     i += 1
     print(f"Internal optimazion - iteration {i}")
@@ -197,7 +197,7 @@ while i < max_niter and tot_err > eps:
     err_dy_jacket = delta_conductor_dx_jacket / conductor.dy_jacket
 
     case.rearrange_conductors_in_wp(
-        n_cond, conductor, case.R_wp_i[0], case.dx_i * 0.8, 0.05, 4
+        n_cond, conductor, case.R_wp_i[0], case.dx_i * 0.8, 0.05, 4, layout = layout
     )
 
     case_dy_vault0 = case.dy_vault
@@ -216,6 +216,7 @@ while i < max_niter and tot_err > eps:
 
 
 show = True
+homogenized = False
 if show:
     scalex = np.array([2, 1])
     scaley = np.array([1, 1.2])

@@ -73,6 +73,16 @@ class CaseTF:
         """Average toroidal length of the ps plate [m]"""
         return (self.Ri + (self.Ri - self.dy_ps)) * np.tan(self._rad_theta_TF / 2)
 
+    @property
+    def n_conductors(self):
+        """Total number of conductors in the winding pack."""
+        return sum([w.n_conductors for w in self.WPs])
+
+    @property
+    def jacket_area(self):
+        """Total jacket area in the winding pack."""
+        return sum([w.jacket_area for w in self.WPs])
+
     def max_Iop(self, B, T, T_margin):  # noqa: N803, N802
         """Maximum operational current (equal to the critical current into the
         superconductor
@@ -375,6 +385,7 @@ class CaseTF:
             dx_WP: float,  # noqa: N803
             min_gap_x: float,
             n_layers_reduction: int,
+            layout: str = "auto",
     ):
         """
         Rearrange the total number of conductors into the TF coil case considering
@@ -394,6 +405,12 @@ class CaseTF:
             minimum toroidal distance between winding pack and tf coils lateral faces
         n_layers_reduction:
             number of turns to be removed when calculating a new pancake
+        layout:
+            type of layout for the conductor placement. Available types are "single", "layer", "pancake".
+                - "auto" means that the conductors are placed in order
+                    to only verify the geometrical constraints
+                - "layer" adds the odd constrain on ny (ny % 2 = 0).
+                - "pancake" adds the even constrain on nx (nx % 2 = 0)
 
         Returns
         -------
@@ -419,9 +436,13 @@ class CaseTF:
             # maximum toroidal dimension of the WP most outer pancake
             # dx_WP = 2 * (R_wp_i * np.tan(self._rad_theta_TF / 2) - dx0_wp)
 
-            # maximum number of turns on the considered pancake
+            # maximum number of turns on the considered WP
             if i == 1:
                 n_layers_max = int(math.floor(dx_WP / cond.dx))
+                if layout == "pancake":
+                    n_layers_max = int(math.floor(dx_WP / cond.dx / 2.) * 2)
+                    if n_layers_max == 0:
+                        n_layers_max = 2
             else:
                 n_layers_max -= n_layers_reduction
 
@@ -441,6 +462,13 @@ class CaseTF:
                 int(np.floor(max_dy / cond.dy)),
                 int(np.ceil(remaining_conductors / n_layers_max)),
             )
+            if layout == "layer":
+                n_turns_max = min(
+                    int(np.floor(max_dy / cond.dy / 2.) * 2),
+                    int(np.ceil(remaining_conductors / n_layers_max / 2.) * 2),
+                )
+                if n_turns_max == 0:
+                    n_turns_max = 2
 
             if n_turns_max < 1:
                 raise ValueError(

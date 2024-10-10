@@ -37,6 +37,16 @@ class WindingPack:
         """Total height of the winding pack along the y-axis."""
         return self.conductor.dy * self.ny
 
+    @property
+    def n_conductors(self):
+        """Total number of conductors in the winding pack."""
+        return self.nx * self.ny
+
+    @property
+    def jacket_area(self):
+        """Total jacket area in the winding pack."""
+        return self.conductor.area_jacket * self.n_conductors
+
     def Kx(self, **kwargs) -> float:
         """
         Calculates the total equivalent stiffness of the winding pack along the x-axis.
