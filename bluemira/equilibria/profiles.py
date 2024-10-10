@@ -40,8 +40,7 @@ __all__ = [
     "BetaIpProfile",
     "CustomProfile",
     "DoublePowerFunc",
-    "LaoPolynomialFuncRight",
-    "LaoPolynomialFuncWrong",
+    "LaoPolynomialFunc",
     "LuxonExpFunc",
     "SinglePowerFunc",
 ]
@@ -190,22 +189,7 @@ def speedy_pressure_mask(
 
 
 # @nb.jit(cache=True)
-def laopolywrong(x: float, *args) -> float:
-    """
-    Polynomial shape function defined in Lao 1985
-        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
-    \t:math:`g(x)=\\sum_{n=0}^{n_F} \\alpha_{n}x^{n}-`
-    \t:math:`x^{n_F+1}\\sum_{n=0}^{n_F} \\alpha_{n}`
-    """
-    res = np.zeros_like(x)
-    for i in range(len(args)):
-        res += args[i] * x ** int(i)
-    res -= sum(args) * x ** (len(args) + 1)
-    return res
-
-
-# @nb.jit(cache=True)
-def laopolyright(x: float, *args) -> float:
+def laopoly(x: float, *args) -> float:
     """
     Polynomial shape function defined in Lao 1985
         https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
@@ -327,7 +311,7 @@ class DoublePowerFunc(ShapeFunction):
         return doublepowerfunc(x, *args)
 
 
-class LaoPolynomialFuncWrong(ShapeFunction):
+class LaoPolynomialFunc(ShapeFunction):
     """
     Function object for a Lao polynomial profile
     """
@@ -343,26 +327,7 @@ class LaoPolynomialFuncWrong(ShapeFunction):
 
     @staticmethod
     def _dfunc(x: float, *args) -> float:
-        return laopolywrong(x, *args)
-
-
-class LaoPolynomialFuncRight(ShapeFunction):
-    """
-    Function object for a Lao polynomial profile
-    """
-
-    _fact = 1
-    _order = 3
-
-    def __init__(self, coeffs: npt.ArrayLike):
-        if not hasattr(coeffs, "__len__"):
-            self.n = 0
-        self.n = len(coeffs) - 1
-        self.coeffs = coeffs
-
-    @staticmethod
-    def _dfunc(x: float, *args) -> float:
-        return laopolyright(x, *args)
+        return laopoly(x, *args)
 
 
 class LuxonExpFunc(ShapeFunction):
@@ -767,7 +732,7 @@ class CustomProfile(Profile):
 
         # Fit a shape function to the pprime profile (mostly for plotting)
         x = np.linspace(0, 1, 50)
-        self.shape = LaoPolynomialFuncWrong.from_datafit(self.pprime(x))
+        self.shape = LaoPolynomialFunc.from_datafit(self.pprime(x))
 
     @staticmethod
     def parse_to_callable(unknown):
