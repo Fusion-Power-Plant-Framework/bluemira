@@ -24,6 +24,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_zone
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
@@ -100,7 +101,7 @@ def coil_harmonic_amplitude_matrix(
     currents2harmonics[0, :] = 1
 
     # SH coefficients from function of the current distribution
-    # outside of the sphere containing the LCFS
+    # outside of the sphere containing the core plamsa
     # SH coefficients = currents2harmonics @ coil currents
     degrees = np.arange(1, max_degree)[:, None]
     ones = np.ones_like(degrees)
@@ -211,14 +212,14 @@ def collocation_points(
     """
     Create a set of collocation points for use wih spherical harmonic
     approximations. Points are found within the user-supplied
-    boundary and should correspond to the LCFS of a chosen equilibrium.
+    boundary and should correspond to the LCFS (or similar) of a chosen equilibrium.
     Current functionality is for:
 
     - equispaced points on an arc of fixed radius,
     - equispaced points on an arc plus extrema,
-    - random points within a circle enclosed by the LCFS,
+    - random points within a circle enclosed by the boundary,
     - random points plus extrema,
-    - a grid of points containing the LCFS.
+    - a grid of points containing the boundary.
 
     Parameters
     ----------
@@ -268,7 +269,7 @@ def collocation_points(
         collocation_z = collocation_r * np.cos(collocation_theta)
 
     if point_type in {PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA}:
-        # Random sample within a circle enclosed by the LCFS
+        # Random sample within a circle enclosed by the boundary
         rng = np.random.default_rng(RNGSeeds.equilibria_harmonics.value)
         half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
         sample_r = half_sample_x_range * rng.random(n_points)
@@ -309,7 +310,7 @@ def collocation_points(
         collocation_theta = np.arctan2(collocation_x, collocation_z)
 
     if point_type is PointType.GRID_POINTS:
-        # Create uniform, rectangular grid using max and min LCFS values
+        # Create uniform, rectangular grid using max and min boundary values
         if grid_num is None:
             grid_num = (n_points, n_points)
         grid_num_x, grid_num_z = grid_num
@@ -322,7 +323,7 @@ def collocation_points(
             nz=grid_num_z,
         )
 
-        # Only use grid points that are within LCFS
+        # Only use grid points that are within boundary
         mask = in_zone(
             rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
         )
@@ -343,10 +344,12 @@ def collocation_points(
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
-def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
+def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     """
     Calculate the value of the metric used for evaluating the SH approximation.
-    This is equal to 1 for non-intersecting LCFSs, and 0 for identical LCFSs.
+    This is equal to 1 for non-intersecting flux surfaces, and 0 for identical surfaces.
+    The flux surface of interest is usually the LCFS, or a closed flux surface that
+    is close to the last closed flux surface., e.g., psi_norm = 0.95 or 0.98.
 
     Parameters
     ----------
@@ -359,41 +362,41 @@ def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     -------
     fit_metric_value:
         Measure of how 'good' the approximation is.
-        fit_metric_value = total area within one but not both LCFSs /
-        (input LCFS area + approximation LCFS area)
+        fit_metric_value = total area within one but not both FSs /
+        (input FS area + approximation FS area)
 
     """
-    # Test to see if the LCFS for the SH approx is not closed for some reason
+    # Test to see if the FS for the SH approx is not closed for some reason
     if not coords2.closed:
         # If not closed then go back and try again
         bluemira_print(
-            "The approximate LCFS is not closed. Trying again with more degrees."
+            "The approximate FS is not closed. Trying again with more degrees."
         )
         return 1
 
-    # If the two LCFSs have identical coordinates then return a perfect fit metric
+    # If the two FSs have identical coordinates then return a perfect fit metric
     if np.array_equal(coords1.x, coords2.x) and np.array_equal(coords1.z, coords2.z):
-        bluemira_print("Perfect match! Original LCFS = SH approx LCFS")
+        bluemira_print("Perfect match! Original FS = SH approx FS")
         return 0
 
-    # Get area of within the original and the SH approx LCFS
+    # Get area of within the original and the SH approx FS
     area1 = get_area_2d(coords1.x, coords1.z)
     area2 = get_area_2d(coords2.x, coords2.z)
 
-    # Find intersections of the LCFSs
+    # Find intersections of the FSs
     xcross, _zcross = get_intersect(coords1.xz, coords2.xz)
 
     # Check there are an even number of intersections
     if np.mod(len(xcross), 2) != 0:
         bluemira_print(
-            "Odd number of intersections for input and SH approx LCFS: this shouldn''t"
+            "Odd number of intersections for input and SH approx FS: this shouldn''t"
             " be possible. Trying again with more degrees."
         )
         return 1
 
     # If there are no intersections then...
     if len(xcross) == 0:
-        # Check if one LCFS is entirely within another
+        # Check if one FS is entirely within another
         test_1_in_2 = polygon_in_polygon(coords2.xz.T, coords1.xz.T)
         test_2_in_1 = polygon_in_polygon(coords1.xz.T, coords2.xz.T)
         if all(test_1_in_2) or all(test_2_in_1):
@@ -401,13 +404,13 @@ def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
             return (np.max([area1, area2]) - np.min([area1, area2])) / (area1 + area2)
         # Otherwise they are in entirely different places
         bluemira_print(
-            "The approximate LCFS does not overlap with the original. Trying again with"
+            "The approximate FS does not overlap with the original. Trying again with"
             " more degrees."
         )
         return 1
 
-    # Calculate the area between the intersections of the two LCFSs,
-    # i.e., area within one but not both LCFSs.
+    # Calculate the area between the intersections of the two FSs,
+    # i.e., area within one but not both FSs.
     c1 = Coordinates({"x": coords1.x, "z": coords1.z})
     c2 = Coordinates({"x": coords2.x, "z": coords2.z})
     c1_face = BluemiraFace(make_polygon(c1, closed=True))
@@ -421,10 +424,12 @@ def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     )
 
 
-def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
+def coils_outside_fs_sphere(
+    eq: Equilibrium, psi_norm: float | None = None
+) -> tuple[list, float]:
     """
     Find the coils located outside of the sphere containing the core plasma,
-    i.e., LCFS of the equilibrium state.
+    e.g., LCFS of the equilibrium state.
 
     Parameters
     ----------
@@ -436,17 +441,24 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
     c_names or not_too_close_coils:
         coil names selected appropriately for use of SH approximation
     bdry_r:
-        maximum radial value for lcfs of starting equilibria
+        maximum radial value for fs of starting equilibria
+    psi_norm:
+        Normalised flux value of the surface of interest.
+        None value will default to LCFS.
 
     """
+    if psi_norm is None:
+        bndry = eq.get_LCFS()
+    else:
+        bndry = ClosedFluxSurface(eq.get_flux_surface(psi_norm)).coords
     c_names = np.array(eq.coilset.control)
-    bdry_r = np.max(np.linalg.norm([eq.get_LCFS().x, eq.get_LCFS().z], axis=0))
+    bdry_r = np.max(np.linalg.norm([bndry.x, bndry.z], axis=0))
     coil_r = np.linalg.norm(
         [eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z],
         axis=0,
     )
     # Approximation boundary - sphere must contain
-    # plasma/LCFS for chosen equilibrium.
+    # plasma for chosen equilibrium.
     # Are the control coils outside the sphere containing
     # the last closed flux surface?
     if bdry_r > np.min(coil_r):
@@ -521,6 +533,7 @@ def spherical_harmonic_approximation(
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
     grid_num: tuple[int, int] | None = None,
     acceptable_fit_metric: float = 0.01,
+    psi_norm: float | None = None,
     nlevels: int = 50,
     seed: int | None = None,
     sig_figures: int = 15,
@@ -532,7 +545,7 @@ def spherical_harmonic_approximation(
     needed as a reference value for the 'spherical_harmonics_constraint'
     used in coilset optimisation.
 
-    Use a LCFS fit metric to determine the required number of degrees.
+    Use a FS fit metric to determine the required number of degrees.
 
     The number of degrees used in the approximation is one less than
     the number of collocation points.
@@ -553,7 +566,8 @@ def spherical_harmonic_approximation(
         (default="arc_plus_extrema"). The following options are
         available for collocation point distribution:
         - 'arc' = equispaced points on an arc of fixed radius,
-        - 'arc_plus_extrema' = 'arc' plus the min and max points of the LCFS
+        - 'arc_plus_extrema' = 'arc' plus the min and max points of either
+            the LCFS or a flux surface with a chosen normalised flux value.
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
@@ -562,12 +576,16 @@ def spherical_harmonic_approximation(
         Number of points in x-direction and z-direction,
         to use with grid point distribution.
     acceptable_fit_metric:
-        Value between 0 and 1 chosen by user (default=0.01).
-        If the LCFS found using the SH approximation method perfectly matches the
-        LCFS of the input equilibria then the fit metric = 0.
+        The default flux surface (FS) used for this metric is the LCFS.
+        (psi_norm value is used to select an alternative)
+        If the FS found using the SH approximation method perfectly matches the
+        FS of the input equilibria then the fit metric = 0.
         A fit metric of 1 means that they do not overlap at all.
-        fit_metric_value = total area within one but not both LCFSs /
-        (input LCFS area + approximation LCFS area)
+        fit_metric_value = total area within one but not both FSs /
+        (input FS area + approximation FS area)
+    psi_norm:
+        Normalised flux value of the surface of interest.
+        None value will default to LCFS.
     nlevels:
         Plot setting, higher n = greater number of contour lines
     seed:
@@ -590,7 +608,7 @@ def spherical_harmonic_approximation(
     approx_total_psi:
         Total psi obtained using the SH approximation
     bdry_r:
-        Approximation boundary - sphere containing LCFS for chosen equilibrium.
+        Approximation boundary - sphere containing core plasma for chosen equilibrium.
     sh_eq.coilset.current:
         Coil currents found using the spherical harmonic approximation
 
@@ -605,14 +623,17 @@ def spherical_harmonic_approximation(
     To address numerical reproducability across different machines:
 
         - Even harmonic amplitudes are set to zero.
-        - Currents found using lstsq are rounded before being used to calculate the LCFS
+        - Currents found using lstsq are rounded before being used to calculate the FS
           fit metric.
 
     """
     # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
-    # Starting LCFS
-    original_LCFS = eq.get_LCFS()
+    # Starting FS
+    if psi_norm is None:
+        original_fs = eq.get_LCFS()
+    else:
+        original_fs = ClosedFluxSurface(eq.get_flux_surface(psi_norm)).coords
 
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for SH approximation.")
@@ -623,23 +644,23 @@ def spherical_harmonic_approximation(
     # Psi contribution from plasma
     plasma_psi = eq.plasma.psi(grid.x, grid.z)
 
-    # Names of coils located outside of the sphere containing the LCFS
-    sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
+    # Names of coils located outside of the sphere containing the FS
+    sh_coil_names, bdry_r = coils_outside_fs_sphere(eq, psi_norm=psi_norm)
 
     # Typical length scale
     r_t = bdry_r
 
     # Calculate psi contribution from the vacuum, i.e.,
-    # from coils located outside of the sphere containing LCFS
+    # from coils located outside of the sphere containing FS
     vacuum_psi = np.zeros(np.shape(grid.x))
     for n in sh_coil_names:
         vacuum_psi = np.sum(
             [vacuum_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
         )
 
-    # Create the set of collocation points within the LCFS for the SH calculations
+    # Create the set of collocation points within the FS for the SH calculations
     collocation = collocation_points(
-        original_LCFS,
+        original_fs,
         point_type,
         n_points,
         seed,
@@ -657,17 +678,6 @@ def spherical_harmonic_approximation(
     max_degree = min(len(collocation.x) - 1, 12)
 
     sh_eq = deepcopy(eq)
-
-    # Clip the grid in the z-direction to remove area below upper/lower-most coil
-    # This prevents us from creating an approximation with more degrees than is needed
-    # for a flux surface that wraps around the divertor coils and thereby affects
-    # the result of the LCFS finding function used in the fit metric calculaton.
-    clipped_eq = deepcopy(sh_eq)
-    clip = (grid.z[0, :] > np.min(sh_eq.coilset.z)) & (
-        grid.z[0, :] < np.max(sh_eq.coilset.z)
-    )
-    clipped_eq.grid.x, clipped_eq.grid.z = grid.x[:, clip], grid.z[:, clip]
-    clipped_eq.x, clipped_eq.z = grid.x[:, clip], grid.z[:, clip]
 
     for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for coils
@@ -700,22 +710,22 @@ def spherical_harmonic_approximation(
         approx_total_psi = coilset_approx_psi + plasma_psi
         sh_eq.get_OX_points(approx_total_psi, force_update=True)
 
-        # Clip the grid in the z direction to remove area below upper/lower-most coil
-        clip_psi = approx_total_psi[:, clip]
-        clipped_eq.get_OX_points(clip_psi, force_update=True)
-
         try:
             # Get plasma boundary for comparison to starting equilibrium using fit metric
-            approx_LCFS = clipped_eq.get_LCFS(psi=clip_psi, delta_start=0.015)
+            if psi_norm is None:
+                approx_fs = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
+            else:
+                approx_fs = ClosedFluxSurface(sh_eq.get_flux_surface(psi_norm)).coords
         except EquilibriaError:
             bluemira_print(
-                "Could not find LCFS in the approximate psi field. "
+                "Could not find closed FS (at chosen normalised psi)"
+                "for the approximate psi field."
                 "Trying again with more degrees."
             )
             continue
 
         # Compare staring equilibrium to new approximate equilibrium
-        fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
+        fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 
         bluemira_print(
             f"Fit metric value = {fit_metric_value} using" f" {degree} degrees."
@@ -737,8 +747,8 @@ def spherical_harmonic_approximation(
             eq=eq,
             vac_psi_app=coilset_approx_psi,
             nlevels=nlevels,
-            original_LCFS=original_LCFS,
-            approx_LCFS=approx_LCFS,
+            original_flux_surface=original_fs,
+            approx_flux_surface=approx_fs,
         )
 
     return (
@@ -758,8 +768,8 @@ def plot_psi_comparision(
     vac_psi_app: np.ndarray,
     axes: list[plt.Axes] | None = None,
     nlevels: int = 50,
-    original_LCFS: Coordinates | None = None,
-    approx_LCFS: Coordinates | None = None,
+    original_flux_surface: Coordinates | None = None,
+    approx_flux_surface: Coordinates | None = None,
     *,
     show: bool = True,
 ) -> tuple[plt.Axes, ...]:
@@ -778,6 +788,10 @@ def plot_psi_comparision(
         List of Matplotlib Axes objects set by user
     nlevels:
         Plot setting, higher n = greater number of contour lines
+    original_flux_surface:
+        Coordinates of flux surcae of interest (e.g. LCFS) for starting equilibrium
+    approx_flux_surface:
+        Coordinates of flux surcae of interest (e.g. LCFS) from approximation
     show:
         Whether or not to display the plot
 
@@ -852,14 +866,18 @@ def plot_psi_comparision(
         zorder=Zorder.PSI.value,
     )
 
-    if original_LCFS is not None:
-        plot1.plot(original_LCFS.x, original_LCFS.z, color="r")
-        plot2.plot(original_LCFS.x, original_LCFS.z, color="r")
-        plot3.plot(original_LCFS.x, original_LCFS.z, color="r")
-        plot4.plot(original_LCFS.x, original_LCFS.z, color="r")
-    if approx_LCFS is not None:
-        plot2.plot(approx_LCFS.x, approx_LCFS.z, color="b", linestyle="--")
-        plot4.plot(approx_LCFS.x, approx_LCFS.z, color="b", linestyle="--")
+    if original_flux_surface is not None:
+        plot1.plot(original_flux_surface.x, original_flux_surface.z, color="r")
+        plot2.plot(original_flux_surface.x, original_flux_surface.z, color="r")
+        plot3.plot(original_flux_surface.x, original_flux_surface.z, color="r")
+        plot4.plot(original_flux_surface.x, original_flux_surface.z, color="r")
+    if approx_flux_surface is not None:
+        plot2.plot(
+            approx_flux_surface.x, approx_flux_surface.z, color="b", linestyle="--"
+        )
+        plot4.plot(
+            approx_flux_surface.x, approx_flux_surface.z, color="b", linestyle="--"
+        )
 
     if show:
         plt.show()

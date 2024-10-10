@@ -85,10 +85,14 @@ plt.show()
 #
 # - n_points: Number of desired collocation points
 # - point_type: How the collocation points are distributed
+# - grid_num: The number of points in x-direction and z-direction,
+#   to use with grid point distribution
 # - acceptable_fit_metric: how 'good' we require the approximation to be
-# - r_t: typical length scale for spherical harmonic approximation
-# - extra_info: set this to true if you wish to return additional
-#               information and plot the results.
+# - psi_norm: 'None' will default to LCFS, otherwise choose the desired
+#   normalised psi value of a closed flux surface that containe the core plasma
+# - seed: Seed value to use with random point distribution
+# - sig_figures: Number of significant figures for rounding during SH approximation
+# - plot: Whether or not to plot the results
 
 # %%
 # Information needed for SH Approximation
@@ -105,6 +109,7 @@ plt.show()
     n_points=10,
     point_type=PointType.GRID_POINTS,
     acceptable_fit_metric=0.02,
+    psi_norm=0.98,
     seed=15,
     plot=True,
 )
@@ -112,17 +117,17 @@ plt.show()
 # %% [markdown]
 # ## Outputs
 #
-# spherical_harmonic_approximation outputs results
-# that can be used in optimisation.
-#
-# ### Always output
+# ### Results for use in optimisation
 #
 # - "sh_coil_names", names of the coils that can be used with SH approximation
 # - "coil_current_harmonic_amplitudes", SH amplitudes for required number of degrees
+# - "r_t", length scale for the approximation
+#
+# ### Informative outputs
+#
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 # - "fit_metric_value", fit metric achieved
 # - "approx_total_psi", the total psi obtained using the SH approximation
-# - "r_t", typical length scale for spherical harmonic approximation
 # - "sh_coilset_current", the coil currents obtained using the approximation
 
 # %%

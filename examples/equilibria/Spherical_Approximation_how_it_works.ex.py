@@ -65,10 +65,10 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
     coil_harmonic_amplitude_matrix,
-    coils_outside_lcfs_sphere,
+    coils_outside_fs_sphere,
     collocation_points,
+    fs_fit_metric,
     harmonic_amplitude_marix,
-    lcfs_fit_metric,
 )
 
 # %pdb
@@ -76,12 +76,16 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 # %% [markdown]
 # ### Equilibria and Coilset Data from File
 #
-# Note: We cannot use coils that are within the sphere containing the LCFS
+# N.B.: We cannot use coils that are within the sphere containing the core plasma
 # for our approximation. The maximum radial distance of the LCFS is used
 # as a limit (orange shaded area in plot below).
 # If you have coils in this region then we need to specify a list of the
 # coil names that are outside of the radial limit
 # (this is done automatically in the spherical_harmonic_approximation class).
+# N.N.B.: We use the LCFS thoughout this example, however,
+# in the spherical_harmonic_approximation class 'psi_norm' can be used to
+# select a different closed flux surface that contrains the core plasma,
+# see spherical_harmonic_approximation_basic_use.ex.py.
 
 # %%
 # Data from EQDSK file
@@ -98,7 +102,7 @@ eq = Equilibrium.from_eqdsk(file_path, from_cocos=3, qpsi_sign=-1)
 original_LCFS = eq.get_LCFS()
 
 # Names of coils located outside of the sphere containing the LCFS
-sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
+sh_coil_names, bdry_r = coils_outside_fs_sphere(eq)
 
 # Typical length scale
 r_t = bdry_r
@@ -486,7 +490,7 @@ for degree in np.arange(min_degree, max_degree):  # + 1):
     approx_LCFS = clipped_eq.get_LCFS(psi=clip_psi)
 
     # Compare staring equilibrium to new approximate equilibrium
-    fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
+    fit_metric_value = fs_fit_metric(original_LCFS, approx_LCFS)
 
     print("fit metric = ", fit_metric_value, "number of degrees required = ", degree)
 
