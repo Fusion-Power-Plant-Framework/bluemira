@@ -24,7 +24,6 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_zone
-from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
@@ -447,10 +446,7 @@ def coils_outside_fs_sphere(
         None value will default to LCFS.
 
     """
-    if psi_norm is None:
-        bndry = eq.get_LCFS()
-    else:
-        bndry = ClosedFluxSurface(eq.get_flux_surface(psi_norm)).coords
+    bndry = eq.get_LCFS() if psi_norm is None else eq.get_flux_surface(psi_norm)
     c_names = np.array(eq.coilset.control)
     bdry_r = np.max(np.linalg.norm([bndry.x, bndry.z], axis=0))
     coil_r = np.linalg.norm(
@@ -630,10 +626,7 @@ def spherical_harmonic_approximation(
     # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
     # Starting FS
-    if psi_norm is None:
-        original_fs = eq.get_LCFS()
-    else:
-        original_fs = ClosedFluxSurface(eq.get_flux_surface(psi_norm)).coords
+    original_fs = eq.get_LCFS() if psi_norm is None else eq.get_flux_surface(psi_norm)
 
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for SH approximation.")
@@ -715,7 +708,7 @@ def spherical_harmonic_approximation(
             if psi_norm is None:
                 approx_fs = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
             else:
-                approx_fs = ClosedFluxSurface(sh_eq.get_flux_surface(psi_norm)).coords
+                approx_fs = sh_eq.get_flux_surface(psi_norm)
         except EquilibriaError:
             bluemira_print(
                 "Could not find closed FS (at chosen normalised psi)"
