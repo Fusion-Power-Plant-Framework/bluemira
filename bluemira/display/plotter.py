@@ -268,7 +268,7 @@ class BasePlotter(ABC):
             # discretisation points representing the shape in global coordinate system
             self.data = []
             # modified discretisation points for plotting (e.g. view transformation)
-            self._data_to_plot = []
+            self._projected_data = []
 
     def set_view(self, view: str | BluemiraPlacement):
         """Set the plotting view"""
@@ -314,14 +314,14 @@ class BasePlotter(ABC):
     ):
         """
         Internal function that makes the plot. It fills self._data and
-        self._data_to_plot
+        self._projected_data
         """
 
     @abstractmethod
     def _make_plot_2d(self):
         """
         Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
+        self._projected_data, so _populate_data should be called before.
         """
 
     def _set_aspect_2d(self):
@@ -392,7 +392,7 @@ class BasePlotter(ABC):
     @abstractmethod
     def _make_plot_3d(self):
         """Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
+        self._projected_data, so _populate_data should be called before.
         """
 
     def plot_3d(
@@ -411,9 +411,7 @@ class BasePlotter(ABC):
             self.initialise_plot_3d(ax=ax)
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
-            # self._data_to_plot is used for 2D plot
-            # TODO: probably better to rename self._data_to_plot into
-            #  self._projected_data or self._data2d
+            # self._projected_data is used for 2D plot
             self._populate_data(obj)
             self._make_plot_3d()
             self._set_aspect_3d()
@@ -445,14 +443,14 @@ class PointsPlotter(BasePlotter):
         points = _parse_to_xyz_array(obj).T
         self._data = points
         # apply rotation matrix given by options['view']
-        self._data_to_plot = np.dot(
+        self._projected_data = np.dot(
             np.c_[self._data, np.ones(len(self._data))],
             self.options.view_placement.to_matrix().T,
         ).T[0:2]
 
     def _make_plot_2d(self):
         if self.options.show_points:
-            self.ax.scatter(*self._data_to_plot, **self.options.point_options)
+            self.ax.scatter(*self._projected_data, **self.options.point_options)
         self._set_aspect_2d()
 
     def _make_plot_3d(self, *args, **kwargs):  # noqa: ARG002
@@ -486,11 +484,11 @@ class WirePlotter(BasePlotter):
         ).T
         self._pplotter = PointsPlotter(self.options, data=pointsw)
         self._data = pointsw
-        self._data_to_plot = self._pplotter._data_to_plot
+        self._projected_data = self._pplotter._projected_data
 
     def _make_plot_2d(self):
         if self.options.show_wires:
-            self.ax.plot(*self._data_to_plot, **self.options.wire_options)
+            self.ax.plot(*self._projected_data, **self.options.wire_options)
 
         if self.options.show_points:
             self._pplotter._ax = self.ax
@@ -535,10 +533,10 @@ class FacePlotter(BasePlotter):
             self._wplotters.append(wplotter)
         self._data = np.array(self._data)
 
-        self._data_to_plot = [[], []]
+        self._projected_data = [[], []]
         for w in self._wplotters:
-            self._data_to_plot[0] += [*w._data_to_plot[0].tolist(), None]
-            self._data_to_plot[1] += [*w._data_to_plot[1].tolist(), None]
+            self._projected_data[0] += [*w._projected_data[0].tolist(), None]
+            self._projected_data[1] += [*w._projected_data[1].tolist(), None]
 
     def _make_plot_2d(self):
         if self.options.show_faces:
@@ -546,13 +544,13 @@ class FacePlotter(BasePlotter):
             if face_opts.get("hatch", None) is not None:
                 self.ax.add_patch(
                     Polygon(
-                        np.asarray(self._data_to_plot).T,
+                        np.asarray(self._projected_data).T,
                         fill=False,
                         **face_opts,
                     )
                 )
             else:
-                self.ax.fill(*self._data_to_plot, **face_opts)
+                self.ax.fill(*self._projected_data, **face_opts)
 
         for plotter in self._wplotters:
             plotter._ax = self.ax
@@ -620,7 +618,7 @@ class ComponentPlotter(BasePlotter):
     def _make_plot_3d(self):
         """
         Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
+        self._projected_data, so _populate_data should be called before.
         """
         for plotter in self._cplotters:
             plotter._ax = self.ax
