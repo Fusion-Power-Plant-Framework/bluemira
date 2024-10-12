@@ -13,8 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, TypeVar
 
-import anytree
-from anytree import NodeMixin, RenderTree
+from anytree import NodeMixin, RenderTree, search
 
 from bluemira.base.error import ComponentError
 from bluemira.display.displayer import DisplayableCAD
@@ -54,6 +53,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         name: str,
         parent: ComponentT | None = None,
         children: list[ComponentT] | None = None,
+        *,
+        _manager_name: str | None = None,
     ):
         super().__init__()
         self.name = name
@@ -72,6 +73,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         if children:
             self.children = children
+
+        self._manager_name = _manager_name
+        self._manager_data: dict[str, Any] = {}
 
     def __repr__(self) -> str:
         """
@@ -215,7 +219,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             function.
         """
         return self._get_thing(
-            lambda n: anytree.search._filter_by_name(n, "name", name),
+            lambda n: search._filter_by_name(n, "name", name),
             first=first,
             full_tree=full_tree,
         )
@@ -281,9 +285,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         first: bool,
         full_tree: bool,
     ) -> ComponentT | tuple[ComponentT] | None:
-        found_nodes = anytree.search.findall(
-            self.root if full_tree else self, filter_=filter_
-        )
+        found_nodes = search.findall(self.root if full_tree else self, filter_=filter_)
         if found_nodes in {None, ()}:
             return None
         if first and isinstance(found_nodes, Iterable):
@@ -362,7 +364,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         Remove the child with the given name, and all its children.
         """
-        found_component = anytree.search.find_by_attr(self, name)
+        found_component = search.find_by_attr(self, name)
         if found_component:
             # Method of deleting a node suggested by library author
             # https://github.com/c0fec0de/anytree/issues/152

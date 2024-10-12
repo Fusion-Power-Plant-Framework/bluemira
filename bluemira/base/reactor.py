@@ -17,6 +17,7 @@ from rich.progress import track
 from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.tools import Exporter, Importer
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
@@ -111,6 +112,13 @@ class BaseManager(abc.ABC):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
+
+    def _save(self, filename):
+        return Exporter().export(self)
+
+    @staticmethod
+    def _load(filename):
+        return Importer().import_(filename)
 
     def tree(self) -> str:
         """
@@ -281,6 +289,20 @@ class ComponentManager(BaseManager):
         """
         return self._component
 
+    @property
+    def _component(self) -> ComponentT:
+        """
+        Return the component tree wrapped by this manager.
+        """
+        return self.__component
+
+    @_component.setter
+    def _component(self, component) -> ComponentT:
+        self.__component = component
+        # Note this could result in a possible bug
+        # if a component is used in multiple managers
+        self.__component.manager_name = f"{self.__module__}::{self.__class__.__name__}"
+
     def save_cad(
         self,
         *dims: str,
@@ -424,6 +446,7 @@ class Reactor(BaseManager):
         self.name = name
         self.n_sectors = n_sectors
         self.start_time = time.perf_counter()
+        self._manager_name = f"{self.__module__}::{self.__class__.__name__}"
 
     def component(
         self,
@@ -457,7 +480,7 @@ class Reactor(BaseManager):
                 "Please see the examples for a template Reactor."
             )
 
-        component = Component(self.name)
+        component = Component(self.name, _manager_name=self._manager_name)
         comp_type: type
         for comp_name, comp_type in get_type_hints(type(self)).items():
             if not issubclass(comp_type, ComponentManager):

@@ -13,6 +13,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import TypeVar
 
+from anytree.exporter import DictExporter
+from anytree.importer import DictImporter
+
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.compound import BluemiraCompound
@@ -87,3 +90,11 @@ def serialise_component(comp: Component) -> dict:
             cdict["shape"] = serialise_shape(comp.shape)
         return {str(type(comp).__name__): cdict}
     raise NotImplementedError(f"Serialisation non implemented for {type_}")
+
+
+class Importer(DictImporter):
+    def import_(self, filename): ...
+
+
+class Exporter(DictExporter):
+    def export(self): ...
