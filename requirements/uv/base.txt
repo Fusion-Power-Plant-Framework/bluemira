@@ -14,7 +14,7 @@ blosc2==2.7.1
     # via tables
 certifi==2024.8.30
     # via requests
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via bluemira (pyproject.toml)
@@ -42,7 +42,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
-imageio==2.35.1
+imageio==2.36.0
     # via bluemira (pyproject.toml)
 joblib==1.4.2
     # via scikit-learn
@@ -130,7 +130,7 @@ pyclipper==1.3.0.post5
     # via bluemira (pyproject.toml)
 pygments==2.18.0
     # via rich
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via
     #   matplotlib
     #   periodictable
