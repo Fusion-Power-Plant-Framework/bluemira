@@ -943,7 +943,7 @@ class BePebbleBed(UnitCellCompound):
     @staticmethod
     def CTE(temperature: float, eps_vol: float = 0) -> float:  # noqa: N802
         """
-        https://www.sciencedirect.com/science/article/pii/S0920379602001655
+        .. doi:: 10.1016/S0920-3796(02)00165-5
         """
         # NOTE: Effect of inelastic volumetric strains [%] not negligible
         # esp_vol calculated roughly as f(T), as per 2M2BH9

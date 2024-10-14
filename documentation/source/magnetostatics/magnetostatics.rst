@@ -211,10 +211,10 @@ where :math:`v` is the basis element function of the defined functional subspace
 
 .. rubric:: References
 
-.. [Zhang_2012] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68
-.. [Babic_2005a] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005, vol. 18, pp. 493-504
+.. [Zhang_2012] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68 :doi:`10.1109/TMAG.2011.2167981`
+.. [Babic_2005a] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005, vol. 18, pp. 493-504 :doi:`10.1002/jnm.594`
 .. [Babic_2005b] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section - Erratum, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005
-.. [Feng_1985] Z. X. Feng, The treatment of singularities in calculation of magnetic field using integral method, IEEE Transactions on Magnetics, 1985, vol. 21
-.. [Fabbri_2008] M. Fabbri, Magnetic Flux Density and Vector Potential of Uniform Polyhedral Sources, IEEE Transactions on Magnetics, 2008, vol. 44, no. 1
-.. [Zohm_2015] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany, 2015
-.. [Villone_2013] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008, https://doi.org/10.1088/0741-3335/55/9/095008
+.. [Feng_1985] Z. X. Feng, The treatment of singularities in calculation of magnetic field using integral method, IEEE Transactions on Magnetics, 1985, vol. 21 :doi:`10.1109/TMAG.1985.1064259`
+.. [Fabbri_2008] M. Fabbri, Magnetic Flux Density and Vector Potential of Uniform Polyhedral Sources, IEEE Transactions on Magnetics, 2008, vol. 44, no. 1 :doi:`10.1109/TMAG.2007.908698`
+.. [Zohm_2015] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany, 2015 :doi:`10.1002/9783527677375`
+.. [Villone_2013] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008, :doi:`10.1088/0741-3335/55/9/095008`

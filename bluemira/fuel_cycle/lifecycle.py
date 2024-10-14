@@ -517,19 +517,19 @@ class LifeCycleParams:
     blk_1_dpa: float = 20
     """
     Starter blanket life limit (EUROfer) [dpa].
-    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    .. doi:: 10.1088/1741-4326/57/9/092002
     """
 
     blk_2_dpa: float = 50
     """
     Second blanket life limit (EUROfer) [dpa].
-    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    .. doi:: 10.1088/1741-4326/57/9/092002
     """
 
     div_dpa: float = 5
     """
     Divertor life limit (CuCrZr) [dpa].
-    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    .. doi:: 10.1088/1741-4326/57/9/092002
     """
 
     vv_dpa: float = 3.25
@@ -538,7 +538,7 @@ class LifeCycleParams:
     tf_fluence: float = 3.2e21
     """
     Insulation fluence limit for ITER equivalent to 10 MGy [1/m^2].
-    https://ieeexplore.ieee.org/document/6374236/.
+    .. doi:: 10.1109/TASC.2012.2231723
     """
 
     tf_ins_nflux: float = 1.4e13
@@ -553,7 +553,7 @@ class LifeCycleParams:
     div_dmg: float = 3
     """
     Divertor neutron damage rate [dpa/fpy].
-    https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
+    .. doi:: 10.1088/1741-4326/57/9/092002/pdf
     """
 
     vv_dmg: float = 0.3

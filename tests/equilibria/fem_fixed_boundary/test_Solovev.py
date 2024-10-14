@@ -33,7 +33,7 @@ class Solovev:
 
     .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
         tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
-        1996) https://doi.org/10.1063/1.871772
+        1996) :doi:`10.1063/1.871772`
     """
 
     def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
@@ -276,7 +276,7 @@ class TestSolovevZheng:
 
         .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
            tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
-           1996) https://doi.org/10.1063/1.871772
+           1996) :doi:`10.1063/1.871772`
         """
         diff = self.gs_solver.psi.x.array - self.psi_exact_fun.x.array
         eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(
