@@ -58,7 +58,7 @@ repository = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
 dev = [
     "jupytext",
     "mypy",
-    "myst-nb",
+    "myst-nb != 1.1.2",
     "pre-commit",
     "pytest",
     "pytest-cov",
