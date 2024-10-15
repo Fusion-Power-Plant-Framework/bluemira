@@ -7,8 +7,8 @@ else
     PYTHON_VERSION="3.10"
 fi
 
-# Get and install mambaforge
-if [ ! -d "$HOME/mambaforge" ]; then
+# Get and install miniforge
+if [ ! -d "$HOME/miniforge" ]; then
   curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
   bash Miniforge3-$(uname)-$(uname -m).sh -b -p "$HOME/miniforge"
   rm Miniforge3-$(uname)-$(uname -m).sh
