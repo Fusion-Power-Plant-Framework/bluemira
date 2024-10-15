@@ -27,8 +27,6 @@ jobs:
           environment-file: conda/environment.yml
           miniforge-version: "latest"
           use-only-tar-bz2: false
-          miniforge-variant: Mambaforge
-          use-mamba: true
           python-version: ${{ matrix.python-version }}
 
       - name: Install bluemira
