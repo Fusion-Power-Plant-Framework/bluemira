@@ -25,14 +25,14 @@ class CaseTF:
     """TF case class"""
 
     def __init__(
-            self,
-            Ri: float,  # noqa: N803
-            dy_ps: float,
-            dy_vault: float,
-            theta_TF: float,
-            mat_case: Material,
-            WPs: list[WindingPack],  # noqa: N803
-            name: str = "",
+        self,
+        Ri: float,  # noqa: N803
+        dy_ps: float,
+        dy_vault: float,
+        theta_TF: float,
+        mat_case: Material,
+        WPs: list[WindingPack],  # noqa: N803
+        name: str = "",
     ):
         """
         Case structure for TF coils
@@ -77,11 +77,6 @@ class CaseTF:
     def n_conductors(self):
         """Total number of conductors in the winding pack."""
         return sum([w.n_conductors for w in self.WPs])
-
-    @property
-    def jacket_area(self):
-        """Total jacket area in the winding pack."""
-        return sum([w.jacket_area for w in self.WPs])
 
     def max_Iop(self, B, T, T_margin):  # noqa: N803, N802
         """Maximum operational current (equal to the critical current into the
@@ -220,7 +215,7 @@ class CaseTF:
         # the maximum hoop stress, corrected to account for the presence of the WP, is
         # placed at the innermost radius of the case as:
         sigma_theta = (
-                2.0 / (1 - beta ** 2) * pm * self.Kx_vault(**kwargs) / self.Kx(**kwargs)
+            2.0 / (1 - beta**2) * pm * self.Kx_vault(**kwargs) / self.Kx(**kwargs)
         )
 
         # In addition to the radial centripetal force, the second in-plane component
@@ -238,13 +233,13 @@ class CaseTF:
         return sigma_theta + sigma_z
 
     def optimize_vault_radial_thickness(
-            self,
-            pm: float,
-            fz: float,
-            T: float,  # noqa: N803
-            B: float,
-            allowable_sigma: float,
-            bounds: np.array = None,
+        self,
+        pm: float,
+        fz: float,
+        T: float,  # noqa: N803
+        B: float,
+        allowable_sigma: float,
+        bounds: np.array = None,
     ):
         """
         Optimize the vault radial thickness of the case
@@ -275,7 +270,6 @@ class CaseTF:
         ValueError
             If the optimization process did not converge.
         """
-
         method = None
         if bounds is not None:
             method = "bounded"
@@ -297,13 +291,13 @@ class CaseTF:
         return result
 
     def _sigma_difference(
-            self,
-            dy_vault: float,
-            pm: float,
-            fz: float,
-            T: float,
-            B: float,
-            allowable_sigma: float,
+        self,
+        dy_vault: float,
+        pm: float,
+        fz: float,
+        T: float,
+        B: float,
+        allowable_sigma: float,
     ):
         """
         Fitness function for the optimization problem. It calculates the absolute
@@ -341,6 +335,69 @@ class CaseTF:
         sigma = self._tresca_stress(pm, fz, T=T, B=B)
         return abs(sigma - allowable_sigma)
 
+    def optimize_jacket_and_vault(
+        self,
+        pm: float,
+        fz: float,
+        T: float,  # noqa: N803
+        B: float,
+        allowable_sigma: float,
+        bounds: np.array = None,
+        layout: str = "auto",
+        wp_reduction_factor: float = 0.8,
+        min_gap_x: float = 0.05,
+        n_layers_reduction: int = 4,
+        max_niter: int = 10,
+        eps: float = 1e-8,
+    ):
+        conductor = self.WPs[0].conductor
+        tot_err = 100 * eps
+        i = 0
+        while i < max_niter and tot_err > eps:
+            i += 1
+            print(f"Internal optimazion - iteration {i}")
+            print(
+                f"before optimization: conductor jacket area = {conductor.area_jacket}"
+            )
+            cond_area_jacket0 = conductor.area_jacket
+            t_z_cable_jacket = (
+                fz
+                * self.area_wps_jacket
+                / (self.area_jacket + self.area_wps_jacket)
+                / self.n_conductors
+            )
+            conductor.optimize_jacket_conductor(
+                pm, t_z_cable_jacket, T, B, allowable_sigma, bounds
+            )
+            print(t_z_cable_jacket)
+            print(f"after optimization: conductor jacket area = {conductor.area_jacket}")
+            err_conductor_area_jacket = (
+                abs(conductor.area_jacket - cond_area_jacket0) / cond_area_jacket0
+            )
+
+            self.rearrange_conductors_in_wp(
+                self.n_conductors,
+                conductor,
+                self.R_wp_i[0],
+                wp_reduction_factor,
+                min_gap_x,
+                n_layers_reduction,
+                layout=layout,
+            )
+            case_dy_vault0 = self.dy_vault
+            print(f"before optimization: case dy_vault = {self.dy_vault}")
+            self.optimize_vault_radial_thickness(
+                pm=pm, fz=fz, T=T, B=B, allowable_sigma=allowable_sigma, bounds=bounds
+            )
+
+            print(f"after optimization: case dy_vault = {self.dy_vault}")
+            delta_case_dy_vault = abs(self.dy_vault - case_dy_vault0)
+            err_dy_vault = delta_case_dy_vault / self.dy_vault
+            tot_err = err_dy_vault + err_conductor_area_jacket
+
+            print(f"err_dy_jacket = {err_conductor_area_jacket}")
+            print(f"err_dy_vault = {err_dy_vault}")
+            print(f"tot_err = {tot_err}")
 
     def plot(self, ax=None, *, show: bool = False, homogenized: bool = False):
         """
@@ -358,6 +415,7 @@ class CaseTF:
         """
         if ax is None:
             _, ax = plt.subplots()
+            ax.set_aspect("equal", adjustable="box")
 
         p0 = np.array([-self.dx_i / 2, self.Ri])
         p1 = np.array([self.dx_i / 2, self.Ri])
@@ -378,14 +436,14 @@ class CaseTF:
         return ax
 
     def rearrange_conductors_in_wp(
-            self,
-            n_conductors: int,
-            cond: Conductor,
-            R_wp_i: float,  # noqa: N803
-            dx_WP: float,  # noqa: N803
-            min_gap_x: float,
-            n_layers_reduction: int,
-            layout: str = "auto",
+        self,
+        n_conductors: int,
+        cond: Conductor,
+        R_wp_i: float,  # noqa: N803
+        wp_reduction_factor: float,
+        min_gap_x: float,
+        n_layers_reduction: int,
+        layout: str = "auto",
     ):
         """
         Rearrange the total number of conductors into the TF coil case considering
@@ -422,6 +480,8 @@ class CaseTF:
             the one defined in n_conductors due to the necessity to close the final
             layer.
         """
+        dx_WP = self.dx_i * wp_reduction_factor
+
         WPs = []  # noqa: N806
         # number of conductors to be allocated
         remaining_conductors = n_conductors
@@ -440,7 +500,7 @@ class CaseTF:
             if i == 1:
                 n_layers_max = int(math.floor(dx_WP / cond.dx))
                 if layout == "pancake":
-                    n_layers_max = int(math.floor(dx_WP / cond.dx / 2.) * 2)
+                    n_layers_max = int(math.floor(dx_WP / cond.dx / 2.0) * 2)
                     if n_layers_max == 0:
                         n_layers_max = 2
             else:
@@ -464,8 +524,8 @@ class CaseTF:
             )
             if layout == "layer":
                 n_turns_max = min(
-                    int(np.floor(max_dy / cond.dy / 2.) * 2),
-                    int(np.ceil(remaining_conductors / n_layers_max / 2.) * 2),
+                    int(np.floor(max_dy / cond.dy / 2.0) * 2),
+                    int(np.ceil(remaining_conductors / n_layers_max / 2.0) * 2),
                 )
                 if n_turns_max == 0:
                     n_turns_max = 2
@@ -482,7 +542,7 @@ class CaseTF:
 
             if remaining_conductors < 0:
                 bluemira_warn(
-                    f"{abs(remaining_conductors)} have been added"
+                    f"{abs(remaining_conductors)}/{n_layers_max * n_turns_max} have been added"
                     f" to complete the last layer."
                 )
 

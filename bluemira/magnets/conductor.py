@@ -6,8 +6,6 @@
 
 """Conductor class"""
 
-from typing import Optional
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
@@ -24,15 +22,15 @@ from bluemira.magnets.utils import (
 
 class Conductor:
     def __init__(
-            self,
-            cable: ABCCable,
-            mat_jacket: Material,
-            mat_ins: Material,
-            dx_jacket: float,
-            dy_jacket: float,
-            dx_ins: float,
-            dy_ins: float,
-            name: str = "",
+        self,
+        cable: ABCCable,
+        mat_jacket: Material,
+        mat_ins: Material,
+        dx_jacket: float,
+        dy_jacket: float,
+        dx_ins: float,
+        dy_ins: float,
+        name: str = "",
     ):
         """
         A generic conductor consisting of a cable surrounded by a jacket and an
@@ -121,7 +119,7 @@ class Conductor:
     def area_jacket(self):
         """Area of the jacket [m^2]"""
         return (self.dx - 2 * self.dx_ins) * (
-                self.dy - 2 * self.dy_ins
+            self.dy - 2 * self.dy_ins
         ) - self.cable.area
 
     @property
@@ -189,10 +187,7 @@ class Conductor:
         return self.mat_ins.E(**kwargs) * self.dy_ins / (self.dx - 2 * self.dx_ins)
 
     def Kx_lat_jacket(self, **kwargs):
-        return (
-                self.mat_jacket.E(**kwargs) * self.dy_jacket / (
-                self.dx - 2 * self.dx_ins)
-        )
+        return self.mat_jacket.E(**kwargs) * self.dy_jacket / (self.dx - 2 * self.dx_ins)
 
     def Kx_topbot_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.cable.dy / self.dx_jacket
@@ -201,15 +196,14 @@ class Conductor:
         return self.cable.Kx(**kwargs)
 
     def Kx(self, **kwargs):
-        return (serie_k([self.Kx_topbot_ins(**kwargs) / 2,
-                         parall_k([
-                             2 * self.Kx_lat_ins(**kwargs),
-                             2 * self.Kx_lat_jacket(**kwargs),
-                             serie_k([self.Kx_cable(**kwargs),
-                                      self.Kx_topbot_jacket(**kwargs) / 2]),
-                         ]),
-                         ])
-                )
+        return serie_k([
+            self.Kx_topbot_ins(**kwargs) / 2,
+            parall_k([
+                2 * self.Kx_lat_ins(**kwargs),
+                2 * self.Kx_lat_jacket(**kwargs),
+                serie_k([self.Kx_cable(**kwargs), self.Kx_topbot_jacket(**kwargs) / 2]),
+            ]),
+        ])
 
     def Ky_topbot_ins(self, **kwargs):
         return self.mat_ins.E(**kwargs) * self.dx / self.dy_ins
@@ -218,10 +212,7 @@ class Conductor:
         return self.mat_ins.E(**kwargs) * self.dx_ins / (self.dy - 2 * self.dy_ins)
 
     def Ky_lat_jacket(self, **kwargs):
-        return (
-                self.mat_jacket.E(**kwargs) * self.dx_jacket / (
-                self.dy - 2 * self.dy_ins)
-        )
+        return self.mat_jacket.E(**kwargs) * self.dx_jacket / (self.dy - 2 * self.dy_ins)
 
     def Ky_topbot_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.cable.dx / self.dy_jacket
@@ -230,18 +221,18 @@ class Conductor:
         return self.cable.Ky(**kwargs)
 
     def Ky(self, **kwargs):
-        return (serie_k([self.Ky_topbot_ins(**kwargs) / 2,
-                         parall_k([
-                             2 * self.Ky_lat_ins(**kwargs),
-                             2 * self.Ky_lat_jacket(**kwargs),
-                             serie_k([self.Ky_cable(**kwargs),
-                                      self.Ky_topbot_jacket(**kwargs) / 2]),
-                         ]),
-                         ])
-                )
+        return serie_k([
+            self.Ky_topbot_ins(**kwargs) / 2,
+            parall_k([
+                2 * self.Ky_lat_ins(**kwargs),
+                2 * self.Ky_lat_jacket(**kwargs),
+                serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) / 2]),
+            ]),
+        ])
 
-    def _tresca_sigma_jacket(self, pressure: float, f_z: float, T: float,
-                             B: float, direction: str = 'x') -> float:
+    def _tresca_sigma_jacket(
+        self, pressure: float, f_z: float, T: float, B: float, direction: str = "x"
+    ) -> float:
         """
         Calculate the radial stress in the jacket when the conductor is subjected to a pressure
         along a specified direction and a force perpendicular to the conductor cross-section.
@@ -269,20 +260,16 @@ class Conductor:
         ValueError
             If the specified direction is not 'x' or 'y'.
         """
-
-        if direction not in ['x', 'y']:
+        if direction not in ["x", "y"]:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
-        if direction == 'x':
+        if direction == "x":
             saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
 
             K = parall_k([
                 2 * self.Ky_lat_ins(T=T, B=B),
                 2 * self.Ky_lat_jacket(T=T, B=B),
-                serie_k([
-                    self.Ky_cable(T=T, B=B),
-                    self.Ky_topbot_jacket(T=T, B=B) / 2
-                ]),
+                serie_k([self.Ky_cable(T=T, B=B), self.Ky_topbot_jacket(T=T, B=B) / 2]),
             ])
 
             X_jacket = 2 * self.Ky_lat_jacket(T=T, B=B) / K
@@ -293,10 +280,7 @@ class Conductor:
             K = parall_k([
                 2 * self.Kx_lat_ins(T=T, B=B),
                 2 * self.Kx_lat_jacket(T=T, B=B),
-                serie_k([
-                    self.Kx_cable(T=T, B=B),
-                    self.Kx_topbot_jacket(T=T, B=B) / 2
-                ]),
+                serie_k([self.Kx_cable(T=T, B=B), self.Kx_topbot_jacket(T=T, B=B) / 2]),
             ])
 
             X_jacket = 2 * self.Kx_lat_jacket(T=T, B=B) / K
@@ -306,14 +290,14 @@ class Conductor:
         return tresca_stress
 
     def optimize_jacket_conductor(
-            self,
-            pressure: float,
-            f_z: float,
-            T: float,
-            B: float,
-            allowable_sigma: float,
-            bounds: Optional[np.ndarray] = None,
-            direction: str = 'x'
+        self,
+        pressure: float,
+        f_z: float,
+        T: float,
+        B: float,
+        allowable_sigma: float,
+        bounds: np.ndarray | None = None,
+        direction: str = "x",
     ):
         """
         Optimize the jacket dimension of a conductor based on allowable stress using the Tresca criterion.
@@ -351,13 +335,13 @@ class Conductor:
         """
 
         def sigma_difference(
-                jacket_thickness: float,
-                pressure: float,
-                fz: float,
-                T: float,
-                B: float,
-                allowable_sigma: float,
-                direction: str = 'x'
+            jacket_thickness: float,
+            pressure: float,
+            fz: float,
+            T: float,
+            B: float,
+            allowable_sigma: float,
+            direction: str = "x",
         ):
             """
             Fitness function for the optimization problem. It calculates the absolute difference between
@@ -389,10 +373,10 @@ class Conductor:
                 This function modifies the conductor's jacket thickness along the specified direction
                 using the value provided in jacket_thickness.
             """
-            if direction not in ['x', 'y']:
+            if direction not in ["x", "y"]:
                 raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
-            if direction == 'x':
+            if direction == "x":
                 self.dx_jacket = jacket_thickness
             else:
                 self.dy_jacket = jacket_thickness
@@ -414,12 +398,14 @@ class Conductor:
         if not result.success:
             raise ValueError("Optimization of the jacket conductor did not converge.")
         self.dx_jacket = result.x
-        if direction == 'x':
+        if direction == "x":
             print(f"Optimal dx_jacket: {self.dx_jacket}")
         else:
             print(f"Optimal dy_jacket: {self.dy_jacket}")
-        print(f"Averaged sigma in the {direction}-direction: "
-              f"{self._tresca_sigma_jacket(pressure, f_z, T, B) / 1e6} MPa")
+        print(
+            f"Averaged sigma in the {direction}-direction: "
+            f"{self._tresca_sigma_jacket(pressure, f_z, T, B) / 1e6} MPa"
+        )
 
         return result
 
@@ -473,18 +459,19 @@ class Conductor:
         return ax
 
 
-class SquareConductor(Conductor):
+class SymmetricConductor(Conductor):
     def __init__(
-            self,
-            cable: ABCCable,
-            mat_jacket: Material,
-            mat_ins: Material,
-            dx_jacket: float,
-            dx_ins: float,
-            name: str = "",
+        self,
+        cable: ABCCable,
+        mat_jacket: Material,
+        mat_ins: Material,
+        dx_jacket: float,
+        dx_ins: float,
+        name: str = "",
     ):
         """
-        Representation of a square conductor
+        Representation of a symmetric conductor in which both jacket and insulator mantain
+        a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
 
         Parameters
         ----------

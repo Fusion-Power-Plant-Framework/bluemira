@@ -7,35 +7,30 @@
 """Cable class"""
 
 from abc import ABC, abstractmethod
-from typing import Callable
+from collections.abc import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
+from bluemira.base.look_and_feel import bluemira_error, bluemira_print
 from bluemira.magnets.materials import Material
 from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.magnets.utils import parall_r, serie_r
 
-from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
-from bluemira.geometry.tools import make_circle, make_polygon
-from bluemira.geometry.face import BluemiraFace
-from bluemira import display
-from bluemira.display.plotter import PlotOptions
-
 
 class ABCCable(Material, ABC):
     def __init__(
-            self,
-            sc_strand: SuperconductingStrand,
-            stab_strand: Strand,
-            n_sc_strand: int,
-            n_stab_strand: int,
-            d_cooling_channel: float,
-            void_fraction: float = 0.725,
-            cos_theta: float = 0.97,
-            name: str = "",
+        self,
+        sc_strand: SuperconductingStrand,
+        stab_strand: Strand,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float = 0.725,
+        cos_theta: float = 0.97,
+        name: str = "",
     ):
         """
         Representation of a cable. Only the x-dimension of the cable is given as
@@ -91,6 +86,10 @@ class ABCCable(Material, ABC):
     @abstractmethod
     def dy(self):
         pass
+
+    @property
+    def aspect_ratio(self):
+        return self.dx / self.dy
 
     @property
     def n_sc_strand(self):
@@ -211,13 +210,13 @@ class ABCCable(Material, ABC):
     @property
     def area_cc(self):
         """Area of the cooling channel"""
-        return self.d_cooling_channel ** 2 / 4 * np.pi
+        return self.d_cooling_channel**2 / 4 * np.pi
 
     @property
     def area(self):
         """Area of the cable considering the void fraction"""
         return (
-                self.area_sc + self.area_stab
+            self.area_sc + self.area_stab
         ) / self.void_fraction / self.cos_theta + self.area_cc
 
     def E(self, **kwargs):
@@ -261,15 +260,15 @@ class ABCCable(Material, ABC):
         return dTdt
 
     def optimize_n_stab_ths(
-            self,
-            t0: float,
-            tf: float,
-            initial_temperature: float,
-            target_temperature: float,
-            B: Callable,
-            I: Callable,
-            bounds: np.ndarray = None,
-            show: bool = False,
+        self,
+        t0: float,
+        tf: float,
+        initial_temperature: float,
+        target_temperature: float,
+        B: Callable,
+        I: Callable,
+        bounds: np.ndarray = None,
+        show: bool = False,
     ):
         """
         Optimize the number of stabilizer strand in the superconducting cable using a
@@ -306,11 +305,11 @@ class ABCCable(Material, ABC):
         """
 
         def _temperature_evolution(
-                t0: float,
-                tf: float,
-                initial_temperature: float,
-                B: Callable,
-                I: Callable,
+            t0: float,
+            tf: float,
+            initial_temperature: float,
+            B: Callable,
+            I: Callable,
         ):
             solution = solve_ivp(
                 self._heat_balance_model_cable,
@@ -326,18 +325,22 @@ class ABCCable(Material, ABC):
             return solution
 
         def final_temperature_difference(
-                n_stab: int,
-                t0: float,
-                tf: float,
-                initial_temperature: float,
-                target_temperature: float,
-                B: Callable,
-                I: Callable,
+            n_stab: int,
+            t0: float,
+            tf: float,
+            initial_temperature: float,
+            target_temperature: float,
+            B: Callable,
+            I: Callable,
         ):
             self.n_stab_strand = n_stab
 
             solution = _temperature_evolution(
-                t0=t0, tf=tf, initial_temperature=initial_temperature, B=B, I=I,
+                t0=t0,
+                tf=tf,
+                initial_temperature=initial_temperature,
+                B=B,
+                I=I,
             )
             final_T = float(solution.y[0][-1])
             diff = abs(final_T - target_temperature)
@@ -362,29 +365,70 @@ class ABCCable(Material, ABC):
         solution = _temperature_evolution(t0, tf, initial_temperature, B, I)
         final_temperature = solution.y[0][-1]
 
-        print(f"Optimal n_stab: {self.n_stab_strand}")
-        print(f"Final temperature with optimal n_stab: {final_temperature} Kelvin")
+        bluemira_print(f"Optimal n_stab: {self.n_stab_strand}")
+        bluemira_print(
+            f"Final temperature with optimal n_stab: {final_temperature} Kelvin"
+        )
 
         if show:
+            # _, ax = plt.subplots()
+            # ax.plot(solution.t, solution.y[0], "r*")
+            # time_steps = np.linspace(t0, tf, 100)
+            # ax.plot(time_steps, solution.sol(time_steps)[0], "b")
+            # plt.grid(True)
+            # plt.xlabel("Time [s]")
+            # plt.ylabel("Temperature [K]")
+            # plt.title("Quench temperature evoltuion")
+            #
+            # # *** Additional info ***
+            # additional_info = [f"Hot spot temp. = {target_temperature} [K]",
+            #                    f"Initial temp. = {initial_temperature} [K]",
+            #                    f"Sc. strand = {self.sc_strand.__class__.__name__}",
+            #                    f"n. sc. strand = {self.n_sc_strand}",
+            #                    f"Stab. strand = {self.stab_strand.__class__.__name__}",
+            #                    f"n. stab. strand = {self.n_stab_strand}"]
+            #
+            # additional_info = '\n'.join(additional_info)
+            # plt.text(50, 80, additional_info)
+            # plt.show()
+
             _, ax = plt.subplots()
+
+            # Plot the main solution
             ax.plot(solution.t, solution.y[0], "r*")
             time_steps = np.linspace(t0, tf, 100)
             ax.plot(time_steps, solution.sol(time_steps)[0], "b")
             plt.grid(True)
             plt.xlabel("Time [s]")
             plt.ylabel("Temperature [K]")
-            plt.title("Quench temperature evoltuion")
+            plt.title("Quench temperature evolution")
 
-            # *** Additional info ***
-            additional_info = [f"Hot spot temp. = {target_temperature} [K]",
-                               f"Initial temp. = {initial_temperature} [K]",
-                               f"Sc. strand = {self.sc_strand.__class__.__name__}",
-                               f"n. sc. strand = {self.n_sc_strand}",
-                               f"Stab. strand = {self.stab_strand.__class__.__name__}",
-                               f"n. stab. strand = {self.n_stab_strand}"]
+            # Create secondary axis on the right (no ticks or labels needed)
+            ax2 = ax.twinx()  # This creates a new y-axis that shares the same x-axis
+            ax2.set_yticks([])  # Remove y-axis ticks
+            ax2.set_ylabel("")  # Remove y-axis label
 
-            additional_info = '\n'.join(additional_info)
-            plt.text(50, 80, additional_info)
+            # Plot additional info next to the right y-axis
+            additional_info = [
+                f"Hot spot temp. = {target_temperature} [K]",
+                f"Initial temp. = {initial_temperature} [K]",
+                f"Sc. strand = {self.sc_strand.__class__.__name__}",
+                f"n. sc. strand = {self.n_sc_strand}",
+                f"Stab. strand = {self.stab_strand.__class__.__name__}",
+                f"n. stab. strand = {self.n_stab_strand}",
+            ]
+            additional_info = "\n".join(additional_info)
+
+            # Set text position right after the right y-axis
+            ax2.text(
+                1.05,
+                0.5,
+                additional_info,
+                transform=ax2.transAxes,
+                verticalalignment="center",
+                fontsize=10,
+            )
+
             plt.show()
 
         return result
@@ -430,15 +474,16 @@ class ABCCable(Material, ABC):
 
         points_ext = np.vstack((p0, p1, p2, p3, p0)) + pc
         points_cc = (
-                np.array([
-                    np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
-                    for theta in np.linspace(0, np.radians(360), 19)
-                ])
-                + pc
+            np.array([
+                np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
+                for theta in np.linspace(0, np.radians(360), 19)
+            ])
+            + pc
         )
 
         ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
         ax.fill(points_cc[:, 0], points_cc[:, 1], "r")
+        ax.set_aspect("equal")
 
         if show:
             plt.show()
@@ -447,16 +492,16 @@ class ABCCable(Material, ABC):
 
 class RectangularCable(ABCCable):
     def __init__(
-            self,
-            dx: float,
-            sc_strand: SuperconductingStrand,
-            stab_strand: Strand,
-            n_sc_strand: int,
-            n_stab_strand: int,
-            d_cooling_channel: float,
-            void_fraction: float = 0.725,
-            cos_theta: float = 0.97,
-            name: str = "",
+        self,
+        dx: float,
+        sc_strand: SuperconductingStrand,
+        stab_strand: Strand,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float = 0.725,
+        cos_theta: float = 0.97,
+        name: str = "",
     ):
         """
         Representation of a cable. Only the x-dimension of the cable is given as
@@ -504,7 +549,6 @@ class RectangularCable(ABCCable):
         # assign
         self.dx = dx
 
-
     @property
     def dx(self):
         """Cable dimension in the x direction [m]"""
@@ -523,6 +567,12 @@ class RectangularCable(ABCCable):
         """Cable dimension in the y direction [m]"""
         return self.area / self.dx
 
+    # Todo: decide if this function shall be a setter.
+    #       Defined as "normal" function to underline that it modifies dx.
+    def set_aspect_ratio(self, value: float) -> None:
+        """Modify dx in order to get the given aspect ratio"""
+        self.dx = np.sqrt(value * self.area)
+
     # OD homogenized structural properties
     def Kx(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
@@ -533,17 +583,80 @@ class RectangularCable(ABCCable):
         return self.E(**kwargs) * self.dx / self.dy
 
 
+class DummyRectangularCableHTS(RectangularCable):
+    """
+    Dummy rectangular cable with young's moduli set to 120 GPa.
+
+    Parameters
+    ----------
+    dx:
+        x-dimension of the cable [m]
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+
+    """
+
+    def E(self, **kwargs):
+        """Young's module"""
+        return 120e9
+
+
+class DummyRectangularCableLTS(RectangularCable):
+    """
+    Dummy square cable with young's moduli set to 0.1 GPa
+
+    Parameters
+    ----------
+    dx:
+        x-dimension of the cable [m]
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+    """
+
+    def E(self, **kwargs):
+        """Young's module"""
+        return 0.1e9
+
+
 class SquareCable(ABCCable):
     def __init__(
-            self,
-            sc_strand: SuperconductingStrand,
-            stab_strand: Strand,
-            n_sc_strand: int,
-            n_stab_strand: int,
-            d_cooling_channel: float,
-            void_fraction: float = 0.725,
-            cos_theta: float = 0.97,
-            name: str = "",
+        self,
+        sc_strand: SuperconductingStrand,
+        stab_strand: Strand,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float = 0.725,
+        cos_theta: float = 0.97,
+        name: str = "",
     ):
         """
         Representation of a square cable.
@@ -666,15 +779,15 @@ class DummySquareCableLTS(SquareCable):
 
 class RoundCable(ABCCable):
     def __init__(
-            self,
-            sc_strand: SuperconductingStrand,
-            stab_strand: Strand,
-            n_sc_strand: int,
-            n_stab_strand: int,
-            d_cooling_channel: float,
-            void_fraction: float = 0.725,
-            cos_theta: float = 0.97,
-            name: str = "",
+        self,
+        sc_strand: SuperconductingStrand,
+        stab_strand: Strand,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float = 0.725,
+        cos_theta: float = 0.97,
+        name: str = "",
     ):
         """
         Representation of a round cable
@@ -753,19 +866,19 @@ class RoundCable(ABCCable):
         pc = np.array([xc, yc])
 
         points_ext = (
-                np.array([
-                    np.array([np.cos(theta), np.sin(theta)]) * self.dx / 2
-                    for theta in np.linspace(0, np.radians(360), 19)
-                ])
-                + pc
+            np.array([
+                np.array([np.cos(theta), np.sin(theta)]) * self.dx / 2
+                for theta in np.linspace(0, np.radians(360), 19)
+            ])
+            + pc
         )
 
         points_cc = (
-                np.array([
-                    np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
-                    for theta in np.linspace(0, np.radians(360), 19)
-                ])
-                + pc
+            np.array([
+                np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
+                for theta in np.linspace(0, np.radians(360), 19)
+            ])
+            + pc
         )
 
         ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
@@ -774,6 +887,7 @@ class RoundCable(ABCCable):
         if show:
             plt.show()
         return ax
+
 
 class DummyRoundCableHTS(RoundCable):
     """
