@@ -11,6 +11,7 @@ import operator
 from enum import Enum, auto
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
@@ -245,7 +246,7 @@ class LegFlux:
 
 def get_legs_length_and_angle(
     eq: Equilibrium,
-    leg_dict: dict,
+    leg_dict: dict[str, npt.NDArray[np.float64] | None],
     plasma_facing_boundary: Grid | Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary."""
