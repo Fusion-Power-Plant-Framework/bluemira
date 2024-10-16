@@ -20,7 +20,7 @@ import numba as nb
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -584,6 +584,8 @@ class FieldLine:
         """
         Plot the FieldLine.
 
+        #TODO this needs updating
+
         Parameters
         ----------
         ax:
@@ -769,7 +771,8 @@ def calculate_connection_length_flt(
     z: float,
     *,
     forward: bool = True,
-    first_wall=Coordinates | Grid | None,
+    n_points: float = 200,
+    first_wall: Coordinates | Grid | None = None,
     n_turns_max: int = 50,
 ) -> float:
     """
@@ -803,10 +806,16 @@ def calculate_connection_length_flt(
     but can't tell the difference. Not sensitive to equilibrium grid discretisation.
     Will work correctly for flux surfaces passing through Coils, but really they should
     be intercepted beforehand!
+
     """
+    if first_wall is None:
+        x1, x2 = eq.grid.x_min, eq.grid.x_max
+        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
+
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(
-        x, z, forward=forward, n_points=2, n_turns_max=n_turns_max
+        x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
     )
     return field_line.connection_length
 
@@ -817,8 +826,8 @@ def calculate_connection_length_fs(
     z: float,
     *,
     forward: bool = True,
-    first_wall=Coordinates | Grid | None,
-    f_s: Coordinates | None,
+    first_wall: Coordinates | Grid | None = None,
+    f_s: Coordinates | None = None,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -856,8 +865,8 @@ def calculate_connection_length_fs(
     passing through Coils, but really they should be intercepted beforehand!
     """
     if first_wall is None:
-        x1, x2 = eq.grid.x_min + 0.01, eq.grid.x_max - 0.01
-        z1, z2 = eq.grid.z_min + 0.01, eq.grid.z_max - 0.01
+        x1, x2 = eq.grid.x_min, eq.grid.x_max
+        z1, z2 = eq.grid.z_min, eq.grid.z_max
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
     if f_s is None:
@@ -866,6 +875,7 @@ def calculate_connection_length_fs(
         )
         f_s = Coordinates({"x": xfs, "z": zfs})
     if f_s.closed:
+        bluemira_print("Flux surface is closed. No connection length calculated.")
         return 0.0
     f_s = OpenFluxSurface(f_s)
 

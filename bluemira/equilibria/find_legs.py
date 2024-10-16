@@ -13,6 +13,7 @@ from enum import Enum, auto
 import numpy as np
 
 from bluemira.base.error import BluemiraError
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.equilibria.equilibrium import Equilibrium, Grid
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -32,27 +33,21 @@ from bluemira.geometry.coordinates import (
 
 
 class NumNull(Enum):
-    """
-    Class for use with LegFlux.
-    """
+    """Class for use with LegFlux."""
 
     DN = auto()
-    # Double Null
+    """Double Null"""
     SN = auto()
-    # Single Null
+    """Single Null"""
 
 
 class SortSplit(Enum):
-    """
-    Class for use with LegFlux.
-     (X)
-
-    """
+    """Class for use with LegFlux."""
 
     X = auto()
-    # Split the flux in x-direction
+    """Split the flux in x-direction"""
     Z = auto()
-    # Split the flux in z-direction
+    """Split the flux in z-direction"""
 
 
 class LegFlux:
@@ -522,6 +517,7 @@ def calculate_connection_length(
     delta_start: float = 0.01,
     rtol: float = 1e-1,
     n_turns_max: int = 50,
+    n_points: int = 1000,
     calculation_method: str = "flux_surface_geometry",
 ):
     """
@@ -533,11 +529,22 @@ def calculate_connection_length(
     ------
     BluemiraError
         If an invalid option calculation_method is selected.
+        If no target is provided for FLT calculation_method - this is because the
+        flux interception point found is not accurate enough to be used
+        on a seperatrix automatically found by Bluemira (n.b., the FLT can not
+        distingish between open and closed flux).
+
     """
     calculation_method = CalcMethod[calculation_method.upper()]
 
     # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
     if div_target_start_point is None:
+        if calculation_method == CalcMethod.FIELD_LINE_TRACER:
+            raise BluemiraError(
+                "Field line tracer method requires input div_target_start_point."
+                "Please use flux surface geometry method or input a target location."
+            )
+
         legflux = LegFlux(
             eq=eq,
             psi_n_tol=psi_n_tol,
@@ -563,6 +570,10 @@ def calculate_connection_length(
         )
         f_s = Coordinates({"x": xfs, "z": zfs})
 
+    if f_s.closed:
+        bluemira_print("Flux surface is closed. No connection length calculated.")
+        return 0.0
+
     # OMP is taken to be start point regardless of input
     z_abs = np.abs(f_s.z)
     z = np.min(z_abs)
@@ -574,6 +585,7 @@ def calculate_connection_length(
             x=x,
             z=z,
             forward=forward,
+            n_points=n_points,
             first_wall=first_wall,
             n_turns_max=n_turns_max,
         )

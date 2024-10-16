@@ -26,6 +26,8 @@ from bluemira.equilibria.flux_surfaces import (
     FieldLineTracer,
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    calculate_connection_length_flt,
+    calculate_connection_length_fs,
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
@@ -95,19 +97,74 @@ class TestOpenFluxSurfaceStuff:
         assert np.isclose(l_flt_lfs.connection_length, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
+        # Check the calculate_connection_length functions
+        l_fsg_fwd = calculate_connection_length_fs(
+            eq=self.eq,
+            x=x_start,
+            z=z_start,
+        )
+        l_flt_fwd = calculate_connection_length_flt(
+            eq=self.eq,
+            x=x_start,
+            z=z_start,
+        )
+        l_fsg_bwd = calculate_connection_length_fs(
+            eq=self.eq,
+            x=x_start,
+            z=z_start,
+            forward=False,
+        )
+        l_flt_bwd = calculate_connection_length_flt(
+            eq=self.eq,
+            x=x_start,
+            z=z_start,
+            forward=False,
+        )
+        assert np.isclose(l_fsg_fwd, l_flt_fwd, rtol=2e-2)
+        assert np.isclose(l_fsg_bwd, l_flt_bwd, rtol=2e-2)
+
         # Check the calculate_connection_length function, that calls either
         # method, returns the same result for the same selected point
-        xz = Coordinates({"x": [12], "z": [0]})
+        xz = Coordinates({"x": [x_start], "z": [z_start]})
         l_fsg = calculate_connection_length(
             self.eq,
             div_target_start_point=xz,
             calculation_method="flux_surface_geometry",
         )
         l_flt = calculate_connection_length(
-            self.eq, div_target_start_point=xz, calculation_method="field_line_tracer"
+            self.eq,
+            div_target_start_point=xz,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
         )
         assert np.isclose(l_fsg, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt, l_flt_lfs.connection_length, rtol=2e-2)
+
+        # Check the calculate_connection_length result when no point is input
+        l_fsg = calculate_connection_length(
+            self.eq,
+            calculation_method="flux_surface_geometry",
+        )
+        assert np.isclose(l_fsg, 157.85, rtol=2e-2)
+
+        # Check for a closed flux surface
+        # Choose (and make sure) flux surface is closed
+        closed_fs = self.eq.get_flux_surface(0.90)
+        assert closed_fs.closed
+        xz = Coordinates([np.max(closed_fs.x), 0.0, 0.0])
+        l_fsg = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert np.isclose(l_fsg, 0.0, rtol=1e-6)
+        assert np.isclose(l_flt, 0.0, rtol=1e-6)
 
     def test_legflux(self):
         """
