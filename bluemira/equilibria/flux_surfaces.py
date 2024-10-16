@@ -584,8 +584,6 @@ class FieldLine:
         """
         Plot the FieldLine.
 
-        #TODO this needs updating
-
         Parameters
         ----------
         ax:
