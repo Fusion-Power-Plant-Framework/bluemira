@@ -18,11 +18,11 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
     coil_harmonic_amplitude_matrix,
-    coils_outside_lcfs_sphere,
+    coils_outside_fs_sphere,
     collocation_points,
+    fs_fit_metric,
     get_psi_harmonic_amplitudes,
     harmonic_amplitude_marix,
-    lcfs_fit_metric,
     spherical_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
@@ -36,7 +36,7 @@ from bluemira.geometry.coordinates import Coordinates, in_polygon
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 
-def test_lcfs_fit_metric():
+def test_fs_fit_metric():
     xa = [1, 2, 2, 1, 1]
     xb = [3, 4, 4, 3, 3]
     xc = [1.5, 2.5, 2.5, 1.5, 1.5]
@@ -48,10 +48,10 @@ def test_lcfs_fit_metric():
     poly3 = Coordinates({"x": xc, "z": zc})
     poly4 = Coordinates({"x": xc, "z": za})
 
-    assert lcfs_fit_metric(poly1, poly1) == 0
-    assert lcfs_fit_metric(poly1, poly2) == 1
-    assert lcfs_fit_metric(poly1, poly3) == pytest.approx(0.75, rel=0, abs=EPS)
-    assert lcfs_fit_metric(poly1, poly4) == pytest.approx(0.5, rel=0, abs=EPS)
+    assert fs_fit_metric(poly1, poly1) == 0
+    assert fs_fit_metric(poly1, poly2) == 1
+    assert fs_fit_metric(poly1, poly3) == pytest.approx(0.75, rel=0, abs=EPS)
+    assert fs_fit_metric(poly1, poly4) == pytest.approx(0.5, rel=0, abs=EPS)
 
 
 def test_harmonic_amplitude_marix():
@@ -205,7 +205,7 @@ class TestRegressionSH:
             from_cocos=3,
             qpsi_sign=Sign.NEGATIVE,
         )
-        cls.sh_coil_names, cls.bdry_r = coils_outside_lcfs_sphere(cls.eq)
+        cls.sh_coil_names, cls.bdry_r = coils_outside_fs_sphere(cls.eq)
         cls.test_colocation = collocation_points(
             plasma_boundary=cls.eq.get_LCFS(),
             point_type=PointType.GRID_POINTS,
