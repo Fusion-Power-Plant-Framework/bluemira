@@ -563,7 +563,7 @@ def spherical_harmonic_approximation(
         available for collocation point distribution:
         - 'arc' = equispaced points on an arc of fixed radius,
         - 'arc_plus_extrema' = 'arc' plus the min and max points of either
-            the LCFS or a flux surface with a chosen normalised flux value.
+        the LCFS or a flux surface with a chosen normalised flux value.
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
