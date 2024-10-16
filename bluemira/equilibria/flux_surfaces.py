@@ -20,7 +20,7 @@ import numba as nb
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -369,18 +369,21 @@ class OpenFluxSurface(FluxSurface):
         super().__init__(coords)
 
     def split(
-        self, o_point: PsiPoint, plane: BluemiraPlane | None = None
+        self, psi_point: PsiPoint, plane: BluemiraPlane | None = None
     ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.
 
+        N.B.  The magnetic centre of the plasma (O-point) is often the
+        value that is used for the PsiPoint and X-Y plane.
+
         Parameters
         ----------
-        o_point:
-            The magnetic centre of the plasma
+        psi_point:
+            Point at which to make the split.
         plane:
-            The x-y cutting plane. Will default to the O-point x-y plane
+            The x-y cutting plane. Will default to the psi_point x-y plane
 
         Returns
         -------
@@ -397,9 +400,9 @@ class OpenFluxSurface(FluxSurface):
 
         if plane is None:
             plane = BluemiraPlane.from_3_points(
-                [o_point.x, 0, o_point.z],
-                [o_point.x + 1, 0, o_point.z],
-                [o_point.x, 1, o_point.z],
+                [psi_point.x, 0, psi_point.z],
+                [psi_point.x + 1, 0, psi_point.z],
+                [psi_point.x, 1, psi_point.z],
             )
 
         ref_coords = deepcopy(self.coords)
@@ -407,15 +410,15 @@ class OpenFluxSurface(FluxSurface):
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
-        deltas = x_inter - o_point.x
-        arg_inter = np.argmax(deltas > 0)
+        deltas = x_inter - psi_point.x
+        arg_inter = np.argmax(deltas >= 0)
         x_mp = x_inter[arg_inter]
-        z_mp = o_point.z
+        z_mp = psi_point.z
 
         # Split the flux surface geometry into LFS and HFS geometries
 
-        delta = 1e-1 if o_point.x < x_mp else -1e-1
-        radial_line = Coordinates({"x": [o_point.x, x_mp + delta], "z": [z_mp, z_mp]})
+        delta = 1e-1 if psi_point.x < x_mp else -1e-1
+        radial_line = Coordinates({"x": [psi_point.x, x_mp + delta], "z": [z_mp, z_mp]})
         # Add the intersection point to the Coordinates
         arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
 
@@ -766,7 +769,8 @@ def calculate_connection_length_flt(
     z: float,
     *,
     forward: bool = True,
-    first_wall=Coordinates | Grid | None,
+    n_points: float = 200,
+    first_wall: Coordinates | Grid | None = None,
     n_turns_max: int = 50,
 ) -> float:
     """
@@ -800,10 +804,16 @@ def calculate_connection_length_flt(
     but can't tell the difference. Not sensitive to equilibrium grid discretisation.
     Will work correctly for flux surfaces passing through Coils, but really they should
     be intercepted beforehand!
+
     """
+    if first_wall is None:
+        x1, x2 = eq.grid.x_min, eq.grid.x_max
+        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
+
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(
-        x, z, forward=forward, n_points=2, n_turns_max=n_turns_max
+        x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
     )
     return field_line.connection_length
 
@@ -814,7 +824,8 @@ def calculate_connection_length_fs(
     z: float,
     *,
     forward: bool = True,
-    first_wall=Coordinates | Grid | None,
+    first_wall: Coordinates | Grid | None = None,
+    f_s: Coordinates | None = None,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -832,6 +843,8 @@ def calculate_connection_length_fs(
         Whether or not to follow the field line forwards or backwards
     first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
+    f_s:
+        Coordniates of flux surface through x and z.
 
     Returns
     -------
@@ -854,8 +867,15 @@ def calculate_connection_length_fs(
         z1, z2 = eq.grid.z_min, eq.grid.z_max
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
-    xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z))
-    f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
+    if f_s is None:
+        xfs, zfs = find_flux_surface_through_point(
+            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
+        )
+        f_s = Coordinates({"x": xfs, "z": zfs})
+    if f_s.closed:
+        bluemira_print("Flux surface is closed. No connection length calculated.")
+        return 0.0
+    f_s = OpenFluxSurface(f_s)
 
     class Point:
         def __init__(self, x, z):
