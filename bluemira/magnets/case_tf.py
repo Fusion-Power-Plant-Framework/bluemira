@@ -349,7 +349,10 @@ class CaseTF:
         n_layers_reduction: int = 4,
         max_niter: int = 10,
         eps: float = 1e-8,
+        n_conds: int = None,
     ):
+        if n_conds is None:
+            n_conds = self.n_conductors
         conductor = self.WPs[0].conductor
         tot_err = 100 * eps
         i = 0
@@ -376,7 +379,7 @@ class CaseTF:
             )
 
             self.rearrange_conductors_in_wp(
-                self.n_conductors,
+                n_conds,
                 conductor,
                 self.R_wp_i[0],
                 wp_reduction_factor,
@@ -543,7 +546,7 @@ class CaseTF:
             if remaining_conductors < 0:
                 bluemira_warn(
                     f"{abs(remaining_conductors)}/{n_layers_max * n_turns_max} have been added"
-                    f" to complete the last layer."
+                    f" to complete the last winding pack (nx={n_layers_max}, ny={n_turns_max})."
                 )
 
             R_wp_i -= n_turns_max * cond.dy  # noqa: N806
