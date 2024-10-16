@@ -253,30 +253,26 @@ def get_legs_length_and_angle(
     length_dict = {}
     angle_dict = {}
     for name, leg_list in leg_dict.items():
-        if not leg_list:
-            lengths = [0.0]
-            angles = [np.pi]
-        else:
-            lengths = []
-            angles = []
-            for leg in leg_list:
-                if leg is None:
-                    con_length = 0.0
+        lengths = []
+        angles = []
+        for leg in leg_list:
+            if leg is None:
+                con_length = 0.0
+                grazing_ang = np.pi
+            else:
+                leg_fs = PartialOpenFluxSurface(leg)
+                if plasma_facing_boundary is not None:
+                    leg_fs.clip(plasma_facing_boundary)
+                con_length = OpenFluxSurface(leg_fs.coords).connection_length(eq)
+                alpha = leg_fs.alpha
+                if alpha is None:
                     grazing_ang = np.pi
+                elif alpha <= 0.5 * np.pi:
+                    grazing_ang = alpha
                 else:
-                    leg_fs = PartialOpenFluxSurface(leg)
-                    if plasma_facing_boundary is not None:
-                        leg_fs.clip(plasma_facing_boundary)
-                    con_length = OpenFluxSurface(leg_fs.coords).connection_length(eq)
-                    alpha = leg_fs.alpha
-                    if alpha is None:
-                        grazing_ang = np.pi
-                    elif alpha <= 0.5 * np.pi:
-                        grazing_ang = alpha
-                    else:
-                        grazing_ang = np.pi - alpha
-                lengths.append(con_length)
-                angles.append(grazing_ang)
+                    grazing_ang = np.pi - alpha
+            lengths.append(con_length)
+            angles.append(grazing_ang)
         length_dict.update({name: lengths})
         angle_dict.update({name: angles})
     return length_dict, angle_dict
