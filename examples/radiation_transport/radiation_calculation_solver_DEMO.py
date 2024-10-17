@@ -88,6 +88,8 @@ params = {
     "fw_lambda_q_far_omp": {"value": 0.1, "unit": "m"},
     "fw_lambda_q_near_imp": {"value": 0.002, "unit": "m"},
     "fw_lambda_q_far_imp": {"value": 0.1, "unit": "m"},
+    "lambda_t_factor": {"value": 7, "unit": "dimensionless"},
+    "lambda_n_factor": {"value": 1 / 7, "unit": "dimensionless"},
     "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
     "k_0": {"value": 2000.0, "unit": "dimensionless"},
     "lfs_p_fraction": {"value": lfs_p_fraction, "unit": "dimensionless"},

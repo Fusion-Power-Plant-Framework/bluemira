@@ -74,6 +74,12 @@ class RadiationSourceParams(ParameterFrame):
     """electron energy loss"""
     f_ion_t: Parameter[float]
     """Hydrogen first ionization"""
+    main_ext: Parameter[float]
+    """radiation region extention in main chamber"""
+    rec_ext_out_leg: Parameter[float]
+    """recyccling region extetion in outer leg"""
+    rec_ext_in_leg: Parameter[float]
+    """recyccling region extetion in inner leg"""
     fw_lambda_q_far_imp: Parameter[float]
     """Lambda_q far SOL imp"""
     fw_lambda_q_far_omp: Parameter[float]
@@ -82,6 +88,10 @@ class RadiationSourceParams(ParameterFrame):
     """Lambda_q near SOL imp"""
     fw_lambda_q_near_omp: Parameter[float]
     """Lambda_q near SOL omp"""
+    lambda_t_factor: Parameter[float]
+    """Lambda_t factor for non conduction-limited regime"""
+    lambda_n_factor: Parameter[float]
+    """Lambda_n factor for non conduction-limited regime"""
     gamma_sheath: Parameter[float]
     """sheath heat transmission coefficient"""
     k_0: Parameter[float]
@@ -373,12 +383,10 @@ class CoreRadiation(Radiation):
     ):
         super().__init__(eq, params)
 
-        exclude_species = ["Ar"]
+        # Picking impurity species
+        included_species = list(impurity_data)
 
-        # Filtering out excluded species
-        included_species = [key for key in impurity_data if key not in exclude_species]
-
-        # Using the filtered list to build other lists
+        # Using the selected list to build other lists
         self.impurities_content = [impurity_content[key] for key in included_species]
 
         self.imp_data_t_ref = [
@@ -390,8 +398,8 @@ class CoreRadiation(Radiation):
 
         self.imp_data_z_ref = [impurity_data[key]["z_ref"] for key in included_species]
 
-        # Store impurity symbols, excluding Argon
-        self.impurity_symbols = impurity_content.keys() - exclude_species
+        # Store impurity symbols
+        self.impurity_symbols = impurity_content.keys()
 
         # Store the midplane profiles
         self.profiles = midplane_profiles
@@ -943,6 +951,8 @@ class ScrapeOffLayerRadiation(Radiation):
             fw_lambda_q_far,
             dx,
             f_exp=f_p,
+            t_factor_det=self.params.lambda_t_factor.value,
+            n_factor_det=self.params.lambda_n_factor.value,
         )
 
         return te_prof, ne_prof
@@ -1071,7 +1081,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=1.5,
+                rec_ext=self.params.rec_ext_out_leg.value,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -1081,7 +1091,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=0.15,
+                rec_ext=self.params.rec_ext_in_leg.value,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -1494,10 +1504,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 flux_tubes=getattr(self, f"flux_tubes_{side}_{low_up}"),
                 x_strike=getattr(self, f"x_strike_{side}"),
                 z_strike=getattr(self, f"z_strike_{side}"),
-                main_ext=3,
+                main_ext=self.params.main_ext.value,
                 firstwall_geom=firstwall_geom,
                 pfr_ext=None,
-                rec_ext=2,
+                rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
                 detachment=False,
                 lfs=side == "lfs",
@@ -1774,7 +1784,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 main_ext=1,
                 firstwall_geom=firstwall_geom,
                 pfr_ext=None,
-                rec_ext=2,
+                rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
                 detachment=False,
                 lfs=side == "lfs",
