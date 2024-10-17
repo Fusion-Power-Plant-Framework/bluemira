@@ -338,6 +338,8 @@ def electron_density_and_temperature_sol_decay(
     lambda_q_far: float,
     dx_mp: float,
     f_exp: float = 1,
+    t_factor_det: float | None = None,
+    n_factor_det: float | None = None,
 ) -> tuple[np.ndarray, ...]:
     """
     Generic radial esponential decay to be applied from a generic starting point
@@ -361,9 +363,10 @@ def electron_density_and_temperature_sol_decay(
         Gaps between flux tubes at the mp [m]
     f_exp:
         flux expansion. Default value=1 referred to the mid-plane
-    near_sol_gradient:
-        temperature and density drop within the near scrape-off layer
-        from the separatrix value
+    t_factor_det: temperature decay length scaling factor in relation
+        to the power decay length.
+    n_factor_det: density decay length scaling factor in relation
+        to the temperature decay length.
 
     Returns
     -------
@@ -371,14 +374,28 @@ def electron_density_and_temperature_sol_decay(
         radial decayed temperatures through the SoL. Unit [eV]
     ne_sol:
         radial decayed densities through the SoL. unit [1/m^3]
+
+    Notes
+    -----
+        Temperature and density radially decay different than power.
+        At the mid-plane, the decay length relationships are usually
+        assumed to be lambda_q = 0.285*lambda_t and lambda_n = 0.333*lambda_t.
+        In more radiative regions, especially in a detached regime, they may change.
+
+    References
+    ----------
+        [1] Stangeby, P. C. (2000). The Plasma Boundary of Magnetic Fusion Devices.
+            Institute of Physics Publishing.
+        [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
+            Nuclear Fusion, 47(6), S203.
     """
     # temperature and density decay factors
     if f_exp == 1:
         t_factor = 7 / 2
         n_factor = 1 / 3
     else:
-        t_factor = 7
-        n_factor = 1 / 7
+        t_factor = t_factor_det
+        n_factor = n_factor_det
 
     # radial distance of flux tubes from the separatrix
     dr = dx_mp * f_exp
