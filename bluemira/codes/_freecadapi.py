@@ -485,7 +485,8 @@ def make_circle(
     -------
     FreeCAD wire that contains the arc or circle
     """
-    # TODO: check the creation of the arc when start_angle < end_angle
+    # TODO @ivanmaione: check the creation of the arc when start_angle < end_angle
+    # 3528
     output = Part.Circle()
     output.Radius = radius
     output.Center = Base.Vector(center)
@@ -519,7 +520,8 @@ def make_circle_arc_3P(  # noqa: N802
     -------
     FreeCAD wire that contains the arc of circle
     """
-    # TODO: check what happens when the 3 points are in a line
+    # TODO @ivanmaione: check what happens when the 3 points are in a line
+    # 3528
     arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
 
     # next steps are made to create an arc of circle that is consistent with that
@@ -569,7 +571,8 @@ def make_ellipse(
     -------
     FreeCAD wire that contains the ellipse or arc of ellipse
     """
-    # TODO: check the creation of the arc when start_angle < end_angle
+    # TODO @ivanmaione: check the creation of the arc when start_angle < end_angle
+    # 3528
     s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
     s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
     center = Base.Vector(center)

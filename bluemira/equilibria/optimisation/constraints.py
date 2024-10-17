@@ -48,7 +48,8 @@ def _get_dummy_equilibrium(equilibrium: Equilibrium):
     When we do I (current vector) optimisation, the background vector only includes
     contributions from the passive coils (plasma).
     """
-    # TODO: Add passive coil contributions here
+    # TODO @hsaunders1904: Add passive coil contributions here
+    # 3579
     dummy = equilibrium.plasma
     dummy.coilset = deepcopy(equilibrium.coilset)
     return dummy
