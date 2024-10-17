@@ -386,7 +386,7 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     )
 
     # # Find top-left and bottom-left "corners"
-    # coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
+    # coordinates = tf_offset.discretise(byedges=True, ndiscr=200)
     # #x_min = np.min(coordinates.x)
     # z_min, z_max = 0.0, 0.0
     # eps = 0.0
