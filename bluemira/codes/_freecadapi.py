@@ -1373,6 +1373,17 @@ class CADFileType(enum.Enum):
         self.import_module = import_module or export_module
 
     @classmethod
+    def _missing_(cls, value: str):
+        if isinstance(value, str):
+            try:
+                return cls(value.lower())
+            except ValueError:
+                for mixed_c in (cls.STEP_ZIP, cls.IFC_BIM_JSON, cls.FREECAD):
+                    if value.casefold() == mixed_c.value().casefold():
+                        return mixed_c
+        raise ValueError(f"{value} is not a valid {cls.__name__}")
+
+    @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that don't need to be converted because they are unitless"""
         return (cls.OBJ_WAVE, *[form for form in cls if form.export_module == "Mesh"])
