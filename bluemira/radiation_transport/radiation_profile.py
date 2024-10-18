@@ -430,7 +430,7 @@ class CoreRadiation(Radiation):
         """
         self.mp_profile_plot(self.profiles.psi_n, self.rad_mp, self.impurity_symbols)
 
-    def calculate_core_distribution(self, scaling) -> list[list[np.ndarray]]:
+    def calculate_core_distribution(self) -> list[list[np.ndarray]]:
         """
         Build poloidal distribution (distribution along the field lines) of
         line radiation loss in the plasma core.
@@ -444,42 +444,16 @@ class CoreRadiation(Radiation):
         # Collect closed flux tubes within the separatrix
         self.flux_tubes = self.collect_flux_tubes(self.profiles.psi_n)
 
-        if scaling:
-            # Calculate scaling factors for temperature and density along each flux tube
-            self.scaling_pol_t = [
-                self.scaling_factor_core(ft, alpha=0.5) for ft in self.flux_tubes
-            ]
-            self.scaling_pol_n = [
-                self.scaling_factor_core(ft, alpha=0.5) for ft in self.flux_tubes
-            ]
-            # Calculate poloidal density profile for each flux tube
-            # and apply scaling factor
-            self.ne_pol = [
-                self.flux_tube_pol_n(ft, n, core=True) / scaling
-                for ft, n, scaling in zip(
-                    self.flux_tubes, self.profiles.ne, self.scaling_pol_n, strict=False
-                )
-            ]
-
-            # Calculate poloidal temperature profile for each flux tube
-            # and apply scaling factor
-            self.te_pol = [
-                self.flux_tube_pol_t(ft, t, core=True) * scaling
-                for ft, t, scaling in zip(
-                    self.flux_tubes, self.profiles.te, self.scaling_pol_t, strict=False
-                )
-            ]
-        else:
-            # Calculate poloidal density profile for each flux tube
-            self.ne_pol = [
-                self.flux_tube_pol_n(ft, n, core=True)
-                for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
-            ]
-            # Calculate poloidal temperature profile for each flux tube
-            self.te_pol = [
-                self.flux_tube_pol_t(ft, t, core=True)
-                for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
-            ]
+        # Calculate poloidal density profile for each flux tube
+        self.ne_pol = [
+            self.flux_tube_pol_n(ft, n, core=True)
+            for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
+        ]
+        # Calculate poloidal temperature profile for each flux tube
+        self.te_pol = [
+            self.flux_tube_pol_t(ft, t, core=True)
+            for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
+        ]
 
         # Calculate the radiative power loss function for each impurity
         # species and for each flux tube
@@ -504,58 +478,11 @@ class CoreRadiation(Radiation):
 
         return self.rad
 
-    def scaling_factor_core(self, flux_tube, alpha=1):
-        """
-        Calculate the scaling factor for temperature or density based on the ratio
-        of local magnetic field to the magnetic field at the outboard midplane.
-
-        The scaling factor is computed as (B_local / B_mp) ** alpha for each point
-        along a flux tube, where B_local is the total magnetic field at a given point
-        and B_mp is the total magnetic field at the outboard midplane.
-
-        Parameters
-        ----------
-        flux_tube : FluxTube
-            The flux tube object containing x and z coordinates along the flux surface.
-        alpha : float, optional
-            The exponent used for scaling. Default is 1.
-
-        Returns
-        -------
-        np.ndarray
-            Scaling factor for each point along the flux tube.
-
-        Notes
-        -----
-        The scaling factor is based on the assumption that the temperature or density
-        scales with the local magnetic field relative to the outboard midplane.
-        """
-        # Find index of the point closest to the outboard midplane (z ≈ 0)
-        mp_indices = np.where(flux_tube.z == 0)[0]
-
-        # If multiple points, use the last one; otherwise, use the single point
-        mp_i = mp_indices[-1] if len(mp_indices) > 1 else mp_indices[0]
-
-        # Total magnetic field at the outboard midplane
-        x_mp, z_mp = flux_tube.x[mp_i], flux_tube.z[mp_i]
-        b_pol_mp = self.eq.Bp(x_mp, z_mp)
-        b_tor_mp = self.eq.Bt(x_mp)
-        b_mp = np.hypot(b_pol_mp, b_tor_mp)
-
-        # Calculate local magnetic field along the flux tube
-        b_local = [
-            np.hypot(self.eq.Bp(x, z), self.eq.Bt(x))
-            for x, z in zip(flux_tube.x, flux_tube.z, strict=False)
-        ]
-
-        # Calculate scaling factor for each point along the flux tube
-        return np.array((np.array(b_local) / b_mp) ** alpha)
-
     def calculate_core_radiation_map(self):
         """
         Build core radiation map.
         """
-        rad = self.calculate_core_distribution(scaling=False)
+        rad = self.calculate_core_distribution()
         self.total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
 
         self.x_tot = np.concatenate([flux_tube.x for flux_tube in self.flux_tubes])
