@@ -95,8 +95,10 @@ def flux_surface_hirshman(
 
     Notes
     -----
-    Hirshman and Neilson, 1986
-    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    .. doi:: 10.1063/1.865934
+        :title: Hirshman and Neilson,
+                "External inductance of an axisymmetric plasma", 1986
+
     """
     t = _generate_theta(n)
     eps = a / r_0
@@ -576,10 +578,9 @@ def flux_surface_kuiroukidis(
     """
     Make an up-down asymmetric flux surface with a lower X-point.
 
-    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Control. Fusion 57  (2015)
-    078001
-
-    DOI: 10.1088/0741-3335/57/7/078001
+    .. doi:: 10.1088/0741-3335/57/7/078001
+        :title: Ap. Kuiroukidis and G. N. Throumoulopoulos,
+                Plasma Phys. Control. Fusion 57 (2015)
 
     Parameters
     ----------

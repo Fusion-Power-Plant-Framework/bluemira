@@ -71,10 +71,10 @@ class DPACoefficients:
 
     Notes
     -----
-    Shengli Chena, David Bernard
-    On the calculation of atomic displacements using damage energy
-    Results in Physics 16 (2020) 102835
-    https://doi.org/10.1016/j.rinp.2019.102835
+    .. doi:: 10.1016/j.rinp.2019.102835
+        :title: Shengli Chena, David Bernard,
+                "On the calculation of atomic displacements using damage energy"
+                Results in Physics 16 (2020)
     """
 
     def __init__(

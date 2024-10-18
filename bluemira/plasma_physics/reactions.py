@@ -221,8 +221,8 @@ class BoschHale_DT_4Hen:
 
     D + T --> 4He + n
 
-    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
-    DOI 10.1088/0029-5515/32/4/I07
+    .. doi:: 10.1088/0029-5515/32/4/I07
+        :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
 
     t_min: float = 0.2  # [keV]
@@ -249,8 +249,8 @@ class BoschHale_DD_3Hen:
 
     D + D --> 3He + n
 
-    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
-    DOI 10.1088/0029-5515/32/4/I07
+    .. doi:: 10.1088/0029-5515/32/4/I07
+        :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
 
     t_min: float = 0.2  # [keV]
@@ -277,8 +277,8 @@ class BoschHale_DD_Tp:
 
     D + D --> T + p
 
-    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
-    DOI 10.1088/0029-5515/32/4/I07
+    .. doi:: 10.1088/0029-5515/32/4/I07
+        :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
 
     t_min: float = 0.2  # [keV]
@@ -305,8 +305,8 @@ class BoschHale_DHe3_4Hep:
 
     D + 3He --> 4He + p
 
-    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
-    DOI 10.1088/0029-5515/32/4/I07
+    .. doi:: 10.1088/0029-5515/32/4/I07
+        :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
 
     t_min: float = 0.5  # [keV]
@@ -345,8 +345,8 @@ def _reactivity_bosch_hale(
 
     Notes
     -----
-    H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
-    DOI 10.1088/0029-5515/32/4/I07
+    .. doi:: 10.1088/0029-5515/32/4/I07
+        :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
     if reaction == Reactions.D_D:
         return 0.5 * (

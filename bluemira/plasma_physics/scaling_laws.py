@@ -189,9 +189,7 @@ def P_LH(  # noqa: N802
 
     Notes
     -----
-    [3] Martin et al., 2008,
-    <https://infoscience.epfl.ch/record/135655/files/1742-6596_123_1_012033.pdf>
-    equation (3)
+    [3] Martin et al., 2008, :doi:`10.1088/1742-6596/123/1/012033` equation (3)
 
     \t:math:`P_{LH}=2.15e^{\\pm 0.107}n_{e20}^{0.782 \\pm 0.037}`
     \t:math:`B_{T}^{0.772 \\pm 0.031}a^{0.975 \\pm 0.08}R_{0}^{0.999 \\pm 0.101}`
@@ -252,8 +250,7 @@ def IPB98y2(  # noqa: N802
 
     Notes
     -----
-    [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
-    equation (20)
+    [2] :doi:`ITER Physics Expert Group, Nucl. Fus. 39, 12 <10.1088/0029-5515/39/12/302>
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
     """

@@ -14,7 +14,7 @@ from bluemira.plasma_physics.scaling_laws import P_LH, IPB98y2, lambda_q
 class TestLambdaQScaling:
     def test_ITER(self):
         """
-        As per https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.107.215001
+        As per :doi:`10.1103/PhysRevLett.107.215001`
         """
         lambda_q_value, min_v, max_v = lambda_q(5.3, 2.42, 120e6, 6.2, error=True)
         # In the paper above, the conclusions section give 0.94 mm for the extrapolation,
@@ -28,7 +28,7 @@ class TestLambdaQScaling:
 class TestPLH:
     def test_ITER(self):
         """
-        As per https://infoscience.epfl.ch/record/135655/files/1742-6596_123_1_012033.pdf
+        As per :doi:`10.1088/1742-6596/123/1/012033`
         """
         p_lh_threshold, min_v, max_v = P_LH(1e20, 5.3, 3.1, 6.2, error=True)
         # No value provided for this scaling (3), but ballpark is right

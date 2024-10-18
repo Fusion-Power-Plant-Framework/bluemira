@@ -6,11 +6,13 @@
 """
 Polyhedral prism current source using the volume integral method
 
-The easiest description and structure to follow was M. Fabbri,
-"Magnetic Flux Density and Vector Potential of Uniform Polyhedral Sources",
-IEEE TRANSACTIONS ON MAGNETICS, VOL. 44, NO. 1, JANUARY 2008
 
-https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4407584
+The easiest description and structure to follow was:
+
+.. doi:: 10.1109/TMAG.2007.908698
+    :title: M. Fabbri,
+            "Magnetic Flux Density and Vector Potential of Uniform Polyhedral Sources",
+            IEEE TRANSACTIONS ON MAGNETICS, VOL. 44, NO. 1, JANUARY 2008
 
 Additional information and detail also present in Passaroto's Master's thesis:
 https://thesis.unipd.it/retrieve/d0269be2-2e5d-4068-af58-4374193d38a1/Passarotto_Mauro_tesi.pdf
@@ -65,7 +67,7 @@ class Fabbri(PolyhedralKernel):
     """
     Fabbri polyhedral prism formulation
 
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4407584
+    .. doi:: 10.1109/TMAG.2007.908698
     """
 
     @staticmethod

@@ -8,9 +8,11 @@
 Analytical expressions for the field inside an arbitrarily shaped winding pack
 of rectangular cross-section, following equations as described in:
 
-https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
+.. doi:: 10.1002/jnm.594
+
 including corrections from:
-https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
+
+.. doi:: 10.1002/jnm.675
 """
 
 import numba as nb
@@ -54,7 +56,7 @@ def primitive_sxn_bound(
     Notes
     -----
     Uses corrected formulae available at:
-    https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
+    .. doi:: 10.1002/jnm.675
 
     Singularities all resolve to: lim(ln(1)) --> 0
     """

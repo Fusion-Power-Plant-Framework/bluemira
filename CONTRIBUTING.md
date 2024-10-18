@@ -227,7 +227,7 @@ def IPB98y2(
 
   Notes
   -----
-  [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
+  [2] :doi:`ITER Physics Expert Group, Nucl. Fus. 39, 12 <10.1088/0029-5515/39/12/302>`
 
   \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
   """
