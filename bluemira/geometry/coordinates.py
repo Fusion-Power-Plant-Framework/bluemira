@@ -1894,7 +1894,8 @@ def join_intersect(
 
     args = _intersect_count(x_int, z_int, coords1.x, coords1.z)
 
-    # TODO: Check for duplicates and order correctly based on distance
+    # TODO @CoronelBuendia: Check for duplicates and order correctly based on distance
+    # 3585
     # u, counts = np.unique(args, return_counts=True)
 
     count = 0

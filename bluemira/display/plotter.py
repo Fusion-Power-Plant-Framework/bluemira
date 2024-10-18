@@ -432,7 +432,9 @@ class PointsPlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):  # noqa: ARG004
-        # TODO: create a function that checks if the obj is a cloud of 3D or 2D points
+        # TODO @DanShort12: create a function that checks if the obj is a
+        # cloud of 3D or 2D points
+        # 3573
         return True
 
     def _check_options(self):

@@ -189,7 +189,8 @@ class CoilsetOptimisationProblem(abc.ABC):
                 " controls."
             )
 
-        # TODO: sort out this interface
+        # TODO @hsaunders1904: sort out this interface
+        # 3580
         upper_bounds = np.abs(max_currents) / self.scale
         lower_bounds = -upper_bounds
         self.bounds = (lower_bounds, upper_bounds)
@@ -255,7 +256,8 @@ class CoilsetOptimisationProblem(abc.ABC):
                 "df_constraint": df_c,
                 "tolerance": constraint.tolerance,
             }
-            # TODO: tidy this up, so the interface guarantees this works!
+            # TODO @hsaunders1904: tidy this up, so the interface guarantees this works!
+            # 3581
             if getattr(constraint, "constraint_type", "inequality") == "equality":
                 equality.append(d)
             else:
