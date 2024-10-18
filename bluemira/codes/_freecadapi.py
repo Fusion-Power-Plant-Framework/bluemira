@@ -1293,11 +1293,6 @@ class Document:
         ------
         :
             Each object in document
-
-        Notes
-        -----
-        TODO the rotate flag should be removed.
-             We should fix it in the camera of the viewer
         """
         if labels is None:
             # Empty string is the default argument for addObject
@@ -1407,6 +1402,17 @@ class CADFileType(enum.Enum):
     ):
         self.export_module = export_module
         self.import_module = import_module or export_module
+
+    @classmethod
+    def _missing_(cls, value: str) -> CADFileType:
+        if isinstance(value, str):
+            if value.upper() in cls.__members__:
+                return cls[value.upper()]
+            for mixed_c in (cls.STEP_ZIP, cls.IFC_BIM_JSON, cls.FREECAD):
+                if value.casefold() == mixed_c.value.casefold():
+                    return mixed_c
+            return cls(value.lower())
+        return super()._missing_(value)
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
@@ -2739,7 +2745,7 @@ def show_cad(
     parts: apiShape | list[apiShape],
     options: dict | list[dict | None] | None = None,
     labels: list[str] | None = None,
-    camera_rotation: Iterable = (90, 0, 0),
+    camera_rotation: Iterable[float] = (90, 0, 0),
     **kwargs,  # noqa: ARG001
 ):
     """
