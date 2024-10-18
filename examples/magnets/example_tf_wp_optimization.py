@@ -203,7 +203,7 @@ bluemira_print(f"cable area: {cable.area}")
 #%% md
 # ***Change cable aspect ratio***
 #%%
-aspect_ratio = 1
+aspect_ratio = 1.3
 cable.set_aspect_ratio(aspect_ratio)  # This adjusts the cable dimensions while maintaining the total cross-sectional area.
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
@@ -258,11 +258,12 @@ bluemira_print(f"New number of conductors: {case.n_conductors}")
 # ## Optimize cable jacket and case vault thickness
 #%%
 # Optimization parameters
-bounds = [1e-5, 2]
-max_niter = 10
+bounds_cond_jacket = [1e-5, 0.1]
+bounds_dy_vault = [0.1, 2]
+max_niter = 100
 err = 1e-5
 
-case.optimize_jacket_and_vault( pm, t_z, T0, B_TF_i, S_Y, bounds, layout, wp_reduction_factor,
+case.optimize_jacket_and_vault( pm, t_z, T0, B_TF_i, S_Y, bounds_cond_jacket, bounds_dy_vault, layout, wp_reduction_factor,
                                 min_gap_x, n_layers_reduction, max_niter, err, n_cond)
 
 if show:
