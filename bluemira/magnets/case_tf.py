@@ -342,7 +342,8 @@ class CaseTF:
         T: float,  # noqa: N803
         B: float,
         allowable_sigma: float,
-        bounds: np.array = None,
+        bounds_cond_jacket: np.array = None,
+        bounds_dy_vault: np.array = None,
         layout: str = "auto",
         wp_reduction_factor: float = 0.8,
         min_gap_x: float = 0.05,
@@ -370,7 +371,7 @@ class CaseTF:
                 / self.n_conductors
             )
             conductor.optimize_jacket_conductor(
-                pm, t_z_cable_jacket, T, B, allowable_sigma, bounds
+                pm, t_z_cable_jacket, T, B, allowable_sigma, bounds_cond_jacket
             )
             print(t_z_cable_jacket)
             print(f"after optimization: conductor jacket area = {conductor.area_jacket}")
@@ -390,7 +391,7 @@ class CaseTF:
             case_dy_vault0 = self.dy_vault
             print(f"before optimization: case dy_vault = {self.dy_vault}")
             self.optimize_vault_radial_thickness(
-                pm=pm, fz=fz, T=T, B=B, allowable_sigma=allowable_sigma, bounds=bounds
+                pm=pm, fz=fz, T=T, B=B, allowable_sigma=allowable_sigma, bounds=bounds_dy_vault
             )
 
             print(f"after optimization: case dy_vault = {self.dy_vault}")
