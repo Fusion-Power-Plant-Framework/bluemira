@@ -7,6 +7,7 @@
 import copy
 import filecmp
 import json
+import string
 from pathlib import Path
 from unittest.mock import patch
 
@@ -64,7 +65,7 @@ def test_is_num():
 
 class TestAsciiStr:
     def test_asciistr(self):
-        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        alphabet = string.ascii_letters
         for i in range(52):
             assert asciistr(i + 1) == alphabet[: i + 1]
 
