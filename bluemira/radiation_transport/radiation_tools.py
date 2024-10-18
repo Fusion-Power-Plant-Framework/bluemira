@@ -295,13 +295,7 @@ def specific_point_temperature(
     # Distinction between lfs and hfs
     d = sep_corrector if lfs else -sep_corrector
 
-    # need to simplify this
-    if lfs and z_p < z_mp:
-        forward = True
-    elif (lfs and z_p > z_mp) or (z_p < z_mp and not lfs):
-        forward = False
-    elif z_p > z_mp and not lfs:
-        forward = True
+    forward = False if z_p == z_mp else (lfs and z_p < z_mp) or (not lfs and z_p > z_mp)
 
     # Distance between the chosen point and the the target
     l_p = calculate_connection_length_flt(
@@ -323,6 +317,7 @@ def specific_point_temperature(
         if connection_length is None
         else connection_length
     )
+
     # connection length from mp to p point
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
