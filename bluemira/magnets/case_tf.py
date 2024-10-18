@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize_scalar
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from bluemira.magnets.conductor import Conductor
 from bluemira.magnets.materials import Material
 from bluemira.magnets.utils import parall_k, serie_k
@@ -116,10 +116,15 @@ class CaseTF:
         return (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
 
     @property
-    def area_jacket(self):
-        """Total jacket area (total case area - winding packs area)"""
+    def area_case_jacket(self):
+        """Total case jacket area (total case area - winding packs area)"""
         total_wp_area = np.sum([w.conductor.area * w.nx * w.ny for w in self.WPs])
         return self.area - total_wp_area
+
+    @property
+    def area_wps(self):
+        """Tatal winding pack area"""
+        return np.sum([w.area for w in self.WPs])
 
     @property
     def area_wps_jacket(self):
@@ -199,10 +204,6 @@ class CaseTF:
                 radial magnetic pressure
             fz:
                 vertical tension acting on the case
-            Re:
-                external radius of the TF coil
-            I:
-                total current flowing in the case
             kwargs:
                 additional arguments necessary to calculate the structural properties
                 of the case
@@ -224,12 +225,7 @@ class CaseTF:
 
         # As conservative approximation, the vertical force is considered to act only
         # on jackets and vault
-        total_case_area = (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
-        total_wp_area = np.sum([w.conductor.area * w.nx * w.ny for w in self.WPs])
-        total_wp_jacket_area = np.sum([
-            w.conductor.area_jacket * w.nx * w.ny for w in self.WPs
-        ])
-        sigma_z = fz / (total_case_area - total_wp_area + total_wp_jacket_area)
+        sigma_z = fz / (self.area_case_jacket + self.area_wps_jacket)
         return sigma_theta + sigma_z
 
     def optimize_vault_radial_thickness(
@@ -270,6 +266,9 @@ class CaseTF:
         ValueError
             If the optimization process did not converge.
         """
+        bluemira_print(f"pm: {pm}, fz: {fz}, T: {T}, B: {B}, allowable_sigma: {allowable_sigma}")
+        bluemira_print(f"bounds: {bounds}")
+
         method = None
         if bounds is not None:
             method = "bounded"
@@ -333,6 +332,7 @@ class CaseTF:
         """
         self.dy_vault = dy_vault
         sigma = self._tresca_stress(pm, fz, T=T, B=B)
+        # bluemira_print(f"sigma: {sigma}, allowable_sigma: {allowable_sigma}, diff: {sigma - allowable_sigma}")
         return abs(sigma - allowable_sigma)
 
     def optimize_jacket_and_vault(
@@ -366,7 +366,7 @@ class CaseTF:
             t_z_cable_jacket = (
                 fz
                 * self.area_wps_jacket
-                / (self.area_jacket + self.area_wps_jacket)
+                / (self.area_case_jacket + self.area_wps_jacket)
                 / self.n_conductors
             )
             conductor.optimize_jacket_conductor(

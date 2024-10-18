@@ -43,8 +43,8 @@ a = R0 / A # minor radius
 #%% md
 # **Inputs for the TF coils**
 #%%
-d = 1.9 # additional distance to calculate the max external radius of the inner TF leg
-Iop = 60.0e3  # operational current in each conductor
+d = 1.82 # additional distance to calculate the max external radius of the inner TF leg
+Iop = 70.0e3  # operational current in each conductor
 dr_plasma_side = R0 * 2 / 3 * 1e-2 # thickness of the plate before the WP
 T_sc = 4.2  # operational temperature of superconducting cable
 T_margin = 1.5  # temperature margin
@@ -188,12 +188,13 @@ B_ref = 15 #[T] Reference B field value (limit for LTS)
 
 if B_TF_i < B_ref:
     cable = DummyRectangularCableLTS(
-        dx=dx, sc_strand=sc_strand, stab_strand=stab_strand, n_sc_strand=n_sc_strand, n_stab_strand=1, d_cooling_channel=5e-3, void_fraction=0.7, cos_theta=0.97
+        dx=dx, sc_strand=sc_strand, stab_strand=stab_strand, n_sc_strand=n_sc_strand, n_stab_strand=505,
+        d_cooling_channel=1e-2, void_fraction=0.7, cos_theta=0.97
     )
 else:
     cable = DummyRectangularCableHTS(
-        dx=dx, sc_strand=sc_strand, stab_strand=stab_strand, n_sc_strand=n_sc_strand, n_stab_strand=1,
-        d_cooling_channel=5e-3, void_fraction=0.7, cos_theta=0.97
+        dx=dx, sc_strand=sc_strand, stab_strand=stab_strand, n_sc_strand=n_sc_strand, n_stab_strand=505,
+        d_cooling_channel=1e-2, void_fraction=0.7, cos_theta=0.97
     )
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
@@ -202,7 +203,8 @@ bluemira_print(f"cable area: {cable.area}")
 #%% md
 # ***Change cable aspect ratio***
 #%%
-cable.set_aspect_ratio(2)  # This adjusts the cable dimensions while maintaining the total cross-sectional area.
+aspect_ratio = 1
+cable.set_aspect_ratio(aspect_ratio)  # This adjusts the cable dimensions while maintaining the total cross-sectional area.
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
 #%%
@@ -216,7 +218,7 @@ result = cable.optimize_n_stab_ths(
 )
 bluemira_print(f"after optimization: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}")
 
-cable.set_aspect_ratio(2)
+cable.set_aspect_ratio(aspect_ratio)
 bluemira_print(f"Adjust aspect ratio: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}")
 #%%
 ###########################################################
@@ -227,9 +229,9 @@ conductor = SymmetricConductor(
 #%%
 # case parameters
 layout = "auto" #"layer" or "pancake"
-wp_reduction_factor = 0.8
-min_gap_x = 0.01
-n_layers_reduction = 4
+wp_reduction_factor = 0.7
+min_gap_x = 2*dr_plasma_side
+n_layers_reduction = 2
 
 # creation of the case
 wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
@@ -256,9 +258,9 @@ bluemira_print(f"New number of conductors: {case.n_conductors}")
 # ## Optimize cable jacket and case vault thickness
 #%%
 # Optimization parameters
-bounds = [1e-5, 0.2] 
+bounds = [1e-5, 2]
 max_niter = 10
-err = 1e-3
+err = 1e-5
 
 case.optimize_jacket_and_vault( pm, t_z, T0, B_TF_i, S_Y, bounds, layout, wp_reduction_factor,
                                 min_gap_x, n_layers_reduction, max_niter, err, n_cond)

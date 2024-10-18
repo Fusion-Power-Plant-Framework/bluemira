@@ -180,54 +180,64 @@ class Conductor:
 
     # TODO: add a description of the 0D structural model, otherwise the following
     # function cannot be undestood
-    def Kx_topbot_ins(self, **kwargs):
-        return self.mat_ins.E(**kwargs) * self.dy / self.dx_ins
+    def _Kx_topbot_ins(self, **kwargs):
+        return self.mat_ins.E(**kwargs) * self.cable.dy / self.dx_ins
 
-    def Kx_lat_ins(self, **kwargs):
-        return self.mat_ins.E(**kwargs) * self.dy_ins / (self.dx - 2 * self.dx_ins)
+    def _Kx_lat_ins(self, **kwargs):
+        return self.mat_ins.E(**kwargs) * self.dy_ins / self.dx
 
-    def Kx_lat_jacket(self, **kwargs):
+    def _Kx_lat_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.dy_jacket / (self.dx - 2 * self.dx_ins)
 
-    def Kx_topbot_jacket(self, **kwargs):
+    def _Kx_topbot_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.cable.dy / self.dx_jacket
 
-    def Kx_cable(self, **kwargs):
+    def _Kx_cable(self, **kwargs):
         return self.cable.Kx(**kwargs)
 
     def Kx(self, **kwargs):
-        return serie_k([
-            self.Kx_topbot_ins(**kwargs) / 2,
-            parall_k([
-                2 * self.Kx_lat_ins(**kwargs),
-                2 * self.Kx_lat_jacket(**kwargs),
-                serie_k([self.Kx_cable(**kwargs), self.Kx_topbot_jacket(**kwargs) / 2]),
+        return parall_k([
+            self._Kx_lat_ins(**kwargs),
+            self._Kx_lat_jacket(**kwargs),
+            serie_k([
+                self._Kx_topbot_ins(**kwargs),
+                self._Kx_topbot_jacket(**kwargs),
+                self._Kx_cable(**kwargs),
+                self._Kx_topbot_jacket(**kwargs),
+                self._Kx_topbot_ins(**kwargs),
             ]),
+            self._Kx_lat_jacket(**kwargs),
+            self._Kx_lat_ins(**kwargs),
         ])
 
-    def Ky_topbot_ins(self, **kwargs):
-        return self.mat_ins.E(**kwargs) * self.dx / self.dy_ins
+    def _Ky_topbot_ins(self, **kwargs):
+        return self.mat_ins.E(**kwargs) * self.cable.dx / self.dy_ins
 
-    def Ky_lat_ins(self, **kwargs):
-        return self.mat_ins.E(**kwargs) * self.dx_ins / (self.dy - 2 * self.dy_ins)
+    def _Ky_lat_ins(self, **kwargs):
+        return self.mat_ins.E(**kwargs) * self.dx_ins / self.dy
 
-    def Ky_lat_jacket(self, **kwargs):
+    def _Ky_lat_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.dx_jacket / (self.dy - 2 * self.dy_ins)
 
-    def Ky_topbot_jacket(self, **kwargs):
+    def _Ky_topbot_jacket(self, **kwargs):
         return self.mat_jacket.E(**kwargs) * self.cable.dx / self.dy_jacket
 
-    def Ky_cable(self, **kwargs):
+    def _Ky_cable(self, **kwargs):
         return self.cable.Ky(**kwargs)
 
     def Ky(self, **kwargs):
-        return serie_k([
-            self.Ky_topbot_ins(**kwargs) / 2,
-            parall_k([
-                2 * self.Ky_lat_ins(**kwargs),
-                2 * self.Ky_lat_jacket(**kwargs),
-                serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) / 2]),
+        return parall_k([
+            self._Ky_lat_ins(**kwargs),
+            self._Ky_lat_jacket(**kwargs),
+            serie_k([
+                self._Ky_topbot_ins(**kwargs),
+                self._Ky_topbot_jacket(**kwargs),
+                self._Ky_cable(**kwargs),
+                self._Ky_topbot_jacket(**kwargs),
+                self._Ky_topbot_ins(**kwargs),
             ]),
+            self._Ky_lat_jacket(**kwargs),
+            self._Ky_lat_ins(**kwargs),
         ])
 
     def _tresca_sigma_jacket(
@@ -267,23 +277,23 @@ class Conductor:
             saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
 
             K = parall_k([
-                2 * self.Ky_lat_ins(T=T, B=B),
-                2 * self.Ky_lat_jacket(T=T, B=B),
-                serie_k([self.Ky_cable(T=T, B=B), self.Ky_topbot_jacket(T=T, B=B) / 2]),
+                2 * self._Ky_lat_ins(T=T, B=B),
+                2 * self._Ky_lat_jacket(T=T, B=B),
+                serie_k([self._Ky_cable(T=T, B=B), self._Ky_topbot_jacket(T=T, B=B) / 2]),
             ])
 
-            X_jacket = 2 * self.Ky_lat_jacket(T=T, B=B) / K
+            X_jacket = 2 * self._Ky_lat_jacket(T=T, B=B) / K
 
         else:
             saf_jacket = (self.cable.dy + 2 * self.dy_jacket) / (2 * self.dy_jacket)
 
             K = parall_k([
-                2 * self.Kx_lat_ins(T=T, B=B),
-                2 * self.Kx_lat_jacket(T=T, B=B),
-                serie_k([self.Kx_cable(T=T, B=B), self.Kx_topbot_jacket(T=T, B=B) / 2]),
+                2 * self._Kx_lat_ins(T=T, B=B),
+                2 * self._Kx_lat_jacket(T=T, B=B),
+                serie_k([self._Kx_cable(T=T, B=B), self._Kx_topbot_jacket(T=T, B=B) / 2]),
             ])
 
-            X_jacket = 2 * self.Kx_lat_jacket(T=T, B=B) / K
+            X_jacket = 2 * self._Kx_lat_jacket(T=T, B=B) / K
 
         tresca_stress = pressure * X_jacket * saf_jacket + f_z / self.area_jacket
 

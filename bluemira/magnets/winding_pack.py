@@ -38,6 +38,10 @@ class WindingPack:
         return self.conductor.dy * self.ny
 
     @property
+    def area(self):
+        return self.dx * self.dy
+
+    @property
     def n_conductors(self):
         """Total number of conductors in the winding pack."""
         return self.nx * self.ny
@@ -60,7 +64,7 @@ class WindingPack:
         -------
             The total equivalent stiffness along the x-axis.
         """
-        return parall_k([serie_k([self.conductor.Kx(**kwargs)] * self.nx)] * self.ny)
+        return self.conductor.Kx(**kwargs) * self.ny / self.nx
 
     def Ky(self, **kwargs) -> float:
         """
@@ -75,7 +79,7 @@ class WindingPack:
         -------
             The total equivalent stiffness along the y-axis.
         """
-        return serie_k([parall_k([self.conductor.Ky(**kwargs)] * self.ny)] * self.nx)
+        return self.conductor.Ky(**kwargs) * self.nx / self.ny
 
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None, homogenized: bool = True):
         """
