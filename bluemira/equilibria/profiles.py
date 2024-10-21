@@ -199,7 +199,7 @@ def laopoly(x: float, *args) -> float:
     res = np.zeros_like(x)
     for i in range(len(args)):
         res += args[i] * x ** int(i)
-    res -= sum(args) * x ** (len(args) + 1)
+    res -= sum(args) * x ** len(args)
     return res
 
 
