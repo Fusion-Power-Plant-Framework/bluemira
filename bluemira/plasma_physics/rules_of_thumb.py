@@ -117,7 +117,8 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     -----
     .. doi:: 10.1063/1.865934
         :title: Hirshman and Neilson, 1986
-    Assuming a LCFS parameterisation as per:
+
+    Assuming a LCFS parameterisation as per
     :py:func:`~bluemira.equilibria.shapes.flux_surface_hirshman`
     """
     eps = 1 / A
