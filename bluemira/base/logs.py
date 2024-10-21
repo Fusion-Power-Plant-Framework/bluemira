@@ -198,7 +198,7 @@ def _bm_print(string: str, width: int = 73, *, single_flush: bool = False) -> st
         return _bm_print_singleflush(string, width)
 
     strings = [
-        " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
+        " " if s == "\n" and i != 0 else s.removesuffix("\n")
         for i, s in enumerate(string.splitlines(keepends=True))
     ]
     t = [
