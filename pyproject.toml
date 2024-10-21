@@ -325,7 +325,6 @@ ignore-names = [
 "eudemo/eudemo/reactor.py" = ["ARG001"]
 "bluemira/codes/plasmod/mapping.py" = ["TD"]
 "bluemira/balance_of_plant/calculations.py" = ["TD"]
-"bluemira/fuel_cycle/*" = ["TD"]
 "{tests,eudemo/eudemo_tests}/*" = [
     "INP001",
     "PLR2004",
@@ -361,7 +360,7 @@ ignore-names = [
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
 # TODO remove
-"eudemo/eudemo/*" = ["DOC201"]  #186
+"eudemo/eudemo/*" = ["DOC201", "TD"]  #186
 # see above for actual line
 # "examples/*" = ["DOC201"]  # 51
 "bluemira/utilities/*" = ["DOC201"]  # 38
@@ -373,7 +372,7 @@ ignore-names = [
 "bluemira/materials/*" = ["DOC201"]  # 62
 "bluemira/magnetostatics/*" = ["DOC201"]  # 45
 "bluemira/geometry/*" = ["DOC201"]  # 109
-"bluemira/fuel_cycle/*" = ["DOC201"]  # 19
+"bluemira/fuel_cycle/*" = ["DOC201", "TD"]  # 19
 "bluemira/equilibria/*" = ["DOC201"]  # 217
 "bluemira/display/*" = ["DOC201"]  # 25
 "bluemira/codes/*" = ["DOC201"]  # 242

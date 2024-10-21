@@ -101,7 +101,7 @@ class BiotSavartFilament(CurrentSource):
         max_d_l = np.max(lengths)
         if max_d_l > 0.03 * total:
             bluemira_warn("Biot-Savart discretisation possibly insufficient.")
-        # TODO: Improve check and modify discretisation
+        # TODO @CoronelBuendia: Improve check and modify discretisation
 
     @process_xyz_array
     def potential(
@@ -202,7 +202,7 @@ class BiotSavartFilament(CurrentSource):
         You probably shouldn't use this if you are actually interested in the
         inductance of an arbitrarily shaped Coordinates...
         """  # noqa: W505, E501
-        # TODO: Validate inductance calculate properly and compare stored
+        # TODO @CoronelBuendia: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0
         for _i, (x1, dx1) in enumerate(
