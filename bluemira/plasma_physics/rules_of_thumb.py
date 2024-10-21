@@ -79,8 +79,9 @@ def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
 
     Notes
     -----
-    Hirshman and Neilson, 1986
-    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    .. doi:: 10.1063/1.865934
+        :title: Hirshman and Neilson, 1986
+
     Assuming a LCFS parameterisation as per:
     :py:func:`~bluemira.equilibria.shapes.flux_surface_hirshman`
     """
@@ -114,9 +115,10 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
 
     Notes
     -----
-    Hirshman and Neilson, 1986
-    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
-    Assuming a LCFS parameterisation as per:
+    .. doi:: 10.1063/1.865934
+        :title: Hirshman and Neilson, 1986
+
+    Assuming a LCFS parameterisation as per
     :py:func:`~bluemira.equilibria.shapes.flux_surface_hirshman`
     """
     eps = 1 / A

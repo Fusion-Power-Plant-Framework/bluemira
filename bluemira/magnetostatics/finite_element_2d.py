@@ -59,7 +59,7 @@ class FemMagnetostatic2d:
     .. [Zohm] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany,
        2015
     .. [Villone] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008,
-       https://doi.org/10.1088/0741-3335/55/9/095008
+       :doi:`10.1088/0741-3335/55/9/095008`
 
     Parameters
     ----------

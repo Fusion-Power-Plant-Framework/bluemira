@@ -4,19 +4,26 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 """Configuration file for the Sphinx documentation builder."""
+from __future__ import annotations
 import os
 import sys
 from importlib.metadata import version as get_version
+from typing import TYPE_CHECKING, ClassVar
 
-from docutils import nodes, statemachine
+from docutils import nodes, statemachine, utils
 from docutils.parsers.rst import Directive
 
+from sphinx.util.docutils import SphinxDirective
+
+if TYPE_CHECKING:
+    from sphinx.util.typing import OptionSpec
 
 def setup(app):
     """Setup function for sphinx"""
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
-    app.add_directive("params", ParamsDirective)
+    # app.add_config_value('extlinks', {}, 'env')  # needed if extlinks extension removed
+    app.connect('builder-inited', setup_link_roles)
     app.connect("autoapi-skip-member", SkipAlreadyDocumented())
 
 
@@ -50,6 +57,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
     "sphinx_copybutton",
+    "sphinx.ext.extlinks",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -96,6 +104,59 @@ html_title = f"bluemira {_html_version} documentation"
 
 numfig = True
 
+# --- Configuration for plotting ---
+extensions.append("matplotlib.sphinxext.plot_directive")
+plot_formats = ["svg"]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+
+# --- Configuration for graphviz ---
+extensions.append("sphinx.ext.graphviz")
+graphviz_output_format = "svg"
+
+# --- Configuration for myst-nb ---
+extensions.append("myst_nb")
+nb_execution_mode = "off"
+nb_custom_formats = {
+    ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
+}
+myst_enable_extensions = ["amsmath", "dollarmath"]
+
+# --- Configuration for extlinks ---
+
+extlinks = {
+    'doi': ('https://dx.doi.org/%s', 'DOI: %s'),
+}
+extlinks_detect_hardcoded_links = True
+
+
+def setup_link_roles(app: Sphinx):
+    """Create Directives for all extlinks"""
+    for name, (base_url, caption) in app.config.extlinks.items():
+        app.add_directive(name, link_directive(name, base_url, caption))
+
+def link_directive(name: str, base_url: str, caption: str):
+    """Class factory for link directives"""
+    class LinkDirective(SphinxDirective):
+        """A directive to create doi link"""
+
+        has_content = True
+        required_arguments = 1
+
+        option_spec: ClassVar[OptionSpec] = {
+            'title': str
+        }
+
+        def run(self) -> list[nodes.Node]:
+            part = utils.unescape(self.arguments[0])
+            title = utils.unescape(self.options.get('title', caption % part))
+            pnode = nodes.reference(title, title, internal=False, refuri=base_url % part)
+            pnode["classes"].append(f"extlink-{name}")
+            wrapper = nodes.paragraph()
+            wrapper.append(pnode)
+            return [wrapper]
+    return LinkDirective
+
 
 # --- Configuration for sphinx-autoapi ---
 autodoc_typehints = "both"
@@ -115,66 +176,6 @@ autoapi_options = [
     "show-module-summary",
     "special-members",
 ]
-
-# --- Configuration for plotting ---
-extensions.append("matplotlib.sphinxext.plot_directive")
-plot_formats = ["svg"]
-plot_html_show_formats = False
-plot_html_show_source_link = False
-
-# --- Configuration for graphviz ---
-extensions.append("sphinx.ext.graphviz")
-graphviz_output_format = "svg"
-
-# --- Configuration for myst-nb ---
-extensions.append("myst_nb")
-nb_execution_mode = "off"
-nb_custom_formats = {
-    ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
-}
-myst_enable_extensions = ["amsmath", "dollarmath"]
-
-
-class ParamsDirective(Directive):
-    """
-    Generates the default parameters table for the given analysis module and class.
-    """
-
-    has_content = True
-
-    def run(self):
-        """
-        Run the directive.
-        """
-        tab_width = self.options.get("tab-width", self.state.document.settings.tab_width)
-        source = self.state_machine.input_lines.source(
-            self.lineno - self.state_machine.input_offset - 1
-        )
-
-        try:
-            import importlib
-
-            analysis_module_name = self.content[0]
-            analysis_class_name = self.content[1]
-
-            analysis_module = importlib.import_module(analysis_module_name)
-            analysis_class = getattr(analysis_module, analysis_class_name)
-
-            text = analysis_class.default_params.tabulator(tablefmt="rst")
-            lines = statemachine.string2lines(text, tab_width, convert_whitespace=True)
-            self.state_machine.insert_input(lines, source)
-            return []
-        except Exception:
-            return [
-                nodes.error(
-                    None,
-                    nodes.paragraph(
-                        text="Unable to generate parameter documentation at %s:%d:"
-                        % (os.path.basename(source), self.lineno)
-                    ),
-                    nodes.paragraph(text=str(sys.exc_info()[1])),
-                )
-            ]
 
 
 class SkipAlreadyDocumented:

@@ -91,8 +91,9 @@ def singlepowerfunc(x: float, *args) -> float:
 @nb.jit(nopython=True, cache=True)
 def doublepowerfunc(x: float, *args) -> float:
     """
-    Double power shape function defined e.g. in Lao 1985
-        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+    Double power shape function defined e.g. in
+    :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
+
     \t:math:`g(x)=(1-x^{m})^{n}`
     """
     # sign tweak needed to avoid runtimewarnings in np
@@ -191,8 +192,8 @@ def speedy_pressure_mask(
 # @nb.jit(cache=True)
 def laopoly(x: float, *args) -> float:
     """
-    Polynomial shape function defined in Lao 1985
-        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+    Polynomial shape function defined in
+    :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
     \t:math:`g(x)=\\sum_{n=0}^{n_F} \\alpha_{n}x^{n}-`
     \t:math:`x^{n_F+1}\\sum_{n=0}^{n_F} \\alpha_{n}`
     """
@@ -206,8 +207,8 @@ def laopoly(x: float, *args) -> float:
 @nb.jit(nopython=True, cache=True)
 def luxonexp(x: float, *args) -> float:
     """
-    Exponential shape function defined in Luxon 1984
-        https://iopscience.iop.org/article/10.1088/0029-5515/22/6/009/meta
+    Exponential shape function defined in
+    :doi:`Luxon 1984 <10.1088/0029-5515/22/6/009>`
     \t:math:`g(x)=\\text{exp}\\big(-\\alpha^2x^2\\big)`
     """
     alpha = args[0]
@@ -506,7 +507,7 @@ class Profile:
 class BetaIpProfile(Profile):
     """
     Constrain poloidal Beta and plasma current following logic as laid out in
-    Jeon, 2015: https://link.springer.com/article/10.3938/jkps.67.843 and
+    :doi:`Jeon, 2015 <10.3938/jkps.67.843>` and
     following some implementation in B. Dudson, FreeGS:
     https://github.com/bendudson/freegs
 

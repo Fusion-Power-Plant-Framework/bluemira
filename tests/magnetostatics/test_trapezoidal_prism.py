@@ -18,7 +18,7 @@ class TestTrapezoidalPrismBabicAykel:
 
     Babic and Aykel example
 
-    https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
+    .. doi:: 10.1002/jnm.594
     """
 
     # Babic and Aykel example (single trapezoidal prism)

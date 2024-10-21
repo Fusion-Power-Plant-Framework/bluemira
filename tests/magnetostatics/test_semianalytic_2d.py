@@ -24,11 +24,9 @@ class TestSemiAnalyticBxBz:
     @staticmethod
     def semianalytic_results(zc):
         """
-        Test case and data from:
-        https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6019053
+        Test case and data from :doi:`10.1109/TMAG.2011.2167981`
         NOTE: Test case wrongly described in the above, and the correct description can
-        be found here:
-        https://www.tandfonline.com/doi/pdf/10.1163/156939310791958653?needAccess=true
+        be found here :doi:`10.1163/156939310791958653`
         """
         xc = 0.0525
         dx, dz = 0.0025, 0.0025

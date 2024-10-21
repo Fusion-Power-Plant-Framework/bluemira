@@ -221,7 +221,7 @@ def semianalytic_Bx(
 
     References
     ----------
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6019053
+    .. doi:: 10.1109/TMAG.2011.2167981
     """
     r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
 
@@ -273,7 +273,7 @@ def semianalytic_Bz(
 
     References
     ----------
-    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6019053
+    .. doi:: 10.1109/TMAG.2011.2167981
     """
     r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
 
