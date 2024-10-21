@@ -22,8 +22,6 @@ def setup(app):
     """Setup function for sphinx"""
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
-
-    app.add_directive("params", ParamsDirective)
     # app.add_config_value('extlinks', {}, 'env')  # needed if extlinks extension removed
     app.connect('builder-inited', setup_link_roles)
     app.connect("autoapi-skip-member", SkipAlreadyDocumented())
