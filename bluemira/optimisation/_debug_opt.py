@@ -3,49 +3,77 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Defines the interface for an Optimiser."""
+"""Debugging optimisation interface"""
 
-import abc
-from dataclasses import dataclass, field
+from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING, Any
 
-from bluemira.optimisation.typed import OptimiserCallable
+from eqdsk.file import dataclass
+
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
+from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING, NloptOptimiser
+from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._scipy_opt import ScipyAlgorithm, ScipyOptimiser
+from bluemira.optimisation.error import OptimisationError
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    import numpy as np
+
+    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 
 @dataclass
-class OptimiserResult:
-    """Container for optimiser results."""
-
-    f_x: float
-    """The evaluation of the optimised parameterisation."""
-    x: np.ndarray
-    """The optimised parameterisation."""
-    n_evals: int
-    """The number of evaluations of the objective function in the optimisation."""
-    history: list[tuple[np.ndarray, float]] = field(repr=False)
-    """
-    The history of the parametrisation at each iteration.
-
-    The first element of each tuple is the parameterisation (x), the
-    second is the evaluation of the objective function at x (f(x)).
-    """
-    constraint_history: list[tuple[np.ndarray, ...]] = field(repr=False)
-    """
-    Constraint history
-    """
-    constraints_satisfied: bool | None = None
-    """
-    Whether all constraints have been satisfied to within the required tolerance.
-
-    Is ``None`` if constraints have not been checked.
-    """
+class Constraint:
+    f_constraint: OptimiserCallable
+    tolerance: np.ndarray
+    df_constraint: OptimiserCallable | None = None
 
 
-class Optimiser(abc.ABC):
-    """Interface for an optimiser supporting bounds and constraints."""
+class DebugOptimiser(Optimiser):
+    def __init__(
+        self,
+        algorithm: AlgorithmType,
+        n_variables: int,
+        f_objective: ObjectiveCallable,
+        df_objective: OptimiserCallable | None = None,
+        opt_conditions: Mapping[str, int | float] | None = None,
+        opt_parameters: Mapping[str, Any] | None = None,
+        *,
+        keep_history: bool = False,
+    ):
+        self.algorithm = Algorithm(algorithm)
+        self.n_variables = n_variables
+        self.f_objective = f_objective
+        self.df_objective = df_objective
+        self.opt_conditions = opt_conditions
+        self.opt_parameters = opt_parameters
+        self.keep_history = keep_history
+        self.eq_constraint = []
+        self.ineq_constraint = []
 
-    @abc.abstractmethod
+        if self.algorithm in NLOPT_ALG_MAPPING:
+            optimiser = NloptOptimiser
+        else:
+            try:
+                ScipyAlgorithm(self.algorithm)
+            except KeyError:
+                raise OptimisationError("Unknown algorithm") from None
+            else:
+                optimiser = ScipyOptimiser
+
+        self.opt = optimiser(
+            self.algorithm,
+            self.n_variables,
+            self.f_objective,
+            self.df_objective,
+            self.opt_conditions,
+            self.opt_parameters,
+            keep_history=self.keep_history,
+        )
+
     def add_eq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -88,8 +116,9 @@ class Optimiser(abc.ABC):
             * ISRES
 
         """
+        self.opt.add_eq_constraint(f_constraint, tolerance, df_constraint)
+        self.eq_constraint.append(Constraint(f_constraint, tolerance, df_constraint))
 
-    @abc.abstractmethod
     def add_ineq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -132,8 +161,9 @@ class Optimiser(abc.ABC):
             * ISRES
 
         """
+        self.opt.add_ineq_constraint(f_constraint, tolerance, df_constraint)
+        self.ineq_constraint.append(Constraint(f_constraint, tolerance, df_constraint))
 
-    @abc.abstractmethod
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
         """
         Run the optimiser.
@@ -152,20 +182,31 @@ class Optimiser(abc.ABC):
         parameters ``x``, as well as other information about the
         optimisation.
         """
-        ...
+        self.opt_in = OptimiserResult(
+            f_x=0, x=x0, n_evals=0, history=[], constraint_history=[]
+        )
+        self.opt_result = self.opt.optimise(x0)
+        import pprint
 
-    @abc.abstractmethod
+        pprint.pprint(self.__dict__)
+
+        # ipdb.set_trace()
+        return self.opt_result
+
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
+        self.opt.set_lower_bounds(bounds)
+        self.lower_bounds = bounds
 
-    @abc.abstractmethod
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the upper bound for each optimisation parameter.
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
+        self.opt.set_upper_bounds(bounds)
+        self.upper_bounds = bounds

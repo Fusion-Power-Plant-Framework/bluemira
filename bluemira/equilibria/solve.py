@@ -468,6 +468,8 @@ class PicardIterator:
         gif: bool = False,
         figure_folder: str | None = None,
         plot_name: str = "default_0",
+        keep_history: bool = False,
+        check_constraints: bool = False,
     ):
         self.eq = eq
         self.coilset = self.eq.coilset
@@ -482,7 +484,8 @@ class PicardIterator:
                 " ConvergenceCriterion."
             )
         self.fixed_coils = fixed_coils
-
+        self.keep_history = keep_history
+        self.check_constraints = check_constraints
         self.relaxation = relaxation
         self.maxiter = maxiter
         self.plot_flag = plot or (gif and not plot)
@@ -501,7 +504,11 @@ class PicardIterator:
     def _optimise_coilset(self):
         self.result = None
         try:
-            self.result = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
+            self.result = self.opt_prob.optimise(
+                fixed_coils=self.fixed_coils,
+                keep_history=self.keep_history,
+                check_constraints=self.check_constraints,
+            )
             self.coilset = self.result.coilset
         except OptimisationError:
             self.coilset = self.store[-1]

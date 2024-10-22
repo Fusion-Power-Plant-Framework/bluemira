@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
-_NLOPT_ALG_MAPPING = {
+NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
     Algorithm.COBYLA: nlopt.LN_COBYLA,
     Algorithm.SBPLX: nlopt.LN_SBPLX,
@@ -109,7 +109,7 @@ class NloptOptimiser(Optimiser):
         self._keep_history = keep_history
 
         self._set_algorithm(algorithm)
-        self._opt = nlopt.opt(_NLOPT_ALG_MAPPING[self.algorithm], n_variables)
+        self._opt = nlopt.opt(NLOPT_ALG_MAPPING[self.algorithm], n_variables)
         self._set_objective_function(f_objective, df_objective, n_variables)
         self._set_termination_conditions(opt_conditions)
         self._set_algorithm_parameters(opt_parameters)
@@ -169,7 +169,10 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_equality_mconstraint(constraint.call, constraint.tolerance)
+        self._opt.add_equality_mconstraint(
+            constraint.call_with_history if self._keep_history else constraint.call,
+            constraint.tolerance,
+        )
         self._eq_constraints.append(constraint)
 
     def add_ineq_constraint(
@@ -200,7 +203,10 @@ class NloptOptimiser(Optimiser):
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
         )
-        self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
+        self._opt.add_inequality_mconstraint(
+            constraint.call_with_history if self._keep_history else constraint.call,
+            constraint.tolerance,
+        )
         self._ineq_constraints.append(constraint)
 
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
@@ -247,7 +253,14 @@ class NloptOptimiser(Optimiser):
             x=x_star,
             n_evals=self._opt.get_numevals(),
             history=self._objective.history,
+            constraint_history=self._get_constraint_history(),
         )
+
+    def _get_constraint_history(self):
+        return [
+            constraint.history
+            for constraint in self._eq_constraints + self._ineq_constraints
+        ]
 
     def set_lower_bounds(self, bounds: npt.ArrayLike) -> None:
         """
