@@ -131,7 +131,6 @@ print(summer_time.fractions)
 
 # %%
 # Attributes are the same
-# TODO do we want to do this?
 # print(another_strawberry == strawberry)
 # print(summer_time == strawberries_and_cream)
 

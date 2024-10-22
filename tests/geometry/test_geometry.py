@@ -360,7 +360,6 @@ class TestGeometry:
         assert np.isclose(solid.volume, true_volume)
 
     def test_cut_hollow_circle(self):
-        # TODO: More fun to be had with circles...
         x_c = 10
         radius = 1
         circle = make_circle(radius=radius, center=[10, 0, 0], axis=[0, 1, 0])

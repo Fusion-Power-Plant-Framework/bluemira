@@ -58,8 +58,10 @@ class WireInfo:
     3. A copy of the wire itself
     """
 
-    # TODO: Perhaps implement more classes so it also work with splines? Or justify why
+    # TODO @je-cook: Perhaps implement more classes so it also work with splines?
+    # Or justify why
     # we don't need to. Or merge this invention into an existing issue?
+    # 3662
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
     tangents: Sequence[Iterable[float]]  # 2 normalised directional vectors xyz

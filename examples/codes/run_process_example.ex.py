@@ -358,7 +358,8 @@ except CodesError as ce:
 
 # %%
 
-# TODO actually get to converge
+# TODO @je-cook: actually get to converge
+# 3667
 template_builder.set_run_title("Example that should converge")
 template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)

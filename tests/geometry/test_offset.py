@@ -31,8 +31,10 @@ from bluemira.geometry.tools import (
 class TestOffset:
     @classmethod
     def setup_class(cls):
-        # TODO: There is a known limitation of PrincetonD offsetting when building the
+        # TODO @CoronelBuendia: There is a known limitation
+        # of PrincetonD offsetting when building the
         # BSpline from too many points...
+        # 3671
         cls.p_wire = PrincetonD().create_shape(n_points=200, label="princeton")
         cls.pf_wire = PictureFrame().create_shape(label="pict_frame")
         cls.t_wire = TripleArc().create_shape(label="triple")
@@ -71,7 +73,9 @@ class TestOffset:
 
     @pytest.mark.xfail
     def test_bad_princeton(self):
-        # TODO: This is a more fundamental issue that I have yet to get to the bottom of
+        # TODO @CoronelBuendia: This is a more fundamental issue
+        # that I have yet to get to the bottom of
+        # 3672
         p = PrincetonD({
             "x1": {"value": 4},
             "x2": {"value": 14},

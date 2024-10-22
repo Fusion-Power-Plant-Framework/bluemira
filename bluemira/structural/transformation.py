@@ -53,7 +53,9 @@ def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
     b = dy / length
     c = dz / length
     d = np.hypot(a, b)
-    # TODO: Why does the less intuitive, simpler algebra form work better??
+    # TODO @CoronelBuendia: Why does the less intuitive,
+    # simpler algebra form work better??
+    # 3666
     # https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-571-structural-analysis-and-control-spring-2004/readings/connor_ch5.pdf
     if np.isclose(a, 0) and np.isclose(b, 0):
         dcm = np.array([

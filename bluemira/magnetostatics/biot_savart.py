@@ -102,6 +102,7 @@ class BiotSavartFilament(CurrentSource):
         if max_d_l > 0.03 * total:
             bluemira_warn("Biot-Savart discretisation possibly insufficient.")
         # TODO @CoronelBuendia: Improve check and modify discretisation
+        # 3651
 
     @process_xyz_array
     def potential(
@@ -204,6 +205,7 @@ class BiotSavartFilament(CurrentSource):
         """  # noqa: W505, E501
         # TODO @CoronelBuendia: Validate inductance calculate properly and compare stored
         # energy of systems
+        # 3652
         inductance = 0
         for _i, (x1, dx1) in enumerate(
             zip(self.ref_mid_points, self.ref_d_l, strict=False)

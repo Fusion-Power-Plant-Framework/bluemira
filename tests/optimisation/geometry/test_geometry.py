@@ -94,9 +94,10 @@ class TestGeometry:
             "x2": {"value": 16, "upper_bound": 19.5, "lower_bound": 12.5},
             "dz": {"value": 1, "upper_bound": 1.5, "lower_bound": -1.5},
         })
-        # TODO(hsaunders1904): think about whether we want to keep the
+        # TODO @hsaunders1904: think about whether we want to keep the
         # original parameterisation constant, or whether we change it
         # in-place. Add a test for the behaviour
+        # 3673
         original_length = parameterisation.create_shape().length
         koz_radius = 4.5
         koz_center = (12.5, 0, 0)

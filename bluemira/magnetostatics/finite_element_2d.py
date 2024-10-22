@@ -169,6 +169,7 @@ class FemMagnetostatic2d:
         else:
             # TODO @je-cook: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
+            # 3653
             bcs = (
                 dirichlet_bc_function
                 if isinstance(dirichlet_bc_function, Iterable)

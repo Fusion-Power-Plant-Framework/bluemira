@@ -429,6 +429,7 @@ class MassFractionMaterial:
         """Equality Check"""
         if not isinstance(other, type(self)):
             # TODO @je-cook: a mixutre with only one component could be the same
+            # 3654
             return False
         raise NotImplementedError("Material equality not implemented")
 
@@ -623,7 +624,6 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         # when raising a negative number to a fractional power, which in this
         # parameterisation only occurs if a non-physical (<0) current density
         # is returned.
-        # TODO @DanShort12: Check the above..
         c = (1 - ii) ** self.beta if 1 - ii > 0 else 0
         return a * b * c
 
