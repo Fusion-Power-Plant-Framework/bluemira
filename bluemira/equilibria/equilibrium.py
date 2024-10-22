@@ -1193,7 +1193,7 @@ class Equilibrium(CoilSetMHDState):
         vcontrol = kwargs.get("vcontrol", self._kwargs["vcontrol"])
         self.set_vcontrol(vcontrol)
         # TODO @CoronelBuendia: reinit psi and jtor?
-        # 3576
+        # 3658
 
     def _set_init_plasma(
         self,

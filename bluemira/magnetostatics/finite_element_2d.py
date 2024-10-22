@@ -167,7 +167,7 @@ class FemMagnetostatic2d:
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
             bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
         else:
-            # TODO @je-cook: we should pass directly the BCs, not the functions since
+            # TODO @ivanmaione: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
             # 3653
             bcs = (

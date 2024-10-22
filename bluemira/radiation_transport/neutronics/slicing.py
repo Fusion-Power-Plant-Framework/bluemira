@@ -192,7 +192,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
             wire_info = add_circle(edge, w_edge, current_start, current_end)
         elif isinstance(edge.Curve, cadapi.Part.ArcOfEllipse | cadapi.Part.Ellipse):
             raise NotImplementedError("Conversion for ellipses are not available yet.")
-            # TODO @je-cook: implement this feature
+            # TODO @OceanNuclear: implement this feature
             # 3660
         else:
             raise NotImplementedError(f"Conversion for {edge.Curve} not available yet.")
@@ -531,7 +531,7 @@ class PanelsAndExteriorCurve:
             segments of the vacuum vessel exterior curve forming each pre-cell's exterior
             curve.
         """
-        # TODO @je-cook: remove discretisation level when issue #3038 is fixed.
+        # TODO @OceanNuclear: remove discretisation level when issue #3038 is fixed.
         # The raw wire can
         # be used without discretisation then.
         # 3661
@@ -819,7 +819,7 @@ class DivertorWireAndExteriorCurve:
             list of WireInfoList describing the each pre-cell's vacuum vessel exterior
             curve
         """
-        # TODO @je-cook: remove discretisation level when issue #3038 is fixed.
+        # TODO @OceanNuclear: remove discretisation level when issue #3038 is fixed.
         # The raw wire can
         # be used without discretisation then.
         # 3661
