@@ -7,6 +7,7 @@
 import numpy as np
 import pytest
 
+from bluemira.equilibria.constants import X_AXIS_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid, integrate_dx_dz, volume_integral
 
@@ -15,12 +16,16 @@ class TestGrid:
     def test_init(self):
         g = Grid(0, 20, -10, 10, 100, 100)
         assert g.x_min != 0
+        assert np.isclose(g.x_size, 20.0 - X_AXIS_MIN)
         g = Grid(10, 5, -10, 10, 100, 100)
         assert g.x_min == 5
         assert g.x_max == 10
+        assert np.isclose(g.x_size, 5.0)
+        assert np.isclose(g.z_size, 20.0)
         g = Grid(5, 10, 10, -10, 100, 100)
         assert g.z_min == -10
         assert g.z_max == 10
+        assert np.isclose(g.z_size, 20.0)
 
         bad_dims = [
             [0, 20, -10, -10, 100, 100],

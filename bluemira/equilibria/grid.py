@@ -113,7 +113,7 @@ class Grid:
         self.x_mid = (x_max - x_min) / 2
         self.z_min = z_min
         self.z_max = z_max
-        self.z_size = abs(z_max) + abs(z_min)
+        self.z_size = abs(z_max - z_min)
         self.z_mid = z_min + (z_max - z_min) / 2
         self.x_1d = np.linspace(x_min, x_max, nx)
         self.z_1d = np.linspace(z_min, z_max, nz)
