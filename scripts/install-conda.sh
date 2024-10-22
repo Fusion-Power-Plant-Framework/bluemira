@@ -10,7 +10,6 @@ do
     esac
 done
 
-echo $ENVIRONMENT
 # Get and install miniforge
 if [ ! -d "$HOME/miniforge" ]; then
   curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
