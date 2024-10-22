@@ -574,6 +574,11 @@ def calculate_connection_length(
     # OMP is taken to be start point regardless of input
     z_abs = np.abs(f_s.z)
     z = np.min(z_abs)
+    # If flux surface is not passing though midplane then do
+    # not calculate connection length.
+    midplane = np.isclose(z, 0.0, atol=eq.grid.dz)
+    if not midplane:
+        return 0.0
     x = np.max(f_s.x[z_abs == np.min(z_abs)])
 
     if calculation_method == CalcMethod.FIELD_LINE_TRACER:
