@@ -310,7 +310,9 @@ class TestCADFiletype:
 
     # Commented out CADFileTypes dont work with basic shapes tested or needed more
     # FreeCAD imported, should be reviewed in future
-    @pytest.mark.longrun  # TODO(je-cook) some of these crash on CI (?)
+    # TODO @je-cook: some of these crash on CI (?)
+    # 3668
+    @pytest.mark.longrun
     @pytest.mark.parametrize(
         "name",
         [

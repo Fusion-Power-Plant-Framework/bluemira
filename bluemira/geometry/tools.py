@@ -659,7 +659,8 @@ def make_circle_arc_3P(  # noqa: N802
     -------
     Bluemira wire that contains the arc or circle
     """
-    # TODO: check what happens when the 3 points are in a line
+    # TODO @ivanmaione: check what happens when the 3 points are in a line
+    # 3589
     output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
     return BluemiraWire(output, label=label)
 
@@ -1677,8 +1678,9 @@ def signed_distance(
                 (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
             )
 
-        # TODO: Use a boolean difference operation to get the lengths of the
+        # TODO @je-cook: Use a boolean difference operation to get the lengths of the
         # overlapping wire segment(s)
+        # 3590
         return length
     # There are no intersections, return minimum distance
     return -d

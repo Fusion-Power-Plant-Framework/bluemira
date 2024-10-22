@@ -45,7 +45,8 @@ class GeoMeshable(meshing.Meshable):
         """
         Print the mesh options for this object.
         """
-        # TODO: improve the output of this function
+        # TODO @ivanmaione: improve the output of this function
+        # 3584
         output = []
         output.append(self.mesh_options)
         if hasattr(self, "boundary"):

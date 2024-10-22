@@ -29,10 +29,11 @@ if TYPE_CHECKING:
     from bluemira.structural.node import Node
 
 
-# TODO: Clean up some class stuff with cached_property decorators.
+# TODO @CoronelBuendia: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
 # Check speed and so on.
 # Only bother doing this if you don't rewrite in C++
+# 3663
 
 
 # @nb.jit(nopython=True, cache=True)

@@ -464,8 +464,10 @@ class FiniteElementModel:
             DOFs less than 6 or never constrianed
         """
         if self.n_fixed_dofs < 6:  # noqa: PLR2004
-            # TODO: check dimensionality of problem (1-D, 2-D, 3-D) and reduce
+            # TODO @CoronelBuendia: check dimensionality of problem
+            # (1-D, 2-D, 3-D) and reduce
             # number of fixed DOFs required accordingly.
+            # 3664
             raise StructuralError(
                 "Insufficient boundary conditions to carry out "
                 f"analysis:\n fixed_dofs: {self.fixed_dofs}"
@@ -526,7 +528,8 @@ class FiniteElementModel:
         pr:
             The reduced global nodal force vector of the problem
         """
-        # TODO: determine which approach is more suitable!
+        # TODO @je-cook: determine which approach is more suitable!
+        # 3665
 
         # Modification of K and P matrices to remove the rigid-body DOFs
         # This is the method recommended by Przemieniecki in the book

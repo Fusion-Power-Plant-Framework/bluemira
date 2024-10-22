@@ -496,8 +496,10 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
             # start_tangent=[0, 0, 1],
             # end_tangent=[0, 0, -1],
         )
-        # TODO: Enforce tangency of this bspline... causing issues with offsetting
-        # TODO: The real irony is that tangencies don't solve the problem..
+        # TODO @CoronelBuendia: Enforce tangency of this bspline...
+        # causing issues with offsetting
+        # The real irony is that tangencies don't solve the problem..
+        # 3586
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
@@ -789,7 +791,8 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             parameterisation wire
 
         """
-        # TODO Labels for f1, f2 and a1, a2
+        # TODO @je-cook: Labels for f1, f2 and a1, a2
+        # 3588
         _offset_x, _offset_z = super()._label_function(ax, shape)
         z_val = (self.variables.sl.value / 2) + self.variables.dz.value
         x_val = 0.5 + self.variables.x1.value
@@ -1362,8 +1365,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
-        # TODO add labels for:
-        #   height top upper dz flat tilt bottom lower l0s - l3s l0e - l3e
+        # TODO @je-cook: add labels for height top upper dz flat tilt bottom lower
+        # l0s - l3s l0e - l3e
+        # 3587
         _offset_x, _offset_z = super()._label_function(ax, shape)
 
 

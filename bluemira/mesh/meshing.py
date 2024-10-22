@@ -49,7 +49,9 @@ class MeshTags(IntEnum):
     CNTRPOINTS = 0
     CURVE = 1
     SURFACE = 2
-    CURVELOOP = -1  # TODO what is the num
+    # TODO @je-cook: what is the num
+    # 3655
+    CURVELOOP = -1
 
 
 class MeshTagsNC(IntEnum):
@@ -205,8 +207,9 @@ class Mesh:
         TypeError
             Meshfile must be a string or list of strings
         """
-        # todo: should be implemented also a check on the file extension. Only a
-        # limited type of file extensions is allowed by gmsh.
+        # TODO @ivanmaione: should be implemented also a check on the file extension.
+        # Only a limited type of file extensions is allowed by gmsh.
+        # 3656
         if isinstance(meshfile, str):
             meshfile = [meshfile]
         elif isinstance(meshfile, list):

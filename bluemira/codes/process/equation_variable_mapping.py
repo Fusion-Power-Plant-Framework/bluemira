@@ -679,7 +679,7 @@ ITERATION_VAR_MAPPING = {
     "fplhsep": 137,
     "rebco_thickness": 138,
     "copper_thick": 139,
-    "dr_tf_wp": 140,  # TODO: WTF
+    "dr_tf_wp": 140,
     "fcqt": 141,
     "nesep": 142,
     "f_coppera_m2": 143,

@@ -321,7 +321,8 @@ class TestCoilGroup:
         with pytest.raises(EquilibriaError):
             self.group.remove_coil("PF_1")
 
-        # TODO test nested removal
+        # TODO @je-cook: test nested removal
+        # 3669
 
     def test_resize(self):
         initdx = self.group.dx

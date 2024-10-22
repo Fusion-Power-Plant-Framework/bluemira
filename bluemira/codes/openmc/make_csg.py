@@ -413,12 +413,14 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
     return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
 
 
-# TODO: Raise issue/papercut to check if simplifying the boolean expressions can yield
+# TODO @OceanNuclear: Raise issue/papercut to check if simplifying the
+# boolean expressions can yield
 # speedup or not, and if so, we should attempt to simplify it further.
 # E.g. the expression (-1 ((-1107 -1) | -1108)) can be simplified to (-1107 | -1108) -1;
 # And don't even get me started on how much things can get simplified when ~ is involved.
 # It is possible that boolean expressions get condensed appropriately before getting
 # parsed onto openmc. I can't tell either way.
+# 3530
 
 
 def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
@@ -1727,7 +1729,8 @@ class BlanketCellArray:
             :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
         """
         cell_walls = pre_cell_array.cell_walls
-        # TODO: when contorl_id, we're forced to start at id=0
+        # TODO @je-cook: when contorl_id, we're forced to start at id=0
+        # 3531
 
         # left wall
         ccw_surf = csg.surface_from_2points(

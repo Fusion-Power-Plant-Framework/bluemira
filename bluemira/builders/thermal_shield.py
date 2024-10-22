@@ -252,7 +252,9 @@ class CryostatTSBuilder(Builder):
                 BluemiraFace(tf_o_wire),
             ]).boundary[0]
         except GeometryError:
-            # TODO: boolean_fuse probably shouldn't throw an error here...
+            # TODO @CoronelBuendia: boolean_fuse probably
+            # 3527
+            # shouldn't throw an error here...
             # the TF offset face is probably enclosed by the PF offset face
             cts_inner = pf_o_wire
 

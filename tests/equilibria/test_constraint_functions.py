@@ -21,7 +21,8 @@ from bluemira.equilibria.optimisation.constraint_funcs import (
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
-# TODO add control coil test
+# TODO @geograham: add control coil test
+# 3670
 
 
 class TestSimpleABConstraintFuntions:

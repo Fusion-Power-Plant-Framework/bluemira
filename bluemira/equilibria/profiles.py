@@ -150,7 +150,8 @@ def speedy_pressure(
     return pfunc
 
 
-# TODO(je-cook) non-precise type pyobject with the below decorator
+# TODO @je-cook: non-precise type pyobject with the below decorator
+# 3582
 # @nb.jit(cache=False, forceobj=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure_mask(
     ii: npt.NDArray[np.int64],
@@ -466,7 +467,8 @@ class Profile:
         if not o_points:
             _f, ax = plt.subplots()
             ax.contour(x, z, psi, cmap="viridis")
-            # TODO: Handle this better, with perhaps some alternatives
+            # TODO @CoronelBuendia: Handle this better, with perhaps some alternatives
+            # 3583
             # e.g.
             # nx, nz = psi.shape
             # psio = psi[nx//2, nz//2]

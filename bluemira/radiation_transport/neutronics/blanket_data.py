@@ -147,8 +147,9 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
         percent_type="ao",
         packing_fraction=0.642,
     )  # combination fraction type is by atom fraction
-    # todo: check if this packing fraction is correct (as set above)
+    # TODO @OceanNuclear:  check if this packing fraction is correct (as set above)
     # KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  # applying packing fraction
+    # 3657
 
 
 def duplicate_mat_as(
@@ -590,6 +591,7 @@ def _create_from_blanket_type(
         inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
         outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
         div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
-        # TODO get shield material
+        # TODO @OceanNuclear: get shield material
+        # 3659
         rad_shield=duplicate_mat_as(eurofer_mat, "div_sf", 604),
     )
