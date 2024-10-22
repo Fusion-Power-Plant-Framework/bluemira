@@ -1,12 +1,16 @@
 set -e
 
-if [ "$1" ]
-  then
-    PYTHON_VERSION="$1"
-else
-    PYTHON_VERSION="3.10"
-fi
+PYTHON_VERSION="3.10"
+ENVIRONMENT="bluemira"
+while getopts "e:p:" flag
+do
+    case "${flag}" in
+        e) ENVIRONMENT="${OPTARG}";;
+        p) PYTHON_VERSION="${OPTARG}";;
+    esac
+done
 
+echo $ENVIRONMENT
 # Get and install miniforge
 if [ ! -d "$HOME/miniforge" ]; then
   curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
@@ -21,8 +25,8 @@ source ~/.miniforge-init.sh
 
 # Create the bluemira conda environment
 sed s/".*python.*"/"  - python="$PYTHON_VERSION/g ./conda/environment.yml > ./conda/tmp_env.yml
-mamba env create -f ./conda/tmp_env.yml
-conda activate bluemira
+mamba env create -f ./conda/tmp_env.yml -n $ENVIRONMENT
+conda activate $ENVIRONMENT
 
 # Install bluemira
 python -m pip install --no-cache-dir -e .
