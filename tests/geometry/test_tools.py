@@ -39,6 +39,7 @@ from bluemira.geometry.tools import (
     fillet_wire_2D,
     find_clockwise_angle_2d,
     force_wire_to_spline,
+    import_cad,
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
@@ -328,7 +329,16 @@ class TestSolidFacePlaneIntersect:
             (xz_plane, cyl_rect, False),
             (yz_plane, cyl_rect, False),
             # tangent intersecting plane doesnt work at solid base??
-            pytest.param(xy_plane, twopir, False, marks=[pytest.mark.xfail]),
+            pytest.param(
+                xy_plane,
+                twopir,
+                False,
+                marks=[
+                    pytest.mark.xfail(
+                        reason="tangent intersecting plane doesnt work with solid base"
+                    )
+                ],
+            ),
             (BluemiraPlane(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, False),
             (BluemiraPlane(base=[0, 0, offset], axis=[0, 0, 1]), twopir, False),
         ],
@@ -662,23 +672,23 @@ class TestSavingCAD:
 
     def setup_method(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
-        self.test_file = Path(fp, "test_circ.stp")
+        self.test_file = Path(fp)
+        self.test_fn = "test_circ{}.stp"
         self.generated_file = "test_generated_circ.stp"
         self.obj = make_circle(5, axis=(1, 1, 1))
 
-    @pytest.mark.xfail(reason="Unknown, passes locally")
     def test_save_as_STP(self, tmp_path):
-        self._save_and_check(self.obj, save_as_STP, tmp_path)
+        self._save_and_check(self.obj, save_as_STP, tmp_path, legacy=True)
 
     def test_save_cad(self, tmp_path):
         self._save_and_check(self.obj, save_cad, tmp_path)
 
-    def _save_and_check(self, obj, save_func, tmp_path):
+    def _save_and_check(self, obj, save_func, tmp_path, *, legacy=False):
         # Can't mock out as written by freecad not python
         self.generated_file = tmp_path / self.generated_file
         save_func(obj, filename=str(self.generated_file).split(".")[0])
 
-        with open(self.test_file) as tf:
+        with open(self.test_file / self.test_fn.format("leg" if legacy else "")) as tf:
             lines1 = tf.readlines()
 
         with open(self.generated_file) as gf:
@@ -696,8 +706,34 @@ class TestSavingCAD:
                     # Attempt to ignore version number
                     if not re.search(self.STP_VERSION_RE, line):
                         lines += [line]
+        if legacy:
+            # legacy STP writer outputs weird things the content of which is correct
+            # the metadata can be garbage
+            assert len(lines) < 10
+        else:
+            assert lines == []
 
-        assert lines == []
+
+class TestImportCAD:
+    def test_save_and_import_wire(self, tmp_path):
+        obj = make_circle(5, axis=(1, 1, 1))
+        file = tmp_path / "file.stp"
+        save_cad(obj, filename=file, cad_format="stp")
+
+        obj2 = import_cad(file)
+
+        assert obj2.length == pytest.approx(obj.length)
+
+    def test_save_and_import_shell(self, tmp_path):
+        obj = extrude_shape(make_circle(5, axis=(1, 1, 1)), (0, 0, 1))
+        file = tmp_path / "file.stp"
+        save_cad(obj, filename=file, cad_format="stp")
+
+        obj2 = import_cad(file)
+
+        assert obj2.length == pytest.approx(obj.length)
+        assert obj2.area == pytest.approx(obj.area)
+        assert obj2.volume == pytest.approx(obj.volume)
 
 
 class TestMirrorShape:
@@ -757,9 +793,6 @@ class TestFilletChamfer2D:
     def test_simple_rectangle_chamfer(self, wire, radius):
         result = chamfer_wire_2D(wire, radius)
         n = 4 if wire.is_closed() else 2
-        # I'll be honest, I don't understand why this modified radius happens...
-        # I worry about what happens at other angles...
-        radius *= 0.5 * np.sqrt(2)
         correct_length = wire.length - n * 2 * radius
         correct_length += n * np.sqrt(2 * radius**2)
 
