@@ -186,3 +186,4 @@ plasmod_*.dat
 *.svg
 *.xml
 *.out
+eudemo/dagmc_models
