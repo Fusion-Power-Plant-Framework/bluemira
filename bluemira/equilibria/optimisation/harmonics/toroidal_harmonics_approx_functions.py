@@ -13,6 +13,10 @@ from math import factorial
 import numpy as np
 from scipy.special import gamma, poch
 
+# TODO add brief explanations of function choices
+# TODO add types and Parameters section to docstring?
+# TODO domains of validity
+
 
 def f_hypergeometric(a, b, c, z, n_max=20):
     """Evaluates the hypergeometric power series up to n_max.
@@ -43,6 +47,14 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     F:
         hypergeometric function result.
     """
+    # print(f"z = {z}")
+    # if isinstance(type(z), np.float64):
+
+    # else:
+    #     if abs(z)>1:
+    #         print(f"z = {z} is out of domain")
+    # if any(abs(i) > 1 for i in z):
+    #     print(f"z = {z} is out of domain")
     F = 0
     for s in range(n_max + 1):
         F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
