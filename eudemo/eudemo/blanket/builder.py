@@ -173,7 +173,7 @@ class BlanketBuilder(Builder):
                     f"{name}_{no}",
                     shape,
                     material=get_cached_material(
-                        self.build_config.get("material").get(name)
+                        self.build_config.get("material", {}).get(name)
                     ),
                 )
                 apply_component_display_options(

@@ -112,7 +112,9 @@ class TSUpperPortDuctBuilder(Builder):
         comp = PhysicalComponent(
             self.name,
             port,
-            material=get_cached_material(self.build_config.get("material").get("TS")),
+            material=get_cached_material(
+                self.build_config.get("material", {}).get("TS")
+            ),
         )
         apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
         void = PhysicalComponent(
@@ -216,7 +218,9 @@ class TSEquatorialPortDuctBuilder(Builder):
         comp = PhysicalComponent(
             self.name,
             port,
-            material=get_cached_material(self.build_config.get("material").get("TS")),
+            material=get_cached_material(
+                self.build_config.get("material", {}).get("TS")
+            ),
         )
 
         void = extrude_shape(yz_voidface, vec)
@@ -317,7 +321,9 @@ class VVUpperPortDuctBuilder(Builder):
         comp = PhysicalComponent(
             self.name,
             port,
-            material=get_cached_material(self.build_config.get("material").get("VV")),
+            material=get_cached_material(
+                self.build_config.get("material", {}).get("VV")
+            ),
         )
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         void = PhysicalComponent(
@@ -421,7 +427,9 @@ class VVEquatorialPortDuctBuilder(Builder):
         comp = PhysicalComponent(
             self.name,
             port,
-            material=get_cached_material(self.build_config.get("material").get("VV")),
+            material=get_cached_material(
+                self.build_config.get("material", {}).get("VV")
+            ),
         )
 
         void = extrude_shape(yz_voidface, vec)

@@ -167,7 +167,9 @@ class VVTSBuilder(Builder):
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
             material=[
-                get_cached_material(self.build_config["material"][self.VVTS]),
+                get_cached_material(
+                    self.build_config.get("material", {}).get(self.VVTS)
+                ),
                 Void("vacuum"),
             ],
         )
@@ -330,7 +332,9 @@ class CryostatTSBuilder(Builder):
             degree,
             enable_sectioning=True,
             material=[
-                get_cached_material(self.build_config.get("material").get(self.CRYO_TS)),
+                get_cached_material(
+                    self.build_config.get("material", {}).get(self.CRYO_TS)
+                ),
                 Void("vacuum"),
             ],
         )

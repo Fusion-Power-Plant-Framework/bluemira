@@ -307,7 +307,9 @@ class ITERGravitySupportBuilder(Builder):
         component = PhysicalComponent(
             "ITER-like gravity support",
             shape,
-            material=get_cached_material(self.build_config.get("material").get("GS")),
+            material=get_cached_material(
+                self.build_config.get("material", {}).get("GS")
+            ),
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -376,7 +378,7 @@ class PFCoilSupportBuilder(Builder):
             self.name,
             face,
             material=get_cached_material(
-                self.build_config.get("material").get("PF ICS")
+                self.build_config.get("material", {}).get("PF ICS")
             ),
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
@@ -923,7 +925,7 @@ class OISBuilder(Builder):
                 f"{self.OIS_XZ} {i}",
                 face,
                 material=get_cached_material(
-                    self.build_config.get("material").get(self.OIS_XZ)
+                    self.build_config.get("material", {}).get(self.OIS_XZ)
                 ),
             )
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])

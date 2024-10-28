@@ -218,6 +218,6 @@ class CryostatBuilder(Builder):
             BLUE_PALETTE["CR"][0],
             degree,
             material=get_cached_material(
-                self.build_config.get("material").get("Body"),
+                self.build_config.get("material", {}).get("Body"),
             ),
         )

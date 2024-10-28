@@ -263,7 +263,7 @@ class CryostatPortPlugBuilder(Builder):
                 f"{self.name} {i}",
                 plug,
                 material=get_cached_material(
-                    self.build_config.get("material").get("Port Plug")
+                    self.build_config.get("material", {}).get("Port Plug")
                 ),
             )
             void = PhysicalComponent(  # noqa: PLW2901
