@@ -247,7 +247,10 @@ def get_cached_material(
     -------
     The requested material.
     """
-    if material_name is None:
+    # mateiral name can also be an empty dict
+    # sometimes because of the dict default value used
+    # when calling .get
+    if not (material_name and isinstance(material_name, str)):
         return None
     if cache is None:
         cache = MaterialCache.get_instance()
