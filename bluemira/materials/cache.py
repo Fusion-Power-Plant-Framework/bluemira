@@ -18,6 +18,7 @@ from bluemira.materials.material import (
     BePebbleBed,
     Liquid,
     MassFractionMaterial,
+    Material,
     MaterialsError,
     NbSnSuperconductor,
     NbTiSuperconductor,
@@ -222,7 +223,9 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
     return cache
 
 
-def get_cached_material(material_name: str, cache: MaterialCache | None = None):
+def get_cached_material(
+    material_name: str | None, cache: MaterialCache | None = None
+) -> Material | None:
     """
     Get the named material from the MaterialCache.
 
@@ -239,6 +242,8 @@ def get_cached_material(material_name: str, cache: MaterialCache | None = None):
     -------
     The requested material.
     """
+    if material_name is None:
+        return None
     if cache is None:
         cache = MaterialCache.get_instance()
     return cache.get_material(material_name)

@@ -99,7 +99,7 @@ class DivertorBuilder(Builder):
             segment = PhysicalComponent(
                 f"{self.SEGMENT_PREFIX}_{no}",
                 shape,
-                material=get_cached_material(self.build_config["material"]),
+                material=get_cached_material(self.build_config.get("material")),
             )
             apply_component_display_options(segment, BLUE_PALETTE[self.DIV][no])
             segments.append(segment)
