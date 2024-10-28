@@ -122,7 +122,7 @@ class TestDuctConnection:
         self.params.tk_vv_single_wall.value = port_wall
         self.params.tk_vv_double_wall.value = port_wall * 2
         self.params.tf_wp_depth.value = y_offset
-        builder = VVUpperPortDuctBuilder(self.params, port_koz, port_koz)
+        builder = VVUpperPortDuctBuilder(self.params, {}, port_koz, port_koz)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -180,7 +180,7 @@ class TestDuctConnection:
         self.params.tk_vv_single_wall.value = 0
 
         with pytest.raises(ValueError):  # noqa: PT011
-            VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
+            VVUpperPortDuctBuilder(self.params, {}, self.port_koz, self.port_koz)
 
     @pytest.mark.parametrize("end", [1, 5])
     def test_BuilderError_on_too_small_port(self, end):
@@ -188,7 +188,7 @@ class TestDuctConnection:
         self.params.tk_vv_single_wall.value = 0.5
         self.params.tk_vv_double_wall.value = end
         self.params.tf_wp_depth.value = 2.0
-        builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
+        builder = VVUpperPortDuctBuilder(self.params, {}, self.port_koz, self.port_koz)
 
         with pytest.raises(BuilderError):
             builder.build()
