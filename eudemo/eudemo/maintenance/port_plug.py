@@ -24,6 +24,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
+from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -258,7 +259,11 @@ class CryostatPortPlugBuilder(Builder):
 
         plug_comps, void_comps = [], []
         for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
-            plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
+            plug = PhysicalComponent(  # noqa: PLW2901
+                f"{self.name} {i}",
+                plug,
+                material=get_cached_material(self.build_config["material"]["Port Plug"]),
+            )
             void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
             )

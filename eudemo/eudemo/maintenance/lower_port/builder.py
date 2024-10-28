@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from bluemira.materials.cache import get_cached_material
+
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
@@ -92,7 +94,11 @@ class TSLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(self.name, duct)
+        pc = PhysicalComponent(
+            self.name,
+            duct,
+            material=get_cached_material(self.build_config["material"]["TS"]),
+        )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE["TS"][0])
         apply_component_display_options(void, color=(0, 0, 0))
@@ -170,7 +176,11 @@ class VVLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(self.name, duct)
+        pc = PhysicalComponent(
+            self.name,
+            duct,
+            material=get_cached_material(self.build_config["material"]["VV"]),
+        )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
         apply_component_display_options(void, color=(0, 0, 0))

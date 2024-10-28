@@ -27,6 +27,7 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
+from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
@@ -216,4 +217,7 @@ class CryostatBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["CR"][0],
             degree,
+            material=get_cached_material(
+                self.build_config.get("material").get("Body"),
+            ),
         )

@@ -42,6 +42,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.materials.cache import get_cached_material
 from bluemira.optimisation import OptimisationProblem
 from bluemira.utilities.tools import floatify
 
@@ -303,7 +304,11 @@ class ITERGravitySupportBuilder(Builder):
         # Finally, make the floor block
         shape_list.append(self._make_floor_block(floatify(v1.x), floatify(v4.x)))
         shape = boolean_fuse(shape_list)
-        component = PhysicalComponent("ITER-like gravity support", shape)
+        component = PhysicalComponent(
+            "ITER-like gravity support",
+            shape,
+            material=get_cached_material(self.build_config.get("material").get("GS")),
+        )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
@@ -367,7 +372,13 @@ class PFCoilSupportBuilder(Builder):
         result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
         result.sort(key=lambda wire: -wire.length)
         face = BluemiraFace(result)
-        component = PhysicalComponent(self.name, face)
+        component = PhysicalComponent(
+            self.name,
+            face,
+            material=get_cached_material(
+                self.build_config.get("material").get("PF ICS")
+            ),
+        )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
@@ -908,7 +919,13 @@ class OISBuilder(Builder):
         components = []
         for i, ois_profile in enumerate(self.ois_xz_profiles):
             face = BluemiraFace(ois_profile)
-            component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
+            component = PhysicalComponent(
+                f"{self.OIS_XZ} {i}",
+                face,
+                material=get_cached_material(
+                    self.build_config.get("material").get(self.OIS_XZ)
+                ),
+            )
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)
         return components

@@ -1,7 +1,7 @@
 {
   "params": "$path:params.json",
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
@@ -106,6 +106,20 @@
     },
     "Divertor silhouette": {}
   },
+  "Blanket": {
+    "material": {
+      "IBS": "Homogenised_HCPB_2015_v3_BZ",
+      "OBS": "Homogenised_HCPB_2015_v3_BZ"
+    }
+  },
+  "Vacuum vessel": {
+    "material": {
+      "Body": "SS316-LN"
+    }
+  },
+  "Divertor": {
+    "material": "SS316-LN"
+  },
   "Neutronics": {
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 16800,
@@ -122,9 +136,14 @@
     "show_data": false
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
+    "material": {
+      "Winding Pack": "Toroidal_Field_Coil_2015",
+      "Casing": "Toroidal_Field_Coil_2015",
+      "Insulation": "Toroidal_Field_Coil_2015"
+    },
     "param_class": "TripleArc",
     "variables_map": {},
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
@@ -146,8 +165,13 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
+    "material": {
+      "Ground Insulation": "Poloidal_Field_Coil",
+      "Winding Pack": "Poloidal_Field_Coil",
+      "Casing": "Poloidal_Field_Coil"
+    },
     "verbose": false,
     "plot": true,
     "grid_settings": {
@@ -194,7 +218,12 @@
       }
     }
   },
-  "Upper Port": {},
+  "Upper Port": {
+    "material": {
+      "TS": "SS316-LN",
+      "VV": "SS316-LN"
+    }
+  },
   "Equatorial Port": {
     "params": {
       "ep_width": {
@@ -215,6 +244,10 @@
         "source": "Input",
         "long_name": "Equatorial port central axis z coordinate"
       }
+    },
+    "material": {
+      "TS": "SS316-LN",
+      "VV": "SS316-LN"
     }
   },
   "Lower Port": {
@@ -243,6 +276,10 @@
         "source": "Input",
         "long_name": "Width of the lower port"
       }
+    },
+    "material": {
+      "TS": "SS316-LN",
+      "VV": "SS316-LN"
     }
   },
   "Cryostat": {
@@ -265,6 +302,16 @@
         "source": "Input",
         "long_name": "Castellation offset value."
       }
+    },
+    "material": {
+      "Body": "SS316-LN",
+      "Port Plug": "SS316-LN"
+    }
+  },
+  "Thermal shield": {
+    "material": {
+      "VVTS": "SS316-LN",
+      "Cryostat TS": "SS316-LN"
     }
   },
   "RadiationShield": {
@@ -287,6 +334,14 @@
         "source": "Input",
         "long_name": "Castellation offset value."
       }
+    },
+    "material": "SS316-LN"
+  },
+  "Coil structures": {
+    "material": {
+      "PF ICS": "SS316-LN",
+      "TF OIS": "SS316-LN",
+      "GS": "SS316-LN"
     }
   }
 }

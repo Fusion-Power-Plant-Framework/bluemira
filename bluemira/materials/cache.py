@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import copy
 import json
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from bluemira.materials.material import (
     BePebbleBed,
@@ -26,6 +26,9 @@ from bluemira.materials.material import (
     Void,
 )
 from bluemira.materials.mixtures import HomogenisedMixture
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class MaterialCache:
@@ -56,6 +59,22 @@ class MaterialCache:
             mat_class.__name__: mat_class for mat_class in self.default_classes
         }
 
+    _instance: MaterialCache | None = None
+
+    @classmethod
+    def get_instance(cls) -> MaterialCache:
+        """
+        Get the singleton instance of the MaterialCache.
+
+        Returns
+        -------
+        MaterialCache
+            The singleton instance of the MaterialCache.
+        """
+        if cls._instance is None:
+            cls._instance = MaterialCache()
+        return cls._instance
+
     def __getattr__(self, value: str):
         """Allow attribute access to cached materials
 
@@ -84,14 +103,11 @@ class MaterialCache:
         ----------
         path:
             The path to the file from which to load the materials.
-
-        Returns
-        -------
-        The dictionary containing the loaded materials.
         """
         with open(path) as fh:
             mats_dict = json.load(fh)
-        return {name: self.load_from_dict(name, mats_dict) for name in mats_dict}
+        for name in mats_dict:
+            self.load_from_dict(name, mats_dict)
 
     def load_from_dict(
         self, mat_name: str, mats_dict: dict[str, Any], *, overwrite: bool = True
@@ -186,3 +202,48 @@ class MaterialCache:
                 "exists in the cache."
             )
         self._material_dict[mat_name] = mat
+
+
+def establish_material_cache(materials_json_paths: list[Path | str]):
+    """
+    Load the material data from the provided json files into the global material cache
+    instance.
+
+    This instance can be accessed using the `MaterialCache.get_instance()`
+    function.
+
+    Parameters
+    ----------
+    materials_json_paths:
+        A list of paths to the data files to load into the material cache.
+
+    Returns
+    -------
+    The material cache.
+    """
+    cache = MaterialCache.get_instance()
+    for path in materials_json_paths:
+        cache.load_from_file(path)
+    return cache
+
+
+def get_cached_material(material_name: str, cache: MaterialCache | None = None):
+    """
+    Get the named material from the MaterialCache.
+
+    If cache is None, the global cache instance is used.
+
+    Parameters
+    ----------
+    material_name:
+        The name of the material to retrieve from the dictionary
+    cache:
+        The material cache to retrieve the material from. By default the global cache.
+
+    Returns
+    -------
+    The requested material.
+    """
+    if cache is None:
+        cache = MaterialCache.get_instance()
+    return cache.get_material(material_name)

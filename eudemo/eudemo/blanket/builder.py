@@ -22,6 +22,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import slice_shape
+from bluemira.materials.cache import get_cached_material
 
 
 @dataclass
@@ -168,7 +169,11 @@ class BlanketBuilder(Builder):
             [self.OBS, self.params.n_bb_inboard.value + 1, obs_shapes],
         ]:
             for no, shape in enumerate(bs_shape):
-                segment = PhysicalComponent(f"{name}_{no}", shape)
+                segment = PhysicalComponent(
+                    f"{name}_{no}",
+                    shape,
+                    material=get_cached_material(self.build_config["material"][name]),
+                )
                 apply_component_display_options(
                     segment, color=BLUE_PALETTE[self.BB][base_no + no]
                 )

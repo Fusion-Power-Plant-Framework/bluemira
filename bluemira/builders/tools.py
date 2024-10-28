@@ -178,6 +178,7 @@ def circular_pattern_component(
                         f"with search index: {search_index_i}"
                     )
                 phy_comp.shape = shape
+                phy_comp.material = comp.material
 
     return sectors
 

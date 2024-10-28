@@ -23,6 +23,7 @@ from bluemira.equilibria.coils import Coil, CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
+from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -130,16 +131,32 @@ class PFCoilBuilder(Builder):
         :
             the winding pack, insulation and casing
         """
-        wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
+        wp = PhysicalComponent(
+            self.WINDING_PACK,
+            BluemiraFace(shape),
+            material=get_cached_material(
+                self.build_config["material"][self.WINDING_PACK]
+            ),
+        )
         idx = CoilType(self.params.ctype.value).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         ins_shape = offset_wire(shape, self.params.tk_insulation.value)
-        ins = PhysicalComponent(self.GROUND_INSULATION, BluemiraFace([ins_shape, shape]))
+        ins = PhysicalComponent(
+            self.GROUND_INSULATION,
+            BluemiraFace([ins_shape, shape]),
+            material=get_cached_material(
+                self.build_config["material"][self.GROUND_INSULATION]
+            ),
+        )
         apply_component_display_options(ins, color=BLUE_PALETTE["PF"][3])
 
         cas_shape = offset_wire(ins_shape, self.params.tk_casing.value)
-        casing = PhysicalComponent(self.CASING, BluemiraFace([cas_shape, ins_shape]))
+        casing = PhysicalComponent(
+            self.CASING,
+            BluemiraFace([cas_shape, ins_shape]),
+            material=get_cached_material(self.build_config["material"][self.CASING]),
+        )
         apply_component_display_options(casing, color=BLUE_PALETTE["PF"][2])
         return [wp, ins, casing]
 
@@ -170,7 +187,7 @@ class PFCoilBuilder(Builder):
         components = []
         for c in xz_components:
             shape = revolve_shape(c.shape, degree=sector_degree * n_sectors)
-            c_xyz = PhysicalComponent(c.name, shape)
+            c_xyz = PhysicalComponent(c.name, shape, material=c.material)
             apply_component_display_options(
                 c_xyz, color=c.plot_options.face_options["color"]
             )

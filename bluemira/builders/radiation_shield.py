@@ -26,6 +26,7 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
+from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -130,4 +131,5 @@ class RadiationShieldBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE[self.RS][0],
             degree,
+            material=get_cached_material(self.build_config["material"]),
         )

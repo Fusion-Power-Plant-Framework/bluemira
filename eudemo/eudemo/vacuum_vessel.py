@@ -30,7 +30,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     force_wire_to_spline,
 )
-from bluemira.materials.cache import Void
+from bluemira.materials.cache import Void, get_cached_material
 from eudemo.comp_managers import PortManagerMixin
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 
@@ -67,7 +67,8 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         xyz = component.get_component("xyz")
         vv_xyz = xyz.get_component("Sector 1")
         target_void = vv_xyz.get_component("Vessel voidspace 1").shape
-        target_shape = vv_xyz.get_component("Body 1").shape
+        vv_body = vv_xyz.get_component("Body 1")
+        target_shape = vv_body.shape
 
         if isinstance(ports, Component):
             ports = [ports]
@@ -89,7 +90,9 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         final_shape = boolean_fuse(new_shape_pieces)
         final_void = boolean_fuse([target_void, *tool_voids])
 
-        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, final_shape)
+        sector_body = PhysicalComponent(
+            VacuumVesselBuilder.BODY, final_shape, material=vv_body.material
+        )
         sector_void = PhysicalComponent(
             VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
         )
@@ -203,7 +206,11 @@ class VacuumVesselBuilder(Builder):
         outer_vv = force_wire_to_spline(outer_vv, n_edges_max=100)
         face = BluemiraFace([outer_vv, inner_vv])
 
-        body = PhysicalComponent(self.BODY, face)
+        body = PhysicalComponent(
+            self.BODY,
+            face,
+            material=get_cached_material(self.build_config["material"][self.BODY]),
+        )
         vacuum = PhysicalComponent(
             self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
         )
@@ -240,5 +247,8 @@ class VacuumVesselBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
-            material=[None, Void("vacuum")],
+            material=[
+                get_cached_material(self.build_config["material"][self.BODY]),
+                Void("vacuum"),
+            ],
         )

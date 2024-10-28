@@ -31,6 +31,7 @@ from bluemira.geometry.tools import (
     point_inside_shape,
 )
 from bluemira.materials import Void
+from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.reactor_config import ConfigParams
@@ -58,10 +59,11 @@ class TSUpperPortDuctBuilder(Builder):
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         self.x_min = port_koz.bounding_box.x_min
         self.x_max = port_koz.bounding_box.x_max
         self.z_max = cryostat_ts_xz.bounding_box.z_max + 0.5 * self.params.g_cr_ts.value
@@ -107,7 +109,11 @@ class TSUpperPortDuctBuilder(Builder):
         # Add start-cap for future boolean fragmentation help
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=get_cached_material(self.build_config["material"]["TS"]),
+        )
         apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
         void = PhysicalComponent(
             self.name + " voidspace",
@@ -157,9 +163,10 @@ class TSEquatorialPortDuctBuilder(Builder):
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         cryostat_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         # Put the end of the equatorial port half-way between cryostat ts and
         # cryostat
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
@@ -206,7 +213,11 @@ class TSEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=get_cached_material(self.build_config["material"]["TS"]),
+        )
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
@@ -240,10 +251,11 @@ class VVUpperPortDuctBuilder(Builder):
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         koz_offset = self.params.tk_ts.value + self.params.g_vv_ts.value
         self.x_min = port_koz.bounding_box.x_min + koz_offset
         self.x_max = port_koz.bounding_box.x_max - koz_offset
@@ -302,7 +314,11 @@ class VVUpperPortDuctBuilder(Builder):
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
 
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=get_cached_material(self.build_config["material"]["VV"]),
+        )
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         void = PhysicalComponent(
             self.name + " voidspace",
@@ -353,9 +369,10 @@ class VVEquatorialPortDuctBuilder(Builder):
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         cryostat_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         # Put the end of the equatorial port half-way between cryostat ts and
         # cryostat
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
@@ -401,7 +418,11 @@ class VVEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=get_cached_material(self.build_config["material"]["VV"]),
+        )
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
