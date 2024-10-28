@@ -25,8 +25,10 @@ Calculate solution due to a single wire as a sum of toroidal harmonics.
 """
 
 # %% [markdown]
-# # Example of calculating the flux solution due to a single wire as a sum of toroidal
-# harmonics
+# # Example of calculating the flux solution due to a single wire as a sum of toroidal harmonics
+#
+# This example illustrates how the magnetic flux due to a single wire can be
+# calculated by using toroidal harmonics about a focus point.
 
 # %% [markdown]
 # ### Imports
@@ -36,6 +38,8 @@ from math import factorial
 
 import matplotlib.pyplot as plt
 import numpy as np
+from IPython.display import display
+from PIL import Image
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
@@ -45,6 +49,32 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.utilities.tools import cylindrical_to_toroidal, toroidal_to_cylindrical
 
+# %% [markdown]
+# We want to calculate the psi field due to a circular wire using toroidal
+# harmonics.
+#
+# The relevant equations for psi in toroidal coordinates, $(\tau, \sigma)$, are
+#
+# $$ \psi = R A $$
+#
+# $$ A(\tau, \sigma) = \sum_{m=0}^{\infty} \sum_{\cos, \sin} A_m^{\cos, \sin} \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}} Q_{m-\frac{1}{2}}^1(\cosh \tau)_{\sin}^{\cos} (m \sigma)  $$
+#
+# $$ A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right) \frac{\sinh(\tau_c)}
+# {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c))_{\sin}^{\cos}(m \sigma_c) $$
+#
+# Here, $m$ is the poloidal mode number, and we have the following
+# $$ \Delta = \cosh \tau - \cos \sigma, $$
+# $$ \Delta_c = \cosh \tau_c - \cos \sigma_c $$
+# $$ \epsilon_0 = 1, \epsilon_{m\ge1}=2$$
+# $P_{\nu}^{\mu}$ is the associated Legendre function of the first kind, of degree $\nu$ and order $\mu$.
+# $Q_{\nu}^{\mu}$ is Olver's definition of the associated Legendre function of the second kind.
+# See [here](https://dlmf.nist.gov/14) for more information.
+#
+# The following image shows the psi field we are expecting to obtain at the end of this
+# example.
+
+single_wire_image = Image.open("single_wire_output_image.png")
+display(single_wire_image)
 # %% [markdown]
 # First we define the location in cylindrical coordinates of the focus $(R_0, z_0)$ and
 # of the wire $(R_c, z_c)$, and the current in the wire, $I_c$.
@@ -58,11 +88,12 @@ from bluemira.utilities.tools import cylindrical_to_toroidal, toroidal_to_cylind
 # $$ d_{1}^2 = (R_{c} + R_{0})^2 + (z_c - z_{0})^2 $$
 # $$ d_{2}^2 = (R_{c} - R_{0})^2 + (z_c - z_{0})^2 $$
 
-# We need a range of $\tau$ in order to create the grid over which we want to solve. We
-# specify this using the value of $\tau$ at the wire, $\tau_c$ and the approximate
-# minimum distance from the focus. This estimation is necessary as using coordinate
-# transform functions would result in divide by zero errors.
 #
+# We need the location of the wire in toroidal coordinates. We also need to
+# approximate tau at the focus instead of using coordinate transform functions
+# as this would result in divide by zero errors. We use these values to create a
+# grid in toroidal coordinates.
+
 # Once we have the grid in toroidal coordinates, we can convert this to cylindrical
 # coordinates for use later using the following relations:
 # $$ R = R_0 \frac{\sinh\tau}{\cosh \tau - \cos \sigma}$$
@@ -103,8 +134,9 @@ R, Z = toroidal_to_cylindrical(R_0=R_0, z_0=Z_0, tau=tau, sigma=sigma)
 # {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) $$
 # $$ A_m^{sin} = A_m \sin(m \sigma_c) $$
 # $$ A_m^{cos} = A_m \cos(m \sigma_c) $$
+# which are functions of $m$ and the coil position,
 # where $$ \Delta_c = \cosh(\tau_c) - \cos(\sigma_c) $$
-# and $$ factorial\_term = \prod_{0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right) $$
+# and $$ factorial\_term = \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right) $$
 #
 
 # %%

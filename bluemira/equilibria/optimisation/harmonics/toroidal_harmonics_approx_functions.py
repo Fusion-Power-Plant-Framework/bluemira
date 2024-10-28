@@ -13,16 +13,29 @@ from math import factorial
 import numpy as np
 from scipy.special import gamma, poch
 
+# TODO add brief explanations of function choices
+# TODO add types and Parameters section to docstring?
+# TODO domains of validity
 
-def f_hypergeometric(a, b, c, z, n_max):
+
+def f_hypergeometric(a, b, c, z, n_max=20):
     """Evaluates the hypergeometric power series up to n_max.
-
+    Valid for |z| < 1
     .. math::
         F(a, b; c; z) = \\sum_0^{n_max} \\frac{(a)_{s} (b)_{s}}{Gamma(c + s) s!} z^{s}
 
     See https://dlmf.nist.gov/15.2#E2 and https://dlmf.nist.gov/5.2#iii for more
     information.
+
     """
+    # print(f"z = {z}")
+    # if isinstance(type(z), np.float64):
+
+    # else:
+    #     if abs(z)>1:
+    #         print(f"z = {z} is out of domain")
+    # if any(abs(i) > 1 for i in z):
+    #     print(f"z = {z} is out of domain")
     F = 0
     for s in range(n_max + 1):
         F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
@@ -32,6 +45,7 @@ def f_hypergeometric(a, b, c, z, n_max):
 def my_legendre_p(lam, mu, x, n_max=20):
     """Evaluates the associated Legendre function of the first kind of degree lambda and order
     minus mu as a function of x. See https://dlmf.nist.gov/14.3#E18 for more information.
+    Works for half integer order.
 
     TODO check domain of validity? Assumed validity is 1<x<inf
 
@@ -53,9 +67,11 @@ def my_legendre_p(lam, mu, x, n_max=20):
 
 
 def my_legendre_q(lam, mu, x, n_max=20):
-    """Evaluates Olver's associated Legendre function of the second kind of degree lambda
-    and order minus mu as a function of x. See https://dlmf.nist.gov/14, https://dlmf.nist.gov/14.3#E10,
-    and https://dlmf.nist.gov/14.3#E7 for more information.
+    """Evaluates Olver's definition of the associated Legendre function of the second
+    kind of degree lambda and order minus mu as a function of x. See
+    https://dlmf.nist.gov/14, https://dlmf.nist.gov/14.3#E10, and
+    https://dlmf.nist.gov/14.3#E7 for more information.
+    Works for half integer order.
 
     TODO check domain of validity? Assumed validity is 1<x<inf
 
@@ -66,6 +82,7 @@ def my_legendre_q(lam, mu, x, n_max=20):
                                 + \\mu); \\lambda + \\frac{3}{2}; \\frac{1}{x^2})
 
         where F is the hypergeometric function defined above as f_hypergeometric.
+
 
     """
     a = 1 / 2 * (lam + mu) + 1
