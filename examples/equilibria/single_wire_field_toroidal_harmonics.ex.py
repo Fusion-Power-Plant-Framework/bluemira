@@ -25,8 +25,7 @@ Calculate solution due to a single wire as a sum of toroidal harmonics.
 """
 
 # %% [markdown]
-# # Example of calculating the flux solution due to a single wire as a sum of toroidal
-# harmonics
+# # Example of calculating the flux solution due to a single wire as a sum of toroidal harmonics
 
 # %% [markdown]
 # ### Imports
