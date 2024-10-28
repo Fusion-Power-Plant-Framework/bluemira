@@ -131,5 +131,5 @@ class RadiationShieldBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE[self.RS][0],
             degree,
-            material=get_cached_material(self.build_config.get("material")),
+            material=get_cached_material(self.build_config.get("material", {})),
         )
