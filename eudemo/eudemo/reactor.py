@@ -44,6 +44,7 @@ from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.materials.cache import establish_material_cache
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -291,9 +292,13 @@ def build_upper_port(
     """
     Build the upper port for the reactor.
     """
-    ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
+    ts_builder = TSUpperPortDuctBuilder(
+        params, build_config, upper_port_koz, cryostat_ts_xz_boundary
+    )
     ts_upper_port = ts_builder.build()
-    vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
+    vv_builder = VVUpperPortDuctBuilder(
+        params, build_config, upper_port_koz, cryostat_ts_xz_boundary
+    )
     vv_upper_port = vv_builder.build()
     return ts_upper_port, vv_upper_port
 
@@ -302,9 +307,9 @@ def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
     """
     Build the equatorial port for the reactor.
     """
-    builder = VVEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
+    builder = VVEquatorialPortDuctBuilder(params, build_config, cryostat_ts_xz_boundary)
     vv_eq_port = builder.build()
-    builder = TSEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
+    builder = TSEquatorialPortDuctBuilder(params, build_config, cryostat_ts_xz_boundary)
     ts_eq_port = builder.build()
     return ts_eq_port, vv_eq_port
 
@@ -410,6 +415,11 @@ def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary)
 
 if __name__ == "__main__":
     set_log_level("INFO")
+
+    establish_material_cache([
+        Path(CONFIG_DIR, "materials.json"),
+        Path(CONFIG_DIR, "mixtures.json"),
+    ])
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
     reactor = EUDEMO(
         "EUDEMO",

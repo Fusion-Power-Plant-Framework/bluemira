@@ -50,6 +50,7 @@ from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
+from bluemira.materials.cache import get_cached_material
 from bluemira.utilities.tools import get_class_from_module
 
 
@@ -655,7 +656,11 @@ class TFCoilBuilder(Builder):
         Winding pack x-y-z
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
-        winding_pack = PhysicalComponent(self.WP, wp_solid)
+        winding_pack = PhysicalComponent(
+            self.WP,
+            wp_solid,
+            material=get_cached_material(self.build_config["material"][self.WP]),
+        )
 
         apply_component_display_options(winding_pack, color=BLUE_PALETTE["TF"][1])
 
@@ -675,6 +680,7 @@ class TFCoilBuilder(Builder):
         insulation = PhysicalComponent(
             self.INS,
             ins_solid,
+            material=get_cached_material(self.build_config["material"][self.INS]),
         )
 
         apply_component_display_options(insulation, color=BLUE_PALETTE["TF"][2])
@@ -721,7 +727,11 @@ class TFCoilBuilder(Builder):
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
 
-        casing = PhysicalComponent(self.CASING, case_solid_hollow)
+        casing = PhysicalComponent(
+            self.CASING,
+            case_solid_hollow,
+            material=get_cached_material(self.build_config["material"][self.CASING]),
+        )
 
         apply_component_display_options(casing, color=BLUE_PALETTE["TF"][0])
 
