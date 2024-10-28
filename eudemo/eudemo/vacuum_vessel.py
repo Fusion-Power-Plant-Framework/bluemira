@@ -209,7 +209,9 @@ class VacuumVesselBuilder(Builder):
         body = PhysicalComponent(
             self.BODY,
             face,
-            material=get_cached_material(self.build_config["material"][self.BODY]),
+            material=get_cached_material(
+                self.build_config.get("material").get(self.BODY)
+            ),
         )
         vacuum = PhysicalComponent(
             self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
@@ -248,7 +250,7 @@ class VacuumVesselBuilder(Builder):
             [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
             material=[
-                get_cached_material(self.build_config["material"][self.BODY]),
+                get_cached_material(self.build_config.get("material").get(self.BODY)),
                 Void("vacuum"),
             ],
         )

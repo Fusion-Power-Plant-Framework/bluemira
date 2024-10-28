@@ -135,7 +135,7 @@ class PFCoilBuilder(Builder):
             self.WINDING_PACK,
             BluemiraFace(shape),
             material=get_cached_material(
-                self.build_config["material"][self.WINDING_PACK]
+                self.build_config.get("material").get(self.WINDING_PACK)
             ),
         )
         idx = CoilType(self.params.ctype.value).value - 1
@@ -146,7 +146,7 @@ class PFCoilBuilder(Builder):
             self.GROUND_INSULATION,
             BluemiraFace([ins_shape, shape]),
             material=get_cached_material(
-                self.build_config["material"][self.GROUND_INSULATION]
+                self.build_config.get("material").get(self.GROUND_INSULATION)
             ),
         )
         apply_component_display_options(ins, color=BLUE_PALETTE["PF"][3])
@@ -155,7 +155,9 @@ class PFCoilBuilder(Builder):
         casing = PhysicalComponent(
             self.CASING,
             BluemiraFace([cas_shape, ins_shape]),
-            material=get_cached_material(self.build_config["material"][self.CASING]),
+            material=get_cached_material(
+                self.build_config.get("material").get(self.CASING)
+            ),
         )
         apply_component_display_options(casing, color=BLUE_PALETTE["PF"][2])
         return [wp, ins, casing]

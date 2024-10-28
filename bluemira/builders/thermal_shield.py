@@ -330,7 +330,7 @@ class CryostatTSBuilder(Builder):
             degree,
             enable_sectioning=True,
             material=[
-                get_cached_material(self.build_config["material"][self.CRYO_TS]),
+                get_cached_material(self.build_config.get("material").get(self.CRYO_TS)),
                 Void("vacuum"),
             ],
         )

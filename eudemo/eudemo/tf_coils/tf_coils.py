@@ -742,7 +742,7 @@ class TFCoilBuilder(Builder):
         winding_pack = PhysicalComponent(
             self.WP,
             wp_solid,
-            material=get_cached_material(self.build_config["material"][self.WP]),
+            material=get_cached_material(self.build_config.get("material").get(self.WP)),
         )
 
         apply_component_display_options(winding_pack, color=BLUE_PALETTE["TF"][1])
@@ -766,7 +766,9 @@ class TFCoilBuilder(Builder):
         insulation = PhysicalComponent(
             self.INS,
             ins_solid,
-            material=get_cached_material(self.build_config["material"][self.INS]),
+            material=get_cached_material(
+                self.build_config.get("material").get(self.INS)
+            ),
         )
 
         apply_component_display_options(insulation, color=BLUE_PALETTE["TF"][2])
@@ -821,7 +823,9 @@ class TFCoilBuilder(Builder):
         casing = PhysicalComponent(
             self.CASING,
             case_solid_hollow,
-            material=get_cached_material(self.build_config["material"][self.CASING]),
+            material=get_cached_material(
+                self.build_config.get("material").get(self.CASING)
+            ),
         )
 
         apply_component_display_options(casing, color=BLUE_PALETTE["TF"][0])

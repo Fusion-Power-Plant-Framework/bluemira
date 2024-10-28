@@ -172,7 +172,9 @@ class BlanketBuilder(Builder):
                 segment = PhysicalComponent(
                     f"{name}_{no}",
                     shape,
-                    material=get_cached_material(self.build_config["material"][name]),
+                    material=get_cached_material(
+                        self.build_config.get("material").get(name)
+                    ),
                 )
                 apply_component_display_options(
                     segment, color=BLUE_PALETTE[self.BB][base_no + no]
