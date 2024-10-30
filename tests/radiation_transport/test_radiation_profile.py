@@ -68,14 +68,20 @@ class TestCoreRadiation:
             "T_e_sep": {"value": 0.16, "unit": "keV"},
         }
         cls.params = {
-            "sep_corrector": {"value": 5e-3, "unit": "dimensionless"},
+            "sep_corrector_omp": {"value": 5e-3, "unit": "dimensionless"},
+            "sep_corrector_imp": {"value": 5e-3, "unit": "dimensionless"},
             "det_t": {"value": 0.0015, "unit": "keV"},
             "eps_cool": {"value": 25.0, "unit": "eV"},
             "f_ion_t": {"value": 0.01, "unit": "keV"},
+            "main_ext": {"value": None, "unit": "m"},
+            "rec_ext_out_leg": {"value": 2, "unit": "m"},
+            "rec_ext_in_leg": {"value": 0.2, "unit": "m"},
             "fw_lambda_q_near_omp": {"value": 0.003, "unit": "m"},
             "fw_lambda_q_far_omp": {"value": 0.1, "unit": "m"},
             "fw_lambda_q_near_imp": {"value": 0.003, "unit": "m"},
             "fw_lambda_q_far_imp": {"value": 0.1, "unit": "m"},
+            "lambda_t_factor": {"value": 7, "unit": "dimensionless"},
+            "lambda_n_factor": {"value": 1 / 7, "unit": "dimensionless"},
             "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
             "k_0": {"value": 2000.0, "unit": "dimensionless"},
             "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
@@ -86,9 +92,10 @@ class TestCoreRadiation:
         }
 
         cls.config = {
-            "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
-            "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
-            "confinement": 0.1,
+            "f_imp_core": {"H": 1e-2, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
+            "f_imp_sol": {"H": 0, "He": 0, "Ar": 1e-3, "Xe": 0, "W": 0},
+            "confinement_core": 0.1,
+            "confinement_sol": 10,
         }
 
         profiles = midplane_profiles(params=midplane_params)
@@ -100,7 +107,8 @@ class TestCoreRadiation:
             midplane_profiles=profiles,
             core_impurities=cls.config["f_imp_core"],
             sol_impurities=cls.config["f_imp_sol"],
-            confinement_time=cls.config["confinement"],
+            confinement_time_core=cls.config["confinement_core"],
+            confinement_time_sol=cls.config["confinement_sol"],
         )
         source.analyse(firstwall_geom=fw_shape)
         source.rad_map(fw_shape)
@@ -157,7 +165,7 @@ class TestCoreRadiation:
     def test_calculate_core_distribution(self):
         # calls calculate_core_distribution() internally
         self.source.core_rad.calculate_core_radiation_map()
-        assert np.sum(self.source.core_rad.rad_tot) == pytest.approx(273.5583)
+        assert np.sum(self.source.core_rad.rad_tot) == pytest.approx(1295.7477)
         assert np.sum(self.source.core_rad.x_tot) == pytest.approx(55614.0533)
         assert np.sum(self.source.core_rad.z_tot) == pytest.approx(239.84336)
 

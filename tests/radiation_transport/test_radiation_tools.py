@@ -9,7 +9,6 @@ import pytest
 
 from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
-    calculate_z_species,
     exponential_decay,
     filtering_in_or_out,
     gaussian_decay,
@@ -34,21 +33,12 @@ def test_exponential_decay():
     assert gap_1 > gap_2 > gap_3
 
 
-def test_calculate_z_species():
-    t_ref = np.array([0, 10])
-    z_ref = np.array([10, 20])
-    frac = 0.1
-    t_test = 5
-    z = calculate_z_species(t_ref, z_ref, frac, t_test)
-    assert z == pytest.approx(22.5)
-
-
 def test_calculate_line_radiation_loss():
     ne = 1e20
     p_loss = 1e-31
     frac = 0.01
     rad = calculate_line_radiation_loss(ne, p_loss, frac)
-    assert rad == pytest.approx(0.796, abs=1e-3)
+    assert rad == pytest.approx(10, abs=1e-3)
 
 
 def test_interpolated_field_values():
