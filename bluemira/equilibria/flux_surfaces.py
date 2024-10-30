@@ -21,6 +21,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -128,7 +129,7 @@ class FluxSurface:
         kwargs["linewidth"] = kwargs.get("linewidth", 0.05)
         kwargs["color"] = kwargs.get("color", "r")
 
-        self.coords.plot(ax, **kwargs)
+        plot_coordinates(self.coords, ax=ax, **kwargs)
 
     def copy(self):
         """
@@ -589,7 +590,7 @@ class FieldLine:
         ax:
             Matplotlib axes onto which to plot
         """
-        self.coords.plot(ax=ax, **kwargs)
+        plot_coordinates(self.coords, ax=ax, **kwargs)
 
     def pointcare_plot(self, ax: plt.Axes | None = None):
         """

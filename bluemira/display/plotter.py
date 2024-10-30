@@ -831,7 +831,6 @@ def _get_ndim(coords: Coordinates) -> int:
 def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
     axes = ["x", "y", "z"]
     dims = [k for i, k in enumerate(axes) if not np.allclose(array[i][0], array[i])]
-
     if len(dims) == 1:
         # Stops error when flat lines are given (same coords in two axes)
         axes.remove(dims[0])  # remove variable axis
@@ -845,7 +844,6 @@ def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
             # Just default to x - z, this is pretty rare..
             # usually due to an offset x - z loop
             dims = ["x", "z"]
-
     return sorted(dims)
 
 
@@ -901,21 +899,22 @@ def plot_coordinates(
         }
         _plot_3d(coords, ax=ax, **kwargs)
 
-    a, b = _get_plan_dims(coords.xyz)
-    x, y = (getattr(coords, c) for c in [a, b])
-    marker = "o" if points else None
-    ax.set_xlabel(a + " [m]")
-    ax.set_ylabel(b + " [m]")
-    if fill:
-        ax.add_patch(PathPatch(coordinates_to_path(x, y), color=fc, alpha=alpha))
+    else:
+        a, b = _get_plan_dims(coords.xyz)
+        x, y = (getattr(coords, c) for c in [a, b])
+        marker = "o" if points else None
+        ax.set_xlabel(a + " [m]")
+        ax.set_ylabel(b + " [m]")
+        if fill:
+            ax.add_patch(PathPatch(coordinates_to_path(x, y), color=fc, alpha=alpha))
 
-    ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
+        ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
 
-    if points:
-        for i, p in enumerate(zip(x, y, strict=False)):
-            ax.annotate(i, xy=(p[0], p[1]))
+        if points:
+            for i, p in enumerate(zip(x, y, strict=False)):
+                ax.annotate(i, xy=(p[0], p[1]))
 
-    ax.set_aspect("equal")
+        ax.set_aspect("equal")
 
 
 def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
