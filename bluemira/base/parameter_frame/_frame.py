@@ -507,7 +507,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
         try:
-            quantity = pint.Quantity(f'{param_data["value"]}*{param_data["unit"]}')
+            quantity = pint.Quantity(f"{param_data['value']}*{param_data['unit']}")
         except pint.errors.PintError as pe:
             if param_data["value"] is None:
                 quantity = pint.Quantity(
