@@ -21,7 +21,7 @@ dependencies = [
     "click",
     "contourpy",
     "CoolProp",
-    "eqdsk>=0.4.0, <0.5.0",
+    "eqdsk>=0.5.0, <0.6.0",
     "fortranformat",
     "gmsh",
     "imageio",
