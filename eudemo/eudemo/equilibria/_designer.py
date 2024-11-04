@@ -672,8 +672,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         """
         if (save := self.build_config.get("save", False)) and self.file_path is None:
             raise ValueError(
-                "Cannot execute save equilibrium: "
-                "'file_path' missing from build config."
+                "Cannot execute save equilibrium: 'file_path' missing from build config."
             )
 
         lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
