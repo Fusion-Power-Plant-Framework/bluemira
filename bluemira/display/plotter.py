@@ -869,8 +869,6 @@ def plot_coordinates(
     alpha: float
         The transparency to plot the Coordinates fill with
     """
-    from bluemira.utilities.plot_tools import coordinates_to_path  # noqa: PLC0415
-
     ndim = _get_ndim(coords)
 
     fc = kwargs.get("facecolor", "royalblue")
@@ -888,33 +886,20 @@ def plot_coordinates(
     if ndim == 2 and ax is None:  # noqa: PLR2004
         ax = kwargs.get("ax", plt.gca())
 
+    kwargs = {
+        "edgecolor": ec,
+        "facecolor": fc,
+        "linewidth": lw,
+        "linestyle": ls,
+        "alpha": alpha,
+        "fill": fill,
+    }
+
     if ndim == 3 or (ndim == 2 and hasattr(ax, "zaxis")):  # noqa: PLR2004
-        kwargs = {
-            "edgecolor": ec,
-            "facecolor": fc,
-            "linewidth": lw,
-            "linestyle": ls,
-            "alpha": alpha,
-            "fill": fill,
-        }
         _plot_3d(coords, ax=ax, **kwargs)
 
     else:
-        a, b = _get_plan_dims(coords.xyz)
-        x, y = (getattr(coords, c) for c in [a, b])
-        marker = "o" if points else None
-        ax.set_xlabel(a + " [m]")
-        ax.set_ylabel(b + " [m]")
-        if fill:
-            ax.add_patch(PathPatch(coordinates_to_path(x, y), color=fc, alpha=alpha))
-
-        ax.plot(x, y, color=ec, marker=marker, linewidth=lw, linestyle=ls)
-
-        if points:
-            for i, p in enumerate(zip(x, y, strict=False)):
-                ax.annotate(i, xy=(p[0], p[1]))
-
-        ax.set_aspect("equal")
+        _plot_2d(coords=coords, ax=ax, points=points, **kwargs)
 
 
 def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
@@ -965,3 +950,39 @@ def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
 
     if not hasattr(ax, "zaxis"):
         ax.set_aspect("equal")
+
+
+def _plot_2d(coords: Coordinates, ax: Axes | None = None, *, points: bool, **kwargs):
+    from bluemira.utilities.plot_tools import coordinates_to_path  # noqa: PLC0415
+
+    if ax is None:
+        ax = plt.gca()
+
+    a, b = _get_plan_dims(coords.xyz)
+    x, y = (getattr(coords, c) for c in [a, b])
+    marker = "o" if points else None
+    ax.set_xlabel(a + " [m]")
+    ax.set_ylabel(b + " [m]")
+    if kwargs["fill"]:
+        ax.add_patch(
+            PathPatch(
+                coordinates_to_path(x, y),
+                color=kwargs["facecolor"],
+                alpha=kwargs["alpha"],
+            )
+        )
+
+    ax.plot(
+        x,
+        y,
+        color=kwargs["edgecolor"],
+        marker=marker,
+        linewidth=kwargs["linewidth"],
+        linestyle=kwargs["linestyle"],
+    )
+
+    if points:
+        for i, p in enumerate(zip(x, y, strict=False)):
+            ax.annotate(i, xy=(p[0], p[1]))
+
+    ax.set_aspect("equal")
