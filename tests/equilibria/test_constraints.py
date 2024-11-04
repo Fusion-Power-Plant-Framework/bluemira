@@ -7,7 +7,6 @@
 from pathlib import Path
 
 import numpy as np
-from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -28,7 +27,7 @@ class TestWeightedConstraints:
         # Generate a test equilibrium
         path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         fn = Path(path, "DN-DEMO_eqref.json")
-        eq = Equilibrium.from_eqdsk(fn, from_cocos=3, qpsi_sign=Sign.NEGATIVE)
+        eq = Equilibrium.from_eqdsk(fn, from_cocos=3, qpsi_positive=False)
 
         # Test that both default weights and custom weights can be applied
         for apply_weights in (True, False):

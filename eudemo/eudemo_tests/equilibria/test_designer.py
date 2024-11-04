@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
@@ -49,7 +48,7 @@ class TestEquilibriumDesigner:
 
         eq = designer.execute()
 
-        ref_eq = Equilibrium.from_eqdsk(eqdsk, from_cocos=3, qpsi_sign=Sign.NEGATIVE)
+        ref_eq = Equilibrium.from_eqdsk(eqdsk, from_cocos=3, qpsi_positive=False)
         assert eq.analyse_plasma() == ref_eq.analyse_plasma()
 
     def test_ValueError_on_init_given_read_mode_and_no_file_path(self):
