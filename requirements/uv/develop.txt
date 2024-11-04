@@ -58,7 +58,7 @@ docutils==0.21.2
     #   myst-parser
     #   sphinx
     #   sphinx-rtd-theme
-eqdsk==0.4.0
+eqdsk==0.5.0
     # via bluemira (pyproject.toml)
 exceptiongroup==1.2.2
     # via

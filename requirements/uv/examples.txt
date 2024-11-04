@@ -63,7 +63,7 @@ decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
     # via nbconvert
-eqdsk==0.4.0
+eqdsk==0.5.0
     # via bluemira (pyproject.toml)
 exceptiongroup==1.2.2
     # via
