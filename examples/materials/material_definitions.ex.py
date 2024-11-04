@@ -159,10 +159,7 @@ print(
     f"Strawberry electrical resistivity @ {ref_temperature}: "
     f"{strawberry.erho(ref_temperature)}"
 )
-print(
-    f"Cream electrical resistivity @ {ref_temperature}: "
-    f"{cream.erho(ref_temperature)}"
-)
+print(f"Cream electrical resistivity @ {ref_temperature}: {cream.erho(ref_temperature)}")
 print(
     f"StrawberriesAndCream electrical resistivity @ {ref_temperature}: "
     f"{strawberries_and_cream.erho(ref_temperature)}"
