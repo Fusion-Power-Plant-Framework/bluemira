@@ -9,7 +9,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
@@ -203,7 +202,7 @@ class TestRegressionSH:
         cls.eq = Equilibrium.from_eqdsk(
             Path(TEST_PATH, "SH_test_file.json").as_posix(),
             from_cocos=3,
-            qpsi_sign=Sign.NEGATIVE,
+            qpsi_positive=False,
         )
         cls.sh_coil_names, cls.bdry_r = coils_outside_fs_sphere(cls.eq)
         cls.test_colocation = collocation_points(
