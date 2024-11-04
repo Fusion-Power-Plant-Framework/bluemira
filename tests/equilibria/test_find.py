@@ -10,7 +10,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -85,7 +84,7 @@ class TestFindLCFSSeparatrix:
 
     def test_double_null(self):
         sof = Equilibrium.from_eqdsk(
-            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_positive=False
         )
         psi = sof.psi()
         o_points, x_points = sof.get_OX_points(psi)
@@ -131,7 +130,7 @@ class TestGetLegs:
     def setup_class(cls):
         cls.sn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"), from_cocos=7)
         cls.dn_eq = Equilibrium.from_eqdsk(
-            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+            Path(DATA, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_positive=False
         )
         cls.falsified_dn_eq = deepcopy(cls.sn_eq)
 

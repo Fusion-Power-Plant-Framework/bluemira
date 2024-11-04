@@ -9,7 +9,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
@@ -337,7 +336,7 @@ class TestFieldLine:
 def test_poloidal_angle():
     eq_name = "DN-DEMO_eqref.json"
     eq = Equilibrium.from_eqdsk(
-        Path(TEST_PATH, eq_name), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+        Path(TEST_PATH, eq_name), from_cocos=3, qpsi_positive=False
     )
     # Building inputs
     x_strike = 10.0

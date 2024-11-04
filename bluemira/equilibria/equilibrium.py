@@ -66,7 +66,6 @@ from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 if TYPE_CHECKING:
-    from eqdsk.models import Sign
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.find import Lpoint
@@ -125,8 +124,8 @@ class MHDState:
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         full_coil: bool = False,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid]:
@@ -143,8 +142,8 @@ class MHDState:
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
@@ -167,7 +166,7 @@ class MHDState:
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             **kwargs,
         )
         if "SCENE" in e.name and not isinstance(cls, Breakdown):
@@ -264,8 +263,8 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         full_coil: bool = False,
         **kwargs,
     ):
@@ -283,8 +282,8 @@ class FixedPlasmaEquilibrium(MHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
@@ -295,7 +294,7 @@ class FixedPlasmaEquilibrium(MHDState):
             from_cocos=from_cocos,
             to_cocos=to_cocos,
             full_coil=full_coil,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             **kwargs,
         )
         psi_ax = e.psimag
@@ -458,8 +457,8 @@ class CoilSetMHDState(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
         full_coil: bool = False,
@@ -478,8 +477,8 @@ class CoilSetMHDState(MHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         user_coils:
             Coilset provided by the user.
@@ -507,7 +506,7 @@ class CoilSetMHDState(MHDState):
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             full_coil=full_coil,
             **kwargs,
         )
@@ -650,8 +649,8 @@ class Breakdown(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
@@ -671,8 +670,8 @@ class Breakdown(CoilSetMHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
@@ -687,7 +686,7 @@ class Breakdown(CoilSetMHDState):
             filename,
             from_cocos,
             to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
@@ -1013,8 +1012,8 @@ class Equilibrium(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
@@ -1038,8 +1037,8 @@ class Equilibrium(CoilSetMHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
@@ -1054,7 +1053,7 @@ class Equilibrium(CoilSetMHDState):
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
