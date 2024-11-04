@@ -241,8 +241,7 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     if isinstance(point, Coordinates):
         if np.shape(point) != (3, 1):
             raise GeometryError(
-                "Can only cast the 3D coordinates of a single point"
-                "into a cadapi vertex!"
+                "Can only cast the 3D coordinates of a single pointinto a cadapi vertex!"
             )
         point = point.points[0]
     if len(point) != 3:  # noqa: PLR2004
