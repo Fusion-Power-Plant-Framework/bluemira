@@ -7,7 +7,6 @@
 from pathlib import Path
 
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -69,7 +68,7 @@ class TestMakeFS:
     def setup_class(cls):
         eq_name = "DN-DEMO_eqref.json"
         cls.eq = Equilibrium.from_eqdsk(
-            Path(TEST_PATH, eq_name), from_cocos=3, qpsi_sign=Sign.NEGATIVE
+            Path(TEST_PATH, eq_name), from_cocos=3, qpsi_positive=False
         )
         cls.o_point = cls.eq.get_OX_points()[0][0]  # 1st o_point
         cls.yz_plane = BluemiraPlane.from_3_points(
