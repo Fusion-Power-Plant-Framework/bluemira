@@ -212,8 +212,7 @@ class Teardown(CodesTeardown):
             return None
 
         bluemira_print(
-            f"{parameter_name} has become obsolete and set to "
-            f"{updated_parameter_name}."
+            f"{parameter_name} has become obsolete and set to {updated_parameter_name}."
         )
         return output_value
 

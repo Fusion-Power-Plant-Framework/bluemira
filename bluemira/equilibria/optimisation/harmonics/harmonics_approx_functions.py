@@ -720,9 +720,7 @@ def spherical_harmonic_approximation(
         # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 
-        bluemira_print(
-            f"Fit metric value = {fit_metric_value} using" f" {degree} degrees."
-        )
+        bluemira_print(f"Fit metric value = {fit_metric_value} using {degree} degrees.")
 
         if fit_metric_value <= acceptable_fit_metric:
             break

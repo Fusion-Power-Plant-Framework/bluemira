@@ -117,7 +117,7 @@ class PlasmaSourceParameters:
             )
         if self.aspect_ratio < 1.0:
             raise GeometryError(
-                "By construction, tokamak aspect ratio " "can't be smaller than 1."
+                "By construction, tokamak aspect ratio can't be smaller than 1."
             )
         if self.elongation < 1.0:
             raise GeometryError("Elongation can't be smaller than 1")
