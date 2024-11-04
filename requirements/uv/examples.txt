@@ -46,7 +46,9 @@ cffi==1.17.1
 charset-normalizer==3.4.0
     # via requests
 click==8.1.7
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   eqdsk
 comm==0.2.2
     # via ipykernel
 contourpy==1.3.0

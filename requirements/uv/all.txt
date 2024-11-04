@@ -58,6 +58,7 @@ cherab==1.5.0
 click==8.1.7
     # via
     #   bluemira (pyproject.toml)
+    #   eqdsk
     #   jupyter-cache
 comm==0.2.2
     # via ipykernel
