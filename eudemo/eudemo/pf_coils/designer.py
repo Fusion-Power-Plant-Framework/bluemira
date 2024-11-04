@@ -140,7 +140,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         # TODO: Load up equilibria from files and add states to manager
 
         eqdsk = EQDSKInterface(**data[next(iter(data))])
-        eqdsk.identify(as_cocos=3, qpsi_sign=-1)
+        eqdsk.identify(as_cocos=3, qpsi_positive=False)
 
         return CoilSet.from_group_vecs(eqdsk)
 
