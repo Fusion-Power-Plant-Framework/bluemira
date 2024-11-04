@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.models import Sign
 
 from bluemira.base import constants
 from bluemira.base.constants import raw_uc
@@ -46,7 +45,7 @@ class TestCoreRadiation:
     def setup_class(cls):
         eq_name = "DN-DEMO_eqref.json"
         filename = Path(EQ_PATH, eq_name)
-        eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_sign=Sign.NEGATIVE)
+        eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_positive=False)
         fw_name = "DN_fw_shape.json"
         filename = Path(TEST_PATH, fw_name)
         fw_shape = Coordinates.from_json(filename)
