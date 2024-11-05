@@ -29,6 +29,7 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
 )
 from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
+    calculate_total_radiated_power,
     electron_density_and_temperature_sol_decay,
     exponential_decay,
     gaussian_decay,
@@ -59,7 +60,9 @@ if TYPE_CHECKING:
 class RadiationSourceParams(ParameterFrame):
     """Radiaition source parameter frame"""
 
-    sep_corrector: Parameter[float]
+    sep_corrector_omp: Parameter[float]
+    """Separation correction for double and single null plasma"""
+    sep_corrector_imp: Parameter[float]
     """Separation correction for double and single null plasma"""
     alpha_n: Parameter[float]
     """Density profile factor"""
@@ -71,6 +74,12 @@ class RadiationSourceParams(ParameterFrame):
     """electron energy loss"""
     f_ion_t: Parameter[float]
     """Hydrogen first ionization"""
+    main_ext: Parameter[float]
+    """radiation region extention in main chamber"""
+    rec_ext_out_leg: Parameter[float]
+    """recyccling region extetion in outer leg"""
+    rec_ext_in_leg: Parameter[float]
+    """recyccling region extetion in inner leg"""
     fw_lambda_q_far_imp: Parameter[float]
     """Lambda_q far SOL imp"""
     fw_lambda_q_far_omp: Parameter[float]
@@ -79,6 +88,10 @@ class RadiationSourceParams(ParameterFrame):
     """Lambda_q near SOL imp"""
     fw_lambda_q_near_omp: Parameter[float]
     """Lambda_q near SOL omp"""
+    lambda_t_factor: Parameter[float]
+    """Lambda_t factor for non conduction-limited regime"""
+    lambda_n_factor: Parameter[float]
+    """Lambda_n factor for non conduction-limited regime"""
     gamma_sheath: Parameter[float]
     """sheath heat transmission coefficient"""
     k_0: Parameter[float]
@@ -192,7 +205,7 @@ class Radiation:
 
         Returns
         -------
-        te:
+        te [keV]:
             poloidal distribution of electron temperature
 
         Raises
@@ -370,18 +383,25 @@ class CoreRadiation(Radiation):
     ):
         super().__init__(eq, params)
 
-        self.H_content = impurity_content["H"]
-        self.impurities_content = [
-            frac for key, frac in impurity_content.items() if key != "Ar"
-        ]
+        # Picking impurity species
+        included_species = list(impurity_data)
+
+        # Using the selected list to build other lists
+        self.impurities_content = [impurity_content[key] for key in included_species]
+
         self.imp_data_t_ref = [
-            data["T_ref"] for key, data in impurity_data.items() if key != "Ar"
+            constants.raw_uc(impurity_data[key]["T_ref"], "eV", "keV")
+            for key in included_species
         ]
-        self.imp_data_l_ref = [
-            data["L_ref"] for key, data in impurity_data.items() if key != "Ar"
-        ]
+
+        self.imp_data_l_ref = [impurity_data[key]["L_ref"] for key in included_species]
+
+        self.imp_data_z_ref = [impurity_data[key]["z_ref"] for key in included_species]
+
+        # Store impurity symbols
         self.impurity_symbols = impurity_content.keys()
 
+        # Store the midplane profiles
         self.profiles = midplane_profiles
 
     def calculate_mp_radiation_profile(self):
@@ -417,27 +437,26 @@ class CoreRadiation(Radiation):
 
         Returns
         -------
-        rad:
-            Line core radiation.
-            For specie and each closed flux line in the core
+        rad :
+            Line core radiation for each impurity species
+            and for each closed flux line in the core.
         """
-        # Closed flux tubes within the separatrix
+        # Collect closed flux tubes within the separatrix
         self.flux_tubes = self.collect_flux_tubes(self.profiles.psi_n)
 
-        # For each flux tube, poloidal density profile.
+        # Calculate poloidal density profile for each flux tube
         self.ne_pol = [
             self.flux_tube_pol_n(ft, n, core=True)
             for ft, n in zip(self.flux_tubes, self.profiles.ne, strict=False)
         ]
-
-        # For each flux tube, poloidal temperature profile.
+        # Calculate poloidal temperature profile for each flux tube
         self.te_pol = [
             self.flux_tube_pol_t(ft, t, core=True)
             for ft, t in zip(self.flux_tubes, self.profiles.te, strict=False)
         ]
 
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the radiative power loss function.
+        # Calculate the radiative power loss function for each impurity
+        # species and for each flux tube
         self.loss_f = [
             [radiative_loss_function_values(t, t_ref, l_ref) for t in self.te_pol]
             for t_ref, l_ref in zip(
@@ -445,14 +464,16 @@ class CoreRadiation(Radiation):
             )
         ]
 
-        # For each impurity species and for each flux tube,
-        # poloidal distribution of the line radiation loss.
+        # Calculate the line radiation loss for each impurity species
+        # and for each flux tube
         self.rad = [
             [
                 calculate_line_radiation_loss(n, l_f, fi)
-                for n, l_f in zip(self.ne_pol, ft, strict=False)
+                for n, l_f in zip(self.ne_pol, loss_per_species, strict=False)
             ]
-            for ft, fi in zip(self.loss_f, self.impurities_content, strict=False)
+            for loss_per_species, fi in zip(
+                self.loss_f, self.impurities_content, strict=False
+            )
         ]
 
         return self.rad
@@ -467,6 +488,9 @@ class CoreRadiation(Radiation):
         self.x_tot = np.concatenate([flux_tube.x for flux_tube in self.flux_tubes])
         self.z_tot = np.concatenate([flux_tube.z for flux_tube in self.flux_tubes])
         self.rad_tot = np.concatenate(self.total_rad)
+
+        # Calculate the total radiated power
+        return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
     def radiation_distribution_plot(
         self, flux_tubes: np.ndarray, power_density: np.ndarray, ax=None
@@ -599,14 +623,14 @@ class ScrapeOffLayerRadiation(Radiation):
             })
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector.value
+        self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector_omp.value
         # magnetic field components at the midplane
         self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
         b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
         self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
 
         if self.eq.is_double_null:
-            self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector.value
+            self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector_imp.value
             self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
@@ -854,6 +878,8 @@ class ScrapeOffLayerRadiation(Radiation):
             fw_lambda_q_far,
             dx,
             f_exp=f_p,
+            t_factor_det=self.params.lambda_t_factor.value,
+            n_factor_det=self.params.lambda_n_factor.value,
         )
 
         return te_prof, ne_prof
@@ -961,7 +987,7 @@ class ScrapeOffLayerRadiation(Radiation):
         -------
         t_pol:
             temperature poloidal profile along each
-            flux tube within the specified set [eV]
+            flux tube within the specified set [keV]
         n_pol:
             density poloidal profile along each
             flux tube within the specified set [1/m^3]
@@ -982,7 +1008,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=1,
+                rec_ext=self.params.rec_ext_out_leg.value,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -992,7 +1018,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=0.2,
+                rec_ext=self.params.rec_ext_in_leg.value,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -1020,6 +1046,7 @@ class ScrapeOffLayerRadiation(Radiation):
             alpha = self.alpha_lfs
             b_tot_tar = self.b_tot_out_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
+            sep_corrector = self.params.sep_corrector_omp.value
         else:
             t_u_kev = self.t_imp
             b_pol_tar = self.b_pol_inn_tar
@@ -1029,6 +1056,7 @@ class ScrapeOffLayerRadiation(Radiation):
             alpha = self.alpha_hfs
             b_tot_tar = self.b_tot_inn_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
+            sep_corrector = self.params.sep_corrector_imp.value
 
         # Coverting needed parameter units
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
@@ -1055,9 +1083,9 @@ class ScrapeOffLayerRadiation(Radiation):
             r_sep_mp,
             self.points["o_point"]["z"],
             self.params.k_0.value,
-            self.params.sep_corrector.value,
+            sep_corrector,
             firstwall_geom,
-            lfs,
+            lfs=lfs,
         )
 
         # exit of radiation region
@@ -1101,12 +1129,12 @@ class ScrapeOffLayerRadiation(Radiation):
             t_u_ev,
             lfs=lfs,
         )
+
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
             detachment=detachment,
         )
-
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
@@ -1309,7 +1337,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
         ]
-
         self.imp_data_t_ref = [
             data["T_ref"] for key, data in impurity_data.items() if key != "H"
         ]
@@ -1404,10 +1431,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 flux_tubes=getattr(self, f"flux_tubes_{side}_{low_up}"),
                 x_strike=getattr(self, f"x_strike_{side}"),
                 z_strike=getattr(self, f"z_strike_{side}"),
-                main_ext=None,
+                main_ext=self.params.main_ext.value,
                 firstwall_geom=firstwall_geom,
                 pfr_ext=None,
-                rec_ext=2,
+                rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
                 detachment=False,
                 lfs=side == "lfs",
@@ -1555,6 +1582,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             )
         )
 
+        # Calculate the total radiated power
+        return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
+
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
         """
         Plot poloiadal radiation distribution
@@ -1681,7 +1711,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 main_ext=1,
                 firstwall_geom=firstwall_geom,
                 pfr_ext=None,
-                rec_ext=2,
+                rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
                 detachment=False,
                 lfs=side == "lfs",
@@ -1810,7 +1840,8 @@ class RadiationSource:
         midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
-        confinement_time: float = 0.1,
+        confinement_time_core: float = np.inf,
+        confinement_time_sol: float = 10,
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -1819,10 +1850,11 @@ class RadiationSource:
         impurities_list_core = list(core_impurities)
         impurities_list_sol = list(sol_impurities)
         impurity_data_core = get_impurity_data(
-            impurities_list=impurities_list_core, confinement_time_ms=confinement_time
+            impurities_list=impurities_list_core,
+            confinement_time_ms=confinement_time_core,
         )
         impurity_data_sol = get_impurity_data(
-            impurities_list=impurities_list_sol, confinement_time_ms=confinement_time
+            impurities_list=impurities_list_sol, confinement_time_ms=confinement_time_sol
         )
 
         self.imp_content_core = core_impurities

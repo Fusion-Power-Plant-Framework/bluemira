@@ -23,6 +23,7 @@ from scipy.interpolate import (
     interp1d,
     interp2d,
 )
+from scipy.spatial import Delaunay
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
 from bluemira.base.look_and_feel import bluemira_error
@@ -294,12 +295,14 @@ def specific_point_temperature(
     # Distinction between lfs and hfs
     d = sep_corrector if lfs else -sep_corrector
 
+    forward = False if z_p == z_mp else (lfs and z_p < z_mp) or (not lfs and z_p > z_mp)
+
     # Distance between the chosen point and the the target
     l_p = calculate_connection_length_flt(
         eq,
         x_p + (d * f_exp),
         z_p,
-        forward=lfs,
+        forward=forward,
         first_wall=firstwall_geom,
     )
     # connection length from the midplane to the target
@@ -308,12 +311,13 @@ def specific_point_temperature(
             eq,
             r_sep_mp,
             z_mp,
-            forward=lfs,
+            forward=forward,
             first_wall=firstwall_geom,
         )
         if connection_length is None
         else connection_length
     )
+
     # connection length from mp to p point
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
@@ -329,7 +333,8 @@ def electron_density_and_temperature_sol_decay(
     lambda_q_far: float,
     dx_mp: float,
     f_exp: float = 1,
-    near_sol_gradient: float = 0.99,
+    t_factor_det: float | None = None,
+    n_factor_det: float | None = None,
 ) -> tuple[np.ndarray, ...]:
     """
     Generic radial esponential decay to be applied from a generic starting point
@@ -353,9 +358,10 @@ def electron_density_and_temperature_sol_decay(
         Gaps between flux tubes at the mp [m]
     f_exp:
         flux expansion. Default value=1 referred to the mid-plane
-    near_sol_gradient:
-        temperature and density drop within the near scrape-off layer
-        from the separatrix value
+    t_factor_det: temperature decay length scaling factor in relation
+        to the power decay length.
+    n_factor_det: density decay length scaling factor in relation
+        to the temperature decay length.
 
     Returns
     -------
@@ -363,16 +369,31 @@ def electron_density_and_temperature_sol_decay(
         radial decayed temperatures through the SoL. Unit [eV]
     ne_sol:
         radial decayed densities through the SoL. unit [1/m^3]
+
+    Notes
+    -----
+        Temperature and density radially decay different than power.
+        At the mid-plane, the decay length relationships are usually
+        assumed to be lambda_q = 0.285*lambda_t and lambda_n = 0.333*lambda_t.
+        In more radiative regions, especially in a detached regime, they may change.
+
+    References
+    ----------
+        [1] Stangeby, P. C. (2000). The Plasma Boundary of Magnetic Fusion Devices.
+            Institute of Physics Publishing.
+        [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
+            Nuclear Fusion, 47(6), S203.
     """
     # temperature and density decay factors
-    t_factor = 7 / 2
-    n_factor = 1
+    if f_exp == 1:
+        t_factor = 7 / 2
+        n_factor = 1 / 3
+    else:
+        t_factor = t_factor_det
+        n_factor = n_factor_det
 
     # radial distance of flux tubes from the separatrix
     dr = dx_mp * f_exp
-
-    # temperature and density percentage decay within the far SOL
-    far_sol_gradient = 1 - near_sol_gradient
 
     # power decay length modified according to the flux expansion
     lambda_q_near *= f_exp
@@ -380,16 +401,10 @@ def electron_density_and_temperature_sol_decay(
 
     # Assuming conduction-limited regime.
     lambda_t_near = t_factor * lambda_q_near
-    lambda_t_far = t_factor * lambda_q_far
     lambda_n_near = n_factor * lambda_t_near
-    lambda_n_far = n_factor * lambda_t_far
 
-    te_sol = (near_sol_gradient * t_sep) * np.exp(-dr / lambda_t_near) + (
-        far_sol_gradient * t_sep
-    ) * np.exp(-dr / lambda_t_far)
-    ne_sol = (near_sol_gradient * n_sep) * np.exp(-dr / lambda_n_near) + (
-        far_sol_gradient * n_sep
-    ) * np.exp(-dr / lambda_n_far)
+    te_sol = (t_sep) * np.exp(-dr / lambda_t_near)
+    ne_sol = (n_sep) * np.exp(-dr / lambda_n_near)
 
     return te_sol, ne_sol
 
@@ -542,30 +557,155 @@ def ion_front_distance(
     return abs(z_strike - x_pt_z) - abs(z_ext)
 
 
-def calculate_z_species(
-    t_ref: np.ndarray, z_ref: np.ndarray, species_frac: float, te: np.ndarray
-) -> np.ndarray:
+def calculate_zeff(
+    impurities_content: np.ndarray,
+    imp_data_z_ref: np.ndarray,
+    imp_data_t_ref: np.ndarray,
+    impurity_symbols: np.ndarray,
+    te: np.ndarray,
+):
     """
-    Calculation of species ion charge, in condition of quasi-neutrality.
+    Calculate the effective charge (Z_eff) for the plasma core.
+
+    This function computes Z_eff based on the species information
+    and the temperature profile.
 
     Parameters
     ----------
-    t_ref:
-        temperature reference [keV]
-    z_ref:
-        effective charge reference [m]
-    species_frac:
-        fraction of relevant impurity
-    te:
-        electron temperature [keV]
+    impurities_content: np.array
+        Content of each impurity species in the plasma.
+    imp_data_z_ref: np.array
+        Reference effective charge values corresponding to the reference temperatures.
+    imp_data_t_ref: np.array
+        Reference temperatures (in keV) for interpolation.
+    impurity_symbols: np.array
+        All the impurity species symbols in the plasma.
+    te : np.ndarray
+        Electron temperature profile (in keV) at various positions in the plasma.
 
     Returns
     -------
-        species ion charge
+    zeff: np.ndarray
+        Effective charge profile for each plasma position.
+    avg_zeff: float
+        Average Z_eff across the plasma.
+    total_fraction: float
+        Total fraction of impurities.
+    intermediate_values: dict
+        A dictionary containing species fractions, average charge states, and symbols.
     """
-    z_interp = interp1d(t_ref, z_ref)
+    # Get the electron temperature profile (flattened) [keV]
+    te = np.concatenate(te)
 
-    return species_frac * z_interp(te) ** 2
+    # Initialize lists to hold species fractions and charge states
+    species_fractions = []
+    species_zi = []
+    symbols = []
+
+    # Include other species
+    for frac, z_r, t_r, symbol in zip(
+        impurities_content,
+        imp_data_z_ref,
+        imp_data_t_ref,
+        impurity_symbols,
+        strict=False,
+    ):
+        species_fractions.append(frac)
+        symbols.append(symbol)
+
+        # Ensure data is in correct numerical format
+        t_ref = np.array(t_r, dtype=float)
+        z_ref = np.array(z_r, dtype=float)
+        te = np.array(te, dtype=float)
+        z_interp = interp1d(t_ref, z_ref, fill_value="extrapolate", bounds_error=False)
+        z_i = z_interp(te)
+        species_zi.append(z_i)
+
+    # Convert lists to numpy arrays for vectorized operations
+    z_i_all = np.array(species_zi)
+    f_i_all = np.array(species_fractions)[:, np.newaxis]
+
+    # Compute numerator and denominator for Zeff at each position
+    numerator = np.sum(f_i_all * z_i_all**2, axis=0)
+    denominator = np.sum(f_i_all * z_i_all, axis=0)
+
+    # Calculate Zeff at each position
+    zeff = numerator / denominator
+
+    # Compute average Zeff over all positions
+    avg_zeff = np.mean(zeff)
+
+    # Calculate intermediate values to return as a dictionary
+    intermediate_values = {
+        "species_fractions": species_fractions,
+        "species_zi": [np.mean(z_i) for z_i in species_zi],
+        "symbols": symbols,
+    }
+
+    # Calculate total fraction of impurities
+    total_fraction = np.sum(species_fractions)
+
+    return zeff, avg_zeff, total_fraction, intermediate_values
+
+
+def calculate_total_radiated_power(
+    x: np.ndarray, z: np.ndarray, p_rad: np.ndarray
+) -> float:
+    """
+    Calculate the total radiated power from the radiation map.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Array of x-coordinates (in meters) of the radiation map.
+    z : np.ndarray
+        Array of z-coordinates (in meters) of the radiation map.
+    Prad : np.ndarray
+        Array of radiation power density values (in MW/m³)
+        at the corresponding x and z coordinates.
+
+    Returns
+    -------
+    P_total : float
+        Total radiated power in megawatts (MW).
+    """
+    # Stack x and z coordinates
+    points = np.column_stack((x, z))
+
+    # Delaunay triangulation
+    tri = Delaunay(points)
+
+    # Initialize total power
+    p_total = 0.0
+
+    # Loop over each triangle in the Delaunay triangulation
+    for simplex in tri.simplices:
+        indices = simplex
+        x_vertices = x[indices]
+        z_vertices = z[indices]
+        p_rad_vertices = p_rad[indices]
+
+        # Compute area of the triangle in x-z plane using determinant formula
+        area = 0.5 * abs(
+            (x_vertices[1] - x_vertices[0]) * (z_vertices[2] - z_vertices[0])
+            - (x_vertices[2] - x_vertices[0]) * (z_vertices[1] - z_vertices[0])
+        )
+        if area <= 0:  # Check if area is non-zero and positive
+            continue
+
+        # Compute centroid (average position of vertices)
+        x_centroid = np.mean(x_vertices)
+        p_rad_centroid = np.mean(p_rad_vertices)
+
+        # Compute volume element using cylindrical symmetry
+        dv = 2 * np.pi * x_centroid * area  # Volume element in m^3
+
+        # Compute differential power
+        dp = p_rad_centroid * dv  # Power in MW (MW/m^3 * m^3)
+        # Accumulate total power
+        p_total += dp
+
+    return p_total
 
 
 def radiative_loss_function_values(
@@ -578,7 +718,7 @@ def radiative_loss_function_values(
     Parameters
     ----------
     te:
-        electron temperature [eV]
+        electron temperature [keV]
     t_ref:
         temperature reference [eV]
     l_ref:
@@ -647,7 +787,7 @@ def calculate_line_radiation_loss(
     -------
         Line radiation losses [MW m^-3]
     """
-    return raw_uc((species_frac * (ne**2) * p_loss_f) / (4 * np.pi), "W", "MW")
+    return raw_uc((species_frac * (ne**2) * p_loss_f), "W", "MW")
 
 
 def linear_interpolator(
@@ -821,6 +961,7 @@ def get_impurity_data(
         impurity_data[imp] = {
             "T_ref": imp_data_getter(imp, confinement_time_ms)[0],
             "L_ref": imp_data_getter(imp, confinement_time_ms)[1],
+            "z_ref": imp_data_getter(imp, confinement_time_ms)[2],
         }
 
     return impurity_data

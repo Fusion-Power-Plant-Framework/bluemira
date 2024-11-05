@@ -45,13 +45,14 @@ SINGLE_NULL = False
 if SINGLE_NULL:
     eq_name = "EU-DEMO_EOF.json"
     fw_name = "first_wall.json"
-    sep_corrector = 5e-2
+    sep_corrector_omp = 5e-2
     lfs_p_fraction = 1
     tungsten_fraction = 1e-4
 else:
     eq_name = "DN-DEMO_eqref.json"
     fw_name = "DN_fw_shape.json"
-    sep_corrector = 5e-3
+    sep_corrector_omp = 5e-3
+    sep_corrector_imp = 6e-3
     lfs_p_fraction = 0.9
     tungsten_fraction = 1e-5
 
@@ -78,16 +79,22 @@ fw_shape = Coordinates.from_json(
 
 # %%
 params = {
-    "sep_corrector": {"value": sep_corrector, "unit": "dimensionless"},
+    "sep_corrector_omp": {"value": sep_corrector_omp, "unit": "m"},
+    "sep_corrector_imp": {"value": sep_corrector_imp, "unit": "m"},
     "alpha_n": {"value": 1.15, "unit": "dimensionless"},
     "alpha_t": {"value": 1.905, "unit": "dimensionless"},
     "det_t": {"value": 0.0015, "unit": "keV"},
     "eps_cool": {"value": 25.0, "unit": "eV"},
     "f_ion_t": {"value": 0.01, "unit": "keV"},
+    "main_ext": {"value": None, "unit": "m"},
+    "rec_ext_out_leg": {"value": 2, "unit": "m"},
+    "rec_ext_in_leg": {"value": 0.2, "unit": "m"},
     "fw_lambda_q_near_omp": {"value": 0.002, "unit": "m"},
     "fw_lambda_q_far_omp": {"value": 0.1, "unit": "m"},
     "fw_lambda_q_near_imp": {"value": 0.002, "unit": "m"},
     "fw_lambda_q_far_imp": {"value": 0.1, "unit": "m"},
+    "lambda_t_factor": {"value": 7, "unit": "dimensionless"},
+    "lambda_n_factor": {"value": 1 / 7, "unit": "dimensionless"},
     "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
     "k_0": {"value": 2000.0, "unit": "dimensionless"},
     "lfs_p_fraction": {"value": lfs_p_fraction, "unit": "dimensionless"},
@@ -112,7 +119,8 @@ params = {
 config = {
     "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": tungsten_fraction},
     "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
-    "confinement": 0.1,
+    "tau_core": np.inf,
+    "tau_sol": 10,
 }
 
 
@@ -136,7 +144,8 @@ source = RadiationSource(
     midplane_profiles=profiles,
     core_impurities=config["f_imp_core"],
     sol_impurities=config["f_imp_sol"],
-    confinement_time=config["confinement"],
+    confinement_time_core=config["tau_core"],
+    confinement_time_sol=config["tau_sol"],
 )
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
@@ -148,7 +157,7 @@ source.rad_map(fw_shape)
 
 
 # %%
-only_source = False
+only_source = True
 if only_source:
     source.plot()
     plt.show()
