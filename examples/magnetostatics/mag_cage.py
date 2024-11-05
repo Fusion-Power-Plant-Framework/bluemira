@@ -48,12 +48,11 @@ from bluemira.magnetostatics.circuits import (
 
 # %%
 n_TF = 12
-current = 20e6
-breadth = 0.5
-depth = 1.0
-radius = 6
-x_c = 9
-z_c = 0
+breadth = 0.5837
+depth = 1.2312
+R_0 = 9.204
+B_0 = 4.9596
+z_0 = 0
 
 centreline = TripleArc({
     "x1": {"value": 3.746477, "lower_bound": 3, "upper_bound": 5, "fixed": True},
@@ -98,7 +97,7 @@ centreline = TripleArc({
 # %%
 coordinates = centreline.discretise(ndiscr=100, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
-    coordinates, breadth=breadth, depth=depth, current=current
+    coordinates, breadth=breadth, depth=depth, current=1
 )
 
 
@@ -108,6 +107,7 @@ analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
 # %%
 analytical_tf_cage1 = HelmholtzCage(analytical_circuit1, n_TF=n_TF)
 
+analytical_tf_cage1.set_current(-B_0 / analytical_tf_cage1.field(R_0, 0, z_0)[1])
 # %% [markdown]
 # PF coils
 
