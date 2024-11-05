@@ -88,6 +88,10 @@ jobs:
                  ${PYTEST_LONGRUN} \
                  tests eudemo/eudemo_tests
 
+      - name: See files
+        shell: bash -l {0}
+        run: ls -la
+
       - name: Upload test report
         uses: actions/upload-artifact@v4
         if: ${{ matrix.with-process != 'process_disabled' }}
