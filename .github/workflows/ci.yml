@@ -82,7 +82,8 @@ jobs:
                  --cov-report html:htmlcov_bluemira \
                  --cov-report xml \
                  --json-report \
-                 --json-report-indent=3 \
+                 --json-report-file=test-report.json \
+                 --json-report-indent=2 \
                  --reactor \
                  ${PYTEST_PRIVATE} \
                  ${PYTEST_LONGRUN} \
@@ -94,8 +95,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: report-json_${{ matrix.python-version }}_${{ matrix.os }}
-          path: .report.json
+          name: test-report-json_${{ matrix.python-version }}_${{ matrix.os }}
+          path: test-report.json
           overwrite: true
 
       - name: "Upload coverage to Codecov"
