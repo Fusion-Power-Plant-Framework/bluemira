@@ -63,10 +63,10 @@ jobs:
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
         id: warning-report
         run: |
-          if [ -f "ref_report/.report.json" ]; then
-            compare_args="--compare ref_report/.report.json"
+          if [ -f "ref_report/test-report.json" ]; then
+            compare_args="--compare ref_report/test-report.json"
           fi
-          report_str=$(python scripts/format_warning_report.py PR_report/.report.json ${compare_args}) || true
+          report_str=$(python scripts/format_warning_report.py PR_report/test-report.json ${compare_args}) || true
           echo "report<<EOF" >> $GITHUB_OUTPUT
           echo "${report_str}" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
