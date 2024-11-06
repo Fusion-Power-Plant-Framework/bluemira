@@ -972,7 +972,6 @@ def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
         A sorted list of axis labels ("x", "y", "z") indicating which
         dimensions have variability.
     """
-    length = array.shape[1]
     axes = ["x", "y", "z"]
     dims = [k for i, k in enumerate(axes) if not np.allclose(array[i][0], array[i])]
     if len(dims) == 1:

@@ -490,6 +490,11 @@ class CoreRadiation(Radiation):
     def calculate_core_radiation_map(self):
         """
         Build core radiation map.
+
+        Returns
+        -------
+        :
+            the core radiation map
         """
         rad = self.calculate_core_distribution()
         self.total_rad = np.sum(np.array(rad, dtype=object), axis=0).tolist()
@@ -518,6 +523,7 @@ class CoreRadiation(Radiation):
         Returns
         -------
         :
+            the axes
         """
         if ax is None:
             fig, ax = plt.subplots()
@@ -1579,6 +1585,11 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         hfs_up:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
+
+        Returns
+        -------
+        :
+            the sol radiation map
         """
         # total line radiation loss along the open flux tubes
         self.total_rad_lfs_low = np.sum(np.array(lfs_low, dtype=object), axis=0).tolist()
