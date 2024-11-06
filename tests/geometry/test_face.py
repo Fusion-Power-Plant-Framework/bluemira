@@ -4,6 +4,10 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 
@@ -24,49 +28,57 @@ from bluemira.geometry.tools import (
     offset_wire,
 )
 
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
+
 
 class TestBluemiraFace:
-    @classmethod
-    def setup_class(cls):
-        polygon = make_polygon(
-            [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
-            closed=True,
-        )
-        princeton = PrincetonD().create_shape(n_points=150)
-        triple = TripleArc().create_shape()
-        sextuple = SextupleArc().create_shape()
-        tapered = PictureFrame(inner="TAPERED_INNER").create_shape()
-        cls.shapes = [polygon, princeton, triple, sextuple, tapered]
+    polygon = make_polygon(
+        [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
+        closed=True,
+    )
+    princeton = PrincetonD().create_shape(n_points=150)
+    triple = TripleArc().create_shape()
+    sextuple = SextupleArc().create_shape()
+    tapered = PictureFrame(inner="TAPERED_INNER").create_shape()
+    shapes = (
+        pytest.param(polygon, id="polygon"),
+        pytest.param(princeton, id="princetonD"),
+        pytest.param(triple, id="triplearc"),
+        pytest.param(sextuple, id="sextuplearc"),
+        pytest.param(tapered, id="tapered_pictureframe"),
+    )
 
-    def test_single_complicated(self):
-        for shape in self.shapes:
-            face = BluemiraFace(shape)
-            assert face.is_valid()
-            assert not face.is_null()
-            assert face.area > 0.0
+    @pytest.mark.parametrize("shape", shapes)
+    def test_single_complicated(self, shape: BluemiraWire):
+        face = BluemiraFace(shape)
+        assert face.is_valid()
+        assert not face.is_null()
+        assert face.area > 0.0
 
     @pytest.mark.parametrize("offset", [0.5, -0.5])
-    def test_two_complicated(self, offset):
+    @pytest.mark.parametrize("shape", shapes)
+    def test_two_complicated(self, offset, shape: BluemiraWire):
         direction = int(offset / abs(offset))
-        for shape in self.shapes:
-            wire = offset_wire(shape, offset, join="arc")
-            face_list = [wire, shape][::direction]
-            face = BluemiraFace(face_list)
-            assert not face.is_null()
-            assert face.is_valid()
-            assert np.isclose(
-                face.area,
-                BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area,
-            )
+        wire = offset_wire(shape, offset, join="arc")
+        face_list = [wire, shape][::direction]
+        face = BluemiraFace(face_list)
 
-    def test_two_offsets(self):
-        for shape in self.shapes:
-            outer = offset_wire(shape, 0.5, join="arc")
-            inner = offset_wire(shape, -0.5, join="arc")
-            face = BluemiraFace([outer, inner])
-            assert not face.is_null()
-            assert face.is_valid()
-            assert face.area > 0.0
+        assert not face.is_null()
+        assert face.is_valid()
+        assert np.isclose(
+            face.area,
+            BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area,
+        )
+
+    @pytest.mark.parametrize("shape", shapes)
+    def test_two_offsets(self, shape):
+        outer = offset_wire(shape, 0.5, join="arc")
+        inner = offset_wire(shape, -0.5, join="arc")
+        face = BluemiraFace([outer, inner])
+        assert not face.is_null()
+        assert face.is_valid()
+        assert face.area > 0.0
 
     def test_face_vertices(self):
         points = Coordinates({
