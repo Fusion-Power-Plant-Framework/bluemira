@@ -8,6 +8,7 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass, fields
 
 import matplotlib.pyplot as plt
@@ -136,6 +137,15 @@ class ChargedParticleSolver:
     def _process_first_wall(self, first_wall):
         """
         Force working first wall geometry to be closed and counter-clockwise.
+
+        Returns
+        -------
+        first_wall:
+            the first wall wire
+        int_intersection:
+            the internal intersection coordinate
+        out_intersection:
+            the external intersection coordinate
         """
         first_wall = deepcopy(first_wall)
 
@@ -169,15 +179,15 @@ class ChargedParticleSolver:
 
         Returns
         -------
-        x_mp: npt.NDArray[float]
+        x_mp:
             the array of mid-plane intersection point x-coordinate for each flux surface
-        z_mp: npt.NDArray[float]
+        z_mp:
             the array of mid-plane intersection point z-coordinate for each flux surface
-        x_fw: npt.NDArray[float]
+        x_fw:
             the array of first-wall intersection point x-coordinate for each flux surface
-        z_fw: npt.NDArray[float]
+        z_fw:
             the array of first-wall intersection point z-coordinate for each flux surface
-        alpha: npt.NDArray[float]
+        alpha:
             the array of alpha angle for each flux surface
         """
         x_mp = np.array([fs.x_start for fs in flux_surfaces])
@@ -252,7 +262,16 @@ class ChargedParticleSolver:
         self, x_up_inter, z_up_inter, x_down_inter, z_down_inter, *, lfs=True
     ):
         """
-        Get first wall mid-plane region with no flux line inetrsections.
+        Get first wall mid-plane region with no flux line intersections.
+
+        Returns
+        -------
+        x_reg_inter:
+            the x region intersection point
+        z_reg_inter:
+            the z region intersection point
+        wire_length:
+            the length of the wire
         """
         up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
         down_end_i = self.first_wall.argmin(
@@ -403,17 +422,17 @@ class ChargedParticleSolver:
             ]),
         )
 
-    def _analyse_DN(self):  # noqa: PLR0914
+    def _analyse_DN(self) -> tuple[npt.NDArray[float], ...]:  # noqa: PLR0914
         """
         Calculation for the case of double nulls.
 
         Returns
         -------
-        x: np.array
+        x:
             The x coordinates of the flux surface intersections
-        z: np.array
+        z:
             The z coordinates of the flux surface intersections
-        heat_flux: np.array
+        heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
         self._make_flux_surfaces_ob()

@@ -41,25 +41,26 @@ def analyse_first_wall_flux_surfaces(
 
     Parameters
     ----------
-    equilibrium: Equilibrium
+    equilibrium:
         The equilibrium defining flux surfaces.
     first_wall:
-    dx_mp: float
+        the first wall to analyse
+    dx_mp:
         The midplane spatial resolution between flux surfaces [m]
         (default: 0.001).
 
 
     Returns
     -------
-    dx_omp: np.ndarray
+    dx_omp:
         The midplane spatial resolution between flux surfaces at the outboard [m]
-    dx_imp: np.ndarray or None
+    dx_imp:
         The midplane spatial resolution between flux surfaces at the inboard [m]
-    flux_surfaces: list[PartialOpenFluxSurface]
+    flux_surfaces:
         list of flux surfaces, all of which terminating at the first walls.
-    x_sep_omp: float
+    x_sep_omp:
         intersection between the separatrix outboard and mid-plane.
-    x_sep_imp: float or None
+    x_sep_imp:
         intersection between the separatrix inboard and mid-plane.
     """
     o_point = equilibrium.get_OX_points()[0][0]  # 1st o_point
@@ -87,7 +88,7 @@ def _process_first_wall(first_wall: Coordinates) -> Coordinates:
 
     Returns
     -------
-    first_wall: Coordinates
+    first_wall:
         A closed first wall geometry, running counter clockwise.
     """
     first_wall = deepcopy(first_wall)
@@ -114,7 +115,7 @@ def _analyse_SN(
         horizontal distances between outboard flux surfaces and outboard separatrix.
     :
         list of flux surfaces, all of which terminating at the first walls.
-    x_sep_omp: float
+    x_sep_omp:
         intersection between the separatrix outboard and mid-plane.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
@@ -150,9 +151,9 @@ def _analyse_DN(
         horizontal distances between inboard flux surfaces and inboard separatrix.
     :
         list of flux surfaces, all of which terminating at the first walls.
-    x_sep_omp: float
+    x_sep_omp:
         intersection between the separatrix outboard and mid-plane.
-    x_sep_imp: float
+    x_sep_imp:
         intersection between the separatrix inboard and mid-plane.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
@@ -189,7 +190,7 @@ def _clip_flux_surfaces(
 
     Returns
     -------
-    flux_surfaces: list[PartialOpenFluxSurface]
+    flux_surfaces:
         A list of flux surface groups. Each group only contains flux surfaces that
         intersect the first_wall.
     """
@@ -201,7 +202,6 @@ def _clip_flux_surfaces(
                     # No intersection detected between flux surface and first wall
                     # Drop the flux surface from the group
                     group.pop(i)  # noqa: B909
-                    # TODO: fix this ^ B909 error
     return flux_surfaces
 
 
@@ -212,7 +212,7 @@ def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
     Returns
     -------
     :
-        np.ndarray of mid-plane intersection point x-coordinate.
+        array of mid-plane intersection point x-coordinate.
 
     """
     return np.array([fs.x_start for fs in flux_surfaces])
@@ -225,7 +225,7 @@ def get_array_z_mp(flux_surfaces) -> npt.NDArray[float]:
     Returns
     -------
     :
-        np.ndarray of mid-plane intersection point z-coordinate.
+        array of mid-plane intersection point z-coordinate.
     """
     return np.array([fs.z_start for fs in flux_surfaces])
 
@@ -237,7 +237,7 @@ def get_array_x_fw(flux_surfaces) -> npt.NDArray[float]:
     Returns
     -------
     :
-        np.ndarray of first-wall intersection point x-coordinate.
+        array of first-wall intersection point x-coordinate.
     """
     return np.array([fs.x_end for fs in flux_surfaces])
 
@@ -249,7 +249,7 @@ def get_array_z_fw(flux_surfaces) -> npt.NDArray[float]:
     Returns
     -------
     :
-        np.ndarray of first-wall intersection point z-coordinate.
+        array of first-wall intersection point z-coordinate.
     """
     return np.array([fs.z_end for fs in flux_surfaces])
 
@@ -261,7 +261,7 @@ def get_array_alpha(flux_surfaces) -> npt.NDArray[float]:
     Returns
     -------
     :
-        np.ndarray of alpha.
+        array of alpha.
     """
     return np.array([fs.alpha for fs in flux_surfaces])
 
@@ -273,19 +273,20 @@ def _get_sep_out_intersection(
     Find the x-coordinate of where the mid-plane intersect the separatrix and at
     the inboard/outboard.
 
+    Returns
+    -------
+    x_sep_mp:
+        the x-coordinate of the intersection point between the inboard-side separatrix
+        (outboard=False)/outboard-side separatrix (inboard=True) and the mid-plane.
+    x_out_mp:
+        the x-coordinate of the intersection point between the inboard first wall
+        (outboard=False)/outboard first wall (outboard=True), and the mid-plane.
+
     Raises
     ------
     RadiationTransportError
         Separatrix doesnt cross midplane
 
-    Returns
-    -------
-    x_sep_mp: float
-        the x-coordinate of the intersection point between the inboard-side separatrix
-        (outboard=False)/outboard-side separatrix (inboard=True) and the mid-plane.
-    x_out_mp: float
-        the x-coordinate of the intersection point between the inboard first wall
-        (outboard=False)/outboard first wall (outboard=True), and the mid-plane.
     """
     sep = LegFlux(eq)
 

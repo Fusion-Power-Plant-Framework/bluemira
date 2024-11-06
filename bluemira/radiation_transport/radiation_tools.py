@@ -585,6 +585,7 @@ def radiative_loss_function_values(
 
     Returns
     -------
+    :
         interpolated local values of the radiative power loss function [W m^3]
     """
     te_i = np.nonzero(te < min(t_ref))
@@ -610,7 +611,7 @@ def radiative_loss_function_plot(
 
     Returns
     -------
-    ax: plt.Axes
+    ax:
         The axes object on which radiative loss function is plotted.
     """
     _fig, ax = plt.subplots()
@@ -649,6 +650,7 @@ def calculate_line_radiation_loss(
 
     Returns
     -------
+    :
         Line radiation losses [MW m^-3]
     """
     return raw_uc((species_frac * (ne**2) * p_loss_f) / (4 * np.pi), "W", "MW")
@@ -726,7 +728,7 @@ def grid_interpolator(
     interpolated_function:
         interpolated field function, to be used to
         calculate the field values for a new set of points
-        or to be provided to a tracing code such as CHEARAB
+        or to be provided to a tracing code such as CHERAB
     """
     # scipy deprecation of interp2d ~3x slower:
     # grid = RegularGridInterpolator(

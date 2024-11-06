@@ -311,7 +311,7 @@ class Radiation:
     @staticmethod
     def mp_profile_plot(
         rho: np.ndarray, rad_power: np.ndarray, imp_name: str | list[str], ax=None
-    ):
+    ) -> plt.Axes:
         """
         1D plot of the radiation power distribution along the midplane.
 
@@ -327,7 +327,7 @@ class Radiation:
 
         Returns
         -------
-        ax: plt.Axes
+        ax:
             axes on which the mid-plane radiation power distribution profile is plotted.
 
         Notes
@@ -466,7 +466,7 @@ class CoreRadiation(Radiation):
 
         return self.rad
 
-    def calculate_core_radiation_map(self) -> None:
+    def calculate_core_radiation_map(self):
         """
         Build core radiation map.
         """
@@ -493,7 +493,7 @@ class CoreRadiation(Radiation):
 
         Returns
         -------
-        ax: plt.Axes
+        :
         """
         if ax is None:
             fig, ax = plt.subplots()
@@ -1189,7 +1189,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Returns
         -------
-        ax: plt.Axes
+        ax:
             Axes on which the 2D radiation power distribution is plotted.
         """
         if ax is None:
@@ -1249,7 +1249,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Returns
         -------
-        ax: plt.Axes
+        ax:
             Axes on which the flux tubes' properties are plotted.
         """
         if ax is None:
@@ -1271,7 +1271,7 @@ class ScrapeOffLayerRadiation(Radiation):
         return ax
 
     @staticmethod
-    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None):
+    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None) -> plt.Axes:
         """
         2D plot of temperature and density of a single flux tube within the SoL
 
@@ -1288,9 +1288,9 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Returns
         -------
-        ax1: plt.Axes
+        ax1:
             Axes object on which the electron temperature is plotted
-        ax2: plt.Axes
+        ax2:
             Axes object on which the electron density is plotted
         """
         if ax1 is None:
@@ -1898,9 +1898,9 @@ class RadiationSource:
 
         Returns
         -------
-        self.core_rad: CoreRadiation
+        self.core_rad:
             Core radiation source
-        self.sol_rad: ScrapeOffLayerRadiation
+        self.sol_rad:
             Scrape-off-layer radiation source
         """
         self.core_rad = CoreRadiation(
@@ -2098,7 +2098,7 @@ class RadiationSource:
 
         Returns
         -------
-        ax: plt.Axes
+        ax:
             The axes object on which radiation solver results are plotted.
         """
         if ax is None:
