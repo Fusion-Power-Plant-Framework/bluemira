@@ -449,7 +449,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         self.alpha = None
 
-    def clip(self, first_wall: Coordinates) -> None:
+    def clip(self, first_wall: Coordinates):
         """
         Clip the PartialOpenFluxSurface to a first wall.
 
