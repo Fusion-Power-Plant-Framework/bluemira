@@ -14,16 +14,21 @@ from dataclasses import dataclass, fields
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
+from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
+from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.error import AdvectionTransportError
-from bluemira.radiation_transport.flux_surfaces_maker import _clip_flux_surfaces
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    _clip_flux_surfaces,
+    _process_first_wall,
+)
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -73,15 +78,17 @@ class ChargedParticleSolver:
         self._o_point = o_points[0]
         z = self._o_point.z
         self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
+        self._process_first_wall = staticmethod(_process_first_wall)
 
     @property
-    def flux_surfaces(self):
+    def flux_surfaces(self) -> list[PartialOpenFluxSurface]:
         """
         All flux surfaces in the ChargedParticleSolver.
 
         Returns
         -------
-        flux_surfaces: List[PartialOpenFluxSurface]
+        flux_surfaces:
+            The list of partially open flux surfaces.
         """
         flux_surfaces = []
         for group in [
@@ -130,6 +137,15 @@ class ChargedParticleSolver:
     def _process_first_wall(self, first_wall):
         """
         Force working first wall geometry to be closed and counter-clockwise.
+
+        Returns
+        -------
+        first_wall:
+            the first wall wire
+        int_intersection:
+            the internal intersection coordinate
+        out_intersection:
+            the external intersection coordinate
         """
         first_wall = deepcopy(first_wall)
 
@@ -149,9 +165,30 @@ class ChargedParticleSolver:
         return first_wall, int_intersection, out_intersection
 
     @staticmethod
-    def _get_arrays(flux_surfaces):
+    def _get_arrays(
+        flux_surfaces,
+    ) -> tuple[
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+        npt.NDArray[float],
+    ]:
         """
         Get arrays of flux surface values.
+
+        Returns
+        -------
+        x_mp:
+            the array of mid-plane intersection point x-coordinate for each flux surface
+        z_mp:
+            the array of mid-plane intersection point z-coordinate for each flux surface
+        x_fw:
+            the array of first-wall intersection point x-coordinate for each flux surface
+        z_fw:
+            the array of first-wall intersection point z-coordinate for each flux surface
+        alpha:
+            the array of alpha angle for each flux surface
         """
         x_mp = np.array([fs.x_start for fs in flux_surfaces])
         z_mp = np.array([fs.z_start for fs in flux_surfaces])
@@ -160,7 +197,7 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _make_flux_surfaces_ob(self):
+    def _make_flux_surfaces_ob(self) -> None:
         """
         Make the flux surfaces on the outboard.
         """
@@ -225,7 +262,16 @@ class ChargedParticleSolver:
         self, x_up_inter, z_up_inter, x_down_inter, z_down_inter, *, lfs=True
     ):
         """
-        Get first wall mid-plane region with no flux line inetrsections.
+        Get first wall mid-plane region with no flux line intersections.
+
+        Returns
+        -------
+        x_reg_inter:
+            the x region intersection point
+        z_reg_inter:
+            the z region intersection point
+        wire_length:
+            the length of the wire
         """
         up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
         down_end_i = self.first_wall.argmin(
@@ -276,11 +322,11 @@ class ChargedParticleSolver:
 
         Returns
         -------
-        x: np.array
+        x:
             The x coordinates of the flux surface intersections
-        z: np.array
+        z:
             The z coordinates of the flux surface intersections
-        heat_flux: np.array
+        heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
 
         Notes
@@ -312,6 +358,14 @@ class ChargedParticleSolver:
         """
         Calculation for the case of single nulls.
 
+        Returns
+        -------
+        x:
+            The x coordinates of the flux surface intersections
+        z:
+            The z coordinates of the flux surface intersections
+        heat_flux:
+            The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
         self._make_flux_surfaces_ob()
 
@@ -372,9 +426,18 @@ class ChargedParticleSolver:
             ]),
         )
 
-    def _analyse_DN(self):  # noqa: PLR0914
+    def _analyse_DN(self) -> tuple[npt.NDArray[float], ...]:  # noqa: PLR0914
         """
         Calculation for the case of double nulls.
+
+        Returns
+        -------
+        x:
+            The x coordinates of the flux surface intersections
+        z:
+            The z coordinates of the flux surface intersections
+        heat_flux:
+            The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
         self._make_flux_surfaces_ob()
         self._make_flux_surfaces_ib()
@@ -518,6 +581,11 @@ class ChargedParticleSolver:
     def _q_par(self, x, dx, B, Bp, *, outboard=True):
         """
         Calculate the parallel power at the midplane.
+
+        Returns
+        -------
+        :
+            parallel power at the midplane
         """
         p_sol_near = self.params.P_sep_particle * self.params.f_p_sol_near
         p_sol_far = self.params.P_sep_particle * (1 - self.params.f_p_sol_near)
@@ -539,6 +607,11 @@ class ChargedParticleSolver:
     def plot(self, ax: Axes = None, *, show=False) -> Axes:
         """
         Plot the ChargedParticleSolver results.
+
+        Returns
+        -------
+        :
+            The axes object on which the ChargedParticleSolver is plotted.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -579,6 +652,11 @@ class ChargedParticleSolver:
             Unsupported config type
         ValueError
             Unknown configuration parameters
+
+        Returns
+        -------
+        :
+            a ChargedParticleSolverParams object
         """
         if isinstance(config, dict):
             try:

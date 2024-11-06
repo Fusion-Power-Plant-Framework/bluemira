@@ -324,7 +324,7 @@ class Radiation:
     @staticmethod
     def mp_profile_plot(
         rho: np.ndarray, rad_power: np.ndarray, imp_name: str | list[str], ax=None
-    ):
+    ) -> plt.Axes:
         """
         1D plot of the radiation power distribution along the midplane.
 
@@ -337,6 +337,11 @@ class Radiation:
             radiated power at each mid-plane location corresponding to rho [Mw/m^3]
         imp_name:
             impurity names
+
+        Returns
+        -------
+        ax:
+            axes on which the mid-plane radiation power distribution profile is plotted.
 
         Notes
         -----
@@ -381,6 +386,10 @@ class CoreRadiation(Radiation):
         impurity_content,
         impurity_data,
     ):
+        """
+        In addition to `Radiation`, this class also includes the impurity data of all
+        gases except Argon.
+        """
         super().__init__(eq, params)
 
         # Picking impurity species
@@ -494,7 +503,7 @@ class CoreRadiation(Radiation):
 
     def radiation_distribution_plot(
         self, flux_tubes: np.ndarray, power_density: np.ndarray, ax=None
-    ):
+    ) -> plt.Axes:
         """
         2D plot of the core radiation power distribution.
 
@@ -505,6 +514,10 @@ class CoreRadiation(Radiation):
         power_density:
             arrays containing the power radiation density of the
             points lying on each flux tube [MW/m^3]
+
+        Returns
+        -------
+        :
         """
         if ax is None:
             fig, ax = plt.subplots()
@@ -1201,6 +1214,11 @@ class ScrapeOffLayerRadiation(Radiation):
             expected len(flux_tubes) = len(power_density)
         firstwall: Grid
             first wall geometry
+
+        Returns
+        -------
+        ax:
+            Axes on which the 2D radiation power distribution is plotted.
         """
         if ax is None:
             fig, ax = plt.subplots()
@@ -1256,6 +1274,11 @@ class ScrapeOffLayerRadiation(Radiation):
         flux_property
             arrays containing the property values associated
             to the points of each flux tube.
+
+        Returns
+        -------
+        ax:
+            Axes on which the flux tubes' properties are plotted.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -1276,7 +1299,7 @@ class ScrapeOffLayerRadiation(Radiation):
         return ax
 
     @staticmethod
-    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None):
+    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None) -> plt.Axes:
         """
         2D plot of temperature and density of a single flux tube within the SoL
 
@@ -1290,6 +1313,13 @@ class ScrapeOffLayerRadiation(Radiation):
         n_distribution: np.array([np.array])
             arrays containing the density values associated
             to the points of the flux tube.
+
+        Returns
+        -------
+        ax1:
+            Axes object on which the electron temperature is plotted
+        ax2:
+            Axes object on which the electron density is plotted
         """
         if ax1 is None:
             _, ax1 = plt.subplots()
@@ -1804,6 +1834,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(
+            # concatenate these two lists into a single float np.ndarray
             functools.reduce(operator.iadd, [self.total_rad_lfs, self.total_rad_hfs], [])
         )
 
@@ -1897,6 +1928,12 @@ class RadiationSource:
         firstwall_geom:
             The closed first wall geometry
 
+        Returns
+        -------
+        self.core_rad:
+            Core radiation source
+        self.sol_rad:
+            Scrape-off-layer radiation source
         """
         self.core_rad = CoreRadiation(
             self.eq,
@@ -2063,6 +2100,15 @@ class RadiationSource:
         Mapping all the radiation values associated to all the points
         as three arrays containing x coordinates, z coordinates and
         local radiated power density [MW/m^3]
+
+        Returns
+        -------
+        self.x_tot:
+            x-coordinates of flux tubes [m]
+        self.z_tot:
+            z-coordinates of flux tubes [m]
+        self.rad_tot:
+            total radiated power density [MW/m^3]
         """
         self.core_rad.calculate_core_radiation_map()
 
@@ -2078,9 +2124,14 @@ class RadiationSource:
 
         return self.x_tot, self.z_tot, self.rad_tot
 
-    def plot(self, ax=None):
+    def plot(self, ax=None) -> plt.Axes:
         """
         Plot the RadiationSolver results.
+
+        Returns
+        -------
+        ax:
+            The axes object on which radiation solver results are plotted.
         """
         if ax is None:
             fig, ax = plt.subplots()
