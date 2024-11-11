@@ -370,4 +370,3 @@ ignore-names = [
 "bluemira/equilibria/*" = ["DOC201"]  # 214
 "bluemira/codes/*" = ["DOC201"]  # 239
 "bluemira/builders/*" = ["DOC201"]  # 69
-"bluemira/balance_of_plant/*" = ["DOC201"]  # 5

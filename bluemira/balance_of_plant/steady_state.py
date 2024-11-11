@@ -192,6 +192,11 @@ class PredeterminedEfficiency(PowerCycleEfficiencyCalc):
         p_divertor:
             Divertor thermal power [MW]
 
+        Returns
+        -------
+        :
+            The efficiency
+
         """
         return self.efficiency
 
@@ -223,6 +228,10 @@ class SuperheatedRankine(PowerCycleEfficiencyCalc):
         p_divertor:
             Divertor thermal power [MW]
 
+        Returns
+        -------
+        :
+            The efficiency of the power cycle
         """
         return superheated_rankine(
             p_blanket, p_divertor, self.bb_t_out, self.delta_t_turbine
@@ -652,6 +661,11 @@ class BalanceOfPlantModel:
             Title to print on the plot
         kwargs:
             see BALANCE_PLOT_DEFAULTS for details
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         plotter = self._plotter(**kwargs)
         return plotter.plot(self.flow_dict, title=title)

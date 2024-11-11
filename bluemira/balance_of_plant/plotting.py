@@ -266,6 +266,11 @@ class BalanceOfPlantPlotter:
             The operation mode of the reactor
         flow_dict: dict
             The dictionary of flows for each of the Sankey diagrams.
+
+        Returns
+        -------
+        :
+            the plot axis
         """
         flow_dict = self._scale_flows(flow_dict)
         # Build the base figure object
@@ -302,6 +307,11 @@ class BalanceOfPlantPlotter:
         Builds the Sankey diagram. This is much more verbose than looping over
         some structs, but that's how it used to be and it was hard to modify.
         This is easier to read and modify.
+
+        Returns
+        -------
+        :
+            The Sankey diagram object
         """
         trunk_length = self.plot_options["trunk_length"]
         l_s = self.plot_options["standard_length"]
