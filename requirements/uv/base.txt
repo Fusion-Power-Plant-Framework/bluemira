@@ -2,8 +2,6 @@
 #    uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/base.txt
 anytree==2.12.1
     # via bluemira (pyproject.toml)
-appdirs==1.4.4
-    # via pint
 asteval==1.0.5
     # via
     #   bluemira (pyproject.toml)
@@ -32,7 +30,7 @@ eqdsk==0.5.0
     # via bluemira (pyproject.toml)
 flexcache==0.3
     # via pint
-flexparser==0.3.1
+flexparser==0.4
     # via pint
 fonttools==4.54.1
     # via matplotlib
@@ -102,7 +100,7 @@ numpy==1.26.4
     #   scipy
     #   seaborn
     #   tables
-packaging==24.1
+packaging==24.2
     # via
     #   matplotlib
     #   pooch
@@ -118,10 +116,12 @@ pillow==11.0.0
     #   imageio
     #   matplotlib
     #   pyvista
-pint==0.24.3
+pint==0.24.4
     # via bluemira (pyproject.toml)
 platformdirs==4.3.6
-    # via pooch
+    # via
+    #   pint
+    #   pooch
 pooch==1.8.2
     # via pyvista
 py-cpuinfo==9.0.0
