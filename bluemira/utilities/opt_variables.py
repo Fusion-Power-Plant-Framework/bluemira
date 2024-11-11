@@ -139,6 +139,11 @@ class OptVariable:
     def from_normalised(self, norm: float) -> float:
         """
         The value from a normalised value between [0 -> 1], w.r.t its bounds
+
+        Returns
+        -------
+        :
+            The unnormalised value
         """
         return self.lower_bound + norm * (self.upper_bound - self.lower_bound)
 
@@ -200,7 +205,12 @@ class OptVariable:
         self._validate_bounds()
 
     def as_dict(self) -> OptVarDictT:
-        """Dictionary representation of OptVariable, can be used for serialisation"""
+        """
+        Returns
+        -------
+        :
+            Dictionary representation of OptVariable, can be used for serialisation
+        """
         return {
             "name": self.name,
             "value": self.value,
@@ -211,7 +221,12 @@ class OptVariable:
         }
 
     def as_serialisable(self) -> OptVarSerialisedT:
-        """Dictionary representation of OptVariable"""
+        """
+        Returns
+        -------
+        :
+            Dictionary representation of OptVariable
+        """
         return {
             "value": self.value,
             "lower_bound": self.lower_bound,
@@ -222,7 +237,12 @@ class OptVariable:
 
     @classmethod
     def from_serialised(cls, name: str, data: OptVarSerialisedT) -> OptVariable:
-        """Create an OptVariable from a dictionary"""
+        """
+        Returns
+        -------
+        :
+            Create an OptVariable from a dictionary
+        """
         return cls(
             name=name,
             value=data["value"],
@@ -265,7 +285,10 @@ class OptVariable:
 
     def __repr__(self) -> str:
         """
-        Representation of OptVariable
+        Returns
+        -------
+        :
+            Representation of OptVariable
         """
         lower_bound, upper_bound, fixed = (
             self.lower_bound,
@@ -279,7 +302,10 @@ class OptVariable:
 
     def __str__(self) -> str:
         """
-        Pretty representation of OptVariable
+        Returns
+        -------
+        :
+            Pretty representation of OptVariable
         """
         bound = (
             f" Bounds: ({self.lower_bound}, {self.upper_bound})"
@@ -291,7 +317,11 @@ class OptVariable:
         return f"{self.name} = {self.value}{bound}{descr}"
 
     def __add__(self, other: OptVariable):
-        """The sum of two OptVariables is the sum of their values
+        """
+        Returns
+        -------
+        :
+            The sum of two OptVariables as the sum of their values
 
         Raises
         ------
@@ -305,7 +335,11 @@ class OptVariable:
         raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
     def __sub__(self, other: OptVariable):
-        """The subtraction of two OptVariables is the subtraction of their values
+        """
+        Returns
+        -------
+        :
+            The subtraction of two OptVariables as the subtraction of their values
 
         Raises
         ------
@@ -320,8 +354,10 @@ class OptVariable:
 
     def __mul__(self, other: OptVariable):
         """
-        The multiplication of two OptVariables is
-        the multiplication of their values
+        Returns
+        -------
+        :
+            The multiplication of two OptVariables as the multiplication of their values
 
         Raises
         ------
@@ -344,7 +380,14 @@ def ov(
     fixed: bool = False,
     description: str | None = None,
 ) -> field:
-    """Field factory for OptVariable"""
+    """
+    Field factory for OptVariable
+
+    Returns
+    -------
+    :
+        Field wrapped OptVariable
+    """
     return field(
         default_factory=lambda: OptVariable(
             name, value, lower_bound, upper_bound, fixed=fixed, description=description
@@ -419,6 +462,11 @@ class OptVariablesFrame:
         ----------
         name:
             Name of the variable to get
+
+        Returns
+        -------
+        :
+            The opt variable
         """
         return getattr(self, name)
 
@@ -609,13 +657,19 @@ class OptVariablesFrame:
 
     def as_dict(self) -> dict[str, OptVarDictT]:
         """
-        Dictionary Representation of the frame
+        Returns
+        -------
+        :
+            Dictionary Representation of the frame
         """
         return {opv.name: opv.as_dict() for opv in self}
 
     def as_serialisable(self) -> dict[str, OptVarSerialisedT]:
         """
-        Dictionary Representation of the frame
+        Returns
+        -------
+        :
+            Serialised Representation of the frame
         """
         return {opv.name: opv.as_serialisable() for opv in self}
 
@@ -639,6 +693,11 @@ class OptVariablesFrame:
         ----------
         file: Union[str, TextIO]
             The path to the file, or an open file handle that supports reading.
+
+        Returns
+        -------
+        :
+            The new instance
         """
         if isinstance(file, Path | str):
             with open(file) as fh:
@@ -679,13 +738,19 @@ class OptVariablesFrame:
 
     def __str__(self) -> str:
         """
-        Pretty prints a representation of the OptVariablesFrame inside the console
+        Returns
+        -------
+        :
+            A pretty representation of the OptVariablesFrame inside the console
         """
         return self.tabulate()
 
     def __repr__(self) -> str:
         """
-        Prints a representation of the OptVariablesFrame inside the console
+        Returns
+        -------
+        :
+            A representation of the OptVariablesFrame inside the console
         """
         return (
             f"{self.__class__.__name__}(\n    "

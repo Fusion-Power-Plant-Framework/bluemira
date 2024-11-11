@@ -141,6 +141,11 @@ def ring_coding(n: int) -> np.ndarray:
     """
     The codes will be all "LINETO" commands, except for "MOVETO"s at the
     beginning of each subpath
+
+    Returns
+    -------
+    :
+        The ring coded array
     """
     codes = np.ones(n, dtype=Path_mpl.code_type) * Path_mpl.LINETO
     codes[0] = Path_mpl.MOVETO
@@ -150,6 +155,11 @@ def ring_coding(n: int) -> np.ndarray:
 def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path_mpl:
     """
     Convert coordinates to path vertices.
+
+    Returns
+    -------
+    :
+        The path vertices
     """
     if not check_ccw(x, z):
         x = x[::-1]
@@ -251,5 +261,10 @@ class BluemiraPathPatch3D(PathPatch3D):
     def __getattr__(self, key: str):
         """
         Transfer the key getattr to underlying PathPatch object.
+
+        Returns
+        -------
+        :
+            The key's value
         """
         return getattr(self._patch2d, key)

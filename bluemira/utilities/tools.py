@@ -58,6 +58,11 @@ class NumpyJSONEncoder(JSONEncoder):
     def default(self, o):
         """
         Override the JSONEncoder default object handling behaviour for np.arrays.
+
+        Returns
+        -------
+        :
+            The default json encoder object
         """
         if isinstance(o, np.ndarray):
             return o.tolist()
@@ -88,6 +93,10 @@ def json_writer(
     kwargs:
         all further kwargs passed to the json writer
 
+    Returns
+    -------
+    :
+        The json dictionary if requested
     """
     if file is None and not return_output:
         bluemira_warn("No json action to take")
@@ -282,6 +291,11 @@ class EinsumWrapper:
         axis:
             axis for the norm to occur on
 
+        Returns
+        -------
+        :
+            The norm of the array
+
         Raises
         ------
         ValueError
@@ -316,6 +330,11 @@ class EinsumWrapper:
             Second array
         out:
             output array for inplace dot product
+
+        Returns
+        -------
+        :
+            The dot product of the array
 
         Raises
         ------
@@ -366,6 +385,11 @@ class EinsumWrapper:
         out:
             output array for inplace cross product
 
+        Returns
+        -------
+        :
+            the cross product of the arrays
+
         Raises
         ------
         ValueError
@@ -401,6 +425,11 @@ def floatify(x: npt.ArrayLike) -> float:
     This function aims to avoid numpy warnings for float(x) for >0 rank scalars
     it emulates the functionality of float conversion
 
+    Returns
+    -------
+    :
+        the extracted float
+
     Raises
     ------
     ValueError
@@ -424,7 +453,13 @@ class ColourDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj: Any, _) -> str:
-        """Get the hex colour"""
+        """Get the hex colour
+
+        Returns
+        -------
+        :
+            The hex colour string
+        """
         if obj is None:
             return self._default
 
@@ -445,8 +480,14 @@ class ColourDescriptor:
         setattr(obj, self._name, value)
 
 
-def iterable_to_list(obj: Any | Iterable[Any]):
-    """Convert object(s) to an explicit list of objects"""
+def iterable_to_list(obj: Any | Iterable[Any]) -> list[Any]:
+    """Convert object(s) to an explicit list of objects
+
+    Returns
+    -------
+    :
+        The object converted to a list
+    """
     if isinstance(obj, list):
         return obj
     if isinstance(obj, Iterable):
@@ -465,7 +506,8 @@ def is_num(thing: Any) -> bool:
 
     Returns
     -------
-    Whether or not the input is a number
+    :
+        Whether or not the input is a number
     """
     if thing is True or thing is False:
         return False
@@ -480,6 +522,11 @@ def is_num(thing: Any) -> bool:
 def is_num_array(thing: Any) -> bool:
     """
     :func:`~bluemira.utilities.tools.is_num` but also includes arrays
+
+    Returns
+    -------
+    :
+        Whether or not the input is a number
     """
     if isinstance(thing, np.ndarray) and thing.dtype in {float, int, complex}:
         return ~np.isnan(thing)
@@ -500,7 +547,8 @@ def abs_rel_difference(v2: float, v1_ref: float) -> float:
 
     Returns
     -------
-    The absolute relative difference between v2 and v1ref
+    :
+        The absolute relative difference between v2 and v1ref
     """
     return abs((v2 - v1_ref) / v1_ref)
 
@@ -683,6 +731,11 @@ def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
         array to find repeats in
     num_rep:
         number of repetitions to find
+
+    Returns
+    -------
+    :
+        The repeated element array
     """
     if num_rep <= 1:
         raise NotImplementedError("Not implemented for less than 2 repeat elements")
@@ -692,19 +745,37 @@ def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
 
 
 def slope(arr: np.ndarray) -> float:
-    """Calculate gradient of a 2x2 point array"""
+    """Calculate gradient of a 2x2 point array
+
+    Returns
+    -------
+    :
+        The gradient of the array
+    """
     b = arr[1, 0] - arr[0, 0]
     return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
 
 
 def yintercept(arr: np.ndarray) -> tuple[float, float]:
-    """Calculate the y intercept and gradient of an array"""
+    """Calculate the y intercept and gradient of an array
+
+    Returns
+    -------
+    :
+        The y-intercept of the array
+    """
     s = slope(arr)
     return arr[0, 1] - s * arr[0, 0], s
 
 
 def ten_power(x):
-    """Get the power for the base ten notation, set 0 to 0."""
+    """Get the power for the base ten notation, set 0 to 0.
+
+    Returns
+    -------
+    :
+        the nearest log10 power
+    """
     x = np.atleast_1d(x)
     tp = np.zeros_like(x)
     ind = np.nonzero(x != 0)
@@ -726,6 +797,11 @@ def sig_fig_round(x, s, low_lim=-16):
     low_lim:
         power below which values are set to 0,
         default: low_lim = -16 (i.e, numbers below 1e-16)
+
+    Returns
+    -------
+    :
+        Rounded value
 
     """
     tp = ten_power(x)
@@ -1039,6 +1115,11 @@ def deprecation_wrapper(
     ----------
     message:
         The callable to deprecate or the message to show
+
+    Returns
+    -------
+    :
+        The wrapped function
     """
 
     def _decorate(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
@@ -1048,6 +1129,11 @@ def deprecation_wrapper(
         ----------
         func:
             The callable to deprecate
+
+        Returns
+        -------
+        :
+            wrapped function
         """
 
         @wraps(func)

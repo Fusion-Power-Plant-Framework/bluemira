@@ -361,7 +361,6 @@ ignore-names = [
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
 "examples/*" = ["INP001", "T201", "DOC201"] # 51
-"bluemira/utilities/*" = ["DOC201"]  # 39
 "bluemira/structural/*" = ["DOC201"]  # 22
 "bluemira/radiation_transport/neutronics/*" = ["DOC201"] # 67
 "bluemira/materials/*" = ["DOC201"]  # 62

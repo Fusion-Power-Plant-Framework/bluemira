@@ -46,6 +46,11 @@ class XZGeometryInterpolator(abc.ABC):
     def _get_xz_coordinates(self, num_pts):
         """
         Get discretised x-z coordinates of the geometry.
+
+        Returns
+        -------
+        :
+            The xz coordinates
         """
         coordinates = self.geometry.discretise(
             byedges=True, dl=self.geometry.length / num_pts
@@ -89,6 +94,11 @@ class PathInterpolator(XZGeometryInterpolator):
     ) -> tuple[float, float] | tuple[np.ndarray, np.ndarray]:
         """
         Convert parametric-space 'L' values to physical x-z space.
+
+        Returns
+        -------
+        :
+            The xz coordinates
         """
         l_values = np.clip(l_values, 0.0, 1.0)
         if is_num(l_values):
@@ -103,6 +113,11 @@ class PathInterpolator(XZGeometryInterpolator):
     def to_L(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Convert physical x-z space values to parametric-space 'L' values.
+
+        Returns
+        -------
+        :
+            The normalised coordinates
         """
         if is_num(x):
             return self.geometry.parameter_at([x, 0, z], tolerance=VERY_BIG)
@@ -349,6 +364,11 @@ class PositionMapper:
     def _vector_to_list(self, l_values):
         """
         Convert a vector of l_values into a ragged list if necessary
+
+        Returns
+        -------
+        :
+            The list of normalised values
         """
         list_values = []
         for i, interpolator in enumerate(self.interpolators.values()):
