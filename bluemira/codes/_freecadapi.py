@@ -173,37 +173,37 @@ def check_data_type(data_type):
 @check_data_type(Base.Vector)
 def vector_to_list(vectors: list[apiVector]) -> list[list[float]]:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""
-    return [list(v) for v in vectors]
+    return [list(v) for v in vectors]  # noqa: DOC201
 
 
 @check_data_type(Part.Point)
 def point_to_list(points: list[Part.Point]) -> list[list[float]]:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a list"""
-    return [[p.X, p.Y, p.Z] for p in points]
+    return [[p.X, p.Y, p.Z] for p in points]  # noqa: DOC201
 
 
 @check_data_type(Part.Vertex)
 def vertex_to_list(vertexes: list[apiVertex]) -> list[list[float]]:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
-    return [[v.X, v.Y, v.Z] for v in vertexes]
+    return [[v.X, v.Y, v.Z] for v in vertexes]  # noqa: DOC201
 
 
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors: list[apiVector]) -> np.ndarray:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
-    return np.array([np.array(v) for v in vectors])
+    return np.array([np.array(v) for v in vectors])  # noqa: DOC201
 
 
 @check_data_type(Part.Point)
 def point_to_numpy(points: list[Part.Point]) -> np.ndarray:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
-    return np.array([np.array([p.X, p.Y, p.Z]) for p in points])
+    return np.array([np.array([p.X, p.Y, p.Z]) for p in points])  # noqa: DOC201
 
 
 @check_data_type(Part.Vertex)
 def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
-    return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
+    return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])  # noqa: DOC201
 
 
 # ======================================================================================
@@ -213,12 +213,12 @@ def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
 
 def make_solid(shell: apiShell) -> apiSolid:
     """Make a solid from a shell."""
-    return Part.makeSolid(shell)
+    return Part.makeSolid(shell)  # noqa: DOC201
 
 
 def make_shell(faces: list[apiFace]) -> apiShell:
     """Make a shell from faces."""
-    return Part.makeShell(faces)
+    return Part.makeShell(faces)  # noqa: DOC201
 
 
 def make_compound(shapes: list[apiShape]) -> apiCompound:
@@ -730,48 +730,48 @@ def _get_api_attr(obj: apiShape, prop: str):
 
 def length(obj: apiShape) -> float:
     """Object's length"""
-    return _get_api_attr(obj, "Length")
+    return _get_api_attr(obj, "Length")  # noqa: DOC201
 
 
 def area(obj: apiShape) -> float:
     """Object's Area"""
-    return _get_api_attr(obj, "Area")
+    return _get_api_attr(obj, "Area")  # noqa: DOC201
 
 
 def volume(obj: apiShape) -> float:
     """Object's volume"""
-    return _get_api_attr(obj, "Volume")
+    return _get_api_attr(obj, "Volume")  # noqa: DOC201
 
 
 def center_of_mass(obj: apiShape) -> np.ndarray:
     """Object's center of mass"""
-    return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))
+    return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))  # noqa: DOC201
 
 
 def is_null(obj: apiShape) -> bool:
     """True if obj is null"""
-    return _get_api_attr(obj, "isNull")()
+    return _get_api_attr(obj, "isNull")()  # noqa: DOC201
 
 
 def is_closed(obj: apiShape) -> bool:
     """True if obj is closed"""
-    return _get_api_attr(obj, "isClosed")()
+    return _get_api_attr(obj, "isClosed")()  # noqa: DOC201
 
 
 def is_valid(obj) -> bool:
     """True if obj is valid"""
-    return _get_api_attr(obj, "isValid")()
+    return _get_api_attr(obj, "isValid")()  # noqa: DOC201
 
 
 def is_same(obj1: apiShape, obj2: apiShape) -> bool:
     """True if obj1 and obj2 have the same shape."""
-    return obj1.isSame(obj2)
+    return obj1.isSame(obj2)  # noqa: DOC201
 
 
 def bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
-    return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
+    return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax  # noqa: DOC201
 
 
 def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]:
@@ -812,66 +812,69 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""
     point = obj.OrderedEdges[0].firstVertex().Point
-    return vector_to_numpy(point)
+    return vector_to_numpy(point)  # noqa: DOC201
 
 
 def end_point(obj: apiShape) -> np.ndarray:
     """The end point of the object"""
     point = obj.OrderedEdges[-1].lastVertex().Point
-    return vector_to_numpy(point)
+    return vector_to_numpy(point)  # noqa: DOC201
 
 
 def ordered_vertexes(obj: apiShape) -> np.ndarray:
     """Ordered vertexes of the object"""
     vertexes = _get_api_attr(obj, "OrderedVertexes")
-    return vertex_to_numpy(vertexes)
+    return vertex_to_numpy(vertexes)  # noqa: DOC201
 
 
 def vertexes(obj: apiShape) -> np.ndarray:
     """Wires of the object"""
     vertexes = _get_api_attr(obj, "Vertexes")
-    return vertex_to_numpy(vertexes)
+    return vertex_to_numpy(vertexes)  # noqa: DOC201
 
 
 def orientation(obj: apiShape) -> bool:
     """True if obj is valid"""
-    return _get_api_attr(obj, "Orientation")
+    return _get_api_attr(obj, "Orientation")  # noqa: DOC201
 
 
 def edges(obj: apiShape) -> list[apiWire]:
     """Edges of the object"""
-    return _get_api_attr(obj, "Edges")
+    return _get_api_attr(obj, "Edges")  # noqa: DOC201
 
 
 def ordered_edges(obj: apiShape) -> np.ndarray:
     """Ordered edges of the object"""
-    return _get_api_attr(obj, "OrderedEdges")
+    return _get_api_attr(obj, "OrderedEdges")  # noqa: DOC201
 
 
 def wires(obj: apiShape) -> list[apiWire]:
     """Wires of the object"""
-    return _get_api_attr(obj, "Wires")
+    return _get_api_attr(obj, "Wires")  # noqa: DOC201
 
 
 def faces(obj: apiShape) -> list[apiFace]:
     """Faces of the object"""
-    return _get_api_attr(obj, "Faces")
+    return _get_api_attr(obj, "Faces")  # noqa: DOC201
 
 
 def shells(obj: apiShape) -> list[apiShell]:
     """Shells of the object"""
-    return _get_api_attr(obj, "Shells")
+    return _get_api_attr(obj, "Shells")  # noqa: DOC201
 
 
 def solids(obj: apiShape) -> list[apiSolid]:
     """Solids of the object"""
-    return _get_api_attr(obj, "Solids")
+    return _get_api_attr(obj, "Solids")  # noqa: DOC201
 
 
 def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:
     """
-    Get the normal vector of the face at a parameterised point in space. For
-    planar faces, the normal is the same everywhere.
+    Returns
+    -------
+    :
+        The normal vector of the face at a parameterised point in space.
+        For planar faces, the normal is the same everywhere.
     """
     return np.array(face.normalAt(alpha_1, alpha_2))
 
@@ -880,7 +883,14 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
 # Wire manipulation
 # ======================================================================================
 def wire_closure(wire: apiWire) -> apiWire:
-    """Create a line segment wire that closes an open wire"""
+    """
+    Create a line segment wire that closes an open wire
+
+    Returns
+    -------
+    :
+        The closure segment
+    """
     closure = None
     if not wire.isClosed():
         vertexes = wire.OrderedVertexes
@@ -892,7 +902,11 @@ def wire_closure(wire: apiWire) -> apiWire:
 def close_wire(wire: apiWire) -> apiWire:
     """
     Closes a wire with a line segment, if not already closed.
-    A new wire is returned.
+
+    Returns
+    -------
+    :
+        A new closed wire.
     """
     if not wire.isClosed():
         vertexes = wire.OrderedVertexes
@@ -1222,7 +1236,7 @@ def slice_shape(
 
     """
     if isinstance(shape, apiWire):
-        return _slice_wire(shape, plane_axis, plane_origin)
+        return _slice_wire(shape, plane_axis, plane_origin)  # noqa: DOC201
     if not isinstance(shape, apiFace | apiSolid):
         bluemira_warn("The output structure of this function may not be as expected")
     shift = np.dot(np.array(plane_origin), np.array(plane_axis))
@@ -1238,14 +1252,14 @@ def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
     ).toShape()
     plane = apiFace(apiWire(circ))
     intersect_obj = wire.section(plane)
-    return np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
+    return np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])  # noqa: DOC201
 
 
 def _slice_solid(obj, normal_plane, shift):
     """
     Get the plane intersection wires of a face or solid
     """
-    return obj.slice(Base.Vector(*normal_plane), shift)
+    return obj.slice(Base.Vector(*normal_plane), shift)  # noqa: DOC201
 
 
 # ======================================================================================
@@ -1387,12 +1401,12 @@ class CADFileType(enum.Enum):
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that don't need to be converted because they are unitless"""
-        return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])
+        return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])  # noqa: DOC201
 
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""
-        return (
+        return (  # noqa: DOC201
             cls.GLTRANSMISSION,
             cls.GLTRANSMISSION_2,
             cls.PLY_STANFORD,
@@ -1455,7 +1469,7 @@ def meshed_exporter(
 
         export_func(objs, filename, **kwargs)
 
-    return wrapper
+    return wrapper  # noqa: DOC201
 
 
 def save_as_STP(
@@ -1767,7 +1781,14 @@ def extrude_shape(shape: apiShape, vec: tuple[float, float, float]) -> apiShape:
 
 def _split_wire(wire):
     """
-    Split a wire into two parts.
+    Split a wire into two parts at mid point or middle edge.
+
+    Returns
+    -------
+    :
+        The first split
+    :
+        The second split
     """
     edges = wire.OrderedEdges
     if len(edges) == 1:
@@ -2088,7 +2109,8 @@ def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
 
     Returns
     -------
-    Whether or not the point is inside the shape
+    :
+        Whether or not the point is inside the shape
     """
     vector = apiVector(*point)
     return shape.isInside(vector, EPS_FREECAD, True)  # noqa: FBT003
@@ -2099,14 +2121,14 @@ def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
 # ======================================================================================
 
 
-def _edges_tangent(edge_1, edge_2):
+def _edges_tangent(edge_1, edge_2) -> bool:
     """
     Check if two adjacent edges are tangent to one another.
     """
     angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
         edge_2.tangentAt(edge_2.FirstParameter)
     )
-    return np.isclose(
+    return np.isclose(  # noqa: DOC201
         angle,
         0.0,
         rtol=1e-4,
@@ -2114,12 +2136,12 @@ def _edges_tangent(edge_1, edge_2):
     )
 
 
-def _wire_edges_tangent(wire):
+def _wire_edges_tangent(wire) -> bool:
     """
     Check that all consecutive edges in a wire are tangent
     """
     if len(wire.Edges) <= 1:
-        return True
+        return True  # noqa: DOC201
 
     edges_tangent = []
     for i in range(len(wire.OrderedEdges) - 1):
@@ -2134,18 +2156,18 @@ def _wire_edges_tangent(wire):
     return all(edges_tangent)
 
 
-def _wire_is_planar(wire):
+def _wire_is_planar(wire) -> bool:
     """
     Check if a wire is planar.
     """
     try:
         face = Part.Face(wire)
     except Part.OCCError:
-        return False
+        return False  # noqa: DOC201
     return isinstance(face.Surface, Part.Plane)
 
 
-def _wire_is_straight(wire):
+def _wire_is_straight(wire) -> bool:
     """
     Check if a wire is a straight line.
     """
@@ -2154,7 +2176,7 @@ def _wire_is_straight(wire):
         if len(edge.Vertexes) == 2:  # noqa: PLR2004
             straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
             if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
-                return True
+                return True  # noqa: DOC201
     return False
 
 
@@ -2184,14 +2206,14 @@ def _check_shapes_coplanar(shapes):
         )
 
 
-def _shapes_are_coplanar(shapes):
+def _shapes_are_coplanar(shapes) -> bool:
     """
     Check if a list of shapes are all coplanar. First shape is taken as the reference.
     """
-    return all(shapes[0].isCoplanar(other) for other in shapes[1:])
+    return all(shapes[0].isCoplanar(other) for other in shapes[1:])  # noqa: DOC201
 
 
-def _shapes_are_coaxis(shapes):
+def _shapes_are_coaxis(shapes) -> bool:
     """
     Check if a list of shapes are all co-axis. First shape is taken as the reference.
     """
@@ -2199,7 +2221,7 @@ def _shapes_are_coaxis(shapes):
     for shape in shapes[1:]:
         other_axis = shape.findPlane().Axis
         if axis != other_axis:
-            return False
+            return False  # noqa: DOC201
     return True
 
 
@@ -2258,7 +2280,7 @@ def make_placement(
     base = Base.Vector(base)
     axis = Base.Vector(axis)
 
-    return Base.Placement(base, axis, angle)
+    return Base.Placement(base, axis, angle)  # noqa: DOC201
 
 
 def make_placement_from_matrix(matrix: np.ndarray) -> apiPlacement:
@@ -2292,7 +2314,7 @@ def make_placement_from_matrix(matrix: np.ndarray) -> apiPlacement:
     matrix[-1, :] = [0, 0, 0, 1]
 
     matrix = Base.Matrix(*matrix.flat)
-    return Base.Placement(matrix)
+    return Base.Placement(matrix)  # noqa: DOC201
 
 
 def move_placement(placement: apiPlacement, vector: Iterable[float]):
@@ -2318,7 +2340,7 @@ def make_placement_from_vectors(
 ) -> apiPlacement:
     """Create a placement from three directional vectors"""
     rotation = Base.Rotation(vx, vy, vz, order)
-    return Base.Placement(base, rotation)
+    return Base.Placement(base, rotation)  # noqa: DOC201
 
 
 def change_placement(geo: apiShape, placement: apiPlacement):
@@ -2413,7 +2435,8 @@ def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
 
     Returns
     -------
-    Face from plane
+    :
+        Face from plane
     """
     # as suggested in https://forum.freecadweb.org/viewtopic.php?t=46418
     corners = [
@@ -2432,14 +2455,22 @@ def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
 
 
 def plane_from_shape(shape: apiShape) -> apiPlane:
-    """Return a plane if the shape is planar"""
+    """
+    Returns
+    -------
+    :
+        A plane if the shape is planar
+    """
     return shape.findPlane()
 
 
 def placement_from_plane(plane: apiPlane) -> apiPlacement:
     """
-    Return a placement from a plane with the origin on the plane base and the z-axis
-    directed as the plane normal.
+    Returns
+    -------
+    :
+        A placement from a plane with the origin on the plane base and the z-axis
+        directed as the plane normal.
     """
     axis = plane.Axis
     pos = plane.Position
@@ -2622,8 +2653,13 @@ def extract_attribute(func):
     """
     Decorator for serialise_shape. Convert the function output attributes string
     list to the corresponding object attributes.
+
     The first argument of func is the reference object.
-    If an output is callable, the output result is returned.
+
+    Returns
+    -------
+    :
+        If an output is callable, the output result is returned.
     """
 
     def wrapper(*args, **kwargs):
@@ -2644,6 +2680,11 @@ def extract_attribute(func):
 def serialise_shape(shape):
     """
     Serialise a FreeCAD topological data object.
+
+    Returns
+    -------
+    :
+        The json-ified shape
     """
     type_ = type(shape)
 
@@ -2728,6 +2769,7 @@ def deserialise_shape(buffer):
 
     Returns
     -------
+    :
         The deserialised FreeCAD object
     """
     for type_, v in buffer.items():
