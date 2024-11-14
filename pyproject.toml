@@ -365,4 +365,3 @@ ignore-names = [
 "bluemira/radiation_transport/neutronics/*" = ["DOC201"] # 67
 "bluemira/equilibria/*" = ["DOC201"]  # 214
 "bluemira/codes/*" = ["DOC201"]  # 239
-"bluemira/builders/*" = ["DOC201"]  # 69

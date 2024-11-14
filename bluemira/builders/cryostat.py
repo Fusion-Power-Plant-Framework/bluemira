@@ -85,6 +85,13 @@ class CryostatDesigner(Designer[tuple[float, float]]):
     def run(self) -> tuple[float, float]:
         """
         Cryostat designer run method
+
+        Returns
+        -------
+        :
+            the maximum x of the bounding box including thicknesses
+        :
+            the maximum z of the bounding box including thicknesses
         """
         bound_box = self.cryo_ts_xz.bounding_box
         z_max = bound_box.z_max
@@ -120,7 +127,7 @@ class CryostatBuilder(Builder):
         """
         xz_cryostat = self.build_xz(self.x_out, self.z_top)
         xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=[xz_cryostat],
             xy=[self.build_xy(self.x_out)],
             xyz=self.build_xyz(xz_cross_section, degree=0),
@@ -173,7 +180,7 @@ class CryostatBuilder(Builder):
             self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         )
         apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
-        return cryostat_vv
+        return cryostat_vv  # noqa: DOC201
 
     def build_xy(self, x_out: float) -> PhysicalComponent:
         """
@@ -188,7 +195,7 @@ class CryostatBuilder(Builder):
             self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
         )
         apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
-        return cryostat_vv
+        return cryostat_vv  # noqa: DOC201
 
     def build_xyz(
         self, xz_cross_section: BluemiraFace, degree=360
@@ -203,7 +210,7 @@ class CryostatBuilder(Builder):
         degree:
             Revolution degree
         """
-        return build_sectioned_xyz(
+        return build_sectioned_xyz(  # noqa: DOC201
             xz_cross_section,
             self.CRYO,
             self.params.n_TF.value,

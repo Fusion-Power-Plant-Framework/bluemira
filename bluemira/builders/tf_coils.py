@@ -97,7 +97,10 @@ class ParameterisedRippleSolver:
 
     def _make_single_circuit(self, wire: BluemiraWire) -> BiotSavartFilament:
         """
-        Make a single BioSavart Filament for a single TF coil
+        Returns
+        -------
+        :
+            A single BioSavart Filament for a single TF coil
         """
         bb = self.wp_xs.bounding_box
         dx_xs = 0.5 * (bb.x_max - bb.x_min)
@@ -154,7 +157,8 @@ class ParameterisedRippleSolver:
 
         Returns
         -------
-        The value of the TF ripple at the point(s) [%]
+        :
+            The value of the TF ripple at the point(s) [%]
         """
         return self.cage.ripple(x, y, z)
 
@@ -188,7 +192,7 @@ class RipplePointSelector:
         self.parameterisation = parameterisation
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
-        return {
+        return {  # noqa: DOC201
             "f_constraint": self._constrain_ripple,
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
@@ -212,7 +216,7 @@ class RipplePointSelector:
         # defining a df_constraint on this class, would be good for me to play with.
         # 3526
         bluemira_debug_flush(f"Max ripple: {max(ripple)}")
-        return ripple - self.TF_ripple_limit
+        return ripple - self.TF_ripple_limit  # noqa: DOC201
 
 
 class EquispacedSelector(RipplePointSelector):
@@ -336,7 +340,7 @@ class MaximiseSelector(RipplePointSelector):
         self.parameterisation = parameterisation
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
-        return {
+        return {  # noqa: DOC201
             "f_constraint": self._constrain_max_ripple,
             "tolerance": np.full(2, rip_con_tol),
         }
@@ -375,7 +379,7 @@ class MaximiseSelector(RipplePointSelector):
         # defining a df_constraint on this class, would be good for me to play with.
         # 3526
         bluemira_debug_flush(f"Max ripple: {ripple}")
-        return ripple - self.TF_ripple_limit
+        return ripple - self.TF_ripple_limit  # noqa: DOC201
 
 
 @dataclass
@@ -497,19 +501,19 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """
         Objective function (minimise length)
         """
-        return parameterisation.create_shape().length
+        return parameterisation.create_shape().length  # noqa: DOC201
 
     def keep_out_zones(self) -> list[KeepOutZone]:
         """
         Keep out zone
         """
-        return self._keep_out_zone
+        return self._keep_out_zone  # noqa: DOC201
 
     def ineq_constraints(self) -> GeomConstraintT:
         """
         Inequality constraints
         """
-        return [self._ripple_constraint]
+        return [self._ripple_constraint]  # noqa: DOC201
 
     def optimise(self) -> GeometryParameterisation:
         """
@@ -530,7 +534,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
         if isinstance(self.ripple_values, float):
             self.ripple_values = np.array([self.ripple_values])
-        return self.parameterisation
+        return self.parameterisation  # noqa: DOC201
 
     def plot(self, ax: plt.Axes | None = None):
         """

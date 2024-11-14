@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from bluemira.base.components import ComponentT
+    from bluemira.geometry.base import BluemiraGeoT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.materials.material import Material
@@ -130,6 +131,11 @@ def circular_pattern_component(
     degree:
         The angular extent of the patterning in degrees, by default 360.
 
+    Returns
+    -------
+    :
+        The patterned components
+
     Raises
     ------
     ComponentError
@@ -196,7 +202,8 @@ def pattern_revolved_silhouette(
 
     Returns
     -------
-    List of solids for each segment (ordered anti-clockwise)
+    :
+        List of solids for each segment (ordered anti-clockwise)
     """
     sector_degree = 360 / n_sectors
 
@@ -274,7 +281,10 @@ def pattern_lofted_silhouette(
 
 def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
     """
-    Generate the gap volumes
+    Returns
+    -------
+    :
+        The gap volumes
     """
     bb = face.bounding_box
     delta = 1.0
@@ -299,9 +309,14 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
     return circular_pattern(gap_volume, degree=degree, n_shapes=n_seg_p_sector + 1)
 
 
-def _order_shapes_anticlockwise(shapes):
+def _order_shapes_anticlockwise(shapes: Iterable[BluemiraGeoT]) -> list[BluemiraGeoT]:
     """
     Order shapes anti-clockwise about (0, 0, 1) by center of mass
+
+    Returns
+    -------
+    :
+        sorted shapes
     """
     x, y = np.zeros(len(shapes)), np.zeros(len(shapes))
 
@@ -329,7 +344,8 @@ def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]
 
     Returns
     -------
-    The radii of intersections, sorted from smallest to largest
+    :
+        The radii of intersections, sorted from smallest to largest
     """
     intersections = slice_shape(wire, plane)
     return sorted(intersections[:, 0])
@@ -338,6 +354,11 @@ def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]
 def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
     """
     Make a circular annulus in the x-y plane (z=0)
+
+    Returns
+    -------
+    :
+        The circular face
 
     Raises
     ------
@@ -382,7 +403,8 @@ def build_sectioned_xy(
 
     Returns
     -------
-    List of PhysicalComponents with colours applied
+    :
+        List of PhysicalComponents with colours applied
     """
     xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
 
@@ -434,7 +456,8 @@ def build_sectioned_xyz(
 
     Returns
     -------
-    List of PhysicalComponents
+    :
+        List of PhysicalComponents
 
     Raises
     ------

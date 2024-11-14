@@ -84,7 +84,7 @@ class VVTSBuilder(Builder):
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
         vvts_void_face: BluemiraFace = xz_vvts_void.get_component_properties("shape")
 
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=[xz_vvts, xz_vvts_void],
             xy=self.build_xy(vvts_face),
             xyz=self.build_xyz(vvts_face, vvts_void_face, degree=0),
@@ -98,6 +98,13 @@ class VVTSBuilder(Builder):
         ----------
         koz:
             keep out zone for the thermal shield
+
+        Returns
+        -------
+        :
+            The xz shape
+        :
+            The xz void
         """
         # This split hack works round #1319
         # _offset_wire_discretised used because
@@ -138,7 +145,7 @@ class VVTSBuilder(Builder):
         vvts_face:
             xz face to build vvts
         """
-        return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])
+        return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])  # noqa: DOC201
 
     def build_xyz(
         self, vvts_face: BluemiraFace, vvts_void_face: BluemiraFace, degree: float = 360
@@ -153,7 +160,7 @@ class VVTSBuilder(Builder):
         degree:
             Revolution degrees
         """
-        return build_sectioned_xyz(
+        return build_sectioned_xyz(  # noqa: DOC201
             [vvts_face, vvts_void_face],
             [self.VVTS, self.VOID],
             self.params.n_TF.value,
@@ -207,7 +214,7 @@ class CryostatTSBuilder(Builder):
         cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
         cts_void_face: BluemiraFace = xz_cts_void.get_component_properties("shape")
 
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=[xz_cts, xz_cts_void],
             xy=[self.build_xy(cts_face)],
             xyz=self.build_xyz(cts_face, cts_void_face, degree=0),
@@ -218,6 +225,13 @@ class CryostatTSBuilder(Builder):
     ) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the thermal shield.
+
+        Returns
+        -------
+        :
+            The xz shape
+        :
+            The xz void
         """
         x, z = [], []
         for coil in pf_kozs:
@@ -297,7 +311,7 @@ class CryostatTSBuilder(Builder):
         cryostat_ts = PhysicalComponent(self.CRYO_TS, make_circular_xy_ring(r_in, r_out))
         apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
 
-        return cryostat_ts
+        return cryostat_ts  # noqa: DOC201
 
     def build_xyz(
         self, cts_face: BluemiraFace, cts_void_face: BluemiraFace, degree: float = 360
@@ -305,7 +319,7 @@ class CryostatTSBuilder(Builder):
         """
         Build the x-y-z components of the thermal shield.
         """
-        return build_sectioned_xyz(
+        return build_sectioned_xyz(  # noqa: DOC201
             [cts_face, cts_void_face],
             [self.CRYO_TS, self.VOID],
             self.params.n_TF.value,
