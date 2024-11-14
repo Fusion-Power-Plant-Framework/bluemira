@@ -12,6 +12,11 @@ Importer for external code API and related functions
 def freecad_message_removal():
     """
     Remove annoying message about freecad libdir not being set
+
+    Returns
+    -------
+    :
+        The default freecad path
     """
     import importlib  # noqa: PLC0415
     import os  # noqa: PLC0415

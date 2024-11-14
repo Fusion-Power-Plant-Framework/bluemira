@@ -44,6 +44,10 @@ class MappedParameterFrame(ParameterFrame):
 
         If a default value is not found for a given mapping it is set to NaN
 
+        Returns
+        -------
+        :
+            The parameter frame
         """
         new_param_dict = {}
         for bm_map_name, param_map in cls._mappings.items():
@@ -137,7 +141,7 @@ class ParameterMapping:
         """
         Convert this object to a dictionary with attributes as values.
         """
-        return {
+        return {  # noqa: DOC201
             "name": self.name,
             "out_name": self.out_name,
             "send": self.send,
@@ -150,14 +154,14 @@ class ParameterMapping:
         """
         Create a ParameterMapping using a dictionary with attributes as values.
         """
-        return cls(**the_dict)
+        return cls(**the_dict)  # noqa: DOC201
 
     def __str__(self):
         """
         Create a string representation of of this object which is more compact than that
         provided by the default `__repr__` method.
         """
-        return repr(self.to_dict())
+        return repr(self.to_dict())  # noqa: DOC201
 
     def __setattr__(self, attr: str, value: bool | str):  # noqa: FBT001
         """

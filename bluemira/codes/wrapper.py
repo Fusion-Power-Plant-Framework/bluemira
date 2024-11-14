@@ -46,7 +46,8 @@ def systems_code_solver(
 
     Returns
     -------
-    The solver that has been run.
+    :
+        The solver that has been run.
 
     Raises
     ------
@@ -80,7 +81,7 @@ def plot_radial_build(
     """
     syscode = get_code_interface(module)
 
-    return syscode.plot_radial_build(filename, width, show=show)
+    return syscode.plot_radial_build(filename, width, show=show)  # noqa: DOC201
 
 
 def transport_code_solver(
@@ -102,7 +103,8 @@ def transport_code_solver(
 
     Returns
     -------
-    The solver object to be run
+    :
+        The solver object to be run
     """
     transp = get_code_interface(module)
     return transp.Solver(params, build_config)
@@ -130,7 +132,8 @@ def neutronics_code_solver(
 
     Returns
     -------
-    The solver object to be run
+    :
+        The solver object to be run
     """
     neutron = get_code_interface(module)
     return neutron.Solver(params, build_config, neutronics_model, source, tally_function)

@@ -69,7 +69,7 @@ def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
     """
     try:
         with open(file_path) as f:
-            return json.load(f)
+            return json.load(f)  # noqa: DOC201
     except OSError as os_error:
         raise CodesError(
             f"Cannot open mock {name} results file '{file_path}'."
@@ -87,7 +87,8 @@ def get_code_interface(module: str) -> ModuleType:
 
     Returns
     -------
-    code module
+    :
+        Code module
     """
     try:
         return get_module(f"bluemira.codes.{module.lower()}")
@@ -103,7 +104,8 @@ def create_mapping(
 
     Returns
     -------
-    A mapping from bluemira names to an external code ParameterMapping
+    :
+        A mapping from bluemira names to an external code ParameterMapping
 
     """
     mappings = {}
@@ -165,7 +167,10 @@ class LogPipe(threading.Thread):
 
     def fileno(self):
         """
-        Return the write file descriptor of the pipe
+        Returns
+        -------
+        :
+            The write file descriptor of the pipe
         """
         return self.fd_write
 

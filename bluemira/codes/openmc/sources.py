@@ -31,7 +31,7 @@ def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
     """
     if not PPS_ISO_INSTALLED:
         raise SourceError("pps_isotropic installation not found")
-    return create_parametric_plasma_source(
+    return create_parametric_plasma_source(  # noqa: DOC201
         # tokamak geometry
         major_r=source_parameters.plasma_physics_units.major_radius,
         minor_r=source_parameters.plasma_physics_units.minor_radius,
@@ -49,7 +49,7 @@ def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
     """Create the ring source"""
-    return create_ring_source(
+    return create_ring_source(  # noqa: DOC201
         source_parameters.major_radius, source_parameters.shaf_shift
     )
 
@@ -80,4 +80,4 @@ def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source
         [raw_uc(dt_neutron_energy, "J", "eV")], [1]
     )
 
-    return ring_source
+    return ring_source  # noqa: DOC201

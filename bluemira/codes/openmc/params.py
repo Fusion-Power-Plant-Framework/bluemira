@@ -170,4 +170,4 @@ class PlasmaSourceParameters:
             else:
                 param_convert_dict[k.name] = val
 
-        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))
+        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))  # noqa: DOC201

@@ -392,4 +392,4 @@ class ProcessSolverParams(MappedParameterFrame):
                 template.to_dict(), source=f"{NAME} user input template"
             )
         self.__defaults = template
-        return self
+        return self  # noqa: DOC201

@@ -137,6 +137,11 @@ class Impurities(IntEnum):
         """
         Get PROCESS impurity data file path
 
+        Returns
+        -------
+        :
+            The available file paths
+
         Raises
         ------
         CodesError
@@ -157,14 +162,22 @@ class Impurities(IntEnum):
 
     def id(self):
         """
-        Get variable string for impurity fraction
+        Returns
+        -------
+        :
+            The variable string for impurity fraction
         """
         return f"fimp({self.value:02})"
 
     def read_impurity_files(
         self, filetype: Sequence[Literal["lz", "z2", "z"]]
     ) -> tuple[list[ImpurityDataHeader], ...]:
-        """Get contents of impurity data files"""
+        """
+        Returns
+        -------
+        :
+            Contents of impurity data files
+        """
         files = self.files()
         return tuple(
             read_impurity_file(files[file])
@@ -185,11 +198,12 @@ def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
 
     Returns
     -------
-    PROCESS variable names valid for the install (if OBS_VAR is updated
-    correctly). Returns a list if an obsolete variable has been
-    split into more than one new variable (e.g., a thermal shield
-    thickness is split into ib/ob thickness). Returns `None` if there
-    is no alternative.
+    :
+        PROCESS variable names valid for the install (if OBS_VAR is updated
+        correctly). Returns a list if an obsolete variable has been
+        split into more than one new variable (e.g., a thermal shield
+        thickness is split into ib/ob thickness). Returns `None` if there
+        is no alternative.
     """
     process_name = _nested_check(process_map_name)
 
@@ -204,6 +218,11 @@ def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
 def _nested_check(process_name):
     """
     Recursively checks for obsolete variable names
+
+    Returns
+    -------
+    :
+        The newest process name
     """
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]

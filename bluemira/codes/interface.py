@@ -29,7 +29,7 @@ class BaseRunMode(enum.Enum):
         """
         Convert the enum name to a string; its name in lower-case.
         """
-        return self.name.lower()
+        return self.name.lower()  # noqa: DOC201
 
     @classmethod
     def from_string(cls, mode_str: str):
@@ -48,7 +48,7 @@ class BaseRunMode(enum.Enum):
         """
         for run_mode_str, enum_value in cls.__members__.items():
             if run_mode_str.lower() == mode_str.lower():
-                return enum_value
+                return enum_value  # noqa: DOC201
         raise ValueError(f"Unknown run mode '{mode_str}'.")
 
 
@@ -341,7 +341,7 @@ class CodesSolver(abc.ABC):
             result = run(result)
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(result)
-        return result
+        return result  # noqa: DOC201
 
     def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
         """
@@ -380,9 +380,12 @@ class CodesSolver(abc.ABC):
     @staticmethod
     def _get_execution_method(task: CodesTask, run_mode: BaseRunMode) -> Callable | None:
         """
-        Return the method on the task corresponding to this solver's run
-        mode (e.g., :code:`task.run`).
+        Returns
+        -------
+        :
+            The method on the task corresponding to this solver's run
+            mode (e.g., :code:`task.run`).
 
-        If the method on the task does not exist, return :code:`None`.
+            If the method on the task does not exist, return :code:`None`.
         """
         return getattr(task, run_mode.to_string(), None)

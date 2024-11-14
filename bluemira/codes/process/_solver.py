@@ -162,6 +162,11 @@ class Solver(CodesSolver):
             :func:`~bluemira.codes.process._solver.Solver.__init__`
             docstring for details of the behaviour of each run mode.
 
+        Returns
+        -------
+        :
+            The modified parameters
+
         Raises
         ------
         CodesError

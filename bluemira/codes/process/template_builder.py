@@ -314,7 +314,7 @@ class PROCESSTemplateBuilder:
         self._check_model_inputs()
         models = {k: v.value for k, v in self._models.items()}
 
-        return ProcessInputs(
+        return ProcessInputs(  # noqa: DOC201
             bounds=self.bounds,
             icc=icc,
             ixc=self.ixc,

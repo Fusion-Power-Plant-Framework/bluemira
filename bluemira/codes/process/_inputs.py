@@ -723,6 +723,11 @@ class ProcessInputs:
         Wrap each value in an INVariable object
 
         Needed for compatibility with PROCESS InDat writer
+
+        Returns
+        -------
+        :
+            Converted input dictionary
         """
         out_dict = {}
         for name, value in self:
@@ -755,7 +760,9 @@ class ProcessInputs:
 
     def to_dict(self) -> dict[str, float | list | dict]:
         """
-        A dictionary representation of the dataclass
-
+        Returns
+        -------
+        :
+            A dictionary representation of the dataclass
         """
         return dict(self)

@@ -81,6 +81,11 @@ MAX_PRECISION = 1e-5
 def catch_caderr(new_error_type):
     """
     Catch CAD errors with given error
+
+    Returns
+    -------
+    :
+        the wrapped function
     """
 
     def argswrap(func):
@@ -114,7 +119,8 @@ def arrange_edges(old_wire: apiWire, new_wire: apiWire) -> apiWire:
 
     Returns
     -------
-    Wire with arranged edges
+    :
+        Wire with arranged edges
     """
     old_edges = Part.sortEdges(old_wire.Edges)[0]
     new_edges = Part.sortEdges(new_wire.Edges)[0]
@@ -129,6 +135,11 @@ def check_data_type(data_type):
     """
     Decorator to check the data type of the first parameter input (args[0]) of a
     function.
+
+    Returns
+    -------
+    :
+        Decorator enforcing a certain datatype
 
     Raises
     ------
@@ -238,7 +249,8 @@ def make_polygon(points: list | np.ndarray) -> apiWire:
 
     Returns
     -------
-    A FreeCAD wire that contains the polygon
+    :
+        A FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -257,7 +269,8 @@ def make_bezier(points: list | np.ndarray) -> apiWire:
 
     Returns
     -------
-    A FreeCAD wire that contains the bezier curve
+    :
+        A FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -298,7 +311,8 @@ def make_bspline(
 
     Returns
     -------
-    A FreeCAD wire that contains the bspline curve
+    :
+        A FreeCAD wire that contains the bspline curve
 
     Notes
     -----
@@ -353,7 +367,8 @@ def make_bsplinesurface(
 
     Returns
     -------
-    A FreeCAD object that contours the bsplinesurface
+    :
+        A FreeCAD object that contours the bsplinesurface
 
     Notes
     -----
@@ -402,7 +417,8 @@ def interpolate_bspline(
 
     Returns
     -------
-    A FreeCAD wire that contains the bspline curve
+    :
+        A FreeCAD wire that contains the bspline curve
 
     Raises
     ------
@@ -483,7 +499,8 @@ def make_circle(
 
     Returns
     -------
-    FreeCAD wire that contains the arc or circle
+    :
+        FreeCAD wire that contains the arc or circle
     """
     # TODO @ivanmaione: check the creation of the arc when start_angle < end_angle
     # 3528
@@ -518,7 +535,8 @@ def make_circle_arc_3P(  # noqa: N802
 
     Returns
     -------
-    FreeCAD wire that contains the arc of circle
+    :
+        FreeCAD wire that contains the arc of circle
     """
     # TODO @ivanmaione: check what happens when the 3 points are in a line
     # 3528
@@ -569,7 +587,8 @@ def make_ellipse(
 
     Returns
     -------
-    FreeCAD wire that contains the ellipse or arc of ellipse
+    :
+        FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO @ivanmaione: check the creation of the arc when start_angle < end_angle
     # 3528
@@ -618,7 +637,8 @@ def offset_wire(
 
     Returns
     -------
-    Offset wire
+    :
+        Offset wire
 
     Raises
     ------
@@ -679,7 +699,8 @@ def make_face(wire: apiWire) -> apiFace:
 
     Returns
     -------
-    Face created from the wire boundary
+    :
+        Face created from the wire boundary
 
     Raises
     ------
@@ -897,7 +918,8 @@ def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
 
     Returns
     -------
-    Array of points
+    :
+        Array of points
 
     Raises
     ------
@@ -942,7 +964,8 @@ def discretise_by_edges(
 
     Returns
     -------
-    Array of points
+    :
+        Array of points
 
     Raises
     ------
@@ -1020,7 +1043,8 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
 
     Returns
     -------
-    Wire point value at distance
+    :
+        Wire point value at distance
     """
     if distance == 0.0:
         return start_point(wire)
@@ -1068,7 +1092,8 @@ def wire_parameter_at(
 
     Returns
     -------
-    Parameter value along the wire at the vertex
+    :
+        Parameter value along the wire at the vertex
 
     Raises
     ------
@@ -1599,7 +1624,8 @@ def scale_shape(shape: apiShape, factor: float) -> apiShape:
 
     Returns
     -------
-    The scaled shape
+    :
+        The scaled shape
     """
     return shape.scale(factor)
 
@@ -1617,7 +1643,8 @@ def translate_shape(shape: apiShape, vector: tuple[float, float, float]) -> apiS
 
     Returns
     -------
-    The translated shape
+    :
+        The translated shape
     """
     return shape.translate(Base.Vector(vector))
 
@@ -1644,7 +1671,8 @@ def rotate_shape(
 
     Returns
     -------
-    The rotated shape
+    :
+        The rotated shape
     """
     return shape.rotate(base, direction, degree)
 
@@ -1668,7 +1696,8 @@ def mirror_shape(
 
     Returns
     -------
-    The mirrored shape
+    :
+        The mirrored shape
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
@@ -1708,7 +1737,8 @@ def revolve_shape(
 
     Returns
     -------
-    The revolved shape.
+    :
+        The revolved shape.
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
@@ -1728,7 +1758,8 @@ def extrude_shape(shape: apiShape, vec: tuple[float, float, float]) -> apiShape:
 
     Returns
     -------
-    The extruded shape.
+    :
+        The extruded shape.
     """
     vec = Base.Vector(vec)
     return shape.extrude(vec)
@@ -1780,7 +1811,8 @@ def sweep_shape(
 
     Returns
     -------
-    Swept geometry object
+    :
+        Swept geometry object
 
     Raises
     ------
@@ -2744,7 +2776,8 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
 
     Returns
     -------
-    FreeCAD Part curve object
+    :
+        FreeCAD Part curve object
     """
     curve = edge.Curve
     first = edge.FirstParameter
