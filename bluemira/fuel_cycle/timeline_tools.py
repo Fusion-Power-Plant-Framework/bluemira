@@ -34,14 +34,14 @@ def f_gompertz(t: float, a: float, b: float, c: float) -> float:
 
     \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
     """
-    return a * np.exp(-b * np.exp(-c * t))
+    return a * np.exp(-b * np.exp(-c * t))  # noqa: DOC201
 
 
 def f_logistic(t: float, value: float, k: float, x_0: float) -> float:
     """
     Logistic function parameterisation.
     """
-    return value / (1 + np.exp(-k * (t - x_0)))
+    return value / (1 + np.exp(-k * (t - x_0)))  # noqa: DOC201
 
 
 def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -49,7 +49,7 @@ def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     Transform values into arrays usable to make histograms.
     """
     x, y = np.array(x), np.array(y)
-    return x.repeat(2)[1:-1], y.repeat(2)
+    return x.repeat(2)[1:-1], y.repeat(2)  # noqa: DOC201
 
 
 def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:
@@ -69,7 +69,8 @@ def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.n
 
     Returns
     -------
-    The distribution of size n and of the correct integral value
+    :
+        The distribution of size n and of the correct integral value
     """
     rng = np.random.default_rng(RNGSeeds.timeline_tools_lognorm.value)
 
@@ -99,7 +100,8 @@ def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np
 
     Returns
     -------
-    The distribution of size n and of the correct integral value
+    :
+        The distribution of size n and of the correct integral value
     """
     rng = np.random.default_rng(RNGSeeds.timeline_tools_truncnorm.value)
     distribution = rng.normal(0, sigma, n)
@@ -128,7 +130,8 @@ def generate_exponential_distribution(
 
     Returns
     -------
-    The distribution of size n and of the correct integral value
+    :
+        The distribution of size n and of the correct integral value
     """
     rng = np.random.default_rng(RNGSeeds.timeline_tools_expo.value)
     distribution = rng.exponential(lambdda, n)
@@ -160,7 +163,8 @@ class LearningStrategy(abc.ABC):
 
         Returns
         -------
-        Operational availabilities at each operational phase
+        :
+            Operational availabilities at each operational phase
         """
         ...
 
@@ -186,7 +190,8 @@ class UniformLearningStrategy(LearningStrategy):
 
         Returns
         -------
-        Operational availabilities at each operational phase
+        :
+            Operational availabilities at each operational phase
         """
         return lifetime_op_availability * np.ones(len(op_durations))
 
@@ -221,7 +226,8 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
 
         Returns
         -------
-        Operational availabilities at each operational phase
+        :
+            Operational availabilities at each operational phase
 
         Raises
         ------
@@ -295,7 +301,8 @@ class GompertzLearningStrategy(LearningStrategy):
 
         Returns
         -------
-        Operational availabilities at each operational phase
+        :
+            Operational availabilities at each operational phase
 
         Raises
         ------
@@ -320,6 +327,11 @@ class GompertzLearningStrategy(LearningStrategy):
             Optimisation objective for chunky fit to Gompertz
 
             \t:math:`a_{min}+(a_{max}-a_{min})e^{\\dfrac{-\\text{ln}(2)}{e^{-ct_{infl}}}}`
+
+            Returns
+            -------
+            :
+                Objective
             """
             a_ops_i = self._f_op_availabilities(t, x, arg_dates)
             # NOTE: Fancy analytical integral objective of Gompertz function
@@ -386,7 +398,8 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
 
         Returns
         -------
-        The distribution of size n and of the correct integral value
+        :
+            The distribution of size n and of the correct integral value
         """
         return generate_lognorm_distribution(n, integral, self.sigma)
 
@@ -420,7 +433,8 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
 
         Returns
         -------
-        The distribution of size n and of the correct integral value
+        :
+            The distribution of size n and of the correct integral value
         """
         return generate_truncnorm_distribution(n, integral, self.sigma)
 

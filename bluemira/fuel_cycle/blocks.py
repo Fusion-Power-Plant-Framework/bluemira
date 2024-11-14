@@ -51,6 +51,11 @@ class FuelCycleFlow:
             The number of flow divisions
         fractions:
             The fractional breakdown of the flows (must sum to 1)
+
+        Returns
+        -------
+        :
+            fractions of outflows
         """
         if number <= 1 or not isinstance(number, int):
             bluemira_warn("Integer greater than 1.")
@@ -169,7 +174,8 @@ class FuelCycleComponent:
 
         Returns
         -------
-        The tritium out flow signal
+        :
+            The tritium out flow signal
         """
         if self.m_out is None:
             bluemira_warn("Need to run component first.")

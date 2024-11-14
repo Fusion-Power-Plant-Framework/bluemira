@@ -237,7 +237,10 @@ class LifeCycle:
 
     def get_op_phases(self) -> list[float]:
         """
-        Get the operational phases for the LifeCycle.
+        Returns
+        -------
+        :
+            The operational phases for the LifeCycle.
         """
         return [
             d
@@ -247,7 +250,10 @@ class LifeCycle:
 
     def make_timeline(self) -> Timeline:
         """
-        Builds a Timeline instance
+        Returns
+        -------
+        :
+            The timeline instance
         """
         n = len(self.n_pulse_p)
 
@@ -459,6 +465,11 @@ class LifeCycle:
     def write(self, filename: str, **kwargs):
         """
         Save a Timeline to a JSON file.
+
+        Returns
+        -------
+        :
+            The json output
         """
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
@@ -468,6 +479,11 @@ class LifeCycle:
     def read(filename: str):
         """
         Load a Timeline from a JSON file.
+
+        Returns
+        -------
+        :
+            The json loaded timeline
         """
         bluemira_print(f"Reading {filename}")
         with open(filename) as f_h:

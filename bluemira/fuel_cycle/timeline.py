@@ -160,7 +160,8 @@ class OperationPhase(Phase):
 
         Returns
         -------
-        The array of outage durations [s] (n_pulse)
+        :
+            The array of outage durations [s] (n_pulse)
         """
         t_fus = self.n_pulse * self.t_flattop  # [s] fusion time in phase
         # [s] total downtime per phase
@@ -393,6 +394,11 @@ class Timeline:
     def to_dict(self) -> dict[str, np.ndarray | int]:
         """
         Convert the timeline to a dictionary object for use in FuelCycle.
+
+        Returns
+        -------
+        :
+            Dictionary of fuel cycle object
         """
         return {
             "time": self.t,
@@ -434,6 +440,11 @@ class Timeline:
         """
         Plots the damage in the various components over the Timeline. Das hast
         du ein Mal in einem Paper benutzt
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         f, (ax3, ax31) = plt.subplots(
             2, 1, sharex=True, gridspec_kw={"height_ratios": [1, 2]}
