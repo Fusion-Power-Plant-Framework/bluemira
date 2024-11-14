@@ -39,7 +39,7 @@ class MixtureFraction:
 
     def __hash__(self):
         """Hash of class"""
-        return hash(self.name)
+        return hash(self.name)  # noqa: DOC201
 
     def __eq__(self, other: object):
         """Material equality"""
@@ -48,7 +48,7 @@ class MixtureFraction:
             and other.fraction == self.fraction
             and other.material == self.material
         ):
-            return True
+            return True  # noqa: DOC201
         if isinstance(other, MassFractionMaterial) and self.fraction == 1:
             return other == self.material
         return False
@@ -81,7 +81,10 @@ class HomogenisedMixture:
 
     def __str__(self) -> str:
         """
-        Get the name of the mixture.
+        Returns
+        -------
+        :
+            The name of the mixture.
         """
         return self.name
 
@@ -93,6 +96,11 @@ class HomogenisedMixture:
     def to_openmc_material(self, temperature: float | None = None):
         """
         Convert the mixture to an openmc material.
+
+        Returns
+        -------
+        :
+            The openmc material
         """
         temperature = self.temperature if temperature is None else temperature
         return to_openmc_material_mixture(
@@ -112,7 +120,10 @@ class HomogenisedMixture:
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
     ) -> float:
         """
-        Calculate a mass-fraction-averaged property for the homogenised mixture.
+        Returns
+        -------
+        :
+            A mass-fraction-averaged property for the homogenised mixture.
         """
         temperature = self.temperature if temperature is None else temperature
         warn = []
@@ -165,7 +176,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        The Young's modulus of the material at the given temperature.
+        :
+            The Young's modulus of the material at the given temperature.
         """
         return self._calc_homogenised_property("E", temperature, mix_type=mix_type)
 
@@ -184,7 +196,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        Poisson's ratio for the material at the given temperature.
+        :
+            Poisson's ratio for the material at the given temperature.
         """
         return self._calc_homogenised_property("mu", temperature, mix_type=mix_type)
 
@@ -203,7 +216,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
+        :
+            Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
         """
         return self._calc_homogenised_property("CTE", temperature, mix_type=mix_type)
 
@@ -222,7 +236,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        The density of the material at the given temperature.
+        :
+            The density of the material at the given temperature.
         """
         return self._calc_homogenised_property("rho", temperature, mix_type=mix_type)
 
@@ -241,7 +256,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        The electrical resistivity of the material at the given temperature.
+        :
+            The electrical resistivity of the material at the given temperature.
         """
         return self._calc_homogenised_property("erho", temperature, mix_type=mix_type)
 
@@ -260,7 +276,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        Minimum yield stress in MPa at the given temperature.
+        :
+            Minimum yield stress in MPa at the given temperature.
         """
         return self._calc_homogenised_property("Sy", temperature, mix_type=mix_type)
 
@@ -282,7 +299,8 @@ class HomogenisedMixture:
 
         Returns
         -------
-        The mixture
+        :
+            The mixture
 
         Raises
         ------
@@ -307,7 +325,7 @@ class HomogenisedMixture:
         if (not isinstance(other, type(self)) and len(self.fractions) > 1) or (
             len(other.materials) != len(self.materials)
         ):
-            return False
+            return False  # noqa: DOC201
 
         if isinstance(other, type(self)):
             for selfmat in self.materials:
@@ -324,4 +342,4 @@ class HomogenisedMixture:
 
     def __hash__(self):
         """Hash of class"""
-        return hash(self.name)
+        return hash(self.name)  # noqa: DOC201
