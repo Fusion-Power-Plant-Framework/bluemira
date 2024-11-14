@@ -63,7 +63,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate poloidal flux at (x, z)
         """
-        return self.psi_response(x, z) * self.current
+        return self.psi_response(x, z) * self.current  # noqa:DOC201
 
     def psi_response(self, x, z):
         return self._mix_control_method(
@@ -74,7 +74,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate radial magnetic field Bx at (x, z)
         """
-        return self.Bx_response(x, z) * self.current
+        return self.Bx_response(x, z) * self.current  # noqa:DOC201
 
     def Bx_response(
         self, x: float | np.ndarray, z: float | np.ndarray
@@ -93,7 +93,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        The radial magnetic field response at the x, z coordinates.
+        :
+            The radial magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
             x, z, greens_Bx, semianalytic_Bx, disable_analytic=not self._Bx_analytic
@@ -103,7 +104,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate vertical magnetic field Bz at (x, z)
         """
-        return self.Bz_response(x, z) * self.current
+        return self.Bz_response(x, z) * self.current  # noqa:DOC201
 
     def Bz_response(
         self, x: float | np.ndarray, z: float | np.ndarray
@@ -122,7 +123,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        The vertical magnetic field response at the x, z coordinates.
+        :
+            The vertical magnetic field response at the x, z coordinates.
         """
         return self._mix_control_method(
             x, z, greens_Bz, semianalytic_Bz, disable_analytic=not self._Bz_analytic
@@ -132,7 +134,7 @@ class CoilGroupFieldsMixin:
         """
         Calculate poloidal magnetic field Bp at (x, z)
         """
-        return np.hypot(self.Bx(x, z), self.Bz(x, z))
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))  # noqa:DOC201
 
     def F(self, eqcoil: CoilGroup) -> np.ndarray:
         """
@@ -144,6 +146,11 @@ class CoilGroupFieldsMixin:
              \\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}
             F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)
             F_z = -IBx
+
+        Returns
+        -------
+        :
+            The force response
         """  # noqa: W505, E501
         multiplier = self.current * 2 * np.pi * self.x
         cr = self._current_radius
@@ -167,9 +174,15 @@ class CoilGroupFieldsMixin:
 
     def control_F(self, coil_grp: CoilGroup) -> np.ndarray:
         """
-        Returns the Green's matrix element for the coil mutual force.
+        Calculates the coil mutual force
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
+
+        Returns
+        -------
+        :
+            The Green's matrix element for the coil mutual force.
+
         """
         # TODO @je-cook: Vectorise
         # 3575
@@ -219,7 +232,7 @@ class CoilGroupFieldsMixin:
         """
         Quickly calculate plasma psi, Bx or Bz from Greens functions and current
         """
-        return self.current * green
+        return self.current * green  # noqa: DOC201
 
     def _mix_control_method(
         self,
@@ -682,7 +695,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def control_F(self, coil_grp: CoilGroup, *, control: bool = False) -> np.ndarray:
         """
-        Returns the Green's matrix element for the coil mutual force.
+        Calculate the coil mutual force
 
         \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
 
@@ -692,6 +705,11 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             the coil group to calculate against
         control:
             operations on control coils only
+
+        Returns
+        -------
+        :
+            the Green's matrix element for the coil mutual force.
         """
         if control:
             inds = self._control_ind
