@@ -31,6 +31,11 @@ def treat_xz_array(func):
     """
     Decorator for handling array calls to PlasmaCoil methods.
 
+    Returns
+    -------
+    :
+        Wrapped function
+
     Raises
     ------
     EquilibriaError
@@ -130,7 +135,7 @@ class PlasmaCoil:
                 " distribution."
             )
 
-        return np.sum(
+        return np.sum(  # noqa: DOC201
             self._j_tor[self._ii, self._jj]
             * self._grid.dx
             * self._grid.dz
@@ -162,7 +167,8 @@ class PlasmaCoil:
 
         Returns
         -------
-        Poloidal magnetic flux at the points [V.s/rad]
+        :
+            Poloidal magnetic flux at the points [V.s/rad]
         """
         if x is None and z is None:
             return self._plasma_psi
@@ -193,7 +199,8 @@ class PlasmaCoil:
 
         Returns
         -------
-        Radial magnetic field at the points [T]
+        :
+            Radial magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bx
@@ -224,7 +231,8 @@ class PlasmaCoil:
 
         Returns
         -------
-        Vertical magnetic field at the points [T]
+        :
+            Vertical magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bz
@@ -254,7 +262,8 @@ class PlasmaCoil:
 
         Returns
         -------
-        Poloidal magnetic field at the points [T]
+        :
+            Poloidal magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bp
@@ -268,12 +277,20 @@ class PlasmaCoil:
         ----------
         ax:
             The matplotlib axes on which to plot the PlasmaCoil
+
+        Returns
+        -------
+        :
+            The axis
         """
         return PlasmaCoilPlotter(self, ax=ax)
 
     def __repr__(self):
         """
-        Get a simple string representation of the PlasmaCoil.
+        Returns
+        -------
+        :
+            A simple string representation of the PlasmaCoil.
         """
         n_filaments = len(np.nonzero(self._j_tor > 0)[0])
         return f"{self.__class__.__name__}: {n_filaments} filaments"

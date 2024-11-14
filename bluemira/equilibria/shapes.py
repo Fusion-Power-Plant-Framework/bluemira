@@ -37,7 +37,10 @@ __all__ = [
 
 def _generate_theta(n: int) -> npt.NDArray[np.float64]:
     """
-    Generate a poloidal angle vector that encompasses all extrema
+    Returns
+    -------
+    :
+        A poloidal angle vector that encompasses all extrema
     """
     quart_values = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
     if n <= 4:  # noqa: PLR2004
@@ -457,12 +460,19 @@ def flux_surface_kuiroukidis_quadrants(
     delta_l: float,
     n_power: int = 8,
     n_points: int = 100,
-) -> tuple[list[npt.NDArray[np.float64]], list[npt.NDArray[np.float64]]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Kuiroukidis flux surface individual quadrants
 
     please see :func:`~bluemira.equilibria.shapes.flux_surface_kuiroukidis`
     for more information
+
+    Returns
+    -------
+    :
+        x coordinates of flux surface
+    :
+        z coordinates of flux surface
     """
     if delta_u < 0:
         delta_u *= -1

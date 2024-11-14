@@ -289,7 +289,7 @@ class CoilGroupPlotter(Plotter):
 
         control_ind[control] = True
 
-        return (
+        return (  # noqa: DOC201
             centre,
             xx,
             np.atleast_1d(self._cg.z),
@@ -304,7 +304,10 @@ class CoilGroupPlotter(Plotter):
 
     def _get_centre(self):
         """
-        Get a "centre" position for the coils to arrange the labels.
+        Returns
+        -------
+        :
+            A "centre" position for the coils to arrange the labels.
         """
         try:
             x, z = self._cg.get_control_coils().position

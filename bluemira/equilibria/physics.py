@@ -10,6 +10,7 @@ A collection of simple equilibrium physics calculations
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.find import Opoint, Xpoint
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 
 
 def calc_psi_norm(
@@ -207,7 +209,7 @@ def calc_volume(eq: Equilibrium) -> float:
     Calculates plasma volume [m^3]
     """
     lcfs = eq.get_LCFS().xz
-    return revolved_volume(*lcfs)
+    return revolved_volume(*lcfs)  # noqa: DOC201
 
 
 def calc_energy(eq: Equilibrium) -> float:
@@ -218,7 +220,7 @@ def calc_energy(eq: Equilibrium) -> float:
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
+    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)  # noqa: DOC201
 
 
 def calc_Li(eq: Equilibrium) -> float:
@@ -228,7 +230,7 @@ def calc_Li(eq: Equilibrium) -> float:
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
     """
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._I_p**2
+    return 2 * p_energy / eq._I_p**2  # noqa: DOC201
 
 
 def calc_li(eq: Equilibrium) -> float:
@@ -238,7 +240,7 @@ def calc_li(eq: Equilibrium) -> float:
     \t:math:`l_i=\\dfrac{2L_i}{\\mu_{0}R_{0}}`
     """
     li = calc_Li(eq)
-    return 2 * li / (MU_0 * eq._R_0)
+    return 2 * li / (MU_0 * eq._R_0)  # noqa: DOC201
 
 
 def calc_li3(eq: Equilibrium) -> float:
@@ -258,7 +260,7 @@ def calc_li3(eq: Equilibrium) -> float:
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)
+    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)  # noqa: DOC201
 
 
 def calc_li3minargs(
@@ -284,7 +286,7 @@ def calc_li3minargs(
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
     bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
-    return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)
+    return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)  # noqa: DOC201
 
 
 def calc_p_average(eq: Equilibrium) -> float:
@@ -372,29 +374,82 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
     return 2 * MU_0 * p_avg / Bp**2
 
 
-def calc_summary(eq: Equilibrium) -> dict[str, float]:
+@dataclass
+class EqSummary:
     """
     Calculates interesting values in one go.
-    Uses functions (or components of functions) contained within this file.
     """
-    R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
-    mask = in_plasma(eq.x, eq.z, eq.psi())
-    Bp = eq.Bp()
-    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    energy = bpavg / (2 * MU_0)
-    li_true = 2 * energy / I_p**2
-    li = 2 * li_true / (MU_0 * R_0)
-    li3 = 2 * bpavg / (R_0 * (MU_0 * R_0) ** 2)
-    volume = calc_volume(eq)
-    beta_p = calc_beta_p(eq)
-    return {
-        "W": energy,
-        "Li": li_true,
-        "li": li,
-        "li(3)": li3,
-        "V": volume,
-        "beta_p": beta_p,
-    }
+
+    W: float
+    Li: float
+    li: float
+    li_3: float
+    V: float
+    beta_p: float
+    q_95: float
+    kappa_95: float
+    delta_95: float
+    kappa: float
+    delta: float
+    R_0: float
+    A: float
+    a: float
+    # dXsep : float
+    I_p: float
+    dx_shaf: float
+    dz_shaf: float
+
+    @classmethod
+    def from_equilibrium(
+        cls,
+        eq: Equilibrium,
+        f95: ClosedFluxSurface,
+        f100: ClosedFluxSurface,
+        *,
+        is_double_null: bool,
+    ):
+        """
+        Create summary from equilibrium
+        """
+        R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
+        mask = in_plasma(eq.x, eq.z, eq.psi())
+        Bp = eq.Bp()
+        bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
+        energy = bpavg / (2 * MU_0)
+        li_true = 2 * energy / I_p**2
+        if is_double_null:
+            kappa_95 = f95.kappa
+            delta_95 = f95.delta
+            kappa = f100.kappa
+            delta = f100.delta
+
+        else:
+            kappa_95 = f95.kappa_upper
+            delta_95 = f95.delta_upper
+            kappa = f100.kappa_upper
+            delta = f100.delta_upper
+
+        # d['dXsep'] = self.calc_dXsep()
+        dx_shaf, dz_shaf = f100.shafranov_shift(eq)
+        return cls(  # noqa: DOC201
+            W=energy,
+            Li=li_true,
+            li=2 * li_true / (MU_0 * R_0),
+            li_3=2 * bpavg / (R_0 * (MU_0 * R_0) ** 2),
+            V=calc_volume(eq),
+            beta_p=calc_beta_p(eq),
+            q_95=f95.safety_factor(eq),
+            R_0=f100.major_radius,
+            A=f100.aspect_ratio,
+            a=f100.area,
+            I_p=eq.profiles.I_p,
+            dx_shaf=dx_shaf,
+            dz_shaf=dz_shaf,
+            kappa_95=kappa_95,
+            delta_95=delta_95,
+            kappa=kappa,
+            delta=delta,
+        )
 
 
 def beta(pressure: npt.NDArray[np.float64], field: float) -> float:

@@ -524,6 +524,11 @@ class PicardIterator:
     def __call__(self) -> CoilsetOptimiserResult:
         """
         The iteration object call handle.
+
+        Returns
+        -------
+        :
+            The result
         """
         iterator = iter(self)
         while self.i < self.maxiter:
@@ -589,6 +594,11 @@ class PicardIterator:
     def iterate_once(self) -> CoilsetOptimiserResult:
         """
         Perform a single iteration and handle convergence.
+
+        Returns
+        -------
+        :
+            The result
 
         Raises
         ------

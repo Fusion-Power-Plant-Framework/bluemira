@@ -47,7 +47,11 @@ from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
+from bluemira.equilibria.physics import (
+    EqSummary,
+    calc_li3minargs,
+    calc_psi_norm,
+)
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
@@ -1817,29 +1821,12 @@ class Equilibrium(CoilSetMHDState):
         """
         Analyse the energetic and magnetic characteristics of the plasma.
         """
-        d = calc_summary(self)
-        f95 = ClosedFluxSurface(self.get_flux_surface(0.95))
-        f100 = ClosedFluxSurface(self.get_LCFS())
-        d["q_95"] = f95.safety_factor(self)
-        if self.is_double_null:
-            d["kappa_95"] = f95.kappa
-            d["delta_95"] = f95.delta
-            d["kappa"] = f100.kappa
-            d["delta"] = f100.delta
-
-        else:
-            d["kappa_95"] = f95.kappa_upper
-            d["delta_95"] = f95.delta_upper
-            d["kappa"] = f100.kappa_upper
-            d["delta"] = f100.delta_upper
-
-        d["R_0"] = f100.major_radius
-        d["A"] = f100.aspect_ratio
-        d["a"] = f100.area
-        # d['dXsep'] = self.calc_dXsep()
-        d["Ip"] = self.profiles.I_p
-        d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
-        return d
+        return EqSummary.from_equilibrium(
+            self,
+            ClosedFluxSurface(self.get_flux_surface(0.95)),
+            ClosedFluxSurface(self.get_LCFS()),
+            is_double_null=self.is_double_null,
+        )
 
     def analyse_coils(self) -> tuple[dict[str, Any], float, float]:
         """

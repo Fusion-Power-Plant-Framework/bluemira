@@ -391,7 +391,15 @@ class PulsedCoilsetDesign(ABC):
     def calculate_sof_eof_fluxes(
         self, psi_premag: float | None = None
     ) -> tuple[float, float]:
-        """Calculate the SOF and EOF plasma boundary fluxes."""
+        """Calculate the SOF and EOF plasma boundary fluxes.
+
+        Returns
+        -------
+        :
+            SOF psi
+        :
+            EOF psi
+        """
         if psi_premag is None and self.BREAKDOWN not in self.snapshots:
             self.run_premagnetisation()
         elif psi_premag is not None:
@@ -416,7 +424,12 @@ class PulsedCoilsetDesign(ABC):
     def get_sof_eof_opt_problems(
         self, psi_sof: float, psi_eof: float
     ) -> list[CoilsetOptimisationProblem]:
-        """Get start of flat top and end of flat top optimisation problems."""
+        """
+        Returns
+        -------
+        :
+            Start of flat top and end of flat top optimisation problems.
+        """
         eq_ref = self.snapshots[self.EQ_REF].eq
         max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
         max_currents = self._get_max_currents(self.coilset)
@@ -508,7 +521,13 @@ class PulsedCoilsetDesign(ABC):
             self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
 
     def plot(self):
-        """Plot the pulsed equilibrium problem."""
+        """Plot the pulsed equilibrium problem.
+
+        Returns
+        -------
+        :
+            plot figure
+        """
         n_snapshots = len(self.snapshots)
         if n_snapshots == 0:
             return None
@@ -533,7 +552,7 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
     def optimise(self) -> CoilSet:
         """Run pulsed coilset design optimisation."""
         self.optimise_currents()
-        return self.coilset
+        return self.coilset  # noqa: DOC201
 
     def optimise_currents(self):
         """Optimise the coil currents at the start and end of the current flat-top."""
@@ -663,7 +682,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
                 "Breakdown flux significantly lower with optimised coil positions: "
                 f"{psi_premag:.2f} < {psi_bd_orig:.2f}"
             )
-        return optimised_coilset
+        return optimised_coilset  # noqa: DOC201
 
     def _consolidate_coilset(
         self, coilset: CoilSet, sub_opt_problems: Iterable[CoilsetOptimisationProblem]
@@ -695,4 +714,4 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         consolidated_coilset = deepcopy(problem.eq.coilset)
         consolidated_coilset.fix_sizes()
         consolidated_coilset.get_control_coils().current = 0
-        return consolidated_coilset
+        return consolidated_coilset  # noqa: DOC201
