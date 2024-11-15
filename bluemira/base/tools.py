@@ -8,13 +8,15 @@
 Tool function and classes for the bluemira base module.
 """
 
+import re
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import Component, ComponentT, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.builders.tools import circular_pattern_component
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import serialise_shape
 
@@ -91,6 +93,47 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
         boundary = [c.shape for c in comp.leaves if hasattr(c, "shape") and c.shape]
 
     return BluemiraCompound(label=comp.name, boundary=boundary)
+
+
+def circular_pattern_xyz_components(
+    comp: Component, n_sectors: int, degree: float
+) -> Component:
+    """
+    Create a circular pattern of components in the XY plane.
+
+    Raises
+    ------
+    ValueError
+        If no xyz components are found in the component.
+    """
+    xyzs = comp.get_component(
+        "xyz",
+        first=False,
+    )
+    if xyzs is None:
+        raise ValueError("No xyz components found in the component")
+    xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
+    for xyz in xyzs:
+        xyz.children = circular_pattern_component(
+            list(xyz.children),
+            n_sectors,
+            degree=degree,
+        )
+    return comp
+
+
+def copy_and_filter_component(
+    comp: Component,
+    dim: str,
+    component_filter: Callable[[ComponentT], bool] | None,
+) -> Component:
+    """
+    Copies a component (deeply) then filters
+    and returns the resultant component tree.
+    """
+    c: Component = comp.copy()
+    c.filter_components([dim], component_filter)
+    return c
 
 
 # # =============================================================================

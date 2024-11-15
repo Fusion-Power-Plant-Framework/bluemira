@@ -9,18 +9,27 @@ from __future__ import annotations
 
 import abc
 import time
+from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, get_type_hints
+from typing import TYPE_CHECKING, Any, Literal, get_type_hints
 
+from numpy import iterable
 from rich.progress import track
 
-from bluemira.base.components import Component, get_properties_from_components
+from bluemira.base.components import (
+    Component,
+    PhysicalComponent,
+    get_properties_from_components,
+)
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.tools import (
+    circular_pattern_xyz_components,
+    copy_and_filter_component,
+)
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
-from bluemira.geometry.tools import save_cad
 from bluemira.materials.material import Material, Void
 
 if TYPE_CHECKING:
@@ -33,6 +42,9 @@ if TYPE_CHECKING:
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
+
+DIM_2D = Literal["xy", "xz"]
+DIM_3D = Literal["xyz"]
 
 
 class BaseManager(abc.ABC):
@@ -55,6 +67,7 @@ class BaseManager(abc.ABC):
     @abc.abstractmethod
     def save_cad(
         self,
+        dim: DIM_3D | DIM_2D,
         components: ComponentT | Iterable[ComponentT],
         filename: str,
         cad_format: str | cadapi.CADFileType = "stp",
@@ -72,15 +85,11 @@ class BaseManager(abc.ABC):
         cad_format:
             CAD file format
         """
-        shapes: list[BluemiraGeoT]
-        names: list[str]
-        shapes, names = get_properties_from_components(components, ("shape", "name"))
-        save_cad(shapes, filename, cad_format, names, **kwargs)
 
     @abc.abstractmethod
     def show_cad(
         self,
-        *dims: str,
+        dim: DIM_3D | DIM_2D,
         component_filter: Callable[[ComponentT], bool] | None,
         **kwargs,
     ):
@@ -98,7 +107,11 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, component_filter: Callable[[ComponentT], bool] | None):
+    def plot(
+        self,
+        dim: DIM_2D,
+        component_filter: Callable[[ComponentT], bool] | None,
+    ):
         """
         Plot the component.
 
@@ -175,41 +188,6 @@ class BaseManager(abc.ABC):
 
         return dims_to_show
 
-    @staticmethod
-    def _filter_tree(
-        comp: ComponentT,
-        dims_to_show: tuple[str, ...],
-        component_filter: Callable[[ComponentT], bool] | None,
-    ) -> ComponentT:
-        """
-        Filter a component tree.
-
-        Returns
-        -------
-        :
-            The filtered component tree.
-
-        Notes
-        -----
-        A copy of the component tree is made
-        as filtering would mutate the ComponentMangers' underlying component trees
-        """
-        comp_copy = comp.copy()
-        comp_copy.filter_components(dims_to_show, component_filter)
-        return comp_copy
-
-    def _plot_dims(
-        self,
-        comp: ComponentT,
-        dims_to_show: tuple[str, ...],
-        component_filter: Callable[[ComponentT], bool] | None,
-    ):
-        for i, dim in enumerate(dims_to_show):
-            ComponentPlotter(view=dim).plot_2d(
-                self._filter_tree(comp, dims_to_show, component_filter),
-                show=i == len(dims_to_show) - 1,
-            )
-
 
 class FilterMaterial:
     """
@@ -279,6 +257,16 @@ class FilterMaterial:
         return bool_store
 
 
+class CADConstructionType(Enum):
+    """
+    Enum for construction types for components
+    """
+
+    CONNECT = "connect"
+    COMPOUND = "compound"
+    PATTERN = "pattern"
+
+
 class ComponentManager(BaseManager):
     """
     A wrapper around a component tree.
@@ -306,6 +294,12 @@ class ComponentManager(BaseManager):
     def __init__(self, component_tree: ComponentT) -> None:
         self._component = component_tree
 
+    def cad_construction_type(self) -> CADConstructionType | PhysicalComponent:  # noqa: PLR6301
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return CADConstructionType.PATTERN
+
     def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
@@ -319,7 +313,7 @@ class ComponentManager(BaseManager):
 
     def save_cad(
         self,
-        *dims: str,
+        dim: DIM_3D | DIM_2D = "xyz",
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
@@ -359,7 +353,7 @@ class ComponentManager(BaseManager):
 
     def show_cad(
         self,
-        *dims: str,
+        dim: DIM_3D | DIM_2D = "xyz",
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         **kwargs,
     ):
@@ -388,7 +382,7 @@ class ComponentManager(BaseManager):
 
     def plot(
         self,
-        *dims: str,
+        dim: DIM_2D = "xz",
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
     ):
         """
@@ -403,8 +397,8 @@ class ComponentManager(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
-        self._plot_dims(
-            self.component(), self._validate_plot_dims(*dims), component_filter
+        ComponentPlotter(view=dim).plot_2d(
+            copy_and_filter_component(self.component(), dim, component_filter)
         )
 
 
@@ -461,23 +455,15 @@ class Reactor(BaseManager):
         self.n_sectors = n_sectors
         self.start_time = time.perf_counter()
 
-    def component(
-        self,
-        with_components: list[ComponentManager] | None = None,
-    ) -> Component:
+    def component(self) -> Component:
         """Return the component tree.
-
-        Parameters
-        ----------
-        with_components:
-            The components to include in the tree. If None, all components
 
         Returns
         -------
         :
-            The list of components.
+            The reactor component tree.
         """
-        return self._build_component_tree(with_components)
+        return self._build_component_show_tree(None)
 
     def time_since_init(self) -> float:
         """
@@ -490,16 +476,17 @@ class Reactor(BaseManager):
         """
         return time.perf_counter() - self.start_time
 
-    def _build_component_tree(
+    def _component_managers(
         self,
         with_components: list[ComponentManager] | None = None,
-    ) -> Component:
-        """Build the component tree from this class's annotations.
+    ) -> list[ComponentManager]:
+        """
+        Get the component managers
 
         Returns
         -------
         :
-            The component tree.
+            A list of initialised component managers.
 
         Raises
         ------
@@ -513,87 +500,59 @@ class Reactor(BaseManager):
                 "correctly defined component managers for it. "
                 "Please see the examples for a template Reactor."
             )
+        return [
+            getattr(self, comp_name)
+            for comp_name, comp_type in get_type_hints(type(self)).items()
+            if issubclass(comp_type, ComponentManager)
+            and getattr(self, comp_name, None) is not None
+            and (with_components is None or getattr(self, comp_name) in with_components)
+        ]
 
+    def _build_component_cad_tree(
+        self,
+        dim: str,
+        with_components: list[ComponentManager] | None = None,
+        n_sectors: int | None = None,
+    ) -> Component:
+        """Build the component tree for CAD."""
         component = Component(self.name)
-        comp_type: type
-        for comp_name, comp_type in get_type_hints(type(self)).items():
-            if not issubclass(comp_type, ComponentManager):
-                continue
-            try:
-                component_manager = getattr(self, comp_name)
-                if (
-                    with_components is not None
-                    and component_manager not in with_components
-                ):
-                    continue
-            except AttributeError:
-                # We don't mind if a reactor component is not set, it
-                # just won't be part of the tree
-                continue
-
-            component.add_child(component_manager.component())
+        for comp_manager in self._component_managers(with_components):
+            component.add_child(comp_manager.component())
         return component
 
-    def _construct_xyz_cad(
+    def _build_component_show_tree(
         self,
-        reactor_component: ComponentT,
+        dim: str | None,
         with_components: list[ComponentManager] | None = None,
-        n_sectors: int = 1,
-    ):
-        xyzs = reactor_component.get_component(
-            "xyz",
-            first=False,
-        )
-        xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
-
-        comp_names = (
-            "all"
-            if not with_components
-            else ", ".join([cm.component().name for cm in with_components])
-        )
-        bluemira_print(
-            f"Constructing xyz CAD for display with {n_sectors} sectors and components:"
-            f" {comp_names}"
-        )
-        for xyz in track(xyzs):
-            xyz.children = circular_pattern_component(
-                list(xyz.children),
-                n_sectors,
-                degree=(360 / self.n_sectors) * n_sectors,
-            )
-
-    def _filter_and_reconstruct(
-        self,
-        dims_to_show: tuple[str, ...],
-        with_components: list[ComponentManager] | None,
-        n_sectors: int | None,
-        component_filter: Callable[[ComponentT], bool] | None,
+        # component_filter: Callable[[ComponentT], bool] | None = None,
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
+        n_sectors: int | None = None,
     ) -> Component:
-        # We filter because self.component (above) only creates
-        # a new root node for this reactor, not a new component tree.
-        comp_copy = self._filter_tree(
-            self.component(with_components), dims_to_show, component_filter
-        )
-        if not comp_copy.children:
-            raise ComponentError(
-                "The reactor has no components defined for the given "
-                "dimension(s) and/or filter."
-            )
-        # if "xyz" is requested, construct the 3d cad
-        # from each xyz component in the tree,
-        # as it's assumed that the cad is only built for 1 sector
-        # and is sector symmetric, therefore can be patterned
-        if "xyz" in dims_to_show:
-            self._construct_xyz_cad(
-                comp_copy,
-                with_components,
-                self.n_sectors if n_sectors is None else n_sectors,
-            )
-        return comp_copy
+        component = Component(self.name)
+        for comp_manager in self._component_managers(with_components):
+            manager_comp = comp_manager.component()
+            # if dim is None, return the raw, underlying component tree
+            if dim:
+                filtered_comp = copy_and_filter_component(
+                    manager_comp,
+                    dim,
+                    component_filter,
+                )
+                if dim == "xyz":
+                    n_secs = n_sectors or self.n_sectors
+                    d = int((360 / self.n_sectors) * n_secs)
+                    print(d)
+                    filtered_comp = circular_pattern_xyz_components(
+                        filtered_comp,
+                        n_secs,
+                        degree=d,
+                    )
+            component.add_child(filtered_comp)
+        return component
 
     def save_cad(
         self,
-        *dims: str,
+        dim: DIM_3D | DIM_2D = "xyz",
         with_components: list[ComponentManager] | None = None,
         n_sectors: int | None = None,
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
@@ -632,11 +591,10 @@ class Reactor(BaseManager):
             filename = self.name
 
         super().save_cad(
-            self._filter_and_reconstruct(
-                self._validate_cad_dims(*dims),
+            self._build_component_cad_tree(
+                dim,
                 with_components,
                 n_sectors,
-                component_filter,
             ),
             Path(directory, filename).as_posix(),
             cad_format,
@@ -645,7 +603,7 @@ class Reactor(BaseManager):
 
     def show_cad(
         self,
-        *dims: str,
+        dim: DIM_3D | DIM_2D = "xyz",
         with_components: list[ComponentManager] | None = None,
         n_sectors: int | None = None,
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
@@ -672,18 +630,15 @@ class Reactor(BaseManager):
             passed to the `~bluemira.display.displayer.show_cad` function
         """
         ComponentDisplayer().show_cad(
-            self._filter_and_reconstruct(
-                self._validate_cad_dims(*dims),
-                with_components,
-                n_sectors,
-                component_filter,
+            self._build_component_show_tree(
+                dim, with_components, component_filter, n_sectors
             ),
             **kwargs,
         )
 
     def plot(
         self,
-        *dims: str,
+        dim: DIM_2D = "xz",
         with_components: list[ComponentManager] | None = None,
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
     ):
@@ -702,8 +657,6 @@ class Reactor(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
-        self._plot_dims(
-            self.component(with_components),
-            self._validate_plot_dims(*dims),
-            component_filter,
+        ComponentPlotter(view=dim).plot_2d(
+            self._build_component_show_tree(dim, with_components, component_filter, 1)
         )
