@@ -362,6 +362,18 @@ def make_bezier(
     -----
     If the input points are closed, but closed is False, the returned BluemiraWire will
     be closed.
+
+    Bezier curve of degree n  by the control points `P_i` is:
+
+    .. math::
+        {\\textbf{C}}(t) = \\sum_{i=0}^{n} B_{i,n}(t) \\cdot {\\textbf{P}}_i
+
+    where :math:`B_{i,n}(t)` are the Bernstein polynomials:
+
+    .. math::
+        B_{i,n}(t) = \\binom{n}{i} (1 - t)^{n-i} t^i
+
+    t is a parameter ranging from 0 to 1.
     """
     return cadapi.make_bezier(points.T)
 
@@ -400,6 +412,29 @@ def make_bspline(
     Returns
     -------
     BluemiraWire of the spline
+
+    Notes
+    -----
+    The B-spline curve is defined by the control points `P_i`:
+
+    .. math::
+        \\textbf{C}(t) = \\sum_{i=0}^{n} B_{i,p}(t) {\\textbf{P}}_i,
+
+    where the basis functions :math:`B_{i,p}(t)` are computed as:
+
+    .. math::
+        B_{i,0}(t) =
+        \\begin{cases}
+        1 & \\text{if } t_i \\leq t < t_{i+1}, \\\\
+        0 & \\text{otherwise}.
+        \\end{cases}
+
+    .. math::
+        B_{i,p}(t) = \\frac{t - t_i}{t_{i+p} - t_i} B_{i,p-1}(t) +
+        \\frac{t_{i+p+1} - t}{t_{i+p+1} - t_{i+1}} B_{i+1,p-1}(t).
+
+    Here, t is a parameter ranging from 0 to 1, representing the position
+    along the curve.
     """
     return BluemiraWire(
         cadapi.make_bspline(
@@ -461,7 +496,16 @@ def make_bsplinesurface(
 
     Notes
     -----
-    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
+    This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots.
+
+    The B-spline surface is defined as:
+
+    .. math::
+        {\\textbf{S}}(u, v) = \\sum_{i=0}^{n} \\sum_{j=0}^{m} N_{i,p}(u) \\\\
+         M_{j,q}(v) {\\textbf{P}}_{i,j}
+
+    where :math:`N_{i,p}(u)` and :math:`M_{j,q}(v)` are the B-spline basis functions
+    in the u and v dimensions, respectively.
     """
     return convert(
         cadapi.make_bsplinesurface(
@@ -1659,6 +1703,17 @@ def signed_distance(
 
     This function has been extended to allow the target wire to be a point
         (:class:`~bluemira.geometry.coordinates.Coordinates`) as well
+
+    The signed "distance" function can be expressed as:
+
+    .. math::
+
+        d (\\textbf{p}_1, \\textbf{p}_2) =
+        \\begin{cases}
+            - \\| \\textbf{p}_1 - \\textbf{p}_2 \\| & \\text{if no intersection} \\\\
+            0 & \\text{if one intersection} \\\\
+            \\text{positive estimate of overlap length} & \\text{if overlap exists}
+        \\end{cases}
     """
     d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0

@@ -210,12 +210,6 @@ def levi_civita_tensor(dim: int = 3) -> np.ndarray:
     """
     N dimensional Levi-Civita Tensor.
 
-    For dim=3 this looks like:
-
-    e_ijk = np.zeros((3, 3, 3))
-    e_ijk[0, 1, 2] = e_ijk[1, 2, 0] = e_ijk[2, 0, 1] = 1
-    e_ijk[0, 2, 1] = e_ijk[2, 1, 0] = e_ijk[1, 0, 2] = -1
-
     Parameters
     ----------
     dim:
@@ -224,6 +218,28 @@ def levi_civita_tensor(dim: int = 3) -> np.ndarray:
     Returns
     -------
     np.array (n_0,n_1,...n_n)
+
+    Notes
+    -----
+    The Levi-Civita symbol in n dimensions is defined as:
+
+    .. math::
+        \\epsilon_{i_1 i_2 \\dots i_n} =
+        \\begin{cases} \\\\
+            +1 & \\text{for even permutation of } (1, 2, \\dots, n) \\\\
+            -1 & \\text{for odd permutation of } (1, 2, \\dots, n) \\\\
+            0 & \\text{for indices are equal} \\\\
+        \\end{cases}
+
+    For dim=3, this looks like:
+
+    .. math::
+        \\epsilon_{ijk} =
+        \\begin{cases}
+        1 & \\text{if } (i, j, k) \\text{ is } (0, 1, 2), (1, 2, 0), (2, 0, 1) \\\\
+        -1 & \\text{if } (i, j, k) \\text{ is } (0, 2, 1), (2, 1, 0), (1, 0, 2) \\\\
+        0 & \\text{otherwise}
+        \\end{cases}
 
     """
     perms = np.array(list(set(permutations(np.arange(dim)))))
