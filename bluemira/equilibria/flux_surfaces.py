@@ -114,8 +114,9 @@ class FluxSurface:
 
         Returns
         -------
-        Connection length from the start of the flux surface to the end of the flux
-        surface
+        :
+            Connection length from the start of the flux surface to the end of the flux
+            surface
         """
         return np.sum(self._dl(eq))
 
@@ -135,7 +136,7 @@ class FluxSurface:
         """
         Make a deep copy of the FluxSurface.
         """
-        return deepcopy(self)
+        return deepcopy(self)  # noqa: DOC201
 
 
 class ClosedFluxSurface(FluxSurface):
@@ -294,7 +295,7 @@ class ClosedFluxSurface(FluxSurface):
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
-        return floatify((d_ab - d_ac) / d_cd)
+        return floatify((d_ab - d_ac) / d_cd)  # noqa: DOC201
 
     @property
     @lru_cache(1)
@@ -653,6 +654,11 @@ class FieldLineTracer:
         def __call__(self, _phi, xz, *_args):
             """
             Function handle for the CollisionTerminator
+
+            Returns
+            -------
+            :
+                The distance to the given xz point
             """
             if isinstance(self.boundary, Grid):
                 return self._call_grid(xz)
@@ -662,6 +668,11 @@ class FieldLineTracer:
             """
             Function handle for the CollisionTerminator in the case of a Grid.
             (slight speed improvement)
+
+            Returns
+            -------
+            :
+                the minimal distance to the grid
             """
             if self.boundary.point_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
@@ -670,6 +681,11 @@ class FieldLineTracer:
         def _call_coordinates(self, xz):
             """
             Function handle for the CollisionTerminator in the case of Coordinates.
+
+            Returns
+            -------
+            :
+                the minimal distance to the grid
             """
             return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
@@ -711,7 +727,8 @@ class FieldLineTracer:
 
         Returns
         -------
-        Resulting field line
+        :
+            Resulting field line
         """
         phi = np.linspace(0, 2 * np.pi * n_turns_max, n_points)
 
@@ -734,6 +751,11 @@ class FieldLineTracer:
     def _dxzl_dphi(self, _phi, xz, forward):
         """
         Credit: Dr. B. Dudson, FreeGS.
+
+        Returns
+        -------
+        :
+            The dx, dz, and dl
         """
         f = 1.0 if forward is True else -1.0
         Bx = self.eq.Bx(*xz[:2])

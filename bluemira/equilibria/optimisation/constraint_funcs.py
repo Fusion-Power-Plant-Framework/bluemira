@@ -125,11 +125,11 @@ class AxBConstraint(ConstraintFunction):
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         currents = self.scale * vector
-        return self.a_mat @ currents - self.b_vec - self.value
+        return self.a_mat @ currents - self.b_vec - self.value  # noqa: DOC201
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Constraint derivative"""
-        return self.scale * self.a_mat
+        return self.scale * self.a_mat  # noqa: DOC201
 
 
 class L2NormConstraint(ConstraintFunction):
@@ -168,13 +168,13 @@ class L2NormConstraint(ConstraintFunction):
         """Constraint function"""
         currents = self.scale * vector
         residual = self.a_mat @ currents - self.b_vec
-        return residual.T @ residual - self.value
+        return residual.T @ residual - self.value  # noqa: DOC201
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
         currents = self.scale * vector
         df = 2 * (self.a_mat.T @ self.a_mat @ currents - self.a_mat.T @ self.b_vec)
-        return self.scale * df
+        return self.scale * df  # noqa: DOC201
 
 
 class FieldConstraintFunction(ConstraintFunction):
@@ -230,7 +230,7 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
 
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
-        return np.round(B - self.B_max, self._round_dp)
+        return np.round(B - self.B_max, self._round_dp)  # noqa: DOC201
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
@@ -242,7 +242,7 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
         Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)
+        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)  # noqa: DOC201
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -283,7 +283,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         self.eq.coilset.get_control_coils().current = self.scale * vector
         lcfs = self.eq.get_LCFS()
         if self.inboard:
-            return self.radius - min(lcfs.x)
+            return self.radius - min(lcfs.x)  # noqa: DOC201
         return max(lcfs.x) - self.radius
 
 
@@ -346,7 +346,12 @@ class CoilForceConstraintFunctions:
         self._grad = value
 
     def calc_f_matx(self, currents):
-        """Force"""
+        """
+        Returns
+        -------
+        :
+            Force matrix
+        """
         f_matx = np.zeros((self.n_coils, 2))
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
@@ -354,7 +359,12 @@ class CoilForceConstraintFunctions:
         return f_matx / self.scale  # Scale down to MN
 
     def calc_df_matx(self, currents):
-        """Jacobian"""
+        """
+        Returns
+        -------
+        :
+            Force Jacobian
+        """
         df_matx = np.zeros((self.n_coils, self.n_coils, 2))
         im = currents.reshape(-1, 1) @ np.ones((1, self.n_coils))  # current matrix
         for i in range(2):
@@ -368,11 +378,16 @@ class CoilForceConstraintFunctions:
         return df_matx
 
     def cs_fz(self, f_matx):
-        """Vertical forces on CS coils."""
+        """
+        Returns
+        -------
+        :
+            Vertical forces on CS coils.
+        """
         return f_matx[self.n_PF :, 1]
 
     def pf_z_constraint(self, f_matx, max_value):
-        """Constraint Function: Absolute vertical force constraint on PF coils."""
+        """Constraint Function Absolute vertical force constraint on PF coils."""
         scaled_max_value = max_value / self.scale
         self.constraint[: self.n_PF] = f_matx[: self.n_PF, 1] ** 2 - scaled_max_value**2
 
@@ -467,7 +482,13 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         self._round_dp = round_dp
 
     def f_constraint(self, vector):
-        """Constraint function"""
+        """Constraint function
+
+        Returns
+        -------
+        :
+            Coil force
+        """
         currents = self.scale * vector
         f_matx = self.calc_f_matx(currents)
         self.pf_z_constraint(f_matx, self.PF_Fz_max)
@@ -477,7 +498,13 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         return np.round(self.constraint, self._round_dp)
 
     def df_constraint(self, vector):
-        """Constraint derivative"""
+        """Constraint derivative
+
+        Returns
+        -------
+        :
+            Derivative of the coil force
+        """
         currents = self.scale * vector
         df_matx = self.calc_df_matx(currents)
         self.pf_z_constraint_grad(df_matx)

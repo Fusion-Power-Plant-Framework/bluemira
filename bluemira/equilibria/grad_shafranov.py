@@ -122,7 +122,7 @@ class GSOperator:
             A[ind, ind - 1] = ghost_factor * inv_dz_2
             A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
             A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
-        return A.tocsr()  # Compressed sparse row format
+        return A.tocsr()  # Compressed sparse row format  # noqa: DOC201
 
 
 class DirectSolver:
@@ -158,7 +158,7 @@ class DirectSolver:
         x = self.solve(b1d)
         if np.any(np.isnan(x)):
             raise EquilibriaError("Matrix inversion problem in GS solver.")
-        return np.reshape(x, b.shape)
+        return np.reshape(x, b.shape)  # noqa: DOC201
 
 
 class GSSolver(DirectSolver):
@@ -220,4 +220,4 @@ class GSSolver(DirectSolver):
             # Solve linear system with no symmetry assumptions.
             x = super().__call__(b)
 
-        return x
+        return x  # noqa: DOC201
