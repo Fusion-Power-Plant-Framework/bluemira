@@ -31,7 +31,8 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 
     Returns
     -------
-    The symmetric mutual inductance matrix [H]
+    :
+        The symmetric mutual inductance matrix [H]
 
     Notes
     -----
@@ -66,6 +67,11 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 def _get_symmetric_coils(coilset: CoilSet) -> list[list]:
     """
     Coilset symmetry utility
+
+    Returns
+    -------
+    :
+        Symmetric coilset
     """
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T

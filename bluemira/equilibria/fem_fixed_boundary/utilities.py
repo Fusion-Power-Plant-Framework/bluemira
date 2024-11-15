@@ -531,7 +531,7 @@ def _interpolate_profile(
     x: np.ndarray, profile_data: np.ndarray
 ) -> Callable[[np.ndarray], np.ndarray]:
     """Interpolate profile data"""
-    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+    return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")  # noqa: DOC201
 
 
 def refine_mesh(
@@ -556,7 +556,8 @@ def refine_mesh(
 
     Returns
     -------
-    Refined mesh
+    :
+        Refined mesh
     """
 
     def inside_delta(xs):
@@ -581,6 +582,11 @@ def create_mesh(
 ) -> dolfinx.mesh.Mesh:
     """
     Create mesh
+
+    Returns
+    -------
+    :
+        Mesh object
     """
     meshfile = Path(directory, mesh_name_msh).as_posix()
     meshing.Mesh(meshfile=meshfile)(plasma)

@@ -202,7 +202,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
             np.linalg.norm(a_mat @ c_cs.current - b_vec)
             + np.linalg.norm(self.gamma * c_cs.current)
         )
-        return CoilsetOptimiserResult(
+        return CoilsetOptimiserResult(  # noqa: DOC201
             coilset=c_cs,
             f_x=f_x,
             n_evals=0,
