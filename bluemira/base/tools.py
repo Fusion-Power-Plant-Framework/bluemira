@@ -12,13 +12,21 @@ import re
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Iterable, TypeVar
 
-from bluemira.base.components import Component, ComponentT, PhysicalComponent
+import bluemira.codes._freecadapi as cadapi
+from bluemira.base.components import (
+    Component,
+    ComponentT,
+    PhysicalComponent,
+    get_properties_from_components,
+)
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.builders.tools import circular_pattern_component
+from bluemira.display.displayer import ComponentDisplayer
+from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import serialise_shape
+from bluemira.geometry.tools import save_cad, serialise_shape
 
 _T = TypeVar("_T")
 
@@ -134,6 +142,46 @@ def copy_and_filter_component(
     c: Component = comp.copy()
     c.filter_components([dim], component_filter)
     return c
+
+
+def save_components_cad(
+    components: ComponentT | Iterable[ComponentT],
+    filename: str,
+    cad_format: str | cadapi.CADFileType = "stp",
+    **kwargs,
+):
+    """
+    Save the CAD build of the component.
+
+    Parameters
+    ----------
+    components:
+        Components to save
+    filename:
+        The filename of the
+    cad_format:
+        CAD file format
+    """
+    shapes, names = get_properties_from_components(components, ("shape", "name"))
+    save_cad(shapes, filename, cad_format, names, **kwargs)
+
+
+def show_components_cad(
+    components: ComponentT | Iterable[ComponentT],
+    **kwargs,
+):
+    ComponentDisplayer().show_cad(
+        components,
+        **kwargs,
+    )
+
+
+def plot_component_dim(
+    dim: str,
+    component: ComponentT,
+    **kwargs,
+):
+    ComponentPlotter(view=dim).plot_2d(component)
 
 
 # # =============================================================================

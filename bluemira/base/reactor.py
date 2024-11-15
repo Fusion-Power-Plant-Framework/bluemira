@@ -13,21 +13,20 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, get_type_hints
 
-from numpy import iterable
 from rich.progress import track
 
 from bluemira.base.components import (
     Component,
     PhysicalComponent,
-    get_properties_from_components,
 )
 from bluemira.base.error import ComponentError
-from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.tools import (
     circular_pattern_xyz_components,
     copy_and_filter_component,
+    plot_component_dim,
+    save_components_cad,
+    show_components_cad,
 )
-from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.materials.material import Material, Void
@@ -38,7 +37,6 @@ if TYPE_CHECKING:
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.components import ComponentT
-    from bluemira.geometry.base import BluemiraGeoT
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
@@ -291,8 +289,8 @@ class ComponentManager(BaseManager):
         The component tree this manager should wrap.
     """
 
-    def __init__(self, component_tree: ComponentT) -> None:
-        self._component = component_tree
+    def __init__(self, component: ComponentT) -> None:
+        self._component = component
 
     def cad_construction_type(self) -> CADConstructionType | PhysicalComponent:  # noqa: PLR6301
         """
@@ -340,12 +338,11 @@ class ComponentManager(BaseManager):
         kwargs:
             passed to the :func:`bluemira.geometry.tools.save_cad` function
         """
-        comp = self.component()
+        comp = copy_and_filter_component(self.component(), dim, component_filter)
         if filename is None:
             filename = comp.name
-
-        super().save_cad(
-            self._filter_tree(comp, self._validate_cad_dims(*dims), component_filter),
+        save_components_cad(
+            comp,
             filename=Path(directory, filename).as_posix(),
             cad_format=cad_format,
             **kwargs,
@@ -372,11 +369,7 @@ class ComponentManager(BaseManager):
             passed to the `~bluemira.display.displayer.show_cad` function
         """
         ComponentDisplayer().show_cad(
-            self._filter_tree(
-                self.component(),
-                self._validate_cad_dims(*dims),
-                component_filter,
-            ),
+            copy_and_filter_component(self.component(), dim, component_filter),
             **kwargs,
         )
 
@@ -512,11 +505,12 @@ class Reactor(BaseManager):
         self,
         dim: str,
         with_components: list[ComponentManager] | None = None,
+        component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
         n_sectors: int | None = None,
     ) -> Component:
         """Build the component tree for CAD."""
         component = Component(self.name)
-        for comp_manager in self._component_managers(with_components):
+        for comp_manager in track(self._component_managers(with_components)):
             component.add_child(comp_manager.component())
         return component
 
@@ -529,7 +523,7 @@ class Reactor(BaseManager):
         n_sectors: int | None = None,
     ) -> Component:
         component = Component(self.name)
-        for comp_manager in self._component_managers(with_components):
+        for comp_manager in track(self._component_managers(with_components)):
             manager_comp = comp_manager.component()
             # if dim is None, return the raw, underlying component tree
             if dim:
@@ -589,11 +583,11 @@ class Reactor(BaseManager):
         """
         if filename is None:
             filename = self.name
-
-        super().save_cad(
+        save_components_cad(
             self._build_component_cad_tree(
                 dim,
                 with_components,
+                component_filter,
                 n_sectors,
             ),
             Path(directory, filename).as_posix(),
@@ -629,7 +623,7 @@ class Reactor(BaseManager):
         kwargs:
             passed to the `~bluemira.display.displayer.show_cad` function
         """
-        ComponentDisplayer().show_cad(
+        show_components_cad(
             self._build_component_show_tree(
                 dim, with_components, component_filter, n_sectors
             ),
@@ -657,6 +651,7 @@ class Reactor(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
-        ComponentPlotter(view=dim).plot_2d(
-            self._build_component_show_tree(dim, with_components, component_filter, 1)
+        plot_component_dim(
+            dim,
+            self._build_component_show_tree(dim, with_components, component_filter, 1),
         )
