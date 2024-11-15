@@ -104,7 +104,10 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def _get_initial_vector(self) -> npt.NDArray:
         """
-        Get a vector representation of the initial coilset state from the PositionMapper.
+        Returns
+        -------
+        :
+            A vector representation of the initial coilset state from the PositionMapper.
         """
         cs_opt_state = self.coilset.get_optimisation_state(
             self.position_mapper.interpolator_names, current_scale=self.scale
@@ -151,7 +154,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         # Run the sub-optimisation
         sub_opt_result = self.sub_opt.optimise(fixed_coils=False)
 
-        return sub_opt_result.f_x
+        return sub_opt_result.f_x  # noqa: DOC201
 
 
 class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
@@ -250,7 +253,13 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     def sub_opt_objective(
         self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
-        """Run the sub-optimisations and return the largest figure of merit."""
+        """Run the sub-optimisations
+
+        Returns
+        -------
+        :
+            The largest figure of merit.
+        """
         pos_map = self.position_mapper.to_xz_dict(vector)
 
         if self.debug[0]:
@@ -275,11 +284,14 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
         """The objective function of the parent optimisation."""
-        return self.sub_opt_objective(vector, verbose=verbose)
+        return self.sub_opt_objective(vector, verbose=verbose)  # noqa: DOC201
 
     def _get_initial_vector(self) -> npt.NDArray[np.float64]:
         """
-        Get a vector representation of the initial coilset state from the PositionMapper.
+        Returns
+        -------
+        :
+            A vector representation of the initial coilset state from the PositionMapper.
         """
         cs_opt_state = self.coilset.get_optimisation_state(
             self.position_mapper.interpolator_names, current_scale=self.scale

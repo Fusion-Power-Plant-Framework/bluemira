@@ -261,4 +261,4 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             current_scale=self.scale,
         )
 
-        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)  # noqa: DOC201

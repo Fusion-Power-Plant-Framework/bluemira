@@ -656,12 +656,22 @@ class PsiConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset psi response
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -710,6 +720,11 @@ class IsofluxConstraint(RelativeMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The difference in coilset psi response with the reference
         """
         return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
             self.ref_x, self.ref_z, control=True
@@ -718,6 +733,11 @@ class IsofluxConstraint(RelativeMagneticConstraint):
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -771,12 +791,22 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset psi response
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -860,12 +890,21 @@ class MagneticConstraintSet:
         """
         The mathematical size of the constraint set.
         """
-        return sum(len(c) for c in self.constraints)
+        return sum(len(c) for c in self.constraints)  # noqa: DOC201
 
     def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.
+
+        Returns
+        -------
+        weights:
+            the weight matrix
+        weighted_a:
+            A scaled by the weight matrix
+        weighted_b:
+            b scaled by the weight matrix
         """
         weights = self.w
         weighted_a = weights[:, np.newaxis] * self.A
@@ -947,6 +986,11 @@ class MagneticConstraintSet:
     def plot(self, ax=None):
         """
         Plots constraints
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return ConstraintPlotter(self, ax=ax)
 
