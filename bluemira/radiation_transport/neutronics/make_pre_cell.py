@@ -123,7 +123,21 @@ def pick_higher_point(
     point2: npt.NDArray[np.float64],
     vector: npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
-    """Pick the point that, when projected onto `vector`, gives a higher value."""
+    """
+    Pick the point that, when projected onto `vector`, gives a higher value.
+
+    Parameters
+    ----------
+    point1, point2:
+        Point to choose from.
+    vector:
+        The co-vector direction that we want to project onto.
+
+    Returns
+    -------
+    point:
+        The point further among the two choices [point1, point2].
+    """
     if (vector @ point1) > (vector @ point2):
         return point1
     return point2

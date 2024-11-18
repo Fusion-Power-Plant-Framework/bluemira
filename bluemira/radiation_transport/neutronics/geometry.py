@@ -141,6 +141,14 @@ class TokamakDimensions:
         """
         Setup tokamak dimensions
 
+        Parameters
+        ----------
+        params:
+            parameter frame containing all the relevant thickness parameters
+        r_inner_cut:
+            Major radius value beyond which it's considered the "outboard", and within
+            which it's considered the inboard part of the tokamak.
+
         Returns
         -------
         :
