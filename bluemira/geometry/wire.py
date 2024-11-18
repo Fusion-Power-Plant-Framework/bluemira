@@ -88,6 +88,10 @@ class BluemiraWire(BluemiraGeo):
 
     def _create_wire(self, *, check_reverse: bool = True):
         wire = cadapi.apiWire(self._get_wires())
+
+        if not cadapi.is_valid(wire):
+            cadapi.fix_shape(wire)
+
         if check_reverse:
             return self._check_reverse(wire)
         return wire
