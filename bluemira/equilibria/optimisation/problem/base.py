@@ -57,7 +57,7 @@ class CoilsetOptimiserResult:
         cls, coilset: CoilSet, opt_result: OptimiserResult
     ) -> CoilsetOptimiserResult:
         """Make a coilset optimisation result from a normal optimisation result."""
-        return cls(
+        return cls(  # noqa: DOC201
             coilset=coilset,
             f_x=opt_result.f_x,
             n_evals=opt_result.n_evals,
@@ -212,7 +212,15 @@ class CoilsetOptimisationProblem(abc.ABC):
     def _make_numerical_constraints(
         self, coilset: CoilSet
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
-        """Build the numerical equality and inequality constraint dictionaries."""
+        """Build the numerical equality and inequality constraint dictionaries.
+
+        Returns
+        -------
+        :
+            equality constraints
+        :
+            inequality constriants
+        """
         if (constraints := getattr(self, "_constraints", None)) is None:
             return [], []
         equality = []

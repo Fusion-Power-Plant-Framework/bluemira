@@ -76,6 +76,13 @@ class CircularZoneStrategy(BreakdownZoneStrategy):
     def calculate_zone_points(self, n_points: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the discretised set of points representing the breakdown zone.
+
+        Returns
+        -------
+        x:
+            The x coordinates of the zone
+        z:
+            The z coordinates of the zone
         """
         x_c, z_c = self.breakdown_point
         r_c = self.breakdown_radius
@@ -254,4 +261,4 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             current_scale=self.scale,
         )
 
-        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)  # noqa: DOC201

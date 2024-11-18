@@ -97,6 +97,10 @@ class ITERGravitySupportBuilder(Builder):
     def build(self) -> Component:
         """
         Build the ITER-like gravity support component.
+
+        Returns
+        -------
+        :
         """
         xyz = self.build_xyz()
         return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
@@ -105,6 +109,10 @@ class ITERGravitySupportBuilder(Builder):
     def build_xz(xyz_component: PhysicalComponent) -> PhysicalComponent:
         """
         Build the x-z component of the ITER-like gravity support.
+
+        Returns
+        -------
+        :
         """
         xz_plane = BluemiraPlane((0, 0, 0), (0, 1, 0))
         slice_result = slice_shape(xyz_component.shape, xz_plane)
@@ -164,7 +172,11 @@ class ITERGravitySupportBuilder(Builder):
 
     def _make_connection_block(self, width, v1, v4, intersection_wire):
         """
-        Make the connection block of the gravity support with the TF coil
+        Returns
+        -------
+        :
+            The connection block of the gravity support with the TF coil
+
         """
         z_block_lower = min(v1.z[0], v4.z[0]) - 5 * self.params.tf_gs_tk_plate.value
         v2 = Coordinates(np.array([v1.x[0], 0, z_block_lower]))
@@ -178,9 +190,13 @@ class ITERGravitySupportBuilder(Builder):
         face.translate(vector=(0, -0.5 * width, 0))
         return extrude_shape(face, vec=(0, width, 0))
 
-    def _make_plates(self, width, v1x, v4x, z_block_lower):
+    def _make_plates(self, width, v1x, v4x, z_block_lower) -> list[BluemiraWire]:
         """
         Make the gravity support vertical plates
+
+        Returns
+        -------
+        :
         """
         plate_list = []
         yz_profile = Coordinates(
@@ -257,6 +273,10 @@ class ITERGravitySupportBuilder(Builder):
     ) -> PhysicalComponent:
         """
         Build the x-y-z component of the ITER-like gravity support.
+
+        Returns
+        -------
+        :
         """
         shape_list = []
         # First, project upwards at the radius of the GS into the keep-out-zone
@@ -324,7 +344,10 @@ class PFCoilSupportBuilder(Builder):
 
     def build(self) -> Component:
         """
-        Build the PF coil support component.
+        Returns
+        -------
+        :
+            The PF coil support component.
         """
         xyz = self.build_xyz()
         return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
@@ -336,7 +359,10 @@ class PFCoilSupportBuilder(Builder):
 
     def build_xz(self, xyz):
         """
-        Build the x-z components of the PF coil support.
+        Returns
+        -------
+        :
+            The x-z components of the PF coil support.
         """
         result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
         result.sort(key=lambda wire: -wire.length)
@@ -377,7 +403,10 @@ class PFCoilSupportBuilder(Builder):
     @staticmethod
     def _get_first_intersection(point, angle, wire):
         """
-        Get the first intersection from a point along an angle with a wire.
+        Returns
+        -------
+        :
+            The first intersection from a point along an angle with a wire.
         """
         point = np.array(point)
         x_out = point[0] + np.cos(angle) * VERY_BIG
@@ -525,6 +554,11 @@ class PFCoilSupportBuilder(Builder):
     ) -> PhysicalComponent:
         """
         Build the x-y-z components of the PF coil support.
+
+        Returns
+        -------
+        :
+            The coil support
         """
         shape_list = []
         # First build the support block around the PF coil
@@ -584,11 +618,11 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
     def objective(self, x: np.ndarray) -> float:
         """Objective function to maximise length."""
-        return self.negative_length(x)
+        return self.negative_length(x)  # noqa: DOC201
 
     def ineq_constraints(self) -> list[ConstraintT]:
         """The inequality constraints for the problem."""
-        return [
+        return [  # noqa: DOC201
             {
                 "f_constraint": self.constrain_koz,
                 "tolerance": np.full(self.n_koz_discr, 1e-6),
@@ -603,7 +637,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     @staticmethod
     def bounds() -> tuple[np.ndarray, np.ndarray]:
         """The optimisation parameter bounds."""
-        return np.array([0, 0]), np.array([1, 1])
+        return np.array([0, 0]), np.array([1, 1])  # noqa: DOC201
 
     @staticmethod
     def f_L_to_wire(  # noqa: N802
@@ -611,6 +645,11 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     ) -> BluemiraWire:
         """
         Convert a pair of normalised L values to a wire
+
+        Returns
+        -------
+        :
+            The wire
         """
         p1 = wire.value_at(x_norm[0])
         p2 = wire.value_at(x_norm[1])
@@ -622,7 +661,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         Convert a normalised L value to an x, z pair.
         """
         point = wire.value_at(value)
-        return np.array([point[0], point[2]])
+        return np.array([point[0], point[2]])  # noqa: DOC201
 
     def negative_length(self, x_norm: np.ndarray) -> float:
         """
@@ -635,7 +674,8 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
         Returns
         -------
-        Negative length from the normalised solution vector
+        :
+            Negative length from the normalised solution vector
         """
         p1 = self.f_L_to_xz(self.wire, x_norm[0])
         p2 = self.f_L_to_xz(self.wire, x_norm[1])
@@ -652,7 +692,8 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
         Returns
         -------
-        KOZ constraint array
+        :
+            KOZ constraint array
         """
         if np.isnan(x_norm).any():
             bluemira_warn(f"NaN in x_norm {x_norm}")
@@ -666,14 +707,14 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         """
         Constrain the second normalised value to be always greater than the first.
         """
-        return x_norm[0] - x_norm[1]
+        return x_norm[0] - x_norm[1]  # noqa: DOC201
 
     @staticmethod
     def df_constrain_x(x_norm: np.ndarray) -> np.ndarray:  # noqa: ARG004
         """
         Gradient of the constraint on  the solution vector
         """
-        return np.array([1.0, -1.0])
+        return np.array([1.0, -1.0])  # noqa: DOC201
 
 
 @dataclass
@@ -723,7 +764,8 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
 
         Returns
         -------
-        A list of outer inter-coil structure wires on the y=0 plane.
+        :
+            A list of outer inter-coil structure wires on the y=0 plane.
         """
         inner_tf_wire = self.tf_face.boundary[1]
         koz_centreline = offset_wire(
@@ -766,7 +808,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         tk = self.params.tk_ois.value
         p3 = p2 + tk * normal
         p4 = p1 + tk * normal
-        return make_polygon([p1, p2, p3, p4], closed=True)
+        return make_polygon([p1, p2, p3, p4], closed=True)  # noqa: DOC201
 
     def _make_ois_koz(self, koz_centreline):
         """
@@ -780,7 +822,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         ]
         koz_faces = [BluemiraFace(koz) for koz in koz_wires]
 
-        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])
+        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])  # noqa: DOC201
 
     def _make_ois_regions(self, ois_centreline, koz_centreline):
         """
@@ -812,7 +854,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
             )
             if length > self.params.min_OIS_length.value:
                 big_ois_regions.append(region)
-        return big_ois_regions
+        return big_ois_regions  # noqa: DOC201
 
 
 @dataclass
@@ -852,7 +894,7 @@ class OISBuilder(Builder):
         """
         Build the PF coil support component.
         """
-        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())
+        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())  # noqa: DOC201
 
     def build_xy(self):
         """
@@ -869,7 +911,7 @@ class OISBuilder(Builder):
             component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)
-        return components
+        return components  # noqa: DOC201
 
     def build_xyz(self):
         """
@@ -916,4 +958,4 @@ class OISBuilder(Builder):
         for component in components:
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
 
-        return components
+        return components  # noqa: DOC201

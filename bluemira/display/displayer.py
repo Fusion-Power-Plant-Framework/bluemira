@@ -41,6 +41,11 @@ class ViewerBackend(Enum):
             Cannot find backend
         FileNotFoundError
             Cannot find backend
+
+        Returns
+        -------
+        :
+            The loaded module.
         """
         try:
             return get_module(self.value)
@@ -57,7 +62,10 @@ class ViewerBackend(Enum):
 
 def get_default_options(backend=ViewerBackend.FREECAD):
     """
-    Returns the default display options.
+    Returns
+    -------
+    :
+        The default display options for the specified backend.
     """
     return backend.get_module().DefaultDisplayOptions()
 
@@ -92,6 +100,11 @@ def _validate_display_inputs(parts, options, labels):
     ------
     DisplayError
         Number of options not equal to number of parts
+
+    Returns
+    -------
+    :
+        A tuple containing the list of parts, list of options and list of labels.
     """
     if parts is None:
         bluemira_debug("No new parts to display")
@@ -190,7 +203,10 @@ class BaseDisplayer(ABC):
 
 def _get_displayer_class(part):
     """
-    Get the displayer class for an object.
+    Returns
+    -------
+    :
+        the displayer class for an object
 
     Raises
     ------
@@ -220,7 +236,10 @@ class DisplayableCAD:
     @property
     def display_cad_options(self) -> DisplayCADOptions:
         """
-        The options that will be used to display the object.
+        Returns
+        -------
+        :
+            the options that will be used to display the object.
         """
         return self._display_cad_options
 
@@ -235,7 +254,10 @@ class DisplayableCAD:
     @property
     def _displayer(self) -> BaseDisplayer:
         """
-        The options that will be used to display the object.
+        Returns
+        -------
+        :
+            the options that will be used to display the object.
         """
         return _get_displayer_class(self)(self.display_cad_options)
 

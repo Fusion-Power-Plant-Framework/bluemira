@@ -81,13 +81,13 @@ class PsiPoint:
         """
         Imbue PsiPoint with list-like behaviour
         """
-        return [self.x, self.z, self.psi][i]
+        return [self.x, self.z, self.psi][i]  # noqa: DOC201
 
     def __str__(self) -> str:
         """
         A better string representation of the PsiPoint.
         """
-        return (
+        return (  # noqa: DOC201
             f"{self.__class__.__name__} x: {self.x:.2f}, z:{self.z:.2f}, "
             f"psi: {self.psi:.2f}"
         )
@@ -156,7 +156,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.flo
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
-    return np.asarray([[d, -b], [-c, a]]) / (a * d - b * c)
+    return np.asarray([[d, -b], [-c, a]]) / (a * d - b * c)  # noqa: DOC201
 
 
 def find_local_Bp_minima_cg(
@@ -218,7 +218,7 @@ def drop_space_duplicates(
                 break
         if not duplicate:
             stack.append(p1)
-    return stack
+    return stack  # noqa: DOC201
 
 
 def triage_OX_points(
@@ -407,6 +407,13 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa: N802
     """
     Handles Op and Xp retrieval, depending on combinations of None/not None
 
+    Returns
+    -------
+    :
+        The O points
+    :
+        The X points
+
     Raises
     ------
     EquilibriaError
@@ -462,7 +469,8 @@ def get_contours(
 
     Returns
     -------
-    The list of arrays of value contour(s) in the array
+    :
+        The list of arrays of value contour(s) in the array
     """
     con_gen = contour_generator(
         x, z, array, name="mpl2014", line_type=LineType.SeparateCode
@@ -500,7 +508,8 @@ def find_flux_surfs(
 
     Returns
     -------
-    The coordinates of the loops that was found
+    :
+        The coordinates of the loops that was found
     """
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
@@ -542,9 +551,9 @@ def find_flux_surf(
 
     Returns
     -------
-    The flux surface coordinate array
+    :
+        The flux surface coordinate array
 
-    \t:math:`{\\Psi}_{N} = {\\psi}_{O}-N({\\psi}_{O}-{\\psi}_{X})`
 
     Raises
     ------
@@ -553,6 +562,8 @@ def find_flux_surf(
 
     Notes
     -----
+    \t:math:`{\\Psi}_{N} = {\\psi}_{O}-N({\\psi}_{O}-{\\psi}_{X})`
+
     Uses matplotlib hacks to pick contour surfaces on psi(X, Z).
     """
 
@@ -560,7 +571,7 @@ def find_flux_surf(
         """
         Error function for point clusters relative to.base.O-point
         """
-        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)
+        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)  # noqa: DOC201
 
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
     xo, zo, _ = o_points[0]
@@ -596,7 +607,8 @@ def find_field_surf(
 
     Returns
     -------
-    The coordinates of the field surface
+    :
+        The coordinates of the field surface
     """
     m, n = x.shape
     xo, zo = x[m // 2, n // 2], z[m // 2, n // 2]
@@ -605,7 +617,7 @@ def find_field_surf(
         """
         Error function for point clusters relative to grid center
         """
-        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)
+        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)  # noqa: DOC201
 
     surfaces = get_contours(x, z, Bp, field)
     err = []
@@ -654,7 +666,8 @@ def find_flux_surface_through_point(
 
     Returns
     -------
-    The coordinates of the flux surface
+    :
+        The coordinates of the flux surface
     """
 
     def f_min(x_opt, z_opt):

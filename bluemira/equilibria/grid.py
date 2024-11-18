@@ -142,7 +142,7 @@ class Grid:
         e: dict
             EQDSK dictionary
         """
-        return cls(
+        return cls(  # noqa: DOC201
             e["xgrid1"],
             e["xgrid1"] + e["xdim"],
             e["zmid"] - 0.5 * e["zdim"],
@@ -161,7 +161,7 @@ class Grid:
         e:
 
         """
-        return cls(
+        return cls(  # noqa: DOC201
             e.xgrid1,
             e.xgrid1 + e.xdim,
             e.zmid - 0.5 * e.zdim,
@@ -225,6 +225,11 @@ class Grid:
     def plot(self, ax=None, **kwargs):
         """
         Plot the Grid object onto an ax.
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         from bluemira.equilibria.plotting import GridPlotter  # noqa: PLC0415
 

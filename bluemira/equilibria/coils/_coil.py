@@ -192,7 +192,7 @@ class Coil(CoilFieldsMixin):
         """
         Pretty printing
         """
-        return (
+        return (  # noqa: DOC201
             f"{type(self).__name__}({self.name} ctype={self.ctype.name} x={self.x:.2g}"
             f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g}"
             f" current={self.current:.2g} j_max={self.j_max:.2g} b_max={self.b_max:.2g}"
@@ -223,6 +223,11 @@ class Coil(CoilFieldsMixin):
             force arrows iterable
         kwargs:
             passed to matplotlib's Axes.plot
+
+        Returns
+        -------
+        :
+            the axis if created
         """
         if self.ctype == CoilType.DUM:
             # Do not plot if it is a dummy coil
@@ -240,7 +245,7 @@ class Coil(CoilFieldsMixin):
         -----
         Allows n_coils to be accessed if an individual coil or a CoilGroup
         """
-        return 1
+        return 1  # noqa: DOC201
 
     @property
     def x(self) -> float:
@@ -440,7 +445,12 @@ class Coil(CoilFieldsMixin):
         self.b_max = b_max
 
     def get_max_current(self):
-        """Get max current"""
+        """
+        Returns
+        -------
+        :
+            Max current
+        """
         return (
             np.inf
             if np.isnan(self.j_max)
@@ -553,6 +563,13 @@ class Coil(CoilFieldsMixin):
     def _make_size(self, current: float | None = None):
         """
         Size the coil based on a current and a current density.
+
+        Returns
+        -------
+        :
+            change in x
+        :
+            change in z
         """
         if current is None:
             current = self.current

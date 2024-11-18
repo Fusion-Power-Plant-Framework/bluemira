@@ -157,7 +157,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
             self._grad_psi.interpolate(grad_psi_expr)
 
-        return self._grad_psi(point)
+        return self._grad_psi(point)  # noqa: DOC201
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
@@ -309,7 +309,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
-        return integrate_f(self.g, self.mesh)
+        return integrate_f(self.g, self.mesh)  # noqa: DOC201
 
     def _update_curr(self):
         self.k = 1
@@ -431,7 +431,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return self._equilibrium()
 
     def _equilibrium(self):
-        """Equilibrium data object"""
+        """
+        Returns
+        -------
+        :
+            Equilibrium data object
+        """
         return FixedBoundaryEquilibrium(
             self.mesh,
             self.psi,

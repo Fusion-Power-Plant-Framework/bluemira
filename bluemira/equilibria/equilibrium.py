@@ -47,7 +47,11 @@ from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
+from bluemira.equilibria.physics import (
+    EqSummary,
+    calc_li3minargs,
+    calc_psi_norm,
+)
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
@@ -311,7 +315,7 @@ class FixedPlasmaEquilibrium(MHDState):
             filename=filename,
         )
         self._eqdsk = e
-        return self
+        return self  # noqa: DOC201
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -319,7 +323,8 @@ class FixedPlasmaEquilibrium(MHDState):
 
         Returns
         -------
-        The Coordinates of the LCFS
+        :
+            The Coordinates of the LCFS
         """
         return deepcopy(self._lcfs)
 
@@ -342,7 +347,8 @@ class FixedPlasmaEquilibrium(MHDState):
 
         Returns
         -------
-        Radial magnetic field at x, z
+        :
+            Radial magnetic field at x, z
         """
         return self.plasma.Bx(x, z)
 
@@ -365,7 +371,8 @@ class FixedPlasmaEquilibrium(MHDState):
 
         Returns
         -------
-        Vertical magnetic field at x, z
+        :
+            Vertical magnetic field at x, z
         """
         return self.plasma.Bz(x, z)
 
@@ -388,7 +395,8 @@ class FixedPlasmaEquilibrium(MHDState):
 
         Returns
         -------
-        Poloidal magnetic field at x, z
+        :
+            Poloidal magnetic field at x, z
         """
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
@@ -412,7 +420,8 @@ class FixedPlasmaEquilibrium(MHDState):
 
         Returns
         -------
-        Poloidal magnetic flux at x, z
+        :
+            Poloidal magnetic flux at x, z
         """
         if x is None and z is None:
             return self._psi
@@ -422,6 +431,11 @@ class FixedPlasmaEquilibrium(MHDState):
     def plot(self, ax: Axes | None = None, *, field: bool = False):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
+
+        Returns
+        -------
+        :
+            the plot axis
         """
         return FixedPlasmaEquilibriumPlotter(self, ax, field=field)
 
@@ -531,7 +545,8 @@ class CoilSetMHDState(MHDState):
 
         Returns
         -------
-        Fx, Fz array of forces on coils [N]
+        :
+            Fx, Fz array of forces on coils [N]
 
         Notes
         -----
@@ -560,7 +575,8 @@ class CoilSetMHDState(MHDState):
 
         Returns
         -------
-        The Bp array of fields on coils [T]
+        :
+            The Bp array of fields on coils [T]
         """
         return self.Bp(self.coilset.x - self.coilset.dx, self.coilset.z)
 
@@ -679,7 +695,7 @@ class Breakdown(CoilSetMHDState):
         )
         self = cls(coilset, grid, limiter=limiter, psi=eqdsk.psi, filename=filename)
         self._eqdsk = eqdsk
-        return self
+        return self  # noqa: DOC201
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -687,7 +703,8 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        A dictionary for the Breakdown object
+        :
+            A dictionary for the Breakdown object
         """
         xc, zc, dxc, dzc, currents = self.coilset.to_group_vecs()
         return {
@@ -750,8 +767,9 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        The minimum poloidal magnetic flux at the edge of the breakdown
-        region [V.s/rad]
+        :
+            The minimum poloidal magnetic flux at the edge of the breakdown
+            region [V.s/rad]
         """
         return self.psi(*self.breakdown_point)
 
@@ -774,7 +792,8 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        Radial magnetic field at x, z
+        :
+            Radial magnetic field at x, z
         """
         if x is None and z is None:
             return self.coilset._stored_greens(self._bx_green)
@@ -800,7 +819,8 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        Vertical magnetic field at x, z
+        :
+            Vertical magnetic field at x, z
         """
         if x is None and z is None:
             return self.coilset._stored_greens(self._bz_green)
@@ -826,7 +846,8 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        Poloidal magnetic field at x, z
+        :
+            Poloidal magnetic field at x, z
         """
         if x is None and z is None:
             return np.hypot(
@@ -856,7 +877,8 @@ class Breakdown(CoilSetMHDState):
 
         Returns
         -------
-        Poloidal magnetic flux at x, z
+        :
+            Poloidal magnetic flux at x, z
         """
         if x is None and z is None:
             return self.coilset._stored_greens(self._psi_green)
@@ -865,7 +887,10 @@ class Breakdown(CoilSetMHDState):
 
     def get_coil_Bp(self) -> npt.NDArray[np.float64]:
         """
-        Returns the poloidal field within each coil
+        Returns
+        -------
+        :
+            The poloidal field within each coil
         """
         b = np.zeros(self.coilset.n_coils())
         dx_mask = np.zeros_like(self.coilset.dx)
@@ -882,6 +907,11 @@ class Breakdown(CoilSetMHDState):
     def plot(self, ax: Axes | None = None, *, Bp: bool = False):
         """
         Plots the breakdown object onto `ax`
+
+        Returns
+        -------
+        :
+            The plotting axis
         """
         return BreakdownPlotter(self, ax, Bp=Bp)
 
@@ -1048,7 +1078,7 @@ class Equilibrium(CoilSetMHDState):
 
         self._eqdsk = e
 
-        return self
+        return self  # noqa: DOC201
 
     def to_dict(self, qpsi_calcmode: int = 0) -> dict[str, Any]:
         """
@@ -1062,7 +1092,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        A dictionary of the Equilibrium object values, sufficient for EQDSK
+        :
+            A dictionary of the Equilibrium object values, sufficient for EQDSK
         """
         qpsi_calcmode = QpsiCalcMode(qpsi_calcmode)
 
@@ -1161,7 +1192,7 @@ class Equilibrium(CoilSetMHDState):
         """
         d = dict(self.__dict__)
         d.pop("_solver", None)
-        return d
+        return d  # noqa: DOC201
 
     def __setstate__(self, d):
         """
@@ -1325,6 +1356,11 @@ class Equilibrium(CoilSetMHDState):
             """
             The minimisation function to obtain the correct l_i
 
+            Returns
+            -------
+            :
+                Change in li
+
             Raises
             ------
             StopIteration
@@ -1396,7 +1432,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        The integral value of the field in 2-D
+        :
+            The integral value of the field in 2-D
         """
         return integrate_dx_dz(func, self.dx, self.dz)
 
@@ -1437,7 +1474,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Radial magnetic field at x, z
+        :
+            Radial magnetic field at x, z
         """
         if x is None and z is None:
             return self.plasma.Bx() + self.coilset._stored_greens(self._bx_green)
@@ -1463,7 +1501,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Vertical magnetic field at x, z
+        :
+            Vertical magnetic field at x, z
         """
         if x is None and z is None:
             return self.plasma.Bz() + self.coilset._stored_greens(self._bz_green)
@@ -1489,7 +1528,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Poloidal magnetic field at x, z
+        :
+            Poloidal magnetic field at x, z
         """
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
@@ -1504,7 +1544,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Toroidal magnetic field at x
+        :
+            Toroidal magnetic field at x
         """
         return self.fvac() / x
 
@@ -1529,7 +1570,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Poloidal magnetic flux at x, z
+        :
+            Poloidal magnetic flux at x, z
         """
         if x is None and z is None:
             # Defaults to the full psi map (fast)
@@ -1545,14 +1587,20 @@ class Equilibrium(CoilSetMHDState):
 
     def psi_norm(self) -> npt.NDArray[np.float64]:
         """
-        2-D x-z normalised poloidal flux map
+        Returns
+        -------
+        :
+            2-D x-z normalised poloidal flux map
         """
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
     def pressure_map(self) -> npt.NDArray[np.float64]:
         """
-        Get plasma pressure map.
+        Returns
+        -------
+        :
+            Plasma pressure map.
         """
         mask = self._get_core_mask()
         p = self.pressure(np.clip(self.psi_norm(), 0, 1))
@@ -1560,7 +1608,10 @@ class Equilibrium(CoilSetMHDState):
 
     def _get_core_mask(self) -> npt.NDArray[np.float64]:
         """
-        Get a 2-D masking array for the plasma core.
+        Returns
+        -------
+        :
+            A 2-D masking array for the plasma core.
         """
         o_points, x_points = self.get_OX_points()
         return in_plasma(
@@ -1574,7 +1625,10 @@ class Equilibrium(CoilSetMHDState):
         x_points: Iterable | None = None,
     ) -> float | npt.NDArray[np.float64]:
         """
-        Get the safety factor at given psinorm.
+        Returns
+        -------
+        :
+            The safety factor at given psinorm.
         """
         if o_points is None or x_points is None:
             o_points, x_points = self.get_OX_points()
@@ -1601,13 +1655,19 @@ class Equilibrium(CoilSetMHDState):
 
     def fRBpol(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Get f = R*Bt at specified values of normalised psi.
+        Returns
+        -------
+        :
+            f = R*Bt at specified values of normalised psi.
         """
         return self.profiles.fRBpol(psinorm)
 
     def fvac(self) -> npt.NDArray[np.float64]:
         """
-        Get vacuum f = R*Bt.
+        Returns
+        -------
+        :
+            The vacuum f = R*Bt.
         """
         try:
             return self.profiles.fvac()
@@ -1616,19 +1676,28 @@ class Equilibrium(CoilSetMHDState):
 
     def pprime(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return p' at given normalised psi
+        Returns
+        -------
+        :
+            p' at given normalised psi
         """
         return self.profiles.pprime(psinorm)
 
     def ffprime(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return ff' at given normalised psi
+        Returns
+        -------
+        :
+            ff' at given normalised psi
         """
         return self.profiles.ffprime(psinorm)
 
     def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Returns plasma pressure at specified values of normalised psi
+        Returns
+        -------
+        :
+            Plasma pressure at specified values of normalised psi
         """
         return self.profiles.pressure(psinorm)
 
@@ -1651,7 +1720,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Flux surface Coordinates
+        :
+            Flux surface Coordinates
         """
         if psi is None:
             psi = self.psi()
@@ -1676,7 +1746,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        The Coordinates of the LCFS
+        :
+            The Coordinates of the LCFS
         """
         if psi is None:
             psi = self.psi()
@@ -1706,7 +1777,8 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        The separatrix coordinates (Coordinates for SN, List[Coordinates]] for DN)
+        :
+            The separatrix coordinates (Coordinates for SN, List[Coordinates]] for DN)
         """
         if psi is None:
             psi = self.psi()
@@ -1733,7 +1805,12 @@ class Equilibrium(CoilSetMHDState):
         self, psi: npt.NDArray[np.float64] | None = None, *, force_update: bool = False
     ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
-        Returns list of [[O-points], [X-points]]
+        Returns
+        -------
+        :
+            The O-points
+        :
+            The X-points
         """
         if (self._o_points is None and self._x_points is None) or force_update is True:
             if psi is None:
@@ -1750,7 +1827,14 @@ class Equilibrium(CoilSetMHDState):
         self, psi: npt.NDArray[np.float64] | None = None
     ) -> tuple[float, float]:
         """
-        Returns psi at the.base.O-point and X-point
+        The psi at the base
+
+        Returns
+        -------
+        :
+            psi at O-point
+        :
+            psi at X-point
         """
         if psi is None:
             psi = self.psi()
@@ -1784,7 +1868,7 @@ class Equilibrium(CoilSetMHDState):
             """
             z_opt = args[0]
             psi = self.psi(x_opt, z_opt)[0]
-            return abs(psi - x_psi)
+            return abs(psi - x_psi)  # noqa: DOC201
 
         res = minimize(
             psi_err,
@@ -1806,45 +1890,38 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
-        Result dataclass
+        :
+            Result dataclass
         """
         results = analyse_plasma_core(self, n_points=n_points)
         if plot:
             CorePlotter(results)
         return results
 
-    def analyse_plasma(self) -> dict[str, float]:
+    def analyse_plasma(self) -> EqSummary:
         """
         Analyse the energetic and magnetic characteristics of the plasma.
         """
-        d = calc_summary(self)
-        f95 = ClosedFluxSurface(self.get_flux_surface(0.95))
-        f100 = ClosedFluxSurface(self.get_LCFS())
-        d["q_95"] = f95.safety_factor(self)
-        if self.is_double_null:
-            d["kappa_95"] = f95.kappa
-            d["delta_95"] = f95.delta
-            d["kappa"] = f100.kappa
-            d["delta"] = f100.delta
-
-        else:
-            d["kappa_95"] = f95.kappa_upper
-            d["delta_95"] = f95.delta_upper
-            d["kappa"] = f100.kappa_upper
-            d["delta"] = f100.delta_upper
-
-        d["R_0"] = f100.major_radius
-        d["A"] = f100.aspect_ratio
-        d["a"] = f100.area
-        # d['dXsep'] = self.calc_dXsep()
-        d["Ip"] = self.profiles.I_p
-        d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
-        return d
+        return EqSummary.from_equilibrium(  # noqa: DOC201
+            self,
+            ClosedFluxSurface(self.get_flux_surface(0.95)),
+            ClosedFluxSurface(self.get_LCFS()),
+            is_double_null=self.is_double_null,
+        )
 
     def analyse_coils(self) -> tuple[dict[str, Any], float, float]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilibrium and coilset.
+
+        Returns
+        -------
+        table:
+            Tabulated currents fields and forces
+        fz_c_stot:
+            The sum of the forces on the CS
+        fsep:
+
         """
         ccoils = self.coilset.get_control_coils()
         c_names = ccoils.name
@@ -1876,6 +1953,7 @@ class Equilibrium(CoilSetMHDState):
 
         Returns
         -------
+        :
         Whether or not the Equilibrium is a double-null Equilibrium.
         """
         _, x_points = self.get_OX_points()
@@ -1892,12 +1970,22 @@ class Equilibrium(CoilSetMHDState):
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
     def plot_field(self, ax: Axes | None = None, *, show_ox: bool = True):
         """
         Plot the equilibrium field structure onto `ax`.
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return EquilibriumPlotter(
             self,
@@ -1910,5 +1998,10 @@ class Equilibrium(CoilSetMHDState):
     def plot_core(self):
         """
         Plot a 1-D section through the magnetic axis.
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return CorePlotter2(self)

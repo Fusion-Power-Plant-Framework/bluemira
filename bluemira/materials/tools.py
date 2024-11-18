@@ -27,6 +27,11 @@ def matproperty(t_min: float, t_max: float):
 
     Checks that input T vector is within bounds. Handles floats and arrays.
 
+    Returns
+    -------
+    :
+        The decorated function
+
     Raises
     ------
     ValueError
@@ -68,7 +73,13 @@ def _try_calc_property(mat, prop_name, *args, **kwargs):
 
 
 def import_nmm():
-    """Don't hack my json, among other annoyances."""
+    """Don't hack my json, among other annoyances.
+
+    Returns
+    -------
+    :
+        The modified nmm module reference
+    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
         import neutronics_material_maker as nmm  # noqa: PLC0415
@@ -126,7 +137,14 @@ def to_openmc_material(
     *,
     temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
-    """Convert Bluemira material to OpenMC material"""
+    """
+    Convert Bluemira material to OpenMC material
+
+    Returns
+    -------
+    :
+        The openmc material
+    """
     with patch_nmm_openmc() as nmm:
         return nmm.Material(
             name=name,
@@ -171,7 +189,13 @@ def to_openmc_material_mixture(
     *,
     temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
-    """Convert Bluemira material mixture to OpenMC material mixture"""
+    """Convert Bluemira material mixture to OpenMC material mixture
+
+    Returns
+    -------
+    :
+        The openmc mixture
+    """
     with patch_nmm_openmc() as nmm:
         return nmm.Material.from_mixture(
             name=name,

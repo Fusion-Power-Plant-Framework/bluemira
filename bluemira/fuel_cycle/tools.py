@@ -318,28 +318,40 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
 
 
 @nb.jit(nopython=True, cache=True)
-def fountain(flow: np.ndarray, t: np.ndarray, min_inventory: float) -> np.ndarray:
+def fountain(
+    flow: np.ndarray, t: np.ndarray, min_inventory: float
+) -> tuple[np.ndarray, ...]:
     """
     Fountain tritium block. Needs a minimum T inventory to operate.
     This is a binary description. In reality, the TFV systems modelled here
     (such as the cryogenic distillation column) can and do operate below I_min.
 
-    **Inputs:** \\n
-      :math:`m_{T_{flow}}` [kg/s]: tritium flow through system [vector] \\n
-      :math:`t` [years]: time [vector] \\n
-      :math:`I_{min}` [kg]: minimum T inventory for system to operate \\n
-    **Outputs:** \\n
-      :math:`I` [kg]: built-up T inventory in system [vector]\\n
-      :math:`m_{T_{flowout}}` [kg/s]: mass flow out [vector] \\n
-    **Calculations** \\n
-      :math:`dt = t[i]-t[i-1]` \\n
-      :math:`I[i] = I[i-1]e^{-ln(2)dt/t_{1/2}}+m_{T_{flow}}dt` \\n
+    Parameters
+    ----------
+    flow:
+        :math:`m_{T_{flow}}` tritium flow through system [kg/s]
+    t:
+      :math:`t` time [years]
+    min_inventory:
+      :math:`I_{min}` minimum T inventory for system to operate [kg]
 
-      if :math:`I > I_{min}`:
+    Returns
+    -------
+    m_out:
+        :math:`m_{T_{flowout}}`  mass flow out [kg/s]
+    inventory:
+        :math:`I` built-up T inventory in system [kg]
+
+    Notes
+    -----
+    :math:`dt = t[i]-t[i-1]` \\n
+    :math:`I[i] = I[i-1]e^{-ln(2)dt/t_{1/2}}+m_{T_{flow}}dt` \\n
+
+    if :math:`I > I_{min}`:
         :math:`I[i] = I_{min}` [kg]\\n
         :math:`m_{T_{flowout}} = \\frac{I_{min}-I[i]}{dt}` [kg/s] \\n
 
-      if :math:`I < I_{min}`:
+    if :math:`I < I_{min}`:
         :math:`I[i] = I[i-1]+m_{T_{flow}}dt` [kg] \\n
         :math:`m_{T_{flowout}} = 0` [kg/s]
     """
@@ -383,7 +395,8 @@ def _speed_recycle(
 
     Returns
     -------
-    The tritium in the stores
+    :
+        The tritium in the stores
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
@@ -412,7 +425,8 @@ def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
 
     Returns
     -------
-    The maximum load factor in the time signal (over a one year period)
+    :
+        The maximum load factor in the time signal (over a one year period)
     """
     _t, rt = discretise_1d(time_years, time_fpy, int(np.ceil(time_years[-1])))
     try:
@@ -507,6 +521,11 @@ def _dec_I_mdot(  # noqa: N802
 
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}({\\Delta}t+1/2)}-1\\big)}{e^{\\lambda}-1}`
 
+    Returns
+    -------
+    :
+        output inventory
+
     Raises
     ------
     ValueError
@@ -540,7 +559,8 @@ def _timestep_decay(flux: float, dt: float) -> float:
 
     Returns
     -------
-    The value of the total inventory which decayed over the time-step.
+    :
+        The value of the total inventory which decayed over the time-step.
     """  # noqa: W505, E501
     return flux * (
         1
@@ -565,8 +585,11 @@ def _find_t15(
     \\big(e^{{\\lambda}({\\Delta}t+1/2)}-1\\big)}{e^{\\lambda}-1}=I_{lim}`\n
     :math:`{\\Delta}t=\\dfrac{ln\\bigg(\\dfrac{Ie^{\\lambda}-I-{\\eta}\\dot{m}}
     {I_{lim}e^{{\\lambda}}-I_{lim}-{\\eta}\\dot{m}e^{\\lambda/2}}\\bigg)}{\\lambda}`
-    \n
-    returns dt relative to t_in of crossing point
+
+    Returns
+    -------
+    :
+        dt relative to t_in of crossing point
     """
     t = (
         np.log(

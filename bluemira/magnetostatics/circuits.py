@@ -47,6 +47,11 @@ class PlanarCircuit(SourceGroup):
     ) -> list[TrapezoidalPrismCurrentSource | PolyhedralPrismCurrentSource]:
         """
         Generate the sources of a given class along the discretised shape
+
+        Returns
+        -------
+        sources:
+            Generated sources
         """
         shape = self._process_planar_shape(shape)
         betas, alphas = self._get_betas_alphas(shape)
@@ -105,6 +110,11 @@ class PlanarCircuit(SourceGroup):
         """
         Checks that the shape is planar
 
+        Returns
+        -------
+        shape:
+            Coordinates of input shape as Coordinates object.
+
         Raises
         ------
         MagnetostaticsError
@@ -122,6 +132,11 @@ class PlanarCircuit(SourceGroup):
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Get the first and second half-angles (transformed to the x-z plane)
+
+        Returns
+        -------
+        :
+            First and second half-angles
         """
         shape = self._transform_to_xz(deepcopy(shape))
         self._t_shape = shape
@@ -153,6 +168,14 @@ class PlanarCircuit(SourceGroup):
 
     @staticmethod
     def _transform_to_xz(shape: npt.NDArray[np.float64] | Coordinates) -> Coordinates:
+        """
+        Transform shape to the x-z plane.
+
+        Returns
+        -------
+        :
+            Tranformed coordinates.
+        """
         normal_vector = shape.normal_vector
         if abs(normal_vector[1]) == 1.0:
             return shape
@@ -169,6 +192,11 @@ class PlanarCircuit(SourceGroup):
     ) -> float:
         """
         Get the half angle between three points, respecting winding direction.
+
+        Returns
+        -------
+        angle:
+            Half angle between three points.
         """
         v1 = p1 - p0
         v2 = p2 - p1
@@ -207,6 +235,15 @@ class PlanarCircuit(SourceGroup):
         return angle
 
     def _point_inside_xz(self, point: npt.NDArray[np.float64]) -> bool:
+        """
+        Determine whether or not the point is in the polygon - accounts
+        for clockwise ordered coordinates.
+
+        Returns
+        -------
+        :
+            Whether or not the point is in the polygon
+        """
         # reverse second axis if clockwise
         ind = (slice(None), slice(None, None, -1)) if self._clockwise else slice(None)
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
@@ -307,6 +344,11 @@ class HelmholtzCage(SourceGroup):
     def _pattern(self, circuit: CurrentSource) -> list[CurrentSource]:
         """
         Pattern the CurrentSource axisymmetrically.
+
+        Returns
+        -------
+        :
+            List of arranged sources
         """
         sources = []
         for angle in np.linspace(0, 360, int(self.n_TF), endpoint=False):
@@ -336,7 +378,8 @@ class HelmholtzCage(SourceGroup):
 
         Returns
         -------
-        The value of the TF ripple at the point(s) [%]
+        :
+            The value of the TF ripple at the point(s) [%]
         """
         point = np.array([x, y, z])
         ripple_field = np.zeros(2)

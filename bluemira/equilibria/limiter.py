@@ -64,11 +64,16 @@ class Limiter:
         """
         The length of the limiter.
         """
-        return len(self.x)
+        return len(self.x)  # noqa: DOC201
 
     def __next__(self):
         """
         Hacky phoenix iterator
+
+        Returns
+        -------
+        :
+            The xz coordinates
 
         Raises
         ------
@@ -83,5 +88,10 @@ class Limiter:
     def plot(self, ax: Axes | None = None) -> LimiterPlotter:
         """
         Plots the Limiter object
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return LimiterPlotter(self, ax)

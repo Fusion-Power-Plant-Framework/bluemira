@@ -43,9 +43,14 @@ def make_equilibrium(
     _params: EquilibriumParams | dict,
     tf_coil_boundary: BluemiraWire,
     grid_settings: dict,
-):
+) -> Equilibrium:
     """
     Build an equilibrium using a coilset and a `BetaIpProfile` profile.
+
+    Returns
+    -------
+    :
+        The equilibrium
     """
     if isinstance(_params, dict):
         params = EquilibriumParams.from_dict(_params)
@@ -107,10 +112,15 @@ def make_reference_equilibrium(
     lcfs_shape: BluemiraWire,
     profiles: Profile,
     grid_settings: dict,
-):
+) -> Equilibrium:
     """
     Make a crude reference equilibrium, scaling coils and grid for a first pass
     solve.
+
+    Returns
+    -------
+    :
+        The equilibrium
     """
     if isinstance(_params, dict):
         params = ReferenceEquilibriumParams.from_dict(_params)

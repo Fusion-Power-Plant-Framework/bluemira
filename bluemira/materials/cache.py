@@ -59,6 +59,11 @@ class MaterialCache:
     def __getattr__(self, value: str):
         """Allow attribute access to cached materials
 
+        Returns
+        -------
+        :
+            The requested Material
+
         Raises
         ------
         AttributeError

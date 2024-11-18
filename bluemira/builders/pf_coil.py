@@ -70,7 +70,7 @@ class PFCoilBuilder(Builder):
         """
         Build the PFCoil component.
         """
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=self.build_xz(self.xz_cross_section),
             xy=self.build_xy(self.xz_cross_section),
             xyz=self.build_xyz(self.xz_cross_section, degree=0),
@@ -79,6 +79,11 @@ class PFCoilBuilder(Builder):
     def build_xy(self, shape: BluemiraWire) -> list[PhysicalComponent]:
         """
         Build the xy cross-section of the PF coil.
+
+        Returns
+        -------
+        :
+            the winding pack, insulation and casing
         """
         r_in = shape.bounding_box.x_min
         r_out = shape.bounding_box.x_max
@@ -119,6 +124,11 @@ class PFCoilBuilder(Builder):
     def build_xz(self, shape: BluemiraWire) -> list[PhysicalComponent]:
         """
         Build the xz cross-section of the PF coil.
+
+        Returns
+        -------
+        :
+            the winding pack, insulation and casing
         """
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
         idx = CoilType(self.params.ctype.value).value - 1
@@ -150,7 +160,8 @@ class PFCoilBuilder(Builder):
 
         Returns
         -------
-        The component grouping the results in 3D (xyz).
+        :
+            The component grouping the results in 3D (xyz).
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
@@ -192,7 +203,12 @@ class PFCoilPictureFrame(Designer):
 
     def run(self) -> BluemiraWire:
         """
-        Run the design step, outputting the PictureFrame shape as a wire.
+        Run the design step
+
+        Returns
+        -------
+        :
+            The PictureFrame shape as a wire.
         """
         x_in = self.coil.x - self.coil.dx
         x_out = self.coil.x + self.coil.dx

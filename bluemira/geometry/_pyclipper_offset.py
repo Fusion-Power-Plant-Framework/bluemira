@@ -98,6 +98,11 @@ def pyclippolytree_to_coordinates(polytree: list[np.ndarray]) -> list[Coordinate
     ----------
     polytree:
         The polytree to convert to Coordinates
+
+    Returns
+    -------
+    :
+        List of Coordinates for the polytree.
     """
     paths = PolyTreeToPaths(polytree)
     return [pyclippath_to_coordinates(path) for path in paths]
@@ -189,6 +194,11 @@ class OffsetOperationManager(PyclipperMixin):
         delta:
             The value of the offset [m]. Positive for increasing size, negative for
             decreasing
+
+        Returns
+        -------
+        :
+            List of offset coordinates objects.
         """
         delta = int(round(delta * self._scale))  # approximation
         solution = self.tool.Execute(delta)
@@ -198,6 +208,11 @@ class OffsetOperationManager(PyclipperMixin):
     def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> float | None:
         """
         Calculate the pyclipper scaling to integers
+
+        Returns
+        -------
+        :
+            The pyclipper scaling.
         """
         # Find the first non-zero dimension (low number of iterations)
         for i in range(len(path) - 1):
@@ -322,6 +337,11 @@ def transform_coordinates_to_xz(
 ) -> Coordinates:
     """
     Rotate coordinates to the x-z plane.
+
+    Returns
+    -------
+    :
+        The coordinates in the x-z plane.
     """
     coordinates.translate(base)
     if abs(coordinates.normal_vector[1]) == 1.0:
@@ -338,6 +358,11 @@ def transform_coordinates_to_original(
 ) -> Coordinates:
     """
     Rotate coordinates back to original plane
+
+    Returns
+    -------
+    :
+        The coordinates fot the original plane.
     """
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
     x, y, z = r.T @ coordinates

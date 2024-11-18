@@ -72,7 +72,12 @@ class Run(CodesTask):
 
     @staticmethod
     def flush_callable(line: str) -> bool:
-        """Callable for flushed output"""
+        """
+        Returns
+        -------
+        :
+            If callable should be used for flushed output
+        """
         try:
             int(line.split("|")[0])
         except ValueError:

@@ -16,7 +16,7 @@ import pprint
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import gmsh
 
@@ -81,7 +81,10 @@ SUPPORTED_GEOS = tuple(GEOS.__members__.keys())
 
 def get_default_options() -> DefaultMeshOptions:
     """
-    Returns the default display options.
+    Returns
+    -------
+    :
+        The default display options.
     """
     return DefaultMeshOptions()
 
@@ -119,7 +122,10 @@ class MeshOptions:
 
     def as_dict(self) -> dict[str, float | None]:
         """
-        Returns the instance as a dictionary.
+        Returns
+        -------
+        :
+            The instance as a dictionary.
         """
         return asdict(self._options)
 
@@ -133,7 +139,10 @@ class MeshOptions:
 
     def __repr__(self) -> str:
         """
-        Representation string of the DisplayOptions.
+        Returns
+        -------
+        :
+            Representation string of the DisplayOptions.
         """
         return f"{type(self).__name__}({pprint.pformat(self._options)}" + "\n)"
 
@@ -200,6 +209,11 @@ class Mesh:
         """
         Check the mesh file input.
 
+        Returns
+        -------
+        :
+            The meshfile list
+
         Raises
         ------
         ValueError
@@ -233,6 +247,11 @@ class Mesh:
     def __call__(self, obj: Component | Meshable, dim: int = 2):
         """
         Generate the mesh and save it to file.
+
+        Returns
+        -------
+        :
+            The serialised shape
 
         Raises
         ------
@@ -281,9 +300,14 @@ class Mesh:
 
         return buffer
 
-    def __mesh_obj(self, obj, dim: int):
+    def __mesh_obj(self, obj, dim: int) -> dict[str, Any]:
         """
         Function to mesh the object.
+
+        Returns
+        -------
+        :
+            The serialised shape
 
         Raises
         ------
@@ -352,10 +376,15 @@ class Mesh:
             for p in points_lcar2:
                 _FreeCADGmsh._set_mesh_size([(0, p[0])], p[1])
 
-    def __create_dict_for_mesh_size(self, buffer: dict):
+    def __create_dict_for_mesh_size(self, buffer: dict) -> list[tuple[str, float]]:
         """
         Function to create the correct dictionary format for the
         application of the mesh size.
+
+        Returns
+        -------
+        :
+            list of lcar point tuples
         """
         points_lcar = []
         for k, v in buffer.items():
@@ -538,8 +567,11 @@ class Mesh:
         self, buffer: dict, file_format: str | GmshFileType = GmshFileType.DEFAULT
     ) -> dict[MeshTags, list]:
         """
-        Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
-        tag)) format.
+        Returns
+        -------
+        :
+            the gmsh dict in a default (only tags) or gmsh (tuple(dim,
+            tag)) format.
 
         Raises
         ------
@@ -637,6 +669,11 @@ class _FreeCADGmsh:
     def create_gmsh_curve(buffer: dict) -> dict:
         """
         Function to create gmsh curve from a dictionary (buffer).
+
+        Returns
+        -------
+        :
+            gmsh dictionary of curve
         """
         gmsh_dict = {}
 
@@ -768,5 +805,10 @@ class _FreeCADGmsh:
 def _add_points(*point: Iterable) -> list:
     """
     Add gmsh model points
+
+    Returns
+    -------
+    :
+        List of points added to occ model
     """
     return [gmsh.model.occ.addPoint(p[0], p[1], p[2]) for p in point]

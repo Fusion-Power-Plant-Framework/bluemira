@@ -182,6 +182,11 @@ class EUDEMOFuelCycleModel:
     def tbreed(self, TBR: float, m_T_0: float) -> np.ndarray:
         """
         Ideal system without T sequestration. Used for plotting and sanity.
+
+        Returns
+        -------
+        :
+            Tritium breeding
         """
         m_T = m_T_0 * np.ones(len(self.DEMO_t))
         for i in range(1, len(self.DEMO_t)):
@@ -216,7 +221,8 @@ class EUDEMOFuelCycleModel:
 
         Returns
         -------
-        Flow-rate out of the system [kg/s]
+        :
+            Flow-rate out of the system [kg/s]
         """
         plasma = FuelCycleComponent(
             "Plasma",
@@ -315,6 +321,11 @@ class EUDEMOFuelCycleModel:
     def injector(self, flows: list[np.ndarray]) -> np.ndarray:
         """
         Pellet injection system assumed
+
+        Returns
+        -------
+        :
+            injector mass out
         """
         injector = FuelCycleComponent("Injector", self.t, 1, 0)
         for flow in flows:
@@ -436,6 +447,11 @@ class EUDEMOFuelCycleModel:
     def plot_m_T(self, **kwargs):
         """
         Plot the evolution of the tritium masses over time.
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         ax = kwargs.get("ax", plt.gca())
         ax.plot(
@@ -538,6 +554,11 @@ class EUDEMOFuelCycleModel:
     def _adjust_inv_plot(t, inventory, thresh=0.2):
         """
         Plot correction for compressed time inventories
+
+        Returns
+        -------
+        :
+            inventory
         """
         inventory = inventory.copy()
         for i in np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2:
@@ -551,7 +572,10 @@ class EUDEMOFuelCycleModel:
 
         Returns
         -------
-        Doubling time of the tritium fuel cycle [y]
+        arg_t_d:
+            index of doubling time in time array
+        :
+            Doubling time of the tritium fuel cycle [y]
 
         \t:math:`t_{d} = t[\\text{max}(\\text{argmin}\\lvert m_{T_{store}}-I_{TFV_{min}}-m_{T_{start}}\\rvert))]`
         """  # noqa: W505, E501
@@ -577,6 +601,13 @@ class EUDEMOFuelCycleModel:
     def calc_t_infl(self) -> tuple[int, float]:
         """
         Calculate the inflection time of the reactor tritium inventory
+
+        Returns
+        -------
+        arg_t_infl:
+            index of inflection time in time array
+        :
+            inflection time
         """
         arg_t_infl = np.argmin(self.m_T)
         return arg_t_infl, self.t[arg_t_infl]
@@ -605,7 +636,8 @@ class EUDEMOFuelCycleModel:
 
         Returns
         -------
-        Tritium release rate [kg/yr]
+        :
+            Tritium release rate [kg/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
         mb = 1000 * raw_uc(max(self.brate), "g/s", "kg/s")

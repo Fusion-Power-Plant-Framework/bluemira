@@ -69,7 +69,7 @@ class RadiationShieldBuilder(Builder):
         rs_xz = self.build_xz()
         rs_face = rs_xz.get_component_properties("shape")
 
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=[rs_xz],
             xy=[self.build_xy()],
             xyz=self.build_xyz(rs_face, degree=0),
@@ -104,7 +104,7 @@ class RadiationShieldBuilder(Builder):
             self.BODY, boolean_cut(BluemiraFace([rs_outer, rs_inner]), cutter)[0]
         )
         apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
-        return shield_body
+        return shield_body  # noqa: DOC201
 
     def build_xy(self) -> PhysicalComponent:
         """
@@ -116,7 +116,7 @@ class RadiationShieldBuilder(Builder):
         shield_body = PhysicalComponent(self.BODY, make_circular_xy_ring(r_in, r_out))
         apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
 
-        return shield_body
+        return shield_body  # noqa: DOC201
 
     def build_xyz(
         self, rs_face: BluemiraFace, degree: float = 360.0
@@ -124,7 +124,7 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-y-z components of the radiation shield.
         """
-        return build_sectioned_xyz(
+        return build_sectioned_xyz(  # noqa: DOC201
             rs_face,
             self.BODY,
             self.params.n_TF.value,

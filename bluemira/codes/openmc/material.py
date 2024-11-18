@@ -77,13 +77,21 @@ class MaterialsLibrary:
     @classmethod
     def from_neutronics_materials(cls, materials_lib: NeutronicsMaterials):
         """Initialise from neutronics materials"""
-        return cls(**{
+        return cls(**{  # noqa: DOC201
             field.name: getattr(materials_lib, field.name).to_openmc_material()
             for field in fields(materials_lib)
         })
 
     def match_material(self, cell_type: CellType, *, inboard: bool = False):
-        """Choose the appropriate blanket material for the given blanket cell type."""
+        """
+        Choose the appropriate blanket material for the given blanket cell type.
+
+        Returns
+        -------
+        :
+            The blanket material
+
+        """
         match cell_type:
             case CellType.BlanketSurface:
                 return self.inb_sf_mat if inboard else self.outb_sf_mat
@@ -109,5 +117,12 @@ class MaterialsLibrary:
                 return self.rad_shield
 
     def export_to_xml(self, path: str | Path = "materials.xml"):
-        """Exports material defintions to xml"""
+        """
+        Exports material defintions to xml
+
+        Returns
+        -------
+        :
+            The xml representation
+        """
         return openmc.Materials(asdict(self).values()).export_to_xml(path)

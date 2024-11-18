@@ -33,7 +33,12 @@ class Plasma(ComponentManager):
     """
 
     def lcfs(self) -> BluemiraWire:
-        """Return a wire representing the last-closed flux surface."""
+        """
+        Returns
+        -------
+        :
+            A wire representing the last-closed flux surface.
+        """
         return (
             self.component()
             .get_component("xz")
@@ -74,7 +79,7 @@ class PlasmaBuilder(Builder):
         """
         Build the plasma component.
         """
-        return self.component_tree(
+        return self.component_tree(  # noqa: DOC201
             xz=[self.build_xz(self.xz_lcfs)],
             xy=[self.build_xy(self.xz_lcfs)],
             xyz=[self.build_xyz(self.xz_lcfs, degree=0)],
@@ -94,7 +99,7 @@ class PlasmaBuilder(Builder):
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component
+        return component  # noqa: DOC201
 
     def build_xy(self, lcfs: BluemiraWire) -> PhysicalComponent:
         """
@@ -112,7 +117,7 @@ class PlasmaBuilder(Builder):
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component
+        return component  # noqa: DOC201
 
     def build_xyz(self, lcfs: BluemiraWire, degree: float = 360.0) -> PhysicalComponent:
         """
@@ -137,4 +142,4 @@ class PlasmaBuilder(Builder):
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component
+        return component  # noqa: DOC201

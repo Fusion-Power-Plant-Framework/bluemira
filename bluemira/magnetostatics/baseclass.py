@@ -67,7 +67,8 @@ class CurrentSource(ABC):
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         ...
 
@@ -98,6 +99,12 @@ class CurrentSource(ABC):
     def copy(self):
         """
         Get a deepcopy of the CurrentSource.
+
+        Returns
+        -------
+        :
+            Deepcopy of current source.
+
         """
         return deepcopy(self)
 
@@ -146,6 +153,11 @@ class CrossSectionCurrentSource(CurrentSource):
     ) -> npt.NDArray[np.float64]:
         """
         Convert local x', y', z' point coordinates to global x, y, z point coordinates.
+
+        Returns
+        -------
+        :
+            Converted array of points.
         """
         return np.array([self._origin + self._dcm.T @ p for p in points])
 
@@ -154,6 +166,11 @@ class CrossSectionCurrentSource(CurrentSource):
     ) -> npt.NDArray[np.float64]:
         """
         Convert global x, y, z point coordinates to local x', y', z' point coordinates.
+
+        Returns
+        -------
+        :
+            Local coordinates
         """
         return np.array([(self._dcm @ (p - self._origin)) for p in points])
 
@@ -310,7 +327,8 @@ class SourceGroup(ABC):
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        :
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
@@ -353,5 +371,10 @@ class SourceGroup(ABC):
     def copy(self):
         """
         Get a deepcopy of the SourceGroup.
+
+        Returns
+        -------
+        :
+            Deepcopy of the SourceGroup.
         """
         return deepcopy(self)

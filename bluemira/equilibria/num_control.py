@@ -43,7 +43,7 @@ class DummyController:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
-        return np.zeros(self._shape)
+        return np.zeros(self._shape)  # noqa: DOC201
 
     @staticmethod
     def Bx(
@@ -56,7 +56,7 @@ class DummyController:
         try:
             float(x)
         except TypeError:
-            return np.zeros_like(x)
+            return np.zeros_like(x)  # noqa: DOC201
         else:
             return 0.0
 
@@ -71,7 +71,7 @@ class DummyController:
         try:
             float(x)
         except TypeError:
-            return np.zeros_like(x)
+            return np.zeros_like(x)  # noqa: DOC201
         else:
             return 0.0
 
@@ -107,7 +107,7 @@ class VirtualController(CoilGroup):
         """
         xcur, zcur = self.eq.effective_centre()
 
-        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
+        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)  # noqa: DOC201
 
     def adjust_currents(self, d_current: float):
         """
@@ -127,4 +127,4 @@ class VirtualController(CoilGroup):
         """
         Get the psi array of the VirtualController
         """
-        return self.current * self._pgreen
+        return self.current * self._pgreen  # noqa: DOC201

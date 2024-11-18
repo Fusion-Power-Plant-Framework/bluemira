@@ -37,8 +37,11 @@ if TYPE_CHECKING:
 
 def _get_dummy_equilibrium(equilibrium: Equilibrium):
     """
-    Get a dummy equilibrium for current optimisation where the background response is
-    solely due to the plasma and passive coils.
+    Returns
+    -------
+    :
+        a dummy equilibrium for current optimisation where the background response is
+        solely due to the plasma and passive coils.
 
     Notes
     -----
@@ -64,7 +67,7 @@ class UpdateableConstraint(ABC):
     def __init_subclass__(cls, **kwargs):
         """Create constraint name on definition of subclass"""
         cls._name = cls.__name__
-        return super().__init_subclass__(**kwargs)
+        return super().__init_subclass__(**kwargs)  # noqa: DOC201
 
     @property
     def name(self) -> str:
@@ -182,6 +185,13 @@ class FieldConstraints(UpdateableConstraint):
     def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            Bx response
+        :
+            Bz response
         """
         return (
             coilset.Bx_response(self.x, self.z, control=True),
@@ -191,6 +201,13 @@ class FieldConstraints(UpdateableConstraint):
     def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            Bx of equilibrium
+        :
+            Bz of equilibrium
         """
         Bx = np.atleast_1d(equilibrium.Bx(self.x, self.z))
         Bz = np.atleast_1d(equilibrium.Bz(self.x, self.z))
@@ -200,13 +217,13 @@ class FieldConstraints(UpdateableConstraint):
         """Calculate the constraint function"""
         f_constraint = FieldConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.f_constraint_type
-        return f_constraint
+        return f_constraint  # noqa: DOC201
 
     def __len__(self) -> int:
         """
         Length of field constraints.
         """
-        return len(self.x)
+        return len(self.x)  # noqa: DOC201
 
 
 class CoilFieldConstraints(FieldConstraints):
@@ -368,12 +385,17 @@ class CoilForceConstraints(UpdateableConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.control_F(coilset, control=True)
+        return coilset.control_F(coilset, control=True)  # noqa: DOC201
 
     @staticmethod
     def evaluate(equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The force evaluation
         """
         cc = equilibrium.coilset.get_control_coils()
         fp = np.zeros((cc.n_coils(), 2))
@@ -385,7 +407,7 @@ class CoilForceConstraints(UpdateableConstraint):
 
     def f_constraint(self) -> CoilForceConstraintFunction:
         """Calculate the constraint function"""
-        return CoilForceConstraintFunction(name=self.name, **self._args)
+        return CoilForceConstraintFunction(name=self.name, **self._args)  # noqa: DOC201
 
 
 class MagneticConstraint(UpdateableConstraint):
@@ -459,10 +481,15 @@ class MagneticConstraint(UpdateableConstraint):
         -----
         Length of the array if an array is specified, otherwise 1 for a float.
         """
-        return len(self.x) if hasattr(self.x, "__len__") else 1
+        return len(self.x) if hasattr(self.x, "__len__") else 1  # noqa: DOC201
 
     def f_constraint(self) -> ConstraintFunction:
-        """Return the non-linear, numerical, part of the constraint."""
+        """
+        Returns
+        -------
+        :
+            The non-linear, numerical, part of the constraint.
+        """
         f_constraint = self._f_constraint(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
@@ -559,6 +586,11 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            Bx and Bz response of the coilset
         """
         return np.vstack([
             coilset.Bx_response(self.x, self.z, control=True),
@@ -568,6 +600,11 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            Bx and Bz response of the equilibrium
         """
         return np.array([eq.Bx(self.x, self.z), eq.Bz(self.x, self.z)])
 
@@ -590,7 +627,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         The mathematical size of the constraint.
         """
-        return 2
+        return 2  # noqa: DOC201
 
 
 class PsiConstraint(AbsoluteMagneticConstraint):
@@ -619,12 +656,22 @@ class PsiConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset psi response
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -673,6 +720,11 @@ class IsofluxConstraint(RelativeMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The difference in coilset psi response with the reference
         """
         return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
             self.ref_x, self.ref_z, control=True
@@ -681,6 +733,11 @@ class IsofluxConstraint(RelativeMagneticConstraint):
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -734,12 +791,22 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset psi response
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium psi
         """
         return eq.psi(self.x, self.z)
 
@@ -823,12 +890,21 @@ class MagneticConstraintSet:
         """
         The mathematical size of the constraint set.
         """
-        return sum(len(c) for c in self.constraints)
+        return sum(len(c) for c in self.constraints)  # noqa: DOC201
 
     def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.
+
+        Returns
+        -------
+        weights:
+            the weight matrix
+        weighted_a:
+            A scaled by the weight matrix
+        weighted_b:
+            b scaled by the weight matrix
         """
         weights = self.w
         weighted_a = weights[:, np.newaxis] * self.A
@@ -910,6 +986,11 @@ class MagneticConstraintSet:
     def plot(self, ax=None):
         """
         Plots constraints
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return ConstraintPlotter(self, ax=ax)
 

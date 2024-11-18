@@ -162,7 +162,7 @@ class Teardown(CodesTeardown):
         """
         self._mfile_wrapper = _MFileWrapper(path, self._name)
         self._mfile_wrapper.read()
-        return self._mfile_wrapper
+        return self._mfile_wrapper  # noqa: DOC201
 
     def _get_output_or_raise(
         self, external_outputs: dict[str, Any], parameter_name: str
@@ -264,6 +264,11 @@ class _MFileWrapper:
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
         Derive radial build parameters that PROCESS does not directly calculate.
+
+        Returns
+        -------
+        :
+            The derived parameters
 
         Raises
         ------

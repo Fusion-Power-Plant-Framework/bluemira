@@ -31,6 +31,11 @@ def _partial_x_integrand(phi: float, rr: float, zz: float) -> float:
     """
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
+
+    Returns
+    -------
+    result:
+        partial x itergrand
     """
     cos_phi = np.cos(phi)
     r0 = np.sqrt(rr**2 + 1 - 2 * rr * cos_phi + zz**2)
@@ -53,6 +58,11 @@ def _full_x_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
 
     \t:math:`P_{x}(R, Z) = \\int_{0}^{\\pi}[R_{0}+cos(\\phi)ln(R_{0}+R`
     \t:math:`-cos(\\phi))]cos(\\phi)d\\phi`
+
+    Returns
+    -------
+    :
+        P_x primitive integral
     """
     return (
         _partial_x_integrand(phi, r1, z1)
@@ -66,6 +76,11 @@ def _partial_z_integrand_nojit(phi: float, rr: float, zz: float) -> float:
     """
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
+
+    Returns
+    -------
+    result:
+        partial z itergrand
     """
     if abs(zz) < EPS:
         return 0.0
@@ -97,6 +112,11 @@ def _full_z_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
     \t:math:`P_{z}(R, Z) = \\int_{0}^{\\pi} [Zln(R_{0}+R-cos(\\phi)`
     \t:math:`+\\dfrac{1}{2}cos(\\phi)ln(\\dfrac{R_{0}-Z}{R_{0}+Z})`
     \t:math:`-sin(\\phi)arctan(\\dfrac{Z[R-cos(\\phi)]}{R_{0}sin(\\phi)})]d\\phi`
+
+    Returns
+    -------
+    :
+        P_z primitive integral
     """
     return (
         _partial_z_integrand(phi, r1, z1)
@@ -111,6 +131,11 @@ def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
     Integrate the Bz integrand by parts.
 
     This can be used as a fallback if the full integration fails.
+
+    Returns
+    -------
+    :
+        result of itergration
     """
     return (
         integrate(_partial_z_integrand_llc, (r1, z1), 0, np.pi)
@@ -126,6 +151,22 @@ def _get_working_coords(
 ) -> tuple[float, float, float, float, float]:
     """
     Convert coil and global coordinates to working coordinates.
+
+    Parameters
+    ----------
+    xc:
+        Coil x coordinate [m]
+    zc:
+        Coil z coordinate [m]
+    x:
+        Calculation x location
+    z:
+        Calculation z location
+
+    Returns
+    -------
+    :
+        working coords
     """
     z = z - zc  # numba issue # noqa: PLR6104
     r1, r2 = (xc - d_xc) / x, (xc + d_xc) / x
@@ -137,6 +178,11 @@ def _get_working_coords(
 def _array_dispatcher(func):
     """
     Decorator for float and array handling.
+
+    Returns
+    -------
+    wrapper:
+        decorator
     """
 
     def wrapper(xc, zc, x, z, d_xc, d_zc):
@@ -212,7 +258,8 @@ def semianalytic_Bx(
 
     Returns
     -------
-    Radial magnetic field response (x, z)
+    :
+        Radial magnetic field response (x, z)
 
     Notes
     -----
@@ -264,7 +311,8 @@ def semianalytic_Bz(
 
     Returns
     -------
-    Vertical magnetic field response at (x, z)
+    :
+        Vertical magnetic field response at (x, z)
 
     Notes
     -----
@@ -292,6 +340,11 @@ def semianalytic_Bz(
 def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
     """
     Integrand for psi = xBz
+
+    Returns
+    -------
+    :
+        integrand
     """
     z = z - zc  # numba issue # noqa: PLR6104
     r1, r2 = (xc - d_xc) / x, (xc + d_xc) / x
@@ -335,7 +388,8 @@ def semianalytic_psi(
 
     Returns
     -------
-    Poloidal magnetic flux response at (x, z)
+    :
+        Poloidal magnetic flux response at (x, z)
 
     Notes
     -----

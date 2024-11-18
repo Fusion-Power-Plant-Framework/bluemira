@@ -61,7 +61,8 @@ def varied_offset(
 
     Returns
     -------
-    New wire at a variable offset to the input.
+    :
+        New wire at a variable offset to the input.
 
     Raises
     ------
@@ -117,7 +118,16 @@ def _throw_if_inputs_invalid(
 def _sort_coords_by_angle(
     angles: npt.NDArray[np.float64], coords: npt.NDArray[np.float64]
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Sort the given angles and use that to re-order the coords."""
+    """
+    Sort the given angles and use that to re-order the coords.
+
+    Returns
+    -------
+    :
+        the sorted angles
+    :
+        the coordinates associated with the sorted angles
+    """
     angle_sort_idx = np.argsort(angles)
     return angles[angle_sort_idx], coords[:, angle_sort_idx]
 
@@ -129,7 +139,13 @@ def _calculate_offset_magnitudes(
     inboard_offset: float,
     outboard_offset: float,
 ) -> npt.NDArray[np.float64]:
-    """Calculate the magnitude of the offset at each angle."""
+    """
+    Returns
+    -------
+    :
+        The magnitude of the offset at each angle.
+
+    """
     offsets = np.empty_like(angles)
     # All angles less than inboard_offset_degree set to min offset
     constant_minor_offset_idxs = np.logical_or(
@@ -168,6 +184,11 @@ def _calculate_variable_offset_magnitudes(
 
     The offset increases linearly between start_angle and end_angle,
     between inboard_offset and outboard_offset.
+
+    Returns
+    -------
+    :
+        Variable offset angles
     """
     angles[angles > np.pi] = 2 * np.pi - angles[angles > np.pi]
     angle_fraction = (angles - start_angle) / (end_angle - start_angle)
@@ -181,7 +202,14 @@ def _calculate_normals_2d(
     Calculate the unit normals to the tangents at each of the given
     coordinates.
 
-    Note that this applies an anti-clockwise rotation to the tangents,
+    Returns
+    -------
+    :
+        2D normals
+
+    Notes
+    -----
+    That this applies an anti-clockwise rotation to the tangents,
     so to get an outward facing normal to a polygon, the coordinates
     should be ordered in the clockwise direction.
     """
@@ -193,6 +221,11 @@ def _calculate_normals_2d(
 def _2d_coords_to_wire(coords_2d: npt.NDArray[np.float64]) -> BluemiraWire:
     """
     Build a wire from a 2D array of coordinates using a bspline.
+
+    Returns
+    -------
+    :
+        the wire
     """
     coords_3d = np.zeros((3, coords_2d.shape[1]))
     coords_3d[(0, 2), :] = coords_2d

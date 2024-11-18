@@ -69,7 +69,8 @@ def fitfunc(
 
     Returns
     -------
-    Optimised fitting parameters
+    :
+        Optimised fitting parameters
     """
     x = np.linspace(0, 1, len(data))
     p0 = None if order is None else [1] * order
@@ -85,7 +86,7 @@ def singlepowerfunc(x: float, *args) -> float:
     \t:math:`g(x)=(1-x^{n})`
     """
     n = args[0]
-    return 1 - x**n
+    return 1 - x**n  # noqa: DOC201
 
 
 @nb.jit(nopython=True, cache=True)
@@ -99,7 +100,7 @@ def doublepowerfunc(x: float, *args) -> float:
     # sign tweak needed to avoid runtimewarnings in np
     m, n = args
     f = 1 - np.sign(x) * np.abs(x) ** m
-    return np.sign(f) * (np.abs(f)) ** n
+    return np.sign(f) * (np.abs(f)) ** n  # noqa: DOC201
 
 
 @nb.jit(cache=True, forceobj=True)
@@ -108,11 +109,14 @@ def pshape(
 ) -> float:
     """
     Integral of jtorshape to calculate pressure
-    NOTE: factor to convert from normalised psi integral
+
+    Notes
+    -----
+    Factor to convert from normalised psi integral
     """
     si = quad(shape, psinorm, 1, limit=100)[0]
     si *= psix - psio
-    return si
+    return si  # noqa: DOC201
 
 
 @nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
@@ -139,7 +143,8 @@ def speedy_pressure(
 
     Returns
     -------
-    The pressure on the grid
+    :
+        The pressure on the grid
     """
     nx, nz = psi_norm.shape
     pfunc = np.zeros((nx, nz))
@@ -182,7 +187,8 @@ def speedy_pressure_mask(
 
     Returns
     -------
-    The pressure on the grid
+    :
+        The pressure on the grid
     """
     pfunc = np.zeros_like(psi_norm, dtype=np.float64)
     for i, j in zip(ii, jj, strict=False):
@@ -202,7 +208,7 @@ def laopoly(x: float, *args) -> float:
     for i in range(len(args)):
         res += args[i] * x ** int(i)
     res -= sum(args) * x ** len(args)
-    return res
+    return res  # noqa: DOC201
 
 
 @nb.jit(nopython=True, cache=True)
@@ -213,7 +219,7 @@ def luxonexp(x: float, *args) -> float:
     \t:math:`g(x)=\\text{exp}\\big(-\\alpha^2x^2\\big)`
     """
     alpha = args[0]
-    return np.exp(-(x**2) * alpha**2)
+    return np.exp(-(x**2) * alpha**2)  # noqa: DOC201
 
 
 class ShapeFunction:
@@ -232,7 +238,7 @@ class ShapeFunction:
         data /= max(data)
         coeffs = fitfunc(cls._dfunc, data, order=order)
         cls.data = data
-        return cls(coeffs)
+        return cls(coeffs)  # noqa: DOC201
 
     def _func(self, x: float) -> float:
         return self._dfunc(x, *self.coeffs)
@@ -241,7 +247,7 @@ class ShapeFunction:
         """
         Calculate the value of the ShapeFunction for given x.
         """
-        return self._fact * self._func(x)
+        return self._fact * self._func(x)  # noqa: DOC201
 
     def adjust_parameters(self, coeffs: npt.NDArray[np.float64]):
         """
@@ -267,14 +273,14 @@ class ShapeFunction:
         Multiply the ShapeFunction (adjust factor)
         """
         self._fact = a
-        return self
+        return self  # noqa: DOC201
 
     def __rmul__(self, a: float) -> ShapeFunction:
         """
         Multiply the ShapeFunction (adjust factor)
         """
         self._fact = a
-        return self
+        return self  # noqa: DOC201
 
 
 class SinglePowerFunc(ShapeFunction):
@@ -370,7 +376,7 @@ class Profile:
         Convert from integral in psi_norm to integral in psi
         """
         val = quad(prime, norm, 1)[0]
-        return val * (self.psiax - self.psisep)
+        return val * (self.psiax - self.psisep)  # noqa: DOC201
 
     @staticmethod
     def _reshape(psinorm):
@@ -380,11 +386,14 @@ class Profile:
         out = np.zeros_like(psinorm)
         p_vals = np.reshape(psinorm, -1)
         o_vals = np.reshape(out, -1)
-        return p_vals, o_vals
+        return p_vals, o_vals  # noqa: DOC201
 
     def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return p as a function of normalised psi by integrating pprime
+        Returns
+        -------
+        :
+            Pressure as a function of normalised psi by integrating pprime
         """
         if not isinstance(psinorm, np.ndarray):
             return self._scalar_denorm(self.pprime, psinorm)
@@ -396,12 +405,16 @@ class Profile:
 
     def fRBpol(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return f as a function of normalised psi
+        Returns
+        -------
+        :
+            f as a function of normalised psi
+            :math:`FF^{'} = \\dfrac{1}{2}\\dfrac{F^{2}}{d\\psi}`
 
-        \t:math:`FF^{'} = \\dfrac{1}{2}\\dfrac{F^{2}}{d\\psi}`
-
+        Notes
+        -----
         Apply a boundary condition:
-            \t:math:`FF^{'}|_{\\substack{\\psi_{N}=1}} = (R_{0}B_{T,0})^{2}`
+        :math:`FF^{'}|_{\\substack{\\psi_{N}=1}} = (R_{0}B_{T,0})^{2}`
         """
         fvacuum = self.fvac()
         if not isinstance(psinorm, np.ndarray):
@@ -488,20 +501,28 @@ class Profile:
         Vacuum field function handle
         """
         try:
-            return self._fvac
+            return self._fvac  # noqa: DOC201
         except AttributeError:
             raise NotImplementedError("Please specify ._fvac as vacuum R*B.") from None
 
     def int2d(self, func2d: npt.NDArray[np.float64]) -> float:
         """
-        Returns the integral of a 2-D function map (numpy 2-D array) over the
-        domain space (X, Z)
+        Returns
+        -------
+        :
+            The integral of a 2-D function map (numpy 2-D array) over the
+            domain space (X, Z)
         """
         return integrate_dx_dz(func2d, self.dx, self.dz)
 
     def plot(self, ax=None):
         """
         Plot the Profile object
+
+        Returns
+        -------
+        :
+            The plot axis
         """
         return ProfilePlotter(self, ax=ax)
 
@@ -633,19 +654,19 @@ class BetaIpProfile(Profile):
         jtor = lambd * (beta0 * x / self.R_0 + (1 - beta0) * self.R_0 / x) * jtorshape
         self.lambd = lambd
         self.beta0 = beta0
-        return jtor
+        return jtor  # noqa: DOC201
 
     def pprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         dp/dpsi as a function of normalised psi
         """
-        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
+        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)  # noqa: DOC201
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
         """
-        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)
+        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)  # noqa: DOC201
 
 
 class BetaLiIpProfile(BetaIpProfile):
@@ -748,7 +769,7 @@ class CustomProfile(Profile):
             Cannot make opject callable
         """
         if callable(unknown):
-            return unknown
+            return unknown  # noqa: DOC201
         if isinstance(unknown, np.ndarray):
             return interp1d(np.linspace(0, 1, len(unknown)), unknown)
         if unknown is None:
@@ -759,13 +780,13 @@ class CustomProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """
-        return abs(self.scale) * self._pprime_in(pn)
+        return abs(self.scale) * self._pprime_in(pn)  # noqa: DOC201
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
         """
-        return abs(self.scale) * self._ffprime_in(pn)
+        return abs(self.scale) * self._ffprime_in(pn)  # noqa: DOC201
 
     def jtor(
         self,
@@ -796,11 +817,14 @@ class CustomProfile(Profile):
             if I_p != 0.0:
                 self.scale = self.I_p / I_p
                 jtor *= self.scale
-        return jtor
+        return jtor  # noqa: DOC201
 
     def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return pressure [Pa] at given value(s) of normalised psi
+        Returns
+        -------
+        :
+            Pressure [Pa] at given value(s) of normalised psi
         """
         if self.p_func is not None:
             return abs(self.scale) * self.p_func(psinorm)
@@ -808,7 +832,10 @@ class CustomProfile(Profile):
 
     def fRBpol(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
-        Return f=R*Bt at given value(s) of normalised psi
+        Returns
+        -------
+        :
+            f=R*Bt at given value(s) of normalised psi
         """
         if self.f_func is not None:
             return abs(self.scale) * self.f_func(psinorm)
@@ -833,14 +860,14 @@ class CustomProfile(Profile):
             qpsi_sign=qpsi_sign,
             **kwargs,
         )
-        return cls.from_eqdsk(e)
+        return cls.from_eqdsk(e)  # noqa: DOC201
 
     @classmethod
     def from_eqdsk(cls, eq: EQDSKInterface) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk object
         """
-        return cls(
+        return cls(  # noqa: DOC201
             eq.pprime,
             eq.ffprime,
             R_0=eq.xcentre,

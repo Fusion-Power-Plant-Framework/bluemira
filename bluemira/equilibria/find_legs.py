@@ -154,7 +154,7 @@ class LegFlux:
                     )
                 )
                 leg_dict[name] = leg
-        return leg_dict
+        return leg_dict  # noqa: DOC201
 
     def get_legs(
         self,
@@ -249,7 +249,15 @@ def get_legs_length_and_angle(
     leg_dict: dict[str, npt.NDArray[np.float64] | None],
     plasma_facing_boundary: Grid | Coordinates | None = None,
 ):
-    """Calculates the length of all the divertor legs in a dictionary."""
+    """Calculates the length of all the divertor legs in a dictionary.
+
+    Returns
+    -------
+    :
+        leg length dictionary for a given leg
+    :
+        the angle dictionary for a given leg
+    """
     length_dict = {}
     angle_dict = {}
     for name, leg_list in leg_dict.items():
@@ -279,7 +287,12 @@ def get_legs_length_and_angle(
 
 
 def get_single_null_legs(separatrix, delta, o_point, x_points=None, imin=None):
-    """Get the legs from a single null separatrix and return as a dictionary."""
+    """
+    Returns
+    -------
+    :
+        The legs from a single null separatrix as a dictionary.
+    """
     sorted_legs = get_leg_list(
         separatrix,
         delta,
@@ -292,8 +305,11 @@ def get_single_null_legs(separatrix, delta, o_point, x_points=None, imin=None):
 
 def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
     """
-    Get the legs from a double null separatrix, split in x-direction,
-    and return as a dictionary.
+    Returns
+    -------
+    :
+        The legs from a double null separatrix, split in x-direction,
+        as a dictionary.
 
     """
     # Separatrix list is sorted by INNER then OUTER
@@ -313,8 +329,11 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
 
 def get_legs_double_null_zsplit(separatrix, delta, x_points, o_point, x_range_lcfs):
     """
-    Get the legs from a double null separatrix, split in z-direction,
-    and return as a dictionary.
+    Returns
+    -------
+    :
+        The legs from a double null separatrix, split in z-direction,
+        as a dictionary.
 
     """
     # Separatrix list is sorted by loop length
@@ -370,6 +389,11 @@ def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
     Extracts leg/s from given flux line and return as sorted list.
     Legs are sorted by inner then outer.
 
+    Returns
+    -------
+    :
+        the legs sort by in and out
+
     """
     # Looking at flux surface contains the plasma (single or double null)
     if x_p is not None:
@@ -387,8 +411,13 @@ def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
     return legs
 
 
-def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets):
-    """Get flux surfaces offset from separatix leg. Add to list."""
+def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> list:
+    """
+    Returns
+    -------
+    :
+         Flux surfaces offset from separatix leg
+    """
     offset_legs = []
     for dx in dx_offsets:
         x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
@@ -410,7 +439,7 @@ def add_pair_to_dict(sorted_legs, x_p, o_p):
     """Convert a upper or lower pair of sorted legs into a dictionary."""
     location = "lower" if x_p.z < o_p.z else "upper"
     if sorted_legs is None:
-        return {
+        return {  # noqa: DOC201
             f"{location}_inner": [None],
             f"{location}_outer": [None],
         }
@@ -433,7 +462,13 @@ def _extract_leg(
     delta_x: float,
     o_point_z: float,
 ):
-    """Extract legs from a flux surface using a chosen intersection point."""
+    """Extract legs from a flux surface using a chosen intersection point.
+
+    Returns
+    -------
+    :
+        the flux legs
+    """
     radial_line = Coordinates({
         "x": [x_cut - delta_x, x_cut + delta_x],
         "z": [z_cut, z_cut],
@@ -472,6 +507,11 @@ def _extract_leg_using_index_value(
     """
     Extract legs from a flux surface using
     an intersection point chosen by index value.
+
+    Returns
+    -------
+    :
+        The flux legs
 
     """
     leg1, leg2 = Coordinates(flux_line[:, i_cut:]), Coordinates(flux_line[:, :i_cut])
@@ -521,6 +561,11 @@ def calculate_connection_length(
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using either flux surface geometry or a field line tracer.
     If no starting point is selected then use the separatrix at the Outboard Midplane.
+
+    Returns
+    -------
+    :
+        The connection length
 
     Raises
     ------

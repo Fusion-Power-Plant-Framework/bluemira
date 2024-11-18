@@ -135,6 +135,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coil harmonic amplitude matrix
         """
         # SH coefficients from function of the current distribution outside of the sphere
         # containing the plasma, i.e., LCFS (r_lcfs)
@@ -150,13 +155,13 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        return np.zeros(len(self.target_harmonics))
+        return np.zeros(len(self.target_harmonics))  # noqa: DOC201
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""
         f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
-        return f_constraint
+        return f_constraint  # noqa: DOC201
 
     def plot(self, ax=None):
         """

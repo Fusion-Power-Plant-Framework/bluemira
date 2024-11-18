@@ -78,6 +78,7 @@ def save_fixed_boundary_to_file(
         Format of the file
     json_kwargs:
         kwargs to use if saving to JSON
+
     """
     xbdry, zbdry = get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])
@@ -166,4 +167,4 @@ def save_fixed_boundary_to_file(
         qpsi=np.array([]),
     )
     data.write(file_path, file_format=file_format, json_kwargs=json_kwargs)
-    return data
+    return data  # noqa: DOC201

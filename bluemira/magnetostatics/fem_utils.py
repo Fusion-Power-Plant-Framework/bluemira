@@ -48,7 +48,14 @@ old_m_to_m = gmshio.model_to_mesh
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
-    """Convert points to array"""
+    """
+    Convert points to array
+
+    Returns
+    -------
+    x:
+        Array of points.
+    """
     x = np.asarray(x)
     if len(x.shape) == 1:
         if len(x) == 2:  # noqa: PLR2004
@@ -66,7 +73,15 @@ def model_to_mesh(
     gdim: int | Iterable[int] = 3,
     **kwargs,
 ):
-    """Convert gmsh model to dolfinx mesh
+    """
+    Convert gmsh model to dolfinx mesh.
+
+    Returns
+    -------
+    result:
+        Dolfinx mesh.
+    labels:
+        Associated names.
 
     Notes
     -----
@@ -99,10 +114,16 @@ def extract_geometry(
     dimensions: Iterable[int],
     model: type[gmsh.model],
 ):
-    """Extract model geometry
+    """
+    Extract model geometry
 
     Designed to call dolfinx.io.gmshio.extract_geometry but patch for non
     sequential dimensions
+
+    Returns
+    -------
+    x:
+        Extracted model geometry.
     """
     x = func(model)
     if any(dimensions != np.arange(len(dimensions))):
@@ -111,7 +132,14 @@ def extract_geometry(
 
 
 def calc_bb_tree(mesh: Mesh, padding: float = 0.0) -> geometry.BoundingBoxTree:
-    """Calculate the BoundingBoxTree of a dolfinx mesh"""
+    """
+    Calculate the BoundingBoxTree of a dolfinx mesh
+
+    Returns
+    -------
+    :
+        Bounding box tree.
+    """
     return geometry.bb_tree(mesh, mesh.topology.dim, padding=padding)
 
 
@@ -151,6 +179,18 @@ class BluemiraFemFunction(Function):
         """
         Call function
 
+        Parameters
+        ----------
+        points:
+            points at which function is evaluated
+
+        Returns
+        -------
+        res:
+            interpolated function value for new_points
+        new_points:
+            points for which interpolation was possible
+
         Notes
         -----
         Overwrite of the call function such that the behaviour is similar to the one
@@ -161,6 +201,19 @@ class BluemiraFemFunction(Function):
     def _eval_new(self, points: np.ndarray | list):
         """
         Supporting function for __call__
+
+        Parameters
+        ----------
+        points:
+            points at which function is evaluated
+
+        Returns
+        -------
+        res:
+            interpolated function value for new_points
+        new_points:
+            points for which interpolation was possible
+
         """
         # initial_shape = points.shape
         res, new_points = (
@@ -173,6 +226,19 @@ class BluemiraFemFunction(Function):
 
 def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     """Calculate closest point in mesh
+
+    Parameters
+    ----------
+    mesh:
+        mesh
+    points:
+        points at which a function is evaluated
+
+    Returns
+    -------
+    new_points:
+        closest point(s) in a mesh
+
 
     TODO hopefully remove in dolfinx >0.7.1
     """
@@ -238,7 +304,8 @@ def calculate_area(
 
     Returns
     -------
-    area of the subdomain
+    :
+        area of the subdomain
     """
     return integrate_f(Constant(mesh, PETSc.ScalarType(1)), mesh, boundaries, tag)
 
@@ -266,7 +333,8 @@ def integrate_f(
 
     Returns
     -------
-    area of the subdomain
+    :
+        area of the subdomain
     """
     dx = (
         ufl.dx
@@ -356,7 +424,8 @@ def error_L2(  # noqa: N802
 
     Returns
     -------
-    integral error
+    :
+        integral error
     """
     # Create higher order function space
     degree = uh.function_space.ufl_element().degree()
@@ -402,7 +471,10 @@ def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
 
     Returns
     -------
-    the values of the function in the specified points
+    values:
+        values of the function at the specified points
+    points_on_proc:
+        specified points
 
     """
     mesh = function.function_space.mesh
@@ -479,7 +551,8 @@ def plot_scalar_field(
 
     Returns
     -------
-    Matplotlib axis on which the plot ocurred
+    :
+        Matplotlib axis on which the plot ocurred
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -574,8 +647,9 @@ def create_j_function(
 
     Returns
     -------
-    a dolfinx function on the function space (mesh, eltype) with the values of
-    the density current to be applied at each cell
+    J:
+        a dolfinx function on the function space (mesh, eltype) with the values of
+        the density current to be applied at each cell
 
     Raises
     ------
@@ -631,9 +705,10 @@ def compute_B_from_Psi(
     eltype:
         Element type identified (e.g. ("P", 1)) for the magnetic flux density function
 
-    Return
-    ------
-    Magnetic flux density function in the mesh domain
+    Returns
+    -------
+    B:
+        Magnetic flux density function in the mesh domain
     """
     mesh = psi.function_space.mesh
     W0 = functionspace(mesh, (*eltype, (mesh.geometry.dim,)))  # noqa: N806

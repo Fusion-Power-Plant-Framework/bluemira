@@ -138,6 +138,11 @@ class MaterialProperty:
     def to_dict(self):
         """
         Serialise the material property to a dictionary.
+
+        Returns
+        -------
+        :
+            Dictionary representation of the material property
         """
         return asdict(self)
 
@@ -161,6 +166,11 @@ class MaterialProperty:
         ----------
         temperature:
             The temperatures requested to value the property at.
+
+        Returns
+        -------
+        :
+            The validated temperatures
 
         Raises
         ------
@@ -197,7 +207,12 @@ class MaterialPropertyDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj: Any, _) -> Callable[[], MaterialProperty] | MaterialProperty:
-        """Get the MaterialProperty of the dataclass entry"""
+        """
+        Returns
+        -------
+        :
+            The MaterialProperty of the dataclass entry
+        """
         if obj is None:
             return lambda: self._default
         if self._default.obj is None:
@@ -263,27 +278,41 @@ class Void:
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
-        Young's modulus of the material at the given temperature.
+        Returns
+        -------
+        :
+            Young's modulus of the material at the given temperature.
         """
         return 0.0
 
     @staticmethod
     def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
-        Poisson's ratio at a given temperature.
+        Returns
+        -------
+        :
+            Poisson's ratio at a given temperature.
         """
         return 0.0
 
     @staticmethod
     def rho(temperature: float | None = None) -> float:  # noqa: ARG004
         """
-        The density at a given temperature.
+        Returns
+        -------
+        :
+            The density at a given temperature.
         """
         return 0.0
 
     def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
+
+        Returns
+        -------
+        :
+            The openmc material
         """
         temperature = self.temperature if temperature is None else temperature
         return to_openmc_material(
@@ -421,7 +450,10 @@ class MassFractionMaterial:
 
     def __str__(self) -> str:
         """
-        Get a string representation of the MfMaterial.
+        Returns
+        -------
+        :
+            A string representation of the MfMaterial.
         """
         return self.name
 
@@ -430,12 +462,12 @@ class MassFractionMaterial:
         if not isinstance(other, type(self)):
             # TODO @je-cook: a mixutre with only one component could be the same
             # 3654
-            return False
+            return False  # noqa: DOC201
         raise NotImplementedError("Material equality not implemented")
 
     def __hash__(self):
         """Hash of class"""
-        return hash(self.elements)
+        return hash(self.elements)  # noqa: DOC201
 
     def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """
@@ -445,6 +477,11 @@ class MassFractionMaterial:
         ----------
         temperature:
             The temperature [K].
+
+        Returns
+        -------
+        :
+            The openmc material
 
         """
         temperature = self.temperature if temperature is None else temperature
@@ -464,85 +501,127 @@ class MassFractionMaterial:
 
     def mu(self, temperature: float) -> float:
         """
-        Poisson's ratio
+        Returns
+        -------
+        :
+            Poisson's ratio
         """
         return _try_calc_property(self, "poissons_ratio", temperature)
 
     def k(self, temperature: float) -> float:
         """
-        Thermal conductivity in W.m/K
+        Returns
+        -------
+        :
+            Thermal conductivity in W.m/K
         """
         return _try_calc_property(self, "thermal_conductivity", temperature)
 
     def E(self, temperature: float) -> float:  # noqa: N802
         """
-        Young's modulus in GPa
+        Returns
+        -------
+        :
+            Young's modulus in GPa
         """
         return _try_calc_property(self, "youngs_modulus", temperature)
 
     def Cp(self, temperature: float) -> float:  # noqa: N802
         """
-        Specific heat in J/kg/K
+        Returns
+        -------
+        :
+            Specific heat in J/kg/K
         """
         return _try_calc_property(self, "specific_heat", temperature)
 
     def CTE(self, temperature: float) -> float:  # noqa: N802
         """
-        Mean coefficient of thermal expansion in 10**-6/T
+        Returns
+        -------
+        :
+            Mean coefficient of thermal expansion in 10**-6/T
         """
         return _try_calc_property(self, "coefficient_thermal_expansion", temperature)
 
     def rho(self, temperature: float) -> float:
         """
-        Mass density in kg/m**3
+        Returns
+        -------
+        :
+            Mass density in kg/m**3
         """
         return _try_calc_property(self, "density", temperature)
 
     def erho(self, temperature: float) -> float:
         """
-        Electrical resistivity in 10^(-8)Ohm.m
+        Returns
+        -------
+        :
+            Electrical resistivity in 10^(-8)Ohm.m
         """
         return _try_calc_property(self, "electrical_resistivity", temperature)
 
     def Ms(self, temperature: float) -> float:  # noqa: N802
         """
-        Magnetic saturation in Am^2/kg
+        Returns
+        -------
+        :
+            Magnetic saturation in Am^2/kg
         """
         return _try_calc_property(self, "magnetic_saturation", temperature)
 
     def Mt(self, temperature: float) -> float:  # noqa: N802
         """
-        Viscous remanent magnetisation in Am^2/kg
+        Returns
+        -------
+        :
+            Viscous remanent magnetisation in Am^2/kg
         """
         return _try_calc_property(self, "viscous_remanent_magnetisation", temperature)
 
     def Hc(self, temperature: float) -> float:  # noqa: N802
         """
-        Coercive field in A/m
+        Returns
+        -------
+        :
+            Coercive field in A/m
         """
         return _try_calc_property(self, "coercive_field", temperature)
 
     def Sy(self, temperature: float) -> float:  # noqa: N802
         """
-        Minimum yield stress in MPa
+        Returns
+        -------
+        :
+            Minimum yield stress in MPa
         """
         return _try_calc_property(self, "minimum_yield_stress", temperature)
 
     def Syavg(self, temperature: float) -> float:  # noqa: N802
         """
-        Average yield stress in MPa
+        Returns
+        -------
+        :
+            Average yield stress in MPa
         """
         return _try_calc_property(self, "average_yield_stress", temperature)
 
     def Su(self, temperature: float) -> float:  # noqa: N802
         """
-        Minimum ultimate tensile stress in MPa
+        Returns
+        -------
+        :
+            Minimum ultimate tensile stress in MPa
         """
         return _try_calc_property(self, "minimum_ultimate_tensile_stress", temperature)
 
     def Suavg(self, temperature: float) -> float:  # noqa: N802
         """
-        Average ultimate tensile stress in MPa
+        Returns
+        -------
+        :
+            Average ultimate tensile stress in MPa
         """
         return _try_calc_property(self, "average_ultimate_tensile_stress", temperature)
 
@@ -606,14 +685,26 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
 
     def Bc2(self, temperature: float) -> float:
         """
-        Critical field \n
+        Returns
+        -------
+        :
+            Critical field
+
+        Notes
+        -----
         :math:`B_{C2}^{*}(T) = B_{C20}(1-(\\frac{T}{T_{C0}})^{1.7})`
         """
         return self.bc_20 * (1 - (temperature / self.tc_0) ** 1.7)
 
     def Jc(self, B: float, temperature: float) -> float:  # noqa: N802
         """
-        Critical current \n
+        Returns
+        -------
+        :
+            Critical current
+
+        Notes
+        -----
         :math:`j_{c}(B, T) = \\frac{C_{0}}{B}(1-(\\frac{T}{T_{C0}})^{1.7})
         ^{\\gamma}(\\frac{B}{B_{C2}(T)})^{\\alpha}(1-(\\frac{B}{B_{C2}(T)}))
         ^{\\beta}`
@@ -637,6 +728,10 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         temperature:
             The temperature [K].
 
+        Returns
+        -------
+        :
+            The openmc material
         """
         temperature = self.temperature if temperature is None else temperature
 
@@ -686,8 +781,13 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
     def Tc_star(self, B: float, eps: float) -> float:  # noqa: N802
         """
-        Critical temperature
+        Returns
+        -------
+        :
+            Critical temperature
 
+        Notes
+        -----
         :math:`T_{C}^{*}(B, {\\epsilon}) = T_{C0max}^{*}s({\\epsilon})^{1/3}
         (1-b_{0})^{1/1.52}`
         """
@@ -698,8 +798,13 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
     def Bc2_star(self, temperature: float, eps: float) -> float:
         """
-        Critical field
+        Returns
+        -------
+        :
+            Critical field
 
+        Notes
+        -----
         :math:`B_{C}^{*}(T, {\\epsilon}) = B_{C20max}^{*}s({\\epsilon})
         (1-t^{1.52})`
         """
@@ -709,8 +814,13 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
     def Jc(self, B: float, temperature: float, eps: float) -> float:  # noqa: N802
         """
-        Critical current
+        Returns
+        -------
+        :
+            Critical current
 
+        Notes
+        -----
         :math:`j_{c} = \\frac{C}{B}s({\\epsilon})(1-t^{1.52})(1-t^{2})b^{p}
         (1-b)^{q}`
         """
@@ -738,15 +848,28 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
     def reduced_t(self, temperature: float, eps: float) -> float:
         """
-        Reduced temperature \n
+        Returns
+        -------
+        :
+            Reduced temperature
+
+        Notes
+        -----
         :math:`t = \\frac{T}{T_{C}^{*}(0, {\\epsilon})}`
         """
         return temperature / self.Tc_star(0, eps)
 
     def b(self, field: float, temperature: float, eps: float) -> float:
         """
-        Reduced magnetic field \n
+        Returns
+        -------
+        :
+            Reduced magnetic field
+
+        Notes
+        -----
         :math:`b = \\frac{B}{B_{C2}^{*}(0,{\\epsilon})}`
+
         """
         return field / self.Bc2_star(temperature, eps)
 
@@ -756,6 +879,11 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         :math:`s({\\epsilon}) = 1+ \\frac{1}{1-C_{a1}{\\epsilon}_{0,a}}[C_{a1}
         (\\sqrt{{\\epsilon}_{sk}^{2}+{\\epsilon}_{0,a}^{2}}-\\sqrt{({\\epsilon}-
         {\\epsilon}_{sk})^{2}+{\\epsilon}_{0,a}^{2}})-C_{a2}{\\epsilon}]`
+
+        Returns
+        -------
+        :
+            The material strain
         """
         return 1 + 1 / (1 - self.c_a1 * self.eps_0a) * (
             self.c_a1
@@ -775,6 +903,10 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         temperature:
             The temperature [K].
 
+        Returns
+        -------
+        :
+            The openmc Material
         """
         temperature = self.temperature if temperature is None else temperature
         return to_openmc_material(
@@ -811,13 +943,19 @@ class Liquid:
 
     def __str__(self) -> str:
         """
-        Get a string representation of the Liquid.
+        Returns
+        -------
+        :
+            Get a string representation of the Liquid.
         """
         return self.name
 
     def rho(self, temperature: float, pressure: float | None = None) -> float:
         """
-        Mass density
+        Returns
+        -------
+        :
+            Mass density
         """
         return _try_calc_property(
             self,
@@ -829,7 +967,10 @@ class Liquid:
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
-        Youngs modulus (0 for all liquids)
+        Returns
+        -------
+        :
+            Youngs modulus (0 for all liquids)
         """
         return 0
 
@@ -837,6 +978,11 @@ class Liquid:
     def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
         Hmm... not sure about this one
+
+        Returns
+        -------
+        :
+            Poisson ratio
         """
         return 0
 
@@ -849,6 +995,10 @@ class Liquid:
         temperature:
             The temperature [K].
 
+        Returns
+        -------
+        :
+            The openmc Material
         """
         temperature = self.temperature if temperature is None else temperature
 
@@ -894,13 +1044,19 @@ class UnitCellCompound:
 
     def __str__(self):
         """
-        Get a string representation of the UcCompound.
+        Returns
+        -------
+        :
+            A string representation of the UcCompound.
         """
         return self.name
 
     def Cp(self, temperature: float) -> float:  # noqa: N802
         """
-        Specific heat in J/kg/K
+        Returns
+        -------
+        :
+            Specific heat in J/kg/K
         """
         return _try_calc_property(self, "specific_heat", temperature)
 
@@ -908,7 +1064,10 @@ class UnitCellCompound:
         self, temperature: float, eps_vol: float | None = None
     ) -> float:
         """
-        Mean coefficient of thermal expansion in 10**-6/T
+        Returns
+        -------
+        :
+            Mean coefficient of thermal expansion in 10**-6/T
         """
         return _try_calc_property(
             self, "coefficient_thermal_expansion", temperature, eps_vol
@@ -917,6 +1076,11 @@ class UnitCellCompound:
     def to_openmc_material(self, temperature: None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
+
+        Returns
+        -------
+        :
+            The openmc Material
         """
         return to_openmc_material(
             name=self.name,
@@ -945,6 +1109,11 @@ class BePebbleBed(UnitCellCompound):
     def CTE(temperature: float, eps_vol: float = 0) -> float:  # noqa: N802
         """
         .. doi:: 10.1016/S0920-3796(02)00165-5
+
+        Returns
+        -------
+        :
+            Mean coefficient of thermal expansion
         """
         # NOTE: Effect of inelastic volumetric strains [%] not negligible
         # esp_vol calculated roughly as f(T), as per 2M2BH9
@@ -953,7 +1122,10 @@ class BePebbleBed(UnitCellCompound):
 
             def calc_eps_vol(temp):
                 """
-                Calculates inelastic volumetric strains [%] based on T (C)
+                Returns
+                -------
+                :
+                    Inelastic volumetric strains [%] based on T (C)
                 """
                 if temp >= 600:  # noqa: PLR2004
                     return 0.5
@@ -997,27 +1169,41 @@ class Plasma:
 
     def __str__(self) -> str:
         """
-        Get a string representation of the plasma.
+        Returns
+        -------
+        :
+            A string representation of the plasma.
         """
         return self.name
 
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
-        Young's modulus.
+        Returns
+        -------
+        :
+            Young's modulus.
         """
         return 0
 
     @staticmethod
     def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
-        Poisson's ratio.
+        Returns
+        -------
+        :
+            Poisson's ratio.
         """
         return 0
 
     def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
         """
         Convert the material to an OpenMC material.
+
+        Returns
+        -------
+        :
+            The openmc Material
         """
         return to_openmc_material(
             name=self.name,
