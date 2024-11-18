@@ -241,7 +241,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> None | list:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> list[str] | None:
         """
         Remove coil from CoilGroup
 
@@ -1122,7 +1122,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         )
         self.control = control_names
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> None | list:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True):
         """
         Remove coil from CoilSet
         """

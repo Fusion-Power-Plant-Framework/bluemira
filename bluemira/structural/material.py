@@ -78,22 +78,6 @@ def make_structural_material(
     )
 
 
-class Material(dict):
-    """
-    A simple material property dictionary (keep small for speed and memory)
-    """
-
-    __slots__ = ()
-
-    def __init__(self, e_modulus, nu, rho, alpha, sigma_y):
-        self["E"] = e_modulus
-        self["nu"] = nu
-        self["alpha"] = alpha
-        self["rho"] = rho
-        self["G"] = e_modulus / (1 + nu) / 2
-        self["sigma_y"] = sigma_y
-
-
 # Just some simple materials to play with during tests and the like
 
 SS316 = StructuralMaterial(

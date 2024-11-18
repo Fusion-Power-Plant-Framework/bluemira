@@ -309,7 +309,7 @@ class NloptOptimiser(Optimiser):
     def _set_objective_function(
         self,
         func: ObjectiveCallable,
-        df: None | OptimiserCallable,
+        df: OptimiserCallable | None,
         n_variables: int,
     ) -> None:
         """Wrap and set the objective function."""

@@ -161,7 +161,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.flo
 
 def find_local_Bp_minima_cg(
     f_psi: RectBivariateSpline, x0: float, z0: float, radius: float
-) -> None | list[float]:
+) -> list[float] | None:
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
     conjugate gradient search.

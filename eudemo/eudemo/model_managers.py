@@ -50,7 +50,7 @@ class EquilibriumManager:
             bluemira_warn(f"Over-writing equilibrium state: {name}!")
         self.states[name] = snapshot
 
-    def get_state(self, name: str) -> None | Snapshot:
+    def get_state(self, name: str) -> Snapshot | None:
         """
         Get an equilibrium state from the Equilibrium manager.
         """

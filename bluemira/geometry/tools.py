@@ -1263,7 +1263,7 @@ def distance_to(
 
 def split_wire(
     wire: BluemiraWire, vertex: npt.ArrayLike, tolerance: float = EPS * 10
-) -> tuple[None | BluemiraWire, None | BluemiraWire]:
+) -> tuple[BluemiraWire | None, BluemiraWire | None]:
     """
     Split a wire at a given vertex.
 
@@ -1298,7 +1298,7 @@ def split_wire(
 
 def slice_shape(
     shape: BluemiraGeo, plane: BluemiraPlane
-) -> list[np.ndarray] | None | list[BluemiraWire]:
+) -> list[np.ndarray] | list[BluemiraWire] | None:
     """
     Calculate the plane intersection points with an object
 
