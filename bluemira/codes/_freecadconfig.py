@@ -14,7 +14,7 @@ import freecad  # noqa: F401
 import FreeCAD
 
 
-class _Unit(enum.IntEnum):
+class FCUnit(enum.IntEnum):
     """Available units in FreeCAD"""
 
     MM = 0  # mmKS
@@ -50,9 +50,7 @@ def _freecad_save_config(
     This must be run before Part is imported for legacy exporters
     """
     unit_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
-    # Seems to have little effect on anything but its an option to set
-    # does effect the GUI be apparently not the base unit of the built part...
-    unit_prefs.SetInt("UserSchema", _Unit[unit].value)
+    unit_prefs.SetInt("UserSchema", FCUnit[unit].value)
     unit_prefs.SetInt("Decimals", no_dp)  # 100th mm
 
     part_step_prefs = FreeCAD.ParamGet(
@@ -62,7 +60,7 @@ def _freecad_save_config(
     part_step_prefs.SetString("Author", author)
     part_step_prefs.SetString("Company", "Bluemira")
     # Seems to have little effect on anything but its an option to set
-    part_step_prefs.SetInt("Unit", _Unit[unit].value)
+    part_step_prefs.SetInt("Unit", FCUnit[unit].value)
 
     part_step_2_prefs = FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/Mod/Import/hSTEP"

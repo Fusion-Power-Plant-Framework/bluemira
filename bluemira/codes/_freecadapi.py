@@ -1627,9 +1627,7 @@ def meshed_exporter(
     return wrapper  # noqa: DOC201
 
 
-def save_as_STP(
-    shapes: list[apiShape], filename: str = "test", unit_scale: str = "metre"
-):
+def save_as_STP(shapes: list[apiShape], filename: str = "test"):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1639,8 +1637,6 @@ def save_as_STP(
         Iterable of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    unit_scale:
-        The scale in which to save the Shape objects
 
     Raises
     ------
@@ -1664,13 +1660,6 @@ def save_as_STP(
         raise FreeCADError("Shape is null.")
 
     compound = make_compound(shapes)
-    scale = raw_uc(1, unit_scale, "mm")
-
-    if scale != 1:
-        # scale the compound. Since the scale function modifies directly the shape,
-        # a copy of the compound is made to avoid modification of the original shapes.
-        compound = scale_shape(compound.copy(), scale)
-
     compound.exportStep(filename)
 
 
@@ -1695,7 +1684,6 @@ def save_cad(
     filename: str,
     cad_format: str | CADFileType = "stp",
     labels: Iterable[str] | None = None,
-    unit_scale: str = "metre",
     **kwargs,
 ):
     """
@@ -1711,8 +1699,6 @@ def save_cad(
         file cad_format
     labels:
         shape labels
-    unit_scale:
-        unit to save the objects as.
     kwargs:
         passed to freecad preferences configuration
 
@@ -1743,10 +1729,6 @@ def save_cad(
 
     with Document() as doc:
         objs = list(doc.setup(shapes, labels))
-
-        # Part is always built in mm but some formats are unitless
-        if cad_format not in CADFileType.unitless_formats():
-            _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
 
         # Some exporters need FreeCADGui to be setup before their import,
         # this is achieved in _setup_document

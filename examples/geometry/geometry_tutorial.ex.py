@@ -403,5 +403,4 @@ save_cad(
     filename=Path(
         get_bluemira_path("", subfolder="generated_data"), my_file_path
     ).as_posix(),
-    unit_scale="metre",
 )
