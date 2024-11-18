@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numpy import typing as npt
@@ -38,6 +39,9 @@ from bluemira.radiation_transport.neutronics.wires import (
     WireInfo,
     WireInfoList,
 )
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 CCW_90 = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
 CW_90 = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
@@ -287,11 +291,18 @@ class PreCell:
             self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
         return self._blanket_half_solid
 
-    def plot_2d(self, *args, **kwargs):
-        """Plot the outline in 2D"""
+    def plot_2d(self, *args, **kwargs) -> Axes:
+        """
+        Plot the outline in 2D
+
+        Returns
+        -------
+        :
+            Axes on which the pre-cell is plotted.
+        """
         return plot_2d([self.outline, self.vv_wire], *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs):
+    def show_cad(self, *args, **kwargs) -> None:
         """Plot the outline in 3D"""
         return show_cad(self.half_solid, *args, **kwargs)
 
@@ -450,6 +461,13 @@ class PreCellArray:
             pre-cell with curved-edge to pre-cell with straight edges.
             If True, increase the length of the cut lines appropriately to compensate for
             the volume loss due to the straight line approximation.
+
+        Returns
+        -------
+        :
+            An array of the copies of the pre-cells, where the exterior wall and interior
+            walls (as well as the dividing walls between adjacent pre-cells) were made of
+            straight BluemiraWire's, as opposed to the curved lines initally provided.
         """
         exterior_walls_copy = self.cell_walls.copy()
         interior_walls_copy = CellWalls.from_pre_cell_array_vv(self)
@@ -490,7 +508,14 @@ class PreCellArray:
         return PreCellArray(new_pre_cells)
 
     def plot_2d(self, *args, **kwargs):
-        """Plot pre cells in 2d"""
+        """
+        Plot pre cells in 2d
+
+        Returns
+        -------
+        :
+            Axes on which the pre-cell array is plotted.
+        """
         return plot_2d(
             [
                 *(pc.outline for pc in self.pre_cells),
@@ -500,7 +525,7 @@ class PreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs):
+    def show_cad(self, *args, **kwargs) -> None:
         """Show pre cell CAD"""
         return show_cad([pc.half_solid for pc in self.pre_cells], *args, **kwargs)
 
@@ -528,11 +553,11 @@ class PreCellArray:
 
     def __len__(self) -> int:
         """Number of pre cells"""
-        return len(self.pre_cells)
+        return len(self.pre_cells)  # noqa: DOC201
 
     def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
         """Get pre cell"""
-        return self.pre_cells[index_or_slice]
+        return self.pre_cells[index_or_slice]  # noqa: DOC201
 
     def __setitem__(self, index_or_slice, new_pre_cell: PreCell | PreCellArray):
         """Set an element to be a new Precell, or a slice to be a new PreCellarray."""
@@ -542,7 +567,14 @@ class PreCellArray:
             self.pre_cells[index_or_slice] = new_pre_cell.pre_cells
 
     def __add__(self, other_array) -> PreCellArray:
-        """Adding two list together to create a new one.
+        """
+        Adding two list together to create a new one.
+
+        Returns
+        -------
+        :
+            Both pre-cell arrays (self and other_array) concatenated together to form a
+            new PreCellArray.
 
         Raises
         ------
@@ -556,7 +588,14 @@ class PreCellArray:
         )
 
     def __repr__(self) -> str:
-        """String representation"""
+        """
+        String representation
+
+        Returns
+        -------
+        :
+            A string that includes the number of pre-cells in the array.
+        """
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
 
     def copy(self):
@@ -618,11 +657,18 @@ class DivertorPreCell:
             ])
         )
 
-    def plot_2d(self, *args, **kwargs):
-        """Plot 2d precell"""
+    def plot_2d(self, *args, **kwargs) -> Axes:
+        """
+        Plot 2d precell
+
+        Returns
+        -------
+        :
+            The Axes object on which the divertor pre-cell was plotted.
+        """
         return plot_2d(self.outline, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs):
+    def show_cad(self, *args, **kwargs) -> None:
         """Show precell CAD"""
         return show_cad(self.half_solid, *args, **kwargs)
 
@@ -674,6 +720,11 @@ class DivertorPreCell:
             1. The circles will be scaled correctly (center moves towards the new origin
                by x%, radius scaled down by x%).
             2. All tangents are preserved, so no need to change them.
+
+        Returns
+        -------
+        :
+            The interior wire offsetted by thickness, represented as a WireInfoList.
         """
         int_wire_pts = np.array([
             *(w.key_points[0] for w in self.interior_wire),
@@ -781,7 +832,12 @@ class DivertorPreCellArray:
         Parameters
         ----------
         interior_vertices:
-            aray of shape (N+1, 3) arranged counter-clockwise (inboard to outboard).
+            array of shape (N+1, 3) arranged counter-clockwise (inboard to outboard).
+
+        Returns
+        -------
+        :
+             A numpy array of every vertex in each pre-cell's vertices.
         """
         return np.concatenate([
             stack.interior_wire.get_3D_coordinates() for stack in self.pre_cells
@@ -789,20 +845,27 @@ class DivertorPreCellArray:
 
     def __len__(self) -> int:
         """Number of pre cells"""
-        return len(self.pre_cells)
+        return len(self.pre_cells)  # noqa: DOC201
 
     def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
         """Get pre cell"""
-        return self.pre_cells[index_or_slice]
+        return self.pre_cells[index_or_slice]  # noqa: DOC201
 
     def __repr__(self) -> str:
         """String representation"""
-        return (
+        return (  # noqa: DOC201
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
     def plot_2d(self, *args, **kwargs):
-        """Plot precell array cad in 2d"""
+        """
+        Plot precell array cad in 2d
+
+        Returns
+        -------
+        :
+            The Axes on which the divertor pre-cell array was plotted.
+        """
         return plot_2d(
             [
                 *(dpc.outline for dpc in self.pre_cells),
@@ -812,7 +875,7 @@ class DivertorPreCellArray:
             **kwargs,
         )
 
-    def show_cad(self, *args, **kwargs):
+    def show_cad(self, *args, **kwargs) -> None:
         """Show precell array CAD"""
         return show_cad([dpc.half_solid for dpc in self.pre_cells], *args, **kwargs)
 
@@ -823,7 +886,7 @@ class DivertorPreCellArray:
 
         Returns
         -------
-        new_copy
+        :
             copy of itself
         """
         return DivertorPreCellArray(self.pre_cells.copy())
