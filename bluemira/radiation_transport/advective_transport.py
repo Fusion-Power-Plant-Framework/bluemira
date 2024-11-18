@@ -8,7 +8,6 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-from copy import deepcopy
 from dataclasses import dataclass, fields
 
 import matplotlib.pyplot as plt
@@ -78,7 +77,6 @@ class ChargedParticleSolver:
         self._o_point = o_points[0]
         z = self._o_point.z
         self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
-        self._process_first_wall = staticmethod(_process_first_wall)
 
     @property
     def flux_surfaces(self) -> list[PartialOpenFluxSurface]:
@@ -147,17 +145,7 @@ class ChargedParticleSolver:
         out_intersection:
             the external intersection coordinate
         """
-        first_wall = deepcopy(first_wall)
-
-        if not first_wall.check_ccw(axis=[0, 1, 0]):
-            bluemira_warn(
-                "First wall should be oriented counter-clockwise. Reversing it."
-            )
-            first_wall.reverse()
-
-        if not first_wall.closed:
-            bluemira_warn("First wall should be a closed geometry. Closing it.")
-            first_wall.close()
+        first_wall = _process_first_wall(first_wall)
 
         int_intersection = coords_plane_intersect(first_wall, self._yz_plane)[0]
         out_intersection = coords_plane_intersect(first_wall, self._yz_plane)[1]
@@ -197,7 +185,7 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _make_flux_surfaces_ob(self) -> None:
+    def _make_flux_surfaces_ob(self):
         """
         Make the flux surfaces on the outboard.
         """
