@@ -207,7 +207,7 @@ class MaterialPropertyDescriptor:
 
     def _mutate_value(
         self,
-        value: dict[str, float | str | None] | float | str | None | MaterialProperty,
+        value: dict[str, float | str | None] | float | str | MaterialProperty | None,
         obj=None,
     ) -> MaterialProperty:
         if isinstance(value, dict):
@@ -233,9 +233,9 @@ class MaterialPropertyDescriptor:
         value: dict[str, float | str | None]
         | float
         | str
-        | None
         | Callable[[], MaterialProperty]
-        | MaterialProperty,
+        | MaterialProperty
+        | None,
     ):
         """
         Set the MaterialProperty of the dataclass entry

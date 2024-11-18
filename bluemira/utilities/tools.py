@@ -1031,7 +1031,7 @@ def array_or_num(array: Any) -> np.ndarray | float:
 
 
 def deprecation_wrapper(
-    message: Callable[[Any], Any] | None | str,
+    message: Callable[[Any], Any] | str | None,
 ) -> Callable[[Any], Any]:
     """Deprecate any callable.
 

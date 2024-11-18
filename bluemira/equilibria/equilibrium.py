@@ -93,12 +93,12 @@ class MHDState:
 
     def __init__(self):
         # Constructors
-        self.x: None | npt.NDArray[np.float64] = None
-        self.z: None | npt.NDArray[np.float64] = None
-        self.dx: None | float = None
-        self.dz: None | float = None
-        self.grid: None | Grid = None
-        self.limiter: None | Limiter = None
+        self.x: npt.NDArray[np.float64] | None = None
+        self.z: npt.NDArray[np.float64] | None = None
+        self.dx: float | None = None
+        self.dz: float | None = None
+        self.grid: Grid | None = None
+        self.limiter: Limiter | None = None
 
     def set_grid(self, grid: Grid):
         """
