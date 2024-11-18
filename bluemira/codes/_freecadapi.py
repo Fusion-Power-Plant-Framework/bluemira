@@ -674,7 +674,7 @@ def offset_wire(
         ])
         raise FreeCADError(msg) from None
 
-    fix_wire(wire)
+    fix_shape(wire)
     if not wire.isClosed() and not open_wire:
         raise FreeCADError("offset failed to close wire")
     return wire
@@ -1570,6 +1570,7 @@ def import_cad(
                 if len(objs) > 0:
                     return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
             bluemira_warn("No objects found in import")
+
         if filetype not in CADFileType.unitless_formats():
             return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
         return objs
@@ -2379,22 +2380,22 @@ def _make_shapes_coaxis(shapes):
 # ======================================================================================
 
 
-def fix_wire(
-    wire: apiWire, precision: float = EPS_FREECAD, min_length: float = MINIMUM_LENGTH
+def fix_shape(
+    shape: apiShape, precision: float = EPS_FREECAD, min_length: float = MINIMUM_LENGTH
 ):
     """
-    Fix a wire by removing any small edges and joining the remaining edges.
+    Fix a shape by removing any small edges and joining the remaining edges.
 
     Parameters
     ----------
-    wire:
+    shape:
         Wire to fix
     precision:
         General precision with which to work
     min_length:
         Minimum edge length
     """
-    wire.fix(precision, min_length, min_length)
+    shape.fix(precision, min_length, min_length)
 
 
 # ======================================================================================

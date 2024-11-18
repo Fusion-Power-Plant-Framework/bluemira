@@ -146,6 +146,9 @@ class BluemiraFace(BluemiraGeo):
             else:
                 raise DisjointedFaceError("Any or more than one face has been created.")
 
+        if not cadapi.is_valid(face):
+            cadapi.fix_shape(face)
+
         if check_reverse:
             return self._check_reverse(face)
         return face
