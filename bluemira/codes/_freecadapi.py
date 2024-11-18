@@ -1735,12 +1735,8 @@ def save_cad(
     })
 
     with Document() as doc:
-        objs = list(doc.setup(shapes, labels))
-
-        # Some exporters need FreeCADGui to be setup before their import,
-        # this is achieved in _setup_document
         try:
-            cad_format.exporter(objs, filename, **kwargs)
+            cad_format.exporter(list(doc.setup(shapes, labels)), filename, **kwargs)
         except ImportError as imp_err:
             raise FreeCADError(
                 f"Unable to save to {cad_format.value} please try through the main"
