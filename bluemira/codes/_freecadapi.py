@@ -1542,7 +1542,13 @@ def import_cad(
     unit_scale: str = "m",
     **kwargs,
 ) -> list[tuple[apiShape, str]]:
-    """Import CAD objects from file"""
+    """Import CAD objects from file
+
+    Returns
+    -------
+    :
+        The imported shapes
+    """
     file = Path(file)
     filetype = (
         CADFileType(file.suffix.strip("."))
@@ -1593,7 +1599,7 @@ def webgl_export(export_func: ExporterProtocol) -> ExporterProtocol:
         kwargs["camera"] = kwargs.pop("camera", None) or camerastr
         export_func(objs, filename, **kwargs)
 
-    return wrapper
+    return wrapper  # noqa: DOC201
 
 
 def stepz_import(import_func: ImporterProtocol) -> ImporterProtocol:
@@ -1604,7 +1610,7 @@ def stepz_import(import_func: ImporterProtocol) -> ImporterProtocol:
         with mock.patch("stepZ.FreeCADGui.SendMsgToActiveView", create=True):
             import_func(filename, document, **kwargs)
 
-    return wrapper
+    return wrapper  # noqa: DOC201
 
 
 def meshed_exporter(
