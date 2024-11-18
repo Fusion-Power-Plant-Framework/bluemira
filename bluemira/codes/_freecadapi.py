@@ -1116,7 +1116,7 @@ def wire_parameter_at(
 
 def split_wire(
     wire: apiWire, vertex: Iterable[float], tolerance: float
-) -> tuple[None | apiWire, None | apiWire]:
+) -> tuple[apiWire | None, apiWire | None]:
     """
     Split a wire at a given vertex.
 
