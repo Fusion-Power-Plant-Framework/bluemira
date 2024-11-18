@@ -60,13 +60,13 @@ click==8.1.7
     #   jupyter-cache
 comm==0.2.2
     # via ipykernel
-contourpy==1.3.0
+contourpy==1.3.1
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
 coolprop==6.6.0
     # via bluemira (pyproject.toml)
-coverage==7.6.4
+coverage==7.6.7
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -100,7 +100,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.54.1
+fonttools==4.55.0
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -114,7 +114,7 @@ greenlet==3.1.1
     # via sqlalchemy
 h11==0.14.0
     # via httpcore
-httpcore==1.0.6
+httpcore==1.0.7
     # via httpx
 httpx==0.27.2
     # via jupyterlab
@@ -160,7 +160,7 @@ jinja2==3.1.4
     #   sphinx-autoapi
 joblib==1.4.2
     # via scikit-learn
-json5==0.9.27
+json5==0.9.28
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
@@ -171,7 +171,7 @@ jsonschema==4.23.0
     #   nbformat
 jsonschema-specifications==2024.10.1
     # via jsonschema
-jupyter-cache==1.0.0
+jupyter-cache==1.0.1
     # via myst-nb
 jupyter-client==8.6.3
     # via
@@ -200,7 +200,7 @@ jupyter-server==2.14.2
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.5
+jupyterlab==4.2.6
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -489,7 +489,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==75.3.0
+setuptools==75.5.0
     # via jupyterlab
 six==1.16.0
     # via
@@ -518,7 +518,7 @@ sphinx-autoapi==3.3.3
     # via bluemira (pyproject.toml)
 sphinx-copybutton==0.5.2
     # via bluemira (pyproject.toml)
-sphinx-rtd-theme==3.0.1
+sphinx-rtd-theme==3.0.2
     # via bluemira (pyproject.toml)
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
@@ -538,7 +538,7 @@ sqlalchemy==2.0.36
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sybil==8.0.1
+sybil==9.0.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
     # via
@@ -556,7 +556,7 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tinycss2==1.4.0
     # via nbconvert
-tomli==2.0.2
+tomli==2.1.0
     # via
     #   coverage
     #   jupyterlab
