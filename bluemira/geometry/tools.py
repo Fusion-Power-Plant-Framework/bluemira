@@ -1572,7 +1572,6 @@ def is_convex(points: npt.NDArray):
 def save_as_STP(
     shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
-    unit_scale: str = "metre",
     **kwargs,
 ):
     """
@@ -1584,15 +1583,13 @@ def save_as_STP(
         List of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    unit_scale:
-        The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
 
-    cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
+    cadapi.save_as_STP([s.shape for s in shapes], filename, **kwargs)
 
 
 def save_cad(
