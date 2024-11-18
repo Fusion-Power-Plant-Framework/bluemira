@@ -45,7 +45,14 @@ class BlanketThickness:
     manifold: float
 
     def get_interface_depths(self):
-        """Return the depth of the interface layers"""
+        """
+        Depth of at each interface layers = the thickness of all the layers before it.
+
+        Returns
+        -------
+        :
+            Depths of the interface between layers.
+        """
         return np.cumsum([
             self.surface,
             self.first_wall,
@@ -131,7 +138,15 @@ class TokamakDimensions:
     def from_parameterframe(
         cls, params: NeutronicsReactorParameterFrame, r_inner_cut: float
     ):
-        """Setup tokamak dimensions"""
+        """
+        Setup tokamak dimensions
+
+        Returns
+        -------
+        :
+            TokamakDimensions object with the appropriate dimensions extracted from
+            params.
+        """
         return cls(
             BlanketThickness(
                 params.fw_blanket_surface_tk.value,
