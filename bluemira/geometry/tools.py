@@ -1635,7 +1635,13 @@ def import_cad(
     unit_scale: str = "m",
     **kwargs,
 ) -> BluemiraGeo | list[BluemiraGeo]:
-    """Import CAD from file"""
+    """Import CAD from file
+
+    Returns
+    -------
+    :
+        The imported objects
+    """
     objs = [
         convert(s[0], label=s[1])
         for s in cadapi.import_cad(filename, cad_format, unit_scale, **kwargs)
