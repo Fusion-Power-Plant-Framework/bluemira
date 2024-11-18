@@ -383,7 +383,7 @@ class BasePlotter(ABC):
     def plot_2d(
         self,
         obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
-        ax: None | Axes = None,
+        ax: Axes | None = None,
         *,
         show: bool = True,
     ) -> Axes:
@@ -431,7 +431,7 @@ class BasePlotter(ABC):
     def plot_3d(
         self,
         obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
-        ax: None | Axes = None,
+        ax: Axes | None = None,
         *,
         show: bool = True,
     ) -> Axes:
@@ -744,7 +744,7 @@ class ComponentPlotter(BasePlotter):
 
 def _validate_plot_inputs(
     parts: BluemiraGeoT | list[BluemiraGeoT],
-    options: None | PlotOptions | list[None] | list[PlotOptions],
+    options: PlotOptions | list[None] | list[PlotOptions] | None,
 ) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
     Validate the lists of parts and options, applying some default options.
@@ -924,7 +924,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax: None | Axes = None, *, show: bool = True) -> Axes:
+    def plot_2d(self, ax: Axes | None = None, *, show: bool = True) -> Axes:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
