@@ -12,6 +12,7 @@ import Part
 import numpy as np
 import pytest
 from FreeCAD import Base, newDocument
+from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -287,6 +288,40 @@ class TestFreecadapi:
         assert (
             "AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }" in stp_content
         )  # scheme change
+
+    def test_circle_ellipse_arc(self):
+        # from make_circle
+        arc = cadapi.make_circle(start_angle=0, end_angle=180)
+        assert cadapi.length(arc) == np.pi  # check length of created arc
+        assert np.allclose(
+            cadapi.start_point(arc), [1.0, 0.0, 0.0]
+        )  # check start point of arc
+        assert np.allclose(
+            cadapi.end_point(arc), [-1.0, 0.0, 0.0]
+        )  # check end point of arc
+        arc2 = cadapi.make_circle(
+            start_angle=360, end_angle=180
+        )  # same as arc but using start>end
+        assert np.allclose(cadapi.discretise(arc, 10), cadapi.discretise(arc2, 10))
+
+        # from make_circle_arc_3P
+        arc3 = cadapi.make_circle_arc_3P(
+            [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]
+        )
+        assert np.allclose(
+            cadapi.discretise(arc, 10), cadapi.discretise(arc3, 10)
+        )  # check arc3 matches arc
+        with pytest.raises(Part.OCCError):
+            cadapi.make_circle_arc_3P([1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0])
+
+        # from make_ellipse
+        arc4 = cadapi.make_ellipse(start_angle=0, end_angle=90)
+        ellipse_major_radius = 2
+        ellipse_eccentricity = 0.75
+        arc_length = ellipse_major_radius * ellipe(
+            ellipse_eccentricity
+        )  # length of arc using complete elliptic integral
+        assert np.isclose(arc_length, cadapi.length(arc4), 6)
 
 
 class TestCADFiletype:
