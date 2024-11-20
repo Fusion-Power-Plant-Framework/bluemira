@@ -127,6 +127,10 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     Then, get only the key information (start/end points and tangent) of each segment of
     the wire.
 
+    Returns
+    -------
+    :
+        List of WireInfo, each one representing a segment of the wire.
 
     Raises
     ------
@@ -140,9 +144,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         wire: BluemiraWire,
         start_vec: cadapi.apiVector | npt.NDArray,
         end_vec: cadapi.apiVector | npt.NDArray,
-    ):
-        """Function to record a line"""
-        return WireInfo(
+    ) -> WireInfo:
+        """
+        Function to record a line as a WireInfo, with the appropriate tangents and
+        BluemiraWire.
+        """
+        return WireInfo(  # noqa: DOC201
             StraightLineInfo(np.array(start_vec), np.array(end_vec)),
             [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
             wire,
@@ -153,9 +160,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         wire: BluemiraWire,
         start_vec: cadapi.apiVector | npt.NDArray,
         end_vec: cadapi.apiVector | npt.NDArray,
-    ):
-        """Function to record the arc of a circle."""
-        return WireInfo(
+    ) -> WireInfo:
+        """
+        Function to record the arc of a circle as a WireInfo, with the appropriate
+        tangents and BluemiraWire.
+        """
+        return WireInfo(  # noqa: DOC201
             CircleInfo(
                 np.array(start_vec),
                 np.array(end_vec),
@@ -230,6 +240,11 @@ def turned_morethan_180(
         +1: evaluate rotation required in the counter-clockwise direction.
         -1: evaluate rotation required in the clockwise direction.
 
+    Returns
+    -------
+    : bool
+        boolean
+
     Raises
     ------
     GeometryError
@@ -251,7 +266,14 @@ def turned_morethan_180(
 def deviate_less_than(
     xyz_vector1: Sequence[float], xyz_vector2: Sequence[float], threshold_degrees: float
 ) -> bool:
-    """Check if two vector's angles less than a certain threshold angle (in degrees)."""
+    """
+    Check if two vector's angles less than a certain threshold angle (in degrees).
+
+    Returns
+    -------
+    : bool
+        boolean
+    """
     angle1 = np.arctan2(xyz_vector1[2], xyz_vector1[0])
     angle2 = np.arctan2(xyz_vector2[2], xyz_vector2[0])
     return np.rad2deg(abs(angle2 - angle1)) < threshold_degrees
@@ -262,7 +284,12 @@ def straight_lines_deviate_less_than(
 ) -> bool:
     """
     Check that both lines are straight lines, then check if deviation is less than
-    threshold_degrees or not
+    threshold_degrees or not.
+
+    Returns
+    -------
+    : boool
+        boolean
     """
     if not (
         isinstance(info1.key_points, StraightLineInfo)
@@ -398,6 +425,15 @@ class PanelsAndExteriorCurve:
             the n-th breakpoint that we want the bisection line to project from.
             (N.B. There are N+1 breakpoints for N panels.)
             Thus this is the last point of the n-th panel.
+
+        Returns
+        -------
+        line_origin:
+            A point on the line bisecting the two panels at breakpoint[i].
+        line_direction:
+            A vector tangent to the line bisecting the two panels at breakpoint[i].
+            Together, line_origin+p*line_direction = a parametric representation of
+            the bisection line.
         """
         p1, p2, p3 = self.interior_panels[index - 1 : index + 2, ::2]
         origin_2d, direction_2d = get_bisection_line(p1, p2, p3, p2)
@@ -525,11 +561,11 @@ class PanelsAndExteriorCurve:
         Returns
         -------
         vv_curve_segments:
-            segments of the vacuum vessel interior curve forming each pre-cell's interior
-            curve.
+            len=(discretisation_level-1) segments of the vacuum vessel interior curve
+            forming each pre-cell's interior curve.
         exterior_curve_segments:
-            segments of the vacuum vessel exterior curve forming each pre-cell's exterior
-            curve.
+            len=(discretisation_level-1) segments of the vacuum vessel exterior curve
+            forming each pre-cell's exterior curve.
         """
         # TODO @OceanNuclear: remove discretisation level when issue #3038 is fixed.
         # The raw wire can
@@ -580,6 +616,11 @@ class PanelsAndExteriorCurve:
         `curve.value_at(params_range[n])`.
 
         This implementation shall be replaced when issue #3038 gets resolved.
+
+        Returns
+        -------
+        :
+            A BluemiraWire made entirely out of segments of straight lines.
         """
         return make_polygon(
             np.array([curve.value_at(t) for t in param_range]).T,
@@ -600,6 +641,11 @@ class PanelsAndExteriorCurve:
         pre-cell. The two remaining sides are the counter-clockwise and clockwise walls.
 
         The vacuum vessel interior surface is sandwiched between them.
+
+        Returns
+        -------
+        :
+            A pre-cell array where each pre-cell has exactly four sides.
         """
         # make horizontal cuts if the starting and ending cuts aren't provided.
         if starting_cut is None:
@@ -812,12 +858,12 @@ class DivertorWireAndExteriorCurve:
         vv_curve_segments
 
             list of WireInfoList describing the each pre-cell's vacuum vessel interior
-            curve
+            curve, with len=(discretisation_level-1)
 
         exterior_curve_segments
 
             list of WireInfoList describing the each pre-cell's vacuum vessel exterior
-            curve
+            curve, with len=(discretisation_level-1)
         """
         # TODO @OceanNuclear: remove discretisation level when issue #3038 is fixed.
         # The raw wire can
@@ -848,11 +894,16 @@ class DivertorWireAndExteriorCurve:
         curve: BluemiraWire, param_range: npt.NDArray[np.float64]
     ) -> WireInfoList:
         """
-        Given params_range (an iterable of floats of len n between 0 to 1), create n-1
+        Given params_range (len(params_range)==n, 0<=params_range[i]<=1), create n-1
         straight lines such that the n-th point corresponds to
         `curve.value_at(params_range[n])`.
 
         This implementation shall be updated/replaced when issue #3038 gets resolved.
+
+        Returns
+        -------
+        :
+            WireInfoList made of n different WireInfo's.
         """
         return WireInfoList(
             starmap(WireInfo.from_2P, pairwise([curve.value_at(t) for t in param_range]))
@@ -863,7 +914,7 @@ class DivertorWireAndExteriorCurve:
         starting_cut: npt.NDArray[np.float64] | None = None,
         ending_cut: npt.NDArray[np.float64] | None = None,
         discretisation_level: int = DISCRETISATION_LEVEL,
-    ):
+    ) -> DivertorPreCellArray:
         """
         Cut the exterior curve up, so that would act as the exterior side of the
         quadrilateral pre-cell. Then, the panel would act as the interior side of the
@@ -880,6 +931,12 @@ class DivertorWireAndExteriorCurve:
             shape = (2,)
         discretisation_level:
             integer: how many points to use to approximate each curve segment.
+
+        Returns
+        -------
+        :
+            An array of len=(discretisation_level+1) divertor pre-cells created by
+            cutting the exterior curve.
         """
         # deduced starting_cut and ending_cut from the divertor itself.
         if not starting_cut:

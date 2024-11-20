@@ -32,8 +32,8 @@ class StraightLineInfo(NamedTuple):
     end_point: Iterable[float]  # 3D coordinates
 
     def reverse(self) -> StraightLineInfo:
-        """Flip the wire"""
-        return StraightLineInfo(self.end_point, self.start_point)
+        """Flip the wire's direction"""
+        return StraightLineInfo(self.end_point, self.start_point)  # noqa: DOC201
 
 
 class CircleInfo(NamedTuple):
@@ -45,8 +45,8 @@ class CircleInfo(NamedTuple):
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:
-        """Flip the wire"""
-        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)
+        """Flip the wire's direction"""
+        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)  # noqa: DOC201
 
 
 @dataclass
@@ -68,8 +68,8 @@ class WireInfo:
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
-        """Flip the wire"""
-        return type(self)(
+        """Flip the wire's direction"""
+        return type(self)(  # noqa: DOC201
             self.key_points.reverse(), [-t for t in self.tangents[::-1]], None
         )
 
@@ -80,6 +80,11 @@ class WireInfo:
         """
         Create the WireInfo for a straight line (i.e. one where the key_points is of
         instance StraightLineInfo) using only two points.
+
+        Returns
+        -------
+        :
+            A WireInfo representing the straight-line.
         """
         direction = np.array(end_point) - np.array(start_point)
         normed_dir = np.array(direction) / np.linalg.norm(direction)
@@ -100,27 +105,39 @@ class WireInfoList:
 
     def __len__(self) -> int:
         """Number of wire infos"""
-        return len(self.info_list)
+        return len(self.info_list)  # noqa: DOC201
 
     def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
         """Get a WireInfo"""
-        return self.info_list[index_or_slice]
+        return self.info_list[index_or_slice]  # noqa: DOC201
 
     def __repr__(self) -> str:
         """String representation"""
-        return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")
+        return super().__repr__().replace(" at ", f" of {len(self)} WireInfo at ")  # noqa: DOC201
 
-    def pop(self, index):
-        """Pop one element"""
+    def pop(self, index: int) -> WireInfo:
+        """
+        Pop one WireInfo out of the list.
+
+        Returns
+        -------
+        :
+            The required WireInfo instance popped out of the list.
+        """
         return self.info_list.pop(index)
 
     def get_3D_coordinates(self) -> npt.NDArray:
         """
-        Get of the entire wire.
+        Get the vertices (connecting point between each pair of adjacent wires) in the
+        entire WireInfoList.
+
+        Returns
+        -------
+        :
+            A list of 3D-coordinates of the vertices. shape = (N+1, 3).
         """
         # assume continuity, which is already enforced during initialisation, so we
         # should be fine.
-        # shape = (N+1, 3)
         return np.array(
             [
                 self.info_list[0].key_points[0],
@@ -157,10 +174,17 @@ class WireInfoList:
 
     def reverse(self) -> WireInfoList:
         """Flip this list of wires"""
-        return WireInfoList([info.reverse() for info in self.info_list[::-1]])
+        return WireInfoList([info.reverse() for info in self.info_list[::-1]])  # noqa: DOC201
 
     def restore_to_wire(self) -> BluemiraWire:
-        """Re-create a bluemira wire from a series of WireInfo."""
+        """
+        Re-create a bluemira wire from a series of WireInfo.
+
+        Returns
+        -------
+        :
+            WireInfo reconstructed back into a bluemira wire.
+        """
         wire_list = []
         for info in self:
             start_end = np.array(info.key_points[:2])
