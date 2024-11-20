@@ -798,14 +798,14 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     def _update_params_from_eq(self, eq: Equilibrium):
         plasma_dict = eq.analyse_plasma()
         new_values = {
-            "beta_p": plasma_dict["beta_p"],
-            "delta_95": plasma_dict["delta_95"],
-            "delta": plasma_dict["delta"],
-            "I_p": plasma_dict["Ip"],
-            "kappa_95": plasma_dict["kappa_95"],
-            "kappa": plasma_dict["kappa"],
-            "l_i": plasma_dict["li"],
-            "q_95": plasma_dict["q_95"],
-            "shaf_shift": np.hypot(plasma_dict["dx_shaf"], plasma_dict["dz_shaf"]),
+            "beta_p": plasma_dict.beta_p,
+            "delta_95": plasma_dict.delta_95,
+            "delta": plasma_dict.delta,
+            "I_p": plasma_dict.I_p,
+            "kappa_95": plasma_dict.kappa_95,
+            "kappa": plasma_dict.kappa,
+            "l_i": plasma_dict.li,
+            "q_95": plasma_dict.q_95,
+            "shaf_shift": np.hypot(plasma_dict.dx_shaf, plasma_dict.dz_shaf),
         }
         self.params.update_values(new_values, source=type(self).__name__)
