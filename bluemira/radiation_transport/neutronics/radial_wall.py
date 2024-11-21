@@ -70,12 +70,12 @@ class CellWalls:
         self.check_volumes_and_lengths()
 
     def __len__(self) -> int:
-        """Number of cell wall panels"""  # noqa: DOC201
-        return len(self.cell_walls)
+        """Number of cell wall panels"""
+        return len(self.cell_walls)  # noqa: DOC201
 
     def __getitem__(self, index_or_slice) -> npt.NDArray | float:
-        """Get cell wall panel"""  # noqa: DOC201
-        return self.cell_walls[index_or_slice]
+        """Get cell wall panel"""
+        return self.cell_walls[index_or_slice]  # noqa: DOC201
 
     def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
         """
@@ -86,14 +86,14 @@ class CellWalls:
         self.cell_walls[index_or_slice] = new_coordinates
 
     def __repr__(self) -> str:
-        """String representation"""  # noqa: DOC201
-        return (
+        """String representation"""
+        return (  # noqa: DOC201
             super().__repr__().replace(" at ", f" of {len(self.cell_walls)} walls at ")
         )
 
     def copy(self) -> CellWalls:
-        """Copy cell wall"""  # noqa: DOC201
-        return CellWalls(self.cell_walls.copy())
+        """Copy cell wall"""
+        return CellWalls(self.cell_walls.copy())  # noqa: DOC201
 
     @classmethod
     def from_pre_cell_array(cls, pre_cell_array: PreCellArray) -> CellWalls:

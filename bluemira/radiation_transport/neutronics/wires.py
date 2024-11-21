@@ -33,8 +33,8 @@ class StraightLineInfo(NamedTuple):
     end_point: Iterable[float]  # 3D coordinates
 
     def reverse(self) -> StraightLineInfo:
-        """Flip the wire's direction"""  # noqa: DOC201
-        return StraightLineInfo(self.end_point, self.start_point)
+        """Flip the wire's direction"""
+        return StraightLineInfo(self.end_point, self.start_point)  # noqa: DOC201
 
 
 class CircleInfo(NamedTuple):
@@ -46,8 +46,8 @@ class CircleInfo(NamedTuple):
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:
-        """Flip the wire's direction"""  # noqa: DOC201
-        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)
+        """Flip the wire's direction"""
+        return CircleInfo(self.end_point, self.start_point, self.center, self.radius)  # noqa: DOC201
 
 
 @dataclass
@@ -69,8 +69,8 @@ class WireInfo:
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
-        """Flip the wire's direction"""  # noqa: DOC201
-        return type(self)(
+        """Flip the wire's direction"""
+        return type(self)(  # noqa: DOC201
             self.key_points.reverse(), [-t for t in self.tangents[::-1]], None
         )
 
@@ -101,16 +101,9 @@ class WireInfoList:
     def __init__(self, info_list: Iterable[WireInfo]):
         self.info_list = list(info_list)
         for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
-<<<<<<< HEAD
-            distance = np.linalg.norm(
-                np.array(prev_wire.key_points[1]) - np.array(curr_wire.key_points[0])
-            )
-            if distance > EPS_FREECAD:
-=======
             if not np.array_equal(
                 prev_wire.key_points[1], curr_wire.key_points[0]
             ):  # cannot be mixed type wires: either all Coordinates or all NDArray.
->>>>>>> 41fee1c3 (Minor updates to docstrings)
                 raise GeometryError(f"wire {i + 1} must start where the wire {i} stops.")
 
     def __len__(self) -> int:
@@ -183,8 +176,8 @@ class WireInfoList:
         )
 
     def reverse(self) -> WireInfoList:
-        """Flip this list of wires"""  # noqa: DOC201
-        return WireInfoList([info.reverse() for info in self.info_list[::-1]])
+        """Flip this list of wires"""
+        return WireInfoList([info.reverse() for info in self.info_list[::-1]])  # noqa: DOC201
 
     def restore_to_wire(self) -> BluemiraWire:
         """

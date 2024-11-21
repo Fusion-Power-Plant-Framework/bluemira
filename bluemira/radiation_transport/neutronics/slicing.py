@@ -148,8 +148,8 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         """
         Function to record a line as a WireInfo, with the appropriate tangents and
         BluemiraWire.
-        """  # noqa: DOC201
-        return WireInfo(
+        """
+        return WireInfo(  # noqa: DOC201
             StraightLineInfo(np.array(start_vec), np.array(end_vec)),
             [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
             wire,
@@ -164,8 +164,8 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         """
         Function to record the arc of a circle as a WireInfo, with the appropriate
         tangents and BluemiraWire.
-        """  # noqa: DOC201
-        return WireInfo(
+        """
+        return WireInfo(  # noqa: DOC201
             CircleInfo(
                 np.array(start_vec),
                 np.array(end_vec),
