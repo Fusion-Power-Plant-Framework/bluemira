@@ -242,7 +242,7 @@ def turned_morethan_180(
 
     Returns
     -------
-    : bool
+    :
         boolean
 
     Raises
@@ -271,7 +271,7 @@ def deviate_less_than(
 
     Returns
     -------
-    : bool
+    :
         boolean
     """
     angle1 = np.arctan2(xyz_vector1[2], xyz_vector1[0])
@@ -288,7 +288,7 @@ def straight_lines_deviate_less_than(
 
     Returns
     -------
-    : boool
+    :
         boolean
     """
     if not (
