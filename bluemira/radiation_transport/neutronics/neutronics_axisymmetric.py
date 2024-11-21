@@ -139,6 +139,11 @@ class PreCellStage:
         Get the outermost coordinates of the tokamak cross-section from pre-cell array
         and divertor pre-cell array.
         Runs clockwise, beginning at the inboard blanket-divertor joint.
+
+        Returns
+        -------
+        :
+            All vertices on the exterior of the blanket and the divertor.
         """
         return np.concatenate([
             self.blanket.exterior_vertices(),
@@ -146,7 +151,21 @@ class PreCellStage:
         ])
 
     def bounding_box(self) -> tuple[float, ...]:
-        """Get bounding box of pre cell stage"""
+        """
+        Get bounding box of pre cell stage
+
+        Returns
+        -------
+        z_max:
+            The maximum height of the bounding box.
+        z_min:
+            The minimum height of the bounding box.
+        r_max:
+            The maximum major radius reached by the pre-cells.
+        -r_max:
+            The minimum major radius reached by the pre-cells. Due to axial symmetry,
+            this must be =-r_max.
+        """
         all_ext_vertices = self.external_coordinates()
         z_min = all_ext_vertices[:, -1].min()
         z_max = all_ext_vertices[:, -1].max()
@@ -157,6 +176,19 @@ class PreCellStage:
         """
         Get bounding box of the 2D poloidal cross-section of the right-hand half of the
         reactor.
+
+        Returns
+        -------
+        z_max:
+            The maximum height of the bounding box.
+        z_min:
+            The minimum height of the bounding box.
+        r_max:
+            The maximum major radius reached by the pre-cells.
+        r_min:
+            The minimum major radius reached by the pre-cells on one side of the xz cross
+            section. This is typically non-zero because pre-cells should not cross the
+            z-axis of symmetry.
         """
         all_ext_vertices = self.external_coordinates()
         z_min = all_ext_vertices[:, -1].min()
@@ -270,7 +302,14 @@ class NeutronicsReactor(ABC):
         return self._pre_cell_stage.divertor
 
     def plot_2d(self, *args, **kwargs):
-        """Plot neutronics reactor 2d profile"""
+        """
+        Plot neutronics reactor 2d profile
+
+        Returns
+        -------
+        :
+            Axes on which the reactor is plotted.
+        """
         show = kwargs.pop("show", True)
         ax = kwargs.pop("ax", None)
         ax = self.blanket.plot_2d(*args, ax=ax, show=False, **kwargs)

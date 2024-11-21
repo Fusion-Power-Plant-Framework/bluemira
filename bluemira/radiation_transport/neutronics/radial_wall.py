@@ -71,11 +71,11 @@ class CellWalls:
 
     def __len__(self) -> int:
         """Number of cell wall panels"""
-        return len(self.cell_walls)
+        return len(self.cell_walls)  # noqa: DOC201
 
     def __getitem__(self, index_or_slice) -> npt.NDArray | float:
         """Get cell wall panel"""
-        return self.cell_walls[index_or_slice]
+        return self.cell_walls[index_or_slice]  # noqa: DOC201
 
     def __setitem__(self, index_or_slice, new_coordinates: npt.NDArray | float):
         """
@@ -87,17 +87,25 @@ class CellWalls:
 
     def __repr__(self) -> str:
         """String representation"""
-        return (
+        return (  # noqa: DOC201
             super().__repr__().replace(" at ", f" of {len(self.cell_walls)} walls at ")
         )
 
     def copy(self) -> CellWalls:
         """Copy cell wall"""
-        return CellWalls(self.cell_walls.copy())
+        return CellWalls(self.cell_walls.copy())  # noqa: DOC201
 
     @classmethod
     def from_pre_cell_array(cls, pre_cell_array: PreCellArray) -> CellWalls:
-        """Use the corner vertices in an array of pre-cells to make a CellWalls."""
+        """
+        Use the corner vertices in an array of pre-cells to make a CellWalls.
+
+        Returns
+        -------
+        :
+            A list of cell walls from from a pre-cell array, specifically made from the
+            walls dividing adjacent pre-cells from each other.
+        """
         # cut each coordinates down from having shape (3, 1) down to (2,)
         return cls([
             *(
@@ -115,6 +123,12 @@ class CellWalls:
         """
         Use the corner vertices and the vacuum vessel vertices of the pre-cell array to
         make a CellWall.
+
+        Returns
+        -------
+        :
+            A list of cell walls extracted from a divertor pre-cell array, specifically
+            made from the walls dividing adjacent divertor pre-cells from each other.
         """
         return cls([
             *(

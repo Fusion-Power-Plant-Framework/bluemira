@@ -77,7 +77,19 @@ Be12Ti_mat = MassFractionMaterial(
 
 # Lithium-containing materials
 def make_PbLi_mat(li_enrich_ao) -> MassFractionMaterial:
-    """Make PbLi according to the enrichment fraction inputted."""
+    """
+    Make PbLi according to the enrichment fraction inputted.
+
+    Parameters
+    ----------
+    li_enrich_ao:
+        The fraction of enrichment of the lithium-6.
+
+    Returns
+    -------
+    :
+        PbLi material with the specified Li-6 enrichment.
+    """
     return MassFractionMaterial(
         name="PbLi",
         elements={"Pb": 0.83, "Li": 0.17},
@@ -91,7 +103,19 @@ def make_PbLi_mat(li_enrich_ao) -> MassFractionMaterial:
 
 
 def make_Li4SiO4_mat(li_enrich_ao) -> MassFractionMaterial:
-    """Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment"""
+    """
+    Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment
+
+    Parameters
+    ----------
+    li_enrich_ao:
+        The fraction of enrichment of the lithium-6.
+
+    Returns
+    -------
+    :
+        Li4SiO4 material with the specified Li-6 enrichment.
+    """
     return MassFractionMaterial(
         name="lithium_orthosilicate",
         elements={"Li": 4},
@@ -106,7 +130,19 @@ def make_Li4SiO4_mat(li_enrich_ao) -> MassFractionMaterial:
 
 
 def make_Li2TiO3_mat(li_enrich_ao) -> MassFractionMaterial:
-    """Make Li2TiO3 according to the enrichment fraction inputted."""
+    """
+    Make Li2TiO3 according to the enrichment fraction inputted.
+
+    Parameters
+    ----------
+    li_enrich_ao:
+        The fraction of enrichment of the lithium-6.
+
+    Returns
+    -------
+    :
+        Li2TiO3 material with the specified Li-6 enrichment.
+    """
     return MassFractionMaterial(
         name="lithium_titanate",
         elements={"Li": 2, "Ti": 1},
@@ -133,7 +169,21 @@ lined_euro_mat = HomogenisedMixture(
 
 # Lithium-containing material that is also a mixture of existing materials
 def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
-    """Ref: Current status and future perspectives of EU ceramic breeder development"""
+    """
+    Parameters
+    ----------
+    li_enrich_ao:
+        The fraction of enrichment of the lithium-6.
+
+    Returns
+    -------
+    :
+        the KALOS_ACB material with the specified Li-6 enrichment.
+
+    Notes
+    -----
+    Ref: Current status and future perspectives of EU ceramic breeder development
+    """
     return HomogenisedMixture(
         name="kalos_acb",  # optional name of homogeneous material
         materials=[  # molar combination adjusted to atom fractions
@@ -157,7 +207,23 @@ def duplicate_mat_as(
     new_name: str,
     new_id: int | None = None,
 ) -> MassFractionMaterial | HomogenisedMixture:
-    """Clones and renames an OpenMC material"""
+    """
+    Clones and renames an OpenMC material
+
+    Parameters
+    ----------
+    mat_to_clone:
+        parent material to be cloned from.
+    new_name:
+        new name to be given to the material
+    new_id:
+        new id to be given to the material.
+
+    Returns
+    -------
+    new_mat:
+        New copy of the material.
+    """
     new_mat = deepcopy(mat_to_clone)
     new_mat.material_id = new_id
     new_mat.name = new_name
@@ -212,10 +278,14 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
     Parameters
     ----------
-    --_-------
     li_enrich_ao: float
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
+
+    Returns
+    -------
+    :
+        The set of materials used to create a DCLL reactor.
 
     Notes
     -----
@@ -283,6 +353,12 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     li_enrich_ao:
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
+
+    Returns
+    -------
+    :
+        The set of materials used to create DCLL reactors with the specified Li-6
+        enrichment.
 
     Notes
     -----
@@ -360,6 +436,12 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     li_enrich_ao:
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
+
+    Returns
+    -------
+    :
+        The set of materials used to create WCLL reactors with the specified Li-6
+        enrichment.
 
     Notes
     -----
@@ -468,6 +550,13 @@ def get_preset_physical_properties(
     The allowed list of blanket types are specified in BlanketType.
     Currently, the blanket types with pre-populated data in this function are:
     {'wcll', 'dcll', 'hcpb'}
+
+    Returns
+    -------
+    breeder_materials:
+        breeder blanket materials
+    tokamak_geometry:
+        tokamak geometry parameters
     """
     blanket_type = BlanketType(blanket_type)
 
@@ -543,6 +632,11 @@ def create_materials(
     ----------
     breeder_materials:
         dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
+
+    Returns
+    -------
+    :
+        Materials used along with those blankets.
     """
     return _create_from_blanket_type(
         breeder_materials.blanket_type,
@@ -561,6 +655,11 @@ def _create_from_blanket_type(
         the blanket type
     li_enrich_ao:
         PERCENTAGE enrichment of Li6 (float between 0 - 100)
+
+    Returns
+    -------
+    :
+        Set of materials used for that specific type of reactor.
     """
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
