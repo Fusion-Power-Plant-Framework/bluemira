@@ -80,10 +80,10 @@ pinned = [
     "numpy==1.26.4",
     "matplotlib==3.9.2",
     "scipy==1.10.1",
-    "vtk==9.2.6",  # needed for uv resolution
+    "vtk==9.3.1",  # needed for uv resolution
 ]
 
-conda_pinned = ["fenics-dolfinx==0.7.3", "freecad==0.21.2"]
+conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 openmc = ["openmc>=0.14.0", "openmc_data==2.2.10"]
 process = ["process==3.1.0"]
 polyscope = ["polyscope"]

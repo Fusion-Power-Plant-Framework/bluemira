@@ -1,8 +1,8 @@
 gmsh-interop==2024.1
-h5py==3.11.0
+h5py==3.12.1
 pybind11==2.13.6
 pybind11-global==2.13.6
-PySide2==5.15.8
+PySide6==6.7.3
 pytools==2024.1.14
-shiboken2==5.15.8
-vtk==9.2.6
+shiboken6==6.7.3
+vtk==9.3.1
