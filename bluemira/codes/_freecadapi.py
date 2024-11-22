@@ -36,7 +36,7 @@ import FreeCADGui
 import Part
 import numpy as np
 from FreeCAD import Base
-from PySide2.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from matplotlib import colors
 from pivy import coin, quarter
 
