@@ -28,12 +28,13 @@ from dolfinx.fem import (
     Expression,
     Function,
     assemble_scalar,
-    create_nonmatching_meshes_interpolation_data,
+    create_interpolation_data,
     form,
     functionspace,
     locate_dofs_topological,
 )
 from dolfinx.io import gmshio
+from dolfinx.mesh import entities_to_geometry
 from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
 from petsc4py import PETSc
@@ -160,19 +161,24 @@ class BluemiraFemFunction(Function):
         super().__init__(*args, **kwargs)
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
-    def interpolate(self, u, *args, **kwargs):
+    def interpolate(self, u, cells=None):
         """Interpolate function and cache bb_tree"""
-        nmm = (
-            create_nonmatching_meshes_interpolation_data(
-                self.function_space.mesh._cpp_object,
-                self.function_space.element,
-                u.function_space.mesh._cpp_object,
+        if cells is None:
+            mesh = self.function_space.mesh
+            cell_map = mesh.topology.index_map(mesh.topology.dim)
+            num_cells_on_proc = cell_map.size_local + cell_map.num_ghosts
+            cells = np.arange(num_cells_on_proc, dtype=np.int32)
+
+        if hasattr(u, "function_space"):
+            nmm = create_interpolation_data(
+                self.function_space,
+                u.function_space,
+                cells,
                 padding=1e-8,
             )
-            if hasattr(u, "function_space")
-            else ((), (), (), ())
-        )
-        super().interpolate(u, *args, nmm_interpolation_data=nmm, **kwargs)
+            super().interpolate_nonmatching(u, cells, interpolation_data=nmm)
+        else:
+            super().interpolate(u, cells)
         calc_bb_tree(self.function_space.mesh)
 
     def __call__(self, points: np.ndarray):
@@ -246,20 +252,23 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     points = convert_to_points_array(points)
 
     tdim = mesh.topology.dim
-    tree = geometry.bb_tree(mesh, tdim)
     num_entities_local = (
         mesh.topology.index_map(tdim).size_local
         + mesh.topology.index_map(tdim).num_ghosts
     )
-    entities = np.arange(num_entities_local, dtype=np.int32)
-    midpoint_tree = geometry.create_midpoint_tree(mesh, tdim, entities)
-    closest_entities = geometry.compute_closest_entity(tree, midpoint_tree, mesh, points)
     # _colliding_entity_bboxes = geometry.compute_collisions_points(tree, points)
-    geom_dofs = cpp.mesh.entities_to_geometry(
-        mesh._cpp_object,
-        tdim,
-        np.atleast_2d(closest_entities),
-        False,  # noqa: FBT003
+    geom_dofs = entities_to_geometry(
+        mesh,
+        dim=tdim,
+        entities=geometry.compute_closest_entity(
+            tree=geometry.bb_tree(mesh, tdim),
+            midpoint_tree=geometry.create_midpoint_tree(
+                mesh, tdim, np.arange(num_entities_local, dtype=np.int32)
+            ),
+            mesh=mesh,
+            points=points,
+        ),
+        permute=False,
     )
 
     dist = []
