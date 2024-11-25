@@ -53,6 +53,21 @@ from eudemo.equilibria.tools import (
 )
 
 
+def plasma_data(eq):
+    p_dat = eq.analyse_plasma()
+    return {
+        "beta_p": p_dat.beta_p,
+        "delta_95": p_dat.delta_95,
+        "delta": p_dat.delta,
+        "I_p": p_dat.I_p,
+        "kappa_95": p_dat.kappa_95,
+        "kappa": p_dat.kappa,
+        "l_i": p_dat.li,
+        "q_95": p_dat.q_95,
+        "shaf_shift": np.hypot(p_dat.dx_shaf, p_dat.dz_shaf),
+    }
+
+
 @dataclass
 class EquilibriumDesignerParams(ParameterFrame):
     """Parameters for running the `UnconstrainedTikhonovSolver`."""
@@ -163,19 +178,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         return eq
 
     def _update_params_from_eq(self, eq: Equilibrium):
-        plasma_data = eq.analyse_plasma()
-        new_values = {
-            "beta_p": plasma_data.beta_p,
-            "delta_95": plasma_data.delta_95,
-            "delta": plasma_data.delta,
-            "I_p": plasma_data.I_p,
-            "kappa_95": plasma_data.kappa_95,
-            "kappa": plasma_data.kappa,
-            "l_i": plasma_data.li,
-            "q_95": plasma_data.q_95,
-            "shaf_shift": np.hypot(plasma_data.dx_shaf, plasma_data.dz_shaf),
-        }
-        self.params.update_values(new_values, source=type(self).__name__)
+        self.params.update_values(plasma_data(eq), source=type(self).__name__)
 
     def _make_equilibrium(self) -> Equilibrium:
         """
@@ -796,16 +799,4 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         )
 
     def _update_params_from_eq(self, eq: Equilibrium):
-        plasma_data = eq.analyse_plasma()
-        new_values = {
-            "beta_p": plasma_data.beta_p,
-            "delta_95": plasma_data.delta_95,
-            "delta": plasma_data.delta,
-            "I_p": plasma_data.I_p,
-            "kappa_95": plasma_data.kappa_95,
-            "kappa": plasma_data.kappa,
-            "l_i": plasma_data.li,
-            "q_95": plasma_data.q_95,
-            "shaf_shift": np.hypot(plasma_data.dx_shaf, plasma_data.dz_shaf),
-        }
-        self.params.update_values(new_values, source=type(self).__name__)
+        self.params.update_values(plasma_data(eq), source=type(self).__name__)
