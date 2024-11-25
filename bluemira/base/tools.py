@@ -8,11 +8,11 @@
 Tool function and classes for the bluemira base module.
 """
 
-import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, Iterable, TypeVar
+from typing import TypeVar
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.components import (
@@ -22,13 +22,31 @@ from bluemira.base.components import (
     get_properties_from_components,
 )
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
-from bluemira.builders.tools import circular_pattern_component
+from bluemira.builders.tools import (
+    circular_pattern_component,
+    compound_from_components,
+    connect_components,
+)
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import save_cad, serialise_shape
 
+# if TYPE_CHECKING:
+#     from bluemira.base.reactor import ComponentManager
+
+
 _T = TypeVar("_T")
+
+
+class CADConstructionType(Enum):
+    """
+    Enum for construction types for components
+    """
+
+    CONNECT = "connect"
+    COMPOUND = "compound"
+    PATTERN = "pattern"
 
 
 def _timing(
@@ -170,6 +188,9 @@ def show_components_cad(
     components: ComponentT | Iterable[ComponentT],
     **kwargs,
 ):
+    """
+    Show the CAD build of the component.
+    """
     ComponentDisplayer().show_cad(
         components,
         **kwargs,
@@ -181,7 +202,87 @@ def plot_component_dim(
     component: ComponentT,
     **kwargs,
 ):
-    ComponentPlotter(view=dim).plot_2d(component)
+    """
+    Plot the component in the specified dimension.
+    """
+    ComponentPlotter(view=dim, kwargs=kwargs).plot_2d(component)
+
+
+def build_comp_manager_save_xyz_cad_tree(
+    comp_manager,
+    component_filter: Callable[[ComponentT], bool] | None,
+    n_sectors: int,
+    sector_degrees: int,
+) -> Component:
+    """
+    Build the CAD of the component manager's components
+    and save the CAD to a file.
+
+    Parameters
+    ----------
+    comp_manager:
+        Component manager
+    component_filter:
+        Filter to apply to the components
+    """
+    const_type = comp_manager.cad_construction_type()
+    if isinstance(const_type, PhysicalComponent):
+        return const_type
+
+    manager_comp = comp_manager.component()
+    filtered_comp = copy_and_filter_component(
+        manager_comp,
+        "xyz",
+        component_filter,
+    )
+    filtered_comp = circular_pattern_xyz_components(
+        filtered_comp,
+        n_sectors,
+        degree=sector_degrees,
+    )
+
+    match const_type:
+        case CADConstructionType.CONNECT:
+            filtered_comp = connect_components([filtered_comp], manager_comp.name)
+        case CADConstructionType.COMPOUND:
+            filtered_comp = compound_from_components([filtered_comp], manager_comp.name)
+
+    return filtered_comp
+
+
+def build_comp_manager_show_cad_tree(
+    comp_manager,
+    dim: str,
+    component_filter: Callable[[ComponentT], bool] | None,
+    n_sectors: int,
+    sector_degrees: int,
+) -> Component:
+    """
+    Build the CAD of the component manager's components
+    and save the CAD to a file.
+
+    Parameters
+    ----------
+    comp_manager:
+        Component manager
+    dim:
+        Dimension to build the CAD in
+    component_filter:
+        Filter to apply to the components
+    """
+    manager_comp = comp_manager.component()
+    filtered_comp = copy_and_filter_component(
+        manager_comp,
+        dim,
+        component_filter,
+    )
+    if dim == "xyz":
+        filtered_comp = circular_pattern_xyz_components(
+            filtered_comp,
+            n_sectors,
+            degree=sector_degrees,
+        )
+    return filtered_comp
 
 
 # # =============================================================================
