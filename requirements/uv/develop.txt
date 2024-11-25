@@ -412,7 +412,7 @@ tomli==2.0.2
     #   mypy
     #   pytest
     #   sphinx
-tornado==6.4.1
+tornado==6.4.2
     # via
     #   ipykernel
     #   jupyter-client
