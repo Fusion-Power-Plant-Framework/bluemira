@@ -17,6 +17,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor import ComponentManager
+from bluemira.base.tools import CADConstructionType
 from bluemira.builders.tools import (
     apply_component_display_options,
     build_sectioned_xy,
@@ -42,6 +43,12 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
     """
     Wrapper around a Vacuum Vessel component tree.
     """
+
+    def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
+        """
+        Return the construction type of the component tree wrapped by this manager.
+        """
+        return CADConstructionType.CONNECT
 
     @property
     def xz_boundary(self) -> BluemiraWire:
