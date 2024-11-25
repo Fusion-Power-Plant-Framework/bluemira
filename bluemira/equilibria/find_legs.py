@@ -138,7 +138,9 @@ class LegFlux:
         return NumNull.SN, SortSplit.X
 
     def get_leg_offsets(self, leg_dict):
-        """Expands the leg list if user requires offset flux surfaces."""
+        """
+        Expands the leg list if user requires offset flux surfaces.
+        """  # noqa: DOC201
         for name in leg_dict:
             leg = leg_dict[name]
             direction = -1 if name.find("inner") != -1 else 1
@@ -154,7 +156,7 @@ class LegFlux:
                     )
                 )
                 leg_dict[name] = leg
-        return leg_dict  # noqa: DOC201
+        return leg_dict
 
     def get_legs(
         self,
@@ -436,10 +438,12 @@ def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> 
 
 
 def add_pair_to_dict(sorted_legs, x_p, o_p):
-    """Convert a upper or lower pair of sorted legs into a dictionary."""
+    """
+    Convert a upper or lower pair of sorted legs into a dictionary.
+    """  # noqa: DOC201
     location = "lower" if x_p.z < o_p.z else "upper"
     if sorted_legs is None:
-        return {  # noqa: DOC201
+        return {
             f"{location}_inner": [None],
             f"{location}_outer": [None],
         }

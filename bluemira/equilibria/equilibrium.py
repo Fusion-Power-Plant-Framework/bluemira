@@ -288,7 +288,7 @@ class FixedPlasmaEquilibrium(MHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         e, grid = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
@@ -314,7 +314,7 @@ class FixedPlasmaEquilibrium(MHDState):
             filename=filename,
         )
         self._eqdsk = e
-        return self  # noqa: DOC201
+        return self
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -681,7 +681,7 @@ class Breakdown(CoilSetMHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         eqdsk, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
@@ -694,7 +694,7 @@ class Breakdown(CoilSetMHDState):
         )
         self = cls(coilset, grid, limiter=limiter, psi=eqdsk.psi, filename=filename)
         self._eqdsk = eqdsk
-        return self  # noqa: DOC201
+        return self
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -1048,7 +1048,7 @@ class Equilibrium(CoilSetMHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         e, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
@@ -1077,7 +1077,7 @@ class Equilibrium(CoilSetMHDState):
 
         self._eqdsk = e
 
-        return self  # noqa: DOC201
+        return self
 
     def to_dict(self, qpsi_calcmode: int = 0) -> dict[str, Any]:
         """
@@ -1188,10 +1188,10 @@ class Equilibrium(CoilSetMHDState):
     def __getstate__(self):
         """
         Get the state of the Equilibrium object. Used in pickling.
-        """
+        """  # noqa: DOC201
         d = dict(self.__dict__)
         d.pop("_solver", None)
-        return d  # noqa: DOC201
+        return d
 
     def __setstate__(self, d):
         """
@@ -1864,10 +1864,10 @@ class Equilibrium(CoilSetMHDState):
         def psi_err(x_opt, *args):
             """
             The psi error minimisation objective function.
-            """
+            """  # noqa: DOC201
             z_opt = args[0]
             psi = self.psi(x_opt, z_opt)[0]
-            return abs(psi - x_psi)  # noqa: DOC201
+            return abs(psi - x_psi)
 
         res = minimize(
             psi_err,
@@ -1900,8 +1900,8 @@ class Equilibrium(CoilSetMHDState):
     def analyse_plasma(self) -> EqSummary:
         """
         Analyse the energetic and magnetic characteristics of the plasma.
-        """
-        return EqSummary.from_equilibrium(  # noqa: DOC201
+        """  # noqa: DOC201
+        return EqSummary.from_equilibrium(
             self,
             ClosedFluxSurface(self.get_flux_surface(0.95)),
             ClosedFluxSurface(self.get_LCFS()),

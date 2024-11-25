@@ -145,7 +145,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
     def objective(self, vector: npt.NDArray[np.float64]) -> float:
-        """Objective function to minimise."""
+        """Objective function to minimise."""  # noqa: DOC201
         pos_map = self.position_mapper.to_xz_dict(vector)
         self.coilset.set_optimisation_state(coil_position_map=pos_map)
 
@@ -154,7 +154,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         # Run the sub-optimisation
         sub_opt_result = self.sub_opt.optimise(fixed_coils=False)
 
-        return sub_opt_result.f_x  # noqa: DOC201
+        return sub_opt_result.f_x
 
 
 class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
@@ -283,8 +283,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     def objective(
         self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
-        """The objective function of the parent optimisation."""
-        return self.sub_opt_objective(vector, verbose=verbose)  # noqa: DOC201
+        """The objective function of the parent optimisation."""  # noqa: DOC201
+        return self.sub_opt_objective(vector, verbose=verbose)
 
     def _get_initial_vector(self) -> npt.NDArray[np.float64]:
         """

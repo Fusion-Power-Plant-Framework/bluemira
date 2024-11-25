@@ -66,10 +66,10 @@ def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
     ------
     CodesError
         Cannot open mock file
-    """
+    """  # noqa: DOC201
     try:
         with open(file_path) as f:
-            return json.load(f)  # noqa: DOC201
+            return json.load(f)
     except OSError as os_error:
         raise CodesError(
             f"Cannot open mock {name} results file '{file_path}'."

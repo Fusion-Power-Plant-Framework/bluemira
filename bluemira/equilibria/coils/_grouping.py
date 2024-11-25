@@ -126,11 +126,11 @@ class CoilGroup(CoilGroupFieldsMixin):
     def __repr__(self):
         """
         Pretty print
-        """
+        """  # noqa: DOC201
         coils_repr = "\n    "
         coils_repr += "".join(f"{c!r}\n    " for c in self._coils)
         coils_repr = coils_repr.replace("\n", "\n    ")
-        return f"{type(self).__name__}({coils_repr[:-5]})"  # noqa: DOC201
+        return f"{type(self).__name__}({coils_repr[:-5]})"
 
     def n_coils(self, ctype: str | CoilType | None = None) -> int:
         """
@@ -178,10 +178,10 @@ class CoilGroup(CoilGroupFieldsMixin):
             force arrows iterable
         kwargs:
             passed to matplotlib's Axes.plot
-        """
+        """  # noqa: DOC201
         if self.ctype == CoilType.DUM:
             # Do not plot if it is a dummy coil
-            return None  # noqa: DOC201
+            return None
         return CoilGroupPlotter(
             self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
         )
@@ -314,7 +314,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         if for some reason the coilset is missing, and the user has not
         provided 'user_coils' as an input for 'from_eqdsk', then a dummy
         coilset is used and a warning message is printed.
-        """
+        """  # noqa: DOC201
         pfcoils = []
         cscoils = []
         passivecoils = []
@@ -340,7 +340,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 "EQDSK coilset empty - dummy coilset in use."
                 "Please replace with an appropriate coilset."
             )
-            return cls(*coils)  # noqa: DOC201
+            return cls(*coils)
 
         def _get_val(lst: npt.ArrayLike | None, idx: int, default=None):
             if lst is None:
@@ -422,8 +422,8 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.x, self.z, self.dx, self.dz, self.current
 
     def __list_getter(self, attr: str) -> list:
-        """Get attributes from coils tuple"""
-        return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)  # noqa: DOC201
+        """Get attributes from coils tuple"""  # noqa: DOC201
+        return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
     def __getter(self, attr: str) -> np.ndarray:
         """
@@ -489,29 +489,31 @@ class CoilGroup(CoilGroupFieldsMixin):
                 no = end_no
 
     def __getitem__(self, item):
-        """Get coils"""
-        return self._find_coil(item)  # noqa: DOC201
+        """Get coils"""  # noqa: DOC201
+        return self._find_coil(item)
 
     def __copy__(self):
-        """Copy dunder method, needed because attribute setter fails for quadratures"""
+        """
+        Copy dunder method, needed because attribute setter fails for quadratures
+        """  # noqa: DOC201
         cls = self.__class__
         result = cls.__new__(cls)
         for k in self.__slots__:
             setattr(result, k, getattr(self, k))
-        return result  # noqa: DOC201
+        return result
 
     def __deepcopy__(self, memo):
         """
         Deepcopy dunder method, needed because attribute setter fails for
         quadratures
-        """
+        """  # noqa: DOC201
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k in self.__slots__:
             setattr(result, k, deepcopy(getattr(self, k), memo))
         result._einsum_str = self._einsum_str
-        return result  # noqa: DOC201
+        return result
 
     def _pad_discretisation(
         self,
@@ -549,11 +551,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         ------
         KeyError
             Coil not found in group
-        """
+        """  # noqa: DOC201
         for c in self._coils:
             if isinstance(c, CoilGroup):
                 try:
-                    return c._find_coil(name)  # noqa: DOC201
+                    return c._find_coil(name)
                 except KeyError:
                     pass
             elif c.name == name:
@@ -562,7 +564,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         raise KeyError(f"Coil '{name}' not found in Group")
 
     def _get_coiltype(self, ctype: CoilType | str) -> list[Coil]:
-        """Find coil by type"""
+        """Find coil by type"""  # noqa: DOC201
         coils = []
         ctype = CoilType(ctype)
         for c in self._coils:
@@ -570,7 +572,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.extend(c._get_coiltype(ctype))
             elif c.ctype == ctype:
                 coils.append(c)
-        return coils  # noqa: DOC201
+        return coils
 
     def all_coils(self) -> list[Coil]:
         """
@@ -1010,14 +1012,14 @@ class SymmetricCircuit(Circuit):
         """
         Calculate the change in position to the symmetric coil,
         twice the distance to the line of symmetry.
-        """
+        """  # noqa: DOC201
         cp = self._get_group_centre()
         cp[1] -= self._shift
 
         mirror = np.dot(self.sym_mat, cp.T)
         mirror[1] += self._shift
 
-        return (  # noqa: DOC201
+        return (
             np.array([
                 self._get_symmetric_group_x_centre(),
                 self._get_symmetric_group_z_centre(),
@@ -1052,24 +1054,24 @@ class SymmetricCircuit(Circuit):
         self.symmetric_group.z -= self._symmetrise()[1]
 
     def _get_primary_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""
-        return np.mean(self.primary_group.x)  # noqa: DOC201
+        """Get the x centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.primary_group.x)
 
     def _get_primary_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""
-        return np.mean(self.primary_group.z)  # noqa: DOC201
+        """Get the z centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.primary_group.z)
 
     def _get_symmetric_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""
-        return np.mean(self.symmetric_group.x)  # noqa: DOC201
+        """Get the x centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.symmetric_group.x)
 
     def _get_symmetric_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""
-        return np.mean(self.symmetric_group.z)  # noqa: DOC201
+        """Get the z centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.symmetric_group.z)
 
     def _get_group_centre(self) -> np.ndarray:
-        """Get the centre of the first coil group"""
-        return np.array([  # noqa: DOC201
+        """Get the centre of the first coil group"""  # noqa: DOC201
+        return np.array([
             self._get_primary_group_x_centre(),
             self._get_primary_group_z_centre(),
         ])
@@ -1179,7 +1181,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self) -> CoilSet:
-        """Get control coils"""
+        """Get control coils"""  # noqa: DOC201
         coils = []
         for c in self._coils:
             if isinstance(c, CoilSet):
@@ -1188,7 +1190,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 isinstance(c, CoilGroup) and any(n in self.control for n in c.name)
             ):
                 coils.append(c)
-        return CoilSet(*coils)  # noqa: DOC201
+        return CoilSet(*coils)
 
     @property
     def area(self) -> float:
@@ -1229,9 +1231,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
 
     def get_coiltype(self, ctype: str | CoilType) -> CoilSet | None:
-        """Get coils by coils type"""
+        """Get coils by coils type"""  # noqa: DOC201
         if coiltype := self._get_coiltype(ctype):
-            return CoilSet(*coiltype)  # noqa: DOC201
+            return CoilSet(*coiltype)
         return None
 
     @classmethod
@@ -1241,7 +1243,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """Create CoilSet from eqdsk group vectors.
 
         Automatically sets all coils that are not implicitly passive to control coils
-        """
+        """  # noqa: DOC201
         self = super().from_group_vecs(eqdsk)
 
         self.control = [
@@ -1249,7 +1251,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             for ctype in control_coiltypes
             for coil in self._get_coiltype(ctype)
         ]
-        return self  # noqa: DOC201
+        return self
 
     def get_optimisation_state(
         self, position_coil_names: list[str] | None = None, current_scale: float = 1.0
@@ -1348,9 +1350,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ------
         ValueError
             If a name in `coil_names` in not in `all_current_optimisable_coils`.
-        """
+        """  # noqa: DOC201
         if coil_names is None:
-            return self.all_current_optimisable_coils  # noqa: DOC201
+            return self.all_current_optimisable_coils
 
         opt_coils_map = {c.name: c for c in self.all_current_optimisable_coils}
         rtn = []
@@ -1502,9 +1504,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ------
         ValueError
             Coil's position not optimisable
-        """
+        """  # noqa: DOC201
         if coil_names is None:
-            return self.all_position_optimisable_coils  # noqa: DOC201
+            return self.all_position_optimisable_coils
 
         opt_coils_map = {c.name: c for c in self.all_position_optimisable_coils}
         rtn = []

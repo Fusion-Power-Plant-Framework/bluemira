@@ -276,7 +276,7 @@ class CoilGroupPlotter(Plotter):
     def _plotting_array_shaping(self):
         """
         Shape arrays to account for single coils or groups of coils
-        """
+        """  # noqa: DOC201
         xx = np.atleast_1d(self._cg.x)
         control_ind = np.zeros_like(xx, dtype=bool)
 
@@ -289,7 +289,7 @@ class CoilGroupPlotter(Plotter):
 
         control_ind[control] = True
 
-        return (  # noqa: DOC201
+        return (
             centre,
             xx,
             np.atleast_1d(self._cg.z),

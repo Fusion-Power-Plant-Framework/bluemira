@@ -42,8 +42,8 @@ class DummyController:
     def psi(self) -> npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
-        """
-        return np.zeros(self._shape)  # noqa: DOC201
+        """  # noqa: DOC201
+        return np.zeros(self._shape)
 
     @staticmethod
     def Bx(
@@ -52,11 +52,11 @@ class DummyController:
     ) -> float | npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
-        """
+        """  # noqa: DOC201
         try:
             float(x)
         except TypeError:
-            return np.zeros_like(x)  # noqa: DOC201
+            return np.zeros_like(x)
         else:
             return 0.0
 
@@ -67,11 +67,11 @@ class DummyController:
     ) -> float | npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
-        """
+        """  # noqa: DOC201
         try:
             float(x)
         except TypeError:
-            return np.zeros_like(x)  # noqa: DOC201
+            return np.zeros_like(x)
         else:
             return 0.0
 
@@ -104,10 +104,10 @@ class VirtualController(CoilGroup):
 
         \t:math:`I_{feedback}=-g_{z}\\dfrac{B_{X,vac}}{B_{X,feedback}}`
         \t:math:`\\Bigr|_{\\substack{X_{cur}, Z_{cur}}}`
-        """
+        """  # noqa: DOC201
         xcur, zcur = self.eq.effective_centre()
 
-        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)  # noqa: DOC201
+        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
 
     def adjust_currents(self, d_current: float):
         """
@@ -126,5 +126,5 @@ class VirtualController(CoilGroup):
     def psi(self) -> npt.NDArray[np.float64]:
         """
         Get the psi array of the VirtualController
-        """
-        return self.current * self._pgreen  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.current * self._pgreen

@@ -65,8 +65,8 @@ class DivertorBuilder(Builder):
     def build(self) -> Component:
         """
         Build the divertor component.
-        """
-        return self.component_tree(  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.component_tree(
             xz=[self.build_xz()],
             xy=[],
             xyz=self.build_xyz(degree=0),
@@ -75,16 +75,16 @@ class DivertorBuilder(Builder):
     def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the divertor.
-        """
+        """  # noqa: DOC201
         body = PhysicalComponent(self.BODY, self.div_koz)
         apply_component_display_options(body, color=BLUE_PALETTE[self.DIV][0])
 
-        return body  # noqa: DOC201
+        return body
 
     def build_xyz(self, degree: float = 360.0) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the divertor.
-        """
+        """  # noqa: DOC201
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
         shapes = pattern_revolved_silhouette(
             self.div_koz,
@@ -99,7 +99,7 @@ class DivertorBuilder(Builder):
             apply_component_display_options(segment, BLUE_PALETTE[self.DIV][no])
             segments.append(segment)
 
-        return circular_pattern_component(  # noqa: DOC201
+        return circular_pattern_component(
             Component(self.CASETTES, children=segments),
             n_sectors,
             degree=sector_degree * n_sectors,

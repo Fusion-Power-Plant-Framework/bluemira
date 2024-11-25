@@ -123,13 +123,13 @@ class AxBConstraint(ConstraintFunction):
         self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint function"""
+        """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
-        return self.a_mat @ currents - self.b_vec - self.value  # noqa: DOC201
+        return self.a_mat @ currents - self.b_vec - self.value
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
-        """Constraint derivative"""
-        return self.scale * self.a_mat  # noqa: DOC201
+        """Constraint derivative"""  # noqa: DOC201
+        return self.scale * self.a_mat
 
 
 class L2NormConstraint(ConstraintFunction):
@@ -165,16 +165,16 @@ class L2NormConstraint(ConstraintFunction):
         self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint function"""
+        """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
         residual = self.a_mat @ currents - self.b_vec
-        return residual.T @ residual - self.value  # noqa: DOC201
+        return residual.T @ residual - self.value
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint derivative"""
+        """Constraint derivative"""  # noqa: DOC201
         currents = self.scale * vector
         df = 2 * (self.a_mat.T @ self.a_mat @ currents - self.a_mat.T @ self.b_vec)
-        return self.scale * df  # noqa: DOC201
+        return self.scale * df
 
 
 class FieldConstraintFunction(ConstraintFunction):
@@ -223,17 +223,17 @@ class FieldConstraintFunction(ConstraintFunction):
         self._round_dp = round_dp
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint function"""
+        """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
 
         Bx_a = self.ax_mat @ currents
         Bz_a = self.az_mat @ currents
 
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
-        return np.round(B - self.B_max, self._round_dp)  # noqa: DOC201
+        return np.round(B - self.B_max, self._round_dp)
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint derivative"""
+        """Constraint derivative"""  # noqa: DOC201
         currents = self.scale * vector
 
         Bx_a = self.ax_mat @ currents
@@ -242,7 +242,7 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
         Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)  # noqa: DOC201
+        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -279,11 +279,11 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         self.name = name
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint function"""
+        """Constraint function"""  # noqa: DOC201
         self.eq.coilset.get_control_coils().current = self.scale * vector
         lcfs = self.eq.get_LCFS()
         if self.inboard:
-            return self.radius - min(lcfs.x)  # noqa: DOC201
+            return self.radius - min(lcfs.x)
         return max(lcfs.x) - self.radius
 
 
