@@ -1,0 +1,41 @@
+From e81c5f32538891c740b90b5d2eb77fa6a9e1cb43 Mon Sep 17 00:00:00 2001
+From: Lorenz Lechner <sppedflyer@gmail.com>
+Date: Thu, 21 Nov 2024 19:35:19 +0100
+Subject: [PATCH] pyside6: fix QtOpenGLWidget import
+
+---
+ pivy/qt/QtOpenGL/__init__.py  | 4 +++-
+ pivy/quarter/QuarterWidget.py | 5 +----
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/pivy/qt/QtOpenGL/__init__.py b/pivy/qt/QtOpenGL/__init__.py
+index d92b23f..0554c96 100644
+--- a/pivy/qt/QtOpenGL/__init__.py
++++ b/pivy/qt/QtOpenGL/__init__.py
+@@ -1,5 +1,7 @@
+ try:
+     from PySide6.QtOpenGL import *
++    from PySide6.QtOpenGLWidgets import QOpenGLWidget
+     from PySide6.QtOpenGLWidgets import QOpenGLWidget as QGLWidget
+ except ImportError:
+-    from PySide2.QtOpenGL import *
+\ No newline at end of file
++    from PySide2.QtOpenGL import *
++    from PySide2.QtWidgets import QOpenGLWidget
+\ No newline at end of file
+diff --git a/pivy/quarter/QuarterWidget.py b/pivy/quarter/QuarterWidget.py
+index d0bd811..94d958d 100644
+--- a/pivy/quarter/QuarterWidget.py
++++ b/pivy/quarter/QuarterWidget.py
+@@ -111,11 +111,8 @@
+ """
+
+ from pivy.qt import QtCore, QtGui, QtOpenGL
++from pivy.qt.QtOpenGL import QOpenGLWidget
+
+-try:
+-    from pivy.qt.QtOpenGLWidgets import QOpenGLWidget
+-except ImportError:
+-    from pivy.qt.QtWidgets import QOpenGLWidget
+
+ from pivy import coin

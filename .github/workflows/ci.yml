@@ -70,6 +70,10 @@ jobs:
         with:
           version: ${{ matrix.with-process }}
 
+      - name: Patch pivy
+        shell: bash -l {0}
+        run: |
+            /usr/bin/patch -l -p2 -N -d /home/runner/miniconda3/envs/bluemira/lib/python${{ matrix.python-version}}/site-packages/pivy/ < ./bluemira/codes/pivy.patch
       - name: Run pytest bluemira
         shell: bash -l {0}
         env:

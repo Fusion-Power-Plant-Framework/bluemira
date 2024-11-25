@@ -9,6 +9,8 @@ FreeCAD configuration
 """
 
 import enum  # noqa: I001
+import subprocess  # noqa: S404
+from pathlib import Path
 
 import freecad  # noqa: F401
 import FreeCAD
@@ -83,3 +85,27 @@ def _freecad_save_config(
     import_prefs.SetInt("ImportMode", 0)
     import_prefs.SetBool("ExportLegacy", False)  # noqa: FBT003
     import_prefs.SetBool("ExpandCompound", True)  # noqa: FBT003
+
+
+def _patch_pivy():
+    import pivy  # noqa: PLC0415
+
+    if pivy.__version__ == "0.6.9":
+        subprocess.run(  # noqa: S602
+            [
+                "/usr/bin/patch",
+                "-l",
+                "-p2",
+                "-N",
+                "-d",
+                f"{Path(pivy.__file__).parent}",
+                "<",
+                "pivy.patch",
+            ],
+            cwd=Path(__file__).parent,
+            shell=True,
+        )
+
+    from pivy import coin, quarter  # noqa: PLC0415
+
+    return coin, quarter

@@ -38,7 +38,13 @@ import numpy as np
 from FreeCAD import Base
 from PySide6.QtWidgets import QApplication
 from matplotlib import colors
-from pivy import coin, quarter
+
+try:
+    from pivy import coin, quarter
+except ImportError:
+    from bluemira.codes._freecadconfig import _patch_pivy
+
+    coin, quarter = _patch_pivy()
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
