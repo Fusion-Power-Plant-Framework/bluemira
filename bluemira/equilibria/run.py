@@ -550,9 +550,9 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
     """Procedural design for a pulsed tokamak with a known, fixed PF coilset."""
 
     def optimise(self) -> CoilSet:
-        """Run pulsed coilset design optimisation."""
+        """Run pulsed coilset design optimisation."""  # noqa: DOC201
         self.optimise_currents()
-        return self.coilset  # noqa: DOC201
+        return self.coilset
 
     def optimise_currents(self):
         """Optimise the coil currents at the start and end of the current flat-top."""
@@ -653,7 +653,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     def optimise(self, *, verbose: bool = False) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
-        """
+        """  # noqa: DOC201
         psi_sof, psi_eof = self.calculate_sof_eof_fluxes()
         if self.EQ_REF not in self.snapshots:
             self.run_reference_equilibrium()
@@ -682,7 +682,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
                 "Breakdown flux significantly lower with optimised coil positions: "
                 f"{psi_premag:.2f} < {psi_bd_orig:.2f}"
             )
-        return optimised_coilset  # noqa: DOC201
+        return optimised_coilset
 
     def _consolidate_coilset(
         self, coilset: CoilSet, sub_opt_problems: Iterable[CoilsetOptimisationProblem]
@@ -690,7 +690,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         """
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
-        """
+        """  # noqa: DOC201
         max_cs_currents = coilset.get_coiltype("CS").get_max_current(0.0)
         pf_currents = []
         for problem in sub_opt_problems:
@@ -714,4 +714,4 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         consolidated_coilset = deepcopy(problem.eq.coilset)
         consolidated_coilset.fix_sizes()
         consolidated_coilset.get_control_coils().current = 0
-        return consolidated_coilset  # noqa: DOC201
+        return consolidated_coilset

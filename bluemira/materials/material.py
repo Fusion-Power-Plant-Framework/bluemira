@@ -458,16 +458,16 @@ class MassFractionMaterial:
         return self.name
 
     def __eq__(self, other: object) -> bool:
-        """Equality Check"""
+        """Equality Check"""  # noqa: DOC201
         if not isinstance(other, type(self)):
             # TODO @je-cook: a mixutre with only one component could be the same
             # 3654
-            return False  # noqa: DOC201
+            return False
         raise NotImplementedError("Material equality not implemented")
 
     def __hash__(self):
-        """Hash of class"""
-        return hash(self.elements)  # noqa: DOC201
+        """Hash of class"""  # noqa: DOC201
+        return hash(self.elements)
 
     def to_openmc_material(self, temperature: float | None = None) -> openmc.Material:
         """

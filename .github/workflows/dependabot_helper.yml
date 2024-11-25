@@ -44,3 +44,17 @@ jobs:
             git commit -m "Updated dependencies in requirements files"
             git push
           fi
+
+      - name: Update pre-commit
+        if: contains(steps.metadata.outputs.dependency-names, 'ruff')
+        shell: bash
+        run: |
+          pip install pre-commit
+          pre-commit autoupdate || true  # pre-commit hooks is not a file
+          git add .pre-commit-config.yaml
+          pre-commit run --all-files
+          git add .
+          if [[ -n $(git status --porcelain) ]] ; then
+            git commit -m "Updated pre-commit"
+            git push
+          fi

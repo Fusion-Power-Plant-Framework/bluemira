@@ -207,9 +207,9 @@ def calc_dx_sep(eq: Equilibrium) -> float:
 def calc_volume(eq: Equilibrium) -> float:
     """
     Calculates plasma volume [m^3]
-    """
+    """  # noqa: DOC201
     lcfs = eq.get_LCFS().xz
-    return revolved_volume(*lcfs)  # noqa: DOC201
+    return revolved_volume(*lcfs)
 
 
 def calc_energy(eq: Equilibrium) -> float:
@@ -217,10 +217,10 @@ def calc_energy(eq: Equilibrium) -> float:
     Calculates the stored poloidal magnetic energy in the plasma [J]
 
     \t:math:`W=\\dfrac{LI^2}{2}`
-    """
+    """  # noqa: DOC201
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)  # noqa: DOC201
+    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
 def calc_Li(eq: Equilibrium) -> float:
@@ -228,9 +228,9 @@ def calc_Li(eq: Equilibrium) -> float:
     Calculates the internal inductance of the plasma [H]
 
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
-    """
+    """  # noqa: DOC201
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._I_p**2  # noqa: DOC201
+    return 2 * p_energy / eq._I_p**2
 
 
 def calc_li(eq: Equilibrium) -> float:
@@ -238,9 +238,9 @@ def calc_li(eq: Equilibrium) -> float:
     Calculates the normalised internal inductance of the plasma
 
     \t:math:`l_i=\\dfrac{2L_i}{\\mu_{0}R_{0}}`
-    """
+    """  # noqa: DOC201
     li = calc_Li(eq)
-    return 2 * li / (MU_0 * eq._R_0)  # noqa: DOC201
+    return 2 * li / (MU_0 * eq._R_0)
 
 
 def calc_li3(eq: Equilibrium) -> float:
@@ -256,11 +256,11 @@ def calc_li3(eq: Equilibrium) -> float:
     \t:math:`\\langle B_p^2\\rangle=\\dfrac{1}{V}\\int B_p^2dV`
 
     where: Bp is the poloidal magnetic field and V is the plasma volume
-    """
+    """  # noqa: DOC201
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)  # noqa: DOC201
+    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)
 
 
 def calc_li3minargs(
@@ -282,11 +282,11 @@ def calc_li3minargs(
     \t:math:`\\dfrac{2 B_{p, average}}{R_{0} (\\mu_{0} I_{p})**2}`
 
     Used in the optimisation of the plasma profiles.
-    """
+    """  # noqa: DOC201
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
     bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
-    return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)  # noqa: DOC201
+    return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)
 
 
 def calc_p_average(eq: Equilibrium) -> float:
@@ -410,7 +410,7 @@ class EqSummary:
     ):
         """
         Create summary from equilibrium
-        """
+        """  # noqa: DOC201
         R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
         mask = in_plasma(eq.x, eq.z, eq.psi())
         Bp = eq.Bp()
@@ -431,7 +431,7 @@ class EqSummary:
 
         # d['dXsep'] = self.calc_dXsep()
         dx_shaf, dz_shaf = f100.shafranov_shift(eq)
-        return cls(  # noqa: DOC201
+        return cls(
             W=energy,
             Li=li_true,
             li=2 * li_true / (MU_0 * R_0),

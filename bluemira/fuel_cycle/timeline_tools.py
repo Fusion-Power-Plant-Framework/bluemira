@@ -33,23 +33,23 @@ def f_gompertz(t: float, a: float, b: float, c: float) -> float:
     Gompertz sigmoid function parameterisation.
 
     \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
-    """
-    return a * np.exp(-b * np.exp(-c * t))  # noqa: DOC201
+    """  # noqa: DOC201
+    return a * np.exp(-b * np.exp(-c * t))
 
 
 def f_logistic(t: float, value: float, k: float, x_0: float) -> float:
     """
     Logistic function parameterisation.
-    """
-    return value / (1 + np.exp(-k * (t - x_0)))  # noqa: DOC201
+    """  # noqa: DOC201
+    return value / (1 + np.exp(-k * (t - x_0)))
 
 
 def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Transform values into arrays usable to make histograms.
-    """
+    """  # noqa: DOC201
     x, y = np.array(x), np.array(y)
-    return x.repeat(2)[1:-1], y.repeat(2)  # noqa: DOC201
+    return x.repeat(2)[1:-1], y.repeat(2)
 
 
 def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:

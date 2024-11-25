@@ -111,7 +111,7 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
             fp = Path(folder, filename)
             ims.append(fp)
 
-    find_digit = re.compile("(\\d+)")
+    find_digit = re.compile(r"(\\d+)")
     ims = sorted(ims, key=lambda x: int(find_digit.findall(x)[-1]))
     images = [imageio.imread(fp) for fp in ims]
     if clean:

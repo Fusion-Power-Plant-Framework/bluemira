@@ -143,7 +143,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def grad_psi(self, point: np.ndarray) -> np.ndarray:
         """
         Calculate the gradients of psi at a point
-        """
+        """  # noqa: DOC201
         if self._grad_psi is None:
             w = dolfinx.fem.functionspace(self.mesh, ("P", 1, (self.mesh.geometry.dim,)))
 
@@ -157,7 +157,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
             self._grad_psi.interpolate(grad_psi_expr)
 
-        return self._grad_psi(point)  # noqa: DOC201
+        return self._grad_psi(point)
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
@@ -308,8 +308,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._R_0 = R_0
 
     def _calculate_curr_tot(self) -> float:
-        """Calculate the total current into the domain"""
-        return integrate_f(self.g, self.mesh)  # noqa: DOC201
+        """Calculate the total current into the domain"""  # noqa: DOC201
+        return integrate_f(self.g, self.mesh)
 
     def _update_curr(self):
         self.k = 1

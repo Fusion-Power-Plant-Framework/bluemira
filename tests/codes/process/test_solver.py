@@ -51,7 +51,7 @@ class TestSolver:
         bm_warn_mock.assert_called_once()
         call_args, _ = bm_warn_mock.call_args
         assert re.match(
-            ".* unknown .* arguments: 'not_an_arg', 'also_not_an_arg'", call_args[0]
+            r".* unknown .* arguments: 'not_an_arg', 'also_not_an_arg'", call_args[0]
         )
 
     def test_none_mode_does_not_alter_parameters(self):

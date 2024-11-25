@@ -65,9 +65,9 @@ class UpdateableConstraint(ABC):
     """
 
     def __init_subclass__(cls, **kwargs):
-        """Create constraint name on definition of subclass"""
+        """Create constraint name on definition of subclass"""  # noqa: DOC201
         cls._name = cls.__name__
-        return super().__init_subclass__(**kwargs)  # noqa: DOC201
+        return super().__init_subclass__(**kwargs)
 
     @property
     def name(self) -> str:
@@ -214,16 +214,16 @@ class FieldConstraints(UpdateableConstraint):
         return Bx, Bz
 
     def f_constraint(self) -> FieldConstraintFunction:
-        """Calculate the constraint function"""
+        """Calculate the constraint function"""  # noqa: DOC201
         f_constraint = FieldConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.f_constraint_type
-        return f_constraint  # noqa: DOC201
+        return f_constraint
 
     def __len__(self) -> int:
         """
         Length of field constraints.
-        """
-        return len(self.x)  # noqa: DOC201
+        """  # noqa: DOC201
+        return len(self.x)
 
 
 class CoilFieldConstraints(FieldConstraints):
@@ -384,8 +384,8 @@ class CoilForceConstraints(UpdateableConstraint):
     def control_response(coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
-        """
-        return coilset.control_F(coilset, control=True)  # noqa: DOC201
+        """  # noqa: DOC201
+        return coilset.control_F(coilset, control=True)
 
     @staticmethod
     def evaluate(equilibrium: Equilibrium) -> np.ndarray:
@@ -406,8 +406,8 @@ class CoilForceConstraints(UpdateableConstraint):
         return fp
 
     def f_constraint(self) -> CoilForceConstraintFunction:
-        """Calculate the constraint function"""
-        return CoilForceConstraintFunction(name=self.name, **self._args)  # noqa: DOC201
+        """Calculate the constraint function"""  # noqa: DOC201
+        return CoilForceConstraintFunction(name=self.name, **self._args)
 
 
 class MagneticConstraint(UpdateableConstraint):
@@ -480,8 +480,8 @@ class MagneticConstraint(UpdateableConstraint):
         Notes
         -----
         Length of the array if an array is specified, otherwise 1 for a float.
-        """
-        return len(self.x) if hasattr(self.x, "__len__") else 1  # noqa: DOC201
+        """  # noqa: DOC201
+        return len(self.x) if hasattr(self.x, "__len__") else 1
 
     def f_constraint(self) -> ConstraintFunction:
         """
@@ -626,8 +626,8 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
     def __len__(self) -> int:
         """
         The mathematical size of the constraint.
-        """
-        return 2  # noqa: DOC201
+        """  # noqa: DOC201
+        return 2
 
 
 class PsiConstraint(AbsoluteMagneticConstraint):
@@ -889,8 +889,8 @@ class MagneticConstraintSet:
     def __len__(self) -> int:
         """
         The mathematical size of the constraint set.
-        """
-        return sum(len(c) for c in self.constraints)  # noqa: DOC201
+        """  # noqa: DOC201
+        return sum(len(c) for c in self.constraints)
 
     def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

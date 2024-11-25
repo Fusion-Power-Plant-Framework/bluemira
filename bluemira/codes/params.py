@@ -140,8 +140,8 @@ class ParameterMapping:
     def to_dict(self) -> dict:
         """
         Convert this object to a dictionary with attributes as values.
-        """
-        return {  # noqa: DOC201
+        """  # noqa: DOC201
+        return {
             "name": self.name,
             "out_name": self.out_name,
             "send": self.send,
@@ -153,15 +153,15 @@ class ParameterMapping:
     def from_dict(cls, the_dict: dict) -> ParameterMapping:
         """
         Create a ParameterMapping using a dictionary with attributes as values.
-        """
-        return cls(**the_dict)  # noqa: DOC201
+        """  # noqa: DOC201
+        return cls(**the_dict)
 
     def __str__(self):
         """
         Create a string representation of of this object which is more compact than that
         provided by the default `__repr__` method.
-        """
-        return repr(self.to_dict())  # noqa: DOC201
+        """  # noqa: DOC201
+        return repr(self.to_dict())
 
     def __setattr__(self, attr: str, value: bool | str):  # noqa: FBT001
         """

@@ -63,8 +63,8 @@ class Limiter:
     def __len__(self) -> int:
         """
         The length of the limiter.
-        """
-        return len(self.x)  # noqa: DOC201
+        """  # noqa: DOC201
+        return len(self.x)
 
     def __next__(self):
         """

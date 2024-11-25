@@ -65,11 +65,11 @@ class RadiationShieldBuilder(Builder):
     def build(self) -> Component:
         """
         Build the radiation shield component.
-        """
+        """  # noqa: DOC201
         rs_xz = self.build_xz()
         rs_face = rs_xz.get_component_properties("shape")
 
-        return self.component_tree(  # noqa: DOC201
+        return self.component_tree(
             xz=[rs_xz],
             xy=[self.build_xy()],
             xyz=self.build_xyz(rs_face, degree=0),
@@ -78,7 +78,7 @@ class RadiationShieldBuilder(Builder):
     def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the radiation shield.
-        """
+        """  # noqa: DOC201
         cryo_vv_rot = self.cryo_vv.deepcopy()
         cryo_vv_rot.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
 
@@ -104,27 +104,27 @@ class RadiationShieldBuilder(Builder):
             self.BODY, boolean_cut(BluemiraFace([rs_outer, rs_inner]), cutter)[0]
         )
         apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
-        return shield_body  # noqa: DOC201
+        return shield_body
 
     def build_xy(self) -> PhysicalComponent:
         """
         Build the x-y components of the radiation shield.
-        """
+        """  # noqa: DOC201
         r_in = self.cryo_vv.bounding_box.x_max + self.params.g_cr_rs.value
         r_out = r_in + self.params.tk_rs.value
 
         shield_body = PhysicalComponent(self.BODY, make_circular_xy_ring(r_in, r_out))
         apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
 
-        return shield_body  # noqa: DOC201
+        return shield_body
 
     def build_xyz(
         self, rs_face: BluemiraFace, degree: float = 360.0
     ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the radiation shield.
-        """
-        return build_sectioned_xyz(  # noqa: DOC201
+        """  # noqa: DOC201
+        return build_sectioned_xyz(
             rs_face,
             self.BODY,
             self.params.n_TF.value,
