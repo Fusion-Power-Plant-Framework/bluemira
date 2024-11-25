@@ -62,8 +62,8 @@ class CoilGroupFieldsMixin:
     def psi(self, x: float | np.ndarray, z: float | np.ndarray):
         """
         Calculate poloidal flux at (x, z)
-        """
-        return self.psi_response(x, z) * self.current  # noqa:DOC201
+        """  # noqa: DOC201
+        return self.psi_response(x, z) * self.current
 
     def psi_response(self, x, z):
         return self._mix_control_method(
@@ -73,8 +73,8 @@ class CoilGroupFieldsMixin:
     def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
         """
         Calculate radial magnetic field Bx at (x, z)
-        """
-        return self.Bx_response(x, z) * self.current  # noqa:DOC201
+        """  # noqa: DOC201
+        return self.Bx_response(x, z) * self.current
 
     def Bx_response(
         self, x: float | np.ndarray, z: float | np.ndarray
@@ -103,8 +103,8 @@ class CoilGroupFieldsMixin:
     def Bz(self, x: float | np.ndarray, z: float | np.ndarray) -> float | np.ndarray:
         """
         Calculate vertical magnetic field Bz at (x, z)
-        """
-        return self.Bz_response(x, z) * self.current  # noqa:DOC201
+        """  # noqa: DOC201
+        return self.Bz_response(x, z) * self.current
 
     def Bz_response(
         self, x: float | np.ndarray, z: float | np.ndarray
@@ -133,8 +133,8 @@ class CoilGroupFieldsMixin:
     def Bp(self, x: float | np.ndarray, z: float | np.ndarray):
         """
         Calculate poloidal magnetic field Bp at (x, z)
-        """
-        return np.hypot(self.Bx(x, z), self.Bz(x, z))  # noqa:DOC201
+        """  # noqa: DOC201
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def F(self, eqcoil: CoilGroup) -> np.ndarray:
         """
@@ -231,8 +231,8 @@ class CoilGroupFieldsMixin:
     def _stored_greens(self, green: float | np.ndarray):
         """
         Quickly calculate plasma psi, Bx or Bz from Greens functions and current
-        """
-        return self.current * green  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.current * green
 
     def _mix_control_method(
         self,

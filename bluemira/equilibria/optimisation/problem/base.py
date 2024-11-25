@@ -56,8 +56,8 @@ class CoilsetOptimiserResult:
     def from_opt_result(
         cls, coilset: CoilSet, opt_result: OptimiserResult
     ) -> CoilsetOptimiserResult:
-        """Make a coilset optimisation result from a normal optimisation result."""
-        return cls(  # noqa: DOC201
+        """Make a coilset optimisation result from a normal optimisation result."""  # noqa: DOC201
+        return cls(
             coilset=coilset,
             f_x=opt_result.f_x,
             n_evals=opt_result.n_evals,

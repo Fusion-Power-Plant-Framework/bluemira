@@ -28,8 +28,8 @@ class BaseRunMode(enum.Enum):
     def to_string(self) -> str:
         """
         Convert the enum name to a string; its name in lower-case.
-        """
-        return self.name.lower()  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.name.lower()
 
     @classmethod
     def from_string(cls, mode_str: str):
@@ -45,10 +45,10 @@ class BaseRunMode(enum.Enum):
         ------
         ValueError
             Unknown run mode
-        """
+        """  # noqa: DOC201
         for run_mode_str, enum_value in cls.__members__.items():
             if run_mode_str.lower() == mode_str.lower():
-                return enum_value  # noqa: DOC201
+                return enum_value
         raise ValueError(f"Unknown run mode '{mode_str}'.")
 
 
@@ -331,7 +331,9 @@ class CodesSolver(abc.ABC):
         """
 
     def execute(self, run_mode: str | BaseRunMode) -> Any:
-        """Execute the setup, run, and teardown tasks, in order."""
+        """
+        Execute the setup, run, and teardown tasks, in order.
+        """  # noqa: DOC201
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
         result = None
@@ -341,7 +343,7 @@ class CodesSolver(abc.ABC):
             result = run(result)
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(result)
-        return result  # noqa: DOC201
+        return result
 
     def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
         """

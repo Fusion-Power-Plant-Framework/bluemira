@@ -76,7 +76,7 @@ class GSOperator:
         ------
         EquilibriaError
             Underlying limits are not symmetric
-        """
+        """  # noqa: DOC201
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
         half_xdx = 0.5 / (np.linspace(self.x_min, self.x_max, nx) * d_x)
@@ -122,7 +122,7 @@ class GSOperator:
             A[ind, ind - 1] = ghost_factor * inv_dz_2
             A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
             A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
-        return A.tocsr()  # Compressed sparse row format  # noqa: DOC201
+        return A.tocsr()  # Compressed sparse row format
 
 
 class DirectSolver:
@@ -153,12 +153,12 @@ class DirectSolver:
         ------
         EquilibriaError
             Matrix inversion problem in GS solver
-        """
+        """  # noqa: DOC201
         b1d = np.reshape(b, -1)
         x = self.solve(b1d)
         if np.any(np.isnan(x)):
             raise EquilibriaError("Matrix inversion problem in GS solver.")
-        return np.reshape(x, b.shape)  # noqa: DOC201
+        return np.reshape(x, b.shape)
 
 
 class GSSolver(DirectSolver):
@@ -200,7 +200,7 @@ class GSSolver(DirectSolver):
         ----------
         b: np.array(nx, nz)
             2-D X, Z map of the RHS of the G-S equation.
-        """
+        """  # noqa: DOC201
         if self.force_symmetry:
             nz = self.grid.nz
 
@@ -220,4 +220,4 @@ class GSSolver(DirectSolver):
             # Solve linear system with no symmetry assumptions.
             x = super().__call__(b)
 
-        return x  # noqa: DOC201
+        return x

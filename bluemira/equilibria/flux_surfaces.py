@@ -135,8 +135,8 @@ class FluxSurface:
     def copy(self):
         """
         Make a deep copy of the FluxSurface.
-        """
-        return deepcopy(self)  # noqa: DOC201
+        """  # noqa: DOC201
+        return deepcopy(self)
 
 
 class ClosedFluxSurface(FluxSurface):
@@ -286,7 +286,7 @@ class ClosedFluxSurface(FluxSurface):
         Notes
         -----
         Squareness defined here w.r.t an ellipse intersection along a projected line
-        """
+        """  # noqa: DOC201
         xc = xa + b * np.sqrt(0.5)
         zc = za + a * np.sqrt(0.5)
 
@@ -295,7 +295,7 @@ class ClosedFluxSurface(FluxSurface):
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
-        return floatify((d_ab - d_ac) / d_cd)  # noqa: DOC201
+        return floatify((d_ab - d_ac) / d_cd)
 
     @property
     @lru_cache(1)

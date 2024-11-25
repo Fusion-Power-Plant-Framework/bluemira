@@ -38,17 +38,17 @@ class MixtureFraction:
         self.name = self.material.name
 
     def __hash__(self):
-        """Hash of class"""
-        return hash(self.name)  # noqa: DOC201
+        """Hash of class"""  # noqa: DOC201
+        return hash(self.name)
 
     def __eq__(self, other: object):
-        """Material equality"""
+        """Material equality"""  # noqa: DOC201
         if (
             isinstance(other, type(self))
             and other.fraction == self.fraction
             and other.material == self.material
         ):
-            return True  # noqa: DOC201
+            return True
         if isinstance(other, MassFractionMaterial) and self.fraction == 1:
             return other == self.material
         return False
@@ -321,11 +321,11 @@ class HomogenisedMixture:
         return cls(name, **mat_dict)
 
     def __eq__(self, other: object):
-        """Equality check"""
+        """Equality check"""  # noqa: DOC201
         if (not isinstance(other, type(self)) and len(self.fractions) > 1) or (
             len(other.materials) != len(self.materials)
         ):
-            return False  # noqa: DOC201
+            return False
 
         if isinstance(other, type(self)):
             for selfmat in self.materials:
@@ -341,5 +341,5 @@ class HomogenisedMixture:
         return True
 
     def __hash__(self):
-        """Hash of class"""
-        return hash(self.name)  # noqa: DOC201
+        """Hash of class"""  # noqa: DOC201
+        return hash(self.name)

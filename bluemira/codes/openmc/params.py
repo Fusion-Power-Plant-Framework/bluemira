@@ -143,7 +143,7 @@ class PlasmaSourceParameters:
 
         This gives the illusion that self.cgs.x = scale_factor*self.x
         We rely on the 'frozen' nature of this dataclass so these links don't break.
-        """
+        """  # noqa: DOC201
         conversion = {
             "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
@@ -170,4 +170,4 @@ class PlasmaSourceParameters:
             else:
                 param_convert_dict[k.name] = val
 
-        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))  # noqa: DOC201
+        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))

@@ -107,12 +107,12 @@ class RegularisedLsqObjective(ObjectiveFunction):
         return fom
 
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Gradient of the objective function for an optimisation."""
+        """Gradient of the objective function for an optimisation."""  # noqa: DOC201
         vector = vector * self.scale  # nlopt read only  # noqa: PLR6104
         jac = 2 * self.a_mat.T @ self.a_mat @ vector / float(len(self.b_vec))
         jac -= 2 * self.a_mat.T @ self.b_vec / float(len(self.b_vec))
         jac += 2 * self.gamma * self.gamma * vector
-        return self.scale * jac  # noqa: DOC201
+        return self.scale * jac
 
 
 class CoilCurrentsObjective(ObjectiveFunction):
@@ -131,8 +131,8 @@ class CoilCurrentsObjective(ObjectiveFunction):
 
     @staticmethod
     def df_objective(vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Gradient of the objective function for an optimisation."""
-        return 2 * vector  # noqa: DOC201
+        """Gradient of the objective function for an optimisation."""  # noqa: DOC201
+        return 2 * vector
 
 
 class MaximiseFluxObjective(ObjectiveFunction):
@@ -153,12 +153,12 @@ class MaximiseFluxObjective(ObjectiveFunction):
         self.scale = scale
 
     def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
-        """Objective function for an optimisation."""
-        return -self.scale * self.c_psi_mat @ vector  # noqa: DOC201
+        """Objective function for an optimisation."""  # noqa: DOC201
+        return -self.scale * self.c_psi_mat @ vector
 
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
-        """Gradient of the objective function for an optimisation."""
-        return -self.scale * self.c_psi_mat  # noqa: DOC201
+        """Gradient of the objective function for an optimisation."""  # noqa: DOC201
+        return -self.scale * self.c_psi_mat
 
 
 # =============================================================================

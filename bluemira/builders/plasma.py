@@ -78,8 +78,8 @@ class PlasmaBuilder(Builder):
     def build(self) -> Component:
         """
         Build the plasma component.
-        """
-        return self.component_tree(  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.component_tree(
             xz=[self.build_xz(self.xz_lcfs)],
             xy=[self.build_xy(self.xz_lcfs)],
             xyz=[self.build_xyz(self.xz_lcfs, degree=0)],
@@ -93,13 +93,13 @@ class PlasmaBuilder(Builder):
         ----------
         lcfs:
             LCFS wire
-        """
+        """  # noqa: DOC201
         face = BluemiraFace(lcfs, self.name)
         component = PhysicalComponent(self.LCFS, face)
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component  # noqa: DOC201
+        return component
 
     def build_xy(self, lcfs: BluemiraWire) -> PhysicalComponent:
         """
@@ -109,7 +109,7 @@ class PlasmaBuilder(Builder):
         ----------
         lcfs:
             LCFS wire
-        """
+        """  # noqa: DOC201
         inner = make_circle(lcfs.bounding_box.x_min)
         outer = make_circle(lcfs.bounding_box.x_max)
         face = BluemiraFace([outer, inner], self.name)
@@ -117,7 +117,7 @@ class PlasmaBuilder(Builder):
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component  # noqa: DOC201
+        return component
 
     def build_xyz(self, lcfs: BluemiraWire, degree: float = 360.0) -> PhysicalComponent:
         """
@@ -129,7 +129,7 @@ class PlasmaBuilder(Builder):
             LCFS wire
         degree:
             degrees to sweep the shape
-        """
+        """  # noqa: DOC201
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
         solid = revolve_shape(
@@ -142,4 +142,4 @@ class PlasmaBuilder(Builder):
         apply_component_display_options(
             component, color=BLUE_PALETTE["PL"], transparency=0.3
         )
-        return component  # noqa: DOC201
+        return component

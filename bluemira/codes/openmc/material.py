@@ -76,8 +76,8 @@ class MaterialsLibrary:
 
     @classmethod
     def from_neutronics_materials(cls, materials_lib: NeutronicsMaterials):
-        """Initialise from neutronics materials"""
-        return cls(**{  # noqa: DOC201
+        """Initialise from neutronics materials"""  # noqa: DOC201
+        return cls(**{
             field.name: getattr(materials_lib, field.name).to_openmc_material()
             for field in fields(materials_lib)
         })

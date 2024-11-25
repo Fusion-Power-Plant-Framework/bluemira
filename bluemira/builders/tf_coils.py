@@ -188,11 +188,11 @@ class RipplePointSelector:
     ) -> GeomConstraintT:
         """
         Make the ripple OptimisationConstraint
-        """
+        """  # noqa: DOC201
         self.parameterisation = parameterisation
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
-        return {  # noqa: DOC201
+        return {
             "f_constraint": self._constrain_ripple,
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
@@ -207,7 +207,7 @@ class RipplePointSelector:
         ----------
         parameterisation:
             Geometry parameterisation
-        """
+        """  # noqa: DOC201
         wire = parameterisation.create_shape()
         self.solver.update_cage(wire)
         ripple = self.solver.ripple(*self.points)
@@ -216,7 +216,7 @@ class RipplePointSelector:
         # defining a df_constraint on this class, would be good for me to play with.
         # 3526
         bluemira_debug_flush(f"Max ripple: {max(ripple)}")
-        return ripple - self.TF_ripple_limit  # noqa: DOC201
+        return ripple - self.TF_ripple_limit
 
 
 class EquispacedSelector(RipplePointSelector):
@@ -336,11 +336,11 @@ class MaximiseSelector(RipplePointSelector):
     ) -> GeomConstraintT:
         """
         Make the ripple OptimisationConstraint
-        """
+        """  # noqa: DOC201
         self.parameterisation = parameterisation
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
-        return {  # noqa: DOC201
+        return {
             "f_constraint": self._constrain_max_ripple,
             "tolerance": np.full(2, rip_con_tol),
         }
@@ -353,7 +353,7 @@ class MaximiseSelector(RipplePointSelector):
         ----------
         parameterisation:
             Geometry parameterisation
-        """
+        """  # noqa: DOC201
         tf_wire = parameterisation.create_shape()
         self.solver.update_cage(tf_wire)
 
@@ -379,7 +379,7 @@ class MaximiseSelector(RipplePointSelector):
         # defining a df_constraint on this class, would be good for me to play with.
         # 3526
         bluemira_debug_flush(f"Max ripple: {ripple}")
-        return ripple - self.TF_ripple_limit  # noqa: DOC201
+        return ripple - self.TF_ripple_limit
 
 
 @dataclass
@@ -500,25 +500,25 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
     def objective(parameterisation: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
-        """
-        return parameterisation.create_shape().length  # noqa: DOC201
+        """  # noqa: DOC201
+        return parameterisation.create_shape().length
 
     def keep_out_zones(self) -> list[KeepOutZone]:
         """
         Keep out zone
-        """
-        return self._keep_out_zone  # noqa: DOC201
+        """  # noqa: DOC201
+        return self._keep_out_zone
 
     def ineq_constraints(self) -> GeomConstraintT:
         """
         Inequality constraints
-        """
-        return [self._ripple_constraint]  # noqa: DOC201
+        """  # noqa: DOC201
+        return [self._ripple_constraint]
 
     def optimise(self) -> GeometryParameterisation:
         """
         Solve the GeometryOptimisationProblem.
-        """
+        """  # noqa: DOC201
         self.parameterisation = (
             super()
             .optimise(
@@ -534,7 +534,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
         if isinstance(self.ripple_values, float):
             self.ripple_values = np.array([self.ripple_values])
-        return self.parameterisation  # noqa: DOC201
+        return self.parameterisation
 
     def plot(self, ax: plt.Axes | None = None):
         """
