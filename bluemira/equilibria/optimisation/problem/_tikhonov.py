@@ -182,7 +182,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         weight matrix W_ij used to define (for example) the least-squares objective
         function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
         weights[i] = w[i] = sqrt(W[i,i]).
-        """
+        """  # noqa: DOC201
         # Scale the control matrix and magnetic field targets vector by weights.
         self.targets(self.eq, I_not_dI=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
@@ -202,7 +202,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
             np.linalg.norm(a_mat @ c_cs.current - b_vec)
             + np.linalg.norm(self.gamma * c_cs.current)
         )
-        return CoilsetOptimiserResult(  # noqa: DOC201
+        return CoilsetOptimiserResult(
             coilset=c_cs,
             f_x=f_x,
             n_evals=0,

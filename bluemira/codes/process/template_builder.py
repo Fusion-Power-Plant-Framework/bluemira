@@ -302,7 +302,7 @@ class PROCESSTemplateBuilder:
     def make_inputs(self) -> ProcessInputs:
         """
         Make the ProcessInputs InVariable for the specified template
-        """
+        """  # noqa: DOC201
         if self.ioptimiz != 0 and self.minmax == 0:
             bluemira_warn(
                 "You are running in optimisation mode,"
@@ -314,7 +314,7 @@ class PROCESSTemplateBuilder:
         self._check_model_inputs()
         models = {k: v.value for k, v in self._models.items()}
 
-        return ProcessInputs(  # noqa: DOC201
+        return ProcessInputs(
             bounds=self.bounds,
             icc=icc,
             ixc=self.ixc,

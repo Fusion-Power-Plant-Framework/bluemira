@@ -80,14 +80,14 @@ class PsiPoint:
     def __getitem__(self, i: int) -> float:
         """
         Imbue PsiPoint with list-like behaviour
-        """
-        return [self.x, self.z, self.psi][i]  # noqa: DOC201
+        """  # noqa: DOC201
+        return [self.x, self.z, self.psi][i]
 
     def __str__(self) -> str:
         """
         A better string representation of the PsiPoint.
-        """
-        return (  # noqa: DOC201
+        """  # noqa: DOC201
+        return (
             f"{self.__class__.__name__} x: {self.x:.2f}, z:{self.z:.2f}, "
             f"psi: {self.psi:.2f}"
         )
@@ -155,8 +155,8 @@ def find_local_minima(
 def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.float64]:
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
-    """
-    return np.asarray([[d, -b], [-c, a]]) / (a * d - b * c)  # noqa: DOC201
+    """  # noqa: DOC201
+    return np.asarray([[d, -b], [-c, a]]) / (a * d - b * c)
 
 
 def find_local_Bp_minima_cg(
@@ -208,7 +208,7 @@ def drop_space_duplicates(
 ) -> list[npt.NDArray[np.float64]]:
     """
     Drop duplicates from a list of points if closer together than tol
-    """
+    """  # noqa: DOC201
     stack = []
     for p1 in points:
         duplicate = False
@@ -218,7 +218,7 @@ def drop_space_duplicates(
                 break
         if not duplicate:
             stack.append(p1)
-    return stack  # noqa: DOC201
+    return stack
 
 
 def triage_OX_points(
@@ -570,8 +570,8 @@ def find_flux_surf(
     def f_min(x_opt, z_opt):
         """
         Error function for point clusters relative to.base.O-point
-        """
-        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)  # noqa: DOC201
+        """  # noqa: DOC201
+        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)
 
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
     xo, zo, _ = o_points[0]
@@ -616,8 +616,8 @@ def find_field_surf(
     def f_min(x_opt, z_opt):
         """
         Error function for point clusters relative to grid center
-        """
-        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)  # noqa: DOC201
+        """  # noqa: DOC201
+        return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)
 
     surfaces = get_contours(x, z, Bp, field)
     err = []

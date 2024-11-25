@@ -14,7 +14,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bluemira.base.parameter_frame import Parameter  # noqa: TCH001
+from bluemira.base.parameter_frame import Parameter  # noqa: TC001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.constants import NAME
@@ -383,7 +383,7 @@ class ProcessSolverParams(MappedParameterFrame):
     def from_defaults(cls, template: ProcessInputs | None = None) -> ProcessSolverParams:
         """
         Initialise from defaults
-        """
+        """  # noqa: DOC201
         if template is None:
             template = ProcessInputs()
             self = super().from_defaults(template.to_dict())
@@ -392,4 +392,4 @@ class ProcessSolverParams(MappedParameterFrame):
                 template.to_dict(), source=f"{NAME} user input template"
             )
         self.__defaults = template
-        return self  # noqa: DOC201
+        return self

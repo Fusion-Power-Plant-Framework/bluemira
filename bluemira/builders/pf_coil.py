@@ -69,8 +69,8 @@ class PFCoilBuilder(Builder):
     def build(self) -> Component:
         """
         Build the PFCoil component.
-        """
-        return self.component_tree(  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.component_tree(
             xz=self.build_xz(self.xz_cross_section),
             xy=self.build_xy(self.xz_cross_section),
             xyz=self.build_xyz(self.xz_cross_section, degree=0),

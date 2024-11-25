@@ -154,14 +154,14 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
         """
         Calculate the value of the constraint in an Equilibrium.
-        """
-        return np.zeros(len(self.target_harmonics))  # noqa: DOC201
+        """  # noqa: DOC201
+        return np.zeros(len(self.target_harmonics))
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
-        """Constraint function."""
+        """Constraint function."""  # noqa: DOC201
         f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
-        return f_constraint  # noqa: DOC201
+        return f_constraint
 
     def plot(self, ax=None):
         """

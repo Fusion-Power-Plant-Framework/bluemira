@@ -617,12 +617,12 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         )
 
     def objective(self, x: np.ndarray) -> float:
-        """Objective function to maximise length."""
-        return self.negative_length(x)  # noqa: DOC201
+        """Objective function to maximise length."""  # noqa: DOC201
+        return self.negative_length(x)
 
     def ineq_constraints(self) -> list[ConstraintT]:
-        """The inequality constraints for the problem."""
-        return [  # noqa: DOC201
+        """The inequality constraints for the problem."""  # noqa: DOC201
+        return [
             {
                 "f_constraint": self.constrain_koz,
                 "tolerance": np.full(self.n_koz_discr, 1e-6),
@@ -636,8 +636,8 @@ class StraightOISOptimisationProblem(OptimisationProblem):
 
     @staticmethod
     def bounds() -> tuple[np.ndarray, np.ndarray]:
-        """The optimisation parameter bounds."""
-        return np.array([0, 0]), np.array([1, 1])  # noqa: DOC201
+        """The optimisation parameter bounds."""  # noqa: DOC201
+        return np.array([0, 0]), np.array([1, 1])
 
     @staticmethod
     def f_L_to_wire(  # noqa: N802
@@ -659,9 +659,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     def f_L_to_xz(wire: BluemiraWire, value: float) -> np.ndarray:
         """
         Convert a normalised L value to an x, z pair.
-        """
+        """  # noqa: DOC201
         point = wire.value_at(value)
-        return np.array([point[0], point[2]])  # noqa: DOC201
+        return np.array([point[0], point[2]])
 
     def negative_length(self, x_norm: np.ndarray) -> float:
         """
@@ -706,15 +706,15 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     def constrain_x(x_norm: np.ndarray) -> np.ndarray:
         """
         Constrain the second normalised value to be always greater than the first.
-        """
-        return x_norm[0] - x_norm[1]  # noqa: DOC201
+        """  # noqa: DOC201
+        return x_norm[0] - x_norm[1]
 
     @staticmethod
     def df_constrain_x(x_norm: np.ndarray) -> np.ndarray:  # noqa: ARG004
         """
         Gradient of the constraint on  the solution vector
-        """
-        return np.array([1.0, -1.0])  # noqa: DOC201
+        """  # noqa: DOC201
+        return np.array([1.0, -1.0])
 
 
 @dataclass
@@ -800,7 +800,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
     def _make_ois_wire(self, p1, p2):
         """
         Make a rectangular wire from the two inner edge points
-        """
+        """  # noqa: DOC201
         dx = p2[0] - p1[0]
         dz = p2[2] - p1[2]
         normal = np.array([dz, 0, -dx])
@@ -808,12 +808,12 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         tk = self.params.tk_ois.value
         p3 = p2 + tk * normal
         p4 = p1 + tk * normal
-        return make_polygon([p1, p2, p3, p4], closed=True)  # noqa: DOC201
+        return make_polygon([p1, p2, p3, p4], closed=True)
 
     def _make_ois_koz(self, koz_centreline):
         """
         Make the (fused) keep-out-zone for the outer inter-coil structures.
-        """
+        """  # noqa: DOC201
         # Note we use the same offset to the exclusion zones as for the OIS
         # to the TF.
         koz_wires = [
@@ -822,12 +822,12 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         ]
         koz_faces = [BluemiraFace(koz) for koz in koz_wires]
 
-        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])  # noqa: DOC201
+        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])
 
     def _make_ois_regions(self, ois_centreline, koz_centreline):
         """
         Select regions that are viable for outer inter-coil structures
-        """
+        """  # noqa: DOC201
         inner_wire = self.tf_face.boundary[1]
         # Drop the inboard (already connected by the vault)
         # Note we also drop the probable worst case of the edge corners of the OIS
@@ -854,7 +854,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
             )
             if length > self.params.min_OIS_length.value:
                 big_ois_regions.append(region)
-        return big_ois_regions  # noqa: DOC201
+        return big_ois_regions
 
 
 @dataclass
@@ -893,8 +893,8 @@ class OISBuilder(Builder):
     def build(self) -> Component:
         """
         Build the PF coil support component.
-        """
-        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.component_tree(self.build_xz(), self.build_xy(), self.build_xyz())
 
     def build_xy(self):
         """
@@ -904,19 +904,19 @@ class OISBuilder(Builder):
     def build_xz(self):
         """
         Build the x-z component of the OIS
-        """
+        """  # noqa: DOC201
         components = []
         for i, ois_profile in enumerate(self.ois_xz_profiles):
             face = BluemiraFace(ois_profile)
             component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)
-        return components  # noqa: DOC201
+        return components
 
     def build_xyz(self):
         """
         Build the x-y-z component of the OIS
-        """
+        """  # noqa: DOC201
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         tf_angle = 2 * np.pi / self.params.n_TF.value
         centre_radius = 0.5 * width / np.tan(0.5 * tf_angle)
@@ -958,4 +958,4 @@ class OISBuilder(Builder):
         for component in components:
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
 
-        return components  # noqa: DOC201
+        return components

@@ -159,10 +159,10 @@ class Teardown(CodesTeardown):
         """
         Read an MFile, applying the given mappings, and performing unit
         conversions.
-        """
+        """  # noqa: DOC201
         self._mfile_wrapper = _MFileWrapper(path, self._name)
         self._mfile_wrapper.read()
-        return self._mfile_wrapper  # noqa: DOC201
+        return self._mfile_wrapper
 
     def _get_output_or_raise(
         self, external_outputs: dict[str, Any], parameter_name: str
