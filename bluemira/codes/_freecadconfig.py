@@ -104,6 +104,7 @@ def _patch_pivy():
             ],
             cwd=Path(__file__).parent,
             shell=True,
+            check=False,
         )
 
     from pivy import coin, quarter  # noqa: PLC0415
