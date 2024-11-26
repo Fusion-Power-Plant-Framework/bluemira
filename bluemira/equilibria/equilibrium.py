@@ -602,6 +602,7 @@ class CoilSetMHDState(MHDState):
         self._psi_green = self.coilset.psi_response(self.x, self.z)
         self._bx_green = self.coilset.Bx_response(self.x, self.z)
         self._bz_green = self.coilset.Bz_response(self.x, self.z)
+        self._db_green = self.coilset.dB_d_response(self.x, self.z)
 
     def get_coil_forces(self) -> npt.NDArray[np.float64]:
         """
@@ -916,6 +917,54 @@ class Breakdown(CoilSetMHDState):
 
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
+    def dBx_dz(self, x: npt.ArrayLike, z: npt.ArrayLike):
+        """
+        Total differential of the radial magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            Differential of the radial magnetic field at x, z
+
+        Notes
+        -----
+        As there is not plasma this is equivalent to dBz_dx
+        """
+        return self.coilset.dB_d(x, z)
+
+    def dBz_dx(self, x: npt.ArrayLike, z: npt.ArrayLike):
+        """
+        Total differential of the vertical magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            Differential of the vertical magnetic field at x, z
+
+        Notes
+        -----
+        As there is not plasma this is equivalent to dBx_dz
+        """
+        return self.coilset.dB_d(x, z)
+
     def psi(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
@@ -992,7 +1041,7 @@ class QpsiCalcMode(Enum):
     ZEROS = 2
 
 
-class Equilibrium(CoilSetMHDState):
+class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
     """
     Represents the equilibrium state, including plasma and coil currents
 
@@ -1753,6 +1802,46 @@ class Equilibrium(CoilSetMHDState):
         p = self.pressure(np.clip(self.psi_norm(), 0, min(1, psi_n)))
 
         return p * mask
+
+    def dBx_dz(self, x: npt.ArrayLike, z: npt.ArrayLike):
+        """
+        Total differential of the radial magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            Differential of the radial magnetic field at x, z
+        """
+        return self.plasma.dBx(x, z) + self.coilset.dB_d(x, z)
+
+    def dBz_dx(self, x: npt.ArrayLike, z: npt.ArrayLike):
+        """
+        Total differential of the vertical magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            Differential of the vertical magnetic field at x, z
+        """
+        return self.plasma.dBz(x, z) + self.coilset.dB_d(x, z)
 
     def _get_core_mask(self, psi_n: float | None = None) -> npt.NDArray[np.float64]:
         """
