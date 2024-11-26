@@ -42,11 +42,11 @@ contourpy==1.3.1
     #   matplotlib
 coolprop==6.6.0
     # via bluemira (pyproject.toml)
-coverage==7.6.7
+coverage==7.6.8
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.8
+debugpy==1.8.9
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -83,7 +83,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 greenlet==3.1.1
     # via sqlalchemy
-identify==2.6.2
+identify==2.6.3
     # via pre-commit
 idna==3.10
     # via requests
@@ -197,7 +197,7 @@ numba==0.60.0
     #   numba-scipy
 numba-scipy==0.4.0
     # via bluemira (pyproject.toml)
-numexpr==2.10.1
+numexpr==2.10.2
     # via
     #   blosc2
     #   tables
@@ -446,7 +446,7 @@ tzdata==2024.2
     # via pandas
 urllib3==2.2.3
     # via requests
-virtualenv==20.27.1
+virtualenv==20.28.0
     # via pre-commit
 vtk==9.3.1
     # via
