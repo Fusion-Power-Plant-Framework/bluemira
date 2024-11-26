@@ -57,7 +57,7 @@ coolprop==6.6.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.8
+debugpy==1.8.9
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -228,7 +228,7 @@ numba==0.60.0
     #   numba-scipy
 numba-scipy==0.4.0
     # via bluemira (pyproject.toml)
-numexpr==2.10.1
+numexpr==2.10.2
     # via
     #   blosc2
     #   tables
@@ -382,7 +382,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==75.5.0
+setuptools==75.6.0
     # via jupyterlab
 six==1.16.0
     # via

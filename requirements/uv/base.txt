@@ -76,7 +76,7 @@ numba==0.60.0
     #   numba-scipy
 numba-scipy==0.4.0
     # via bluemira (pyproject.toml)
-numexpr==2.10.1
+numexpr==2.10.2
     # via
     #   blosc2
     #   tables
