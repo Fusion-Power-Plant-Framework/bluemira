@@ -726,6 +726,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("b_max")
 
     @property
+    def resistance(self) -> np.ndarray:
+        """Get coil resistance"""
+        return self.__getter("resistance")
+
+    @property
     def discretisation(self) -> np.ndarray:
         """Get coil discretisations"""
         return self.__getter("discretisation")
@@ -854,6 +859,11 @@ class CoilGroup(CoilGroupFieldsMixin):
     @b_max.setter
     def b_max(self, values: float | Iterable[float]):
         """Set coil max fields"""
+        self.__setter("b_max", values)
+
+    @resistance.setter
+    def resistance(self, values: float | Iterable[float]):
+        """Set coil resistance"""
         self.__setter("b_max", values)
 
     @discretisation.setter
