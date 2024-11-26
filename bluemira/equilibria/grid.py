@@ -59,6 +59,7 @@ class Grid:
         "edges",
         "nx",
         "nz",
+        "step",
         "x",
         "x_1d",
         "x_max",
@@ -132,6 +133,7 @@ class Grid:
             [(0, z) for z in range(nz)],
             [(nx - 1, z) for z in range(nz)],
         ])
+        self.step = abs(self.x_1d[0] - self.x_1d[1]) * abs(self.z_1d[0] - self.z_1d[1])
 
     @classmethod
     def from_eqdict(cls, e) -> Grid:
