@@ -552,12 +552,12 @@ class PreCellArray:
         return np.insert(self.cell_walls[:, 0], 1, 0, axis=-1)
 
     def __len__(self) -> int:
-        """Number of pre cells"""
-        return len(self.pre_cells)  # noqa: DOC201
+        """Number of pre cells"""  # noqa: DOC201
+        return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
-        """Get pre cell"""
-        return self.pre_cells[index_or_slice]  # noqa: DOC201
+        """Get pre cell"""  # noqa: DOC201
+        return self.pre_cells[index_or_slice]
 
     def __setitem__(self, index_or_slice, new_pre_cell: PreCell | PreCellArray):
         """Set an element to be a new Precell, or a slice to be a new PreCellarray."""
@@ -844,16 +844,16 @@ class DivertorPreCellArray:
         ])
 
     def __len__(self) -> int:
-        """Number of pre cells"""
-        return len(self.pre_cells)  # noqa: DOC201
+        """Number of pre cells"""  # noqa: DOC201
+        return len(self.pre_cells)
 
     def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
-        """Get pre cell"""
-        return self.pre_cells[index_or_slice]  # noqa: DOC201
+        """Get pre cell"""  # noqa: DOC201
+        return self.pre_cells[index_or_slice]
 
     def __repr__(self) -> str:
-        """String representation"""
-        return (  # noqa: DOC201
+        """String representation"""  # noqa: DOC201
+        return (
             super().__repr__().replace(" at ", f" of {len(self)} DivertorPreCells at ")
         )
 
