@@ -110,7 +110,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         Bx_analytic: bool = True,
         Bz_analytic: bool = True,
     ):
-        if any(not isinstance(c, Coil | CoilGroup) for c in coils):
+        if any(not isinstance(c, Coil | CoilGroup) for c in coils) or not coils:
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
         self._pad_discretisation(self.__list_getter("_quad_x"))
@@ -332,7 +332,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 pfcoils.append(coil)
             coils = pfcoils
             bluemira_warn(
-                "EQDSK coilset empty - dummy coilset in use."
+                "EQDSK coilset empty - dummy coilset in use. "
                 "Please replace with an appropriate coilset."
             )
             return cls(*coils)
@@ -555,10 +555,10 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         raise KeyError(f"Coil '{name}' not found in Group")
 
-    def _get_coiltype(self, ctype: CoilType | str) -> list[Coil]:
+    def _get_coiltype(self, *ctype: CoilType | str) -> list[Coil]:
         """Find coil by type"""  # noqa: DOC201
         coils = []
-        ctype = CoilType(ctype)
+        ctype = tuple(CoilType(ct) for ct in ctype)
         for c in self._coils:
             if isinstance(c, Circuit) and len(c._get_coiltype(ctype)) > 0:
                 coils.append(c)
@@ -577,14 +577,22 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         return [self[n] for n in self.name]
 
-    def get_coiltype(self, ctype: str | CoilType) -> CoilGroup | None:
+    def _get_type_index(self, *ctype: CoilType | str) -> npt.NDArray[int]:
+        coil_type = tuple(CoilType(ct) for ct in ctype) if ctype else CoilType
+
+        return np.asarray(
+            [no for no, coil in enumerate(self.all_coils()) if coil.ctype in coil_type],
+            dtype=int,
+        )
+
+    def get_coiltype(self, *ctype: str | CoilType) -> CoilGroup | None:
         """
         Returns
         -------
         :
             Coils matching coil type
         """
-        if coiltype := self._get_coiltype(ctype):
+        if coiltype := self._get_coiltype(*ctype):
             return CoilGroup(*coiltype)
         return None
 
@@ -1261,6 +1269,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 coils.append(c)
         return CoilSet(*coils)
 
+    def get_uncontrolled_coils(self) -> CoilSet:
+        """Get uncontrolled coils"""
+        coils = []
+        for c in self._coils:
+            if isinstance(c, CoilSet):
+                coils.extend(c.get_uncontrolled_coils()._coils)
+            elif (isinstance(c, Coil) and c.name not in self.control) or (
+                isinstance(c, CoilGroup) and not any(n in self.control for n in c.name)
+            ):
+                coils.append(c)
+        return CoilSet(*coils)
+
     @property
     def area(self) -> float:
         """
@@ -1299,10 +1319,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
 
-    def get_coiltype(self, ctype: str | CoilType) -> CoilSet | None:
+    def get_coiltype(self, *ctype: str | CoilType) -> CoilSet | None:
         """Get coils by coils type"""  # noqa: DOC201
-        if coiltype := self._get_coiltype(ctype):
-            return CoilSet(*coiltype)
+        if coiltype := self._get_coiltype(*ctype):
+            return CoilSet(*coiltype)  # noqa: DOC201
         return None
 
     @classmethod
@@ -1315,11 +1335,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """  # noqa: DOC201
         self = super().from_group_vecs(eqdsk)
 
-        self.control = [
-            coil.name
-            for ctype in control_coiltypes
-            for coil in self._get_coiltype(ctype)
-        ]
+        self.control = [coil.name for coil in self._get_coiltype(*control_coiltypes)]
         return self
 
     def get_optimisation_state(
