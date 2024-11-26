@@ -567,7 +567,7 @@ def refine_mesh(
         dim = mesh.topology.dim
         edges = dolfinx.mesh.locate_entities(mesh, dim - 1, inside_delta)
         mesh.topology.create_entities(1)
-        mesh = dolfinx.mesh.refine(mesh, edges, redistribute=False)
+        mesh, _, _ = dolfinx.mesh.refine(mesh, edges)
 
     return mesh
 

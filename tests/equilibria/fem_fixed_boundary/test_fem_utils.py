@@ -9,7 +9,7 @@ from pathlib import Path
 
 import gmsh
 import numpy as np
-from dolfinx.fem import Constant, FunctionSpace
+from dolfinx.fem import Constant, functionspace
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -77,7 +77,7 @@ class TestFemUtils:
         area = integrate_f(func, self.mesh, self.ct, 1)
         assert np.allclose(area, self.l**2)
 
-        V = FunctionSpace(self.mesh, ("Lagrange", 1))  # noqa: N806
+        V = functionspace(self.mesh, ("Lagrange", 1))  # noqa: N806
         dofs_points = V.tabulate_dof_coordinates()
         func = BluemiraFemFunction(V)
         func.x.array[:] = np.array([operator.itemgetter(0)(x) for x in dofs_points])
