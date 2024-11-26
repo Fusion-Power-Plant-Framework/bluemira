@@ -64,6 +64,7 @@ class BluemiraCompound(BluemiraGeo):
         bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
         bm_wires = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
         if len(bm_wires) == 0:
+            # In some edge cases there are edges that are not captured within wires
             bm_wires = [
                 BluemiraWire(wire)
                 for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]

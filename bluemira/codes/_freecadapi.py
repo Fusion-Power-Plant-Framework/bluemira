@@ -1220,8 +1220,6 @@ def slice_shape(
     """
     Slice a shape along a given plane
 
-    TODO improve face-solid-shell interface
-
     Parameters
     ----------
     shape:
@@ -1238,6 +1236,8 @@ def slice_shape(
     Further investigation needed.
 
     """
+    # TODO @je-cook: improve face-solid-shell interface
+    # 1050
     if isinstance(shape, apiWire):
         return _slice_wire(shape, plane_axis, plane_origin)  # noqa: DOC201
     if not isinstance(shape, apiFace | apiSolid):
@@ -2397,7 +2397,7 @@ def fix_shape(
     Parameters
     ----------
     shape:
-        Wire to fix
+        Shape to fix
     precision:
         General precision with which to work
     min_length:
