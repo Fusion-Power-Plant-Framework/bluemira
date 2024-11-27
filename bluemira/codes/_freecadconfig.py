@@ -91,21 +91,30 @@ def _patch_pivy():
     import pivy  # noqa: PLC0415
 
     if pivy.__version__ == "0.6.9":
-        subprocess.run(  # noqa: S602
-            [
-                "/usr/bin/patch",
-                "-l",
-                "-p2",
-                "-N",
-                "-d",
-                f"{Path(pivy.__file__).parent}",
-                "<",
-                "pivy.patch",
-            ],
-            cwd=Path(__file__).parent,
-            shell=True,
-            check=False,
-        )
+        try:
+            subprocess.run(  # noqa: S602
+                [
+                    "/usr/bin/patch",
+                    "-l",
+                    "-p2",
+                    "-N",
+                    "-d",
+                    f"{Path(pivy.__file__).parent}",
+                    "<",
+                    "pivy.patch",
+                ],
+                cwd=Path(__file__).parent,
+                shell=True,
+                check=False,
+                timeout=3,
+            )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError(
+                "Patch failed to apply please run manually in the repo root:\n"
+                f"PIVYPATH={Path(pivy.__file__).parent}\n"
+                "patch -l -N -d $PIVYPATH -p 2 < ./bluemira/codes/pivy.patch\n"
+                "See v2.5.0 release notes for more information"
+            ) from None
 
     from pivy import coin, quarter  # noqa: PLC0415
 
