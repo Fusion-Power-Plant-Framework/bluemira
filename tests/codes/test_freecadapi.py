@@ -332,13 +332,10 @@ cad_test_parameterisation = [
     ("AUTOCAD_DXF", False),  # import segfault
     ("BINMESH", True),
     ("BREP", True),
-    ("BREP_2", True),
     pytest.param("CSG", True, marks=[pytest.mark.xfail(reason="import fails")]),
     ("FREECAD", True),
     ("GLTRANSMISSION", True),
-    ("GLTRANSMISSION_2", True),
     ("IGES", True),
-    ("IGES_2", True),
     ("INVENTOR_V2_1", True),
     ("JSON", False),  # import not implemented
     ("OBJ", True),
@@ -348,7 +345,6 @@ cad_test_parameterisation = [
     ("PLY_STANFORD", True),
     ("SIMPLE_MODEL", True),
     ("STEP", True),
-    ("STEP_2", True),
     ("STEP_ZIP", True),  # Case sensitive extension  # possible import wrong
     ("STL", True),
     ("SVG_FLAT", True),  # returns face
@@ -397,9 +393,7 @@ cad_test_parameterisation = [
     # pytest.param("SVG", marks=[pytest.mark.xfail(reason="No DrawingGui found")]),
     # pytest.param("PDF", marks=[pytest.mark.xfail(reason="More GUI required")]),
     # pytest.param("VRML", marks=[pytest.mark.xfail(reason="More GUI required")]),
-    # pytest.param("VRML_2", marks=[pytest.mark.xfail(reason="More GUI required")]),
     # pytest.param("VRML_ZIP", marks=[pytest.mark.xfail(reason="More GUI required")]),
-    # pytest.param("VRML_ZIP_2", marks=[pytest.mark.xfail(reason="More GUI required")]),
     # pytest.param("WEBGL_X3D", marks=[pytest.mark.xfail(reason="More GUI required")]),
     # pytest.param("X3D", marks=[pytest.mark.xfail(reason="More GUI required")]),
     # pytest.param("X3DZ", marks=[pytest.mark.xfail(reason="More GUI required")]),
@@ -434,7 +428,7 @@ class TestCADFiletype:
         self, name, imprt, tmp_path
     ):
         filetype = cadapi.CADFileType[name]
-        filename = f"{tmp_path / 'tst'}.{filetype.value.strip('$')}"
+        filename = f"{tmp_path / 'tst'}.{filetype.ext}"
         if name != "FREECAD":  # custom function in this case
             assert filetype.exporter.__name__ == "export"
 
@@ -450,14 +444,14 @@ class TestCADFiletype:
             if filetype not in cadapi.CADFileType.mesh_import_formats():
                 objs = doc.doc.Objects
                 assert len(objs) == 1
-                if filetype in {cadapi.CADFileType.BREP, cadapi.CADFileType.BREP_2}:
+                if filetype is cadapi.CADFileType.BREP:
                     assert objs[0].Label == "tst"
                 else:
                     assert objs[0].Label == "Circle"
                 if filetype is cadapi.CADFileType.SVG_FLAT:
                     # A flat svg is not going to be 3D
                     assert isinstance(objs[0].Shape, cadapi.apiFace)
-                elif filetype in {cadapi.CADFileType.BREP, cadapi.CADFileType.BREP_2}:
+                elif filetype is cadapi.CADFileType.BREP:
                     assert isinstance(objs[0].Shape, cadapi.apiCompound)
                 else:
                     assert isinstance(objs[0].Shape, cadapi.apiShell)

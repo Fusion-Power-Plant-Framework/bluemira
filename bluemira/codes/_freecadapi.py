@@ -1325,6 +1325,87 @@ class Document:
 # ======================================================================================
 # Save functions
 # ======================================================================================
+
+
+@dataclass
+class _CADType:
+    """CAD file type definition"""
+
+    file_extensions: str | tuple[str, ...]
+    export_module: str | None = None
+    import_module: str | None = None
+
+    def __post_init__(self):
+        if not isinstance(self.file_extensions, tuple):
+            self.file_extensions = (self.file_extensions,)
+        self._casefolded = tuple(f.casefold() for f in self.file_extensions)
+        self.import_module = self.import_module or self.export_module
+
+    def __contains__(self, value: str) -> bool:
+        return value.casefold() in self._casefolded
+
+    def __eq__(self, value: str | _CADType) -> bool:
+        if isinstance(value, str):
+            return value.casefold() in self._casefolded
+        if isinstance(value, _CADType):
+            return value is self
+        return False
+
+    def __hash__(self):
+        return hash((*self.file_extensions, self.export_module, self.import_module))
+
+    @property
+    def ext(self):
+        return self.file_extensions[0]
+
+    def exporter(self) -> ExporterProtocol:
+        if self.export_module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
+                doc = objs[0].Document
+                doc.saveAs(filename)
+
+            return FreeCADwriter
+        modlist = self.export_module.split(".")
+        try:
+            export_func = (
+                getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).export
+                if len(modlist) > 1
+                else __import__(self.export_module).export
+            )
+        except AttributeError:
+            raise FreeCADError(
+                f"Unable to save to {self.file_extensions[0]} "
+                "please try through the main FreeCAD GUI"
+            ) from None
+        return export_func
+
+    def importer(self) -> ImporterProtocol:
+        if self.import_module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADreader(filename, document, **kwargs):  # noqa: ARG001
+                FreeCAD.getDocument(document).mergeProject(filename)
+
+            return FreeCADreader
+        modlist = self.import_module.split(".")
+        msg = "Unable to import from {} please try through the main FreeCAD GUI"
+        try:
+            read = (
+                getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).insert
+                if len(modlist) > 1
+                else __import__(self.import_module).insert
+            )
+        except AttributeError:
+            raise FreeCADError(msg.format(self.file_extensions[0])) from None
+        return read
+
+
 class CADFileType(enum.Enum):
     """
     FreeCAD standard export filetypes
@@ -1336,78 +1417,60 @@ class CADFileType(enum.Enum):
     """
 
     # Commented out currently don't function
-    ASCII_STEREO_MESH = ("ast", "Mesh")
-    ADDITIVE_MANUFACTURING = ("amf", "Mesh")
-    ASC = ("asc", "Points")
-    AUTOCAD = ("dwg", "importDWG")
-    AUTOCAD_DXF = ("dxf", "importDXF")
-    BDF = ("bdf", "feminout.exportNastranMesh")
-    BINMESH = ("bms", "Mesh")
-    BREP = ("brep", "Part")
-    BREP_2 = ("brp", "Part")
-    CSG = ("csg", "exportCSG", "importCSG")
-    DAE = ("dae", "importDAE")
-    DAT = ("dat", "Fem")
-    FREECAD = ("FCStd", None)
-    FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
-    FENICS_FEM_XML = ("xml", "feminout.importFenicsMesh")
-    GLTRANSMISSION = ("gltf", "ImportGui")
-    GLTRANSMISSION_2 = ("glb", "ImportGui")
-    IFC_BIM = ("ifc", "exportIFC")
-    IFC_BIM_JSON = ("ifcJSON", "exportIFC")
-    IGES = ("iges", "ImportGui")
-    IGES_2 = ("igs", "ImportGui")
-    INP = ("inp", "Fem")
-    INVENTOR_V2_1 = ("iv", "Mesh")
-    JSON = ("json", "BIM.importers.importJSON")
-    JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
-    MED = ("med", "Fem")
-    MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
-    MESHPY = ("meshpy", "feminout.importPyMesh")
-    MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
-    OBJ = ("obj", "Mesh")
-    OBJ_WAVE = ("$obj", "BIM.importers.importOBJ")
-    OFF = ("off", "Mesh")
-    OPENSCAD = ("scad", "exportCSG")
-    PCD = ("pcd", "Points")
-    # PDF = ("pdf", "FreeCADGui")
-    PLY = ("$ply", "Points")
-    PLY_STANFORD = ("ply", "Mesh")
-    SIMPLE_MODEL = ("smf", "Mesh")
-    STEP = ("stp", "ImportGui")
-    STEP_2 = ("step", "ImportGui")
-    STEP_ZIP = ("stpZ", "stepZ")
-    STL = ("stl", "Mesh")
-    # SVG = ("svg", "DrawingGui")
-    SVG_FLAT = ("$svg", "importSVG")
-    TETGEN_FEM = ("poly", "feminout.convert2TetGen")
-    # THREED_MANUFACTURING = ("3mf", "Mesh")  # segfault?
-    UNV = ("unv", "Fem")
-    # VRML = ("vrml", "FreeCADGui")
-    # VRML_2 = ("wrl", "FreeCADGui")
-    # VRML_ZIP = ("wrl.gz", "FreeCADGui")
-    # VRML_ZIP_2 = ("wrz", "FreeCADGui")
-    VTK = ("vtk", "Fem")
-    VTU = ("vtu", "Fem")
-    WEBGL = ("html", "BIM.importers.importWebGL")
-    # WEBGL_X3D = ("xhtml", "FreeCADGui")
-    # X3D = ("x3d", "FreeCADGui")
-    # X3DZ = ("x3dz", "FreeCADGui")
-    YAML = ("yaml", "feminout.importYamlJsonMesh")
-    Z88_FEM_MESH = ("z88", "Fem")
-    Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
-
-    def __new__(cls, *args, **kwds):  # noqa: ARG003
-        """Create Enum from first half of tuple"""
-        obj = object.__new__(cls)
-        obj._value_ = args[0]
-        return obj
-
-    def __init__(
-        self, _, export_module: str | None = "", import_module: str | None = None
-    ):
-        self.export_module = export_module
-        self.import_module = import_module or export_module
+    ASCII_STEREO_MESH = _CADType("ast", "Mesh")
+    ADDITIVE_MANUFACTURING = _CADType("amf", "Mesh")
+    ASC = _CADType("asc", "Points")
+    AUTOCAD = _CADType("dwg", "importDWG")
+    AUTOCAD_DXF = _CADType("dxf", "importDXF")
+    BDF = _CADType("bdf", "feminout.exportNastranMesh")
+    BINMESH = _CADType("bms", "Mesh")
+    BREP = _CADType(("brep", "brp"), "Part")
+    CSG = _CADType("csg", "exportCSG", "importCSG")
+    DAE = _CADType("dae", "importDAE")
+    DAT = _CADType("dat", "Fem")
+    FREECAD = _CADType("FCStd", None)
+    FENICS_FEM = _CADType("xdmf", "feminout.importFenicsMesh")
+    FENICS_FEM_XML = _CADType("xml", "feminout.importFenicsMesh")
+    GLTRANSMISSION = _CADType(("gltf", "glb"), "ImportGui")
+    IFC_BIM = _CADType("ifc", "exportIFC")
+    IFC_BIM_JSON = _CADType("ifcJSON", "exportIFC")
+    IGES = _CADType(("iges", "igs"), "ImportGui")
+    INP = _CADType("inp", "Fem")
+    INVENTOR_V2_1 = _CADType("iv", "Mesh")
+    JSON = _CADType("json", "BIM.importers.importJSON")
+    JSON_MESH = _CADType("$json", "feminout.importYamlJsonMesh")
+    MED = _CADType("med", "Fem")
+    MESHJSON = _CADType("meshjson", "feminout.importYamlJsonMesh")
+    MESHPY = _CADType("meshpy", "feminout.importPyMesh")
+    MESHYAML = _CADType("meshyaml", "feminout.importYamlJsonMesh")
+    OBJ = _CADType("obj", "Mesh")
+    OBJ_WAVE = _CADType("$obj", "BIM.importers.importOBJ")
+    OFF = _CADType("off", "Mesh")
+    OPENSCAD = _CADType("scad", "exportCSG")
+    PCD = _CADType("pcd", "Points")
+    # PDF = _CADType("pdf", "FreeCADGui")
+    PLY = _CADType("ply", "Points")
+    PLY_STANFORD = _CADType("ply", "Mesh")
+    SIMPLE_MODEL = _CADType("smf", "Mesh")
+    STEP = _CADType(("stp", "step"), "ImportGui")
+    STEP_ZIP = _CADType("stpZ", "stepZ")
+    STL = _CADType("stl", "Mesh")
+    # SVG = _CADType("svg", "DrawingGui")
+    SVG_FLAT = _CADType("svg", "importSVG")
+    TETGEN_FEM = _CADType("poly", "feminout.convert2TetGen")
+    # THREED_MANUFACTURING = _CADType("3mf", "Mesh")  # segfault?
+    UNV = _CADType("unv", "Fem")
+    # VRML = _CADType(("vrml", "wrl"), "FreeCADGui")
+    # VRML_ZIP = _CADType(("wrl.gz", "wrz"), "FreeCADGui")
+    VTK = _CADType("vtk", "Fem")
+    VTU = _CADType("vtu", "Fem")
+    WEBGL = _CADType("html", "BIM.importers.importWebGL")
+    # WEBGL_X3D = _CADType("xhtml", "FreeCADGui")
+    # X3D = _CADType("x3d", "FreeCADGui")
+    # X3DZ = _CADType("x3dz", "FreeCADGui")
+    YAML = _CADType("yaml", "feminout.importYamlJsonMesh")
+    Z88_FEM_MESH = _CADType("z88", "Fem")
+    Z88_FEM_MESH_2 = _CADType("i1.txt", "feminout.importZ88Mesh")
 
     @classmethod
     def _missing_(cls, value: str) -> CADFileType:
@@ -1415,22 +1478,31 @@ class CADFileType(enum.Enum):
             if value.upper() in cls.__members__:
                 return cls[value.upper()]
             for mixed_c in (cls.STEP_ZIP, cls.IFC_BIM_JSON, cls.FREECAD):
-                if value.casefold() == mixed_c.value.casefold():
+                if value in mixed_c.value:
                     return mixed_c
-            return cls(value.lower())
+            for cl in cls.__members__.values():
+                if value in cl.value:
+                    return cl
         return super()._missing_(value)
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
-        """CAD formats that don't need to be converted because they are unitless"""
-        return (cls.OBJ_WAVE, *[form for form in cls if form.export_module == "Mesh"])  # noqa: DOC201
+        """
+        Returns
+        -------
+        :
+            CAD formats that don't need to be converted because they are unitless
+        """
+        return (
+            cls.OBJ_WAVE,
+            *[form for form in cls if form.value.export_module == "Mesh"],
+        )
 
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""
         return (  # noqa: DOC201
             cls.GLTRANSMISSION,
-            cls.GLTRANSMISSION_2,
             cls.PLY_STANFORD,
             cls.SIMPLE_MODEL,
         )
@@ -1454,6 +1526,10 @@ class CADFileType(enum.Enum):
         )
 
     @DynamicClassAttribute
+    def ext(self) -> str:
+        return self.value.ext
+
+    @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
         """Get exporter module for each filetype
 
@@ -1462,28 +1538,7 @@ class CADFileType(enum.Enum):
         FreeCADError
             Unable to save file type
         """
-        if self.export_module is None:
-            # Assume CADFileType.FREECAD
-            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
-                doc = objs[0].Document
-                doc.saveAs(filename)
-
-            return FreeCADwriter
-        modlist = self.export_module.split(".")
-        try:
-            export_func = (
-                getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
-                ).export
-                if len(modlist) > 1
-                else __import__(self.export_module).export
-            )
-        except AttributeError:
-            raise FreeCADError(
-                f"Unable to save to {self.value} "
-                "please try through the main FreeCAD GUI"
-            ) from None
+        export_func = self.value.exporter()
         if self in self.manual_mesh_formats():
             return meshed_exporter(self, export_func)
         if self is self.WEBGL:
@@ -1499,27 +1554,10 @@ class CADFileType(enum.Enum):
         FreeCADError
             Unable to import file type
         """
-        if self.import_module is None:
-            # Assume CADFileType.FREECAD
-            def FreeCADreader(filename, document, **kwargs):  # noqa: ARG001
-                FreeCAD.getDocument(document).mergeProject(filename)
-
-            return FreeCADreader
         if self in self.not_importable_formats():
             raise NotImplementedError(f"{self.name} import not implemented in FreeCAD")
-        modlist = self.import_module.split(".")
-        msg = "Unable to import from {} please try through the main FreeCAD GUI"
-        try:
-            read = (
-                getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
-                ).insert
-                if len(modlist) > 1
-                else __import__(self.import_module).insert
-            )
-        except AttributeError:
-            raise FreeCADError(msg.format(self.value)) from None
+
+        read = self.value.importer()
 
         if self is CADFileType.STEP_ZIP:
             read = stepz_import(read)
@@ -1571,11 +1609,8 @@ def import_cad(
         if len(objs) == 0:
             if filetype in {
                 CADFileType.STEP,
-                CADFileType.STEP_2,
                 CADFileType.BREP,
-                CADFileType.BREP_2,
                 CADFileType.IGES,
-                CADFileType.IGES_2,
             }:
                 Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
                 objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
@@ -1733,7 +1768,7 @@ def save_cad(
         except (KeyError, AttributeError):
             raise ve from None
 
-    filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
+    filename = force_file_extension(filename, f".{cad_format.ext}")
 
     _freecad_save_config(**{
         k: kwargs.pop(k)
