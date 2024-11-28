@@ -111,8 +111,8 @@ def _patch_pivy():
         except subprocess.TimeoutExpired:
             raise TimeoutError(
                 "Patch failed to apply please run manually in the repo root:\n"
-                f"PIVYPATH={Path(pivy.__file__).parent}\n"
-                "patch -l -N -d $PIVYPATH -p 2 < ./bluemira/codes/pivy.patch\n"
+                f"patch -l -N -p 2 -d {Path(pivy.__file__).parent}"
+                " < ./bluemira/codes/pivy.patch\n"
                 "See v2.5.0 release notes for more information"
             ) from None
 
