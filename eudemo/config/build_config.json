@@ -8,7 +8,7 @@
     "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
-    "plot": true
+    "plot": false
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
