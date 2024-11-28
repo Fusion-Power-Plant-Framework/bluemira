@@ -121,9 +121,9 @@ def compound_from_components(
     -------
     PhysicalComponent
     """
-    faux_sec_comp = Component(f"{name} X")
-    faux_sec_comp.children = components
-    itr = PreOrderIter(faux_sec_comp)
+    faux_parent_for_iter = Component(f"{name} X")
+    faux_parent_for_iter.children = components
+    itr = PreOrderIter(faux_parent_for_iter)
     phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
     comp = make_compound(phy_comps_shape, name)
     return PhysicalComponent(name, comp, material=material)
@@ -157,7 +157,11 @@ def connect_components(
     itr = PreOrderIter(faux_sec_comp)
     phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
     # imprinted = connect_shapes(phy_comps_shape, 0.1, name)
-    imprinted = boolean_fuse(phy_comps_shape, name)
+    imprinted = phy_comps_shape[0]
+    for idx, shape in enumerate(phy_comps_shape[1:]):
+        print(f"Connecting shape {idx + 1}")
+        imprinted = boolean_fuse([imprinted, shape], name)
+    # imprinted = boolean_fuse(phy_comps_shape, name)
     return PhysicalComponent(name, imprinted, material=material)
 
 

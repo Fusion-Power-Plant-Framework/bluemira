@@ -567,8 +567,6 @@ if __name__ == "__main__":
         ivc_shapes.divertor_face,
     )
 
-    reactor.save_cad()
-
     upper_port_designer = UpperPortKOZDesigner(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
@@ -584,6 +582,8 @@ if __name__ == "__main__":
         r_inner_cut,
         cut_angle,
     )
+
+    reactor.save_cad()
 
     if reactor_config.config_for("Neutronics").get("enabled", False):
         reactor.neutronics = NeutronicsManager(

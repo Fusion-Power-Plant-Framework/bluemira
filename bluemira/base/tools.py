@@ -227,6 +227,7 @@ def build_comp_manager_save_xyz_cad_tree(
     """
     const_type = comp_manager.cad_construction_type()
     if isinstance(const_type, PhysicalComponent):
+        # you will still need to extract and compunidfy per material
         return const_type
 
     manager_comp = comp_manager.component()
