@@ -1271,22 +1271,40 @@ def _slice_solid(obj, normal_plane, shift):
 class Document:
     """Context manager to wrap freecad document creation"""
 
+    def __init__(
+        self,
+        shapes: Iterable[apiShape] | None = None,
+        labels: Iterable[str] | None = None,
+        doc_name: str = "Bluemira_FreeCAD_wrapper",
+    ):
+        if shapes is not None:
+            if labels is None:
+                # Empty string is the default argument for addObject
+                labels = [""] * len(shapes)
+
+            elif len(labels) != len(shapes):
+                raise ValueError(
+                    f"Number of labels ({len(labels)}) "
+                    f"!= number of objects ({len(shapes)})"
+                )
+        self.shapes = shapes
+        self.labels = labels
+        self.doc_name = doc_name
+
     def __enter__(self):
         if not hasattr(FreeCADGui, "subgraphFromObject"):
             FreeCADGui.setupWithoutGUI()
 
         self._old_doc = FreeCAD.ActiveDocument
-        self.doc = FreeCAD.newDocument("Bluemira_FreeCAD_wrapper")
+        self.doc = FreeCAD.newDocument()
         FreeCAD.setActiveDocument(self.doc.Name)
         return self
 
-    def setup(
+    def parts(
         self,
-        parts: Iterable[apiShape],
-        labels: Iterable[str] | None = None,
     ) -> Iterator[Part.Feature]:
         """
-        Setup FreeCAD document.
+        Get FreeCAD parts.
 
         Converts shapes to FreeCAD Part.Features to enable saving and viewing
 
@@ -1300,19 +1318,12 @@ class Document:
         :
             Each object in document
         """
-        if labels is None:
-            # Empty string is the default argument for addObject
-            labels = [""] * len(parts)
+        if self.shapes is None:
+            raise ValueError("No parts found")
 
-        elif len(labels) != len(parts):
-            raise ValueError(
-                f"Number of labels ({len(labels)}) != number of objects ({len(parts)})"
-            )
-
-        for part, label in zip(parts, labels, strict=False):
-            new_part = part.copy()
+        for part, label in zip(self.shapes, self.labels, strict=False):
             obj = self.doc.addObject("Part::FeaturePython", label)
-            obj.Shape = new_part
+            obj.Shape = part
             self.doc.recompute()
             yield obj
 
@@ -1732,6 +1743,7 @@ def save_cad(
     filename: str,
     cad_format: str | CADFileType = "stp",
     labels: Iterable[str] | None = None,
+    doc_name: str = "Bluemira_FreeCAD_wrapper",
     **kwargs,
 ):
     """
@@ -1775,9 +1787,9 @@ def save_cad(
         for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
     })
 
-    with Document() as doc:
+    with Document(shapes, labels, doc_name) as doc:
         try:
-            cad_format.exporter(list(doc.setup(shapes, labels)), filename, **kwargs)
+            cad_format.exporter(list(doc.parts()), filename, **kwargs)
         except ImportError as imp_err:
             raise FreeCADError(
                 f"Unable to save to {cad_format.value} please try through the main"
@@ -2818,8 +2830,8 @@ def show_cad(
     # Works for 3D, transparency and 2D doesnt work...
     # root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
 
-    with Document() as doc:
-        for obj, option in zip(doc.setup(parts, labels), options, strict=False):
+    with Document(parts, labels) as doc:
+        for obj, option in zip(doc.parts(), options, strict=False):
             subgraph = FreeCADGui.subgraphFromObject(obj)
             _colourise(subgraph, option)
             root.addChild(subgraph)
