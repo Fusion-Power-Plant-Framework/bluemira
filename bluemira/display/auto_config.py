@@ -16,7 +16,7 @@ from multiprocessing import TimeoutError as mpTimeoutError
 
 import numpy as np
 import seaborn as sns
-from PySide2 import QtWidgets
+from PySide6 import QtWidgets
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE

@@ -157,7 +157,6 @@ class TestGeometry:
             ],
             (2, False),
             id="coincident",
-            marks=pytest.mark.xfail(reason="coincident wires"),
         ),
         pytest.param(
             [
@@ -305,7 +304,6 @@ class TestGeometry:
             ),
             [(4, 1)],
             id="1-vertex-coincident",
-            # marks=pytest.mark.xfail(reason="Only one vertex intersection"),
         ),
         pytest.param(
             param_face(

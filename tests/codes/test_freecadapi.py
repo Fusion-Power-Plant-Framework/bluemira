@@ -11,7 +11,7 @@ import freecad  # noqa: F401
 import Part
 import numpy as np
 import pytest
-from FreeCAD import Base, newDocument
+from FreeCAD import Base, closeDocument, newDocument
 from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
@@ -324,13 +324,93 @@ class TestFreecadapi:
         assert np.isclose(arc_length, cadapi.length(arc4), 6)
 
 
+# Commented out CADFileTypes dont work with basic shapes tested or needed more
+# FreeCAD imported, should be reviewed in future
+cad_test_parameterisation = [
+    ("ASCII_STEREO_MESH", True),
+    ("ADDITIVE_MANUFACTURING", False),  # import not implemented
+    ("AUTOCAD_DXF", False),  # import segfault
+    ("BINMESH", True),
+    ("BREP", True),
+    pytest.param("CSG", True, marks=[pytest.mark.xfail(reason="import fails")]),
+    ("FREECAD", True),
+    ("GLTRANSMISSION", True),
+    ("IGES", True),
+    ("INVENTOR_V2_1", True),
+    ("JSON", False),  # import not implemented
+    ("OBJ", True),
+    ("OBJ_WAVE", True),
+    ("OFF", True),
+    ("OPENSCAD", False),  # requires openscad package see openscad.org
+    ("PLY_STANFORD", True),
+    ("SIMPLE_MODEL", True),
+    ("STEP", True),
+    ("STEP_ZIP", True),  # Case sensitive extension  # possible import wrong
+    ("STL", True),
+    ("SVG_FLAT", True),  # returns face
+    ("WEBGL", False),  # import not imlemented
+    # "THREED_MANUFACTURING",  # segfault
+    pytest.param("IFC_BIM", True, marks=[skipif_import_error("ifcopenshell")]),
+    pytest.param(
+        "IFC_BIM_JSON",  # github.com/buildingSMART/ifcJSON
+        False,  # import not implemented
+        marks=[skipif_import_error("ifcopenshell", "ifcjson")],
+    ),
+    pytest.param("DAE", True, marks=[skipif_import_error("collada")]),
+    pytest.param("AUTOCAD", True, marks=[pytest.mark.xfail(reason="LibreDWG required")]),
+    # TODO @je-cook: Part.Feature has no compatible object type, find compatible object
+    # 3713
+    pytest.param("ASC", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("BDF", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("DAT", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param(
+        "FENICS_FEM", True, marks=[pytest.mark.xfail(reason="No file created")]
+    ),
+    pytest.param(
+        "FENICS_FEM_XML", True, marks=[pytest.mark.xfail(reason="No file created")]
+    ),
+    pytest.param("INP", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param("MED", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param("MESHJSON", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("MESHPY", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("MESHYAML", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("PCD", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param("PLY", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param(
+        "TETGEN_FEM", True, marks=[pytest.mark.xfail(reason="No file created")]
+    ),
+    pytest.param("UNV", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param("VTK", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param("VTU", True, marks=[pytest.mark.xfail(reason="No FEM object")]),
+    pytest.param("YAML", True, marks=[pytest.mark.xfail(reason="No file created")]),
+    pytest.param(
+        "Z88_FEM_MESH", True, marks=[pytest.mark.xfail(reason="No FEM object")]
+    ),
+    pytest.param(
+        "Z88_FEM_MESH_2", True, marks=[pytest.mark.xfail(reason="No file created")]
+    ),
+    # Requires imports which requires a full GUI
+    # pytest.param("SVG", marks=[pytest.mark.xfail(reason="No DrawingGui found")]),
+    # pytest.param("PDF", marks=[pytest.mark.xfail(reason="More GUI required")]),
+    # pytest.param("VRML", marks=[pytest.mark.xfail(reason="More GUI required")]),
+    # pytest.param("VRML_ZIP", marks=[pytest.mark.xfail(reason="More GUI required")]),
+    # pytest.param("WEBGL_X3D", marks=[pytest.mark.xfail(reason="More GUI required")]),
+    # pytest.param("X3D", marks=[pytest.mark.xfail(reason="More GUI required")]),
+    # pytest.param("X3DZ", marks=[pytest.mark.xfail(reason="More GUI required")]),
+]
+
+
 class TestCADFiletype:
     @classmethod
     def setup_class(cls):
-        doc = newDocument()
-        cls.shape = doc.addObject("Part::FeaturePython")
+        cls.doc = newDocument("TestCADFileType")
+        cls.shape = cls.doc.addObject("Part::FeaturePython", "Circle")
         cls.shape.Shape = cadapi.extrude_shape(cadapi.make_circle(), (0, 0, 1))
-        doc.recompute()
+        cls.doc.recompute()
+
+    @classmethod
+    def teardown_class(cls):
+        closeDocument(cls.doc.Name)
 
     def setup_method(self):
         import FreeCADGui  # noqa: PLC0415
@@ -343,64 +423,35 @@ class TestCADFiletype:
         assert cadapi.CADFileType[name] == ftype
         assert cadapi.CADFileType(ftype.value) == ftype
 
-    # Commented out CADFileTypes dont work with basic shapes tested or needed more
-    # FreeCAD imported, should be reviewed in future
-    # TODO @je-cook: some of these crash on CI (?)
-    # 3668
-    @pytest.mark.longrun
-    @pytest.mark.parametrize(
-        "name",
-        [
-            "ASCII_STEREO_MESH",
-            "ADDITIVE_MANUFACTURING",
-            "AUTOCAD_DXF",
-            "BINMESH",
-            "BREP",
-            "BREP_2",
-            "CSG",
-            "FREECAD",
-            "GLTRANSMISSION",
-            "GLTRANSMISSION_2",
-            "IGES",
-            "IGES_2",
-            "INVENTOR_V2_1",
-            "JSON",
-            "OBJ",
-            "OBJ_WAVE",
-            "OFF",
-            "OPENSCAD",
-            "PLY_STANFORD",
-            "SIMPLE_MODEL",
-            "STEP",
-            "STEP_2",
-            "STEP_ZIP",  # Case sensitive extension
-            "STL",
-            # "THREED_MANUFACTURING",  # segfault
-            pytest.param("IFC_BIM", marks=[skipif_import_error("ifcopenshell")]),
-            pytest.param(
-                "IFC_BIM_JSON",  # github.com/buildingSMART/ifcJSON
-                marks=[skipif_import_error("ifcopenshell", "ifcjson")],
-            ),
-            pytest.param("DAE", marks=[skipif_import_error("collada")]),
-            pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),  # LibreDWG required
-            # # Part.Feature has no compatible object type, find compatible object type
-            # "ASC", "BDF", "DAT", "FENICS_FEM", "FENICS_FEM_XML", "INP", "MED",
-            # "MESHJSON", "MESHPY", "MESHYAML", "PCD", "PLY", "TETGEN_FEM", "UNV",
-            # "VTK", "VTU", "YAML", "Z88_FEM_MESH", "Z88_FEM_MESH_2",
-            # # More FreeCAD than we import, fails differently on each import
-            # "WEBGL",
-            # # No file output
-            # "SVG, "SVG_FLAT",
-            # # Requires TechDrawGui import which requires a GUI
-            # "PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2",
-            # "WEBGL_X3D", "X3D", "X3DZ"
-        ],
-    )
-    def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
+    @pytest.mark.parametrize(("name", "imprt"), cad_test_parameterisation)
+    def test_exporter_function_exists_and_creates_a_file_and_imported(
+        self, name, imprt, tmp_path
+    ):
         filetype = cadapi.CADFileType[name]
-        filename = f"{tmp_path / 'tst'}.{filetype.value}"
+        filename = f"{tmp_path / 'tst'}.{filetype.ext}"
         if name != "FREECAD":  # custom function in this case
             assert filetype.exporter.__name__ == "export"
 
-        cadapi.CADFileType[name].exporter([self.shape], filename)
+        filetype.exporter([self.shape], filename)
         assert Path(filename).exists()
+
+        if not imprt:
+            return
+
+        with cadapi.Document() as doc:
+            filetype.importer(filename, doc.doc.Name)
+
+            if filetype not in cadapi.CADFileType.mesh_import_formats():
+                objs = doc.doc.Objects
+                assert len(objs) == 1
+                if filetype is cadapi.CADFileType.BREP:
+                    assert objs[0].Label == "tst"
+                else:
+                    assert objs[0].Label == "Circle"
+                if filetype is cadapi.CADFileType.SVG_FLAT:
+                    # A flat svg is not going to be 3D
+                    assert isinstance(objs[0].Shape, cadapi.apiFace)
+                elif filetype is cadapi.CADFileType.BREP:
+                    assert isinstance(objs[0].Shape, cadapi.apiCompound)
+                else:
+                    assert isinstance(objs[0].Shape, cadapi.apiShell)

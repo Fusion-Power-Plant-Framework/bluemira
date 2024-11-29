@@ -14,15 +14,13 @@ import enum
 import math
 import os
 import sys
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import (
-    TYPE_CHECKING,
-    Protocol,
-)
+from typing import TYPE_CHECKING, Protocol
+from unittest import mock
 
 import FreeCAD
 import BOPTools
@@ -38,9 +36,15 @@ import FreeCADGui
 import Part
 import numpy as np
 from FreeCAD import Base
-from PySide2.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from matplotlib import colors
-from pivy import coin, quarter
+
+try:
+    from pivy import coin, quarter
+except ImportError:
+    from bluemira.codes._freecadconfig import _patch_pivy
+
+    coin, quarter = _patch_pivy()
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
@@ -669,14 +673,14 @@ def offset_wire(
                 thickness, f_join.value, fill=False, intersection=open_wire
             ),
         )
-    except Base.FreeCADError as error:
+    except (ValueError, Base.FreeCADError) as error:
         msg = "\n".join([
             "FreeCAD was unable to make an offset of wire:",
             f"{error.args[0]['sErrMsg']}",
         ])
         raise FreeCADError(msg) from None
 
-    fix_wire(wire)
+    fix_shape(wire)
     if not wire.isClosed() and not open_wire:
         raise FreeCADError("offset failed to close wire")
     return wire
@@ -1079,6 +1083,11 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
             parameter = edge.getParameterByLength(floatify(new_distance))
             point = edge.valueAt(parameter)
             break
+    else:
+        # This catches floating point less thans when new_length ~= distance
+        # for the last wire
+        edge = wire.OrderedEdges[-1]
+        point = edge.valueAt(edge.LastParameter)
 
     return np.array(point)
 
@@ -1211,8 +1220,6 @@ def slice_shape(
     """
     Slice a shape along a given plane
 
-    TODO improve face-solid-shell interface
-
     Parameters
     ----------
     shape:
@@ -1229,6 +1236,8 @@ def slice_shape(
     Further investigation needed.
 
     """
+    # TODO @je-cook: improve face-solid-shell interface
+    # 1050
     if isinstance(shape, apiWire):
         return _slice_wire(shape, plane_axis, plane_origin)  # noqa: DOC201
     if not isinstance(shape, apiFace | apiSolid):
@@ -1259,58 +1268,155 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # FreeCAD Configuration
 # ======================================================================================
-def _setup_document(
-    parts: Iterable[apiShape],
-    labels: Iterable[str] | None = None,
-    *,
-    rotate: bool = False,
-) -> Iterator[Part.Feature]:
-    """
-    Setup FreeCAD document.
+class Document:
+    """Context manager to wrap freecad document creation"""
 
-    Converts shapes to FreeCAD Part.Features to enable saving and viewing
+    def __init__(
+        self,
+        shapes: Iterable[apiShape] | None = None,
+        labels: Iterable[str] | None = None,
+        doc_name: str = "Bluemira_FreeCAD_wrapper",
+    ):
+        if shapes is not None:
+            if labels is None:
+                # Empty string is the default argument for addObject
+                labels = [""] * len(shapes)
 
-    Raises
-    ------
-    ValueError
-        Number of objects not equal to number of labels
+            elif len(labels) != len(shapes):
+                raise ValueError(
+                    f"Number of labels ({len(labels)}) "
+                    f"!= number of objects ({len(shapes)})"
+                )
+        self.shapes = shapes
+        self.labels = labels
+        self.doc_name = doc_name
 
-    Yields
-    ------
-    :
-        Each document object
+    def __enter__(self):
+        if not hasattr(FreeCADGui, "subgraphFromObject"):
+            FreeCADGui.setupWithoutGUI()
 
-    Notes
-    -----
-    TODO the rotate flag should be removed. We should fix it in the camera of the viewer
-    """
-    if not hasattr(FreeCADGui, "subgraphFromObject"):
-        FreeCADGui.setupWithoutGUI()
+        self._old_doc = FreeCAD.ActiveDocument
+        self.doc = FreeCAD.newDocument()
+        FreeCAD.setActiveDocument(self.doc.Name)
+        return self
 
-    doc = FreeCAD.newDocument()
+    def parts(
+        self,
+    ) -> Iterator[Part.Feature]:
+        """
+        Get FreeCAD parts.
 
-    if labels is None:
-        # Empty string is the default argument for addObject
-        labels = [""] * len(parts)
+        Converts shapes to FreeCAD Part.Features to enable saving and viewing
 
-    elif len(labels) != len(parts):
-        raise ValueError(
-            f"Number of labels ({len(labels)}) != number of objects ({len(parts)})"
-        )
+        Raises
+        ------
+        ValueError
+            Number of objects not equal to number of labels
 
-    for part, label in zip(parts, labels, strict=False):
-        new_part = part.copy()
-        if rotate:
-            new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::FeaturePython", label)
-        obj.Shape = new_part
-        doc.recompute()
-        yield obj
+        Yields
+        ------
+        :
+            Each object in document
+        """
+        if self.shapes is None:
+            raise ValueError("No parts found")
+
+        for part, label in zip(self.shapes, self.labels, strict=False):
+            obj = self.doc.addObject("Part::FeaturePython", label)
+            obj.Shape = part
+            self.doc.recompute()
+            yield obj
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        FreeCAD.closeDocument(self.doc.Name)
+        if self._old_doc is not None:
+            FreeCAD.setActiveDocument(self._old_doc.Name)
 
 
 # ======================================================================================
 # Save functions
 # ======================================================================================
+
+
+@dataclass
+class _CADType:
+    """CAD file type definition"""
+
+    file_extensions: str | tuple[str, ...]
+    export_module: str | None = None
+    import_module: str | None = None
+
+    def __post_init__(self):
+        if not isinstance(self.file_extensions, tuple):
+            self.file_extensions = (self.file_extensions,)
+        self._casefolded = tuple(f.casefold() for f in self.file_extensions)
+        self.import_module = self.import_module or self.export_module
+
+    def __contains__(self, value: str) -> bool:
+        return value.casefold() in self._casefolded
+
+    def __eq__(self, value: str | _CADType) -> bool:
+        if isinstance(value, str):
+            return value.casefold() in self._casefolded
+        if isinstance(value, _CADType):
+            return value is self
+        return False
+
+    def __hash__(self):
+        return hash((*self.file_extensions, self.export_module, self.import_module))
+
+    @property
+    def ext(self):
+        return self.file_extensions[0]
+
+    def exporter(self) -> ExporterProtocol:
+        if self.export_module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
+                doc = objs[0].Document
+                doc.saveAs(filename)
+
+            return FreeCADwriter
+        modlist = self.export_module.split(".")
+        try:
+            export_func = (
+                getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).export
+                if len(modlist) > 1
+                else __import__(self.export_module).export
+            )
+        except AttributeError:
+            raise FreeCADError(
+                f"Unable to save to {self.file_extensions[0]} "
+                "please try through the main FreeCAD GUI"
+            ) from None
+        return export_func
+
+    def importer(self) -> ImporterProtocol:
+        if self.import_module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADreader(filename, document, **kwargs):  # noqa: ARG001
+                FreeCAD.getDocument(document).mergeProject(filename)
+
+            return FreeCADreader
+        modlist = self.import_module.split(".")
+        msg = "Unable to import from {} please try through the main FreeCAD GUI"
+        try:
+            read = (
+                getattr(
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
+                    modlist[-1],
+                ).insert
+                if len(modlist) > 1
+                else __import__(self.import_module).insert
+            )
+        except AttributeError:
+            raise FreeCADError(msg.format(self.file_extensions[0])) from None
+        return read
+
+
 class CADFileType(enum.Enum):
     """
     FreeCAD standard export filetypes
@@ -1322,90 +1428,117 @@ class CADFileType(enum.Enum):
     """
 
     # Commented out currently don't function
-    ASCII_STEREO_MESH = ("ast", "Mesh")
-    ADDITIVE_MANUFACTURING = ("amf", "Mesh")
-    ASC = ("asc", "Points")
-    AUTOCAD = ("dwg", "importDWG")
-    AUTOCAD_DXF = ("dxf", "importDXF")
-    # BDF = ("bdf", "feminout.exportNastranMesh")
-    BINMESH = ("bms", "Mesh")
-    BREP = ("brep", "Part")
-    BREP_2 = ("brp", "Part")
-    CSG = ("csg", "exportCSG")
-    DAE = ("dae", "importDAE")
-    # DAT = ("dat", "Fem")
-    FREECAD = ("FCStd", None)
-    # FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
-    # FENICS_FEM_XML = ("xml", "feminout.importFenicsMesh")
-    GLTRANSMISSION = ("gltf", "ImportGui")
-    GLTRANSMISSION_2 = ("glb", "ImportGui")
-    IFC_BIM = ("ifc", "exportIFC")
-    IFC_BIM_JSON = ("ifcJSON", "exportIFC")
-    IGES = ("iges", "ImportGui")
-    IGES_2 = ("igs", "ImportGui")
-    # INP = ("inp", "Fem")
-    INVENTOR_V2_1 = ("iv", "Mesh")
-    JSON = ("json", "importJSON")
-    # JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
-    # MED = ("med", "Fem")
-    # MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
-    # MESHPY = ("meshpy", "feminout.importPyMesh")
-    # MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
-    OBJ = ("obj", "Mesh")
-    OBJ_WAVE = ("$obj", "importOBJ")
-    OFF = ("off", "Mesh")
-    OPENSCAD = ("scad", "exportCSG")
-    # PCD = ("pcd", "Points")
-    # PDF = ("pdf", "FreeCADGui")
-    # PLY = ("ply", "Points")
-    PLY_STANFORD = ("ply", "Mesh")
-    SIMPLE_MODEL = ("smf", "Mesh")
-    STEP = ("stp", "ImportGui")
-    STEP_2 = ("step", "ImportGui")
-    STEP_ZIP = ("stpZ", "stepZ")
-    STL = ("stl", "Mesh")
-    # SVG = ("svg", "DrawingGui")
-    # SVG_FLAT = ("$svg", "importSVG")
-    # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
-    # THREED_MANUFACTURING = ("3mf", "Mesh")  # segfault?
-    # UNV = ("unv", "Fem")
-    # VRML = ("vrml", "FreeCADGui")
-    # VRML_2 = ("wrl", "FreeCADGui")
-    # VRML_ZIP = ("wrl.gz", "FreeCADGui")
-    # VRML_ZIP_2 = ("wrz", "FreeCADGui")
-    # VTK = ("vtk", "Fem")
-    # VTU = ("vtu", "Fem")
-    # WEBGL = ("html", "importWebGL")
-    # WEBGL_X3D = ("xhtml", "FreeCADGui")
-    # X3D = ("x3d", "FreeCADGui")
-    # X3DZ = ("x3dz", "FreeCADGui")
-    # YAML = ("yaml", "feminout.importYamlJsonMesh")
-    # Z88_FEM_MESH = ("z88", "Fem")
-    # Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
+    ASCII_STEREO_MESH = _CADType("ast", "Mesh")
+    ADDITIVE_MANUFACTURING = _CADType("amf", "Mesh")
+    ASC = _CADType("asc", "Points")
+    AUTOCAD = _CADType("dwg", "importDWG")
+    AUTOCAD_DXF = _CADType("dxf", "importDXF")
+    BDF = _CADType("bdf", "feminout.exportNastranMesh")
+    BINMESH = _CADType("bms", "Mesh")
+    BREP = _CADType(("brep", "brp"), "Part")
+    CSG = _CADType("csg", "exportCSG", "importCSG")
+    DAE = _CADType("dae", "importDAE")
+    DAT = _CADType("dat", "Fem")
+    FREECAD = _CADType("FCStd", None)
+    FENICS_FEM = _CADType("xdmf", "feminout.importFenicsMesh")
+    FENICS_FEM_XML = _CADType("xml", "feminout.importFenicsMesh")
+    GLTRANSMISSION = _CADType(("gltf", "glb"), "ImportGui")
+    IFC_BIM = _CADType("ifc", "exportIFC")
+    IFC_BIM_JSON = _CADType("ifcJSON", "exportIFC")
+    IGES = _CADType(("iges", "igs"), "ImportGui")
+    INP = _CADType("inp", "Fem")
+    INVENTOR_V2_1 = _CADType("iv", "Mesh")
+    JSON = _CADType("json", "BIM.importers.importJSON")
+    JSON_MESH = _CADType("$json", "feminout.importYamlJsonMesh")
+    MED = _CADType("med", "Fem")
+    MESHJSON = _CADType("meshjson", "feminout.importYamlJsonMesh")
+    MESHPY = _CADType("meshpy", "feminout.importPyMesh")
+    MESHYAML = _CADType("meshyaml", "feminout.importYamlJsonMesh")
+    OBJ = _CADType("obj", "Mesh")
+    OBJ_WAVE = _CADType("$obj", "BIM.importers.importOBJ")
+    OFF = _CADType("off", "Mesh")
+    OPENSCAD = _CADType("scad", "exportCSG")
+    PCD = _CADType("pcd", "Points")
+    # PDF = _CADType("pdf", "FreeCADGui")
+    PLY = _CADType("ply", "Points")
+    PLY_STANFORD = _CADType("ply", "Mesh")
+    SIMPLE_MODEL = _CADType("smf", "Mesh")
+    STEP = _CADType(("stp", "step"), "ImportGui")
+    STEP_ZIP = _CADType("stpZ", "stepZ")
+    STL = _CADType("stl", "Mesh")
+    # SVG = _CADType("svg", "DrawingGui")
+    SVG_FLAT = _CADType("svg", "importSVG")
+    TETGEN_FEM = _CADType("poly", "feminout.convert2TetGen")
+    # THREED_MANUFACTURING = _CADType("3mf", "Mesh")  # segfault?
+    UNV = _CADType("unv", "Fem")
+    # VRML = _CADType(("vrml", "wrl"), "FreeCADGui")
+    # VRML_ZIP = _CADType(("wrl.gz", "wrz"), "FreeCADGui")
+    VTK = _CADType("vtk", "Fem")
+    VTU = _CADType("vtu", "Fem")
+    WEBGL = _CADType("html", "BIM.importers.importWebGL")
+    # WEBGL_X3D = _CADType("xhtml", "FreeCADGui")
+    # X3D = _CADType("x3d", "FreeCADGui")
+    # X3DZ = _CADType("x3dz", "FreeCADGui")
+    YAML = _CADType("yaml", "feminout.importYamlJsonMesh")
+    Z88_FEM_MESH = _CADType("z88", "Fem")
+    Z88_FEM_MESH_2 = _CADType("i1.txt", "feminout.importZ88Mesh")
 
-    def __new__(cls, *args, **kwds):  # noqa: ARG003
-        """Create Enum from first half of tuple"""
-        obj = object.__new__(cls)
-        obj._value_ = args[0]
-        return obj
-
-    def __init__(self, _, module: str = ""):
-        self.module = module
+    @classmethod
+    def _missing_(cls, value: str) -> CADFileType:
+        if isinstance(value, str):
+            if value.upper() in cls.__members__:
+                return cls[value.upper()]
+            for mixed_c in (cls.STEP_ZIP, cls.IFC_BIM_JSON, cls.FREECAD):
+                if value in mixed_c.value:
+                    return mixed_c
+            for cl in cls.__members__.values():
+                if value in cl.value:
+                    return cl
+        return super()._missing_(value)
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
-        """CAD formats that don't need to be converted because they are unitless"""
-        return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])  # noqa: DOC201
+        """
+        Returns
+        -------
+        :
+            CAD formats that don't need to be converted because they are unitless
+        """
+        return (
+            cls.OBJ_WAVE,
+            *[form for form in cls if form.value.export_module == "Mesh"],
+        )
 
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""
         return (  # noqa: DOC201
             cls.GLTRANSMISSION,
-            cls.GLTRANSMISSION_2,
             cls.PLY_STANFORD,
             cls.SIMPLE_MODEL,
         )
+
+    @classmethod
+    def not_importable_formats(cls) -> tuple[CADFileType, ...]:
+        return (cls.ADDITIVE_MANUFACTURING, cls.WEBGL, cls.JSON)
+
+    @classmethod
+    def mesh_import_formats(cls) -> tuple[CADFileType, ...]:
+        return (
+            cls.ASCII_STEREO_MESH,
+            cls.BINMESH,
+            cls.INVENTOR_V2_1,
+            cls.OBJ,
+            cls.OBJ_WAVE,
+            cls.OFF,
+            cls.PLY_STANFORD,
+            cls.SIMPLE_MODEL,
+            cls.STL,
+        )
+
+    @DynamicClassAttribute
+    def ext(self) -> str:
+        return self.value.ext
 
     @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
@@ -1416,26 +1549,30 @@ class CADFileType(enum.Enum):
         FreeCADError
             Unable to save file type
         """
-        try:
-            export_func = __import__(self.module).export
-        except AttributeError:
-            modlist = self.module.split(".")
-            if len(modlist) > 1:
-                return getattr(__import__(modlist[0]), modlist[1]).export
-            raise FreeCADError(
-                f"Unable to save to {self.value} please try through the main FreeCAD GUI"
-            ) from None
-        except TypeError:
-            # Assume CADFileType.FREECAD
-            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
-                doc = objs[0].Document
-                doc.saveAs(filename)
+        export_func = self.value.exporter()
+        if self in self.manual_mesh_formats():
+            return meshed_exporter(self, export_func)
+        if self is self.WEBGL:
+            return webgl_export(export_func)
+        return export_func
 
-            return FreeCADwriter
-        else:
-            if self in self.manual_mesh_formats():
-                return meshed_exporter(self, export_func)
-            return export_func
+    @DynamicClassAttribute
+    def importer(self) -> ImporterProtocol:
+        """Get importer module for each filetype
+
+        Raises
+        ------
+        FreeCADError
+            Unable to import file type
+        """
+        if self in self.not_importable_formats():
+            raise NotImplementedError(f"{self.name} import not implemented in FreeCAD")
+
+        read = self.value.importer()
+
+        if self is CADFileType.STEP_ZIP:
+            read = stepz_import(read)
+        return read
 
 
 class ExporterProtocol(Protocol):
@@ -1443,10 +1580,93 @@ class ExporterProtocol(Protocol):
 
     def __call__(self, objs: list[Part.Feature], filename: str, **kwargs):
         """Export CAD protocol"""
+        ...
+
+
+class ImporterProtocol(Protocol):
+    """Typing for CAD importer"""
+
+    def __call__(self, filename: str, document: str, **kwargs):
+        """Import CAD protocol"""
+        ...
+
+
+def import_cad(
+    file: str | Path,
+    filetype: CADFileType | str | None = None,
+    unit_scale: str = "m",
+    **kwargs,
+) -> list[tuple[apiShape, str]]:
+    """Import CAD objects from file
+
+    Returns
+    -------
+    :
+        The imported shapes
+    """
+    file = Path(file)
+    filetype = (
+        CADFileType(file.suffix.strip("."))
+        if filetype is None
+        else CADFileType(filetype)
+    )
+    scale = raw_uc(1, "mm", unit_scale)
+
+    with Document() as doc:
+        filetype.importer(file.as_posix(), doc.doc.Name, **kwargs)
+        if filetype in CADFileType.mesh_import_formats():
+            raise NotImplementedError("Mesh CAD formats not implemented")
+        objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
+        if len(objs) == 0:
+            if filetype in {
+                CADFileType.STEP,
+                CADFileType.BREP,
+                CADFileType.IGES,
+            }:
+                Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
+                objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
+                if len(objs) > 0:
+                    return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
+            bluemira_warn("No objects found in import")
+
+        if filetype not in CADFileType.unitless_formats():
+            return [(scale_shape(obj.copy(), scale), lab) for obj, lab in objs]
+        return objs
+
+
+def webgl_export(export_func: ExporterProtocol) -> ExporterProtocol:
+    """Webgl exporter for offscreen rendering"""
+    # Default camera in freecad gui found with
+    # Gui.ActiveDocument.ActiveView.getCamera()
+    camerastr = (
+        "#Inventor V2.1 ascii\n\n\nOrthographicCamera "
+        "{\n  viewportMapping ADJUST_CAMERA\n  "
+        "position 40.957512 -70.940689 57.35767\n  "
+        "orientation 0.86492187 0.23175442 0.44519675  1.0835806\n  "
+        "aspectRatio 1\n  focalDistance 100\n  height 100\n\n}\n"
+    )
+
+    @wraps(export_func)
+    def wrapper(objs: list[Part.Feature], filename: str, **kwargs):
+        kwargs["camera"] = kwargs.pop("camera", None) or camerastr
+        export_func(objs, filename, **kwargs)
+
+    return wrapper  # noqa: DOC201
+
+
+def stepz_import(import_func: ImporterProtocol) -> ImporterProtocol:
+    """Step z importer "needs" more FreeCADGui so we're patching it out"""
+
+    @wraps(import_func)
+    def wrapper(filename: str, document: str, **kwargs):
+        with mock.patch("stepZ.FreeCADGui.SendMsgToActiveView", create=True):
+            import_func(filename, document, **kwargs)
+
+    return wrapper  # noqa: DOC201
 
 
 def meshed_exporter(
-    cad_format: CADFileType, export_func: Callable[[Part.Feature, str], None]
+    cad_format: CADFileType, export_func: ExporterProtocol
 ) -> ExporterProtocol:
     """Meshing and then exporting CAD in certain formats."""
 
@@ -1466,9 +1686,7 @@ def meshed_exporter(
     return wrapper  # noqa: DOC201
 
 
-def save_as_STP(
-    shapes: list[apiShape], filename: str = "test", unit_scale: str = "metre"
-):
+def save_as_STP(shapes: list[apiShape], filename: str = "test"):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1478,8 +1696,6 @@ def save_as_STP(
         Iterable of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    unit_scale:
-        The scale in which to save the Shape objects
 
     Raises
     ------
@@ -1503,13 +1719,6 @@ def save_as_STP(
         raise FreeCADError("Shape is null.")
 
     compound = make_compound(shapes)
-    scale = raw_uc(1, unit_scale, "mm")
-
-    if scale != 1:
-        # scale the compound. Since the scale function modifies directly the shape,
-        # a copy of the compound is made to avoid modification of the original shapes.
-        compound = scale_shape(compound.copy(), scale)
-
     compound.exportStep(filename)
 
 
@@ -1534,7 +1743,7 @@ def save_cad(
     filename: str,
     cad_format: str | CADFileType = "stp",
     labels: Iterable[str] | None = None,
-    unit_scale: str = "metre",
+    doc_name: str = "Bluemira_FreeCAD_wrapper",
     **kwargs,
 ):
     """
@@ -1550,8 +1759,6 @@ def save_cad(
         file cad_format
     labels:
         shape labels
-    unit_scale:
-        unit to save the objects as.
     kwargs:
         passed to freecad preferences configuration
 
@@ -1573,28 +1780,21 @@ def save_cad(
         except (KeyError, AttributeError):
             raise ve from None
 
-    filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
+    filename = force_file_extension(filename, f".{cad_format.ext}")
 
     _freecad_save_config(**{
         k: kwargs.pop(k)
         for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
     })
 
-    objs = list(_setup_document(shapes, labels, rotate=False))
-
-    # Part is always built in mm but some formats are unitless
-    if cad_format not in CADFileType.unitless_formats():
-        _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
-
-    # Some exporters need FreeCADGui to be setup before their import,
-    # this is achieved in _setup_document
-    try:
-        cad_format.exporter(objs, filename, **kwargs)
-    except ImportError as imp_err:
-        raise FreeCADError(
-            f"Unable to save to {cad_format.value} please try through the main"
-            " FreeCAD GUI"
-        ) from imp_err
+    with Document(shapes, labels, doc_name) as doc:
+        try:
+            cad_format.exporter(list(doc.parts()), filename, **kwargs)
+        except ImportError as imp_err:
+            raise FreeCADError(
+                f"Unable to save to {cad_format.value} please try through the main"
+                " FreeCAD GUI"
+            ) from imp_err
 
     if not Path(filename).exists():
         mesg = f"{filename} not created, filetype not written by FreeCAD."
@@ -2235,22 +2435,22 @@ def _make_shapes_coaxis(shapes):
 # ======================================================================================
 
 
-def fix_wire(
-    wire: apiWire, precision: float = EPS_FREECAD, min_length: float = MINIMUM_LENGTH
+def fix_shape(
+    shape: apiShape, precision: float = EPS_FREECAD, min_length: float = MINIMUM_LENGTH
 ):
     """
-    Fix a wire by removing any small edges and joining the remaining edges.
+    Fix a shape by removing any small edges and joining the remaining edges.
 
     Parameters
     ----------
-    wire:
-        Wire to fix
+    shape:
+        Shape to fix
     precision:
         General precision with which to work
     min_length:
         Minimum edge length
     """
-    wire.fix(precision, min_length, min_length)
+    shape.fix(precision, min_length, min_length)
 
 
 # ======================================================================================
@@ -2415,7 +2615,7 @@ def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
 
     Note
     ----
-    Face is centered on the Plane Position. With respect to the global coordinate
+    Face is centred on the Plane Position. With respect to the global coordinate
     system, the face placement is given by a simple rotation of the z axis.
 
     Parameters
@@ -2495,15 +2695,15 @@ def collect_verts_faces(
     solid: apiShape, tesselation: float = 0.1
 ) -> tuple[np.ndarray | None, ...]:
     """
-    Collects verticies and faces of parts and tessellates them
+    Collects vertices and faces of parts and tessellates them
     for the CAD viewer
 
     Parameters
     ----------
     solid:
         FreeCAD Part
-    tesselation:
-        amount of tesselation for the mesh
+    tessellation:
+        amount of tessellation for the mesh
 
     Returns
     -------
@@ -2518,7 +2718,7 @@ def collect_verts_faces(
 
     # collect
     for face in solid.Faces:
-        # tesselation is likely to be the most expensive part of this
+        # tessellation is likely to be the most expensive part of this
         v, f = face.tessellate(tesselation)
 
         if v != []:
@@ -2534,7 +2734,7 @@ def collect_verts_faces(
 
 def collect_wires(solid: apiShape, **kwds) -> tuple[np.ndarray, np.ndarray]:
     """
-    Collects verticies and edges of parts and discretises them
+    Collects vertices and edges of parts and discretises them
     for the CAD viewer
 
     Parameters
@@ -2583,6 +2783,7 @@ def show_cad(
     parts: apiShape | list[apiShape],
     options: dict | list[dict | None] | None = None,
     labels: list[str] | None = None,
+    camera_rotation: Iterable[float] = (90, 0, 0),
     **kwargs,  # noqa: ARG001
 ):
     """
@@ -2596,6 +2797,9 @@ def show_cad(
         The options to use to display the parts.
     labels:
         labels to use for each part object
+    camera_rotation:
+        rotation in degrees of camera around object,
+        Default looks at the bluemira xz plane.
 
     Raises
     ------
@@ -2623,21 +2827,98 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for obj, option in zip(
-        _setup_document(parts, labels, rotate=True), options, strict=False
-    ):
-        subgraph = FreeCADGui.subgraphFromObject(obj)
-        _colourise(subgraph, option)
-        root.addChild(subgraph)
+    # Works for 3D, transparency and 2D doesnt work...
+    # root = embedLight(root, lightdir=(0, 0, -1), intensity=0.5)
 
-    viewer = quarter.QuarterWidget()
-    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
-    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
-    viewer.setSceneGraph(root)
+    with Document(parts, labels) as doc:
+        for obj, option in zip(doc.parts(), options, strict=False):
+            subgraph = FreeCADGui.subgraphFromObject(obj)
+            _colourise(subgraph, option)
+            root.addChild(subgraph)
 
-    viewer.setWindowTitle("Bluemira Display")
-    viewer.show()
-    app.exec_()
+        viewer = quarter.QuarterWidget()
+        viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+        viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+        viewer.setSceneGraph(root)
+
+        viewer.setWindowTitle("Bluemira Display")
+
+        rotate_into_position(viewer, *(np.deg2rad(i) for i in camera_rotation))
+
+        light = viewer.getHeadlight()
+        light.direction = (0, 0.3, -0.8)
+        light.intensity = 1.2
+
+        viewer.show()
+        app.exec_()
+
+
+def rotate_into_position(
+    scene: quarter.QuarterWidget, x_ang: float, y_ang: float, z_ang: float
+):
+    """Rotate camera around object"""
+    axes = []
+    for i_ang, i in zip((x_ang, y_ang, z_ang), ("X", "Y", "Z"), strict=False):
+        mat = Base.Matrix()
+        getattr(mat, f"rotate{i}")(i_ang)
+        axes.append(Base.Placement(mat).Rotation)
+
+    cam = scene.getSoEventManager().getCamera()
+    rot_camera = Base.Rotation(*cam.orientation.getValue().getValue())
+    # scene.fitAll()
+
+    # the camera's position, i.e. the user's eye point
+    position = Base.Vector(*cam.position.getValue().getValue())
+    distance = cam.focalDistance.getValue()
+
+    # view direction
+    vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+
+    # this is the point on the screen the camera looks at
+    # when rotating the camera we should make this point fix
+    lookat = position + vec * distance
+
+    for axis in axes:
+        rot_camera = axis.multiply(rot_camera)
+        cam.orientation.setValue(*rot_camera.Q)
+        vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+        pos = lookat - vec * distance
+        cam.position.setValue(pos.x, pos.y, pos.z)
+
+
+def embedLight(scene, lightdir: tuple[float], intensity: float) -> coin.SoSeparator:
+    """
+    Embeds a given coin node
+    inside a shadow group with directional light with the
+    given direction (x,y,z) tuple.
+
+    Returns
+    -------
+    :
+        the final coin node
+
+    Notes
+    -----
+    Modified from BIM.OfflineRendingerUtils::embedLight
+    """
+    buf = f"""
+    #Inventor V2.1 ascii
+    ShadowGroup {{
+        quality 1
+        precision 1
+        ShadowDirectionalLight {{
+            direction {lightdir[0]} {lightdir[1]} {lightdir[2]}
+            intensity {intensity}
+            # enable this to reduce the shadow view distance
+            maxShadowDistance 1
+        }}
+    }}"""
+
+    inp = coin.SoInput()
+    inp.setBuffer(buf)
+    sgroup = coin.SoDB.readAll(inp)
+    sgroup.addChild(scene)
+    return sgroup
 
 
 # # =============================================================================

@@ -20,11 +20,11 @@ variables:
 
 dependencies:
   - python >=3.10,<3.12
-  - fenics-dolfinx=0.7.3
-  - freecad=0.21.2
+  - fenics-dolfinx=0.9.0
+  - freecad=1.0
   - h5py
   - openmc>=0.14.0
-  - mpi4py<4
+  - mpi4py
   - graphviz
   - pip
   - pip:

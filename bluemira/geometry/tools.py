@@ -1572,7 +1572,6 @@ def is_convex(points: npt.NDArray):
 def save_as_STP(
     shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
     filename: str,
-    unit_scale: str = "metre",
     **kwargs,
 ):
     """
@@ -1584,20 +1583,18 @@ def save_as_STP(
         List of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    unit_scale:
-        The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
 
     if not isinstance(shapes, list):
         shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
 
-    cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
+    cadapi.save_as_STP([s.shape for s in shapes], filename, **kwargs)
 
 
 def save_cad(
     shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
-    filename: str,
+    filename: str | Path,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
     **kwargs,
@@ -1625,11 +1622,34 @@ def save_cad(
 
     cadapi.save_cad(
         [s.shape for s in shapes],
-        filename,
+        Path(filename).as_posix(),
         cad_format=cad_format,
         labels=names,
         **kwargs,
     )
+
+
+def import_cad(
+    filename: str | Path,
+    cad_format: str | cadapi.CADFileType | None = None,
+    unit_scale: str = "m",
+    **kwargs,
+) -> BluemiraGeo | list[BluemiraGeo]:
+    """Import CAD from file
+
+    Returns
+    -------
+    :
+        The imported objects
+    """
+    objs = [
+        convert(s[0], label=s[1])
+        for s in cadapi.import_cad(filename, cad_format, unit_scale, **kwargs)
+    ]
+
+    if len(objs) == 1:
+        return objs[0]
+    return objs
 
 
 # ======================================================================================

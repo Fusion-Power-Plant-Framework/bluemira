@@ -9,12 +9,14 @@ FreeCAD configuration
 """
 
 import enum  # noqa: I001
+import subprocess  # noqa: S404
+from pathlib import Path
 
 import freecad  # noqa: F401
 import FreeCAD
 
 
-class _Unit(enum.IntEnum):
+class FCUnit(enum.IntEnum):
     """Available units in FreeCAD"""
 
     MM = 0  # mmKS
@@ -50,9 +52,7 @@ def _freecad_save_config(
     This must be run before Part is imported for legacy exporters
     """
     unit_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
-    # Seems to have little effect on anything but its an option to set
-    # does effect the GUI be apparently not the base unit of the built part...
-    unit_prefs.SetInt("UserSchema", _Unit[unit].value)
+    unit_prefs.SetInt("UserSchema", FCUnit[unit].value)
     unit_prefs.SetInt("Decimals", no_dp)  # 100th mm
 
     part_step_prefs = FreeCAD.ParamGet(
@@ -62,7 +62,19 @@ def _freecad_save_config(
     part_step_prefs.SetString("Author", author)
     part_step_prefs.SetString("Company", "Bluemira")
     # Seems to have little effect on anything but its an option to set
-    part_step_prefs.SetInt("Unit", _Unit[unit].value)
+    part_step_prefs.SetInt("Unit", FCUnit[unit].value)
+
+    part_step_2_prefs = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/Import/hSTEP"
+    )
+    part_step_2_prefs.SetBool("ReadShapeCompoundMode", False)  # noqa: FBT003
+
+    part_iges_prefs = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/Part/IGES"
+    )
+    part_iges_prefs.SetBool("BrepMode", True)  # noqa: FBT003
+    part_iges_prefs.SetString("Author", author)
+    part_iges_prefs.SetString("Company", "Bluemira")
 
     part_gen_prefs = FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/Mod/Part/General"
@@ -72,3 +84,38 @@ def _freecad_save_config(
     import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
     import_prefs.SetInt("ImportMode", 0)
     import_prefs.SetBool("ExportLegacy", False)  # noqa: FBT003
+    import_prefs.SetBool("ExpandCompound", True)  # noqa: FBT003
+
+
+def _patch_pivy():
+    import pivy  # noqa: PLC0415
+
+    if pivy.__version__ == "0.6.9":
+        try:
+            subprocess.run(  # noqa: S602
+                [
+                    "/usr/bin/patch",
+                    "-l",
+                    "-p2",
+                    "-N",
+                    "-d",
+                    f"{Path(pivy.__file__).parent}",
+                    "<",
+                    "pivy.patch",
+                ],
+                cwd=Path(__file__).parent,
+                shell=True,
+                check=False,
+                timeout=5,
+            )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError(
+                "Patch failed to apply, please run manually in the repo root:\n\n"
+                f"patch -l -N -p 2 -d {Path(pivy.__file__).parent}"
+                " < ./bluemira/codes/pivy.patch\n\n"
+                "See v2.5.0 release notes for more information"
+            ) from None
+
+    from pivy import coin, quarter  # noqa: PLC0415
+
+    return coin, quarter

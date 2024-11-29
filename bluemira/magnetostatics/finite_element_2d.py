@@ -12,6 +12,7 @@ from collections.abc import Iterable
 
 import dolfinx.fem
 import numpy as np
+from basix.ufl import element
 from dolfinx.fem import (
     Expression,
     dirichletbc,
@@ -25,7 +26,6 @@ from ufl import (
     SpatialCoordinate,
     TestFunction,
     TrialFunction,
-    VectorElement,
     as_vector,
     dot,
     dx,
@@ -238,8 +238,7 @@ class FemMagnetostatic2d:
         code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
-        degree = self.V.ufl_element().degree()
-
+        degree = self.V.ufl_element().degree
         if degree == 1:
             base_eltype = ("DG", 0)
         elif degree > 1:
@@ -247,11 +246,14 @@ class FemMagnetostatic2d:
         else:
             raise ValueError(
                 f"Cannot calculate B for ({self.V.ufl_element().family()}"
-                f", {self.V.ufl_element().degree()})."
+                f", {degree})."
             )
 
-        V_W0 = VectorElement(base_eltype[0], self.mesh.ufl_cell(), base_eltype[1], 2)  # noqa: N806
+        V_W0 = element(  # noqa: N806
+            base_eltype[0], self.mesh.ufl_cell().cellname(), base_eltype[1], shape=(2,)
+        )
         W0 = functionspace(self.mesh, V_W0)  # noqa: N806
+
         B0 = BluemiraFemFunction(W0)
 
         x = SpatialCoordinate(self.mesh)
@@ -271,7 +273,9 @@ class FemMagnetostatic2d:
         if interpolation_eltype is not None:
             family = interpolation_eltype[0]
             degree = interpolation_eltype[1]
-            V_W = VectorElement(family, self.mesh.ufl_cell(), degree, 2)  # noqa: N806
+            V_W = element(  # noqa: N806
+                family, self.mesh.ufl_cell().cellname(), degree, shape=(2,)
+            )
             W = functionspace(self.mesh, V_W)  # noqa: N806
             B = BluemiraFemFunction(W)
             B.interpolate(B0)
