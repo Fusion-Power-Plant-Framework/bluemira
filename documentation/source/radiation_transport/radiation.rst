@@ -118,7 +118,7 @@ distance along the SOL, *L* is the total parallel distance from the upstream to 
 is the cross-sectional area of the SOL for power flow.
 
 The **radiation region** starts above the X-point, as most of the radiative loss occurs near the divertor,
-due to the steep parallel temperature gradients [Pitcher_1997]_. In ``Bluemira``, the actual position is
+due to the steep parallel temperature gradients [Pitcher_1997]_. In ``bluemira``, the actual position is
 a user choice. The temperature decay stops at the entrance to recycling region. As for the upstream
 temperature, the temperature at the start of the radiation region is calculated as function of the
 parallel distance:

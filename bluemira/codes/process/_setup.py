@@ -38,7 +38,7 @@ class Setup(CodesSetup):
     in_dat_path:
         The path to where the IN.DAT file should be written.
     problem_settings:
-        The PROCESS parameters that do not exist in Bluemira.
+        The PROCESS parameters that do not exist in bluemira.
     """
 
     MODELS: ClassVar = {

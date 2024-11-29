@@ -28,7 +28,7 @@ Usage of the 'spherical_harmonic_approximation' function.
 # # spherical_harmonic_approximation Function
 #
 # This example illustrates the input and output of the
-# Bluemira spherical harmonics approximation function
+# bluemira spherical harmonics approximation function
 # (spherical_harmonic_approximation) which can be used
 # in coilset current and position optimisation for spherical tokamaks.
 
@@ -79,7 +79,7 @@ plt.show()
 #
 # ### Required
 #
-# - eq = Our chosen Bluemira Equilibrium
+# - eq = Our chosen bluemira equilibrium
 #
 # ### Optional
 #

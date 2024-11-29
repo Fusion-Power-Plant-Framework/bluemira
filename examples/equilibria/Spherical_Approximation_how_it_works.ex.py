@@ -27,7 +27,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # %% [markdown]
 # # Example of using Spherical Harmonic Approximation
 #
-# This example illustrates the inner workings of the Bluemira spherical harmonics
+# This example illustrates the inner workings of the bluemira spherical harmonics
 # approximation function (spherical_harmonic_approximation) which can be used in
 # coilset current and position optimisation for spherical tokamaks.
 # For an example of how spherical_harmonic_approximation is used

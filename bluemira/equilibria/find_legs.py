@@ -573,7 +573,7 @@ def calculate_connection_length(
         If an invalid option calculation_method is selected.
         If no target is provided for FLT calculation_method - this is because the
         flux interception point found is not accurate enough to be used
-        on a seperatrix automatically found by Bluemira (n.b., the FLT can not
+        on a seperatrix automatically found by bluemira (n.b., the FLT can not
         distingish between open and closed flux).
 
     """

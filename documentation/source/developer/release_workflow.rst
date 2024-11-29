@@ -4,7 +4,7 @@ Release Workflow
 Schedule
 --------
 
-A new version of Bluemira is tagged every 6 weeks; marking the end of a
+A new version of bluemira is tagged every 6 weeks; marking the end of a
 development cycle.
 When a new release is due, a scheduled GitHub Actions workflow opens an issue
 to create a release.

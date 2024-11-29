@@ -31,7 +31,7 @@ leveraging the functionality of the above modules.
 
 .. _how to use:
 
-How to use ``Bluemira``
+How to use ``bluemira``
 -----------------------
 
 ``Bluemira`` is designed to be used by three different types of user.
@@ -40,12 +40,12 @@ How to use ``Bluemira``
     A Modeller will execute a reactor build workflow (created by a '`Reactor Designer`_'), to carry out studies on a reactor design. Modellers will need to know about the parameters of a design, and how to manipulate JSON files to modify those parameters.
 
   _`Reactor Designer`
-    A Reactor Designer will use ``Bluemira`` as a framework to create a design for a reactor.
+    A Reactor Designer will use ``bluemira`` as a framework to create a design for a reactor.
     To design a reactor, the design workflow strategy needs to be considered and codified.
     Using Designer and Builder objects, each component of the reactor can be created and collected into a full reactor design, or used individually.
 
   Developers
-    A developer of ``Bluemira`` will need to understand the program to a much more detailed level than a reactor designer. They will be involved with adding new features to ``Bluemira`` as well as helping a Reactor Designer or a Modeller to add a new feature or customisation option.
+    A developer of ``bluemira`` will need to understand the program to a much more detailed level than a reactor designer. They will be involved with adding new features to ``bluemira`` as well as helping a Reactor Designer or a Modeller to add a new feature or customisation option.
 
 High level Architecture
 ^^^^^^^^^^^^^^^^^^^^^^^

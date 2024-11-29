@@ -138,7 +138,7 @@ def to_openmc_material(
     temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
     """
-    Convert Bluemira material to OpenMC material
+    Convert bluemira material to OpenMC material
 
     Returns
     -------
@@ -189,7 +189,7 @@ def to_openmc_material_mixture(
     *,
     temperature_to_neutronics_code: bool = True,
 ) -> openmc.Material:
-    """Convert Bluemira material mixture to OpenMC material mixture
+    """Convert bluemira material mixture to OpenMC material mixture
 
     Returns
     -------

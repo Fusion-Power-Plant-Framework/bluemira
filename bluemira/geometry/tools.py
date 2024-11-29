@@ -109,7 +109,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         Returns
         -------
         :
-            List from Bluemira shape or numpy array.
+            List from bluemira shape or numpy array.
         """
         if isinstance(obj, BluemiraGeo):
             return serialise_shape(obj)
