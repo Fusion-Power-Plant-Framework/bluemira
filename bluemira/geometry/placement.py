@@ -236,7 +236,7 @@ class BluemiraPlacement:
         Returns
         -------
         :
-            A Bluemira placement from a FreeCAD placement.
+            A bluemira placement from a FreeCAD placement.
         """
         if isinstance(obj, cadapi.apiPlacement):
             placement = BluemiraPlacement(label=label)

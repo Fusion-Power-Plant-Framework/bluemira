@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Base class for a Bluemira reactor."""
+"""Base class for a bluemira reactor."""
 
 from __future__ import annotations
 

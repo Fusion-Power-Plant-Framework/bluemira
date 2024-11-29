@@ -79,7 +79,7 @@ class BluemiraPlane:
         Returns
         -------
         :
-            A Bluemira plane.
+            A bluemira plane.
         """
         plane = BluemiraPlane()
         plane._shape = cadapi.make_plane_from_3_points(point_1, point_2, point_3)

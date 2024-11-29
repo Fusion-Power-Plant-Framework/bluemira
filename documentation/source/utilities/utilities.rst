@@ -5,7 +5,7 @@ Toroidal coordinate transform
 ----------------------------------------
 
 This is a demonstration of the conversion between cylindrical and toroidal coordinate systems
-using the Bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`. We denote toroidal coordinates by (:math:`\tau`, :math:`\sigma`, :math:`\phi`) and cylindrical coordinates by (:math:`R`, :math:`z`, :math:`\phi`).
+using the bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`. We denote toroidal coordinates by (:math:`\tau`, :math:`\sigma`, :math:`\phi`) and cylindrical coordinates by (:math:`R`, :math:`z`, :math:`\phi`).
 
 The snippets in this document use these imports
     .. code-block:: python
@@ -64,7 +64,7 @@ where we have
 Converting a unit circle
 ^^^^^^^^^^^^^^^^^^^^^^^^
 We will start with an example of converting a unit circle in cylindrical coordinates to
-toroidal coordinates and then converting back to cylindrical using the Bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`.
+toroidal coordinates and then converting back to cylindrical using the bluemira functions `cylindrical_to_toroidal` and `toroidal_to_cylindrical`.
 This unit circle is centered at the point (2,0) in the poloidal plane.
 
 Original circle:

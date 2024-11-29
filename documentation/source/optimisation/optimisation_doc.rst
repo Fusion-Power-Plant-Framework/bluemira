@@ -261,7 +261,7 @@ for an implemented example of an :code:`OptimisationProblem`.
 Available Optimisation Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-There are several optimisation algorithms that can be used within Bluemira.
+There are several optimisation algorithms that can be used within bluemira.
 Including gradient and non-gradient based.
 
 - SLSQP

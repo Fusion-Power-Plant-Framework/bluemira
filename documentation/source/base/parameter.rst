@@ -114,7 +114,7 @@ Units
 :py:class:`ParameterFrames` always enforce the same set of standard units :ref:`unit_convention`.
 :py:class:`Parameters` within a :py:class:`ParameterFrame` whose units are convertible to one of bluemira's standard units,
 have their values and converted to the corresponding standard unit.
-This keeps the units used within Bluemira consistent across classes and modules.
+This keeps the units used within bluemira consistent across classes and modules.
 
 For this reason, if your inputs use a non-standard unit,
 the value you put into a :py:class:`Parameter` will be different to the one you get out.

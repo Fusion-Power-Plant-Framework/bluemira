@@ -1,4 +1,4 @@
-Logging in Bluemira
+Logging in bluemira
 -------------------
 
 To organise and have granularity in text (and potentially graphical) outputs

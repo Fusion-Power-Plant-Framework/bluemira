@@ -98,7 +98,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 #   coilset state array.
 #   - Usually based on NLOpt.
 #   - There are several optimisation algorithms that can be used within
-#     Bluemira.
+#     bluemira.
 #     Including gradient and non-gradient based.
 #       - SLSQP
 #       - COBYLA

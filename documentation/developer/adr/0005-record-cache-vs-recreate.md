@@ -23,7 +23,7 @@ Options:
         * Higher computational cost (recreate upon each call of geometry)
         * Higher maintenance overhead
         * Reverse engineering of FreeCAD is presently imperfect
-            * An operation can work in FreeCAD but fail upon "reconstruction" in Bluemira
+            * An operation can work in FreeCAD but fail upon "reconstruction" in bluemira
             * NotClosedWireError, DisjointedFaceError, ...
 * Cache the FreeCAD shape
     * Pros:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run Bluemira example files in sequence. Exit with code 1 if any errors.
+Run bluemira example files in sequence. Exit with code 1 if any errors.
 
 This will recursively search for python files within a given directory,
 and run them in sequence. It will report which ran without error, and

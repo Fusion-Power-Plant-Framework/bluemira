@@ -306,7 +306,7 @@ class CodesSolver(abc.ABC):
         solver.
 
         This class is where computations should be defined. This may be
-        something like calling a Bluemira problem, or executing some
+        something like calling a bluemira problem, or executing some
         external code or process.
         """
 
@@ -318,7 +318,7 @@ class CodesSolver(abc.ABC):
 
         This class should perform any clean-up operations required by
         the solver. This may be deleting temporary files, or could
-        involve mapping parameters from some external code to Bluemira
+        involve mapping parameters from some external code to bluemira
         parameters.
         """
 
