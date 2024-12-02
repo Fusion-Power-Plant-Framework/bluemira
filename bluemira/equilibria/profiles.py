@@ -32,8 +32,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from eqdsk.models import Sign
-
     from bluemira.equilibria.find import Opoint, Xpoint
 
 __all__ = [
@@ -84,9 +82,9 @@ def singlepowerfunc(x: float, *args) -> float:
     Single power shape function defined e.g. CREATE stuff
 
     \t:math:`g(x)=(1-x^{n})`
-    """
+    """  # noqa: DOC201
     n = args[0]
-    return 1 - x**n  # noqa: DOC201
+    return 1 - x**n
 
 
 @nb.jit(nopython=True, cache=True)
@@ -96,11 +94,11 @@ def doublepowerfunc(x: float, *args) -> float:
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
 
     \t:math:`g(x)=(1-x^{m})^{n}`
-    """
+    """  # noqa: DOC201
     # sign tweak needed to avoid runtimewarnings in np
     m, n = args
     f = 1 - np.sign(x) * np.abs(x) ** m
-    return np.sign(f) * (np.abs(f)) ** n  # noqa: DOC201
+    return np.sign(f) * (np.abs(f)) ** n
 
 
 @nb.jit(cache=True, forceobj=True)
@@ -113,10 +111,10 @@ def pshape(
     Notes
     -----
     Factor to convert from normalised psi integral
-    """
+    """  # noqa: DOC201
     si = quad(shape, psinorm, 1, limit=100)[0]
     si *= psix - psio
-    return si  # noqa: DOC201
+    return si
 
 
 @nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
@@ -203,12 +201,12 @@ def laopoly(x: float, *args) -> float:
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
     \t:math:`g(x)=\\sum_{n=0}^{n_F} \\alpha_{n}x^{n}-`
     \t:math:`x^{n_F+1}\\sum_{n=0}^{n_F} \\alpha_{n}`
-    """
+    """  # noqa: DOC201
     res = np.zeros_like(x)
     for i in range(len(args)):
         res += args[i] * x ** int(i)
     res -= sum(args) * x ** len(args)
-    return res  # noqa: DOC201
+    return res
 
 
 @nb.jit(nopython=True, cache=True)
@@ -217,9 +215,9 @@ def luxonexp(x: float, *args) -> float:
     Exponential shape function defined in
     :doi:`Luxon 1984 <10.1088/0029-5515/22/6/009>`
     \t:math:`g(x)=\\text{exp}\\big(-\\alpha^2x^2\\big)`
-    """
+    """  # noqa: DOC201
     alpha = args[0]
-    return np.exp(-(x**2) * alpha**2)  # noqa: DOC201
+    return np.exp(-(x**2) * alpha**2)
 
 
 class ShapeFunction:
@@ -231,14 +229,14 @@ class ShapeFunction:
     def from_datafit(cls, data: npt.NDArray[np.float64], order: int | None = None):
         """
         Defines function from a dataset, fit using scipy curve_fit
-        """
+        """  # noqa: DOC201
         if order is None:
             order = cls._order
         # Normalise data here
         data /= max(data)
         coeffs = fitfunc(cls._dfunc, data, order=order)
         cls.data = data
-        return cls(coeffs)  # noqa: DOC201
+        return cls(coeffs)
 
     def _func(self, x: float) -> float:
         return self._dfunc(x, *self.coeffs)
@@ -246,8 +244,8 @@ class ShapeFunction:
     def __call__(self, x: float) -> float:
         """
         Calculate the value of the ShapeFunction for given x.
-        """
-        return self._fact * self._func(x)  # noqa: DOC201
+        """  # noqa: DOC201
+        return self._fact * self._func(x)
 
     def adjust_parameters(self, coeffs: npt.NDArray[np.float64]):
         """
@@ -271,16 +269,16 @@ class ShapeFunction:
     def __mul__(self, a: float) -> ShapeFunction:
         """
         Multiply the ShapeFunction (adjust factor)
-        """
+        """  # noqa: DOC201
         self._fact = a
-        return self  # noqa: DOC201
+        return self
 
     def __rmul__(self, a: float) -> ShapeFunction:
         """
         Multiply the ShapeFunction (adjust factor)
-        """
+        """  # noqa: DOC201
         self._fact = a
-        return self  # noqa: DOC201
+        return self
 
 
 class SinglePowerFunc(ShapeFunction):
@@ -374,19 +372,19 @@ class Profile:
     def _scalar_denorm(self, prime, norm):
         """
         Convert from integral in psi_norm to integral in psi
-        """
+        """  # noqa: DOC201
         val = quad(prime, norm, 1)[0]
-        return val * (self.psiax - self.psisep)  # noqa: DOC201
+        return val * (self.psiax - self.psisep)
 
     @staticmethod
     def _reshape(psinorm):
         """
         Reshaping and array dimensioning utility
-        """
+        """  # noqa: DOC201
         out = np.zeros_like(psinorm)
         p_vals = np.reshape(psinorm, -1)
         o_vals = np.reshape(out, -1)
-        return p_vals, o_vals  # noqa: DOC201
+        return p_vals, o_vals
 
     def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
@@ -499,9 +497,9 @@ class Profile:
     def fvac(self) -> float:
         """
         Vacuum field function handle
-        """
+        """  # noqa: DOC201
         try:
-            return self._fvac  # noqa: DOC201
+            return self._fvac
         except AttributeError:
             raise NotImplementedError("Please specify ._fvac as vacuum R*B.") from None
 
@@ -606,7 +604,7 @@ class BetaIpProfile(Profile):
         \t:math:`\\lambda=\\dfrac{I_{p}-\\lambda{\\beta_{0}}\\bigg(\\int\\int\\dfrac{X}{R_{0}}f+\\int\\int\\dfrac{R_{0}}{X}f\\bigg)}{\\int\\int\\dfrac{R_{0}}{X}f}`
 
         Derivation: book 10, p 120
-        """  # noqa: W505, E501
+        """  # noqa: W505, E501, DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
         psix, psio, mask = self._jtor(x, z, psi, o_points, x_points)
@@ -654,19 +652,19 @@ class BetaIpProfile(Profile):
         jtor = lambd * (beta0 * x / self.R_0 + (1 - beta0) * self.R_0 / x) * jtorshape
         self.lambd = lambd
         self.beta0 = beta0
-        return jtor  # noqa: DOC201
+        return jtor
 
     def pprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         dp/dpsi as a function of normalised psi
-        """
-        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)  # noqa: DOC201
+        """  # noqa: DOC201
+        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
-        """
-        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)  # noqa: DOC201
+        """  # noqa: DOC201
+        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)
 
 
 class BetaLiIpProfile(BetaIpProfile):
@@ -767,9 +765,9 @@ class CustomProfile(Profile):
         ------
         TypeError
             Cannot make opject callable
-        """
+        """  # noqa: DOC201
         if callable(unknown):
-            return unknown  # noqa: DOC201
+            return unknown
         if isinstance(unknown, np.ndarray):
             return interp1d(np.linspace(0, 1, len(unknown)), unknown)
         if unknown is None:
@@ -779,14 +777,14 @@ class CustomProfile(Profile):
     def pprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         dp/dpsi as a function of normalised psi
-        """
-        return abs(self.scale) * self._pprime_in(pn)  # noqa: DOC201
+        """  # noqa: DOC201
+        return abs(self.scale) * self._pprime_in(pn)
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
-        """
-        return abs(self.scale) * self._ffprime_in(pn)  # noqa: DOC201
+        """  # noqa: DOC201
+        return abs(self.scale) * self._ffprime_in(pn)
 
     def jtor(
         self,
@@ -801,7 +799,7 @@ class CustomProfile(Profile):
         Calculate toroidal plasma current
 
         \t:math:`J_{\\phi}=Xp^{'}+\\dfrac{FF^{'}}{\\mu_{0}X}`
-        """
+        """  # noqa: DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
         psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points, lcfs=lcfs)
@@ -817,7 +815,7 @@ class CustomProfile(Profile):
             if I_p != 0.0:
                 self.scale = self.I_p / I_p
                 jtor *= self.scale
-        return jtor  # noqa: DOC201
+        return jtor
 
     def pressure(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
@@ -847,27 +845,28 @@ class CustomProfile(Profile):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
+        *,
+        qpsi_positive: bool | None = None,
         **kwargs,
     ) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk file
-        """
+        """  # noqa: DOC201
         e = EQDSKInterface.from_file(
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             **kwargs,
         )
-        return cls.from_eqdsk(e)  # noqa: DOC201
+        return cls.from_eqdsk(e)
 
     @classmethod
     def from_eqdsk(cls, eq: EQDSKInterface) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk object
-        """
-        return cls(  # noqa: DOC201
+        """  # noqa: DOC201
+        return cls(
             eq.pprime,
             eq.ffprime,
             R_0=eq.xcentre,

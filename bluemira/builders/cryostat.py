@@ -124,10 +124,10 @@ class CryostatBuilder(Builder):
     def build(self) -> Component:
         """
         Build the cryostat component.
-        """
+        """  # noqa: DOC201
         xz_cryostat = self.build_xz(self.x_out, self.z_top)
         xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
-        return self.component_tree(  # noqa: DOC201
+        return self.component_tree(
             xz=[xz_cryostat],
             xy=[self.build_xy(self.x_out)],
             xyz=self.build_xyz(xz_cross_section, degree=0),
@@ -152,7 +152,7 @@ class CryostatBuilder(Builder):
         Notes
         -----
         Only designed for an inward kink, outward kinks will fail
-        """
+        """  # noqa: DOC201
         x_in = 0
         x_gs_kink = self.params.x_g_support.value - self.params.x_gs_kink_diff.value
         if x_gs_kink > x_out:
@@ -180,7 +180,7 @@ class CryostatBuilder(Builder):
             self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         )
         apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
-        return cryostat_vv  # noqa: DOC201
+        return cryostat_vv
 
     def build_xy(self, x_out: float) -> PhysicalComponent:
         """
@@ -190,12 +190,12 @@ class CryostatBuilder(Builder):
         ----------
         x_out:
             x coordinate extremity
-        """
+        """  # noqa: DOC201
         cryostat_vv = PhysicalComponent(
             self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
         )
         apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
-        return cryostat_vv  # noqa: DOC201
+        return cryostat_vv
 
     def build_xyz(
         self, xz_cross_section: BluemiraFace, degree=360
@@ -209,8 +209,8 @@ class CryostatBuilder(Builder):
             xz cross section of cryostat
         degree:
             Revolution degree
-        """
-        return build_sectioned_xyz(  # noqa: DOC201
+        """  # noqa: DOC201
+        return build_sectioned_xyz(
             xz_cross_section,
             self.CRYO,
             self.params.n_TF.value,

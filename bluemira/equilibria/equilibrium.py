@@ -66,7 +66,6 @@ from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 if TYPE_CHECKING:
-    from eqdsk.models import Sign
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.find import Lpoint
@@ -98,12 +97,12 @@ class MHDState:
 
     def __init__(self):
         # Constructors
-        self.x: None | npt.NDArray[np.float64] = None
-        self.z: None | npt.NDArray[np.float64] = None
-        self.dx: None | float = None
-        self.dz: None | float = None
-        self.grid: None | Grid = None
-        self.limiter: None | Limiter = None
+        self.x: npt.NDArray[np.float64] | None = None
+        self.z: npt.NDArray[np.float64] | None = None
+        self.dx: float | None = None
+        self.dz: float | None = None
+        self.grid: Grid | None = None
+        self.limiter: Limiter | None = None
 
     def set_grid(self, grid: Grid):
         """
@@ -125,8 +124,8 @@ class MHDState:
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         full_coil: bool = False,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid]:
@@ -143,8 +142,8 @@ class MHDState:
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
@@ -167,7 +166,7 @@ class MHDState:
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             **kwargs,
         )
         if "SCENE" in e.name and not isinstance(cls, Breakdown):
@@ -264,8 +263,8 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         full_coil: bool = False,
         **kwargs,
     ):
@@ -283,19 +282,19 @@ class FixedPlasmaEquilibrium(MHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         e, grid = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
             full_coil=full_coil,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             **kwargs,
         )
         psi_ax = e.psimag
@@ -315,7 +314,7 @@ class FixedPlasmaEquilibrium(MHDState):
             filename=filename,
         )
         self._eqdsk = e
-        return self  # noqa: DOC201
+        return self
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -458,8 +457,8 @@ class CoilSetMHDState(MHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
         full_coil: bool = False,
@@ -478,8 +477,8 @@ class CoilSetMHDState(MHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         user_coils:
             Coilset provided by the user.
@@ -507,7 +506,7 @@ class CoilSetMHDState(MHDState):
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             full_coil=full_coil,
             **kwargs,
         )
@@ -650,8 +649,8 @@ class Breakdown(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
@@ -671,8 +670,8 @@ class Breakdown(CoilSetMHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
@@ -682,12 +681,12 @@ class Breakdown(CoilSetMHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         eqdsk, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
             to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
@@ -695,7 +694,7 @@ class Breakdown(CoilSetMHDState):
         )
         self = cls(coilset, grid, limiter=limiter, psi=eqdsk.psi, filename=filename)
         self._eqdsk = eqdsk
-        return self  # noqa: DOC201
+        return self
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -1013,8 +1012,8 @@ class Equilibrium(CoilSetMHDState):
         filename: Path | str,
         from_cocos: int | None = 11,
         to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
-        qpsi_sign: Sign | int | None = None,
         *,
+        qpsi_positive: bool | None = None,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
@@ -1038,8 +1037,8 @@ class Equilibrium(CoilSetMHDState):
             the determined COCOS indices.
         to_cocos:
             The COCOS index to convert the EQDSK file to.
-        qpsi_sign:
-            The sign of the qpsi, required for identification
+        qpsi_positive:
+            Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
@@ -1049,12 +1048,12 @@ class Equilibrium(CoilSetMHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
-        """
+        """  # noqa: DOC201
         e, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             to_cocos=to_cocos,
-            qpsi_sign=qpsi_sign,
+            qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
@@ -1078,7 +1077,7 @@ class Equilibrium(CoilSetMHDState):
 
         self._eqdsk = e
 
-        return self  # noqa: DOC201
+        return self
 
     def to_dict(self, qpsi_calcmode: int = 0) -> dict[str, Any]:
         """
@@ -1189,10 +1188,10 @@ class Equilibrium(CoilSetMHDState):
     def __getstate__(self):
         """
         Get the state of the Equilibrium object. Used in pickling.
-        """
+        """  # noqa: DOC201
         d = dict(self.__dict__)
         d.pop("_solver", None)
-        return d  # noqa: DOC201
+        return d
 
     def __setstate__(self, d):
         """
@@ -1865,10 +1864,10 @@ class Equilibrium(CoilSetMHDState):
         def psi_err(x_opt, *args):
             """
             The psi error minimisation objective function.
-            """
+            """  # noqa: DOC201
             z_opt = args[0]
             psi = self.psi(x_opt, z_opt)[0]
-            return abs(psi - x_psi)  # noqa: DOC201
+            return abs(psi - x_psi)
 
         res = minimize(
             psi_err,
@@ -1901,8 +1900,8 @@ class Equilibrium(CoilSetMHDState):
     def analyse_plasma(self) -> EqSummary:
         """
         Analyse the energetic and magnetic characteristics of the plasma.
-        """
-        return EqSummary.from_equilibrium(  # noqa: DOC201
+        """  # noqa: DOC201
+        return EqSummary.from_equilibrium(
             self,
             ClosedFluxSurface(self.get_flux_surface(0.95)),
             ClosedFluxSurface(self.get_LCFS()),

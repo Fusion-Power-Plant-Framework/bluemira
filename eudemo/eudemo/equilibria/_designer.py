@@ -15,7 +15,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from eqdsk import EQDSKInterface
-from eqdsk.models import Sign
 
 from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
@@ -172,7 +171,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         eq = Equilibrium.from_eqdsk(
             self.file_path,
             from_cocos=self.build_config.get("cocos"),
-            qpsi_sign=self.build_config.get("qpsi", Sign.NEGATIVE),
+            qpsi_positive=self.build_config.get("qpsi", False),
         )
         self._update_params_from_eq(eq)
         return eq
@@ -434,7 +433,7 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
             self.file_path,
             clockwise_phi=False,
             volt_seconds_per_radian=True,
-            qpsi_sign=Sign.NEGATIVE,
+            qpsi_positive=False,
         )
         lcfs_coords = Coordinates({"x": data.xbdry, "y": 0, "z": data.zbdry})
         lcfs_coords.close()
@@ -675,8 +674,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         """
         if (save := self.build_config.get("save", False)) and self.file_path is None:
             raise ValueError(
-                "Cannot execute save equilibrium: "
-                "'file_path' missing from build config."
+                "Cannot execute save equilibrium: 'file_path' missing from build config."
             )
 
         lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
@@ -746,7 +744,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         :
             The equilibrium read in
         """
-        eq = Equilibrium.from_eqdsk(self.file_path, qpsi_sign=-1, from_cocos=3)
+        eq = Equilibrium.from_eqdsk(self.file_path, qpsi_positive=False, from_cocos=3)
         self._update_params_from_eq(eq)
         return eq
 

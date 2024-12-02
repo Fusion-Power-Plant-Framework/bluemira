@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
-import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -56,16 +55,15 @@ class TestFuelCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data")
+        path = Path(
+            get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data")
+        )
 
-        # Get all the data files
-        files = [file for file in os.listdir(path) if Path(file).suffix == ".json"]
-
-        # Compiles the data from the files
         data = {}
-        for file in files:
-            with open(Path(path, file)) as fh:
-                data[Path(file).stem] = json.load(fh)
+        for file in path.iterdir():
+            if file.suffix == ".json":
+                with open(file) as fh:
+                    data[file.stem] = json.load(fh)
 
         # Convert the data to arrays and inventories to kg
         for v in data.values():

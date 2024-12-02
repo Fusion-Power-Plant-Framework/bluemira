@@ -191,8 +191,8 @@ class Coil(CoilFieldsMixin):
     def __repr__(self):
         """
         Pretty printing
-        """
-        return (  # noqa: DOC201
+        """  # noqa: DOC201
+        return (
             f"{type(self).__name__}({self.name} ctype={self.ctype.name} x={self.x:.2g}"
             f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g}"
             f" current={self.current:.2g} j_max={self.j_max:.2g} b_max={self.b_max:.2g}"
@@ -244,8 +244,8 @@ class Coil(CoilFieldsMixin):
         Notes
         -----
         Allows n_coils to be accessed if an individual coil or a CoilGroup
-        """
-        return 1  # noqa: DOC201
+        """  # noqa: DOC201
+        return 1
 
     @property
     def x(self) -> float:

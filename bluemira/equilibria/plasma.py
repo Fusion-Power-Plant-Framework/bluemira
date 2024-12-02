@@ -128,14 +128,14 @@ class PlasmaCoil:
         ------
         EquilibriaError
             No known toroidal current distribution
-        """
+        """  # noqa: DOC201
         if self._j_tor is None:
             raise EquilibriaError(
                 "Cannot calculate value off grid; there is no known toroidal current"
                 " distribution."
             )
 
-        return np.sum(  # noqa: DOC201
+        return np.sum(
             self._j_tor[self._ii, self._jj]
             * self._grid.dx
             * self._grid.dz

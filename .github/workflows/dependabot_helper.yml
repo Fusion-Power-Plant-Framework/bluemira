@@ -33,14 +33,32 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install uv
-          uv pip compile pyproject.toml --python-version=3.10 --extra pinned -o requirements/uv/base.txt
-          uv pip compile pyproject.toml --python-version=3.10 --extra pinned -o requirements/uv/develop.txt --extra dev
-          uv pip compile pyproject.toml --python-version=3.10 --extra pinned -o requirements/uv/examples.txt --extra examples
-          uv pip compile pyproject.toml --python-version=3.10 --extra pinned -o requirements/uv/all.txt --extra dev --extra polyscope --extra radiation --extra examples
+          uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/base.txt
+          uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/develop.txt --extra dev
+          uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/examples.txt --extra examples
+          uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/all.txt --extra dev --extra polyscope --extra radiation --extra examples
           git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
           git config user.name "dependabot[bot]"
           git add requirements
           if [[ -n $(git status --porcelain) ]] ; then
             git commit -m "Updated dependencies in requirements files"
+            git push
+          fi
+
+      - name: Update pre-commit
+        if: contains(steps.metadata.outputs.dependency-names, 'ruff')
+        shell: bash
+        run: |
+          pip install pre-commit
+          pre-commit autoupdate || true  # pre-commit hooks is not a file
+          git add .pre-commit-config.yaml
+          if [[ -n $(git status --porcelain) ]] ; then
+            git commit -m "Updated pre-commit"
+            git push
+          fi
+          pre-commit run --all-files
+          git add .
+          if [[ -n $(git status --porcelain) ]] ; then
+            git commit -m 'Linter fixes'
             git push
           fi

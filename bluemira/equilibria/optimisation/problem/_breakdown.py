@@ -233,7 +233,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
     def optimise(self, x0=None, *, fixed_coils=True):
         """
         Solve the optimisation problem.
-        """
+        """  # noqa: DOC201
         self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
 
         if x0 is None:
@@ -261,4 +261,4 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             current_scale=self.scale,
         )
 
-        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)  # noqa: DOC201
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

@@ -271,8 +271,7 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     if isinstance(point, Coordinates):
         if np.shape(point) != (3, 1):
             raise GeometryError(
-                "Can only cast the 3D coordinates of a single point"
-                "into a cadapi vertex!"
+                "Can only cast the 3D coordinates of a single pointinto a cadapi vertex!"
             )
         point = point.points[0]
     if len(point) != 3:  # noqa: PLR2004
@@ -281,8 +280,22 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     return cadapi.apiVertex(*point)
 
 
-class GeometryCreation(Protocol):
-    """Typing for closed_wire_wrapper"""
+class GeometryCreationIn(Protocol):
+    """Typing for closed_wire_wrapper input"""
+
+    def __call__(
+        self,
+        points: Coordinates,
+        label: str = "",
+        *,
+        closed: bool = False,
+    ) -> BluemiraWire:
+        """Typing for coordinates wrapping"""
+        ...
+
+
+class GeometryCreationOut(Protocol):
+    """Typing for closed_wire_wrapper output"""
 
     def __call__(
         self,
@@ -297,7 +310,7 @@ class GeometryCreation(Protocol):
 
 def closed_wire_wrapper(
     *, drop_closure_point: bool
-) -> Callable[[GeometryCreation], GeometryCreation]:
+) -> Callable[[GeometryCreationIn], GeometryCreationOut]:
     """
     Decorator for checking / enforcing closures on wire creation functions.
 
@@ -307,7 +320,7 @@ def closed_wire_wrapper(
         Decorator on wire creation functions.
     """
 
-    def decorator(func: GeometryCreation) -> GeometryCreation:
+    def decorator(func: GeometryCreationIn) -> GeometryCreationOut:
         @functools.wraps(func)
         def wrapper(
             points: npt.ArrayLike | dict[str, npt.ArrayLike] | Coordinates,
@@ -1369,7 +1382,7 @@ def distance_to(
 
 def split_wire(
     wire: BluemiraWire, vertex: npt.ArrayLike, tolerance: float = EPS * 10
-) -> tuple[None | BluemiraWire, None | BluemiraWire]:
+) -> tuple[BluemiraWire | None, BluemiraWire | None]:
     """
     Split a wire at a given vertex.
 
@@ -1404,7 +1417,7 @@ def split_wire(
 
 def slice_shape(
     shape: BluemiraGeo, plane: BluemiraPlane
-) -> list[np.ndarray] | None | list[BluemiraWire]:
+) -> list[np.ndarray] | list[BluemiraWire] | None:
     """
     Calculate the plane intersection points with an object
 

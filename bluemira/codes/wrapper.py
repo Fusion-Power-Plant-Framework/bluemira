@@ -78,10 +78,10 @@ def plot_radial_build(
         the user shows it, by default True.
     module:
         Module to use
-    """
+    """  # noqa: DOC201
     syscode = get_code_interface(module)
 
-    return syscode.plot_radial_build(filename, width, show=show)  # noqa: DOC201
+    return syscode.plot_radial_build(filename, width, show=show)
 
 
 def transport_code_solver(

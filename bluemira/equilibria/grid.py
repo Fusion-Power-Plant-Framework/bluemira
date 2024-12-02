@@ -141,8 +141,8 @@ class Grid:
         ----------
         e: dict
             EQDSK dictionary
-        """
-        return cls(  # noqa: DOC201
+        """  # noqa: DOC201
+        return cls(
             e["xgrid1"],
             e["xgrid1"] + e["xdim"],
             e["zmid"] - 0.5 * e["zdim"],
@@ -160,8 +160,8 @@ class Grid:
         ----------
         e:
 
-        """
-        return cls(  # noqa: DOC201
+        """  # noqa: DOC201
+        return cls(
             e.xgrid1,
             e.xgrid1 + e.xdim,
             e.zmid - 0.5 * e.zdim,

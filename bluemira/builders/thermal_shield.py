@@ -79,12 +79,12 @@ class VVTSBuilder(Builder):
     def build(self) -> Component:
         """
         Build the vacuum vessel thermal shield component.
-        """
+        """  # noqa: DOC201
         xz_vvts, xz_vvts_void = self.build_xz(self.keep_out_zone)
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
         vvts_void_face: BluemiraFace = xz_vvts_void.get_component_properties("shape")
 
-        return self.component_tree(  # noqa: DOC201
+        return self.component_tree(
             xz=[xz_vvts, xz_vvts_void],
             xy=self.build_xy(vvts_face),
             xyz=self.build_xyz(vvts_face, vvts_void_face, degree=0),
@@ -144,8 +144,8 @@ class VVTSBuilder(Builder):
         ----------
         vvts_face:
             xz face to build vvts
-        """
-        return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])  # noqa: DOC201
+        """  # noqa: DOC201
+        return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])
 
     def build_xyz(
         self, vvts_face: BluemiraFace, vvts_void_face: BluemiraFace, degree: float = 360
@@ -159,8 +159,8 @@ class VVTSBuilder(Builder):
             xz face to build vvts
         degree:
             Revolution degrees
-        """
-        return build_sectioned_xyz(  # noqa: DOC201
+        """  # noqa: DOC201
+        return build_sectioned_xyz(
             [vvts_face, vvts_void_face],
             [self.VVTS, self.VOID],
             self.params.n_TF.value,
@@ -207,14 +207,14 @@ class CryostatTSBuilder(Builder):
     def build(self) -> Component:
         """
         Build the cryostat thermal shield component.
-        """
+        """  # noqa: DOC201
         xz_cts, xz_cts_void = self.build_xz(
             self.pf_keep_out_zones, self.tf_keep_out_zone
         )
         cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
         cts_void_face: BluemiraFace = xz_cts_void.get_component_properties("shape")
 
-        return self.component_tree(  # noqa: DOC201
+        return self.component_tree(
             xz=[xz_cts, xz_cts_void],
             xy=[self.build_xy(cts_face)],
             xyz=self.build_xyz(cts_face, cts_void_face, degree=0),
@@ -304,22 +304,22 @@ class CryostatTSBuilder(Builder):
     def build_xy(self, cts_face: BluemiraFace) -> PhysicalComponent:
         """
         Build the x-y components of the thermal shield.
-        """
+        """  # noqa: DOC201
         mid_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
         r_in, r_out = find_xy_plane_radii(cts_face.boundary[0], mid_plane)
 
         cryostat_ts = PhysicalComponent(self.CRYO_TS, make_circular_xy_ring(r_in, r_out))
         apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
 
-        return cryostat_ts  # noqa: DOC201
+        return cryostat_ts
 
     def build_xyz(
         self, cts_face: BluemiraFace, cts_void_face: BluemiraFace, degree: float = 360
     ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the thermal shield.
-        """
-        return build_sectioned_xyz(  # noqa: DOC201
+        """  # noqa: DOC201
+        return build_sectioned_xyz(
             [cts_face, cts_void_face],
             [self.CRYO_TS, self.VOID],
             self.params.n_TF.value,
