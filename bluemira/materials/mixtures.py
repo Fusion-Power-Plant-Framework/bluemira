@@ -124,6 +124,24 @@ class HomogenisedMixture:
         -------
         :
             A mass-fraction-averaged property for the homogenised mixture.
+
+        Notes
+        -----
+        If the mixture type is `MixtureConnectionType.SERIES`:
+
+        .. math::
+            \\text{Property_{Series}} = \\sum_i f_i \\cdot v_i
+
+        If the mixture type is `MixtureConnectionType.Parallel`:
+
+        .. math::
+
+            \\text{Property_{Parallel}} = \\left( \\sum_i \\frac{f_i}{v_i} \\right)^{-1}
+
+        Where :math:`v_i` is the property value of :math:`i^{\\text{th}}` material at
+        a given temperature, and
+        :math:`f_i = \\frac{\\text{fraction}_i}{\\sum \\text{fraction}_i}`
+        are the normalized mass fractions.
         """
         temperature = self.temperature if temperature is None else temperature
         warn = []
