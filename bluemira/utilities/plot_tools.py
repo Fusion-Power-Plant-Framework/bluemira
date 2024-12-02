@@ -10,7 +10,6 @@ A collection of plotting tools.
 
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -105,21 +104,26 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
     clean:
         Delete figures after completion?
     """
-    ims = []
-    for filename in os.listdir(folder):
-        if filename.startswith(figname) and filename.endswith(file_format):
-            fp = Path(folder, filename)
-            ims.append(fp)
-
     find_digit = re.compile(r"(\\d+)")
-    ims = sorted(ims, key=lambda x: int(find_digit.findall(x)[-1]))
-    images = [imageio.imread(fp) for fp in ims]
+
+    ims = sorted(
+        [
+            Path(folder, filename)
+            for filename in Path(folder).iterdir()
+            if str(filename).startswith(figname) and str(filename).endswith(file_format)
+        ],
+        key=lambda x: int(find_digit.findall(x)[-1]),
+    )
+    imageio.mimsave(
+        Path(folder, f"{figname}.gif"),
+        [imageio.imread(fp) for fp in ims],
+        "GIF-FI",
+        duration=0.5,
+        loop=3,
+    )
     if clean:
         for fp in ims:
             fp.unlink()
-    imageio.mimsave(
-        Path(folder, f"{figname}.gif"), images, "GIF-FI", duration=0.5, loop=3
-    )
 
 
 def save_figure(
