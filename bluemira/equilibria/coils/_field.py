@@ -141,8 +141,8 @@ class CoilGroupFieldsMixin:
 
         where `B_x` and `B_z` are the x and z components of the
         magnetic field.
-        """
-        return np.hypot(self.Bx(x, z), self.Bz(x, z))  # noqa:DOC201
+        """  # noqa: DOC201
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def F(self, eqcoil: CoilGroup) -> np.ndarray:
         """
