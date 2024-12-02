@@ -245,8 +245,7 @@ class FemMagnetostatic2d:
             base_eltype = ("Lagrange", degree - 1)
         else:
             raise ValueError(
-                f"Cannot calculate B for ({self.V.ufl_element().family()}"
-                f", {degree})."
+                f"Cannot calculate B for ({self.V.ufl_element().family()}, {degree})."
             )
 
         V_W0 = element(  # noqa: N806

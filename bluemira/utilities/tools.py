@@ -21,7 +21,7 @@ from importlib import machinery as imp_mach
 from importlib import util as imp_u
 from itertools import permutations
 from json import JSONEncoder, dumps
-from os import PathLike, listdir
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import nlopt
@@ -39,6 +39,7 @@ from bluemira.base.look_and_feel import (
 )
 
 if TYPE_CHECKING:
+    from os import PathLike
     from types import ModuleType
 
     import numpy.typing as npt
@@ -1010,11 +1011,12 @@ def _loadfromspec(name: str) -> ModuleType:
         Cant find module
     """
     full_dirname = name.rsplit("/", 1)
-    dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]
+    dirname = Path("." if len(full_dirname[0]) == 0 else full_dirname[0])
+    path = Path(full_dirname[1])
 
     try:
         mod_files = [
-            file for file in listdir(dirname) if file.startswith(full_dirname[1])
+            file for file in dirname.iterdir() if file.name.startswith(full_dirname[1])
         ]
     except FileNotFoundError:
         raise FileNotFoundError(f"Can't find module file '{name}'") from None
@@ -1022,19 +1024,19 @@ def _loadfromspec(name: str) -> ModuleType:
     if len(mod_files) == 0:
         raise FileNotFoundError(f"Can't find module file '{name}'")
 
-    requested = full_dirname[1] if full_dirname[1] in mod_files else mod_files[0]
+    requested = path if path in mod_files else Path(dirname, mod_files[0])
 
     if len(mod_files) > 1:
         bluemira_warn(
             "{}{}".format(
-                f"Multiple files start with '{full_dirname[1]}'\n",
+                f"Multiple files start with '{path}'\n",
                 f"Assuming module is '{requested}'",
             )
         )
 
-    mod_file = f"{dirname}/{requested}"
-
-    name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
+    name, ext = (
+        requested.name.rsplit(".", 1) if "." in requested.name else (requested.name, "")
+    )
     if ext not in imp_mach.SOURCE_SUFFIXES:
         if ext and not ext.startswith("."):
             ext = f".{ext}"
@@ -1044,7 +1046,7 @@ def _loadfromspec(name: str) -> ModuleType:
         n_suffix = False
 
     try:
-        spec = imp_u.spec_from_file_location(name, mod_file)
+        spec = imp_u.spec_from_file_location(name, requested)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
     except ModuleNotFoundError:

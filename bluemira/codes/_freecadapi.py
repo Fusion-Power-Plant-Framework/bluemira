@@ -1635,7 +1635,7 @@ def import_cad(
 
 
 def webgl_export(export_func: ExporterProtocol) -> ExporterProtocol:
-    """Webgl exporter for offscreen rendering"""
+    """Webgl exporter for offscreen rendering"""  # noqa: DOC201
     # Default camera in freecad gui found with
     # Gui.ActiveDocument.ActiveView.getCamera()
     camerastr = (
@@ -1651,18 +1651,20 @@ def webgl_export(export_func: ExporterProtocol) -> ExporterProtocol:
         kwargs["camera"] = kwargs.pop("camera", None) or camerastr
         export_func(objs, filename, **kwargs)
 
-    return wrapper  # noqa: DOC201
+    return wrapper
 
 
 def stepz_import(import_func: ImporterProtocol) -> ImporterProtocol:
-    """Step z importer "needs" more FreeCADGui so we're patching it out"""
+    """
+    Step z importer "needs" more FreeCADGui so we're patching it out
+    """  # noqa: DOC201
 
     @wraps(import_func)
     def wrapper(filename: str, document: str, **kwargs):
         with mock.patch("stepZ.FreeCADGui.SendMsgToActiveView", create=True):
             import_func(filename, document, **kwargs)
 
-    return wrapper  # noqa: DOC201
+    return wrapper
 
 
 def meshed_exporter(

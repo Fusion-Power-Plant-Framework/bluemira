@@ -9,7 +9,6 @@ Script used to analyse T retention data
 """
 
 import json
-import os
 from pathlib import Path
 
 import numpy as np
@@ -26,14 +25,14 @@ from bluemira.fuel_cycle.tools import (
 
 plot_defaults()
 
-PATH = get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data")
+PATH = Path(get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data"))
 
 # Compiles the data from the files
 data = {}
-for file in os.listdir(PATH):
-    if Path(file).suffix == ".json":
-        short_name = Path(file).stem
-        with open(Path(PATH, file)) as fh:
+for file in PATH.iterdir():
+    if file.suffix == ".json":
+        short_name = file.stem
+        with open(file) as fh:
             data[short_name] = json.load(fh)
 
 # Convert the data to arrays and inventories to kg

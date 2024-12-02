@@ -177,7 +177,7 @@ def force_file_extension(file_path: str, valid_extensions: str | list[str]) -> s
     return file_path
 
 
-def get_files_by_ext(folder: str, extension: str) -> list[str]:
+def get_files_by_ext(folder: str, extension: str) -> list[Path]:
     """
     Get filenames of files in folder with the specified extension.
 
@@ -190,9 +190,12 @@ def get_files_by_ext(folder: str, extension: str) -> list[str]:
 
     Returns
     -------
-    The list of full path filenames found in the folder
+    :
+        The list of full path filenames found in the folder
     """
-    files = [file for file in os.listdir(folder) if file.endswith(extension)]
+    files = [
+        file for file in Path(folder).iterdir() if file.as_posix().endswith(extension)
+    ]
     if len(files) == 0:
         from bluemira.base.look_and_feel import bluemira_warn  # noqa: PLC0415
 
