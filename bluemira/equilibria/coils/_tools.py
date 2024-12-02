@@ -37,6 +37,17 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     Notes
     -----
     Single-filament coil formulation; serves as a useful approximation.
+
+    - **Off-diagonal terms** (:math:`i \\neq j`):
+    .. math::
+        M_{ij} = n_i n_j G(x_i, z_i, x_j, z_j)
+    where :math:`G` is the Green's function for mutual inductance.
+
+    - **Diagonal terms** (:math:`i = j`):
+    .. math::
+        M_{ii} = n_i^2 L_i
+    with :math:`L_i` as the self-inductance using elliptic integrals.
+
     """
     n_coils = coilset.n_coils()
     M = np.zeros((n_coils, n_coils))  # noqa: N806
@@ -130,5 +141,11 @@ def get_max_current(
     Returns
     -------
     Maximum current [A]
+
+    Notes
+    -----
+    .. math::
+        I_{\\text{max}} = j_{\\text{max}} \\cdot (4 \\cdot dx \\cdot dz)
+
     """
     return np.abs(j_max * (4 * dx * dz))

@@ -133,8 +133,16 @@ class CoilGroupFieldsMixin:
     def Bp(self, x: float | np.ndarray, z: float | np.ndarray):
         """
         Calculate poloidal magnetic field Bp at (x, z)
-        """  # noqa: DOC201
-        return np.hypot(self.Bx(x, z), self.Bz(x, z))
+
+        Notes
+        -----
+        .. math::
+            B_p = \\sqrt{B_x^2 + B_z^2}
+
+        where `B_x` and `B_z` are the x and z components of the
+        magnetic field.
+        """
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))  # noqa:DOC201
 
     def F(self, eqcoil: CoilGroup) -> np.ndarray:
         """
