@@ -42,7 +42,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
-imageio==2.36.0
+imageio==2.36.1
     # via bluemira (pyproject.toml)
 joblib==1.4.2
     # via scikit-learn
@@ -144,7 +144,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2024.2
     # via pandas
-pyvista==0.44.1
+pyvista==0.44.2
     # via bluemira (pyproject.toml)
 requests==2.32.3
     # via pooch
