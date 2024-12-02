@@ -1016,7 +1016,7 @@ def _loadfromspec(name: str) -> ModuleType:
 
     try:
         mod_files = [
-            file for file in dirname.iterdir() if str(file).startswith(full_dirname[1])
+            file for file in dirname.iterdir() if file.name.startswith(full_dirname[1])
         ]
     except FileNotFoundError:
         raise FileNotFoundError(f"Can't find module file '{name}'") from None
@@ -1024,7 +1024,7 @@ def _loadfromspec(name: str) -> ModuleType:
     if len(mod_files) == 0:
         raise FileNotFoundError(f"Can't find module file '{name}'")
 
-    requested = path if path in mod_files else mod_files[0]
+    requested = path if path in mod_files else Path(dirname, mod_files[0])
 
     if len(mod_files) > 1:
         bluemira_warn(
@@ -1034,9 +1034,9 @@ def _loadfromspec(name: str) -> ModuleType:
             )
         )
 
-    mod_file = f"{dirname}/{requested}"
-
-    name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
+    name, ext = (
+        requested.name.rsplit(".", 1) if "." in requested.name else (requested.name, "")
+    )
     if ext not in imp_mach.SOURCE_SUFFIXES:
         if ext and not ext.startswith("."):
             ext = f".{ext}"
@@ -1046,7 +1046,7 @@ def _loadfromspec(name: str) -> ModuleType:
         n_suffix = False
 
     try:
-        spec = imp_u.spec_from_file_location(name, mod_file)
+        spec = imp_u.spec_from_file_location(name, requested)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
     except ModuleNotFoundError:
