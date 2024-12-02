@@ -77,6 +77,20 @@ class TestDivertorSilhouetteDesigner:
         for target in [divertor[1], divertor[3]]:
             assert signed_distance(target, self.separatrix) == pytest.approx(0)
 
+    @pytest.mark.parametrize(("div_ltarg", "div_targ_angle"), [(1.5, 52)])
+    def test_target_length_set_by_parameter(self, div_ltarg, div_targ_angle):
+        params = self.params.copy()
+        params["div_Ltarg_ib"]["value"] = div_ltarg / 2
+        params["div_Ltarg_ob"]["value"] = div_ltarg / 2
+        params["div_targ_angle_ib"]["value"] = div_targ_angle
+
+        designer = DivertorSilhouetteDesigner(params, self.eq, self.wall)
+
+        divertor = designer.execute()
+
+        for target in [divertor[1], divertor[3]]:
+            assert target.length == pytest.approx(div_ltarg / 2, rel=EPS)
+
     def test_dome_added_to_divertor(self):
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)
 
