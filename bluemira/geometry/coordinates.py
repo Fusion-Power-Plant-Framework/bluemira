@@ -120,6 +120,22 @@ def vector_lengthnorm(
     Returns
     -------
     The normalised length vector
+
+    Notes
+    -----
+    The normalized length vector is:
+
+    .. math::
+        \\text{Normalized Length} = \\frac{L}{L[-1]}
+
+    where
+
+    .. math::
+        L = \\sum_{i=0}^{n-1} \\sqrt{(\\Delta x_i)^2 + (\\Delta y_i)^2 + (\\Delta z_i)^2}
+
+    Where :math:`\\Delta x_i`, :math:`\\Delta y_i`, and :math:`\\Delta z_i` are the
+    finite differences along the x, y, and z dimensions, respectively for the i-th
+    index. n is the length of the array of coordinates.
     """
     coords = [x, y] if z is None else [x, y, z]
     dl_vectors = np.sqrt(np.sum([np.diff(ci) ** 2 for ci in coords], axis=0))
@@ -1303,6 +1319,16 @@ class Coordinates:
         Returns
         -------
         The vector of distances of the Coordinates to the point
+
+        Notes
+        -----
+        Euclidean distance:
+
+        .. math::
+            d = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}
+
+        where indices refer to the Coordinate and the given point.
+
         """
         point = np.array(point)
         point = point.reshape(3, 1).T
