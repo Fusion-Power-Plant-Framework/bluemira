@@ -4,5 +4,5 @@ pybind11==2.13.6
 pybind11-global==2.13.6
 PySide6==6.7.3
 pytools==2024.1.16
-shiboken6==6.7.3
+shiboken6==6.8.0.2
 vtk==9.3.1
