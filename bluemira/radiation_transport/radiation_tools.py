@@ -78,8 +78,7 @@ def upstream_temperature(
     connection_length: float | None = None,
 ) -> float:
     """
-    Calculate the upstream temperature, as suggested from
-    "Pitcher et al., Plasma Physics and Controlled Fusion 39.6 (1997): 779".
+    Calculate the upstream temperature.
     Knowing the power entering the SOL, and assuming large temperature gradient
     between upstream and target.
 
@@ -110,6 +109,11 @@ def upstream_temperature(
     -------
     t_upstream_kev:
         upstream temperature. Unit [keV]
+
+    Notes
+    -----
+    Reference:
+    Pitcher et al., Plasma Physics and Controlled Fusion 39.6 (1997): 779
     """
     # SoL cross-section at the midplane
     a_par = 4 * np.pi * r_sep_mp * lambda_q_near * (b_pol / b_tot)
@@ -151,8 +155,6 @@ def target_temperature(
     """
     Calculate the target as suggested from the 2PM.
     It includes hydrogen recycle loss energy.
-    Ref. Stangeby, "The Plasma Boundary of Magnetic Fusion
-    Devices", 2000.
 
     Parameters
     ----------
@@ -188,6 +190,13 @@ def target_temperature(
     -------
     t_tar:
         target temperature. Unit [eV]
+
+    Notes
+    -----
+    Reference:
+    Stangeby, "The Plasma Boundary of Magnetic Fusion
+    Devices", 2000.
+
     """
     # flux expansion at the target location
     f_exp = (r_u * b_pol_u) / (r_tar * b_pol_tar)
