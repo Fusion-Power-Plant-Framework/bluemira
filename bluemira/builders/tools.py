@@ -15,7 +15,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 from anytree import PreOrderIter
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import (
+    Component,
+    PhysicalComponent,
+    get_properties_from_components,
+)
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.display.palettes import ColorPalette
@@ -121,11 +125,8 @@ def compound_from_components(
     -------
     PhysicalComponent
     """
-    faux_parent_for_iter = Component(f"{name} X")
-    faux_parent_for_iter.children = components
-    itr = PreOrderIter(faux_parent_for_iter)
-    phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
-    comp = make_compound(phy_comps_shape, name)
+    shapes = get_properties_from_components(components, ("shape"))
+    comp = make_compound(shapes, name)
     return PhysicalComponent(name, comp, material=material)
 
 

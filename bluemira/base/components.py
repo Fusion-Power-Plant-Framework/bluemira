@@ -408,8 +408,8 @@ class PhysicalComponent(Component):
         children: list[ComponentT] | None = None,
     ):
         super().__init__(name, parent, children)
-        self.shape = shape
-        self.material = material
+        self._shape = shape
+        self._material = material
 
     def copy(
         self,
@@ -459,7 +459,7 @@ class PhysicalComponent(Component):
         self._shape = value
 
     @property
-    def material(self) -> Material:
+    def material(self) -> Material | None:
         """
         The material that the Component is built from.
         """

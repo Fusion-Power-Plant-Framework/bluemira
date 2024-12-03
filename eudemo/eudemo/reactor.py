@@ -596,6 +596,8 @@ if __name__ == "__main__":
 
     reactor.save_cad()
 
+    exit()
+
     if reactor_config.config_for("Neutronics").get("enabled", False):
         reactor.neutronics = NeutronicsManager(
             *run_neutronics(

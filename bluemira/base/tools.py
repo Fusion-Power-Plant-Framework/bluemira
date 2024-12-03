@@ -8,13 +8,13 @@
 Tool function and classes for the bluemira base module.
 """
 
+from __future__ import annotations
+
 import time
-from collections.abc import Callable, Iterable
 from enum import Enum
 from functools import wraps
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-import bluemira.codes._freecadapi as cadapi
 from bluemira.base.components import (
     Component,
     ComponentT,
@@ -25,15 +25,17 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.builders.tools import (
     circular_pattern_component,
     compound_from_components,
-    connect_components,
 )
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import save_cad, serialise_shape
 
-# if TYPE_CHECKING:
-#     from bluemira.base.reactor import ComponentManager
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    import bluemira.codes._freecadapi as cadapi
+    from bluemira.base.reactor import ComponentManager
 
 
 _T = TypeVar("_T")
@@ -209,7 +211,7 @@ def plot_component_dim(
 
 
 def build_comp_manager_save_xyz_cad_tree(
-    comp_manager,
+    comp_manager: ComponentManager,
     component_filter: Callable[[ComponentT], bool] | None,
     n_sectors: int,
     sector_degrees: int,
@@ -225,34 +227,49 @@ def build_comp_manager_save_xyz_cad_tree(
     component_filter:
         Filter to apply to the components
     """
-    const_type = comp_manager.cad_construction_type()
-    if isinstance(const_type, PhysicalComponent):
-        # you will still need to extract and compunidfy per material
-        return const_type
-
-    manager_comp = comp_manager.component()
-    filtered_comp = copy_and_filter_component(
+    cad_const_type = comp_manager.cad_construction_type()
+    manager_comp = (
+        cad_const_type
+        if isinstance(cad_const_type, Component)
+        else comp_manager.component()
+    )
+    copy_and_filtered = copy_and_filter_component(
         manager_comp,
         "xyz",
         component_filter,
     )
-    filtered_comp = circular_pattern_xyz_components(
-        filtered_comp,
-        n_sectors,
-        degree=sector_degrees,
-    )
+    patterned = copy_and_filtered
+    if not isinstance(cad_const_type, Component):
+        patterned = circular_pattern_xyz_components(
+            copy_and_filtered,
+            n_sectors,
+            degree=sector_degrees,
+        )
 
-    match const_type:
-        case CADConstructionType.CONNECT:
-            filtered_comp = connect_components([filtered_comp], manager_comp.name)
-        case CADConstructionType.COMPOUND:
-            filtered_comp = compound_from_components([filtered_comp], manager_comp.name)
+    # now you have the full patterned xyz component of n_sectors,
+    # you want create a mapping between because unique material name
+    # and the PhysicalComponent's with that material
 
-    return filtered_comp
+    # is there a better way to get physical comps from the trree?
+    phy_comps = patterned.leaves
+    mat_to_comps_map = {}
+    for phy_comp in phy_comps:
+        mat_name = "no-mat" if phy_comp.material is None else phy_comp.material.name
+        if mat_name not in mat_to_comps_map:
+            mat_to_comps_map[mat_name] = []
+        mat_to_comps_map[mat_name].append(phy_comp)
+
+    return_comp = Component(name=manager_comp.name)
+    return_comp.children = [
+        compound_from_components(comps, f"{manager_comp.name}_{mat_name}")
+        for mat_name, comps in mat_to_comps_map.items()
+    ]
+
+    return return_comp
 
 
 def build_comp_manager_show_cad_tree(
-    comp_manager,
+    comp_manager: ComponentManager,
     dim: str,
     component_filter: Callable[[ComponentT], bool] | None,
     n_sectors: int,
