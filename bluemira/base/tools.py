@@ -29,7 +29,7 @@ from bluemira.builders.tools import (
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import save_cad, serialise_shape
+from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -46,9 +46,10 @@ class CADConstructionType(Enum):
     Enum for construction types for components
     """
 
-    CONNECT = "connect"
-    COMPOUND = "compound"
-    PATTERN = "pattern"
+    PATTERN_RADIAL = "PATTERN_RADIAL"
+    PATTERN_RADIAL_CONNECT = "PATTERN_RADIAL_CONNECT"
+    REVOLVE_XZ = "REVOLVE_XZ"
+    NO_OP = "NO_OP"
 
 
 def _timing(
@@ -227,24 +228,39 @@ def build_comp_manager_save_xyz_cad_tree(
     component_filter:
         Filter to apply to the components
     """
+    # TODO: add construction params
     cad_const_type = comp_manager.cad_construction_type()
-    manager_comp = (
-        cad_const_type
-        if isinstance(cad_const_type, Component)
-        else comp_manager.component()
-    )
-    copy_and_filtered = copy_and_filter_component(
-        manager_comp,
-        "xyz",
-        component_filter,
-    )
-    patterned = copy_and_filtered
-    if not isinstance(cad_const_type, Component):
-        patterned = circular_pattern_xyz_components(
-            copy_and_filtered,
-            n_sectors,
-            degree=sector_degrees,
+    # should cost nothing to get the component
+    manager_comp: Component = comp_manager.component()
+
+    if isinstance(cad_const_type, Component):
+        final_comp = cad_const_type
+        # TODO: filter this
+    else:
+        copy_and_filtered = copy_and_filter_component(
+            manager_comp,
+            "xyz",
+            component_filter,
         )
+        match cad_const_type:
+            case CADConstructionType.PATTERN_RADIAL:
+                final_comp = circular_pattern_xyz_components(
+                    copy_and_filtered,
+                    n_sectors,
+                    degree=sector_degrees,
+                )
+            case CADConstructionType.REVOLVE_XZ:
+                xz_components = manager_comp.get_component("xz", first=False)
+                shapes = get_properties_from_components(xz_components, ("shape"))
+                components = []
+                for c in shapes:
+                    c: PhysicalComponent
+                    shape = revolve_shape(c.shape, degree=sector_degrees * n_sectors)
+                    c_xyz = PhysicalComponent(c.name, shape)
+                    components.append(c_xyz)
+
+            case CADConstructionType.NO_OP:
+                patterned = copy_and_filtered
 
     # now you have the full patterned xyz component of n_sectors,
     # you want create a mapping between because unique material name
@@ -254,17 +270,19 @@ def build_comp_manager_save_xyz_cad_tree(
     phy_comps = patterned.leaves
     mat_to_comps_map = {}
     for phy_comp in phy_comps:
-        mat_name = "no-mat" if phy_comp.material is None else phy_comp.material.name
+        mat_name = "" if phy_comp.material is None else phy_comp.material.name
         if mat_name not in mat_to_comps_map:
             mat_to_comps_map[mat_name] = []
         mat_to_comps_map[mat_name].append(phy_comp)
 
     return_comp = Component(name=manager_comp.name)
     return_comp.children = [
-        compound_from_components(comps, f"{manager_comp.name}_{mat_name}")
+        compound_from_components(
+            comps,
+            f"{manager_comp.name}_{mat_name}" if mat_name else manager_comp.name,
+        )
         for mat_name, comps in mat_to_comps_map.items()
     ]
-
     return return_comp
 
 

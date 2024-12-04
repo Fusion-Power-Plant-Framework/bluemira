@@ -264,6 +264,7 @@ class ComponentManager(BaseManager):
     def __init__(self, component: ComponentT) -> None:
         self._component = component
 
+    # TODO: add construction params
     def cad_construction_type(self) -> CADConstructionType | PhysicalComponent:  # noqa: PLR6301
         """
         Return the construction type of the component tree wrapped by this manager.
@@ -273,7 +274,7 @@ class ComponentManager(BaseManager):
         :
             The construction type of the component managed by this.
         """
-        return CADConstructionType.PATTERN
+        return CADConstructionType.PATTERN_RADIAL
 
     def component(self) -> ComponentT:
         """

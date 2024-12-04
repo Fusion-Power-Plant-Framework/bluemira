@@ -27,9 +27,6 @@ class Blanket(ComponentManager):
         self._panel_points = panel_points
         super().__init__(component_tree)
 
-    def cad_construction_type(self):
-        return CADConstructionType.COMPOUND
-
     @property
     def panel_points(self) -> Coordinates:
         """

@@ -48,7 +48,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         """
         Return the construction type of the component tree wrapped by this manager.
         """
-        return CADConstructionType.CONNECT
+        return CADConstructionType.PATTERN_RADIAL_CONNECT
 
     @property
     def xz_boundary(self) -> BluemiraWire:
