@@ -1012,7 +1012,7 @@ class SymmetricCircuit(Circuit):
         """
         Calculate the change in position to the symmetric coil,
         twice the distance to the line of symmetry.
-        """  # noqa: DOC201
+        """
         cp = self._get_group_centre()
         cp[1] -= self._shift
 
@@ -1053,25 +1053,62 @@ class SymmetricCircuit(Circuit):
         self.primary_group.z += new_z - self._get_primary_group_z_centre()
         self.symmetric_group.z -= self._symmetrise()[1]
 
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> list[str] | None:
+        """
+        Remove coil(s) from CoilSet
+
+        Parameters
+        ----------
+        coil_name:
+            coil(s) to remove
+        _top_level:
+            FOR INTERNAL USE, flags if at top level of nested coilgroup stack
+
+        Returns
+        -------
+        :
+            Removed coil names, if not at top level of nested stack
+
+        Raises
+        ------
+        ValueError
+            Cannot remove coils from a SymmetricCircuit with nested CoilGroups
+        """
+        if not all(isinstance(coil, Coil) for coil in self._coils):
+            raise ValueError(
+                "Cannot remove coils from a SymmerricCircuit with nested CoilGroups"
+            ) from None
+
+        if all(name in coil_name for name in self.name):
+            # needed for short circuiting
+            pass
+        elif any(name in coil_name for name in self.name):
+            bluemira_warn(
+                "Removing one coil from a SymmetricCircuit implies removing both"
+            )
+            coil_name = self.name
+
+        return super().remove_coil(*coil_name, _top_level=_top_level)
+
     def _get_primary_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""  # noqa: DOC201
-        return np.mean(self.primary_group.x)
+        """Get the x centre of the first coil group"""
+        return np.mean(self.primary_group.x)  # noqa: DOC201
 
     def _get_primary_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""  # noqa: DOC201
-        return np.mean(self.primary_group.z)
+        """Get the z centre of the first coil group"""
+        return np.mean(self.primary_group.z)  # noqa: DOC201
 
     def _get_symmetric_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""  # noqa: DOC201
-        return np.mean(self.symmetric_group.x)
+        """Get the x centre of the first coil group"""
+        return np.mean(self.symmetric_group.x)  # noqa: DOC201
 
     def _get_symmetric_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""  # noqa: DOC201
-        return np.mean(self.symmetric_group.z)
+        """Get the z centre of the first coil group"""
+        return np.mean(self.symmetric_group.z)  # noqa: DOC201
 
     def _get_group_centre(self) -> np.ndarray:
-        """Get the centre of the first coil group"""  # noqa: DOC201
-        return np.array([
+        """Get the centre of the first coil group"""
+        return np.array([  # noqa: DOC201
             self._get_primary_group_x_centre(),
             self._get_primary_group_z_centre(),
         ])
@@ -1148,12 +1185,25 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         )
         self.control = control_names
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True):
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> list[str] | None:
         """
-        Remove coil from CoilSet
+        Remove coil(s) from CoilSet
+
+        Parameters
+        ----------
+        coil_name:
+            coil(s) to remove
+        _top_level:
+            FOR INTERNAL USE, flags if at top level of nested coilgroup stack
+
+        Returns
+        -------
+        :
+            Removed coil names, if not at top level of nested stack
         """
-        super().remove_coil(*coil_name, _top_level=_top_level)
+        removed_coils = super().remove_coil(*coil_name, _top_level=_top_level)
         self.control = list(set(self.control) & set(self.name))
+        return removed_coils
 
     @property
     def control(self) -> list[str]:
