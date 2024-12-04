@@ -168,9 +168,7 @@ def format_warning_report(sys_args: list[str]) -> int:
         )
         if new:
             warning_list = format_warnings_list(new)
-            report.extend(
-                make_collapsable(warning_list, f"New warnings ({len(warnings)})")
-            )
+            report.extend(make_collapsable(warning_list, f"New warnings ({len(new)})"))
         exit_code = len(new)
     else:
         plural = "" if len(warnings) == 1 else "s"
