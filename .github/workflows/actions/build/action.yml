@@ -65,6 +65,7 @@ runs:
         environment-file: conda/environment.yml
         miniforge-version: "latest"
         use-only-tar-bz2: false
+        conda-remove-defaults: true
         python-version: ${{ inputs.python-version }}
 
     - name: Patch pivy
