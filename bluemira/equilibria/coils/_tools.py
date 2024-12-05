@@ -39,14 +39,18 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     Single-filament coil formulation; serves as a useful approximation.
 
     - **Off-diagonal terms** (:math:`i \\neq j`):
-    .. math::
-        M_{ij} = n_i n_j G(x_i, z_i, x_j, z_j)
-    where :math:`G` is the Green's function for mutual inductance.
+
+        .. math::
+            M_{ij} = n_i n_j G(x_i, z_i, x_j, z_j)
+
+        where :math:`G` is the Green's function for mutual inductance.
 
     - **Diagonal terms** (:math:`i = j`):
-    .. math::
-        M_{ii} = n_i^2 L_i
-    with :math:`L_i` as the self-inductance using elliptic integrals.
+
+        .. math::
+            M_{ii} = n_i^2 L_i
+
+        with :math:`L_i` as the self-inductance using elliptic integrals.
 
     """
     n_coils = coilset.n_coils()
