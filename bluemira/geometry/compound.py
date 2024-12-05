@@ -58,7 +58,7 @@ class BluemiraCompound(BluemiraGeo):
             )
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
-
+        # save_cad
         bm_solids = [BluemiraSolid._create(solid) for solid in cadapi.solids(obj)]
         bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
         bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]

@@ -11,6 +11,7 @@ Tool function and classes for the bluemira base module.
 from __future__ import annotations
 
 import time
+from collections.abc import Iterable
 from enum import Enum
 from functools import wraps
 from typing import TYPE_CHECKING, TypeVar
@@ -32,7 +33,7 @@ from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
@@ -47,7 +48,6 @@ class CADConstructionType(Enum):
     """
 
     PATTERN_RADIAL = "PATTERN_RADIAL"
-    PATTERN_RADIAL_CONNECT = "PATTERN_RADIAL_CONNECT"
     REVOLVE_XZ = "REVOLVE_XZ"
     NO_OP = "NO_OP"
 
@@ -211,6 +211,116 @@ def plot_component_dim(
     ComponentPlotter(view=dim, kwargs=kwargs).plot_2d(component)
 
 
+def _construct_comp_manager_physical_comps(
+    comp_manager: ComponentManager,
+    component_filter: Callable[[ComponentT], bool] | None,
+    n_sectors: int,
+    sector_degrees: int,
+) -> tuple[list[PhysicalComponent], str]:
+    """
+    Construct the compoent using the construction type
+    and return the PhysicalComponents.
+
+    Returns
+    -------
+    :
+        A List of constructed PhysicalComponent's
+        and the name to associate with them
+    """
+    # TODO: add construction params
+    construction_type = comp_manager.cad_construction_type()
+    # should cost nothing to get the component
+    manager_comp: Component = comp_manager.component()
+
+    phy_comps = None
+    if isinstance(construction_type, Component):
+        phy_comps = construction_type
+        # TODO: filter this
+    else:
+        xyz_copy_and_filtered = copy_and_filter_component(
+            manager_comp,
+            "xyz",
+            component_filter,
+        )
+        match construction_type:
+            case CADConstructionType.PATTERN_RADIAL:
+                phy_comps = circular_pattern_xyz_components(
+                    xyz_copy_and_filtered,
+                    n_sectors,
+                    degree=sector_degrees,
+                ).leaves
+            case CADConstructionType.REVOLVE_XZ:
+                xz_components = manager_comp.get_component("xz", first=False)
+                xz_phy_comps: list[PhysicalComponent] = []
+                for xz_c in xz_components:
+                    xz_phy_comps.extend(xz_c.leaves)
+                phy_comps = [
+                    PhysicalComponent(
+                        c.name,
+                        revolve_shape(c.shape, degree=sector_degrees * n_sectors),
+                        material=c.material,
+                    )
+                    for c in xz_phy_comps
+                ]
+            case CADConstructionType.NO_OP:
+                phy_comps = xyz_copy_and_filtered.leaves
+
+    # todo: could filter all faces here
+
+    return phy_comps, manager_comp.name
+
+
+def _group_physical_components_by_material(
+    phy_comps: list[PhysicalComponent],
+) -> dict[str, list[PhysicalComponent]]:
+    """
+    Group the physical components by material name.
+
+    Returns
+    -------
+    :
+        A dictionary of material name to list of physical components
+    """
+    mat_to_comps_map = {}
+    for phy_comp in phy_comps:
+        mat_name = "" if phy_comp.material is None else phy_comp.material.name
+        if mat_name not in mat_to_comps_map:
+            mat_to_comps_map[mat_name] = []
+        mat_to_comps_map[mat_name].append(phy_comp)
+    return mat_to_comps_map
+
+
+def _build_compounds_from_map(
+    mat_to_comps_map: dict[str, list[PhysicalComponent]],
+    manager_name: str,
+) -> list[PhysicalComponent]:
+    """
+    Build the compounds from the material to components map.
+
+    Returns
+    -------
+    :
+        A list of compounds
+    """
+    return [
+        Component(
+            f"{manager_name}_{mat_name}" if mat_name else manager_name,
+            children=comps,
+        )
+        # compound_from_components(
+        #     comps,
+        #     f"{manager_name}_{mat_name}" if mat_name else manager_name,
+        # )
+        if len(comps) > 1
+        else PhysicalComponent(
+            name=f"{manager_name}_{comps[0].name}",
+            shape=comps[0].shape,
+            material=comps[0].material,
+        )
+        for mat_name, comps in mat_to_comps_map.items()
+    ]
+
+
 def build_comp_manager_save_xyz_cad_tree(
     comp_manager: ComponentManager,
     component_filter: Callable[[ComponentT], bool] | None,
@@ -227,62 +337,35 @@ def build_comp_manager_save_xyz_cad_tree(
         Component manager
     component_filter:
         Filter to apply to the components
+
+    Returns
+    -------
+    :
+        The constructed component manager component for CAD saving
+
+    Raises
+    ------
+    ValueError
+        If no components were constructed
     """
-    # TODO: add construction params
-    cad_const_type = comp_manager.cad_construction_type()
-    # should cost nothing to get the component
-    manager_comp: Component = comp_manager.component()
+    constructed_phy_comps, manager_name = _construct_comp_manager_physical_comps(
+        comp_manager,
+        component_filter,
+        n_sectors,
+        sector_degrees,
+    )
 
-    if isinstance(cad_const_type, Component):
-        final_comp = cad_const_type
-        # TODO: filter this
-    else:
-        copy_and_filtered = copy_and_filter_component(
-            manager_comp,
-            "xyz",
-            component_filter,
-        )
-        match cad_const_type:
-            case CADConstructionType.PATTERN_RADIAL:
-                final_comp = circular_pattern_xyz_components(
-                    copy_and_filtered,
-                    n_sectors,
-                    degree=sector_degrees,
-                )
-            case CADConstructionType.REVOLVE_XZ:
-                xz_components = manager_comp.get_component("xz", first=False)
-                shapes = get_properties_from_components(xz_components, ("shape"))
-                components = []
-                for c in shapes:
-                    c: PhysicalComponent
-                    shape = revolve_shape(c.shape, degree=sector_degrees * n_sectors)
-                    c_xyz = PhysicalComponent(c.name, shape)
-                    components.append(c_xyz)
+    if not constructed_phy_comps:
+        raise ValueError(f"No components were constructed for {manager_name}")
 
-            case CADConstructionType.NO_OP:
-                patterned = copy_and_filtered
+    mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
 
-    # now you have the full patterned xyz component of n_sectors,
-    # you want create a mapping between because unique material name
-    # and the PhysicalComponent's with that material
+    return_comp = Component(name=manager_name)
+    return_comp.children = _build_compounds_from_map(
+        mat_to_comps_map,
+        manager_name,
+    )
 
-    # is there a better way to get physical comps from the trree?
-    phy_comps = patterned.leaves
-    mat_to_comps_map = {}
-    for phy_comp in phy_comps:
-        mat_name = "" if phy_comp.material is None else phy_comp.material.name
-        if mat_name not in mat_to_comps_map:
-            mat_to_comps_map[mat_name] = []
-        mat_to_comps_map[mat_name].append(phy_comp)
-
-    return_comp = Component(name=manager_comp.name)
-    return_comp.children = [
-        compound_from_components(
-            comps,
-            f"{manager_comp.name}_{mat_name}" if mat_name else manager_comp.name,
-        )
-        for mat_name, comps in mat_to_comps_map.items()
-    ]
     return return_comp
 
 
