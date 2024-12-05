@@ -34,7 +34,7 @@ class Plasma(ComponentManager):
     """
 
     def cad_construction_type(self):
-        return CADConstructionType.PATTERN_RADIAL_CONNECT
+        return CADConstructionType.REVOLVE_XZ
 
     def lcfs(self) -> BluemiraWire:
         """

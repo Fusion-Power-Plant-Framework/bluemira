@@ -44,12 +44,6 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
     Wrapper around a Vacuum Vessel component tree.
     """
 
-    def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
-        """
-        Return the construction type of the component tree wrapped by this manager.
-        """
-        return CADConstructionType.PATTERN_RADIAL_CONNECT
-
     @property
     def xz_boundary(self) -> BluemiraWire:
         """
