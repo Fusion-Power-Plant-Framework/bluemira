@@ -28,7 +28,7 @@ class TestConstraintMechanics:
         # Generate a test equilibrium
         path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         fn = Path(path, "DN-DEMO_eqref.json")
-        cls.eq = Equilibrium.from_eqdsk(fn, from_cocos=3, qpsi_positive=False)
+        cls._eq = Equilibrium.from_eqdsk(fn, from_cocos=3, qpsi_positive=False)
 
         # Test isoflux constraint locations and weights
         cls.x_iso = np.array([0.6, 1.0, 1.5, 1.0])
@@ -46,52 +46,60 @@ class TestConstraintMechanics:
         cls.CS_Fz_sum_max = 300e6
         cls.CS_Fz_sep_max = 250e6
 
+        cls.pf_names = cls._eq.coilset.get_coiltype("PF").name
+        cls.cs_names = cls._eq.coilset.get_coiltype("CS").name
+
+    def setup_method(self):
+        self.eq = deepcopy(self._eq)
+
+    def teardown_method(self):
+        del self.eq
+
     @pytest.mark.parametrize("control", [False, True])
     def test_control_coils(self, control):
         """
         Checks that the number of coils used matches the control coils.
         Default is all coils are control coils.
         """
-        eq_cc = deepcopy(self.eq)
         if control:
             # Test coilset with n control coils < n coils
-            eq_cc.coilset.control = ["PF_1", "PF_2", "PF_3", "CS_1", "CS_2", "CS_3"]
+            self.eq.coilset.control = [*self.pf_names[:3], *self.cs_names[:3]]
 
         # Field
-        field_c = CoilFieldConstraints(eq_cc.coilset, self.B_max)
-        field_c.prepare(eq_cc)
+        field_c = CoilFieldConstraints(self.eq.coilset, self.B_max)
+        field_c.prepare(self.eq)
         assert np.shape(field_c._args["ax_mat"]) == (
-            len(eq_cc.coilset.control),
-            len(eq_cc.coilset.control),
+            len(self.eq.coilset.control),
+            len(self.eq.coilset.control),
         )
         assert np.shape(field_c._args["az_mat"]) == (
-            len(eq_cc.coilset.control),
-            len(eq_cc.coilset.control),
+            len(self.eq.coilset.control),
+            len(self.eq.coilset.control),
         )
-        assert len(field_c._args["bxp_vec"]) == len(eq_cc.coilset.control)
-        assert len(field_c._args["bzp_vec"]) == len(eq_cc.coilset.control)
+        assert len(field_c._args["bxp_vec"]) == len(self.eq.coilset.control)
+        assert len(field_c._args["bzp_vec"]) == len(self.eq.coilset.control)
 
         # Force
         force_c = CoilForceConstraints(
-            eq_cc.coilset, self.PF_Fz_max, self.CS_Fz_sum_max, self.CS_Fz_sep_max
+            self.eq.coilset, self.PF_Fz_max, self.CS_Fz_sum_max, self.CS_Fz_sep_max
         )
-        force_c.prepare(eq_cc)
+        force_c.prepare(self.eq)
         assert np.shape(force_c._args["a_mat"]) == (
-            len(eq_cc.coilset.control),
-            len(eq_cc.coilset.control),
+            len(self.eq.coilset.control),
+            len(self.eq.coilset.control),
             2,
         )
-        assert len(force_c._args["b_vec"]) == len(eq_cc.coilset.control)
+        assert len(force_c._args["b_vec"]) == len(self.eq.coilset.control)
 
         # Set
         mcs = MagneticConstraintSet([
             IsofluxConstraint(self.x_iso, self.z_iso, ref_x=0.5, ref_z=0.5),
             PsiBoundaryConstraint(self.x_psi, self.z_psi, target_value=0.0),
         ])
-        mcs.__call__(equilibrium=eq_cc)
+        mcs.__call__(equilibrium=self.eq)
         assert np.shape(mcs.A) == (
             len(self.x_psi) + len(self.x_iso),
-            len(eq_cc.coilset.control),
+            len(self.eq.coilset.control),
         )
 
     @pytest.mark.parametrize("apply_weights", [True, False])
