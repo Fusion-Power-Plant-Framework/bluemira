@@ -321,9 +321,6 @@ class TestCoilGroup:
         with pytest.raises(EquilibriaError):
             self.group.remove_coil("PF_1")
 
-        # TODO @je-cook: test nested removal
-        # 3669
-
     def test_resize(self):
         initdx = self.group.dx
         initdz = self.group.dz
@@ -456,23 +453,24 @@ class TestCoilSet:
         cls.coilset_w_cg = CoilSet(coil_1, group)
 
     def test_remove_nested_coils(self):
-        coilset_w_sc_copy = copy.deepcopy(self.coilset_w_sc)
+        coilset_w_cg_copy = copy.deepcopy(self.coilset_w_cg)
 
-        self.coilset_w_cg.remove_coil("PF_2")
-        assert self.coilset_w_cg.name == ["PF_1", "PF_3"]
-        self.coilset_w_cg.remove_coil("PF_3")
-        assert self.coilset_w_cg.name == ["PF_1"]
+        coilset_w_cg_copy.remove_coil("PF_2")
+        assert coilset_w_cg_copy.name == ["PF_1", "PF_3"]
+        coilset_w_cg_copy.remove_coil("PF_3")
+        assert coilset_w_cg_copy.name == ["PF_1"]
         # checks if the empty coilgroup is removed
-        assert all(isinstance(coil, Coil) for coil in self.coilset_w_cg._coils)
+        assert all(isinstance(coil, Coil) for coil in coilset_w_cg_copy._coils)
 
-        coilset_w_sc_copy = copy.deepcopy(self.coilset_w_sc)
+        coilset_w_sc_copy_a = copy.deepcopy(self.coilset_w_sc)
+        coilset_w_sc_copy_b = copy.deepcopy(self.coilset_w_sc)
 
         # removing one coil from a symmetric circuit should remove the other
-        self.coilset_w_sc.remove_coil("PF_2", "PF_1")
-        assert self.coilset_w_cg.name == ["PF_1"]
+        coilset_w_sc_copy_a.remove_coil("PF_2")
+        assert coilset_w_sc_copy_a.name == ["PF_1"]
 
-        coilset_w_sc_copy.remove_coil("PF_2", "PF_1")
-        assert coilset_w_sc_copy.name == []
+        coilset_w_sc_copy_b.remove_coil("PF_2", "PF_1")
+        assert coilset_w_sc_copy_b.name == []
 
     def test_padding_of_quads(self):
         cs = copy.deepcopy(self.coilset_w_sc)
