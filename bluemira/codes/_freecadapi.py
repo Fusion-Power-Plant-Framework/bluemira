@@ -2191,13 +2191,14 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
 
 def join_connect(shapes: Iterable[apiShape], dist_tolerance: float) -> apiShape:
     """
-    Cnnects interiors of two walled objects (e.g., pipes).
+    Connects interiors of two walled objects (e.g., pipes).
 
     It can also join shells and wires.
 
     Returns
     -------
-    Result of the join connect operation.
+    :
+        Result of the join connect operation.
 
     Raises
     ------

@@ -16,7 +16,6 @@ from rich.progress import track
 
 from bluemira.base.components import (
     Component,
-    PhysicalComponent,
 )
 from bluemira.base.error import ComponentError
 from bluemira.base.tools import (
@@ -265,15 +264,10 @@ class ComponentManager(BaseManager):
         self._component = component
 
     # TODO: add construction params
-    def cad_construction_type(self) -> CADConstructionType | PhysicalComponent:  # noqa: PLR6301
+    def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
         """
         Return the construction type of the component tree wrapped by this manager.
-
-        Returns
-        -------
-        :
-            The construction type of the component managed by this.
-        """
+        """  # noqa: DOC201
         return CADConstructionType.PATTERN_RADIAL
 
     def component(self) -> ComponentT:
@@ -480,8 +474,11 @@ class Reactor(BaseManager):
         return [
             getattr(self, comp_name)
             for comp_name, comp_type in get_type_hints(type(self)).items()
+            # filter out non-component managers
             if issubclass(comp_type, ComponentManager)
+            # filter out component managers that are not initialised
             and getattr(self, comp_name, None) is not None
+            # if with_components is set, filter out components not in the list
             and (with_components is None or getattr(self, comp_name) in with_components)
         ]
 
