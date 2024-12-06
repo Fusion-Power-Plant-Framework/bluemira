@@ -321,9 +321,6 @@ class TestCoilGroup:
         with pytest.raises(EquilibriaError):
             self.group.remove_coil("PF_1")
 
-        # TODO @je-cook: test nested removal
-        # 3669
-
     def test_resize(self):
         initdx = self.group.dx
         initdz = self.group.dz
@@ -423,45 +420,67 @@ class TestSymmetricCircuit:
 class TestCoilSet:
     @classmethod
     def setup_class(cls):
-        coil = Coil(
+        coil_1 = Coil(
             x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
-        circuit = SymmetricCircuit(
-            Coil(
-                x=1.5,
-                z=6,
-                current=1e6,
-                dx=0.25,
-                dz=0.5,
-                j_max=10.0,
-                b_max=100,
-                ctype="PF",
-                name="PF_2",
-            ),
-            Coil(
-                x=1.5,
-                z=-6,
-                current=1e6,
-                dx=0.25,
-                dz=0.5,
-                j_max=10.0,
-                b_max=100,
-                ctype="PF",
-                name="PF_3",
-            ),
+        coil_2 = Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        )
+        coil_3 = Coil(
+            x=1.5,
+            z=-6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_3",
         )
 
-        cls.coilset = CoilSet(coil, circuit)
+        circuit = SymmetricCircuit(coil_2, coil_3)
+        group = CoilGroup(coil_2, coil_3)
+
+        cls.coilset_w_sc = CoilSet(coil_1, circuit)
+        cls.coilset_w_cg = CoilSet(coil_1, group)
+
+    def test_remove_nested_coils(self):
+        coilset_w_cg_copy = copy.deepcopy(self.coilset_w_cg)
+
+        coilset_w_cg_copy.remove_coil("PF_2")
+        assert coilset_w_cg_copy.name == ["PF_1", "PF_3"]
+        coilset_w_cg_copy.remove_coil("PF_3")
+        assert coilset_w_cg_copy.name == ["PF_1"]
+        # checks if the empty coilgroup is removed
+        assert all(isinstance(coil, Coil) for coil in coilset_w_cg_copy._coils)
+
+        coilset_w_sc_copy_a = copy.deepcopy(self.coilset_w_sc)
+        coilset_w_sc_copy_b = copy.deepcopy(self.coilset_w_sc)
+
+        # removing one coil from a symmetric circuit should remove the other
+        coilset_w_sc_copy_a.remove_coil("PF_2")
+        assert coilset_w_sc_copy_a.name == ["PF_1"]
+
+        coilset_w_sc_copy_b.remove_coil("PF_2", "PF_1")
+        assert coilset_w_sc_copy_b.name == []
 
     def test_padding_of_quads(self):
-        cs = copy.deepcopy(self.coilset)
+        cs = copy.deepcopy(self.coilset_w_sc)
         cs._coils[0].discretisation = 0.5
 
         # if padding is done on multiple axes this shape will be (10, 8)
         assert cs._quad_x.shape == (3, 8)
 
     def test_group_vecs(self):
-        x, z, dx, dz, currents = self.coilset.to_group_vecs()
+        x, z, dx, dz, currents = self.coilset_w_sc.to_group_vecs()
 
         assert np.allclose(currents, np.array([2e6, 1e6, 1e6]))
         assert np.allclose(x, np.array([4, 1.5, 1.5]))
@@ -470,28 +489,28 @@ class TestCoilSet:
         assert np.allclose(dx, np.array([1, 0.25, 0.25]))
 
     def test_member_attributes(self):
-        coilset = copy.deepcopy(self.coilset)
+        coilset = copy.deepcopy(self.coilset_w_sc)
 
-        assert np.isclose(self.coilset["PF_1"].x, 4)
-        assert np.isclose(self.coilset["PF_2"].x, 1.5)
+        assert np.isclose(self.coilset_w_sc["PF_1"].x, 4)
+        assert np.isclose(self.coilset_w_sc["PF_2"].x, 1.5)
 
-        assert np.isclose(self.coilset["PF_1"].z, 10)
-        assert np.isclose(self.coilset["PF_2"].z, 6)
+        assert np.isclose(self.coilset_w_sc["PF_1"].z, 10)
+        assert np.isclose(self.coilset_w_sc["PF_2"].z, 6)
 
-        assert np.isclose(self.coilset["PF_1"].dx, 1)
-        assert np.isclose(self.coilset["PF_2"].dx, 0.25)
+        assert np.isclose(self.coilset_w_sc["PF_1"].dx, 1)
+        assert np.isclose(self.coilset_w_sc["PF_2"].dx, 0.25)
 
-        assert np.isclose(self.coilset["PF_1"].dz, 0.5)
-        assert np.isclose(self.coilset["PF_2"].dz, 0.5)
+        assert np.isclose(self.coilset_w_sc["PF_1"].dz, 0.5)
+        assert np.isclose(self.coilset_w_sc["PF_2"].dz, 0.5)
 
-        assert np.isclose(self.coilset["PF_1"].j_max, 5.0)
-        assert np.isclose(self.coilset["PF_2"].j_max, 10.0)
+        assert np.isclose(self.coilset_w_sc["PF_1"].j_max, 5.0)
+        assert np.isclose(self.coilset_w_sc["PF_2"].j_max, 10.0)
 
-        assert np.isclose(self.coilset["PF_1"].b_max, 50)
-        assert np.isclose(self.coilset["PF_2"].b_max, 100)
+        assert np.isclose(self.coilset_w_sc["PF_1"].b_max, 50)
+        assert np.isclose(self.coilset_w_sc["PF_2"].b_max, 100)
 
-        assert np.isclose(self.coilset["PF_1"].current, 2e6)
-        assert np.isclose(self.coilset["PF_2"].current, 1e6)
+        assert np.isclose(self.coilset_w_sc["PF_1"].current, 2e6)
+        assert np.isclose(self.coilset_w_sc["PF_2"].current, 1e6)
 
         coil1 = coilset["PF_1"]
         coil1.dz = 0.77
@@ -502,13 +521,13 @@ class TestCoilSet:
         assert np.isclose(coilset["PF_3"].dz, 0.6)
 
     def test_numbers(self):
-        assert self.coilset.n_coils("PF") == 2
-        assert self.coilset.n_coils("CS") == 0
-        assert self.coilset.n_coils("NONE") == 1
-        assert self.coilset.n_coils() == 3
+        assert self.coilset_w_sc.n_coils("PF") == 2
+        assert self.coilset_w_sc.n_coils("CS") == 0
+        assert self.coilset_w_sc.n_coils("NONE") == 1
+        assert self.coilset_w_sc.n_coils() == 3
 
     def test_currents(self):
-        coilset = copy.deepcopy(self.coilset)
+        coilset = copy.deepcopy(self.coilset_w_sc)
 
         set_currents = np.array([3e6, 4e6])
         coilset.get_control_coils().current = set_currents
@@ -517,7 +536,7 @@ class TestCoilSet:
         assert np.isclose(set_currents[-1], currents[-1])
 
     def test_material_assignment(self):
-        coilset = copy.deepcopy(self.coilset)
+        coilset = copy.deepcopy(self.coilset_w_sc)
         test_j_max = 7.0
         test_b_max = 24.0
         coilset.assign_material("PF", j_max=test_j_max, b_max=test_b_max)
@@ -528,7 +547,7 @@ class TestCoilSet:
         assert np.allclose(coilset.b_max[1:], test_b_max)
 
     def test_get_max_current(self):
-        coilset = copy.deepcopy(self.coilset)
+        coilset = copy.deepcopy(self.coilset_w_sc)
         coilset["PF_1"]._flag_sizefix = False
 
         # isnan(j_max) = False False False
@@ -544,17 +563,19 @@ class TestCoilSet:
         np.testing.assert_allclose(coilset.get_max_current(), [np.inf, np.inf, np.inf])
 
     def test_get_position_optimisable_coils(self):
-        all_c_opt_coils = [c.name for c in self.coilset.get_position_optimisable_coils()]
+        all_c_opt_coils = [
+            c.name for c in self.coilset_w_sc.get_position_optimisable_coils()
+        ]
         pf1_c_opt_coils = [
-            c.name for c in self.coilset.get_position_optimisable_coils(["PF_1"])
+            c.name for c in self.coilset_w_sc.get_position_optimisable_coils(["PF_1"])
         ]
         assert all_c_opt_coils == ["PF_1", "PF_2"]
         assert pf1_c_opt_coils == ["PF_1"]
 
-        assert self.coilset.n_position_optimisable_coils == 2
+        assert self.coilset_w_sc.n_position_optimisable_coils == 2
 
         with pytest.raises(ValueError):  # noqa: PT011
-            self.coilset.get_position_optimisable_coils(["PF_3"])
+            self.coilset_w_sc.get_position_optimisable_coils(["PF_3"])
 
 
 class TestCoilSetSymmetry:
