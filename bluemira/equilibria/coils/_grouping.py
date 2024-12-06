@@ -1081,7 +1081,7 @@ class SymmetricCircuit(Circuit):
         """
         if not all(isinstance(coil, Coil) for coil in self._coils):
             raise ValueError(
-                "Cannot remove coils from a SymmerricCircuit with nested CoilGroups"
+                "Cannot remove coils from a SymmetricCircuit with nested CoilGroups"
             ) from None
 
         if all(name in coil_name for name in self.name):
