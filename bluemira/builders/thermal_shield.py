@@ -38,7 +38,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
-from bluemira.materials.cache import Void
+from bluemira.materials.cache import Void, get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -166,7 +166,12 @@ class VVTSBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
-            material=[None, Void("vacuum")],
+            material=[
+                get_cached_material(
+                    self.build_config.get("material", {}).get(self.VVTS)
+                ),
+                Void("vacuum"),
+            ],
         )
 
 
@@ -326,5 +331,10 @@ class CryostatTSBuilder(Builder):
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
             enable_sectioning=True,
-            material=[None, Void("vacuum")],
+            material=[
+                get_cached_material(
+                    self.build_config.get("material", {}).get(self.CRYO_TS)
+                ),
+                Void("vacuum"),
+            ],
         )
