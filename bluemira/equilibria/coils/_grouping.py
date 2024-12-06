@@ -1012,6 +1012,11 @@ class SymmetricCircuit(Circuit):
         """
         Calculate the change in position to the symmetric coil,
         twice the distance to the line of symmetry.
+
+        Returns
+        -------
+        :
+            The change in position
         """
         cp = self._get_group_centre()
         cp[1] -= self._shift
@@ -1091,24 +1096,24 @@ class SymmetricCircuit(Circuit):
         return super().remove_coil(*coil_name, _top_level=_top_level)
 
     def _get_primary_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""
-        return np.mean(self.primary_group.x)  # noqa: DOC201
+        """Get the x centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.primary_group.x)
 
     def _get_primary_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""
-        return np.mean(self.primary_group.z)  # noqa: DOC201
+        """Get the z centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.primary_group.z)
 
     def _get_symmetric_group_x_centre(self) -> np.float64:
-        """Get the x centre of the first coil group"""
-        return np.mean(self.symmetric_group.x)  # noqa: DOC201
+        """Get the x centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.symmetric_group.x)
 
     def _get_symmetric_group_z_centre(self) -> np.float64:
-        """Get the z centre of the first coil group"""
-        return np.mean(self.symmetric_group.z)  # noqa: DOC201
+        """Get the z centre of the first coil group"""  # noqa: DOC201
+        return np.mean(self.symmetric_group.z)
 
     def _get_group_centre(self) -> np.ndarray:
-        """Get the centre of the first coil group"""
-        return np.array([  # noqa: DOC201
+        """Get the centre of the first coil group"""  # noqa: DOC201
+        return np.array([
             self._get_primary_group_x_centre(),
             self._get_primary_group_z_centre(),
         ])
