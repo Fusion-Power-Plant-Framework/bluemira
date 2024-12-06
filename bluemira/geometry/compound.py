@@ -37,8 +37,14 @@ class BluemiraCompound(BluemiraGeo):
         Label to assign to the compound
     """
 
-    def __init__(self, boundary: list[BluemiraGeo], label: str = ""):
+    def __init__(
+        self,
+        boundary: list[BluemiraGeo],
+        label: str = "",
+        api_obj: cadapi.apiCompound = None,
+    ):
         boundary_classes = [BluemiraGeo]
+        self._sneaky_underlying_shape = api_obj
         super().__init__(boundary, label, boundary_classes)
 
     def _create_shape(self) -> cadapi.apiCompound:
@@ -48,7 +54,8 @@ class BluemiraCompound(BluemiraGeo):
         apiCompound:
             Shape of the object as a single compound.
         """
-        return cadapi.apiCompound([s.shape for s in self.boundary])
+        # return cadapi.apiCompound([s.shape for s in self.boundary])
+        return self._sneaky_underlying_shape
 
     @classmethod
     def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
@@ -58,7 +65,7 @@ class BluemiraCompound(BluemiraGeo):
             )
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
-        # save_cad
+
         bm_solids = [BluemiraSolid._create(solid) for solid in cadapi.solids(obj)]
         bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
         bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
@@ -70,7 +77,7 @@ class BluemiraCompound(BluemiraGeo):
                 for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
             ]
 
-        return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label)
+        return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label, api_obj=obj)
 
     @property
     def vertexes(self) -> Coordinates:

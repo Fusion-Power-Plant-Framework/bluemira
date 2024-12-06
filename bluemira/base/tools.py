@@ -24,6 +24,7 @@ from bluemira.base.components import (
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.builders.tools import (
     circular_pattern_component,
+    compound_from_components,
 )
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
@@ -342,14 +343,14 @@ def _build_compounds_from_map(
             material=comps[0].material,
         )
         if len(comps) == 1
-        else Component(
-            f"{manager_name}_{mat_name}" if mat_name else manager_name,
-            children=comps,
-        )
-        # compound_from_components(
-        #     comps,
+        # Component(
         #     f"{manager_name}_{mat_name}" if mat_name else manager_name,
+        #     children=comps,
         # )
+        else compound_from_components(
+            comps,
+            f"{manager_name}_{mat_name}" if mat_name else manager_name,
+        )
         for mat_name, comps in mat_to_comps_map.items()
     ]
 
