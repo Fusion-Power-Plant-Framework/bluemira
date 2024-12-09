@@ -362,7 +362,7 @@ class EUDEMOFuelCycleModel:
 
         m_T_out = self.plasma(self.params.eta_iv, self.params.I_miv, flows=flows)
         # Resolution - Not used everywhere for speed
-        n_ts = int(round(self.DEMO_t[-1] * YR_TO_S / self.timestep))
+        n_ts = round(self.DEMO_t[-1] * YR_TO_S / self.timestep)
         self.t, m_pellet_in = discretise_1d(self.DEMO_t, self.m_T_in, n_ts)
 
         # Flow out of the vacuum vessel
