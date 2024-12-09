@@ -25,6 +25,7 @@ dependencies:
   - h5py
   - mpi4py
   - graphviz
+  - numpy <2.2
   - pip
   - pip:
-      - -e '../[pinned]'
+      - -e '../[pinned,dev]'
