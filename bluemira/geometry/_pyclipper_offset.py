@@ -200,7 +200,7 @@ class OffsetOperationManager(PyclipperMixin):
         :
             List of offset coordinates objects.
         """
-        delta = int(round(delta * self._scale))  # approximation
+        delta = round(delta * self._scale)  # approximation
         solution = self.tool.Execute(delta)
         return self.handle_solution(solution)
 

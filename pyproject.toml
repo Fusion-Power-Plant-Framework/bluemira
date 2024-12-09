@@ -65,7 +65,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.8.1",
+    "ruff==0.8.2",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -177,6 +177,7 @@ ignore = [
     "ISC001",  # ruff format conflict
     "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
+    "RUF052",  # not dummy variables just private
     "TRY003",  # put error messages in error class
     "FURB152",  # 3.14 != pi
     "PIE790",  # TMP for false positive ...
