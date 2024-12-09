@@ -59,7 +59,7 @@ class TestReactor:
     def test_component_tree_built_from_class_properties(self):
         assert self.reactor.plasma.component().name == "Plasma"
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_displays_all_components(self, dim):
         with patch("bluemira.display.displayer.show_cad") as mock_show:
             if isinstance(dim, tuple):
@@ -76,13 +76,10 @@ class TestReactor:
         with pytest.raises(ComponentError):
             self.reactor.show_cad(bad_dim)
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy"])
     def test_plot_displays_all_components(self, dim):
         with patch("bluemira.display.plotter.BasePlotter.show"):
-            if isinstance(dim, tuple):
-                self.reactor.plot(*dim)
-            else:
-                self.reactor.plot(dim)
+            self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["i", 1, ["x"]])
     def test_ComponentError_given_invalid_plot_dimension_plot(self, bad_dim):
@@ -90,7 +87,7 @@ class TestReactor:
             self.reactor.plot(bad_dim)
 
     @pytest.mark.parametrize("material_filter", [True, False])
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_reactor_doesnt_show_void_material_by_default(self, dim, material_filter):
         reactor = self._make_reactor()
 
@@ -176,7 +173,7 @@ class TestComponentMananger:
         self.plasma.save_cad("xyz", directory=tmp_path)
         assert Path(tmp_path, "Plasma.stp").is_file()
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_contains_components(self, dim):
         with patch("bluemira.display.displayer.show_cad") as mock_show:
             if isinstance(dim, tuple):
@@ -189,7 +186,7 @@ class TestComponentMananger:
         )
 
     @pytest.mark.parametrize("material_filter", [True, False])
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_ignores_void_by_default(self, dim, material_filter):
         p_comp = deepcopy(self.p_comp)
         if isinstance(dim, tuple):
@@ -225,10 +222,7 @@ class TestComponentMananger:
             else 1
         )
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy"])
     def test_plot_displays_all_components(self, dim):
         with patch("bluemira.display.plotter.BasePlotter.show"):
-            if isinstance(dim, tuple):
-                self.plasma.plot(*dim)
-            else:
-                self.plasma.plot(dim)
+            self.plasma.plot(dim)

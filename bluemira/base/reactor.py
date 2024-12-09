@@ -263,7 +263,7 @@ class ComponentManager(BaseManager):
     def __init__(self, component: ComponentT) -> None:
         self._component = component
 
-    # TODO: add construction params
+    # TODO: add construction params  # noqa: TD002, TD003
     def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
         """
         Return the construction type of the component tree wrapped by this manager.
@@ -471,7 +471,7 @@ class Reactor(BaseManager):
                 "correctly defined component managers for it. "
                 "Please see the examples for a template Reactor."
             )
-        return [
+        comp_managers = [
             getattr(self, comp_name)
             for comp_name, comp_type in get_type_hints(type(self)).items()
             # filter out non-component managers
@@ -481,6 +481,11 @@ class Reactor(BaseManager):
             # if with_components is set, filter out components not in the list
             and (with_components is None or getattr(self, comp_name) in with_components)
         ]
+        if not comp_managers:
+            raise ComponentError(
+                "The reactor has no components defined or instantiated."
+            )
+        return comp_managers
 
     def _build_component_tree(
         self,
@@ -493,7 +498,7 @@ class Reactor(BaseManager):
     ) -> Component:
         reactor_component = Component(self.name)
         for comp_manager in track(self._component_managers(with_components)):
-            # if dim is None, return the raw, underlying component tree
+            # if dim is None, return the raw, underlying comp manager component tree
             if dim:
                 n_secs = n_sectors or self.n_sectors
                 sec_degrees = int((360 / self.n_sectors) * n_secs)
@@ -506,6 +511,8 @@ class Reactor(BaseManager):
                     comp = build_comp_manager_show_cad_tree(
                         comp_manager, dim, component_filter, n_secs, sec_degrees
                     )
+            else:
+                comp = comp_manager.component()
             reactor_component.add_child(comp)
         return reactor_component
 
@@ -589,6 +596,7 @@ class Reactor(BaseManager):
         kwargs:
             passed to the `~bluemira.display.displayer.show_cad` function
         """
+        self._validate_cad_dim(dim)
         show_components_cad(
             self._build_component_tree(
                 dim,
@@ -605,6 +613,7 @@ class Reactor(BaseManager):
         dim: DIM_2D = "xz",
         with_components: list[ComponentManager] | None = None,
         component_filter: Callable[[ComponentT], bool] | None = FilterMaterial(),
+        **kwargs,
     ):
         """
         Plot the reactor.
@@ -621,9 +630,11 @@ class Reactor(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
+        self._validate_plot_dims(dim)
         plot_component_dim(
             dim,
             self._build_component_tree(
                 dim, with_components, component_filter, n_sectors=1, for_save=False
             ),
+            **kwargs,
         )

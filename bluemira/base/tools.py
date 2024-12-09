@@ -235,7 +235,7 @@ def plot_component_dim(
     """
     Plot the component in the specified dimension.
     """
-    ComponentPlotter(view=dim, kwargs=kwargs).plot_2d(component)
+    ComponentPlotter(view=dim, **kwargs).plot_2d(component)
 
 
 def _construct_comp_manager_physical_comps(
@@ -259,7 +259,7 @@ def _construct_comp_manager_physical_comps(
     ValueError
         If no components were constructed
     """
-    # TODO: add construction params
+    # TODO: add construction params  # noqa: TD002, TD003
     construction_type = comp_manager.cad_construction_type()
     # should cost nothing to get the component
     manager_comp: Component = comp_manager.component()
