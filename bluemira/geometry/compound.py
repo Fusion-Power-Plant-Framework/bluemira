@@ -16,7 +16,7 @@ Wrapper for FreeCAD Part.Compounds objects
 from __future__ import annotations
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.base import BluemiraShape
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -25,7 +25,7 @@ from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 
 
-class BluemiraCompound(BluemiraGeo):
+class BluemiraCompound(BluemiraShape):
     """
     Bluemira Compound class.
 
@@ -37,29 +37,11 @@ class BluemiraCompound(BluemiraGeo):
         Label to assign to the compound
     """
 
-    def __init__(
-        self,
-        boundary: list[BluemiraGeo],
-        label: str = "",
-        api_obj: cadapi.apiCompound | None = None,
-    ):
-        boundary_classes = [BluemiraGeo]
-        self._underlying_shape = api_obj
-        super().__init__(boundary, label, boundary_classes)
-
-    def _create_shape(self) -> cadapi.apiCompound:
-        """
-        Returns
-        -------
-        apiCompound:
-            Shape of the object as a single compound.
-        """
-        if self._underlying_shape is None:
-            return cadapi.apiCompound([s.shape for s in self.boundary])
-        return self._underlying_shape
+    def __init__(self, compound_obj: cadapi.apiCompound):
+        super().__init__(compound_obj)
 
     @classmethod
-    def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
+    def _create(cls, obj: cadapi.apiCompound, _label="") -> BluemiraCompound:
         if not isinstance(obj, cadapi.apiCompound):
             raise TypeError(
                 f"Only apiCompound objects can be used to create a {cls} instance"
@@ -67,21 +49,7 @@ class BluemiraCompound(BluemiraGeo):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        # Extracts and validates the boundary objects of the api compound objects.
-        # These form the compound's boundary, however, because these calls
-        # validate the shapes, one does not need to recreate the obj during init
-        bm_solids = [BluemiraSolid._create(solid) for solid in cadapi.solids(obj)]
-        bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
-        bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
-        bm_wires = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
-        if len(bm_wires) == 0:
-            # In some edge cases there are edges that are not captured within wires
-            bm_wires = [
-                BluemiraWire(wire)
-                for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
-            ]
-
-        return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label, api_obj=obj)
+        return cls(compound_obj=obj)
 
     @property
     def vertexes(self) -> Coordinates:
