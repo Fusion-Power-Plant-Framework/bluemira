@@ -107,18 +107,19 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             This function mutates components in the subtree
         """
         for n in names:
-            descendent_comps = self.get_component(
+            named_comps = self.get_component(
                 n,
                 first=False,
             )
 
-            if descendent_comps is None:
+            if named_comps is None:
                 continue
-            if not isinstance(descendent_comps, Iterable):
-                descendent_comps = [descendent_comps]
+            if not isinstance(named_comps, Iterable):
+                named_comps = [named_comps]
 
             # Filter out all siblings that are not in names
-            for c in descendent_comps:
+            for c in named_comps:
+                c: Component
                 for c_sib in c.siblings:
                     if c_sib.name not in names:
                         c_sib.parent = None
@@ -407,8 +408,8 @@ class PhysicalComponent(Component):
         children: list[ComponentT] | None = None,
     ):
         super().__init__(name, parent, children)
-        self.shape = shape
-        self.material = material
+        self._shape = shape
+        self._material = material
 
     def copy(
         self,
@@ -458,7 +459,7 @@ class PhysicalComponent(Component):
         self._shape = value
 
     @property
-    def material(self) -> Material:
+    def material(self) -> Material | None:
         """
         The material that the Component is built from.
         """

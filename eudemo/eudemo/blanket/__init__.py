@@ -7,6 +7,7 @@
 
 from bluemira.base.components import Component
 from bluemira.base.reactor import ComponentManager
+from bluemira.base.tools import CADConstructionType
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire

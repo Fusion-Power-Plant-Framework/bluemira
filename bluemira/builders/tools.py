@@ -15,7 +15,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 from anytree import PreOrderIter
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import (
+    Component,
+    PhysicalComponent,
+    get_properties_from_components,
+)
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.display.palettes import ColorPalette
@@ -28,6 +32,7 @@ from bluemira.geometry.tools import (
     circular_pattern,
     extrude_shape,
     make_circle,
+    make_compound,
     make_polygon,
     revolve_shape,
     slice_shape,
@@ -95,6 +100,70 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
     sector_degree = 360 / no_obj
     n_sectors = max(1, int(degree // int(sector_degree)))
     return sector_degree, n_sectors
+
+
+def compound_from_components(
+    components: list[ComponentT],
+    name: str,
+    *,
+    material: Material | None = None,
+) -> PhysicalComponent:
+    """
+    Imprints and fuses (boolean merge) all PhysicalComponents of a list of
+    components into a single PhysicalComponent.
+
+    Parameters
+    ----------
+    components:
+        List of components to imprint and fuse
+    name:
+        Name of the new PhysicalComponent.
+    material:
+        Optional material to apply to the new PhysicalComponent
+
+    Returns
+    -------
+    PhysicalComponent
+    """
+    shapes = get_properties_from_components(components, ("shape"))
+    comp = make_compound(shapes, name)
+    return PhysicalComponent(name, comp, material=material)
+
+
+def connect_components(
+    components: list[ComponentT],
+    name: str,
+    *,
+    material: Material | None = None,
+) -> PhysicalComponent:
+    """
+    Imprints and fuses (boolean merge) all PhysicalComponents of a list of
+    components into a single PhysicalComponent.
+
+    Parameters
+    ----------
+    components:
+        List of components to imprint and fuse
+    name:
+        Name of the new PhysicalComponent.
+    material:
+        Optional material to apply to the new PhysicalComponent
+
+    Returns
+    -------
+    PhysicalComponent
+    """
+    faux_sec_comp = Component(f"{name} X")
+    faux_sec_comp.children = components
+    itr = PreOrderIter(faux_sec_comp)
+    phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
+    # imprinted = connect_shapes(phy_comps_shape, 0.1, name)
+    imprinted = phy_comps_shape[0]
+    for idx, shape in enumerate(phy_comps_shape[1:]):
+        print(f"Connecting shape {idx + 1}")
+        imprinted = boolean_fuse([imprinted, shape], name)
+    # imprinted = boolean_fuse(phy_comps_shape, name)
+    return PhysicalComponent(name, imprinted, material=material)
 
 
 def circular_pattern_component(
