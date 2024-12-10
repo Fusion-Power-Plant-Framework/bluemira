@@ -13,6 +13,7 @@ from __future__ import annotations
 import copy
 import enum
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, TypeVar
 
 from bluemira.codes import _freecadapi as cadapi
@@ -24,6 +25,113 @@ if TYPE_CHECKING:
 
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.placement import BluemiraPlacement
+
+
+class BluemiraShape:
+    """
+    Abstract base class representing a CAD shape defining it's creation.
+    """
+
+    def __init__(self, shape: cadapi.apiShape | None):
+        self._set_shape(shape)
+
+    @property
+    def shape(self) -> cadapi.apiShape | None:
+        """
+        The CAD shape of the object.
+        """
+        return self._shape
+
+    def _set_shape(self, shape: cadapi.apiShape | None) -> None:
+        """
+        Set the shape of the object.
+        """
+        self._shape = shape
+
+    @property
+    def length(self) -> float:
+        """
+        The shape's length.
+        """
+        return cadapi.length(self.shape)
+
+    @property
+    def area(self) -> float:
+        """
+        The shape's area.
+        """
+        return cadapi.area(self.shape)
+
+    @property
+    def volume(self) -> float:
+        """
+        The shape's volume.
+        """
+        return cadapi.volume(self.shape)
+
+    @property
+    def center_of_mass(self) -> np.ndarray:
+        """
+        The shape's center of mass.
+        """
+        return cadapi.center_of_mass(self.shape)
+
+    @property
+    def bounding_box(self) -> BoundingBox:
+        """
+        The bounding box of the shape.
+
+        Notes
+        -----
+        If your shape is complicated, this has the potential to not be very accurate.
+        Consider using :meth:`~bluemira.geometry.base.get_optimal_bounding_box`.
+        """
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
+
+    def is_null(self) -> bool:
+        """
+        Check if the shape is null.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is null.
+        """
+        return cadapi.is_null(self.shape)
+
+    def is_closed(self) -> bool:
+        """
+        Check if the shape is closed.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is closed.
+        """
+        return cadapi.is_closed(self.shape)
+
+    def is_valid(self) -> bool:
+        """
+        Check if the shape is valid.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is valid.
+        """
+        return cadapi.is_valid(self.shape)
+
+    def is_same(self, obj: BluemiraGeo) -> bool:
+        """
+        Check if obj has the same shape as self
+
+        Returns
+        -------
+        :
+            A boolean for if the obj is the same shape as self.
+        """
+        return cadapi.is_same(self.shape, obj.shape)
 
 
 class GeoMeshable(meshing.Meshable):
@@ -71,7 +179,7 @@ class _Orientation(enum.Enum):
 BluemiraGeoT = TypeVar("BluemiraGeoT", bound="BluemiraGeo")
 
 
-class BluemiraGeo(ABC, GeoMeshable):
+class BluemiraGeo(ABC, BluemiraShape, GeoMeshable):
     """
     Abstract base class for geometry.
 
@@ -91,11 +199,75 @@ class BluemiraGeo(ABC, GeoMeshable):
         label: str = "",
         boundary_classes: list[type[BluemiraGeoT]] | None = None,
     ):
-        super().__init__()
         self._boundary_classes = boundary_classes or []
         self.__orientation = _Orientation.FORWARD
         self.label = label
-        self._set_boundary(boundary)
+        self._set_boundary(boundary, replace_shape=False)
+        super().__init__(self._create_shape() if self._boundary else None)
+
+    @abstractmethod
+    def _create_shape(self) -> cadapi.apiShape:
+        """
+        Returns the created CAD shape
+        """
+        pass
+
+    @property
+    def boundary(self) -> tuple:
+        """
+        The shape's boundary.
+        """
+        return tuple(self._boundary)
+
+    def _set_boundary(
+        self,
+        boundary: BluemiraGeoT | list[BluemiraGeoT],
+        *,
+        replace_shape: bool = True,
+    ):
+        self._boundary = self._check_boundary(boundary)
+        if replace_shape:
+            if self._boundary is None:
+                self._set_shape(None)
+            else:
+                self._set_shape(self._create_shape())
+
+    def _check_boundary(
+        self,
+        boundary: BluemiraGeoT | list[BluemiraGeoT],
+    ) -> list[BluemiraGeoT] | None:
+        """
+        Check if objects objs can be used as boundaries.
+
+        Note: empty BluemiraGeo are allowed in case of objs == None.
+
+        Raises
+        ------
+        TypeError
+            Only given boundary classes can be the boundary
+
+        Returns
+        -------
+        :
+            The objects that can be used as boundaries.
+        """
+        if boundary is None:
+            return boundary
+
+        if not isinstance(boundary, Iterable):
+            boundary = [boundary]
+
+        check = False
+        for c in self._boundary_classes:
+            # # in case of obj = [], this check returns True instead of False
+            # check = check or (all(isinstance(o, c) for o in objs))
+            for o in boundary:
+                check = check or isinstance(o, c)
+            if check:
+                return boundary
+        raise TypeError(
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
+        )
 
     @property
     def _orientation(self):
@@ -123,114 +295,6 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return func
 
-    def _check_boundary(self, objs):
-        """
-        Check if objects objs can be used as boundaries.
-
-        Note: empty BluemiraGeo are allowed in case of objs == None.
-
-        Raises
-        ------
-        TypeError
-            Only given boundary classes can be the boundary
-
-        Returns
-        -------
-        :
-            The objects that can be used as boundaries.
-        """
-        if objs is None:
-            return objs
-
-        if not hasattr(objs, "__len__"):
-            objs = [objs]
-
-        check = False
-        for c in self._boundary_classes:
-            # # in case of obj = [], this check returns True instead of False
-            # check = check or (all(isinstance(o, c) for o in objs))
-            for o in objs:
-                check = check or isinstance(o, c)
-            if check:
-                return objs
-        raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
-        )
-
-    @property
-    def boundary(self) -> tuple:
-        """
-        The shape's boundary.
-        """
-        return tuple(self._boundary)
-
-    def _set_boundary(self, objs, *, replace_shape: bool = True):
-        self._boundary = self._check_boundary(objs)
-        if replace_shape:
-            if self._boundary is None:
-                self._set_shape(None)
-            else:
-                self._set_shape(self._create_shape())
-
-    @abstractmethod
-    def _create_shape(self):
-        """
-        Create the shape from the boundary
-        """
-        # Note: this is the "hidden" connection with primitive shapes
-
-    @property
-    def shape(self) -> cadapi.apiShape:
-        """
-        The primitive shape of the object.
-        """
-        # Note: this is the "hidden" connection with primitive shapes
-        return self._shape
-
-    def _set_shape(self, value: cadapi.apiShape):
-        self._shape = value
-
-    @property
-    def length(self) -> float:
-        """
-        The shape's length.
-        """
-        return cadapi.length(self.shape)
-
-    @property
-    def area(self) -> float:
-        """
-        The shape's area.
-        """
-        return cadapi.area(self.shape)
-
-    @property
-    def volume(self) -> float:
-        """
-        The shape's volume.
-        """
-        return cadapi.volume(self.shape)
-
-    @property
-    def center_of_mass(self) -> np.ndarray:
-        """
-        The shape's center of mass.
-        """
-        return cadapi.center_of_mass(self.shape)
-
-    @property
-    def bounding_box(self) -> BoundingBox:
-        """
-        The bounding box of the shape.
-
-        Notes
-        -----
-        If your shape is complicated, this has the potential to not be very accurate.
-        Consider using :meth:`~bluemira.geometry.base.get_optimal_bounding_box`.
-        """
-        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
-        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
-
     def get_optimal_bounding_box(self, tolerance: float = 1.0) -> BoundingBox:
         """
         Get the optimised bounding box of the shape, via tesselation of the underlying
@@ -251,49 +315,71 @@ class BluemiraGeo(ABC, GeoMeshable):
         auto_copy._tessellate(tolerance)
         return auto_copy.bounding_box
 
-    def is_null(self) -> bool:
-        """
-        Check if the shape is null.
+    def __repr__(self) -> str:  # noqa: D105
+        return (
+            f"([{type(self).__name__}] = Label: {self.label}, "
+            f"length: {self.length}, "
+            f"area: {self.area}, "
+            f"volume: {self.volume})"
+        )
+
+    def __deepcopy__(self, memo):
+        """Deepcopy for BluemiraGeo.
+
+        FreeCAD shapes cannot be deepcopied on versions >=0.21
 
         Returns
         -------
         :
-            A boolean for if the shape is null.
+            A deepcopy of the BluemiraGeo.
         """
-        return cadapi.is_null(self.shape)
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k not in {"_shape", "_boundary"}:
+                setattr(
+                    result,
+                    k,
+                    copy.deepcopy(v, memo),
+                )
 
-    def is_closed(self) -> bool:
-        """
-        Check if the shape is closed.
+        result._shape = self._shape.copy()
+        result._boundary = [n.copy() for n in self._boundary]
 
-        Returns
-        -------
-        :
-            A boolean for if the shape is closed.
-        """
-        return cadapi.is_closed(self.shape)
+        return result
 
-    def is_valid(self) -> bool:
+    def copy(self, label: str | None = None) -> BluemiraGeo:
         """
-        Check if the shape is valid.
-
-        Returns
-        -------
-        :
-            A boolean for if the shape is valid.
-        """
-        return cadapi.is_valid(self.shape)
-
-    def is_same(self, obj: BluemiraGeo) -> bool:
-        """
-        Check if obj has the same shape as self
+        Make a copy of the BluemiraGeo.
 
         Returns
         -------
         :
-            A boolean for if the obj is the same shape as self.
+            A copy of the BluemiraGeo.
         """
-        return cadapi.is_same(self.shape, obj.shape)
+        geo_copy = copy.copy(self)
+        if label is not None:
+            geo_copy.label = label
+        else:
+            geo_copy.label = self.label
+        return geo_copy
+
+    def deepcopy(self, label: str | None = None) -> BluemiraGeo:
+        """
+        Make a deepcopy of the BluemiraGeo.
+
+        Returns
+        -------
+        :
+            A deepcopy of the BluemiraGeo.
+        """
+        geo_copy = copy.deepcopy(self)
+        if label is not None:
+            geo_copy.label = label
+        else:
+            geo_copy.label = self.label
+        return geo_copy
 
     def search(self, label: str) -> list[BluemiraGeo]:
         """
@@ -421,72 +507,6 @@ class BluemiraGeo(ABC, GeoMeshable):
             else:
                 cadapi.change_placement(o, placement._shape)
         cadapi.change_placement(self.shape, placement._shape)
-
-    def __repr__(self) -> str:  # noqa: D105
-        return (
-            f"([{type(self).__name__}] = Label: {self.label}, "
-            f"length: {self.length}, "
-            f"area: {self.area}, "
-            f"volume: {self.volume})"
-        )
-
-    def __deepcopy__(self, memo):
-        """Deepcopy for BluemiraGeo.
-
-        FreeCAD shapes cannot be deepcopied on versions >=0.21
-
-        Returns
-        -------
-        :
-            A deepcopy of the BluemiraGeo.
-        """
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k not in {"_shape", "_boundary"}:
-                setattr(
-                    result,
-                    k,
-                    copy.deepcopy(v, memo),
-                )
-
-        result._shape = self._shape.copy()
-        result._boundary = [n.copy() for n in self._boundary]
-
-        return result
-
-    def copy(self, label: str | None = None) -> BluemiraGeo:
-        """
-        Make a copy of the BluemiraGeo.
-
-        Returns
-        -------
-        :
-            A copy of the BluemiraGeo.
-        """
-        geo_copy = copy.copy(self)
-        if label is not None:
-            geo_copy.label = label
-        else:
-            geo_copy.label = self.label
-        return geo_copy
-
-    def deepcopy(self, label: str | None = None) -> BluemiraGeo:
-        """
-        Make a deepcopy of the BluemiraGeo.
-
-        Returns
-        -------
-        :
-            A deepcopy of the BluemiraGeo.
-        """
-        geo_copy = copy.deepcopy(self)
-        if label is not None:
-            geo_copy.label = label
-        else:
-            geo_copy.label = self.label
-        return geo_copy
 
     @property
     @abstractmethod
