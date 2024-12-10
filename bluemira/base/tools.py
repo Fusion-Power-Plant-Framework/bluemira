@@ -266,37 +266,38 @@ def _construct_comp_manager_physical_comps(
     manager_comp_name = manager_comp.name
 
     phy_comps = None
-    match construction_type:
-        case CADConstructionType.PATTERN_RADIAL:
-            xyz_copy_and_filtered = copy_and_filter_component(
-                manager_comp,
-                "xyz",
-                component_filter,
+    if construction_type is CADConstructionType.REVOLVE_XZ:
+        xz_copy_and_filtered = copy_and_filter_component(
+            manager_comp,
+            "xz",
+            component_filter,
+        )
+        xz_phy_comps: list[PhysicalComponent] = []
+        for xz_c in xz_copy_and_filtered:
+            xz_phy_comps.extend(xz_c.leaves)
+        phy_comps = [
+            PhysicalComponent(
+                c.name,
+                revolve_shape(c.shape, degree=sector_degrees * n_sectors),
+                material=c.material,
             )
-            phy_comps = circular_pattern_xyz_components(
-                xyz_copy_and_filtered,
-                n_sectors,
-                degree=sector_degrees,
-            ).leaves
-        case CADConstructionType.REVOLVE_XZ:
-            xz_components = manager_comp.get_component("xz", first=False)
-            xz_phy_comps: list[PhysicalComponent] = []
-            for xz_c in xz_components:
-                xz_phy_comps.extend(xz_c.leaves)
-            phy_comps = [
-                PhysicalComponent(
-                    c.name,
-                    revolve_shape(c.shape, degree=sector_degrees * n_sectors),
-                    material=c.material,
-                )
-                for c in xz_phy_comps
-            ]
-        case CADConstructionType.NO_OP:
-            phy_comps = copy_and_filter_component(
-                manager_comp,
-                "xyz",
-                component_filter,
-            ).leaves
+            for c in xz_phy_comps
+        ]
+    else:
+        xyz_copy_and_filtered = copy_and_filter_component(
+            manager_comp,
+            "xyz",
+            component_filter,
+        )
+        match construction_type:
+            case CADConstructionType.PATTERN_RADIAL:
+                phy_comps = circular_pattern_xyz_components(
+                    xyz_copy_and_filtered,
+                    n_sectors,
+                    degree=sector_degrees,
+                ).leaves
+            case CADConstructionType.NO_OP:
+                phy_comps = xyz_copy_and_filtered.leaves
 
     if not phy_comps:
         raise ValueError(f"No components were constructed for {manager_comp_name}")
