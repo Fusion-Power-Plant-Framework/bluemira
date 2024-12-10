@@ -267,14 +267,11 @@ def _construct_comp_manager_physical_comps(
 
     phy_comps = None
     if construction_type is CADConstructionType.REVOLVE_XZ:
-        xz_copy_and_filtered = copy_and_filter_component(
+        xz_phy_comps: list[PhysicalComponent] = copy_and_filter_component(
             manager_comp,
             "xz",
             component_filter,
-        )
-        xz_phy_comps: list[PhysicalComponent] = []
-        for xz_c in xz_copy_and_filtered:
-            xz_phy_comps.extend(xz_c.leaves)
+        ).leaves
         phy_comps = [
             PhysicalComponent(
                 c.name,
