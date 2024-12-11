@@ -1875,7 +1875,7 @@ def raise_error_if_overlap(
 
 def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     """
-    Connect (imprint) a list of shapes together.
+    Make a compound of the given shapes.
 
     Parameters
     ----------
@@ -1918,6 +1918,11 @@ def connect_shapes(
 ) -> BluemiraGeo:
     """
     Connect (imprint) a list of shapes together.
+
+    This is similar to a boolean fuse operation, but connects the interior walls
+    of solid or shells (removeing the excess).
+
+    For wires it will fuse them, keeping the biggest joined piece.
 
     Parameters
     ----------
