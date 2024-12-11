@@ -13,10 +13,6 @@ from math import factorial
 import numpy as np
 from scipy.special import gamma, poch
 
-# TODO add brief explanations of function choices
-# TODO add types and Parameters section to docstring?
-# TODO domains of validity
-
 
 def f_hypergeometric(a, b, c, z, n_max=20):
     """Evaluates the hypergeometric power series up to n_max.
@@ -28,14 +24,6 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     information.
 
     """
-    # print(f"z = {z}")
-    # if isinstance(type(z), np.float64):
-
-    # else:
-    #     if abs(z)>1:
-    #         print(f"z = {z} is out of domain")
-    # if any(abs(i) > 1 for i in z):
-    #     print(f"z = {z} is out of domain")
     F = 0
     for s in range(n_max + 1):
         F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
@@ -47,7 +35,7 @@ def my_legendre_p(lam, mu, x, n_max=20):
     minus mu as a function of x. See https://dlmf.nist.gov/14.3#E18 for more information.
     Works for half integer order.
 
-    TODO check domain of validity? Assumed validity is 1<x<inf
+    Valid for 1<x<infinity, and real \\mu and \\nu
 
     .. math::
         P_{\\lambda}^{-\\mu} = 2^{-\\mu} x^{\\lambda - \\mu} (x^2 - 1)^{\\mu/2}
@@ -73,10 +61,10 @@ def my_legendre_q(lam, mu, x, n_max=20):
     https://dlmf.nist.gov/14.3#E7 for more information.
     Works for half integer order.
 
-    TODO check domain of validity? Assumed validity is 1<x<inf
+    Valid for 1<x<infinity, and real \\mu and \\nu
 
     .. math::
-        Q_{\\lambda}^{-\\mu} = \\frac{\\pi^{\\frac{1}{2}} (x^2 - 1)^{\frac{\\mu}{2}}}
+        Q_{\\lambda}^{\\mu} = \\frac{\\pi^{\\frac{1}{2}} (x^2 - 1)^{\frac{\\mu}{2}}}
                                 {2^{\\lambda + 1} x^{\\lambda + \\mu + 1}}
                                 F(\\frac{1}{2}(\\lambda + \\mu)+1, \\frac{1}{2}(\\lambda
                                 + \\mu); \\lambda + \\frac{3}{2}; \\frac{1}{x^2})
@@ -95,7 +83,8 @@ def my_legendre_q(lam, mu, x, n_max=20):
         / (2 ** (lam + 1) * x ** (lam + mu + 1))
         * F_sum
     )
-    if isinstance(type(legQ), np.float64):
+
+    if isinstance(legQ, np.float64):
         if x == 1:
             legQ = np.inf  # noqa: N806
     else:

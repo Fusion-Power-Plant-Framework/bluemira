@@ -25,7 +25,7 @@ Calculate solution due to a single wire as a sum of toroidal harmonics.
 """
 
 # %% [markdown]
-# # Example of calculating the flux solution due to a single wire as a sum of toroidal harmonics
+# # Example of calculating the flux solution due to a single wire as a sum of toroidal harmonics  # noqa: W505, E501
 #
 # This example illustrates how the magnetic flux due to a single wire can be
 # calculated by using toroidal harmonics about a focus point.
@@ -57,18 +57,25 @@ from bluemira.utilities.tools import cylindrical_to_toroidal, toroidal_to_cylind
 #
 # $$ \psi = R A $$
 #
-# $$ A(\tau, \sigma) = \sum_{m=0}^{\infty} \sum_{\cos, \sin} A_m^{\cos, \sin} \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}} Q_{m-\frac{1}{2}}^1(\cosh \tau)_{\sin}^{\cos} (m \sigma)  $$
+# $$ A(\tau, \sigma) = \sum_{m=0}^{\infty} \sum_{\cos, \sin} A_m^{\cos, \sin} \epsilon_m
+# m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}} \textbf{Q}_{m-\frac{1}{2}}^1(\cosh \tau)_
+# {\sin}^{\cos} (m \sigma)  $$
 #
-# $$ A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right) \frac{\sinh(\tau_c)}
-# {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c))_{\sin}^{\cos}(m \sigma_c) $$
+# $$ A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} \prod_{i=0}^{m-1} \left( 1 +
+# \frac{1}{2(m-i)}\right) \frac{\sinh(\tau_c)}
+# {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c))_{\sin}^{\cos}(m
+# \sigma_c) $$
 #
 # Here, $m$ is the poloidal mode number, and we have the following
 # $$ \Delta = \cosh \tau - \cos \sigma, $$
 # $$ \Delta_c = \cosh \tau_c - \cos \sigma_c $$
 # $$ \epsilon_0 = 1, \epsilon_{m\ge1}=2$$
-# $P_{\nu}^{\mu}$ is the associated Legendre function of the first kind, of degree $\nu$ and order $\mu$.
-# $Q_{\nu}^{\mu}$ is Olver's definition of the associated Legendre function of the second kind.
-# See [here](https://dlmf.nist.gov/14) for more information.
+# $P_{\nu}^{\mu}$ is the associated Legendre function of the first kind, of degree $\nu$
+# and order $\mu$. $\textbf{Q}_{\nu}^{\mu}$ is Olver's definition of the associated
+# Legendre function of the second kind. See [here](https://dlmf.nist.gov/14) or F. W. J.
+# Olver
+# (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more
+# information.
 #
 # The following image shows the psi field we are expecting to obtain at the end of this
 # example.
@@ -90,7 +97,7 @@ display(single_wire_image)
 
 #
 # We need the location of the wire in toroidal coordinates. We also need to
-# approximate tau at the focus instead of using coordinate transform functions
+# approximate $\tau$ at the focus instead of using coordinate transform functions
 # as this would result in divide by zero errors. We use these values to create a
 # grid in toroidal coordinates.
 
@@ -164,16 +171,16 @@ for m in range(m_max + 1):
 # Now we can use the following
 #
 # $$ A(\tau, \sigma) = \sum_{m=0}^{\infty} A_m^{\cos} \epsilon_m m! \sqrt{\frac{2}{\pi}}
-# \Delta^{\frac{1}{2}} Q_{m-\frac{1}{2}}^{1}(\cosh \tau) \cos(m \sigma) + A_m^{\sin}
+# \Delta^{\frac{1}{2}} \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \cos(m \sigma) + A_m^
+# {\sin}
 # \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}}
-# Q_{m-\frac{1}{2}}^{1}(\cosh \tau) \sin(m \sigma) $$
+# \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \sin(m \sigma) $$
 
 # along with $$\psi = R A$$
 # to calculate the solution and plot the psi graph. Here we have that
 # $ \epsilon_0 = 1$ and $\epsilon_{m\ge 1} = 2$.
 
 # %%
-# TODO equation (19) from OB document
 epsilon = 2 * np.ones(m_max + 1)
 epsilon[0] = 1
 A = np.zeros_like(R)

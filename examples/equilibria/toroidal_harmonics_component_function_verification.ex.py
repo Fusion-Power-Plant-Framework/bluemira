@@ -80,15 +80,17 @@ tau, sigma = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R, Z=Z)
 # the focus.
 #
 # We use the following equations
-# $$ \psi_{sin} = R \sqrt{\cosh (\tau) - \cos (\sigma)} Q_{m - \frac{1}{2}}^1
+# $$ \psi_{sin} = R \sqrt{\cosh (\tau) - \cos (\sigma)} \textbf{Q}_{m - \frac{1}{2}}^1
 # (\cosh \tau) \sin (m \sigma) $$
 #
-# $$ \psi_{cos} = R \sqrt{\cosh (\tau) - \cos (\sigma)} Q_{m - \frac{1}{2}}^1
+# $$ \psi_{cos} = R \sqrt{\cosh (\tau) - \cos (\sigma)} \textbf{Q}_{m - \frac{1}{2}}^1
 # (\cosh \tau) \cos (m \sigma) $$
 #
 #
-# $Q_{\nu}^{\mu}$ is Olver's definition of the associated Legendre function
-# of the second kind.
+# $\textbf{Q}_{\nu}^{\mu}$ is Olver's definition of the associated Legendre function
+# of the second kind. See [here](https://dlmf.nist.gov/14) or F. W. J. Olver
+# (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more
+# information.
 # Here we have degree $\nu = 1$, and half integer order $\mu = m - \frac{1}{2}$.
 #
 # We evaluate these contributions to the harmonics about the focus and plot.
@@ -110,7 +112,6 @@ nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
 cmap = PLOT_DEFAULTS["psi"]["cmap"]
 
 for i_nu in range(len(nu)):
-    levels_m = np.linspace(-(i_nu + 1), i_nu + 1, nlevels)
     foo = (
         R
         * np.sqrt(np.cosh(tau) - np.cos(sigma))
