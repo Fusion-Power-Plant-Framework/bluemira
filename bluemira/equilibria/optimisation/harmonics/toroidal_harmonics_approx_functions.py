@@ -13,10 +13,6 @@ from math import factorial
 import numpy as np
 from scipy.special import gamma, poch
 
-# TODO add brief explanations of function choices
-# TODO add types and Parameters section to docstring?
-# TODO domains of validity
-
 
 def f_hypergeometric(a, b, c, z, n_max=20):
     """Evaluates the hypergeometric power series up to n_max.
