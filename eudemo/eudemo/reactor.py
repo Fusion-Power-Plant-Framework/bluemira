@@ -20,6 +20,7 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
+import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -724,6 +725,10 @@ if __name__ == "__main__":
         [ts_upper_port, ts_eq_port, ts_lower_port],
         n_TF=reactor_config.global_params.n_TF.value,
     )
+
+    reactor.save_cad()
+
+    sys.exit()
 
     cr_plugs = build_cryostat_plugs(
         reactor_config.params_for("Cryostat"),

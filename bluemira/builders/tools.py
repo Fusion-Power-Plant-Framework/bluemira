@@ -130,15 +130,15 @@ def compound_from_components(
     return PhysicalComponent(name, comp, material=material)
 
 
-def connect_components(
+def fuse_components(
     components: list[ComponentT],
     name: str,
     *,
     material: Material | None = None,
 ) -> PhysicalComponent:
     """
-    Imprints and fuses (boolean merge) all PhysicalComponents of a list of
-    components into a single PhysicalComponent.
+    Iteratively boolean fuses all PhysicalComponents of components
+    into a single PhysicalComponent.
 
     Parameters
     ----------
@@ -151,19 +151,13 @@ def connect_components(
 
     Returns
     -------
-    PhysicalComponent
+    The single PhysicalComponent
     """
-    faux_sec_comp = Component(f"{name} X")
-    faux_sec_comp.children = components
-    itr = PreOrderIter(faux_sec_comp)
-    phy_comps_shape = [comp.shape for comp in itr if isinstance(comp, PhysicalComponent)]
-    # imprinted = connect_shapes(phy_comps_shape, 0.1, name)
-    imprinted = phy_comps_shape[0]
-    for idx, shape in enumerate(phy_comps_shape[1:]):
-        print(f"Connecting shape {idx + 1}")
-        imprinted = boolean_fuse([imprinted, shape], name)
-    # imprinted = boolean_fuse(phy_comps_shape, name)
-    return PhysicalComponent(name, imprinted, material=material)
+    shapes = get_properties_from_components(components, ("shape"))
+    fused = shapes[0]
+    for shape in shapes[1:]:
+        fused = boolean_fuse([fused, shape], name)
+    return PhysicalComponent(name, fused, material=material)
 
 
 def circular_pattern_component(
