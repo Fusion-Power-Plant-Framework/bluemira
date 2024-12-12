@@ -32,8 +32,8 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     f_hypergeometric,
-    my_legendre_p,
-    my_legendre_q,
+    legendre_p,
+    legendre_q,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
@@ -390,7 +390,7 @@ def test_hypergeometric_function():
 
 def test_legendre_p_function():
     # test edge case x=1
-    assert (my_legendre_p(1 / 2, 1, 1)) == 0
+    assert (legendre_p(1 / 2, 1, 1)) == 0
 
     # test on float input for x
     expected_leg_p_values = [
@@ -402,7 +402,7 @@ def test_legendre_p_function():
         18.034312803906946,
     ]
     tau_c = 1.317059523987338
-    test_leg_p_values = [my_legendre_p(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
+    test_leg_p_values = [legendre_p(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
     assert test_leg_p_values == expected_leg_p_values
 
     # test on array input for x
@@ -650,7 +650,7 @@ def test_legendre_p_function():
             0.24793067,
         ],
     ]
-    test_leg_p_array_values = my_legendre_p(1 - 1 / 2, 1, np.cosh(tau))
+    test_leg_p_array_values = legendre_p(1 - 1 / 2, 1, np.cosh(tau))
     np.testing.assert_array_almost_equal(
         test_leg_p_array_values, expected_leg_p_array_values
     )
@@ -658,7 +658,7 @@ def test_legendre_p_function():
 
 def test_legendre_q_function():
     # test edge case x=1
-    assert (my_legendre_q(1 / 2, 1, 1)) == np.inf
+    assert (legendre_q(1 / 2, 1, 1)) == np.inf
 
     # test on float input for x
     expected_leg_q_values = [
@@ -670,7 +670,7 @@ def test_legendre_q_function():
         1.3424505697649924e-05,
     ]
     tau_c = 1.2824746787307681
-    test_leg_q_values = [my_legendre_q(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
+    test_leg_q_values = [legendre_q(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
     assert test_leg_q_values == expected_leg_q_values
 
     # test on array input for x
@@ -919,7 +919,7 @@ def test_legendre_q_function():
             0.47775572,
         ],
     ]
-    test_leg_q_array_values = my_legendre_q(1 - 1 / 2, 1, np.cosh(tau))
+    test_leg_q_array_values = legendre_q(1 - 1 / 2, 1, np.cosh(tau))
     np.testing.assert_array_almost_equal(
         test_leg_q_array_values, expected_leg_q_array_values
     )

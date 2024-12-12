@@ -25,13 +25,13 @@ Calculate solution due to a single wire as a sum of toroidal harmonics.
 """
 
 # %% [markdown]
-# # Example of calculating the flux solution due to a single wire as a sum of toroidal harmonics  # noqa: W505, E501
+# # Calculating the flux solution due to a single wire as a sum of toroidal harmonics
 #
 # This example illustrates how the magnetic flux due to a single wire can be
 # calculated by using toroidal harmonics about a focus point.
 
 # %% [markdown]
-# ### Imports
+# ## Imports
 
 # %%
 from math import factorial
@@ -43,8 +43,8 @@ from PIL import Image
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    my_legendre_p,
-    my_legendre_q,
+    legendre_p,
+    legendre_q,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.utilities.tools import cylindrical_to_toroidal, toroidal_to_cylindrical
@@ -79,7 +79,7 @@ from bluemira.utilities.tools import cylindrical_to_toroidal, toroidal_to_cylind
 #
 # The following image shows the psi field we are expecting to obtain at the end of this
 # example.
-
+# %%
 single_wire_image = Image.open("single_wire_output_image.png")
 display(single_wire_image)
 # %% [markdown]
@@ -162,7 +162,7 @@ for m in range(m_max + 1):
         (MU_0 * I_c / 2 ** (5 / 2))
         * factorial_term
         * (np.sinh(tau_c) / np.sqrt(Deltac))
-        * my_legendre_p(m - 1 / 2, 1, np.cosh(tau_c))
+        * legendre_p(m - 1 / 2, 1, np.cosh(tau_c))
     )
     Am_cos[m] = A_m * np.cos(m * sigma_c)
     Am_sin[m] = A_m * np.sin(m * sigma_c)
@@ -188,9 +188,9 @@ A = np.zeros_like(R)
 for m in range(m_max + 1):
     A += Am_cos[m] * epsilon[m] * factorial(m) * np.sqrt(2 / np.pi) * np.sqrt(
         Delta
-    ) * my_legendre_q(m - 1 / 2, 1, np.cosh(tau)) * np.cos(m * sigma) + Am_sin[
+    ) * legendre_q(m - 1 / 2, 1, np.cosh(tau)) * np.cos(m * sigma) + Am_sin[m] * epsilon[
         m
-    ] * epsilon[m] * factorial(m) * np.sqrt(2 / np.pi) * np.sqrt(Delta) * my_legendre_q(
+    ] * factorial(m) * np.sqrt(2 / np.pi) * np.sqrt(Delta) * legendre_q(
         m - 1 / 2, 1, np.cosh(tau)
     ) * np.sin(m * sigma)
 

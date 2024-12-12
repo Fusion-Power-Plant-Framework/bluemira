@@ -32,14 +32,14 @@ point.
 # contributions about a focus point.
 
 # %% [markdown]
-# ### Imports
+# ## Imports
 
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    my_legendre_q,
+    legendre_q,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.utilities.tools import cylindrical_to_toroidal
@@ -115,7 +115,7 @@ for i_nu in range(len(nu)):
     foo = (
         R
         * np.sqrt(np.cosh(tau) - np.cos(sigma))
-        * my_legendre_q(nu[i_nu] - 1 / 2, 1, np.cosh(tau))
+        * legendre_q(nu[i_nu] - 1 / 2, 1, np.cosh(tau))
     )
     psi_sin = foo * np.sin(nu[i_nu] * sigma)
     psi_cos = foo * np.cos(nu[i_nu] * sigma)
