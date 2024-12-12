@@ -15,6 +15,8 @@ from enum import Enum
 from functools import wraps
 from typing import TYPE_CHECKING, TypeVar, TypedDict
 
+from typing_extensions import NotRequired
+
 from bluemira.base.components import (
     Component,
     ComponentT,
@@ -56,9 +58,10 @@ class ConstructionParams(TypedDict):
     Parameters for the construction CAD.
     """
 
-    component_filter: Callable[[ComponentT], bool] | None
-    n_sectors: int
-    total_sectors: int
+    with_components: NotRequired[list[ComponentManager] | None]
+    component_filter: NotRequired[Callable[[Component], bool] | None]
+    n_sectors: NotRequired[int | None]
+    total_sectors: NotRequired[int | None]
 
 
 def _timing(
@@ -231,10 +234,7 @@ def show_components_cad(
     """
     Show the CAD build of the component.
     """
-    ComponentDisplayer().show_cad(
-        components,
-        **kwargs,
-    )
+    ComponentDisplayer().show_cad(components, **kwargs)
 
 
 def plot_component_dim(
