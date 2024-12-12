@@ -18,6 +18,8 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     """Evaluates the hypergeometric power series up to n_max.
     Valid for \\|z\\| < 1
 
+    Valid for \\|z\\| < 1
+
     .. math::
         F(a, b; c; z) = \\sum_0^{n_max} \\frac{(a)_{s} (b)_{s}}{Gamma(c + s) s!} z^{s}
 
@@ -43,20 +45,13 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     F:
         hypergeometric function result.
     """
-    # print(f"z = {z}")
-    # if isinstance(type(z), np.float64):
-
-    # else:
-    #     if abs(z)>1:
-    #         print(f"z = {z} is out of domain")
-    # if any(abs(i) > 1 for i in z):
-    #     print(f"z = {z} is out of domain")
     F = 0
     for s in range(n_max + 1):
         F += (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s
     return F
 
 
+def legendre_p(lam, mu, x, n_max=20):
 def legendre_p(lam, mu, x, n_max=20):
     """Evaluates the associated Legendre function of the first kind of degree lambda and order
     minus mu as a function of x. See https://dlmf.nist.gov/14.3#E18 for more information.
@@ -80,7 +75,7 @@ def legendre_p(lam, mu, x, n_max=20):
     x:
         points at which to evaluate legendreP.
     n_max:
-        upper value for summation in f_hypergeometric.
+        argument required for f_hypergeometric.
 
     Returns
     -------
@@ -97,6 +92,7 @@ def legendre_p(lam, mu, x, n_max=20):
 
 
 def legendre_q(lam, mu, x, n_max=20):
+def legendre_q(lam, mu, x, n_max=20):
     """Evaluates Olver's definition of the associated Legendre function of the second
     kind of degree lambda and order minus mu as a function of x. See
     https://dlmf.nist.gov/14, https://dlmf.nist.gov/14.3#E10, and
@@ -106,6 +102,8 @@ def legendre_q(lam, mu, x, n_max=20):
     Valid for 1<x<infinity, and real \\mu and \\nu
 
     .. math::
+        \\textbf{Q}_{\\lambda}^{\\mu} = \\frac{\\pi^{\\frac{1}{2}} (x^2 - 1)^
+                            {\\frac{\\mu}{2}}}{2^{\\lambda + 1} x^{\\lambda + \\mu + 1}}
         \\textbf{Q}_{\\lambda}^{\\mu} = \\frac{\\pi^{\\frac{1}{2}} (x^2 - 1)^
                             {\\frac{\\mu}{2}}}{2^{\\lambda + 1} x^{\\lambda + \\mu + 1}}
                                 F(\\frac{1}{2}(\\lambda + \\mu)+1, \\frac{1}{2}(\\lambda
@@ -122,7 +120,7 @@ def legendre_q(lam, mu, x, n_max=20):
     x:
         points at which to evaluate legendreQ.
     n_max:
-        upper value for summation in f_hypergeometric.
+        argument required for f_hypergeometric.
 
     Returns
     -------
