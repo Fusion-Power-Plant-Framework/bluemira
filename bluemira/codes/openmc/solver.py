@@ -10,7 +10,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, fields
-from enum import auto
 from operator import attrgetter
 from pathlib import Path
 from typing import Literal
@@ -49,7 +48,7 @@ class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""
 
     RUN = openmc.settings.RunMode.FIXED_SOURCE.value
-    RUN_AND_PLOT = auto()
+    RUN_AND_PLOT = "run and plot"
     PLOT = openmc.settings.RunMode.PLOT.value
     VOLUME = openmc.settings.RunMode.VOLUME.value
 
