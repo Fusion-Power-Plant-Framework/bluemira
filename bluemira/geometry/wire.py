@@ -23,6 +23,7 @@ from bluemira.geometry.error import (
     MixedOrientationWireError,
     NotClosedWireError,
 )
+from bluemira.geometry.tools import distance_to
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -261,6 +262,22 @@ class BluemiraWire(BluemiraGeo):
             )
         except FreeCADError as e:
             raise GeometryError(e.args[0]) from None
+
+    def parameter_nearest_to_point(self, point: Coordinates) -> float:
+        """
+        Parameters
+        ----------
+        point:
+            point of interest, that we want to get as close to as possible.
+
+        Returns
+        -------
+        :
+            The parameter of the point on the wire itself, that's nearest to the point of
+            interest.
+        """
+        nearest_to_point = distance_to(self, point)[1][0]
+        return self.parameter_at(nearest_to_point)
 
     def start_point(self) -> Coordinates:
         """
