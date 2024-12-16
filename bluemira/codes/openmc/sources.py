@@ -11,7 +11,7 @@ import openmc
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.error import SourceError
-from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
+from bluemira.radiation_transport.neutronics.constants import DT_NEUTRON_ENERGY
 
 try:
     from pps_isotropic.source import create_parametric_plasma_source
@@ -77,7 +77,7 @@ def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source
     )
     ring_source.angle = openmc.stats.Isotropic()
     ring_source.energy = openmc.stats.Discrete(
-        [raw_uc(dt_neutron_energy, "J", "eV")], [1]
+        [raw_uc(DT_NEUTRON_ENERGY, "J", "eV")], [1]
     )
 
     return ring_source
