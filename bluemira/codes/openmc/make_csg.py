@@ -711,7 +711,7 @@ def make_void_cells(
 
 def make_cell_arrays(
     pre_cell_reactor: NeutronicsReactor,
-    csg: BluemiraNeutronicsCSG,
+    csg: OpenMCEnvironment,
     materials: MaterialsLibrary,
     *,
     control_id: bool = False,
@@ -824,7 +824,7 @@ def make_cell_arrays(
     return cell_stage
 
 
-class BluemiraNeutronicsCSG:
+class OpenMCEnvironment:
     """Container for CSG planes to enable reuse of planes, very eco friendly"""
 
     def __init__(self):
@@ -1096,7 +1096,7 @@ class BluemiraNeutronicsCSG:
             array of shape (?, 3), that the final region should include.
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region_cone`
 
         Returns
         -------
@@ -1141,7 +1141,7 @@ class BluemiraNeutronicsCSG:
         series_of_surfaces
             Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
             surface. For the last 3 options, see
-            :func:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region`
+            :func:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region`
             for more.
 
         vertices_array
@@ -1149,7 +1149,7 @@ class BluemiraNeutronicsCSG:
             least on the edge of the returned Region.
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.choose_region_cone`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region_cone`
 
         Returns
         -------
@@ -1183,7 +1183,7 @@ class BlanketCell(openmc.Cell):
         cw_surface: openmc.Surface,
         interior_surface: openmc.Surface | None,
         vertices: Coordinates,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         cell_id: int | None = None,
         name: str = "",
         fill: openmc.Material | None = None,
@@ -1351,7 +1351,7 @@ class BlanketCellStack:
         return self._interfaces
 
     def get_overall_region(
-        self, csg: BluemiraNeutronicsCSG, *, control_id: bool = False
+        self, csg: OpenMCEnvironment, *, control_id: bool = False
     ) -> openmc.Region:
         """
         Calculate the region covering the entire cell stack.
@@ -1360,7 +1360,7 @@ class BlanketCellStack:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`
 
         Raises
         ------
@@ -1391,7 +1391,7 @@ class BlanketCellStack:
         ccw_surface: openmc.Surface,
         cw_surface: openmc.Surface,
         depth_series: npt.NDArray,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         fill_lib: MaterialsLibrary,
         *,
         inboard: bool,
@@ -1569,7 +1569,7 @@ class BlanketCellArray:
     """
 
     def __init__(
-        self, blanket_cell_array: list[BlanketCellStack], csg: BluemiraNeutronicsCSG
+        self, blanket_cell_array: list[BlanketCellStack], csg: OpenMCEnvironment
     ):
         """
         Create array from a list of BlanketCellStack
@@ -1673,7 +1673,7 @@ class BlanketCellArray:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`.
 
         Raises
         ------
@@ -1704,7 +1704,7 @@ class BlanketCellArray:
         pre_cell_array: PreCellArray,
         materials: MaterialsLibrary,
         blanket_dimensions: TokamakDimensions,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         *,
         control_id: bool = False,
     ) -> BlanketCellArray:
@@ -1726,7 +1726,7 @@ class BlanketCellArray:
             recording the dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.BluemiraNeutronicsCSG.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`.
         """
         cell_walls = pre_cell_array.cell_walls
         # TODO @je-cook: when contorl_id, we're forced to start at id=0
@@ -1779,7 +1779,7 @@ class DivertorCell(openmc.Cell):
         interior_surfaces: list[tuple[openmc.Surface]],
         exterior_wire: WireInfoList,
         interior_wire: WireInfoList,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         subtractive_region: openmc.Region | None = None,
         cell_id: int | None = None,
         name: str = "",
@@ -1926,9 +1926,7 @@ class DivertorCellStack:
     poloidal angle.
     """
 
-    def __init__(
-        self, divertor_cell_stack: list[DivertorCell], csg: BluemiraNeutronicsCSG
-    ):
+    def __init__(self, divertor_cell_stack: list[DivertorCell], csg: OpenMCEnvironment):
         self.cell_stack = divertor_cell_stack
         self.csg = csg
         # This check below is invalid because of how we subtract region instead.
@@ -2043,7 +2041,7 @@ class DivertorCellStack:
         cw_surface: openmc.Surface,
         ccw_surface: openmc.Surface,
         materials: MaterialsLibrary,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         armour_thickness: float = 0,
         stack_num: str | int = "",
     ) -> DivertorCellStack:
@@ -2266,7 +2264,7 @@ class DivertorCellArray:
         pre_cell_array: DivertorPreCellArray,
         materials: MaterialsLibrary,
         divertor_thickness: DivertorThickness,
-        csg: BluemiraNeutronicsCSG,
+        csg: OpenMCEnvironment,
         override_start_end_surfaces: tuple[openmc.Surface, openmc.Surface] | None = None,
     ) -> DivertorCellArray:
         """
