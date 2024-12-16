@@ -63,11 +63,11 @@ class BaseManager(abc.ABC):
     def save_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
+        construction_params: ConstructionParams | None = None,
+        *,
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
-        *,
-        c_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -87,8 +87,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         dim: DIM_3D | DIM_2D,
-        *,
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -108,8 +107,7 @@ class BaseManager(abc.ABC):
     def plot(
         self,
         dim: DIM_2D,
-        *,
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -309,11 +307,11 @@ class ComponentManager(BaseManager):
     def save_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
+        construction_params: ConstructionParams | None = None,
+        *,
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
-        *,
-        c_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -338,9 +336,9 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = self._init_construction_params(c_params)
+        construction_params = self._init_construction_params(construction_params)
 
-        comp = self._build_save_cad_component(dim, c_params)
+        comp = self._build_save_cad_component(dim, construction_params)
         filename = filename or comp.name
 
         save_components_cad(
@@ -353,7 +351,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -372,12 +370,12 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = self._init_construction_params(c_params)
+        construction_params = self._init_construction_params(construction_params)
 
         show_components_cad(
             self._build_show_cad_component(
                 dim,
-                construction_params=c_params,
+                construction_params,
             ),
             **kwargs,
         )
@@ -385,8 +383,7 @@ class ComponentManager(BaseManager):
     def plot(
         self,
         dim: DIM_2D = "xz",
-        *,
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -403,11 +400,11 @@ class ComponentManager(BaseManager):
         """
         self._validate_plot_dims(dim)
 
-        c_params = c_params or {}
+        construction_params = self._init_construction_params(construction_params)
 
         plot_component_dim(
             dim,
-            self._build_show_cad_component(dim, construction_params=c_params),
+            self._build_show_cad_component(dim, construction_params),
             **kwargs,
         )
 
@@ -548,8 +545,8 @@ class Reactor(BaseManager):
     def _build_component_tree(
         self,
         dim: str | None,
-        *,
         construction_params: ConstructionParams,
+        *,
         for_save: bool = False,
     ) -> Component:
         reactor_component = Component(self.name)
@@ -574,11 +571,11 @@ class Reactor(BaseManager):
     def save_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
+        construction_params: ConstructionParams | None = None,
+        *,
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
-        *,
-        c_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -609,13 +606,13 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = self._init_construction_params(c_params)
+        construction_params = self._init_construction_params(construction_params)
         filename = filename or self.name
 
         save_components_cad(
             self._build_component_tree(
                 dim,
-                construction_params=c_params,
+                construction_params,
                 for_save=True,
             ),
             Path(directory, filename).as_posix(),
@@ -626,7 +623,7 @@ class Reactor(BaseManager):
     def show_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -651,12 +648,12 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = self._init_construction_params(c_params)
+        construction_params = self._init_construction_params(construction_params)
 
         show_components_cad(
             self._build_component_tree(
                 dim,
-                construction_params=c_params,
+                construction_params,
                 for_save=False,
             ),
             **kwargs,
@@ -665,8 +662,7 @@ class Reactor(BaseManager):
     def plot(
         self,
         dim: DIM_2D = "xz",
-        *,
-        c_params: ConstructionParams | None = None,
+        construction_params: ConstructionParams | None = None,
         **kwargs,
     ):
         """
@@ -686,12 +682,10 @@ class Reactor(BaseManager):
         """
         self._validate_plot_dims(dim)
 
-        c_params = self._init_construction_params(c_params)
+        construction_params = self._init_construction_params(construction_params)
 
         plot_component_dim(
             dim,
-            self._build_component_tree(
-                dim, construction_params=c_params, for_save=False
-            ),
+            self._build_component_tree(dim, construction_params, for_save=False),
             **kwargs,
         )
