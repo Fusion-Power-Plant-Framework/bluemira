@@ -72,7 +72,7 @@ def legendre_p(lam, mu, x, n_max=20):
     x:
         points at which to evaluate legendreP.
     n_max:
-        argument required for f_hypergeometric.
+        upper value for summation in f_hypergeometric.
 
     Returns
     -------
