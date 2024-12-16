@@ -161,10 +161,17 @@ def plot_surface_at_1000cm(ax, surface: openmc.Surface, color_num: int):
     """
     if isinstance(surface, openmc.ZCylinder):
         ax.plot(
-            [surface.x0, surface.x0],
+            [surface.r, surface.r],
             [-1000, 1000],
-            label=f"{surface.id}: {surface.name}",
+            label=f"{surface.id}: {surface.name} (rhs)",
             color=f"C{color_num}",
+        )
+        ax.plot(
+            [-surface.r, -surface.r],
+            [-1000, 1000],
+            label=f"{surface.id}: {surface.name} (lhs)",
+            color=f"C{color_num}",
+            linestyle="--",
         )
     elif isinstance(surface, openmc.ZPlane):
         ax.plot(
