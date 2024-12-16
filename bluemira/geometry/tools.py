@@ -30,7 +30,7 @@ from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
@@ -2143,15 +2143,19 @@ def serialise_shape(shape: BluemiraGeoT):
     type_ = type(shape)
 
     output = []
-    if isinstance(shape, BluemiraGeo):
+    if isinstance(shape, BluemiraGeo | BluemiraCompound):
         sdict = {"label": shape.label, "boundary": output}
-        for obj in shape.boundary:
-            output.append(serialise_shape(obj))
-            if isinstance(shape, GeoMeshable) and shape.mesh_options is not None:
-                if shape.mesh_options.lcar is not None:
-                    sdict["lcar"] = shape.mesh_options.lcar
-                if shape.mesh_options.physical_group is not None:
-                    sdict["physical_group"] = shape.mesh_options.physical_group
+        sub_shapes = []
+        if isinstance(shape, BluemiraGeo):
+            sub_shapes = shape.boundary
+        elif isinstance(shape, BluemiraCompound):
+            sub_shapes = shape.constituents
+        for ss in sub_shapes:
+            output.append(serialise_shape(ss))
+            if shape.mesh_options.lcar is not None:
+                sdict["lcar"] = shape.mesh_options.lcar
+            if shape.mesh_options.physical_group is not None:
+                sdict["physical_group"] = shape.mesh_options.physical_group
         return {str(type(shape).__name__): sdict}
     if isinstance(shape, cadapi.apiWire):
         return cadapi.serialise_shape(shape)
