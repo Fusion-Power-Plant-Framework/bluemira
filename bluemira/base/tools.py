@@ -30,14 +30,19 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
-from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
+from bluemira.geometry.tools import (
+    make_compound,
+    revolve_shape,
+    save_cad,
+    serialise_shape,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
+    from bluemira.geometry.compound import BluemiraCompound
 
 
 _T = TypeVar("_T")
@@ -116,6 +121,7 @@ def _timing(
 def create_compound_from_component(comp: Component) -> BluemiraCompound:
     """
     Creates a BluemiraCompound from the children's shapes of a component.
+    This BluemiraCompound has it's constituents set to the shapes of comp.
 
     Parameters
     ----------
@@ -128,12 +134,8 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
         The BluemiraCompound component
 
     """
-    if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
-        boundary = [comp.shape]
-    else:
-        boundary = [c.shape for c in comp.leaves if hasattr(c, "shape") and c.shape]
-
-    return BluemiraCompound(label=comp.name, boundary=boundary)
+    shapes = get_properties_from_components(comp, ("shape"))
+    return make_compound(shapes, comp.name, set_constituents=True)
 
 
 def circular_pattern_xyz_components(
@@ -356,8 +358,8 @@ def _build_compounds_from_map(
         )
         if len(comps) == 1
         else compound_from_components(
-            comps,
-            f"{manager_name}_{mat_name}" if mat_name else manager_name,
+            name=f"{manager_name}_{mat_name}" if mat_name else manager_name,
+            components=comps,
             # all comps in the list have the same material
             material=comps[0].material,
         )
