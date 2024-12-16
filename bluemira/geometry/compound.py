@@ -37,11 +37,16 @@ class BluemiraCompound(BluemiraShape):
         Label to assign to the compound
     """
 
-    def __init__(self, compound_obj: cadapi.apiCompound):
+    def __init__(
+        self,
+        compound_obj: cadapi.apiCompound,
+        label: str = "",
+    ):
+        self.label = label
         super().__init__(compound_obj)
 
     @classmethod
-    def _create(cls, obj: cadapi.apiCompound, _label="") -> BluemiraCompound:
+    def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
         if not isinstance(obj, cadapi.apiCompound):
             raise TypeError(
                 f"Only apiCompound objects can be used to create a {cls} instance"
@@ -49,7 +54,7 @@ class BluemiraCompound(BluemiraShape):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        return cls(compound_obj=obj)
+        return cls(obj, label)
 
     @property
     def vertexes(self) -> Coordinates:
@@ -59,36 +64,43 @@ class BluemiraCompound(BluemiraShape):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the compound.
         """
         return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the compound.
         """
         return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
-    def faces(self) -> tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace, ...]:
         """
         The faces of the compound.
         """
         return tuple(BluemiraFace._create(o) for o in cadapi.faces(self.shape))
 
     @property
-    def shells(self) -> tuple[BluemiraShell]:
+    def shells(self) -> tuple[BluemiraShell, ...]:
         """
         The shells of the compound.
         """
         return tuple(BluemiraShell._create(o) for o in cadapi.shells(self.shape))
 
     @property
-    def solids(self) -> tuple[BluemiraSolid]:
+    def solids(self) -> tuple[BluemiraSolid, ...]:
         """
         The solids of the compound.
         """
         return tuple(BluemiraSolid._create(o) for o in cadapi.solids(self.shape))
+
+    @property
+    def constituents(self) -> tuple[BluemiraShape, ...]:
+        """
+        The constituents of the compound.
+        """
+        return self.solids + self.shells + self.faces + (self.wires or self.edges)

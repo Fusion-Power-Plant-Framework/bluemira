@@ -265,6 +265,18 @@ class ComponentManager(BaseManager):
     def __init__(self, component: ComponentT) -> None:
         self._component = component
 
+    def _init_construction_params(  # noqa: PLR6301
+        self,
+        c_params: ConstructionParams | None,
+    ) -> ConstructionParams:
+        c_params = c_params or {}
+        c_params["component_filter"] = (
+            c_params["component_filter"]
+            if "component_filter" in c_params
+            else FilterMaterial()
+        )
+        return c_params
+
     def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
         """
         Returns the construction type of the component tree wrapped by this manager.
@@ -326,7 +338,7 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = c_params or {}
+        c_params = self._init_construction_params(c_params)
 
         comp = self._build_save_cad_component(dim, c_params)
         filename = filename or comp.name
@@ -341,7 +353,6 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
-        *,
         c_params: ConstructionParams | None = None,
         **kwargs,
     ):
@@ -361,7 +372,7 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = c_params or {}
+        c_params = self._init_construction_params(c_params)
 
         show_components_cad(
             self._build_show_cad_component(
@@ -453,6 +464,19 @@ class Reactor(BaseManager):
         self.name = name
         self.n_sectors = n_sectors
         self.start_time = time.perf_counter()
+
+    def _init_construction_params(
+        self,
+        c_params: ConstructionParams | None,
+    ) -> ConstructionParams:
+        c_params = c_params or {}
+        c_params["total_sectors"] = self.n_sectors
+        c_params["component_filter"] = (
+            c_params["component_filter"]
+            if "component_filter" in c_params
+            else FilterMaterial()
+        )
+        return c_params
 
     def component(self) -> Component:
         """Return the component tree.
@@ -585,8 +609,7 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = c_params or {}
-        c_params["total_sectors"] = self.n_sectors
+        c_params = self._init_construction_params(c_params)
         filename = filename or self.name
 
         save_components_cad(
@@ -603,7 +626,6 @@ class Reactor(BaseManager):
     def show_cad(
         self,
         dim: DIM_3D | DIM_2D = "xyz",
-        *,
         c_params: ConstructionParams | None = None,
         **kwargs,
     ):
@@ -629,8 +651,7 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        c_params = c_params or {}
-        c_params["total_sectors"] = self.n_sectors
+        c_params = self._init_construction_params(c_params)
 
         show_components_cad(
             self._build_component_tree(
@@ -665,8 +686,7 @@ class Reactor(BaseManager):
         """
         self._validate_plot_dims(dim)
 
-        c_params = c_params or {}
-        c_params["total_sectors"] = self.n_sectors
+        c_params = self._init_construction_params(c_params)
 
         plot_component_dim(
             dim,
