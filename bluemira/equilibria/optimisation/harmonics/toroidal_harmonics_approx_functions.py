@@ -120,7 +120,7 @@ def legendre_q(lam, mu, x, n_max=20):
     x:
         points at which to evaluate legendreQ.
     n_max:
-        argument required for f_hypergeometric.
+        upper value for summation in f_hypergeometric.
 
     Returns
     -------
