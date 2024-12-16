@@ -1881,7 +1881,12 @@ def raise_error_if_overlap(
 # ======================================================================================
 
 
-def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
+def make_compound(
+    shapes: Iterable[BluemiraGeo],
+    label: str = "",
+    *,
+    set_constituents=False,
+) -> BluemiraCompound:
     """
     Make a compound of the given shapes.
 
@@ -1891,6 +1896,9 @@ def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo
         List of shape objects to be saved
     label:
         Label for the resulting shape
+    set_constituents:
+        If True, shapes will be set at as the compound's consitituents.
+        It won't be deriived from the cadapi shape.
 
     Returns
     -------
@@ -1916,7 +1924,9 @@ def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo
     api_shapes = [s.shape for s in shapes]
     try:
         compound_shape = cadapi.make_compound(api_shapes)
-        return convert(compound_shape, label)
+        return BluemiraCompound._create(
+            compound_shape, label, constituents=shapes if set_constituents else None
+        )
     except Exception as e:  # noqa: BLE001
         raise GeometryError(f"Connect operation failed: {e}") from None
 

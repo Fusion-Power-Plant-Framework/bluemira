@@ -15,6 +15,8 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraShape
 from bluemira.geometry.coordinates import Coordinates
@@ -23,6 +25,9 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class BluemiraCompound(BluemiraShape):
@@ -41,12 +46,21 @@ class BluemiraCompound(BluemiraShape):
         self,
         compound_obj: cadapi.apiCompound,
         label: str = "",
+        *,
+        constituents: Iterable[BluemiraShape] | None = None,
     ):
         self.label = label
+        self._constituents = constituents
         super().__init__(compound_obj)
 
     @classmethod
-    def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
+    def _create(
+        cls,
+        obj: cadapi.apiCompound,
+        label="",
+        *,
+        constituents: Iterable[BluemiraShape] | None = None,
+    ) -> BluemiraCompound:
         if not isinstance(obj, cadapi.apiCompound):
             raise TypeError(
                 f"Only apiCompound objects can be used to create a {cls} instance"
@@ -54,7 +68,7 @@ class BluemiraCompound(BluemiraShape):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        return cls(obj, label)
+        return cls(obj, label, constituents=constituents)
 
     @property
     def vertexes(self) -> Coordinates:
@@ -103,4 +117,6 @@ class BluemiraCompound(BluemiraShape):
         """
         The constituents of the compound.
         """
+        if self._constituents:
+            return tuple(self._constituents)
         return self.solids + self.shells + self.faces + (self.wires or self.edges)

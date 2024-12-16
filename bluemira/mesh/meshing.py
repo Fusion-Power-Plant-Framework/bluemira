@@ -261,9 +261,11 @@ class Mesh:
         bluemira_print("Starting mesh process...")
 
         if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
-            from bluemira.builders.tools import compound_from_components  # noqa: PLC0415
+            from bluemira.base.tools import (  # noqa: PLC0415
+                create_compound_from_component,
+            )
 
-            obj = compound_from_components([obj], name=obj.name).shape
+            obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):
             # gmsh is initialised
