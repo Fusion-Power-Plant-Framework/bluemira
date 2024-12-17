@@ -2153,19 +2153,15 @@ def serialise_shape(shape: BluemiraGeoT):
     type_ = type(shape)
 
     output = []
-    if isinstance(shape, BluemiraGeo | BluemiraCompound):
+    if isinstance(shape, BluemiraGeo):
         sdict = {"label": shape.label, "boundary": output}
-        sub_shapes = []
-        if isinstance(shape, BluemiraGeo):
-            sub_shapes = shape.boundary
-        elif isinstance(shape, BluemiraCompound):
-            sub_shapes = shape.constituents
-        for ss in sub_shapes:
-            output.append(serialise_shape(ss))
-            if shape.mesh_options.lcar is not None:
-                sdict["lcar"] = shape.mesh_options.lcar
-            if shape.mesh_options.physical_group is not None:
-                sdict["physical_group"] = shape.mesh_options.physical_group
+        for obj in shape.boundary:
+            output.append(serialise_shape(obj))
+            if shape.mesh_options is not None:
+                if shape.mesh_options.lcar is not None:
+                    sdict["lcar"] = shape.mesh_options.lcar
+                if shape.mesh_options.physical_group is not None:
+                    sdict["physical_group"] = shape.mesh_options.physical_group
         return {str(type(shape).__name__): sdict}
     if isinstance(shape, cadapi.apiWire):
         return cadapi.serialise_shape(shape)
