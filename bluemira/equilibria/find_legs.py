@@ -216,7 +216,7 @@ class LegFlux:
                 self.separatrix,
                 self.delta,
                 self.o_point,
-                x_points=self.x_points,
+                self.x_points,
             )
             if self.dx_offsets is not None:
                 return self.get_leg_offsets(leg_dict)
@@ -288,7 +288,7 @@ def get_legs_length_and_angle(
     return length_dict, angle_dict
 
 
-def get_single_null_legs(separatrix, delta, o_point, x_points=None, imin=None):
+def get_single_null_legs(separatrix, delta, o_point, x_points, imin=None):
     """
     Returns
     -------
@@ -396,14 +396,21 @@ def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
     :
         the legs sort by in and out
 
+    Raises
+    ------
+    BluemiraError
+        if x_p and imin are both None
+
     """
-    # Looking at flux surface contains the plasma (single or double null)
-    if x_p is not None:
-        legs = _extract_leg(leg_pair, x_p.x, x_p.z, delta, o_p.z)
     # Looking at flux surface with the same normalised flux as the
     # plasma containing flux surface (double null only)
     if imin is not None:
         legs = _extract_leg_using_index_value(leg_pair, imin)
+    # Looking at flux surface contains the plasma (single or double null)
+    elif x_p is not None:
+        legs = _extract_leg(leg_pair, x_p.x, x_p.z, delta, o_p.z)
+    else:
+        raise BluemiraError("Please enter either a value for x_p or imin.")
     if legs is None:
         return None
     if isinstance(legs, Coordinates):
