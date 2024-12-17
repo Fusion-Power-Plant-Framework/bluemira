@@ -164,6 +164,12 @@ def _plot_show_and_close(request):
         yield
     else:
         yield
+        clstitle = "" if cls is None else cls.name
+        for fig in list(map(plt.figure, plt.get_fignums())):
+            fig.suptitle(
+                f"{fig.get_suptitle()} {clstitle}::"
+                f"{request.node.getparent(pytest.Function).name}"
+            )
         plt.show()
         plt.close()
 
@@ -180,6 +186,10 @@ def _plot_show_and_close_class(request):
 
     if "classplot" in request.keywords:
         yield
+        clstitle = request.node.getparent(pytest.Class).name
+
+        for fig in list(map(plt.figure, plt.get_fignums())):
+            fig.suptitle(f"{fig.get_suptitle()} {clstitle}")
         plt.show()
         plt.close()
     else:
