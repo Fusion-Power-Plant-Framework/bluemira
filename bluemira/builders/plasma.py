@@ -33,7 +33,16 @@ class Plasma(ComponentManager):
     Wrapper around a plasma component tree.
     """
 
-    def cad_construction_type(self):
+    @staticmethod
+    def cad_construction_type() -> CADConstructionType:
+        """
+        The CAD construction type for the plasma is to revolve the XZ face.
+
+        Returns
+        -------
+        :
+            The CAD construction
+        """
         return CADConstructionType.REVOLVE_XZ
 
     def lcfs(self) -> BluemiraWire:

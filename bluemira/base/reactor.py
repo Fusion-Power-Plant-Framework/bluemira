@@ -275,7 +275,8 @@ class ComponentManager(BaseManager):
         )
         return c_params
 
-    def cad_construction_type(self) -> CADConstructionType:  # noqa: PLR6301
+    @staticmethod
+    def cad_construction_type() -> CADConstructionType:
         """
         Returns the construction type of the component tree wrapped by this manager.
         """  # noqa: DOC201
