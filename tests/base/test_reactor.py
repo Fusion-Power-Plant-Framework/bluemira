@@ -78,10 +78,11 @@ class TestReactor:
 
     @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
     def test_plot_displays_all_components(self, dim):
-        if isinstance(dim, tuple):
-            self.reactor.plot(*dim)
-        else:
-            self.reactor.plot(dim)
+        with patch("bluemira.display.plotter.BasePlotter.show"):
+            if isinstance(dim, tuple):
+                self.reactor.plot(*dim)
+            else:
+                self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["i", 1, ["x"]])
     def test_ComponentError_given_invalid_plot_dimension_plot(self, bad_dim):
@@ -226,7 +227,8 @@ class TestComponentMananger:
 
     @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
     def test_plot_displays_all_components(self, dim):
-        if isinstance(dim, tuple):
-            self.plasma.plot(*dim)
-        else:
-            self.plasma.plot(dim)
+        with patch("bluemira.display.plotter.BasePlotter.show"):
+            if isinstance(dim, tuple):
+                self.plasma.plot(*dim)
+            else:
+                self.plasma.plot(dim)
