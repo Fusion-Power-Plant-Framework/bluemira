@@ -6,6 +6,11 @@
 """
 Create csg geometry by converting from bluemira geometry objects made of wires. All units
 in this module are in SI (distrance:[m]) unless otherwise specified by the docstring.
+
+Despite having a similar structure to
+:mod:bluemira.radiation_transport.neutronics.make_pre_cell, we do not merge these two
+modules together to ensure modularity, i.e. we can plug in a different csg neutronics
+plugin than openmc later if we choose to.
 """
 
 from __future__ import annotations
@@ -1566,7 +1571,7 @@ class BlanketCellStack:
 
 class BlanketCellArray:
     """
-    An array of BlanketCellStack. Interior and exterior curve are both assumed convex.
+    An array of BlanketCellStack. Interior and exterior curve both should be convex.
 
     Parameters
     ----------
