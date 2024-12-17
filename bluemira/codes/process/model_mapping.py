@@ -981,8 +981,6 @@ class DivertorHeatFluxModel(PROCESSModel):
         """
         return "i_hldiv"
 
-    # TODO @CoronelBuendia: What about Kallenbach?
-    # 3578
     INPUT = 0
     CHAMBER = 1
     WADE = 2
