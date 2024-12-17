@@ -65,7 +65,8 @@ class TestReactor:
         with patch("bluemira.display.displayer.show_cad") as mock_show:
             self.reactor.show_cad(dim)
 
-        assert len(mock_show.call_args[0][0]) == 1
+        call_arg = mock_show.call_args[0][0]
+        assert isinstance(call_arg, BluemiraGeo)
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
