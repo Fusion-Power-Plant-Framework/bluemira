@@ -30,8 +30,8 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import (
-    make_compound,
     revolve_shape,
     save_cad,
     serialise_shape,
@@ -42,7 +42,6 @@ if TYPE_CHECKING:
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
-    from bluemira.geometry.compound import BluemiraCompound
 
 
 _T = TypeVar("_T")
@@ -121,7 +120,6 @@ def _timing(
 def create_compound_from_component(comp: Component) -> BluemiraCompound:
     """
     Creates a BluemiraCompound from the children's shapes of a component.
-    This BluemiraCompound has it's constituents set to the shapes of comp.
 
     Parameters
     ----------
@@ -135,7 +133,7 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 
     """
     shapes = get_properties_from_components(comp, ("shape"))
-    return make_compound(shapes, comp.name, set_constituents=True)
+    return BluemiraCompound(label=comp.name, boundary=shapes)
 
 
 def circular_pattern_xyz_components(
