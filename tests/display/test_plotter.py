@@ -180,6 +180,7 @@ class TestPlot3d:
 
     def test_plot_3d_new_axis(self):
         ax_orig = Plot3D()  # Empty axis
+        ax_orig.figure.suptitle("EMPTY")
         ax_1 = plot_3d(tools.make_circle(), show=False)
         ax_2 = plot_3d(tools.make_circle(radius=2), show=False)
 
@@ -190,10 +191,10 @@ class TestPlot3d:
 
 class TestPointsPlotter:
     def test_plotting_2d(self):
-        plotter.PointsPlotter().plot_2d(SQUARE_POINTS)
+        plotter.PointsPlotter().plot_2d(SQUARE_POINTS, show=False)
 
     def test_plotting_3d(self):
-        plotter.PointsPlotter().plot_3d(SQUARE_POINTS)
+        plotter.PointsPlotter().plot_3d(SQUARE_POINTS, show=False)
 
 
 class TestWirePlotter:
@@ -201,16 +202,16 @@ class TestWirePlotter:
         self.wire = tools.make_polygon(SQUARE_POINTS)
 
     def test_plotting_2d(self):
-        plotter.WirePlotter().plot_2d(self.wire)
+        plotter.WirePlotter().plot_2d(self.wire, show=False)
 
     def test_plotting_2d_with_points(self):
-        plotter.WirePlotter(show_points=True).plot_2d(self.wire)
+        plotter.WirePlotter(show_points=True).plot_2d(self.wire, show=False)
 
     def test_plotting_3d(self):
-        plotter.WirePlotter().plot_3d(self.wire)
+        plotter.WirePlotter().plot_3d(self.wire, show=False)
 
     def test_plotting_3d_with_points(self):
-        plotter.WirePlotter(show_points=True).plot_3d(self.wire)
+        plotter.WirePlotter(show_points=True).plot_3d(self.wire, show=False)
 
 
 class TestFacePlotter:
@@ -220,16 +221,18 @@ class TestFacePlotter:
         self.face = face.BluemiraFace(wire)
 
     def test_plotting_2d(self):
-        plotter.FacePlotter().plot_2d(self.face)
+        plotter.FacePlotter().plot_2d(self.face, show=False)
 
     def test_plotting_2d_with_wire(self):
-        plotter.FacePlotter(show_wires=True).plot_2d(self.face)
+        plotter.FacePlotter(show_wires=True).plot_2d(self.face, show=False)
 
     def test_plotting_3d(self):
-        plotter.FacePlotter().plot_3d(self.face)
+        plotter.FacePlotter().plot_3d(self.face, show=False)
 
     def test_plotting_3d_with_wire_and_points(self):
-        plotter.FacePlotter(show_wires=True, show_points=True).plot_3d(self.face)
+        plotter.FacePlotter(show_wires=True, show_points=True).plot_3d(
+            self.face, show=False
+        )
 
 
 class TestComponentPlotter:
@@ -248,24 +251,39 @@ class TestComponentPlotter:
         self.child2 = PhysicalComponent("Child2", shape=face2, parent=self.group)
         # make child2 have non-default colour on creation
         self.child2.plot_options.face_options["color"] = "green"
+
         # custom group
         self.group2 = Component("Components")
-        self.group2_options = self.group2.plot_options.as_dict()
-        self.group2_options["wire_options"] = {}
-        self.group2_options["face_options"] = {"color": "red"}
+        self.group2_options = self.group2.plot_options
+        self.group2_options.wire_options = {}
+        self.group2_options.show_wires = False
+        self.group2_options.face_options = {"color": "red"}
         self.child3 = PhysicalComponent("Child3", shape=face3, parent=self.group2)
         self.child4 = PhysicalComponent("Child4", shape=face4, parent=self.group2)
         self.child4.plot_options.face_options["color"] = "green"
 
     def test_plotting_2d(self):
-        plotter.ComponentPlotter().plot_2d(self.group)
-        plot_2d(self.group2, **self.group2_options)
+        pl = plotter.ComponentPlotter()
+        ax = pl.plot_2d(self.group, show=False)
+        ax.figure.suptitle("blue face, green face, no wires on blue")
 
-    def test_plotting_2d_no_wires(self):
-        plotter.ComponentPlotter(show_wires=True).plot_2d(self.group)
+        ax = plot_2d(self.group2, self.group2_options, show=False)
+        ax.figure.suptitle("red face and green face, no wires on red")
+
+    def test_plotting_2d_nothing_to_plot(self):
+        ax = plotter.ComponentPlotter(show_faces=False).plot_2d(self.group, show=False)
+        assert ax is None
+
+    def test_plotting_2d_show_wires(self):
+        ax = plotter.ComponentPlotter(show_wires=True).plot_2d(self.group, show=False)
+        ax.figure.suptitle("blue face, green face, with wires")
 
     def test_plotting_3d(self):
-        plotter.ComponentPlotter().plot_3d(self.group)
+        ax = plotter.ComponentPlotter().plot_3d(self.group, show=False)
+        ax.figure.suptitle("blue face, green face, no wires on blue")
 
     def test_plotting_3d_with_wires_and_points(self):
-        plotter.ComponentPlotter(show_wires=True, show_points=True).plot_3d(self.group)
+        ax = plotter.ComponentPlotter(show_wires=True, show_points=True).plot_3d(
+            self.group, show=False
+        )
+        ax.figure.suptitle("wires, points, faces")
