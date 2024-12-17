@@ -83,3 +83,21 @@ def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
         reason = f"dependencies {modules} not found"
 
     return pytest.mark.skipif(any(skip), reason=reason)
+
+
+def add_plot_title(func, request):
+    import matplotlib.pyplot as plt  # noqa: PLC0415
+
+    cls = request.node.getparent(pytest.Class)
+    clstitle = "" if cls is None else cls.name
+
+    def wrapper(*args, **kwargs):
+        res = func(*args, **kwargs)
+        for fig in list(map(plt.figure, plt.get_fignums())):
+            fig.suptitle(
+                f"{fig.get_suptitle()} {clstitle}::"
+                f"{request.node.getparent(pytest.Function).name}"
+            )
+        return res
+
+    return wrapper
