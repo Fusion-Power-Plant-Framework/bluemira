@@ -276,8 +276,8 @@ def _construct_comp_manager_physical_comps(
     manager_comp_name = manager_comp.name
 
     component_filter = construction_params.get("component_filter")
-    tot_secs = construction_params.get("total_sectors", 1)
-    n_secs = construction_params.get("n_sectors", tot_secs)
+    tot_secs = int(construction_params.get("total_sectors", 1))
+    n_secs = int(construction_params.get("n_sectors", tot_secs))
     sec_degrees = int((360 / tot_secs) * n_secs)
 
     phy_comps = None
