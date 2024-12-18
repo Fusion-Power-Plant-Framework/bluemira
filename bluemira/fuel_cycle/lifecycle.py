@@ -24,7 +24,7 @@ from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 
 if TYPE_CHECKING:
-    from numpy.random import SeedSequence
+    from numpy.random import BitGenerator, SeedSequence
 
     from bluemira.fuel_cycle.timeline_tools import (
         LearningStrategy,
@@ -83,11 +83,13 @@ class LifeCycle:
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
         rng_seed: int | SeedSequence = RNGSeeds.timeline_outages.value,
+        *,
+        _rng: BitGenerator | None = None,
     ):
         self.learning_strategy = learning_strategy
         self.availability_strategy = availability_strategy
         self.inputs = inputs
-        self.rng = np.random.default_rng(rng_seed)
+        self.rng = np.random.default_rng(rng_seed) if _rng is None else _rng
 
         if isinstance(config, LifeCycleParams):
             self.params = config
@@ -327,11 +329,12 @@ class LifeCycle:
                 "the problem is probably related to unplanned maintenance."
             )
 
-            self.__init__(  # noqa: PLC2801
+            self.__init__(
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
+                _rng=self.rng,
             )  # Phoenix
 
         if delta2 > 0.015:  # noqa: PLR2004
@@ -343,11 +346,12 @@ class LifeCycle:
                 f"% diff: {100 * delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(  # noqa: PLC2801
+            self.__init__(
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
+                _rng=self.rng,
             )  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + self.min_downtime * S_TO_YR):
