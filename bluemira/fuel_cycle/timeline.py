@@ -8,15 +8,21 @@
 Partially randomised fusion reactor load signal object and tools
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.random import BitGenerator
 
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.fuel_cycle.timeline_tools import (
     LogNormalAvailabilityStrategy,
     OperationalAvailabilityStrategy,
 )
+
+if TYPE_CHECKING:
+    from numpy.random import BitGenerator
 
 __all__ = ["Timeline"]
 
@@ -277,6 +283,8 @@ class Timeline:
         The vacuum vessel life limit [dpa]
     availability_strategy:
         Operational availability strategy
+    rng:
+        Operational outages random number generator
 
     Attributes
     ----------

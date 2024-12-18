@@ -297,7 +297,7 @@ class LifeCycle:
             self.params.vv_dmg,
             self.params.vv_dpa,
             self.availability_strategy,
-            self.rng,
+            self.rng.spawn(1),
         )
         self.T = timeline
         self.t_unplanned_m = self.T.t_unplanned_m
