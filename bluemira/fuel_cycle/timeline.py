@@ -10,8 +10,9 @@ Partially randomised fusion reactor load signal object and tools
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.random import BitGenerator
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S, RNGSeeds
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.fuel_cycle.timeline_tools import (
     LogNormalAvailabilityStrategy,
     OperationalAvailabilityStrategy,
@@ -98,10 +99,12 @@ class OperationPhase(Phase):
         n_DT_reactions: float,
         n_DD_reactions: float,
         plasma_current: float,
+        rng: BitGenerator,
         t_start: float = 0.0,
         availability_strategy: OperationalAvailabilityStrategy | None = None,
     ):
         super().__init__()
+        self.rng = rng
         self.name = name
         self.n_pulse = n_pulse
         self.load_factor = load_factor
@@ -174,8 +177,7 @@ class OperationPhase(Phase):
 
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
-        rng = np.random.default_rng(RNGSeeds.timeline_outages.value)
-        return rng.permutation(dist)
+        return self.rng.permutation(dist)
 
     def plot_dist(self):
         """
@@ -314,6 +316,7 @@ class Timeline:
         vv_dmg: float,
         vv_dpa: float,
         availability_strategy: OperationalAvailabilityStrategy,
+        rng: BitGenerator,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -351,6 +354,7 @@ class Timeline:
                     n_DTs[j],
                     n_DDs[j],
                     plasma_currents[j],
+                    rng=rng,
                     t_start=t_start,
                     availability_strategy=availability_strategy,
                 )

@@ -570,7 +570,9 @@ def abs_rel_difference(v2: float, v1_ref: float) -> float:
     return abs((v2 - v1_ref) / v1_ref)
 
 
-def set_random_seed(seed_number: int):
+def set_random_seed(
+    seed_number: int, no_sequences: int = 1
+) -> list[np.random.SeedSequence]:
     """
     Sets the random seed number in numpy and NLopt. Useful when repeatable
     results are desired in Monte Carlo methods and stochastic optimisation
@@ -580,9 +582,17 @@ def set_random_seed(seed_number: int):
     ----------
     seed_number:
         The random seed number, preferably a very large integer
+    no_sequences:
+        The number of seed sequences to produce
+
+    Returns
+    -------
+    :
+        The requested seed sequences
     """
-    np.random.default_rng(seed_number)
+    sq = np.random.SeedSequence(seed_number)
     nlopt.srand(seed_number)
+    return sq.spawn(no_sequences)
 
 
 def compare_dicts(

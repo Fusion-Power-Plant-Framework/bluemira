@@ -12,6 +12,7 @@ import abc
 from collections.abc import Iterable
 
 import numpy as np
+from numpy.random import BitGenerator, SeedSequence
 from scipy.optimize import brentq
 
 from bluemira.base.constants import RNGSeeds
@@ -52,7 +53,9 @@ def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return x.repeat(2)[1:-1], y.repeat(2)
 
 
-def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:
+def generate_lognorm_distribution(
+    n: int, integral: float, sigma: float, rng: BitGenerator
+) -> np.ndarray:
     """
     Generate a log-norm distribution for a given standard deviation of the
     underlying normal distribution. The mean value of the normal distribution
@@ -66,13 +69,14 @@ def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.n
         The integral value of the distribution
     sigma:
         The standard deviation of the underlying normal distribution
+    rng_seed:
+        random number generator seed for the log normal distribution
 
     Returns
     -------
     :
         The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng(RNGSeeds.timeline_tools_lognorm.value)
 
     def f_integral(x):
         return np.sum(rng.lognormal(x, sigma, n)) - integral
@@ -85,7 +89,9 @@ def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.n
     return distribution
 
 
-def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:
+def generate_truncnorm_distribution(
+    n: int, integral: float, sigma: float, rng: BitGenerator
+) -> np.ndarray:
     """
     Generate a truncated normal distribution for a given standard deviation.
 
@@ -97,13 +103,14 @@ def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np
         The integral value of the distribution
     sigma:
         The standard deviation of the underlying normal distribution
+    rng_seed:
+        random number generator seed for the log normal distribution
 
     Returns
     -------
     :
         The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng(RNGSeeds.timeline_tools_truncnorm.value)
     distribution = rng.normal(0, sigma, n)
     # Truncate distribution by 0-folding
     distribution = np.abs(distribution)
@@ -114,7 +121,7 @@ def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np
 
 
 def generate_exponential_distribution(
-    n: int, integral: float, lambdda: float
+    n: int, integral: float, lambdda: float, rng: BitGenerator
 ) -> np.ndarray:
     """
     Generate an exponential distribution for a given rate parameter.
@@ -133,7 +140,6 @@ def generate_exponential_distribution(
     :
         The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng(RNGSeeds.timeline_tools_expo.value)
     distribution = rng.exponential(lambdda, n)
     # Correct distribution integral
     distribution /= np.sum(distribution)
@@ -349,6 +355,9 @@ class OperationalAvailabilityStrategy(abc.ABC):
     distributions of unplanned outages.
     """
 
+    def __init__(self, rng_seed: int | SeedSequence):
+        self.rng = np.random.default_rng(rng_seed)
+
     @abc.abstractmethod
     def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
@@ -374,7 +383,11 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
     Log-normal distribution strategy
     """
 
-    def __init__(self, sigma: float):
+    def __init__(
+        self,
+        sigma: float,
+        rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_lognorm.value,
+    ):
         """
         Parameters
         ----------
@@ -382,7 +395,7 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
             Standard deviation of the underlying normal distribution
         """
         self.sigma = sigma
-        super().__init__()
+        super().__init__(rng_seed)
 
     def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
@@ -401,7 +414,7 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
         :
             The distribution of size n and of the correct integral value
         """
-        return generate_lognorm_distribution(n, integral, self.sigma)
+        return generate_lognorm_distribution(n, integral, self.sigma, self.rng)
 
 
 class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
@@ -409,7 +422,11 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
     Truncated normal distribution strategy
     """
 
-    def __init__(self, sigma: float):
+    def __init__(
+        self,
+        sigma: float,
+        rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_truncnorm.value,
+    ):
         """
         Parameters
         ----------
@@ -417,7 +434,7 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
             Standard deviation of the underlying normal distribution
         """
         self.sigma = sigma
-        super().__init__()
+        super().__init__(rng_seed)
 
     def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
@@ -436,7 +453,7 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
         :
             The distribution of size n and of the correct integral value
         """
-        return generate_truncnorm_distribution(n, integral, self.sigma)
+        return generate_truncnorm_distribution(n, integral, self.sigma, self.rng)
 
 
 class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
@@ -444,7 +461,11 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
     Exponential distribution strategy
     """
 
-    def __init__(self, lambdda: float):
+    def __init__(
+        self,
+        lambdda: float,
+        rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_expo.value,
+    ):
         """
         Parameters
         ----------
@@ -452,7 +473,7 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
             Rate of the distribution
         """
         self.lambdda = lambdda
-        super().__init__()
+        super().__init__(rng_seed)
 
     def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
@@ -470,4 +491,4 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
         -------
         The distribution of size n and of the correct integral value
         """
-        return generate_exponential_distribution(n, integral, self.lambdda)
+        return generate_exponential_distribution(n, integral, self.lambdda, self.rng)
