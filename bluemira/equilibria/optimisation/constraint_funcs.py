@@ -326,6 +326,7 @@ class CoilForceConstraintFunctions:
         self.n_coils = self.n_CS + self.n_PF
         self._constraint = np.zeros(self.n_coils)
         self._grad = np.zeros((self.n_coils, self.n_coils))
+        self._sign = np.ones(self.n_coils)
 
     @property
     def constraint(self):
@@ -344,6 +345,15 @@ class CoilForceConstraintFunctions:
     @grad.setter
     def grad(self, value):
         self._grad = value
+
+    @property
+    def sign(self):
+        """Constraint Sign"""
+        return self._sign
+
+    @sign.setter
+    def sign(self, value):
+        self._sign = value
 
     def calc_f_matx(self, currents):
         """
@@ -392,10 +402,13 @@ class CoilForceConstraintFunctions:
         self.constraint[: self.n_PF] = (
             np.sqrt(f_matx[: self.n_PF, 1] ** 2) - scaled_max_value
         )
+        self.sign[: self.n_PF] = np.sign(f_matx[: self.n_PF, 1])
 
     def pf_z_constraint_grad(self, df_matx):
         """Constraint Derivative: Absolute vertical force constraint on PF coils."""
-        self.grad[: self.n_PF] = df_matx[: self.n_PF, :, 1]
+        self.grad[: self.n_PF] = (
+            self.sign[: self.n_PF, np.newaxis] * df_matx[: self.n_PF, :, 1]
+        )
 
     def cs_z_constraint(self, f_matx, max_value):
         """
