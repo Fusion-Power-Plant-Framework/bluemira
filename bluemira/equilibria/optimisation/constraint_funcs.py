@@ -302,7 +302,7 @@ class CoilForceConstraintFunctions:
     n_CS:
         Number of CS coils
     scale:
-        Current scale with which to calculate the constraints
+        Force scale with which to calculate the constraints
     """
 
     def __init__(
@@ -311,7 +311,7 @@ class CoilForceConstraintFunctions:
         b_vec: npt.NDArray[np.float64],
         n_PF: int,
         n_CS: int,
-        scale: float,
+        scale: float = 1e6,  # (scale from N to MN)
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -326,6 +326,7 @@ class CoilForceConstraintFunctions:
         self.n_coils = self.n_CS + self.n_PF
         self._constraint = np.zeros(self.n_coils)
         self._grad = np.zeros((self.n_coils, self.n_coils))
+        self._sign = np.ones(self.n_coils)
 
     @property
     def constraint(self):
@@ -345,6 +346,15 @@ class CoilForceConstraintFunctions:
     def grad(self, value):
         self._grad = value
 
+    @property
+    def sign(self):
+        """Constraint Sign"""
+        return self._sign
+
+    @sign.setter
+    def sign(self, value):
+        self._sign = value
+
     def calc_f_matx(self, currents):
         """
         Returns
@@ -356,7 +366,7 @@ class CoilForceConstraintFunctions:
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
             f_matx[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
-        return f_matx / self.scale  # Scale down to MN
+        return f_matx / self.scale
 
     def calc_df_matx(self, currents):
         """
@@ -389,11 +399,16 @@ class CoilForceConstraintFunctions:
     def pf_z_constraint(self, f_matx, max_value):
         """Constraint Function Absolute vertical force constraint on PF coils."""
         scaled_max_value = max_value / self.scale
-        self.constraint[: self.n_PF] = f_matx[: self.n_PF, 1] ** 2 - scaled_max_value**2
+        self.constraint[: self.n_PF] = (
+            np.sqrt(f_matx[: self.n_PF, 1] ** 2) - scaled_max_value
+        )
+        self.sign[: self.n_PF] = np.sign(f_matx[: self.n_PF, 1])
 
     def pf_z_constraint_grad(self, df_matx):
         """Constraint Derivative: Absolute vertical force constraint on PF coils."""
-        self.grad[: self.n_PF] = 2 * df_matx[: self.n_PF, :, 1]
+        self.grad[: self.n_PF] = (
+            self.sign[: self.n_PF, np.newaxis] * df_matx[: self.n_PF, :, 1]
+        )
 
     def cs_z_constraint(self, f_matx, max_value):
         """
@@ -403,14 +418,14 @@ class CoilForceConstraintFunctions:
         scaled_max_value = max_value / self.scale
         # vertical force on CS stack
         cs_z_sum = np.sum(self.cs_fz(f_matx))
-        self.constraint[self.n_PF] = cs_z_sum**2 - scaled_max_value**2
+        self.constraint[self.n_PF] = np.sqrt(cs_z_sum**2) - scaled_max_value
 
     def cs_z_grad(self, df_matx):
         """
         Constraint Derivative:
         Absolute sum of vertical force constraint on entire CS stack
         """
-        self.grad[self.n_PF] = 2 * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
+        self.grad[self.n_PF] = np.sum(df_matx[self.n_PF :, :, 1], axis=0)
 
     def cs_z_sep_constraint(self, f_matx, max_value):
         """Constraint Function: CS separation constraints."""
@@ -474,7 +489,8 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         *,
         round_dp: int = 16,
     ):
-        super().__init__(a_mat, b_vec, n_PF, n_CS, scale)
+        super().__init__(a_mat, b_vec, n_PF, n_CS)
+        self.scale = scale
         self.PF_Fz_max = PF_Fz_max
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
