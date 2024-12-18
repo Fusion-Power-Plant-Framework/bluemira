@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
     import numpy.typing as npt
+    from numpy.random import SeedSequence
 
     from bluemira.display.palettes import ColorPalette
 
@@ -570,9 +571,7 @@ def abs_rel_difference(v2: float, v1_ref: float) -> float:
     return abs((v2 - v1_ref) / v1_ref)
 
 
-def set_random_seed(
-    seed_number: int, no_sequences: int = 1
-) -> list[np.random.SeedSequence]:
+def set_random_seed(seed_number: int, no_sequences: int = 1) -> list[SeedSequence]:
     """
     Sets the random seed number in numpy and NLopt. Useful when repeatable
     results are desired in Monte Carlo methods and stochastic optimisation

@@ -80,6 +80,8 @@ class OperationPhase(Phase):
         D-D reaction rate at full power [1/s]
     plasma_current:
         Plasma current [A]
+    rng:
+        Random number generator for operational outages
     t_start:
         Time at which the phase starts [s] (default = 0)
     sigma:

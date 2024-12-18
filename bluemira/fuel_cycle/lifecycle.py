@@ -72,6 +72,8 @@ class LifeCycle:
         outages.
     inputs:
         Currently unused.
+    rng_seed:
+        Random number generator seed for operational outages
     """
 
     def __init__(

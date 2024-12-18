@@ -69,8 +69,8 @@ def generate_lognorm_distribution(
         The integral value of the distribution
     sigma:
         The standard deviation of the underlying normal distribution
-    rng_seed:
-        random number generator seed for the log normal distribution
+    rng:
+        Random number generator for lognormal distribution
 
     Returns
     -------
@@ -353,6 +353,11 @@ class OperationalAvailabilityStrategy(abc.ABC):
     """
     Abstract base class for operational availability strategies to generate
     distributions of unplanned outages.
+
+    Parameters
+    ----------
+    rng_seed:
+        random number generator seed for the operational availability
     """
 
     def __init__(self, rng_seed: int | SeedSequence):
@@ -381,6 +386,13 @@ class OperationalAvailabilityStrategy(abc.ABC):
 class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
     """
     Log-normal distribution strategy
+
+    Parameters
+    ----------
+    sigma:
+        Standard deviation of the underlying normal distribution
+    rng_seed:
+        random number generator seed for the normal distribution
     """
 
     def __init__(
@@ -388,12 +400,6 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
         sigma: float,
         rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_lognorm.value,
     ):
-        """
-        Parameters
-        ----------
-        sigma:
-            Standard deviation of the underlying normal distribution
-        """
         self.sigma = sigma
         super().__init__(rng_seed)
 
@@ -420,6 +426,13 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
 class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
     """
     Truncated normal distribution strategy
+
+    Parameters
+    ----------
+    sigma:
+        Standard deviation of the underlying normal distribution
+    rng_seed:
+        random number generator seed for the normal distribution
     """
 
     def __init__(
@@ -427,12 +440,6 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
         sigma: float,
         rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_truncnorm.value,
     ):
-        """
-        Parameters
-        ----------
-        sigma:
-            Standard deviation of the underlying normal distribution
-        """
         self.sigma = sigma
         super().__init__(rng_seed)
 
@@ -459,6 +466,13 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
 class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
     """
     Exponential distribution strategy
+
+    Parameters
+    ----------
+    lambdda:
+        Rate of the distribution
+    rng_seed:
+        random number generator seed for the exponential distribution
     """
 
     def __init__(
@@ -466,12 +480,6 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
         lambdda: float,
         rng_seed: int | SeedSequence = RNGSeeds.timeline_tools_expo.value,
     ):
-        """
-        Parameters
-        ----------
-        lambdda:
-            Rate of the distribution
-        """
         self.lambdda = lambdda
         super().__init__(rng_seed)
 
@@ -489,6 +497,7 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
 
         Returns
         -------
-        The distribution of size n and of the correct integral value
+        :
+            The distribution of size n and of the correct integral value
         """
         return generate_exponential_distribution(n, integral, self.lambdda, self.rng)
