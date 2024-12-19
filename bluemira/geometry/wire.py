@@ -262,16 +262,16 @@ class BluemiraWire(BluemiraGeo):
         point:
             point of interest, that we want to get as close to as possible.
 
-        Raises
-        ------
-        GeometryError:
-            Reference point must be a single 3D point.
-
         Returns
         -------
         :
             The parameter of the point on the wire itself, that's nearest to the point of
             interest.
+
+        Raises
+        ------
+        GeometryError
+            Reference point must be a single 3D point.
         """
         # Convert point into something that cadapi can use.
         if isinstance(point, Coordinates):
@@ -285,6 +285,10 @@ class BluemiraWire(BluemiraGeo):
         # dist_to_shape gives the (distance, (start point, end point)).
         nearest_to_point = cadapi.dist_to_shape(self, cad_point)[1][0]
         return self.parameter_at(nearest_to_point)
+
+    def intersect_wire(self, other_wire: BluemiraWire) -> Coordinates:
+        """Find the point at which other_wire intersects with self."""
+        ...
 
     def start_point(self) -> Coordinates:
         """
