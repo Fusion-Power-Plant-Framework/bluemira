@@ -16,6 +16,7 @@ from bluemira.equilibria.optimisation.constraints import (
 from bluemira.equilibria.optimisation.problem import TikhonovCurrentCOP
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
+from tests._helpers import add_plot_title
 
 
 def coilset_setup(*, materials=False):
@@ -41,7 +42,7 @@ def coilset_setup(*, materials=False):
     return coilset
 
 
-def test_isoflux_constrained_tikhonov_current_optimisation():
+def test_isoflux_constrained_tikhonov_current_optimisation(request):
     coilset = coilset_setup()
     grid = Grid(4.5, 14, -9, 9, 65, 65)
     profiles = CustomProfile(
@@ -60,7 +61,9 @@ def test_isoflux_constrained_tikhonov_current_optimisation():
     x_point = FieldNullConstraint(8, -8)
     targets = MagneticConstraintSet([isoflux, x_point])
     opt_problem = TikhonovCurrentCOP(eq.coilset, eq, targets, gamma=1e-8)
-    program = PicardIterator(eq, opt_problem, relaxation=0.1, plot=True)
+    program = add_plot_title(PicardIterator, request)(
+        eq, opt_problem, relaxation=0.1, plot=True
+    )
     program()
     np.testing.assert_almost_equal(
         eq.coilset.current,

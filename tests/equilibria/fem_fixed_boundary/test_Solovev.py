@@ -6,7 +6,6 @@
 
 
 import gmsh
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import scipy
@@ -221,7 +220,6 @@ class TestSolovevZheng:
         _ax, cntr, _cntrf, _points, _psi = solovev.plot_psi(
             5.0, -6, 8.0, 12.0, 100, 100, levels=levels
         )
-        plt.show()
 
         # Find the boundary of the FEM model as the closed flux surface for psi = 0.
         # Note: the points can have a small "interpolation" error,

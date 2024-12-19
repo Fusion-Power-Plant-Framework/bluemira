@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 
@@ -16,6 +18,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
 from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
+from tests._helpers import add_plot_title
 
 
 def parameterisation_fixture_not_fully_init(
@@ -69,23 +72,41 @@ class TestFemGradShafranovFixedBoundary:
         )
 
     @pytest.mark.parametrize("plot", [False, True])
-    def test_all_optional_init_12(self, plot):
+    def test_all_optional_init_12(self, plot, request):
         mod_current = 20e6
         self.optional_init_solver.set_profiles(
             self.p_prime, self.ff_prime, I_p=mod_current
         )
         self.optional_init_solver.set_mesh(self.mesh)
-        self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+        if plot:
+            with patch.object(
+                self.optional_init_solver,
+                "_setup_plot",
+                add_plot_title(self.optional_init_solver._setup_plot, request),
+            ):
+                self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+        else:
+            self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+
         assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
     @pytest.mark.parametrize("plot", [False, True])
-    def test_all_optional_init_21(self, plot):
+    def test_all_optional_init_21(self, plot, request):
         mod_current = 20e6
         self.optional_init_solver.set_mesh(self.mesh)
         self.optional_init_solver.set_profiles(
             self.p_prime, self.ff_prime, I_p=mod_current
         )
-        self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+        if plot:
+            with patch.object(
+                self.optional_init_solver,
+                "_setup_plot",
+                add_plot_title(self.optional_init_solver._setup_plot, request),
+            ):
+                self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+        else:
+            self.optional_init_solver.solve(plot=plot, autoclose_plot=False)
+
         assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
     @pytest.mark.parametrize("test_no", [1, 2, 3])
