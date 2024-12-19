@@ -15,6 +15,7 @@ from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import make_polygon
 from bluemira.materials.material import Void
 
@@ -59,29 +60,22 @@ class TestReactor:
     def test_component_tree_built_from_class_properties(self):
         assert self.reactor.plasma.component().name == "Plasma"
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_displays_all_components(self, dim):
         with patch("bluemira.display.displayer.show_cad") as mock_show:
-            if isinstance(dim, tuple):
-                self.reactor.show_cad(*dim)
-            else:
-                self.reactor.show_cad(dim)
+            self.reactor.show_cad(dim)
 
-        assert (
-            len(mock_show.call_args[0][0]) == len(dim) if isinstance(dim, tuple) else 1
-        )
+        call_arg = mock_show.call_args[0][0]
+        assert isinstance(call_arg, BluemiraGeo)
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
         with pytest.raises(ComponentError):
             self.reactor.show_cad(bad_dim)
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy"])
     def test_plot_displays_all_components(self, dim):
-        if isinstance(dim, tuple):
-            self.reactor.plot(*dim)
-        else:
-            self.reactor.plot(dim)
+        self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["i", 1, ["x"]])
     def test_ComponentError_given_invalid_plot_dimension_plot(self, bad_dim):
@@ -89,38 +83,25 @@ class TestReactor:
             self.reactor.plot(bad_dim)
 
     @pytest.mark.parametrize("material_filter", [True, False])
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_reactor_doesnt_show_void_material_by_default(self, dim, material_filter):
         reactor = self._make_reactor()
 
-        if isinstance(dim, tuple):
-            for d in dim:
-                reactor.plasma.component().get_component(d).get_component(
-                    "LCFS"
-                ).material = Void("test")
-        else:
-            reactor.plasma.component().get_component(dim).get_component(
-                "LCFS"
-            ).material = Void("test")
+        reactor.plasma.component().get_component(dim).get_component(
+            "LCFS"
+        ).material = Void("test")
 
         with patch("bluemira.display.displayer.show_cad") as mock_show:
-            if isinstance(dim, tuple):
-                if material_filter:
-                    reactor.show_cad(*dim)
-                else:
-                    reactor.show_cad(*dim, _filter=None)
-
-            elif material_filter:
+            if material_filter:
                 reactor.show_cad(dim)
             else:
-                reactor.show_cad(dim, _filter=None)
+                reactor.show_cad(dim, {"component_filter": None})
 
+        call_arg = mock_show.call_args[0][0]
         assert (
-            len(mock_show.call_args[0][0]) == 0
+            isinstance(call_arg, list)
             if material_filter
-            else len(dim)
-            if isinstance(dim, tuple)
-            else 1
+            else isinstance(call_arg, BluemiraGeo)
         )
 
     def test_save_cad(self, tmp_path):
@@ -175,58 +156,35 @@ class TestComponentMananger:
         self.plasma.save_cad("xyz", directory=tmp_path)
         assert Path(tmp_path, "Plasma.stp").is_file()
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_contains_components(self, dim):
         with patch("bluemira.display.displayer.show_cad") as mock_show:
-            if isinstance(dim, tuple):
-                self.plasma.show_cad(*dim)
-            else:
-                self.plasma.show_cad(dim)
+            self.plasma.show_cad(dim)
 
-        assert (
-            len(mock_show.call_args[0][0]) == len(dim) if isinstance(dim, tuple) else 1
-        )
+        assert len(mock_show.call_args[0]) == 3
 
     @pytest.mark.parametrize("material_filter", [True, False])
-    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz"])
     def test_show_cad_ignores_void_by_default(self, dim, material_filter):
         p_comp = deepcopy(self.p_comp)
-        if isinstance(dim, tuple):
-            for d in dim:
-                p_comp.get_component(d).get_component("LCFS").material = Void("test")
-        else:
-            p_comp.get_component(dim).get_component("LCFS").material = Void("test")
+
+        p_comp.get_component(dim).get_component("LCFS").material = Void("test")
 
         plasma = Plasma(p_comp)
 
         with patch("bluemira.display.displayer.show_cad") as mock_show:
-            if isinstance(dim, tuple):
-                plasma.show_cad(*dim)
-            else:
-                plasma.show_cad(dim)
-
-            if isinstance(dim, tuple):
-                if material_filter:
-                    plasma.show_cad(*dim)
-                else:
-                    plasma.show_cad(*dim, _filter=None)
-
-            elif material_filter:
+            if material_filter:
                 plasma.show_cad(dim)
             else:
-                plasma.show_cad(dim, _filter=None)
+                plasma.show_cad(dim, {"component_filter": None})
 
+        call_arg = mock_show.call_args[0][0]
         assert (
-            len(mock_show.call_args[0][0]) == 0
+            isinstance(call_arg, list)
             if material_filter
-            else len(dim)
-            if isinstance(dim, tuple)
-            else 1
+            else isinstance(call_arg, BluemiraGeo)
         )
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
+    @pytest.mark.parametrize("dim", ["xz", "xy"])
     def test_plot_displays_all_components(self, dim):
-        if isinstance(dim, tuple):
-            self.plasma.plot(*dim)
-        else:
-            self.plasma.plot(dim)
+        self.plasma.plot(dim)
