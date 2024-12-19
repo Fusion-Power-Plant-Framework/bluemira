@@ -2159,6 +2159,11 @@ class DivertorCellArray:
         override_start_end_surfaces
             openmc.Surfaces that would be used as the first cw_surface and last
             ccw_surface
+
+        Returns
+        -------
+        :
+            DivertorCellArray that matches the divertor pre-cell array given.
         """
         stack_list = []
 
