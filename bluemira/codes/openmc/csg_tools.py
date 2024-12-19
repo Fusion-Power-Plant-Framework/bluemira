@@ -8,6 +8,7 @@ The OpenMC Environment, and tools to interact with it by creating surfaces and d
 regions inside of this environment.
 """
 
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
