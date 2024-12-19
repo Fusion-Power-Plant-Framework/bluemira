@@ -162,7 +162,7 @@ class TestChargedParticleRecursionSN:
         assert np.allclose(self.z, z)
 
     def test_plotting(self):
-        ax = self.solver.plot(show=True)
+        ax = self.solver.plot(show=False)
         assert len(ax.lines) > 2
 
     def test_analyse_SN(self, caplog):

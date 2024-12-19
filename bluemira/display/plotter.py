@@ -226,6 +226,8 @@ class DefaultPlotOptions:
     byedges: bool = True
     # View of object
     view: ViewDescriptor = ViewDescriptor()
+    # use external object options or default plotter options
+    _external_options: bool = False
 
     @property
     def view_placement(self) -> BluemiraPlacement:
@@ -398,9 +400,7 @@ class BasePlotter(ABC):
         """
         self._check_obj(obj)
 
-        if not self._check_options():
-            self._ax = ax
-        else:
+        if self._check_options():
             self.initialise_plot_2d(ax)
             self._populate_data(obj)
             self._make_plot_2d()
@@ -409,6 +409,8 @@ class BasePlotter(ABC):
 
             if show:
                 self.show()
+        else:
+            self._ax = ax
         return self.ax
 
     # # =================================================================================
@@ -708,17 +710,16 @@ class ComponentPlotter(BasePlotter):
             if comp.plot_options.face_options["color"] in flatten_iterable(
                 BLUE_PALETTE.as_hex()
             ):
-                if self.options.face_options["color"] == "blue":
+                if self.options._external_options:
                     options = comp.plot_options
                 else:
-                    # not possible with ComponentPlotter only plot_2d
                     options = self.options
             else:
                 options = comp.plot_options
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
         else:
             for child in comp.children:
-                self._create_plotters(child)
+                yield from self._create_plotters(child)
 
     def _populate_data(self, comp: Component):
         self._cplotters = list(self._create_plotters(comp))
@@ -835,10 +836,12 @@ def plot_2d(
     :
         The axes with the plotted data.
     """
+    _external_options = options is None
     parts, options = _validate_plot_inputs(parts, options)
 
     for part, option in zip(parts, options, strict=False):
         plotter = _get_plotter_class(part)(option, **kwargs)
+        plotter.options._external_options = _external_options
         ax = plotter.plot_2d(part, ax, show=False)
 
     if show:

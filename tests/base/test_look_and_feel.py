@@ -38,7 +38,7 @@ ROOT = get_bluemira_root()
 GIT_WORKTREE = subprocess.run(  # noqa: S603
     ["git", "rev-parse", "--is-inside-work-tree"],  # noqa: S607
     shell=False,
-    check=True,
+    check=False,
 )
 
 

@@ -20,7 +20,7 @@ from bluemira.base.file import (
 )
 
 REACTOR_NAME = "TEST_REACTOR"
-FILE_REF_PATH = Path("data").as_posix()
+FILE_REF_PATH = Path(Path(__file__).parent.parent.parent, "data").as_posix()
 
 
 @pytest.mark.parametrize(
