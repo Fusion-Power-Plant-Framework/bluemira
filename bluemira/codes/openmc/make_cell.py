@@ -9,28 +9,24 @@ in this module are in SI (distrance:[m]) unless otherwise specified by the docst
 
 Despite having a similar structure to
 :mod:bluemira.radiation_transport.neutronics.make_pre_cell, we do not merge these two
-modules together to ensure modularity, i.e. we can plug in a different csg neutronics
-plugin than openmc later if we choose to.
+modules together to ensure modularity, i.e. we can replace this file with a different csg
+neutronics plugin than openmc later if the need arises.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from itertools import chain, pairwise
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 import openmc.region
 
 from bluemira.codes.openmc.material import CellType
-from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     is_convex,
-    make_circle_arc_3P,
     make_polygon,
     polygon_revolve_signed_volume,
     revolve_shape,
@@ -38,18 +34,16 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.neutronics.constants import (
     DTOL_CM,
-    to_cm,
     to_cm3,
-    to_m,
 )
 from bluemira.radiation_transport.neutronics.radial_wall import Vert
-from bluemira.radiation_transport.neutronics.wires import CircleInfo
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
+    from collections.abc import Iterator
 
     import numpy.typing as npt
 
+    from bluemira.codes.openmc.csg_tools import OpenMCEnvironment
     from bluemira.codes.openmc.material import MaterialsLibrary
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.radiation_transport.neutronics.geometry import (
@@ -62,153 +56,14 @@ if TYPE_CHECKING:
         PreCell,
         PreCellArray,
     )
-    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-        NeutronicsReactor,
-    )
     from bluemira.radiation_transport.neutronics.wires import (
-        StraightLineInfo,
         WireInfoList,
     )
-
-
-# Found to work by trial and error. I'm sorry.
-SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
-
-
-@dataclass
-class CellStage:
-    """Stage of making cells."""
-
-    blanket: BlanketCellArray
-    divertor: DivertorCellArray
-    tf_coils: list[openmc.Cell]
-    cs_coil: openmc.Cell
-    plasma: openmc.Cell
-    radiation_shield: openmc.Cell
-    ext_void: openmc.Cell
-    universe: openmc.region.Intersection
-
-    @property
-    def cells(self):
-        """Get the list of all cells."""
-        return (
-            *chain.from_iterable((*self.blanket, *self.divertor)),
-            *self.tf_coils,
-            self.cs_coil,
-            self.plasma,
-            self.radiation_shield,
-            self.ext_void,
-        )
-
-    def get_all_hollow_merged_cells(self):
-        """Blanket and divertor cells"""
-        return [
-            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.blanket],
-            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
-        ]
-
-    def set_volumes(self):
-        """
-        Sets the volume of the voids. Not necessary/ used anywhere yet.
-        """
-        ext_vertices = exterior_vertices(self.blanket, self.divertor)
-        total_universe_volume = (
-            #  top - bottom
-            (self.universe[0].surface.z0 - self.universe[1].surface.z0)
-            * np.pi
-            * self.universe[2].surface.r ** 2  # cylinder
-        )  # cm^3
-
-        # is this needed?
-        # self.universe.volume = total_universe_volume
-
-        outer_boundary_volume = to_cm3(
-            polygon_revolve_signed_volume(ext_vertices[:, ::2])
-        )
-        ext_void_volume = total_universe_volume - outer_boundary_volume
-        if self.tf_coils:
-            for coil in self.tf_coils:
-                ext_void_volume -= coil.volume
-        if self.cs_coil:
-            ext_void_volume -= self.cs_coil.volume
-        self.ext_void.volume = ext_void_volume
-        blanket_volumes = sum(cell.volume for cell in chain.from_iterable(self.blanket))
-        divertor_volumes = sum(
-            cell.volume for cell in chain.from_iterable(self.divertor)
-        )
-        self.plasma.volume = outer_boundary_volume - blanket_volumes - divertor_volumes
 
 
 def is_monotonically_increasing(series):
     """Check if a series is monotonically increasing"""  # or decreasing
     return all(np.diff(series) >= 0)  # or all(diff<0)
-
-
-def plot_surfaces(surfaces_list: list[openmc.Surface], ax=None):
-    """
-    Plot a list of surfaces in matplotlib.
-    """
-    if not ax:
-        ax = plt.axes()
-    # ax.set_aspect(1.0) # don't do this as it makes the plot hard to read.
-    for i, surface in enumerate(surfaces_list):
-        plot_surface_at_1000cm(ax, surface, color_num=i)
-    ax.legend()
-    ax.set_aspect("equal")
-    ax.set_ylim([-1000, 1000])
-    ax.set_xlim([-1000, 1000])
-    return ax
-
-
-def plot_surface_at_1000cm(ax, surface: openmc.Surface, color_num: int):
-    """
-    In the range [-1000, 1000], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
-    """
-    if isinstance(surface, openmc.ZCylinder):
-        ax.plot(
-            [surface.r, surface.r],
-            [-1000, 1000],
-            label=f"{surface.id}: {surface.name} (rhs)",
-            color=f"C{color_num}",
-        )
-        ax.plot(
-            [-surface.r, -surface.r],
-            [-1000, 1000],
-            label=f"{surface.id}: {surface.name} (lhs)",
-            color=f"C{color_num}",
-            linestyle="--",
-        )
-    elif isinstance(surface, openmc.ZPlane):
-        ax.plot(
-            [-1000, 1000],
-            [surface.z0, surface.z0],
-            label=f"{surface.id}: {surface.name}",
-            color=f"C{color_num}",
-        )
-    elif isinstance(surface, openmc.ZCone):
-        intercept = surface.z0
-        slope = 1 / np.sqrt(surface.r2)
-
-        def equation_pos(x):
-            return slope * np.array(x) + intercept
-
-        def equation_neg(x):
-            return -slope * np.array(x) + intercept
-
-        y_pos, y_neg = equation_pos([-1000, 1000]), equation_neg([-1000, 1000])
-        ax.plot(
-            [-1000, 1000],
-            y_pos,
-            label=f"{surface.id}: {surface.name} (upper)",
-            color=f"C{color_num}",
-        )
-        ax.plot(
-            [-1000, 1000],
-            y_neg,
-            label=f"{surface.id}: {surface.name} (lower)",
-            linestyle="--",
-            color=f"C{color_num}",
-        )
 
 
 def get_depth_values(
@@ -249,931 +104,6 @@ def check_inboard_outboard(
     return (
         pre_cell.vertex[0].mean() < blanket_dimensions.inboard_outboard_transition_radius
     )
-
-
-def torus_from_3points(
-    point1: npt.NDArray[np.float64],
-    point2: npt.NDArray[np.float64],
-    point3: npt.NDArray[np.float64],
-    surface_id: int | None = None,
-    name: str = "",
-) -> openmc.ZTorus:
-    """
-    Make a circular torus centered on the z-axis using 3 points.
-    All 3 points should lie on the RZ plane AND the surface of the torus simultaneously.
-
-    Parameters
-    ----------
-    point1, point2, point3:
-        RZ coordinates of the 3 points on the surface of the torus.
-    surface_id, name:
-        See openmc.Surface
-    """
-    point1 = point1[0], 0, point1[-1]
-    point2 = point2[0], 0, point2[-1]
-    point3 = point3[0], 0, point3[-1]
-    circle = make_circle_arc_3P(point1, point2, point3)
-    cad_circle = circle.shape.OrderedEdges[0].Curve
-    center, radius = cad_circle.Center, cad_circle.Radius
-    return torus_from_circle(
-        [center[0], center[-1]], radius, surface_id=surface_id, name=name
-    )
-
-
-def torus_from_circle(
-    center: Sequence[float],
-    minor_radius: float,
-    surface_id: int | None = None,
-    name: str = "",
-) -> openmc.ZTorus:
-    """
-    Make a circular torus centered on the z-axis.
-    The circle would lie on the RZ plane AND the surface of the torus simultaneously.
-
-    Parameters
-    ----------
-    minor_radius:
-        Radius of the cross-section circle, which forms the minor radius of the torus.
-    center:
-        Center of the cross-section circle, which forms the center of the torus.
-    surface_id, name:
-        See openmc.Surface
-    """
-    return z_torus(
-        [center[0], center[-1]], minor_radius, surface_id=surface_id, name=name
-    )
-
-
-def z_torus(
-    center: npt.ArrayLike,
-    minor_radius: float,
-    surface_id: int | None = None,
-    name: str = "",
-) -> openmc.ZTorus:
-    """
-    A circular torus centered on the z-axis.
-    The center refers to the major radius and it's z coordinate.
-
-    Parameters
-    ----------
-    center:
-        The center of the torus' RZ plane cross-section
-    minor_radius:
-        minor radius of the torus
-
-    """
-    major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
-    return openmc.ZTorus(
-        z0=height,
-        a=major_radius,
-        b=minor_radius,
-        c=minor_radius,
-        surface_id=surface_id,
-        name=name,
-    )
-
-
-def choose_halfspace(
-    surface: openmc.Surface, choice_points: npt.NDArray
-) -> openmc.Halfspace:
-    """
-    Simply take the centroid point of all of the choice_points, and choose the
-    corresponding half space
-
-    Parameters
-    ----------
-    surface:
-        an openmc surface
-
-    Raises
-    ------
-    GeometryError
-        Point is directly on surface
-    """
-    pt = np.mean(to_cm(choice_points), axis=0)
-    value = surface.evaluate(pt)
-    if value > 0:
-        return +surface
-    if value < 0:
-        return -surface
-    raise GeometryError("Centroid point is directly on the surface")
-
-
-def choose_plane_cylinders(
-    surface: openmc.ZPlane | openmc.ZCylinder, choice_points: npt.NDArray
-) -> openmc.Halfspace:
-    """
-    choose a side of the Halfspace in the region of ZPlane and ZCylinder.
-
-    Parameters
-    ----------
-    surface
-        :class:`openmc.surface.Surface` of a openmc.ZPlane or openmc.ZCylinder
-    choice_points: np.ndarray of shape (N, 3)
-        a list of points representing the vertices of a convex polygon in RZ plane
-
-    Raises
-    ------
-    GeometryError
-        Points on both sides of surface
-    """
-    x, y, z = np.array(to_cm(choice_points)).T
-    values = surface.evaluate([x, y, z])
-    threshold = DTOL_CM
-    if isinstance(surface, openmc.ZCylinder):
-        threshold = 2 * DTOL_CM * surface.r + DTOL_CM**2
-
-    if all(values >= -threshold):
-        return +surface
-    if all(values <= threshold):
-        return -surface
-
-    raise GeometryError(f"There are points on both sides of this {type(surface)}!")
-
-
-# simplfying openmc.Intersection by associativity
-def flat_intersection(region_list: Iterable[openmc.Region]) -> openmc.Intersection:
-    """
-    Get the flat intersection of an entire list of regions.
-    e.g. (a (b c)) becomes (a b c)
-    """
-    return openmc.Intersection(
-        intersection_dictionary(openmc.Intersection(region_list)).values()
-    )
-
-
-def intersection_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
-    """Get a dictionary of all of the elements that shall be intersected together,
-    applying the rule of associativity
-    """
-    if isinstance(region, openmc.Halfspace):  # termination condition
-        return {region.side + str(region.surface.id): region}
-    if isinstance(region, openmc.Intersection):
-        final_intersection = {}
-        for _r in region:
-            final_intersection.update(intersection_dictionary(_r))
-        return final_intersection
-    return {str(region): region}
-
-
-# simplfying openmc.Union by associativity
-def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
-    """
-    Get the flat union of an entire list of regions.
-    e.g. (a | (b | c)) becomes (a | b | c)
-    """
-    return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
-
-
-# TODO @OceanNuclear: Raise issue/papercut to check if simplifying the
-# boolean expressions can yield
-# speedup or not, and if so, we should attempt to simplify it further.
-# E.g. the expression (-1 ((-1107 -1) | -1108)) can be simplified to (-1107 | -1108) -1;
-# And don't even get me started on how much things can get simplified when ~ is involved.
-# It is possible that boolean expressions get condensed appropriately before getting
-# parsed onto openmc. I can't tell either way.
-# 3530
-
-
-def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
-    """Get a dictionary of all of the elements that shall be unioned together,
-    applying the rule of associativity
-    """
-    if isinstance(region, openmc.Halfspace):  # termination condition
-        return {region.side + str(region.surface.id): region}
-    if isinstance(region, openmc.Union):
-        final_intersection = {}
-        for _r in region:
-            final_intersection.update(union_dictionary(_r))
-        return final_intersection
-    return {str(region): region}
-
-
-def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int = 100):
-    """
-    Make openmc's surfaces' and cells' next IDs to be incremented to the next
-    pre-determined interval.
-    """
-    openmc.Surface.next_id = (
-        int(max(openmc.Surface.used_ids) / surface_step_size + 1) * surface_step_size + 1
-    )
-    openmc.Cell.next_id = (
-        int(max(openmc.Cell.used_ids) / cell_step_size + 1) * cell_step_size + 1
-    )
-
-
-def exterior_vertices(blanket, divertor) -> npt.NDArray:
-    """
-    Get the 3D coordinates of every point at the outer boundary of the tokamak's
-    poloidal cross-section.
-
-    Returns
-    -------
-    coordinates
-        array of shape (N+1+n*M, 3), where N = number of blanket pre-cells,
-        M = number of divertor pre-cells, n = discretisation_level used when chopping
-        up the divertor in
-        :meth:`bluemira.radiation_transport.neutronics.DivertorWireAndExteriorCurve.make_divertor_pre_cell_array`
-    """
-    return np.concatenate([
-        blanket.exterior_vertices(),
-        divertor.exterior_vertices()[::-1],
-    ])
-
-
-def interior_vertices(blanket, divertor) -> npt.NDArray:
-    """
-    Get the 3D coordinates of every point at the interior boundary of the tokamak's
-    poloidal cross-section
-
-    Returns
-    -------
-    coordinates
-        array of shape ((N+1)+sum(number of interior points of the divertor), 3),
-        where N = number of blanket pre-cells, M = number of divertor pre-cells.
-        Runs clockwise, beginning at the inboard blanket-divertor joining point.
-    """
-    return np.concatenate([
-        blanket.interior_vertices(),
-        divertor.interior_vertices()[::-1],
-    ])
-
-
-def make_universe_box(
-    csg, z_min: float, z_max: float, r_max: float, *, control_id: bool = False
-):
-    """Box up the universe in a cylinder (including top and bottom)."""
-    bottom = csg.find_suitable_z_plane(
-        z_min,
-        boundary_type="vacuum",
-        surface_id=998 if control_id else None,
-        name="Universe bottom",
-    )
-    top = csg.find_suitable_z_plane(
-        z_max,
-        boundary_type="vacuum",
-        surface_id=999 if control_id else None,
-        name="Universe top",
-    )
-    universe_cylinder = openmc.ZCylinder(
-        r=to_cm(r_max),
-        surface_id=1000 if control_id else None,
-        boundary_type="vacuum",
-        name="Max radius of Universe",
-    )
-    return -top & +bottom & -universe_cylinder
-
-
-def make_radiation_shield_box(
-    csg,
-    z_min: float,
-    z_max: float,
-    r_max: float,
-    universe: openmc.region.Intersection,
-    materials: MaterialsLibrary,
-):
-    """Define the radiation shield wall as a hollow of the universe box."""
-    bottom_inner = csg.find_suitable_z_plane(
-        z_min,
-        name="Radiation shield bottom inner wall",
-    )
-
-    top_inner = csg.find_suitable_z_plane(
-        z_max,
-        name="Radiation shield top inner wall",
-    )
-
-    radial_cylinder_inboard = openmc.ZCylinder(
-        r=to_cm(r_max),
-        name="Radiation shield wall radial inboard",
-    )
-
-    rad_shield_inner = -top_inner & +bottom_inner & -radial_cylinder_inboard
-
-    return openmc.Cell(
-        name="Radiation shield wall",
-        fill=materials.match_material(CellType.RadiationShield),
-        region=universe & ~rad_shield_inner,
-    )
-
-
-def make_coils(
-    csg,
-    solenoid_radius: float,
-    tf_coil_thick: float,
-    z_min: float,
-    z_max: float,
-    materials,
-) -> tuple[openmc.Cell, list[openmc.Cell]]:
-    """
-    Make tf coil and the central solenoid. The former wraps around the latter.
-
-    Parameters
-    ----------
-    solenoid_radius:
-        Central solenoid radius [m]
-    tf_coil_thick:
-        Thickness of the tf-coil, wrapped around the central solenoid [m]
-    z_max:
-        z-coordinate of the the top z-plane shared by both cylinders
-        (cs and tf coil)
-    z_min
-        z-coordinate of the the bottom z-plane shared by both cylinders
-        (cs and tf coil)
-
-    Raises
-    ------
-    GeometryError
-        Thickness of TF coil and solenoid must be positive
-    """
-    if tf_coil_thick <= 0 or solenoid_radius <= 0:
-        raise GeometryError(
-            "Centrol column TF Coils and solenoid must have positive thicknesses!"
-        )
-    solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
-    central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
-    top = csg.find_suitable_z_plane(
-        z_max,
-        [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
-        name="Top of central solenoid",
-    )
-    bottom = csg.find_suitable_z_plane(
-        z_min,
-        [z_min - D_TOLERANCE, z_min + D_TOLERANCE],
-        name="Bottom of central solenoid",
-    )
-    central_solenoid = openmc.Cell(
-        name="Central solenoid",
-        fill=materials.match_material(CellType.CSCoil),
-        region=+bottom & -top & -solenoid,
-    )
-    tf_coils = [
-        openmc.Cell(
-            name="TF coil (sheath around central solenoid)",
-            fill=materials.match_material(CellType.TFCoil),
-            region=+bottom & -top & +solenoid & -central_tf_coil,
-        )
-    ]
-    central_solenoid.volume = (top.z0 - bottom.z0) * np.pi * solenoid.r**2
-    tf_coils[0].volume = (
-        (top.z0 - bottom.z0) * np.pi * (central_tf_coil.r**2 - solenoid.r**2)
-    )
-    return central_solenoid, tf_coils
-
-
-def make_dividing_surface(csg, component):
-    """Surface that marks the end of the divertor/blanket's exterior."""
-    exterior_pts = component.exterior_vertices()[:, ::2]
-    return csg.surface_from_2points(exterior_pts[0], exterior_pts[-1])
-
-
-def blanket_and_divertor_outer_regions(
-    csg, blanket, divertor, *, control_id: bool = False
-) -> openmc.Region:
-    """
-    Get the entire tokamak's poloidal cross-section (everything inside
-    self.geom.boundary) as an openmc.Region.
-    """
-    dividing_surface = make_dividing_surface(csg, blanket)
-    blanket_outer = csg.region_from_surface_series(
-        [*blanket.exterior_surfaces(), dividing_surface],
-        blanket.exterior_vertices(),
-        control_id=control_id,
-    )
-    divertor_outer = csg.region_from_surface_series(
-        [*divertor.exterior_surfaces(), dividing_surface],
-        divertor.exterior_vertices(),
-        control_id=control_id,
-    )
-    return blanket_outer, divertor_outer
-
-
-def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
-    """Get the plasma chamber's poloidal cross-section
-
-    Raises
-    ------
-    GeometryError
-        Geometry must be convex
-    """
-    blanket_interior_pts = blanket.interior_vertices()
-    dividing_surface = make_dividing_surface(csg, blanket)
-    if not is_convex(blanket_interior_pts):
-        raise GeometryError(
-            f"{blanket} interior (blanket_outline's inner_curve) needs to be convex!"
-        )
-    plasma = csg.region_from_surface_series(
-        [*blanket.interior_surfaces(), dividing_surface],
-        blanket_interior_pts,
-        control_id=control_id,
-    )
-
-    divertor_exterior_vertices = divertor.exterior_vertices()
-    if not is_convex(divertor_exterior_vertices):
-        raise GeometryError(f"{divertor} exterior needs to be convex!")
-    exhaust_including_divertor = csg.region_from_surface_series(
-        [*divertor.exterior_surfaces(), dividing_surface],
-        divertor_exterior_vertices,
-        control_id=control_id,
-    )
-
-    return flat_union([plasma, exhaust_including_divertor]) & ~divertor.exclusion_zone(
-        control_id=control_id
-    )
-
-
-def make_void_cells(
-    csg,
-    universe: openmc.region.Intersection,
-    blanket: BlanketCellArray,
-    divertor: DivertorCellArray,
-    central_solenoid: openmc.Cell,
-    tf_coils: list[openmc.Cell] | None,
-    rad_shield: openmc.Cell | None = None,
-    *,
-    control_id: bool = False,
-):
-    """Make the plasma chamber and the outside ext_void. This should be called AFTER
-    the blanket and divertor cells are created.
-    """
-    blanket_silhouette, divertor_silhouette = blanket_and_divertor_outer_regions(
-        csg, blanket, divertor, control_id=control_id
-    )
-    void_region = universe & ~blanket_silhouette & ~divertor_silhouette
-    if tf_coils:
-        void_region &= ~tf_coils[0].region
-    if central_solenoid:
-        void_region &= ~central_solenoid.region
-    if rad_shield:
-        void_region &= ~rad_shield.region
-
-    return (
-        openmc.Cell(
-            region=plasma_void(csg, blanket, divertor, control_id=control_id),
-            fill=None,
-            name="Plasma void",
-        ),
-        openmc.Cell(
-            region=flat_intersection(void_region),
-            fill=None,
-            name="Exterior void",
-        ),
-    )
-
-
-def make_cell_arrays(
-    pre_cell_reactor: NeutronicsReactor,
-    csg: OpenMCEnvironment,
-    materials: MaterialsLibrary,
-    *,
-    control_id: bool = False,
-) -> CellStage:
-    """Make pre-cell arrays for the blanket and the divertor.
-
-    Parameters
-    ----------
-    materials:
-        library containing information about the materials
-    tokamak_dimensions:
-        A parameter
-        :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`,
-        Specifying the dimensions of various layers in the blanket, divertor, and
-        central solenoid.
-    control_id: bool
-        Whether to set the blanket Cells and surface IDs by force or not.
-        With this set to True, it will be easier to understand where each cell came
-        from. However, it will lead to warnings and errors if a cell/surface is
-        generated to use a cell/surface ID that has already been used respectively.
-        Keep this as False if you're running openmc simulations multiple times in one
-        session.
-    """
-    # determine universe_box
-
-    z_max, z_min, r_max, r_min = pre_cell_reactor.half_bounding_box
-
-    z_min_adj = z_min - D_TOLERANCE
-    z_max_adj = z_max + D_TOLERANCE
-    r_max_adj = r_max + D_TOLERANCE
-
-    rad_shield_wall_tk = pre_cell_reactor.tokamak_dimensions.rad_shield.wall
-
-    # make the universe box, incorporates the radiation shield wall
-    universe = make_universe_box(
-        csg,
-        z_min_adj - rad_shield_wall_tk,
-        z_max_adj + rad_shield_wall_tk,
-        r_max_adj + rad_shield_wall_tk,
-        control_id=control_id,
-    )
-
-    blanket = BlanketCellArray.from_pre_cell_array(
-        pre_cell_reactor.blanket,
-        materials,
-        pre_cell_reactor.tokamak_dimensions,
-        csg,
-        control_id=control_id,
-    )
-
-    # change the cell and surface id register before making the divertor.
-    # (ids will only count up from here.)
-    if control_id:
-        round_up_next_openmc_ids()
-
-    divertor = DivertorCellArray.from_pre_cell_array(
-        pre_cell_reactor.divertor,
-        materials,
-        pre_cell_reactor.tokamak_dimensions.divertor,
-        csg=csg,
-        override_start_end_surfaces=(blanket[0].ccw_surface, blanket[-1].cw_surface),
-        # ID cannot be controlled at this point.
-    )
-
-    # make the plasma cell and the exterior void.
-    if control_id:
-        round_up_next_openmc_ids()
-
-    cs, tf = make_coils(
-        csg,
-        r_min - pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
-        pre_cell_reactor.tokamak_dimensions.cs_coil.thickness,
-        z_min_adj,
-        z_max_adj,
-        materials,
-    )
-    # make the radiation shield wall
-    # which is a hollow of the universe box
-    rad_shield = make_radiation_shield_box(
-        csg,
-        z_min_adj,
-        z_max_adj,
-        r_max_adj,
-        universe,
-        materials,
-    )
-    plasma, ext_void = make_void_cells(
-        csg,
-        universe=universe,
-        blanket=blanket,
-        divertor=divertor,
-        central_solenoid=cs,
-        tf_coils=tf,
-        rad_shield=rad_shield,
-        control_id=control_id,
-    )
-
-    cell_stage = CellStage(
-        blanket=blanket,
-        divertor=divertor,
-        tf_coils=tf,
-        cs_coil=cs,
-        plasma=plasma,
-        radiation_shield=rad_shield,
-        ext_void=ext_void,
-        universe=universe,
-    )
-    cell_stage.set_volumes()
-
-    return cell_stage
-
-
-class OpenMCEnvironment:
-    """Container for CSG planes to enable reuse of planes, very eco friendly"""
-
-    def __init__(self):
-        # it's called a hangar because it's where the planes are parked ;)
-        self.hangar = {}
-
-    def surface_from_2points(
-        self,
-        point1: npt.NDArray[np.float64],
-        point2: npt.NDArray[np.float64],
-        surface_id: int | None = None,
-        name: str = "",
-    ) -> openmc.Surface | openmc.model.ZConeOneSided | None:
-        """
-        Create either a cylinder, a cone, or a surface from 2 points using only the
-        rz coordinates of any two points on it.
-
-        Parameters
-        ----------
-        point1, point2:
-            any two non-trivial (i.e. cannot be the same) points on the rz cross-section
-            of the surface, each containing the r and z coordinates
-            Units: [m]
-        surface_id, name:
-            see openmc.Surface
-
-        Returns
-        -------
-        surface:
-            if the two points provided are redundant: don't return anything, as this is a
-            single point pretending to be a surface. This will come in handy for handling
-            the creation of BlanketCells made with 3 surfaces rather than 4.
-        """
-        point1, point2 = to_cm((point1, point2))
-        dr, dz = point2 - point1
-        if np.isclose(dr, 0, rtol=0, atol=DTOL_CM):
-            if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
-                return None
-            return openmc.ZCylinder(r=point1[0], surface_id=surface_id, name=name)
-        if np.isclose(dz, 0, rtol=0, atol=DTOL_CM):
-            z = point1[-1]
-            self.hangar[z] = openmc.ZPlane(z0=z, surface_id=surface_id, name=name)
-            return self.hangar[z]
-        slope = dz / dr
-        z_intercept = -slope * point1[0] + point1[-1]
-        return openmc.ZCone(
-            z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name
-        )
-
-    def surface_from_straight_line(
-        self,
-        straight_line_info: StraightLineInfo,
-        surface_id: int | None = None,
-        name: str = "",
-    ):
-        """Create a surface to match the straight line info provided."""
-        start_end = np.array(straight_line_info[:2])[:, ::2]
-        return self.surface_from_2points(*start_end, surface_id=surface_id, name=name)
-
-    def surfaces_from_info_list(self, wire_info_list: WireInfoList, name: str = ""):
-        """
-        Create a list of surfaces using a list of wire infos.
-
-        Parameters
-        ----------
-        wire_info_list
-            List of wires
-        name
-            This name will be *reused* across all of the surfaces created in this list.
-        """
-        surface_list = []
-        for wire in wire_info_list.info_list:
-            info = wire.key_points
-            plane_cone_cylinder = self.surface_from_straight_line(info, name=name)
-            if isinstance(info, CircleInfo):
-                torus = torus_from_circle(info.center, info.radius, name=name)
-                # will need the openmc.Union of these two objects later.
-                surface_list.append((plane_cone_cylinder, torus))
-            else:
-                surface_list.append((plane_cone_cylinder,))
-        return tuple(surface_list)
-
-    def find_suitable_z_plane(
-        self,
-        z0: float,
-        z_range: Iterable[float] | None = None,
-        surface_id: int | None = None,
-        name: str = "",
-        **kwargs,
-    ):
-        """
-        Find a suitable z from the hangar, or create a new one if no matches are found.
-
-        Parameters
-        ----------
-        z0:
-            The height of the plane, if we need to create it. Unit: [m]
-        z_range:
-            If we a suitable z-plane already exists, then we only accept it if it lies
-            within this range of z. Unit: [m]
-        surface_id, name:
-            See openmc.Surface
-        """
-        if z_range is not None:
-            z_min, z_max = min(z_range), max(z_range)
-            for key in self.hangar:
-                if z_min <= key <= z_max:
-                    return self.hangar[key]  # return the first match
-        self.hangar[z0] = openmc.ZPlane(
-            z0=to_cm(z0), surface_id=surface_id, name=name, **kwargs
-        )
-        return self.hangar[z0]
-
-    def choose_region_cone(
-        self,
-        surface: openmc.ZCone,
-        choice_points: npt.NDArray,
-        *,
-        control_id: bool = False,
-    ) -> openmc.Region:
-        """
-        choose the region for a ZCone.
-        When reading this function's code, bear in mind that a Z cone can be separated
-        into 3 parts:
-
-            A. the upper cone (evaluates to negative),
-            B. outside of the cone (evaluates to positive),
-            C. the lower cone (evaluates to negative).
-
-        We have to account for the following cases:
-
-        +------------+---------+------------+
-        | upper cone | outside | lower cone |
-        +============+=========+============+
-        |      Y     |    N    |      N     |
-        +------------+---------+------------+
-        |      Y     |    Y    |      N     |
-        +------------+---------+------------+
-        |      N     |    Y    |      N     |
-        +------------+---------+------------+
-        |      N     |    Y    |      Y     |
-        +------------+---------+------------+
-        |      N     |    N    |      Y     |
-        +------------+---------+------------+
-
-        All other cases should raise an error.
-        The tricky part to handle is the floating point precision problem.
-        It's possible that th every point used to create the cone does not lie on the
-        cone/ lies on the wrong side of the cone.
-        Hence the first step is to shrink the choice_points by SHRINK_DISTANCE
-        towards the centroid.
-
-        Parameters
-        ----------
-        surface:
-            where all points are expected to be excluded from at least one of its two
-            one-sided cones.
-        choice_points:
-            An array of points that, after choosing the appropriate region,
-            should all lie in the chosen region.
-        control_id:
-            When an ambiguity plane is needed, we ned to create a surface. if
-            control_id = True, then this would force the surface to be created with
-            id = 1000 + the id of the cone. This is typically only used so that
-            we have full control of (and easily understandable records of)
-            every surfaces' ID.
-            Thus elsewhere in the code, most other classes/methods turns control_id
-            on when cell_ids are also provided (proving intention on controlling IDs
-            of OpenMC objects).
-
-        Returns
-        -------
-        region
-            openmc.Region, specifically (openmc.Halfspace) or
-            (openmc.Union of 2 openmc.Halfspaces)
-
-        Raises
-        ------
-        GeometryError
-            cone construction invalid
-        """
-        # shrink to avoid floating point number comparison imprecision issues.
-        # Especially important when the choice point sits exactly on the surface.
-        centroid = np.mean(choice_points, axis=0)
-        step_dir = centroid - choice_points
-        unit_step_dir = (step_dir.T / np.linalg.norm(step_dir, axis=1)).T
-        shrunken_points = choice_points + SHRINK_DISTANCE * unit_step_dir
-
-        # # Alternative
-        # shrunken_points = (choice_points + 0.01 * centroid) / 1.01
-        # take one step towards the centroid = 0.1 cm
-
-        x, y, z = np.array(to_cm(shrunken_points)).T
-        values = surface.evaluate([x, y, z])
-        middle = values > 0
-        if all(middle):  # exist outside of cone
-            return +surface
-
-        z_dist = z - surface.z0
-        upper_cone = np.logical_and(~middle, z_dist > 0)
-        lower_cone = np.logical_and(~middle, z_dist < 0)
-
-        # all of the following cases requires a plane to be made.
-        if control_id:
-            surface_id = 1000 + surface.id
-        else:
-            surface_id = max(openmc.Surface.used_ids)
-            surface_id += 1000 + surface_id % 1000
-
-        if all(upper_cone):
-            # everything in the upper cone.
-            # the highest we can cut is at the lowest z.
-            plane = self.find_suitable_z_plane(
-                to_m(surface.z0),
-                to_m([surface.z0 - DTOL_CM, min(z) - DTOL_CM]),
-                surface_id=surface_id,
-                name=f"Ambiguity plane for cone {surface.id}",
-            )
-            return -surface & +plane
-        if all(lower_cone):
-            # everything in the lower cone
-            # the lowest we can cut is at the highest z.
-            plane = self.find_suitable_z_plane(
-                to_m(surface.z0),
-                to_m([max(z) + DTOL_CM, surface.z0 + DTOL_CM]),
-                surface_id=surface_id,
-                name=f"Ambiguity plane for cone {surface.id}",
-            )
-            return -surface & -plane
-        if all(np.logical_or(upper_cone, lower_cone)):
-            raise GeometryError(
-                "Both cones have vertices lying inside! Cannot compute a contiguous "
-                "region that works for both. Check if polygon is convex?"
-            )
-        # In this rare case, make its own plane.
-        plane = self.find_suitable_z_plane(
-            to_m(surface.z0),
-            to_m([surface.z0 + DTOL_CM, surface.z0 - DTOL_CM]),
-            surface_id=surface_id,
-            name=f"Ambiguity plane for cone {surface.id}",
-        )
-        if all(np.logical_or(upper_cone, middle)):
-            return +surface | +plane
-        if all(np.logical_or(lower_cone, middle)):
-            return +surface | -plane
-        raise GeometryError("Can't have points in upper cone, lower cone AND outside!")
-
-    def choose_region(
-        self,
-        surface: openmc.Surface
-        | tuple[openmc.Surface]
-        | tuple[openmc.Surface | openmc.ZTorus],
-        vertices_array: npt.NDArray,
-        *,
-        control_id: bool = False,
-    ) -> openmc.Region:
-        """
-        Pick the correct region of the surface that includes all of the points in
-        vertices_array.
-
-        Parameters
-        ----------
-        surface
-            Either a :class:`openmc.Surface`, or a 1-tuple or 2-tuple of
-            :class:`openmc.Surface`. If it is a tuple, the first element is always a
-            :class:`openmc.ZPlane`/:class:`openmc.ZCone`/:class:`openmc.ZCylinder`;
-            the second element (if present) is always :class:`openmc.ZTorus`.
-        vertices_array
-            array of shape (?, 3), that the final region should include.
-        control_id
-            Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region_cone`
-
-        Returns
-        -------
-            An openmc.Region built from surface provided and includes all of these
-        """
-        if isinstance(surface, openmc.ZPlane | openmc.ZCylinder):
-            return choose_plane_cylinders(surface, vertices_array)
-
-        if isinstance(surface, openmc.ZCone):
-            return self.choose_region_cone(
-                surface, vertices_array, control_id=control_id
-            )
-
-        if isinstance(surface, tuple):
-            chosen_first_region = self.choose_region(
-                surface[0], vertices_array, control_id=control_id
-            )
-            # cone, or cylinder, or plane, or (cone | ambiguity_surface)
-            if len(surface) == 1:
-                return chosen_first_region
-            # -surface[1] = inside of torus
-            return flat_union((chosen_first_region, -surface[1]))
-        raise NotImplementedError(
-            f"Surface {type(surface)} is not ready for use in the axis-symmetric case!"
-        )
-
-    def region_from_surface_series(
-        self,
-        series_of_surfaces: Sequence[
-            openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None] | None
-        ],
-        vertices_array: npt.NDArray,
-        *,
-        control_id: bool = False,
-    ) -> openmc.Intersection:
-        """
-        Switch between choose_region() and choose_region_from_tuple_of_surfaces()
-        depending on the type of each element in the series_of_surfaces.
-
-        Parameters
-        ----------
-        series_of_surfaces
-            Each of them can be a None, a 1-tuple of surface, a 2-tuple of surfaces, or a
-            surface. For the last 3 options, see
-            :func:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region`
-            for more.
-
-        vertices_array
-            array of shape (?, 3), where every single point should be included by, or at
-            least on the edge of the returned Region.
-        control_id
-            Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.choose_region_cone`
-
-        Returns
-        -------
-        intersection_region:
-            openmc.Intersection of a list of
-            [(openmc.Halfspace) or (openmc.Union of openmc.Halfspace)]
-        """
-        return flat_intersection([
-            self.choose_region(surface, vertices_array, control_id=control_id)
-            for surface in series_of_surfaces
-            if surface is not None
-        ])
 
 
 class BlanketCell(openmc.Cell):
@@ -1232,13 +162,12 @@ class BlanketCell(openmc.Cell):
         self.cw_surface = cw_surface
         self.interior_surface = interior_surface
         self.vertex = vertices
-        self.csg = csg
 
         super().__init__(
             cell_id=cell_id,
             name=name,
             fill=fill,
-            region=self.csg.region_from_surface_series(
+            region=csg.region_from_surface_series(
                 [exterior_surface, ccw_surface, cw_surface, interior_surface],
                 self.vertex.T,  # We just assume it is convex
                 control_id=bool(cell_id),
@@ -1256,7 +185,7 @@ class BlanketCellStack:
     closest to the exterior. They should all be situated at the same poloidal angle.
     """
 
-    def __init__(self, cell_stack: list[BlanketCell]):
+    def __init__(self, cell_stack: list[BlanketCell], csg: OpenMCEnvironment):
         """
         The shared surface between adjacent cells must be the SAME one, i.e. same id and
         hash, not just identical.
@@ -1281,6 +210,7 @@ class BlanketCellStack:
             Contiguous stack of cells expected
         """
         self.cell_stack = cell_stack
+        self._csg = csg
         for int_cell, ext_cell in pairwise(cell_stack):
             if int_cell.exterior_surface is not ext_cell.interior_surface:
                 raise ValueError("Expected a contiguous stack of cells!")
@@ -1362,9 +292,7 @@ class BlanketCellStack:
             self._interfaces.append(self.cell_stack[-1].exterior_surface)
         return self._interfaces
 
-    def get_overall_region(
-        self, csg: OpenMCEnvironment, *, control_id: bool = False
-    ) -> openmc.Region:
+    def get_overall_region(self, *, control_id: bool = False) -> openmc.Region:
         """
         Calculate the region covering the entire cell stack.
 
@@ -1372,7 +300,7 @@ class BlanketCellStack:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`
+            :meth:`~bluemira.radiation_transport.neutronics.csg_env.OpenMCEnvironment.region_from_surface_series`
 
         Raises
         ------
@@ -1385,7 +313,7 @@ class BlanketCellStack:
         ))
         if not is_convex(vertices):
             raise GeometryError(f"{self}'s vertices need to be convex!")
-        return csg.region_from_surface_series(
+        return self._csg.region_from_surface_series(
             [
                 self.exterior_surface,
                 self.ccw_surface,
@@ -1566,7 +494,7 @@ class BlanketCellStack:
             int_surf = ext_surf
         int_surf.name = "vacuum-vessel-facing surface"
 
-        return cls(cell_stack)
+        return cls(cell_stack, csg)
 
 
 class BlanketCellArray:
@@ -1594,7 +522,7 @@ class BlanketCellArray:
         self.blanket_cell_array = blanket_cell_array
         self.poloidal_surfaces = [self.blanket_cell_array[0].ccw_surface]
         self.radial_surfaces = []
-        self.csg = csg
+        self._csg = csg
         for i, this_stack in enumerate(self.blanket_cell_array):
             self.poloidal_surfaces.append(this_stack.cw_surface)
             self.radial_surfaces.append(this_stack.interfaces)
@@ -1607,6 +535,16 @@ class BlanketCellArray:
                         f"Neighbouring BlanketCellStack [{i}] and "
                         f"[{i + 1}] are not aligned!"
                     )
+        if not is_convex(self.exterior_vertices()):
+            raise GeometryError(
+                "The exterior vertices of all of the cell-stack should"
+                "form a convex curve!"
+            )
+        if not is_convex(self.interior_vertices()):
+            raise GeometryError(
+                "The interior vertices of all of the cell-stack should"
+                "form a convex curve!"
+            )
 
     def __len__(self) -> int:
         """Number of cell stacks"""
@@ -1685,7 +623,7 @@ class BlanketCellArray:
         ----------
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.csg_env.OpenMCEnvironment.region_from_surface_series`.
 
         Raises
         ------
@@ -1702,7 +640,7 @@ class BlanketCellArray:
                 raise GeometryError(f"{self}'s vertices need to be convex!")
 
             exclusion_zone_by_stack.append(
-                self.csg.region_from_surface_series(
+                self._csg.region_from_surface_series(
                     [stack.cw_surface, stack.ccw_surface, stack.interior_surface],
                     stack_vertices,
                     control_id=control_id,
@@ -1738,7 +676,7 @@ class BlanketCellArray:
             recording the dimensions of the blanket in SI units (unit: [m]).
         control_id
             Passed as argument onto
-            :meth:`~bluemira.radiation_transport.neutronics.make_csg.OpenMCEnvironment.region_from_surface_series`.
+            :meth:`~bluemira.radiation_transport.neutronics.csg_env.OpenMCEnvironment.region_from_surface_series`.
         """
         cell_walls = pre_cell_array.cell_walls
         # TODO @je-cook: when contorl_id, we're forced to start at id=0
@@ -1804,9 +742,9 @@ class DivertorCell(openmc.Cell):
         self.interior_surfaces = interior_surfaces
         self.exterior_wire = exterior_wire
         self.interior_wire = interior_wire
-        self.csg = csg
+        self._csg = csg
 
-        region = self.csg.region_from_surface_series(
+        region = self._csg.region_from_surface_series(
             [
                 self.cw_surface,
                 self.ccw_surface,
@@ -1893,7 +831,7 @@ class DivertorCell(openmc.Cell):
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.csg_env.region_from_surface_series`
 
         Raises
         ------
@@ -1909,7 +847,7 @@ class DivertorCell(openmc.Cell):
                 raise GeometryError(
                     f"{self} (excluding the surface)'s vertices needs to be convex!"
                 )
-            return self.csg.region_from_surface_series(
+            return self._csg.region_from_surface_series(
                 [self.cw_surface, self.ccw_surface, *self.interior_surfaces],
                 vertices_array,
                 control_id=control_id,
@@ -1923,7 +861,7 @@ class DivertorCell(openmc.Cell):
             raise GeometryError(
                 f"{self} (excluding the vacuum vessel)'s vertices needs to be convex!"
             )
-        return self.csg.region_from_surface_series(
+        return self._csg.region_from_surface_series(
             [self.cw_surface, self.ccw_surface, *self.exterior_surfaces],
             vertices_array,
             control_id=control_id,
@@ -1940,7 +878,7 @@ class DivertorCellStack:
 
     def __init__(self, divertor_cell_stack: list[DivertorCell], csg: OpenMCEnvironment):
         self.cell_stack = divertor_cell_stack
-        self.csg = csg
+        self._csg = csg
         # This check below is invalid because of how we subtract region instead.
         # for int_cell, ext_cell in pairwise(self.cell_stack):
         #     if int_cell.exterior_surfaces is not ext_cell.interior_surfaces:
@@ -2024,7 +962,7 @@ class DivertorCellStack:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.csg_env.region_from_surface_series`
 
         Raises
         ------
@@ -2035,7 +973,7 @@ class DivertorCellStack:
         if not is_convex(all_vertices):
             raise GeometryError(f"overall_region of {self} needs to be convex!")
 
-        return self.csg.region_from_surface_series(
+        return self._csg.region_from_surface_series(
             [
                 self.cw_surface,
                 self.ccw_surface,
@@ -2259,7 +1197,7 @@ class DivertorCellArray:
         ----------
         control_id
             Passed as argument onto
-            :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
+            :func:`~bluemira.radiation_transport.neutronics.csg_env.region_from_surface_series`
         """
         return openmc.Union([
             stack[0].exclusion_zone(
