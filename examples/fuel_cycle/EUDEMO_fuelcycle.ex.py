@@ -95,6 +95,14 @@ lifecycle_config = {
 # %%
 lifecycle_inputs = {}
 
+# %% [markdown]
+#
+# Now we use the LifeCycle to generate pseudo-randomised timelines. Let's set a
+# random seed number first to get repeatable results
+
+# %%
+rng_seeds = set_random_seed(2358203947, 2)
+
 # We need to define some strategies to define the pseudo-random timelines
 
 # Let's choose a LearningStrategy such that the operational availability grows over time
@@ -102,19 +110,16 @@ learning_strategy = GompertzLearningStrategy(
     learn_rate=1.0, min_op_availability=0.1, max_op_availability=0.5
 )
 # Let's choose an OperationalAvailabilityStrategy to determine how to distribute outages
-availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
+availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0, rng_seed=rng_seeds[0])
 
 lifecycle = LifeCycle(
-    lifecycle_config, learning_strategy, availability_strategy, lifecycle_inputs
+    lifecycle_config,
+    learning_strategy,
+    availability_strategy,
+    lifecycle_inputs,
+    rng_seed=rng_seeds[1],
 )
 
-# %% [markdown]
-#
-# Now we use the LifeCycle to generate pseudo-randomised timelines. Let's set a
-# random seed number first to get repeatable results
-
-# %%
-set_random_seed(2358203947)
 
 # Let's do 50 runs Monte Carlo
 # NOTE: Make sure you have enough memory..!

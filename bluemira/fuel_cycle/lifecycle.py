@@ -18,12 +18,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S, raw_uc
+from bluemira.base.constants import S_TO_YR, YR_TO_S, RNGSeeds, raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 
 if TYPE_CHECKING:
+    from numpy.random import BitGenerator, SeedSequence
+
     from bluemira.fuel_cycle.timeline_tools import (
         LearningStrategy,
         OperationalAvailabilityStrategy,
@@ -70,6 +72,8 @@ class LifeCycle:
         outages.
     inputs:
         Currently unused.
+    rng_seed:
+        Random number generator seed for operational outages
     """
 
     def __init__(
@@ -78,10 +82,14 @@ class LifeCycle:
         learning_strategy: LearningStrategy,
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
+        rng_seed: int | SeedSequence = RNGSeeds.timeline_outages.value,
+        *,
+        _rng: BitGenerator | None = None,
     ):
         self.learning_strategy = learning_strategy
         self.availability_strategy = availability_strategy
         self.inputs = inputs
+        self.rng = np.random.default_rng(rng_seed) if _rng is None else _rng
 
         if isinstance(config, LifeCycleParams):
             self.params = config
@@ -289,6 +297,7 @@ class LifeCycle:
             self.params.vv_dmg,
             self.params.vv_dpa,
             self.availability_strategy,
+            self.rng.spawn(1)[0],
         )
         self.T = timeline
         self.t_unplanned_m = self.T.t_unplanned_m
@@ -320,11 +329,12 @@ class LifeCycle:
                 "the problem is probably related to unplanned maintenance."
             )
 
-            self.__init__(  # noqa: PLC2801
+            self.__init__(
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
+                _rng=self.rng,
             )  # Phoenix
 
         if delta2 > 0.015:  # noqa: PLR2004
@@ -336,11 +346,12 @@ class LifeCycle:
                 f"% diff: {100 * delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(  # noqa: PLC2801
+            self.__init__(
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,
                 self.inputs,
+                _rng=self.rng,
             )  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + self.min_downtime * S_TO_YR):

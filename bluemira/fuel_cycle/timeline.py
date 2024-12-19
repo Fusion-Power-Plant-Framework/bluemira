@@ -8,14 +8,21 @@
 Partially randomised fusion reactor load signal object and tools
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S, RNGSeeds
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.fuel_cycle.timeline_tools import (
     LogNormalAvailabilityStrategy,
     OperationalAvailabilityStrategy,
 )
+
+if TYPE_CHECKING:
+    from numpy.random import BitGenerator
 
 __all__ = ["Timeline"]
 
@@ -79,6 +86,8 @@ class OperationPhase(Phase):
         D-D reaction rate at full power [1/s]
     plasma_current:
         Plasma current [A]
+    rng:
+        Random number generator for operational outages
     t_start:
         Time at which the phase starts [s] (default = 0)
     sigma:
@@ -98,10 +107,12 @@ class OperationPhase(Phase):
         n_DT_reactions: float,
         n_DD_reactions: float,
         plasma_current: float,
+        rng: BitGenerator,
         t_start: float = 0.0,
         availability_strategy: OperationalAvailabilityStrategy | None = None,
     ):
         super().__init__()
+        self.rng = rng
         self.name = name
         self.n_pulse = n_pulse
         self.load_factor = load_factor
@@ -174,8 +185,7 @@ class OperationPhase(Phase):
 
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
-        rng = np.random.default_rng(RNGSeeds.timeline_outages.value)
-        return rng.permutation(dist)
+        return self.rng.permutation(dist)
 
     def plot_dist(self):
         """
@@ -273,6 +283,8 @@ class Timeline:
         The vacuum vessel life limit [dpa]
     availability_strategy:
         Operational availability strategy
+    rng:
+        Operational outages random number generator
 
     Attributes
     ----------
@@ -314,6 +326,7 @@ class Timeline:
         vv_dmg: float,
         vv_dpa: float,
         availability_strategy: OperationalAvailabilityStrategy,
+        rng: BitGenerator,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -351,6 +364,7 @@ class Timeline:
                     n_DTs[j],
                     n_DDs[j],
                     plasma_currents[j],
+                    rng=rng,
                     t_start=t_start,
                     availability_strategy=availability_strategy,
                 )
