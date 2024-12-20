@@ -228,8 +228,8 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx_a = self.ax_mat @ currents
         Bz_a = self.az_mat @ currents
-
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
+
         return np.round(B - self.B_max, self._round_dp)
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -240,9 +240,23 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
 
-        Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
-        Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)
+        if len(B) == 1:
+            return np.round(
+                (self.scale / B)
+                * (
+                    self.ax_mat * (Bx_a + self.bxp_vec)
+                    + self.az_mat * (Bz_a + self.bzp_vec)
+                ),
+                self._round_dp,
+            )
+        return np.round(
+            (self.scale / B)[:, np.newaxis]
+            * (
+                self.ax_mat * (Bx_a + self.bxp_vec)[:, np.newaxis]
+                + self.az_mat * (Bz_a + self.bzp_vec)[:, np.newaxis]
+            ),
+            self._round_dp,
+        )
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
