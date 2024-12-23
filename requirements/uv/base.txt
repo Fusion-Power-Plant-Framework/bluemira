@@ -10,11 +10,11 @@ babel==2.16.0
     # via bluemira (pyproject.toml)
 blosc2==2.7.1
     # via tables
-certifi==2024.8.30
+certifi==2024.12.14
     # via requests
 charset-normalizer==3.4.0
     # via requests
-click==8.1.7
+click==8.1.8
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.0
+fonttools==4.55.3
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -109,7 +109,7 @@ pandas==2.2.3
     # via
     #   pypet
     #   seaborn
-periodictable==1.7.1
+periodictable==2.0.2
     # via bluemira (pyproject.toml)
 pillow==11.0.0
     # via
@@ -152,7 +152,7 @@ rich==13.9.4
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-scikit-learn==1.5.2
+scikit-learn==1.6.0
     # via bluemira (pyproject.toml)
 scipy==1.10.1
     # via
@@ -164,7 +164,7 @@ scooby==0.10.0
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
-six==1.16.0
+six==1.17.0
     # via
     #   anytree
     #   python-dateutil
@@ -189,7 +189,7 @@ typing-extensions==4.12.2
     #   typeguard
 tzdata==2024.2
     # via pandas
-urllib3==2.2.3
+urllib3==2.3.0
     # via requests
 vtk==9.3.1
     # via
