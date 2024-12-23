@@ -351,7 +351,7 @@ def choose_plane_cylinders(
     surface: openmc.ZPlane | openmc.ZCylinder, choice_points: npt.NDArray
 ) -> openmc.Halfspace:
     """
-    choose a side of the Halfspace in the region of ZPlane and ZCylinder.
+    Choose a side of the Halfspace in the region of ZPlane and ZCylinder.
 
     Parameters
     ----------
@@ -946,7 +946,7 @@ class BluemiraNeutronicsCSG:
         control_id: bool = False,
     ) -> openmc.Region:
         """
-        choose the region for a ZCone.
+        Choose the region for a ZCone.
         When reading this function's code, bear in mind that a Z cone can be separated
         into 3 parts:
 
