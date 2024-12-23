@@ -32,7 +32,7 @@ def test_coil_type_enum():
 
     invalid_types = [42, None]
     for invalid_type in invalid_types:
-        with pytest.raises(TypeError, match="Input must be a string."):
+        with pytest.raises(TypeError, match=r"Input must be a string."):
             CoilType(invalid_type)
 
 
