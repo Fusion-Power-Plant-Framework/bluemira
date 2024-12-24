@@ -480,7 +480,9 @@ class OpenMCEnvironment:
         start_end = np.array(straight_line_info[:2])[:, ::2]
         return self.surface_from_2points(*start_end, surface_id=surface_id, name=name)
 
-    def surfaces_from_info_list(self, wire_info_list: WireInfoList, name: str = "") -> tuple[openmc.Surfaces]:
+    def surfaces_from_info_list(
+        self, wire_info_list: WireInfoList, name: str = ""
+    ) -> tuple[openmc.Surfaces]:
         """
         Create a list of surfaces using a list of wire infos.
 
