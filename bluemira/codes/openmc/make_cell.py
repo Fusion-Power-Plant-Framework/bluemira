@@ -56,9 +56,7 @@ if TYPE_CHECKING:
         PreCell,
         PreCellArray,
     )
-    from bluemira.radiation_transport.neutronics.wires import (
-        WireInfoList,
-    )
+    from bluemira.radiation_transport.neutronics.wires import WireInfoList
 
 
 def is_monotonically_increasing(series):

@@ -46,6 +46,23 @@ def plot_surfaces(
 ) -> plt.Axes:
     """
     Plot a list of surfaces in matplotlib.
+
+    Parameters
+    ----------
+    surface_list:
+        list of openmc.Surface that we are trying to plot.
+    ax:
+        The matplotlib axes object that we are trying to plot onto.
+    plot_both_sides:
+        Whether to plot from x=-1000 to x=1000cm, or from x=0 to x=1000cm.
+        Due to model being axis-symmetric we expect the plot to have a reflective
+        symmetry line of x=0.
+
+    Returns
+    -------
+    ax:
+        The matplotlib axes object on which the surfaces' cross-sections are plotted
+        onto.
     """
     ax = ax or plt.subplot()
     # ax.set_aspect(1.0) # don't do this as it makes the plot hard to read.
@@ -63,10 +80,26 @@ def plot_surfaces(
 
 
 def plot_surface_at_1000cm(
-    ax: plt.Axes, surface: openmc.Surface, color_num: int, *plot_both_sides: bool
+    ax: plt.Axes, surface: openmc.Surface, color_num: int, *, plot_both_sides: bool
 ) -> None:
     """
     In the range [-1000, 1000], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
+
+    Parameters
+    ----------
+    ax:
+        The axes object on which the surface shall be drawn.
+    surface:
+        The surface to be drawn.
+    color_num:
+        The C? number that is parsed onto matplotlib, to specify what colour should be
+        used to draw the line representing the surface.
+    plot_both_sides:
+        If it is a ZCylinder, then its RZ cross-section is symmetric along the x=0 line.
+        Therefore if we only want to look at the RHHP (which is going to be a mirrored
+        copy of the LHHP) there is no need to plot the LHS line (the part of the
+        ZCylinder intersecting the x<0 LHHP). So when plot_both_sides is false, we skip
+        plotting the LHS line.
     """
     if isinstance(surface, openmc.ZCylinder):
         label_str = f"{surface.id}: {surface.name}"
@@ -116,6 +149,64 @@ def plot_surface_at_1000cm(
             linestyle="--",
             color=f"C{color_num}",
         )
+
+
+def plot_regions(surfaces_list: list[openmc.Region], *, ax=None) -> plt.Axes: ...
+
+
+def plot_region_up_to_1000cm(
+    ax: plt.Axes,
+    region: openmc.Region,
+    color_num: int,
+    *,
+    plot_both_sides: bool,
+    alpha: float = 0.4,
+) -> None:
+    """
+    Plot the openmc.Region where the thing
+
+    Parameters
+    ----------
+    ax:
+        The axes object on which the regions shall be plotted
+    region:
+        region to be plotted
+    color_num:
+        The C? number that is parsed onto matplotlib, to specify what colour should be
+        used to draw the line representing the surface.
+
+    Raises
+    ------
+    NotImplementedError
+        We can only accept ZCylinder, ZPlane, ZCone, and halfcones
+
+    Returns
+    -------
+    :
+        The axes on which the region is plotted
+    """
+    if isinstance(openmc.Halfspace):
+        ax.add_patch(plt.Polygon())
+        if (
+            isinstance(region.surface, openmc.ZCylinder)
+            or isinstance(region.surface, openmc.ZPlane)
+            or isinstance(region.surface, openmc.ZCone)
+        ):
+            ...
+        else:
+            raise NotImplementedError(
+                f"type{region.surface} is not one of the accepted surfaces!"
+            )
+    elif isinstance(openmc.Intersection):
+        surfaces = list(region.get_surfaces())
+        if len(surfaces) != 2:
+            raise NotImplementedError(
+                f"Expected intersection of a cone with a ZPlane, instead got {surfaces}!"
+            )
+        ax.add_patch(plt.Polygon())
+    else:
+        raise NotImplementedError(f"This function cannot plot type {type(region)}!")
+    return ax
 
 
 def torus_from_3points(
@@ -389,7 +480,7 @@ class OpenMCEnvironment:
         start_end = np.array(straight_line_info[:2])[:, ::2]
         return self.surface_from_2points(*start_end, surface_id=surface_id, name=name)
 
-    def surfaces_from_info_list(self, wire_info_list: WireInfoList, name: str = ""):
+    def surfaces_from_info_list(self, wire_info_list: WireInfoList, name: str = "") -> tuple[openmc.Surfaces]:
         """
         Create a list of surfaces using a list of wire infos.
 
@@ -399,6 +490,12 @@ class OpenMCEnvironment:
             List of wires
         name
             This name will be *reused* across all of the surfaces created in this list.
+
+        Returns
+        -------
+        :
+            A collection of surfaces, each corresponding to a WireInfo.
+            The WireInfo is listed here because we want them to.
         """
         surface_list = []
         for wire in wire_info_list.info_list:
