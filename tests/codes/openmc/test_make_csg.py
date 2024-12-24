@@ -64,7 +64,6 @@ class TestCSGEnv:
         assert Coordinates([0.0, 2.1, 0.1]) in -torus_2  # center of the torus
         assert origin not in -torus_2
 
-
         wire_info_list = WireInfoList([CircleInfo()])
         torus3 = self.env.surfaces_from_info_list(wire_info_list)[0]
 
