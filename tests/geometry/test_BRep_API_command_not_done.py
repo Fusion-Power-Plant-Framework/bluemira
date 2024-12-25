@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
 from pprint import pprint
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 
