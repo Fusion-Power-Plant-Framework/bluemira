@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, NamedTuple
 import numpy as np
 from numpy import typing as npt
 
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
@@ -100,7 +101,10 @@ class WireInfoList:
     def __init__(self, info_list: Iterable[WireInfo]):
         self.info_list = list(info_list)
         for i, (prev_wire, curr_wire) in enumerate(pairwise(self.info_list)):
-            if not np.array_equal(prev_wire.key_points[1], curr_wire.key_points[0]):
+            distance = np.linalg.norm(
+                np.array(prev_wire.key_points[1]) - np.array(curr_wire.key_points[0])
+            )
+            if distance > EPS_FREECAD:
                 raise GeometryError(f"wire {i + 1} must start where the wire {i} stops.")
 
     def __len__(self) -> int:
