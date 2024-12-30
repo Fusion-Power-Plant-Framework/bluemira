@@ -80,7 +80,7 @@ pinned = [
     "numpy==1.26.4",
     "matplotlib==3.10.0",
     "scipy==1.10.1",
-    "vtk==9.3.1",  # needed for uv resolution
+    "vtk==9.4.1",  # needed for uv resolution
 ]
 
 conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
