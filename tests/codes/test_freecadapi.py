@@ -311,7 +311,7 @@ class TestFreecadapi:
         assert np.allclose(
             cadapi.discretise(arc, 10), cadapi.discretise(arc3, 10)
         )  # check arc3 matches arc
-        with pytest.raises(Part.OCCError):
+        with pytest.raises(FreeCADError):
             cadapi.make_circle_arc_3P([1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0])
 
         # from make_ellipse
