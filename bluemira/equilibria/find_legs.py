@@ -27,10 +27,7 @@ from bluemira.equilibria.flux_surfaces import (
     calculate_connection_length_flt,
     calculate_connection_length_fs,
 )
-from bluemira.geometry.coordinates import (
-    Coordinates,
-    join_intersect,
-)
+from bluemira.geometry.coordinates import Coordinates, get_intersect, join_intersect
 
 
 class NumNull(Enum):
@@ -560,6 +557,7 @@ def calculate_connection_length(
     eq: Equilibrium,
     div_target_start_point: Coordinates | None = None,
     first_wall: Coordinates | Grid | None = None,
+    div_norm_psi: float | None = None,
     forward: bool = True,  # noqa: FBT001, FBT002
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
@@ -582,6 +580,7 @@ def calculate_connection_length(
     ------
     BluemiraError
         If an invalid option calculation_method is selected.
+        If an invalid div_norm_psi value is entered.
         If no target is provided for FLT calculation_method - this is because the
         flux interception point found is not accurate enough to be used
         on a seperatrix automatically found by bluemira (n.b., the FLT can not
@@ -589,6 +588,31 @@ def calculate_connection_length(
 
     """
     calculation_method = CalcMethod[calculation_method.upper()]
+
+    if first_wall is None:
+        x1, x2 = eq.grid.x_min, eq.grid.x_max
+        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
+
+    # Use intersection between plasma facing surface and flux surface
+    # with chosen normalised psi. Note: this will override an input
+    # div_target_start_point.
+    if div_norm_psi is not None:
+        if div_norm_psi <= 1:
+            raise BluemiraError("div_norm_psi value must be > 1.")
+        f_s = eq.get_flux_surface(div_norm_psi)
+        xcrss, zcrss = get_intersect(f_s.xz, first_wall.xz)
+        # Pick lower inner or outer corner for div crossing points
+        # N.B. forward = True = LFS
+        mid = np.median(eq.get_LCFS().x)
+        xcond = (xcrss >= mid) if forward else (xcrss <= mid)
+        xcrss, zcrss = xcrss[xcond & (zcrss <= 0.0)], zcrss[xcond & (zcrss <= 0.0)]
+        if isinstance(xcrss, list):
+            # Sort by x crossing value
+            xcrss, zcrss = zip(*sorted(zip(xcrss, zcrss, strict=False)), strict=False)
+            # Choose lowest x crossing value if outer (forward=True) and highest if inner
+            xcrss, zcrss = xcrss[0], zcrss[0] if forward else xcrss[-1], zcrss[-1]
+        div_target_start_point = Coordinates({"x": xcrss, "z": zcrss})
 
     # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
     if div_target_start_point is None:

@@ -59,7 +59,7 @@ class TestOpenFluxSurfaceStuff:
         Use both a flux surface and field line tracing approach to calculate connection
         length and check they are the same or similar.
         """
-        x_start, z_start = 12, 0
+        x_start, z_start, psi_norm_start = 12, 0, 1.076675434621207
         x_loop, z_loop = find_flux_surface_through_point(
             self.eq.x,
             self.eq.z,
@@ -138,6 +138,37 @@ class TestOpenFluxSurfaceStuff:
         )
         assert np.isclose(l_fsg, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt, l_flt_lfs.connection_length, rtol=2e-2)
+
+        # Check the calculate_connection_length function, that calls either
+        # method, returns the same result for the normalised psi input that
+        # matches the normalise psi of the div_target_start_point
+        l_fsg_psinorm = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=psi_norm_start,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt_psinorm = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=psi_norm_start,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert np.isclose(l_fsg_psinorm, l_fsg, rtol=2e-2)
+        assert np.isclose(l_flt_psinorm, l_flt, rtol=2e-2)
+
+        # Test that we get the expected value for a given psi_norm
+        # Use a value different from psi_norm_start to make sure that
+        # div_target_start_point is set correctly
+        l_flt = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=1.03,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert np.isclose(l_flt, 83.13936166158712, rtol=2e-2)
 
         # Check the calculate_connection_length result when no point is input
         l_fsg = calculate_connection_length(
