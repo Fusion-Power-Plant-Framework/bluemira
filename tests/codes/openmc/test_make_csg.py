@@ -10,6 +10,7 @@ from bluemira.codes.openmc.make_csg import OpenMCEnvironment
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.neutronics.wires import (
     CircleInfo,
+    WireInfo,
     WireInfoList,
     torus_from_3points,
     torus_from_circle,
@@ -36,6 +37,8 @@ class TestCSGEnv:
 
     def test_ztorus(self):
         """
+        https://docs.openmc.org/en/latest/pythonapi/generated/openmc.ZTorus.html
+
         The only use-case for the z-torus is to approximate arc of a circle in an
         axisymmetric model, so its axis of revolution should be the z-axis.
         """
@@ -64,13 +67,25 @@ class TestCSGEnv:
         assert Coordinates([0.0, 2.1, 0.1]) in -torus_2  # center of the torus
         assert origin not in -torus_2
 
-        wire_info_list = WireInfoList([CircleInfo()])
+        wire_info_list = WireInfoList([
+            WireInfo(
+                CircleInfo(
+                    start_point=[1.5, 0, 0],
+                    end_point=[2.5, 0, 0],
+                    center=[2, 0, 0],
+                    radius=0.5,
+                ),
+                [[None] * 3, [None] * 3],
+            )
+        ])
         torus3 = self.env.surfaces_from_info_list(wire_info_list)[0]
 
     def test_zplane(self):
+        """https://docs.openmc.org/en/latest/pythonapi/generated/openmc.ZPlane.html"""
         assert ...
 
     def test_zcone(self):
+        """https://docs.openmc.org/en/latest/pythonapi/generated/openmc.ZCone.html"""
         assert ...
 
     def test_error_when_not_sharing_neighbouring_planes():
