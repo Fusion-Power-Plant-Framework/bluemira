@@ -755,10 +755,18 @@ def make_circle_arc_3P(  # noqa: N802
     Returns
     -------
     Bluemira wire that contains the arc or circle
+
+    Raises
+    ------
+    GeometryError
+        Raised if the three points are collinear.
     """
-    # TODO @ivanmaione: check what happens when the 3 points are in a line
-    # 3589
-    output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
+    try:
+        output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
+    except cadapi.FreeCADError as e:
+        raise GeometryError(
+            f"Failed to create BluemiraWire circle/arc from 3 points: {e}"
+        ) from None
     return BluemiraWire(output, label=label)
 
 

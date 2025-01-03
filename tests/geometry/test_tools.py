@@ -666,6 +666,13 @@ class TestMakeCircle:
         np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=EPS)
         np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=EPS)
 
+    def test_make_circle_from_colinear_points(self):
+        p1 = [1, 0, 2]
+        p2 = [2, 0, 4]
+        p3 = [3, 0, 6]
+        with pytest.raises(GeometryError):
+            make_circle_arc_3P(p1, p2, p3)
+
 
 class TestSavingCAD:
     STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"

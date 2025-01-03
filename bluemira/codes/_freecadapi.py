@@ -539,8 +539,16 @@ def make_circle_arc_3P(  # noqa: N802
     -------
     :
         FreeCAD wire that contains the arc of circle
+
+    Raises
+    ------
+    FreeCADError
+        Raised if the three points are collinear.
     """
-    arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+    try:
+        arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+    except Part.OCCError as error:
+        raise FreeCADError(error.args[0]) from error
 
     # next steps are made to create an arc of circle that is consistent with that
     # created by 'make_circle'
