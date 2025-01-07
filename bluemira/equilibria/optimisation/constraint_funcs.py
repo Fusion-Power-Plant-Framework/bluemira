@@ -413,9 +413,7 @@ class CoilForceConstraintFunctions:
     def pf_z_constraint(self, f_matx, max_value):
         """Constraint Function Absolute vertical force constraint on PF coils."""
         scaled_max_value = max_value / self.scale
-        self.constraint[: self.n_PF] = (
-            np.sqrt(f_matx[: self.n_PF, 1] ** 2) - scaled_max_value
-        )
+        self.constraint[: self.n_PF] = np.abs(f_matx[: self.n_PF, 1]) - scaled_max_value
         self.sign[: self.n_PF] = np.sign(f_matx[: self.n_PF, 1])
 
     def pf_z_constraint_grad(self, df_matx):
@@ -432,7 +430,7 @@ class CoilForceConstraintFunctions:
         scaled_max_value = max_value / self.scale
         # vertical force on CS stack
         cs_z_sum = np.sum(self.cs_fz(f_matx))
-        self.constraint[self.n_PF] = np.sqrt(cs_z_sum**2) - scaled_max_value
+        self.constraint[self.n_PF] = np.abs(cs_z_sum) - scaled_max_value
 
     def cs_z_grad(self, df_matx):
         """
