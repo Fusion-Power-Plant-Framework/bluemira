@@ -76,6 +76,7 @@ apiCompound = Part.Compound  # noqa: N816
 WORKING_PRECISION = 1e-5
 MIN_PRECISION = 1e-5
 MAX_PRECISION = 1e-5
+ONE_PERIOD = 2 * np.pi
 
 # ======================================================================================
 # Error catching
@@ -1181,6 +1182,10 @@ def split_wire(
             edges_1.append(edge)
         elif i == idx:
             parameter = edge.Curve.parameter(points[0][0])
+            if (
+                not edge.ParameterRange[0] <= parameter <= edge.ParameterRange[1]
+            ) and isinstance(edge.Curve, Part.ArcOfConic | Part.Conic):
+                parameter += np.sign(edge.ParameterRange[0] - parameter) * ONE_PERIOD
             half_edge_1, half_edge_2 = _split_edge(edge, parameter)
             if half_edge_1:
                 edges_1.append(half_edge_1)
@@ -1205,13 +1210,39 @@ def split_wire(
 
 
 def _split_edge(edge, parameter):
-    p0, p1 = edge.ParameterRange[0], edge.ParameterRange[1]
+    """
+    Parameters
+    ----------
+    edge:
+        The Part.Edge to be splitted
+    parameter:
+        the parameter
+
+    Returns
+    -------
+    edge_1:
+        The edge from its minimum parameter up to the user-provided parameter.
+        If length=0, then return None.
+    edge_2:
+        The edge from the user-provided parameter up to its maximum parameter.
+        If length=0, then return None.
+
+    Raises
+    ------
+    FreeCADError
+        Thrown if the provided parameter is outside of the edge's valid parameter range.
+    """
+    p0, p1 = edge.ParameterRange[0:2]
     if parameter == p0:
         return None, edge
     if parameter == p1:
         return edge, None
-
-    return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
+    if p0 < parameter < p1:
+        return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
+    raise FreeCADError(
+        f"The splitting parameter {parameter} exists beyond the allowed parameter "
+        f"range of {p0}-{p1}!"
+    )
 
 
 def _get_closest_edge_idx(wire, vertex):
