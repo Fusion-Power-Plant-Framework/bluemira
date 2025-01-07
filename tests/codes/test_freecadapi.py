@@ -183,6 +183,55 @@ class TestFreecadapi:
         assert isinstance(com, np.ndarray)
         assert comparison.all()
 
+    def test_split_circular_wire(self):
+        full_circle = cadapi.make_circle(radius=1.0, center=(1, 0, 0), axis=(0, 1, 0))
+        arc_of_circ = cadapi.make_circle_arc_3P(
+            [0, 0, 0], [1, 1, 0], [2, 0, 0], axis=(0, 1, 0)
+        )
+        semi_circle_lower, semi_circle_upper = cadapi.split_wire(
+            full_circle, [0, 0, 0], EPS * 10
+        )
+        assert np.allclose(
+            cadapi.start_point(semi_circle_upper) - cadapi.start_point(arc_of_circ),
+            0,
+            atol=D_TOLERANCE,
+        )
+        assert cadapi.split_wire(arc_of_circ, [2, 0, 0], EPS * 10)[1] is None
+        assert (
+            list(cadapi.split_wire(full_circle, [2, 0, 0], EPS * 10)).count(None) == 1
+        ), (
+            "Splitting vertex on the start- AND end-point, "
+            "so one of the wires must have zero length."
+        )
+
+        with pytest.raises(FreeCADError):
+            cadapi.split_wire(full_circle, (3, 0, 0), EPS * 10)
+        with pytest.raises(FreeCADError):
+            cadapi.split_wire(arc_of_circ, (3, 0, 0), EPS * 10)
+        with pytest.raises(FreeCADError):
+            cadapi._split_edge(
+                arc_of_circ.OrderedEdges[0], 0.0
+            )  # angle=0.0 radian is invalid here.
+
+    def test_split_elliptical_wire(self):
+        ellipse = cadapi.make_ellipse(
+            major_radius=2, minor_radius=1, major_axis=(1, 0, 0), minor_axis=(0, 0, -1)
+        )
+        _, arc_of_ellipse = cadapi.split_wire(ellipse, [0, 0, -1], EPS * 10)
+        assert np.isclose(arc_of_ellipse.Edges[0].LastParameter, 2 * np.pi)
+        same_arc, none = cadapi.split_wire(arc_of_ellipse, [2, 0, 0], EPS * 10)
+
+        with pytest.raises(FreeCADError):
+            cadapi._split_edge(arc_of_ellipse.OrderedEdges[0], 0.0)
+
+    def test_split_nonperiodic_wire(self):
+        closed_wire = cadapi.make_polygon(self.closed_square_points)
+        bezier = cadapi.make_bezier(self.square_points)
+        bspline = cadapi.interpolate_bspline(self.square_points)
+        cadapi.split_wire(closed_wire, self.closed_square_points[1], EPS * 10)
+        cadapi.split_wire(bezier, self.square_points[0], EPS * 10)
+        cadapi.split_wire(bspline, self.square_points[1], EPS * 10)
+
     def test_scale_shape(self):
         factor = 2.0
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
