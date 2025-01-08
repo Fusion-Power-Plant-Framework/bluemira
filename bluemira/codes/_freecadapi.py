@@ -51,6 +51,7 @@ from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.codes.freecad_number import next_freecad_float, prev_freecad_float
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify
 
@@ -1183,9 +1184,9 @@ def split_wire(
         elif i == idx:
             parameter = edge.Curve.parameter(points[0][0])
             if (
-                not edge.ParameterRange[0] - EPS_FREECAD
+                not next_freecad_float(edge.ParameterRange[0])
                 <= parameter
-                <= edge.ParameterRange[1] + EPS_FREECAD
+                <= prev_freecad_float(edge.ParameterRange[1])
             ) and isinstance(edge.Curve, Part.ArcOfConic | Part.Conic):
                 parameter += np.sign(edge.ParameterRange[0] - parameter) * ONE_PERIOD
             half_edge_1, half_edge_2 = _split_edge(edge, parameter)
@@ -1235,11 +1236,11 @@ def _split_edge(edge, parameter):
         Thrown if the provided parameter is outside of the edge's valid parameter range.
     """
     p0, p1 = edge.ParameterRange[0:2]
-    if np.isclose(parameter, p0, rtol=0, atol=EPS_FREECAD):
+    if next_freecad_float(p0) <= parameter <= prev_freecad_float(p0):
         return None, edge
-    if np.isclose(parameter, p1, rtol=0, atol=EPS_FREECAD):
+    if next_freecad_float(p1) <= parameter <= prev_freecad_float(p1):
         return edge, None
-    if p0 + EPS_FREECAD < parameter < p1 - EPS_FREECAD:
+    if next_freecad_float(p0) < parameter < prev_freecad_float(p1):
         return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
     raise FreeCADError(
         f"The splitting parameter {parameter} exists beyond the allowed parameter "
