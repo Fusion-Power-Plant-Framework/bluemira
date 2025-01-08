@@ -340,7 +340,6 @@ class CoilForceConstraintFunctions:
         self.n_coils = self.n_CS + self.n_PF
         self._constraint = np.zeros(self.n_coils)
         self._grad = np.zeros((self.n_coils, self.n_coils))
-        self._sign = np.ones(self.n_coils)
 
     @property
     def constraint(self):
@@ -359,15 +358,6 @@ class CoilForceConstraintFunctions:
     @grad.setter
     def grad(self, value):
         self._grad = value
-
-    @property
-    def sign(self):
-        """Constraint Sign"""
-        return self._sign
-
-    @sign.setter
-    def sign(self, value):
-        self._sign = value
 
     def calc_f_matx(self, currents):
         """
@@ -413,13 +403,12 @@ class CoilForceConstraintFunctions:
     def pf_z_constraint(self, f_matx, max_value):
         """Constraint Function Absolute vertical force constraint on PF coils."""
         scaled_max_value = max_value / self.scale
-        self.constraint[: self.n_PF] = np.abs(f_matx[: self.n_PF, 1]) - scaled_max_value
-        self.sign[: self.n_PF] = np.sign(f_matx[: self.n_PF, 1])
+        self.constraint[: self.n_PF] = f_matx[: self.n_PF, 1] ** 2 - scaled_max_value**2
 
-    def pf_z_constraint_grad(self, df_matx):
+    def pf_z_constraint_grad(self, f_matx, df_matx):
         """Constraint Derivative: Absolute vertical force constraint on PF coils."""
         self.grad[: self.n_PF] = (
-            self.sign[: self.n_PF, np.newaxis] * df_matx[: self.n_PF, :, 1]
+            2 * (df_matx[: self.n_PF, :, 1].T * f_matx[: self.n_PF, 1]).T
         )
 
     def cs_z_constraint(self, f_matx, max_value):
@@ -429,15 +418,16 @@ class CoilForceConstraintFunctions:
         """
         scaled_max_value = max_value / self.scale
         # vertical force on CS stack
-        cs_z_sum = np.sum(self.cs_fz(f_matx))
-        self.constraint[self.n_PF] = np.abs(cs_z_sum) - scaled_max_value
+        cs_z_sum = np.sum(self.cs_fz(f_matx), axis=0)
+        self.constraint[self.n_PF] = cs_z_sum**2 - scaled_max_value**2
 
-    def cs_z_grad(self, df_matx):
+    def cs_z_grad(self, f_matx, df_matx):
         """
         Constraint Derivative:
         Absolute sum of vertical force constraint on entire CS stack
         """
-        self.grad[self.n_PF] = np.sum(df_matx[self.n_PF :, :, 1], axis=0)
+        cs_z_sum = np.sum(self.cs_fz(f_matx), axis=0)
+        self.grad[self.n_PF] = 2 * cs_z_sum * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
 
     def cs_z_sep_constraint(self, f_matx, max_value):
         """Constraint Function: CS separation constraints."""
@@ -534,9 +524,10 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
             Derivative of the coil force
         """
         currents = self.scale * vector
+        f_matx = self.calc_f_matx(currents)
         df_matx = self.calc_df_matx(currents)
-        self.pf_z_constraint_grad(df_matx)
+        self.pf_z_constraint_grad(f_matx, df_matx)
         if self.n_CS != 0:
-            self.cs_z_grad(df_matx)
+            self.cs_z_grad(f_matx, df_matx)
             self.cs_z_sep_grad(df_matx)
         return np.round(self.grad, self._round_dp)
