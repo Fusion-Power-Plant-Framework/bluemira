@@ -1184,9 +1184,9 @@ def split_wire(
         elif i == idx:
             parameter = edge.Curve.parameter(points[0][0])
             if (
-                not next_freecad_float(edge.ParameterRange[0])
+                not prev_freecad_float(edge.ParameterRange[0])
                 <= parameter
-                <= prev_freecad_float(edge.ParameterRange[1])
+                <= next_freecad_float(edge.ParameterRange[1])
             ) and isinstance(edge.Curve, Part.ArcOfConic | Part.Conic):
                 parameter += np.sign(edge.ParameterRange[0] - parameter) * ONE_PERIOD
             half_edge_1, half_edge_2 = _split_edge(edge, parameter)
@@ -1236,9 +1236,9 @@ def _split_edge(edge, parameter):
         Thrown if the provided parameter is outside of the edge's valid parameter range.
     """
     p0, p1 = edge.ParameterRange[0:2]
-    if next_freecad_float(p0) <= parameter <= prev_freecad_float(p0):
+    if prev_freecad_float(p0) <= parameter <= next_freecad_float(p0):
         return None, edge
-    if next_freecad_float(p1) <= parameter <= prev_freecad_float(p1):
+    if prev_freecad_float(p1) <= parameter <= next_freecad_float(p1):
         return edge, None
     if next_freecad_float(p0) < parameter < prev_freecad_float(p1):
         return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
