@@ -3011,6 +3011,7 @@ def serialise_shape(shape):
 
     if type_ == Part.Edge:
         return serialise_shape(_convert_edge_to_curve(shape))
+        # forces circles into ArcOfCircle, ellipse into ArcOfEllipse
 
     if type_ in {Part.LineSegment, Part.Line}:
         return {
@@ -3089,40 +3090,48 @@ def deserialise_shape(buffer):
     -------
     :
         The deserialised FreeCAD object
+
+    Raises
+    ------
+    FreeCADError
+        Wrapping the OCCError: BRep not done in a more understandable message.
     """
-    for type_, v in buffer.items():
-        if type_ == "Wire":
-            return Part.Wire([deserialise_shape(edge) for edge in v])
-        if type_ == "LineSegment":
-            return make_polygon([v["StartPoint"], v["EndPoint"]])
-        if type_ == "BezierCurve":
-            return make_bezier(v["Poles"])
-        if type_ == "BSplineCurve":
-            return make_bspline(
-                v["Poles"],
-                v["Mults"],
-                v["Knots"],
-                periodic=v["isPeriodic"],
-                degree=v["Degree"],
-                weights=v["Weights"],
-                check_rational=v["checkRational"],
-            )
-        if type_ == "ArcOfCircle":
-            return make_circle(
-                v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]
-            )
-        if type_ == "ArcOfEllipse":
-            return make_ellipse(
-                v["Center"],
-                v["MajorRadius"],
-                v["MinorRadius"],
-                v["MajorAxis"],
-                v["MinorAxis"],
-                v["StartAngle"],
-                v["EndAngle"],
-            )
-        raise NotImplementedError(f"Deserialisation non implemented for {type_}")
-    return None
+    try:
+        for type_, v in buffer.items():
+            if type_ == "Wire":
+                return Part.Wire([deserialise_shape(edge) for edge in v])
+            if type_ == "LineSegment":
+                return make_polygon([v["StartPoint"], v["EndPoint"]])
+            if type_ == "BezierCurve":
+                return make_bezier(v["Poles"])
+            if type_ == "BSplineCurve":
+                return make_bspline(
+                    v["Poles"],
+                    v["Mults"],
+                    v["Knots"],
+                    periodic=v["isPeriodic"],
+                    degree=v["Degree"],
+                    weights=v["Weights"],
+                    check_rational=v["checkRational"],
+                )
+            if type_ == "ArcOfCircle":
+                return make_circle(
+                    v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]
+                )
+            if type_ == "ArcOfEllipse":
+                return make_ellipse(
+                    v["Center"],
+                    v["MajorRadius"],
+                    v["MinorRadius"],
+                    v["MajorAxis"],
+                    v["MinorAxis"],
+                    v["StartAngle"],
+                    v["EndAngle"],
+                )
+            raise NotImplementedError(f"Deserialisation non implemented for {type_}")
+        return None
+    except Part.OCCError as e:
+        raise FreeCADError(str(e) + "\nlikely due to incontinguous wire.") from e
 
 
 def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
@@ -3132,64 +3141,74 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
     Parameters
     ----------
     edge:
-        FreeCAD Edge
+        FreeCAD Edge, where type(edge.Curve) is one of the following:
+        1. Part.Line
+        2. Part.Circle
+        3. Part.Ellipse
+        4. Part.BezierCurve
+        5. Part.BSplineCurve
+        6. Part.OffsetCurve
 
     Returns
     -------
     :
-        FreeCAD Part curve object
+        FreeCAD Part curve object, corresponding to the input type:
+        1. Part.Line        -> Part.LineSegment
+        2. Part.Circle      -> Part.ArcOfCircle
+        3. Part.ellipse     -> Part.ArcOfEllipse
+        4. Part.BezierCurve -> Part.BezierCurve
+        5. Part.BSplineCurve-> Part.BSplineCurve
+        6. Part.OffsetCurve -> Part.BSplineCurve
     """
-    curve = edge.Curve
+    in_curve = edge.Curve
     first = edge.FirstParameter
     last = edge.LastParameter
     if edge.Orientation == "Reversed":
         first, last = last, first
-    output = None
+    out_curve = None
 
-    if isinstance(curve, Part.Line):
-        output = Part.LineSegment(curve.value(first), curve.value(last))
-    elif isinstance(curve, Part.Ellipse):
-        output = Part.ArcOfEllipse(curve, first, last)
+    if isinstance(in_curve, Part.Line):
+        out_curve = Part.LineSegment(in_curve.value(first), in_curve.value(last))
+    elif isinstance(in_curve, Part.Ellipse):
+        out_curve = Part.ArcOfEllipse(in_curve, first, last)
         if edge.Orientation == "Reversed":
-            output.Axis = -output.Axis
-            p0 = curve.value(first)
-            p1 = curve.value(last)
-            output = Part.ArcOfEllipse(
-                output.Ellipse,
-                output.Ellipse.parameter(p0),
-                output.Ellipse.parameter(p1),
+            p0 = in_curve.value(last)
+            p1 = in_curve.value(first)
+            out_curve = Part.ArcOfEllipse(
+                in_curve,
+                in_curve.parameter(p0),
+                in_curve.parameter(p1),
             )
-    elif isinstance(curve, Part.Circle):
-        output = Part.ArcOfCircle(curve, first, last)
+    elif isinstance(in_curve, Part.Circle):
+        out_curve = Part.ArcOfCircle(in_curve, first, last)
         if edge.Orientation == "Reversed":
-            output.Axis = -output.Axis
-            p0 = curve.value(first)
-            p1 = curve.value(last)
-            output = Part.ArcOfCircle(
-                output.Circle,
-                output.Circle.parameter(p0),
-                output.Circle.parameter(p1),
+            p0 = in_curve.value(last)
+            p1 = in_curve.value(first)
+            out_curve = Part.ArcOfCircle(
+                in_curve,
+                in_curve.parameter(p0),
+                in_curve.parameter(p1),
             )
-    elif isinstance(curve, Part.BezierCurve):
-        output = Part.BezierCurve()
-        poles = curve.getPoles()
+    elif isinstance(in_curve, Part.BezierCurve):
+        out_curve = Part.BezierCurve()
+        poles = in_curve.getPoles()
         if edge.Orientation == "Reversed":
             poles.reverse()
-        output.setPoles(poles)
-        output.segment(first, last)
-    elif isinstance(curve, Part.BSplineCurve):
-        output = curve
-        # p = curve.discretise(100)
+        out_curve.setPoles(poles)
+        out_curve.segment(first, last)
+    elif isinstance(in_curve, Part.BSplineCurve):
+        out_curve = in_curve
+        # p = in_curve.discretise(100)
         # if edge.Orientation == "Reversed":
         #     p.reverse()
-        # output = Part.BSplineCurve()
-        # output.interpolate(p)
-    elif isinstance(curve, Part.OffsetCurve):
-        c = curve.toNurbs()
+        # out_curve = Part.BSplineCurve()
+        # out_curve.interpolate(p)
+    elif isinstance(in_curve, Part.OffsetCurve):
+        c = in_curve.toNurbs()
         if isinstance(c, Part.BSplineCurve) and edge.Orientation == "Reversed":
             c.reverse()
-        output = _convert_edge_to_curve(Part.Edge(c))
+        out_curve = _convert_edge_to_curve(Part.Edge(c))
     else:
-        bluemira_warn(f"Conversion of {type(curve)} is still not supported!")
+        bluemira_warn(f"Conversion of {type(in_curve)} is still not supported!")
 
-    return output
+    return out_curve
