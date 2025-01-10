@@ -349,7 +349,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pradmw",
+        "name": "p_plasma_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -368,7 +368,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pinnerzoneradmw",
+        "name": "p_plasma_inner_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -382,7 +382,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pouterzoneradmw",
+        "name": "p_plasma_outer_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -421,7 +421,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "psyncpv*vol",
+        "name": "pden_plasma_sync_mw*vol",
         "send": false,
         "recv": true,
         "unit": "MW"
