@@ -357,7 +357,7 @@ class Constraint(ConstraintSelection, Model):
     WALL_RADIATION_UPPER_LIMIT = (
         67,
         (4, 6, 116),
-        ("peakfactrad", "peakradwallload"),
+        ("f_fw_rad_max", "pflux_fw_rad_max_mw"),
         "Simple radiation wall load limit",
     )
     PSEPB_QAR_UPPER_LIMIT = (
