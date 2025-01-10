@@ -3129,9 +3129,10 @@ def deserialise_shape(buffer):
                     v["EndAngle"],
                 )
             raise NotImplementedError(f"Deserialisation non implemented for {type_}")
-        return None
     except Part.OCCError as e:
         raise FreeCADError(str(e) + "\nlikely due to incontinguous wire.") from e
+    else:
+        return None
 
 
 def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
@@ -3172,23 +3173,12 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
     elif isinstance(in_curve, Part.Ellipse):
         out_curve = Part.ArcOfEllipse(in_curve, first, last)
         if edge.Orientation == "Reversed":
-            p0 = in_curve.value(last)
-            p1 = in_curve.value(first)
-            out_curve = Part.ArcOfEllipse(
-                in_curve,
-                in_curve.parameter(p0),
-                in_curve.parameter(p1),
-            )
+            # reverse changes the direction of rotation, but only to a point.
+            out_curve = Part.ArcOfEllipse(in_curve, last, first)
     elif isinstance(in_curve, Part.Circle):
         out_curve = Part.ArcOfCircle(in_curve, first, last)
         if edge.Orientation == "Reversed":
-            p0 = in_curve.value(last)
-            p1 = in_curve.value(first)
-            out_curve = Part.ArcOfCircle(
-                in_curve,
-                in_curve.parameter(p0),
-                in_curve.parameter(p1),
-            )
+            out_curve = Part.ArcOfCircle(in_curve, last, first)
     elif isinstance(in_curve, Part.BezierCurve):
         out_curve = Part.BezierCurve()
         poles = in_curve.getPoles()
