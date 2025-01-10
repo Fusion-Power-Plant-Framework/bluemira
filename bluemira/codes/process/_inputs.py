@@ -409,7 +409,7 @@ class ProcessInputs:
     nbshinefmax: float | None = None
     nflutfmax: float | None = None
     pdivtlim: float | None = None
-    peakfactrad: float | None = None
+    f_fw_rad_max: float | None = None
     pnetelin: float | None = None
     powfmax: float | None = None
     psepbqarmax: float | None = None
