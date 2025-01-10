@@ -161,7 +161,7 @@ select = ["ALL"]
 ignore = [
     "ANN",     # type annotations
     "EM",      # string in error messages
-    "PD",      # Pandas
+    "PD901",   # Pandas df variable name
     "B019",    # using cache memory leaks
     "COM812",  # enforce trailing comma, disagrees with black/ruff format
     "D200",    # docs stuff
@@ -172,17 +172,13 @@ ignore = [
     "D401",
     "DOC502",  # Omit non-explicit exceptions from docstrings
     "DTZ005",  # datetime timezone arg
-    "E203",    # black/ruff format conflicts
     "FIX002",  # Line contains todo
-    "ISC001",  # ruff format conflict
     "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
     "RUF052",  # not dummy variables just private
     "TRY003",  # put error messages in error class
     "FURB152",  # 3.14 != pi
-    "PIE790",  # TMP for false positive ...
     # should remove
-    # "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "SLF001",  # private method use
 
