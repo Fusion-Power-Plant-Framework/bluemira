@@ -899,7 +899,7 @@
     "var_mod": "Plasma",
     "scan01": 1.2
   },
-  "dnitot": {
+  "nd_ions_total": {
     "var_mod": "Plasma",
     "scan01": 5.3766e19
   },
@@ -907,19 +907,19 @@
     "var_mod": "Plasma",
     "scan01": 4.7623e19
   },
-  "dnz": {
+  "nd_impurities": {
     "var_mod": "Plasma",
     "scan01": 8.7155e16
   },
-  "dnalp": {
+  "nd_alphas": {
     "var_mod": "Plasma",
     "scan01": 6.0339e18
   },
-  "dnprot": {
+  "nd_protons": {
     "var_mod": "Plasma",
     "scan01": 2.2157e16
   },
-  "dnbeam": {
+  "nd_beam_ions": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
@@ -991,7 +991,7 @@
     "var_mod": "Plasma",
     "scan01": 5e-5
   },
-  "aion": {
+  "m_ions_total_amu": {
     "var_mod": "Plasma",
     "scan01": 2.8796
   },
@@ -1127,7 +1127,7 @@
     "var_mod": "Plasma",
     "scan01": 402.27
   },
-  "psyncpv*vol": {
+  "pden_plasma_sync_mw*vol": {
     "var_mod": "Plasma",
     "scan01": 51.362
   },
@@ -1143,15 +1143,15 @@
     "var_mod": "Plasma",
     "scan01": 0.6
   },
-  "pinnerzoneradmw": {
+  "p_plasma_inner_rad_mw": {
     "var_mod": "Plasma",
     "scan01": 261.1
   },
-  "pouterzoneradmw": {
+  "p_plasma_outer_rad_mw": {
     "var_mod": "Plasma",
     "scan01": 385.78
   },
-  "pradmw": {
+  "p_plasma_rad_mw": {
     "var_mod": "Plasma",
     "scan01": 646.88
   },
@@ -1167,11 +1167,11 @@
     "var_mod": "Plasma",
     "scan01": 0.95951
   },
-  "photon_wall": {
+  "pflux_fw_rad_mw": {
     "var_mod": "Plasma",
     "scan01": 0.3386
   },
-  "peakfactrad": {
+  "f_fw_rad_max": {
     "var_mod": "Plasma",
     "scan01": 3.33
   },
@@ -1179,7 +1179,7 @@
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "peakradwallload": {
+  "pflux_fw_rad_max_mw": {
     "var_mod": "Plasma",
     "scan01": 1.1275
   },
