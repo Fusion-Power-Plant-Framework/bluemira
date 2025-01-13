@@ -130,7 +130,7 @@ py-cpuinfo==9.0.0
     #   tables
 pyclipper==1.3.0.post6
     # via bluemira (pyproject.toml)
-pygments==2.19.0
+pygments==2.19.1
     # via rich
 pyparsing==3.2.1
     # via
@@ -152,7 +152,7 @@ rich==13.9.4
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-scikit-learn==1.6.0
+scikit-learn==1.6.1
     # via bluemira (pyproject.toml)
 scipy==1.10.1
     # via
