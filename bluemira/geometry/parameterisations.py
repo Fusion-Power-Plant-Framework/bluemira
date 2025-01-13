@@ -300,7 +300,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             },
         )
         ax.annotate(
-            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
+            rf"$\it{{{str_to_latex(key).strip('$')}}}$",
             xy=xy3,
             xycoords="data",
             xytext=(0, 5),
@@ -341,7 +341,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         ax.plot((x_1, x_1_), (z_1, z_1_), color="k", linewidth=1)
         ax.plot((x_2, x_2_), (z_2, z_2_), color="k", linewidth=1)
         ax.annotate(
-            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
+            rf"$\it{{{str_to_latex(key).strip('$')}}}$",
             xy=_get_rotated_point(centre, radius, centre_angle),
             xycoords="data",
             xytext=_get_rotated_point(centre, radius - 0.5, centre_angle),
