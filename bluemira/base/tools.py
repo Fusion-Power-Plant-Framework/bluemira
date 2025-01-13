@@ -119,7 +119,8 @@ def _timing(
 
 def create_compound_from_component(comp: Component) -> BluemiraCompound:
     """
-    Creates a BluemiraCompound from the children's shapes of a component.
+    Creates a BluemiraCompound from the shapes at the root of the component's
+    component tree.
 
     Parameters
     ----------
@@ -133,7 +134,7 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 
     """
     shapes = get_properties_from_components(comp, ("shape"))
-    return BluemiraCompound(label=comp.name, boundary=shapes)
+    return BluemiraCompound(shapes, comp.name)
 
 
 def circular_pattern_xyz_components(

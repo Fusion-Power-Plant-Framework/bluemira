@@ -1884,11 +1884,11 @@ def raise_error_if_overlap(
 def make_compound(
     shapes: Iterable[BluemiraGeo],
     label: str = "",
-    *,
-    set_constituents=False,
 ) -> BluemiraCompound:
     """
     Make a compound of the given shapes.
+
+    The shapes must all be the same topologic type (all solids, shells etc.). No mixing.
 
     Parameters
     ----------
@@ -1924,11 +1924,9 @@ def make_compound(
     api_shapes = [s.shape for s in shapes]
     try:
         compound_shape = cadapi.make_compound(api_shapes)
-        return BluemiraCompound._create(
-            compound_shape, label, constituents=shapes if set_constituents else None
-        )
+        return BluemiraCompound._create(compound_shape, label)
     except Exception as e:  # noqa: BLE001
-        raise GeometryError(f"Connect operation failed: {e}") from None
+        raise GeometryError(f"make_compound operation failed: {e}") from None
 
 
 def connect_shapes(

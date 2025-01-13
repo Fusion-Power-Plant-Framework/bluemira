@@ -10,7 +10,6 @@ Core functionality for the bluemira mesh module.
 
 from __future__ import annotations
 
-import inspect
 import operator
 import pprint
 from dataclasses import asdict, dataclass
@@ -260,10 +259,20 @@ class Mesh:
         """
         bluemira_print("Starting mesh process...")
 
-        if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
+        from bluemira.base.components import (  # noqa: PLC0415
+            Component,
+            PhysicalComponent,
+        )
+
+        if isinstance(obj, Component) and not isinstance(obj, PhysicalComponent):
             from bluemira.base.tools import (  # noqa: PLC0415
                 create_compound_from_component,
             )
+
+            # This is done to create a single bluemira geometry
+            # from a component that may hold more than one geometry.
+            # This allows the meshing to be done on a single object,
+            # and have the labels set to the obj name.
 
             obj = create_compound_from_component(obj)
 

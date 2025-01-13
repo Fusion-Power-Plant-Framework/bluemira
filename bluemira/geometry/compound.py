@@ -35,6 +35,9 @@ class BluemiraCompound(BluemiraGeo):
         List of BluemiraGeo objects to include in the compound
     label:
         Label to assign to the compound
+    _compound_obj:
+        A pre-constructed compound object to use for the shape. This should only be used
+        by the _create classmethod.
     """
 
     def __init__(
@@ -42,10 +45,10 @@ class BluemiraCompound(BluemiraGeo):
         boundary: list[BluemiraGeo],
         label: str = "",
         *,
-        compound_obj: cadapi.apiCompound | None = None,
+        _compound_obj: cadapi.apiCompound | None = None,
     ):
         boundary_classes = [BluemiraGeo]
-        self._compound_obj = compound_obj
+        self._compound_obj = _compound_obj
         super().__init__(boundary, label, boundary_classes)
 
     def _create_shape(self) -> cadapi.apiCompound:
@@ -68,7 +71,6 @@ class BluemiraCompound(BluemiraGeo):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        topo_compound_shapes = []
         if cadapi.solids(obj):
             topo_compound_shapes = [
                 BluemiraSolid._create(solid) for solid in cadapi.solids(obj)
@@ -89,7 +91,7 @@ class BluemiraCompound(BluemiraGeo):
                 for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
             ]
 
-        return cls(topo_compound_shapes, label=label, compound_obj=obj)
+        return cls(topo_compound_shapes, label=label, _compound_obj=obj)
 
     @property
     def vertexes(self) -> Coordinates:

@@ -43,7 +43,7 @@ def setup_sybil_namespace(namespace):
         Component("xyz", children=[PhysicalComponent("sh", make_circle())])
     )
     namespace["build_tf_coils"] = lambda: namespace["MyTfCoils"](
-        Component("xy", children=[PhysicalComponent("sh", make_circle())])
+        Component("xyz", children=[PhysicalComponent("sh", make_circle())])
     )
     namespace["np"] = np
     namespace["plasma_shape"] = make_circle()

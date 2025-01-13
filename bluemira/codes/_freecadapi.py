@@ -2218,7 +2218,6 @@ def join_connect(shapes: Iterable[apiShape], dist_tolerance: float) -> apiShape:
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
-    _type = type(shapes[0])
     _check_shapes_same_type(shapes)
 
     return BOPTools.JoinAPI.connect(shapes, tolerance=dist_tolerance)

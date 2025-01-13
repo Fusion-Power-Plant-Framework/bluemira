@@ -123,7 +123,8 @@ def compound_from_components(
 
     Returns
     -------
-    PhysicalComponent
+    :
+        The compounded component
     """
     shapes = get_properties_from_components(components, ("shape"))
     comp = make_compound(shapes, name)
@@ -151,7 +152,8 @@ def fuse_components(
 
     Returns
     -------
-    The single PhysicalComponent
+    :
+        The single PhysicalComponent
     """
     shapes = get_properties_from_components(components, ("shape"))
     fused = shapes[0]
