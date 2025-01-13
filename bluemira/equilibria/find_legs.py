@@ -623,7 +623,7 @@ def calculate_connection_length(
             # Sort by x crossing value
             xcrss, zcrss = zip(*sorted(zip(xcrss, zcrss, strict=False)), strict=False)
             # Choose lowest x crossing value if outer (forward=True) and highest if inner
-            xcrss, zcrss = xcrss[0], zcrss[0] if forward else xcrss[-1], zcrss[-1]
+            xcrss, zcrss = (xcrss[0], zcrss[0]) if forward else (xcrss[-1], zcrss[-1])
         div_target_start_point = Coordinates({"x": xcrss, "z": zcrss})
 
     # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
