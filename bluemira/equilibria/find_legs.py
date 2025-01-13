@@ -619,7 +619,7 @@ def calculate_connection_length(
         mid = np.median(eq.get_LCFS().x)
         xcond = (xcrss >= mid) if forward else (xcrss <= mid)
         xcrss, zcrss = xcrss[xcond & (zcrss <= 0.0)], zcrss[xcond & (zcrss <= 0.0)]
-        if isinstance(xcrss, list):
+        if isinstance(xcrss, np.ndarray):
             # Sort by x crossing value
             xcrss, zcrss = zip(*sorted(zip(xcrss, zcrss, strict=False)), strict=False)
             # Choose lowest x crossing value if outer (forward=True) and highest if inner

@@ -179,6 +179,30 @@ class TestOpenFluxSurfaceStuff:
         )
         assert l_fsg_psinorm_bwd > l_fsg_psinorm
         assert l_flt_psinorm_bwd > l_flt_psinorm
+        # test multiple intersections of first wall
+        first_wall_1 = Coordinates({
+            "x": [x1, 9.2, 9.2, 9.5, x2, x2, x1, x1],
+            "z": [z1, -6.2, -7.5, -7.2, z1, z2, z2, z1],
+        })
+        l_fw1 = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            first_wall=first_wall_1,
+            calculation_method="flux_surface_geometry",
+        )
+        first_wall_2 = Coordinates({
+            "x": [x1, x2, x2, x1, 6.2, 6.2, 4.8, x1],
+            "z": [z1, z1, z2, z2, -7.2, -7.5, -6.2, z1],
+        })
+        l_fw2 = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            first_wall=first_wall_2,
+            forward=False,
+            calculation_method="flux_surface_geometry",
+        )
+        assert np.isclose(l_fw1, 46.86960546652787, rtol=2e-2)
+        assert np.isclose(l_fw2, 138.37688138779316, rtol=2e-2)
 
         # Test that we get the expected value for a given psi_norm
         # Use a value different from psi_norm_start to make sure that
