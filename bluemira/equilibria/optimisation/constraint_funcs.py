@@ -240,16 +240,7 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
 
-        if len(B) == 1:
-            return np.round(
-                (self.scale / B)
-                * (
-                    self.ax_mat * (Bx_a + self.bxp_vec)
-                    + self.az_mat * (Bz_a + self.bzp_vec)
-                ),
-                self._round_dp,
-            )
-        return np.round(
+        res = np.round(
             (self.scale / B)[:, np.newaxis]
             * (
                 self.ax_mat * (Bx_a + self.bxp_vec)[:, np.newaxis]
@@ -257,6 +248,10 @@ class FieldConstraintFunction(ConstraintFunction):
             ),
             self._round_dp,
         )
+
+        if len(B) == 1:
+            return np.squeeze(res)
+        return res
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
