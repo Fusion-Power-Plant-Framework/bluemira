@@ -228,8 +228,8 @@ class FieldConstraintFunction(ConstraintFunction):
 
         Bx_a = self.ax_mat @ currents
         Bz_a = self.az_mat @ currents
-
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
+
         return np.round(B - self.B_max, self._round_dp)
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
@@ -240,9 +240,18 @@ class FieldConstraintFunction(ConstraintFunction):
         Bz_a = self.az_mat @ currents
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
 
-        Bx = Bx_a * (Bx_a * currents + self.bxp_vec)
-        Bz = Bz_a * (Bz_a * currents + self.bzp_vec)
-        return np.round((Bx + Bz) / (B * self.scale**2), self._round_dp)
+        res = np.round(
+            (self.scale / B)[:, np.newaxis]
+            * (
+                self.ax_mat * (Bx_a + self.bxp_vec)[:, np.newaxis]
+                + self.az_mat * (Bz_a + self.bzp_vec)[:, np.newaxis]
+            ),
+            self._round_dp,
+        )
+
+        if len(B) == 1:
+            return np.squeeze(res)
+        return res
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -302,7 +311,7 @@ class CoilForceConstraintFunctions:
     n_CS:
         Number of CS coils
     scale:
-        Current scale with which to calculate the constraints
+        Force scale with which to calculate the constraints
     """
 
     def __init__(
@@ -311,7 +320,7 @@ class CoilForceConstraintFunctions:
         b_vec: npt.NDArray[np.float64],
         n_PF: int,
         n_CS: int,
-        scale: float,
+        scale: float = 1e6,  # (scale from N to MN)
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -356,7 +365,7 @@ class CoilForceConstraintFunctions:
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
             f_matx[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
-        return f_matx / self.scale  # Scale down to MN
+        return f_matx / self.scale
 
     def calc_df_matx(self, currents):
         """
@@ -391,9 +400,11 @@ class CoilForceConstraintFunctions:
         scaled_max_value = max_value / self.scale
         self.constraint[: self.n_PF] = f_matx[: self.n_PF, 1] ** 2 - scaled_max_value**2
 
-    def pf_z_constraint_grad(self, df_matx):
+    def pf_z_constraint_grad(self, f_matx, df_matx):
         """Constraint Derivative: Absolute vertical force constraint on PF coils."""
-        self.grad[: self.n_PF] = 2 * df_matx[: self.n_PF, :, 1]
+        self.grad[: self.n_PF] = (
+            2 * (df_matx[: self.n_PF, :, 1].T * f_matx[: self.n_PF, 1]).T
+        )
 
     def cs_z_constraint(self, f_matx, max_value):
         """
@@ -402,15 +413,16 @@ class CoilForceConstraintFunctions:
         """
         scaled_max_value = max_value / self.scale
         # vertical force on CS stack
-        cs_z_sum = np.sum(self.cs_fz(f_matx))
+        cs_z_sum = np.sum(self.cs_fz(f_matx), axis=0)
         self.constraint[self.n_PF] = cs_z_sum**2 - scaled_max_value**2
 
-    def cs_z_grad(self, df_matx):
+    def cs_z_grad(self, f_matx, df_matx):
         """
         Constraint Derivative:
         Absolute sum of vertical force constraint on entire CS stack
         """
-        self.grad[self.n_PF] = 2 * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
+        cs_z_sum = np.sum(self.cs_fz(f_matx), axis=0)
+        self.grad[self.n_PF] = 2 * cs_z_sum * np.sum(df_matx[self.n_PF :, :, 1], axis=0)
 
     def cs_z_sep_constraint(self, f_matx, max_value):
         """Constraint Function: CS separation constraints."""
@@ -506,9 +518,10 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
             Derivative of the coil force
         """
         currents = self.scale * vector
+        f_matx = self.calc_f_matx(currents)
         df_matx = self.calc_df_matx(currents)
-        self.pf_z_constraint_grad(df_matx)
+        self.pf_z_constraint_grad(f_matx, df_matx)
         if self.n_CS != 0:
-            self.cs_z_grad(df_matx)
+            self.cs_z_grad(f_matx, df_matx)
             self.cs_z_sep_grad(df_matx)
         return np.round(self.grad, self._round_dp)

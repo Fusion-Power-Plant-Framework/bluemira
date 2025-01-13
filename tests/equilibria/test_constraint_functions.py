@@ -18,6 +18,7 @@ from bluemira.equilibria.optimisation.constraint_funcs import (
     FieldConstraintFunction,
     L2NormConstraint,
 )
+from bluemira.optimisation._tools import approx_derivative
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -72,39 +73,11 @@ class TestEquilibriumInput:
         cls.scale = 1.0
 
     def test_field_constraint_function(self):
-        x_test = [4.0, 4.0]
-        z_test = [8.0, 6.0]
-        B_max = [5.0, 5.0]
-        const = [-2.0, -2.0]
-        d_const = [
-            np.array([
-                5834431.996,
-                -3833054.841,
-                -6667793.621,
-                -10377812.829,
-                -3071010.298,
-                24746454.269,
-                13498903.551,
-                -17725218.609,
-                -32366687.970,
-                -18253227.419,
-                -31213733.164,
-            ]),
-            np.array([
-                4946354.550,
-                -3249613.188,
-                -5652867.309,
-                -8798172.624,
-                -2603561.882,
-                20979717.412,
-                11444192.371,
-                -15027206.266,
-                -27440050.735,
-                -15474845.165,
-                -26462590.869,
-            ]),
-        ]
-        for x, z, b, c, d_c in zip(x_test, z_test, B_max, const, d_const, strict=False):
+        x_test = [4.0, 4.0, np.array([4.0, 4.0])]
+        z_test = [8.0, 6.0, np.array([8.0, 6.0])]
+        B_max = [5.0, 5.0, np.array([5.0, 5.0])]
+        const = [-2.08141466, -1.96647235, np.array([-2.08141466, -1.96647235])]
+        for x, z, b, c in zip(x_test, z_test, B_max, const, strict=False):
             ax_mat = self.coilset.Bx_response(x, z, control=True)
             az_mat = self.coilset.Bz_response(x, z, control=True)
             bxp_vec = np.atleast_1d(self.eq.Bx(x, z))
@@ -117,10 +90,12 @@ class TestEquilibriumInput:
                 B_max=b,
                 scale=self.scale,
             )
-
-            assert len(fcf.f_constraint(self.vector)) == 1
-            assert fcf.f_constraint(self.vector) == pytest.approx(c, 0.1)
-            assert fcf.df_constraint(self.vector) == pytest.approx(d_c, 0.1)
+            l_c = 1 if isinstance(c, float) else len(c)
+            assert len(fcf.f_constraint(self.vector)) == l_c
+            assert fcf.f_constraint(self.vector) == pytest.approx(c)
+            assert fcf.df_constraint(self.vector) == pytest.approx(
+                approx_derivative(fcf.f_constraint, self.vector)
+            )
 
     def test_current_midplane_constraint(self):
         ib_bool = [True, True, False, False]
@@ -152,27 +127,28 @@ class TestEquilibriumInput:
             b_vec=b_vec,
             n_PF=self.coilset.n_coils("PF"),
             n_CS=self.coilset.n_coils("CS"),
-            PF_Fz_max=2.0,
-            CS_Fz_sum_max=2.0,
-            CS_Fz_sep_max=2.0,
+            PF_Fz_max=450e6,
+            CS_Fz_sum_max=300e6,
+            CS_Fz_sep_max=350e6,
             scale=self.scale,
         )
 
         test_f_constraint = cfc.f_constraint(self.vector)
         test_df_constraint = cfc.df_constraint(self.vector)
         ref_f_constraint = np.array([
-            1.54930904e15,
-            1.69386035e16,
-            8.97731593e16,
-            1.38523768e17,
-            2.23841058e16,
-            9.92524949e17,
-            7.75893042e17,
-            -3.19248971e08,
-            -1.16835624e09,
-            -1.26566468e09,
-            -1.50638973e09,
+            3.73612632e07,
+            1.32148390e08,
+            3.01621694e08,
+            3.70187813e08,
+            1.47613187e08,
+            9.98255464e08,
+            8.78847911e08,
+            -3.21248969e08,
+            -1.17035624e09,
+            -1.26766468e09,
+            -1.50838972e09,
         ])
+        approx_df_constraint = approx_derivative(cfc.f_constraint, self.vector)
         assert len(test_f_constraint) == len(self.vector)
         assert len(test_df_constraint[0, :]) == len(self.vector)
         assert len(test_df_constraint[:, 0]) == len(self.vector)
@@ -180,3 +156,6 @@ class TestEquilibriumInput:
             test == pytest.approx(ref)
             for test, ref in zip(test_f_constraint, ref_f_constraint, strict=False)
         ]
+        for test, appx in zip(test_df_constraint, approx_df_constraint, strict=False):
+            for t, a in zip(test, appx, strict=False):
+                assert t == pytest.approx(a, rel=0.01)
