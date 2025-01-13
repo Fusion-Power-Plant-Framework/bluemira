@@ -3135,7 +3135,15 @@ def deserialise_shape(buffer):
         return None
 
 
-def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
+def _convert_edge_to_curve(
+    edge: apiEdge,
+) -> (
+    Part.LineSegment
+    | Part.ArcOfCircle
+    | Part.ArcOfEllipse
+    | Part.BezierCurve
+    | Part.BSplineCurve
+):
     """
     Convert a Freecad Edge to the respective curve.
 
@@ -3165,20 +3173,32 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
     first = edge.FirstParameter
     last = edge.LastParameter
     if edge.Orientation == "Reversed":
+        # Reversed means that we traverse the wire in the descending parameter direction.
         first, last = last, first
     out_curve = None
 
     if isinstance(in_curve, Part.Line):
         out_curve = Part.LineSegment(in_curve.value(first), in_curve.value(last))
     elif isinstance(in_curve, Part.Ellipse):
-        out_curve = Part.ArcOfEllipse(in_curve, first, last)
+        s1, s2 = in_curve.value(0.0), in_curve.value(ONE_PERIOD / 4)
+        p0, p1 = in_curve.value(first), in_curve.value(last)
+        ellipse = Part.Ellipse(s1, s2, in_curve.Center)
         if edge.Orientation == "Reversed":
-            # reverse changes the direction of rotation, but only to a point.
-            out_curve = Part.ArcOfEllipse(in_curve, last, first)
+            ellipse.reverse()
+        out_curve = Part.ArcOfEllipse(
+            ellipse, ellipse.parameter(p0), ellipse.parameter(p1)
+        )
     elif isinstance(in_curve, Part.Circle):
-        out_curve = Part.ArcOfCircle(in_curve, first, last)
+        circle = Part.Circle()
+        circle.Radius = in_curve.Radius
+        circle.Center = in_curve.Center
+        circle.Axis = -in_curve.Axis if edge.Orientation == "Reversed" else in_curve.Axis
+        first_point = edge.firstVertex().Point
+        last_point = edge.lastVertex().Point
         if edge.Orientation == "Reversed":
-            out_curve = Part.ArcOfCircle(in_curve, last, first)
+            first_point, last_point = last_point, first_point
+        p0, p1 = circle.parameter(first_point), circle.parameter(last_point)
+        out_curve = Part.ArcOfCircle(circle, p0, p1)
     elif isinstance(in_curve, Part.BezierCurve):
         out_curve = Part.BezierCurve()
         poles = in_curve.getPoles()
@@ -3199,6 +3219,9 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
             c.reverse()
         out_curve = _convert_edge_to_curve(Part.Edge(c))
     else:
-        bluemira_warn(f"Conversion of {type(in_curve)} is still not supported!")
+        bluemira_warn(
+            f"Conversion of {type(in_curve)} from Part.Edge to curve "
+            "is still not supported!"
+        )
 
     return out_curve
