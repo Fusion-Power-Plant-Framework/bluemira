@@ -491,8 +491,7 @@ class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
         *,
         round_dp: int = 16,
     ):
-        super().__init__(a_mat, b_vec, n_PF, n_CS)
-        self.scale = scale
+        super().__init__(a_mat, b_vec, n_PF, n_CS, scale)
         self.PF_Fz_max = PF_Fz_max
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
