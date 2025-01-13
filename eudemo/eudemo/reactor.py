@@ -726,10 +726,6 @@ if __name__ == "__main__":
         n_TF=reactor_config.global_params.n_TF.value,
     )
 
-    reactor.save_cad()
-
-    sys.exit()
-
     cr_plugs = build_cryostat_plugs(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
@@ -753,6 +749,10 @@ if __name__ == "__main__":
         rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
+
+    reactor.save_cad()
+
+    sys.exit()
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary)

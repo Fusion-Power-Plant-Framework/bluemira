@@ -279,7 +279,7 @@ def _construct_comp_manager_physical_comps(
     n_secs = int(construction_params.get("n_sectors", tot_secs))
     sec_degrees = int((360 / tot_secs) * n_secs)
 
-    phy_comps = None
+    xyz_phy_comps = None
     if construction_type is CADConstructionType.REVOLVE_XZ:
         xz_phy_comps: list[PhysicalComponent] = copy_and_filter_component(
             manager_comp,
@@ -287,7 +287,7 @@ def _construct_comp_manager_physical_comps(
             component_filter,
         ).leaves
 
-        phy_comps = [
+        xyz_phy_comps = [
             PhysicalComponent(
                 c.name,
                 revolve_shape(c.shape, degree=sec_degrees),
@@ -303,18 +303,18 @@ def _construct_comp_manager_physical_comps(
         )
         match construction_type:
             case CADConstructionType.PATTERN_RADIAL:
-                phy_comps = circular_pattern_xyz_components(
+                xyz_phy_comps = circular_pattern_xyz_components(
                     xyz_copy_and_filtered,
                     n_secs,
                     degree=sec_degrees,
                 ).leaves
             case CADConstructionType.NO_OP:
-                phy_comps = xyz_copy_and_filtered.leaves
+                xyz_phy_comps = xyz_copy_and_filtered.leaves
 
-    if not phy_comps:
+    if not xyz_phy_comps:
         raise ValueError(f"No components were constructed for {manager_comp_name}")
 
-    return phy_comps, manager_comp_name
+    return xyz_phy_comps, manager_comp_name
 
 
 def _group_physical_components_by_material(
@@ -350,6 +350,7 @@ def _build_compounds_from_map(
         A list of compounds
     """
     return [
+        # recreate the PhysicalComponent to rename it
         PhysicalComponent(
             name=f"{manager_name}_{mat_name}" if mat_name else manager_name,
             shape=comps[0].shape,
@@ -425,11 +426,8 @@ def build_comp_manager_show_cad_tree(
         The constructed component manager component for CAD showing
     """
     component_filter = construction_params.get("component_filter")
-    tot_secs = construction_params.get("total_sectors", 1)
-    n_secs = construction_params.get("n_sectors", tot_secs)
-    sec_degrees = int((360 / tot_secs) * n_secs)
 
-    manager_comp = comp_manager.component()
+    manager_comp: Component = comp_manager.component()
     filtered_comp = copy_and_filter_component(
         manager_comp,
         dim,
@@ -437,13 +435,17 @@ def build_comp_manager_show_cad_tree(
     )
 
     if dim == "xyz":
+        tot_secs = construction_params.get("total_sectors", 1)
+        n_secs = construction_params.get("n_sectors", tot_secs)
+        sec_degrees = int((360 / tot_secs) * n_secs)
+
         filtered_comp = circular_pattern_xyz_components(
             filtered_comp,
             n_secs,
             degree=sec_degrees,
         )
-
-    return filtered_comp
+    manager_comp.children = [filtered_comp]
+    return manager_comp
 
 
 # # =============================================================================
