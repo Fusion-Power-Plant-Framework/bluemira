@@ -20,6 +20,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_flux_surface_through_point,
+    find_flux_surfs,
 )
 from bluemira.equilibria.flux_surfaces import (
     OpenFluxSurface,
@@ -556,7 +557,7 @@ class CalcMethod(Enum):
 def calculate_connection_length(
     eq: Equilibrium,
     div_target_start_point: Coordinates | None = None,
-    first_wall: Coordinates | Grid | None = None,
+    first_wall: Coordinates | None = None,
     div_norm_psi: float | None = None,
     forward: bool = True,  # noqa: FBT001, FBT002
     psi_n_tol: float = 1e-6,
@@ -569,6 +570,11 @@ def calculate_connection_length(
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using either flux surface geometry or a field line tracer.
+
+    User can choose an xz point or a normalised psi value to select a flux surface
+    of interest - please NOTE, an input div_norm_psi will override an input
+    div_target_start_point if both are entered.
+
     If no starting point is selected then use the separatrix at the Outboard Midplane.
 
     Returns
@@ -600,8 +606,14 @@ def calculate_connection_length(
     if div_norm_psi is not None:
         if div_norm_psi <= 1:
             raise BluemiraError("div_norm_psi value must be > 1.")
-        f_s = eq.get_flux_surface(div_norm_psi)
-        xcrss, zcrss = get_intersect(f_s.xz, first_wall.xz)
+        op, xp = eq.get_OX_points()
+        fs_lst = find_flux_surfs(eq.grid.x, eq.grid.z, eq.psi(), div_norm_psi, op, xp)
+        coords = [Coordinates({"x": fs_arr.T[0], "z": fs_arr.T[1]}) for fs_arr in fs_lst]
+        coords.sort(key=lambda coords: -coords.length)
+        xcrss, zcrss = np.array([]), np.array([])
+        for c in coords[:2]:
+            x_int, z_int = get_intersect(c.xz, first_wall.xz)
+            xcrss, zcrss = np.append(xcrss, x_int), np.append(zcrss, z_int)
         # Pick lower inner or outer corner for div crossing points
         # N.B. forward = True = LFS
         mid = np.median(eq.get_LCFS().x)

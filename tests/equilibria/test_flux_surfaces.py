@@ -97,26 +97,33 @@ class TestOpenFluxSurfaceStuff:
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
         # Check the calculate_connection_length functions
+        x1, x2 = self.eq.grid.x_min, self.eq.grid.x_max
+        z1, z2 = self.eq.grid.z_min, self.eq.grid.z_max
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
         l_fsg_fwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
         )
         l_flt_fwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
         )
         l_fsg_bwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
             forward=False,
         )
         l_flt_bwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
             forward=False,
         )
         assert np.isclose(l_fsg_fwd, l_flt_fwd, rtol=2e-2)
@@ -157,6 +164,21 @@ class TestOpenFluxSurfaceStuff:
         )
         assert np.isclose(l_fsg_psinorm, l_fsg, rtol=2e-2)
         assert np.isclose(l_flt_psinorm, l_flt, rtol=2e-2)
+        l_fsg_psinorm_bwd = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            forward=False,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt_psinorm_bwd = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            forward=False,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert l_fsg_psinorm_bwd > l_fsg_psinorm
+        assert l_flt_psinorm_bwd > l_flt_psinorm
 
         # Test that we get the expected value for a given psi_norm
         # Use a value different from psi_norm_start to make sure that

@@ -790,10 +790,10 @@ def calculate_connection_length_flt(
     eq: Equilibrium,
     x: float,
     z: float,
+    first_wall: Coordinates | Grid,
     *,
     forward: bool = True,
     n_points: float = 200,
-    first_wall: Coordinates | Grid | None = None,
     n_turns_max: int = 50,
 ) -> float:
     """
@@ -829,11 +829,6 @@ def calculate_connection_length_flt(
     be intercepted beforehand!
 
     """
-    if first_wall is None:
-        x1, x2 = eq.grid.x_min, eq.grid.x_max
-        z1, z2 = eq.grid.z_min, eq.grid.z_max
-        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
-
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(
         x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
@@ -845,9 +840,9 @@ def calculate_connection_length_fs(
     eq: Equilibrium,
     x: float,
     z: float,
+    first_wall: Coordinates,
     *,
     forward: bool = True,
-    first_wall: Coordinates | Grid | None = None,
     f_s: Coordinates | None = None,
 ) -> float:
     """
@@ -885,11 +880,6 @@ def calculate_connection_length_fs(
     equilibrium grid discretisation. Presently does not correctly work for flux surfaces
     passing through Coils, but really they should be intercepted beforehand!
     """
-    if first_wall is None:
-        x1, x2 = eq.grid.x_min, eq.grid.x_max
-        z1, z2 = eq.grid.z_min, eq.grid.z_max
-        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
-
     if f_s is None:
         xfs, zfs = find_flux_surface_through_point(
             eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
