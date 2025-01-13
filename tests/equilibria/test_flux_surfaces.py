@@ -59,7 +59,7 @@ class TestOpenFluxSurfaceStuff:
         Use both a flux surface and field line tracing approach to calculate connection
         length and check they are the same or similar.
         """
-        x_start, z_start = 12, 0
+        x_start, z_start, psi_norm_start = 12, 0, 1.076675434621207
         x_loop, z_loop = find_flux_surface_through_point(
             self.eq.x,
             self.eq.z,
@@ -97,26 +97,33 @@ class TestOpenFluxSurfaceStuff:
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
         # Check the calculate_connection_length functions
+        x1, x2 = self.eq.grid.x_min, self.eq.grid.x_max
+        z1, z2 = self.eq.grid.z_min, self.eq.grid.z_max
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
         l_fsg_fwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
         )
         l_flt_fwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
         )
         l_fsg_bwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
             forward=False,
         )
         l_flt_bwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
+            first_wall=first_wall,
             forward=False,
         )
         assert np.isclose(l_fsg_fwd, l_flt_fwd, rtol=2e-2)
@@ -138,6 +145,76 @@ class TestOpenFluxSurfaceStuff:
         )
         assert np.isclose(l_fsg, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt, l_flt_lfs.connection_length, rtol=2e-2)
+
+        # Check the calculate_connection_length function, that calls either
+        # method, returns the same result for the normalised psi input that
+        # matches the normalise psi of the div_target_start_point
+        l_fsg_psinorm = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=psi_norm_start,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt_psinorm = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=psi_norm_start,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert np.isclose(l_fsg_psinorm, l_fsg, rtol=2e-2)
+        assert np.isclose(l_flt_psinorm, l_flt, rtol=2e-2)
+        l_fsg_psinorm_bwd = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            forward=False,
+            calculation_method="flux_surface_geometry",
+        )
+        l_flt_psinorm_bwd = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            forward=False,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert l_fsg_psinorm_bwd > l_fsg_psinorm
+        assert l_flt_psinorm_bwd > l_flt_psinorm
+        # test multiple intersections of first wall
+        first_wall_1 = Coordinates({
+            "x": [x1, 9.2, 9.2, 9.5, x2, x2, x1, x1],
+            "z": [z1, -6.2, -7.5, -7.2, z1, z2, z2, z1],
+        })
+        l_fw1 = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            first_wall=first_wall_1,
+            calculation_method="flux_surface_geometry",
+        )
+        first_wall_2 = Coordinates({
+            "x": [x1, x2, x2, x1, 6.2, 6.2, 4.8, x1],
+            "z": [z1, z1, z2, z2, -7.2, -7.5, -6.2, z1],
+        })
+        l_fw2 = calculate_connection_length(
+            self.eq,
+            div_norm_psi=psi_norm_start,
+            first_wall=first_wall_2,
+            forward=False,
+            calculation_method="flux_surface_geometry",
+        )
+        assert np.isclose(l_fw1, 46.86960546652787, rtol=2e-2)
+        assert np.isclose(l_fw2, 138.37688138779316, rtol=2e-2)
+
+        # Test that we get the expected value for a given psi_norm
+        # Use a value different from psi_norm_start to make sure that
+        # div_target_start_point is set correctly
+        l_flt = calculate_connection_length(
+            self.eq,
+            div_target_start_point=xz,
+            div_norm_psi=1.03,
+            n_turns_max=20,
+            calculation_method="field_line_tracer",
+        )
+        assert np.isclose(l_flt, 83.13936166158712, rtol=2e-2)
 
         # Check the calculate_connection_length result when no point is input
         l_fsg = calculate_connection_length(
