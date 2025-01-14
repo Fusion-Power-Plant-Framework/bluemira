@@ -3067,6 +3067,19 @@ def serialise_shape(shape):
             }
         }
 
+    if type_ == Part.Circle:
+        return {
+            "ArcOfCircle": {
+                "Radius": shape.Radius,
+                "Center": list(shape.Center),
+                "Axis": list(shape.Axis),
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "StartPoint": list(shape.value(shape.FirstParameter)),
+                "EndPoint": list(shape.value(shape.LastParameter)),
+            }
+        }
+
     if type_ == Part.ArcOfCircle:
         return {
             "ArcOfCircle": {
@@ -3077,6 +3090,22 @@ def serialise_shape(shape):
                 "EndAngle": math.degrees(shape.LastParameter),
                 "StartPoint": list(shape.StartPoint),
                 "EndPoint": list(shape.EndPoint),
+            }
+        }
+
+    if type_ == Part.Ellipse:
+        return {
+            "ArcOfEllipse": {
+                "Center": list(shape.Center),
+                "MajorRadius": shape.MajorRadius,
+                "MinorRadius": shape.MinorRadius,
+                "MajorAxis": list(shape.XAxis),
+                "MinorAxis": list(shape.YAxis),
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "Focus1": list(shape.Focus1),
+                "StartPoint": list(shape.value(shape.FirstParameter)),
+                "EndPoint": list(shape.value(shape.LastParameter)),
             }
         }
 
@@ -3161,7 +3190,9 @@ def _convert_edge_to_curve(
     edge: apiEdge,
 ) -> (
     Part.LineSegment
+    | Part.Circle
     | Part.ArcOfCircle
+    | Part.Ellipse
     | Part.ArcOfEllipse
     | Part.BezierCurve
     | Part.BSplineCurve
@@ -3202,27 +3233,33 @@ def _convert_edge_to_curve(
     if isinstance(in_curve, Part.Line):
         out_curve = Part.LineSegment(in_curve.value(first), in_curve.value(last))
     elif isinstance(in_curve, Part.Ellipse):
-        s1, s2 = in_curve.value(0.0), in_curve.value(ONE_PERIOD / 4)
-        p0, p1 = in_curve.value(first), in_curve.value(last)
-        ellipse = Part.Ellipse(s1, s2, in_curve.Center)
-        if edge.Orientation == "Reversed":
-            ellipse.reverse()
-        out_curve = Part.ArcOfEllipse(
-            ellipse, ellipse.parameter(p0), ellipse.parameter(p1)
-        )
+        if np.isclose(abs(last - first), ONE_PERIOD, rtol=0, atol=EPS_FREECAD):
+            out_curve = in_curve
+        else:
+            minor_axis, major_axis = in_curve.value(0.0), in_curve.value(ONE_PERIOD / 4)
+            p0, p1 = in_curve.value(first), in_curve.value(last)
+            ellipse = Part.Ellipse(minor_axis, major_axis, in_curve.Center)
+            if edge.Orientation == "Reversed":
+                ellipse.reverse()
+            out_curve = Part.ArcOfEllipse(
+                ellipse, ellipse.parameter(p0), ellipse.parameter(p1)
+            )
     elif isinstance(in_curve, Part.Circle):
-        circle = make_circle_curve(
-            in_curve.Radius,
-            in_curve.Center,
-            -in_curve.Axis if edge.Orientation == "Reversed" else in_curve.Axis,
-        )
+        if np.isclose(abs(last - first), ONE_PERIOD, rtol=0, atol=EPS_FREECAD):
+            out_curve = in_curve
+        else:
+            circle = make_circle_curve(
+                in_curve.Radius,
+                in_curve.Center,
+                -in_curve.Axis if edge.Orientation == "Reversed" else in_curve.Axis,
+            )
 
-        first_point = edge.firstVertex().Point
-        last_point = edge.lastVertex().Point
-        if edge.Orientation == "Reversed":
-            first_point, last_point = last_point, first_point
-        p0, p1 = circle.parameter(first_point), circle.parameter(last_point)
-        out_curve = Part.ArcOfCircle(circle, p0, p1)
+            first_point = edge.firstVertex().Point
+            last_point = edge.lastVertex().Point
+            if edge.Orientation == "Reversed":
+                first_point, last_point = last_point, first_point
+            p0, p1 = circle.parameter(first_point), circle.parameter(last_point)
+            out_curve = Part.ArcOfCircle(circle, p0, p1)
     elif isinstance(in_curve, Part.BezierCurve):
         out_curve = Part.BezierCurve()
         poles = in_curve.getPoles()

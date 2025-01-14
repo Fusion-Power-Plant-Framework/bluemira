@@ -632,6 +632,7 @@ class TestLogFailedGeometryOperationSerialisation:
 
         open_mock.assert_called_once()
         written_data = combine_text_mock_write_calls(open_mock)
+        print(written_data)
         data = json.loads(written_data)
 
         # Check the serialisation of the input shape
