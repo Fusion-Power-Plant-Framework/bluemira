@@ -10,7 +10,7 @@ from __future__ import annotations
 import abc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, get_args, get_type_hints
+from typing import TYPE_CHECKING, Literal, get_args, get_type_hints
 
 from rich.progress import track
 
@@ -20,6 +20,7 @@ from bluemira.base.components import (
 from bluemira.base.error import ComponentError
 from bluemira.base.tools import (
     CADConstructionType,
+    ConstructionParamValues,
     ConstructionParams,
     build_comp_manager_save_xyz_cad_tree,
     build_comp_manager_show_cad_tree,
@@ -27,7 +28,6 @@ from bluemira.base.tools import (
     save_components_cad,
     show_components_cad,
 )
-from bluemira.materials.material import Material, Void
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -38,8 +38,6 @@ if TYPE_CHECKING:
 
 DIM_2D = Literal["xy", "xz"]
 DIM_3D = Literal["xyz"]
-
-_CAD_DIMS_T = DIM_2D | DIM_3D
 
 
 class BaseManager(abc.ABC):
@@ -168,74 +166,6 @@ class BaseManager(abc.ABC):
             )
 
 
-class FilterMaterial:
-    """
-    Filter nodes by material
-
-    Parameters
-    ----------
-    keep_material:
-       materials to include
-    reject_material:
-       materials to exclude
-
-    """
-
-    __slots__ = ("keep_material", "reject_material")
-
-    def __init__(
-        self,
-        keep_material: type[Material] | tuple[type[Material]] | None = None,
-        reject_material: type[Material] | tuple[type[Material]] | None = Void,
-    ):
-        super().__setattr__("keep_material", keep_material)
-        super().__setattr__("reject_material", reject_material)
-
-    def __call__(self, node: ComponentT) -> bool:
-        """Filter node based on material include and exclude rules.
-
-        Parameters
-        ----------
-        node:
-            The node to filter.
-
-        Returns
-        -------
-        :
-            True if the node should be kept, False otherwise.
-        """
-        if hasattr(node, "material"):
-            return self._apply_filters(node.material)
-        return True
-
-    def __setattr__(self, name: str, value: Any):
-        """
-        Override setattr to force immutability
-
-        This method makes the class nearly immutable as no new attributes
-        can be modified or added by standard methods.
-
-        See #2236 discussion_r1191246003 for further details
-
-        Raises
-        ------
-        AttributeError
-            FilterMaterial is immutable
-        """
-        raise AttributeError(f"{type(self).__name__} is immutable")
-
-    def _apply_filters(self, material: Material | tuple[Material]) -> bool:
-        bool_store = True
-
-        if self.keep_material is not None:
-            bool_store = isinstance(material, self.keep_material)
-
-        if self.reject_material is not None:
-            bool_store = not isinstance(material, self.reject_material)
-
-        return bool_store
-
-
 class ComponentManager(BaseManager):
     """
     A wrapper around a component tree.
@@ -263,17 +193,11 @@ class ComponentManager(BaseManager):
     def __init__(self, component: ComponentT) -> None:
         self._component = component
 
-    def _init_construction_params(  # noqa: PLR6301
+    def _init_construction_param_values(  # noqa: PLR6301
         self,
         c_params: ConstructionParams | None,
-    ) -> ConstructionParams:
-        c_params = c_params or {}
-        c_params["component_filter"] = (
-            c_params["component_filter"]
-            if "component_filter" in c_params
-            else FilterMaterial()
-        )
-        return c_params
+    ) -> ConstructionParamValues:
+        return ConstructionParamValues.from_construction_params(c_params)
 
     @staticmethod
     def cad_construction_type() -> CADConstructionType:
@@ -294,16 +218,16 @@ class ComponentManager(BaseManager):
         return self._component
 
     def _build_save_cad_component(
-        self, dim: str, construction_params: ConstructionParams
+        self, dim: str, cp_values: ConstructionParamValues
     ) -> Component:
         if dim == "xyz":
-            return build_comp_manager_save_xyz_cad_tree(self, construction_params)
-        return self._build_show_cad_component(dim, construction_params)
+            return build_comp_manager_save_xyz_cad_tree(self, cp_values)
+        return self._build_show_cad_component(dim, cp_values)
 
     def _build_show_cad_component(
-        self, dim: str, construction_params: ConstructionParams
+        self, dim: str, cp_values: ConstructionParamValues
     ) -> Component:
-        return build_comp_manager_show_cad_tree(self, dim, construction_params)
+        return build_comp_manager_show_cad_tree(self, dim, cp_values)
 
     def save_cad(
         self,
@@ -337,9 +261,9 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        construction_params = self._init_construction_params(construction_params)
-
-        comp = self._build_save_cad_component(dim, construction_params)
+        comp = self._build_save_cad_component(
+            dim, self._init_construction_param_values(construction_params)
+        )
         filename = filename or comp.name
 
         save_components_cad(
@@ -371,12 +295,10 @@ class ComponentManager(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        construction_params = self._init_construction_params(construction_params)
-
         show_components_cad(
             self._build_show_cad_component(
                 dim,
-                construction_params,
+                self._init_construction_param_values(construction_params),
             ),
             **kwargs,
         )
@@ -401,11 +323,11 @@ class ComponentManager(BaseManager):
         """
         self._validate_plot_dims(dim)
 
-        construction_params = self._init_construction_params(construction_params)
-
         plot_component_dim(
             dim,
-            self._build_show_cad_component(dim, construction_params),
+            self._build_show_cad_component(
+                dim, self._init_construction_param_values(construction_params)
+            ),
             **kwargs,
         )
 
@@ -463,18 +385,13 @@ class Reactor(BaseManager):
         self.n_sectors = n_sectors
         self.start_time = time.perf_counter()
 
-    def _init_construction_params(
+    def _init_construction_param_values(
         self,
         c_params: ConstructionParams | None,
-    ) -> ConstructionParams:
+    ) -> ConstructionParamValues:
         c_params = c_params or {}
         c_params["total_sectors"] = self.n_sectors
-        c_params["component_filter"] = (
-            c_params["component_filter"]
-            if "component_filter" in c_params
-            else FilterMaterial()
-        )
-        return c_params
+        return ConstructionParamValues.from_construction_params(c_params)
 
     def component(self) -> Component:
         """Return the component tree.
@@ -484,7 +401,9 @@ class Reactor(BaseManager):
         :
             The reactor component tree.
         """
-        return self._build_component_tree(None, construction_params={})
+        return self._build_component_tree(
+            None, cp_values=ConstructionParamValues.empty()
+        )
 
     def time_since_init(self) -> float:
         """
@@ -546,23 +465,17 @@ class Reactor(BaseManager):
     def _build_component_tree(
         self,
         dim: str | None,
-        construction_params: ConstructionParams,
+        cp_values: ConstructionParamValues,
         *,
         for_save: bool = False,
     ) -> Component:
         reactor_component = Component(self.name)
-        for comp_manager in track(
-            self._component_managers(construction_params.get("with_components"))
-        ):
+        for comp_manager in track(self._component_managers(cp_values.with_components)):
             if dim:
                 if for_save:
-                    comp = comp_manager._build_save_cad_component(
-                        dim, construction_params
-                    )
+                    comp = comp_manager._build_save_cad_component(dim, cp_values)
                 else:
-                    comp = comp_manager._build_show_cad_component(
-                        dim, construction_params
-                    )
+                    comp = comp_manager._build_show_cad_component(dim, cp_values)
             else:
                 # if dim is None, return the raw, underlying comp manager component tree
                 comp = comp_manager.component()
@@ -607,13 +520,12 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        construction_params = self._init_construction_params(construction_params)
         filename = filename or self.name
 
         save_components_cad(
             self._build_component_tree(
                 dim,
-                construction_params,
+                self._init_construction_param_values(construction_params),
                 for_save=True,
             ),
             Path(directory, filename).as_posix(),
@@ -649,12 +561,10 @@ class Reactor(BaseManager):
         """
         self._validate_cad_dim(dim)
 
-        construction_params = self._init_construction_params(construction_params)
-
         show_components_cad(
             self._build_component_tree(
                 dim,
-                construction_params,
+                self._init_construction_param_values(construction_params),
                 for_save=False,
             ),
             **kwargs,
@@ -683,10 +593,12 @@ class Reactor(BaseManager):
         """
         self._validate_plot_dims(dim)
 
-        construction_params = self._init_construction_params(construction_params)
-
         plot_component_dim(
             dim,
-            self._build_component_tree(dim, construction_params, for_save=False),
+            self._build_component_tree(
+                dim,
+                self._init_construction_param_values(construction_params),
+                for_save=False,
+            ),
             **kwargs,
         )

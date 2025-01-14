@@ -11,9 +11,10 @@ Tool function and classes for the bluemira base module.
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, TypeVar, TypedDict
+from typing import TYPE_CHECKING, Any, TypeVar, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -36,6 +37,7 @@ from bluemira.geometry.tools import (
     save_cad,
     serialise_shape,
 )
+from bluemira.materials.material import Material, Void
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -45,6 +47,74 @@ if TYPE_CHECKING:
 
 
 _T = TypeVar("_T")
+
+
+class FilterMaterial:
+    """
+    Filter nodes by material
+
+    Parameters
+    ----------
+    keep_material:
+       materials to include
+    reject_material:
+       materials to exclude
+
+    """
+
+    __slots__ = ("keep_material", "reject_material")
+
+    def __init__(
+        self,
+        keep_material: type[Material] | tuple[type[Material]] | None = None,
+        reject_material: type[Material] | tuple[type[Material]] | None = Void,
+    ):
+        super().__setattr__("keep_material", keep_material)
+        super().__setattr__("reject_material", reject_material)
+
+    def __call__(self, node: ComponentT) -> bool:
+        """Filter node based on material include and exclude rules.
+
+        Parameters
+        ----------
+        node:
+            The node to filter.
+
+        Returns
+        -------
+        :
+            True if the node should be kept, False otherwise.
+        """
+        if hasattr(node, "material"):
+            return self._apply_filters(node.material)
+        return True
+
+    def __setattr__(self, name: str, value: Any):
+        """
+        Override setattr to force immutability
+
+        This method makes the class nearly immutable as no new attributes
+        can be modified or added by standard methods.
+
+        See #2236 discussion_r1191246003 for further details
+
+        Raises
+        ------
+        AttributeError
+            FilterMaterial is immutable
+        """
+        raise AttributeError(f"{type(self).__name__} is immutable")
+
+    def _apply_filters(self, material: Material | tuple[Material]) -> bool:
+        bool_store = True
+
+        if self.keep_material is not None:
+            bool_store = isinstance(material, self.keep_material)
+
+        if self.reject_material is not None:
+            bool_store = not isinstance(material, self.reject_material)
+
+        return bool_store
 
 
 class CADConstructionType(Enum):
@@ -59,13 +129,74 @@ class CADConstructionType(Enum):
 
 class ConstructionParams(TypedDict):
     """
-    Parameters for the construction CAD.
+    Parameters for the construction of CAD.
     """
 
     with_components: NotRequired[list[ComponentManager] | None]
     component_filter: NotRequired[Callable[[Component], bool] | None]
     n_sectors: NotRequired[int | None]
     total_sectors: NotRequired[int | None]
+
+
+@dataclass(frozen=True)
+class ConstructionParamValues:
+    """
+    Parameters for the construction of CAD.
+    """
+
+    with_components: list[ComponentManager] | None
+    component_filter: Callable[[Component], bool] | None
+    n_sectors: int
+    total_sectors: int
+
+    @classmethod
+    def empty(cls) -> ConstructionParamValues:
+        """
+        Create an empty ConstructionParamValues object.
+
+        Returns
+        -------
+        :
+            The empty ConstructionParamValues object
+        """
+        return cls(
+            with_components=None,
+            component_filter=None,
+            n_sectors=1,
+            total_sectors=1,
+        )
+
+    @classmethod
+    def from_construction_params(cls, construction_params: ConstructionParams | None):
+        """
+        Create the ConstructionParamValues from the ConstructionParams.
+
+        Parameters
+        ----------
+        construction_params:
+            Construction parameters to extract values from.
+
+        Returns
+        -------
+        :
+            The ConstructionParamValues object
+        """
+        construction_params = construction_params or {}
+        comp_filter = (
+            construction_params["component_filter"]
+            if "component_filter" in construction_params
+            else FilterMaterial()
+        )
+
+        tot_secs = int(construction_params.get("total_sectors", 1))
+        n_secs = int(construction_params.get("n_sectors", tot_secs))
+
+        return cls(
+            with_components=construction_params.get("with_components"),
+            component_filter=comp_filter,
+            n_sectors=n_secs,
+            total_sectors=tot_secs,
+        )
 
 
 def _timing(
@@ -251,7 +382,7 @@ def plot_component_dim(
 
 def _construct_comp_manager_physical_comps(
     comp_manager: ComponentManager,
-    construction_params: ConstructionParams,
+    construction_params: ConstructionParamValues,
 ) -> tuple[list[PhysicalComponent], str]:
     """
     Construct the compoent using the construction type
@@ -274,9 +405,9 @@ def _construct_comp_manager_physical_comps(
     manager_comp: Component = comp_manager.component()
     manager_comp_name = manager_comp.name
 
-    component_filter = construction_params.get("component_filter")
-    tot_secs = int(construction_params.get("total_sectors", 1))
-    n_secs = int(construction_params.get("n_sectors", tot_secs))
+    component_filter = construction_params.component_filter
+    tot_secs = construction_params.total_sectors
+    n_secs = construction_params.n_sectors
     sec_degrees = int((360 / tot_secs) * n_secs)
 
     xyz_phy_comps = None
@@ -369,7 +500,7 @@ def _build_compounds_from_map(
 
 def build_comp_manager_save_xyz_cad_tree(
     comp_manager: ComponentManager,
-    construction_params: ConstructionParams,
+    construction_params: ConstructionParamValues,
 ) -> Component:
     """
     Build the CAD of the component manager's components
@@ -405,7 +536,7 @@ def build_comp_manager_save_xyz_cad_tree(
 def build_comp_manager_show_cad_tree(
     comp_manager: ComponentManager,
     dim: str,
-    construction_params: ConstructionParams,
+    construction_params: ConstructionParamValues,
 ) -> Component:
     """
     Build the CAD of the component manager's components
@@ -425,7 +556,7 @@ def build_comp_manager_show_cad_tree(
     :
         The constructed component manager component for CAD showing
     """
-    component_filter = construction_params.get("component_filter")
+    component_filter = construction_params.component_filter
 
     manager_comp: Component = comp_manager.component()
     filtered_comp = copy_and_filter_component(
@@ -435,8 +566,8 @@ def build_comp_manager_show_cad_tree(
     )
 
     if dim == "xyz":
-        tot_secs = construction_params.get("total_sectors", 1)
-        n_secs = construction_params.get("n_sectors", tot_secs)
+        tot_secs = construction_params.total_sectors
+        n_secs = construction_params.n_sectors
         sec_degrees = int((360 / tot_secs) * n_secs)
 
         filtered_comp = circular_pattern_xyz_components(
