@@ -40,10 +40,20 @@ def setup_sybil_namespace(namespace):
     namespace["MyPlasma"] = type("MyPlasma", (ComponentManager,), {})
     namespace["MyTfCoils"] = type("MyTfCoils", (ComponentManager,), {})
     namespace["build_plasma"] = lambda: namespace["MyPlasma"](
-        Component("xyz", children=[PhysicalComponent("sh", make_circle())])
+        Component(
+            "MyPlasma",
+            children=[
+                Component("xyz", children=[PhysicalComponent("sh", make_circle())])
+            ],
+        )
     )
     namespace["build_tf_coils"] = lambda: namespace["MyTfCoils"](
-        Component("xyz", children=[PhysicalComponent("sh", make_circle())])
+        Component(
+            "MyTfCoils",
+            children=[
+                Component("xyz", children=[PhysicalComponent("sh", make_circle())])
+            ],
+        )
     )
     namespace["np"] = np
     namespace["plasma_shape"] = make_circle()
