@@ -17,7 +17,7 @@ from scipy.special import ellipe
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from tests._helpers import skipif_import_error
 
 
@@ -371,6 +371,234 @@ class TestFreecadapi:
             ellipse_eccentricity
         )  # length of arc using complete elliptic integral
         assert np.isclose(arc_length, cadapi.length(arc4), 6)
+
+    @pytest.mark.parametrize(
+        ("two_pi_offset", "positive_y_axis", "reverse"),
+        [
+            (0, True, False),
+            (0, True, True),
+            (0, False, False),
+            (0, False, True),
+            (1, True, False),
+            (1, True, True),
+            (1, False, False),
+            (1, False, True),
+            (-1, True, False),
+            (-1, True, True),
+            (-1, False, False),
+            (-1, False, True),
+            (-2, True, False),
+            (-2, True, True),
+            (-2, False, False),
+            (-2, False, True),
+        ],
+    )
+    def test_reverse(
+        self,
+        two_pi_offset: int,
+        *,
+        positive_y_axis: bool,
+        reverse: bool,
+    ):
+        """
+        By swapping the start-end points (x2), and choosing opposite rotation axis (x2),
+        re-drawing the same arc four times (=4).
+
+        This function also helps justify the logic inside cadapi._convert_edge_to_curve.
+
+        Parameters
+        ----------
+        two_pi_offset:
+            an integer n, so we will offset the end-angle by 2*pi*n.
+            Note: This proves that for Part.Circle and Part.Ellipse,
+
+        positive_y_axis:
+            whether the rotation axis is [0,1,0] or [0,-1,0]. This proves that flipping
+            the rotation axis is equivalent to re-calculating all angles as "clockwise"
+            instead of "anti-clockwise".
+
+        reverse:
+            whether to run the .reverse() method on the Part.Wire or not.
+            Note: this test-method proves that .reverse() does NOT alter any information
+            about the `Part.Circle`, only alters the .StartPoint and .EndPoint of
+            `Part.ArcOfCircle`, but this information does not gets stored.
+        """
+        axis = [0, -1 + 2 * int(positive_y_axis), 0]
+        circle = cadapi.make_circle(axis=axis).Edges[0].Curve
+        assert np.isclose(circle.FirstParameter, 0, rtol=0, atol=EPS_FREECAD)
+        assert np.isclose(circle.LastParameter, 2 * np.pi, rtol=0, atol=EPS_FREECAD)
+        if positive_y_axis:
+            arc_wire = Part.Wire(
+                Part.Edge(
+                    Part.ArcOfCircle(circle, 0, 0.5 * np.pi + 2 * np.pi * two_pi_offset)
+                )
+            )
+        else:
+            arc_wire = Part.Wire(
+                Part.Edge(
+                    Part.ArcOfCircle(
+                        circle, 1.5 * np.pi, 2 * np.pi + 2 * np.pi * two_pi_offset
+                    )
+                )
+            )
+            # will get autocorrected to [1.5π, 2π] no matter which 2π interval we input
+        if reverse:
+            arc_wire.reverse()
+        edge = arc_wire.Edges[0]
+
+        if reverse:
+            assert arc_wire.Orientation == "Reversed"
+            assert edge.Orientation == "Reversed"
+        else:
+            assert arc_wire.Orientation == "Forward"
+            assert edge.Orientation == "Forward"
+        # edge.parameter is always increasing.
+        if positive_y_axis:
+            assert np.isclose(
+                edge.parameterAt(edge.firstVertex()),
+                0.0 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+            assert np.isclose(
+                edge.parameterAt(edge.lastVertex()),
+                0.5 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+        else:
+            assert np.isclose(
+                edge.parameterAt(edge.firstVertex()),
+                1.5 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+            assert np.isclose(
+                edge.parameterAt(edge.lastVertex()),
+                2.0 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+        # regardless of reversing the wire or flipping the rotation axis of the wire,
+        # .valueAt uses the underlying .Curve, which is a circle pointed to the RHS.
+        np.testing.assert_allclose(
+            list(edge.valueAt(0)), (1.0, 0.0, 0.0), rtol=0.0, atol=EPS_FREECAD
+        )
+        assert np.isclose(
+            edge.Curve.parameter(cadapi.apiVector((1.0, 0.0, 0.0))),
+            0.0,
+            rtol=0.0,
+            atol=EPS_FREECAD,
+        )
+
+    @pytest.mark.parametrize(("reverse"), [True, False])
+    def test_serialise_circle(self, *, reverse: bool):
+        """Checks for invertibility of the serialise function for make_circle_arc_3P."""
+        x1, z1 = cadapi.apiVector([1, 0, 0]), cadapi.apiVector([0, 0, 1])
+        mid_pt = cadapi.apiVector([np.sqrt(2), 0, np.sqrt(2)])
+        arc_of_circle = cadapi.make_circle_arc_3P(x1, mid_pt, z1)
+        if reverse:
+            arc_of_circle.reverse()
+        reconstructed = cadapi.deserialise_shape(cadapi.serialise_shape(arc_of_circle))
+        if reverse:
+            np.testing.assert_allclose(
+                arc_of_circle.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                arc_of_circle.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+        else:
+            np.testing.assert_allclose(
+                arc_of_circle.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                arc_of_circle.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+
+    @pytest.mark.parametrize(("reverse"), [True, False])
+    def test_serialise_part_ellipse(self, *, reverse: bool):
+        """Checks for invertibility of the serialise function for Part.Ellipse."""
+        ellipse = Part.Ellipse()
+        ellipse.Axis = cadapi.apiVector([0.1, -0.2, 0.3]).normalize()
+        ellipse_arc = Part.ArcOfEllipse(ellipse, 0.0, 5.0)
+        arc_of_ellipse = Part.Wire(Part.Edge(ellipse_arc))
+        if reverse:
+            arc_of_ellipse.reverse()
+
+        reconstructed = cadapi.deserialise_shape(cadapi.serialise_shape(arc_of_ellipse))
+        if reverse:
+            np.testing.assert_allclose(
+                arc_of_ellipse.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                arc_of_ellipse.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+        else:
+            np.testing.assert_allclose(
+                arc_of_ellipse.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                arc_of_ellipse.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+
+    @pytest.mark.parametrize(("reverse"), [True, False])
+    def test_serialise_ellipse(self, *, reverse: bool):
+        """Checks for invertibility of the serialise function for make_ellipse."""
+        ellipse_arc = cadapi.make_ellipse(start_angle=0, end_angle=190)
+        if reverse:
+            ellipse_arc.reverse()
+
+        reconstructed = cadapi.deserialise_shape(cadapi.serialise_shape(ellipse_arc))
+        if reverse:
+            np.testing.assert_allclose(
+                ellipse_arc.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                ellipse_arc.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+        else:
+            np.testing.assert_allclose(
+                ellipse_arc.Edges[0].firstVertex().Point,
+                reconstructed.Edges[0].firstVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
+            np.testing.assert_allclose(
+                ellipse_arc.Edges[0].lastVertex().Point,
+                reconstructed.Edges[0].lastVertex().Point,
+                rtol=0,
+                atol=EPS_FREECAD,
+            )
 
 
 # Commented out CADFileTypes dont work with basic shapes tested or needed more
