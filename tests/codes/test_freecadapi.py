@@ -425,8 +425,8 @@ class TestFreecadapi:
         """
         axis = [0, -1 + 2 * int(positive_y_axis), 0]
         circle = cadapi.make_circle(axis=axis).Edges[0].Curve
-        assert circle.FirstParameter == 0
-        assert circle.LastParameter == 2 * np.pi
+        assert np.isclose(circle.FirstParameter, 0, rtol=0, atol=EPS_FREECAD)
+        assert np.isclose(circle.LastParameter, 2 * np.pi, rtol=0, atol=EPS_FREECAD)
         if positive_y_axis:
             arc_wire = Part.Wire(
                 Part.Edge(
@@ -454,15 +454,42 @@ class TestFreecadapi:
             assert edge.Orientation == "Forward"
         # edge.parameter is always increasing.
         if positive_y_axis:
-            assert edge.parameterAt(edge.firstVertex()) == 0.0 * np.pi
-            assert edge.parameterAt(edge.lastVertex()) == 0.5 * np.pi
+            assert np.isclose(
+                edge.parameterAt(edge.firstVertex()),
+                0.0 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+            assert np.isclose(
+                edge.parameterAt(edge.lastVertex()),
+                0.5 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
         else:
-            assert edge.parameterAt(edge.firstVertex()) == 1.5 * np.pi
-            assert edge.parameterAt(edge.lastVertex()) == 2.0 * np.pi
+            assert np.isclose(
+                edge.parameterAt(edge.firstVertex()),
+                1.5 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
+            assert np.isclose(
+                edge.parameterAt(edge.lastVertex()),
+                2.0 * np.pi,
+                rtol=0.0,
+                atol=EPS_FREECAD,
+            )
         # regardless of reversing the wire or flipping the rotation axis of the wire,
         # .valueAt uses the underlying .Curve, which is a circle pointed to the RHS.
-        assert tuple(edge.valueAt(0)) == (1.0, 0.0, 0.0)
-        assert edge.Curve.parameter(cadapi.apiVector((1.0, 0.0, 0.0))) == 0.0
+        np.testing.assert_allclose(
+            list(edge.valueAt(0)), (1.0, 0.0, 0.0), rtol=0.0, atol=EPS_FREECAD
+        )
+        assert np.isclose(
+            edge.Curve.parameter(cadapi.apiVector((1.0, 0.0, 0.0))),
+            0.0,
+            rtol=0.0,
+            atol=EPS_FREECAD,
+        )
 
     @pytest.mark.parametrize(("reverse"), [True, False])
     def test_serialise_circle(self, *, reverse: bool):
