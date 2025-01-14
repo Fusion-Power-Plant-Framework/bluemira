@@ -444,8 +444,11 @@ def build_comp_manager_show_cad_tree(
             n_secs,
             degree=sec_degrees,
         )
-    manager_comp.children = [filtered_comp]
-    return manager_comp
+
+    return_comp = Component(name=manager_comp.name)
+    return_comp.children = [filtered_comp]
+
+    return return_comp
 
 
 # # =============================================================================
