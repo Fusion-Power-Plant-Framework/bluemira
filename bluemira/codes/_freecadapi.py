@@ -477,6 +477,32 @@ def interpolate_bspline(
     return wire
 
 
+def make_circle_curve(radius: float, center: apiVector, axis: apiVector) -> Part.Circle:
+    """
+    Make a Part.Circle with a consistent .Rotation property, by initializing a circle of
+    the default size, position and orientation at first.
+
+    Parameters
+    ----------
+    radius:
+        radius of the circle [m]
+    center:
+        center of the circle [m]
+    axis:
+        Normalised vector around which the circle spins counter-clockwise.
+
+    Returns
+    -------
+    circle:
+        Part.Circle created by FreeCAD.
+    """
+    circle = Part.Circle()
+    circle.Radius = radius
+    circle.Center = center
+    circle.Axis = axis
+    return circle
+
+
 def make_circle(
     radius: float = 1.0,
     center: Iterable[float] = [0.0, 0.0, 0.0],
@@ -507,10 +533,7 @@ def make_circle(
     :
         FreeCAD wire that contains the arc or circle
     """
-    output = Part.Circle()
-    output.Radius = radius
-    output.Center = Base.Vector(center)
-    output.Axis = Base.Vector(axis)
+    output = make_circle_curve(radius, Base.Vector(center), Base.Vector(axis))
     if start_angle != end_angle:
         output = Part.ArcOfCircle(
             output, math.radians(start_angle), math.radians(end_angle)
@@ -553,10 +576,9 @@ def make_circle_arc_3P(  # noqa: N802
 
     # next steps are made to create an arc of circle that is consistent with that
     # created by 'make_circle'
-    output = Part.Circle()
-    output.Radius = arc.Radius
-    output.Center = arc.Center
-    output.Axis = arc.Axis if axis is None else Base.Vector(axis)
+    output = make_circle_curve(
+        arc.Radius, arc.Center, arc.Axis if axis is None else Base.Vector(axis)
+    )
     arc = Part.ArcOfCircle(
         output, output.parameter(arc.StartPoint), output.parameter(arc.EndPoint)
     )
@@ -3189,10 +3211,12 @@ def _convert_edge_to_curve(
             ellipse, ellipse.parameter(p0), ellipse.parameter(p1)
         )
     elif isinstance(in_curve, Part.Circle):
-        circle = Part.Circle()
-        circle.Radius = in_curve.Radius
-        circle.Center = in_curve.Center
-        circle.Axis = -in_curve.Axis if edge.Orientation == "Reversed" else in_curve.Axis
+        circle = make_circle_curve(
+            in_curve.Radius,
+            in_curve.Center,
+            -in_curve.Axis if edge.Orientation == "Reversed" else in_curve.Axis,
+        )
+
         first_point = edge.firstVertex().Point
         last_point = edge.lastVertex().Point
         if edge.Orientation == "Reversed":
