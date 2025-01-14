@@ -517,15 +517,16 @@ def build_radiation_plugs(
 if __name__ == "__main__":
     set_log_level("INFO")
 
-    establish_material_cache([
-        Path(CONFIG_DIR, "materials.json"),
-        Path(CONFIG_DIR, "mixtures.json"),
-    ])
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
     reactor = EUDEMO(
         "EUDEMO",
         n_sectors=reactor_config.global_params.n_TF.value,
     )
+
+    establish_material_cache([
+        reactor_config.config_for("materials_path")["materials"],
+        reactor_config.config_for("materials_path")["mixtures"],
+    ])
 
     radial_build(
         reactor_config.params_for("Radial build").global_params,

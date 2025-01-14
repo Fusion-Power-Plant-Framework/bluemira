@@ -229,7 +229,7 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
 
 
 def get_cached_material(
-    material_name: str | None, cache: MaterialCache | None = None
+    material_name: str, cache: MaterialCache | None = None
 ) -> Material | None:
     """
     Get the named material from the MaterialCache.
@@ -245,13 +245,51 @@ def get_cached_material(
 
     Returns
     -------
-    The requested material.
+    :
+        The requested material.
+
+    Raises
+    ------
+    MaterialsError
+        If the material name is not a string.
     """
-    # mateiral name can also be an empty dict
-    # sometimes because of the dict default value used
-    # when calling .get
     if not (material_name and isinstance(material_name, str)):
-        return None
+        raise MaterialsError("Material name must be a non-empty string.")
     if cache is None:
         cache = MaterialCache.get_instance()
     return cache.get_material(material_name)
+
+
+def get_cached_material_for_component(
+    build_config: dict, component_name: str | None
+) -> Material | None:
+    """
+    Get the material for a component from the build config.
+
+    Parameters
+    ----------
+    build_config:
+        The build config dictionary.
+    component_name:
+        The name of the component.
+
+    Returns
+    -------
+    :
+        The material for the component.
+
+    Raises
+    ------
+    MaterialsError
+        If the material build config is not a string when no component name is given.
+    """
+    mats = build_config.get("material")
+    if not mats:
+        return None
+    if not component_name:
+        if isinstance(mats, str):
+            return get_cached_material(mats)
+        raise MaterialsError(
+            "Material build config must be a string if no component name is given."
+        )
+    return get_cached_material(mats.get(component_name))
