@@ -483,13 +483,13 @@ def _build_compounds_from_map(
     return [
         # recreate the PhysicalComponent to rename it
         PhysicalComponent(
-            name=f"{manager_name}_{mat_name}" if mat_name else manager_name,
+            name=f"{manager_name}_mat_{mat_name}" if mat_name else manager_name,
             shape=comps[0].shape,
             material=comps[0].material,
         )
         if len(comps) == 1
         else compound_from_components(
-            name=f"{manager_name}_{mat_name}" if mat_name else manager_name,
+            name=f"{manager_name}_mat_{mat_name}" if mat_name else manager_name,
             components=comps,
             # all comps in the list have the same material
             material=comps[0].material,
