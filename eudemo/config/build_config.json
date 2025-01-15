@@ -117,9 +117,7 @@
     }
   },
   "Vacuum vessel": {
-    "material": {
-      "Body": "SS316-LN"
-    }
+    "material": "SS316-LN"
   },
   "Divertor": {
     "material": "SS316-LN"

@@ -13,8 +13,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from bluemira.materials.cache import get_cached_material
-
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
@@ -47,6 +45,8 @@ class TSLowerPortDuctBuilder(Builder):
     """
 
     param_cls: type[TSLowerPortDuctBuilderParams] = TSLowerPortDuctBuilderParams
+
+    TS = "TS"
 
     def __init__(
         self,
@@ -97,12 +97,10 @@ class TSLowerPortDuctBuilder(Builder):
         pc = PhysicalComponent(
             self.name,
             duct,
-            material=get_cached_material(
-                self.build_config.get("material", {}).get("TS")
-            ),
+            material=self.get_material(self.TS),
         )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
-        apply_component_display_options(pc, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(pc, color=BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]
@@ -125,6 +123,8 @@ class VVLowerPortDuctBuilder(Builder):
     """
 
     param_cls: type[VVLowerPortDuctBuilderParams] = VVLowerPortDuctBuilderParams
+
+    VV = "VV"
 
     def __init__(
         self,
@@ -181,12 +181,10 @@ class VVLowerPortDuctBuilder(Builder):
         pc = PhysicalComponent(
             self.name,
             duct,
-            material=get_cached_material(
-                self.build_config.get("material", {}).get("VV")
-            ),
+            material=self.get_material(self.VV),
         )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
-        apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(pc, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]

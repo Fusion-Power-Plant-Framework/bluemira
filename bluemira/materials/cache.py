@@ -258,38 +258,3 @@ def get_cached_material(
     if cache is None:
         cache = MaterialCache.get_instance()
     return cache.get_material(material_name)
-
-
-def get_cached_material_for_component(
-    build_config: dict, component_name: str | None
-) -> Material | None:
-    """
-    Get the material for a component from the build config.
-
-    Parameters
-    ----------
-    build_config:
-        The build config dictionary.
-    component_name:
-        The name of the component.
-
-    Returns
-    -------
-    :
-        The material for the component.
-
-    Raises
-    ------
-    MaterialsError
-        If the material build config is not a string when no component name is given.
-    """
-    mats = build_config.get("material")
-    if not mats:
-        return None
-    if not component_name:
-        if isinstance(mats, str):
-            return get_cached_material(mats)
-        raise MaterialsError(
-            "Material build config must be a string if no component name is given."
-        )
-    return get_cached_material(mats.get(component_name))

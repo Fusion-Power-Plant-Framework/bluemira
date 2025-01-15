@@ -23,7 +23,6 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -99,7 +98,7 @@ class DivertorBuilder(Builder):
             segment = PhysicalComponent(
                 f"{self.SEGMENT_PREFIX}_{no}",
                 shape,
-                material=get_cached_material(self.build_config.get("material", {})),
+                material=self.get_material(),
             )
             apply_component_display_options(segment, BLUE_PALETTE[self.DIV][no])
             segments.append(segment)

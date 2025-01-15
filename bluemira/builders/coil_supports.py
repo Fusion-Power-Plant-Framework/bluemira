@@ -42,7 +42,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.materials.cache import get_cached_material
 from bluemira.optimisation import OptimisationProblem
 from bluemira.utilities.tools import floatify
 
@@ -85,6 +84,8 @@ class ITERGravitySupportBuilder(Builder):
 
     param_cls: type[ITERGravitySupportBuilderParams] = ITERGravitySupportBuilderParams
     params: ITERGravitySupportBuilderParams
+
+    GS = "GS"
 
     def __init__(
         self,
@@ -307,9 +308,7 @@ class ITERGravitySupportBuilder(Builder):
         component = PhysicalComponent(
             "ITER-like gravity support",
             shape,
-            material=get_cached_material(
-                self.build_config.get("material", {}).get("GS")
-            ),
+            material=self.get_material(self.GS),
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -336,6 +335,8 @@ class PFCoilSupportBuilder(Builder):
 
     param_cls: type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
     params: PFCoilSupportBuilderParams
+
+    PF_ICS = "PF ICS"
 
     def __init__(
         self,
@@ -377,9 +378,7 @@ class PFCoilSupportBuilder(Builder):
         component = PhysicalComponent(
             self.name,
             face,
-            material=get_cached_material(
-                self.build_config.get("material", {}).get("PF ICS")
-            ),
+            material=self.get_material(self.PF_ICS),
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -598,7 +597,11 @@ class PFCoilSupportBuilder(Builder):
             shape = BluemiraCompound(shape_list)
 
         shape.translate(vector=(0, -0.5 * width, 0))
-        component = PhysicalComponent(self.name, shape)
+        component = PhysicalComponent(
+            self.name,
+            shape,
+            material=self.get_material(self.PF_ICS),
+        )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
@@ -886,11 +889,12 @@ class OISBuilder(Builder):
     Outer intercoil structure builder
     """
 
-    RIGHT_OIS = "TF OIS right"
-    LEFT_OIS = "TF OIS left"
-    OIS_XZ = "TF OIS"
     param_cls: type[OISBuilderParams] = OISBuilderParams
     params: OISBuilderParams
+
+    RIGHT_OIS = "TF OIS right"
+    LEFT_OIS = "TF OIS left"
+    TF_OIS = "TF OIS"
 
     def __init__(
         self,
@@ -922,11 +926,9 @@ class OISBuilder(Builder):
         for i, ois_profile in enumerate(self.ois_xz_profiles):
             face = BluemiraFace(ois_profile)
             component = PhysicalComponent(
-                f"{self.OIS_XZ} {i}",
+                f"{self.TF_OIS} {i}",
                 face,
-                material=get_cached_material(
-                    self.build_config.get("material", {}).get(self.OIS_XZ)
-                ),
+                material=self.get_material(self.TF_OIS),
             )
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)
@@ -970,8 +972,16 @@ class OISBuilder(Builder):
             ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
             ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 
-            right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i + 1}", ois_right)
-            left_component = PhysicalComponent(f"{self.LEFT_OIS} {i + 1}", ois_left)
+            right_component = PhysicalComponent(
+                f"{self.RIGHT_OIS} {i + 1}",
+                ois_right,
+                material=self.get_material(self.TF_OIS),
+            )
+            left_component = PhysicalComponent(
+                f"{self.LEFT_OIS} {i + 1}",
+                ois_left,
+                material=self.get_material(self.TF_OIS),
+            )
             components.extend([left_component, right_component])
 
         for component in components:

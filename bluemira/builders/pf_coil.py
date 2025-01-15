@@ -23,7 +23,6 @@ from bluemira.equilibria.coils import Coil, CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
-from bluemira.materials.cache import get_cached_material
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -134,9 +133,7 @@ class PFCoilBuilder(Builder):
         wp = PhysicalComponent(
             self.WINDING_PACK,
             BluemiraFace(shape),
-            material=get_cached_material(
-                self.build_config.get("material", {}).get(self.WINDING_PACK)
-            ),
+            material=self.get_material(self.WINDING_PACK),
         )
         idx = CoilType(self.params.ctype.value).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
@@ -145,9 +142,7 @@ class PFCoilBuilder(Builder):
         ins = PhysicalComponent(
             self.GROUND_INSULATION,
             BluemiraFace([ins_shape, shape]),
-            material=get_cached_material(
-                self.build_config.get("material", {}).get(self.GROUND_INSULATION)
-            ),
+            material=self.get_material(self.GROUND_INSULATION),
         )
         apply_component_display_options(ins, color=BLUE_PALETTE["PF"][3])
 
@@ -155,9 +150,7 @@ class PFCoilBuilder(Builder):
         casing = PhysicalComponent(
             self.CASING,
             BluemiraFace([cas_shape, ins_shape]),
-            material=get_cached_material(
-                self.build_config.get("material", {}).get(self.CASING)
-            ),
+            material=self.get_material(self.CASING),
         )
         apply_component_display_options(casing, color=BLUE_PALETTE["PF"][2])
         return [wp, ins, casing]
