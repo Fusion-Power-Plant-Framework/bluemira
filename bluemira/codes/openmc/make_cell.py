@@ -43,8 +43,8 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from bluemira.codes.openmc.csg_tools import OpenMCEnvironment
     from bluemira.codes.openmc.material import MaterialsLibrary
+    from bluemira.codes.openmc.tools import OpenMCEnvironment
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.radiation_transport.neutronics.geometry import (
         DivertorThickness,

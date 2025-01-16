@@ -15,14 +15,14 @@ import numpy as np
 import openmc
 import openmc.region
 
-from bluemira.codes.openmc.csg_tools import (
+from bluemira.codes.openmc.make_cell import BlanketCellArray, DivertorCellArray
+from bluemira.codes.openmc.material import CellType
+from bluemira.codes.openmc.tools import (
     OpenMCEnvironment,
     flat_intersection,
     flat_union,
     round_up_next_openmc_ids,
 )
-from bluemira.codes.openmc.make_cell import BlanketCellArray, DivertorCellArray
-from bluemira.codes.openmc.material import CellType
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import (

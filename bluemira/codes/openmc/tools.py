@@ -195,6 +195,18 @@ def flat_intersection(region_list: Iterable[openmc.Region]) -> openmc.Intersecti
 def intersection_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
     """Get a dictionary of all of the elements that shall be intersected together,
     applying the rule of associativity
+
+    Parameters
+    ----------
+    region:
+        Region
+
+    Returns
+    -------
+    :
+        A dictionary of the regions that needs to be intersectioned together; each key
+        is the str representation of that region (e.g. '-3', or '9|-11').
+
     """
     if isinstance(region, openmc.Halfspace):  # termination condition
         return {region.side + str(region.surface.id): region}
@@ -211,6 +223,16 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
     """
     Get the flat union of an entire list of regions.
     e.g. (a | (b | c)) becomes (a | b | c)
+
+    Parameters
+    ----------
+    region_list:
+        A list of regions to be unioned together.
+
+    Returns
+    -------
+    :
+        A union of all of the regions listed.
     """
     return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
 

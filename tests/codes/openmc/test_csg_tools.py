@@ -4,13 +4,12 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Testing the rest of the miscellaneous functions related to making a csg environment.
+Miscellaneous tools to be tested.
 """
 
-import matplotlib.pyplot as plt
 import openmc
 
-from bluemira.codes.openmc.make_csg import OpenMCEnvironment, plot_surfaces
+from bluemira.codes.openmc.tools import OpenMCEnvironment
 
 
 class TestUtilities:
@@ -21,9 +20,6 @@ class TestUtilities:
             openmc.ZPlane(z0=100, name="pln"),
             openmc.ZCone(z0=100, r2=0.5, name="cone"),
         ]
-        plot_surfaces(surfaces)
 
         plane = csg.surface_from_2points()
         cylinder = csg.surface_from_2points()
-        plot_surfaces(surfaces)
-        plt.show()
