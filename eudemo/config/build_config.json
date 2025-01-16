@@ -112,15 +112,15 @@
   },
   "Blanket": {
     "material": {
-      "IBS": "Homogenised_HCPB_2015_v3_BZ",
-      "OBS": "Homogenised_HCPB_2015_v3_BZ"
+      "IBS": "Homogenised_HCPB_2015_v3_IB",
+      "OBS": "Homogenised_HCPB_2015_v3_OB"
     }
   },
   "Vacuum vessel": {
     "material": "SS316-LN"
   },
   "Divertor": {
-    "material": "SS316-LN"
+    "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
