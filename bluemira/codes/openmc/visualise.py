@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Functions to visualise the plotted areas
+Functions to visualise the csg geometry being described by the openmc objects.
 """
 
 from __future__ import annotations
@@ -85,28 +85,29 @@ def plot_surface_at_1000cm(
         ZCylinder intersecting the x<0 LHHP). So when plot_both_sides is false, we skip
         plotting the LHS line.
     """
+    label_str = f"{surface.id}: {surface.name}"
+    color = f"C{color_num}"
     if isinstance(surface, openmc.ZCylinder):
-        label_str = f"{surface.id}: {surface.name}"
         ax.plot(
             [surface.r, surface.r],
-            [LEFT, RIGHT],
+            [BOTTOM, TOP],
             label=(label_str + " (RHHP)") if plot_both_sides else label_str,
-            color=f"C{color_num}",
+            color=color,
         )
         if plot_both_sides:
             ax.plot(
                 [-surface.r, -surface.r],
-                [LEFT, RIGHT],
+                [BOTTOM, TOP],
                 label=label_str + " (LHHP)",
-                color=f"C{color_num}",
+                color=color,
                 linestyle="-.",
             )
     elif isinstance(surface, openmc.ZPlane):
         ax.plot(
             [LEFT, RIGHT],
             [surface.z0, surface.z0],
-            label=f"{surface.id}: {surface.name}",
-            color=f"C{color_num}",
+            label=label_str,
+            color=color,
         )
     elif isinstance(surface, openmc.ZCone):
         intercept = surface.z0
@@ -122,35 +123,38 @@ def plot_surface_at_1000cm(
         ax.plot(
             [LEFT, RIGHT],
             y_pos,
-            label=f"{surface.id}: {surface.name} (upper)",
+            label=label_str + " (upper)",
             linestyle=":",
-            color=f"C{color_num}",
+            color=color,
         )
         ax.plot(
             [LEFT, RIGHT],
             y_neg,
-            label=f"{surface.id}: {surface.name} (lower)",
+            label=label_str + " (lower)",
             linestyle="--",
-            color=f"C{color_num}",
+            color=color,
         )
     elif isinstance(surface, openmc.ZTorus):
-        ax.add_patches(
+        ax.add_patch(
             plt.Circle(
                 (surface.a, surface.z0),
                 surface.b,
-                edgecolor=f"C{color_num}",
+                color=color,
                 fill=False,
-                label=f"{surface.id}: {surface.name}",
+                label=(label_str + " (RHHP)") if plot_both_sides else label_str,
+                linewidth=2.54,
             )
         )
         if plot_both_sides:
-            ax.add_patches(
+            ax.add_patch(
                 plt.Circle(
                     (-surface.a, surface.z0),
                     surface.b,
-                    edgecolor=f"C{color_num}",
+                    color=color,
                     fill=False,
-                    label=f"{surface.id}: {surface.name}",
+                    label=label_str + " (LHHP)",
+                    linestyle="-.",
+                    linewidth=2.54,
                 )
             )
 

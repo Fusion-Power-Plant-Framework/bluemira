@@ -28,12 +28,8 @@ from bluemira.codes.interface import (
     CodesTask,
     CodesTeardown,
 )
-from bluemira.codes.openmc.make_csg import (
-    BlanketCellArray,
-    DivertorCellArray,
-    OpenMCEnvironment,
-    make_cell_arrays,
-)
+from bluemira.codes.openmc.csg_reactor import OpenMCReactor
+from bluemira.codes.openmc.make_cell import BlanketCellArray, DivertorCellArray
 from bluemira.codes.openmc.material import MaterialsLibrary
 from bluemira.codes.openmc.output import OpenMCResult
 from bluemira.codes.openmc.params import (
@@ -431,8 +427,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.pre_cell_model.material_library
         )
 
-        self.cell_arrays = make_cell_arrays(
-            self.pre_cell_model, OpenMCEnvironment(), self.materials, control_id=True
+        self.cell_arrays = OpenMCReactor.from_pre_cell_reactor(
+            self.pre_cell_model, self.materials, control_id=True
         )
 
         self.tally_function = filter_cells if tally_function is None else tally_function
