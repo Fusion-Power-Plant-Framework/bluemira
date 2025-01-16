@@ -210,6 +210,8 @@ class CryostatPortPlugBuilder(Builder):
 
     param_cls: type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
 
+    PORT_PLUG = "Port Plug"
+
     def __init__(
         self,
         params: dict | ParameterFrame | CryostatPortPlugBuilderParams,
@@ -258,7 +260,11 @@ class CryostatPortPlugBuilder(Builder):
 
         plug_comps, void_comps = [], []
         for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
-            plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
+            plug = PhysicalComponent(  # noqa: PLW2901
+                f"{self.name} {i}",
+                plug,
+                material=self.get_material(self.PORT_PLUG),
+            )
             void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
             )

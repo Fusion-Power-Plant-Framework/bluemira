@@ -14,13 +14,17 @@ import abc
 from typing import TYPE_CHECKING, TypeAlias, Union
 
 from bluemira.base.components import Component
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.tools import _timing
+from bluemira.materials.cache import get_cached_material
+from bluemira.materials.error import MaterialsError
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
     from bluemira.base.components import ComponentT
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.materials.material import Material
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
 """
@@ -71,6 +75,67 @@ class Builder(abc.ABC):
     @abc.abstractmethod
     def build(self) -> Component:
         """Build the component."""
+
+    def get_material(self, component_name: str | None = None) -> Material | None:
+        """
+        Get the material for a component from the build config.
+
+        This will lookup the component_name in the "material" section
+        of the build config to get the material name.
+        It will then use that to get the corresponding material from the
+        material cache.
+
+        If no component_name is given, it's assumed the material name is
+        directly given by the "material" key in the build config.
+
+        See `establish_material_cache` and `get_cached_material` for more
+        information on how the material cache is used.
+
+        If no material is found or there is no "material" key in the build_config,
+        a warning is raised and None returned.
+
+        Parameters
+        ----------
+        component_name:
+            The name of the component.
+
+        Returns
+        -------
+        :
+            The material for the component.
+
+        Raises
+        ------
+        MaterialsError
+            If the material build config is not a string when no component name is given.
+        """
+        mats = self.build_config.get("material")
+        if not mats:
+            bluemira_warn("No 'material' found in build_config, returning None")
+            return None
+
+        if not component_name:
+            if not isinstance(mats, str):
+                raise MaterialsError(
+                    "'material' build_config must be a string when "
+                    "no component name is given."
+                )
+            mat_name = mats
+        else:
+            if not isinstance(mats, dict):
+                raise MaterialsError(
+                    "'material' build_config must be a dictionary when "
+                    "a component name is given."
+                )
+            mat_name: str = mats.get(component_name)
+
+        mat = get_cached_material(mat_name)
+        if mat is None:
+            bluemira_warn(
+                f"No corresponding material found for {component_name} in {mats}"
+            )
+
+        return mat
 
     def component_tree(
         self,

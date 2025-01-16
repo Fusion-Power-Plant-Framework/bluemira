@@ -168,7 +168,11 @@ class BlanketBuilder(Builder):
             [self.OBS, self.params.n_bb_inboard.value + 1, obs_shapes],
         ]:
             for no, shape in enumerate(bs_shape):
-                segment = PhysicalComponent(f"{name}_{no}", shape)
+                segment = PhysicalComponent(
+                    f"{name}_{no}",
+                    shape,
+                    material=self.get_material(name),
+                )
                 apply_component_display_options(
                     segment, color=BLUE_PALETTE[self.BB][base_no + no]
                 )

@@ -55,13 +55,16 @@ class TSUpperPortDuctBuilder(Builder):
     params: TSUpperPortDuctBuilderParams
     param_cls: type[TSUpperPortDuctBuilderParams] = TSUpperPortDuctBuilderParams
 
+    TS = "TS"
+
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         self.x_min = port_koz.bounding_box.x_min
         self.x_max = port_koz.bounding_box.x_max
         self.z_max = cryostat_ts_xz.bounding_box.z_max + 0.5 * self.params.g_cr_ts.value
@@ -107,8 +110,12 @@ class TSUpperPortDuctBuilder(Builder):
         # Add start-cap for future boolean fragmentation help
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
-        comp = PhysicalComponent(self.name, port)
-        apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=self.get_material(self.TS),
+        )
+        apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
@@ -127,7 +134,7 @@ class TSUpperPortDuctBuilder(Builder):
             The xy component
         """
         comp = PhysicalComponent(self.name, face)
-        apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
+        apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         return comp
 
 
@@ -154,12 +161,15 @@ class TSEquatorialPortDuctBuilder(Builder):
     params: TSEquatorialPortDuctBuilderParams
     param_cls = TSEquatorialPortDuctBuilderParams
 
+    TS = "TS"
+
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         cryostat_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         # Put the end of the equatorial port half-way between cryostat ts and
         # cryostat
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
@@ -206,13 +216,17 @@ class TSEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            self.get_material(self.TS),
+        )
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
 
-        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
 
@@ -237,13 +251,16 @@ class VVUpperPortDuctBuilder(Builder):
     params: VVUpperPortDuctBuilderParams
     param_cls = VVUpperPortDuctBuilderParams
 
+    VV = "VV"
+
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         koz_offset = self.params.tk_ts.value + self.params.g_vv_ts.value
         self.x_min = port_koz.bounding_box.x_min + koz_offset
         self.x_max = port_koz.bounding_box.x_max - koz_offset
@@ -302,8 +319,12 @@ class VVUpperPortDuctBuilder(Builder):
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
 
-        comp = PhysicalComponent(self.name, port)
-        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=self.get_material(self.VV),
+        )
+        apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
@@ -323,7 +344,7 @@ class VVUpperPortDuctBuilder(Builder):
         """
         xy_voidface = BluemiraFace(xy_face.boundary[1])
         comp = PhysicalComponent(self.name, xy_face)
-        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         void = PhysicalComponent(
             self.name + " voidspace", xy_voidface, material=Void("vacuum")
         )
@@ -350,12 +371,15 @@ class VVEquatorialPortDuctBuilder(Builder):
     params: VVEquatorialPortDuctBuilderParams
     param_cls = VVEquatorialPortDuctBuilderParams
 
+    VV = "VV"
+
     def __init__(
         self,
         params: dict | ParameterFrame | ConfigParams | None,
+        build_config: dict,
         cryostat_xz: BluemiraWire,
     ):
-        super().__init__(params, None)
+        super().__init__(params, build_config)
         # Put the end of the equatorial port half-way between cryostat ts and
         # cryostat
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_ts.value
@@ -401,13 +425,17 @@ class VVEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(self.name, port)
+        comp = PhysicalComponent(
+            self.name,
+            port,
+            material=self.get_material(self.VV),
+        )
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
 
-        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
 

@@ -106,9 +106,11 @@ class CryostatBuilder(Builder):
     Builder for the cryostat
     """
 
-    CRYO = "Cryostat VV"
     params: CryostatBuilderParams
     param_cls: type[CryostatBuilderParams] = CryostatBuilderParams
+
+    CRYO = "Cryostat VV"
+    BODY = "Body"
 
     def __init__(
         self,
@@ -216,4 +218,5 @@ class CryostatBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["CR"][0],
             degree,
+            material=self.get_material(self.BODY),
         )

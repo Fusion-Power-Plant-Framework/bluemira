@@ -135,15 +135,13 @@ class PlugManagerMixin(OrphanerMixin):
                 plugs.append(child)
 
         component = self.component()
-        xyz_shape = (
-            component.get_component("xyz")
-            .get_component("Sector 1")
-            .get_component(name)
-            .shape
+        comp_pc = (
+            component.get_component("xyz").get_component("Sector 1").get_component(name)
         )
+        xyz_shape = comp_pc.shape
 
         xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
-        xyz_comp = PhysicalComponent(name, xyz_shape)
+        xyz_comp = PhysicalComponent(name, xyz_shape, material=comp_pc.material)
         apply_component_display_options(xyz_comp, color=color_list[0])
         self._orphan_old_components(component)
 

@@ -46,6 +46,8 @@ class TSLowerPortDuctBuilder(Builder):
 
     param_cls: type[TSLowerPortDuctBuilderParams] = TSLowerPortDuctBuilderParams
 
+    TS = "TS"
+
     def __init__(
         self,
         params: ParameterFrame | dict,
@@ -92,9 +94,13 @@ class TSLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(self.name, duct)
+        pc = PhysicalComponent(
+            self.name,
+            duct,
+            material=self.get_material(self.TS),
+        )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
-        apply_component_display_options(pc, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(pc, color=BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]
@@ -117,6 +123,8 @@ class VVLowerPortDuctBuilder(Builder):
     """
 
     param_cls: type[VVLowerPortDuctBuilderParams] = VVLowerPortDuctBuilderParams
+
+    VV = "VV"
 
     def __init__(
         self,
@@ -170,9 +178,13 @@ class VVLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(self.name, duct)
+        pc = PhysicalComponent(
+            self.name,
+            duct,
+            material=self.get_material(self.VV),
+        )
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
-        apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(pc, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]

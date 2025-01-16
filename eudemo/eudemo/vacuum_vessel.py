@@ -67,7 +67,8 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         xyz = component.get_component("xyz")
         vv_xyz = xyz.get_component("Sector 1")
         target_void = vv_xyz.get_component("Vessel voidspace 1").shape
-        target_shape = vv_xyz.get_component("Body 1").shape
+        vv_body = vv_xyz.get_component("Body 1")
+        target_shape = vv_body.shape
 
         if isinstance(ports, Component):
             ports = [ports]
@@ -89,7 +90,9 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         final_shape = boolean_fuse(new_shape_pieces)
         final_void = boolean_fuse([target_void, *tool_voids])
 
-        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, final_shape)
+        sector_body = PhysicalComponent(
+            VacuumVesselBuilder.BODY, final_shape, material=vv_body.material
+        )
         sector_void = PhysicalComponent(
             VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
         )
@@ -203,7 +206,11 @@ class VacuumVesselBuilder(Builder):
         outer_vv = force_wire_to_spline(outer_vv, n_edges_max=100)
         face = BluemiraFace([outer_vv, inner_vv])
 
-        body = PhysicalComponent(self.BODY, face)
+        body = PhysicalComponent(
+            self.BODY,
+            face,
+            material=self.get_material(),
+        )
         vacuum = PhysicalComponent(
             self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
         )
@@ -225,7 +232,7 @@ class VacuumVesselBuilder(Builder):
 
     def build_xyz(
         self, vv_face: BluemiraFace, vacuum_face: BluemiraFace, degree: float = 360.0
-    ) -> PhysicalComponent:
+    ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the vacuum vessel.
 
@@ -240,5 +247,8 @@ class VacuumVesselBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
-            material=[None, Void("vacuum")],
+            material=[
+                self.get_material(),
+                Void("vacuum"),
+            ],
         )

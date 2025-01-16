@@ -166,7 +166,10 @@ class VVTSBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
-            material=[None, Void("vacuum")],
+            material=[
+                self.get_material(self.VVTS),
+                Void("vacuum"),
+            ],
         )
 
 
@@ -326,5 +329,8 @@ class CryostatTSBuilder(Builder):
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
             enable_sectioning=True,
-            material=[None, Void("vacuum")],
+            material=[
+                self.get_material(self.CRYO_TS),
+                Void("vacuum"),
+            ],
         )
