@@ -22,7 +22,6 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import slice_shape
-from bluemira.materials.cache import get_cached_material
 
 
 @dataclass
@@ -172,9 +171,7 @@ class BlanketBuilder(Builder):
                 segment = PhysicalComponent(
                     f"{name}_{no}",
                     shape,
-                    material=get_cached_material(
-                        self.build_config.get("material", {}).get(name)
-                    ),
+                    material=self.get_material(name),
                 )
                 apply_component_display_options(
                     segment, color=BLUE_PALETTE[self.BB][base_no + no]
