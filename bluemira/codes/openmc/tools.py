@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 import openmc.region
@@ -40,174 +39,6 @@ if TYPE_CHECKING:
     )
 
 SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm # Found to work by trial and error.
-
-
-def plot_surfaces(
-    surfaces_list: list[openmc.Surface], *, ax=None, plot_both_sides: bool = False
-) -> plt.Axes:
-    """
-    Plot a list of surfaces in matplotlib.
-
-    Parameters
-    ----------
-    surface_list:
-        list of openmc.Surface that we are trying to plot.
-    ax:
-        The matplotlib axes object that we are trying to plot onto.
-    plot_both_sides:
-        Whether to plot from x=-1000 to x=1000cm, or from x=0 to x=1000cm.
-        Due to model being axis-symmetric we expect the plot to have a reflective
-        symmetry line of x=0.
-
-    Returns
-    -------
-    ax:
-        The matplotlib axes object on which the surfaces' cross-sections are plotted
-        onto.
-    """
-    ax = ax or plt.subplot()
-    # ax.set_aspect(1.0) # don't do this as it makes the plot hard to read.
-    for i, surface in enumerate(surfaces_list):
-        plot_surface_at_1000cm(ax, surface, color_num=i, plot_both_sides=plot_both_sides)
-    ax.legend()
-    ax.set_aspect("equal")
-    ax.set_ylim([-1000, 1000])
-    if plot_both_sides:
-        ax.set_xlim([-1000, 1000])
-    else:
-        ax.set_xlim([0, 1000])
-    ax.set_aspect(1.0)
-    return ax
-
-
-def plot_surface_at_1000cm(
-    ax: plt.Axes, surface: openmc.Surface, color_num: int, *, plot_both_sides: bool
-) -> None:
-    """
-    In the range [-1000, 1000], plot the RZ cross-section of the ZCylinder/ZPlane/ZCone.
-
-    Parameters
-    ----------
-    ax:
-        The axes object on which the surface shall be drawn.
-    surface:
-        The surface to be drawn.
-    color_num:
-        The C? number that is parsed onto matplotlib, to specify what colour should be
-        used to draw the line representing the surface.
-    plot_both_sides:
-        If it is a ZCylinder, then its RZ cross-section is symmetric along the x=0 line.
-        Therefore if we only want to look at the RHHP (which is going to be a mirrored
-        copy of the LHHP) there is no need to plot the LHS line (the part of the
-        ZCylinder intersecting the x<0 LHHP). So when plot_both_sides is false, we skip
-        plotting the LHS line.
-    """
-    if isinstance(surface, openmc.ZCylinder):
-        label_str = f"{surface.id}: {surface.name}"
-        ax.plot(
-            [surface.r, surface.r],
-            [-1000, 1000],
-            label=(label_str + " (RHHP)") if plot_both_sides else label_str,
-            color=f"C{color_num}",
-        )
-        if plot_both_sides:
-            ax.plot(
-                [-surface.r, -surface.r],
-                [-1000, 1000],
-                label=label_str + " (LHHP)",
-                color=f"C{color_num}",
-                linestyle="-.",
-            )
-    elif isinstance(surface, openmc.ZPlane):
-        ax.plot(
-            [-1000, 1000],
-            [surface.z0, surface.z0],
-            label=f"{surface.id}: {surface.name}",
-            color=f"C{color_num}",
-        )
-    elif isinstance(surface, openmc.ZCone):
-        intercept = surface.z0
-        slope = 1 / np.sqrt(surface.r2)
-
-        def equation_pos(x):
-            return slope * np.array(x) + intercept
-
-        def equation_neg(x):
-            return -slope * np.array(x) + intercept
-
-        y_pos, y_neg = equation_pos([-1000, 1000]), equation_neg([-1000, 1000])
-        ax.plot(
-            [-1000, 1000],
-            y_pos,
-            label=f"{surface.id}: {surface.name} (upper)",
-            linestyle=":",
-            color=f"C{color_num}",
-        )
-        ax.plot(
-            [-1000, 1000],
-            y_neg,
-            label=f"{surface.id}: {surface.name} (lower)",
-            linestyle="--",
-            color=f"C{color_num}",
-        )
-
-
-def plot_regions(surfaces_list: list[openmc.Region], *, ax=None) -> plt.Axes: ...
-
-
-def plot_region_up_to_1000cm(
-    ax: plt.Axes,
-    region: openmc.Region,
-    color_num: int,
-    *,
-    plot_both_sides: bool,
-    alpha: float = 0.4,
-) -> None:
-    """
-    Plot the openmc.Region where the thing
-
-    Parameters
-    ----------
-    ax:
-        The axes object on which the regions shall be plotted
-    region:
-        region to be plotted
-    color_num:
-        The C? number that is parsed onto matplotlib, to specify what colour should be
-        used to draw the line representing the surface.
-
-    Raises
-    ------
-    NotImplementedError
-        We can only accept ZCylinder, ZPlane, ZCone, and halfcones
-
-    Returns
-    -------
-    :
-        The axes on which the region is plotted
-    """
-    if isinstance(openmc.Halfspace):
-        ax.add_patch(plt.Polygon())
-        if (
-            isinstance(region.surface, openmc.ZCylinder)
-            or isinstance(region.surface, openmc.ZPlane)
-            or isinstance(region.surface, openmc.ZCone)
-        ):
-            ...
-        else:
-            raise NotImplementedError(
-                f"type{region.surface} is not one of the accepted surfaces!"
-            )
-    elif isinstance(openmc.Intersection):
-        surfaces = list(region.get_surfaces())
-        if len(surfaces) != 2:
-            raise NotImplementedError(
-                f"Expected intersection of a cone with a ZPlane, instead got {surfaces}!"
-            )
-        ax.add_patch(plt.Polygon())
-    else:
-        raise NotImplementedError(f"This function cannot plot type {type(region)}!")
-    return ax
 
 
 def torus_from_3points(
@@ -322,7 +153,7 @@ def choose_plane_cylinders(
     surface: openmc.ZPlane | openmc.ZCylinder, choice_points: npt.NDArray
 ) -> openmc.Halfspace:
     """
-    choose a side of the Halfspace in the region of ZPlane and ZCylinder.
+    Choose a side of the Halfspace in the region of ZPlane and ZCylinder.
 
     Parameters
     ----------
@@ -384,14 +215,11 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
     return openmc.Union(union_dictionary(openmc.Union(region_list)).values())
 
 
-# TODO @OceanNuclear: Raise issue/papercut to check if simplifying the
-# boolean expressions can yield
-# speedup or not, and if so, we should attempt to simplify it further.
+# TODO @OceanNuclear: issue 3530: check if simplifying the boolean expressions can yield
+# speedup or not, and if so, we should attempt to implement a simplification algorithm.
+# https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3530
 # E.g. the expression (-1 ((-1107 -1) | -1108)) can be simplified to (-1107 | -1108) -1;
-# And don't even get me started on how much things can get simplified when ~ is involved.
-# It is possible that boolean expressions get condensed appropriately before getting
-# parsed onto openmc. I can't tell either way.
-# 3530
+# which is (hopefully) faster to evaluate.
 
 
 def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
@@ -499,9 +327,13 @@ class OpenMCEnvironment:
         :
             A collection of surfaces, each corresponding to a WireInfo.
             The WireInfo is listed here because we want them to.
+
+            For every circular arc used, we'll return a pair of shapes (a plane/cone/
+            cylinder paired with a torus), otherwise for all straight-lines, we'll just
+            return a plane/cone/cylinder.
         """
         surface_list = []
-        for wire in wire_info_list.info_list:
+        for wire in wire_info_list:
             info = wire.key_points
             plane_cone_cylinder = self.surface_from_straight_line(info, name=name)
             if isinstance(info, CircleInfo):
@@ -551,7 +383,7 @@ class OpenMCEnvironment:
         control_id: bool = False,
     ) -> openmc.Region:
         """
-        choose the region for a ZCone.
+        Choose the region for a ZCone.
         When reading this function's code, bear in mind that a Z cone can be separated
         into 3 parts:
 
