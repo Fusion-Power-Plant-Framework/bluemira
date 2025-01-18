@@ -284,7 +284,7 @@ class OpenMCEnvironment:
         point2: npt.NDArray[np.float64],
         surface_id: int | None = None,
         name: str = "",
-    ) -> openmc.Surface | openmc.model.ZConeOneSided | None:
+    ) -> openmc.Surface | None:
         """
         Create either a cylinder, a cone, or a surface from 2 points using only the
         rz coordinates of any two points on it.
@@ -326,14 +326,28 @@ class OpenMCEnvironment:
         straight_line_info: StraightLineInfo,
         surface_id: int | None = None,
         name: str = "",
-    ):
-        """Create a surface to match the straight line info provided."""
+    ) -> openmc.Surface:
+        """Create a surface to match the straight line info provided.
+
+        Parameters
+        ----------
+        straight_line_info:
+            The info of the straight line that we're supposed to replicate using a
+            surface.
+        surface_id, name:
+            see openmc.Surface
+
+        Returns
+        -------
+        :
+            the straight line re-produced as a openmc.Surface.
+        """
         start_end = np.array(straight_line_info[:2])[:, ::2]
         return self.surface_from_2points(*start_end, surface_id=surface_id, name=name)
 
     def surfaces_from_info_list(
         self, wire_info_list: WireInfoList, name: str = ""
-    ) -> tuple[openmc.Surfaces]:
+    ) -> tuple[tuple[openmc.Surface]]:
         """
         Create a list of surfaces using a list of wire infos.
 
@@ -347,12 +361,12 @@ class OpenMCEnvironment:
         Returns
         -------
         :
-            A collection of surfaces, each corresponding to a WireInfo.
-            The WireInfo is listed here because we want them to.
+            A collection of 1-tuple/2-tuple of surfaces, each corresponding to a
+            WireInfo.
 
             For every circular arc used, we'll return a pair of shapes (a plane/cone/
             cylinder paired with a torus), otherwise for all straight-lines, we'll just
-            return a plane/cone/cylinder.
+            return a plane/cone/cylinder, wrapped in a tuple.
         """
         surface_list = []
         for wire in wire_info_list:
