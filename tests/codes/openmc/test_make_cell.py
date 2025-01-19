@@ -16,4 +16,9 @@ def test_convexity_cell_arrays(): ...
 
 def test_in_cell():
     """Checking the functionality of each cell"""
-    ...
+
+
+def test_cell_walls_multiply_accessed():
+    """Each cell wall must've been accessed by the cells on either side, thus must've
+    been used at least twice.
+    """
