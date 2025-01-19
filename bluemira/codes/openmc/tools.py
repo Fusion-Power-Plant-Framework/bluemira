@@ -58,6 +58,11 @@ def torus_from_3points(
         RZ coordinates of the 3 points on the surface of the torus.
     surface_id, name:
         See openmc.Surface
+
+    Returns
+    -------
+    :
+        An axisymmetric torus whose surface runs through those three points.
     """
     point1 = point1[0], 0, point1[-1]
     point2 = point2[0], 0, point2[-1]
@@ -88,6 +93,11 @@ def torus_from_circle(
         Center of the cross-section circle, which forms the center of the torus.
     surface_id, name:
         See openmc.Surface
+
+    Returns
+    -------
+    :
+        A torus whose surface intersects with this circle at the RZ plane.
     """
     return z_torus(
         [center[0], center[-1]], minor_radius, surface_id=surface_id, name=name
@@ -111,6 +121,10 @@ def z_torus(
     minor_radius:
         minor radius of the torus
 
+    Returns
+    -------
+    :
+        A torus of the given parameters.
     """
     major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
     return openmc.ZTorus(
@@ -134,6 +148,11 @@ def choose_halfspace(
     ----------
     surface:
         an openmc surface
+
+    Returns
+    -------
+    :
+        The half space containing the choice_points.
 
     Raises
     ------
@@ -162,6 +181,11 @@ def choose_plane_cylinders(
     choice_points: np.ndarray of shape (N, 3)
         a list of points representing the vertices of a convex polygon in RZ plane
 
+    Returns
+    -------
+    :
+        The half space containing the choice_points.
+
     Raises
     ------
     GeometryError
@@ -186,6 +210,17 @@ def flat_intersection(region_list: Iterable[openmc.Region]) -> openmc.Intersecti
     """
     Get the flat intersection of an entire list of regions.
     e.g. (a (b c)) becomes (a b c)
+
+    Parameters
+    ----------
+    region_list:
+        The list of regions (or intersection of regions) that we want to find the
+        intersection of.
+
+    Returns
+    -------
+    :
+        A flattened representation of the intersection of regions.
     """
     return openmc.Intersection(
         intersection_dictionary(openmc.Intersection(region_list)).values()
@@ -206,7 +241,6 @@ def intersection_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
     :
         A dictionary of the regions that needs to be intersectioned together; each key
         is the str representation of that region (e.g. '-3', or '9|-11').
-
     """
     if isinstance(region, openmc.Halfspace):  # termination condition
         return {region.side + str(region.surface.id): region}
@@ -247,6 +281,17 @@ def flat_union(region_list: Iterable[openmc.Region]) -> openmc.Union:
 def union_dictionary(region: openmc.Region) -> dict[str, openmc.Region]:
     """Get a dictionary of all of the elements that shall be unioned together,
     applying the rule of associativity
+
+    Parameters
+    ----------
+    region:
+        Multiple openmc.Halfspaces unioned together.
+
+    Returns
+    -------
+    :
+        A dictionary representation of all of the regions that needs to be unioned
+        together.
     """
     if isinstance(region, openmc.Halfspace):  # termination condition
         return {region.side + str(region.surface.id): region}
@@ -262,6 +307,15 @@ def round_up_next_openmc_ids(surface_step_size: int = 1000, cell_step_size: int 
     """
     Make openmc's surfaces' and cells' next IDs to be incremented to the next
     pre-determined interval.
+
+    Parameters
+    ----------
+    surface_step_size:
+        How much should the next surface id be. e.g. if =1000, and current ID = 2200,
+        then it will round up to 3000 (next nearest 1000).
+    cell_step_size:
+        How much should the next cell id be. e.g. if =100, and current ID = 150, then
+        it will round up to 200 (next nearest 100).
     """
     openmc.Surface.next_id = (
         int(max(openmc.Surface.used_ids) / surface_step_size + 1) * surface_step_size + 1
@@ -356,6 +410,7 @@ class OpenMCEnvironment:
         wire_info_list
             List of wires
         name
+            Name of the surface that is created from this series of WireInfo.
             This name will be *reused* across all of the surfaces created in this list.
 
         Returns
@@ -400,6 +455,12 @@ class OpenMCEnvironment:
             within this range of z. Unit: [m]
         surface_id, name:
             See openmc.Surface
+
+        Returns
+        -------
+        :
+            A z-plane, either retrieved from the self.hangar or created from scratch and
+            saved into self.hangar.
         """
         if z_range is not None:
             z_min, z_max = min(z_range), max(z_range)
