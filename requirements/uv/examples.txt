@@ -57,7 +57,7 @@ coolprop==6.6.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.11
+debugpy==1.8.12
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -99,7 +99,7 @@ idna==3.10
     #   httpx
     #   jsonschema
     #   requests
-imageio==2.36.1
+imageio==2.37.0
     # via bluemira (pyproject.toml)
 ipykernel==6.29.5
     # via jupyterlab
@@ -343,7 +343,7 @@ pyzmq==26.2.0
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -449,6 +449,7 @@ typing-extensions==4.12.2
     #   mistune
     #   pint
     #   pyvista
+    #   referencing
     #   rich
     #   tables
     #   typeguard
