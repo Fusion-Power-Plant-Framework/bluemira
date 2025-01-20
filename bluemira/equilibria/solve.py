@@ -23,6 +23,7 @@ from bluemira.base.look_and_feel import (
 )
 from bluemira.equilibria.constants import PSI_REL_TOL
 from bluemira.equilibria.diagnostics import PicardDiagnosticOptions
+from bluemira.equilibria.profiles import OPointCalcOptions
 from bluemira.optimisation.error import OptimisationError
 
 if TYPE_CHECKING:
@@ -468,6 +469,7 @@ class PicardIterator:
         fixed_coils: bool = False,
         relaxation: float = 0,
         maxiter: int = 30,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ):
         self.eq = eq
         self.coilset = self.eq.coilset
@@ -487,6 +489,7 @@ class PicardIterator:
         self.relaxation = relaxation
         self.maxiter = maxiter
         self.diagnostic_plotting = diagnostic_plotting or PicardDiagnosticOptions()
+        self.o_point_fallback = o_point_fallback
         self.i = 0
 
     def _optimise_coilset(self):
@@ -652,5 +655,10 @@ class PicardIterator:
         """
         o_points, x_points = self.eq.get_OX_points(force_update=True)
         self.eq._jtor = self.eq.profiles.jtor(
-            self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
+            self.eq.x,
+            self.eq.z,
+            self.eq.psi(),
+            o_points,
+            x_points,
+            o_point_fallback=self.o_point_fallback,
         )
