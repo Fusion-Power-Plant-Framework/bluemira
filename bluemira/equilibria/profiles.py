@@ -11,6 +11,7 @@ Plasma profile objects, shape functions, and associated tools
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
+from bluemira.equilibria.find import Opoint, find_LCFS_separatrix, in_plasma, in_zone
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
 from bluemira.equilibria.plotting import ProfilePlotter
 
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from bluemira.equilibria.find import Opoint, Xpoint
+    from bluemira.equilibria.find import Xpoint
 
 __all__ = [
     "BetaIpProfile",
@@ -363,6 +364,15 @@ class LuxonExpFunc(ShapeFunction):
 # =============================================================================
 
 
+class OPointCalcOptions(Enum):
+    """
+    O point estimation fallback options
+    """
+
+    RAISE = auto()
+    GRID_CENTRE = auto()
+
+
 class Profile(ABC):
     """
     Profile base class
@@ -435,7 +445,9 @@ class Profile(ABC):
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
         x_points: list[Xpoint],
-        lcfs: np.ndarray | None = None,
+        lcfs: npt.NDArray[np.float64] | None = None,
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ) -> tuple[float, float, npt.NDArray[np.float64]]:
         """
         Do-not-repeat-yourself utility
@@ -452,6 +464,10 @@ class Profile(ABC):
             The list of O-points
         x_points:
             The list of X-points
+        lcfs:
+            The lcfs (used for fixed boundary handling)
+        o_point_fallback:
+            If no o points are found use an estimation method
 
         Returns
         -------
@@ -475,21 +491,21 @@ class Profile(ABC):
                     "Need to specify O and X-points when providing an LCFS."
                 )
 
-            return x_points[0][2], o_points[0][2], in_zone(x, z, lcfs)
+            return x_points[0].psi, o_points[0].psi, in_zone(x, z, lcfs)
 
         if not o_points:
-            _f, ax = plt.subplots()
-            ax.contour(x, z, psi, cmap="viridis")
-            # TODO @CoronelBuendia: Handle this better, with perhaps some alternatives
-            # 3583
-            # e.g.
-            # nx, nz = psi.shape
-            # psio = psi[nx//2, nz//2]
-            raise EquilibriaError("No O-points found!")
+            match o_point_fallback:
+                case OPointCalcOptions.GRID_CENTRE:
+                    nx, nz = psi.shape
+                    o_points = [Opoint(x[nx // 2], z[nz // 2], psi[nx // 2, nz // 2])]
+                case _:
+                    _f, ax = plt.subplots()
+                    ax.contour(x, z, psi, cmap="viridis")
+                    raise EquilibriaError("No O-points found!")
 
-        psio = o_points[0][2]
+        psio = o_points[0].psi
         if x_points:
-            psix = x_points[0][2]
+            psix = x_points[0].psi
             mask = in_plasma(x, z, psi, o_points, x_points)
         else:
             psix = psi[0, 0]
@@ -608,6 +624,8 @@ class BetaIpProfile(Profile):
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
         x_points: list[Xpoint],
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ) -> npt.NDArray[np.float64]:
         """
         Calculate toroidal plasma current array.
@@ -628,7 +646,9 @@ class BetaIpProfile(Profile):
         """  # noqa: W505, E501, DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psix, psio, mask = self._jtor(x, z, psi, o_points, x_points)
+        psix, psio, mask = self._jtor(
+            x, z, psi, o_points, x_points, o_point_fallback=o_point_fallback
+        )
         psi_norm = (psi - psio) / (psix - psio)
         self.psisep = psix
         self.psiax = psio
@@ -818,6 +838,8 @@ class CustomProfile(Profile):
         o_points: list[Opoint],
         x_points: list[Xpoint],
         lcfs: npt.NDArray[np.float64] | None = None,
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ) -> npt.NDArray[np.float64]:
         """
         Calculate toroidal plasma current
@@ -826,7 +848,9 @@ class CustomProfile(Profile):
         """  # noqa: DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points, lcfs=lcfs)
+        psisep, psiax, mask = self._jtor(
+            x, z, psi, o_points, x_points, lcfs=lcfs, o_point_fallback=o_point_fallback
+        )
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
