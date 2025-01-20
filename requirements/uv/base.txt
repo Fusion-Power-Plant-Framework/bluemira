@@ -42,7 +42,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
-imageio==2.36.1
+imageio==2.37.0
     # via bluemira (pyproject.toml)
 joblib==1.4.2
     # via scikit-learn

@@ -46,7 +46,7 @@ coverage==7.6.10
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.11
+debugpy==1.8.12
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -87,7 +87,7 @@ identify==2.6.5
     # via pre-commit
 idna==3.10
     # via requests
-imageio==2.36.1
+imageio==2.37.0
     # via bluemira (pyproject.toml)
 imagesize==1.4.1
     # via sphinx
@@ -323,7 +323,7 @@ pyzmq==26.2.0
     # via
     #   ipykernel
     #   jupyter-client
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -437,6 +437,7 @@ typing-extensions==4.12.2
     #   myst-nb
     #   pint
     #   pyvista
+    #   referencing
     #   rich
     #   sqlalchemy
     #   tables
@@ -445,7 +446,7 @@ tzdata==2024.2
     # via pandas
 urllib3==2.3.0
     # via requests
-virtualenv==20.28.1
+virtualenv==20.29.1
     # via pre-commit
 vtk==9.3.1
     # via
