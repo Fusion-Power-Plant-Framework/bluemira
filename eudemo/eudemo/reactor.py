@@ -666,14 +666,6 @@ if __name__ == "__main__":
         vv_thermal_shield, cryostat_thermal_shield
     )
 
-    reactor.save_cad(
-        "xyz",
-        {
-            "with_components": [reactor.thermal_shield, reactor.pf_coils],
-            "group_by_materials": True,
-        },
-    )
-
     reactor.coil_structures = build_coil_structures(
         reactor_config.params_for("Coil structures"),
         reactor_config.config_for("Coil structures"),

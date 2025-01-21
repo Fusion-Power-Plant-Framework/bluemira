@@ -199,7 +199,7 @@ class ConstructionParamValues:
             component_filter=comp_filter,
             n_sectors=n_secs,
             total_sectors=tot_secs,
-            group_by_materials=construction_params.get("groups_by_materials", False),
+            group_by_materials=construction_params.get("group_by_materials", False),
         )
 
 
