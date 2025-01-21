@@ -1880,7 +1880,9 @@ class Equilibrium(CoilSetMHDState):
         )
         return res.x[0], z
 
-    def analyse_core(self, n_points: int = 50, *, plot: bool = True) -> CoreResults:
+    def analyse_core(
+        self, n_points: int = 50, *, plot: bool = True, ax=None
+    ) -> CoreResults:
         """
         Analyse the shape and characteristics of the plasma core.
 
@@ -1896,8 +1898,8 @@ class Equilibrium(CoilSetMHDState):
         """
         results = analyse_plasma_core(self, n_points=n_points)
         if plot:
-            CorePlotter(results)
-        return results
+            cp = CorePlotter(results, ax=ax)
+        return results, cp.ax
 
     def analyse_plasma(self) -> EqSummary:
         """
@@ -2001,7 +2003,7 @@ class Equilibrium(CoilSetMHDState):
             field=True,
         )
 
-    def plot_core(self):
+    def plot_core(self, ax=None):
         """
         Plot a 1-D section through the magnetic axis.
 
@@ -2010,4 +2012,4 @@ class Equilibrium(CoilSetMHDState):
         :
             The plot axis
         """
-        return CorePlotter2(self)
+        return CorePlotter2(self, ax)
