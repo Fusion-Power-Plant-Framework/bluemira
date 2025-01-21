@@ -20,7 +20,6 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -667,6 +666,14 @@ if __name__ == "__main__":
         vv_thermal_shield, cryostat_thermal_shield
     )
 
+    reactor.save_cad(
+        "xyz",
+        {
+            "with_components": [reactor.thermal_shield, reactor.pf_coils],
+            "group_by_materials": True,
+        },
+    )
+
     reactor.coil_structures = build_coil_structures(
         reactor_config.params_for("Coil structures"),
         reactor_config.config_for("Coil structures"),
@@ -749,10 +756,6 @@ if __name__ == "__main__":
         rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
-
-    reactor.save_cad()
-
-    sys.exit()
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary)

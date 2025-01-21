@@ -136,6 +136,7 @@ class ConstructionParams(TypedDict):
     component_filter: NotRequired[Callable[[Component], bool] | None]
     n_sectors: NotRequired[int | None]
     total_sectors: NotRequired[int | None]
+    group_by_materials: NotRequired[bool]
 
 
 @dataclass(frozen=True)
@@ -148,6 +149,7 @@ class ConstructionParamValues:
     component_filter: Callable[[Component], bool] | None
     n_sectors: int
     total_sectors: int
+    group_by_materials: bool
 
     @classmethod
     def empty(cls) -> ConstructionParamValues:
@@ -164,6 +166,7 @@ class ConstructionParamValues:
             component_filter=None,
             n_sectors=1,
             total_sectors=1,
+            group_by_materials=False,
         )
 
     @classmethod
@@ -196,6 +199,7 @@ class ConstructionParamValues:
             component_filter=comp_filter,
             n_sectors=n_secs,
             total_sectors=tot_secs,
+            group_by_materials=construction_params.get("groups_by_materials", False),
         )
 
 
@@ -522,7 +526,10 @@ def build_comp_manager_save_xyz_cad_tree(
         comp_manager, construction_params
     )
 
-    mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
+    if construction_params.group_by_materials:
+        mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
+    else:
+        mat_to_comps_map = {"": constructed_phy_comps}
 
     return_comp = Component(name=manager_name)
     return_comp.children = _build_compounds_from_map(
