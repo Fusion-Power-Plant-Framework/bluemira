@@ -15,8 +15,9 @@ from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
+from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.materials.material import Void
 
 REACTOR_NAME = "My Reactor"
@@ -29,11 +30,19 @@ class TFCoil(ComponentManager):
     """
 
 
+class VVTS(ComponentManager):
+    """
+    This component manager is purely for testing the reactor is still
+    valid if this is not set, so we don't need to implement it.
+    """
+
+
 class MyReactor(Reactor):
     SOME_CONSTANT: str = "not a component"
 
     plasma: Plasma
     tf_coil: TFCoil
+    vvts: VVTS
 
 
 @pytest.mark.classplot
@@ -132,6 +141,17 @@ class TestReactor:
                 PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
                 {},
                 lcfs,
+            ).build()
+        )
+        reactor.vvts = VVTS(
+            VVTSBuilder(
+                {
+                    "g_vv_ts": {"value": 0.05, "unit": "m"},
+                    "n_TF": {"value": 16, "unit": ""},
+                    "tk_ts": {"value": 0.05, "unit": "m"},
+                },
+                {},
+                make_circle(10, center=(15, 0, 0), axis=(0.0, 1.0, 0.0)),
             ).build()
         )
         return reactor
