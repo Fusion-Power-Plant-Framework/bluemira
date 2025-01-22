@@ -7,6 +7,7 @@
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.reactor import ComponentManager
+from bluemira.base.tools import CADConstructionType
 from bluemira.equilibria.coils._grouping import CoilSet
 
 
@@ -18,6 +19,13 @@ class PFCoil(ComponentManager):
     def __init__(self, component, coilset):
         super().__init__(component)
         self._coilset = coilset
+
+    @staticmethod
+    def cad_construction_type() -> CADConstructionType:
+        """
+        Returns the construction type of the component tree wrapped by this manager.
+        """  # noqa: DOC201
+        return CADConstructionType.REVOLVE_XZ
 
     @property
     def coilset(self) -> CoilSet:

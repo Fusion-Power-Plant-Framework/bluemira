@@ -26,43 +26,6 @@ if TYPE_CHECKING:
     from bluemira.geometry.placement import BluemiraPlacement
 
 
-class GeoMeshable(meshing.Meshable):
-    """
-    Extended Meshable class for BluemiraGeo objects.
-    """
-
-    def remove_mesh_options(self, *, recursive: bool = False):  # noqa: ARG002
-        """
-        Remove mesh options for this object.
-        """
-        super().remove_mesh_options()
-        if hasattr(self, "boundary"):
-            for obj in self.boundary:
-                if isinstance(obj, GeoMeshable):
-                    obj.remove_mesh_options(recursive=True)
-
-    def print_mesh_options(self, *, recursive: bool = True) -> list:  # noqa: ARG002
-        """
-        Print the mesh options for this object.
-
-        Returns
-        -------
-        :
-            The mesh options.
-        """
-        # TODO @ivanmaione: improve the output of this function
-        # 3584
-        output = []
-        output.append(self.mesh_options)
-        if hasattr(self, "boundary"):
-            output.extend([
-                obj.print_mesh_options(recursive=True)
-                for obj in self.boundary
-                if isinstance(obj, GeoMeshable)
-            ])
-        return output
-
-
 class _Orientation(enum.Enum):
     FORWARD = "Forward"
     REVERSED = "Reversed"
@@ -71,7 +34,7 @@ class _Orientation(enum.Enum):
 BluemiraGeoT = TypeVar("BluemiraGeoT", bound="BluemiraGeo")
 
 
-class BluemiraGeo(ABC, GeoMeshable):
+class BluemiraGeo(ABC, meshing.Meshable):
     """
     Abstract base class for geometry.
 

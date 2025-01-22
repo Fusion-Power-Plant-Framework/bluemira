@@ -35,10 +35,20 @@ class BluemiraCompound(BluemiraGeo):
         List of BluemiraGeo objects to include in the compound
     label:
         Label to assign to the compound
+    _compound_obj:
+        A pre-constructed compound object to use for the shape. This should only be used
+        by the _create classmethod.
     """
 
-    def __init__(self, boundary: list[BluemiraGeo], label: str = ""):
+    def __init__(
+        self,
+        boundary: list[BluemiraGeo],
+        label: str = "",
+        *,
+        _compound_obj: cadapi.apiCompound | None = None,
+    ):
         boundary_classes = [BluemiraGeo]
+        self._compound_obj = _compound_obj
         super().__init__(boundary, label, boundary_classes)
 
     def _create_shape(self) -> cadapi.apiCompound:
@@ -48,6 +58,8 @@ class BluemiraCompound(BluemiraGeo):
         apiCompound:
             Shape of the object as a single compound.
         """
+        if self._compound_obj:
+            return self._compound_obj
         return cadapi.apiCompound([s.shape for s in self.boundary])
 
     @classmethod
@@ -59,18 +71,27 @@ class BluemiraCompound(BluemiraGeo):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        bm_solids = [BluemiraSolid._create(solid) for solid in cadapi.solids(obj)]
-        bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
-        bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
-        bm_wires = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
-        if len(bm_wires) == 0:
-            # In some edge cases there are edges that are not captured within wires
-            bm_wires = [
+        if cadapi.solids(obj):
+            topo_compound_shapes = [
+                BluemiraSolid._create(solid) for solid in cadapi.solids(obj)
+            ]
+        elif cadapi.shells(obj):
+            topo_compound_shapes = [
+                BluemiraShell._create(shell) for shell in cadapi.shells(obj)
+            ]
+        elif cadapi.faces(obj):
+            topo_compound_shapes = [
+                BluemiraFace._create(face) for face in cadapi.faces(obj)
+            ]
+        elif cadapi.wires(obj):
+            topo_compound_shapes = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
+        else:
+            topo_compound_shapes = [
                 BluemiraWire(wire)
                 for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
             ]
 
-        return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label)
+        return cls(topo_compound_shapes, label=label, _compound_obj=obj)
 
     @property
     def vertexes(self) -> Coordinates:
@@ -80,35 +101,35 @@ class BluemiraCompound(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the compound.
         """
         return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the compound.
         """
         return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
-    def faces(self) -> tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace, ...]:
         """
         The faces of the compound.
         """
         return tuple(BluemiraFace._create(o) for o in cadapi.faces(self.shape))
 
     @property
-    def shells(self) -> tuple[BluemiraShell]:
+    def shells(self) -> tuple[BluemiraShell, ...]:
         """
         The shells of the compound.
         """
         return tuple(BluemiraShell._create(o) for o in cadapi.shells(self.shape))
 
     @property
-    def solids(self) -> tuple[BluemiraSolid]:
+    def solids(self) -> tuple[BluemiraSolid, ...]:
         """
         The solids of the compound.
         """

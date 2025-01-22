@@ -10,7 +10,6 @@ Core functionality for the bluemira mesh module.
 
 from __future__ import annotations
 
-import inspect
 import operator
 import pprint
 from dataclasses import asdict, dataclass
@@ -244,7 +243,7 @@ class Mesh:
     def meshfile(self, meshfile: str | list[str]):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj: Component | Meshable, dim: int = 2):
+    def __call__(self, comp: Component | Meshable, dim: int = 2):
         """
         Generate the mesh and save it to file.
 
@@ -260,20 +259,34 @@ class Mesh:
         """
         bluemira_print("Starting mesh process...")
 
-        if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
+        from bluemira.base.components import (  # noqa: PLC0415
+            Component,
+            PhysicalComponent,
+        )
+
+        if isinstance(comp, PhysicalComponent):
+            shape_to_mesh = comp.shape
+        elif isinstance(comp, Component):
             from bluemira.base.tools import (  # noqa: PLC0415
                 create_compound_from_component,
             )
 
-            obj = create_compound_from_component(obj)
+            # This is done to create a single bluemira geometry
+            # from a component that may hold more than one geometry.
+            # This allows the meshing to be done on a single object,
+            # and have the labels set to the obj name.
 
-        if isinstance(obj, Meshable):
+            shape_to_mesh = create_compound_from_component(comp)
+        else:
+            shape_to_mesh = comp
+
+        if isinstance(shape_to_mesh, Meshable):
             # gmsh is initialised
             _FreeCADGmsh._initialise_mesh(self.terminal, self.modelname)
             # Mesh the object. A dictionary with the geometrical and internal
             # information that are used by gmsh is returned. In particular,
             # a gmsh key is added to any meshed entity.
-            buffer = self.__mesh_obj(obj, dim=dim)
+            buffer = self.__mesh_obj(shape_to_mesh, dim=dim)
             # Check for possible intersection (only allowed at the boundary to adjust
             # the gmsh_dictionary
             self.__iterate_gmsh_dict(buffer, self._check_intersections)
@@ -294,7 +307,9 @@ class Mesh:
             # close gmsh
             _FreeCADGmsh._finalise_mesh(self.logfile)
         else:
-            raise TypeError("Only Meshable objects can be meshed")
+            raise TypeError(
+                f"Only Meshable objects can be meshed, got ${type(shape_to_mesh)}"
+            )
 
         bluemira_print("Mesh process completed.")
 

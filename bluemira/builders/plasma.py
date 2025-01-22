@@ -16,6 +16,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor import ComponentManager
+from bluemira.base.tools import CADConstructionType
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -31,6 +32,18 @@ class Plasma(ComponentManager):
     """
     Wrapper around a plasma component tree.
     """
+
+    @staticmethod
+    def cad_construction_type() -> CADConstructionType:
+        """
+        The CAD construction type for the plasma is to revolve the XZ face.
+
+        Returns
+        -------
+        :
+            The CAD construction
+        """
+        return CADConstructionType.REVOLVE_XZ
 
     def lcfs(self) -> BluemiraWire:
         """

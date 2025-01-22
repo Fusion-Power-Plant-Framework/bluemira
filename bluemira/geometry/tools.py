@@ -30,7 +30,7 @@ from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
@@ -1879,6 +1879,59 @@ def raise_error_if_overlap(
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
+
+
+def make_compound(
+    shapes: Iterable[BluemiraGeo],
+    label: str = "",
+) -> BluemiraCompound:
+    """
+    Make a compound of the given shapes.
+
+    The shapes must all be the same topologic type (all solids, shells etc.). No mixing.
+
+    Parameters
+    ----------
+    shapes:
+        List of shape objects to be saved
+    label:
+        Label for the resulting shape
+    set_constituents:
+        If True, shapes will be set at as the compound's consitituents.
+        It won't be deriived from the cadapi shape.
+
+    Returns
+    -------
+    Result of the connect operation.
+
+    Raises
+    ------
+    GeometryError
+        In case the boolean operation fails.
+    ValueError
+        All shapes (2 or more) must be the same type
+    """
+    shapes = iterable_to_list(shapes)
+
+    if len(shapes) < 2:  # noqa: PLR2004
+        raise ValueError("At least 2 shapes must be given")
+
+    # check that all the shapes are of the same time
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+
+    api_shapes = [s.shape for s in shapes]
+    try:
+        compound_shape = cadapi.make_compound(api_shapes)
+        return BluemiraCompound._create(compound_shape, label)
+    except Exception as e:  # noqa: BLE001
+        raise GeometryError(f"make_compound operation failed: {e}") from None
+
+
+# ======================================================================================
+# Boolean operations
+# ======================================================================================
 def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     """
     Fuse two or more shapes together. Internal splitter are removed.
@@ -2054,7 +2107,7 @@ def serialise_shape(shape: BluemiraGeoT):
         sdict = {"label": shape.label, "boundary": output}
         for obj in shape.boundary:
             output.append(serialise_shape(obj))
-            if isinstance(shape, GeoMeshable) and shape.mesh_options is not None:
+            if shape.mesh_options is not None:
                 if shape.mesh_options.lcar is not None:
                     sdict["lcar"] = shape.mesh_options.lcar
                 if shape.mesh_options.physical_group is not None:
