@@ -62,9 +62,9 @@ class TestReactor:
         assert self.reactor.component().name == REACTOR_NAME
 
     def test_unset_components_are_not_part_of_component_tree(self):
-        # Only the plasma component is in the tree, as we haven't set the
+        # Only the plasma and vvts components are in the tree, as we haven't set the
         # TF coil
-        assert len(self.reactor.component().children) == 1
+        assert len(self.reactor.component().children) == 2
 
     def test_component_tree_built_from_class_properties(self):
         assert self.reactor.plasma.component().name == "Plasma"
@@ -75,7 +75,7 @@ class TestReactor:
             self.reactor.show_cad(dim)
 
         call_arg = mock_show.call_args[0][0]
-        assert isinstance(call_arg, BluemiraGeo)
+        assert all(isinstance(component, BluemiraGeo) for component in call_arg)
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
@@ -108,11 +108,10 @@ class TestReactor:
                 reactor.show_cad(dim, {"component_filter": None})
 
         call_arg = mock_show.call_args[0][0]
-        assert (
-            isinstance(call_arg, list)
-            if material_filter
-            else isinstance(call_arg, BluemiraGeo)
-        )
+        call_arg = [call_arg] if isinstance(call_arg, BluemiraGeo) else call_arg
+        # when material_filter is True, the call_arg is
+        # the BMSolid of the VVTS only (no plasma)
+        assert len(call_arg) <= 2 if material_filter else len(call_arg) == 3
 
     def test_save_cad(self, tmp_path):
         self.reactor.save_cad("xyz", directory=tmp_path)
