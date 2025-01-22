@@ -661,7 +661,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         """
         Plot the plasma coil.
         """
-        PlasmaCoilPlotter(self.ax, self.eq.plasma_coil())
+        PlasmaCoilPlotter(self.eq.plasma, ax=self.ax)
 
 
 class BreakdownPlotter(Plotter):
