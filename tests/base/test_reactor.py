@@ -114,7 +114,9 @@ class TestReactor:
         assert len(call_arg) <= 2 if material_filter else len(call_arg) == 3
 
     def test_save_cad(self, tmp_path):
-        self.reactor.save_cad("xyz", directory=tmp_path)
+        self.reactor.save_cad(
+            "xyz", directory=tmp_path, construction_params={"group_by_materials": True}
+        )
         assert Path(tmp_path, f"{REACTOR_NAME}.stp").is_file()
 
     def test_show_cad_empty_reactor(self):
