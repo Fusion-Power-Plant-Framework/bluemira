@@ -328,30 +328,29 @@ class TestSolveEquilibrium:
 
 
 class TestEquilibrium:
-    def test_double_null(self):
+    @classmethod
+    def setup_class(cls):
         path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        dn = Equilibrium.from_eqdsk(
+        cls.dn = Equilibrium.from_eqdsk(
             Path(path, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_positive=False
         )
-        assert dn.is_double_null
-        sn = Equilibrium.from_eqdsk(Path(path, "eqref_OOB.json"), from_cocos=7)
-        assert not sn.is_double_null
+        cls.sn = Equilibrium.from_eqdsk(Path(path, "eqref_OOB.json"), from_cocos=7)
+
+    def test_double_null(self):
+        assert self.dn.is_double_null
+        assert not self.sn.is_double_null
 
     def test_qpsi_calculation_modes(self):
-        path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        dn = Equilibrium.from_eqdsk(
-            Path(path, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_positive=False
-        )
-        with patch.object(dn, "q") as eq_q:
-            res = dn.to_dict(qpsi_calcmode=0)
+        with patch.object(self.dn, "q") as eq_q:
+            res = self.dn.to_dict(qpsi_calcmode=0)
             assert eq_q.call_count == 0
             assert "qpsi" not in res
 
-            res = dn.to_dict(qpsi_calcmode=1)
+            res = self.dn.to_dict(qpsi_calcmode=1)
             assert eq_q.call_count == 1
             assert "qpsi" in res
 
-            res = dn.to_dict(qpsi_calcmode=2)
+            res = self.dn.to_dict(qpsi_calcmode=2)
             assert eq_q.call_count == 1
             assert "qpsi" in res
             assert np.all(res["qpsi"] == 0)  # array is all zeros
@@ -381,6 +380,13 @@ class TestEquilibrium:
         ]
         assert e.coilset.n_coils(ctype="PF") == 6
         assert e.coilset.n_coils(ctype="CS") == 5
+
+    def test_plotting_field(self):
+        self.dn.plot_field()
+
+    @pytest.mark.parametrize("plasma", [False, True])
+    def test_plotting_plasma(self, plasma):
+        self.dn.plot(plasma=plasma)
 
 
 class TestEqReadWrite:
