@@ -10,7 +10,7 @@ from __future__ import annotations
 import abc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, get_args, get_type_hints
+from typing import TYPE_CHECKING, Any, Literal, get_args, get_type_hints
 
 from rich.progress import track
 
@@ -194,9 +194,13 @@ class ComponentManager(BaseManager):
         self._component = component
 
     def _init_construction_param_values(  # noqa: PLR6301
-        self,
-        c_params: ConstructionParams | None,
+        self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
     ) -> ConstructionParamValues:
+        c_params = c_params or {}
+        possible_keys = ConstructionParams.__annotations__.keys()
+        if pop_keys := set(kwargs.keys()).intersection(possible_keys):
+            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+
         return ConstructionParamValues.from_construction_params(c_params)
 
     @staticmethod
@@ -262,7 +266,7 @@ class ComponentManager(BaseManager):
         self._validate_cad_dim(dim)
 
         comp = self._build_save_cad_component(
-            dim, self._init_construction_param_values(construction_params)
+            dim, self._init_construction_param_values(construction_params, kwargs)
         )
         filename = filename or comp.name
 
@@ -298,7 +302,7 @@ class ComponentManager(BaseManager):
         show_components_cad(
             self._build_show_cad_component(
                 dim,
-                self._init_construction_param_values(construction_params),
+                self._init_construction_param_values(construction_params, kwargs),
             ),
             **kwargs,
         )
@@ -326,7 +330,7 @@ class ComponentManager(BaseManager):
         plot_component_dim(
             dim,
             self._build_show_cad_component(
-                dim, self._init_construction_param_values(construction_params)
+                dim, self._init_construction_param_values(construction_params, kwargs)
             ),
             **kwargs,
         )
@@ -386,11 +390,15 @@ class Reactor(BaseManager):
         self.start_time = time.perf_counter()
 
     def _init_construction_param_values(
-        self,
-        c_params: ConstructionParams | None,
+        self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
     ) -> ConstructionParamValues:
         c_params = c_params or {}
         c_params["total_sectors"] = self.n_sectors
+
+        possible_keys = ConstructionParams.__annotations__.keys()
+        if pop_keys := set(kwargs.keys()).intersection(possible_keys):
+            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+
         return ConstructionParamValues.from_construction_params(c_params)
 
     def component(self) -> Component:
@@ -525,7 +533,7 @@ class Reactor(BaseManager):
         save_components_cad(
             self._build_component_tree(
                 dim,
-                self._init_construction_param_values(construction_params),
+                self._init_construction_param_values(construction_params, kwargs),
                 for_save=True,
             ),
             Path(directory, filename).as_posix(),
@@ -564,7 +572,7 @@ class Reactor(BaseManager):
         show_components_cad(
             self._build_component_tree(
                 dim,
-                self._init_construction_param_values(construction_params),
+                self._init_construction_param_values(construction_params, kwargs),
                 for_save=False,
             ),
             **kwargs,
@@ -597,7 +605,7 @@ class Reactor(BaseManager):
             dim,
             self._build_component_tree(
                 dim,
-                self._init_construction_param_values(construction_params),
+                self._init_construction_param_values(construction_params, kwargs),
                 for_save=False,
             ),
             **kwargs,
