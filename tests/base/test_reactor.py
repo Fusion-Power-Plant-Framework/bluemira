@@ -119,6 +119,13 @@ class TestReactor:
         )
         assert Path(tmp_path, f"{REACTOR_NAME}.stp").is_file()
 
+    def test_save_cad_kwargs_api(self, tmp_path):
+        self.reactor.save_cad("xyz", directory=tmp_path, group_by_materials=True)
+        assert Path(tmp_path, f"{REACTOR_NAME}.stp").is_file()
+
+    def test_show_cad_kwargs_api(self):
+        self.reactor.show_cad("xyz", n_sectors=1)
+
     def test_show_cad_empty_reactor(self):
         reactor = Reactor(REACTOR_NAME, n_sectors=1)
         with pytest.raises(ComponentError):
