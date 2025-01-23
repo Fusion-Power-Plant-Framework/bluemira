@@ -137,6 +137,7 @@ class ConstructionParams(TypedDict):
     n_sectors: NotRequired[int | None]
     total_sectors: NotRequired[int | None]
     group_by_materials: NotRequired[bool]
+    disable_composite_grouping: NotRequired[bool]
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,7 @@ class ConstructionParamValues:
     n_sectors: int
     total_sectors: int
     group_by_materials: bool
+    disable_composite_grouping: bool
 
     @classmethod
     def empty(cls) -> ConstructionParamValues:
@@ -167,6 +169,7 @@ class ConstructionParamValues:
             n_sectors=1,
             total_sectors=1,
             group_by_materials=False,
+            disable_composite_grouping=False,
         )
 
     @classmethod
@@ -200,6 +203,9 @@ class ConstructionParamValues:
             n_sectors=n_secs,
             total_sectors=tot_secs,
             group_by_materials=construction_params.get("group_by_materials", False),
+            disable_composite_grouping=construction_params.get(
+                "disable_composite_grouping", False
+            ),
         )
 
 
@@ -526,12 +532,19 @@ def build_comp_manager_save_xyz_cad_tree(
         comp_manager, construction_params
     )
 
+    return_comp = Component(name=manager_name)
+
+    if construction_params.disable_composite_grouping:
+        # if disabled, simply set the constructed components as the children
+        # and return
+        return_comp.children = constructed_phy_comps
+        return return_comp
+
     if construction_params.group_by_materials:
         mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
     else:
         mat_to_comps_map = {"": constructed_phy_comps}
 
-    return_comp = Component(name=manager_name)
     return_comp.children = _build_compounds_from_map(
         mat_to_comps_map,
         manager_name,
