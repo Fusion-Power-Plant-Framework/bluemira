@@ -481,7 +481,9 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label: str = "", n_points: int = 2000) -> BluemiraWire:
+    def create_shape(
+        self, label: str = "", n_points: int = 2000, *, with_tangency: bool = False
+    ) -> BluemiraWire:
         """
         Make a CAD representation of the Princeton D.
 
@@ -508,8 +510,11 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         outer_arc = interpolate_bspline(
             xyz.T,
             label="outer_arc",
-            # start_tangent=[0, 0, 1],
-            # end_tangent=[0, 0, -1],
+            **(
+                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, -1]}
+                if with_tangency
+                else {}
+            ),
         )
         # TODO @CoronelBuendia: Enforce tangency of this bspline...
         # causing issues with offsetting

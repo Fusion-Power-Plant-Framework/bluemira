@@ -31,11 +31,7 @@ from bluemira.geometry.tools import (
 class TestOffset:
     @classmethod
     def setup_class(cls):
-        # TODO @CoronelBuendia: There is a known limitation
-        # of PrincetonD offsetting when building the
-        # BSpline from too many points...
-        # 3671
-        cls.p_wire = PrincetonD().create_shape(n_points=200, label="princeton")
+        cls.p_wire = PrincetonD().create_shape(label="princeton")
         cls.pf_wire = PictureFrame().create_shape(label="pict_frame")
         cls.t_wire = TripleArc().create_shape(label="triple")
         cls.tpf_wire = PictureFrame(inner="TAPERED_INNER").create_shape(label="tpf")
@@ -94,6 +90,25 @@ class TestOffset:
             assert new_wire.length < wire.length
             # Check that discretisation doesn't break
             new_wire.discretise(ndiscr=1000, byedges=True)
+
+    @pytest.mark.parametrize("wire", [PrincetonD().create_shape(with_tangency=True)])
+    @pytest.mark.parametrize(
+        "join",
+        [
+            pytest.param("intersect", marks=pytest.mark.xfail(reason="tangency #3586")),
+            "arc",
+        ],
+    )
+    def test_princetonD_tangent_offset(self, join, wire):
+        new_wire = offset_wire(wire, 1.0, join=join)
+        assert new_wire.length > wire.length
+        # Check that discretisation doesn't break
+        new_wire.discretise(ndiscr=1000, byedges=True)
+
+        new_wire = offset_wire(wire, -0.15, join=join)
+        assert new_wire.length < wire.length
+        # Check that discretisation doesn't break
+        new_wire.discretise(ndiscr=1000, byedges=True)
 
     def test_1_offset(self):
         o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
