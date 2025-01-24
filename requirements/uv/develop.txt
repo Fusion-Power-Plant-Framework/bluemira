@@ -4,7 +4,7 @@ alabaster==1.0.0
     # via sphinx
 anytree==2.12.1
     # via bluemira (pyproject.toml)
-asteval==1.0.5
+asteval==1.0.6
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
