@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.3
+fonttools==4.55.6
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -187,7 +187,7 @@ typing-extensions==4.12.2
     #   rich
     #   tables
     #   typeguard
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via requests
