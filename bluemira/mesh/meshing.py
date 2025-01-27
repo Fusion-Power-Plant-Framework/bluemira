@@ -331,23 +331,19 @@ class Mesh:
         """
         from bluemira.geometry.tools import serialise_shape  # noqa: PLC0415
 
-        if not hasattr(obj, "ismeshed") or not obj.ismeshed:
-            if type(obj).__name__ not in SUPPORTED_GEOS:
-                raise ValueError(
-                    f"Mesh procedure not implemented for {obj.__class__.__name__} type."
-                )
+        if type(obj).__name__ not in SUPPORTED_GEOS:
+            raise ValueError(
+                f"Mesh procedure not implemented for {obj.__class__.__name__} type."
+            )
 
-            # object is serialised into a dictionary
-            buffer = serialise_shape(obj)
+        # object is serialised into a dictionary
+        buffer = serialise_shape(obj)
 
-            # Each object is recreated into gmsh. Here there is a trick: in order to
-            # allow the correct mesh in case of intersection, the procedure
-            # is made meshing the objects with increasing dimension.
-            for d in range(1, dim + 1, 1):
-                self.__convert_item_to_gmsh(buffer, d)
-            obj.ismeshed = True
-        else:
-            bluemira_print("Object already meshed")
+        # Each object is recreated into gmsh. Here there is a trick: in order to
+        # allow the correct mesh in case of intersection, the procedure
+        # is made meshing the objects with increasing dimension.
+        for d in range(1, dim + 1, 1):
+            self.__convert_item_to_gmsh(buffer, d)
         return buffer
 
     def __convert_item_to_gmsh(self, buffer: dict, dim: int):
