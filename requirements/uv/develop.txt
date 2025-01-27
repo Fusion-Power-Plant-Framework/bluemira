@@ -12,7 +12,7 @@ astroid==3.3.8
     # via sphinx-autoapi
 asttokens==3.0.0
     # via stack-data
-attrs==24.3.0
+attrs==25.1.0
     # via
     #   jsonschema
     #   jupyter-cache
@@ -63,17 +63,17 @@ exceptiongroup==1.2.2
     # via
     #   ipython
     #   pytest
-executing==2.1.0
+executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
     # via nbformat
-filelock==3.16.1
+filelock==3.17.0
     # via virtualenv
 flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.3
+fonttools==4.55.6
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -83,7 +83,7 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 greenlet==3.1.1
     # via sqlalchemy
-identify==2.6.5
+identify==2.6.6
     # via pre-commit
 idna==3.10
     # via requests
@@ -91,7 +91,7 @@ imageio==2.37.0
     # via bluemira (pyproject.toml)
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.5.0
+importlib-metadata==8.6.1
     # via
     #   jupyter-cache
     #   myst-nb
@@ -257,9 +257,9 @@ pluggy==1.5.0
     # via pytest
 pooch==1.8.2
     # via pyvista
-pre-commit==4.0.1
+pre-commit==4.1.0
     # via bluemira (pyproject.toml)
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via ipython
 psutil==6.1.1
     # via ipykernel
@@ -323,7 +323,7 @@ pyzmq==26.2.0
     # via
     #   ipykernel
     #   jupyter-client
-referencing==0.36.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -442,7 +442,7 @@ typing-extensions==4.12.2
     #   sqlalchemy
     #   tables
     #   typeguard
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via requests
