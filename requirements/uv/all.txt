@@ -24,7 +24,7 @@ asttokens==3.0.0
     # via stack-data
 async-lru==2.0.4
     # via jupyterlab
-attrs==24.3.0
+attrs==25.1.0
     # via
     #   jsonschema
     #   jupyter-cache
@@ -90,17 +90,17 @@ exceptiongroup==1.2.2
     #   anyio
     #   ipython
     #   pytest
-executing==2.1.0
+executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
     # via nbformat
-filelock==3.16.1
+filelock==3.17.0
     # via virtualenv
 flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.3
+fonttools==4.55.6
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -118,7 +118,7 @@ httpcore==1.0.7
     # via httpx
 httpx==0.28.1
     # via jupyterlab
-identify==2.6.5
+identify==2.6.6
     # via pre-commit
 idna==3.10
     # via
@@ -130,7 +130,7 @@ imageio==2.37.0
     # via bluemira (pyproject.toml)
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.5.0
+importlib-metadata==8.6.1
     # via
     #   jupyter-cache
     #   myst-nb
@@ -366,11 +366,11 @@ polyscope==2.3.0
     # via bluemira (pyproject.toml)
 pooch==1.8.2
     # via pyvista
-pre-commit==4.0.1
+pre-commit==4.1.0
     # via bluemira (pyproject.toml)
 prometheus-client==0.21.1
     # via jupyter-server
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via ipython
 psutil==6.1.1
     # via ipykernel
@@ -446,7 +446,7 @@ pyzmq==26.2.0
     #   jupyter-server
 raysect==0.8.1.post1
     # via cherab
-referencing==0.36.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -605,7 +605,7 @@ typing-extensions==4.12.2
     #   sqlalchemy
     #   tables
     #   typeguard
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 uri-template==1.3.0
     # via jsonschema
