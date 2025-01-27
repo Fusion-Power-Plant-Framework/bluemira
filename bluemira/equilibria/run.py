@@ -41,6 +41,7 @@ from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
+from bluemira.equilibria.profiles import OPointCalcOptions
 from bluemira.equilibria.solve import (
     ConvergenceCriterion,
     DudsonConvergence,
@@ -166,6 +167,7 @@ class EQConfig:
     diagnostic_plotting: PicardDiagnosticOptions = field(
         default_factory=PicardDiagnosticOptions
     )
+    o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE
 
     def make_opt_problem(
         self,
@@ -450,6 +452,7 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
+            o_point_fallback=self.eq_settings.o_point_fallback,
         )
         program()
 
@@ -471,6 +474,7 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
+            o_point_fallback=self.eq_settings.o_point_fallback,
         )
         program()
 
@@ -563,6 +567,9 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
+            convergence=deepcopy(self.eq_settings.convergence),
+            relaxation=self.eq_settings.relaxation,
+            o_point_fallback=self.eq_settings.o_point_fallback,
         )
         program()
         return program
