@@ -48,7 +48,7 @@ joblib==1.4.2
     # via scikit-learn
 kiwisolver==1.4.8
     # via matplotlib
-llvmlite==0.43.0
+llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
     # via rich
@@ -70,7 +70,7 @@ neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
-numba==0.60.0
+numba==0.61.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
