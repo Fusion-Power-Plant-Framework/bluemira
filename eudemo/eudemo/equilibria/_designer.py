@@ -33,7 +33,12 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
 from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
+from bluemira.equilibria.profiles import (
+    BetaLiIpProfile,
+    CustomProfile,
+    OPointCalcOptions,
+    Profile,
+)
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
@@ -136,6 +141,9 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         self.diagnostic_plotting = PicardDiagnosticOptions(
             **self.build_config.get("diagnostic_plotting", {})
         )
+        self.o_point_fallback = self.build_config.get(
+            "o_point_fallback", OPointCalcOptions.RAISE
+        )
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
@@ -159,6 +167,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             relaxation=0.2,
             fixed_coils=True,
             diagnostic_plotting=self.diagnostic_plotting,
+            o_point_fallback=self.o_point_fallback,
         )
         self._result = iterator_program()
         self._iterator = iterator_program
