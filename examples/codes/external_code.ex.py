@@ -222,8 +222,7 @@ class Setup(CodesSetup):
         """Run mode"""
         inp = self.update_inputs()
         with open(self.infile, "w") as input_file:
-            for k, v in inp.items():
-                input_file.write(f"{k}  {v}\n")
+            input_file.writelines(f"{k}  {v}\n" for k, v in inp.items())
         return self.options.to_list()
 
 
