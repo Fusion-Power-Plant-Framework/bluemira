@@ -147,17 +147,17 @@ class LegFlux:
             leg = leg_dict[name]
             direction = -1 if name.find("inner") != -1 else 1
             if len(leg) > 0 and leg[0] is not None:
-                    leg.extend(
-                        _extract_offsets(
-                            self.eq,
-                            leg[0],
-                            direction,
-                            self.o_point,
-                            self.dx_offsets,
-                            self.delta_offsets,
-                        )
+                leg.extend(
+                    _extract_offsets(
+                        self.eq,
+                        leg[0],
+                        direction,
+                        self.o_point,
+                        self.dx_offsets,
+                        self.delta_offsets,
                     )
-                    leg_dict[name] = leg
+                )
+                leg_dict[name] = leg
         return leg_dict
 
     def get_legs(
