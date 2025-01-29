@@ -126,6 +126,18 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
             fp.unlink()
 
 
+def set_ax_for_psi_components(ax):
+    """Fuction to set labels etc for component psi plotting."""
+    ax[0].set_xlabel("$x$ [m]")
+    ax[0].set_ylabel("$z$ [m]")
+    ax[0].set_title("Coilset")
+    ax[0].set_aspect("equal")
+    ax[1].set_xlabel("$x$ [m]")
+    ax[1].set_ylabel("$z$ [m]")
+    ax[1].set_title("Plasma")
+    ax[1].set_aspect("equal")
+
+
 def xz_plot_setup(
     pname,
     folder,
@@ -157,14 +169,7 @@ def xz_plot_setup(
 
     if split_psi_plots:
         f, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
-        ax[0].set_xlabel("$x$ [m]")
-        ax[0].set_ylabel("$z$ [m]")
-        ax[0].set_title("Coilset")
-        ax[0].set_aspect("equal")
-        ax[1].set_xlabel("$x$ [m]")
-        ax[1].set_ylabel("$z$ [m]")
-        ax[1].set_title("Plasma")
-        ax[1].set_aspect("equal")
+        set_ax_for_psi_components(ax=ax)
 
     else:
         f, ax = plt.subplots()

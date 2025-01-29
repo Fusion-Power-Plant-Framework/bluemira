@@ -34,7 +34,12 @@ from bluemira.equilibria.diagnostics import (
 from bluemira.equilibria.find import Xpoint, _in_plasma, get_contours, grid_2d_contour
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi
-from bluemira.utilities.plot_tools import save_figure, smooth_contour_fill, str_to_latex
+from bluemira.utilities.plot_tools import (
+    save_figure,
+    set_ax_for_psi_components,
+    smooth_contour_fill,
+    str_to_latex,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -136,14 +141,7 @@ class Plotter:
                 )
             else:
                 self.ax = ax
-            self.ax[0].set_xlabel("$x$ [m]")
-            self.ax[0].set_ylabel("$z$ [m]")
-            self.ax[0].set_title("Coilset")
-            self.ax[0].set_aspect("equal")
-            self.ax[1].set_xlabel("$x$ [m]")
-            self.ax[1].set_ylabel("$z$ [m]")
-            self.ax[1].set_title("Plasma")
-            self.ax[1].set_aspect("equal")
+            set_ax_for_psi_components(self.ax)
 
         elif subplots is EqSubplots.VS_PSI_NORM:
             if ax is None:
@@ -1147,14 +1145,7 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
             legend.set_zorder(10)
             legend = self.ax[1].legend()
             legend.set_zorder(10)
-            self.ax[0].set_xlabel("$x$ [m]")
-            self.ax[0].set_ylabel("$z$ [m]")
-            self.ax[0].set_title("Coilset")
-            self.ax[0].set_aspect("equal")
-            self.ax[1].set_xlabel("$x$ [m]")
-            self.ax[1].set_ylabel("$z$ [m]")
-            self.ax[1].set_title("Plasma")
-            self.ax[1].set_aspect("equal")
+            set_ax_for_psi_components(self.ax)
         else:
             self.plot_psi()
             legend = self.ax.legend()
@@ -1344,14 +1335,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             legend.set_zorder(10)
             legend = self.ax[1].legend()
             legend.set_zorder(10)
-            self.ax[0].set_xlabel("$x$ [m]")
-            self.ax[0].set_ylabel("$z$ [m]")
-            self.ax[0].set_title("Coilset")
-            self.ax[0].set_aspect("equal")
-            self.ax[1].set_xlabel("$x$ [m]")
-            self.ax[1].set_ylabel("$z$ [m]")
-            self.ax[1].set_title("Plasma")
-            self.ax[1].set_aspect("equal")
+            set_ax_for_psi_components(self.ax)
         else:
             self.plot_psi(self.grid)
             legend = self.ax.legend()
