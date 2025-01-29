@@ -215,11 +215,12 @@ multi_analysis = MultiEqAnalysis(
 
 # %%
 # The same physics info as for the EqAnalysis but for all listed equilibria.
-multi_analysis.physics_info_table()
+multi_analysis.physics_info_dataframe()
 
 # %%
 # Plot physics parameters for the plamsa core
-ax = multi_analysis.plot_physics()
+# Note that the dataframe with the results is also output
+core_results, ax = multi_analysis.plot_core_physics()
 
 # %%
 # Plot the noramlised profiles
