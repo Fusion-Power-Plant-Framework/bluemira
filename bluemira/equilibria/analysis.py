@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from itertools import cycle
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -16,13 +17,6 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from matplotlib.gridspec import GridSpec
-
-if TYPE_CHECKING:
-    from bluemira.equilibria.diagnostics import EqDiagnosticOptions
-    from bluemira.equilibria.equilibrium import MHDState
-    from bluemira.equilibria.flux_surfaces import CoreResults
-    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
-from itertools import cycle
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -47,6 +41,12 @@ from bluemira.equilibria.plotting import (
 )
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.tools import is_num
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.diagnostics import EqDiagnosticOptions
+    from bluemira.equilibria.equilibrium import MHDState
+    from bluemira.equilibria.flux_surfaces import CoreResults
+    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
 
 
 # Functions used in multiple toolboxes ###
@@ -210,7 +210,7 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
             )
         target_offsets = np.linspace(0, target_size, n_layers)[1:]
         dx = x + target_offsets
-        dz = np.ones(n_layers) * z
+        dz = np.full(n_layers, z)
     else:
         x = target_coords.z[np.argmin(target_coords.z)]
         z = np.min(target_coords.z)
@@ -221,7 +221,7 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
                 " perhaps you are using a horizontal target (set vertical=False)."
             )
         target_offsets = np.linspace(0, target_size, n_layers)[1:]
-        dx = np.ones(n_layers) * x
+        dx = np.full(n_layers, x)
         dz = z + target_offsets
 
     fs_list = []
@@ -304,9 +304,9 @@ class EqAnalysis:
     ):
         self.diag_ops = diag_ops
         self.fixed_or_free = FixedOrFree.FREE
-        self.dummy_coils = (None,)
-        self.from_cocos = (3,)
-        self.to_cocos = (3,)
+        self.dummy_coils = None
+        self.from_cocos = 3
+        self.to_cocos = 3
 
         if eq:
             self._eq = eq
@@ -583,6 +583,7 @@ class EqAnalysis:
         ax.legend(loc="best")
         ax.set_xlabel("$x$ [m]")
         ax.set_ylabel("$z$ [m]")
+        ax.set_aspect("equal")
 
         if title is not None:
             plt.suptitle(title)
@@ -807,6 +808,7 @@ class EqAnalysis:
         ax.legend(loc="best")
         ax.set_xlabel("$x$ [m]")
         ax.set_ylabel("$z$ [m]")
+        ax.set_aspect("equal")
         if show:
             plt.show()
         return ax
