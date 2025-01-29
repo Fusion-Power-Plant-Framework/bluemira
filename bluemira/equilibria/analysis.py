@@ -8,10 +8,12 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from matplotlib.gridspec import GridSpec
 
@@ -43,7 +45,6 @@ from bluemira.equilibria.plotting import (
     EquilibriumComparisonPostOptPlotter,
     EquilibriumPlotter,
 )
-from bluemira.equilibria.profiles import CustomProfile
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.tools import is_num
 
@@ -320,12 +321,7 @@ class EqAnalysis:
                 to_cocos=to_cocos,
                 qpsi_positive=qpsi_positive,
             )
-            self._profiles = CustomProfile.from_eqdsk_file(
-                file_path,
-                from_cocos=from_cocos,
-                to_cocos=to_cocos,
-                qpsi_positive=qpsi_positive,
-            )
+            self._profiles = self._eq.profiles
         else:
             raise BluemiraError(
                 "Please provide either an Equilibrium object "
@@ -824,6 +820,27 @@ class COPAnalysis(EqAnalysis):
         self._cop = cop
 
 
+@dataclass
+class MultiEqProfiles:
+    """Profile dataclass for plotting."""
+
+    pprime: list[npt.NDArray[np.float64]] | None = None
+    ffprime: list[npt.NDArray[np.float64]] | None = None
+    fRBpol: list[npt.NDArray[np.float64]] | None = None
+    pressure: list[npt.NDArray[np.float64]] | None = None
+    shape: list[npt.NDArray[np.float64]] | None = None
+
+    def add_profile(self, profile, n_points):
+        """Add profile to dataclass."""
+        x = np.linspace(0, 1, n_points)
+        dataclass_dict = self.__dataclass_fields__
+        for key in dataclass_dict:
+            p_list = [] if getattr(self, key) is None else getattr(self, key)
+            p = getattr(profile, key)
+            p_list.append(p(x))
+            setattr(self, key, p_list)
+
+
 class MultiEqAnalysis:
     """
     Equilibria analysis toolbox for multiple Equilibrium.
@@ -849,6 +866,8 @@ class MultiEqAnalysis:
     qpsi_positive:
         Whether or not qpsi is positive, required for identification
         when qpsi is not present in the file.
+    n_points:
+        number of normalised psi points
     """
 
     def __init__(
@@ -860,7 +879,11 @@ class MultiEqAnalysis:
         from_cocos=3,
         to_cocos=3,
         qpsi_positive=False,  # noqa: FBT002
+        n_points=50,
     ):
+        self.n_points = n_points
+        if not isinstance(equilibrium_paths, Iterable):
+            equilibrium_paths = [equilibrium_paths]
         self.equilibrium_paths = equilibrium_paths
 
         if not isinstance(fixed_or_free, Iterable):
@@ -902,10 +925,24 @@ class MultiEqAnalysis:
         self.from_cocos = from_cocos
         self.to_cocos = to_cocos
         self.qpsi_positive = qpsi_positive
+        self.equilibria, self.profiles = self.get_eqs_and_profiles()
+        self.plotting_profiles = MultiEqProfiles()
+        self.fill_plotting_profiles(self.n_points)
 
-        self.profiles = self.profile_dictionary()
+    def get_eqs_and_profiles(self):
+        """
+        Use file name, cocos information etc. to get a list of equilibrium
+        and profile objects.
 
-        self.equilibrium = []
+        Returns
+        -------
+        equilibria:
+            List of equlibrium objects
+        profiles:
+            List of profile objects
+        """
+        equilibria = []
+        profiles = []
         for file, eq_type, dummy, fc, tc, qs in zip(
             self.equilibrium_paths,
             self.fixed_or_free,
@@ -915,92 +952,48 @@ class MultiEqAnalysis:
             self.qpsi_positive,
             strict=False,
         ):
-            self.equilibrium.append(
-                select_eq(
-                    file,
-                    fixed_or_free=eq_type,
-                    dummy_coils=dummy,
-                    from_cocos=fc,
-                    to_cocos=tc,
-                    qpsi_positive=qs,
-                )
+            eq = select_eq(
+                file,
+                fixed_or_free=eq_type,
+                dummy_coils=dummy,
+                from_cocos=fc,
+                to_cocos=tc,
+                qpsi_positive=qs,
             )
+            equilibria.append(eq)
+            profiles.append(eq.profiles)
+        return equilibria, profiles
 
-    def profile_dictionary(self):
+    def make_eq_dataclass_list(self, method, *args):
         """
-        Create a dictionary of profile information.
-        To be used when comparing multiple equilibria
-        but will work for a signle equilibrium.
-
-        Cocos indecis and qpsi sign are set to Bluemira Defaults unless specified.
-
-        The user can spesify from_cocos, to_cocos and qpsi_positive using:
-            - lists if the equilibria have different values
-            - single values if equilibria all have the same convention
+        Create a list of dataclasses from a function with
+        equilbrium as the first argument.
 
         Returns
         -------
-        :
-            Profile Dictionary
-            (profile type: list of profile objects for each equilibria)
+        results:
+            list of dataclass objects
         """
-        if not isinstance(self.equilibrium_paths, Iterable):
-            prof = CustomProfile.from_eqdsk_file(
-                self.equilibrium_paths,
-                from_cocos=self.from_cocos,
-                to_cocos=self.to_cocos,
-                qpsi_positive=self.qpsi_positive,
-            )
-            return {
-                "pprime": prof.pprime,
-                "ffprime": prof.ffprime,
-                "fRBpol": prof.fRBpol,
-                "pressure": prof.pressure,
-                "shape": prof.shape,
-            }
+        results = []
+        for eq in self.equilibria:
+            results.append(method(eq, *args))  # noqa: PERF401
+        return results
 
-        prof_dict = {
-            "pprime": [],
-            "ffprime": [],
-            "fRBpol": [],
-            "pressure": [],
-            "shape": [],
-        }
-        for eq_path, fc, tc, q in zip(
-            self.equilibrium_paths,
-            self.from_cocos,
-            self.to_cocos,
-            self.qpsi_positive,
-            strict=False,
-        ):
-            prof = CustomProfile.from_eqdsk_file(
-                eq_path, from_cocos=fc, to_cocos=tc, qpsi_positive=q
-            )
-            prof_dict["pprime"].append(prof.pprime)
-            prof_dict["ffprime"].append(prof.ffprime)
-            prof_dict["fRBpol"].append(prof.fRBpol)
-            prof_dict["pressure"].append(prof.pressure)
-            prof_dict["shape"].append(prof.shape)
-        return prof_dict
-
-    def physics_dictionary(self):
+    def fill_plotting_profiles(self, n_points):
         """
-        Create a list of dictionaries with the physics information
-        from all listed Equilbria.
+        Calculate profile values for plotting. This is done when a MultiEqAnalysis
+        class initiated but can be reset with different n_points using this function.
 
-        Returns
-        -------
-        dict_list:
-            Pandas dataframe with equilibria physics information.
+        Parameters
+        ----------
+        n_points:
+            number of normalised psi points
 
         """
-        dict_list = []
-        for eq in self.equilibrium:
-            plasma_dict = eq.analyse_plasma()
-            dict_list.append(plasma_dict)
-        return dict_list
+        for profile in self.profiles:
+            self.plotting_profiles.add_profile(profile, n_points)
 
-    def physics_info_table(self):
+    def physics_info_dataframe(self):
         """
         Create a Pandas dataframe with the the physics information
         from all listed Equilbria.
@@ -1012,13 +1005,19 @@ class MultiEqAnalysis:
             Pandas dataframe with equilibria physics information.
 
         """
-        dict_list = self.physics_dictionary()
+        eq_summaries = self.make_eq_dataclass_list(Equilibrium.analyse_plasma)
         pd.set_option("display.float_format", "{:.2f}".format)
-        dataframe = pd.DataFrame(dict_list).T
+        dataframe = pd.DataFrame(eq_summaries).T
         dataframe.columns = self.equilibrium_names
         return dataframe
 
-    def plot_physics(self, title="Physics Parmeters", n_points=50, ax=None, show=True):  # noqa: FBT002
+    def plot_core_physics(
+        self,
+        title="Physics Parmeters",
+        n_points=None,
+        ax=None,
+        show=True,  # noqa: FBT002
+    ):
         """
         Plot physics parameters for the core plasma of each equilibria
         (i.e., plot across the normalised 1-D flux coordinate).
@@ -1036,28 +1035,32 @@ class MultiEqAnalysis:
 
         Returns
         -------
+        dataframe:
+            Pandas dataframe with equilibria core physics results.
         ax:
             Matplotlib Axes object
 
         """
-        results = []
-        [
-            results.append(analyse_plasma_core(eq, n_points=n_points))
-            for eq in self.equilibrium
-        ]
+        if n_points is not None:
+            self.n_points = n_points
+        core_results = self.make_eq_dataclass_list(analyse_plasma_core, self.n_points)
 
         if ax is None:
-            r, c = int((len(results[0].__dict__) - 1) / 2) + 1, 2
+            r, c = int((len(core_results[0].__dict__) - 1) / 2) + 1, 2
             gs = GridSpec(r, c)
             ax = [plt.subplot(gs[i]) for i in range(r * c)]
 
-        for res, name in zip(results, self.equilibrium_names, strict=False):
+        for res, name in zip(core_results, self.equilibrium_names, strict=False):
             CorePlotter(res, ax, eq_name=name)
+
+        pd.set_option("display.float_format", "{:.2f}".format)
+        dataframe = pd.DataFrame(core_results).T
+        dataframe.columns = self.equilibrium_names
 
         plt.suptitle(title)
         if show:
             plt.show()
-        return ax
+        return dataframe, ax
 
     def coilset_dictionary(self, value=CSData.CURRENT):
         """
@@ -1072,7 +1075,7 @@ class MultiEqAnalysis:
 
         """
         dict_list = []
-        for eq, fx in zip(self.equilibrium, self.fixed_or_free, strict=False):
+        for eq, fx in zip(self.equilibria, self.fixed_or_free, strict=False):
             if fx != FixedOrFree.FIXED:
                 coilset_dict = {}
                 for coil in eq.coilset._coils:
@@ -1085,7 +1088,7 @@ class MultiEqAnalysis:
             dict_list.append(coilset_dict)
         return dict_list
 
-    def coilset_info_table(self, value=CSData.CURRENT):
+    def coilset_info_dataframe(self, value=CSData.CURRENT):
         """
         Create a Pandas dataframe with the the coilset information
         from all listed Equilbria.
@@ -1109,36 +1112,11 @@ class MultiEqAnalysis:
             dataframe.style.set_caption("Z-position (m)")
         return dataframe
 
-    def plot_prof(
-        self,
-        ax,
-        profiles,
-        ax_title,
-    ):
-        """
-        Plot equilibria profiles from list.
-
-        Parameters
-        ----------
-        ax:
-            Matplotlib axes object.
-        profiles:
-            List of profile objects.
-        ax_title:
-            Text to be printed above the axis.
-        equilibrium_names:
-            Names of the equilibia to be used as plot labels.
-        """
-        x = np.linspace(0, 1, 50)
-        for p, name in zip(profiles, self.equilibrium_names, strict=False):
-            ax.plot(x, p(x), marker=".", label=name)
-            ax.legend(loc="best")
-            ax.set_title(ax_title)
-
     def plot_compare_profiles(
         self,
         ax=None,
         header=None,
+        n_points=None,
     ):
         """
         Plot the profiles of all the listed equilibria.
@@ -1151,6 +1129,8 @@ class MultiEqAnalysis:
             Tesxt to be added at the top of the figure
         show:
             Whether or not to display the plot
+        n_points:
+            number of normalised psi points
 
         Returns
         -------
@@ -1163,6 +1143,11 @@ class MultiEqAnalysis:
             if the axes provided are the incorrect shape
 
         """
+        if n_points is not None:
+            self.fill_plotting_profiles(n_points)
+            self.n_points = n_points
+        x = np.linspace(0, 1, self.n_points)
+
         shape_ax = (2, 3)
         if ax is not None:
             if np.shape(ax) != shape_ax:
@@ -1175,8 +1160,18 @@ class MultiEqAnalysis:
 
         ax_list = [ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1], ax[0, 2]]
 
-        for axs, (key, profs) in zip(ax_list, self.profiles.items(), strict=False):
-            self.plot_prof(axs, profs, ax_title=key)
+        for axs, key in zip(
+            ax_list, self.plotting_profiles.__dataclass_fields__, strict=False
+        ):
+            for profile, name in zip(
+                getattr(self.plotting_profiles, key),
+                self.equilibrium_names,
+                strict=False,
+            ):
+                axs.plot(x, profile, marker=".", label=name)
+                axs.legend(loc="best")
+                axs.set_title(key)
+
         ax[1, 2].axis("off")
 
         if header is not None:
@@ -1230,7 +1225,7 @@ class MultiEqAnalysis:
         fs_list = []
         ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
         for eq, fx, label in zip(
-            self.equilibrium, self.fixed_or_free, self.equilibrium_names, strict=False
+            self.equilibria, self.fixed_or_free, self.equilibrium_names, strict=False
         ):
             if (flux_surface is FluxSurfaceType.SEPARATRIX) and (
                 fx is not FixedOrFree.FIXED
@@ -1308,7 +1303,7 @@ class MultiEqAnalysis:
 
         """
         lengths, angles = get_leg_flux_info(
-            self.equilibrium,
+            self.equilibria,
             n_layers=n_layers,
             dx_off=dx_off,
             plasma_facing_boundary_list=plasma_facing_boundary_list,
