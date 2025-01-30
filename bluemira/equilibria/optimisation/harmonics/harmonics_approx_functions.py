@@ -366,7 +366,10 @@ def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
 
     """
     # Test to see if the FS for the SH approx is not closed for some reason
-    if not coords2.closed:
+    if not (
+        len(coords2) > 2  # noqa: PLR2004
+        and np.allclose(coords2[:, 0], coords2[:, -1], rtol=1e-13, atol=0)
+    ):
         # If not closed then go back and try again
         bluemira_print(
             "The approximate FS is not closed. Trying again with more degrees."
