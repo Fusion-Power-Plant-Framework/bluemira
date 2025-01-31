@@ -253,7 +253,7 @@ q0       = 1.0 * Safety factor on axis
 f_nd_alpha_electron   = 0.1 * Thermal alpha density / electron density (iteration variable 109)
 rmajor   = 9.0e+00 * Plasma major radius (m) (iteration variable 3)
 i_single_null    = 1 * Switch for single null / double null plasma;
-ssync    = 0.6 * Synchrotron wall reflectivity factor
+f_sync_reflect    = 0.6 * Synchrotron wall reflectivity factor
 te       = 1.3212e+01 * Volume averaged electron temperature (kev)
 triang   = 0.5 * Plasma separatrix triangularity (calculated if ishape=1; 3 or 4)
 taulimit = 5.0 * Lower limit on taup/taueff the ratio of alpha particle to energy confinement times
