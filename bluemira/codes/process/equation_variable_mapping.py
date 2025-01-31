@@ -552,7 +552,7 @@ ITERATION_VAR_MAPPING = {
     "te": 4,
     "beta": 5,
     "dene": 6,
-    "rnbeam": 7,
+    "f_nd_beam_electron": 7,
     "fbeta": 8,
     "fdene": 9,
     "hfact": 10,
