@@ -90,7 +90,7 @@ class PlasmaGeometryModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ishape"
+        return "i_plasma_geometry"
 
     HENDER_K_D_100 = 0, ("kappa", "triang")
     GALAMBOS_K_D_95 = 1, ("kappa95", "triang95")
