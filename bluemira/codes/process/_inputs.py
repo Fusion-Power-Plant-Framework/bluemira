@@ -686,9 +686,9 @@ class ProcessInputs:
     f_nd_alpha_electron: float | None = None
     rli: float | None = None
     rmajor: float | None = None
-    rnbeam: float | None = None
+    f_nd_beam_electron: float | None = None
     i_single_null: int | None = None
-    ssync: float | None = None
+    f_sync_reflect: float | None = None
     te: float | None = None
     ti: float | None = None
     tratio: float | None = None
