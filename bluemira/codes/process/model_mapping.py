@@ -150,7 +150,7 @@ class PlasmaPedestalModel(PROCESSModel):
             "tbeta",
             "teped",
             "tesep",
-            "ralpne",
+            "f_nd_alpha_electron",
         ),
     )
 

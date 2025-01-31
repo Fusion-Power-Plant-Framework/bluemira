@@ -422,7 +422,7 @@ ishape   = 2 * switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * plasma separatrix elongation (calculated if `ishape = 1-5 or 7`)
 q        = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
 q0       = 1.0 * safety factor on axis
-ralpne   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `ipedestal=3`)
+f_nd_alpha_electron   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `ipedestal=3`)
 rmajor   = 9.1077e+00 * plasma major radius (m) (`iteration variable 3`)
 i_single_null = 1 * switch for single null / double null plasma;
 ssync    = 0.6 * synchrotron wall reflectivity factor
