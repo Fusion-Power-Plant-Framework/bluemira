@@ -268,7 +268,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("dene", 7.4321e19)
         template_builder.add_variable("q", 3.5, lower_bound=3.5)
         template_builder.add_variable("pheat", 50.0)
-        template_builder.add_variable("ralpne", 6.8940e-02)
+        template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
         template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
         template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
         template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
