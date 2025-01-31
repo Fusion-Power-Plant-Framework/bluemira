@@ -903,7 +903,7 @@
     "var_mod": "Plasma",
     "scan01": 5.3766e19
   },
-  "deni": {
+  "nd_fuel_ions": {
     "var_mod": "Plasma",
     "scan01": 4.7623e19
   },
@@ -1131,7 +1131,7 @@
     "var_mod": "Plasma",
     "scan01": 51.362
   },
-  "ssync": {
+  "f_sync_reflect": {
     "var_mod": "Plasma",
     "scan01": 0.6
   },
