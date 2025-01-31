@@ -683,7 +683,7 @@ class ProcessInputs:
     q0: float | None = None
     tauratio: float | None = None
     rad_fraction_sol: float | None = None
-    ralpne: float | None = None
+    f_nd_alpha_electron: float | None = None
     rli: float | None = None
     rmajor: float | None = None
     rnbeam: float | None = None
