@@ -648,7 +648,7 @@ ITERATION_VAR_MAPPING = {
     "ftmargoh": 106,
     "favail": 107,
     "breeder_f": 108,
-    "ralpne": 109,
+    "f_nd_alpha_electron": 109,
     "ftaulimit": 110,
     "fniterpump": 111,
     "fzeffmax": 112,
