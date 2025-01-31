@@ -384,7 +384,7 @@ class TestInDatOneForOne:
             "m_s_limit": 0.1,
             "triang": 0.5,
             "q0": 1.0,
-            "ssync": 0.6,
+            "f_sync_reflect": 0.6,
             "plasma_res_factor": 0.66,
             "gamma": 0.3,
             "hfact": 1.1,
