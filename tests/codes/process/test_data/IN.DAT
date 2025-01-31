@@ -398,7 +398,7 @@ beta     = 3.0810e-02 * total plasma beta (`iteration variable 5`) (calculated i
 bt       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
 dene     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `ipedestal=3`)
 beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
-fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`ishape=2; 3`)
+fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
 fvsbrnni = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
 gamma    = 0.3 * Ejima coefficient for resistive startup V-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times; radiation corrected (`iteration variable 10`); If
@@ -418,8 +418,8 @@ teped    = 5.5 * electron temperature of pedestal (keV) (`ipedestal>=1; ieped=0;
 tesep    = 0.1 * electron temperature at separatrix (keV) (`ipedestal>=1`) calculated if reinke
 iprofile = 1 * switch for current profile consistency;
 isc      = 34 * switch for energy confinement time scaling law (see description in `tauscl`)
-ishape   = 2 * switch for plasma cross-sectional shape calculation;
-kappa    = 1.700 * plasma separatrix elongation (calculated if `ishape = 1-5 or 7`)
+i_plasma_geometry   = 2 * switch for plasma cross-sectional shape calculation;
+kappa    = 1.700 * plasma separatrix elongation (calculated if `i_plasma_geometry = 1-5 or 7`)
 q        = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
 q0       = 1.0 * safety factor on axis
 f_nd_alpha_electron   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `ipedestal=3`)
@@ -427,7 +427,7 @@ rmajor   = 9.1077e+00 * plasma major radius (m) (`iteration variable 3`)
 i_single_null = 1 * switch for single null / double null plasma;
 f_sync_reflect    = 0.6 * synchrotron wall reflectivity factor
 te       = 1.3212e+01 * volume averaged electron temperature (keV) (`iteration variable 4`)
-triang   = 0.5 * plasma separatrix triangularity (calculated if `ishape = 1; 3-5 or 7`)
+triang   = 0.5 * plasma separatrix triangularity (calculated if `i_plasma_geometry = 1; 3-5 or 7`)
 
 *--------------Plasma Geometry Module--------------*
 
