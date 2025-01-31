@@ -225,7 +225,7 @@ beta     = 3.0810e-02 * Total plasma beta (iteration variable 5)
 bt       = 5.6476e+00 * Toroidal field on axis (t) (iteration variable 2)
 dene     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
 beta_norm_max   = 3.0 * (troyon-like) coefficient for beta scaling;
-fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (ishape=2; 3)
+fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (i_plasma_geometry=2; 3)
 fvsbrnni = 4.4628e-01 * Fraction of the plasma current produced by
 gamma    = 0.3 * Ejima coefficient for resistive startup v-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times (iteration variable 10)
@@ -246,8 +246,8 @@ teped    = 5.5 * Electron temperature of pedestal (kev) (ipedestal=1)
 tesep    = 0.1 * Electron temperature at separatrix (kev) (ipedestal=1)
 iprofile = 1 * Switch for current profile consistency;
 isc      = 34 * Switch for energy confinement time scaling law
-ishape   = 2 * Switch for plasma cross-sectional shape calculation;
-kappa    = 1.700 * Plasma separatrix elongation (calculated if ishape > 0)
+i_plasma_geometry   = 2 * Switch for plasma cross-sectional shape calculation;
+kappa    = 1.700 * Plasma separatrix elongation (calculated if i_plasma_geometry > 0)
 q        = 3.2267e+00 * Safety factor 'near' plasma edge (iteration variable 18);
 q0       = 1.0 * Safety factor on axis
 f_nd_alpha_electron   = 0.1 * Thermal alpha density / electron density (iteration variable 109)
@@ -255,7 +255,7 @@ rmajor   = 9.0e+00 * Plasma major radius (m) (iteration variable 3)
 i_single_null    = 1 * Switch for single null / double null plasma;
 f_sync_reflect    = 0.6 * Synchrotron wall reflectivity factor
 te       = 1.3212e+01 * Volume averaged electron temperature (kev)
-triang   = 0.5 * Plasma separatrix triangularity (calculated if ishape=1; 3 or 4)
+triang   = 0.5 * Plasma separatrix triangularity (calculated if i_plasma_geometry=1; 3 or 4)
 taulimit = 5.0 * Lower limit on taup/taueff the ratio of alpha particle to energy confinement times
 *-----------------Pulse Variables------------------*
 lpulse   = 1 * Switch for reactor model;
