@@ -6,11 +6,11 @@ asteval==1.0.6
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
-babel==2.16.0
+babel==2.17.0
     # via bluemira (pyproject.toml)
 blosc2==2.7.1
     # via tables
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.6
+fonttools==4.55.8
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -142,7 +142,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
