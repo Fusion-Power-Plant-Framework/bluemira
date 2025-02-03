@@ -111,7 +111,7 @@ NONE_mappings = {
     "V_p": ("plasma_volume", "m^3"),
     "l_i": ("rli", "dimensionless"),
     "f_ni": ("faccd", "dimensionless"),
-    "tk_tf_outboard": ("tfthko", "m"),
+    "tk_tf_outboard": ("dr_tf_outboard", "m"),
     "h_cp_top": ("h_cp_top", "m"),
     "h_tf_max_in": ("hmax", "m"),
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
