@@ -295,7 +295,9 @@ class _MFileWrapper:
             r_vv_ib_in = (
                 r_ts_ib_in + data["gapds"] + data["dr_vv_inboard"] + data["shldith"]
             )
-            r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
+            r_fw_ib_in = (
+                r_vv_ib_in + data["vvblgap"] + data["dr_blkt_inboard"] + data["fwith"]
+            )
             r_fw_ob_in = (
                 r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
             )

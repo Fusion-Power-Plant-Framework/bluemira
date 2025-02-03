@@ -89,7 +89,7 @@ boundl(59) = 0.66667
 
 *-----------------Build Variables------------------*
 
-blnkith  = 0.755 * inboard blanket thickness (m); (calculated if `blktmodel>0`) (=0;0 if `iblnkith=0`)
+dr_blkt_inboard  = 0.755 * inboard blanket thickness (m); (calculated if `blktmodel>0`) (=0;0 if `idr_blkt_inboard=0`)
 blnkoth  = 1.275 * outboard blanket thickness (m); calculated if `blktmodel>0`
 dr_bore     = 2.5006e+00 * central solenoid inboard radius (m) (`iteration variable 29`)
 dr_cryostat    = 0.15 * cryostat thickness (m)
