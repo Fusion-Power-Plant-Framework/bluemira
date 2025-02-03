@@ -230,7 +230,7 @@ template_builder.add_input_values({
     "vvblgap": 0.02,
     "dr_blkt_inboard": 0.755,
     "dr_fw_plasma_gap_inboard": 0.225,
-    "scraplo": 0.225,
+    "dr_fw_plasma_gap_outboard": 0.225,
     "dr_blkt_outboard": 0.982,
     "d_vv_out": 0.3,
     "shldoth": 0.8,
