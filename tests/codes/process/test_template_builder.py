@@ -277,7 +277,7 @@ class TestInDatOneForOne:
         template_builder.add_variable(
             "dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1
         )
-        template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
+        template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
         template_builder.add_variable("oh_steel_frac", 0.57875)
         template_builder.add_variable("coheof", 2.0726e07)
         template_builder.add_variable(
