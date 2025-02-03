@@ -470,7 +470,7 @@ class ProcessInputs:
     vgap_xpoint_divertor: float | None = None
     vgap_vv_thermalshield: float | None = None
     vgaptop: float | None = None
-    vvblgap: float | None = None
+    dr_shld_blkt_gap: float | None = None
     plleni: float | None = None
     plsepi: float | None = None
     plsepo: float | None = None

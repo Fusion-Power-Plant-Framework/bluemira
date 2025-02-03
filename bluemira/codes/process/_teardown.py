@@ -300,7 +300,7 @@ class _MFileWrapper:
             )
             r_fw_ib_in = (
                 r_vv_ib_in
-                + data["vvblgap"]
+                + data["dr_shld_blkt_gap"]
                 + data["dr_blkt_inboard"]
                 + data["dr_fw_inboard"]
             )
@@ -314,7 +314,7 @@ class _MFileWrapper:
                 r_fw_ob_in
                 + data["dr_fw_outboard"]
                 + data["dr_blkt_outboard"]
-                + data["vvblgap"]
+                + data["dr_shld_blkt_gap"]
             )
         except KeyError as key_error:
             raise CodesError(
