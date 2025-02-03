@@ -516,7 +516,11 @@ class TestInDatOneForOne:
                     self.true_data[k].get_value, self.template[k].get_value
                 )
             elif isinstance(self.true_data[k].get_value, dict):
-                compare_dicts(self.true_data[k].get_value, self.template[k]._value)
+                assert compare_dicts(
+                    self.true_data[k].get_value,
+                    self.template[k]._value,
+                    almost_equal=True,
+                )
             else:
                 assert not set(self.true_data[k].get_value) - set(
                     self.template[k].get_value
