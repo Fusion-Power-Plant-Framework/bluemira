@@ -226,7 +226,7 @@ template_builder.add_input_values({
     "scrapli": 0.225,
     "scraplo": 0.225,
     "blnkoth": 0.982,
-    "ddwex": 0.15,
+    "z_cryostat_half_inside": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
     "vgap_vv_thermalshield": 0.05,
