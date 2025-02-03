@@ -1691,7 +1691,7 @@
     "var_mod": "Radial Build",
     "scan01": 0.755
   },
-  "fwith": {
+  "dr_fw_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.018
   },
