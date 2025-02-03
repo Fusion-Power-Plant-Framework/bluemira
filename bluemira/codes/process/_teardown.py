@@ -293,7 +293,10 @@ class _MFileWrapper:
                 rtfin + data["dr_tf_inborard"] + data["dr_tf_shld_gap"] + shield_th
             )
             r_vv_ib_in = (
-                r_ts_ib_in + data["gapds"] + data["dr_vv_inboard"] + data["shldith"]
+                r_ts_ib_in
+                + data["gapds"]
+                + data["dr_vv_inboard"]
+                + data["dr_shld_inboard"]
             )
             r_fw_ib_in = (
                 r_vv_ib_in + data["vvblgap"] + data["dr_blkt_inboard"] + data["fwith"]

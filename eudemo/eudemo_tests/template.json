@@ -2200,7 +2200,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldith",
+        "name": "dr_shld_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
