@@ -294,7 +294,7 @@ class _MFileWrapper:
             )
             r_vv_ib_in = (
                 r_ts_ib_in
-                + data["gapds"]
+                + data["dr_shld_vv_gap_inboard"]
                 + data["dr_vv_inboard"]
                 + data["dr_shld_inboard"]
             )
