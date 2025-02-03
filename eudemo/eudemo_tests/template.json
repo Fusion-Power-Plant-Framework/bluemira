@@ -1596,7 +1596,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bore",
+        "name": "dr_bore",
         "send": false,
         "recv": true,
         "unit": "m"
