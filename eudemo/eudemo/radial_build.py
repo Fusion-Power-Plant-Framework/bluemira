@@ -317,8 +317,8 @@ def apply_specific_interface_rules(params: ParameterFrame):
     # Apply thermal shield thickness to all values in PROCESS
     tk_ts = params.tk_ts.value
     template_builder.add_input_values({
-        "thshield_ib": tk_ts,
-        "thshield_ob": tk_ts,
+        "dr_shld_thermal_inboard": tk_ts,
+        "dr_shld_thermal_outboard": tk_ts,
         "thshield_vb": tk_ts,
     })
 
