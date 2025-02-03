@@ -1964,7 +1964,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "blnkoth",
+        "name": "dr_blkt_outboard",
         "send": true,
         "recv": true,
         "unit": "m"
