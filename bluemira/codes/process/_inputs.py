@@ -457,7 +457,7 @@ class ProcessInputs:
     rinboard: float | None = None
     f_r_cp: float | None = None
     dr_fw_plasma_gap_inboard: float | None = None
-    scraplo: float | None = None
+    dr_fw_plasma_gap_outboard: float | None = None
     dr_shld_inboard: float | None = None
     shldlth: float | None = None
     shldoth: float | None = None
