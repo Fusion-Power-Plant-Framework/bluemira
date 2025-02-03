@@ -574,7 +574,7 @@ ITERATION_VAR_MAPPING = {
     "ffuspow": 26,
     "fhldiv": 27,
     "fradpwr": 28,
-    "bore": 29,
+    "dr_bore": 29,
     "fmva": 30,
     "gapomin": 31,
     "frminor": 32,

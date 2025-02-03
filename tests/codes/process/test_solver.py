@@ -221,7 +221,7 @@ class TestSolverIntegration:
     @pytest.mark.parametrize(
         ("template", "result"),
         [
-            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
+            (ProcessInputs(dr_bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
         ],
     )
     def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
@@ -244,6 +244,6 @@ class TestSolverIntegration:
         solver.teardown_cls = lambda *_, **_kw: None
         solver.execute("run")
 
-        assert f"bore     = {result[0]}" in open(path).read()  # noqa: SIM115
+        assert f"dr_bore     = {result[0]}" in open(path).read()  # noqa: SIM115
         assert f"shldith  = {result[1]}" in open(path).read()  # noqa: SIM115
         assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115

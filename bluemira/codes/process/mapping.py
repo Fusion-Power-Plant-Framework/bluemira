@@ -71,7 +71,7 @@ OUT_mappings = {
     "tk_tf_insgap": ("tfinsgap", "m"),
     "tk_cs": ("ohcth", "m"),
     "r_cp_top": ("r_cp_top", "m"),
-    "r_cs_in": ("bore", "m"),
+    "r_cs_in": ("dr_bore", "m"),
     "r_tf_in": ("rtfin", "m"),
     "r_tf_in_centre": ("r_tf_inboard_mid", "m"),
     "r_ts_ib_in": ("r_ts_ib_in", "m"),
