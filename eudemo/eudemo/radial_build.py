@@ -329,7 +329,7 @@ def apply_specific_interface_rules(params: ParameterFrame):
     tk_sh_ib = tk_vv_ib - default_vv_tk
     tk_sh_ob = tk_vv_ob - default_vv_tk
     template_builder.add_input_values({
-        "shldith": tk_sh_ib,
+        "dr_shld_inboard": tk_sh_ib,
         "shldoth": tk_sh_ob,
         "shldtth": tk_sh_ib,
         "shldlth": tk_sh_ib,
