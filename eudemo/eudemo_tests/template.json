@@ -2258,7 +2258,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "scraplo",
+        "name": "dr_fw_plasma_gap_outboard",
         "send": true,
         "recv": true,
         "unit": "m"
