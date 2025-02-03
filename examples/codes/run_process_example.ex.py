@@ -234,7 +234,7 @@ template_builder.add_input_values({
     "blnkoth": 0.982,
     "d_vv_out": 0.3,
     "shldoth": 0.8,
-    "z_cryostat_half_inside": 0.15,
+    "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
     "d_vv_top": 0.3,

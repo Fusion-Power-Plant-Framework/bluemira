@@ -18,7 +18,7 @@ IN_mappings = {
     "P_hcd_ss": ("pinjalw", "MW"),
     "eta_nb": ("etanbi", "dimensionless"),
     "e_mult": ("emult", "dimensionless"),
-    "tk_cr_vv": ("z_cryostat_half_inside", "m"),
+    "tk_cr_vv": ("dr_cryostat", "m"),
     "tk_tf_front_ib": ("casthi", "m"),
     "tk_tf_side": ("casths", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
