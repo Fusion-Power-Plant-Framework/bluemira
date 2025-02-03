@@ -618,7 +618,7 @@ ITERATION_VAR_MAPPING = {
     "vcool": 70,
     "fq": 71,
     "fipir": 72,
-    "scrapli": 73,
+    "dr_fw_plasma_gap_inboard": 73,
     "scraplo": 74,
     "tfootfi": 75,
     # 76, 77, 78 NOT USED
