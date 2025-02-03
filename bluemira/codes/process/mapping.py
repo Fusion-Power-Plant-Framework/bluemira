@@ -120,7 +120,7 @@ NONE_mappings = {
     "tk_sh_out": ("dr_shld_outboard", "m"),
     "tk_sh_top": ("shldtth", "m"),
     "tk_sh_bot": ("shldlth", "m"),
-    "tk_vv_out": ("d_vv_out", "m"),
+    "tk_vv_out": ("dr_vv_outboard", "m"),
     "tk_vv_top": ("d_vv_top", "m"),
     "tk_vv_bot": ("d_vv_bot", "m"),
     # Thermal shield thickness is a constant for us
