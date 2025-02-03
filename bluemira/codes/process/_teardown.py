@@ -308,7 +308,10 @@ class _MFileWrapper:
                 r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
             )
             r_vv_ob_in = (
-                r_fw_ob_in + data["fwoth"] + data["dr_blkt_outboard"] + data["vvblgap"]
+                r_fw_ob_in
+                + data["dr_fw_outboard"]
+                + data["dr_blkt_outboard"]
+                + data["vvblgap"]
             )
         except KeyError as key_error:
             raise CodesError(
