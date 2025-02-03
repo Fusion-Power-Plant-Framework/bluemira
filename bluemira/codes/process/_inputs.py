@@ -449,7 +449,7 @@ class ProcessInputs:
     fhole: float | None = None
     fseppc: float | None = None
     gapds: float | None = None
-    gapoh: float | None = None
+    dr_cs_tf_gap: float | None = None
     gapomin: float | None = None
     iohcl: int | None = None
     iprecomp: int | None = None
