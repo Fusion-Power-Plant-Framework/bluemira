@@ -305,7 +305,10 @@ class _MFileWrapper:
                 + data["dr_fw_inboard"]
             )
             r_fw_ob_in = (
-                r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
+                r_fw_ib_in
+                + data["dr_fw_plasma_gap_inboard"]
+                + 2 * data["rminor"]
+                + data["scraplo"]
             )
             r_vv_ob_in = (
                 r_fw_ob_in
