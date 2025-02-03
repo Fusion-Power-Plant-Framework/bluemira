@@ -233,7 +233,7 @@ template_builder.add_input_values({
     "dr_fw_plasma_gap_outboard": 0.225,
     "dr_blkt_outboard": 0.982,
     "d_vv_out": 0.3,
-    "shldoth": 0.8,
+    "dr_shld_outboard": 0.8,
     "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
