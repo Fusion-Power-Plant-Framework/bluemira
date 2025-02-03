@@ -1984,7 +1984,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ddwex",
+        "name": "z_cryostat_half_inside",
         "send": true,
         "recv": false,
         "unit": "m"
