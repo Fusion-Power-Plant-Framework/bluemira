@@ -590,7 +590,7 @@ class InboardBlanketSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iblnkith"
+        return "i_blkt_inboard"
 
     ABSENT = 0
     PRESENT = 1
