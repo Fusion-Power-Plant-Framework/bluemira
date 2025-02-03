@@ -102,7 +102,7 @@ def setup_radial_build(run: dict[str, Any], width: float = 1.0):
         "Plasma": "#f77ec7",
         "first wall": "#edb120",
         "Machine bore": "w",
-        "precomp": "#0072bd",
+        "dr_cs_precomp": "#0072bd",
         "scrape-off": "#a2142f",
         "solenoid": "#0072bd",
         "Thermal shield": "#77ac30",
