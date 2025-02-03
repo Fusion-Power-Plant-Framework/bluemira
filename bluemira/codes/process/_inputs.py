@@ -441,7 +441,7 @@ class ProcessInputs:
     f_z_cryostat: float | None = None
     dr_cryostat: float | None = None
     dr_vv_inboard: float | None = None
-    d_vv_out: float | None = None
+    dr_vv_outboard: float | None = None
     d_vv_top: float | None = None
     d_vv_bot: float | None = None
     f_avspace: float | None = None
