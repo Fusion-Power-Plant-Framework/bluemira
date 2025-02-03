@@ -452,7 +452,7 @@ class ProcessInputs:
     dr_cs_tf_gap: float | None = None
     gapomin: float | None = None
     iohcl: int | None = None
-    iprecomp: int | None = None
+    i_cs_precomp: int | None = None
     dr_cs: float | None = None
     rinboard: float | None = None
     f_r_cp: float | None = None
