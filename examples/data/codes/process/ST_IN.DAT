@@ -107,7 +107,7 @@ vgap_vv_thermalshield    = 0.061 * Vertical gap between vacuum vessel and tf coi
 vgap_xpoint_divertor   = 1.60 * Vertical gap between x-point and divertor (m)
 dr_tf_shld_gap = 0.02
 dr_shld_thermal_inboard = 0.05
-vvblgap = 0.02
+dr_shld_blkt_gap = 0.02
 *---------------Buildings Variables----------------*
 *---------------Constraint Variables---------------*
 bmxlim   = 14.0 * Maximum peak toroidal field (t)
