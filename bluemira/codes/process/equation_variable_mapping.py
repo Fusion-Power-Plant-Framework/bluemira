@@ -587,7 +587,7 @@ ITERATION_VAR_MAPPING = {
     "fjohc0": 39,
     "fgamcd": 40,
     "fcohbop": 41,
-    "gapoh": 42,
+    "dr_cs_tf_gap": 42,
     # 43 NOT USED
     "fvsbrnni": 44,
     "fqval": 45,
