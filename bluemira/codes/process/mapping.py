@@ -124,8 +124,8 @@ NONE_mappings = {
     "tk_vv_top": ("d_vv_top", "m"),
     "tk_vv_bot": ("d_vv_bot", "m"),
     # Thermal shield thickness is a constant for us
-    "tk_ts": ("thshield_ib", "m"),
-    # "tk_ts": ("thshield_ob", "m"),
+    "tk_ts": ("dr_shld_thermal_inboard", "m"),
+    # "tk_ts": ("dr_shld_thermal_outboard", "m"),
     # "tk_ts": ("thshield_vb", "m"),
     # TODO @CoronelBuendia: q is not properly put in the MFILE output
     # This should be ok OK most of the time as q_95 is input and then
