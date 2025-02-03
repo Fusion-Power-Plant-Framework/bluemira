@@ -225,7 +225,7 @@ template_builder.add_input_values({
     "dr_blkt_inboard": 0.755,
     "scrapli": 0.225,
     "scraplo": 0.225,
-    "blnkoth": 0.982,
+    "dr_blkt_outboard": 0.982,
     "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
