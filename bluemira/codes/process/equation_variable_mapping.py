@@ -636,7 +636,7 @@ ITERATION_VAR_MAPPING = {
     "blbuoth": 91,
     "fflutf": 92,
     "dr_shld_inboard": 93,
-    "shldoth": 94,
+    "dr_shld_outboard": 94,
     "fptfnuc": 95,
     "fvvhe": 96,
     "fpsepr": 97,
