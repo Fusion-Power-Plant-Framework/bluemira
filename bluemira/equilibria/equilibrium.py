@@ -565,11 +565,11 @@ class CoilSetMHDState(MHDState):
         )
 
         forces = np.zeros((no_coils, 2))
-        currents = self.coilset.get_control_coils().current
+        currents = self.coilset.current
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
-        return forces
+        return forces[self.coilset._control_ind, :]
 
     def get_coil_fields(self) -> npt.NDArray[np.float64]:
         """

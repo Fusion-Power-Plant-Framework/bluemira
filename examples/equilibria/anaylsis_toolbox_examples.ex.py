@@ -26,6 +26,7 @@ Example of equilibria anaylsis utilities.
 
 from pathlib import Path
 
+from bluemira.base.constants import CoilType
 from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_eq
 from bluemira.equilibria.diagnostics import (
     CSData,
@@ -149,8 +150,10 @@ core_results, ax = eq_analysis_1.plot_eq_core_analysis(ax=None)
 physics_table = eq_analysis_1.physics_info_table()
 
 # %%
-# Control coil information in a table
-table = eq_analysis_1.control_coil_table()
+# Control coil information in a table.
+# Note that control can be a coil type, list of control coil names,
+# or None if all coils are contol coils.
+table = eq_analysis_1.control_coil_table(control=CoilType.PF)
 
 # %%
 # PLot the equilibrium and reference equilibrium seperatrices
@@ -215,7 +218,10 @@ equilibrium_names = ["MASTy Eq", "DN DEMOish Eq", "SN DEMOish Eq"]
 # Don't forget to make sure the corrcet cocos value is used
 # if they are not all the same
 multi_analysis = MultiEqAnalysis(
-    paths, equilibrium_names=equilibrium_names, from_cocos=[3, 3, 7]
+    paths,
+    equilibrium_names=equilibrium_names,
+    from_cocos=[3, 3, 7],
+    control_coils=CoilType.PF,
 )
 
 # %%
@@ -260,7 +266,9 @@ ax = multi_analysis.plot_divertor_length_angle(
 
 # %%
 # Print a table compairing coilset information,
-# note that the equillibria can have different coilsets.
+# the equillibria can have different coilsets.
+# Note: when we defined multi_analysis, we set the control_coils to be PF type coils,
+# so only coils with that type are printed for each equilibria.
 coilset_table = multi_analysis.coilset_info_table()
 
 # %%

@@ -18,6 +18,7 @@ import numpy.typing as npt
 from matplotlib.gridspec import GridSpec
 from tabulate import tabulate
 
+from bluemira.base.constants import CoilType
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.diagnostics import (
@@ -43,6 +44,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import MHDState
     from bluemira.equilibria.flux_surfaces import CoreResults
@@ -50,6 +52,26 @@ if TYPE_CHECKING:
 
 
 # Functions used in multiple toolboxes ###
+def rename_coilset(coilset: CoilSet):
+    """
+    Rename the coils.
+
+    Returns
+    -------
+    Coilset
+        The coilset containing the renamed coils
+    """
+    coil_types = ["PF", "CS", "DUM"]
+    coil_numbers = [coilset.get_coiltype(ct) for ct in coil_types]
+    for n, ct in zip(coil_numbers, coil_types, strict=False):
+        if n is not None:
+            for i, coil_name in enumerate(coilset.get_coiltype(ct).name):
+                coil_num = i + 1
+                coilset[coil_name].name = ct + "_" + str(coil_num)
+    coilset.control = coilset.name
+    return coilset
+
+
 def select_eq(
     file_path,
     fixed_or_free=FixedOrFree.FREE,
@@ -88,19 +110,23 @@ def select_eq(
         Equilibrium or FixedPlasmaEquilibrium
     """
     if fixed_or_free == FixedOrFree.FREE:
-        return Equilibrium.from_eqdsk(
+        eq = Equilibrium.from_eqdsk(
             file_path,
             from_cocos=from_cocos,
             user_coils=dummy_coils,
             to_cocos=to_cocos,
             qpsi_positive=qpsi_positive,
         )
-    return FixedPlasmaEquilibrium.from_eqdsk(
+        eq.coilset = rename_coilset(eq.coilset)
+        return eq
+    eq = FixedPlasmaEquilibrium.from_eqdsk(
         file_path,
         from_cocos=from_cocos,
         to_cocos=to_cocos,
         qpsi_positive=qpsi_positive,
     )
+    eq.coilset = rename_coilset(eq.coilset)
+    return eq
 
 
 def get_leg_flux_info(
@@ -500,7 +526,7 @@ class EqAnalysis:
         print(table)  # noqa: T201
         return table
 
-    def control_coil_table(self):
+    def control_coil_table(self, control: list | None = None):
         """
         Create a table with the control coil information
         from the Equilbria of interest.
@@ -521,6 +547,10 @@ class EqAnalysis:
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
+        if isinstance(control, list):
+            self._eq.coilset.control = control
+        if isinstance(control, CoilType):
+            self._eq.coilset.control = self._eq.coilset.get_coiltype(control).name
         table, _fz_c_stot, _fsep = self._eq.analyse_coils()
         return table
 
@@ -926,6 +956,10 @@ class MultiEqAnalysis:
     qpsi_positive:
         Whether or not qpsi is positive, required for identification
         when qpsi is not present in the file.
+    control_coils:
+        Set which coils are control coils for each equilibria.
+        Can be a coil type, a list of coil names,
+        or None for all coils.
     n_points:
         number of normalised psi points
     """
@@ -939,6 +973,7 @@ class MultiEqAnalysis:
         from_cocos=3,
         to_cocos=3,
         qpsi_positive=False,  # noqa: FBT002
+        control_coils: CoilType | list[str] | None = None,
         n_points=50,
     ):
         self.n_points = n_points
@@ -985,6 +1020,7 @@ class MultiEqAnalysis:
         self.from_cocos = from_cocos
         self.to_cocos = to_cocos
         self.qpsi_positive = qpsi_positive
+        self.control = control_coils
         self.equilibria, self.profiles = self.get_eqs_and_profiles()
         self.plotting_profiles = MultiEqProfiles()
         self.fill_plotting_profiles(self.n_points)
@@ -1020,6 +1056,10 @@ class MultiEqAnalysis:
                 to_cocos=tc,
                 qpsi_positive=qs,
             )
+            if isinstance(self.control, Iterable):
+                eq.coilset.control = self.control
+            if isinstance(self.control, CoilType):
+                eq.coilset.control = eq.coilset.get_coiltype(self.control).name
             equilibria.append(eq)
             profiles.append(eq.profiles)
         return equilibria, profiles
