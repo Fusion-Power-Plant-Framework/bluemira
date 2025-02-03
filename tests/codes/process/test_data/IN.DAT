@@ -66,7 +66,7 @@ ixc = 58 * thwcndut
 boundl(58) = 8.0d-3
 ixc = 61 * gapds
 boundl(61) = 0.12
-ixc = 13 * tfcth
+ixc = 13 * dr_tf_inborard
 boundl(13) = 0.5
 ixc = 103 * flhthresh
 ixc = 60 * cpttf
@@ -104,7 +104,7 @@ scraplo  = 0.225 * Gap between plasma and first wall; outboard side (m) (if `isc
 shldith  = 0.30 * inboard shield thickness (m) (`iteration variable 93`)
 shldoth  = 0.80 * outboard shield thickness (m) (`iteration variable 94`)
 shldtth  = 0.30 * upper/lower shield thickness (m); calculated if `blktmodel > 0` (= shldlth if double-null)
-tfcth    = 1.0500e+00 * inboard TF coil thickness; (centrepost for ST) (m)
+dr_tf_inborard    = 1.0500e+00 * inboard TF coil thickness; (centrepost for ST) (m)
 vgap_vv_thermalshield  = 0.12 * vertical gap between vacuum vessel and thermal shields (m)
 vgap_xpoint_divertor    = 1.60 * vertical gap between x-point and divertor (m) (if = 0; it is calculated)
 

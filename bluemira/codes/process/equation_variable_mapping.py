@@ -558,7 +558,7 @@ ITERATION_VAR_MAPPING = {
     "hfact": 10,
     "pheat": 11,
     # NO LONGER USED "oacdp": 12,
-    "tfcth": 13,
+    "dr_tf_inborard": 13,
     "fwalld": 14,
     "fvs": 15,
     "dr_cs": 16,
