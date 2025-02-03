@@ -460,7 +460,7 @@ class ProcessInputs:
     dr_fw_plasma_gap_outboard: float | None = None
     dr_shld_inboard: float | None = None
     shldlth: float | None = None
-    shldoth: float | None = None
+    dr_shld_outboard: float | None = None
     shldtth: float | None = None
     sigallpc: float | None = None
     tfoofti: float | None = None
