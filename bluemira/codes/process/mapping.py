@@ -69,7 +69,7 @@ OUT_mappings = {
     "tf_wp_depth": ("wwp1", "m"),
     "tk_tf_ins": ("tinstf", "m"),
     "tk_tf_insgap": ("tfinsgap", "m"),
-    "tk_cs": ("ohcth", "m"),
+    "tk_cs": ("dr_cs", "m"),
     "r_cp_top": ("r_cp_top", "m"),
     "r_cs_in": ("dr_bore", "m"),
     "r_tf_in": ("rtfin", "m"),

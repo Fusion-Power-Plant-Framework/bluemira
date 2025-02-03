@@ -2004,7 +2004,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ohcth",
+        "name": "dr_cs",
         "send": false,
         "recv": true,
         "unit": "m"
