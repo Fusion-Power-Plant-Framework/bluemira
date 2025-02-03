@@ -185,7 +185,7 @@ class TestTeardown:
 
     def test_CodesError_if_process_parameter_missing_from_radial_build_calculation(self):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
-        del self.mfile_mock.data["bore"]
+        del self.mfile_mock.data["dr_bore"]
 
         with (
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
@@ -193,4 +193,4 @@ class TestTeardown:
         ):
             teardown.read()
 
-        assert "bore" in str(exc)
+        assert "dr_bore" in str(exc)
