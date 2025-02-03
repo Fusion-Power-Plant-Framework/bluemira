@@ -65,7 +65,7 @@ class ProcessInputs:
     fwbsshape: int | None = None
     fw_armour_thickness: float | None = None
     iblanket: int | None = None
-    iblnkith: int | None = None
+    i_blkt_inboard: int | None = None
     li6enrich: float | None = None
     breeder_f: float | None = None
     breeder_multiplier: float | None = None
