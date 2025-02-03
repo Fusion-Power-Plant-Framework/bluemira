@@ -104,19 +104,19 @@ class TestPROCESSTemplateBuilder:
 
     def test_warn_on_repeated_itv(self, caplog):
         t = PROCESSTemplateBuilder()
-        t.add_variable("bore", 2.0)
-        t.add_variable("bore", 3.0)
+        t.add_variable("dr_bore", 2.0)
+        t.add_variable("dr_bore", 3.0)
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
-        assert "Iteration variable 'bore' is already" in warning
+        assert "Iteration variable 'dr_bore' is already" in warning
 
     def test_warn_on_adjusting_nonexistent_variable(self, caplog):
         t = PROCESSTemplateBuilder()
-        t.adjust_variable("bore", 2.0)
+        t.adjust_variable("dr_bore", 2.0)
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
-        assert "Iteration variable 'bore' is not in" in warning
-        assert "bore" in t.variables
+        assert "Iteration variable 'dr_bore' is not in" in warning
+        assert "dr_bore" in t.variables
 
     def test_warn_on_missing_input_constraint(self, caplog):
         t = PROCESSTemplateBuilder()
@@ -197,12 +197,12 @@ class TestPROCESSTemplateBuilder:
 
     def test_inputs_appear_in_dat(self):
         t = PROCESSTemplateBuilder()
-        t.add_input_values({"tinstf": 1000.0, "bore": 1000})
+        t.add_input_values({"tinstf": 1000.0, "dr_bore": 1000})
         assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
-        assert t.values["bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert t.values["dr_bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
         data = t.make_inputs().to_invariable()
         assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
-        assert data["bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert data["dr_bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
 
 
 def read_indat(filename):
@@ -269,7 +269,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("q", 3.5, lower_bound=3.5)
         template_builder.add_variable("pheat", 50.0)
         template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
-        template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
+        template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
         template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
         template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
         template_builder.add_variable("thkcas", 0.52465)
