@@ -392,7 +392,7 @@ class TestInDatOneForOne:
             "hfact": 1.1,
             "life_dpa": 70.0,
             # Radial build inputs
-            "tftsgap": 0.05,
+            "dr_tf_shld_gap": 0.05,
             "dr_vv_inboard": 0.3,
             "shldith": 0.3,
             "vvblgap": 0.02,
