@@ -951,7 +951,7 @@ class CSPrecompressionModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprecomp"
+        return "i_cs_precomp"
 
     ABSENT = 0
     PRESENT = 1
