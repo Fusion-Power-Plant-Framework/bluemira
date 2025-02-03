@@ -1655,7 +1655,7 @@
     "var_mod": "Radial Build",
     "scan01": 1.486
   },
-  "tftsgap": {
+  "dr_tf_shld_gap": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },

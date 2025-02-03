@@ -1219,7 +1219,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tftsgap",
+        "name": "dr_tf_shld_gap",
         "send": true,
         "recv": true,
         "unit": "m"
