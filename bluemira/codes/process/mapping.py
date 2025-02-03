@@ -96,7 +96,7 @@ IO_mappings = {
     "P_el_net": (("pnetelin", "pnetelmw"), "MW"),
     "tk_bb_ib": ("blnkith", "m"),
     "tk_bb_ob": ("blnkoth", "m"),
-    "tk_vv_in": ("d_vv_in", "m"),
+    "tk_vv_in": ("dr_vv_inboard", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
     "g_cs_tf": ("dr_cs_tf_gap", "m"),
