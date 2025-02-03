@@ -1635,7 +1635,7 @@
     "var_mod": "Times",
     "scan01": 10160.0
   },
-  "bore": {
+  "dr_bore": {
     "var_mod": "Radial Build",
     "scan01": 1.2384
   },
@@ -2426,14 +2426,6 @@
   "coheof": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 23666000.0
-  },
-  "bore.": {
-    "var_mod": "Central Solenoid and PF Coils",
-    "scan01": 1.2384
-  },
-  "ohcth.": {
-    "var_mod": "Central Solenoid and PF Coils",
-    "scan01": 0.5
   },
   "areaoh": {
     "var_mod": "Central Solenoid and PF Coils",
