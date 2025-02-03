@@ -1675,7 +1675,7 @@
     "var_mod": "Radial Build",
     "scan01": 0.02
   },
-  "d_vv_in": {
+  "dr_vv_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.3
   },
