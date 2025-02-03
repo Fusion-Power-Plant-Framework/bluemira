@@ -606,7 +606,7 @@ ITERATION_VAR_MAPPING = {
     "thwcndut": 58,
     "fcutfsu": 59,
     "cpttf": 60,
-    "gapds": 61,
+    "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
     "ftpeak": 63,
     "fauxmn": 64,

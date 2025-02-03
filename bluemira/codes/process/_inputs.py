@@ -448,7 +448,7 @@ class ProcessInputs:
     fcspc: float | None = None
     fhole: float | None = None
     fseppc: float | None = None
-    gapds: float | None = None
+    dr_shld_vv_gap_inboard: float | None = None
     dr_cs_tf_gap: float | None = None
     gapomin: float | None = None
     iohcl: int | None = None
