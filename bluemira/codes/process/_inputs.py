@@ -221,7 +221,7 @@ class ProcessInputs:
     qnuc: float | None = None
     ripmax: float | None = None
     tf_in_cs: int | None = None
-    tfcth: float | None = None
+    dr_tf_inborard: float | None = None
     tftsgap: float | None = None
     casthi: float | None = None
     casths: float | None = None
