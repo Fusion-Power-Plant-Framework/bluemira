@@ -308,7 +308,7 @@ class _MFileWrapper:
                 r_fw_ib_in
                 + data["dr_fw_plasma_gap_inboard"]
                 + 2 * data["rminor"]
-                + data["scraplo"]
+                + data["dr_fw_plasma_gap_outboard"]
             )
             r_vv_ob_in = (
                 r_fw_ob_in
