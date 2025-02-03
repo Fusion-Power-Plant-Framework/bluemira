@@ -333,7 +333,7 @@ def apply_specific_interface_rules(params: ParameterFrame):
         "shldoth": tk_sh_ob,
         "shldtth": tk_sh_ib,
         "shldlth": tk_sh_ib,
-        "d_vv_in": default_vv_tk,
+        "dr_vv_inboard": default_vv_tk,
         "d_vv_out": default_vv_tk,
         "d_vv_top": default_vv_tk,
         "d_vv_bot": default_vv_tk,
