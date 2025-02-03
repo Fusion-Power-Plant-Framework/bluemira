@@ -99,7 +99,7 @@ IO_mappings = {
     "tk_vv_in": ("d_vv_in", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
-    "g_cs_tf": ("gapoh", "m"),
+    "g_cs_tf": ("dr_cs_tf_gap", "m"),
     "g_ts_tf": ("tftsgap", "m"),
     "g_vv_bb": ("vvblgap", "m"),
 }

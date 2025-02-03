@@ -1647,7 +1647,7 @@
     "var_mod": "Radial Build",
     "scan01": 0.10396
   },
-  "gapoh": {
+  "dr_cs_tf_gap": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
