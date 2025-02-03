@@ -1259,7 +1259,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "gapds",
+        "name": "dr_shld_vv_gap_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
