@@ -101,7 +101,7 @@ IO_mappings = {
     "tk_sol_ob": ("dr_fw_plasma_gap_outboard", "m"),
     "g_cs_tf": ("dr_cs_tf_gap", "m"),
     "g_ts_tf": ("dr_tf_shld_gap", "m"),
-    "g_vv_bb": ("vvblgap", "m"),
+    "g_vv_bb": ("dr_shld_blkt_gap", "m"),
 }
 
 NONE_mappings = {
