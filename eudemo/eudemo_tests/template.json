@@ -1169,7 +1169,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "gapoh",
+        "name": "dr_cs_tf_gap",
         "send": true,
         "recv": true,
         "unit": "m"
