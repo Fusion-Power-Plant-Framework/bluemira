@@ -440,7 +440,7 @@ class ProcessInputs:
     dr_bore: float | None = None
     f_z_cryostat: float | None = None
     dr_cryostat: float | None = None
-    d_vv_in: float | None = None
+    dr_vv_inboard: float | None = None
     d_vv_out: float | None = None
     d_vv_top: float | None = None
     d_vv_bot: float | None = None
