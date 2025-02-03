@@ -8,15 +8,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from itertools import cycle
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 from matplotlib.gridspec import GridSpec
+from tabulate import tabulate
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -248,6 +248,43 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
     return fs_list
 
 
+def make_table(data, column_names):
+    """
+    Create a table using a dataclass or  list of dataclasses.
+
+    Parameteres
+    -----------
+    data:
+        Dataclass or list of dataclasses
+    column_names:
+        column names or list of column names
+
+    Returns
+    -------
+    :
+        table
+    """
+    if not isinstance(data, Iterable):
+        return tabulate(
+            list(asdict(data).items()),
+            headers=[column_names],
+            tablefmt="simple",
+            showindex=False,
+            numalign="right",
+        )
+
+    table_data = [data[0].__dataclass_fields__] + [
+        list(asdict(column).values()) for column in data
+    ]
+    return tabulate(
+        list(zip(*table_data, strict=False)),
+        headers=["Parameter", *column_names],
+        tablefmt="grid",
+        showindex=False,
+        numalign="right",
+    )
+
+
 class EqAnalysis:
     """
     Equilibria analysis toolbox for selected Equilibrium.
@@ -440,14 +477,14 @@ class EqAnalysis:
 
     def physics_info_table(self):
         """
-        Create a Pandas dataframe with the physics information
+        Create a table with the physics information
         from the Equilbria of interest.
         Not for use with FixedPlasmaEquilibrium.
 
         Returns
         -------
-        dataframe:
-            Pandas dataframe with summary of physics information.
+        table:
+            Table with summary of physics information.
 
         Raises
         ------
@@ -459,12 +496,33 @@ class EqAnalysis:
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
+        table = make_table(self._eq.analyse_plasma(), self.eq_name)
+        print(table)  # noqa: T201
+        return table
 
-        summary_dict = [self._eq.analyse_plasma()]
-        pd.set_option("display.float_format", "{:.2f}".format)
-        dataframe = pd.DataFrame(summary_dict).T
-        dataframe.columns = [self.eq_name]
-        return dataframe
+    def control_coil_table(self):
+        """
+        Create a table with the control coil information
+        from the Equilbria of interest.
+        Not for use with FixedPlasmaEquilibrium.
+
+        Returns
+        -------
+        table:
+            Table with summary of control coil information.
+
+        Raises
+        ------
+        BluemiraError
+            If the equilibrium is fixed boundary.
+
+        """
+        if self.fixed_or_free is FixedOrFree.FIXED:
+            raise BluemiraError(
+                "This function can only be used for Free Boundary Equilbria."
+            )
+        table, _fz_c_stot, _fsep = self._eq.analyse_coils()
+        return table
 
     def plot_equilibria_with_profiles(self, title=None, ax=None, show=True):  # noqa: FBT002
         """
@@ -995,23 +1053,22 @@ class MultiEqAnalysis:
         for profile in self.profiles:
             self.plotting_profiles.add_profile(profile, n_points)
 
-    def physics_info_dataframe(self):
+    def physics_info_table(self):
         """
-        Create a Pandas dataframe with the the physics information
+        Create a table with the the physics information
         from all listed Equilbria.
         Not for use with FixedPlasmaEquilibrium.
 
         Returns
         -------
-        dataframe:
-            Pandas dataframe with equilibria physics information.
+        table:
+            Table with equilibria physics information.
 
         """
         eq_summaries = self.make_eq_dataclass_list(Equilibrium.analyse_plasma)
-        pd.set_option("display.float_format", "{:.2f}".format)
-        dataframe = pd.DataFrame(eq_summaries).T
-        dataframe.columns = self.equilibrium_names
-        return dataframe
+        table = make_table(eq_summaries, self.equilibrium_names)
+        print(table)  # noqa: T201
+        return table
 
     def plot_core_physics(
         self,
@@ -1037,8 +1094,8 @@ class MultiEqAnalysis:
 
         Returns
         -------
-        dataframe:
-            Pandas dataframe with equilibria core physics results.
+        core_results:
+            List[dataclass] of equilibria core physics results.
         ax:
             Matplotlib Axes object
 
@@ -1055,64 +1112,54 @@ class MultiEqAnalysis:
         for res, name in zip(core_results, self.equilibrium_names, strict=False):
             CorePlotter(res, ax, eq_name=name)
 
-        pd.set_option("display.float_format", "{:.2f}".format)
-        dataframe = pd.DataFrame(core_results).T
-        dataframe.columns = self.equilibrium_names
-
         plt.suptitle(title)
         if show:
             plt.show()
-        return dataframe, ax
+        return core_results, ax
 
-    def coilset_dictionary(self, value=CSData.CURRENT):
+    def coilset_info_table(self, value_type=CSData.CURRENT):
         """
-        Create a list of dictionaries with the coilset information
+        Create a table with the the control coil information
         from all listed Equilbria.
-        Not for use with FixedPlasmaEquilibrium.
 
         Returns
         -------
-        dict_list:
-            Pandas dataframe with equilibria physics information.
+        table:
+            table with equilibria control coil information.
 
         """
-        dict_list = []
-        for eq, fx in zip(self.equilibria, self.fixed_or_free, strict=False):
-            if fx != FixedOrFree.FIXED:
-                coilset_dict = {}
-                for coil in eq.coilset._coils:
-                    if value == CSData.CURRENT:
-                        coilset_dict[coil.name] = coil.current / 1e6
-                    elif value == CSData.XLOC:
-                        coilset_dict[coil.name] = coil.x
-                    elif value == CSData.ZLOC:
-                        coilset_dict[coil.name] = coil.z
-            dict_list.append(coilset_dict)
-        return dict_list
+        free = [fx == FixedOrFree.FREE for fx in self.fixed_or_free]
+        n_cc = [
+            len(eq.coilset.name)
+            for (eq, f) in zip(self.equilibria, free, strict=False)
+            if f
+        ]
+        max_n_cc = np.max(n_cc)
+        diff_cc = max_n_cc - n_cc
+        cc_tab_list = []
+        cc_eq_names = []
+        for i, eq in enumerate(self.equilibria):
+            if free[i]:
+                cc_tab_list.append(
+                    eq.coilset.get_control_coils().name + [None] * diff_cc[i]
+                )
+                coil_dict, _, _ = eq.analyse_coils(print_table=False)
+                cc_tab_list.append(
+                    coil_dict[value_type.value].tolist() + [None] * diff_cc[i]
+                )
+            else:
+                cc_tab_list.extend([[None] * max_n_cc, [None] * max_n_cc])
+            cc_eq_names.extend([self.equilibrium_names[i], value_type.value])
 
-    def coilset_info_dataframe(self, value=CSData.CURRENT):
-        """
-        Create a Pandas dataframe with the the coilset information
-        from all listed Equilbria.
-        Not for use with FixedPlasmaEquilibrium.
-
-        Returns
-        -------
-        dataframe:
-            Pandas dataframe with equilibria coilset information.
-
-        """
-        dict_list = self.coilset_dictionary(value)
-        pd.set_option("display.float_format", "{:.2f}".format)
-        dataframe = pd.DataFrame(dict_list).T
-        dataframe.columns = self.equilibrium_names
-        if value is CSData.CURRENT:
-            dataframe.style.set_caption("Current (MA)")
-        elif value is CSData.XLOC:
-            dataframe.style.set_caption("X-position (m)")
-        elif value is CSData.ZLOC:
-            dataframe.style.set_caption("Z-position (m)")
-        return dataframe
+        table = tabulate(
+            list(zip(*cc_tab_list, strict=False)),
+            headers=cc_eq_names,
+            tablefmt="simple",
+            showindex=False,
+            numalign="right",
+        )
+        print(table)  # noqa: T201
+        return table
 
     def plot_compare_profiles(
         self,

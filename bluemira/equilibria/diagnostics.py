@@ -93,9 +93,11 @@ class CSData(Enum):
     Value to be comapred: current, x-position, or z-position.
     """
 
-    CURRENT = auto()
-    XLOC = auto()
-    ZLOC = auto()
+    CURRENT = "I [MA]"
+    XLOC = "x [m]"
+    ZLOC = "z [m]"
+    B = "B [T]"
+    F = "F [GN]"
 
 
 class FixedOrFree(Enum):

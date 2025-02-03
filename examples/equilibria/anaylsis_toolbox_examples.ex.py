@@ -28,6 +28,7 @@ from pathlib import Path
 
 from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_eq
 from bluemira.equilibria.diagnostics import (
+    CSData,
     EqDiagnosticOptions,
     EqSubplots,
     FluxSurfaceType,
@@ -145,7 +146,11 @@ core_results, ax = eq_analysis_1.plot_eq_core_analysis(ax=None)
 
 # %%
 # Key parameters as a table
-eq_analysis_1.physics_info_table()
+physics_table = eq_analysis_1.physics_info_table()
+
+# %%
+# Control coil information in a table
+table = eq_analysis_1.control_coil_table()
 
 # %%
 # PLot the equilibrium and reference equilibrium seperatrices
@@ -215,11 +220,11 @@ multi_analysis = MultiEqAnalysis(
 
 # %%
 # The same physics info as for the EqAnalysis but for all listed equilibria.
-multi_analysis.physics_info_dataframe()
+table = multi_analysis.physics_info_table()
 
 # %%
 # Plot physics parameters for the plamsa core
-# Note that the dataframe with the results is also output
+# Note that a list with the results is also output
 core_results, ax = multi_analysis.plot_core_physics()
 
 # %%
@@ -238,6 +243,9 @@ ax = multi_analysis.plot_compare_flux_surfaces(
 )
 
 # %%
+# Plot grazing angle and connection length for equilibia divertor legs,
+# for a given number of flux surfaces and a given flux surface spacing,
+# defaults are n_layers=10 and dx_off=0.10 respectfully.
 pfb_masty = Coordinates({
     "x": [1.75, 1.75, 0.0, 0.0, 1.75],
     "z": [-1.75, 1.75, 1.75, -1.75, -1.75],
@@ -247,5 +255,15 @@ pfb_demoish = Coordinates({
     "z": [-7.5, 7.5, 7.5, -7.5, -7.5],
 })
 ax = multi_analysis.plot_divertor_length_angle(
-    plasma_facing_boundary_list=[pfb_masty, pfb_demoish, pfb_demoish]
+    plasma_facing_boundary_list=[pfb_masty, pfb_demoish, pfb_demoish],
 )
+
+# %%
+# Print a table compairing coilset information,
+# note that the equillibria can have different coilsets.
+coilset_table = multi_analysis.coilset_info_table()
+
+# %%
+# Default value_type in coilset comparison table is coil current,
+# but we can also chosse from: x-position, z-position, coil feild, and coil force.
+coilset_table = multi_analysis.coilset_info_table(value_type=CSData.B)

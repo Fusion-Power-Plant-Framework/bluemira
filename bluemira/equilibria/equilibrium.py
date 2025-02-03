@@ -558,7 +558,10 @@ class CoilSetMHDState(MHDState):
         response = self.coilset.control_F(self.coilset)
         background = (
             self.coilset.F(plasma)[non_zero_current]
-            / self.coilset.current[non_zero_current]
+            / np.array([
+                self.coilset.current[non_zero_current],
+                self.coilset.current[non_zero_current],
+            ]).transpose()
         )
 
         forces = np.zeros((no_coils, 2))
@@ -1913,7 +1916,10 @@ class Equilibrium(CoilSetMHDState):
             is_double_null=self.is_double_null,
         )
 
-    def analyse_coils(self) -> tuple[dict[str, Any], float, float]:
+    def analyse_coils(
+        self,
+        print_table=True,  # noqa: FBT002
+    ) -> tuple[dict[str, Any], float, float]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilibrium and coilset.
@@ -1925,29 +1931,40 @@ class Equilibrium(CoilSetMHDState):
         fz_c_stot:
             The sum of the forces on the CS
         fsep:
-
+            CS separation force
         """
         ccoils = self.coilset.get_control_coils()
         c_names = ccoils.name
-        currents = ccoils.currents
+        currents = ccoils.current
         fields = self.get_coil_fields()
         forces = self.get_coil_forces()
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_coils("PF") :]
-        fz_c_stot = sum(fz_cs)
-        fsep = max(
-            np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1])
-            for j in range(self.coilset.n_coils("CS") - 1)
-        )
-        table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
-        print(  # noqa: T201
-            tabulate.tabulate(
-                list(table.values()),
-                headers=c_names,
-                floatfmt=".2f",
-                showindex=table.keys(),
+        if self.coilset.n_coils("CS") > 0:
+            fz_c_stot = sum(fz_cs)
+            fsep = max(
+                np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1])
+                for j in range(self.coilset.n_coils("CS") - 1)
             )
-        )
+        else:
+            # If there are no CS coils
+            fz_c_stot, fsep = None, None
+        table = {
+            "x [m]": ccoils.x,
+            "z [m]": ccoils.z,
+            "I [MA]": currents / 1e6,
+            "B [T]": fields,
+            "F [GN]": fz / 1e9,
+        }
+        if print_table:
+            print(  # noqa: T201
+                tabulate.tabulate(
+                    list(table.values()),
+                    headers=c_names,
+                    floatfmt=".2f",
+                    showindex=table.keys(),
+                )
+            )
         return table, fz_c_stot, fsep
 
     @property
