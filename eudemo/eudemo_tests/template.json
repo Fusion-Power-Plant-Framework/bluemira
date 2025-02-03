@@ -1239,7 +1239,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "vvblgap",
+        "name": "dr_shld_blkt_gap",
         "send": true,
         "recv": true,
         "unit": "m"
