@@ -273,7 +273,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
         template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
         template_builder.add_variable("thkcas", 0.52465)
-        template_builder.add_variable("tfcth", 1.2080)
+        template_builder.add_variable("dr_tf_inborard", 1.2080)
         template_builder.add_variable(
             "dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1
         )
