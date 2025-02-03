@@ -220,7 +220,7 @@ template_builder.add_input_values({
     "hfact": 1.1,
     "life_dpa": 70.0,
     # Radial build inputs
-    "tftsgap": 0.05,
+    "dr_tf_shld_gap": 0.05,
     "vvblgap": 0.02,
     "blnkith": 0.755,
     "scrapli": 0.225,
