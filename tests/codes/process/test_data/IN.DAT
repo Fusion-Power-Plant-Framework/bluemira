@@ -40,7 +40,7 @@ ixc = 16 * ohcth
 boundl(16) = 0.4
 ixc = 18 * q
 boundl(18) = 3.0
-ixc = 29 * bore
+ixc = 29 * dr_bore
 boundl(29) = 0.5
 ixc = 36 * fbeta_max
 ixc = 37 * coheof
@@ -91,7 +91,7 @@ boundl(59) = 0.66667
 
 blnkith  = 0.755 * inboard blanket thickness (m); (calculated if `blktmodel>0`) (=0;0 if `iblnkith=0`)
 blnkoth  = 1.275 * outboard blanket thickness (m); calculated if `blktmodel>0`
-bore     = 2.5006e+00 * central solenoid inboard radius (m) (`iteration variable 29`)
+dr_bore     = 2.5006e+00 * central solenoid inboard radius (m) (`iteration variable 29`)
 dr_cryostat    = 0.15 * cryostat thickness (m)
 d_vv_in  = 0.32 * vacuum vessel inboard thickness (TF coil / shield) (m)
 gapds    = 1.2000e-01 * gap between inboard vacuum vessel and thermal shield (m) (`iteration variable 61`)
