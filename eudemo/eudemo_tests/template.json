@@ -2361,7 +2361,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tfthko",
+        "name": "dr_tf_outboard",
         "send": false,
         "recv": false,
         "unit": "m"
