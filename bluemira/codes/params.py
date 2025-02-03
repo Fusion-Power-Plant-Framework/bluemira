@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import abc
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Literal
 
@@ -25,6 +26,11 @@ class MappedParameterFrame(ParameterFrame):
     See :class:`~bluemira.base.parameter_frame.ParameterFrame` for details
     on how to declare parameters.
     """
+
+    def __post_init__(self):
+        """Ensure mappings are as immutable as we can manage"""
+        self._mappings = deepcopy(self.mappings)
+        super().__post_init__()
 
     @abc.abstractproperty
     def defaults(self) -> dict:
