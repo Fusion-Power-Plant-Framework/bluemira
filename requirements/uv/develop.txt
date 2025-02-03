@@ -17,13 +17,13 @@ attrs==25.1.0
     #   jsonschema
     #   jupyter-cache
     #   referencing
-babel==2.16.0
+babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
 blosc2==2.7.1
     # via tables
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 cfgv==3.4.0
     # via pre-commit
@@ -73,7 +73,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.6
+fonttools==4.55.8
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -99,7 +99,7 @@ iniconfig==2.0.0
     # via pytest
 ipykernel==6.29.5
     # via myst-nb
-ipython==8.31.0
+ipython==8.32.0
     # via
     #   ipykernel
     #   myst-nb
@@ -307,7 +307,7 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
@@ -319,7 +319,7 @@ pyyaml==6.0.2
     #   myst-parser
     #   pre-commit
     #   sphinx-autoapi
-pyzmq==26.2.0
+pyzmq==26.2.1
     # via
     #   ipykernel
     #   jupyter-client
