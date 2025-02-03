@@ -648,13 +648,15 @@ def compare_dicts(
         )
 
     def array_almost_eq(val1, val2):
-        return np.allclose(val1, val2, rtol, atol)
+        return np.allclose(
+            np.asarray(val1, dtype=float), np.asarray(val2, dtype=float), rtol, atol
+        )
 
     def num_almost_eq(val1, val2):
-        return np.isclose(val1, val2, rtol, atol)
+        return np.isclose(floatify(val1), floatify(val2), rtol, atol)
 
     def array_is_eq(val1, val2):
-        return (np.asarray(val1) == np.asarray(val2)).all()
+        return (np.asarray(val1, dtype=float) == np.asarray(val2, dtype=float)).all()
 
     def list_eq(val1, val2):
         return Counter(val1) == Counter(val2)
