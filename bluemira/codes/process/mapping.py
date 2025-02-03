@@ -62,7 +62,7 @@ OUT_mappings = {
     "tau_e": ("taueff", "s"),
     "v_burn": ("vburn", "V"),
     "tk_fw_in": ("dr_fw_inboard", "m"),
-    "tk_fw_out": ("fwoth", "m"),
+    "tk_fw_out": ("dr_fw_outboard", "m"),
     "tk_tf_inboard": ("dr_tf_inborard", "m"),
     "tk_tf_nose": ("thkcas", "m"),
     "tf_wp_width": ("dr_tf_wp", "m"),
