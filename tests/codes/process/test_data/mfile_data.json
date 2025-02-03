@@ -1771,7 +1771,7 @@
     "var_mod": "Vertical Build",
     "scan01": 0.3
   },
-  "z_cryostat_half_inside": {
+  "dr_cryostat": {
     "var_mod": "Vertical Build",
     "scan01": 0.15
   },
