@@ -117,7 +117,7 @@ NONE_mappings = {
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
     # The following mappings are not 1:1
     "tk_sh_in": ("dr_shld_inboard", "m"),
-    "tk_sh_out": ("shldoth", "m"),
+    "tk_sh_out": ("dr_shld_outboard", "m"),
     "tk_sh_top": ("shldtth", "m"),
     "tk_sh_bot": ("shldlth", "m"),
     "tk_vv_out": ("d_vv_out", "m"),
