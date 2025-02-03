@@ -97,7 +97,7 @@ IO_mappings = {
     "tk_bb_ib": ("dr_blkt_inboard", "m"),
     "tk_bb_ob": ("dr_blkt_outboard", "m"),
     "tk_vv_in": ("dr_vv_inboard", "m"),
-    "tk_sol_ib": ("scrapli", "m"),
+    "tk_sol_ib": ("dr_fw_plasma_gap_inboard", "m"),
     "tk_sol_ob": ("scraplo", "m"),
     "g_cs_tf": ("dr_cs_tf_gap", "m"),
     "g_ts_tf": ("dr_tf_shld_gap", "m"),
