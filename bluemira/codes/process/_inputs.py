@@ -458,7 +458,7 @@ class ProcessInputs:
     f_r_cp: float | None = None
     scrapli: float | None = None
     scraplo: float | None = None
-    shldith: float | None = None
+    dr_shld_inboard: float | None = None
     shldlth: float | None = None
     shldoth: float | None = None
     shldtth: float | None = None
