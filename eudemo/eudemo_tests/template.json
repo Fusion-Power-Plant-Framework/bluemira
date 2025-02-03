@@ -2054,7 +2054,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "fwith",
+        "name": "dr_fw_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
