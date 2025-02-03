@@ -101,7 +101,7 @@ iohcl    = 1 * Switch for existence of central solenoid;
 ohcth    = 8.2414e-01 * Central solenoid thickness (m) (`iteration variable 16`)
 scrapli  = 0.225 * Gap between plasma and first wall; inboard side (m) (if `iscrp=1`)
 scraplo  = 0.225 * Gap between plasma and first wall; outboard side (m) (if `iscrp=1`)
-shldith  = 0.30 * inboard shield thickness (m) (`iteration variable 93`)
+dr_shld_inboard  = 0.30 * inboard shield thickness (m) (`iteration variable 93`)
 shldoth  = 0.80 * outboard shield thickness (m) (`iteration variable 94`)
 shldtth  = 0.30 * upper/lower shield thickness (m); calculated if `blktmodel > 0` (= shldlth if double-null)
 dr_tf_inborard    = 1.0500e+00 * inboard TF coil thickness; (centrepost for ST) (m)
