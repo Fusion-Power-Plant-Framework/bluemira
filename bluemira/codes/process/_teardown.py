@@ -290,7 +290,9 @@ class _MFileWrapper:
                 + data["dr_cs_tf_gap"]
             )
             r_ts_ib_in = rtfin + data["dr_tf_inborard"] + data["tftsgap"] + shield_th
-            r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
+            r_vv_ib_in = (
+                r_ts_ib_in + data["gapds"] + data["dr_vv_inboard"] + data["shldith"]
+            )
             r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
             r_fw_ob_in = (
                 r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
