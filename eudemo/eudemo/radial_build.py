@@ -222,7 +222,7 @@ template_builder.add_input_values({
     # Radial build inputs
     "dr_tf_shld_gap": 0.05,
     "vvblgap": 0.02,
-    "blnkith": 0.755,
+    "dr_blkt_inboard": 0.755,
     "scrapli": 0.225,
     "scraplo": 0.225,
     "blnkoth": 0.982,
