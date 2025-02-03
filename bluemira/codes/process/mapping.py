@@ -80,7 +80,7 @@ OUT_mappings = {
     "r_fw_ob_in": ("r_fw_ob_in", "m"),
     "r_vv_ob_in": ("r_vv_ob_in", "m"),
     "r_tf_out_centre": ("r_tf_outboard_mid", "m"),
-    "g_vv_ts": ("gapds", "m"),
+    "g_vv_ts": ("dr_shld_vv_gap_inboard", "m"),
     "TF_res_bus": ("tfbusres", "m"),
     "TF_res_tot": ("ztot", "ohm"),
     "TF_E_stored": ("estotftgj", "GJ"),
