@@ -399,7 +399,7 @@ class TestInDatOneForOne:
             "dr_blkt_inboard": 0.755,
             "scrapli": 0.225,
             "scraplo": 0.225,
-            "blnkoth": 0.982,
+            "dr_blkt_outboard": 0.982,
             "d_vv_out": 0.3,
             "shldoth": 0.8,
             "dr_cryostat": 0.15,
