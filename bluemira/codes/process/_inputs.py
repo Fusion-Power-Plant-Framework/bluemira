@@ -114,7 +114,7 @@ class ProcessInputs:
     fvolsi: float | None = None
     fvolso: float | None = None
     fwclfr: float | None = None
-    rpf2dewar: float | None = None
+    dr_pf_cryostat: float | None = None
     vfshld: float | None = None
     irefprop: int | None = None
     fblli2o: float | None = None
@@ -438,8 +438,8 @@ class ProcessInputs:
     blnkith: float | None = None
     blnkoth: float | None = None
     bore: float | None = None
-    clhsf: float | None = None
-    ddwex: float | None = None
+    f_z_cryostat: float | None = None
+    z_cryostat_half_inside: float | None = None
     d_vv_in: float | None = None
     d_vv_out: float | None = None
     d_vv_top: float | None = None
