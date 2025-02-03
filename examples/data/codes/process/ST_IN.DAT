@@ -86,7 +86,7 @@ ixc = 115 * fpoloidalpower: f-value for max rate of change of energy in poloidal
 
 *-----------------Build Variables------------------*
 dr_blkt_inboard  = 0.755 * Inboard blanket thickness (m);
-blnkoth  = 1.275 * Outboard blanket thickness (m);
+dr_blkt_outboard  = 1.275 * Outboard blanket thickness (m);
 dr_bore     = 2.0e+00 * Central solenoid inboard radius (m)
 dr_cryostat    = 0.15 * Cryostat thickness (m)
 ddwi     = 0.3 * Vacuum vessel thickness (tf coil / shield) (m)
