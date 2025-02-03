@@ -2068,7 +2068,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "fwoth",
+        "name": "dr_fw_outboard",
         "send": false,
         "recv": true,
         "unit": "m"
