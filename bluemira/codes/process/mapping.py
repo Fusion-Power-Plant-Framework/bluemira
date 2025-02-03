@@ -116,7 +116,7 @@ NONE_mappings = {
     "h_tf_max_in": ("hmax", "m"),
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
     # The following mappings are not 1:1
-    "tk_sh_in": ("shldith", "m"),
+    "tk_sh_in": ("dr_shld_inboard", "m"),
     "tk_sh_out": ("shldoth", "m"),
     "tk_sh_top": ("shldtth", "m"),
     "tk_sh_bot": ("shldlth", "m"),
