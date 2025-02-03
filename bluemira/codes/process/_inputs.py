@@ -464,8 +464,8 @@ class ProcessInputs:
     shldtth: float | None = None
     sigallpc: float | None = None
     tfoofti: float | None = None
-    thshield_ib: float | None = None
-    thshield_ob: float | None = None
+    dr_shld_thermal_inboard: float | None = None
+    dr_shld_thermal_outboard: float | None = None
     thshield_vb: float | None = None
     vgap_xpoint_divertor: float | None = None
     vgap_vv_thermalshield: float | None = None
