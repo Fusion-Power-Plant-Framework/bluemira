@@ -1659,11 +1659,11 @@
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
-  "thshield_ib": {
+  "dr_shld_thermal_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
-  "thshield_ob": {
+  "dr_shld_thermal_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
