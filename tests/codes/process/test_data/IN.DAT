@@ -99,7 +99,7 @@ dr_cs_tf_gap    = 5.0000e-02 * gap between central solenoid and TF coil (m) (`it
 gapomin  = 0.20 * minimum gap between outboard vacuum vessel and TF coil (m) (`iteration variable 31`)
 iohcl    = 1 * Switch for existence of central solenoid;
 ohcth    = 8.2414e-01 * Central solenoid thickness (m) (`iteration variable 16`)
-scrapli  = 0.225 * Gap between plasma and first wall; inboard side (m) (if `iscrp=1`)
+dr_fw_plasma_gap_inboard  = 0.225 * Gap between plasma and first wall; inboard side (m) (if `iscrp=1`)
 scraplo  = 0.225 * Gap between plasma and first wall; outboard side (m) (if `iscrp=1`)
 dr_shld_inboard  = 0.30 * inboard shield thickness (m) (`iteration variable 93`)
 shldoth  = 0.80 * outboard shield thickness (m) (`iteration variable 94`)
