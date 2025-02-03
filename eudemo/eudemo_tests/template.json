@@ -1944,7 +1944,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "blnkith",
+        "name": "dr_blkt_inboard",
         "send": true,
         "recv": true,
         "unit": "m"

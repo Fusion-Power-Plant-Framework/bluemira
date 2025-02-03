@@ -435,7 +435,7 @@ class ProcessInputs:
     blbpoth: float | None = None
     blbuith: float | None = None
     blbuoth: float | None = None
-    blnkith: float | None = None
+    dr_blkt_inboard: float | None = None
     blnkoth: float | None = None
     dr_bore: float | None = None
     f_z_cryostat: float | None = None
