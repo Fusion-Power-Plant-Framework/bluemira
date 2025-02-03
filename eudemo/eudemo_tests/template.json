@@ -2445,7 +2445,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_out",
+        "name": "dr_vv_outboard",
         "send": true,
         "recv": false,
         "unit": "m"
