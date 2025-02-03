@@ -2403,7 +2403,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "thshield_ib",
+        "name": "dr_shld_thermal_inboard",
         "send": true,
         "recv": true,
         "unit": "m"

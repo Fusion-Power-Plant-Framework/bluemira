@@ -169,7 +169,11 @@ class TestTeardown:
     def test_obsolete_vars_with_multiple_new_names_all_have_mappings(self):
         def fake_uov(param: str):
             if param == "thshield":
-                return ["thshield_ib", "thshield_ob", "thshield_vb"]
+                return [
+                    "dr_shld_thermal_inboard",
+                    "dr_shld_thermal_outboard",
+                    "thshield_vb",
+                ]
             return param
 
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
@@ -179,7 +183,11 @@ class TestTeardown:
         ):
             teardown.read()
 
-        outputs = teardown.get_raw_outputs(["thshield_ib", "thshield_ob", "thshield_vb"])
+        outputs = teardown.get_raw_outputs([
+            "dr_shld_thermal_inboard",
+            "dr_shld_thermal_outboard",
+            "thshield_vb",
+        ])
         # value from the 'thshield' param in ./test_data/mfile_data.json
         assert outputs == [0.05, 0.05, 0.05]
 

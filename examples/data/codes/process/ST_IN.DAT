@@ -106,7 +106,7 @@ dr_tf_inborard    = 1.0500e+00 * Inboard tf coil thickness; (centrepost for st) 
 vgap_vv_thermalshield    = 0.061 * Vertical gap between vacuum vessel and tf coil (m)
 vgap_xpoint_divertor   = 1.60 * Vertical gap between x-point and divertor (m)
 tftsgap = 0.02
-thshield_ib = 0.05
+dr_shld_thermal_inboard = 0.05
 vvblgap = 0.02
 *---------------Buildings Variables----------------*
 *---------------Constraint Variables---------------*

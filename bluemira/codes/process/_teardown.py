@@ -280,7 +280,7 @@ class _MFileWrapper:
         length) of the TF coil, so this must be taken into consideration
         when translating the geometry into the mid-plane.
         """
-        shield_th = data["thshield_ib"]
+        shield_th = data["dr_shld_thermal_inboard"]
 
         try:
             rtfin = (
