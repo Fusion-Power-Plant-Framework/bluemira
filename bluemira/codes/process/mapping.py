@@ -94,7 +94,7 @@ IO_mappings = {
     "A": ("aspect", "dimensionless"),
     "tau_flattop": (("t_burn_min", "t_burn"), "s"),
     "P_el_net": (("pnetelin", "pnetelmw"), "MW"),
-    "tk_bb_ib": ("blnkith", "m"),
+    "tk_bb_ib": ("dr_blkt_inboard", "m"),
     "tk_bb_ob": ("blnkoth", "m"),
     "tk_vv_in": ("dr_vv_inboard", "m"),
     "tk_sol_ib": ("scrapli", "m"),

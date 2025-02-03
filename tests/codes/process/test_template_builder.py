@@ -396,7 +396,7 @@ class TestInDatOneForOne:
             "dr_vv_inboard": 0.3,
             "shldith": 0.3,
             "vvblgap": 0.02,
-            "blnkith": 0.755,
+            "dr_blkt_inboard": 0.755,
             "scrapli": 0.225,
             "scraplo": 0.225,
             "blnkoth": 0.982,
