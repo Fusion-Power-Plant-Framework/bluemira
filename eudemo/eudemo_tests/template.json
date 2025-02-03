@@ -2431,7 +2431,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_in",
+        "name": "dr_vv_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
