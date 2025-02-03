@@ -2244,7 +2244,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "scrapli",
+        "name": "dr_fw_plasma_gap_inboard",
         "send": true,
         "recv": true,
         "unit": "m"

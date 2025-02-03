@@ -223,7 +223,7 @@ template_builder.add_input_values({
     "dr_tf_shld_gap": 0.05,
     "vvblgap": 0.02,
     "dr_blkt_inboard": 0.755,
-    "scrapli": 0.225,
+    "dr_fw_plasma_gap_inboard": 0.225,
     "scraplo": 0.225,
     "dr_blkt_outboard": 0.982,
     "dr_cryostat": 0.15,
