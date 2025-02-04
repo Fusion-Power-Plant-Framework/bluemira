@@ -45,7 +45,12 @@ from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.geometry.tools import (
+    distance_to,
+    interpolate_bspline,
+    offset_wire,
+    save_cad,
+)
 from bluemira.materials.cache import establish_material_cache
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
