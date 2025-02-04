@@ -7,6 +7,7 @@ import pytest
 from matplotlib.pyplot import Axes
 from pandas import DataFrame
 
+from bluemira.base.error import BluemiraError
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_eq
 from bluemira.equilibria.diagnostics import (
@@ -140,14 +141,23 @@ class TestMultiEqAnalysis:
         cls.multi_analysis = MultiEqAnalysis(
             paths, equilibrium_names=equilibrium_names, from_cocos=[3, 3, 7]
         )
+        cls.pfb_masty = Coordinates({
+            "x": [1.75, 1.75, 0.0, 0.0, 1.75],
+            "z": [-1.75, 1.75, 1.75, -1.75, -1.75],
+        })
+        cls.pfb_demoish = Coordinates({
+            "x": [14.5, 14.5, 5.75, 5.75, 14.5],
+            "z": [-7.5, 7.5, 7.5, -7.5, -7.5],
+        })
 
     def test_plotting(self):
-        ax1 = self.multi_analysis.plot_physics()
+        core_res, ax1 = self.multi_analysis.plot_core_physics()
         ax2 = self.multi_analysis.plot_compare_profiles()
         ax3 = self.multi_analysis.plot_compare_flux_surfaces()
         ax4 = self.multi_analysis.plot_compare_flux_surfaces(
             flux_surface=FluxSurfaceType.PSI_NORM, psi_norm=1.05
         )
+        assert isinstance(core_res[0], CoreResults)
         assert isinstance(ax1[0], Axes)
         assert len(ax1) == 18
         assert isinstance(ax2[0], Axes)
@@ -155,21 +165,27 @@ class TestMultiEqAnalysis:
         assert isinstance(ax3, Axes)
         assert isinstance(ax4, Axes)
 
-    @pytest.mark.parametrize(
-        "legs_to_plot", [DivLegsToPlot.ALL, DivLegsToPlot.UP, DivLegsToPlot.LW]
-    )
+    @pytest.mark.parametrize("legs_to_plot", [DivLegsToPlot.ALL, DivLegsToPlot.LW])
     def test_div_info_plot(self, legs_to_plot):
-        pfb_masty = Coordinates({
-            "x": [1.75, 1.75, 0.0, 0.0, 1.75],
-            "z": [-1.75, 1.75, 1.75, -1.75, -1.75],
-        })
-        pfb_demoish = Coordinates({
-            "x": [14.5, 14.5, 5.75, 5.75, 14.5],
-            "z": [-7.5, 7.5, 7.5, -7.5, -7.5],
-        })
         ax = self.multi_analysis.plot_divertor_length_angle(
-            plasma_facing_boundary_list=[pfb_masty, pfb_demoish, pfb_demoish],
+            plasma_facing_boundary_list=[
+                self.pfb_masty,
+                self.pfb_demoish,
+                self.pfb_demoish,
+            ],
             legs_to_plot=legs_to_plot,
         )
         ax_num = 2 if legs_to_plot in DivLegsToPlot.PAIR else 4
-        assert len(ax) == ax_num
+        assert len(ax[0]) == ax_num
+        assert len(ax[1]) == ax_num
+
+    def test_div_info_plot_wrong_input(self, legs_to_plot=DivLegsToPlot.UP):
+        with pytest.raises(BluemiraError):
+            _ = self.multi_analysis.plot_divertor_length_angle(
+                plasma_facing_boundary_list=[
+                    self.pfb_masty,
+                    self.pfb_demoish,
+                    self.pfb_demoish,
+                ],
+                legs_to_plot=legs_to_plot,
+            )
