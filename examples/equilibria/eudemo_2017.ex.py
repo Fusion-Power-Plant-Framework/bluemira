@@ -306,9 +306,7 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
-diag_ops = EqDiagnosticOptions(
-    psi_diff=False, split_psi_plots=False, reference_eq=reference_eq
-)
+diag_ops = EqDiagnosticOptions(reference_eq=reference_eq)
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
