@@ -97,10 +97,10 @@ diag_ops_1 = EqDiagnosticOptions(
     split_psi_plots=EqSubplots.XZ,
     reference_eq=single_demoish_eq,
 )
-# Set up to look at the absolute psi difference seperately
+# Set up to look at the relative psi difference seperately
 # for plamsa and coilset contributions
 diag_ops_2 = EqDiagnosticOptions(
-    psi_diff=PsiPlotType.PSI_ABS_DIFF,
+    psi_diff=PsiPlotType.PSI_REL_DIFF,
     split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
     reference_eq=single_demoish_eq,
     lcfs_mask=LCFSMask.IN,

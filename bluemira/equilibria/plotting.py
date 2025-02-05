@@ -136,6 +136,14 @@ class Plotter:
                 self.ax.set_ylabel("$z$ [m]")
                 self.ax.set_aspect("equal")
 
+            case EqSubplots.VS_PSI_NORM:
+                if ax is None:
+                    _, self.ax = plt.subplots()
+                else:
+                    self.ax = ax
+                self.ax.set_xlabel(str_to_latex("psi_n"))
+                self.ax.set_aspect("equal")
+
             case EqSubplots.XZ_COMPONENT_PSI:
                 if ax is None:
                     _, self.ax = plt.subplots(
@@ -145,14 +153,14 @@ class Plotter:
                     self.ax = ax
                 set_ax_for_psi_components(self.ax)
 
-            case EqSubplots.VS_PSI_NORM:
+            case EqSubplots.VS_PSI_NORM_STACK:
                 if ax is None:
                     gs = GridSpec(nrows, ncols)
                     self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
                 else:
                     self.ax = ax
                 for c in range(1, ncols):
-                    self.ax[(nrows * ncols) - c].set_xlabel("$\\psi_{n}$")
+                    self.ax[(nrows * ncols) - c].set_xlabel(str_to_latex("psi_n"))
 
             case EqSubplots.VS_X:
                 if ax is None:
@@ -857,14 +865,17 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             vmin = 0
             vmax = 1
         else:
-            vmin = np.amin(self.total_psi)
-            vmax = np.amax(self.total_psi)
+            vmin = np.amin(self.coilset_psi)
+            vmax = np.amax(self.coilset_psi)
 
         title_type = "Difference "
+        cbar_label = "[V.s/rad]"
         if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
             title_type = "Relative difference "
+            cbar_label = " "
         if self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
             title_type = "Absolute difference "
+            cbar_label = "[V.s/rad]"
 
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             if self.coilset_psi is None:
@@ -882,9 +893,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                     vmin=vmin,
                     vmax=vmax,
                 )
-                plt.colorbar(
+                cbar = plt.colorbar(
                     mappable=im, cax=self.cax1, ticks=np.linspace(vmin, vmax, 10)
                 )
+                cbar.set_label(cbar_label)
                 plt.suptitle(
                     title_type + "in psi between reference equilibrium"
                     " and current equilibrium, \n split by contribution from"
@@ -930,8 +942,8 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             vmin = 0
             vmax = 1
         else:
-            vmin = np.amin(self.total_psi)
-            vmax = np.amax(self.total_psi)
+            vmin = np.amin(self.plasma_psi)
+            vmax = np.amax(self.plasma_psi)
 
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             if self.plasma_psi is None:
@@ -1498,7 +1510,7 @@ class CorePlotter(Plotter):
     def __init__(self, results, ax=None, eq_name=None):
         num_plots = len(results.__dict__)
         r, c = int((num_plots - 1) / 2) + 1, 2
-        super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM, nrows=r, ncols=c)
+        super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM_STACK, nrows=r, ncols=c)
         self.plot_core(results, eq_name)
         for a in self.ax[num_plots:]:
             a.axis("off")
@@ -1560,7 +1572,7 @@ class ProfilePlotter(Plotter):
     """
 
     def __init__(self, profiles, ax=None):
-        super().__init__(ax)
+        super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM)
         self.prof = profiles
         self.plot_profiles()
 
