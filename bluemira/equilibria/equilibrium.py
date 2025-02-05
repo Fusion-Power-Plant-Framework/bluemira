@@ -1952,7 +1952,7 @@ class Equilibrium(CoilSetMHDState):
         table = {
             "x [m]": ccoils.x,
             "z [m]": ccoils.z,
-            "I [MA]": currents / 1e6,
+            "I [MA]": raw_uc(currents, "A", "MA"),
             "B [T]": fields,
             "F [GN]": fz / 1e9,
         }
