@@ -31,11 +31,11 @@ class EqSubplots(Enum):
     XZ = auto()
     """Plot x vs z"""
     XZ_COMPONENT_PSI = auto()
-    """PLot x vs z for differnt psi components."""
+    """PLot x vs z for different psi components."""
     VS_PSI_NORM = auto()
-    """Plot parmeters (numbers of which can vary) against the normailised psi."""
+    """Plot parameters (numbers of which can vary) against the normalised psi."""
     VS_X = auto()
-    """Plot parmeters (numbers of which can vary) against x."""
+    """Plot parameters (numbers of which can vary) against x."""
 
 
 class PsiPlotType(Flag):
@@ -57,7 +57,7 @@ class PsiPlotType(Flag):
     """
     PSI_REL_DIFF = auto()
     """
-    Plot the realstive difference between a reference equilibrium psi
+    Plot the relative difference between a reference equilibrium psi
     and the equilibrium psi.
     """
     DIFF = PSI_DIFF | PSI_ABS_DIFF | PSI_REL_DIFF
@@ -78,7 +78,7 @@ class DivLegsToPlot(Flag):
 class LCFSMask(Enum):
     """
     For LCFS masking in plots.
-    Block the area within or outside of the refernce LCFS.
+    Block the area within or outside of the reference LCFS.
     """
 
     IN = auto()
@@ -90,7 +90,8 @@ class LCFSMask(Enum):
 class CSData(Enum):
     """
     For the coilset comparision tables.
-    Value to be comapred: current, x-position, or z-position.
+    Value to be compared: current, x-position, z-position,
+    feild, and force.
     """
 
     CURRENT = "I [MA]"
@@ -102,7 +103,7 @@ class CSData(Enum):
 
 class FixedOrFree(Enum):
     """
-    For use in select_eq - to create appropriate
+    For use in select_eq - to create an appropriate
     Equilibrium or FixedPlasmaEquilibrium object.
     Fixed or free boundary equilibrium.
     """
@@ -113,7 +114,7 @@ class FixedOrFree(Enum):
 
 class EqBPlotParam(Flag):
     """
-    The paramater to plot for an equilibria xz plot.
+    The parameter to plot for an equilibria xz plot.
     """
 
     PSI = auto()
@@ -128,7 +129,7 @@ class EqBPlotParam(Flag):
 class FluxSurfaceType(Enum):
     """
     For flux surface comparision plotting.
-    Compare LCFSs, separaticesor flux surfeaces with a given normailised psi.
+    Compare LCFSs, separatices or flux surfaces with a given normalised psi.
     """
 
     LCFS = auto()
