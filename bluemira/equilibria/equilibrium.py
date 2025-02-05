@@ -558,12 +558,8 @@ class CoilSetMHDState(MHDState):
         response = self.coilset.control_F(self.coilset)
         background = (
             self.coilset.F(plasma)[non_zero_current]
-            / np.array([
-                self.coilset.current[non_zero_current],
-                self.coilset.current[non_zero_current],
-            ]).T
+            / self.coilset.current[non_zero_current][:, None]
         )
-
         forces = np.zeros((no_coils, 2))
         currents = self.coilset.current
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
