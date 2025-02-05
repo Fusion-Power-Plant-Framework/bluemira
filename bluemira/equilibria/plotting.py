@@ -1220,13 +1220,13 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             or (self.reference_eq.grid.dx != self.eq.grid.dx)
             or (self.reference_eq.grid.dz != self.eq.grid.dz)
         ):
-            self.grid = self.make_comparison_grid()
-            self.interpolate_psi_for_comparison()
+            self.grid = self._make_comparison_grid()
+            self._interpolate_psi_for_comparison()
         else:
             self.grid = self.reference_eq.grid
-        self.mask = self.make_lcfs_mask()
+        self.mask = self._make_lcfs_mask()
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
-            self.calculate_psi_diff()
+            self._calculate_psi_diff()
             if self.diag_ops.split_psi_plots is EqSubplots.XZ_COMPONENT_PSI:
                 self.cax1 = make_axes_locatable(self.ax[0]).append_axes(
                     "right", size="5%", pad="2%"
@@ -1239,7 +1239,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
                     "right", size="5%", pad="2%"
                 )
 
-    def make_comparison_grid(self):
+    def _make_comparison_grid(self):
         """
         If the grids are different, make a new one to interpolate over.
 
@@ -1269,7 +1269,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         psi_func = RectBivariateSpline(psi_grid.x[:, 0], psi_grid.z[0, :], psi)
         return psi_func.ev(self.grid.x, self.grid.z)
 
-    def interpolate_psi_for_comparison(self):
+    def _interpolate_psi_for_comparison(self):
         """Interpolate all psi components over new grid."""
         self.ref_coilset_psi = self.interpolate_psi(
             self.ref_coilset_psi, self.reference_eq.grid
@@ -1284,7 +1284,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         self.plasma_psi = self.interpolate_psi(self.plasma_psi, self.eq.grid)
         self.total_psi = self.interpolate_psi(self.total_psi, self.eq.grid)
 
-    def make_lcfs_mask(self):
+    def _make_lcfs_mask(self):
         """
         Make a LCFS shaped mask to use with equilibria comparisions.
 
@@ -1318,7 +1318,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             self.plasma_psi *= abs(self.mask - 1)
             self.total_psi *= abs(self.mask - 1)
 
-    def calculate_psi_diff(self):
+    def _calculate_psi_diff(self):
         """
         Find the difference betwwen the reference and choisen equilibrium psi values.
         """
