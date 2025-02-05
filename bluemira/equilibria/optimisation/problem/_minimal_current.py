@@ -72,7 +72,8 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self._constraints = [] if constraints is None else constraints
 
         self.plotting_enabled = plot
-
+        # TODO @geograham: Should we have diagnostic plotting as an option for all COPs?
+        # 3798
         if self.plotting_enabled:
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
