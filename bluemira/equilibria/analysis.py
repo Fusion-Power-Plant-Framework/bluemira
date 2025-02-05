@@ -119,14 +119,12 @@ def select_eq(
         )
         eq.coilset = rename_coilset(eq.coilset)
         return eq
-    eq = FixedPlasmaEquilibrium.from_eqdsk(
+    return FixedPlasmaEquilibrium.from_eqdsk(
         file_path,
         from_cocos=from_cocos,
         to_cocos=to_cocos,
         qpsi_positive=qpsi_positive,
     )
-    eq.coilset = rename_coilset(eq.coilset)
-    return eq
 
 
 def get_leg_flux_info(

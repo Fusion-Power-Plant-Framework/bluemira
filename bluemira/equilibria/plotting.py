@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
@@ -31,6 +32,7 @@ from bluemira.equilibria.diagnostics import (
     LCFSMask,
     PsiPlotType,
 )
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import Xpoint, _in_plasma, get_contours, grid_2d_contour
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi
@@ -43,7 +45,6 @@ from bluemira.utilities.plot_tools import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import (
@@ -125,44 +126,51 @@ class Plotter:
             if kwarg not in PLOT_DEFAULTS:
                 bluemira_warn(f"Unrecognised plot kwarg: {kwarg}")
 
-        if subplots is EqSubplots.XZ:
-            if ax is None:
-                self.f, self.ax = plt.subplots()
-            else:
-                self.ax = ax
-            self.ax.set_xlabel("$x$ [m]")
-            self.ax.set_ylabel("$z$ [m]")
-            self.ax.set_aspect("equal")
+        match subplots:
+            case EqSubplots.XZ:
+                if ax is None:
+                    _, self.ax = plt.subplots()
+                else:
+                    self.ax = ax
+                self.ax.set_xlabel("$x$ [m]")
+                self.ax.set_ylabel("$z$ [m]")
+                self.ax.set_aspect("equal")
 
-        elif subplots is EqSubplots.XZ_COMPONENT_PSI:
-            if ax is None:
-                self.f, self.ax = plt.subplots(
-                    nrows=nrows, ncols=ncols, sharex=True, sharey=True
-                )
-            else:
-                self.ax = ax
-            set_ax_for_psi_components(self.ax)
+            case EqSubplots.XZ_COMPONENT_PSI:
+                if ax is None:
+                    _, self.ax = plt.subplots(
+                        nrows=nrows, ncols=ncols, sharex=True, sharey=True
+                    )
+                else:
+                    self.ax = ax
+                set_ax_for_psi_components(self.ax)
 
-        elif subplots is EqSubplots.VS_PSI_NORM:
-            if ax is None:
-                gs = GridSpec(nrows, ncols)
-                self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
-            else:
-                self.ax = ax
-            for c in range(1, ncols):
-                self.ax[(nrows * ncols) - c].set_xlabel("$\\psi_{n}$")
+            case EqSubplots.VS_PSI_NORM:
+                if ax is None:
+                    gs = GridSpec(nrows, ncols)
+                    self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
+                else:
+                    self.ax = ax
+                for c in range(1, ncols):
+                    self.ax[(nrows * ncols) - c].set_xlabel("$\\psi_{n}$")
 
-        elif subplots is EqSubplots.VS_X:
-            if ax is None:
-                gs = GridSpec(nrows, ncols)
-                self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
-            else:
-                self.ax = ax
-            for a in self.ax:
-                a.set_xlabel("$x$ [m]")
+            case EqSubplots.VS_X:
+                if ax is None:
+                    gs = GridSpec(nrows, ncols)
+                    self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
+                else:
+                    self.ax = ax
+                for a in self.ax:
+                    a.set_xlabel("$x$ [m]")
 
+            case _:
+                raise BluemiraError(f"{subplots} is not a valid option for subplots.")
+
+        # Set figure for use in
+        if isinstance(self.ax, Axes):
+            self.f = self.ax.get_figure()
         else:
-            raise BluemiraError(f"{subplots} is not a valid option for subplots.")
+            self.f = self.ax[0].get_figure()
 
 
 class GridPlotter(Plotter):
@@ -573,7 +581,10 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             lcfs = self.eq.get_LCFS()
-        except Exception:  # noqa: BLE001
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
             bluemira_warn("Unable to plot LCFS")
             return
         x, z = lcfs.xz
@@ -670,7 +681,10 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             separatrix = self.eq.get_separatrix()
-        except Exception:  # noqa: BLE001
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
             bluemira_warn("Unable to plot separatrix")
             return
 
@@ -744,7 +758,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
         self.ref_total_psi = self.reference_eq.psi()
         self.ref_plasma_psi = self.reference_eq.plasma.psi()
-        if (self.ref_total_psi - self.ref_plasma_psi == 0).all():
+        if np.allclose(self.ref_total_psi, self.ref_plasma_psi):
             # Fill with zeros if there is no coilset
             self.ref_coilset_psi = 0.0 * self.reference_eq.grid.x
         else:
@@ -758,7 +772,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             ref_lcfs = self.reference_eq.get_LCFS()
-        except Exception:  # noqa: BLE001
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
             bluemira_warn("Unable to plot reference LCFS")
             return
         x, z = ref_lcfs.xz
@@ -791,7 +808,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         """
         try:
             lcfs = self.eq.get_LCFS()
-        except Exception:  # noqa: BLE001
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
             bluemira_warn("Unable to plot LCFS")
             return
         x, z = lcfs.xz
@@ -1265,7 +1285,10 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         mask_matx = np.zeros_like(self.grid.x)
         try:
             ref_lcfs = self.reference_eq.get_LCFS()
-        except Exception:  # noqa: BLE001
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
             bluemira_warn("Unable to find reference LCFS")
             return None
         return _in_plasma(
