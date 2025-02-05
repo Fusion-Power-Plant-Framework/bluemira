@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from matplotlib.pyplot import Axes
-from pandas import DataFrame
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.file import get_bluemira_path
@@ -113,7 +112,7 @@ class TestEqAnalysis:
         assert isinstance(plot_7_res, CoreResults)
         assert len(plot_7_ax) == 18
         assert len(plot_7_res.__dict__.items()) == 17
-        assert isinstance(plot_8, DataFrame)
+        assert isinstance(plot_8, str)
         assert isinstance(plot_9, Axes)
         assert plot_10 is None
         assert plot_11 is None

@@ -22,7 +22,7 @@ import tabulate
 from eqdsk import EQDSKInterface
 from scipy.optimize import minimize
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import MU_0, raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
