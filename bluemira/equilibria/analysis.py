@@ -778,7 +778,7 @@ class EqAnalysis:
             self._profiles.pressure,
             self._profiles.shape,
         ]
-        ax_titles = ["pprime", "ffprime", "fRBpol", "pressure", "shape"]
+        ax_titles = ["pprime", "ffprime", "fRBpol", "pressure [Pa]", "shape"]
         axes = [ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1], ax[0, 2]]
 
         x = np.linspace(0, 1, 50)
@@ -1246,9 +1246,10 @@ class MultiEqAnalysis:
             _, ax = plt.subplots(2, 3)
 
         ax_list = [ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1], ax[0, 2]]
+        ax_titles = ["pprime", "ffprime", "fRBpol", "pressure [Pa]", "shape"]
 
-        for axs, key in zip(
-            ax_list, self.plotting_profiles.__dataclass_fields__, strict=False
+        for axs, key, title in zip(
+            ax_list, self.plotting_profiles.__dataclass_fields__, ax_titles, strict=False
         ):
             for profile, name in zip(
                 getattr(self.plotting_profiles, key),
@@ -1257,7 +1258,7 @@ class MultiEqAnalysis:
             ):
                 axs.plot(x, profile, marker=".", label=name)
                 axs.legend(loc="best")
-                axs.set_title(key)
+                axs.set_title(title)
 
         ax[1, 2].axis("off")
 

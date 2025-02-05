@@ -30,9 +30,11 @@ class EqSubplots(Enum):
 
     XZ = auto()
     """Plot x vs z"""
+    VS_PSI_NORM = auto()
+    """Plot vs normalised psi."""
     XZ_COMPONENT_PSI = auto()
     """PLot x vs z for different psi components."""
-    VS_PSI_NORM = auto()
+    VS_PSI_NORM_STACK = auto()
     """Plot parameters (numbers of which can vary) against the normalised psi."""
     VS_X = auto()
     """Plot parameters (numbers of which can vary) against x."""
