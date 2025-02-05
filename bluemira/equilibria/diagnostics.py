@@ -14,12 +14,12 @@ from enum import Enum, Flag, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from bluemira.base.file import try_get_bluemira_path
+
 if TYPE_CHECKING:
     from os import PathLike
 
     from bluemira.equilibria.equilibrium import Equilibrium
-
-from bluemira.base.file import try_get_bluemira_path
 
 
 class EqSubplots(Enum):
