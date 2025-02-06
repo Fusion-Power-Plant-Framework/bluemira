@@ -25,12 +25,26 @@ Calculate solution due to coilset as sum of toroidal harmonics, and compare to s
 from Bluemira.
 """
 # %% [markdown]
-# # Calculating the flux solution due to a coilset as a sum of toroidal harmonics
+# # Example of using Toroidal Harmonic Approximation
 #
-# This example illustrates the usage of the bluemira toroidal harmonics approximation
-# function (`toroidal_harmonic_approximate_psi`) which can be used to approximate the
-# magnetic flux due to a coilset. For full details and all equations, look in the
+# This example illustrates the inner workings of the bluemira toroidal harmonics
+# approximation function (toroidal_harmonic_approximation) which can be used in
+# coilset current and position optimisation for conventional aspect ratio tokamaks.
+# For full details and all equations, look in the
 # notebook toroidal_harmonics_component_function_walkthrough_and_verification.ex.py.
+#
+# ## Premise:
+#
+# - Our equilibrium solution will not change if the coilset contribution
+# to the poloidal field (vacuum field) is kept the same in the region
+# occupied by the core plasma (i.e. the region characterised by closed flux surfaces).
+#
+# - If we constrain the core plasma while altering (optimising) other aspects
+#   of the magnetic configuration, then we will not need to re-solve for
+#   the plasma equilibrium at each iteration.
+#
+# - We can decompose the vacuum field into Toroidal Harmonics (TH)
+#   to create a minimal set of constraints for use in optimisation.
 # %% [markdown]
 # ## Imports
 
@@ -50,9 +64,14 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     toroidal_harmonic_approximate_psi,
+    toroidal_harmonic_approximation,
+    toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import Coordinates
+
+# %% [markdown]
+# Get equilibrium from EQDSK file and plot
 
 # %%
 # Get equilibrium
@@ -72,24 +91,39 @@ eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
 plt.show()
 
-# %%
+# %% [markdown]
 # Set the focus point
+#
 # Note: there is the possibility to experiment with the position of the focus, but
 # the default is to use the plasma o point.
+# %%
+# Set the focus point
 eq.get_OX_points()
 R_0 = eq._o_points[0].x
 Z_0 = eq._o_points[0].z
 
 # %% [markdown]
-# Use the `toroidal_harmonic_approximate_psi` function to use approximate the coilset
+# Use the `toroidal_harmonic_grid_and_coil_setup` to obtain the necessary
+# parameters required for the TH approximation, such as the R and Z coordinates of the
+# TH grid.
+#
+# We then use the `toroidal_harmonic_approximate_psi` function to approximate the coilset
 # contribution to the flux using toroidal harmonics. We need to provide this function
-# with the equilibrium, eq, and the coordinates of the focus point, R_0 and Z_0. The
-# function returns the psi_approx array. The default focus point is the plasma o point.
-
+# with the equilibrium, eq, and the ToroidalHarmonicsParams dataclass, which contains
+# necessary parameters for the TH approximation, such as the relevant coordinates
+# and coil names for use in the approximation. The
+# function returns the psi_approx array and the TH coefficient matrix A_m.
+# The default focus point is the plasma o point.
+# The white dot in the plot shows the focus point.
 # %%
 # Approximate psi and plot
-psi_approx, R_approx, Z_approx = toroidal_harmonic_approximate_psi(
-    eq=eq, R_0=R_0, Z_0=Z_0, max_degree=6
+th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
+
+R_approx = th_params.R
+Z_approx = th_params.Z
+
+psi_approx, _ = toroidal_harmonic_approximate_psi(
+    eq=eq, th_params=th_params, max_degree=6
 )
 
 nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
@@ -99,18 +133,35 @@ plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("TH Approximation for Coilset Psi")
 plt.show()
+# %% [markdown]
+# We need to set up a mask to use when interpolating because we don't want
+# to use interpolated values that are outside of the bluemira equilibria
+# grid.
+
+# %%
+# Mask
+min_grid_x, max_grid_x = np.min(eq.grid.x), np.max(eq.grid.x)
+min_grid_z, max_grid_z = np.min(eq.grid.z), np.max(eq.grid.z)
+
+R_mask = R_approx
+R_mask = np.where(R_approx < min_grid_x, 0.0, 1.0)
+R_mask = np.where(R_approx > max_grid_x, 0.0, 1.0)
+Z_mask = Z_approx
+Z_mask = np.where(Z_approx < min_grid_z, 0.0, 1.0)
+Z_mask = np.where(Z_approx > max_grid_z, 0.0, 1.0)
+mask = R_mask * Z_mask
 
 # %% [markdown]
 # Now we want to compare this approximation to the solution from bluemira.
 
 # %%
-# Want to compare to Bluemira coilset and find the fit metric
-
+# Plot total psi using approximate coilset psi from TH, and plasma psi from bluemira
 # Interpolation so we can compare psi over the same grid
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.plasma.psi())
 interpolated_plasma_psi = psi_func.ev(R_approx, Z_approx)
 
 total_psi = psi_approx + interpolated_plasma_psi
+total_psi *= mask
 
 # Find LCFS from TH approx
 approx_eq = deepcopy(eq)
@@ -126,49 +177,63 @@ original_LCFS = eq.get_LCFS()
 plt.contourf(R_approx, Z_approx, total_psi, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
-plt.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
+plt.plot(
+    approx_LCFS.x,
+    approx_LCFS.z,
+    color="red",
+    label="Approximate LCFS from TH approximation",
+)
 plt.title("Total Psi using TH approximation for coilset psi")
 plt.legend(loc="upper right")
 plt.show()
 
-
+# %%
+# Plot interpolated bluemira total psi
 # Obtain psi from Bluemira coilset
 bm_coil_psi = np.zeros(np.shape(eq.grid.x))
 for n in eq.coilset.name:
     bm_coil_psi = np.sum([bm_coil_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0)
 
+
+# Obtain total psi from Bluemira
+psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.psi())
+interpolated_bm_total_psi = psi_func.ev(R_approx, Z_approx)
+interpolated_bm_total_psi *= mask
+
 # Plotting
-plt.contourf(eq.grid.x, eq.grid.z, bm_coil_psi, nlevels, cmap=cmap)
+plt.contourf(R_approx, Z_approx, interpolated_bm_total_psi, levels=nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
-plt.title("Bluemira Coilset Psi")
+plt.title("Interpolated Total Bluemira Psi")
 plt.show()
-
-
+# %%
+# Plot interpolated bluemira coilset psi
 # Interpolation to use same grid
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], bm_coil_psi)
 interpolated_coilset_psi = psi_func.ev(R_approx, Z_approx)
 
 # Plotting
-plt.contourf(R_approx, Z_approx, interpolated_coilset_psi, nlevels, cmap=cmap)
+plt.contourf(R_approx, Z_approx, interpolated_coilset_psi * mask, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("Interpolated Bluemira Coilset Psi")
 plt.show()
-
-# Difference plot to compare TH approximation to Bluemira coil
+# %%
+# Difference plot to compare TH approximation to Bluemira coilset psi
 coilset_psi_diff = np.abs(psi_approx - interpolated_coilset_psi) / np.max(
     interpolated_coilset_psi
 )
+coilset_psi_diff_plot = coilset_psi_diff * mask
 f, ax = plt.subplots()
 ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
 ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
-im = ax.contourf(R_approx, Z_approx, coilset_psi_diff, levels=nlevels, cmap=cmap)
+im = ax.contourf(R_approx, Z_approx, coilset_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
 ax.set_title("Difference between coilset psi and TH approximation psi")
 ax.legend(loc="upper right")
 eq.coilset.plot(ax=ax)
 plt.show()
+
 # %% [markdown]
 # We use a fit metric to evaluate the TH approximation.
 
@@ -176,5 +241,18 @@ plt.show()
 # Fit metric to evaluate TH approximation
 fit_metric_value = fs_fit_metric(original_LCFS, approx_LCFS)
 print(f"fit metric value = {fit_metric_value}")
+
+# %% [markdown]
+# All of these TH functions are combined in the `toroidal_harmonic_approximation`
+# function, which takes the equilibrium, eq, and the TH parameters, th_params, and
+# approximates psi using TH. The function uses a fit metric to find the appropriate
+# number of degrees to use for the approximation.
+#
+# Here is an example of using the function, setting plot to True outputs a graph of the
+# difference in total psi between the TH approximation and bluemira.
+# %%
+names, A_m, degree, fit_metric, approx_total_psi, currents = (
+    toroidal_harmonic_approximation(eq=eq, th_params=th_params, plot=True)
+)
 
 # %%
