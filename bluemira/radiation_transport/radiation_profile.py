@@ -49,6 +49,7 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.radiation_transport.midplane_temperature_density import (
@@ -374,8 +375,25 @@ class Radiation:
 class CoreRadiation(Radiation):
     """
     Specific class to calculate the core radiation source.
-    Temperature and density are assumed to be constant along a
-    single flux tube.
+
+    Temperature and density are assumed to be constant along a single flux tube.
+    In addition to `Radiation`, this class also includes the impurity data of all
+    gases except Argon.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    midplane_profiles:
+        Electron density and electron temperature profile at the mid-plane.
+    impurity_content:
+        The dictionary of impurities (e.g. 'H') and their fractions (e.g. 1E-2)
+        in the core.
+    impurity_data:
+        The dictionary of impurities in the core at a defined time, sorted by
+        species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
     """
 
     def __init__(
@@ -383,13 +401,9 @@ class CoreRadiation(Radiation):
         eq: Equilibrium,
         params: ParameterFrame,
         midplane_profiles: MidplaneProfiles,
-        impurity_content,
-        impurity_data,
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
     ):
-        """
-        In addition to `Radiation`, this class also includes the impurity data of all
-        gases except Argon.
-        """
         super().__init__(eq, params)
 
         # Picking impurity species
@@ -578,16 +592,29 @@ class ScrapeOffLayerRadiation(Radiation):
     In the SOL is assumed a conduction dominated regime until the
     x-point, with no heat sinks, and a convection dominated regime
     between x-point and target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    x_sep_imp
+        inboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
+    dx_imp
+        The midplane spatial resolution between flux surfaces at the inboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        x_sep_omp=None,
-        x_sep_imp=None,
-        dx_omp=None,
-        dx_imp=None,
+        x_sep_omp: float | None = None,
+        x_sep_imp: float | None = None,
+        dx_omp: float | None = None,
+        dx_imp: float | None = None,
     ):
         super().__init__(eq, params)
 
@@ -1353,20 +1380,45 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     Here the SOL is divided into for regions. From the outer midplane to the
     outer lower target; from the omp to the outer upper target; from the inboard
     midplane to the inner lower target; from the imp to the inner upper target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    flux_surfaces:
+        list of flux surfaces, all of which terminating at the first walls.
+    impurity_content:
+        The dictionary of impurities in the double-null's scrape-off layer
+        (e.g. 'H') and their fractions (e.g. 1E-2).
+    impurity_data:
+        The dictionary of impurities in the double-null's scrape-off layer at a
+        defined time, sorted by species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
+    firstwall_geom:
+        The closed first wall geometry
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    x_sep_imp
+        inboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
+    dx_imp:
+        The midplane spatial resolution between flux surfaces at the inboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        flux_surfaces,
-        impurity_content,
-        impurity_data,
-        firstwall_geom,
-        x_sep_omp=None,
-        x_sep_imp=None,
-        dx_omp=None,
-        dx_imp=None,
+        flux_surfaces: list[PartialOpenFluxSurface],
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
+        firstwall_geom: Coordinates,
+        x_sep_omp: float | None = None,
+        x_sep_imp: float | None = None,
+        dx_omp: float | None = None,
+        dx_imp: float | None = None,
     ):
         super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
 
@@ -1659,18 +1711,39 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     Here the SOL is divided into for regions. From the outer midplane to the
     outer lower target; from the omp to the outer upper target; from the inboard
     midplane to the inner lower target; from the imp to the inner upper target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    flux_surfaces:
+        list of flux surfaces, all of which terminating at the first walls.
+    impurity_content:
+        The dictionary of impurities in the single-null scrape-off layer
+        (e.g. 'H') and their fractions (e.g. 1E-2).
+    impurity_data:
+        The dictionary of impurities in the single-null scrape-off layer at a defined
+        time, sorted by species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
+    firstwall_geom:
+        The closed first wall geometry
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        flux_surfaces,
-        impurity_content,
-        impurity_data,
-        firstwall_geom,
-        x_sep_omp,
-        dx_omp,
+        flux_surfaces: list[PartialOpenFluxSurface],
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
+        firstwall_geom: Coordinates,
+        x_sep_omp: float,
+        dx_omp: float,
     ):
         super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
 
@@ -1869,6 +1942,25 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 class RadiationSource:
     """
     Simplified solver to easily access the radiation model location inputs.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    firstwall_shape:
+        BluemiraWire defining the first wall.
+    midplane_profiles:
+        Electron density and electron temperature profile at the mid-plane.
+    core_impurities:
+        The dictionary of impurities in the core (e.g. 'H') and their fractions
+        (e.g. 1E-2).
+    sol_impurities:
+        The dictionary of impurities in the scrape-off layer (e.g. 'H') and their
+        fractions (e.g. 1E-2).
+    confinement_time_sol:
+        Confinement timescale at the scrape-off layer [s]
+    confinement_time_core:
+        Confinement timescale in the core [s]
     """
 
     params: RadiationSourceParams
