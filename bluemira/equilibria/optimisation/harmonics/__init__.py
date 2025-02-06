@@ -17,16 +17,16 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     spherical_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
-    SphericalHarmonicConstraintFunction,
+    HarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
 )
 
 __all__ = [
+    "HarmonicConstraintFunction",
     "PointType",
     "SphericalHarmonicConstraint",
-    "SphericalHarmonicConstraintFunction",
     "coil_harmonic_amplitude_matrix",
     "coils_outside_fs_sphere",
     "collocation_points",
