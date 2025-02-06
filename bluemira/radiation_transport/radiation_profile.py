@@ -45,6 +45,8 @@ from bluemira.radiation_transport.radiation_tools import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     import numpy.typing as npt
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
@@ -2073,18 +2075,19 @@ class RadiationSource:
 
         return self.core_rad, self.sol_rad
 
-    def rad_core_by_psi_n(self, psi_n):
+    def rad_core_by_psi_n(self, psi_n: float | np.ndarray) -> np.ndarray:
         """
         Calculation of core radiation source for a given (set of) psi norm value(s)
 
         Parameters
         ----------
-        psi_n: float (list)
-            The normalised magnetic flux value(s)
+        psi_n:
+            The normalised magnetic flux value(s), between the minimum and maximum of
+            [self.midplane_profiles.psi_n.min(), self.midplane_profiles.psi_n.max()].
 
         Returns
         -------
-        rad_new: float (list)
+        rad_new:
             Local radiation source value(s) associated to the given psi_n
         """
         core_rad = CoreRadiation(
@@ -2098,7 +2101,9 @@ class RadiationSource:
         rad_tot = np.sum(np.array(core_rad.rad_mp, dtype=object), axis=0)
         return interp1d(self.midplane_profiles.psi_n, rad_tot)(psi_n)
 
-    def rad_core_by_points(self, x, z):
+    def rad_core_by_points(
+        self, x: float | np.ndarray, z: float | np.ndarray
+    ) -> np.ndarray:
         """
         Calculation of core radiation source for a given (set of) x, z coordinates
 
@@ -2118,14 +2123,15 @@ class RadiationSource:
         psi_n = calc_psi_norm(psi, *self.eq.get_OX_psis(psi))
         return self.rad_core_by_psi_n(psi_n)
 
-    def rad_sol_by_psi_n(self, psi_n):
+    def rad_sol_by_psi_n(self, psi_n: float | np.ndarray[float]) -> np.ndarray:
         """
         Calculation of sol radiation source for a given psi norm value
 
         Parameters
         ----------
         psi_n: float
-            The normalised magnetic flux value
+            The normalised magnetic flux value, between the minimum and maximum of
+            [self.eq.psi_norm().min(), self.eq.psi_norm().max()].
 
         Returns
         -------
@@ -2139,7 +2145,9 @@ class RadiationSource:
             for x, z in zip(fs.x, fs.z, strict=False)
         ])
 
-    def rad_sol_by_points(self, x_lst, z_lst):
+    def rad_sol_by_points(
+        self, x_lst: Iterable[float], z_lst: Iterable[float]
+    ) -> np.ndarray:
         """
         Calculation of sol radiation source for a given (set of) x, z coordinates
 
@@ -2161,14 +2169,15 @@ class RadiationSource:
             for x, z in zip(x_lst, z_lst, strict=False)
         ])
 
-    def rad_by_psi_n(self, psi_n):
+    def rad_by_psi_n(self, psi_n: float) -> np.ndarray:
         """
         Calculation of any radiation source for a given (set of) psi norm value(s)
 
         Parameters
         ----------
         psi_n:
-            The normalised magnetic flux value(s)
+            The normalised magnetic flux value(s), between the minimum and maximum of
+            [self.eq.psi_norm().min(), self.eq.psi_norm().max()].
 
         Returns
         -------
@@ -2179,7 +2188,7 @@ class RadiationSource:
             return self.rad_core_by_psi_n(psi_n)
         return self.rad_sol_by_psi_n(psi_n)
 
-    def rad_by_points(self, x, z):
+    def rad_by_points(self, x: float | np.ndarray, z: float | np.ndarray) -> np.ndarray:
         """
         Calculation of any radiation source for a given (set of) x, z coordinates
 
@@ -2193,7 +2202,8 @@ class RadiationSource:
         Returns
         -------
         rad_any:
-            Local radiation source value(s) associated to the point(s)
+            Local radiation source values located at the meshgrid formed by meshgrid of
+            x and z.
         """
         f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return interpolated_field_values(x, z, f)
