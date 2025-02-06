@@ -14,10 +14,11 @@ import numpy.typing as npt
 from bluemira.equilibria.optimisation.constraints import ConstraintFunction
 
 
-class SphericalHarmonicConstraintFunction(ConstraintFunction):
+class HarmonicConstraintFunction(ConstraintFunction):
     """
-    Constraint function to constrain spherical harmonics starting from initial
+    Constraint function to constrain harmonics starting from initial
     coil currents and associated core plasma.
+    Used for spherical and toroidal harmonics.
 
     Parameters
     ----------

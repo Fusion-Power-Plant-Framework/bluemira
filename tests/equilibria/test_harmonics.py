@@ -25,7 +25,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     spherical_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
-    SphericalHarmonicConstraintFunction,
+    HarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
@@ -147,7 +147,7 @@ def test_collocation_points():
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
 
-def test_SphericalHarmonicConstraintFunction():
+def test_HarmonicConstraintFunction():
     coil = Coil(x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1")
 
     circuit = SymmetricCircuit(
@@ -189,7 +189,7 @@ def test_SphericalHarmonicConstraintFunction():
     b_vec = np.array([1e-1, 1e-2, 1e-18])
     test_vector = cur_expand_mat @ np.array([1, 1, 1])
     test_result = a_mat @ test_vector
-    test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
+    test_constraint = HarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 

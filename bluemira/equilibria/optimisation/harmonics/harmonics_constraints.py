@@ -24,7 +24,11 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     coil_harmonic_amplitude_matrix,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
-    SphericalHarmonicConstraintFunction,
+    HarmonicConstraintFunction,
+)
+from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    ToroidalHarmonicsParams,
+    coil_toroidal_harmonic_amplitude_matrix,
 )
 from bluemira.utilities.tools import is_num
 
@@ -157,9 +161,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """  # noqa: DOC201
         return np.zeros(len(self.target_harmonics))
 
-    def f_constraint(self) -> SphericalHarmonicConstraintFunction:
+    def f_constraint(self) -> HarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
@@ -171,3 +175,155 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             _, ax = plt.subplots()
 
         ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
+
+
+class ToroidalHarmonicConstraint(UpdateableConstraint):
+    """
+    Toroidal harmonic constraints for the desired core plasma
+    of a conventional aspect ratio stokamak equilibria.
+
+    Parameters
+    ----------
+    ref_harmonics:
+        Initial harmonic amplitudes obtained from desired core plasma
+        (Returned by toroidal_harmonic_approximation)
+    th_params:
+        ToroidalHarmonicsParams dataclass containing necessary parameters for use in TH
+        approximation
+    tolerance:
+        Tolerance with which the constraint(s) will be met
+
+    """
+
+    def __init__(
+        self,
+        ref_harmonics: npt.NDArray[np.float64],
+        th_params: ToroidalHarmonicsParams,
+        tolerance: float | npt.NDArray | None = None,
+        smallest_tol: float = 1e-6,
+        constraint_type: str = "equality",
+        *,
+        invert: bool = False,
+    ):
+        if tolerance is None:
+            ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
+            tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
+            np.nan_to_num(
+                tolerance, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
+            )
+        elif is_num(tolerance):
+            tolerance *= np.ones(len(ref_harmonics))
+        elif len(tolerance) != len(ref_harmonics):
+            raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
+
+        self.constraint_type = constraint_type
+        self.tolerance = tolerance
+
+        self.target_harmonics = ref_harmonics
+        self.max_degree = len(ref_harmonics)
+
+        if invert and constraint_type == "equality":
+            bluemira_warn(
+                "Have used 'invert=True' while using 'equality' type for the"
+                "Toroidal Harmonic Constraint."
+                "Please double check your constraint inputs."
+            )
+
+        self.invert = invert
+
+        self.th_params = th_params
+
+        self._args = {
+            "a_mat": None,
+            "b_vec": None,
+            "value": 0.0,
+            "scale": 1e6,
+        }
+
+    @property
+    def control_coil_names(self):
+        """
+        The names of the allowed control coils when using the
+        TH approximation constraints.
+        """
+        return self.th_params.th_coil_names
+
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
+        """
+        Prepare the constraint for use in an equilibrium optimisation problem.
+
+        Raises
+        ------
+        ValueError
+            Constraint requires fixed coils
+        """
+        if len(equilibrium.coilset.control) != len(self.th_params.th_coil_names):
+            bluemira_warn(
+                "You are using too many control coils in your optimisation problem."
+                "Please make sure you only use the coils allowed by your TH approx."
+            )
+
+        # Passive coils are a TODO in bluemira core
+        if I_not_dI:
+            equilibrium = _get_dummy_equilibrium(equilibrium)
+
+        if not fixed_coils:
+            raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
+
+        self._args["a_mat"] = self.control_response(equilibrium.coilset)
+        self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
+        if self.invert:
+            self._args["a_mat"] *= -1
+            self._args["b_vec"] *= -1
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coil harmonic amplitude matrix
+        """
+        # TH coefficients from function of the current distribution outside of the region
+        # containing the plasma, i.e., LCFS
+        # N.B., cannot use coil located within LCFS as part of this method.
+        return coil_toroidal_harmonic_amplitude_matrix(
+            coilset,
+            self.th_params.R_0,
+            self.th_params.Z_0,
+            self.th_params.th_coil_names,
+        )
+
+    def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """  # noqa: DOC201
+        return np.zeros(len(self.target_harmonics))
+
+    def f_constraint(self) -> HarmonicConstraintFunction:
+        """Constraint function."""  # noqa: DOC201
+        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint.constraint_type = self.constraint_type
+        return f_constraint
+
+    def plot(self, ax=None):  # FIXME
+        """
+        Plot the constraint onto an Axes.
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+        max_R = np.max(self.th_params.R)  # noqa: N806
+        min_R = np.min(self.th_params.R)  # noqa: N806
+        max_Z = np.max(self.th_params.Z)  # noqa: N806
+        min_Z = np.min(self.th_params.Z)  # noqa: N806
+        centre_R = max_R - min_R  # noqa: N806
+        centre_Z = max_Z - min_Z  # noqa: N806
+        radius = (max_R - min_R) / 2
+        # TODO find max x and centre of grid and then make circle
+        # TODO check this is okay
+        ax.add_patch(
+            patch.Circle(
+                (centre_R, centre_Z), radius, ec="orange", fill=True, fc="orange"
+            )
+        )
