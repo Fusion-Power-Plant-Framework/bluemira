@@ -1009,6 +1009,7 @@ def detect_radiation(
     world: World,
     *,
     verbose: bool = False,
+    # TODO @DarioV86: remove these debugs/put into tests?
 ) -> DetectedRadiation:
     """
     To sample the wall and detect radiation
@@ -1128,6 +1129,7 @@ def make_wall_detectors(
     ctr = 0
 
     if debug:
+        # TODO @DarioV86: remove these debugs/put into tests?
         _fig, ax = plt.subplots()
 
     for index in range(num + 1):
@@ -1312,7 +1314,7 @@ class FirstWallRadiationSolver:
         n_samples: int = 500,
         *,
         plot: bool = True,
-        verbose: bool = False,
+        verbose: bool = False,  # TODO @DarioV86: remove these debugs/put into tests?
     ) -> DetectedRadiation:
         """
         Solve first wall radiation problem

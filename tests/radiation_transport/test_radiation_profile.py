@@ -24,6 +24,7 @@ from bluemira.radiation_transport.radiation_tools import (
     DetectedRadiation,
     FirstWallRadiationSolver,
     electron_density_and_temperature_sol_decay,
+    get_impurity_data,
     grid_interpolator,
     interpolated_field_values,
     ion_front_distance,
@@ -115,6 +116,27 @@ class TestCoreRadiation:
         cls.profiles = profiles
         cls.source = source
         cls.fw_shape = fw_shape
+
+    def test_get_impurity_data(self):
+        core_impurities = get_impurity_data(
+            self.config["f_imp_core"], self.config["confinement_core"]
+        )
+        core_shape = core_impurities["H"]["T_ref"].shape
+        assert len(core_impurities) == len(self.config["f_imp_core"])
+        for values in core_impurities.values():
+            assert np.shape(values["T_ref"]) == core_shape
+            assert np.shape(values["L_ref"]) == core_shape
+            assert np.shape(values["z_ref"]) == core_shape
+
+        sol_impurities = get_impurity_data(
+            self.config["f_imp_sol"], self.config["confinement_sol"]
+        )
+        sol_shape = sol_impurities["H"]["T_ref"].shape
+        assert len(sol_impurities) == len(self.config["f_imp_sol"])
+        for values in sol_impurities.values():
+            assert np.shape(values["T_ref"]) == sol_shape
+            assert np.shape(values["L_ref"]) == sol_shape
+            assert np.shape(values["z_ref"]) == sol_shape
 
     def test_collect_flux_tubes(self):
         psi = np.linspace(1, 1.5, 5)
