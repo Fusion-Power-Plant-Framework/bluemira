@@ -139,6 +139,40 @@ class TestCoreRadiation:
         rad_edge = self.source.rad_by_psi_n(0.9).max()
         assert rad_centre > rad_edge
 
+    def test_rad_sol_by_points(self):
+        """The rad_sol value of the flux surface intersecting the chosen point of x-z
+        should include the rad_sol value of that chosen point of x-z.
+        """
+        eq = self.source.eq
+        x, z = eq.x.flatten(), eq.z.flatten()
+        psi_n = eq.psi_norm().flatten()
+        interp_grid = linear_interpolator(x, z, psi_n)
+
+        i = len(self.source.rad_tot) // 2  # pick a random index within range
+        x_tot, z_tot = self.source.x_tot.flatten()[i], self.source.z_tot.flatten()[i]
+        psi_norm_tot = interpolated_field_values(x_tot, z_tot, interp_grid)
+
+        rad_sol_pt = self.source.rad_sol_by_points([x_tot], [z_tot]).flatten()[0]
+        rad_sol_psi = self.source.rad_sol_by_psi_n(psi_norm_tot[0][0]).flatten()
+        assert rad_sol_pt in rad_sol_psi
+
+    def test_rad_by_points(self):
+        """The 'rad' value of the flux surface intersecting the chosen point of x-z
+        should include the 'rad' value of that chosen point of x-z.
+        """
+        eq = self.source.eq
+        x, z = eq.x.flatten(), eq.z.flatten()
+        psi_n = eq.psi_norm().flatten()
+        interp_grid = linear_interpolator(x, z, psi_n)
+
+        i = len(self.source.rad_tot) // 2  # pick a point in the SOL.
+        x_tot, z_tot = self.source.x_tot.flatten()[i], self.source.z_tot.flatten()[i]
+        psi_norm_tot = interpolated_field_values(x_tot, z_tot, interp_grid)
+
+        rad_tot_pt = self.source.rad_by_points(x_tot, z_tot).flatten()[0]
+        rad_tot_psi = self.source.rad_by_psi_n(psi_norm_tot[0][0]).flatten()
+        assert rad_tot_pt in rad_tot_psi
+
     def test_core_electron_density_temperature_profile(self):
         ne_core = self.profiles.ne
         te_core = self.profiles.te

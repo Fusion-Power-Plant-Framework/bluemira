@@ -1643,7 +1643,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         Returns
         -------
         :
-            the sol radiation map
+            the SOL radiation map
         """
         # total line radiation loss along the open flux tubes
         self.total_rad_lfs_low = np.sum(np.array(lfs_low, dtype=object), axis=0).tolist()
@@ -2025,7 +2025,7 @@ class RadiationSource:
         self, firstwall_geom: Coordinates
     ) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
         """
-        Using core radiation model and sol radiation model
+        Using core radiation model and SOL radiation model
         to calculate the radiation source at all points
 
         Parameters
@@ -2125,7 +2125,13 @@ class RadiationSource:
 
     def rad_sol_by_psi_n(self, psi_n: float | np.ndarray[float]) -> np.ndarray:
         """
-        Calculation of sol radiation source for a given psi norm value
+        Calculation of SOL radiation sources for a given psi norm value.
+
+        Each psi_n corresponds to a flux surface defined by a list of
+        x-z coordinates. In the SOL (i.e. outside the LCFS) the radiation intensity
+        is not constant, but rather varies across the flux surface. Therefore this
+        method returns a radiation intensity value for each x-z coordinates in the list
+        defining each flux surface.
 
         Parameters
         ----------
@@ -2149,7 +2155,7 @@ class RadiationSource:
         self, x_lst: Iterable[float], z_lst: Iterable[float]
     ) -> np.ndarray:
         """
-        Calculation of sol radiation source for a given (set of) x, z coordinates
+        Calculation of SOL radiation source for a given (set of) x, z coordinates
 
         Parameters
         ----------
