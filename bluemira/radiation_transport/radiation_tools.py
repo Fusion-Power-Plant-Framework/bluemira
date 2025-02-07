@@ -153,7 +153,7 @@ def target_temperature(
     b_tot_tar: float,
 ) -> float:
     """
-    Calculate the target as suggested from the 2PM.
+    Calculate the target as suggested from the 2-point model.
     It includes hydrogen recycle loss energy.
 
     Parameters
