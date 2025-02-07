@@ -10,17 +10,33 @@
 from __future__ import annotations
 
 import logging
-import sys
 from enum import Enum
-from textwrap import dedent, wrap
 from types import DynamicClassAttribute
 from typing import TYPE_CHECKING
+
+import rich.jupyter as jp
+from rich import default_styles
+from rich.console import Console, ConsoleRenderable
+from rich.logging import RichHandler
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.error import LogsError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from rich.traceback import Traceback
+
+# TODO @je-cook: Remove on culmination of rich fix
+#
+jp.JUPYTER_HTML_FORMAT = (
+    '<pre style="white-space:pre;overflow-x:auto;line-height:normal;'
+    "margin:0;"  # this is the change
+    "font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New'"
+    ',monospace">{code}</pre>'
+)
 
 
 class LogLevel(Enum):
@@ -59,7 +75,7 @@ class LogLevel(Enum):
             ) from None
 
     @DynamicClassAttribute
-    def _value_for_logging(self) -> int:
+    def value_for_logging(self) -> int:
         """Return builtin logging level value"""
         return int(self.value * 10)
 
@@ -67,54 +83,61 @@ class LogLevel(Enum):
 class LoggerAdapter(logging.Logger):
     """Adapt the base logging class for our uses"""
 
+    progress: Progress | None = None
+
     def _base(
         self,
-        func: Callable[[str]],
+        func: Callable[[str], None],
         msg: str,
         *args,
         flush: bool = False,
-        fmt: bool = True,
         _clean: bool = False,
         **kwargs,
     ):
-        loglevel = LogLevel(func.__name__)
-        self._terminator_handler(
-            func,
-            colourise(
-                msg,
-                colour=None if _clean and loglevel is LogLevel.INFO else loglevel.colour,
-                flush=flush,
-                fmt=fmt,
-            ),
-            *args,
-            fhterm=logging.StreamHandler.terminator if flush or not _clean else "",
-            shterm="" if flush or _clean else logging.StreamHandler.terminator,
-            **kwargs,
-        )
+        self._flushing = flush
+        self._clean = _clean
+        msg = msg.strip()
+        if flush:
+            if self.progress is None:
+                self.progress = Progress(
+                    SpinnerColumn("simpleDots"),
+                    TextColumn("{task.description}"),
+                    transient=False,
+                )
+                self.t1 = self.progress.add_task(description=msg, total=None)
+            self.progress.update(self.t1, description=msg, visible=True)
+        elif self.progress is not None:
+            self.progress.stop()
+            self.progress = None
 
-    def debug(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
+        func(msg, *args, **kwargs)
+
+    def makeRecord(self, *args, **kwargs) -> logging.LogRecord:  # noqa: N802
+        """Overridden makeRecord to pass variables to handler"""  # noqa: DOC201
+        record = super().makeRecord(*args, **kwargs)
+        record._flushing = self._flushing
+        record._clean = self._clean
+        return record
+
+    def debug(self, msg: str, *args, flush: bool = False, **kwargs):
         """Debug"""
-        self._base(super().debug, msg, *args, flush=flush, fmt=fmt, **kwargs)
+        self._base(super().debug, msg, *args, flush=flush, **kwargs)
 
-    def info(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def info(self, msg: str, *args, flush: bool = False, **kwargs):
         """Info"""
-        self._base(super().info, msg, *args, flush=flush, fmt=fmt, **kwargs)
+        self._base(super().info, msg, *args, flush=flush, **kwargs)
 
-    def warning(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def warning(self, msg: str, *args, flush: bool = False, **kwargs):
         """Warning"""
-        self._base(
-            super().warning, f"WARNING: {msg}", *args, flush=flush, fmt=fmt, **kwargs
-        )
+        self._base(super().warning, msg, *args, flush=flush, **kwargs)
 
-    def error(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def error(self, msg: str, *args, flush: bool = False, **kwargs):
         """Error"""
-        self._base(super().error, f"ERROR: {msg}", *args, flush=flush, fmt=fmt, **kwargs)
+        self._base(super().error, msg, *args, flush=flush, **kwargs)
 
-    def critical(self, msg: str, *args, flush: bool = False, fmt: bool = True, **kwargs):
+    def critical(self, msg: str, *args, flush: bool = False, **kwargs):
         """Critical"""
-        self._base(
-            super().critical, f"CRITICAL: {msg}", *args, flush=flush, fmt=fmt, **kwargs
-        )
+        self._base(super().critical, msg, *args, flush=flush, **kwargs)
 
     def clean(
         self,
@@ -126,139 +149,7 @@ class LoggerAdapter(logging.Logger):
     ):
         """Unmodified logging"""
         func = getattr(super(), LogLevel(loglevel).name.lower())
-        self._base(func, msg, *args, flush=flush, fmt=False, _clean=True, **kwargs)
-
-    @staticmethod
-    def _terminator_handler(
-        func: Callable[[str], None],
-        string: str,
-        *args,
-        fhterm: str = "",
-        shterm: str = "",
-        **kwargs,
-    ):
-        """
-        Log string allowing modification to handler terminator
-
-        Parameters
-        ----------
-        func:
-            The function to use for logging (e.g LOGGER.info)
-        string:
-            The string to colour flush print
-        fhterm:
-            FileHandler Terminator
-        shterm:
-            StreamHandler Terminator
-
-        Notes
-        -----
-        This deals with some formatting issues when flushing or using external programs.
-        Extra new line characters are added by default (this removes that behaviour):
-
-            - When trying to flush text
-            - When wrapped external printing
-
-        For the file handler newlines are desired in all cases apart from when wrapping
-        external programs
-        For the stream handler newlines are only desired for normal logging
-
-        """
-        original_terminator = logging.StreamHandler.terminator
-        logging.StreamHandler.terminator = shterm
-        logging.FileHandler.terminator = fhterm
-        try:
-            func(string, *args, **kwargs)
-        finally:
-            logging.StreamHandler.terminator = original_terminator
-            logging.FileHandler.terminator = original_terminator
-
-
-def _bm_print(string: str, width: int = 73, *, single_flush: bool = False) -> str:
-    """
-    Create the text string for boxed text to print to the console.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-
-    Returns
-    -------
-    :
-        The text string of the boxed text
-    """
-    if single_flush:
-        return _bm_print_singleflush(string, width)
-
-    strings = [
-        " " if s == "\n" and i != 0 else s.removesuffix("\n")
-        for i, s in enumerate(string.splitlines(keepends=True))
-    ]
-    t = [
-        wrap(s, width=width - 4, replace_whitespace=False, drop_whitespace=False)
-        for s in strings
-    ]
-
-    s = [dedent(item) for sublist in t for item in sublist]
-    h = "".join(["+", "-" * width, "+"])
-    lines = "\n".join([_bm_print_singleflush(i, width) for i in s])
-    return f"{h}\n{lines}\n{h}"
-
-
-def _bm_print_singleflush(string: str, width: int = 73) -> str:
-    r"""
-    Wrap the string in \| \|.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-
-    Returns
-    -------
-    :
-        The wrapped text string
-    """
-    a = width - len(string) - 2
-    return "| " + string + a * " " + " |"
-
-
-def colourise(
-    string: str,
-    width: int = 73,
-    colour: str | None = "blue",
-    *,
-    flush: bool = False,
-    fmt: bool = True,
-) -> str:
-    """
-    Print coloured, boxed text to the console. Default template for bluemira
-    information.
-
-    Parameters
-    ----------
-    string:
-        The string of text to colour and box
-    width:
-        The width of the box, default = 73 (leave this alone for best results)
-    colour:
-        The colour to print the text in from `bluemira.base.constants.ANSI_COLOR`
-
-    Returns
-    -------
-    :
-        colourised string
-    """
-    text = _bm_print(string, width=width, single_flush=flush) if fmt else string
-
-    return ("\r" if flush else "") + (
-        text if colour is None else _print_colour(text, colour)
-    )
+        self._base(func, msg, *args, flush=flush, _clean=True, **kwargs)
 
 
 def _print_colour(string: str, colour: str) -> str:
@@ -278,6 +169,60 @@ def _print_colour(string: str, colour: str) -> str:
         The string with ANSI colour decoration
     """
     return f"{ANSI_COLOR[colour]}{string}{EXIT_COLOR}"
+
+
+class BluemiraRichHandler(RichHandler):
+    """
+    Rich handler modified for different output types
+    """
+
+    def render(
+        self,
+        *,
+        record: logging.LogRecord,
+        traceback: Traceback | None,
+        message_renderable: ConsoleRenderable,
+    ) -> ConsoleRenderable:
+        """Rich handler rendering in a panel under as requested
+
+        Returns
+        -------
+        :
+            The text to be rendered by the logger
+        """
+        log_renderable = super().render(
+            record=record,
+            traceback=traceback,
+            message_renderable=message_renderable,
+        )
+        if getattr(record, "_flushing", False):
+            self.console._flushing = True
+            return log_renderable
+        self.console._flushing = False
+        if getattr(record, "_clean", True):
+            return log_renderable
+        return Panel(
+            log_renderable,
+            border_style=default_styles.DEFAULT_STYLES[
+                f"logging.level.{record.levelname.lower()}"
+            ],
+        )
+
+
+class BluemiraRichFileHandler(BluemiraRichHandler):
+    """Allow some filtering on file log handlers"""
+
+
+class ConsoleFlush(Console):
+    """Rich console modified for progress bar use"""
+
+    _flushing = False
+
+    def print(self, *args, **kwargs):
+        """Console output function customised for progress bar."""
+        if self._flushing:
+            return
+        super().print(*args, **kwargs)
 
 
 def logger_setup(
@@ -307,23 +252,33 @@ def logger_setup(
     bm_logger = logging.getLogger("bluemira")
 
     # what will be shown on screen
-    on_screen_handler_out = logging.StreamHandler(stream=sys.stdout)
-    on_screen_handler_out.setLevel(LogLevel(level)._value_for_logging)
+    on_screen_handler_out = BluemiraRichHandler(
+        console=ConsoleFlush(), show_time=False, markup=True
+    )
+    on_screen_handler_out.setLevel(LogLevel(level).value_for_logging)
     on_screen_handler_out.addFilter(lambda record: record.levelno < logging.WARNING)
     on_screen_handler_out.name = "BM stream stdout"
 
-    on_screen_handler_err = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler_err.setLevel(LogLevel(level)._value_for_logging)
+    on_screen_handler_err = BluemiraRichHandler(
+        console=ConsoleFlush(stderr=True), show_time=False, markup=True
+    )
+    on_screen_handler_err.setLevel(LogLevel(level).value_for_logging)
     on_screen_handler_err.addFilter(lambda record: record.levelno >= logging.WARNING)
     on_screen_handler_err.name = "BM stream stderr"
 
     # what will be written to a file
-    recorded_handler = logging.FileHandler(logfilename)
-    recorded_formatter = logging.Formatter(
-        fmt="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    # TODO @je-cook: force_jupyter and force_terminal shouldnt be needed
+    #                but there is a bug in rich
+    #
+    recorded_handler = BluemiraRichFileHandler(
+        console=Console(
+            file=open(logfilename, "a"),  # noqa: SIM115
+            width=100,
+            force_terminal=False,
+            force_jupyter=False,
+        )
     )
     recorded_handler.setLevel(logging.DEBUG)
-    recorded_handler.setFormatter(recorded_formatter)
     recorded_handler.name = "BM file out"
 
     bm_logger.setLevel(logging.DEBUG)
@@ -386,7 +341,10 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
 
     max_level = 0
     for handler in logger.handlers or logger.parent.handlers:
-        if not isinstance(handler, logging.FileHandler) and handler.level > max_level:
+        if (
+            not isinstance(handler, BluemiraRichFileHandler)
+            and handler.level > max_level
+        ):
             max_level = LogLevel(handler.level).value
     if as_str:
         return LogLevel(max_level).name
@@ -405,8 +363,8 @@ def _modify_handler(new_level: LogLevel, logger: logging.Logger):
         Logger to be used
     """
     for handler in logger.handlers or logger.parent.handlers:
-        if not isinstance(handler, logging.FileHandler):
-            handler.setLevel(new_level._value_for_logging)
+        if not isinstance(handler, BluemiraRichFileHandler):
+            handler.setLevel(new_level.value_for_logging)
 
 
 class LoggingContext:
