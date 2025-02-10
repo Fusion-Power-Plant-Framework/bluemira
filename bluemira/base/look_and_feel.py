@@ -244,9 +244,7 @@ def bluemira_debug(string: str):
     LOGGER.debug(string, stacklevel=4)
 
 
-def _bluemira_clean_flush(
-    string,
-):
+def _bluemira_clean_flush(string: str, *, progress_timeout: float = 4):
     """
     Print and flush string. Useful for updating information.
 
@@ -255,10 +253,10 @@ def _bluemira_clean_flush(
     string:
         The string to colour flush print
     """
-    LOGGER.clean(string, flush=True, stacklevel=4)
+    LOGGER.clean(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
 
 
-def bluemira_print_flush(string: str):
+def bluemira_print_flush(string: str, *, progress_timeout: float = 4):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information.
@@ -268,10 +266,10 @@ def bluemira_print_flush(string: str):
     string:
         The string to colour flush print
     """
-    LOGGER.info(string, flush=True, stacklevel=4)
+    LOGGER.info(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
 
 
-def bluemira_debug_flush(string: str):
+def bluemira_debug_flush(string: str, *, progress_timeout: float = 4):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information when running at the debug logging level.
@@ -281,7 +279,7 @@ def bluemira_debug_flush(string: str):
     string:
         The string to colour flush print for debug messages.
     """
-    LOGGER.debug(string, flush=True, stacklevel=4)
+    LOGGER.debug(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
 
 
 def bluemira_print_clean(string: str):

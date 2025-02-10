@@ -10,7 +10,10 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
+from threading import Event
+from time import sleep
 from types import DynamicClassAttribute
 from typing import TYPE_CHECKING
 
@@ -80,10 +83,33 @@ class LogLevel(Enum):
         return int(self.value * 10)
 
 
+def stop_progress(logger: LoggerAdapter, stop: Event, wait: float = 4):
+    """
+    Kill progress bar as soon as possible
+
+    Parameters
+    ----------
+    logger:
+        Logger instance
+    stop:
+        Kill signal event
+    wait:
+        time (s) to wait before killing progress bar
+    """
+    wait /= 0.1
+    for _ in range(int(wait)):
+        if stop.is_set():
+            return
+        sleep(0.1)
+    logger.progress.stop()
+    logger.progress = None
+
+
 class LoggerAdapter(logging.Logger):
     """Adapt the base logging class for our uses"""
 
     progress: Progress | None = None
+    _stop_p: Event = Event()
 
     def _base(
         self,
@@ -91,6 +117,7 @@ class LoggerAdapter(logging.Logger):
         msg: str,
         *args,
         flush: bool = False,
+        progress_timeout: float = 4,
         _clean: bool = False,
         **kwargs,
     ):
@@ -98,15 +125,20 @@ class LoggerAdapter(logging.Logger):
         self._clean = _clean
         msg = msg.strip()
         if flush:
+            self._stop_p.set()
             if self.progress is None:
                 self.progress = Progress(
-                    SpinnerColumn("simpleDots"),
-                    TextColumn("{task.description}"),
-                    transient=False,
+                    SpinnerColumn("simpleDots"), TextColumn("{task.description}")
                 )
-                self.t1 = self.progress.add_task(description=msg, total=None)
+                self.progress.start()
+                self.t1 = self.progress.add_task(description=msg)
             self.progress.update(self.t1, description=msg, visible=True)
+            self._stop_p = Event()
+            self.executor = ThreadPoolExecutor()
+            self.executor.submit(stop_progress, self, self._stop_p, progress_timeout)
         elif self.progress is not None:
+            self._stop_p.set()
+            self.executor.shutdown(wait=False)
             self.progress.stop()
             self.progress = None
 
