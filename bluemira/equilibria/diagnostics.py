@@ -188,6 +188,8 @@ class PicardDiagnosticOptions:
     plot_name: str = "default_0"
     figure_folder: str | PathLike | None = None
 
+    # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
+    # 3806
     def __post_init__(self):
         """Post init folder definition"""
         if self.figure_folder is None:

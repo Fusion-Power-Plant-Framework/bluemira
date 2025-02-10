@@ -152,7 +152,8 @@ class Plotter:
                 else:
                     self.ax = ax
                 set_ax_for_psi_components(self.ax)
-
+            # TODO @geograham: review use of self.ax in BM
+            # 3807
             case EqSubplots.VS_PSI_NORM_STACK:
                 if ax is None:
                     gs = GridSpec(nrows, ncols)
