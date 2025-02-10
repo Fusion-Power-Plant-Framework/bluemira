@@ -273,7 +273,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
         template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
         template_builder.add_variable("thkcas", 0.52465)
-        template_builder.add_variable("dr_tf_inborard", 1.2080)
+        template_builder.add_variable("dr_tf_inboard", 1.2080)
         template_builder.add_variable(
             "dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1
         )
@@ -308,7 +308,7 @@ class TestInDatOneForOne:
         template_builder.adjust_variable("fstrcase", 1.0)
         template_builder.adjust_variable("ftmargtf", 1.0)
         template_builder.adjust_variable("ftmargoh", 1.0)
-        template_builder.adjust_variable("ftaulimit", 1.0)
+        template_builder.adjust_variable("falpha_energy_confinement", 1.0)
         template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
         template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
         template_builder.adjust_variable("foh_stress", 1.0)
@@ -466,7 +466,6 @@ class TestInDatOneForOne:
             "divdum": 1,
             "ibkt_life": 1,
             "fkzohm": 1.0245,
-            "iinvqd": 1,
             "dintrt": 0.0,
             "fcap0": 1.15,
             "fcap0cp": 1.06,
