@@ -1839,7 +1839,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "taueff",
+        "name": "t_energy_confinement",
         "send": false,
         "recv": true,
         "unit": "s"
@@ -2298,7 +2298,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "dr_tf_inborard",
+        "name": "dr_tf_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
