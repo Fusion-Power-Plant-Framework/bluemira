@@ -719,10 +719,6 @@
     "var_mod": "Plasma",
     "scan01": 1.65
   },
-  "kappaa": {
-    "var_mod": "Plasma",
-    "scan01": 1.7172
-  },
   "triang": {
     "var_mod": "Plasma",
     "scan01": 0.5
@@ -1235,11 +1231,11 @@
     "var_mod": "Plasma",
     "scan01": 0.35936
   },
-  "ptrimw": {
+  "p_ion_transport_loss_mw": {
     "var_mod": "Plasma",
     "scan01": 250.77
   },
-  "ptremw": {
+  "p_electron_transport_loss_mw": {
     "var_mod": "Plasma",
     "scan01": 299.22
   },
@@ -1367,27 +1363,27 @@
     "var_mod": "Plasma",
     "scan01": 1.4
   },
-  "taueff": {
+  "t_energy_confinement": {
     "var_mod": "Plasma",
     "scan01": 4.3196
   },
-  "tauei": {
+  "t_ion_energy_confinement": {
     "var_mod": "Plasma",
     "scan01": 4.3196
   },
-  "tauee": {
+  "t_electron_energy_confinement": {
     "var_mod": "Plasma",
     "scan01": 4.3196
   },
-  "dntau": {
+  "ntau": {
     "var_mod": "Plasma",
     "scan01": 2.7712e20
   },
-  "dntau*te": {
+  "ntau*te": {
     "var_mod": "Plasma",
     "scan01": 5.3197e21
   },
-  "powerht": {
+  "p_plasma_loss_mw": {
     "var_mod": "Plasma",
     "scan01": 549.98
   },
@@ -1399,19 +1395,19 @@
     "var_mod": "Plasma",
     "scan01": 261.1
   },
-  "taup": {
+  "t_alpha_confinement": {
     "var_mod": "Plasma",
     "scan01": 21.598
   },
-  "taup/taueff": {
+  "f_alpha_energy_confinement": {
     "var_mod": "Plasma",
     "scan01": 5.0
   },
-  "taulimit": {
+  "f_alpha_energy_confinement_min": {
     "var_mod": "Plasma",
     "scan01": 5.0
   },
-  "total_energy_conf_time": {
+  "t_energy_confinement_beta": {
     "var_mod": "Plasma",
     "scan01": 3.4437
   },
@@ -1651,7 +1647,7 @@
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
-  "dr_tf_inborard": {
+  "dr_tf_inboard": {
     "var_mod": "Radial Build",
     "scan01": 1.486
   },

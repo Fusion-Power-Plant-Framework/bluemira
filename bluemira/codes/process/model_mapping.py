@@ -278,7 +278,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isc"
+        return "i_confinement_time"
 
     NEO_ALCATOR_OHMIC = 1
     MIRNOV_H_MODE = 2
