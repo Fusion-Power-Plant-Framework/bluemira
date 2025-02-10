@@ -123,7 +123,10 @@ class LoggerAdapter(logging.Logger):
         self._flushing = flush
         self._clean = _clean
         msg = msg.strip()
-        if flush:
+        if (
+            flush
+            and get_log_level("bluemira", as_str=False) <= LogLevel(func.__name__).value
+        ):
             self._stop_p.set()
             if self.progress is None:
                 self.progress = Progress(
