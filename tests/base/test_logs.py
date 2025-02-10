@@ -12,6 +12,7 @@ import pytest
 
 from bluemira.base.error import LogsError
 from bluemira.base.logs import (
+    BluemiraRichFileHandler,
     LogLevel,
     LoggingContext,
     get_log_level,
@@ -89,7 +90,7 @@ class TestLoggingLevel:
         """Testing if the handlers level is actually changed."""
         set_log_level(input_level)
         for handler in self.LOGGER.handlers or self.LOGGER.parent.handlers:
-            if not isinstance(handler, logging.FileHandler):
+            if not isinstance(handler, BluemiraRichFileHandler):
                 assert handler.level // 10 == expected
         if not isinstance(input_level, str):
             if input_level >= 10:
