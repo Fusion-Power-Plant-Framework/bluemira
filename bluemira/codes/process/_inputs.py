@@ -221,7 +221,7 @@ class ProcessInputs:
     qnuc: float | None = None
     ripmax: float | None = None
     tf_in_cs: int | None = None
-    dr_tf_inborard: float | None = None
+    dr_tf_inboard: float | None = None
     dr_tf_shld_gap: float | None = None
     casthi: float | None = None
     casths: float | None = None
@@ -419,8 +419,8 @@ class ProcessInputs:
     t_burn_min: float | None = None
     vvhealw: float | None = None
     walalw: float | None = None
-    taulimit: float | None = None
-    ftaulimit: float | None = None
+    f_alpha_energy_confinement_min: float | None = None
+    falpha_energy_confinement: float | None = None
     fniterpump: float | None = None
     zeffmax: float | None = None
     fpoloidalpower: float | None = None
@@ -655,7 +655,6 @@ class ProcessInputs:
     i_density_limit: int | None = None
     i_diamagnetic_current: int | None = None
     i_beta_fast_alpha: int | None = None
-    iinvqd: int | None = None
     ipedestal: int | None = None
     i_pfirsch_schluter_current: int | None = None
     eped_sf: float | None = None
@@ -669,7 +668,7 @@ class ProcessInputs:
     tesep: float | None = None
     iprofile: int | None = None
     iradloss: int | None = None
-    isc: int | None = None
+    i_confinement_time: int | None = None
     iscrp: int | None = None
     i_plasma_geometry: int | None = None  # listed as an output...
     itart: int | None = None  # listed as an output...

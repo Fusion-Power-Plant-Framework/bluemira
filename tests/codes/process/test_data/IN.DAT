@@ -66,7 +66,7 @@ ixc = 58 * thwcndut
 boundl(58) = 8.0d-3
 ixc = 61 * dr_shld_vv_gap_inboard
 boundl(61) = 0.12
-ixc = 13 * dr_tf_inborard
+ixc = 13 * dr_tf_inboard
 boundl(13) = 0.5
 ixc = 103 * flhthresh
 ixc = 60 * cpttf
@@ -104,7 +104,7 @@ dr_fw_plasma_gap_outboard  = 0.225 * Gap between plasma and first wall; outboard
 dr_shld_inboard  = 0.30 * inboard shield thickness (m) (`iteration variable 93`)
 dr_shld_outboard  = 0.80 * outboard shield thickness (m) (`iteration variable 94`)
 shldtth  = 0.30 * upper/lower shield thickness (m); calculated if `blktmodel > 0` (= shldlth if double-null)
-dr_tf_inborard    = 1.0500e+00 * inboard TF coil thickness; (centrepost for ST) (m)
+dr_tf_inboard    = 1.0500e+00 * inboard TF coil thickness; (centrepost for ST) (m)
 vgap_vv_thermalshield  = 0.12 * vertical gap between vacuum vessel and thermal shields (m)
 vgap_xpoint_divertor    = 1.60 * vertical gap between x-point and divertor (m) (if = 0; it is calculated)
 
@@ -407,7 +407,6 @@ i_beta_component   = 1 * switch for beta limit scaling (`constraint equation 24`
 i_plasma_current   = 4 * switch for plasma current scaling to use
 i_density_limit   = 7 * switch for density limit to enforce (`constraint equation 5`)
 i_beta_fast_alpha = 1 * switch for fast alpha pressure calculation
-iinvqd   = 1 * switch for inverse quadrature in L-mode scaling laws 5 and 9;
 ipedestal = 1 * switch for pedestal profiles;
 neped    = 0.678e20 * electron density of pedestal [m-3] (`ipedestal=1;2; calculated if 3`)
 nesep    = 0.2e20 * electron density at separatrix [m-3] (`ipedestal=1;2; calculated if 3`)
@@ -417,7 +416,7 @@ tbeta    = 2.0 * temperature profile index beta  (`ipedestal=1;2`)
 teped    = 5.5 * electron temperature of pedestal (keV) (`ipedestal>=1; ieped=0; calculated for ieped=1`)
 tesep    = 0.1 * electron temperature at separatrix (keV) (`ipedestal>=1`) calculated if reinke
 iprofile = 1 * switch for current profile consistency;
-isc      = 34 * switch for energy confinement time scaling law (see description in `tauscl`)
+i_confinement_time      = 34 * switch for energy confinement time scaling law (see description in `labels_confinement_scalings`)
 i_plasma_geometry   = 2 * switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * plasma separatrix elongation (calculated if `i_plasma_geometry = 1-5 or 7`)
 q        = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
