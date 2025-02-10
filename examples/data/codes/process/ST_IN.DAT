@@ -36,7 +36,7 @@ ixc = 9 * fdene
 boundu(9) = 1.2
 ixc = 10 * hfact
 boundu(10) = 1.1
-ixc = 13 * dr_tf_inborard
+ixc = 13 * dr_tf_inboard
 boundl(13) = 0.5
 ixc = 14 * fwalld
 ixc = 16 * dr_cs
@@ -80,7 +80,7 @@ ixc = 65 * t_current_ramp_up
 boundu(65) = 1000
 ixc = 103 * flhthresh
 ixc = 109 * f_nd_alpha_electron
-ixc = 110 * ftaulimit
+ixc = 110 * falpha_energy_confinement
 ixc = 114 * fw_channel_length
 ixc = 115 * fpoloidalpower: f-value for max rate of change of energy in poloidal field
 
@@ -102,7 +102,7 @@ dr_fw_plasma_gap_outboard  = 0.225 * Gap between plasma and first wall; outboard
 dr_shld_inboard  = 0.30 * Inboard shield thickness (m)
 dr_shld_outboard  = 0.80 * Outboard shield thickness (m)
 shldtth  = 0.30 * Upper/lower shield thickness (m);
-dr_tf_inborard    = 1.0500e+00 * Inboard tf coil thickness; (centrepost for st) (m)
+dr_tf_inboard    = 1.0500e+00 * Inboard tf coil thickness; (centrepost for st) (m)
 vgap_vv_thermalshield    = 0.061 * Vertical gap between vacuum vessel and tf coil (m)
 vgap_xpoint_divertor   = 1.60 * Vertical gap between x-point and divertor (m)
 dr_tf_shld_gap = 0.02
@@ -235,7 +235,6 @@ i_plasma_current    = 4 * Switch for plasma current scaling to use;
 i_diamagnetic_current     = 2 *switch for diamagnetic current scaling (2: SCENE scaling)
 i_density_limit   = 7 * Switch for density limit to enforce (constraint equation 5);
 i_beta_fast_alpha = 1 * Switch for fast alpha pressure calculation;
-iinvqd   = 1 * Switch for inverse quadrature in l-mode scaling laws 5 and 9;
 ipedestal = 1 * Switch for pedestal profiles;
 neped    = 0.678e20 * Electron density of pedestal (/m3) (ipedestal=1)
 nesep    = 0.2e20 * Electron density at separatrix (/m3) (ipedestal=1)
@@ -245,7 +244,7 @@ tbeta    = 2.0 * Temperature profile index beta  (ipedestal=1)
 teped    = 5.5 * Electron temperature of pedestal (kev) (ipedestal=1)
 tesep    = 0.1 * Electron temperature at separatrix (kev) (ipedestal=1)
 iprofile = 1 * Switch for current profile consistency;
-isc      = 34 * Switch for energy confinement time scaling law
+i_confinement_time      = 34 * Switch for energy confinement time scaling law
 i_plasma_geometry   = 2 * Switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * Plasma separatrix elongation (calculated if i_plasma_geometry > 0)
 q        = 3.2267e+00 * Safety factor 'near' plasma edge (iteration variable 18);
@@ -256,7 +255,7 @@ i_single_null    = 1 * Switch for single null / double null plasma;
 f_sync_reflect    = 0.6 * Synchrotron wall reflectivity factor
 te       = 1.3212e+01 * Volume averaged electron temperature (kev)
 triang   = 0.5 * Plasma separatrix triangularity (calculated if i_plasma_geometry=1; 3 or 4)
-taulimit = 5.0 * Lower limit on taup/taueff the ratio of alpha particle to energy confinement times
+f_alpha_energy_confinement_min = 5.0 * Lower limit on t_alpha_confinement/t_energy_confinement the ratio of alpha particle to energy confinement times
 *-----------------Pulse Variables------------------*
 lpulse   = 1 * Switch for reactor model;
 *------------------Rfp Variables-------------------*
