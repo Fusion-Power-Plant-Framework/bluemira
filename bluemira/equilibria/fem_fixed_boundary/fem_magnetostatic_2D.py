@@ -368,7 +368,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """
         self._check_all_inputs_ready_error()
         self.define_g()
-
+        # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
+        # 3806
         points = self.mesh.geometry.x
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(

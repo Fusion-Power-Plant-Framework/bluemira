@@ -162,6 +162,8 @@ def xz_plot_setup(
         to save or not to save
 
     """
+    # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
+    # 3806
     if folder is None:
         folder = try_get_bluemira_path(
             "", subfolder="generated_data", allow_missing=not save
