@@ -332,8 +332,11 @@ class Constraint(ConstraintSelection, Model):
     CONFINEMENT_RATIO_LOWER_LIMIT = (
         62,
         (110,),
-        ("taulimit",),
-        "taup/taueff the ratio of particle to energy confinement times",
+        ("f_alpha_energy_confinement_min",),
+        (
+            "t_alpha_confinement/t_energy_confinement "
+            "the ratio of particle to energy confinement times"
+        ),
     )
     NITERPUMP_UPPER_LIMIT = (
         63,
@@ -558,7 +561,7 @@ ITERATION_VAR_MAPPING = {
     "hfact": 10,
     "pheat": 11,
     # NO LONGER USED "oacdp": 12,
-    "dr_tf_inborard": 13,
+    "dr_tf_inboard": 13,
     "fwalld": 14,
     "fvs": 15,
     "dr_cs": 16,
@@ -649,7 +652,7 @@ ITERATION_VAR_MAPPING = {
     "favail": 107,
     "breeder_f": 108,
     "f_nd_alpha_electron": 109,
-    "ftaulimit": 110,
+    "falpha_energy_confinement": 110,
     "fniterpump": 111,
     "fzeffmax": 112,
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
