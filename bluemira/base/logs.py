@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from rich.traceback import Traceback
 
 # TODO @je-cook: Remove on culmination of rich fix
-#
+# 3802
 jp.JUPYTER_HTML_FORMAT = (
     '<pre style="white-space:pre;overflow-x:auto;line-height:normal;'
     "margin:0;"  # this is the change
@@ -281,7 +281,7 @@ def logger_setup(
     # what will be written to a file
     # TODO @je-cook: force_jupyter and force_terminal shouldnt be needed
     #                but there is a bug in rich
-    #
+    # 3803
     recorded_handler = BluemiraRichFileHandler(
         console=Console(
             file=open(logfilename, "a"),  # noqa: SIM115
