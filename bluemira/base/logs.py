@@ -24,7 +24,6 @@ from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.error import LogsError
 
 if TYPE_CHECKING:
@@ -182,25 +181,6 @@ class LoggerAdapter(logging.Logger):
         """Unmodified logging"""
         func = getattr(super(), LogLevel(loglevel).name.lower())
         self._base(func, msg, *args, flush=flush, _clean=True, **kwargs)
-
-
-def _print_colour(string: str, colour: str) -> str:
-    """
-    Create text to print. NOTE: Does not call print command
-
-    Parameters
-    ----------
-    string:
-        The text to colour
-    colour:
-        The colour to make the colour-string for
-
-    Returns
-    -------
-    :
-        The string with ANSI colour decoration
-    """
-    return f"{ANSI_COLOR[colour]}{string}{EXIT_COLOR}"
 
 
 class BluemiraRichHandler(RichHandler):
