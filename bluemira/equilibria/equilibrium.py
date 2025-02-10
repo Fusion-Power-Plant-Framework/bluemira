@@ -1950,7 +1950,7 @@ class Equilibrium(CoilSetMHDState):
             "z [m]": ccoils.z,
             "I [MA]": raw_uc(currents, "A", "MA"),
             "B [T]": fields,
-            "F [GN]": fz / 1e9,
+            "F [GN]": raw_uc(fz, 'N', 'GN'),
         }
         if print_table:
             print(  # noqa: T201
