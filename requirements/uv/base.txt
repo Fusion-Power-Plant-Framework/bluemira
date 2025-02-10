@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.8
+fonttools==4.56.0
     # via matplotlib
 fortranformat==2.0.0
     # via
