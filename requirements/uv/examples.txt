@@ -28,7 +28,7 @@ babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   jupyterlab-server
-beautifulsoup4==4.13.0
+beautifulsoup4==4.13.3
     # via nbconvert
 bleach==6.2.0
     # via nbconvert
@@ -77,7 +77,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.8
+fonttools==4.56.0
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -142,7 +142,7 @@ jupyter-core==5.7.2
     #   nbclient
     #   nbconvert
     #   nbformat
-jupyter-events==0.11.0
+jupyter-events==0.12.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
@@ -257,6 +257,7 @@ overrides==7.7.0
 packaging==24.2
     # via
     #   ipykernel
+    #   jupyter-events
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
