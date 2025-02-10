@@ -244,6 +244,6 @@ class TestSolverIntegration:
         solver.teardown_cls = lambda *_, **_kw: None
         solver.execute("run")
 
-        assert f"dr_bore     = {result[0]}" in open(path).read()  # noqa: SIM115
-        assert f"dr_shld_inboard  = {result[1]}" in open(path).read()  # noqa: SIM115
+        assert f"dr_bore  = {result[0]}" in open(path).read()  # noqa: SIM115
+        assert f"dr_shld_inboard = {result[1]}" in open(path).read()  # noqa: SIM115
         assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115
