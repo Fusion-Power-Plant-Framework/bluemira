@@ -127,7 +127,6 @@ class Solver(CodesSolver):
         self._teardown: Teardown | None = None
 
         _build_config = copy.deepcopy(build_config)
-        self.plot = _build_config.pop("plot", False)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())

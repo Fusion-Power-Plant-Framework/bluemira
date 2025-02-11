@@ -61,6 +61,29 @@ def systems_code_solver(
     return syscode.Solver(params, build_config)
 
 
+def plot_radial_build(
+    filename: str, width: float = 1.0, *, show: bool = True, module: str = "PROCESS"
+):
+    """
+    Systems code radial build
+
+    Parameters
+    ----------
+    filename:
+        The directory containing the system code run results.
+    width:
+        The relative width of the plot.
+    show:
+        If True then immediately display the plot, else delay displaying the plot until
+        the user shows it, by default True.
+    module:
+        Module to use
+    """  # noqa: DOC201
+    syscode = get_code_interface(module)
+
+    return syscode.plot_radial_build(filename, width, show=show)
+
+
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
