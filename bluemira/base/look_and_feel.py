@@ -184,7 +184,7 @@ def count_slocs(
 # =============================================================================
 
 
-def bluemira_critical(string: str):
+def bluemira_critical(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira critical errors.
 
@@ -193,10 +193,10 @@ def bluemira_critical(string: str):
     string:
         The string to log at critical level
     """
-    LOGGER.critical(string, stacklevel=4)
+    LOGGER.critical(string, stacklevel=stacklevel)
 
 
-def bluemira_error(string: str):
+def bluemira_error(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira errors.
 
@@ -205,10 +205,10 @@ def bluemira_error(string: str):
     string:
         The string to log at error level
     """
-    LOGGER.error(string, stacklevel=4)
+    LOGGER.error(string, stacklevel=stacklevel)
 
 
-def bluemira_warn(string: str):
+def bluemira_warn(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira warnings.
 
@@ -217,10 +217,10 @@ def bluemira_warn(string: str):
     string:
         The string to log at warning level
     """
-    LOGGER.warning(string, stacklevel=4)
+    LOGGER.warning(string, stacklevel=stacklevel)
 
 
-def bluemira_print(string: str):
+def bluemira_print(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira information messages.
 
@@ -229,10 +229,10 @@ def bluemira_print(string: str):
     string:
         The string to log at info level
     """
-    LOGGER.info(string, stacklevel=4)
+    LOGGER.info(string, stacklevel=stacklevel)
 
 
-def bluemira_debug(string: str):
+def bluemira_debug(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira debugging.
 
@@ -241,10 +241,12 @@ def bluemira_debug(string: str):
     string:
         The string to log at debug level
     """
-    LOGGER.debug(string, stacklevel=4)
+    LOGGER.debug(string, stacklevel=stacklevel)
 
 
-def _bluemira_clean_flush(string: str, *, progress_timeout: float = 4):
+def _bluemira_clean_flush(
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
+):
     """
     Print and flush string. Useful for updating information.
 
@@ -253,10 +255,14 @@ def _bluemira_clean_flush(string: str, *, progress_timeout: float = 4):
     string:
         The string to colour flush print
     """
-    LOGGER.clean(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
+    LOGGER.clean(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_print_flush(string: str, *, progress_timeout: float = 4):
+def bluemira_print_flush(
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
+):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information.
@@ -266,10 +272,14 @@ def bluemira_print_flush(string: str, *, progress_timeout: float = 4):
     string:
         The string to colour flush print
     """
-    LOGGER.info(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
+    LOGGER.info(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_debug_flush(string: str, *, progress_timeout: float = 4):
+def bluemira_debug_flush(
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
+):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information when running at the debug logging level.
@@ -279,10 +289,12 @@ def bluemira_debug_flush(string: str, *, progress_timeout: float = 4):
     string:
         The string to colour flush print for debug messages.
     """
-    LOGGER.debug(string, flush=True, stacklevel=4, progress_timeout=progress_timeout)
+    LOGGER.debug(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_print_clean(string: str):
+def bluemira_print_clean(string: str, *, stacklevel: int = 4):
     """
     Print to the logging info console with no modification.
     Useful for external programs
@@ -292,10 +304,10 @@ def bluemira_print_clean(string: str):
     string:
         The string to print
     """
-    LOGGER.clean(string, stacklevel=4)
+    LOGGER.clean(string, stacklevel=stacklevel)
 
 
-def bluemira_error_clean(string: str):
+def bluemira_error_clean(string: str, *, stacklevel: int = 4):
     """
     Print to the logging error console, colouring the output red.
     No other modification is made. Useful for external programs
@@ -305,7 +317,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    LOGGER.clean(string, loglevel=LogLevel.ERROR, stacklevel=4)
+    LOGGER.clean(string, loglevel=LogLevel.ERROR, stacklevel=stacklevel)
 
 
 # =============================================================================
