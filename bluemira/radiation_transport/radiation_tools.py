@@ -1010,7 +1010,7 @@ def detect_radiation(
     *,
     verbose: bool = False,
     # TODO @DarioV86: remove these debugs/put into tests?
-    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3812
+    # 3812
 ) -> DetectedRadiation:
     """
     To sample the wall and detect radiation
@@ -1131,7 +1131,7 @@ def make_wall_detectors(
 
     if debug:
         # TODO @DarioV86: remove these debugs/put into tests?
-        # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3812
+        # 3812
         _fig, ax = plt.subplots()
 
     for index in range(num + 1):
@@ -1317,7 +1317,7 @@ class FirstWallRadiationSolver:
         *,
         plot: bool = True,
         verbose: bool = False,  # TODO @DarioV86: remove these debugs/put into tests?
-        # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3812
+        # 3812
     ) -> DetectedRadiation:
         """
         Solve first wall radiation problem
