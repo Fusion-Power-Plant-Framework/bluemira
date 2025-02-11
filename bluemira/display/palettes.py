@@ -306,9 +306,9 @@ def make_alpha_palette(
     })
 
 
-def _print_colour(string: str, colour: str) -> str:
+def colour_string(string: str, colour: str) -> str:
     """
-    Create text to print. NOTE: Does not call print command
+    Colour a string with ANSI codes
 
     Parameters
     ----------
