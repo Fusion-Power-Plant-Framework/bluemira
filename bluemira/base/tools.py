@@ -246,9 +246,9 @@ def _timing(
             Output of the function
         """
         if debug_info_str:
-            bluemira_debug(info_str)
+            bluemira_debug(info_str, stacklevel=6)
         else:
-            bluemira_print(info_str)
+            bluemira_print(info_str, stacklevel=6)
         t1 = time.perf_counter()
         out = func(*args, **kwargs)
         t2 = time.perf_counter()

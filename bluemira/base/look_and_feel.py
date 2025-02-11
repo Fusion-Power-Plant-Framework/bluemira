@@ -15,6 +15,9 @@ import subprocess  # noqa: S404
 from getpass import getuser
 from pathlib import Path
 
+from rich.console import Console
+from rich.panel import Panel
+
 from bluemira import __version__
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import LogLevel, logger_setup
@@ -181,7 +184,7 @@ def count_slocs(
 # =============================================================================
 
 
-def bluemira_critical(string: str):
+def bluemira_critical(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira critical errors.
 
@@ -190,10 +193,10 @@ def bluemira_critical(string: str):
     string:
         The string to log at critical level
     """
-    LOGGER.critical(string)
+    LOGGER.critical(string, stacklevel=stacklevel)
 
 
-def bluemira_error(string: str):
+def bluemira_error(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira errors.
 
@@ -202,10 +205,10 @@ def bluemira_error(string: str):
     string:
         The string to log at error level
     """
-    LOGGER.error(string)
+    LOGGER.error(string, stacklevel=stacklevel)
 
 
-def bluemira_warn(string: str):
+def bluemira_warn(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira warnings.
 
@@ -214,10 +217,10 @@ def bluemira_warn(string: str):
     string:
         The string to log at warning level
     """
-    LOGGER.warning(string)
+    LOGGER.warning(string, stacklevel=stacklevel)
 
 
-def bluemira_print(string: str):
+def bluemira_print(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira information messages.
 
@@ -226,10 +229,10 @@ def bluemira_print(string: str):
     string:
         The string to log at info level
     """
-    LOGGER.info(string)
+    LOGGER.info(string, stacklevel=stacklevel)
 
 
-def bluemira_debug(string: str):
+def bluemira_debug(string: str, *, stacklevel: int = 4):
     """
     Standard template for bluemira debugging.
 
@@ -238,11 +241,11 @@ def bluemira_debug(string: str):
     string:
         The string to log at debug level
     """
-    LOGGER.debug(string)
+    LOGGER.debug(string, stacklevel=stacklevel)
 
 
 def _bluemira_clean_flush(
-    string,
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
 ):
     """
     Print and flush string. Useful for updating information.
@@ -252,10 +255,14 @@ def _bluemira_clean_flush(
     string:
         The string to colour flush print
     """
-    LOGGER.clean(string, flush=True)
+    LOGGER.clean(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_print_flush(string: str):
+def bluemira_print_flush(
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
+):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information.
@@ -265,10 +272,14 @@ def bluemira_print_flush(string: str):
     string:
         The string to colour flush print
     """
-    LOGGER.info(string, flush=True)
+    LOGGER.info(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_debug_flush(string: str):
+def bluemira_debug_flush(
+    string: str, *, stacklevel: int = 4, progress_timeout: float = 4
+):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information when running at the debug logging level.
@@ -278,10 +289,12 @@ def bluemira_debug_flush(string: str):
     string:
         The string to colour flush print for debug messages.
     """
-    LOGGER.debug(string, flush=True)
+    LOGGER.debug(
+        string, flush=True, stacklevel=stacklevel, progress_timeout=progress_timeout
+    )
 
 
-def bluemira_print_clean(string: str):
+def bluemira_print_clean(string: str, *, stacklevel: int = 4):
     """
     Print to the logging info console with no modification.
     Useful for external programs
@@ -291,10 +304,10 @@ def bluemira_print_clean(string: str):
     string:
         The string to print
     """
-    LOGGER.clean(string)
+    LOGGER.clean(string, stacklevel=stacklevel)
 
 
-def bluemira_error_clean(string: str):
+def bluemira_error_clean(string: str, *, stacklevel: int = 4):
     """
     Print to the logging error console, colouring the output red.
     No other modification is made. Useful for external programs
@@ -304,7 +317,7 @@ def bluemira_error_clean(string: str):
     string:
         The string to colour print
     """
-    LOGGER.clean(string, loglevel=LogLevel.ERROR)
+    LOGGER.clean(string, loglevel=LogLevel.ERROR, stacklevel=stacklevel)
 
 
 # =============================================================================
@@ -312,21 +325,22 @@ def bluemira_error_clean(string: str):
 # =============================================================================
 
 
-BLUEMIRA_ASCII = r"""+-------------------------------------------------------------------------+
-|  _     _                      _                                         |
-| | |   | |                    (_)                                        |
-| | |__ | |_   _  ___ _ __ ___  _ _ __ __ _ __                            |
-| | '_ \| | | | |/ _ \ '_ ` _ \| | '__/ _| |_ \                           |
-| | |_) | | |_| |  __/ | | | | | | | | (_| |_) |                          |
-| |_.__/|_|\__,_|\___|_| |_| |_|_|_|  \__|_|__/                           |
-+-------------------------------------------------------------------------+"""  # noqa: E501
+BLUEMIRA_ASCII = r""" _     _                      _
+| |   | |                    (_)
+| |__ | |_   _  ___ _ __ ___  _ _ __ __ _ __
+| '_ \| | | | |/ _ \ '_ ` _ \| | '__/ _| |_ \
+| |_) | | |_| |  __/ | | | | | | | | (_| |_) |
+|_.__/|_|\__,_|\___|_| |_| |_|_|_|  \__|_|__/
+"""
 
 
 def print_banner():
     """
     Print the initial banner to the console upon running the bluemira code.
     """
-    LOGGER.info(BLUEMIRA_ASCII, fmt=False)
+    Console(force_terminal=True).print(
+        Panel(f"[blue][bold]{BLUEMIRA_ASCII}", style="blue")
+    )
     v = version_banner()
     v.extend(user_banner())
     bluemira_print("\n".join(v))
@@ -347,19 +361,19 @@ def version_banner() -> list[str]:
     root = get_bluemira_root()
     if not Path(f"{root}/.git").is_dir() or shutil.which("git") is None:
         return [
-            f"Version    : {__version__}",
-            "git branch : docker",
-            "SLOC      : N/A",
+            f"Bluemira Version : {__version__}",
+            "git branch       : docker",
+            "SLOC             : N/A",
         ]
     branch = get_git_branch(root)
     sloc = count_slocs(get_bluemira_path().rstrip(os.sep), branch)
     v = str(get_git_version(root))
 
-    output = [f"Version    : {v[2:-1]}", f"git branch : {branch}"]
+    output = [f"Bluemira Version : {v[2:-1]}", f"git branch       : {branch}"]
 
     for k, v in mapping.items():
         if sloc[v] > 0:
-            line = k + " " * (11 - len(k)) + f": {int(sloc[v])}"
+            line = k + " " * (17 - len(k)) + f": {int(sloc[v])}"
             output.append(line)
     return output
 
@@ -374,6 +388,6 @@ def user_banner() -> list[str]:
         The text for the banner containing user and platform information
     """
     return [
-        f"User       : {getuser()}",
-        f"Platform   : {get_platform()}",
+        f"User             : {getuser()}",
+        f"Platform         : {get_platform()}",
     ]

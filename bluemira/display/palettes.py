@@ -17,6 +17,8 @@ import numpy as np
 import seaborn as sns
 from matplotlib import colors
 
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
+
 if TYPE_CHECKING:
     from matplotlib.typing import ColorType
 
@@ -302,6 +304,25 @@ def make_alpha_palette(
     return ColorPalette({
         f"{color_name}_{i}": col_val for i, col_val in enumerate(color_values)
     })
+
+
+def colour_string(string: str, colour: str) -> str:
+    """
+    Colour a string with ANSI codes
+
+    Parameters
+    ----------
+    string:
+        The text to colour
+    colour:
+        The colour to make the colour-string for
+
+    Returns
+    -------
+    :
+        The string with ANSI colour decoration
+    """
+    return f"{ANSI_COLOR[colour]}{string}{EXIT_COLOR}"
 
 
 # This is specifically NOT the MATLAB color palette.

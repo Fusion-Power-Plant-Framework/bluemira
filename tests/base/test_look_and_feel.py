@@ -99,41 +99,28 @@ def capture_output(caplog, func, *inputs):
 @pytest.mark.parametrize(
     ("method", "text", "colour", "default_text"),
     [
-        (bluemira_critical, "boom", "darkred", "CRITICAL:"),
-        (bluemira_error, "oops", "red", "ERROR:"),
-        (bluemira_warn, "bad", "orange", "WARNING:"),
-        (bluemira_print, "good", "blue", ""),
-        (bluemira_debug, "check", "green", ""),
+        (bluemira_critical, "boom", "darkred", "CRITICAL"),
+        (bluemira_error, "oops", "red", "ERROR"),
+        (bluemira_warn, "bad", "orange", "WARNING"),
+        (bluemira_print, "good", "blue", "INFO"),
+        (bluemira_debug, "check", "green", "DEBUG"),
     ],
 )
-def test_bluemira_log(caplog, method, text, colour, default_text):
+def test_bluemira_log(caplog, capsys, method, text, colour, default_text):  # noqa: ARG001
     # Make sure we capture in DEBUG regardless of default logging level
     # Otherwise we may miss values being recorded.
     with LoggingContext("DEBUG"):
         result = capture_output(caplog, method, text)
 
-    assert len(result) == 3
-    assert ANSI_COLOR[colour] in result[0]
-    if len(default_text) > 0:
-        assert default_text in result[1]
-    assert text in result[1]
-    assert EXIT_COLOR in result[-1]
+    output = (
+        capsys.readouterr().out
+        if default_text in {"INFO", "DEBUG"}
+        else capsys.readouterr().err
+    )
 
-    with LoggingContext("DEBUG"):
-        result = capture_output(
-            caplog,
-            method,
-            "test a very long and verbacious warning message that is bound to be boxed"
-            " in over two lines.",
-        )
-
-    assert len(result) == 4
-    if len(default_text) > 0:
-        assert default_text in result[1]
-        assert default_text not in result[2]
-    assert "test" in result[1]
-    assert "boxed" in result[2]
-    assert EXIT_COLOR in result[-1]
+    assert len(result) == 1
+    assert default_text in output
+    assert text in result[0]
 
 
 @pytest.mark.parametrize(
@@ -144,29 +131,24 @@ def test_bluemira_flush(func, caplog):
     text = "First pass"
     result = capture_output(caplog, func, text)
     assert text in result[0]
-    assert "\r" in result[0]
     assert os.linesep not in result[0]
 
     text = "Second pass"
     result = capture_output(caplog, func, text)
     assert text in result[0]
-    assert "\r" in result[0]
     assert os.linesep not in result[0]
 
 
-@pytest.mark.parametrize(
-    ("func", "prefix", "suffix"),
-    [(bluemira_print_clean, "", ""), (bluemira_error_clean, "\x1b[31m", "\x1b[0m")],
-)
-def test_bluemira_clean(func, prefix, suffix, caplog):
+@pytest.mark.parametrize("func", [bluemira_print_clean, bluemira_error_clean])
+def test_bluemira_clean(func, caplog):
     text = "First pass"
     result = capture_output(caplog, func, text)
-    assert f"{prefix}{text}{suffix}" == result[0]
+    assert text == result[0]
     assert os.linesep not in result[0]
 
     text = "Second pass"
     result = capture_output(caplog, func, text)
-    assert f"{prefix}{text}{suffix}" == result[0]
+    assert text == result[0]
     assert os.linesep not in result[0]
 
 
@@ -178,9 +160,11 @@ def test_bluemira_clean(func, prefix, suffix, caplog):
 @mock.patch(  # noqa: PT008
     "bluemira.base.look_and_feel.count_slocs", lambda _, __: {"total": 1}
 )
-def test_print_banner(caplog):
+def test_print_banner(caplog, capsys):
+    _reset = capsys.readouterr().out
     result = capture_output(caplog, print_banner)
-
-    assert len(result) == 15
-    assert ANSI_COLOR["blue"] in result[0]
-    assert EXIT_COLOR in result[-1]
+    output = capsys.readouterr().out
+    assert len(output.split("\n")) == 17
+    assert len(result) == 5
+    assert ANSI_COLOR["blue"][:3] in output
+    assert EXIT_COLOR in output

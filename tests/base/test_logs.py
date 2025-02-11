@@ -12,6 +12,7 @@ import pytest
 
 from bluemira.base.error import LogsError
 from bluemira.base.logs import (
+    BluemiraRichFileHandler,
     LogLevel,
     LoggingContext,
     get_log_level,
@@ -89,7 +90,7 @@ class TestLoggingLevel:
         """Testing if the handlers level is actually changed."""
         set_log_level(input_level)
         for handler in self.LOGGER.handlers or self.LOGGER.parent.handlers:
-            if not isinstance(handler, logging.FileHandler):
+            if not isinstance(handler, BluemiraRichFileHandler):
                 assert handler.level // 10 == expected
         if not isinstance(input_level, str):
             if input_level >= 10:
@@ -122,41 +123,24 @@ class TestLoggerClass:
         cls.LOGGER = logging.getLogger("bluemira")
         set_log_level("NOTSET")
 
-    @classmethod
-    def teardown_class(cls):
-        set_log_level(cls.original_level.name)
+    def teardown_method(self):
+        set_log_level(self.original_level.name)
 
     @pytest.mark.parametrize(
         "logfunc",
         [LOGGER.debug, LOGGER.info, LOGGER.warning, LOGGER.error, LOGGER.critical],
     )
     @pytest.mark.parametrize("flush", [False, True])
-    @pytest.mark.parametrize("fmt", [True, False])
-    def test_basics(self, logfunc, flush, fmt, caplog):
-        caplog.set_level("DEBUG")
-        logfunc("string1", flush=flush, fmt=fmt)
-        logfunc("string2", flush=flush, fmt=fmt)
+    def test_basics(self, logfunc, flush, caplog):
+        set_log_level("DEBUG")
+        logfunc("string1", flush=flush)
+        logfunc("string2", flush=flush)
 
-        if flush:
-            assert all(c.startswith("\r") for c in caplog.messages)
-        else:
-            assert all(not c.startswith("\r") for c in caplog.messages)
+        assert all("string" in c for c in caplog.messages)
 
-        if fmt:
-            if flush:
-                assert all(len(c.split("|")) == 3 for c in caplog.messages)
-            else:
-                assert all(c.split("\n")[1].endswith("|") for c in caplog.messages)
-        else:
-            assert any("|" not in c for c in caplog.messages)
-
-    @pytest.mark.parametrize("flush", [False, True])
     @pytest.mark.parametrize("loglevel", ["info", "error"])
+    @pytest.mark.parametrize("flush", [False, True])
     def test_clean(self, flush, loglevel, caplog):
         self.LOGGER.clean("string1", flush=flush, loglevel=loglevel)
         self.LOGGER.clean("string2", flush=flush, loglevel=loglevel)
-        if flush:
-            assert all(c.startswith("\r") for c in caplog.messages)
-        else:
-            assert all(not c.startswith("\r") for c in caplog.messages)
-        assert any("|" not in c for c in caplog.messages)
+        assert any("string" in c for c in caplog.messages)
