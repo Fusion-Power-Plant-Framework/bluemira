@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bluemira.codes import plot_radial_build, systems_code_solver
+from bluemira.codes import systems_code_solver
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
@@ -355,7 +355,7 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     Updated parameters following the solve.
     """
     run_mode = build_config.pop("run_mode", "mock")
-    plot = build_config.pop("plot", False)
+
     if run_mode == "run":
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
@@ -364,9 +364,6 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
         build_config["template_in_dat"] = template_builder.make_inputs()
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
-
-    if plot:
-        plot_radial_build(solver.read_directory)
 
     params.update_from_frame(new_params)
     return params

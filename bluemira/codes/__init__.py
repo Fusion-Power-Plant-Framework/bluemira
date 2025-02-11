@@ -44,13 +44,11 @@ _freecad_save_config()
 
 # External codes wrapper imports
 from bluemira.codes.wrapper import (
-    plot_radial_build,
     systems_code_solver,
     transport_code_solver,
 )
 
 __all__ = [
-    "plot_radial_build",
     "systems_code_solver",
     "transport_code_solver",
 ]
