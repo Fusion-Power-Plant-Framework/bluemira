@@ -48,9 +48,9 @@ def check_bb_non_interference(tensor_3d: np.ndarray) -> np.ndarray:
     exclusivity_matrix:
         A matrix of booleans showing whether the bounding boxes overlap.
     """
-    x_bounds, y_bounds, z_bounds = tensor_3d.reshape([
-        ...
-    ])  # @oliverfunk please make this work better. May need expanding.
+    x_bounds = tensor_3d[:, 0, :]
+    y_bounds = tensor_3d[:, 1, :]
+    z_bounds = tensor_3d[:, 2, :]
 
     return np.array([
         is_mutually_exclusive(*x_bounds),
@@ -61,7 +61,9 @@ def check_bb_non_interference(tensor_3d: np.ndarray) -> np.ndarray:
 
 def get_overlaps(exclusivity_matrix) -> np.ndarray:
     """
-    Get the indices of the bounding boxes that are overlapping.
+    Get the indices of the bounding boxes that are overlapping. The overlap matrix is the
+    element-wise negation of the exclusivity matrix. This function returns the 2-D
+    indices of non-zero elements on the upper-right triangle of this matrix.
 
     Parameters
     ----------
