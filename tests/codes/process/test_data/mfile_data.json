@@ -1991,7 +1991,7 @@
     "var_mod": "TF coils",
     "scan01": 1.0
   },
-  "n_tf": {
+  "n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 16.0
   },
@@ -2011,7 +2011,7 @@
     "var_mod": "TF coils",
     "scan01": 10.551
   },
-  "tfleng": {
+  "len_tf_coil": {
     "var_mod": "TF coils",
     "scan01": 59.097
   },
@@ -2063,7 +2063,7 @@
     "var_mod": "TF coils",
     "scan01": 24.606
   },
-  "a_tf_steel*n_tf": {
+  "a_tf_steel*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 17.546
   },
@@ -2071,7 +2071,7 @@
     "var_mod": "TF coils",
     "scan01": 0.71309
   },
-  "a_tf_ins*n_tf": {
+  "a_tf_ins*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 17.546
   },
@@ -2123,7 +2123,7 @@
     "var_mod": "TF coils",
     "scan01": 0.01
   },
-  "aswp*n_tf": {
+  "aswp*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 5.8884
   },
@@ -2239,7 +2239,7 @@
     "var_mod": "TF coils",
     "scan01": 264180.0
   },
-  "whttf/n_tf": {
+  "whttf/n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 1466600.0
   },
@@ -2251,11 +2251,11 @@
     "var_mod": "TF coils",
     "scan01": 11.2
   },
-  "ritfc/1.d6": {
+  "c_tf_total/1.d6": {
     "var_mod": "TF coils",
     "scan01": 181.19
   },
-  "ritfc": {
+  "c_tf_total": {
     "var_mod": "TF coils",
     "scan01": 181190000.0
   },
@@ -3227,7 +3227,7 @@
     "var_mod": "Superconducting TF Coil Power Conversion",
     "scan01": 452.96
   },
-  "tfbusl": {
+  "len_tf_coils_bus": {
     "var_mod": "Superconducting TF Coil Power Conversion",
     "scan01": 3372.7
   },

@@ -11,7 +11,7 @@ PROCESS mappings
 from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {
-    "n_TF": ("n_tf", "dimensionless"),
+    "n_TF": ("n_tf_coils", "dimensionless"),
     "TF_ripple_limit": ("ripmax", "%"),
     "C_Ejima": ("gamma", "dimensionless"),
     "e_nbi": ("beam_energy", "keV"),
@@ -82,9 +82,9 @@ OUT_mappings = {
     "r_tf_out_centre": ("r_tf_outboard_mid", "m"),
     "g_vv_ts": ("dr_shld_vv_gap_inboard", "m"),
     "TF_res_bus": ("tfbusres", "m"),
-    "TF_res_tot": ("ztot", "ohm"),
+    "TF_res_tot": ("res_tf_system_total", "ohm"),
     "TF_E_stored": ("estotftgj", "GJ"),
-    "TF_respc_ob": ("tflegres", "ohm"),
+    "TF_respc_ob": ("res_tf_leg", "ohm"),
     "TF_currpt_ob": ("cpttf", "A"),
     "P_bd_in": ("pinjmw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
