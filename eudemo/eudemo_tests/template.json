@@ -503,7 +503,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ztot",
+        "name": "res_tf_system_total",
         "send": false,
         "recv": true,
         "unit": "ohm"
@@ -517,7 +517,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tflegres",
+        "name": "res_tf_leg",
         "send": false,
         "recv": true,
         "unit": "ohm"
@@ -1439,7 +1439,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "n_tf",
+        "name": "n_tf_coils",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
