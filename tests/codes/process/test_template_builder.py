@@ -433,7 +433,7 @@ class TestInDatOneForOne:
             "ngrp": 4,
             "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
             # TF coil inputs
-            "n_tf": 16,
+            "n_tf_coils": 16,
             "casthi": 0.06,
             "casths": 0.05,
             "ripmax": 0.6,
