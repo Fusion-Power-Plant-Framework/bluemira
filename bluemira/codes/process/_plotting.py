@@ -216,7 +216,7 @@ def process_RB_fromOUT(f):
         if "* Radial Build *" in line:
             flag1 = True
             rb = read_radial_build(num)
-        if "n_tf" in line:
+        if "n_tf_coils" in line:
             flag2 = True
             n_TF = strip_num(line, typ="int")
         if "Major radius" in line:

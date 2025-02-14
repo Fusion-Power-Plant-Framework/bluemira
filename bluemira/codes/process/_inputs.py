@@ -167,7 +167,7 @@ class ProcessInputs:
     n_rad_per_layer: int | None = None
     i_tf_bucking: int | None = None
     n_tf_graded_layers: int | None = None
-    jbus: float | None = None
+    j_tf_bus: float | None = None
     eyoung_ins: float | None = None
     eyoung_steel: float | None = None
     eyong_cond_axial: float | None = None
@@ -185,7 +185,7 @@ class ProcessInputs:
     tcritsc: float | None = None
     tdmptf: float | None = None
     tfinsgap: float | None = None
-    # rhotfbus: Optional[float] = -1.0 # defaults cannot be right
+    rho_tf_bus: float | None = None
     frhocp: float | None = None
     frholeg: float | None = None
     i_cp_joints: int | None = None
@@ -194,7 +194,7 @@ class ProcessInputs:
     n_tf_joints: int | None = None
     th_joint_contact: float | None = None
     # eff_tf_cryo: Optional[float] = -1.0 # defaults cannot be right
-    n_tf: int | None = None
+    n_tf_coils: int | None = None
     tftmp: float | None = None
     thicndut: float | None = None
     thkcas: float | None = None
@@ -208,7 +208,7 @@ class ProcessInputs:
     vftf: float | None = None
     etapump: float | None = None
     fcoolcp: float | None = None
-    fcoolleg: float | None = None
+    f_a_tf_cool_outboard: float | None = None
     ptempalw: float | None = None
     rcool: float | None = None
     tcoolin: float | None = None
@@ -229,6 +229,7 @@ class ProcessInputs:
     tmargmin_cs: float | None = None
     oacdcp: float | None = None
     t_turn_tf: int | None = None
+    len_tf_bus: float | None = None
 
     # PF Power
     iscenr: int | None = None
