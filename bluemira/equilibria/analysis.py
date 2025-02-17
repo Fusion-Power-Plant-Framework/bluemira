@@ -199,7 +199,7 @@ def select_multi_eqs(
         raise ValueError(
             "equilibrium_names length not equal to the number of equilibria."
         )
-    if isinstance(control_coils, CoilType):
+    if not isinstance(control_coils, Iterable):
         control_coils = [control_coils] * len(equilibrium_paths)
 
     equilibria_dict = {}

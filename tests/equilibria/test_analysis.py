@@ -8,18 +8,25 @@ from matplotlib.pyplot import Axes
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_eq
+from bluemira.equilibria.analysis import (
+    EqAnalysis,
+    MultiEqAnalysis,
+    select_eq,
+    select_multi_eqs,
+)
 from bluemira.equilibria.diagnostics import (
     DivLegsToPlot,
     EqDiagnosticOptions,
+    EqPlotMask,
     EqSubplots,
     FixedOrFree,
     FluxSurfaceType,
-    LCFSMask,
+    NamedEq,
     PsiPlotType,
 )
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.flux_surfaces import CoreResults
+from bluemira.equilibria.physics import EqSummary
 from bluemira.geometry.coordinates import Coordinates
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
@@ -43,23 +50,17 @@ class TestEqAnalysis:
             single_demoish_path, from_cocos=7, fixed_or_free=FixedOrFree.FIXED
         )
         cls.double_demoish_eq = select_eq(double_demoish_path)
+        cls.ref_free = NamedEq(eq=cls.single_demoish_eq, name="free")
+        cls.ref_fixed = NamedEq(eq=cls.single_demoish_eq, name="fixed")
         cls.diag_ops_1 = EqDiagnosticOptions(
             psi_diff=PsiPlotType.PSI_ABS_DIFF,
             split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
-            reference_eq=cls.single_demoish_eq,
-            lcfs_mask=LCFSMask.IN,
+            plot_mask=EqPlotMask.IN_LCFS,
         )
         cls.diag_ops_2 = EqDiagnosticOptions(
             psi_diff=PsiPlotType.PSI_ABS_DIFF,
-            split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
-            reference_eq=cls.single_demoish_eq_fixed,
-            lcfs_mask=LCFSMask.IN,
-        )
-        cls.diag_ops_3 = EqDiagnosticOptions(
-            psi_diff=PsiPlotType.PSI_ABS_DIFF,
             split_psi_plots=EqSubplots.XZ,
-            reference_eq=cls.single_demoish_eq,
-            lcfs_mask=LCFSMask.IN,
+            plot_mask=EqPlotMask.IN_LCFS,
         )
 
     def test_select_eq(self):
@@ -70,11 +71,23 @@ class TestEqAnalysis:
     def test_plotting(self):
         "Test plots return expected axes etc."
         # Compare free DN to free SN
-        eq_analysis_1 = EqAnalysis(self.diag_ops_1, self.double_demoish_eq)
+        eq_analysis_1 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_free,
+            diag_ops=self.diag_ops_1,
+        )
         # Compare free DN to fixed SN
-        eq_analysis_2 = EqAnalysis(self.diag_ops_2, self.double_demoish_eq)
+        eq_analysis_2 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_fixed,
+            diag_ops=self.diag_ops_1,
+        )
         # Compare free DN to free SN, with psi components splitting for plots
-        eq_analysis_3 = EqAnalysis(self.diag_ops_3, self.double_demoish_eq)
+        eq_analysis_3 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_free,
+            diag_ops=self.diag_ops_2,
+        )
 
         # Target for legflux plotting.
         target = "lower_outer"
@@ -100,30 +113,30 @@ class TestEqAnalysis:
         plot_11 = eq_analysis_3.plot_compare_psi()
         plot_12 = eq_analysis_1.plot_target_flux(target, target_coords)
 
-        assert plot_1 is None
+        assert isinstance(plot_1, Axes)
         assert isinstance(plot_2[0], Axes)
         assert len(plot_2) == 2
-        assert plot_3 is None
+        assert isinstance(plot_3, Axes)
         assert isinstance(plot_4[0], Axes)
         assert len(plot_4) == 2
-        assert plot_5 is None
-        assert plot_6 is None
+        assert isinstance(plot_5[0], Axes)
+        assert isinstance(plot_6[0, 0], Axes)
         assert isinstance(plot_7_ax[0], Axes)
         assert isinstance(plot_7_res, CoreResults)
         assert len(plot_7_ax) == 18
         assert len(plot_7_res.__dict__.items()) == 17
-        assert isinstance(plot_8, str)
+        assert isinstance(plot_8, EqSummary)
         assert isinstance(plot_9, Axes)
         assert plot_10 is None
         assert plot_11 is None
         assert isinstance(plot_12, Axes)
-        assert plot_1b is None
+        assert isinstance(plot_1b, Axes)
         assert isinstance(plot_2b[0], Axes)
         assert len(plot_2b) == 2
-        assert plot_3b is None
+        assert isinstance(plot_3b, Axes)
         assert isinstance(plot_4b[0], Axes)
         assert len(plot_4b) == 2
-        assert plot_6b is None
+        assert isinstance(plot_6b[0, 0], Axes)
         assert isinstance(plot_9b, Axes)
         assert plot_10b is None
 
@@ -137,9 +150,10 @@ class TestMultiEqAnalysis:
     def setup_class(cls):
         paths = [masty_path, double_demoish_path, single_demoish_path]
         equilibrium_names = ["Little DN", "Big DN", "Big SN"]
-        cls.multi_analysis = MultiEqAnalysis(
+        cls.equilibria_dictionary = select_multi_eqs(
             paths, equilibrium_names=equilibrium_names, from_cocos=[3, 3, 7]
         )
+        cls.multi_analysis = MultiEqAnalysis(equilibria_dict=cls.equilibria_dictionary)
         cls.pfb_masty = Coordinates({
             "x": [1.75, 1.75, 0.0, 0.0, 1.75],
             "z": [-1.75, 1.75, 1.75, -1.75, -1.75],
