@@ -1675,9 +1675,12 @@ class CorePlotter2(Plotter):
         self.ax[2].plot(xx, psi, color=next(ccycle))
         self.ax[2].set_ylabel("[V.s]")
         self.ax[2].annotate("$\\psi$", xy=[0.05, 0.8], xycoords="axes fraction")
-        self.ax[2].axhline(psib * 2 * np.pi, color="r", linestyle="--")
+        self.ax[2].axhline(
+            psib * 2 * np.pi, color="r", linestyle="--", label="Boundary $\\psi$"
+        )
         for ax in self.ax:
-            ax.axvline(xmag, color="r")
+            ax.axvline(xmag, color="r", label="magnetic axis")
+        self.ax[2].legend(loc="best")
 
 
 class ProfilePlotter(Plotter):
