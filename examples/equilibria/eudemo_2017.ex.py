@@ -45,6 +45,7 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.constants import PLT_PAUSE
 from bluemira.equilibria.diagnostics import (
     EqDiagnosticOptions,
+    NamedEq,
     PicardDiagnostic,
     PicardDiagnosticOptions,
 )
@@ -306,7 +307,8 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
-diag_ops = EqDiagnosticOptions(reference_eq=reference_eq)
+reference_eq = NamedEq(eq=reference_eq, name="Reference")
+diag_ops = EqDiagnosticOptions()
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,

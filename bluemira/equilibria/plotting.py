@@ -28,8 +28,10 @@ from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.equilibria.constants import DPI_GIF, J_TOR_MIN, M_PER_MN, PLT_PAUSE
 from bluemira.equilibria.diagnostics import (
     EqBPlotParam,
+    EqPlotMask,
     EqSubplots,
-    LCFSMask,
+    GridPlotType,
+    InterpGrid,
     PsiPlotType,
 )
 from bluemira.equilibria.error import EquilibriaError
@@ -46,7 +48,7 @@ from bluemira.utilities.plot_tools import (
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from bluemira.equilibria.diagnostics import EqDiagnosticOptions
+    from bluemira.equilibria.diagnostics import EqDiagnosticOptions, NamedEq
     from bluemira.equilibria.equilibrium import (
         Equilibrium,
         FixedPlasmaEquilibrium,
@@ -187,12 +189,24 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
-    def __init__(self, grid: Grid, ax=None, *, edge: bool = False, **kwargs):
+    def __init__(
+        self,
+        grid: Grid,
+        ax=None,
+        *,
+        plot_type: GridPlotType = GridPlotType.GRID,
+        **kwargs,
+    ):
         super().__init__(ax)
         self.grid = grid
-        self.plot_grid(**kwargs)
-        if edge:
-            self.plot_edge(**kwargs)
+        match plot_type:
+            case GridPlotType.GRID:
+                self.plot_grid(**kwargs)
+            case GridPlotType.EDGE:
+                self.plot_edge(**kwargs)
+            case GridPlotType.GRID_WITH_EDGE:
+                self.plot_grid(**kwargs)
+                self.plot_edge(**kwargs)
 
     def plot_grid(self, **kwargs):
         """
@@ -200,10 +214,23 @@ class GridPlotter(Plotter):
         """
         lw = kwargs.get("linewidth", PLOT_DEFAULTS["grid"]["linewidth"])
         color = kwargs.get("color", PLOT_DEFAULTS["grid"]["color"])
+        zorder = kwargs.get("zorder", Zorder.GRID.value)
         for i in self.grid.x_1d:
-            self.ax.plot([i, i], [self.grid.z_min, self.grid.z_max], color, linewidth=lw)
+            self.ax.plot(
+                [i, i],
+                [self.grid.z_min, self.grid.z_max],
+                color,
+                linewidth=lw,
+                zorder=zorder,
+            )
         for i in self.grid.z_1d:
-            self.ax.plot([self.grid.x_min, self.grid.x_max], [i, i], color, linewidth=lw)
+            self.ax.plot(
+                [self.grid.x_min, self.grid.x_max],
+                [i, i],
+                color,
+                linewidth=lw,
+                zorder=zorder,
+            )
 
     def plot_edge(self, **kwargs):
         """
@@ -211,7 +238,8 @@ class GridPlotter(Plotter):
         """
         lw = kwargs.get("edgewidth", PLOT_DEFAULTS["grid"]["edgewidth"])
         color = kwargs.get("color", PLOT_DEFAULTS["grid"]["color"])
-        self.ax.plot(*self.grid.bounds, color, linewidth=lw)
+        zorder = kwargs.get("zorder", Zorder.GRID.value)
+        self.ax.plot(*self.grid.bounds, color, linewidth=lw, zorder=zorder)
 
 
 class ConstraintPlotter(Plotter):
@@ -753,26 +781,29 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
     def __init__(
         self,
         equilibrium,
+        reference_equilibrium: NamedEq,
         diag_ops: EqDiagnosticOptions,
+        eq_name: str = "Input",
         ax=None,
     ):
         self.diag_ops = diag_ops
         self.eq = equilibrium
-        self.reference_eq = diag_ops.reference_eq
+        self.eq_name = eq_name
+        self.reference = reference_equilibrium
 
         super().__init__(ax, subplots=self.diag_ops.split_psi_plots)
 
         self.total_psi = self.eq.psi()
         self.plasma_psi = self.eq.plasma.psi()
         self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
-        self.ref_total_psi = self.reference_eq.psi()
-        self.ref_plasma_psi = self.reference_eq.plasma.psi()
+        self.ref_total_psi = self.reference.eq.psi()
+        self.ref_plasma_psi = self.reference.eq.plasma.psi()
         if np.allclose(self.ref_total_psi, self.ref_plasma_psi):
             # Fill with zeros if there is no coilset
-            self.ref_coilset_psi = 0.0 * self.reference_eq.grid.x
+            self.ref_coilset_psi = 0.0 * self.reference.eq.grid.x
         else:
-            self.ref_coilset_psi = self.reference_eq.coilset.psi(
-                self.reference_eq.x, self.reference_eq.z
+            self.ref_coilset_psi = self.reference.eq.coilset.psi(
+                self.reference.eq.x, self.reference.eq.z
             )
 
     def plot_reference_LCFS(self, ref_lcfs_label=None):
@@ -780,7 +811,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         Plot the last closed flux surface for the reference equilibria
         """
         try:
-            ref_lcfs = self.reference_eq.get_LCFS()
+            ref_lcfs = self.reference.eq.get_LCFS()
         except (
             EquilibriaError
         ):  # TODO @geograham: - what is most appropriate error class?
@@ -808,7 +839,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
                 zorder=9,
                 linestyle="--",
-                label="Reference LCFS",
+                label=ref_lcfs_label,
             )
 
     def plot_LCFS(self, lcfs_label=None):
@@ -842,7 +873,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 color=PLOT_DEFAULTS["separatrix"]["color"],
                 linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
                 zorder=9,
-                label="Current LCFS",
+                label=lcfs_label,
             )
 
     def plot_psi_coilset(self, grid: Grid = None, **kwargs):
@@ -881,7 +912,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             if self.coilset_psi is None:
                 bluemira_warn(
-                    "Coilset_psi all 0s. Will only plot current and reference LCFS"
+                    "Coilset_psi all 0s. Will only plot input and reference LCFS"
                 )
             else:
                 im = self.ax[0].contourf(
@@ -900,7 +931,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 cbar.set_label(cbar_label)
                 plt.suptitle(
                     title_type + "in psi between reference equilibrium"
-                    " and current equilibrium, \n split by contribution from"
+                    " and input equilibrium, \n split by contribution from"
                     " coilset and plasma"
                 )
                 plt.tight_layout()
@@ -949,7 +980,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             if self.plasma_psi is None:
                 bluemira_warn(
-                    "Plasma_psi all 0s. Will only plot current and reference LCFS"
+                    "Plasma_psi all 0s. Will only plot input and reference LCFS"
                 )
             else:
                 im = self.ax[1].contourf(
@@ -977,8 +1008,8 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 zorder=8,
             )
         # Plot current and reference lcfs
-        self.plot_LCFS(lcfs_label="Current LCFS")
-        self.plot_reference_LCFS(ref_lcfs_label="Reference LCFS")
+        self.plot_LCFS(lcfs_label=self.eq_name + " LCFS")
+        self.plot_reference_LCFS(ref_lcfs_label=self.reference.name + " LCFS")
 
     def plot_psi(self, grid: Grid = None, **kwargs):
         """
@@ -1013,7 +1044,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             if self.total_psi is None:
                 bluemira_warn(
-                    "Total_psi all 0s. Will only plot current and reference LCFS"
+                    "Total_psi all 0s. Will only plot input and reference LCFS"
                 )
             else:
                 im = self.ax.contourf(
@@ -1031,16 +1062,16 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 )
                 plt.suptitle(
                     title_type + "in total psi between reference equilibrium and"
-                    " current equilibrium"
+                    " input equilibrium"
                 )
                 plt.tight_layout()
 
         else:
             self.ax.contour(x, z, self.total_psi, levels=levels, cmap=cmap, zorder=8)
-            plt.title("Total psi for current equilibrium")
-        # Plot current and reference lcfs
-        self.plot_LCFS()
-        self.plot_reference_LCFS()
+            plt.title("Total psi for input equilibrium")
+        # Plot input and reference lcfs
+        self.plot_LCFS(lcfs_label=self.eq_name + " LCFS")
+        self.plot_reference_LCFS(ref_lcfs_label=self.reference.name + " LCFS")
 
 
 class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
@@ -1059,33 +1090,39 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
     def __init__(
         self,
         equilibrium,
+        reference_equilibrium: NamedEq,
         diag_ops: EqDiagnosticOptions,
         ax=None,
     ):
-        super().__init__(equilibrium, diag_ops, ax)
+        super().__init__(
+            equilibrium=equilibrium,
+            reference_equilibrium=reference_equilibrium,
+            diag_ops=diag_ops,
+            ax=ax,
+        )
 
-        if np.shape(self.eq.grid.x) != np.shape(self.reference_eq.grid.x):
+        if np.shape(self.eq.grid.x) != np.shape(self.reference.eq.grid.x):
             bluemira_warn("Reference psi must have same grid size as input equilibria.")
 
-        if np.min(self.eq.grid.x) != np.min(self.reference_eq.grid.x):
+        if np.min(self.eq.grid.x) != np.min(self.reference.eq.grid.x):
             bluemira_warn(
                 "The minimum value of x is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.min(self.eq.grid.z) != np.min(self.reference_eq.grid.z):
+        if np.min(self.eq.grid.z) != np.min(self.reference.eq.grid.z):
             bluemira_warn(
                 "The minimum value of z is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.max(self.eq.grid.x) != np.max(self.reference_eq.grid.x):
+        if np.max(self.eq.grid.x) != np.max(self.reference.eq.grid.x):
             bluemira_warn(
                 "The maximum value of x is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.max(self.eq.grid.z) != np.max(self.reference_eq.grid.z):
+        if np.max(self.eq.grid.z) != np.max(self.reference.eq.grid.z):
             bluemira_warn(
                 "The maximum value of z is not the same for the reference equilibrium"
                 " and the input equilibrium."
@@ -1209,23 +1246,31 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     def __init__(
         self,
         equilibrium,
+        reference_equilibrium: NamedEq,
         diag_ops: EqDiagnosticOptions,
         ax=None,
+        eq_name="Input",
     ):
-        super().__init__(equilibrium, diag_ops, ax)
+        super().__init__(
+            equilibrium=equilibrium,
+            reference_equilibrium=reference_equilibrium,
+            diag_ops=diag_ops,
+            eq_name=eq_name,
+            ax=ax,
+        )
 
         # Interpolation:
         if (
-            (self.reference_eq.grid.x_size != self.eq.grid.x_size)
-            or (self.reference_eq.grid.z_size != self.eq.grid.z_size)
-            or (self.reference_eq.grid.dx != self.eq.grid.dx)
-            or (self.reference_eq.grid.dz != self.eq.grid.dz)
+            (self.reference.eq.grid.x_size != self.eq.grid.x_size)
+            or (self.reference.eq.grid.z_size != self.eq.grid.z_size)
+            or (self.reference.eq.grid.dx != self.eq.grid.dx)
+            or (self.reference.eq.grid.dz != self.eq.grid.dz)
         ):
             self.grid = self._make_comparison_grid()
             self._interpolate_psi_for_comparison()
         else:
-            self.grid = self.reference_eq.grid
-        self.mask = self._make_lcfs_mask()
+            self.grid = self.reference.eq.grid
+        self.mask = self._make_lcfs_mask(self.diag_ops.plot_mask)
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             self._calculate_psi_diff()
             if self.diag_ops.split_psi_plots is EqSubplots.XZ_COMPONENT_PSI:
@@ -1249,12 +1294,35 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         :
             new Grid
         """
-        x_min = np.max([self.reference_eq.grid.x_min, self.eq.grid.x_min])
-        x_max = np.min([self.reference_eq.grid.x_max, self.eq.grid.x_max])
-        z_min = np.max([self.reference_eq.grid.z_min, self.eq.grid.z_min])
-        z_max = np.min([self.reference_eq.grid.z_max, self.eq.grid.z_max])
-        nx = np.min([self.reference_eq.grid.nx, self.eq.grid.nx])
-        nz = np.min([self.reference_eq.grid.nz, self.eq.grid.nz])
+        ref_grid, input_grid = self.reference.eq.grid, self.eq.grid
+        no_overlap_check = (
+            (ref_grid.x_max <= input_grid.x_min)
+            or (input_grid.x_max <= ref_grid.x_min)
+            or (ref_grid.z_max <= input_grid.z_min)
+            or (input_grid.z_max <= ref_grid.z_min)
+        )
+        if no_overlap_check and self.diag_ops.interpolation_grid is InterpGrid.OVERLAP:
+            bluemira_warn(
+                "Input and reference equilibrium grids have no overlap. "
+                "Using new grid size large enouth to cointain both old grid ranges. "
+                "Setting diag_ops.interpolation_grid to BOTH."
+            )
+            self.diag_ops.interpolation_grid = InterpGrid.BOTH
+
+        if self.diag_ops.interpolation_grid is InterpGrid.OVERLAP:
+            x_min = np.max([ref_grid.x_min, input_grid.x_min])
+            x_max = np.min([ref_grid.x_max, input_grid.x_max])
+            z_min = np.max([ref_grid.z_min, input_grid.z_min])
+            z_max = np.min([ref_grid.z_max, input_grid.z_max])
+            nx = np.max([ref_grid.nx, input_grid.nx])
+            nz = np.max([ref_grid.nz, input_grid.nz])
+        else:
+            x_min = np.min([ref_grid.x_min, input_grid.x_min])
+            x_max = np.max([ref_grid.x_max, input_grid.x_max])
+            z_min = np.min([ref_grid.z_min, input_grid.z_min])
+            z_max = np.max([ref_grid.z_max, input_grid.z_max])
+            nx = np.max([ref_grid.nx, input_grid.nx])
+            nz = np.max([ref_grid.nz, input_grid.nz])
         return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
     def interpolate_psi(self, psi, psi_grid):
@@ -1273,19 +1341,19 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     def _interpolate_psi_for_comparison(self):
         """Interpolate all psi components over new grid."""
         self.ref_coilset_psi = self.interpolate_psi(
-            self.ref_coilset_psi, self.reference_eq.grid
+            self.ref_coilset_psi, self.reference.eq.grid
         )
         self.ref_plasma_psi = self.interpolate_psi(
-            self.ref_plasma_psi, self.reference_eq.grid
+            self.ref_plasma_psi, self.reference.eq.grid
         )
         self.ref_total_psi = self.interpolate_psi(
-            self.ref_total_psi, self.reference_eq.grid
+            self.ref_total_psi, self.reference.eq.grid
         )
         self.coilset_psi = self.interpolate_psi(self.coilset_psi, self.eq.grid)
         self.plasma_psi = self.interpolate_psi(self.plasma_psi, self.eq.grid)
         self.total_psi = self.interpolate_psi(self.total_psi, self.eq.grid)
 
-    def _make_lcfs_mask(self):
+    def _make_lcfs_mask(self, mask_type):
         """
         Make a LCFS shaped mask to use with equilibria comparisions.
 
@@ -1297,31 +1365,53 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         """
         mask_matx = np.zeros_like(self.grid.x)
         try:
-            ref_lcfs = self.reference_eq.get_LCFS()
+            ref_lcfs = self.reference.eq.get_LCFS()
         except (
             EquilibriaError
         ):  # TODO @geograham: - what is most appropriate error class?
             # 3797
             bluemira_warn("Unable to find reference LCFS")
             return None
-        return _in_plasma(
+        try:
+            input_lcfs = self.eq.get_LCFS()
+        except (
+            EquilibriaError
+        ):  # TODO @geograham: - what is most appropriate error class?
+            # 3797
+            bluemira_warn("Unable to find input equilibrium LCFS")
+            return None
+
+        if mask_type in EqPlotMask.REF:
+            return _in_plasma(
+                self.grid.x, self.grid.z, mask_matx, ref_lcfs.xz.T, include_edges=False
+            )
+        if mask_type in EqPlotMask.INPUT:
+            return _in_plasma(
+                self.grid.x, self.grid.z, mask_matx, input_lcfs.xz.T, include_edges=False
+            )
+        ref_mask = _in_plasma(
             self.grid.x, self.grid.z, mask_matx, ref_lcfs.xz.T, include_edges=False
         )
+        input_mask = _in_plasma(
+            self.grid.x, self.grid.z, mask_matx, input_lcfs.xz.T, include_edges=False
+        )
+        # Note use '+' as we want any area in ref or input LCFS.
+        return ref_mask + input_mask
 
     def apply_mask(self, mask_type):
-        """Apply mask to psi from equilibrium and reference equilibrium."""
-        if mask_type is LCFSMask.IN:
+        """Apply mask to psi."""
+        if mask_type in EqPlotMask.IN:
             self.coilset_psi *= self.mask
             self.plasma_psi *= self.mask
             self.total_psi *= self.mask
-        elif mask_type is LCFSMask.OUT:
+        elif mask_type in EqPlotMask.OUT:
             self.coilset_psi *= abs(self.mask - 1)
             self.plasma_psi *= abs(self.mask - 1)
             self.total_psi *= abs(self.mask - 1)
 
     def _calculate_psi_diff(self):
         """
-        Find the difference betwwen the reference and choisen equilibrium psi values.
+        Find the difference betwwen the reference and input equilibrium psi values.
         """
         diff_coilset_psi = self.ref_coilset_psi - self.coilset_psi
         # if all zeros
@@ -1361,8 +1451,12 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     def plot_compare_psi(self):
         """Plot flux differnces"""
         # Apply mask
-        if self.diag_ops.lcfs_mask is not None:
-            self.apply_mask(self.diag_ops.lcfs_mask)
+        if self.diag_ops.plot_mask is not None:
+            if self.diag_ops.plot_mask not in EqPlotMask.LCFS:
+                raise NotImplementedError(
+                    "Chosen mask is not yet available please choosea LCFS mask type."
+                )
+            self.apply_mask(self.diag_ops.plot_mask)
 
         if self.diag_ops.split_psi_plots is EqSubplots.XZ_COMPONENT_PSI:
             self.plot_psi_coilset(self.grid)
@@ -1372,6 +1466,14 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             legend = self.ax[1].legend()
             legend.set_zorder(10)
             set_ax_for_psi_components(self.ax)
+            if self.diag_ops.interpolation_grid is InterpGrid.BOTH:
+                for a in self.ax:
+                    self.reference.eq.grid.plot(
+                        ax=a, plot_type=GridPlotType.EDGE, zorder=Zorder.CONSTRAINT.value
+                    )
+                    self.eq.grid.plot(
+                        ax=a, plot_type=GridPlotType.EDGE, zorder=Zorder.CONSTRAINT.value
+                    )
         else:
             self.plot_psi(self.grid)
             legend = self.ax.legend()
@@ -1379,6 +1481,17 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             self.ax.set_xlabel("$x$ [m]")
             self.ax.set_ylabel("$z$ [m]")
             self.ax.set_aspect("equal")
+            if self.diag_ops.interpolation_grid is InterpGrid.BOTH:
+                self.reference.eq.grid.plot(
+                    ax=self.ax,
+                    plot_type=GridPlotType.EDGE,
+                    zorder=Zorder.CONSTRAINT.value,
+                )
+                self.eq.grid.plot(
+                    ax=self.ax,
+                    plot_type=GridPlotType.EDGE,
+                    zorder=Zorder.CONSTRAINT.value,
+                )
 
 
 class BreakdownPlotter(Plotter):

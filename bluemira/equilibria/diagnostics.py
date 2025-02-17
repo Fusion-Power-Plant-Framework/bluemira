@@ -22,6 +22,16 @@ if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
 
 
+class GridPlotType(Flag):
+    """
+    Whether to plot grid lines, grid edge or both.
+    """
+
+    GRID = auto()
+    EDGE = auto()
+    GRID_WITH_EDGE = auto()
+
+
 class EqSubplots(Enum):
     """
     Type of plot axes.
@@ -77,16 +87,63 @@ class DivLegsToPlot(Flag):
     PAIR = UP | LW
 
 
-class LCFSMask(Enum):
+class EqPlotMask(Flag):
     """
     For LCFS masking in plots.
     Block the area within or outside of the reference LCFS.
     """
 
-    IN = auto()
+    NONE = auto()
+    "No mask."
+    IN_LCFS = auto()
+    """Mask out values inside chosen LCFS."""
+    OUT_LCFS = auto()
+    """Mask out values outside chosen LCFS."""
+    IN_REF_LCFS = auto()
     """Mask out values inside reference LCFS."""
-    OUT = auto()
+    OUT_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
+    IN_COMBO_LCFS = auto()
+    """Mask out values inside chosen and reference LCFS."""
+    OUT_COMBO_LCFS = auto()
+    """Mask out values outside chosen and reference LCFS."""
+    DIV_AREA = (
+        auto()
+    )  # NOTE: add new mask types, this currently raises a not implemented error
+    """Mask out the values oustsie divertor area."""
+    POLYGON = (
+        auto()
+    )  # NOTE: add new mask types, this currently raises a not implemented error
+    """Mask out the values oustsie a chosen polygon area."""
+    INPUT = IN_LCFS | OUT_LCFS
+    REF = IN_REF_LCFS | OUT_LCFS
+    COMBO = IN_COMBO_LCFS | OUT_COMBO_LCFS
+    LCFS = (
+        IN_REF_LCFS
+        | OUT_LCFS
+        | IN_LCFS
+        | OUT_LCFS
+        | IN_COMBO_LCFS
+        | OUT_COMBO_LCFS
+        | NONE
+    )
+    IN = IN_LCFS | IN_REF_LCFS | IN_COMBO_LCFS
+    OUT = OUT_LCFS | OUT_REF_LCFS | OUT_COMBO_LCFS | DIV_AREA | POLYGON
+
+
+class InterpGrid(Enum):
+    """Specify how the interpolated grid is sized."""
+
+    OVERLAP = auto()
+    """
+    Make a new grid for interpolation using the
+    overlapping areas of the old grids.
+    """
+    BOTH = auto()
+    """
+    Make a new grid for interpolation using an area
+    which includes both of the old grids.
+    """
 
 
 class CSData(Enum):
@@ -140,13 +197,21 @@ class FluxSurfaceType(Enum):
 
 
 @dataclass
+class NamedEq:
+    """Equilibrium paired with its name."""
+
+    eq: Equilibrium | None = None
+    name: str = "Default"
+
+
+@dataclass
 class EqDiagnosticOptions:
     """Diagnostic plotting options for Equilibrium."""
 
-    reference_eq: Equilibrium | None = None
     psi_diff: PsiPlotType = PsiPlotType.PSI
     split_psi_plots: EqSubplots = EqSubplots.XZ
-    lcfs_mask: LCFSMask | None = None
+    plot_mask: EqPlotMask = EqPlotMask.NONE
+    interpolation_grid: InterpGrid = InterpGrid.OVERLAP
     plot_name: str = "default_0"
     folder: str | PathLike | None = None
     save: bool = False

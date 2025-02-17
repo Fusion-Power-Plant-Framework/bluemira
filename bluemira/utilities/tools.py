@@ -15,6 +15,7 @@ import string
 import warnings
 from collections import Counter
 from collections.abc import Callable, Iterable
+from dataclasses import asdict
 from functools import wraps
 from importlib import import_module as imp
 from importlib import machinery as imp_mach
@@ -28,6 +29,7 @@ import nlopt
 import numpy as np
 import numpy.typing as npt
 from matplotlib import colors
+from tabulate import tabulate
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.file import force_file_extension
@@ -594,134 +596,6 @@ def set_random_seed(seed_number: int, no_sequences: int = 1) -> list[SeedSequenc
     return sq.spawn(no_sequences)
 
 
-def compare_dicts(
-    d1: dict[str, Any],
-    d2: dict[str, Any],
-    *,
-    almost_equal: bool = False,
-    verbose: bool = True,
-    rtol: float = 1e-5,
-    atol: float = 1e-8,
-) -> bool:
-    """
-    Compares two dictionaries. Will print information about the differences
-    between the two to the console. Dictionaries are compared by length, keys,
-    and values per common keys
-
-    Parameters
-    ----------
-    d1:
-        The reference dictionary
-    d2:
-        The dictionary to be compared with the reference
-    almost_equal:
-        Whether or not to use np.isclose and np.allclose for numbers and arrays
-    verbose:
-        Whether or not to print to the console
-    rtol:
-        The relative tolerance parameter, used if ``almost_equal`` is True
-    atol:
-        The absolute tolerance parameter, used if ``almost_equal`` is True
-
-    Returns
-    -------
-    Whether or not the dictionaries are the same
-    """
-    nkey_diff = len(d1) - len(d2)
-    k1 = set(d1.keys())
-    k2 = set(d2.keys())
-    intersect = k1.intersection(k2)
-    new_diff = k1 - k2
-    old_diff = k2 - k1
-    same, different = [], []
-
-    # Define functions to use for comparison in either the array, dict, or
-    # numeric cases.
-    def dict_eq(value_1, value_2):
-        return compare_dicts(
-            value_1,
-            value_2,
-            almost_equal=almost_equal,
-            verbose=verbose,
-            rtol=rtol,
-            atol=atol,
-        )
-
-    def array_almost_eq(val1, val2):
-        return np.allclose(val1, val2, rtol, atol)
-
-    def num_almost_eq(val1, val2):
-        return np.isclose(val1, val2, rtol, atol)
-
-    def array_is_eq(val1, val2):
-        return (np.asarray(val1) == np.asarray(val2)).all()
-
-    def list_eq(val1, val2):
-        return Counter(val1) == Counter(val2)
-
-    if almost_equal:
-        array_eq = array_almost_eq
-        num_eq = num_almost_eq
-    else:
-        array_eq = array_is_eq
-        num_eq = operator.eq
-
-    # Map the comparison functions to the keys based on the type of value in d1.
-    comp_map = {
-        key: (
-            array_eq
-            if isinstance(val, np.ndarray)
-            or (isinstance(val, list) and is_num(next(flatten_iterable(val))))
-            else (
-                dict_eq
-                if isinstance(val, dict)
-                else list_eq
-                if isinstance(val, list)
-                else num_eq
-                if is_num(val)
-                else operator.eq
-            )
-        )
-        for key, val in d1.items()
-    }
-
-    # Do the comparison
-    for k in intersect:
-        v1, v2 = d1[k], d2[k]
-        try:
-            if comp_map[k](v1, v2):
-                same.append(k)
-            else:
-                different.append(k)
-        except ValueError:  # One is an array and the other not
-            different.append(k)
-
-    the_same = False
-    result = "===========================================================\n"
-    if nkey_diff != 0:
-        compare = "more" if nkey_diff > 0 else "fewer"
-        result += f"d1 has {nkey_diff} {compare} keys than d2" + "\n"
-    if new_diff != set():
-        result += "d1 has the following keys which d2 does not have:\n"
-        new_diff = ["\t" + str(i) for i in new_diff]
-        result += "\n".join(new_diff) + "\n"
-    if old_diff != set():
-        result += "d2 has the following keys which d1 does not have:\n"
-        old_diff = ["\t" + str(i) for i in old_diff]
-        result += "\n".join(old_diff) + "\n"
-    if different:
-        result += "the following shared keys have different values:\n"
-        different = ["\t" + str(i) for i in different]
-        result += "\n".join(different) + "\n"
-    if nkey_diff == 0 and new_diff == set() and old_diff == set() and different == []:
-        the_same = True
-    else:
-        result += "==========================================================="
-        if verbose:
-            bluemira_error(result)
-    return the_same
-
-
 def flatten_iterable(iters: Iterable[Any]):
     """
     Expands a nested iterable structure, flattening it into one iterable
@@ -969,6 +843,176 @@ def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray
         (d_1**2 + d_2**2 - 4 * R_0**2) / (2 * d_1 * d_2)
     )
     return tau, sigma
+
+
+# =====================================================
+# Anaylysis utilities
+# =====================================================
+
+
+def compare_dicts(
+    d1: dict[str, Any],
+    d2: dict[str, Any],
+    *,
+    almost_equal: bool = False,
+    verbose: bool = True,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+) -> bool:
+    """
+    Compares two dictionaries. Will print information about the differences
+    between the two to the console. Dictionaries are compared by length, keys,
+    and values per common keys
+
+    Parameters
+    ----------
+    d1:
+        The reference dictionary
+    d2:
+        The dictionary to be compared with the reference
+    almost_equal:
+        Whether or not to use np.isclose and np.allclose for numbers and arrays
+    verbose:
+        Whether or not to print to the console
+    rtol:
+        The relative tolerance parameter, used if ``almost_equal`` is True
+    atol:
+        The absolute tolerance parameter, used if ``almost_equal`` is True
+
+    Returns
+    -------
+    Whether or not the dictionaries are the same
+    """
+    nkey_diff = len(d1) - len(d2)
+    k1 = set(d1.keys())
+    k2 = set(d2.keys())
+    intersect = k1.intersection(k2)
+    new_diff = k1 - k2
+    old_diff = k2 - k1
+    same, different = [], []
+
+    # Define functions to use for comparison in either the array, dict, or
+    # numeric cases.
+    def dict_eq(value_1, value_2):
+        return compare_dicts(
+            value_1,
+            value_2,
+            almost_equal=almost_equal,
+            verbose=verbose,
+            rtol=rtol,
+            atol=atol,
+        )
+
+    def array_almost_eq(val1, val2):
+        return np.allclose(val1, val2, rtol, atol)
+
+    def num_almost_eq(val1, val2):
+        return np.isclose(val1, val2, rtol, atol)
+
+    def array_is_eq(val1, val2):
+        return (np.asarray(val1) == np.asarray(val2)).all()
+
+    def list_eq(val1, val2):
+        return Counter(val1) == Counter(val2)
+
+    if almost_equal:
+        array_eq = array_almost_eq
+        num_eq = num_almost_eq
+    else:
+        array_eq = array_is_eq
+        num_eq = operator.eq
+
+    # Map the comparison functions to the keys based on the type of value in d1.
+    comp_map = {
+        key: (
+            array_eq
+            if isinstance(val, np.ndarray)
+            or (isinstance(val, list) and is_num(next(flatten_iterable(val))))
+            else (
+                dict_eq
+                if isinstance(val, dict)
+                else list_eq
+                if isinstance(val, list)
+                else num_eq
+                if is_num(val)
+                else operator.eq
+            )
+        )
+        for key, val in d1.items()
+    }
+
+    # Do the comparison
+    for k in intersect:
+        v1, v2 = d1[k], d2[k]
+        try:
+            if comp_map[k](v1, v2):
+                same.append(k)
+            else:
+                different.append(k)
+        except ValueError:  # One is an array and the other not
+            different.append(k)
+
+    the_same = False
+    result = "===========================================================\n"
+    if nkey_diff != 0:
+        compare = "more" if nkey_diff > 0 else "fewer"
+        result += f"d1 has {nkey_diff} {compare} keys than d2" + "\n"
+    if new_diff != set():
+        result += "d1 has the following keys which d2 does not have:\n"
+        new_diff = ["\t" + str(i) for i in new_diff]
+        result += "\n".join(new_diff) + "\n"
+    if old_diff != set():
+        result += "d2 has the following keys which d1 does not have:\n"
+        old_diff = ["\t" + str(i) for i in old_diff]
+        result += "\n".join(old_diff) + "\n"
+    if different:
+        result += "the following shared keys have different values:\n"
+        different = ["\t" + str(i) for i in different]
+        result += "\n".join(different) + "\n"
+    if nkey_diff == 0 and new_diff == set() and old_diff == set() and different == []:
+        the_same = True
+    else:
+        result += "==========================================================="
+        if verbose:
+            bluemira_error(result)
+    return the_same
+
+
+def make_table(data, column_names):
+    """
+    Create a table using a dataclass or  list of dataclasses.
+
+    Parameteres
+    -----------
+    data:
+        Dataclass or list of dataclasses
+    column_names:
+        column names or list of column names
+
+    Returns
+    -------
+    :
+        table
+    """
+    if not isinstance(data, Iterable):
+        return tabulate(
+            list(asdict(data).items()),
+            headers=[column_names],
+            tablefmt="simple",
+            showindex=False,
+            numalign="right",
+        )
+
+    table_data = [data[0].__dataclass_fields__] + [
+        list(asdict(column).values()) for column in data
+    ]
+    return tabulate(
+        list(zip(*table_data, strict=False)),
+        headers=["Parameter", *column_names],
+        tablefmt="grid",
+        showindex=False,
+        numalign="right",
+    )
 
 
 # ======================================================================================
