@@ -755,7 +755,7 @@
     "var_mod": "Plasma",
     "scan01": 1.6552
   },
-  "rli": {
+  "ind_plasma_internal_norm": {
     "var_mod": "Plasma",
     "scan01": 1.1388
   },
@@ -1427,23 +1427,23 @@
     "var_mod": "Plasma",
     "scan01": 1.6705
   },
-  "vsstt": {
+  "vs_plasma_total_required": {
     "var_mod": "Plasma",
     "scan01": 401.46
   },
-  "vsind": {
+  "vs_plasma_res_ramp": {
     "var_mod": "Plasma",
     "scan01": 318.6
   },
-  "gamma": {
+  "ejima_coeff": {
     "var_mod": "Plasma",
     "scan01": 0.3
   },
-  "vsres": {
+  "vs_plasma_res_ramp": {
     "var_mod": "Plasma",
     "scan01": 82.86
   },
-  "vsbrn": {
+  "vs_plasma_burn_required": {
     "var_mod": "Plasma",
     "scan01": 5.9355e-8
   },
@@ -1491,7 +1491,7 @@
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "vburn": {
+  "v_plasma_loop_burn": {
     "var_mod": "Plasma",
     "scan01": 5.9296e-12
   },
@@ -1503,7 +1503,7 @@
     "var_mod": "Plasma",
     "scan01": 5646.1
   },
-  "rlp": {
+  "ind_plasma": {
     "var_mod": "Plasma",
     "scan01": 1.2733e-5
   },
