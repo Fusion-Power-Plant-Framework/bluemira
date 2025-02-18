@@ -548,7 +548,7 @@ class ProcessInputs:
     dtstor: float | None = None
     istore: int | None = None
     itcycl: int | None = None
-    lpulse: int | None = None  # Listed as an output
+    i_pulsed_plant: int | None = None  # Listed as an output
 
     # IFE
 
@@ -647,7 +647,7 @@ class ProcessInputs:
     f_tritium: float | None = None
     f_helium3: float | None = None
     fvsbrnni: float | None = None
-    gamma: float | None = None
+    ejima_coeff: float | None = None
     hfact: float | None = None
     taumax: float | None = None
     i_bootstrap_current: int | None = None
@@ -684,7 +684,7 @@ class ProcessInputs:
     tauratio: float | None = None
     rad_fraction_sol: float | None = None
     f_nd_alpha_electron: float | None = None
-    rli: float | None = None
+    ind_plasma_internal_norm: float | None = None
     rmajor: float | None = None
     f_nd_beam_electron: float | None = None
     i_single_null: int | None = None
