@@ -392,7 +392,7 @@ class LHThreshholdScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ilhthresh"
+        return "i_l_h_threshhold"
 
     ITER_1996_NOM = 1
     ITER_1996_LOW = 2
