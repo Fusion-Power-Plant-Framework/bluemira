@@ -38,7 +38,7 @@ boundu(10) = 1.1
 ixc = 14 * fwalld
 ixc = 16 * ohcth
 boundl(16) = 0.4
-ixc = 18 * q
+ixc = 18 * q95
 boundl(18) = 3.0
 ixc = 29 * dr_bore
 boundl(29) = 0.5
@@ -419,7 +419,7 @@ iprofile = 1 * switch for current profile consistency;
 i_confinement_time      = 34 * switch for energy confinement time scaling law (see description in `labels_confinement_scalings`)
 i_plasma_geometry   = 2 * switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * plasma separatrix elongation (calculated if `i_plasma_geometry = 1-5 or 7`)
-q        = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
+q95      = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
 q0       = 1.0 * safety factor on axis
 f_nd_alpha_electron   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `ipedestal=3`)
 rmajor   = 9.1077e+00 * plasma major radius (m) (`iteration variable 3`)
