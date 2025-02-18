@@ -963,7 +963,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
-        Inequality constraint for TripleArc.
+        Inequality constraint for SextupleArc.
 
         Constrain such that sum of the 5 angles is less than or equal to 360
         degrees.
@@ -971,7 +971,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         Returns
         -------
         :
-            Inequality constraint for TripleArc.
+            Inequality constraint for SextupleArc.
         """
         x_norm = self.variables.get_normalised_values()
         x_actual = self.process_x_norm_fixed(x_norm)
@@ -979,12 +979,12 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
     def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint gradient for TripleArc.
+        """Inequality constraint gradient for SextupleArc.
 
         Returns
         -------
         :
-            Inequality constraint gradient for TripleArc.
+            Inequality constraint gradient for SextupleArc.
         """
         x_norm = self.variables.get_normalised_values()
         gradient = np.zeros((1, len(x_norm)))
