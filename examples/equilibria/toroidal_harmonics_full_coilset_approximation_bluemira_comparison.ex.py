@@ -122,7 +122,7 @@ th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 R_approx = th_params.R
 Z_approx = th_params.Z
 
-psi_approx, _ = toroidal_harmonic_approximate_psi(
+psi_approx, _, _ = toroidal_harmonic_approximate_psi(
     eq=eq, th_params=th_params, max_degree=6
 )
 
@@ -251,7 +251,7 @@ print(f"fit metric value = {fit_metric_value}")
 # Here is an example of using the function, setting plot to True outputs a graph of the
 # difference in total psi between the TH approximation and bluemira.
 # %%
-names, A_m, degree, fit_metric, approx_total_psi, currents = (
+toroidal_harmonics_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi = (
     toroidal_harmonic_approximation(eq=eq, th_params=th_params, plot=True)
 )
 

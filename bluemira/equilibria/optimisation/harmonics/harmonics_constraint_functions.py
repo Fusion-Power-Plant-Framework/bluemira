@@ -19,6 +19,7 @@ class HarmonicConstraintFunction(ConstraintFunction):
     Constraint function to constrain harmonics starting from initial
     coil currents and associated core plasma.
     Used for spherical and toroidal harmonics.
+    # FIXME
 
     Parameters
     ----------
@@ -34,14 +35,18 @@ class HarmonicConstraintFunction(ConstraintFunction):
 
     def __init__(
         self,
-        a_mat: np.ndarray,
-        b_vec: np.ndarray,
+        a_mat_cos: np.ndarray,
+        a_mat_sin: np.ndarray,
+        b_vec_cos: np.ndarray,
+        b_vec_sin: np.ndarray,
         value: float,
         scale: float,
         name: str | None = None,
     ) -> None:
-        self.a_mat = a_mat
-        self.b_vec = b_vec
+        self.a_mat_cos = a_mat_cos
+        self.a_mat_sin = a_mat_sin
+        self.b_vec_cos = b_vec_cos
+        self.b_vec_sin = b_vec_sin
         self.value = value
         self.scale = scale
         self.name = name
@@ -50,9 +55,13 @@ class HarmonicConstraintFunction(ConstraintFunction):
         """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
 
-        result = self.a_mat[:,] @ currents
-        return result - self.b_vec - self.value
+        result_cos = self.a_mat_cos @ currents
+        result_sin = self.a_mat_sin @ currents
 
-    def df_constraint(self, _vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-        """Constraint derivative"""  # noqa: DOC201
-        return self.scale * self.a_mat
+        result_cos -= self.b_vec_cos + self.value
+        result_sin -= self.b_vec_sin + self.value
+        return np.append(result_cos, result_sin, axis=0)
+
+    # def df_constraint(self, _vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    #     """Constraint derivative"""
+    #     return self.scale * self.a_mat
