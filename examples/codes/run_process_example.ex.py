@@ -220,7 +220,7 @@ template_builder.add_input_values({
     "q0": 1.0,
     "f_sync_reflect": 0.6,
     "plasma_res_factor": 0.66,
-    "gamma": 0.3,
+    "ejima_coeff": 0.3,
     "hfact": 1.1,
     "life_dpa": 70.0,
     # Radial build inputs
