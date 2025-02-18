@@ -114,7 +114,7 @@ template_builder.add_variable("fncycle", 1.0)
 # Modified f-values and bounds w.r.t. defaults
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2)
+template_builder.adjust_variable("fl_h_threshold", 1.2, lower_bound=1.1, upper_bound=1.2)
 template_builder.adjust_variable("ft_burn", 1.0, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
