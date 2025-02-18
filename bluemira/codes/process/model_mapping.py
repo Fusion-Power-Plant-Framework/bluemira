@@ -167,7 +167,7 @@ class PlasmaProfileModel(PROCESSModel):
         """
         return "iprofile"
 
-    INPUT = 0, ("alphaj", "rli")
+    INPUT = 0, ("alphaj", "ind_plasma_internal_norm")
     CONSISTENT = 1, ("q", "q0")
 
 
@@ -496,7 +496,7 @@ class OperationModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "lpulse"
+        return "i_pulsed_plant"
 
     STEADY_STATE = 0
     PULSED = 1
