@@ -566,7 +566,7 @@ ITERATION_VAR_MAPPING = {
     "fvs": 15,
     "dr_cs": 16,
     "t_between_pulse": 17,
-    "q": 18,
+    "q95": 18,
     "beam_energy": 19,
     "tcpav": 20,
     "ft_burn": 21,
