@@ -1263,87 +1263,87 @@
     "var_mod": "Plasma",
     "scan01": 9.2
   },
-  "pthrmw(1)": {
+  "l_h_threshold_powers(1)": {
     "var_mod": "Plasma",
     "scan01": 102.68
   },
-  "pthrmw(2)": {
+  "l_h_threshold_powers(2)": {
     "var_mod": "Plasma",
     "scan01": 223.94
   },
-  "pthrmw(3)": {
+  "l_h_threshold_powers(3)": {
     "var_mod": "Plasma",
     "scan01": 46.452
   },
-  "pthrmw(4)": {
+  "l_h_threshold_powers(4)": {
     "var_mod": "Plasma",
     "scan01": 171.04
   },
-  "pthrmw(5)": {
+  "l_h_threshold_powers(5)": {
     "var_mod": "Plasma",
     "scan01": 137.74
   },
-  "pthrmw(6)": {
+  "l_h_threshold_powers(6)": {
     "var_mod": "Plasma",
     "scan01": 93.616
   },
-  "pthrmw(7)": {
+  "l_h_threshold_powers(7)": {
     "var_mod": "Plasma",
     "scan01": 123.57
   },
-  "pthrmw(8)": {
+  "l_h_threshold_powers(8)": {
     "var_mod": "Plasma",
     "scan01": 63.658
   },
-  "pthrmw(9)": {
+  "l_h_threshold_powers(9)": {
     "var_mod": "Plasma",
     "scan01": 65.075
   },
-  "pthrmw(10)": {
+  "l_h_threshold_powers(10)": {
     "var_mod": "Plasma",
     "scan01": 96.769
   },
-  "pthrmw(11)": {
+  "l_h_threshold_powers(11)": {
     "var_mod": "Plasma",
     "scan01": 43.411
   },
-  "pthrmw(12)": {
+  "l_h_threshold_powers(12)": {
     "var_mod": "Plasma",
     "scan01": 26.408
   },
-  "pthrmw(13)": {
+  "l_h_threshold_powers(13)": {
     "var_mod": "Plasma",
     "scan01": 35.972
   },
-  "pthrmw(14)": {
+  "l_h_threshold_powers(14)": {
     "var_mod": "Plasma",
     "scan01": 19.25
   },
-  "pthrmw(15)": {
+  "l_h_threshold_powers(15)": {
     "var_mod": "Plasma",
     "scan01": 34.85
   },
-  "pthrmw(16)": {
+  "l_h_threshold_powers(16)": {
     "var_mod": "Plasma",
     "scan01": 17.113
   },
-  "pthrmw(17)": {
+  "l_h_threshold_powers(17)": {
     "var_mod": "Plasma",
     "scan01": 70.971
   },
-  "pthrmw(18)": {
+  "l_h_threshold_powers(18)": {
     "var_mod": "Plasma",
     "scan01": 292.42
   },
-  "pthrmw(19)": {
+  "l_h_threshold_powers(19)": {
     "var_mod": "Plasma",
     "scan01": 94.519
   },
-  "pthrmw(20)": {
+  "l_h_threshold_powers(20)": {
     "var_mod": "Plasma",
     "scan01": 124.77
   },
-  "pthrmw(21)": {
+  "l_h_threshold_powers(21)": {
     "var_mod": "Plasma",
     "scan01": 64.271
   },
@@ -1351,7 +1351,7 @@
     "var_mod": "Plasma",
     "scan01": 94.519
   },
-  "plhthresh": {
+  "p_l_h_threshold_mw": {
     "var_mod": "Plasma",
     "scan01": 94.519
   },
