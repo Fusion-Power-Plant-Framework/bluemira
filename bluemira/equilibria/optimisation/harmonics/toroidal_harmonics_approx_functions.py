@@ -163,15 +163,47 @@ def legendre_q(lam, mu, x, n_max=20):
     return legQ
 
 
+@dataclass
+class ToroidalHarmonicsParams:
+    """
+    A dataclass to hold necessary parameters for the toroidal harmonics approximation.
+    """
+
+    R_0: float
+    """R coordinate of the focus point in cylindrical coordinates"""
+    Z_0: float
+    """Z coordinate of the focus point in cylindrical coordinates"""
+    R: np.ndarray
+    """R coordinates of the grid in cylindrical coordinates"""
+    Z: np.ndarray
+    """Z coordinates of the grid in cylindrical coordinates"""
+    R_coils: np.ndarray
+    """R coordinates of the coils in cylindrical coordinates"""
+    Z_coils: np.ndarray
+    """Z coordinates of the coils in cylindrical coordinates"""
+    tau: np.ndarray
+    """tau coordinates of the grid in toroidal coordinates"""
+    sigma: np.ndarray
+    """sigma coordinates of the grid in toroidal coordinates"""
+    tau_c: np.ndarray
+    """tau coordinates of the coils in toroidal coordinates"""
+    sigma_c: np.ndarray
+    """sigma coordinates of the coils in toroidal coordinates"""
+    th_coil_names: list
+    """names of coils to use with TH approximation (always outside the LCFS tau limit)"""
+    non_th_coil_names: list
+    """names of coils that cannot be used with TH approximation"""
+
+
 def coil_toroidal_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     R_0: float,
     Z_0: float,
-    th_coil_names: list,
+    th_params: ToroidalHarmonicsParams,
     max_degree: int | None = None,
     sig_figures: int = 15,
 ) -> np.ndarray:
-    """
+    """# FIXME
     Construct matrix from toroidal harmonic amplitudes at given coil locations.
 
     To get an array of toroidal harmonic amplitudes/coefficients (A_m)
@@ -203,8 +235,8 @@ def coil_toroidal_harmonic_amplitude_matrix(
         R coordinate of the focus point in cylindrical coordinates
     Z_0:
         Z coordinate of the focus point in cylindrical coordinates
-    th_coil_names:
-        Names of the coils to use with TH approximation
+    th_params:
+
     max_degree:
         Maximum degree of harmonic to calculate up to
     sig_figures:
@@ -217,17 +249,18 @@ def coil_toroidal_harmonic_amplitude_matrix(
 
     """
     if max_degree is None:
-        max_degree = len(th_coil_names) - 1
+        max_degree = len(th_params.th_coil_names) - 1
 
     # Coils
     x_c = []
     z_c = []
-    for n in th_coil_names:
+    for n in th_params.th_coil_names:
         x_c.append(input_coils[n].x)
         z_c.append(input_coils[n].z)
 
     x_c = np.array(x_c)
     z_c = np.array(z_c)
+    # TODO not sure if this bit ^ needs editing?
 
     # Toroidal coords
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_c, Z=z_c)
@@ -251,40 +284,10 @@ def coil_toroidal_harmonic_amplitude_matrix(
         * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
         * legendre_p(degrees - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
     )
-
-    return sig_fig_round(currents2harmonics, sig_figures)
-
-
-@dataclass
-class ToroidalHarmonicsParams:
-    """
-    A dataclass to hold necessary parameters for the toroidal harmonics approximation.
-    """
-
-    R_0: float
-    """R coordinate of the focus point in cylindrical coordinates"""
-    Z_0: float
-    """Z coordinate of the focus point in cylindrical coordinates"""
-    R: np.ndarray
-    """R coordinates of the grid in cylindrical coordinates"""
-    Z: np.ndarray
-    """Z coordinates of the grid in cylindrical coordinates"""
-    R_coils: np.ndarray
-    """R coordinates of the coils in cylindrical coordinates"""
-    Z_coils: np.ndarray
-    """Z coordinates of the coils in cylindrical coordinates"""
-    tau: np.ndarray
-    """tau coordinates of the grid in toroidal coordinates"""
-    sigma: np.ndarray
-    """sigma coordinates of the grid in toroidal coordinates"""
-    tau_c: np.ndarray
-    """tau coordinates of the coils in toroidal coordinates"""
-    sigma_c: np.ndarray
-    """sigma coordinates of the coils in toroidal coordinates"""
-    th_coil_names: list
-    """names of coils to use with TH approximation (always outside the LCFS tau limit)"""
-    non_th_coil_names: list
-    """names of coils that cannot be used with TH approximation"""
+    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree + 1)]
+    Am_cos = currents2harmonics * np.cos(sigma_c_mult_degree)  # noqa: N806
+    Am_sin = currents2harmonics * np.sin(sigma_c_mult_degree)  # noqa: N806
+    return sig_fig_round(Am_cos, sig_figures), sig_fig_round(Am_sin, sig_figures)
 
 
 def toroidal_harmonic_grid_and_coil_setup(
@@ -410,15 +413,14 @@ def toroidal_harmonic_approximate_psi(
         max_degree = len(th_params.th_coil_names) - 1
 
     # Get coil positions and currents from equilibrium
-    currents = [eq.coilset[name].current for name in th_params.th_coil_names]
+    currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
 
     # Initialise psi and A arrays
     psi_approx = np.zeros_like(th_params.R)
     A = np.zeros_like(th_params.R)
     # Useful combination
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
-    # Get sigma values for the coils
-    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree + 1)]
+    # Get sigma values for the grid
     sigma_mult_degree = [m * th_params.sigma for m in range(max_degree + 1)]
 
     epsilon = 2 * np.ones(max_degree + 1)
@@ -426,32 +428,36 @@ def toroidal_harmonic_approximate_psi(
     factorial_m = np.array([factorial(m) for m in range(max_degree + 1)])
     degrees = np.arange(0, max_degree + 1)[:, None, None]
     # TH coefficient matrix
-    A_m = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
+    Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
         input_coils=eq.coilset,
         R_0=R_0,
         Z_0=Z_0,
-        th_coil_names=eq.coilset.name,
+        th_params=th_params,
         max_degree=max_degree,
     )
 
-    Am_cos = currents @ np.transpose(A_m * np.cos(sigma_c_mult_degree))  # noqa: N806
-    Am_sin = currents @ np.transpose(A_m * np.sin(sigma_c_mult_degree))  # noqa: N806
-
-    A_coil_matrix = Am_cos[:, None, None] * epsilon[:, None, None] * factorial_m[  # noqa: N806
-        :, None, None
-    ] * np.sqrt(2 / np.pi) * np.sqrt(Delta[None, :]) * legendre_q(
-        degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30
-    ) * np.cos(sigma_mult_degree) + Am_sin[:, None, None] * epsilon[
-        :, None, None
-    ] * factorial_m[:, None, None] * np.sqrt(2 / np.pi) * np.sqrt(
-        Delta[None, :]
-    ) * legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30) * np.sin(
-        sigma_mult_degree
+    A_coil_matrix = (
+        Am_cos[:, :, None, None]
+        * epsilon[:, None, None, None]
+        * factorial_m[:, None, None, None]
+        * np.sqrt(2 / np.pi)
+        * np.sqrt(Delta[None, None, :, :])
+        * legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30)[:, None, :, :]
+        * np.cos(sigma_mult_degree)[:, None, :, :]
+        + Am_sin[:, :, None, None]
+        * epsilon[:, None, None, None]
+        * factorial_m[:, None, None, None]
+        * np.sqrt(2 / np.pi)
+        * np.sqrt(Delta[None, None, :, :])
+        * legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30)[:, None, :, :]
+        * np.sin(sigma_mult_degree)[:, None, :, :]
     )
-    A = np.array(np.sum(A_coil_matrix, axis=0), dtype=float)
+    A = np.array(
+        np.sum(np.einsum("ijkl, j", A_coil_matrix, currents), axis=0), dtype=float
+    )
     psi_approx = A * th_params.R
 
-    return psi_approx, A_m
+    return psi_approx, Am_cos @ currents, Am_sin @ currents  # A_m, A_approx
 
 
 def toroidal_harmonic_approximation(
@@ -475,9 +481,9 @@ def toroidal_harmonic_approximation(
         We will approximate psi using THs - the aim is to keep the
         core plasma contribution fixed (using TH amplitudes as constraints)
         while being able to vary the vacuum (coil) contribution, so that
-        we do not need to re-solve for the equilibria during optimisation.
+        we do not need to re-solve for the equilibria during optimisation
     th_params:
-        Dataclass containing necessary parameters for use in TH approximation.
+        Dataclass containing necessary parameters for use in TH approximation
     acceptable_fit_metric:
         The default flux surface (FS) used for this metric is the LCFS.
         (psi_norm value is used to select an alternative)
@@ -496,18 +502,18 @@ def toroidal_harmonic_approximation(
 
     Returns
     -------
-    th_coil_names:
-        Names of the coils to use with TH approximation
-    A_m:
+    th_params:
+        Dataclass containing necessary parameters for use in TH approximation
+    Am_cos:
         TH coefficients/amplitudes for required number of degrees
+    Am_sin:
+
     degree:
         Number of degrees required for a TH approx with the desired fit metric
     fit_metric_value:
         Fit metric achieved
     approx_total_psi:
         Total psi obtained using the TH approximation
-    eq.coilset.current:
-        Coil currents found using the toroidal harmonic approximation
 
     Raises
     ------
@@ -570,7 +576,7 @@ def toroidal_harmonic_approximation(
 
     for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for the coils and approximate psi
-        psi_approx, A_m = toroidal_harmonic_approximate_psi(  # noqa: N806
+        psi_approx, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
             eq=eq, th_params=th_params, max_degree=degree
         )
         # Add the interpolated non TH coil contribution to the total
@@ -625,10 +631,10 @@ def toroidal_harmonic_approximation(
         plt.show()
 
     return (
-        th_params.th_coil_names,
-        A_m,
+        th_params,
+        Am_cos,
+        Am_sin,
         degree,
         fit_metric_value,
         approx_total_psi,
-        eq.coilset.current,
     )

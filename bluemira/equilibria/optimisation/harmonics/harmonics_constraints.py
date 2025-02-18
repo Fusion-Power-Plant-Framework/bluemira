@@ -197,30 +197,23 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
-        ref_harmonics: npt.NDArray[np.float64],
+        ref_harmonics_cos: npt.NDArray[np.float64],
+        ref_harmonics_sin: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
-        tolerance: float | npt.NDArray | None = None,
+        tolerance: float,
         smallest_tol: float = 1e-6,
         constraint_type: str = "equality",
         *,
         invert: bool = False,
     ):
-        if tolerance is None:
-            ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
-            tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
-            np.nan_to_num(
-                tolerance, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
-            )
-        elif is_num(tolerance):
-            tolerance *= np.ones(len(ref_harmonics))
-        elif len(tolerance) != len(ref_harmonics):
-            raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
-
         self.constraint_type = constraint_type
-        self.tolerance = tolerance
+        self.tolerance = tolerance * np.ones(
+            len(ref_harmonics_cos) + len(ref_harmonics_sin)
+        )
 
-        self.target_harmonics = ref_harmonics
-        self.max_degree = len(ref_harmonics)
+        self.target_harmonics_cos = ref_harmonics_cos
+        self.target_harmonics_sin = ref_harmonics_sin
+        self.max_degree = len(ref_harmonics_cos) - 1
 
         if invert and constraint_type == "equality":
             bluemira_warn(
@@ -234,8 +227,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         self.th_params = th_params
 
         self._args = {
-            "a_mat": None,
-            "b_vec": None,
+            "a_mat_cos": None,
+            "a_mat_sin": None,
+            "b_vec_cos": None,
+            "b_vec_sin": None,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -270,11 +265,16 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        self._args["a_mat"] = self.control_response(equilibrium.coilset)
-        self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
+        self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
+            equilibrium.coilset
+        )
+        self._args["b_vec_cos"] = self.target_harmonics_cos - self.evaluate(equilibrium)
+        self._args["b_vec_sin"] = self.target_harmonics_sin - self.evaluate(equilibrium)
         if self.invert:
-            self._args["a_mat"] *= -1
-            self._args["b_vec"] *= -1
+            self._args["a_mat_cos"] *= -1
+            self._args["a_mat_sin"] *= -1
+            self._args["b_vec_cos"] *= -1
+            self._args["b_vec_sin"] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
@@ -293,13 +293,15 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.th_params.R_0,
             self.th_params.Z_0,
             self.th_params.th_coil_names,
+            self.th_params,
+            max_degree=self.max_degree,
         )
 
     def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
-        return np.zeros(len(self.target_harmonics))
+        return np.zeros(len(self.target_harmonics_cos))
 
     def f_constraint(self) -> HarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
