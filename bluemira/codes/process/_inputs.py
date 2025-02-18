@@ -679,7 +679,7 @@ class ProcessInputs:
     kappa95: float | None = None
     m_s_limit: float | None = None
     i_l_h_threshhold: int | None = None
-    q: float | None = None
+    q95: float | None = None
     q0: float | None = None
     tauratio: float | None = None
     rad_fraction_sol: float | None = None
