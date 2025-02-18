@@ -299,7 +299,7 @@ class TestInDatOneForOne:
         template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
         template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
         template_builder.adjust_variable(
-            "flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2
+            "fl_h_threshold", 1.2, lower_bound=1.1, upper_bound=1.2
         )
         template_builder.adjust_variable("ft_burn", 1.0, upper_bound=1.0)
 
