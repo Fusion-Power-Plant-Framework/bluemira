@@ -230,11 +230,6 @@ class Solver(CodesSolver):
         Returns
         -------
         The plot Axes object.
-
-        Raises
-        ------
-        CodesError
-            Cannot find OUT.DAT
         """
         if not self._teardown:
             return None
