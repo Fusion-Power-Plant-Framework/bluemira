@@ -370,7 +370,7 @@ class ProcessInputs:
     fjohc: float | None = None
     fjohc0: float | None = None
     fjprot: float | None = None
-    flhthresh: float | None = None
+    fl_h_threshold: float | None = None
     fmva: float | None = None
     fnbshinef: float | None = None
     fncycle: float | None = None
@@ -678,7 +678,7 @@ class ProcessInputs:
     kappa: float | None = None
     kappa95: float | None = None
     m_s_limit: float | None = None
-    ilhthresh: int | None = None
+    i_l_h_threshhold: int | None = None
     q: float | None = None
     q0: float | None = None
     tauratio: float | None = None
