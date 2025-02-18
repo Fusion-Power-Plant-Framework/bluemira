@@ -853,6 +853,11 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             (x_val, -z_val),
             (x_val + 0.1, self.variables.dz.value),
         )
+        # self._annotator(
+        #     ax,
+        #     "a2",
+        #     (x_val, z_val)
+        # )
         return _offset_x, _offset_z
 
 
@@ -925,6 +930,104 @@ class SextupleArcOptVariables(OptVariablesFrame):
     )
 
 
+def _project_centroid(
+    xc: float, zc: float, xi: float, zi: float, ri: float
+) -> tuple[float, float, npt.NDArray[np.float64]]:
+    """
+    Lengthen the tail of a curvature vector until it hits the center of curvature.
+
+    Parameters
+    ----------
+    xc:
+        x-coordinate of a point on the curvature vector
+    zc:
+        z-coordinate of a point on the curvature vector
+    xi:
+        x-coordinate of a point on the curve
+    zi:
+        z-coordinate of a point on the curve
+    ri:
+        Radius of curvature.
+
+    Returns
+    -------
+    xc:
+        x-coodinate of Center of curvature
+    zc:
+        z-coodinate of Center of curvature
+    vec:
+        unit vector pointed from the center of curvature towards the point on the curve.
+    """
+    vec = np.array([xi - xc, zi - zc])
+    vec /= np.linalg.norm(vec)
+    xc = xi - vec[0] * ri
+    zc = zi - vec[1] * ri
+    return xc, zc, vec
+
+
+def _get_centres(
+    a_values: list[float], r_values: list[float], x_start: float, z_start: float
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
+    """Get the centres of each arc for parametrisations that are made purely of arcs.
+
+    Parameters
+    ----------
+    a_values:
+        a1, a2, a3, a4, a5, etc.
+    r_values:
+        r1, r2, r3, r4, r5, etc.
+    x_start:
+        Radius of the start point of the first arc.
+    z_start:
+        Height of the start point of the first arc.
+
+    Returns
+    -------
+    centres: list[tuple[float, float]]
+        The x-z coordinates of the center of curvature of each arc.
+    angles: list[tuple[float, float]]
+        The start and end angle for each arc.
+    radii: list[float]
+        The radius of curvature for each arc.
+    """
+    a_start: float = 0.0
+    xi, zi = x_start, z_start
+    xc = x_start + r_values[0]
+    zc = z_start
+    centres = []
+    angles = []
+    radii = []
+    for i, (ai, ri) in enumerate(zip(a_values, r_values, strict=False)):
+        if i > 0:
+            xc, zc, _ = _project_centroid(xc, zc, xi, zi, ri)
+        a = np.pi - a_start - ai
+
+        xi = xc + ri * np.cos(a)
+        zi = zc + ri * np.sin(a)
+
+        start_angle = np.rad2deg(np.pi - a_start)
+        end_angle = np.rad2deg(a)
+
+        a_start += ai
+
+        centres.append((xc, zc))
+        angles.append((start_angle, end_angle))
+        radii.append(ri)
+
+    xc, zc, vec = _project_centroid(xc, zc, xi, zi, ri)
+
+    # Retrieve last arc (could be bad...)
+    r6 = (xi - x_start) / (1 + vec[0])
+    xc6 = xi - r6 * vec[0]
+    zc6 = zi - r6 * vec[1]
+
+    centres.append((xc6, zc6))
+    angles.append((np.rad2deg(np.pi - a_start), 180))
+    radii.append(r6)
+
+    return centres, angles, radii
+
+
 class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
@@ -994,56 +1097,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 gradient[0][var_idx] = 1
         return gradient
 
-    @staticmethod
-    def _project_centroid(
-        xc: float, zc: float, xi: float, zi: float, ri: float
-    ) -> tuple[float, float, npt.NDArray[np.float64]]:
-        vec = np.array([xi - xc, zi - zc])
-        vec /= np.linalg.norm(vec)
-        xc = xi - vec[0] * ri
-        zc = zi - vec[1] * ri
-        return xc, zc, vec
-
-    def _get_centres(
-        self, a_values: list[float], r_values: list[float], x1: float, z1: float
-    ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
-        a_start: float = 0
-        xi, zi = x1, z1
-        xc = x1 + r_values[0]
-        zc = z1
-        centres = []
-        angles = []
-        radii = []
-        for i, (ai, ri) in enumerate(zip(a_values, r_values, strict=False)):
-            if i > 0:
-                xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
-            a = np.pi - a_start - ai
-
-            xi = xc + ri * np.cos(a)
-            zi = zc + ri * np.sin(a)
-
-            start_angle = np.rad2deg(np.pi - a_start)
-            end_angle = np.rad2deg(a)
-
-            a_start += ai
-
-            centres.append((xc, zc))
-            angles.append((start_angle, end_angle))
-            radii.append(ri)
-
-        xc, zc, vec = self._project_centroid(xc, zc, xi, zi, ri)
-
-        # Retrieve last arc (could be bad...)
-        r6 = (xi - x1) / (1 + vec[0])
-        xc6 = xi - r6 * vec[0]
-        zc6 = zi - r6 * vec[1]
-
-        centres.append((xc6, zc6))
-        angles.append((np.rad2deg(np.pi - a_start), 180))
-        radii.append(r6)
-
-        return centres, angles, radii
-
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the sextuple arc.
@@ -1064,7 +1117,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(*self._get_centres(a_values, r_values, x1, z1), strict=False)
+            zip(*_get_centres(a_values, r_values, x1, z1), strict=False)
         ):
             arc = make_circle(
                 ri,
@@ -1099,7 +1152,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         """
         _offset_x, _offset_z = super()._label_function(ax, shape)
         variables = self.variables.values
-        centres, angles, radii = self._get_centres(
+        centres, angles, radii = _get_centres(
             np.deg2rad(variables[7:]), variables[2:7], *variables[:2]
         )
 
