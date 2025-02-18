@@ -259,7 +259,7 @@ fblss    = 0.13 * KIT blanket model; steel fraction of breeding zone
 fhole    = 0.05 * area fraction taken up by other holes (IFE)
 iblanket = 1 * switch for blanket model;
 fblbe    = 0.47 * beryllium fraction of blanket by volume (if `iblanket=2`; is Be fraction of breeding zone)
-fwclfr   = 0.1 * first wall coolant fraction (calculated if `lpulse=1` or `ipowerflow=1`)
+fwclfr   = 0.1 * first wall coolant fraction (calculated if `i_pulsed_plant=1` or `ipowerflow=1`)
 vfshld   = 0.60 * coolant void fraction in shield
 fblli2o  = 0.07 * lithium oxide fraction of blanket by volume (stellarator only)
 fbllipb  = 0.00 * lithium lead fraction of blanket by volume (stellarator only)
@@ -400,7 +400,7 @@ dene     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calcula
 beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
 fvsbrnni = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
-gamma    = 0.3 * Ejima coefficient for resistive startup V-s formula
+ejima_coeff    = 0.3 * Ejima coefficient for resistive startup V-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times; radiation corrected (`iteration variable 10`); If
 i_bootstrap_current     = 4 * switch for bootstrap current scaling
 i_beta_component   = 1 * switch for beta limit scaling (`constraint equation 24`)
@@ -460,7 +460,7 @@ triang   = 0.5 * plasma separatrix triangularity (calculated if `i_plasma_geomet
 
 *-----------------Pulse Variables------------------*
 
-lpulse   = 1 * Switch for reactor model;
+i_pulsed_plant   = 1 * Switch for reactor model;
 
 *-------------Read And Get Atomic Data-------------*
 
@@ -534,7 +534,7 @@ vftf     = 0.33 * coolant fraction of TFC 'cable' (`i_tf_sup=1`); or of TFC leg 
 
 *-----------------Times Variables------------------*
 
-t_burn    = 1.0d4 * burn time (s) (calculated if `lpulse=1`)
+t_burn    = 1.0d4 * burn time (s) (calculated if `i_pulsed_plant=1`)
 
 *---------------Torga Curgap Module----------------*
 
@@ -550,7 +550,7 @@ t_burn    = 1.0d4 * burn time (s) (calculated if `lpulse=1`)
 
 *-------------------Vmcon Module-------------------*
 
-gamma    = 0.3 * Ejima coefficient for resistive startup V-s formula
+ejima_coeff    = 0.3 * Ejima coefficient for resistive startup V-s formula
 
 *--------------Water Usage Variables---------------*
 
