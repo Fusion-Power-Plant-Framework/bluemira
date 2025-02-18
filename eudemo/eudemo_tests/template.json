@@ -88,7 +88,7 @@
     "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "mapping": {
       "PROCESS": {
-        "name": "gamma",
+        "name": "ejima_coeff",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -1375,7 +1375,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "rli",
+        "name": "ind_plasma_internal_norm",
         "send": false,
         "recv": false,
         "unit": "dimensionless"
@@ -2473,7 +2473,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "vburn",
+        "name": "v_plasma_loop_burn",
         "send": false,
         "recv": true,
         "unit": "V"
