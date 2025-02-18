@@ -35,23 +35,6 @@ from bluemira.geometry.coordinates import Coordinates
 BuildConfig = dict[str, Union[float, str, "BuildConfig"]]
 
 
-def boxr(
-    ri: float, ro: float, w: float, off: float = 0
-) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Generate coordinates for an arbitrary height radial width. Used in plotting.
-
-    Returns
-    -------
-    tuple
-        x, y coordinates
-    """
-    xc = [ri, ri, ro, ro, ri]
-    yc = [-w, w, w, -w, -w]
-    yc = [i + off for i in yc]
-    return xc, yc
-
-
 class RunMode(BaseRunMode):
     """
     Run modes for the PROCESS solver.
@@ -301,8 +284,18 @@ class Solver(CodesSolver):
             "solenoid": "Central solenoid",
             "Thermal shield": "Thermal shield",
         }
+
         for comp in radial_build["Radial Build"]:
-            xc, yc = boxr(comp[2] - comp[1], comp[2], width)
+            # Generate coordinates for an arbitrary
+            # height radial width.
+            xc = [
+                comp[2] - comp[1],
+                comp[2] - comp[1],
+                comp[2],
+                comp[2],
+                comp[2] - comp[1],
+            ]
+            yc = [-width, width, width, -width, -width]
             yc = np.array(yc)
             coords = Coordinates({"x": xc, "y": yc})
 
