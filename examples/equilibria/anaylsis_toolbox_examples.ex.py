@@ -275,7 +275,7 @@ from_cocos = [3, 3, 7]
 # Load all the equilibria info into a dictionary.
 # This will out input for MultiEqAnalysis.
 equilibria_dictionary = select_multi_eqs(
-    equilibrium_paths=paths,
+    equilibrium_input=paths,
     equilibrium_names=equilibrium_names,
     from_cocos=from_cocos,
     control_coils=CoilType.PF,

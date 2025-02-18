@@ -116,11 +116,11 @@ class EqPlotMask(Flag):
     )  # NOTE: add new mask types, this currently raises a not implemented error
     """Mask out the values oustsie a chosen polygon area."""
     INPUT = IN_LCFS | OUT_LCFS
-    REF = IN_REF_LCFS | OUT_LCFS
+    REF = IN_REF_LCFS | OUT_REF_LCFS
     COMBO = IN_COMBO_LCFS | OUT_COMBO_LCFS
     LCFS = (
         IN_REF_LCFS
-        | OUT_LCFS
+        | OUT_REF_LCFS
         | IN_LCFS
         | OUT_LCFS
         | IN_COMBO_LCFS

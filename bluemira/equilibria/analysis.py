@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import cycle
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -122,7 +123,7 @@ def select_eq(
 
 
 def select_multi_eqs(
-    equilibrium_paths,
+    equilibrium_input,
     fixed_or_free=FixedOrFree.FREE,
     equilibrium_names=None,
     dummy_coils=None,
@@ -138,10 +139,12 @@ def select_multi_eqs(
 
     Parameters
     ----------
-    filepath:
-        file path to chosen equilibria
+    equilibrium_input:
+        List of chosen equilibria or file paths to chosen equilibria
     fixed_or_free:
         whether or not it is for a fixed plasma boundary
+    equilibrium_names:
+        Names of chosen equilibrium
     dummy_coils:
         coilset if none in equilibria file
         (a default coilset is used, and a warning message prints if none is provided)
@@ -171,36 +174,41 @@ def select_multi_eqs(
     ValueError
         If list of input values is not the same length as the input equilibria
     """
-    if not isinstance(equilibrium_paths, Iterable):
-        equilibrium_paths = [equilibrium_paths]
+    if not isinstance(equilibrium_input, Iterable):
+        equilibrium_input = [equilibrium_input]
     if not isinstance(fixed_or_free, Iterable):
-        fixed_or_free = [fixed_or_free] * len(equilibrium_paths)
-    elif len(fixed_or_free) != len(equilibrium_paths):
+        fixed_or_free = [fixed_or_free] * len(equilibrium_input)
+    elif len(fixed_or_free) != len(equilibrium_input):
         raise ValueError(
             "FixedOrFree list length not equal to the number of equilibria."
         )
     if not isinstance(dummy_coils, Iterable):
-        dummy_coils = [dummy_coils] * len(equilibrium_paths)
-    elif len(dummy_coils) != len(equilibrium_paths):
+        dummy_coils = [dummy_coils] * len(equilibrium_input)
+    elif len(dummy_coils) != len(equilibrium_input):
         raise ValueError(
             "dummy_coils list length not equal to the number of equilibria."
         )
     if is_num(from_cocos):
-        from_cocos = np.ones(len(equilibrium_paths)) * from_cocos
+        from_cocos = np.ones(len(equilibrium_input)) * from_cocos
     if is_num(to_cocos):
-        to_cocos = np.ones(len(equilibrium_paths)) * to_cocos
+        to_cocos = np.ones(len(equilibrium_input)) * to_cocos
     if isinstance(qpsi_positive, bool):
-        qpsi_positive = len(equilibrium_paths) * [qpsi_positive]
+        qpsi_positive = len(equilibrium_input) * [qpsi_positive]
     if equilibrium_names is None:
         equilibrium_names = [
-            "Eq_" + str(x) for x in range(1, len(equilibrium_paths) + 1)
+            "Eq_" + str(x) for x in range(1, len(equilibrium_input) + 1)
         ]
-    elif len(equilibrium_names) != len(equilibrium_paths):
+    elif len(equilibrium_names) != len(equilibrium_input):
         raise ValueError(
             "equilibrium_names length not equal to the number of equilibria."
         )
     if not isinstance(control_coils, Iterable):
-        control_coils = [control_coils] * len(equilibrium_paths)
+        control_coils = [control_coils] * len(equilibrium_input)
+
+    if isinstance(equilibrium_input[0], str):
+        equilibrium_paths = equilibrium_input
+    else:
+        equilibrium_paths = ["no path used"] * len(equilibrium_input)
 
     equilibria_dict = {}
     for name, file, eq_type, dc, fc, tc, qp, cc in zip(
@@ -225,6 +233,13 @@ def select_multi_eqs(
                 "control_coils": cc,
             }
         })
+
+    if not isinstance(equilibrium_input[0], Path):
+        for eq, equilibrium_dict in zip(
+            equilibrium_input, equilibria_dict.values(), strict=False
+        ):
+            equilibrium_dict.update({"eq": eq})
+            equilibrium_dict.update({"profiles": eq.profiles})
     return equilibria_dict
 
 
@@ -414,7 +429,7 @@ class EqAnalysis:
     Parameters
     ----------
     diag_ops:
-        Diagnostic plotting options, containg reference equilibria information.
+        Diagnostic plotting options
     input_eq:
         input equilibrium
     reference_eq:
@@ -851,6 +866,7 @@ class EqAnalysis:
         reference_eq: Equilibrium | None = None,
         input_eq_name: str = "Input",
         ref_eq_name: str = "Reference",
+        diag_ops: EqDiagnosticOptions | None = None,
         ax=None,
     ):
         """
@@ -866,10 +882,10 @@ class EqAnalysis:
             Reference equilibrium (will set or reset object used in EqAnalysis)
         ref_eq_name:
             Reverence equilibrium name (will set or reset object used in EqAnalysis)
+        diag_ops:
+            Diagnostic plotting options
         ax:
             List of Matplotlib Axes objects set by user
-        mask_type:
-            Type of masking to be used on plot
 
         Raises
         ------
@@ -888,6 +904,8 @@ class EqAnalysis:
             self.reference = NamedEq(eq=reference_eq, name=ref_eq_name)
         if self.reference is None:
             raise BluemiraError("Please provide a reference Equilibrium object ")
+        if diag_ops is not None:
+            self.diag_ops = diag_ops
         return EquilibriumComparisonPostOptPlotter(
             equilibrium=self.input.eq,
             reference_equilibrium=self.reference,
