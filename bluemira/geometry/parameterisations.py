@@ -649,10 +649,18 @@ class TripleArcOptVaribles(OptVariablesFrame):
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
     )
     f1: OptVariable = ov(
-        "f1", 3, lower_bound=2, upper_bound=12, description="rs == f1*z small"
+        "f1",
+        3,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom left arc [m]",
     )
     f2: OptVariable = ov(
-        "f2", 4, lower_bound=2, upper_bound=12, description="rm == f2*rs mid"
+        "f2",
+        4,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom middle arc [m]",
     )
 
     a1: OptVariable = ov(
@@ -660,14 +668,14 @@ class TripleArcOptVaribles(OptVariablesFrame):
         20,
         lower_bound=5,
         upper_bound=120,
-        description="Small arc angle [degrees]",
+        description="top left and bottom left and arc angle [degrees]",
     )
     a2: OptVariable = ov(
         "a2",
         40,
         lower_bound=10,
         upper_bound=120,
-        description="Middle arc angle [degrees]",
+        description="top middle and bottom middle arc angle [degrees]",
     )
 
 
@@ -696,13 +704,13 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     sl: float
         Length of inboard straigh section [m]
     f1: float
-        rs == f1*z small
+        radii of top and bottom left arc [m]
     f2: float
-        rm == f2*rs mid
+        radii of top and bottom middle arc [m]
     a1: float
-        Small arc angle [degrees]
+        top left and bottom left and arc angle [degrees]
     a2: float
-        Middle arc angle [degrees]
+        top middle and bottom middle arc angle [degrees]
 
     """
 
