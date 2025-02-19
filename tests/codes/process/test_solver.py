@@ -78,7 +78,11 @@ class TestSolver:
     @mock.patch(f"{MODULE_REF}.bluemira_warn")
     def test_plot_radial_build_raises_bluemirawarn(self, bm_warn_mock):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
-        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+        with (
+            mock.patch(f"{self.MODULE_REF}.ENABLED", new=True),
+            mock.patch(f"{self.TEARDOWN_MODULE_REF}._MFileWrapper", new=utils.mfw()),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
             solver.execute(RunMode.READ)
             solver.plot_radial_build()
         bm_warn_mock.assert_called_once()
