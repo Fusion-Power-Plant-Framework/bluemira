@@ -66,7 +66,7 @@ contourpy==1.3.1
     #   matplotlib
 coolprop==6.6.0
     # via bluemira (pyproject.toml)
-coverage==7.6.11
+coverage==7.6.12
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -208,7 +208,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-jupytext==1.16.6
+jupytext==1.16.7
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.8
     # via matplotlib
@@ -244,7 +244,7 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-mistune==3.1.1
+mistune==3.1.2
     # via nbconvert
 msgpack==1.1.0
     # via blosc2
@@ -254,7 +254,7 @@ mypy-extensions==1.0.0
     # via mypy
 myst-nb==1.2.0
     # via bluemira (pyproject.toml)
-myst-parser==4.0.0
+myst-parser==4.0.1
     # via myst-nb
 nbclient==0.10.2
     # via
@@ -373,7 +373,7 @@ prometheus-client==0.21.1
     # via jupyter-server
 prompt-toolkit==3.0.50
     # via ipython
-psutil==6.1.1
+psutil==7.0.0
     # via ipykernel
 ptyprocess==0.7.0
     # via
@@ -512,7 +512,7 @@ sphinx==8.1.3
     #   sphinx-copybutton
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx-autoapi==3.5.0
+sphinx-autoapi==3.6.0
     # via bluemira (pyproject.toml)
 sphinx-copybutton==0.5.2
     # via bluemira (pyproject.toml)
@@ -536,7 +536,7 @@ sqlalchemy==2.0.38
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sybil==9.0.0
+sybil==9.1.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
     # via
@@ -584,7 +584,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typeguard==4.4.1
+typeguard==4.4.2
     # via bluemira (pyproject.toml)
 types-python-dateutil==2.9.0.20241206
     # via arrow
@@ -613,7 +613,7 @@ uri-template==1.3.0
     # via jsonschema
 urllib3==2.3.0
     # via requests
-virtualenv==20.29.1
+virtualenv==20.29.2
     # via pre-commit
 vtk==9.3.1
     # via
