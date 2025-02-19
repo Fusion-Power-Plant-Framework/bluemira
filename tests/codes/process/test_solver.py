@@ -75,6 +75,14 @@ class TestSolver:
 
         assert solver.get_raw_variables("kappa_95") == [1.65]
 
+    @mock.patch(f"{MODULE_REF}.bluemira_warn")
+    def test_plot_radial_build_raises_bluemirawarn(self, bm_warn_mock):
+        solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
+        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+            solver.execute(RunMode.READ)
+            solver.plot_radial_build()
+        bm_warn_mock.assert_called_once()
+
     def test_get_raw_variables_CodesError_given_solver_not_run(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
 
