@@ -863,11 +863,11 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             (x_val + 0.1, self.variables.dz.value),
         )
         centres, angles, radii = _get_centres(
-            np.deg2rad(self.variables.values[-2:]),
+            self.variables.values[-2:],
             self.variables.values[-4:-2],
             self.variables.x1.value,
             (self.variables.sl.value / 2) + self.variables.dz.value,
-            symmetry_along_horizontal_diameter=True,
+            reflection_zplane=self.variables.dz.value,
         )
 
         for r_no, (centre, s_f_angles, radius) in enumerate(
@@ -993,93 +993,116 @@ def _project_centroid(
     return xc, zc, vec
 
 
+def _convert_to_global_angle(angle: float) -> float:
+    return 180 - angle
+
+
+def _reflect(value: float, reflection_point: float):
+    diff = value - reflection_point
+    return value - 2 * diff
+
+
 def _get_centres(
-    a_values: list[float],
-    r_values: list[float],
+    angles: list[float],
+    radii: list[float],
     x_start: float,
     z_start: float,
     *,
-    symmetry_along_horizontal_diameter: bool = False,
+    reflection_zplane: float | None = None,
 ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
     """Get the centres of each arc for parametrisations that are made purely of arcs.
 
     Parameters
     ----------
-    a_values:
-        a1, a2, a3, a4, a5, etc.
-    r_values:
-        r1, r2, r3, r4, r5, etc.
+    angles:
+        The angle spanned by each defined arc, a1, a2, a3, a4, a5, etc. [degrees]
+    radii:
+        The radius of curvature of each defined arc, r1, r2, r3, r4, r5, etc. [m]
     x_start:
-        Radius of the start point of the first arc.
+        x-coordinate (major radius) of the start point of the first arc.
     z_start:
-        Height of the start point of the first arc.
-    symmetry_along_horizontal_diameter:
-        If symmetric along the horizontal diameter, then the parametrised curve only
-        covers from 0° to 180°, with tangent=[0,0,-1] at 180°. The bottom half is the
-        reflected version of the top-half.
-        Otherwise, it covers 0° to 360°.
+        z-coordinate (height) of the start point of the first arc.
+    reflection_zplane:
+        If float, then we enforce bottom-half of the curve = reflection of top-half of
+        the curve, along the z-plane = reflection_zplane, i.e. the parametrised curve
+        can only be defined up to the first <180°, enforced by the condition that
+        tangent=[0,0,-1] at the reflection_zplane (C1 continuous).
+        Otherwise, the parametrised curve can be define up to the first <360°.
 
     Returns
     -------
     centres: list[tuple[float, float]]
         The x-z coordinates of the center of curvature of each arc.
-    angles: list[tuple[float, float]]
+    angle_ranges: list[tuple[float, float]]
         The start and end angle for each arc.
-    radii: list[float]
+    radii_curvature: list[float]
         The radius of curvature for each arc.
 
     Raises
     ------
     GeometryParameterisationError
-        The total angle of the defined curves must be
-        below pi (symmetry_along_horizontal_diameter = True) or
-        below 2pi (symmetry_along_horizontal_diameter = False).
+        The total angle of the defined curves must be below pi (reflection_zplane given)
+        or below 2pi (reflection_zplane not given). And the parametrised curve must not
+        intersect itself. Otherwise, this error is raised.
     """
     a_start: float = 0.0
     xi, zi = x_start, z_start
-    xc = x_start + r_values[0]
+    xc = x_start + radii[0]  # center of curvature is on the right of the start point.
     zc = z_start
+
     centres = []
-    angles = []
-    radii = []
-    xc, zc, _ = _project_centroid(xc, zc, x_start, z_start, r_values[0])
+    angle_ranges = []
+    radii_curvature = []
 
-    for ai, ri in zip(a_values, r_values, strict=True):
-        a = np.pi - a_start - ai
+    # start at 180°, and count DOWN towards -180°
+    for i, (ai, ri) in enumerate(zip(angles, radii, strict=True)):
+        if i > 0:
+            xc, zc, _ = _project_centroid(xc, zc, xi, zi, ri)
 
-        xi = xc + ri * np.cos(a)
-        zi = zc + ri * np.sin(a)
-
-        start_angle = np.rad2deg(np.pi - a_start)
-        end_angle = np.rad2deg(a)
-
+        start_angle = _convert_to_global_angle(a_start)
         a_start += ai
+        end_angle = _convert_to_global_angle(a_start)
+
+        xi = xc + ri * np.cos(np.deg2rad(end_angle))
+        zi = zc + ri * np.sin(np.deg2rad(end_angle))
 
         centres.append((xc, zc))
-        angles.append((start_angle, end_angle))
-        radii.append(ri)
+        angle_ranges.append((start_angle, end_angle))
+        radii_curvature.append(ri)
 
-    if a_start >= np.pi and symmetry_along_horizontal_diameter:
+    reflectional_symmetry_along_horizontal_diameter = reflection_zplane is not None
+    if a_start >= 180 and reflectional_symmetry_along_horizontal_diameter:  # noqa: PLR2004
         raise GeometryParameterisationError("The total angles should add up to <180°.")
-    if a_start >= (2 * np.pi) and not symmetry_along_horizontal_diameter:
+    if a_start >= 360 and not reflectional_symmetry_along_horizontal_diameter:  # noqa: PLR2004
         raise GeometryParameterisationError("The total angles should add up to <360°.")
 
-    xc, zc, vec = _project_centroid(xc, zc, xi, zi, ri)
-
-    if not symmetry_along_horizontal_diameter:
+    _, _, vec = _project_centroid(xc, zc, xi, zi, ri)
+    if not reflectional_symmetry_along_horizontal_diameter:
         r_final = (xi - x_start) / (1 + vec[0])
         x_final = xi - r_final * vec[0]
         z_final = zi - r_final * vec[1]
-    else:
-        r_final = ...
-        x_final = ...
-        z_final = ...
+        centres.append((x_final, z_final))
+        angle_ranges.append((_convert_to_global_angle(a_start), -180.0))
+        radii_curvature.append(r_final)
+        if z_final > z_start:
+            raise GeometryParameterisationError(
+                "Parametrised curve is curled too far upwards and intersects itself!\n"
+                f"{z_final=} should be lower than {z_start=}."
+            )
+        return centres, angle_ranges, radii_curvature
 
+    r_final = ...
+    x_final = ...
+    z_final = ...
     centres.append((x_final, z_final))
-    angles.append((np.rad2deg(np.pi - a_start), -180.0))
-    radii.append(r_final)
-
-    return centres, angles, radii
+    angle_ranges.append((_convert_to_global_angle(a_start), 0.0))
+    radii_curvature.append(r_final)
+    for i in range(len(radii_curvature) - 1, -1, -1):
+        centres.append(centres[i][0], _reflect(centres[i][1]))
+        start_angle = _convert_to_global_angle(a_start)
+        angle_ranges.append(angle_ranges[i][::-1])
+        radii_curvature.append(radii_curvature[i])
+    return centres, angle_ranges, radii_curvature
 
 
 class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
@@ -1167,7 +1190,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         variables = self.variables.values
         x1, z1 = variables[:2]
         r_values = variables[2:7]
-        a_values = np.deg2rad(variables[7:])
+        a_values = variables[7:]
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
@@ -1207,7 +1230,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         _offset_x, _offset_z = super()._label_function(ax, shape)
         variables = self.variables.values
         centres, angles, radii = _get_centres(
-            np.deg2rad(variables[7:]), variables[2:7], *variables[:2]
+            variables[7:], variables[2:7], *variables[:2]
         )
 
         for r_no, (centre, s_f_angles, radius) in enumerate(
