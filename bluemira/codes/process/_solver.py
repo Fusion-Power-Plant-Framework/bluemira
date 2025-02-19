@@ -234,7 +234,7 @@ class Solver(CodesSolver):
         if not self._teardown:
             return None
 
-        radial_build = self._teardown._mfile_wrapper.get_radial_build_dict()
+        radial_build = self._teardown.get_radial_build_for_plotting()
         if not radial_build:
             bluemira_warn("MFILE.DAT file in old format. Cannot plot radial build.")
             return None
