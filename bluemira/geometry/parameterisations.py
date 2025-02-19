@@ -361,8 +361,12 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         Returns
         -------
-        :
-            Labels to parameterisation plots.
+        offset_ar_x:
+            Suggested location for where to plot the next set of labels related to the
+            radii in the parametrisation. (z-coordinates only)
+        offset_ar_z:
+            Suggested location for where to plot the next set of labels related to the
+            height in the parametrisation. (x-coordinates only)
         """
         offset_ar_x = 0
         offset_ar_z: float = 0
