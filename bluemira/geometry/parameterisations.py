@@ -844,20 +844,40 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         # TODO @je-cook: Labels for f1, f2 and a1, a2
         # 3588
         _offset_x, _offset_z = super()._label_function(ax, shape)
-        z_val = (self.variables.sl.value / 2) + self.variables.dz.value
+        z_offset = self.variables.dz.value
+        half_straight_length = self.variables.sl.value / 2
         x_val = 0.5 + self.variables.x1.value
         self._annotator(
             ax,
             "sl",
-            (x_val, z_val),
-            (x_val, -z_val),
+            (x_val, z_offset + half_straight_length),
+            (x_val, z_offset - half_straight_length),
             (x_val + 0.1, self.variables.dz.value),
         )
-        # self._annotator(
-        #     ax,
-        #     "a2",
-        #     (x_val, z_val)
-        # )
+        centres, angles, radii = _get_centres(
+            np.deg2rad(self.variables.values[-2:]),
+            self.variables.values[-4:-2],
+            self.variables.x1.value,
+            (self.variables.sl.value / 2) + self.variables.dz.value,
+            symmetry_along_horizontal_diameter=True,
+        )
+
+        for r_no, (centre, s_f_angles, radius) in enumerate(
+            zip(centres, angles, radii, strict=True), start=1
+        ):
+            centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
+
+            self._annotator(
+                ax,
+                f"r{r_no}",
+                centre,
+                _get_rotated_point(centre, radius, centre_angle),
+                _get_rotated_point(centre, 0.5 * radius, centre_angle),
+            )
+
+            self._angle_annotator(
+                ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
+            )
         return _offset_x, _offset_z
 
 
@@ -966,7 +986,12 @@ def _project_centroid(
 
 
 def _get_centres(
-    a_values: list[float], r_values: list[float], x_start: float, z_start: float
+    a_values: list[float],
+    r_values: list[float],
+    x_start: float,
+    z_start: float,
+    *,
+    symmetry_along_horizontal_diameter: bool = False,
 ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
     """Get the centres of each arc for parametrisations that are made purely of arcs.
 
@@ -980,6 +1005,11 @@ def _get_centres(
         Radius of the start point of the first arc.
     z_start:
         Height of the start point of the first arc.
+    symmetry_along_horizontal_diameter:
+        If symmetric along the horizontal diameter, then the parametrised curve only
+        covers from 0° to 180°, with tangent=[0,0,-1] at 180°. The bottom half is the
+        reflected version of the top-half.
+        Otherwise, it covers 0° to 360°.
 
     Returns
     -------
@@ -989,6 +1019,13 @@ def _get_centres(
         The start and end angle for each arc.
     radii: list[float]
         The radius of curvature for each arc.
+
+    Raises
+    ------
+    GeometryParameterisationError
+        The total angle of the defined curves must be
+        below pi (symmetry_along_horizontal_diameter = True) or
+        below 2pi (symmetry_along_horizontal_diameter = False).
     """
     a_start: float = 0.0
     xi, zi = x_start, z_start
@@ -1014,16 +1051,25 @@ def _get_centres(
         angles.append((start_angle, end_angle))
         radii.append(ri)
 
+    if a_start >= np.pi and symmetry_along_horizontal_diameter:
+        raise GeometryParameterisationError("The total angles should add up to <180°.")
+    if a_start >= (2 * np.pi) and not symmetry_along_horizontal_diameter:
+        raise GeometryParameterisationError("The total angles should add up to <360°.")
+
     xc, zc, vec = _project_centroid(xc, zc, xi, zi, ri)
 
-    # Retrieve last arc (could be bad...)
-    r6 = (xi - x_start) / (1 + vec[0])
-    xc6 = xi - r6 * vec[0]
-    zc6 = zi - r6 * vec[1]
+    if not symmetry_along_horizontal_diameter:
+        r_final = (xi - x_start) / (1 + vec[0])
+        x_final = xi - r_final * vec[0]
+        z_final = zi - r_final * vec[1]
+    else:
+        r_final = ...
+        x_final = ...
+        z_final = ...
 
-    centres.append((xc6, zc6))
-    angles.append((np.rad2deg(np.pi - a_start), 180))
-    radii.append(r6)
+    centres.append((x_final, z_final))
+    angles.append((np.rad2deg(np.pi - a_start), -180.0))
+    radii.append(r_final)
 
     return centres, angles, radii
 
@@ -1117,7 +1163,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(*_get_centres(a_values, r_values, x1, z1), strict=False)
+            zip(*_get_centres(a_values, r_values, x1, z1), strict=True)
         ):
             arc = make_circle(
                 ri,
@@ -1157,13 +1203,9 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         )
 
         for r_no, (centre, s_f_angles, radius) in enumerate(
-            zip(centres, angles, radii, strict=False), start=1
+            zip(centres, angles, radii, strict=True), start=1
         ):
-            if r_no == 6:  # noqa: PLR2004
-                centre_angle = min(s_f_angles) + (0.5 * np.ptp(s_f_angles) + 180)
-            else:
-                centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
-
+            centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
             self._annotator(
                 ax,
                 f"r{r_no}",
@@ -1171,7 +1213,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 _get_rotated_point(centre, radius, centre_angle),
                 _get_rotated_point(centre, 0.5 * radius, centre_angle),
             )
-
             self._angle_annotator(
                 ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
             )
