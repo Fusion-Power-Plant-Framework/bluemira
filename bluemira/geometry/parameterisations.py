@@ -1034,9 +1034,9 @@ def _get_centres(
     centres = []
     angles = []
     radii = []
-    for i, (ai, ri) in enumerate(zip(a_values, r_values, strict=False)):
-        if i > 0:
-            xc, zc, _ = _project_centroid(xc, zc, xi, zi, ri)
+    xc, zc, _ = _project_centroid(xc, zc, x_start, z_start, r_values[0])
+
+    for ai, ri in zip(a_values, r_values, strict=True):
         a = np.pi - a_start - ai
 
         xi = xc + ri * np.cos(a)
@@ -1163,7 +1163,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(*_get_centres(a_values, r_values, x1, z1), strict=True)
+            zip(*_get_centres(a_values, r_values, x1, z1), strict=True), start=1
         ):
             arc = make_circle(
                 ri,
@@ -1171,7 +1171,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 start_angle=end_angle,
                 end_angle=start_angle,
                 axis=(0, -1, 0),
-                label=f"arc_{i + 1}",
+                label=f"arc_{i}",
             )
 
             wires.append(arc)
