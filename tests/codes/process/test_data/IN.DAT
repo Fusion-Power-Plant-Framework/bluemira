@@ -257,8 +257,8 @@ denstl   = 7800.0 * density of steel (kg/m3)
 emult    = 1.18 * energy multiplication in blanket and shield
 fblss    = 0.13 * KIT blanket model; steel fraction of breeding zone
 fhole    = 0.05 * area fraction taken up by other holes (IFE)
-iblanket = 1 * switch for blanket model;
-fblbe    = 0.47 * beryllium fraction of blanket by volume (if `iblanket=2`; is Be fraction of breeding zone)
+i_blanket_type = 1 * switch for blanket model;
+fblbe    = 0.47 * beryllium fraction of blanket by volume (if `i_blanket_type=2`; is Be fraction of breeding zone)
 fwclfr   = 0.1 * first wall coolant fraction (calculated if `i_pulsed_plant=1` or `ipowerflow=1`)
 vfshld   = 0.60 * coolant void fraction in shield
 fblli2o  = 0.07 * lithium oxide fraction of blanket by volume (stellarator only)
