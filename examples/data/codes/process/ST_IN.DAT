@@ -81,7 +81,7 @@ boundu(65) = 1000
 ixc = 103 * fl_h_threshold
 ixc = 109 * f_nd_alpha_electron
 ixc = 110 * falpha_energy_confinement
-ixc = 114 * fw_channel_length
+ixc = 114 * len_fw_channel
 ixc = 115 * fpoloidalpower: f-value for max rate of change of energy in poloidal field
 
 *-----------------Build Variables------------------*
@@ -153,16 +153,16 @@ fblss    = 0.13 * Kit blanket model; steel fraction of breeding zone
 fhole    = 0.05 * Area fraction taken up by other holes (not used)
 fblbe    = 0.47 * Beryllium fraction of blanket by volume
 secondary_cycle = 2 * Switch for thermodynamic model of power conversion cycle;
-tfwmatmax = 873  * Maximum temperature of first wall material (k) (secondary_cycle>1)
+temp_fw_max = 873  * Maximum temperature of first wall material (k) (secondary_cycle>1)
 fwclfr   = 0.1 * First wall coolant fraction
 vfshld   = 0.60 * Coolant void fraction in shield
 vfblkt   = 0.10 * Coolant void fraction in blanket (blktmodel=0)
-fw_channel_length = 7.0  * Length of a single first wall channel (all in parallel) (m) (15/11/27)
-fwinlet  = 573  * inlet temperature of first wall coolant (K) (15/11/27)
-fwoutlet = 773 * outlet temperature of first wall coolant (K) (15/11/27)
-pitch = 0.020  * pitch of first wall cooling channels (m) (27/11/15)
-fwpressure = 8.0e6  * first wall coolant pressure (Pa) (secondary_cycle>1)
-peaking_factor = 2.0 * peaking factor for first wall heat loads (15/11/27)
+len_fw_channel = 7.0  * Length of a single first wall channel (all in parallel) (m) (15/11/27)
+temp_fw_coolant_in  = 573  * inlet temperature of first wall coolant (K) (15/11/27)
+temp_fw_coolant_out = 773 * outlet temperature of first wall coolant (K) (15/11/27)
+dx_fw_module = 0.020  * pitch of first wall cooling channels (m) (27/11/15)
+pres_fw_coolant = 8.0e6  * first wall coolant pressure (Pa) (secondary_cycle>1)
+f_fw_peak = 2.0 * peaking factor for first wall heat loads (15/11/27)
 *-----------------Global Variables-----------------*
 runtitle = Michael's test file
 verbose = 1

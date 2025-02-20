@@ -306,7 +306,7 @@ class Constraint(ConstraintSelection, Model):
         55,
         (93, 94, 96),
         ("vvhealw",),
-        "Vacuum vessel helium concentration upper limit iblanket=2",
+        "Vacuum vessel helium concentration upper limit i_blanket_type=2",
     )
     PSEPR_UPPER_LIMIT = (
         56,
@@ -656,7 +656,7 @@ ITERATION_VAR_MAPPING = {
     "fniterpump": 111,
     "fzeffmax": 112,
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
-    "fw_channel_length": 114,
+    "len_fw_channel": 114,
     "fpoloidalpower": 115,
     "fradwall": 116,
     "fpsepbqar": 117,
