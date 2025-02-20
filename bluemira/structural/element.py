@@ -358,11 +358,6 @@ class Element:
     def length(self) -> float:
         """
         Element length
-
-        Notes
-        -----
-        The Euclidean distance between Nodes 1 and 2
-            .. math:: d = \\sqrt {(x_2 - x_1)^2 + (y_2 - y_1)^2 + (z_2 - z_1)^2}
         """
         if self._length is None:
             self._length = self.node_2.distance_to_other(self.node_1)
@@ -372,13 +367,6 @@ class Element:
     def weight(self) -> float:
         """
         Element self-weight force per unit length
-
-            .. math:: w = g A \\rho
-
-            where:
-                - g is the gravitational acceleration (m/s²),
-                - A is the cross-sectional area of the element (m²),
-                - \\rho is the material density (kg/m³).
         """
         if self._weight is None:
             mass = self._properties["A"] * self._properties["rho"]
@@ -394,38 +382,18 @@ class Element:
         -------
         vector: np.array(3)
             The [x, y, z] vector of the midpoint
-
-        Notes
-        -----
-        The midpoint coordinates are given by:
-
-        .. math::
-
-            M_x = \\frac{x_1 + x_2}{2}, \\quad
-            M_y = \\frac{y_1 + y_2}{2}, \\quad
-            M_z = \\frac{z_1 + z_2}{2}
         """
         return get_midpoint(self.node_1, self.node_2)
 
     @property
     def space_vector(self):
-        r"""
+        """
         Spatial vector of the Element
 
         Returns
         -------
         vector: np.array(3)
             The [dx, dy, dz] vector of the Element
-
-        Notes
-        -----
-        The vector components are given by:
-
-        .. math::
-
-            v_x = x_2 - x_1, \quad
-            v_y = y_2 - y_1, \quad
-            v_z = z_2 - z_1
         """
         return np.array([
             self.node_2.x - self.node_1.x,
