@@ -60,13 +60,8 @@ def check_two_sets_bb_non_interference(
     exclusivity_matrix:
         A matrix of booleans showing whether the bounding boxes overlap.
     """
-    x_bounds_a = set_a_3d_tensor[:, 0, :]
-    y_bounds_a = set_a_3d_tensor[:, 1, :]
-    z_bounds_a = set_a_3d_tensor[:, 2, :]
-
-    x_bounds_b = set_b_3d_tensor[:, 0, :]
-    y_bounds_b = set_b_3d_tensor[:, 1, :]
-    z_bounds_b = set_b_3d_tensor[:, 2, :]
+    x_bounds_a, y_bounds_a, z_bounds_a = set_a_3d_tensor.transpose([1, 2, 0])
+    x_bounds_b, y_bounds_b, z_bounds_b = set_b_3d_tensor.transpose([1, 2, 0])
 
     return np.array([
         two_set_mutually_exclusive(*x_bounds_a, *x_bounds_b),

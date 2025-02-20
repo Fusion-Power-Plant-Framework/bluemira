@@ -26,9 +26,9 @@ def is_mutually_exclusive(
     ----
     Must have the property that all(min_<=max_)==True.
     """
-    l = len(min_)
-    matrix_min = np.broadcast_to(min_, (l, l)).T
-    matrix_max = np.broadcast_to(max_, (l, l)).T
+    len_ = len(min_)
+    matrix_min = np.broadcast_to(min_, (len_, len_)).T
+    matrix_max = np.broadcast_to(max_, (len_, len_)).T
     return np.logical_or(matrix_max < min_, matrix_min > max_)
 
 
@@ -48,9 +48,7 @@ def check_bb_non_interference(tensor_3d: np.ndarray) -> np.ndarray:
     exclusivity_matrix:
         A matrix of booleans showing whether the bounding boxes overlap.
     """
-    x_bounds = tensor_3d[:, 0, :]
-    y_bounds = tensor_3d[:, 1, :]
-    z_bounds = tensor_3d[:, 2, :]
+    x_bounds, y_bounds, z_bounds = tensor_3d.transpose([1, 2, 0])
 
     return np.array([
         is_mutually_exclusive(*x_bounds),
