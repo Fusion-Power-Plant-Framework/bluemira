@@ -186,7 +186,7 @@ template_builder.add_input_values({
     "walker_coefficient": 0.5,
     "fracture_toughness": 150.0,
     # Undocumented danger stuff
-    "iblanket": 1,
+    "i_blanket_type": 1,
     "lsa": 2,
     # Profile parameterisation inputs
     "alphan": 1.0,

@@ -58,13 +58,12 @@ class ProcessInputs:
     # FWBS
     ibkt_life: int | None = None
     denstl: float | None = None
-    denw: float | None = None
     emult: float | None = None
     fblss: float | None = None
     fdiv: float | None = None
     fwbsshape: int | None = None
     fw_armour_thickness: float | None = None
-    iblanket: int | None = None
+    i_blanket_type: int | None = None
     i_blkt_inboard: int | None = None
     li6enrich: float | None = None
     breeder_f: float | None = None
@@ -90,15 +89,15 @@ class ProcessInputs:
     secondary_cycle_liq: int | None = None
     afwi: float | None = None
     afwo: float | None = None
-    fw_wall: float | None = None
-    afw: float | None = None
-    pitch: float | None = None
-    fwinlet: float | None = None
-    fwoutlet: float | None = None
-    fwpressure: float | None = None
+    dr_fw_wall: float | None = None
+    radius_fw_channel: float | None = None
+    dx_fw_module: float | None = None
+    temp_fw_coolant_in: float | None = None
+    temp_fw_coolant_out: float | None = None
+    pres_fw_coolant: float | None = None
     roughness: float | None = None
-    fw_channel_length: float | None = None
-    peaking_factor: float | None = None
+    len_fw_channel: float | None = None
+    f_fw_peak: float | None = None
     blpressure: float | None = None
     inlet_temp: float | None = None
     outlet_temp: float | None = None
@@ -108,7 +107,7 @@ class ProcessInputs:
     nblktmodpi: int | None = None
     nblktmodto: int | None = None
     nblktmodti: int | None = None
-    tfwmatmax: float | None = None
+    temp_fw_max: float | None = None
     fw_th_conductivity: float | None = None
     fvoldw: float | None = None
     fvolsi: float | None = None
@@ -699,7 +698,7 @@ class ProcessInputs:
 
     # first wall, blanket and
     # shield components variables
-    fwcoolant: str | None = None
+    i_fw_coolant_type: str | None = None
     icooldual: int | None = None
     ipump: int | None = None
     i_bb_liq: int | None = None
