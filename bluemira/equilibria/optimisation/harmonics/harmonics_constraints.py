@@ -289,9 +289,6 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # N.B., cannot use coil located within LCFS as part of this method.
         return coil_toroidal_harmonic_amplitude_matrix(
             coilset,
-            self.th_params.R_0,
-            self.th_params.Z_0,
-            self.th_params.th_coil_names,
             self.th_params,
             max_degree=self.max_degree,
         )
@@ -304,7 +301,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> HarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = HarmonicConstraintFunction(**self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 

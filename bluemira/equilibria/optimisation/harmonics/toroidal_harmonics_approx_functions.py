@@ -442,8 +442,6 @@ def toroidal_harmonic_approximate_psi(
     # TH coefficient matrix
     Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
         input_coils=eq.coilset,
-        R_0=R_0,
-        Z_0=Z_0,
         th_params=th_params,
         max_degree=max_degree,
     )
