@@ -215,16 +215,6 @@ def get_midpoint(node1: Node, node2: Node) -> tuple[float, float, float]:
     Returns
     -------
     The coordinates of the mid-point
-
-    Notes
-    -----
-    The midpoint coordinates are given by:
-
-    .. math::
-
-        M_x = \\frac{x_1 + x_2}{2}, \\quad
-        M_y = \\frac{y_1 + y_2}{2}, \\quad
-        M_z = \\frac{z_1 + z_2}{2}
     """
     return (
         0.5 * (node1.x + node2.x),
