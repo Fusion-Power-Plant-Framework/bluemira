@@ -652,6 +652,8 @@ class TripleArcOptVaribles(OptVariablesFrame):
     sl: OptVariable = ov(
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
     )
+    # TODO @CoronelBuendia: can we rename the radii f1 f2 to something like r1 r2?
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3827
     f1: OptVariable = ov(
         "f1",
         3,
@@ -697,7 +699,11 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     .. plot::
 
         from bluemira.geometry.parameterisations import TripleArc
-        TripleArc().plot(labels=True)
+        ta = TripleArc()
+        ta.variables.dz.adjust(1.0)
+        ta.plot(labels=True)
+
+    Source: [doi:10.12688/f1000research.28224.1](https://doi.org/10.12688/f1000research.28224.1)
 
     The dictionary keys in var_dict are:
 
