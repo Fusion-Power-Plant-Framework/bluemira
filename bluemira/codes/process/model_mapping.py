@@ -545,7 +545,7 @@ class BlanketModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iblanket"
+        return "i_blanket_type"
 
     CCFE_HCPB = 1, ("dr_blkt_inboard", "dr_blkt_outboard", "tbrmin"), "CCFE HCPB model"
     KIT_HCPB = 2, ("dr_blkt_inboard", "dr_blkt_outboard"), "KIT HCPB model"
@@ -1317,7 +1317,7 @@ class FWCoolantSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "fwcoolant"
+        return "i_fw_coolant_type"
 
     HELIUM = "helium"
     WATER = "water"

@@ -1069,7 +1069,7 @@
     "source": "Input",
     "long_name": "neutronics reactor power"
   },
-  "peaking_factor": {
+  "f_fw_peak": {
     "value": 1.508,
     "unit": "",
     "source": "Input",
