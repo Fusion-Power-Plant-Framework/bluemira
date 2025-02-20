@@ -142,83 +142,6 @@ class Teardown(CodesTeardown):
             outputs.append(value)
         return outputs
 
-    def get_radial_build_for_plotting(self) -> dict | None:
-        """
-        Get radial build variables from the MFILE
-        for plotting purposes.
-
-        Returns
-        -------
-        dict:
-            radial build dict
-
-        Raises
-        ------
-        CodesError
-            If cannot find the MFILE wrapper
-        OSError
-            unreadable input
-        """
-        if not self._mfile_wrapper:
-            raise CodesError(
-                f"Cannot retrieve output from {self._name} MFile. "
-                "The solver has not been run, so no MFile is available to read."
-            )
-
-        data = self._mfile_wrapper.data
-
-        # Check Process Version
-        process_version_str = data["procver"]
-        process_version = float(".".join(process_version_str.split()[0].split(".")[:2]))
-        min_version = 3.1
-        if process_version < min_version:
-            # Return radial build from MFILE
-            bluemira_warn(
-                "MFILE.DAT file in old format. cannot get radial build output from MFILE"
-            )
-            return None
-
-        # Map description of process radial build parameters
-        descrp = {}
-        with open(self.file_path) as f:
-            raw = f.readlines()
-            raw = raw[1:]
-            if not raw:
-                raise OSError("Cannot read from input file.")
-
-            for line in raw:
-                if "_radial_thickness_(" in line:
-                    descrptor = (
-                        line.split("_radial_thickness_(")[0].replace(" ", "")
-                    ).replace("_", " ")
-                    process_name = line.split("(")[-1].split(")")[0]
-                    descrp[process_name] = descrptor
-
-        # Get rest of the information from the data
-        n_TF = data["n_tf"]
-        R_0 = data["rmajor"]
-
-        rb = []
-        for key, value in data.items():
-            if "radial_label" in key:
-                # Get the order of the component
-                comp_order = int(key.split("(")[-1].split(")")[0])
-
-                # name of the component
-                comp_name = descrp[value]
-                if "gap" in comp_name:
-                    # do not need to know gap between whom
-                    # for plotting
-                    comp_name = "Gap"
-
-                # thickness and cumulative radius
-                comp_tk = data[value]
-                comp_cum_tk = data[f"radial_cum({comp_order})"]
-
-                rb.append([comp_name, comp_tk, comp_cum_tk])
-
-        return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
-
     def _load_mfile(self, path: str, *, recv_all: bool):
         """
         Load the MFile at the given path, and update this object's
@@ -313,6 +236,7 @@ class _MFileWrapper:
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self)
         self.data = {}
+        self.ordered_radial_build = {}
 
     def read(self) -> dict:
         """
@@ -320,6 +244,12 @@ class _MFileWrapper:
 
         Store the result in ``data`` attribute.
         """
+        # Process Version
+        process_version_str = self.mfile.data["procver"]["scan01"]
+        process_version = float(".".join(process_version_str.split()[0].split(".")[:2]))
+        min_version = 3.1  # minimum process version for reading  ordered radial build
+        rb_vector = []
+
         self.data = {}
         for process_param_name, value in self.mfile.data.items():
             param_name = update_obsolete_vars(process_param_name)
@@ -333,9 +263,33 @@ class _MFileWrapper:
                 for name in param_name:
                     self.data[name] = value["scan01"]
             else:
+                if (
+                    process_version >= min_version
+                    and "radial_label" in process_param_name
+                ):
+                    # Get the order of the component
+                    comp_order = int(process_param_name.split("(")[-1].split(")")[0])
+
+                    # thickness and cumulative radius
+                    comp_tk = value["scan01"]
+                    comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
+
+                    # description of the component
+                    comp_name = value.var_description
+                    if "gap" in comp_name:
+                        # do not need to know gap between whom
+                        # for plotting
+                        comp_name = "Gap"
+                    rb_vector.append([comp_name, comp_tk, comp_cum_tk])
+
                 self.data[param_name] = value["scan01"]
 
         self.data.update(self._derive_radial_build_params(self.data))
+        self.ordered_radial_build = {
+            "Radial Build": rb_vector,
+            "n_TF": self.data["n_tf"],
+            "R_0": self.data["rmajor"],
+        }
 
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
