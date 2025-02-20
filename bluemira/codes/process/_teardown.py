@@ -236,6 +236,7 @@ class _MFileWrapper:
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self)
         self.data = {}
+        self.ordered_radial_build = {}
 
     def read(self) -> dict:
         """
@@ -243,6 +244,12 @@ class _MFileWrapper:
 
         Store the result in ``data`` attribute.
         """
+        # Process Version
+        process_version_str = self.mfile.data["procver"]["scan01"]
+        process_version = float(".".join(process_version_str.split()[0].split(".")[:2]))
+        min_version = 3.1  # minimum process version for reading  ordered radial build
+        rb_vector = []
+
         self.data = {}
         for process_param_name, value in self.mfile.data.items():
             param_name = update_obsolete_vars(process_param_name)
@@ -256,9 +263,33 @@ class _MFileWrapper:
                 for name in param_name:
                     self.data[name] = value["scan01"]
             else:
+                if (
+                    process_version >= min_version
+                    and "radial_label" in process_param_name
+                ):
+                    # Get the order of the component
+                    comp_order = int(process_param_name.split("(")[-1].split(")")[0])
+
+                    # thickness and cumulative radius
+                    comp_tk = value["scan01"]
+                    comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
+
+                    # description of the component
+                    comp_name = value.var_description
+                    if "gap" in comp_name:
+                        # do not need to know gap between whom
+                        # for plotting
+                        comp_name = "Gap"
+                    rb_vector.append([comp_name, comp_tk, comp_cum_tk])
+
                 self.data[param_name] = value["scan01"]
 
         self.data.update(self._derive_radial_build_params(self.data))
+        self.ordered_radial_build = {
+            "Radial Build": rb_vector,
+            "n_TF": self.data["n_tf"],
+            "R_0": self.data["rmajor"],
+        }
 
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
