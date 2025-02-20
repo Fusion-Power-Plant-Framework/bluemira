@@ -166,7 +166,7 @@ def legendre_q(lam, mu, x, n_max=20):
 @dataclass
 class ToroidalHarmonicsParams:
     """
-    A dataclass to hold necessary parameters for the toroidal harmonics approximation.
+    A Dataclass holding necessary parameters for the toroidal harmonics approximation.
     """
 
     R_0: float
@@ -195,101 +195,6 @@ class ToroidalHarmonicsParams:
     """names of coils that cannot be used with TH approximation"""
 
 
-def coil_toroidal_harmonic_amplitude_matrix(
-    input_coils: CoilSet,
-    R_0: float,
-    Z_0: float,
-    th_params: ToroidalHarmonicsParams,
-    max_degree: int | None = None,
-    sig_figures: int = 15,
-) -> np.ndarray:
-    """# FIXME
-    Construct matrix from toroidal harmonic amplitudes at given coil locations.
-
-    To get an array of toroidal harmonic amplitudes/coefficients (A_m)
-    which can be used in a toroidal harmonic approximation of the
-    vacuum/coil contribution to the poloidal flux (psi) do:
-
-    A_m = matrix harmonic amplitudes @ vector of coil currents
-
-    A_m can be used as constraints in optimisation, see toroidal_harmonics_constraint.
-    TODO write toroidal_harmonics_constraint.
-
-    N.B. for a single filament (coil):
-
-    .. math::
-        A_{m} = \\frac{\\mu_{0} I_{c}}{2^{5/2}} \\frac{(2m+1)!!}{2^m m!}
-        \\frac{\\sinh{\\tau_{c}}}{\\Delta_{c}^{1/2}}
-        P_{m-\\frac{1}{2}}^{-1}(\\cosh{\\tau_c})
-
-
-    Where m = poloidal mode number, :math: P_{\\lambda}^{-\\mu} are the associated
-    Legendre functions of the first kind of degree lambda and order minus mu, and :math:
-    \\Delta_c = \\cosh{\\tau_c} - \\cos{\\sigma_c}.
-
-    Parameters
-    ----------
-    input_coils:
-        Bluemira CoilSet
-    R_0:
-        R coordinate of the focus point in cylindrical coordinates
-    Z_0:
-        Z coordinate of the focus point in cylindrical coordinates
-    th_params:
-
-    max_degree:
-        Maximum degree of harmonic to calculate up to
-    sig_figures:
-        Number of significant figures for rounding currents2harmonics values
-
-    Returns
-    -------
-    currents2harmonics:
-        Matrix of harmonic amplitudes
-
-    """
-    if max_degree is None:
-        max_degree = len(th_params.th_coil_names) - 1
-
-    # Coils
-    x_c = []
-    z_c = []
-    for n in th_params.th_coil_names:
-        x_c.append(input_coils[n].x)
-        z_c.append(input_coils[n].z)
-
-    x_c = np.array(x_c)
-    z_c = np.array(z_c)
-    # TODO not sure if this bit ^ needs editing?
-
-    # Toroidal coords
-    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_c, Z=z_c)
-    # Useful combination
-    Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
-
-    # [number of degrees, number of coils]
-    currents2harmonics = np.zeros([max_degree + 1, np.size(tau_c)])
-
-    # TH coefficients from function of the current distribution
-    # outside of the region containing the core plamsa
-    # TH coefficients = currents2harmonics @ coil currents
-    degrees = np.arange(0, max_degree + 1)[:, None]
-    factorial_term = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in range(max_degree + 1)
-    ])
-
-    currents2harmonics[:, :] = (
-        (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
-        * factorial_term[:, None]
-        * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
-        * legendre_p(degrees - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
-    )
-    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree + 1)]
-    Am_cos = currents2harmonics * np.cos(sigma_c_mult_degree)  # noqa: N806
-    Am_sin = currents2harmonics * np.sin(sigma_c_mult_degree)  # noqa: N806
-    return sig_fig_round(Am_cos, sig_figures), sig_fig_round(Am_sin, sig_figures)
-
-
 def toroidal_harmonic_grid_and_coil_setup(
     eq: Equilibrium, R_0: float, Z_0: float
 ) -> ToroidalHarmonicsParams:
@@ -312,7 +217,7 @@ def toroidal_harmonic_grid_and_coil_setup(
     Returns
     -------
     ToroidalHarmonicsParams:
-        Dataclass to hold necessary parameters for the TH approximation
+        Dataclass holding necessary parameters for the TH approximation
     """
     # Find region over which to approximate psi using TH by finding LCFS tau limit
     lcfs = eq.get_LCFS()
@@ -366,13 +271,111 @@ def toroidal_harmonic_grid_and_coil_setup(
     )
 
 
+def coil_toroidal_harmonic_amplitude_matrix(
+    input_coils: CoilSet,
+    th_params: ToroidalHarmonicsParams,
+    max_degree: int | None = None,
+    sig_figures: int = 15,
+) -> tuple[np.ndarray, np.ndarray]:
+    """# FIXME check wording and equations
+    Construct coefficient matrices from toroidal harmonic amplitudes at given coil
+    locations.
+
+    To get the individual cos and sin arrays of toroidal harmonic amplitudes/coefficients
+    (Am_cos, Am_sin) which can be used in a toroidal harmonic approximation of the
+    vacuum/coil contribution to the poloidal flux (psi) do:
+
+    A_m = matrix harmonic amplitudes @ vector of coil currents
+
+    Am_cos and Am_sin can be used as constraints in optimisation, see
+    ToroidalHarmonicsConstraint.
+
+    N.B. for a single filament (coil):
+
+    .. math::
+
+        A_{m} = \\frac{\\mu_{0} I_{c}}{2^{5/2}} \\frac{(2m+1)!!}{2^m m!}
+        \\frac{\\sinh{\\tau_{c}}}{\\Delta_{c}^{1/2}}
+        P_{m-\\frac{1}{2}}^{-1}(\\cosh{\\tau_c})
+
+        A_{m}^{\\sin} = A_m \\sin(m \\sigma_c)
+        A_{m}^{\\cos} = A_m \\cos(m \\sigma_c)
+
+
+    Where m = poloidal mode number, :math: P_{\\lambda}^{-\\mu} are the associated
+    Legendre functions of the first kind of degree lambda and order minus mu, and :math:
+    \\Delta_c = \\cosh{\\tau_c} - \\cos{\\sigma_c}.
+
+    Parameters
+    ----------
+    input_coils:
+        Bluemira CoilSet
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    max_degree:
+        Maximum degree of harmonic to calculate up to
+    sig_figures:
+        Number of significant figures for rounding currents2harmonics values
+
+    Returns
+    -------
+    Am_cos:
+        Cos component of matrix of harmonic amplitudes,
+    Am_sin:
+        Sin component of matrix of harmonic amplitudes
+
+    """
+    if max_degree is None:
+        max_degree = len(th_params.th_coil_names) - 1
+
+    R_0 = th_params.R_0
+    Z_0 = th_params.Z_0
+
+    # Coils
+    x_c = []
+    z_c = []
+    for n in th_params.th_coil_names:
+        x_c.append(input_coils[n].x)
+        z_c.append(input_coils[n].z)
+
+    x_c = np.array(x_c)
+    z_c = np.array(z_c)
+
+    # Toroidal coords
+    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_c, Z=z_c)
+    # Useful combination
+    Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
+
+    # [number of degrees, number of coils]
+    currents2harmonics = np.zeros([max_degree + 1, np.size(tau_c)])
+
+    # TH coefficients from function of the current distribution
+    # outside of the region containing the core plamsa
+    # TH coefficients = currents2harmonics @ coil currents
+    degrees = np.arange(0, max_degree + 1)[:, None]
+    factorial_term = np.array([
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in range(max_degree + 1)
+    ])
+
+    currents2harmonics[:, :] = (
+        (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
+        * factorial_term[:, None]
+        * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
+        * legendre_p(degrees - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
+    )
+    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree + 1)]
+    Am_cos = currents2harmonics * np.cos(sigma_c_mult_degree)  # noqa: N806
+    Am_sin = currents2harmonics * np.sin(sigma_c_mult_degree)  # noqa: N806
+    return sig_fig_round(Am_cos, sig_figures), sig_fig_round(Am_sin, sig_figures)
+
+
 def toroidal_harmonic_approximate_psi(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     max_degree: int | None = None,
     # TODO add different ways to set th grid size
     # e.g. limit_type: TH_GRID_LIMIT = TH_GRID_LIMIT.LCFS or TH_GRID_LIMIT.COILSET
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Approximate psi using toroidal harmonic amplitudes calculated in
     coil_toroidal_harmonic_amplitude_matrix.
@@ -396,16 +399,25 @@ def toroidal_harmonic_approximate_psi(
     eq:
         Bluemira Equilibrium
     th_params:
-        Dataclass to hold necessary parameters for the TH approximation
+        Dataclass holding necessary parameters for the TH approximation
     max_degree:
         Maximum degree of harmonic to calculate up to
 
     Returns
     -------
-    psi_approx:
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    Am_cos:
+        TH cos coefficients for required number of degrees
+    Am_sin:
+        TH sin coefficients for required number of degrees
+    degree:
+        Number of degrees required for a TH approx with the desired fit metric
+    fit_metric_value:
+        Fit metric achieved
+    approx_total_psi:
         Matrix of psi values aproximated using TH
-    A_m:
-        TH coefficient matrix
+
     """
     R_0 = th_params.R_0
     Z_0 = th_params.Z_0
@@ -436,7 +448,7 @@ def toroidal_harmonic_approximate_psi(
         max_degree=max_degree,
     )
 
-    A_coil_matrix = (
+    A_coil_matrix = (  # noqa: N806
         Am_cos[:, :, None, None]
         * epsilon[:, None, None, None]
         * factorial_m[:, None, None, None]
@@ -457,7 +469,7 @@ def toroidal_harmonic_approximate_psi(
     )
     psi_approx = A * th_params.R
 
-    return psi_approx, Am_cos @ currents, Am_sin @ currents  # A_m, A_approx
+    return psi_approx, Am_cos @ currents, Am_sin @ currents
 
 
 def toroidal_harmonic_approximation(
@@ -468,7 +480,7 @@ def toroidal_harmonic_approximation(
     nlevels: int = 50,
     *,
     plot: bool = False,
-) -> tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
+) -> tuple[ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray]:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
@@ -505,9 +517,9 @@ def toroidal_harmonic_approximation(
     th_params:
         Dataclass containing necessary parameters for use in TH approximation
     Am_cos:
-        TH coefficients/amplitudes for required number of degrees
+        TH cos coefficients/amplitudes for required number of degrees
     Am_sin:
-
+        TH sin coefficients/amplitudes for required number of degrees
     degree:
         Number of degrees required for a TH approx with the desired fit metric
     fit_metric_value:

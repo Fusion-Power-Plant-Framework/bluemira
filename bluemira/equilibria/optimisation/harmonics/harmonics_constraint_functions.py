@@ -23,10 +23,14 @@ class HarmonicConstraintFunction(ConstraintFunction):
 
     Parameters
     ----------
-    a_mat:
-        Response matrix
-    b_vec:
-        Target value vector
+    a_mat_cos:
+        Cos response matrix
+    a_mat_sin:
+        Sin response matrix
+    b_vec_cos:
+        Target value cos vector
+    b_vec_sin:
+        Target value sin vector
     value:
         Target constraint value
     scale:
@@ -41,7 +45,6 @@ class HarmonicConstraintFunction(ConstraintFunction):
         b_vec_sin: np.ndarray,
         value: float,
         scale: float,
-        name: str | None = None,
     ) -> None:
         self.a_mat_cos = a_mat_cos
         self.a_mat_sin = a_mat_sin
@@ -49,7 +52,6 @@ class HarmonicConstraintFunction(ConstraintFunction):
         self.b_vec_sin = b_vec_sin
         self.value = value
         self.scale = scale
-        self.name = name
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""  # noqa: DOC201
@@ -61,7 +63,3 @@ class HarmonicConstraintFunction(ConstraintFunction):
         result_cos -= self.b_vec_cos + self.value
         result_sin -= self.b_vec_sin + self.value
         return np.append(result_cos, result_sin, axis=0)
-
-    # def df_constraint(self, _vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
-    #     """Constraint derivative"""
-    #     return self.scale * self.a_mat

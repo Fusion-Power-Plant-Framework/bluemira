@@ -201,7 +201,6 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         ref_harmonics_sin: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
         tolerance: float,
-        smallest_tol: float = 1e-6,
         constraint_type: str = "equality",
         *,
         invert: bool = False,
