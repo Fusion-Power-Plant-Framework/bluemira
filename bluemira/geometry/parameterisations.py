@@ -874,22 +874,23 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             reflection_zplane=self.variables.dz.value,
         )
 
-        for r_no, (centre, s_f_angles, radius) in enumerate(
+        for i, (centre, s_f_angles, radius) in enumerate(
             zip(centres, angles, radii, strict=True), start=1
         ):
             centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
+            j = int(3.5 - abs(i - 3.5))
+            if j < 3:  # noqa: PLR2004
+                self._annotator(
+                    ax,
+                    f"f{j}",
+                    centre,
+                    _get_rotated_point(centre, radius, centre_angle),
+                    _get_rotated_point(centre, 0.5 * radius, centre_angle),
+                )
 
-            self._annotator(
-                ax,
-                f"r{r_no}",
-                centre,
-                _get_rotated_point(centre, radius, centre_angle),
-                _get_rotated_point(centre, 0.5 * radius, centre_angle),
-            )
-
-            self._angle_annotator(
-                ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
-            )
+                self._angle_annotator(
+                    ax, f"a{j}", radius, centre, s_f_angles, centre_angle
+                )
         return _offset_x, _offset_z
 
 
@@ -1074,37 +1075,38 @@ def _get_centres(
         angle_ranges.append((start_angle, end_angle))
         radii_curvature.append(ri)
 
-    reflectional_symmetry_along_horizontal_diameter = reflection_zplane is not None
-    if a_start >= 180 and reflectional_symmetry_along_horizontal_diameter:  # noqa: PLR2004
+    vertical_symmetry = reflection_zplane is not None
+    if a_start >= 180 and vertical_symmetry:  # noqa: PLR2004
         raise GeometryParameterisationError("The total angles should add up to <180°.")
-    if a_start >= 360 and not reflectional_symmetry_along_horizontal_diameter:  # noqa: PLR2004
+    if a_start >= 360 and not vertical_symmetry:  # noqa: PLR2004
         raise GeometryParameterisationError("The total angles should add up to <360°.")
 
     _, _, vec = _project_centroid(xc, zc, xi, zi, ri)
-    if not reflectional_symmetry_along_horizontal_diameter:
+
+    if not vertical_symmetry:
         r_final = (xi - x_start) / (1 + vec[0])
-        x_final = xi - r_final * vec[0]
-        z_final = zi - r_final * vec[1]
-        centres.append((x_final, z_final))
+        xc = xi - r_final * vec[0]
+        zc = zi - r_final * vec[1]
+        centres.append((xc, zc))
         angle_ranges.append((_convert_to_global_angle(a_start), -180.0))
         radii_curvature.append(r_final)
-        if z_final > z_start:
+        if zc > z_start:
             raise GeometryParameterisationError(
                 "Parametrised curve is curled too far upwards and intersects itself!\n"
-                f"{z_final=} should be lower than {z_start=}."
+                f"{zc=} should be lower than {z_start=}."
             )
         return centres, angle_ranges, radii_curvature
 
-    r_final = ...
-    x_final = ...
-    z_final = ...
-    centres.append((x_final, z_final))
+    r_final = (zi - reflection_zplane) / vec[1]
+    zc = reflection_zplane
+    xc = xi - r_final * vec[0]
+    centres.append((xc, zc))
     angle_ranges.append((_convert_to_global_angle(a_start), 0.0))
     radii_curvature.append(r_final)
+
     for i in range(len(radii_curvature) - 1, -1, -1):
-        centres.append(centres[i][0], _reflect(centres[i][1]))
-        start_angle = _convert_to_global_angle(a_start)
-        angle_ranges.append(angle_ranges[i][::-1])
+        centres.append((centres[i][0], _reflect(centres[i][1], reflection_zplane)))
+        angle_ranges.append((-angle_ranges[i][1], -angle_ranges[i][0]))
         radii_curvature.append(radii_curvature[i])
     return centres, angle_ranges, radii_curvature
 
