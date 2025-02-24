@@ -205,10 +205,10 @@ def select_multi_eqs(
     if not isinstance(control_coils, Iterable):
         control_coils = [control_coils] * len(equilibrium_input)
 
-    if isinstance(equilibrium_input[0], str):
-        equilibrium_paths = equilibrium_input
-    else:
+    if isinstance(equilibrium_input[0], Equilibrium | FixedPlasmaEquilibrium):
         equilibrium_paths = ["no path used"] * len(equilibrium_input)
+    else:
+        equilibrium_paths = equilibrium_input
 
     equilibria_dict = {}
     for name, file, eq_type, dc, fc, tc, qp, cc in zip(
