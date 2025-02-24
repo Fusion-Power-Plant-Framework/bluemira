@@ -59,7 +59,7 @@ class ParameterFrame:
 
     """
 
-    def __new__(cls, *args, **kwargs):  # noqa: ARG003
+    def __new__(cls, *args, **kwargs):
         """
         Prevent instantiation of this class.
 

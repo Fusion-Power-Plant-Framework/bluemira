@@ -51,7 +51,7 @@ class LogLevel(Enum):
     DEBUG = (1, "green")
     NOTSET = (0, None)
 
-    def __new__(cls, *args, **kwds):  # noqa: ARG003
+    def __new__(cls, *args, **kwds):
         """Create Enum from first half of tuple"""
         obj = object.__new__(cls)
         obj._value_ = args[0]
