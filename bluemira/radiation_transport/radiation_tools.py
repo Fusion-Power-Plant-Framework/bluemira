@@ -20,8 +20,8 @@ from matplotlib.collections import LineCollection
 from rich.progress import track
 from scipy.interpolate import (
     LinearNDInterpolator,
+    RegularGridInterpolator,
     interp1d,
-    interp2d,
 )
 from scipy.spatial import Delaunay
 
@@ -878,12 +878,12 @@ def grid_interpolator(
         calculate the field values for a new set of points
         or to be provided to a tracing code such as CHERAB
     """
-    # scipy deprecation of interp2d ~3x slower:
-    # grid = RegularGridInterpolator(
-    #     (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
-    # )
-    # return lambda xx, zz: grid((xx, zz))
-    return interp2d(x, z, field_grid, kind="cubic")
+    # scipy deprecated interp2d ~3x faster than RegularGridInterpolator:
+    # it used to be used.
+    grid = RegularGridInterpolator(
+        (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
+    )
+    return lambda xx, zz: grid((xx, zz))
 
 
 def pfr_filter(
