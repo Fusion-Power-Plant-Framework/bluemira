@@ -31,7 +31,6 @@ from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
     make_circle,
-    make_circle_arc_3P,
     make_polygon,
     wire_closure,
 )
@@ -781,67 +780,43 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         CAD Wire of the geometry
         """
         x1, dz, sl, f1, f2, a1, a2 = self.variables.values
-        a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-
-        z1 = 0.5 * sl
-        # Upper half
-        p1 = [x1, 0, z1]
-        atot = a1 + a2
-        a15 = 0.5 * a1
-        p15 = [x1 + f1 * (1 - np.cos(a15)), 0, z1 + f1 * np.sin(a15)]
-        p2 = [x1 + f1 * (1 - np.cos(a1)), 0, z1 + f1 * np.sin(a1)]
-
-        a25 = a1 + 0.5 * a2
-        p25 = [
-            p2[0] + f2 * (np.cos(a1) - np.cos(a25)),
-            0,
-            p2[2] + f2 * (np.sin(a25) - np.sin(a1)),
+        wire_names = [
+            "upper_inner_arc",
+            "upper_mid_arc",
+            "upper_outer_arc",
+            "lower_outer_arc",
+            "lower_mid_arc",
+            "lower_inner_arc",
         ]
-        p3 = [
-            p2[0] + f2 * (np.cos(a1) - np.cos(atot)),
-            0,
-            p2[2] + f2 * (np.sin(atot) - np.sin(a1)),
-        ]
-        rl = p3[2] / np.sin(np.pi - atot)
+        wires = []
+        for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
+            *_get_centres(
+                (a1, a2),
+                (f1, f2),
+                x1,
+                dz + sl / 2,
+                reflection_zplane=dz,
+            ),
+            wire_names,
+            strict=True,
+        ):
+            arc = make_circle(
+                radius_i,
+                center=(xc, 0, zc),
+                start_angle=end_angle,
+                end_angle=start_angle,
+                axis=(0, -1, 0),
+                label=name,
+            )
 
-        a35 = 0.5 * atot
-        p35 = [
-            p3[0] + rl * (np.cos(a35) - np.cos(np.pi - atot)),
-            0,
-            p3[2] - rl * (np.sin(atot) - np.sin(a35)),
-        ]
-        p4 = [
-            p3[0] + rl * (1 - np.cos(np.pi - atot)),
-            0,
-            p3[2] - rl * np.sin(atot),
-        ]
-
-        # Symmetric lower half
-        p45 = [p35[0], 0, -p35[2]]
-        p5 = [p3[0], 0, -p3[2]]
-        p55 = [p25[0], 0, -p25[2]]
-        p6 = [p2[0], 0, -p2[2]]
-        p65 = [p15[0], 0, -p15[2]]
-        p7 = [p1[0], 0, -p1[2]]
-
-        wires = [
-            make_circle_arc_3P(p1, p15, p2, label="upper_inner_arc"),
-            make_circle_arc_3P(p2, p25, p3, label="upper_mid_arc"),
-            make_circle_arc_3P(p3, p35, p4, label="upper_outer_arc"),
-            make_circle_arc_3P(p4, p45, p5, label="lower_outer_arc"),
-            make_circle_arc_3P(p5, p55, p6, label="lower_mid_arc"),
-            make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
-        ]
-
+            wires.append(arc)
         if sl != 0.0:
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
             wires.append(straight_segment)
 
-        wire = BluemiraWire(wires, label=label)
-        wire.translate((0, 0, dz))
-        return wire
+        return BluemiraWire(wires, label=label)
 
     def _label_function(self, ax: plt.Axes, shape: BluemiraWire) -> tuple[float, float]:
         """
