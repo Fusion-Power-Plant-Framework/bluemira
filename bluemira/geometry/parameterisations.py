@@ -651,7 +651,7 @@ class TripleArcOptVaribles(OptVariablesFrame):
     sl: OptVariable = ov(
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
     )
-    # TODO @CoronelBuendia: can we rename the radii f1 f2 to something like r1 r2?
+    # TODO @OceanNuclear: can we rename the radii f1 f2 to something like r1 r2?
     # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3827
     f1: OptVariable = ov(
         "f1",
