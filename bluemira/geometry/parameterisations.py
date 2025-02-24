@@ -837,22 +837,23 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         # TODO @je-cook: Labels for f1, f2 and a1, a2
         # 3588
         _offset_x, _offset_z = super()._label_function(ax, shape)
-        z_offset = self.variables.dz.value
-        half_straight_length = self.variables.sl.value / 2
-        x_val = 0.5 + self.variables.x1.value
+        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
+
+        half_straight_length = sl / 2
+        x_val = 0.5 + x1
         self._annotator(
             ax,
             "sl",
-            (x_val, z_offset + half_straight_length),
-            (x_val, z_offset - half_straight_length),
-            (x_val + 0.1, self.variables.dz.value),
+            (x_val, dz + half_straight_length),
+            (x_val, dz - half_straight_length),
+            (x_val + 0.1, dz),
         )
         centres, angles, radii = _get_centres(
-            self.variables.values[-2:],
-            self.variables.values[-4:-2],
-            self.variables.x1.value,
-            (self.variables.sl.value / 2) + self.variables.dz.value,
-            reflection_zplane=self.variables.dz.value,
+            (a1, a2),
+            (f1, f2),
+            x1,
+            dz + half_straight_length,
+            reflection_zplane=dz,
         )
 
         for i, (centre, s_f_angles, radius) in enumerate(
