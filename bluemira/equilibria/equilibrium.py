@@ -104,6 +104,18 @@ class MHDState:
         self.dz: float | None = None
         self.grid: Grid | None = None
         self.limiter: Limiter | None = None
+        self._label: str | None = None
+
+    @property
+    def label(self) -> str:
+        """
+        A name used to idenify the MHD state.
+        """
+        return self._label
+
+    @label.setter
+    def label(self, name: str):
+        self._label = name
 
     def set_grid(self, grid: Grid):
         """
@@ -242,6 +254,7 @@ class FixedPlasmaEquilibrium(MHDState):
         psi_ax: float,
         psi_b: float,
         filename: Path | str | None = None,
+        label: str = "Fixed Plasma Equilibrium",
     ):
         super().__init__()
         self.set_grid(grid)
@@ -257,6 +270,7 @@ class FixedPlasmaEquilibrium(MHDState):
         self.plasma = PlasmaCoil(psi, j_tor, self.grid)
         self._lcfs = lcfs
         self.filename = filename
+        self._label = label
 
     @classmethod
     def from_eqdsk(
@@ -960,6 +974,8 @@ class Equilibrium(CoilSetMHDState):
         cause the jtor array to be constructed later as necessary.
     filename:
         The filename of the Equilibrium. Default = None (no file)
+    label:
+        The name used to identify this equilibirium
     """
 
     def __init__(
@@ -974,6 +990,7 @@ class Equilibrium(CoilSetMHDState):
         psi: npt.NDArray[np.float64] | None = None,
         jtor: npt.NDArray[np.float64] | None = None,
         filename: Path | str | None = None,
+        label: str = "Equilibrium",
     ):
         super().__init__()
         # Constructors
@@ -1003,6 +1020,7 @@ class Equilibrium(CoilSetMHDState):
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
         self.filename = filename
+        self._label = label
 
         self._kwargs = {"vcontrol": vcontrol}
 
@@ -1950,7 +1968,7 @@ class Equilibrium(CoilSetMHDState):
             "z [m]": ccoils.z,
             "I [MA]": raw_uc(currents, "A", "MA"),
             "B [T]": fields,
-            "F [GN]": raw_uc(fz, 'N', 'GN'),
+            "F [GN]": raw_uc(fz, "N", "GN"),
         }
         if print_table:
             print(  # noqa: T201
