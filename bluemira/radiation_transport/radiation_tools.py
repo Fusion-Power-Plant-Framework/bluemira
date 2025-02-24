@@ -20,7 +20,7 @@ from matplotlib.collections import LineCollection
 from rich.progress import track
 from scipy.interpolate import (
     LinearNDInterpolator,
-    RegularGridInterpolator,
+    RectBivariateSpline,
     interp1d,
 )
 from scipy.spatial import Delaunay
@@ -880,10 +880,11 @@ def grid_interpolator(
     """
     # scipy deprecated interp2d ~3x faster than RegularGridInterpolator:
     # it used to be used.
-    grid = RegularGridInterpolator(
-        (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
-    )
-    return lambda xx, zz: grid((xx, zz))
+    # grid = RegularGridInterpolator(
+    #     (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
+    # )
+    grid = RectBivariateSpline(x, z, field_grid.T)
+    return lambda xx, zz: grid(xx, zz).T
 
 
 def pfr_filter(
