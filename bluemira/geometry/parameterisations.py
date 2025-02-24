@@ -673,7 +673,7 @@ class TripleArcOptVaribles(OptVariablesFrame):
         20,
         lower_bound=5,
         upper_bound=120,
-        description="top left and bottom left and arc angle [degrees]",
+        description="top left and bottom left arc angle [degrees]",
     )
     a2: OptVariable = ov(
         "a2",
@@ -717,7 +717,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     f2: float
         radii of top and bottom middle arc [m]
     a1: float
-        top left and bottom left and arc angle [degrees]
+        top left and bottom left arc angle [degrees]
     a2: float
         top middle and bottom middle arc angle [degrees]
 
