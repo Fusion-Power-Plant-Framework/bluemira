@@ -371,7 +371,7 @@ rpds-py==0.22.3
     #   referencing
 scikit-learn==1.6.1
     # via bluemira (pyproject.toml)
-scipy==1.10.1
+scipy==1.15.2
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
