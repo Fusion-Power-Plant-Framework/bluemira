@@ -834,8 +834,6 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         :
             Labels to parameterisation plots.
         """
-        # TODO @je-cook: Labels for f1, f2 and a1, a2
-        # 3588
         _offset_x, _offset_z = super()._label_function(ax, shape)
         x1, dz, sl, f1, f2, a1, a2 = self.variables.values
 
