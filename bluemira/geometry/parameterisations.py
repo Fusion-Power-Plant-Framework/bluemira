@@ -781,12 +781,12 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         """
         x1, dz, sl, f1, f2, a1, a2 = self.variables.values
         wire_names = [
-            "upper_inner_arc",
+            "upper_inboard_arc",
             "upper_mid_arc",
-            "upper_outer_arc",
-            "lower_outer_arc",
+            "upper_outboard_arc",
+            "lower_outboard_arc",
             "lower_mid_arc",
-            "lower_inner_arc",
+            "lower_inboard_arc",
         ]
         wires = []
         for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
