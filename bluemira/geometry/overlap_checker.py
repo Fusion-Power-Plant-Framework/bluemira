@@ -1,5 +1,8 @@
 import numpy as np
 
+from bluemira.base.constants import EPS
+from bluemira.codes.error import FreeCADError
+
 
 def is_mutually_exclusive(
     min_: np.ndarray[float], max_: np.ndarray[float]
@@ -79,3 +82,84 @@ def get_overlaps(exclusivity_matrix) -> np.ndarray:
     duplicates = i >= j
     i, j = i[~duplicates], j[~duplicates]
     return np.array([i, j]).T
+
+
+def point_in_triangules_mesh(point: np.ndarray[float], mesh: np.ndarray) -> bool:
+    """
+    Checks if a point is inside a triangular surface mesh or not.
+
+    Parameters
+    ----------
+    point:
+        The 3D point that you'd like to check for overlaps.
+    mesh:
+        A list of triangles that completely covers (i.e. meshes) the surface of a solid.
+        Each triangle is stored as a 3x3 (3 vertices, xyz coordinates) matrix.
+
+    Returns
+    -------
+    :
+        A boolean indicating whether the point is inside the mesh or not.
+
+    Notes
+    -----
+    Method used:
+        Create a parametric plane (anchored by the 0th vertex of the triangle, + two
+        parametric vectors u*a + v * b) for each triangle. Draw a line from the point
+        upwards towards +z infinity. If this line intersect the triangle, then we count
+        intersection +=1. If the total number of intersection with all triangles is odd,
+        then the point exists inside the solid. Otherwise, it exists outside the solid.
+    """
+    in_face, on_edge, at_vertex = 0, 0, 0
+    for triangle in mesh:
+        t0 = triangle[0]
+        a = triangle[1] - triangle[0]
+        b = triangle[2] - triangle[0]
+        (ax, ay, az), (bx, by, bz) = a, b
+        # array = np.array([[ax, bx], [ay, by]])  # linalg
+        # det = np.linalg.det(array)
+        det = ax * by - bx * ay
+        # For shapes that aren't triangle:
+        # retry this step with different choices of indices in a and b until det>0.
+        if det > EPS:
+            d = point[:2] - t0[:2]
+            # uv = np.linalg.inv(array) @ d
+            u = (by * d[0] - ay * d[1]) / det
+            v = (-bx * d[0] + ax * d[1]) / det
+            # uv = np.array([u, v], dtype=float)  # linalg
+
+            if 0 <= u <= 1 and 0 <= v <= 1:
+                height = t0[2] + az * u + bz * v
+                # height = np.array([az, bz]) @ uv  # linalg
+                # if (uv==1).any(axis=-1) or (uv==0).all(axis=-1):  # linalg
+                if u == 1 or v == 1 or (u == 0 and v == 0):
+                    if point[2] == height:
+                        return True
+                    if point[2] < height:
+                        at_vertex += 1
+                # elif uv.sum(axis=-1)==1 or (uv==0).any(axis=-1):  # linalg
+                elif ((u + v) == 1) or u == 0 or v == 0:
+                    if point[2] == height:
+                        return True
+                    if point[2] < height:
+                        on_edge += 1
+                # elif uv.sum(axis=-1)<1:  # linalg
+                elif (u + v) < 1:
+                    if point[2] == height:
+                        return True
+                    if point[2] < height:
+                        in_face += 1
+    if on_edge % 2 != 0:
+        raise FreeCADError(
+            f"{on_edge} triangles have their edges passed through, "
+            "which should've been even, but is odd!"
+        )
+    if at_vertex % 3 != 0:
+        raise FreeCADError(
+            "We assumed each vertex hit by the projection point is"
+            f"shared by exactly 3 triangles, but instead we have {at_vertex} triangles "
+            "where one of their vertices was hit!"
+        )
+    num_surfaces_passed_through = in_face + on_edge / 2 + at_vertex / 3
+
+    return num_surfaces_passed_through % 2 == 1.0
