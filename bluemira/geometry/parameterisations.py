@@ -1067,6 +1067,11 @@ def _get_centres(
 
     if not vertical_symmetry:
         r_final = (xi - x_start) / (1 + vec[0])
+        if r_final < 0:
+            raise GeometryParameterisationError(
+                "Geometry is overdefined (i.e. upper half of the circle is too narrow): "
+                "parametric curve curled past the inboard x-coordinate."
+            )
         xc = xi - r_final * vec[0]
         zc = zi - r_final * vec[1]
         centres.append((xc, zc))
@@ -1080,6 +1085,11 @@ def _get_centres(
         return centres, angle_ranges, radii_curvature
 
     r_final = (zi - reflection_zplane) / vec[1]
+    if r_final < 0:
+        raise GeometryParameterisationError(
+            "Geometry is overdefined (i.e. angle too great): "
+            "cannot enforce vertical symmetry."
+        )
     zc = reflection_zplane
     xc = xi - r_final * vec[0]
     centres.append((xc, zc))
