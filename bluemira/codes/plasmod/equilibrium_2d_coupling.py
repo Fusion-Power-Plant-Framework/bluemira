@@ -303,6 +303,8 @@ def solve_transport_fixed_boundary(
         "lcfs": {"lcar": lcar_mesh, "physical_group": "lcfs"},
     }
 
+    # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
+    # 3806
     plot = any((plot, debug, gif))
     folder = try_get_bluemira_path("", subfolder="generated_data", allow_missing=False)
     figname = "Transport iteration "

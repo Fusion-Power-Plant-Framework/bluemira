@@ -42,6 +42,13 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.constants import PLT_PAUSE
+from bluemira.equilibria.diagnostics import (
+    EqDiagnosticOptions,
+    NamedEq,
+    PicardDiagnostic,
+    PicardDiagnosticOptions,
+)
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -123,6 +130,7 @@ coilset.fix_sizes()
 coilset.discretisation = 0.3
 
 coilset.plot()
+plt.pause(PLT_PAUSE)
 
 # %% [markdown]
 #
@@ -211,11 +219,11 @@ psi_eof -= 10
 # Set up a parameterised profile
 # Here you can use a CustomProfile, by feeding in arrays describing
 # your p' and FF' flux functions which are linearly interpolated.
-
+#
 # Or you can use either BetaIpProfile or BetaLiIpProfile to constrain
 # the plasma integrals, optimising the shape of the flux functions
 # to match these.
-
+#
 # Comment out the relevant lines below to explore the different
 # behaviour.
 # %%
@@ -290,7 +298,6 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
-
 sof_psi_boundary = PsiBoundaryConstraint(
     sof_xbdry,
     sof_zbdry,
@@ -300,6 +307,8 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
+reference_eq = NamedEq(eq=reference_eq, name="Reference")
+diag_ops = EqDiagnosticOptions()
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
@@ -307,10 +316,15 @@ sof_opt_problem = MinimalCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     constraints=[sof_psi_boundary, x_point],
+    plot=True,
+    diag_ops=diag_ops,
 )
 
 iterator = PicardIterator(
-    sof, sof_opt_problem, plot=True, fixed_coils=True, relaxation=0.2
+    sof,
+    sof_opt_problem,
+    fixed_coils=True,
+    relaxation=0.2,
 )
 iterator()
 
@@ -332,9 +346,13 @@ eof_opt_problem = MinimalCurrentCOP(
     constraints=[eof_psi_boundary, x_point],
 )
 
-
+diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 iterator = PicardIterator(
-    eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+    eof,
+    eof_opt_problem,
+    relaxation=0.2,
+    fixed_coils=True,
+    diagnotic_plotting=diagnostic_plotting,
 )
 iterator()
 
@@ -353,10 +371,10 @@ eof.coilset.plot(ax[2])
 sof_psi = 2 * np.pi * sof.psi(*sof._x_points[0][:2])
 eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
-ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
+plt.pause(PLT_PAUSE)
 
 
 bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
 bluemira_print(f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}")
 
-plt.show()
+plt.show(block=True)
