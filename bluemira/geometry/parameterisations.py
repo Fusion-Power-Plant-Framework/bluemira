@@ -31,7 +31,6 @@ from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
     make_circle,
-    make_circle_arc_3P,
     make_polygon,
     wire_closure,
 )
@@ -361,8 +360,12 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         Returns
         -------
-        :
-            Labels to parameterisation plots.
+        offset_ar_x:
+            Suggested location for where to plot the next set of labels related to the
+            radii in the parametrisation. (z-coordinates only)
+        offset_ar_z:
+            Suggested location for where to plot the next set of labels related to the
+            height in the parametrisation. (x-coordinates only)
         """
         offset_ar_x = 0
         offset_ar_z: float = 0
@@ -648,11 +651,21 @@ class TripleArcOptVaribles(OptVariablesFrame):
     sl: OptVariable = ov(
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
     )
+    # TODO @OceanNuclear: can we rename the radii f1 f2 to something like r1 r2?
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3827
     f1: OptVariable = ov(
-        "f1", 3, lower_bound=2, upper_bound=12, description="rs == f1*z small"
+        "f1",
+        3,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom left arc [m]",
     )
     f2: OptVariable = ov(
-        "f2", 4, lower_bound=2, upper_bound=12, description="rm == f2*rs mid"
+        "f2",
+        4,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom middle arc [m]",
     )
 
     a1: OptVariable = ov(
@@ -660,14 +673,14 @@ class TripleArcOptVaribles(OptVariablesFrame):
         20,
         lower_bound=5,
         upper_bound=120,
-        description="Small arc angle [degrees]",
+        description="top left and bottom left arc angle [degrees]",
     )
     a2: OptVariable = ov(
         "a2",
         40,
         lower_bound=10,
         upper_bound=120,
-        description="Middle arc angle [degrees]",
+        description="top middle and bottom middle arc angle [degrees]",
     )
 
 
@@ -685,7 +698,11 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     .. plot::
 
         from bluemira.geometry.parameterisations import TripleArc
-        TripleArc().plot(labels=True)
+        ta = TripleArc()
+        ta.variables.dz.adjust(1.0)
+        ta.plot(labels=True)
+
+    Source: [doi:10.12688/f1000research.28224.1](https://doi.org/10.12688/f1000research.28224.1)
 
     The dictionary keys in var_dict are:
 
@@ -696,13 +713,13 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     sl: float
         Length of inboard straigh section [m]
     f1: float
-        rs == f1*z small
+        radii of top and bottom left arc [m]
     f2: float
-        rm == f2*rs mid
+        radii of top and bottom middle arc [m]
     a1: float
-        Small arc angle [degrees]
+        top left and bottom left arc angle [degrees]
     a2: float
-        Middle arc angle [degrees]
+        top middle and bottom middle arc angle [degrees]
 
     """
 
@@ -763,67 +780,43 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         CAD Wire of the geometry
         """
         x1, dz, sl, f1, f2, a1, a2 = self.variables.values
-        a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-
-        z1 = 0.5 * sl
-        # Upper half
-        p1 = [x1, 0, z1]
-        atot = a1 + a2
-        a15 = 0.5 * a1
-        p15 = [x1 + f1 * (1 - np.cos(a15)), 0, z1 + f1 * np.sin(a15)]
-        p2 = [x1 + f1 * (1 - np.cos(a1)), 0, z1 + f1 * np.sin(a1)]
-
-        a25 = a1 + 0.5 * a2
-        p25 = [
-            p2[0] + f2 * (np.cos(a1) - np.cos(a25)),
-            0,
-            p2[2] + f2 * (np.sin(a25) - np.sin(a1)),
+        wire_names = [
+            "upper_inboard_arc",
+            "upper_mid_arc",
+            "upper_outboard_arc",
+            "lower_outboard_arc",
+            "lower_mid_arc",
+            "lower_inboard_arc",
         ]
-        p3 = [
-            p2[0] + f2 * (np.cos(a1) - np.cos(atot)),
-            0,
-            p2[2] + f2 * (np.sin(atot) - np.sin(a1)),
-        ]
-        rl = p3[2] / np.sin(np.pi - atot)
+        wires = []
+        for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
+            *_get_centres(
+                (a1, a2),
+                (f1, f2),
+                x1,
+                dz + sl / 2,
+                reflection_zplane=dz,
+            ),
+            wire_names,
+            strict=True,
+        ):
+            arc = make_circle(
+                radius_i,
+                center=(xc, 0, zc),
+                start_angle=end_angle,
+                end_angle=start_angle,
+                axis=(0, -1, 0),
+                label=name,
+            )
 
-        a35 = 0.5 * atot
-        p35 = [
-            p3[0] + rl * (np.cos(a35) - np.cos(np.pi - atot)),
-            0,
-            p3[2] - rl * (np.sin(atot) - np.sin(a35)),
-        ]
-        p4 = [
-            p3[0] + rl * (1 - np.cos(np.pi - atot)),
-            0,
-            p3[2] - rl * np.sin(atot),
-        ]
-
-        # Symmetric lower half
-        p45 = [p35[0], 0, -p35[2]]
-        p5 = [p3[0], 0, -p3[2]]
-        p55 = [p25[0], 0, -p25[2]]
-        p6 = [p2[0], 0, -p2[2]]
-        p65 = [p15[0], 0, -p15[2]]
-        p7 = [p1[0], 0, -p1[2]]
-
-        wires = [
-            make_circle_arc_3P(p1, p15, p2, label="upper_inner_arc"),
-            make_circle_arc_3P(p2, p25, p3, label="upper_mid_arc"),
-            make_circle_arc_3P(p3, p35, p4, label="upper_outer_arc"),
-            make_circle_arc_3P(p4, p45, p5, label="lower_outer_arc"),
-            make_circle_arc_3P(p5, p55, p6, label="lower_mid_arc"),
-            make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
-        ]
-
+            wires.append(arc)
         if sl != 0.0:
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
             wires.append(straight_segment)
 
-        wire = BluemiraWire(wires, label=label)
-        wire.translate((0, 0, dz))
-        return wire
+        return BluemiraWire(wires, label=label)
 
     def _label_function(self, ax: plt.Axes, shape: BluemiraWire) -> tuple[float, float]:
         """
@@ -841,18 +834,43 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         :
             Labels to parameterisation plots.
         """
-        # TODO @je-cook: Labels for f1, f2 and a1, a2
-        # 3588
         _offset_x, _offset_z = super()._label_function(ax, shape)
-        z_val = (self.variables.sl.value / 2) + self.variables.dz.value
-        x_val = 0.5 + self.variables.x1.value
+        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
+
+        half_straight_length = sl / 2
+        x_val = 0.5 + x1
         self._annotator(
             ax,
             "sl",
-            (x_val, z_val),
-            (x_val, -z_val),
-            (x_val + 0.1, self.variables.dz.value),
+            (x_val, dz + half_straight_length),
+            (x_val, dz - half_straight_length),
+            (x_val + 0.1, dz),
         )
+        centres, angles, radii = _get_centres(
+            (a1, a2),
+            (f1, f2),
+            x1,
+            dz + half_straight_length,
+            reflection_zplane=dz,
+        )
+
+        for i, (centre, s_f_angles, radius) in enumerate(
+            zip(centres, angles, radii, strict=True), start=1
+        ):
+            centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
+            j = int(3.5 - abs(i - 3.5))
+            if j < 3:  # noqa: PLR2004
+                self._annotator(
+                    ax,
+                    f"f{j}",
+                    centre,
+                    _get_rotated_point(centre, radius, centre_angle),
+                    _get_rotated_point(centre, 0.5 * radius, centre_angle),
+                )
+
+                self._angle_annotator(
+                    ax, f"a{j}", radius, centre, s_f_angles, centre_angle
+                )
         return _offset_x, _offset_z
 
 
@@ -925,6 +943,164 @@ class SextupleArcOptVariables(OptVariablesFrame):
     )
 
 
+def _project_centroid(
+    xc: float, zc: float, xi: float, zi: float, ri: float
+) -> tuple[float, float, npt.NDArray[np.float64]]:
+    """
+    Lengthen the tail of a curvature vector until it hits the center of curvature.
+
+    Parameters
+    ----------
+    xc:
+        x-coordinate of a point on the curvature vector
+    zc:
+        z-coordinate of a point on the curvature vector
+    xi:
+        x-coordinate of a point on the curve
+    zi:
+        z-coordinate of a point on the curve
+    ri:
+        Radius of curvature.
+
+    Returns
+    -------
+    xc:
+        x-coodinate of Center of curvature
+    zc:
+        z-coodinate of Center of curvature
+    vec:
+        unit vector pointed from the center of curvature towards the point on the curve.
+    """
+    vec = np.array([xi - xc, zi - zc])
+    vec /= np.linalg.norm(vec)
+    xc = xi - vec[0] * ri
+    zc = zi - vec[1] * ri
+    return xc, zc, vec
+
+
+def _convert_to_global_angle(angle: float) -> float:
+    return 180 - angle
+
+
+def _reflect(value: float, reflection_point: float):
+    diff = value - reflection_point
+    return value - 2 * diff
+
+
+def _get_centres(
+    angles: list[float],
+    radii: list[float],
+    x_start: float,
+    z_start: float,
+    *,
+    reflection_zplane: float | None = None,
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
+    """Get the centres of each arc for parametrisations that are made purely of arcs.
+
+    Parameters
+    ----------
+    angles:
+        The angle spanned by each defined arc, a1, a2, a3, a4, a5, etc. [degrees]
+    radii:
+        The radius of curvature of each defined arc, r1, r2, r3, r4, r5, etc. [m]
+    x_start:
+        x-coordinate (major radius) of the start point of the first arc.
+    z_start:
+        z-coordinate (height) of the start point of the first arc.
+    reflection_zplane:
+        If float, then we enforce bottom-half of the curve = reflection of top-half of
+        the curve, along the z-plane = reflection_zplane, i.e. the parametrised curve
+        can only be defined up to the first <180°, enforced by the condition that
+        tangent=[0,0,-1] at the reflection_zplane (C1 continuous).
+        Otherwise, the parametrised curve can be define up to the first <360°.
+
+    Returns
+    -------
+    centres: list[tuple[float, float]]
+        The x-z coordinates of the center of curvature of each arc.
+    angle_ranges: list[tuple[float, float]]
+        The start and end angle for each arc.
+    radii_curvature: list[float]
+        The radius of curvature for each arc.
+
+    Raises
+    ------
+    GeometryParameterisationError
+        The total angle of the defined curves must be below pi (reflection_zplane given)
+        or below 2pi (reflection_zplane not given). And the parametrised curve must not
+        intersect itself. Otherwise, this error is raised.
+    """
+    a_start: float = 0.0
+    xi, zi = x_start, z_start
+    xc = x_start + radii[0]  # center of curvature is on the right of the start point.
+    zc = z_start
+
+    centres = []
+    angle_ranges = []
+    radii_curvature = []
+
+    # start at 180°, and count DOWN towards -180°
+    for i, (ai, ri) in enumerate(zip(angles, radii, strict=True)):
+        if i > 0:
+            xc, zc, _ = _project_centroid(xc, zc, xi, zi, ri)
+
+        start_angle = _convert_to_global_angle(a_start)
+        a_start += ai
+        end_angle = _convert_to_global_angle(a_start)
+
+        xi = xc + ri * np.cos(np.deg2rad(end_angle))
+        zi = zc + ri * np.sin(np.deg2rad(end_angle))
+
+        centres.append((xc, zc))
+        angle_ranges.append((start_angle, end_angle))
+        radii_curvature.append(ri)
+
+    vertical_symmetry = reflection_zplane is not None
+    if a_start >= 180 and vertical_symmetry:  # noqa: PLR2004
+        raise GeometryParameterisationError("The total angles should add up to <180°.")
+    if a_start >= 360 and not vertical_symmetry:  # noqa: PLR2004
+        raise GeometryParameterisationError("The total angles should add up to <360°.")
+
+    _, _, vec = _project_centroid(xc, zc, xi, zi, ri)
+
+    if not vertical_symmetry:
+        r_final = (xi - x_start) / (1 + vec[0])
+        if r_final < 0:
+            raise GeometryParameterisationError(
+                "Geometry is overdefined (i.e. upper half of the circle is too narrow): "
+                "parametric curve curled past the inboard x-coordinate."
+            )
+        xc = xi - r_final * vec[0]
+        zc = zi - r_final * vec[1]
+        centres.append((xc, zc))
+        angle_ranges.append((_convert_to_global_angle(a_start), -180.0))
+        radii_curvature.append(r_final)
+        if zc > z_start:
+            raise GeometryParameterisationError(
+                "Parametrised curve is curled too far upwards and intersects itself!\n"
+                f"{zc=} should be lower than {z_start=}."
+            )
+        return centres, angle_ranges, radii_curvature
+
+    r_final = (zi - reflection_zplane) / vec[1]
+    if r_final < 0:
+        raise GeometryParameterisationError(
+            "Geometry is overdefined (i.e. angle too great): "
+            "cannot enforce vertical symmetry."
+        )
+    zc = reflection_zplane
+    xc = xi - r_final * vec[0]
+    centres.append((xc, zc))
+    angle_ranges.append((_convert_to_global_angle(a_start), 0.0))
+    radii_curvature.append(r_final)
+
+    for i in range(len(radii_curvature) - 1, -1, -1):
+        centres.append((centres[i][0], _reflect(centres[i][1], reflection_zplane)))
+        angle_ranges.append((-angle_ranges[i][1], -angle_ranges[i][0]))
+        radii_curvature.append(radii_curvature[i])
+    return centres, angle_ranges, radii_curvature
+
+
 class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
@@ -963,7 +1139,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
-        Inequality constraint for TripleArc.
+        Inequality constraint for SextupleArc.
 
         Constrain such that sum of the 5 angles is less than or equal to 360
         degrees.
@@ -971,7 +1147,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         Returns
         -------
         :
-            Inequality constraint for TripleArc.
+            Inequality constraint for SextupleArc.
         """
         x_norm = self.variables.get_normalised_values()
         x_actual = self.process_x_norm_fixed(x_norm)
@@ -979,12 +1155,12 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
     def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """Inequality constraint gradient for TripleArc.
+        """Inequality constraint gradient for SextupleArc.
 
         Returns
         -------
         :
-            Inequality constraint gradient for TripleArc.
+            Inequality constraint gradient for SextupleArc.
         """
         x_norm = self.variables.get_normalised_values()
         gradient = np.zeros((1, len(x_norm)))
@@ -993,56 +1169,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 var_idx = self.get_x_norm_index(var)
                 gradient[0][var_idx] = 1
         return gradient
-
-    @staticmethod
-    def _project_centroid(
-        xc: float, zc: float, xi: float, zi: float, ri: float
-    ) -> tuple[float, float, npt.NDArray[np.float64]]:
-        vec = np.array([xi - xc, zi - zc])
-        vec /= np.linalg.norm(vec)
-        xc = xi - vec[0] * ri
-        zc = zi - vec[1] * ri
-        return xc, zc, vec
-
-    def _get_centres(
-        self, a_values: list[float], r_values: list[float], x1: float, z1: float
-    ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
-        a_start: float = 0
-        xi, zi = x1, z1
-        xc = x1 + r_values[0]
-        zc = z1
-        centres = []
-        angles = []
-        radii = []
-        for i, (ai, ri) in enumerate(zip(a_values, r_values, strict=False)):
-            if i > 0:
-                xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
-            a = np.pi - a_start - ai
-
-            xi = xc + ri * np.cos(a)
-            zi = zc + ri * np.sin(a)
-
-            start_angle = np.rad2deg(np.pi - a_start)
-            end_angle = np.rad2deg(a)
-
-            a_start += ai
-
-            centres.append((xc, zc))
-            angles.append((start_angle, end_angle))
-            radii.append(ri)
-
-        xc, zc, vec = self._project_centroid(xc, zc, xi, zi, ri)
-
-        # Retrieve last arc (could be bad...)
-        r6 = (xi - x1) / (1 + vec[0])
-        xc6 = xi - r6 * vec[0]
-        zc6 = zi - r6 * vec[1]
-
-        centres.append((xc6, zc6))
-        angles.append((np.rad2deg(np.pi - a_start), 180))
-        radii.append(r6)
-
-        return centres, angles, radii
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -1060,11 +1186,11 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         variables = self.variables.values
         x1, z1 = variables[:2]
         r_values = variables[2:7]
-        a_values = np.deg2rad(variables[7:])
+        a_values = variables[7:]
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(*self._get_centres(a_values, r_values, x1, z1), strict=False)
+            zip(*_get_centres(a_values, r_values, x1, z1), strict=True), start=1
         ):
             arc = make_circle(
                 ri,
@@ -1072,7 +1198,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 start_angle=end_angle,
                 end_angle=start_angle,
                 axis=(0, -1, 0),
-                label=f"arc_{i + 1}",
+                label=f"arc_{i}",
             )
 
             wires.append(arc)
@@ -1099,18 +1225,14 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         """
         _offset_x, _offset_z = super()._label_function(ax, shape)
         variables = self.variables.values
-        centres, angles, radii = self._get_centres(
-            np.deg2rad(variables[7:]), variables[2:7], *variables[:2]
+        centres, angles, radii = _get_centres(
+            variables[7:], variables[2:7], *variables[:2]
         )
 
         for r_no, (centre, s_f_angles, radius) in enumerate(
-            zip(centres, angles, radii, strict=False), start=1
+            zip(centres, angles, radii, strict=True), start=1
         ):
-            if r_no == 6:  # noqa: PLR2004
-                centre_angle = min(s_f_angles) + (0.5 * np.ptp(s_f_angles) + 180)
-            else:
-                centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
-
+            centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
             self._annotator(
                 ax,
                 f"r{r_no}",
@@ -1118,7 +1240,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
                 _get_rotated_point(centre, radius, centre_angle),
                 _get_rotated_point(centre, 0.5 * radius, centre_angle),
             )
-
             self._angle_annotator(
                 ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
             )
