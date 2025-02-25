@@ -47,7 +47,7 @@ from bluemira.equilibria.diagnostics import (
 from bluemira.geometry.coordinates import Coordinates
 
 # %% [markdown]
-# ### Analysis Examples
+# # Analysis Examples
 #
 # Below we highlight some example uses of the anaylsis classes in equilibria/analysis.py.
 #
