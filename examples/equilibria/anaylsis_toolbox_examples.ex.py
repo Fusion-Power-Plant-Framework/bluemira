@@ -70,7 +70,7 @@ from bluemira.geometry.coordinates import Coordinates
 # to the fixed boundary equilibria.
 
 # %% [markdown]
-# #### Inputs
+# ## Inputs
 #
 # We are going to use MAST-U-like and DEMO-like equilibria
 # as the inputs for our examples.
@@ -95,7 +95,7 @@ double_demoish_eq = select_eq(double_demoish_path)
 double_demoish_eq.label = "DEMO-DN"
 
 # %% [markdown]
-# #### EqAnalysis Part 1
+# ## EqAnalysis Part 1
 #
 # Fisrt we will look at the untilities avilable in the EqAnalysis class
 # for our input equilibria.
@@ -154,7 +154,7 @@ physics_datclass = eq_analysis_double.physics_info_table()
 table = eq_analysis_single.control_coil_table(control=CoilType.PF)
 
 # %% [markdown]
-# #### EqAnalysis Part 2
+# ## EqAnalysis Part 2
 #
 # Now we will look at the untilities avilable in the EqAnalysis class
 # for comparision to a reference equilibria.
@@ -255,7 +255,7 @@ ax = eq_analysis_2.plot_target_flux(
 )
 
 # %% [markdown]
-# #### MultiEqAnalysis
+# ## MultiEqAnalysis
 #
 # Now we will look at the untilities avilable in the
 # MultiEqAnalysis class for multiple equilibria.
