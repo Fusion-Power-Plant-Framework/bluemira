@@ -45,8 +45,10 @@ def main():
     with open(args.outfile, "w") as of:
         if args.add_header:
             of.write("# this is a header\n")
-        for no, line in enumerate(lines, start=1):
-            of.write(f"{no if args.number else ''}    {line}")
+        of.writelines(
+            f"{no if args.number else ''}    {line}"
+            for no, line in enumerate(lines, start=1)
+        )
 
 
 if __name__ == "__main__":

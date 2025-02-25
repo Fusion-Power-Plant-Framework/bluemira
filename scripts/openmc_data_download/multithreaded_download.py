@@ -42,8 +42,7 @@ def download_range(
         headers = {"User-Agent": "Mozilla/5.0", "Range": f"bytes={start}-{end}"}
         response = requests.get(url, headers=headers, timeout=timeout)
         with open(output, "wb") as f:
-            for part in response.iter_content(1024):
-                f.write(part)
+            f.writelines(response.iter_content(1024))
     progress()
 
 

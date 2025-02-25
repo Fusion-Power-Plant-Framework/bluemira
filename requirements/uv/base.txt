@@ -6,11 +6,11 @@ asteval==1.0.6
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
-babel==2.16.0
+babel==2.17.0
     # via bluemira (pyproject.toml)
 blosc2==2.7.1
     # via tables
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -32,7 +32,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.3
+fonttools==4.56.0
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -42,13 +42,13 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
-imageio==2.36.1
+imageio==2.37.0
     # via bluemira (pyproject.toml)
 joblib==1.4.2
     # via scikit-learn
 kiwisolver==1.4.8
     # via matplotlib
-llvmlite==0.43.0
+llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
     # via rich
@@ -70,11 +70,11 @@ neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
-numba==0.60.0
+numba==0.61.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
-numba-scipy==0.4.0
+numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787
     # via bluemira (pyproject.toml)
 numexpr==2.10.2
     # via
@@ -142,7 +142,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
@@ -154,7 +154,7 @@ rich==13.9.4
     #   meshio
 scikit-learn==1.6.1
     # via bluemira (pyproject.toml)
-scipy==1.10.1
+scipy==1.15.2
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
@@ -176,7 +176,7 @@ tabulate==0.9.0
     # via bluemira (pyproject.toml)
 threadpoolctl==3.5.0
     # via scikit-learn
-typeguard==4.4.1
+typeguard==4.4.2
     # via bluemira (pyproject.toml)
 typing-extensions==4.12.2
     # via
@@ -187,7 +187,7 @@ typing-extensions==4.12.2
     #   rich
     #   tables
     #   typeguard
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via requests
