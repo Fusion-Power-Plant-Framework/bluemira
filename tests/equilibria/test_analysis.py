@@ -191,7 +191,7 @@ class TestMultiEqAnalysis:
         assert len(ax[0]) == ax_num
         assert len(ax[1]) == ax_num
 
-    def test_div_info_plot_wrong_input(self, legs_to_plot=DivLegsToPlot.UP):
+    def test_div_info_plot_wrong_input(self):
         with pytest.raises(BluemiraError):
             _ = self.multi_analysis.plot_divertor_length_angle(
                 plasma_facing_boundary_list=[
@@ -199,5 +199,5 @@ class TestMultiEqAnalysis:
                     self.pfb_demoish,
                     self.pfb_demoish,
                 ],
-                legs_to_plot=legs_to_plot,
+                legs_to_plot=DivLegsToPlot.UP,
             )
