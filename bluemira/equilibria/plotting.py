@@ -48,7 +48,7 @@ from bluemira.utilities.plot_tools import (
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from bluemira.equilibria.diagnostics import EqDiagnosticOptions, NamedEq
+    from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import (
         Equilibrium,
         FixedPlasmaEquilibrium,
@@ -1092,7 +1092,7 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
     def __init__(
         self,
         equilibrium,
-        reference_equilibrium: NamedEq,
+        reference_equilibrium: Equilibrium,
         diag_ops: EqDiagnosticOptions,
         ax=None,
     ):

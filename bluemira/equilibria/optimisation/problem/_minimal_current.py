@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.diagnostics import EqDiagnosticOptions, NamedEq
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
@@ -65,7 +65,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         constraints: list[UpdateableConstraint] | None = None,
         *,
         plot: bool | None = False,
-        reference_eq: NamedEq | None = None,
+        reference_eq: Equilibrium | None = None,
         diag_ops: EqDiagnosticOptions | None = None,
     ):
         self.coilset = coilset
@@ -83,7 +83,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             eq_copy = deepcopy(self.eq)
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
-                reference_equilibrium=NamedEq(eq=eq_copy, name="Reference")
+                reference_equilibrium=Equilibrium(eq=eq_copy, label="Reference")
                 if reference_eq is None
                 else reference_eq,
                 diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
