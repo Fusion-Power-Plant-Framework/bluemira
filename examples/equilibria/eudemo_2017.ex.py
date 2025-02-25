@@ -43,7 +43,12 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.constants import PLT_PAUSE
-from bluemira.equilibria.diagnostics import EqDiagnosticOptions
+from bluemira.equilibria.diagnostics import (
+    EqDiagnosticOptions,
+    NamedEq,
+    PicardDiagnostic,
+    PicardDiagnosticOptions,
+)
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -214,11 +219,11 @@ psi_eof -= 10
 # Set up a parameterised profile
 # Here you can use a CustomProfile, by feeding in arrays describing
 # your p' and FF' flux functions which are linearly interpolated.
-
+#
 # Or you can use either BetaIpProfile or BetaLiIpProfile to constrain
 # the plasma integrals, optimising the shape of the flux functions
 # to match these.
-
+#
 # Comment out the relevant lines below to explore the different
 # behaviour.
 # %%
@@ -290,9 +295,7 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     gamma=1e-7,
 )
 
-program = PicardIterator(
-    reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2, plot=False
-)
+program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 sof_psi_boundary = PsiBoundaryConstraint(
@@ -304,9 +307,8 @@ sof_psi_boundary = PsiBoundaryConstraint(
 
 sof = deepcopy(reference_eq)
 
-diag_ops = EqDiagnosticOptions(
-    psi_diff=False, split_psi_plots=False, reference_eq=reference_eq
-)
+reference_eq = NamedEq(eq=reference_eq, name="Reference")
+diag_ops = EqDiagnosticOptions()
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
@@ -319,7 +321,10 @@ sof_opt_problem = MinimalCurrentCOP(
 )
 
 iterator = PicardIterator(
-    sof, sof_opt_problem, plot=False, fixed_coils=True, relaxation=0.2
+    sof,
+    sof_opt_problem,
+    fixed_coils=True,
+    relaxation=0.2,
 )
 iterator()
 
@@ -341,9 +346,13 @@ eof_opt_problem = MinimalCurrentCOP(
     constraints=[eof_psi_boundary, x_point],
 )
 
-
+diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 iterator = PicardIterator(
-    eof, eof_opt_problem, plot=True, relaxation=0.2, fixed_coils=True
+    eof,
+    eof_opt_problem,
+    relaxation=0.2,
+    fixed_coils=True,
+    diagnotic_plotting=diagnostic_plotting,
 )
 iterator()
 

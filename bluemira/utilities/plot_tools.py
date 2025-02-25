@@ -126,6 +126,18 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
             fp.unlink()
 
 
+def set_ax_for_psi_components(ax):
+    """Fuction to set labels etc for component psi plotting."""
+    ax[0].set_xlabel("$x$ [m]")
+    ax[0].set_ylabel("$z$ [m]")
+    ax[0].set_title("Coilset")
+    ax[0].set_aspect("equal")
+    ax[1].set_xlabel("$x$ [m]")
+    ax[1].set_ylabel("$z$ [m]")
+    ax[1].set_title("Plasma")
+    ax[1].set_aspect("equal")
+
+
 def xz_plot_setup(
     pname,
     folder,
@@ -133,7 +145,25 @@ def xz_plot_setup(
     save: bool = False,
     split_psi_plots: bool = False,
 ) -> dict:
-    """Set up for an xz plot (poloidal slice)."""
+    """
+    Set up for an xz plot (poloidal slice).
+
+    Returns
+    -------
+    f:
+        figure
+    ax:
+        axis
+    pname:
+        plot name
+    folder:
+        plot folder
+    save:
+        to save or not to save
+
+    """
+    # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
+    # 3806
     if folder is None:
         folder = try_get_bluemira_path(
             "", subfolder="generated_data", allow_missing=not save
@@ -141,14 +171,7 @@ def xz_plot_setup(
 
     if split_psi_plots:
         f, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
-        ax[0].set_xlabel("$x$ [m]")
-        ax[0].set_ylabel("$z$ [m]")
-        ax[0].set_title("Coilset")
-        ax[0].set_aspect("equal")
-        ax[1].set_xlabel("$x$ [m]")
-        ax[1].set_ylabel("$z$ [m]")
-        ax[1].set_title("Plasma")
-        ax[1].set_aspect("equal")
+        set_ax_for_psi_components(ax=ax)
 
     else:
         f, ax = plt.subplots()

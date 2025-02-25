@@ -22,12 +22,13 @@ import tabulate
 from eqdsk import EQDSKInterface
 from scipy.optimize import minimize
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import MU_0, raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
+from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     Opoint,
@@ -103,6 +104,18 @@ class MHDState:
         self.dz: float | None = None
         self.grid: Grid | None = None
         self.limiter: Limiter | None = None
+        self._label: str | None = None
+
+    @property
+    def label(self) -> str:
+        """
+        A name used to idenify the MHD state.
+        """
+        return self._label
+
+    @label.setter
+    def label(self, name: str):
+        self._label = name
 
     def set_grid(self, grid: Grid):
         """
@@ -241,6 +254,7 @@ class FixedPlasmaEquilibrium(MHDState):
         psi_ax: float,
         psi_b: float,
         filename: Path | str | None = None,
+        label: str = "Fixed Plasma Equilibrium",
     ):
         super().__init__()
         self.set_grid(grid)
@@ -256,6 +270,7 @@ class FixedPlasmaEquilibrium(MHDState):
         self.plasma = PlasmaCoil(psi, j_tor, self.grid)
         self._lcfs = lcfs
         self.filename = filename
+        self._label = label
 
     @classmethod
     def from_eqdsk(
@@ -557,15 +572,14 @@ class CoilSetMHDState(MHDState):
         response = self.coilset.control_F(self.coilset)
         background = (
             self.coilset.F(plasma)[non_zero_current]
-            / self.coilset.current[non_zero_current]
+            / self.coilset.current[non_zero_current][:, None]
         )
-
         forces = np.zeros((no_coils, 2))
-        currents = self.coilset.get_control_coils().current
+        currents = self.coilset.current
         forces[:, 0] = currents * (response[:, :, 0] @ currents + background[:, 0])
         forces[:, 1] = currents * (response[:, :, 1] @ currents + background[:, 1])
 
-        return forces
+        return forces[self.coilset._control_ind, :]
 
     def get_coil_fields(self) -> npt.NDArray[np.float64]:
         """
@@ -960,6 +974,8 @@ class Equilibrium(CoilSetMHDState):
         cause the jtor array to be constructed later as necessary.
     filename:
         The filename of the Equilibrium. Default = None (no file)
+    label:
+        The name used to identify this equilibirium
     """
 
     def __init__(
@@ -974,6 +990,7 @@ class Equilibrium(CoilSetMHDState):
         psi: npt.NDArray[np.float64] | None = None,
         jtor: npt.NDArray[np.float64] | None = None,
         filename: Path | str | None = None,
+        label: str = "Equilibrium",
     ):
         super().__init__()
         # Constructors
@@ -1003,6 +1020,7 @@ class Equilibrium(CoilSetMHDState):
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
         self.filename = filename
+        self._label = label
 
         self._kwargs = {"vcontrol": vcontrol}
 
@@ -1880,7 +1898,9 @@ class Equilibrium(CoilSetMHDState):
         )
         return res.x[0], z
 
-    def analyse_core(self, n_points: int = 50, *, plot: bool = True) -> CoreResults:
+    def analyse_core(
+        self, n_points: int = 50, *, plot: bool = True, ax=None
+    ) -> CoreResults:
         """
         Analyse the shape and characteristics of the plasma core.
 
@@ -1896,8 +1916,8 @@ class Equilibrium(CoilSetMHDState):
         """
         results = analyse_plasma_core(self, n_points=n_points)
         if plot:
-            CorePlotter(results)
-        return results
+            cp = CorePlotter(results, ax=ax)
+        return results, cp.ax
 
     def analyse_plasma(self) -> EqSummary:
         """
@@ -1910,7 +1930,10 @@ class Equilibrium(CoilSetMHDState):
             is_double_null=self.is_double_null,
         )
 
-    def analyse_coils(self) -> tuple[dict[str, Any], float, float]:
+    def analyse_coils(
+        self,
+        print_table=True,  # noqa: FBT002
+    ) -> tuple[dict[str, Any], float, float]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilibrium and coilset.
@@ -1922,29 +1945,40 @@ class Equilibrium(CoilSetMHDState):
         fz_c_stot:
             The sum of the forces on the CS
         fsep:
-
+            CS separation force
         """
         ccoils = self.coilset.get_control_coils()
         c_names = ccoils.name
-        currents = ccoils.currents
+        currents = ccoils.current
         fields = self.get_coil_fields()
         forces = self.get_coil_forces()
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_coils("PF") :]
-        fz_c_stot = sum(fz_cs)
-        fsep = max(
-            np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1])
-            for j in range(self.coilset.n_coils("CS") - 1)
-        )
-        table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
-        print(  # noqa: T201
-            tabulate.tabulate(
-                list(table.values()),
-                headers=c_names,
-                floatfmt=".2f",
-                showindex=table.keys(),
+        if self.coilset.n_coils("CS") > 0:
+            fz_c_stot = sum(fz_cs)
+            fsep = max(
+                np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1])
+                for j in range(self.coilset.n_coils("CS") - 1)
             )
-        )
+        else:
+            # If there are no CS coils
+            fz_c_stot, fsep = None, None
+        table = {
+            "x [m]": ccoils.x,
+            "z [m]": ccoils.z,
+            "I [MA]": raw_uc(currents, "A", "MA"),
+            "B [T]": fields,
+            "F [GN]": raw_uc(fz, "N", "GN"),
+        }
+        if print_table:
+            print(  # noqa: T201
+                tabulate.tabulate(
+                    list(table.values()),
+                    headers=c_names,
+                    floatfmt=".2f",
+                    showindex=table.keys(),
+                )
+            )
         return table, fz_c_stot, fsep
 
     @property
@@ -1998,10 +2032,10 @@ class Equilibrium(CoilSetMHDState):
             ax,
             plasma=False,
             show_ox=show_ox,
-            field=True,
+            field=EqBPlotParam.BP,
         )
 
-    def plot_core(self):
+    def plot_core(self, ax=None):
         """
         Plot a 1-D section through the magnetic axis.
 
@@ -2010,4 +2044,4 @@ class Equilibrium(CoilSetMHDState):
         :
             The plot axis
         """
-        return CorePlotter2(self)
+        return CorePlotter2(self, ax)
