@@ -175,25 +175,18 @@ th_constraint = ToroidalHarmonicConstraint(
     ref_harmonics_cos=Am_cos,
     ref_harmonics_sin=Am_sin,
     th_params=th_params,
-    tolerance=1e-6,
+    tolerance=None,
     constraint_type="inequality",
 )
 th_constraint_inverted = ToroidalHarmonicConstraint(
     ref_harmonics_cos=Am_cos,
     ref_harmonics_sin=Am_sin,
     th_params=th_params,
-    tolerance=1e-6,
+    tolerance=None,
     invert=True,
     constraint_type="inequality",
 )
-th_constraint_equal = ToroidalHarmonicConstraint(
-    ref_harmonics_cos=Am_cos,
-    ref_harmonics_sin=Am_sin,
-    th_params=th_params,
-    tolerance=1e-6,
-    invert=False,
-    constraint_type="equality",
-)
+
 # Make sure we only optimise with coils outside the sphere containing the core plasma by
 # setting control coils using the list of appropriate coils
 eq.coilset.control = list(th_params.th_coil_names)
@@ -267,18 +260,38 @@ plt.show()
 # TODO trying isoflux points for leg shaping for use in TikhonovCurrentCOP
 
 arg_inner = np.argmin(x_bdry)
+
+# %%
 # x_leg = np.array([5.0, 5.5, 6.0, 7.0, 7.5, 8.3, 9.1, 9.9, 10.7, 11.5])
+
 # z_leg = np.array([-8.0, -7.5, -7.1, -6.4, -6.05, -6.1, -6.5, -6.9, -7.3, -7.7])
 
 x_leg = np.array([5.8, 6.3, 6.8, 7.3, 7.8, 8.1, 8.3, 8.5, 8.7, 8.9])
 z_leg = np.array([-7.2, -6.8, -6.5, -6.2, -5.8, -5.9, -6.3, -6.6, -7.0, -7.4])
 
+# x_leg = np.array([
+#     7.0 - 1.2,
+#     7.2 - 1.2,
+#     7.4 - 1.2,
+#     7.6 - 1.2,
+#     7.8 - 1.2,
+#     8.1 - 1.0,
+#     8.3 - 1.0,
+#     8.5 - 1.0,
+#     8.7 - 1.0,
+#     8.9 - 1.0,
+# ])
+# z_leg = np.array([-5.55, -5.54, -5.53, -5.52, -5.51, -5.9, -6.5, -6.9, -7.4, -7.8])
 
-isoflux = IsofluxConstraint(
+isoflux_SN_keep_legs_same = IsofluxConstraint(
     x_leg,
     z_leg,
     x_bdry[arg_inner],
     z_bdry[arg_inner],
+    # x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70]) + 7.5
+    # z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71]) + 0.9
+    # x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60]) + 7.5
+    # z_hfs = np.array([4.80, 5.09, 5.38,
     tolerance=5.0,  # Difficult to choose...
     constraint_value=0.0,  # Difficult to choose...
 )
@@ -286,20 +299,20 @@ isoflux = IsofluxConstraint(
 
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-isoflux.plot(ax=ax)
+isoflux_SN_keep_legs_same.plot(ax=ax)
 eq.coilset.plot(ax=ax)
 
 # %%
-x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70]) + 6.3
-z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71]) + 1.1
+x_lfs = np.array([1.45, 2.0, 2.53, 2.90, 3.43, 4.28]) + 7.0
+z_lfs = np.array([5.2, 5.9, 6.2, 6.4, 6.6, 6.9]) + 1.1
 x_hfs = np.array([
     5.0,
     5.5,
     6.0,
-    7.0,
+    6.6,
     7.5,
 ])
-z_hfs = np.array([8.0, 7.5, 7.1, 6.4, 6.05])
+z_hfs = np.array([8.0, 7.5, 7.1, 6.6, 6.2])
 
 x_legs = np.concatenate([x_lfs, x_hfs])
 z_legs = np.concatenate([-z_lfs, -z_hfs])
@@ -314,23 +327,52 @@ legs_isoflux = IsofluxConstraint(
 )
 
 
-f, ax = plt.subplots()
-eq.plot(ax=ax)
-legs_isoflux.plot(ax=ax)
-eq.coilset.plot(ax=ax)
+# f, ax = plt.subplots()
+# eq.plot(ax=ax)
+# legs_isoflux.plot(ax=ax)
+# eq.coilset.plot(ax=ax)
+
+# %%
+# Double null leg constraints attempt
+
+
+# x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70]) + 7.5
+# z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71]) + 0.9
+# x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60]) + 7.5
+# z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34]) + 0.9
+
+x_lfs = np.array([9.8, 9.9, 10.0, 10.1, 10.2, 10.3, 10.4, 10.5]) - 0.5
+z_lfs = np.array([5.2, 5.4, 5.6, 5.8, 6.0, 6.2, 6.4, 6.8]) + 0.5
+x_hfs = np.array([6, 6.25, 6.5, 6.75, 7.0, 7.25, 7.5, 7.75]) + 0.5
+z_hfs = np.array([6.6, 6.4, 6.2, 6.0, 5.8, 5.6, 5.5, 5.3]) + 0.5
+
+x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
+z_legs = np.concatenate([z_lfs, -z_lfs, -z_hfs, z_hfs])
+
+double_null_legs_isoflux = IsofluxConstraint(
+    x_legs,
+    z_legs,
+    ref_x=x_bdry[arg_inner],
+    ref_z=z_bdry[arg_inner],
+    constraint_value=0.1,
+    tolerance=15,
+)
+# f, ax = plt.subplots()
+# eq.plot(ax=ax)
+# double_null_legs_isoflux.plot(ax=ax)
 
 # TODO tidy up and play around with leg constraints, try reproducing first image from
 # diagram in teams, can look at some eudemo divertor papers to see proposed shapes
 # for single nulls
 # %%
-constraints = [th_constraint, th_constraint_inverted, isoflux]
+constraints = [th_constraint, th_constraint_inverted, isoflux_SN_keep_legs_same]
 
 th_current_opt_eq = deepcopy(eq)
 
 current_opt_problem = TikhonovCurrentCOP(
     th_current_opt_eq.coilset,
     th_current_opt_eq,
-    targets=MagneticConstraintSet([isoflux]),
+    targets=MagneticConstraintSet([isoflux_SN_keep_legs_same]),
     gamma=0.0,
     opt_algorithm="COBYLA",
     opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6},
@@ -343,16 +385,40 @@ program = PicardIterator(
     th_current_opt_eq,
     current_opt_problem,
     fixed_coils=True,
-    convergence=DudsonConvergence(1e-3),
+    convergence=DudsonConvergence(1e-5),
     relaxation=0.1,
-    plot=True,
+    plot=False,
+    maxiter=200,
 )
 program()
+# _ = current_opt_problem.optimise()
+# th_current_opt_eq.solve()
+
 
 # %%
 f, ax = plt.subplots()
 th_current_opt_eq.plot(ax=ax)
-isoflux.plot(ax=ax)
+isoflux_SN_keep_legs_same.plot(ax=ax)
 th_current_opt_eq.coilset.plot(ax=ax)
+
+# %%
+# Plot the two approches
+f, (ax_1, ax_2) = plt.subplots(1, 2)
+
+eq.plot(ax=ax_1)
+isoflux_SN_keep_legs_same.plot(ax=ax_1)
+ax_1.set_title("Starting Equilibrium")
+
+th_current_opt_eq.plot(ax=ax_2)
+isoflux_SN_keep_legs_same.plot(ax=ax_2)
+ax_2.set_title("TH")
+plt.show()
+
+# %%
+# th_current_opt_eq.solve()
+# f, ax = plt.subplots()
+# th_current_opt_eq.plot(ax=ax)
+# legs_isoflux.plot(ax=ax)
+# th_current_opt_eq.coilset.plot(ax=ax)
 
 # %%
