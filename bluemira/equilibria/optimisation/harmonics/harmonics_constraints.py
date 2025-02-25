@@ -308,7 +308,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> HarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = HarmonicConstraintFunction(**self._args)
+        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
