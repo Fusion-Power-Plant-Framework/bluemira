@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from copy import deepcopy
 from dataclasses import dataclass
 from itertools import cycle
 from pathlib import Path
@@ -30,7 +31,6 @@ from bluemira.equilibria.diagnostics import (
     EqDiagnosticOptions,
     FixedOrFree,
     FluxSurfaceType,
-    NamedEq,
 )
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, find_flux_surfs
@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.flux_surfaces import CoreResults
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
+    from bluemira.equilibria.physics import EqSummary
 
 
 # Functions used in different toolboxes ###
@@ -438,59 +439,54 @@ class EqAnalysis:
 
     def __init__(
         self,
-        input_eq: Equilibrium | FixedPlasmaEquilibrium | NamedEq | None = None,
-        reference_eq: Equilibrium | FixedPlasmaEquilibrium | NamedEq | None = None,
+        input_eq: Equilibrium | FixedPlasmaEquilibrium | None = None,
+        reference_eq: Equilibrium | FixedPlasmaEquilibrium | None = None,
         diag_ops: EqDiagnosticOptions | None = None,
     ):
-        if isinstance(input_eq, NamedEq) or input_eq is None:
-            self.input = input_eq
-        else:
-            self.input = NamedEq(eq=input_eq, name="Input")
-        if isinstance(reference_eq, NamedEq) or reference_eq is None:
-            self.reference = reference_eq
-        else:
-            self.reference = NamedEq(eq=reference_eq, name="Reference")
+        self.input = input_eq
+        self.reference = reference_eq
         if diag_ops is None:
             diag_ops = EqDiagnosticOptions()
         self.diag_ops = diag_ops
 
-    def plot(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input", ax=None
-    ):
+    def set_input(self, input_eq: Equilibrium | FixedPlasmaEquilibrium):
+        """Sets input equilibrium."""
+        self.input = input_eq
+
+    def set_reference(self, reference_eq: Equilibrium | FixedPlasmaEquilibrium):
+        """Sets reference equilibrium."""
+        self.reference = reference_eq
+
+    def _get_input(self):
+        try:
+            return self.input
+        except AttributeError:
+            raise AttributeError("Input equilibrium is not set.") from None
+
+    def _get_reference(self):
+        try:
+            return self.reference
+        except AttributeError:
+            raise AttributeError("Reference equilibrium is not set.") from None
+
+    def plot(self, ax=None):
         """
         Plot input equilibria.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
         ax:
             Matplotlib Axes object
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        plotter = self.input.eq.plot(ax=ax)
-        plotter.ax.set_title(self.input.name)
+        eq = self._get_input()
+        plotter = eq.plot(ax=ax)
+        plotter.ax.set_title(eq.label)
         plt.show()
         return plotter.ax
 
-    def plot_field(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input", ax=None
-    ):
+    def plot_field(self, ax=None):
         """
         Plot poloidal and toroidal field for input equilibria.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Raises
         ------
@@ -502,8 +498,7 @@ class EqAnalysis:
         ax:
             Matplotlib Axes object
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
+        eq = self._get_input()
         n_ax = 2
         if ax is not None:
             if len(ax) != n_ax:
@@ -521,54 +516,35 @@ class EqAnalysis:
         ax[1].set_ylabel("$z$ [m]")
         ax[1].set_title("Toroidal")
         ax[1].set_aspect("equal")
-        plt.suptitle(self.input.name)
+        plt.suptitle(eq.label)
 
         EquilibriumPlotter(
-            self.input.eq, ax=ax[0], plasma=False, show_ox=True, field=EqBPlotParam.BP
+            eq, ax=ax[0], plasma=False, show_ox=True, field=EqBPlotParam.BP
         )
         EquilibriumPlotter(
-            self.input.eq, ax=ax[1], plasma=False, show_ox=True, field=EqBPlotParam.BT
+            eq, ax=ax[1], plasma=False, show_ox=True, field=EqBPlotParam.BT
         )
         return ax
 
-    def plot_profiles(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input", ax=None
-    ):
+    def plot_profiles(self, ax=None):
         """
         Plot profiles for input equilibria.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
         ax:
             Matplotlib Axes object
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        plotter = self.input.eq.profiles.plot(ax=ax)
-        plotter.ax.set_title(self.input.name)
+        eq = self._get_input()
+        plotter = eq.profiles.plot(ax=ax)
+        plotter.ax.set_title(eq.label)
         plt.show()
         return plotter.ax
 
-    def plot_eq_core_analysis(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input", ax=None
-    ) -> CoreResults:
+    def plot_eq_core_analysis(self, ax=None) -> CoreResults:
         """
         Plot characteristics of the plasma core for input equilibria and return results.
         Currently only works for free boundary equilibria.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
@@ -582,29 +558,19 @@ class EqAnalysis:
         BluemiraError
             If the equilibrium is fixed boundary.
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if isinstance(self.input.eq, FixedPlasmaEquilibrium):
+        eq = self._get_input()
+        if isinstance(eq, FixedPlasmaEquilibrium):
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
-        core_results, ax = self.input.eq.analyse_core(ax=ax)
-        plt.suptitle(self.input.name)
+        core_results, ax = eq.analyse_core(ax=ax)
+        plt.suptitle(eq.label)
         return core_results, ax
 
-    def plot_eq_core_mag_axis(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input", ax=None
-    ):
+    def plot_eq_core_mag_axis(self, ax=None):
         """
         Plot a 1-D section through the magnetic axis of the input equilibria.
         Currently only works for free boundary equilibria.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
@@ -616,30 +582,20 @@ class EqAnalysis:
         BluemiraError
             If the equilibrium is fixed boundary.
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if isinstance(self.input.eq, FixedPlasmaEquilibrium):
+        eq = self._get_input()
+        if isinstance(eq, FixedPlasmaEquilibrium):
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
-        plotter = self.input.eq.plot_core(ax=ax)
-        plt.suptitle(self.input.name)
+        plotter = eq.plot_core(ax=ax)
+        plt.suptitle(eq.label)
         return plotter.ax
 
-    def physics_info_table(
-        self, input_eq: Equilibrium | None = None, input_eq_name: str = "Input"
-    ):
+    def physics_info_table(self) -> EqSummary:
         """
         Create a table with the physics information
         from the input equilibria.
         Not for use with FixedPlasmaEquilibrium.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
@@ -652,22 +608,16 @@ class EqAnalysis:
             If the equilibrium is fixed boundary.
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if isinstance(self.input.eq, FixedPlasmaEquilibrium):
+        eq = self._get_input()
+        if isinstance(eq, FixedPlasmaEquilibrium):
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
-        eq_summary = self.input.eq.analyse_plasma()
-        print(make_table(eq_summary, self.input.name))  # noqa: T201
+        eq_summary = eq.analyse_plasma()
+        print(make_table(eq_summary, eq.label))  # noqa: T201
         return eq_summary
 
-    def control_coil_table(
-        self,
-        input_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
-        control: list | None = None,
-    ):
+    def control_coil_table(self, control: list | None = None):
         """
         Create a table with the control coil information
         from the input equilibria.
@@ -675,10 +625,8 @@ class EqAnalysis:
 
         Parameters
         ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
+        control:
+            Set the control coils with a coil type or list of coil names.
 
         Returns
         -------
@@ -691,37 +639,25 @@ class EqAnalysis:
             If the equilibrium is fixed boundary.
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if isinstance(self.input.eq, FixedPlasmaEquilibrium):
+        eq = deepcopy(self._get_input())
+        if isinstance(eq, FixedPlasmaEquilibrium):
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
         if isinstance(control, list):
-            self.input.eq.coilset.control = control
+            eq.coilset.control = control
         if isinstance(control, CoilType):
-            self.input.eq.coilset.control = self.input.eq.coilset.get_coiltype(
-                control
-            ).name
-        table, _fz_c_stot, _fsep = self.input.eq.analyse_coils()
+            eq.coilset.control = eq.coilset.get_coiltype(control).name
+        table, _fz_c_stot, _fsep = eq.analyse_coils()
         return table
 
     def plot_equilibria_with_profiles(
         self,
-        input_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
         ax=None,
         show=True,  # noqa: FBT002
     ):
         """
         Plot input equilibria alongside profiles.
-
-        Parameters
-        ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
 
         Parameters
         ----------
@@ -743,8 +679,7 @@ class EqAnalysis:
             if the wrong number of axes is provided
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
+        eq = self._get_input()
         n_ax = 2
         if ax is not None:
             if len(ax) != n_ax:
@@ -755,25 +690,21 @@ class EqAnalysis:
         else:
             _, (ax1, ax2) = plt.subplots(1, 2)
 
-        self.input.eq.plot(ax=ax1)
+        eq.plot(ax=ax1)
         ax1.set_title(
-            f"R_0 = {self.input.eq.profiles.R_0} m \n "
-            f"B_0 = {self.input.eq.profiles._B_0} T \n "
-            f"I_p = {self.input.eq.profiles.I_p / 1e6:.2f} MA \n"
+            f"R_0 = {eq.profiles.R_0} m \n "
+            f"B_0 = {eq.profiles._B_0} T \n "
+            f"I_p = {eq.profiles.I_p / 1e6:.2f} MA \n"
         )
-        self.input.eq.profiles.plot(ax=ax2)
+        eq.profiles.plot(ax=ax2)
         ax2.set_title("Profiles")
-        plt.suptitle(self.input.name)
+        plt.suptitle(eq.label)
         if show:
             plt.show()
         return ax1, ax2
 
     def plot_compare_separatrix(
         self,
-        input_eq: Equilibrium | None = None,
-        reference_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
-        ref_eq_name: str = "Reference",
         title=None,
         ax=None,
         show=True,  # noqa: FBT002
@@ -784,14 +715,6 @@ class EqAnalysis:
 
         Parameters
         ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
-        reference_eq:
-            Reference equilibrium (will set or reset object used in EqAnalysis)
-        ref_eq_name:
-            Reverence equilibrium name (will set or reset object used in EqAnalysis)
         title:
             Title to be added at top of figure
         ax:
@@ -807,29 +730,23 @@ class EqAnalysis:
             Matplotlib Axes object
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if reference_eq is not None:
-            self.reference = NamedEq(eq=reference_eq, name=ref_eq_name)
+        eq = self._get_input()
+        ref = self._get_reference()
         if ax is None:
             _, ax = plt.subplots()
 
-        eq_fs = (
-            self.input.eq.get_separatrix()
-            if isinstance(self.input.eq, Equilibrium)
-            else self.input.eq.get_LCFS()
-        )
+        eq_fs = eq.get_separatrix() if isinstance(eq, Equilibrium) else eq.get_LCFS()
 
-        if isinstance(self.reference.eq, Equilibrium):
-            ref_eq_fs = self.reference.eq.get_separatrix()
+        if isinstance(ref, Equilibrium):
+            ref_eq_fs = ref.get_separatrix()
         else:
-            ref_eq_fs = self.reference.eq.get_LCFS()
+            ref_eq_fs = ref.get_LCFS()
 
         if isinstance(eq_fs, list):
-            ax.plot(eq_fs[0].x, eq_fs[0].z, color="red", label=self.input.name)
+            ax.plot(eq_fs[0].x, eq_fs[0].z, color="red", label=eq.label)
             ax.plot(eq_fs[1].x, eq_fs[1].z, color="red")
         else:
-            ax.plot(eq_fs.x, eq_fs.z, color="red", label=self.input.name)
+            ax.plot(eq_fs.x, eq_fs.z, color="red", label=eq.label)
 
         if isinstance(ref_eq_fs, list):
             ax.plot(
@@ -837,7 +754,7 @@ class EqAnalysis:
                 ref_eq_fs[0].z,
                 color="blue",
                 linestyle="--",
-                label=self.reference.name,
+                label=ref.label,
             )
             ax.plot(ref_eq_fs[1].x, ref_eq_fs[1].z, color="blue", linestyle="--")
         else:
@@ -846,7 +763,7 @@ class EqAnalysis:
                 ref_eq_fs.z,
                 color="blue",
                 linestyle="--",
-                label=self.reference.name,
+                label=ref.label,
             )
 
         ax.legend(loc="best")
@@ -862,10 +779,6 @@ class EqAnalysis:
 
     def plot_compare_psi(
         self,
-        input_eq: Equilibrium | None = None,
-        reference_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
-        ref_eq_name: str = "Reference",
         diag_ops: EqDiagnosticOptions | None = None,
         ax=None,
     ):
@@ -874,14 +787,6 @@ class EqAnalysis:
 
         Parameters
         ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
-        reference_eq:
-            Reference equilibrium (will set or reset object used in EqAnalysis)
-        ref_eq_name:
-            Reverence equilibrium name (will set or reset object used in EqAnalysis)
         diag_ops:
             Diagnostic plotting options
         ax:
@@ -898,28 +803,19 @@ class EqAnalysis:
             plotting class
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if reference_eq is not None:
-            self.reference = NamedEq(eq=reference_eq, name=ref_eq_name)
-        if self.reference is None:
-            raise BluemiraError("Please provide a reference Equilibrium object ")
+        eq = self._get_input()
+        ref = self._get_reference()
         if diag_ops is not None:
             self.diag_ops = diag_ops
         return EquilibriumComparisonPostOptPlotter(
-            equilibrium=self.input.eq,
-            reference_equilibrium=self.reference,
+            equilibrium=eq,
+            reference_equilibrium=ref,
             diag_ops=self.diag_ops,
-            eq_name=self.input.name,
             ax=ax,
         ).plot_compare_psi()
 
     def plot_compare_profiles(
         self,
-        input_eq: Equilibrium | None = None,
-        reference_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
-        ref_eq_name: str = "Reference",
         reference_profile_sign=None,
         ax=None,
         diff=True,  # noqa: FBT002
@@ -930,14 +826,6 @@ class EqAnalysis:
 
         Parameters
         ----------
-        input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
-        reference_eq:
-            Reference equilibrium (will set or reset object used in EqAnalysis)
-        ref_eq_name:
-            Reverence equilibrium name (will set or reset object used in EqAnalysis)
         reference_profile_sign:
             To be used with the diff option if the profile convention of the compared
             equilibria is different.
@@ -959,12 +847,8 @@ class EqAnalysis:
         ValueError
             if the profile sign array provided is an incorrect length
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if reference_eq is not None:
-            self.reference = NamedEq(eq=reference_eq, name=ref_eq_name)
-        if self.reference is None:
-            raise BluemiraError("Please provide a reference Equilibrium object.")
+        eq = self._get_input()
+        ref = self._get_reference()
 
         n_prof = 5
         if reference_profile_sign is None:
@@ -985,18 +869,18 @@ class EqAnalysis:
             _, ax = plt.subplots(2, 3)
 
         ref_profs = [
-            self.reference.eq.profiles.pprime,
-            self.reference.eq.profiles.ffprime,
-            self.reference.eq.profiles.fRBpol,
-            self.reference.eq.profiles.pressure,
-            self.reference.eq.profiles.shape,
+            ref.profiles.pprime,
+            ref.profiles.ffprime,
+            ref.profiles.fRBpol,
+            ref.profiles.pressure,
+            ref.profiles.shape,
         ]
         profs = [
-            self.input.eq.profiles.pprime,
-            self.input.eq.profiles.ffprime,
-            self.input.eq.profiles.fRBpol,
-            self.input.eq.profiles.pressure,
-            self.input.eq.profiles.shape,
+            eq.profiles.pprime,
+            eq.profiles.ffprime,
+            eq.profiles.fRBpol,
+            eq.profiles.pressure,
+            eq.profiles.shape,
         ]
         ax_titles = ["pprime", "ffprime", "fRBpol", "pressure [Pa]", "shape"]
         axes = [ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1], ax[0, 2]]
@@ -1006,14 +890,14 @@ class EqAnalysis:
         for ref_prof, prof, sign, axs, a_title in zip(
             ref_profs, profs, reference_profile_sign, axes, ax_titles, strict=False
         ):
-            axs.plot(x, sign * ref_prof(x), marker=".", label=self.reference.name)
-            axs.plot(x, prof(x), marker=".", label=self.input.name)
+            axs.plot(x, sign * ref_prof(x), marker=".", label=ref.label)
+            axs.plot(x, prof(x), marker=".", label=eq.label)
             if diff:
                 axs.plot(
                     x,
                     sign * ref_prof(x) - prof(x),
                     marker=".",
-                    label=self.reference.name + " - " + self.input.name,
+                    label=ref.label + " - " + eq.label,
                 )
             axs.set_title(a_title)
             axs.legend(loc="best")
@@ -1027,14 +911,11 @@ class EqAnalysis:
         self,
         target: str,
         target_coords: Coordinates,
+        use_reference=True,  # noqa: FBT002
         n_layers=10,
         vertical=False,  # noqa: FBT002
         ax=None,
         show=True,  # noqa: FBT002
-        input_eq: Equilibrium | None = None,
-        reference_eq: Equilibrium | None = None,
-        input_eq_name: str = "Input",
-        ref_eq_name: str = "Reference",
     ):
         """
         Plot the divertor leg flux. Will find flux suraces at evenely spaced points
@@ -1047,6 +928,8 @@ class EqAnalysis:
             lower_outer, lower_inner, upper_outer or upper_inner
         target_coords:
             Corrinates of divertor target
+        use_reference:
+            Plot reference as well as input
         n_layers:
             Number of flux surfaces to extract for each leg
         vertical:
@@ -1057,14 +940,6 @@ class EqAnalysis:
             Matplotlib Axes objects set by user
         show:
             Whether or not to display the plot
-                input_eq:
-            Input equilibrium (will set or reset object used in EqAnalysis)
-        input_eq_name:
-            Input equilibrium name (will set or reset object used in EqAnalysis)
-        reference_eq:
-            Reference equilibrium (will set or reset object used in EqAnalysis)
-        ref_eq_name:
-            Reverence equilibrium name (will set or reset object used in EqAnalysis)
 
         Returns
         -------
@@ -1072,16 +947,13 @@ class EqAnalysis:
             Matplotlib Axes object
 
         """
-        if input_eq is not None:
-            self.input = NamedEq(eq=input_eq, name=input_eq_name)
-        if reference_eq is not None:
-            self.reference = NamedEq(eq=reference_eq, name=ref_eq_name)
         if ax is None:
             _, ax = plt.subplots()
 
-        if self.reference is not None:
+        if use_reference:
+            ref = self._get_reference()
             ref_target_flux = get_target_flux(
-                self.reference.eq, target, target_coords, n_layers, vertical
+                ref, target, target_coords, n_layers, vertical
             )
 
             if isinstance(ref_target_flux, list):
@@ -1092,7 +964,7 @@ class EqAnalysis:
                             ref_target_flux[i].z,
                             color="blue",
                             linestyle="--",
-                            label=self.reference.name + " LCFS",
+                            label=ref.label + " LCFS",
                         )
                     else:
                         ax.plot(
@@ -1107,12 +979,12 @@ class EqAnalysis:
                     ref_target_flux.z,
                     color="blue",
                     linestyle="--",
-                    label=self.reference.name + " LCFS",
+                    label=ref.label + " LCFS",
                 )
 
-        target_flux = get_target_flux(
-            self.input.eq, target, target_coords, n_layers, vertical
-        )
+        eq = self._get_input()
+
+        target_flux = get_target_flux(eq, target, target_coords, n_layers, vertical)
 
         if isinstance(target_flux, list):
             for i in np.arange(len(target_flux)):
@@ -1121,7 +993,7 @@ class EqAnalysis:
                         target_flux[i].x,
                         target_flux[i].z,
                         color="red",
-                        label=self.input.name + " LCFS",
+                        label=eq.label + " LCFS",
                     )
                 else:
                     ax.plot(target_flux[i].x, target_flux[i].z, color="red")
@@ -1130,7 +1002,7 @@ class EqAnalysis:
                 target_flux.x,
                 target_flux.z,
                 color="red",
-                label=self.input.name + " LCFS",
+                label=eq.label + " LCFS",
             )
         else:
             bluemira_warn("No flux found crossing target coordinates.")
@@ -1255,18 +1127,11 @@ class MultiEqAnalysis:
         for profile in self.profiles:
             self.plotting_profiles.add_profile(profile, n_points)
 
-    def physics_info_table(self, equilibria_dict: dict | None = None):
+    def physics_info_table(self):
         """
         Create a table with the the physics information
         from all listed Equilbria.
         Not for use with FixedPlasmaEquilibrium.
-
-        Parameters
-        ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
 
         Returns
         -------
@@ -1274,8 +1139,6 @@ class MultiEqAnalysis:
             Table with equilibria physics information.
 
         """
-        if equilibria_dict is not None:
-            self.set_equilibria(equilibria_dict)
         eq_summaries = self.make_eq_dataclass_list(Equilibrium.analyse_plasma)
         table = make_table(eq_summaries, self.equilibria_dict.keys())
         print(table)  # noqa: T201
@@ -1283,7 +1146,6 @@ class MultiEqAnalysis:
 
     def plot_core_physics(
         self,
-        equilibria_dict: dict | None = None,
         title="Physics Parmeters",
         n_points: int = 50,
         ax=None,
@@ -1293,12 +1155,6 @@ class MultiEqAnalysis:
         Plot physics parameters for the core plasma of each equilibria
         (i.e., plot across the normalised 1-D flux coordinate).
 
-        Parameters
-        ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
         title:
             Title to be added at top of figure
         n_points:
@@ -1316,8 +1172,6 @@ class MultiEqAnalysis:
             Matplotlib Axes object
 
         """
-        if equilibria_dict is not None:
-            self.set_equilibria(equilibria_dict)
         core_results = self.make_eq_dataclass_list(analyse_plasma_core, n_points)
 
         if ax is None:
@@ -1333,9 +1187,7 @@ class MultiEqAnalysis:
             plt.show()
         return core_results, ax
 
-    def coilset_info_table(
-        self, equilibria_dict: dict | None = None, value_type=CSData.CURRENT
-    ):
+    def coilset_info_table(self, value_type=CSData.CURRENT):
         """
         Create a table with the the control coil information
         from all listed Equilbria.
@@ -1356,8 +1208,6 @@ class MultiEqAnalysis:
             table with equilibria control coil information.
 
         """
-        if equilibria_dict is not None:
-            self.set_equilibria(equilibria_dict)
         n_cc = [
             len(eq.coilset.get_control_coils().name)
             for eq in self.equilibria
@@ -1389,7 +1239,6 @@ class MultiEqAnalysis:
 
     def plot_compare_profiles(
         self,
-        equilibria_dict: dict | None = None,
         ax=None,
         header=None,
         n_points=None,
@@ -1399,10 +1248,6 @@ class MultiEqAnalysis:
 
         Parameters
         ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
         ax:
             List of Matplotlib Axes objects set by user
         header:
@@ -1423,10 +1268,7 @@ class MultiEqAnalysis:
             if the axes provided are the incorrect shape
 
         """
-        set_n, set_eq = (n_points is not None), (equilibria_dict is not None)
-        if set_n and set_eq:
-            self.set_equilibria(equilibria_dict, n_points)
-        elif set_n and not set_eq:
+        if n_points is not None:
             self.fill_plotting_profiles(n_points)
 
         x = np.linspace(0, 1, n_points or 50)
@@ -1465,7 +1307,6 @@ class MultiEqAnalysis:
 
     def plot_compare_flux_surfaces(
         self,
-        equilibria_dict: dict | None = None,
         flux_surface=FluxSurfaceType.LCFS,
         plot_fixed=True,  # noqa: FBT002
         psi_norm=0.98,
@@ -1508,9 +1349,6 @@ class MultiEqAnalysis:
             Matplotlib Axes object
 
         """
-        if equilibria_dict is not None:
-            self.set_equilibria(equilibria_dict)
-
         if ax is None:
             _, ax = plt.subplots()
 
@@ -1557,7 +1395,6 @@ class MultiEqAnalysis:
 
     def plot_divertor_length_angle(
         self,
-        equilibria_dict: dict | None = None,
         n_layers=10,
         dx_off=0.10,
         plasma_facing_boundary_list=None,
@@ -1572,10 +1409,6 @@ class MultiEqAnalysis:
 
         Parameters
         ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
         n_layers:
             Number of flux surfaces to extract for each leg
         dx_off:
@@ -1598,9 +1431,6 @@ class MultiEqAnalysis:
             Matplotlib Axes object
 
         """
-        if equilibria_dict is not None:
-            self.set_equilibria(equilibria_dict)
-
         lengths, angles = get_leg_flux_info(
             self.equilibria,
             n_layers=n_layers,

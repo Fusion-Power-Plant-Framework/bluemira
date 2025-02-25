@@ -21,7 +21,6 @@ from bluemira.equilibria.diagnostics import (
     EqSubplots,
     FixedOrFree,
     FluxSurfaceType,
-    NamedEq,
     PsiPlotType,
 )
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
@@ -50,8 +49,8 @@ class TestEqAnalysis:
             single_demoish_path, from_cocos=7, fixed_or_free=FixedOrFree.FIXED
         )
         cls.double_demoish_eq = select_eq(double_demoish_path)
-        cls.ref_free = NamedEq(eq=cls.single_demoish_eq, name="free")
-        cls.ref_fixed = NamedEq(eq=cls.single_demoish_eq, name="fixed")
+        cls.ref_free = cls.single_demoish_eq
+        cls.ref_fixed = cls.single_demoish_eq
         cls.diag_ops_1 = EqDiagnosticOptions(
             psi_diff=PsiPlotType.PSI_ABS_DIFF,
             split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,

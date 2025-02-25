@@ -42,7 +42,6 @@ from bluemira.equilibria.diagnostics import (
     EqPlotMask,
     EqSubplots,
     FluxSurfaceType,
-    NamedEq,
     PsiPlotType,
 )
 from bluemira.geometry.coordinates import Coordinates
@@ -78,17 +77,22 @@ from bluemira.geometry.coordinates import Coordinates
 #
 # The function 'select_eq' can be used to load a free-boundary
 # or fixed plasma equilibrium object from a given file path.
+#
+# We will also set the label of each equilibria to a value that is useful for plotting.
 
 # %%
 # MAST-U-like
 masty_path = Path("../../tests/equilibria/test_data/SH_test_file.json")
 masty_eq = select_eq(masty_path)
+masty_eq.label = "MAST"
 # DEMO-like-SN
 single_demoish_path = Path("../../tests/equilibria/test_data/eqref_OOB.json")
 single_demoish_eq = select_eq(single_demoish_path, from_cocos=7)
+single_demoish_eq.label = "DEMO-SN"
 # DEMO-like-DN
 double_demoish_path = Path("../../tests/equilibria/test_data/DN-DEMO_eqref.json")
 double_demoish_eq = select_eq(double_demoish_path)
+double_demoish_eq.label = "DEMO-DN"
 
 # %% [markdown]
 # #### EqAnalysis Part 1
@@ -98,14 +102,10 @@ double_demoish_eq = select_eq(double_demoish_path)
 
 # %%
 # We can create an EqAnalysis object without any inputs.
-eq_analysis_blank = EqAnalysis()
+eq_analysis_double = EqAnalysis()
 
 # Or we can add the input equilibrium we are interested in investigating.
 eq_analysis_single = EqAnalysis(input_eq=single_demoish_eq)
-
-# Or we can create a named input equilibrium dataclass and use that as an input.
-demo_input_eq = NamedEq(eq=double_demoish_eq, name="DEMO DN")
-eq_analysis_double = EqAnalysis(input_eq=demo_input_eq)
 
 # Note: we have not input any diagnostic plotting settings,
 # these will be default values.
@@ -115,22 +115,19 @@ eq_analysis_double = EqAnalysis(input_eq=demo_input_eq)
 ax = eq_analysis_single.plot()
 
 # %%
-# Plot equilibrium.
+# Plot equilibrium - we can input an equilibrium using set_input
+# if we had not already specified its value when
+# creating an EqAnalysis object.
+eq_analysis_double.set_input(double_demoish_eq)
 ax = eq_analysis_double.plot()
 
 # %%
-# Plot equilibrium - we can input an equilibrium for any of the
-# EqAnalysis functions if we had not already specified its value when
-# creating an EqAnalysis object.
-ax = eq_analysis_blank.plot(input_eq=double_demoish_eq)
-
-# %%
 # Plot equilibrium normalised profiles.
-ax = eq_analysis_double.plot_profiles()
+ax = eq_analysis_single.plot_profiles()
 
 # %%
 # Both together - note that the eq we used as an input for plot has been saved.
-ax = eq_analysis_blank.plot_equilibria_with_profiles()
+ax = eq_analysis_double.plot_equilibria_with_profiles()
 
 # %%
 # Plot field components.
@@ -143,7 +140,7 @@ ax = eq_analysis_double.plot_eq_core_mag_axis()
 # %%
 # Plot an assortment of physics parameters for the plamsa core.
 # Note that the dataclass with the results is also output.
-core_results, ax = eq_analysis_double.plot_eq_core_analysis()
+core_results, ax = eq_analysis_single.plot_eq_core_analysis()
 
 # %%
 # Key parameters as a table.
@@ -154,7 +151,7 @@ physics_datclass = eq_analysis_double.physics_info_table()
 # Control coil information in a table.
 # Note that control can be a coil type, list of control coil names,
 # or None if all coils are contol coils.
-table = eq_analysis_double.control_coil_table(control=CoilType.PF)
+table = eq_analysis_single.control_coil_table(control=CoilType.PF)
 
 # %% [markdown]
 # #### EqAnalysis Part 2
@@ -169,8 +166,6 @@ table = eq_analysis_double.control_coil_table(control=CoilType.PF)
 # We will use the single null DEMO-like equilibrium as our reference equilibrium.
 
 # %%
-# Set up a reference eq or our comparisons
-reference_eq = NamedEq(eq=single_demoish_eq, name="DEMO SN")
 # Diagnostic settings for looking at the psi difference
 diag_ops_1 = EqDiagnosticOptions(
     psi_diff=PsiPlotType.PSI_DIFF,
@@ -186,14 +181,16 @@ diag_ops_2 = EqDiagnosticOptions(
     plot_mask=EqPlotMask.IN_REF_LCFS,
 )
 # Here we create our two anaylsis classes
-eq_analysis_1 = EqAnalysis(diag_ops=diag_ops_1, reference_eq=reference_eq)
-eq_analysis_2 = EqAnalysis(diag_ops=diag_ops_2, reference_eq=reference_eq)
+eq_analysis_1 = EqAnalysis(
+    input_eq=double_demoish_eq, diag_ops=diag_ops_1, reference_eq=single_demoish_eq
+)
+eq_analysis_2 = EqAnalysis(
+    input_eq=double_demoish_eq, diag_ops=diag_ops_2, reference_eq=single_demoish_eq
+)
 
 # %%
 # PLot comparison of equilibrium profiles to reference equilibrium profiles
-ax = eq_analysis_1.plot_compare_profiles(
-    input_eq=double_demoish_eq, input_eq_name="DEMO DN"
-)
+ax = eq_analysis_1.plot_compare_profiles()
 
 # %%
 # PLot the equilibrium and reference equilibrium seperatrices
@@ -207,27 +204,29 @@ eq_analysis_1.plot_compare_psi()
 
 # %%
 # What about with a completely different equilibria?
+# Let's set the reference equilibria to be our MAST-U plasma.
 # Notice that in the case of MAST vs DEMO SN,
 # the two equilibria grids do not overlap at all.
-eq_analysis_1.plot_compare_psi(input_eq=masty_eq, input_eq_name="MAST")
+eq_analysis_1.set_reference(masty_eq)
+eq_analysis_1.plot_compare_psi()
 print(
-    "Psi range for input equilibrium = ",
+    "Psi range for reference equilibrium = ",
     np.round(np.min(masty_eq.psi()), 2),
     " to ",
     np.round(np.max(masty_eq.psi()), 2),
 )
 print(
-    "Psi range for reference equilibrium = ",
-    np.round(np.min(single_demoish_eq.psi()), 2),
+    "Psi range for input equilibrium = ",
+    np.round(np.min(double_demoish_eq.psi()), 2),
     " to ",
-    np.round(np.max(single_demoish_eq.psi()), 2),
+    np.round(np.max(double_demoish_eq.psi()), 2),
 )
 
 # %%
-# For eq_analysis_2b we chose to use diag_ops_2, which is absolute psi diff
+# For eq_analysis_2 we chose to use diag_ops_2, which is absolute psi diff
 # for seperate plasma and coilset contruibutions. A mask has also been applied,
 # so that only the values inside the reference LCFS are visable.
-eq_analysis_2.plot_compare_psi(input_eq=double_demoish_eq, input_eq_name="DEMO DN")
+eq_analysis_2.plot_compare_psi()
 
 # %%
 # Plot the leg flux for a given divertor target and compare to reference.
@@ -268,7 +267,9 @@ ax = eq_analysis_2.plot_target_flux(
 # First we create a list of paths to equlibria of interest.
 paths = [masty_path, double_demoish_path, single_demoish_path]
 # Correponding list of names for plt legends etc.
-equilibrium_names = ["MASTy Eq", "DN DEMOish Eq", "SN DEMOish Eq"]
+# If these are not chosen them the equilibria names are set to
+# Eq_1, Eq_2, etc.
+equilibrium_names = ["MAST", "DEMO-DN", "DEMO-SN"]
 # Don't forget to make sure the corrcet cocos value is used
 # if they are not all the same
 from_cocos = [3, 3, 7]
@@ -278,6 +279,14 @@ equilibria_dictionary = select_multi_eqs(
     equilibrium_input=paths,
     equilibrium_names=equilibrium_names,
     from_cocos=from_cocos,
+    control_coils=CoilType.PF,
+)
+# Note: equilibrium_input cam also be a list of equilibrium
+# objects, in which case, fixed_or_free, dummy_coils, from_cocos,
+# to_cocos, and qpsi_positive parameters are not nessisary.
+equilibria_dictionary = select_multi_eqs(
+    equilibrium_input=[masty_eq, double_demoish_eq, single_demoish_eq],
+    equilibrium_names=equilibrium_names,
     control_coils=CoilType.PF,
 )
 # Now create the anaylsis class for multiple equilibria

@@ -19,8 +19,6 @@ from bluemira.base.file import try_get_bluemira_path
 if TYPE_CHECKING:
     from os import PathLike
 
-    from bluemira.equilibria.equilibrium import Equilibrium
-
 
 class GridPlotType(Flag):
     """
@@ -194,14 +192,6 @@ class FluxSurfaceType(Enum):
     LCFS = auto()
     SEPARATRIX = auto()
     PSI_NORM = auto()
-
-
-@dataclass
-class NamedEq:
-    """Equilibrium paired with its name."""
-
-    eq: Equilibrium | None = None
-    name: str = "Default"
 
 
 @dataclass

@@ -780,15 +780,13 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
 
     def __init__(
         self,
-        equilibrium,
-        reference_equilibrium: NamedEq,
+        equilibrium: Equilibrium,
+        reference_equilibrium: Equilibrium | FixedPlasmaEquilibrium,
         diag_ops: EqDiagnosticOptions,
-        eq_name: str = "Input",
         ax=None,
     ):
         self.diag_ops = diag_ops
         self.eq = equilibrium
-        self.eq_name = eq_name
         self.reference = reference_equilibrium
 
         super().__init__(ax, subplots=self.diag_ops.split_psi_plots)
@@ -796,14 +794,14 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         self.total_psi = self.eq.psi()
         self.plasma_psi = self.eq.plasma.psi()
         self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
-        self.ref_total_psi = self.reference.eq.psi()
-        self.ref_plasma_psi = self.reference.eq.plasma.psi()
+        self.ref_total_psi = self.reference.psi()
+        self.ref_plasma_psi = self.reference.plasma.psi()
         if np.allclose(self.ref_total_psi, self.ref_plasma_psi):
             # Fill with zeros if there is no coilset
-            self.ref_coilset_psi = 0.0 * self.reference.eq.grid.x
+            self.ref_coilset_psi = 0.0 * self.reference.grid.x
         else:
-            self.ref_coilset_psi = self.reference.eq.coilset.psi(
-                self.reference.eq.x, self.reference.eq.z
+            self.ref_coilset_psi = self.reference.coilset.psi(
+                self.reference.x, self.reference.z
             )
 
     def plot_reference_LCFS(self, ref_lcfs_label=None):
@@ -811,7 +809,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         Plot the last closed flux surface for the reference equilibria
         """
         try:
-            ref_lcfs = self.reference.eq.get_LCFS()
+            ref_lcfs = self.reference.get_LCFS()
         except (
             EquilibriaError
         ):  # TODO @geograham: - what is most appropriate error class?
@@ -1008,8 +1006,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 zorder=8,
             )
         # Plot current and reference lcfs
-        self.plot_LCFS(lcfs_label=self.eq_name + " LCFS")
-        self.plot_reference_LCFS(ref_lcfs_label=self.reference.name + " LCFS")
+        self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
+        self.plot_reference_LCFS(
+            ref_lcfs_label="Reference " + self.reference.label + " LCFS"
+        )
 
     def plot_psi(self, grid: Grid = None, **kwargs):
         """
@@ -1070,8 +1070,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             self.ax.contour(x, z, self.total_psi, levels=levels, cmap=cmap, zorder=8)
             plt.title("Total psi for input equilibrium")
         # Plot input and reference lcfs
-        self.plot_LCFS(lcfs_label=self.eq_name + " LCFS")
-        self.plot_reference_LCFS(ref_lcfs_label=self.reference.name + " LCFS")
+        self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
+        self.plot_reference_LCFS(
+            ref_lcfs_label="Reference " + self.reference.label + " LCFS"
+        )
 
 
 class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
@@ -1101,28 +1103,28 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
             ax=ax,
         )
 
-        if np.shape(self.eq.grid.x) != np.shape(self.reference.eq.grid.x):
+        if np.shape(self.eq.grid.x) != np.shape(self.reference.grid.x):
             bluemira_warn("Reference psi must have same grid size as input equilibria.")
 
-        if np.min(self.eq.grid.x) != np.min(self.reference.eq.grid.x):
+        if np.min(self.eq.grid.x) != np.min(self.reference.grid.x):
             bluemira_warn(
                 "The minimum value of x is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.min(self.eq.grid.z) != np.min(self.reference.eq.grid.z):
+        if np.min(self.eq.grid.z) != np.min(self.reference.grid.z):
             bluemira_warn(
                 "The minimum value of z is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.max(self.eq.grid.x) != np.max(self.reference.eq.grid.x):
+        if np.max(self.eq.grid.x) != np.max(self.reference.grid.x):
             bluemira_warn(
                 "The maximum value of x is not the same for the reference equilibrium"
                 " and the input equilibrium."
             )
 
-        if np.max(self.eq.grid.z) != np.max(self.reference.eq.grid.z):
+        if np.max(self.eq.grid.z) != np.max(self.reference.grid.z):
             bluemira_warn(
                 "The maximum value of z is not the same for the reference equilibrium"
                 " and the input equilibrium."
@@ -1245,31 +1247,29 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def __init__(
         self,
-        equilibrium,
-        reference_equilibrium: NamedEq,
+        equilibrium: Equilibrium,
+        reference_equilibrium: Equilibrium | FixedPlasmaEquilibrium,
         diag_ops: EqDiagnosticOptions,
         ax=None,
-        eq_name="Input",
     ):
         super().__init__(
             equilibrium=equilibrium,
             reference_equilibrium=reference_equilibrium,
             diag_ops=diag_ops,
-            eq_name=eq_name,
             ax=ax,
         )
 
         # Interpolation:
         if (
-            (self.reference.eq.grid.x_size != self.eq.grid.x_size)
-            or (self.reference.eq.grid.z_size != self.eq.grid.z_size)
-            or (self.reference.eq.grid.dx != self.eq.grid.dx)
-            or (self.reference.eq.grid.dz != self.eq.grid.dz)
+            (self.reference.grid.x_size != self.eq.grid.x_size)
+            or (self.reference.grid.z_size != self.eq.grid.z_size)
+            or (self.reference.grid.dx != self.eq.grid.dx)
+            or (self.reference.grid.dz != self.eq.grid.dz)
         ):
             self.grid = self._make_comparison_grid()
             self._interpolate_psi_for_comparison()
         else:
-            self.grid = self.reference.eq.grid
+            self.grid = self.reference.grid
         self.mask = self._make_lcfs_mask(self.diag_ops.plot_mask)
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
             self._calculate_psi_diff()
@@ -1294,7 +1294,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         :
             new Grid
         """
-        ref_grid, input_grid = self.reference.eq.grid, self.eq.grid
+        ref_grid, input_grid = self.reference.grid, self.eq.grid
         no_overlap_check = (
             (ref_grid.x_max <= input_grid.x_min)
             or (input_grid.x_max <= ref_grid.x_min)
@@ -1341,13 +1341,13 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     def _interpolate_psi_for_comparison(self):
         """Interpolate all psi components over new grid."""
         self.ref_coilset_psi = self.interpolate_psi(
-            self.ref_coilset_psi, self.reference.eq.grid
+            self.ref_coilset_psi, self.reference.grid
         )
         self.ref_plasma_psi = self.interpolate_psi(
-            self.ref_plasma_psi, self.reference.eq.grid
+            self.ref_plasma_psi, self.reference.grid
         )
         self.ref_total_psi = self.interpolate_psi(
-            self.ref_total_psi, self.reference.eq.grid
+            self.ref_total_psi, self.reference.grid
         )
         self.coilset_psi = self.interpolate_psi(self.coilset_psi, self.eq.grid)
         self.plasma_psi = self.interpolate_psi(self.plasma_psi, self.eq.grid)
@@ -1365,7 +1365,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         """
         mask_matx = np.zeros_like(self.grid.x)
         try:
-            ref_lcfs = self.reference.eq.get_LCFS()
+            ref_lcfs = self.reference.get_LCFS()
         except (
             EquilibriaError
         ):  # TODO @geograham: - what is most appropriate error class?
@@ -1468,7 +1468,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             set_ax_for_psi_components(self.ax)
             if self.diag_ops.interpolation_grid is InterpGrid.BOTH:
                 for a in self.ax:
-                    self.reference.eq.grid.plot(
+                    self.reference.grid.plot(
                         ax=a, plot_type=GridPlotType.EDGE, zorder=Zorder.CONSTRAINT.value
                     )
                     self.eq.grid.plot(
@@ -1482,7 +1482,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             self.ax.set_ylabel("$z$ [m]")
             self.ax.set_aspect("equal")
             if self.diag_ops.interpolation_grid is InterpGrid.BOTH:
-                self.reference.eq.grid.plot(
+                self.reference.grid.plot(
                     ax=self.ax,
                     plot_type=GridPlotType.EDGE,
                     zorder=Zorder.CONSTRAINT.value,
