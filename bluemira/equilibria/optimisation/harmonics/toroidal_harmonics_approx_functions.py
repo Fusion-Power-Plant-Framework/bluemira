@@ -419,8 +419,6 @@ def toroidal_harmonic_approximate_psi(
         Matrix of psi values aproximated using TH
 
     """
-    R_0 = th_params.R_0
-    Z_0 = th_params.Z_0
     if max_degree is None:
         max_degree = len(th_params.th_coil_names) - 1
 
@@ -474,7 +472,7 @@ def toroidal_harmonic_approximation(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams | None = None,
     acceptable_fit_metric: float = 0.01,
-    psi_norm: float | None = None,
+    psi_norm: float = 1.0,
     nlevels: int = 50,
     *,
     plot: bool = False,
@@ -538,7 +536,7 @@ def toroidal_harmonic_approximation(
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
     # Get original flux surface from Bluemira for equilibrium
-    original_fs = eq.get_LCFS() if psi_norm is None else eq.get_flux_surface(psi_norm)
+    original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
 
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for TH approximation.")
@@ -603,7 +601,7 @@ def toroidal_harmonic_approximation(
             R_approx,
             Z_approx,
             approx_total_psi,
-            1.0,
+            psi_norm,
             o_points=o_points,
             x_points=x_points,
         )
