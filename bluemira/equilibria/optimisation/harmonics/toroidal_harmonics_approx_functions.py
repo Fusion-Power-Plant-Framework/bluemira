@@ -594,7 +594,7 @@ def toroidal_harmonic_approximation(
         # Find LCFS from TH approx
         approx_eq = deepcopy(eq)
         approx_eq.coilset.control = th_params.th_coil_names
-        o_points, x_points = approx_eq.get_OX_points(approx_total_psi)
+        o_points, x_points = approx_eq.get_OX_points()
 
         # Find flux surface for our TH approximation equilibrium
         f_s = find_flux_surf(
