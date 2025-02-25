@@ -204,11 +204,25 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         opt_conditions: dict[str, float | int] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.coilset = coilset
+        x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
+        stray_field_cons = FieldConstraints(
+            x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
+        )
+        constraints = (
+            [stray_field_cons]
+            if constraints is None
+            else [*constraints, stray_field_cons]
+        )
+        super().__init__(
+            coilset,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters=None,
+            targets=None,
+        )
         self.eq = breakdown
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
         self._args = {
             "c_psi_mat": np.array(
@@ -216,19 +230,6 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             ),
             "scale": self.scale,
         }
-
-        x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
-        stray_field_cons = FieldConstraints(
-            x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
-        )
-        self._constraints = constraints
-        if self._constraints is not None:
-            self._constraints.append(stray_field_cons)
-        else:
-            self._constraints = [stray_field_cons]
-
-        max_currents = np.atleast_1d(max_currents)
-        self.bounds = (-max_currents / self.scale, max_currents / self.scale)
 
     def optimise(self, x0=None, *, fixed_coils=True):
         """
