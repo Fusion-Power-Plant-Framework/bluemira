@@ -45,6 +45,7 @@ class HarmonicConstraintFunction(ConstraintFunction):
         b_vec_sin: np.ndarray,
         value: float,
         scale: float,
+        name: str | None = None,
     ) -> None:
         self.a_mat_cos = a_mat_cos
         self.a_mat_sin = a_mat_sin
@@ -52,6 +53,7 @@ class HarmonicConstraintFunction(ConstraintFunction):
         self.b_vec_sin = b_vec_sin
         self.value = value
         self.scale = scale
+        self.name = name
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""  # noqa: DOC201
