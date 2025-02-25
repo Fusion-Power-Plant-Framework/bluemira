@@ -200,15 +200,22 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         ref_harmonics_cos: npt.NDArray[np.float64],
         ref_harmonics_sin: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
-        tolerance: float,
+        tolerance: float | None = None,
         constraint_type: str = "equality",
         *,
         invert: bool = False,
     ):
         self.constraint_type = constraint_type
-        self.tolerance = tolerance * np.ones(
-            len(ref_harmonics_cos) + len(ref_harmonics_sin)
-        )
+        if isinstance(tolerance, float):
+            self.tolerance = tolerance * np.ones(
+                len(ref_harmonics_cos) + len(ref_harmonics_sin)
+            )
+        else:
+            # self.tolerance = np.append(ref_harmonics_cos, ref_harmonics_sin, axis=0)
+            self.tolerance = 1e-3 * np.append(
+                ref_harmonics_cos, ref_harmonics_sin, axis=0
+            )
+            self.tolerance = np.abs(self.tolerance)
 
         self.target_harmonics_cos = ref_harmonics_cos
         self.target_harmonics_sin = ref_harmonics_sin
