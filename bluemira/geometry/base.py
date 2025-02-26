@@ -190,7 +190,7 @@ class BluemiraGeo(ABC, meshing.Meshable):
         -----
         If your shape is complicated, i.e. contains splines, this method is potentially
         less accurate. Consider using
-        :meth:`~bluemira.geometry.base.get_optimal_bounding_box` instead.
+        :meth:`~bluemira.geometry.base.BluemiraGeo.get_optimal_bounding_box` instead.
         """
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
