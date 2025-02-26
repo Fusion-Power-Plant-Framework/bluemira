@@ -176,7 +176,6 @@ def check_bb_non_interference(tensor_3d: np.ndarray) -> np.ndarray:
     ]).any(axis=0)
 
 
-
 def get_overlaps_arr(exclusivity_matrix) -> np.ndarray:
     """
     Get the indices of the bounding boxes that are overlapping. The overlap matrix is the
@@ -199,6 +198,7 @@ def get_overlaps_arr(exclusivity_matrix) -> np.ndarray:
     duplicates = i >= j
     i, j = i[~duplicates], j[~duplicates]
     return np.array([i, j]).T
+
 
 def scale_points_from_centroid(points, scale_factor):
     """
