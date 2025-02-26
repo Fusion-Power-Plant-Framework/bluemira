@@ -40,6 +40,7 @@ from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
+from bluemira.mesh.moab_meshing import save_cad_to_dagmc_model
 from bluemira.utilities.tools import iterable_to_list
 
 if TYPE_CHECKING:
@@ -1628,7 +1629,7 @@ def save_cad(
     shapes:
         shapes to save
     filename:
-        Full path filename of the STP assembly
+        Full path filename for the CAD file
     cad_format:
         file format to save as
     names:
@@ -1640,14 +1641,23 @@ def save_cad(
         shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
     if names is not None and not isinstance(names, list):
         names = [names]
+    filename = Path(filename).as_posix()
 
-    cadapi.save_cad(
-        [s.shape for s in shapes],
-        Path(filename).as_posix(),
-        cad_format=cad_format,
-        labels=names,
-        **kwargs,
-    )
+    if cad_format == "dagmc":
+        save_cad_to_dagmc_model(
+            shapes,
+            names,
+            filename,
+            faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
+        )
+    else:
+        cadapi.save_cad(
+            [s.shape for s in shapes],
+            filename,
+            cad_format=cad_format,
+            labels=names,
+            **kwargs,
+        )
 
 
 def import_cad(
