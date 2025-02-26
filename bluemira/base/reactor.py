@@ -427,6 +427,7 @@ class Reactor(BaseManager):
     def _component_managers(
         self,
         with_components: ComponentManager | list[ComponentManager] | None = None,
+        without_components: list[ComponentManager] | None = None,
     ) -> list[ComponentManager]:
         """
         Get the component managers for the reactor.
@@ -436,6 +437,9 @@ class Reactor(BaseManager):
         with_components:
             The components to include. Defaults to None, which means
             include all components.
+        without_components:
+            The components to exclude. Defaults to None, which means
+            exclude no components.
 
         Returns
         -------
@@ -457,6 +461,8 @@ class Reactor(BaseManager):
 
         if isinstance(with_components, ComponentManager):
             with_components = [with_components]
+        if isinstance(without_components, ComponentManager):
+            without_components = [without_components]
 
         comp_managers = [
             getattr(self, comp_name)
@@ -465,12 +471,23 @@ class Reactor(BaseManager):
             if issubclass(comp_type, ComponentManager)
             # filter out component managers that are not initialised
             and getattr(self, comp_name, None) is not None
-            # if with_components is set, filter out components not in the list
-            and (with_components is None or getattr(self, comp_name) in with_components)
         ]
+        if with_components:
+            comp_managers = [
+                comp_manager
+                for comp_manager in comp_managers
+                if comp_manager in with_components
+            ]
+        elif without_components:
+            comp_managers = [
+                comp_manager
+                for comp_manager in comp_managers
+                if comp_manager not in without_components
+            ]
         if not comp_managers:
             raise ComponentError(
-                "The reactor has no components defined or instantiated."
+                "The reactor has no components defined, instantiated "
+                "or they've all been filtered."
             )
         return comp_managers
 
@@ -482,7 +499,11 @@ class Reactor(BaseManager):
         for_save: bool = False,
     ) -> Component:
         reactor_component = Component(self.name)
-        for comp_manager in track(self._component_managers(cp_values.with_components)):
+        for comp_manager in track(
+            self._component_managers(
+                cp_values.with_components, cp_values.without_components
+            )
+        ):
             if dim:
                 if for_save:
                     comp = comp_manager._build_save_cad_component(dim, cp_values)
