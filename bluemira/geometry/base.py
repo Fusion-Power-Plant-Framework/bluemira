@@ -188,8 +188,9 @@ class BluemiraGeo(ABC, meshing.Meshable):
 
         Notes
         -----
-        If your shape is complicated, this has the potential to not be very accurate.
-        Consider using :meth:`~bluemira.geometry.base.get_optimal_bounding_box`.
+        If your shape is complicated, i.e. contains splines, this method is potentially
+        less accurate. Consider using
+        :meth:`~bluemira.geometry.base.get_optimal_bounding_box` instead.
         """
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
@@ -197,7 +198,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
     def get_optimal_bounding_box(self) -> BoundingBox:
         """
         Get the optimised bounding box of the shape, via freecad's optimalBoundingBox
-        method. This is a more
+        method. This is a more accurate method than bounding box, but takes slightly
+        longer.
 
         Parameters
         ----------
@@ -210,17 +212,10 @@ class BluemiraGeo(ABC, meshing.Meshable):
         :
             The optimised bounding box of the shape.
         """
-        bound = self.shape.optimalBoundingBox(
-            # default: useTriangulation = True, useShapeTolerance = False
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.optimal_bounding_box(
+            self.shape
         )
-        return BoundingBox(
-            bound.XMin,
-            bound.XMax,
-            bound.YMin,
-            bound.YMax,
-            bound.ZMin,
-            bound.ZMax,
-        )
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self) -> bool:
         """
