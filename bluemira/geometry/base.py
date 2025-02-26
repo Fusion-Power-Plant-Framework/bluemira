@@ -194,10 +194,10 @@ class BluemiraGeo(ABC, meshing.Meshable):
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
-    def get_optimal_bounding_box(self, tolerance: float = 1.0) -> BoundingBox:
+    def get_optimal_bounding_box(self) -> BoundingBox:
         """
-        Get the optimised bounding box of the shape, via tesselation of the underlying
-        geometry.
+        Get the optimised bounding box of the shape, via freecad's optimalBoundingBox
+        method. This is a more
 
         Parameters
         ----------
@@ -210,9 +210,17 @@ class BluemiraGeo(ABC, meshing.Meshable):
         :
             The optimised bounding box of the shape.
         """
-        auto_copy = self.deepcopy()
-        auto_copy._tessellate(tolerance)
-        return auto_copy.bounding_box
+        bound = self.shape.optimalBoundingBox(
+            # default: useTriangulation = True, useShapeTolerance = False
+        )
+        return BoundingBox(
+            bound.XMin,
+            bound.XMax,
+            bound.YMin,
+            bound.YMax,
+            bound.ZMin,
+            bound.ZMax,
+        )
 
     def is_null(self) -> bool:
         """
