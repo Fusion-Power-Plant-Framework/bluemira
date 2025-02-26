@@ -63,13 +63,13 @@ class TestHardBoundingBox:
         assert np.isclose(self.wire.bounding_box.z_min, -5.0)
 
     def test_opt_bounding_box(self):
-        bb = self.wire.get_optimal_bounding_box()
+        bb = self.wire.optimal_bounding_box
         assert np.isclose(bb.z_min, -5.0)
 
     def test_opt_bounding_box_solid(self):
         solid = self.solid.deepcopy()
         vertices, indices = solid._tessellate(1.0)
-        bb = self.solid.get_optimal_bounding_box()
+        bb = self.solid.optimal_bounding_box
         vertices2, indices2 = solid._tessellate(1.0)
         assert np.isclose(bb.z_min, -5.0)
         # Test that bounding box via tesselation did not modify properties
