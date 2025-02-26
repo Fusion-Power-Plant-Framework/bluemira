@@ -199,8 +199,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
     def optimal_bounding_box(self) -> BoundingBox:
         """
         Get the optimised bounding box of the shape, via freecad's optimalBoundingBox
-        method. This is a more accurate method than bounding box, but takes slightly
-        longer.
+        method. This is a more accurate method than bounding box, but takes about 10x
+        longer (e.g., one PolySpline took 230 μs instead of 13 μs).
 
         Parameters
         ----------
