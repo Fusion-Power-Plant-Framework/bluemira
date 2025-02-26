@@ -82,7 +82,10 @@ def check_two_sets_bb_non_interference(
     ----------
     set_a_3d_tensor:
         An array of 2D arrays (each with shape = (3,2)), each row of the 2D array is
-        the x, y, z bounds (min, max) for that cell.
+        the x, y, z bounds (min, max) for that set A cell.
+    set_b_3d_tensor:
+        An array of 2D arrays (each with shape = (3,2)), each row of the 2D array is
+        the x, y, z bounds (min, max) for that set B cell.
 
     Returns
     -------
