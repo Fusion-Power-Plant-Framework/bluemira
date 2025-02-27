@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import copy
 from pathlib import Path
-from typing import ClassVar
 from unittest import mock
 
 import numpy as np
@@ -65,19 +64,6 @@ class TestTeardown:
         Tested for a value with units.
         """
 
-        class MFile:
-            data: ClassVar = {"enbeam": {"var_mod": "some info", "scan01": 1234}}
-
-        class MFW(_MFileWrapper):
-            # Overwrite some methods because data doesnt exist in 'mfile'
-
-            def __init__(self, path, name):  # noqa: ARG002
-                self.mfile = MFile()
-                self._name = name
-
-            def _derive_radial_build_params(self, data):  # noqa: ARG002
-                return {}
-
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
 
         # Less Warnings
@@ -88,9 +74,9 @@ class TestTeardown:
 
         # Test
         with (
-            mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=MFW),
+            mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=utils.mfw()),
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
-            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"enbeam": None}),
+            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"beam_energy": None}),
         ):
             teardown.read()
 
@@ -183,7 +169,11 @@ class TestTeardown:
     def test_obsolete_vars_with_multiple_new_names_all_have_mappings(self):
         def fake_uov(param: str):
             if param == "thshield":
-                return ["thshield_ib", "thshield_ob", "thshield_vb"]
+                return [
+                    "dr_shld_thermal_inboard",
+                    "dr_shld_thermal_outboard",
+                    "thshield_vb",
+                ]
             return param
 
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
@@ -193,13 +183,17 @@ class TestTeardown:
         ):
             teardown.read()
 
-        outputs = teardown.get_raw_outputs(["thshield_ib", "thshield_ob", "thshield_vb"])
+        outputs = teardown.get_raw_outputs([
+            "dr_shld_thermal_inboard",
+            "dr_shld_thermal_outboard",
+            "thshield_vb",
+        ])
         # value from the 'thshield' param in ./test_data/mfile_data.json
         assert outputs == [0.05, 0.05, 0.05]
 
     def test_CodesError_if_process_parameter_missing_from_radial_build_calculation(self):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
-        del self.mfile_mock.data["bore"]
+        del self.mfile_mock.data["dr_bore"]
 
         with (
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
@@ -207,4 +201,4 @@ class TestTeardown:
         ):
             teardown.read()
 
-        assert "bore" in str(exc)
+        assert "dr_bore" in str(exc)

@@ -89,14 +89,14 @@ template_builder.add_variable("beta", 3.4421e-2)
 template_builder.add_variable("dene", 7.4321e19)
 template_builder.add_variable("q", 3.5, lower_bound=3.5)
 template_builder.add_variable("pheat", 50.0)
-template_builder.add_variable("ralpne", 6.8940e-02)
-template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
+template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
+template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
+template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
 template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
 template_builder.add_variable("thkcas", 0.52465)
-template_builder.add_variable("tfcth", 1.2080)
-template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
+template_builder.add_variable("dr_tf_inboard", 1.2080)
+template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
+template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
 template_builder.add_variable("oh_steel_frac", 0.57875)
 template_builder.add_variable("coheof", 2.0726e07)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
@@ -114,19 +114,19 @@ template_builder.add_variable("fncycle", 1.0)
 # Modified f-values and bounds w.r.t. defaults
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2)
-template_builder.adjust_variable("ftburn", 1.0, upper_bound=1.0)
+template_builder.adjust_variable("fl_h_threshold", 1.2, lower_bound=1.1, upper_bound=1.2)
+template_builder.adjust_variable("ft_burn", 1.0, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
 template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("ftaulimit", 1.0)
+template_builder.adjust_variable("falpha_energy_confinement", 1.0)
 template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
 template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
 template_builder.adjust_variable("foh_stress", 1.0)
-template_builder.adjust_variable("fbetatry", 0.48251)
+template_builder.adjust_variable("fbeta_max", 0.48251)
 template_builder.adjust_variable("fwalld", 0.131)
 template_builder.adjust_variable("fmaxvvstress", 1.0)
 template_builder.adjust_variable("fpsepbqar", 1.0)
@@ -186,7 +186,7 @@ template_builder.add_input_values({
     "walker_coefficient": 0.5,
     "fracture_toughness": 150.0,
     # Undocumented danger stuff
-    "iblanket": 1,
+    "i_blanket_type": 1,
     "lsa": 2,
     # Profile parameterisation inputs
     "alphan": 1.0,
@@ -199,13 +199,13 @@ template_builder.add_input_values({
     "fgwped": 0.85,
     "neped": 0.678e20,
     "nesep": 0.2e20,
-    "dnbeta": 3.0,
+    "beta_norm_max": 3.0,
     # Plasma impurity stuff
     "coreradius": 0.75,
     "coreradiationfraction": 0.6,
     # Important stuff
     "pnetelin": 500.0,
-    "tbrnmn": 7.2e3,
+    "t_burn_min": 7.2e3,
     "sig_tf_case_max": 5.8e8,
     "sig_tf_wp_max": 5.8e8,
     "alstroh": 6.6e8,
@@ -214,35 +214,35 @@ template_builder.add_input_values({
     "m_s_limit": 0.1,
     "triang": 0.5,
     "q0": 1.0,
-    "ssync": 0.6,
+    "f_sync_reflect": 0.6,
     "plasma_res_factor": 0.66,
-    "gamma": 0.3,
+    "ejima_coeff": 0.3,
     "hfact": 1.1,
     "life_dpa": 70.0,
     # Radial build inputs
-    "tftsgap": 0.05,
-    "vvblgap": 0.02,
-    "blnkith": 0.755,
-    "scrapli": 0.225,
-    "scraplo": 0.225,
-    "blnkoth": 0.982,
-    "ddwex": 0.15,
+    "dr_tf_shld_gap": 0.05,
+    "dr_shld_blkt_gap": 0.02,
+    "dr_blkt_inboard": 0.755,
+    "dr_fw_plasma_gap_inboard": 0.225,
+    "dr_fw_plasma_gap_outboard": 0.225,
+    "dr_blkt_outboard": 0.982,
+    "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
-    "vgap2": 0.05,
+    "vgap_vv_thermalshield": 0.05,
     "divfix": 0.621,
     # HCD inputs
     "pinjalw": 51.0,
     "gamma_ecrh": 0.3,
     "etaech": 0.4,
-    "bscfmax": 0.99,
+    "bootstrap_current_fraction_max": 0.99,
     # BOP inputs
     "etath": 0.375,
     "etahtp": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
-    "tdwell": 0.0,
-    "tramp": 500.0,
+    "t_between_pulse": 0.0,
+    "t_precharge": 500.0,
     # CS / PF coil inputs
     "fcuohsu": 0.7,
     "ohhghf": 0.9,
@@ -253,7 +253,7 @@ template_builder.add_input_values({
     "ngrp": 4,
     "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
     # TF coil inputs
-    "n_tf": 16,
+    "n_tf_coils": 16,
     "casthi": 0.06,
     "casths": 0.05,
     "ripmax": 0.6,
@@ -286,7 +286,6 @@ template_builder.add_input_values({
     "divdum": 1,
     "ibkt_life": 1,
     "fkzohm": 1.0245,
-    "iinvqd": 1,
     "dintrt": 0.0,
     "fcap0": 1.15,
     "fcap0cp": 1.06,
@@ -317,8 +316,8 @@ def apply_specific_interface_rules(params: ParameterFrame):
     # Apply thermal shield thickness to all values in PROCESS
     tk_ts = params.tk_ts.value
     template_builder.add_input_values({
-        "thshield_ib": tk_ts,
-        "thshield_ob": tk_ts,
+        "dr_shld_thermal_inboard": tk_ts,
+        "dr_shld_thermal_outboard": tk_ts,
         "thshield_vb": tk_ts,
     })
 
@@ -329,12 +328,12 @@ def apply_specific_interface_rules(params: ParameterFrame):
     tk_sh_ib = tk_vv_ib - default_vv_tk
     tk_sh_ob = tk_vv_ob - default_vv_tk
     template_builder.add_input_values({
-        "shldith": tk_sh_ib,
-        "shldoth": tk_sh_ob,
+        "dr_shld_inboard": tk_sh_ib,
+        "dr_shld_outboard": tk_sh_ob,
         "shldtth": tk_sh_ib,
         "shldlth": tk_sh_ib,
-        "d_vv_in": default_vv_tk,
-        "d_vv_out": default_vv_tk,
+        "dr_vv_inboard": default_vv_tk,
+        "dr_vv_outboard": default_vv_tk,
         "d_vv_top": default_vv_tk,
         "d_vv_bot": default_vv_tk,
     })

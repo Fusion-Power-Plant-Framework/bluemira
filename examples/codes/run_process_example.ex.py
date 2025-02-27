@@ -152,14 +152,14 @@ template_builder.add_variable("beta", 3.1421e-2)
 template_builder.add_variable("dene", 7.4321e19)
 template_builder.add_variable("q", 3.5, lower_bound=3.5)
 template_builder.add_variable("pheat", 50.0)
-template_builder.add_variable("ralpne", 6.8940e-02)
-template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
+template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
+template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
+template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
 template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
 template_builder.add_variable("thkcas", 0.52465)
-template_builder.add_variable("tfcth", 1.2080)
-template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
+template_builder.add_variable("dr_tf_inboard", 1.2080)
+template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
+template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("tdmptf", 2.5829e01)
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
@@ -203,13 +203,13 @@ template_builder.add_input_values({
     "fgwped": 0.85,
     "neped": 0.678e20,
     "nesep": 0.2e20,
-    "dnbeta": 3.0,
+    "beta_norm_max": 3.0,
     # Plasma impurity stuff
     "coreradius": 0.75,
     "coreradiationfraction": 0.6,
     # Important stuff
     "pnetelin": 500.0,
-    "tbrnmn": 7.2e3,
+    "t_burn_min": 7.2e3,
     "sig_tf_case_max": 5.8e8,
     "sig_tf_wp_max": 5.8e8,
     "alstroh": 6.6e8,
@@ -218,27 +218,27 @@ template_builder.add_input_values({
     "m_s_limit": 0.1,
     "triang": 0.5,
     "q0": 1.0,
-    "ssync": 0.6,
+    "f_sync_reflect": 0.6,
     "plasma_res_factor": 0.66,
-    "gamma": 0.3,
+    "ejima_coeff": 0.3,
     "hfact": 1.1,
     "life_dpa": 70.0,
     # Radial build inputs
-    "tftsgap": 0.05,
-    "d_vv_in": 0.3,
-    "shldith": 0.3,
-    "vvblgap": 0.02,
-    "blnkith": 0.755,
-    "scrapli": 0.225,
-    "scraplo": 0.225,
-    "blnkoth": 0.982,
-    "d_vv_out": 0.3,
-    "shldoth": 0.8,
-    "ddwex": 0.15,
+    "dr_tf_shld_gap": 0.05,
+    "dr_vv_inboard": 0.3,
+    "dr_shld_inboard": 0.3,
+    "dr_shld_blkt_gap": 0.02,
+    "dr_blkt_inboard": 0.755,
+    "dr_fw_plasma_gap_inboard": 0.225,
+    "dr_fw_plasma_gap_outboard": 0.225,
+    "dr_blkt_outboard": 0.982,
+    "dr_vv_outboard": 0.3,
+    "dr_shld_outboard": 0.8,
+    "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
     "d_vv_top": 0.3,
-    "vgap2": 0.05,
+    "vgap_vv_thermalshield": 0.05,
     "shldtth": 0.3,
     "divfix": 0.621,
     "d_vv_bot": 0.3,
@@ -246,14 +246,14 @@ template_builder.add_input_values({
     "pinjalw": 51.0,
     "gamma_ecrh": 0.3,
     "etaech": 0.4,
-    "bscfmax": 0.99,
+    "bootstrap_current_fraction_max": 0.99,
     # BOP inputs
     "etath": 0.375,
     "etahtp": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
-    "tdwell": 0.0,
-    "tramp": 500.0,
+    "t_between_pulse": 0.0,
+    "t_precharge": 500.0,
     # CS / PF coil inputs
     "t_crack_vertical": 0.4e-3,
     "fcuohsu": 0.7,
@@ -265,7 +265,7 @@ template_builder.add_input_values({
     "ngrp": 4,
     "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
     # TF coil inputs
-    "n_tf": 16,
+    "n_tf_coils": 16,
     "casthi": 0.06,
     "casths": 0.05,
     "ripmax": 0.6,
@@ -365,8 +365,8 @@ template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("fbetatry", 0.48251)
+template_builder.adjust_variable("falpha_energy_confinement", 1.0)
+template_builder.adjust_variable("fbeta_max", 0.48251)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
 template_builder.adjust_variable("fstrcond", 0.92007)

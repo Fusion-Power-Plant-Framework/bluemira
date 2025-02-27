@@ -280,22 +280,42 @@ class _MFileWrapper:
         length) of the TF coil, so this must be taken into consideration
         when translating the geometry into the mid-plane.
         """
-        try:
-            shield_th = data["thshield"]
-        except KeyError:
-            # PROCESS updated their parameter names in v2.4.0, splitting
-            # 'thshield' into 'thshield_ib', 'thshield_ob', and 'thshield_vb'
-            shield_th = data["thshield_ib"]
+        shield_th = data["dr_shld_thermal_inboard"]
 
         try:
-            rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]
-            r_ts_ib_in = rtfin + data["tfcth"] + data["tftsgap"] + shield_th
-            r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
-            r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
-            r_fw_ob_in = (
-                r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
+            rtfin = (
+                data["dr_bore"]
+                + data["dr_cs"]
+                + data["dr_cs_precomp"]
+                + data["dr_cs_tf_gap"]
             )
-            r_vv_ob_in = r_fw_ob_in + data["fwoth"] + data["blnkoth"] + data["vvblgap"]
+            r_ts_ib_in = (
+                rtfin + data["dr_tf_inboard"] + data["dr_tf_shld_gap"] + shield_th
+            )
+            r_vv_ib_in = (
+                r_ts_ib_in
+                + data["dr_shld_vv_gap_inboard"]
+                + data["dr_vv_inboard"]
+                + data["dr_shld_inboard"]
+            )
+            r_fw_ib_in = (
+                r_vv_ib_in
+                + data["dr_shld_blkt_gap"]
+                + data["dr_blkt_inboard"]
+                + data["dr_fw_inboard"]
+            )
+            r_fw_ob_in = (
+                r_fw_ib_in
+                + data["dr_fw_plasma_gap_inboard"]
+                + 2 * data["rminor"]
+                + data["dr_fw_plasma_gap_outboard"]
+            )
+            r_vv_ob_in = (
+                r_fw_ob_in
+                + data["dr_fw_outboard"]
+                + data["dr_blkt_outboard"]
+                + data["dr_shld_blkt_gap"]
+            )
         except KeyError as key_error:
             raise CodesError(
                 f"Missing PROCESS parameter in '{self.file_path}': {key_error}\n"
