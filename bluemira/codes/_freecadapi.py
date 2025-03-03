@@ -803,6 +803,16 @@ def bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, floa
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
+def optimal_bounding_box(
+    obj: apiShape,
+) -> tuple[float, float, float, float, float, float]:
+    """Object's optimal bounding box"""  # noqa: DOC201
+    box = _get_api_attr(obj, "optimalBoundingBox")(
+        # default: useTriangulation = True, useShapeTolerance = False
+    )
+    return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
+
+
 def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]:
     """
     Tessellate a geometry object.

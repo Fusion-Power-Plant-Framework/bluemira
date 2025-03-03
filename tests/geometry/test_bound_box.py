@@ -62,16 +62,14 @@ class TestHardBoundingBox:
     def test_bad_bounding_box(self):
         assert np.isclose(self.wire.bounding_box.z_min, -5.0)
 
-    @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.001])
-    def test_opt_bounding_box(self, tol):
-        bb = self.wire.get_optimal_bounding_box(tolerance=tol)
+    def test_opt_bounding_box(self):
+        bb = self.wire.optimal_bounding_box
         assert np.isclose(bb.z_min, -5.0)
 
-    @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.01])
-    def test_opt_bounding_box_solid(self, tol):
+    def test_opt_bounding_box_solid(self):
         solid = self.solid.deepcopy()
         vertices, indices = solid._tessellate(1.0)
-        bb = self.solid.get_optimal_bounding_box(tolerance=tol)
+        bb = self.solid.optimal_bounding_box
         vertices2, indices2 = solid._tessellate(1.0)
         assert np.isclose(bb.z_min, -5.0)
         # Test that bounding box via tesselation did not modify properties
@@ -79,8 +77,3 @@ class TestHardBoundingBox:
         np.testing.assert_allclose(indices, indices2)
         vertices3, _ = solid._tessellate(0.01)
         assert vertices3.shape != vertices2.shape
-
-    @pytest.mark.parametrize("tol", [0.0, -1e-9])
-    def test_bad_tolerace(self, tol):
-        with pytest.raises(ValueError):  # noqa: PT011
-            self.wire.get_optimal_bounding_box(tolerance=tol)
