@@ -133,6 +133,7 @@ class ConstructionParams(TypedDict):
     """
 
     with_components: NotRequired[list[ComponentManager] | None]
+    without_components: NotRequired[list[ComponentManager] | None]
     component_filter: NotRequired[Callable[[Component], bool] | None]
     n_sectors: NotRequired[int | None]
     total_sectors: NotRequired[int | None]
@@ -147,6 +148,7 @@ class ConstructionParamValues:
     """
 
     with_components: list[ComponentManager] | None
+    without_components: list[ComponentManager] | None
     component_filter: Callable[[Component], bool] | None
     n_sectors: int
     total_sectors: int
@@ -165,6 +167,7 @@ class ConstructionParamValues:
         """
         return cls(
             with_components=None,
+            without_components=None,
             component_filter=None,
             n_sectors=1,
             total_sectors=1,
@@ -199,6 +202,7 @@ class ConstructionParamValues:
 
         return cls(
             with_components=construction_params.get("with_components"),
+            without_components=construction_params.get("without_components"),
             component_filter=comp_filter,
             n_sectors=n_secs,
             total_sectors=tot_secs,
