@@ -52,7 +52,7 @@ llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
     # via rich
-matplotlib==3.10.0
+matplotlib==3.10.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
