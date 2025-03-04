@@ -77,13 +77,13 @@ from bluemira.geometry.coordinates import Coordinates
 # Get equilibrium
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
-eq_name = "eqref_OOB.json"
-eq_name = Path(EQDATA, eq_name)
-eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
-
-# eq_name = "DN-DEMO_eqref.json"
+# eq_name = "eqref_OOB.json"
 # eq_name = Path(EQDATA, eq_name)
-# eq = Equilibrium.from_eqdsk(eq_name, from_cocos=3, qpsi_positive=False)
+# eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
+
+eq_name = "DN-DEMO_eqref.json"
+eq_name = Path(EQDATA, eq_name)
+eq = Equilibrium.from_eqdsk(eq_name, from_cocos=3, qpsi_positive=False)
 
 # Plot the equilibrium
 f, ax = plt.subplots()
@@ -167,11 +167,13 @@ total_psi *= mask
 approx_eq = deepcopy(eq)
 o_points, x_points = approx_eq.get_OX_points(total_psi)
 
+# TODO Use psi_norm = 0.99 for DN, use 1.0 for single null
+psi_norm = 0.99
 f_s = find_flux_surf(
-    R_approx, Z_approx, total_psi, 1.0, o_points=o_points, x_points=x_points
+    R_approx, Z_approx, total_psi, psi_norm, o_points=o_points, x_points=x_points
 )
 approx_LCFS = Coordinates({"x": f_s[0], "z": f_s[1]})
-original_LCFS = eq.get_LCFS()
+original_LCFS = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
 
 # Plot
 plt.contourf(R_approx, Z_approx, total_psi, nlevels, cmap=cmap)
@@ -221,7 +223,7 @@ plt.show()
 # %%
 # Difference plot to compare TH approximation to Bluemira coilset psi
 coilset_psi_diff = np.abs(psi_approx - interpolated_coilset_psi) / np.max(
-    interpolated_coilset_psi
+    np.abs(interpolated_coilset_psi)
 )
 coilset_psi_diff_plot = coilset_psi_diff * mask
 f, ax = plt.subplots()
@@ -229,7 +231,24 @@ ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from 
 ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
 im = ax.contourf(R_approx, Z_approx, coilset_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
-ax.set_title("Difference between coilset psi and TH approximation psi")
+ax.set_title("Absolute relative difference between coilset psi and TH approximation psi")
+ax.legend(loc="upper right")
+eq.coilset.plot(ax=ax)
+plt.show()
+
+
+# %%
+# Difference plot to compare TH approximation to Bluemira total psi
+total_psi_diff = np.abs(total_psi - interpolated_bm_total_psi) / np.max(
+    np.abs(interpolated_bm_total_psi)
+)
+total_psi_diff_plot = total_psi_diff * mask
+f, ax = plt.subplots()
+ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
+ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
+im = ax.contourf(R_approx, Z_approx, total_psi_diff_plot, levels=nlevels, cmap=cmap)
+f.colorbar(mappable=im)
+ax.set_title("Absolute relative difference between total psi and TH approximation psi")
 ax.legend(loc="upper right")
 eq.coilset.plot(ax=ax)
 plt.show()

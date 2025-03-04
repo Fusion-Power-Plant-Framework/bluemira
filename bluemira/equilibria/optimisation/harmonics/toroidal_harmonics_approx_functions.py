@@ -191,12 +191,10 @@ class ToroidalHarmonicsParams:
     """sigma coordinates of the coils in toroidal coordinates"""
     th_coil_names: list
     """names of coils to use with TH approximation (always outside the LCFS tau limit)"""
-    non_th_coil_names: list
-    """names of coils that cannot be used with TH approximation"""
 
 
 def toroidal_harmonic_grid_and_coil_setup(
-    eq: Equilibrium, R_0: float, Z_0: float
+    eq: Equilibrium, R_0: float, Z_0: float, radius: float | None = None
 ) -> ToroidalHarmonicsParams:
     """
     Set up the grid and coils to be used in toroidal harmonic approximation.
@@ -220,9 +218,15 @@ def toroidal_harmonic_grid_and_coil_setup(
         Dataclass holding necessary parameters for the TH approximation
     """
     # Find region over which to approximate psi using TH by finding LCFS tau limit
-    lcfs = eq.get_LCFS()
-    lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=lcfs.x, Z=lcfs.z)
-    tau_lcfs_limit = np.min(lcfs_tau)
+    if radius is None:
+        lcfs = eq.get_LCFS()
+        lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=lcfs.x, Z=lcfs.z)
+        tau_lcfs_limit = np.min(lcfs_tau)
+    else:
+        x_points = np.array([R_0 - radius, R_0, R_0 + radius, R_0])
+        z_points = np.array([0, radius, 0, -radius])
+        circle_tau, _ = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_points, Z=z_points)
+        tau_lcfs_limit = np.min(circle_tau)
 
     d2_min = 0.05
     tau_max = np.log(2 * R_0 / d2_min)
@@ -245,15 +249,17 @@ def toroidal_harmonic_grid_and_coil_setup(
     # Find coils that can be used in TH approximation, and those that cannot be used
     if tau_lcfs_limit < np.min(tau_c):
         not_too_close_coils = c_names[tau_c < tau_lcfs_limit].tolist()
-        too_close_coils = c_names[tau_c >= tau_lcfs_limit].tolist()
         bluemira_debug(
             "Names of coils that can be used in the TH"
             f" approximation: {not_too_close_coils}."
         )
         th_coil_names = not_too_close_coils
-        non_th_coil_names = too_close_coils
-    th_coil_names = c_names.tolist()
-    non_th_coil_names = None
+    else:
+        th_coil_names = c_names.tolist()
+
+    eq.coilset.control = th_coil_names
+    R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
+    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
 
     return ToroidalHarmonicsParams(
         R_0,
@@ -267,7 +273,6 @@ def toroidal_harmonic_grid_and_coil_setup(
         tau_c,
         sigma_c,
         th_coil_names,
-        non_th_coil_names,
     )
 
 
@@ -572,10 +577,14 @@ def toroidal_harmonic_approximation(
     # account for their contribution to psi
     if len(th_params.th_coil_names) < len(eq.coilset.name):
         non_th_coils = deepcopy(eq.coilset)
-        non_th_coils.control = th_params.non_th_coil_names
-        non_cc_psi = non_th_coils.psi(control=True)
+        non_th_coils.control = list(
+            set(non_th_coils.name) - set(th_params.th_coil_names)
+        )
+        non_cc_psi = non_th_coils.psi(eq.grid.x, eq.grid.z, control=True)
         psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], non_cc_psi)
         interpolated_non_th_contribution_psi += psi_func.ev(R_approx, Z_approx)
+
+    interpolated_non_th_contribution_psi *= mask
 
     # Set min degree to save some time
     min_degree = 2
@@ -626,7 +635,7 @@ def toroidal_harmonic_approximation(
         cmap = PLOT_DEFAULTS["psi"]["cmap"]
         # Plot difference between approx total psi and bluemira total psi
         total_psi_diff = np.abs(approx_total_psi - interpolated_bm_total_psi) / np.max(
-            interpolated_bm_total_psi
+            np.abs(interpolated_bm_total_psi)
         )
         f, ax = plt.subplots()
         ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approximate LCFS from TH")
