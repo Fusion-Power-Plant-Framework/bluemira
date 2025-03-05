@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
@@ -12,8 +13,10 @@ try:
         Int_Vector,
         Point_3_Vector,
         Polygon_Vector,
-        do_intersect,
         polygon_soup_to_polygon_mesh,
+    )
+    from CGAL.CGAL_Polygon_mesh_processing import (
+        do_intersect as cgal_do_intersect,
     )
     from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 
@@ -127,3 +130,22 @@ def find_approx_overlapping_pairs(solids: Iterable[BluemiraSolid]):
             )
 
     aabbs = np.array(aabbs)
+    ex_mat = check_bb_non_interference(aabbs)
+    overlap_idxs = get_overlaps_arr(ex_mat)
+
+    def refine_overlap(i, j):
+        geo_i = approx_geometry[i]
+        geo_j = approx_geometry[j]
+        itc = (
+            cgal_do_intersect(geo_i, geo_j)
+            if cgal_available
+            else np.any(check_two_sets_bb_non_interference(geo_i, geo_j))
+        )
+        return (i, j) if itc else None
+
+    with ThreadPoolExecutor() as executor:
+        refined_overlap_idxs = list(
+            filter(None, executor.map(lambda pair: refine_overlap(*pair), overlap_idxs))
+        )
+
+    return refined_overlap_idxs  # noqa: RET504
