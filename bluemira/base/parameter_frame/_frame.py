@@ -230,7 +230,11 @@ class ParameterFrame:
 
         if not units_compatible(param.unit, o_param.unit):
             raise DimensionalityError(
-                units1=param.unit, units2=o_param.unit, extra_msg=f"for parameter {name}"
+                units1=param.unit,
+                units2=o_param.unit,
+                dim1=param.value,
+                dim2=o_param.value,
+                extra_msg=f": incomaptible unit for parameter {name}",
             )
 
         param.set_value(
