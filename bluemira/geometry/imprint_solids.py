@@ -24,34 +24,18 @@ except ImportError:
     occ_available = False
 
 
-class ImprintedFace:
-    def __init__(self, face):
-        self._face = face
-        self._associated_imprintables = set()
-
-    @classmethod
-    def from_imprintable(cls, face, imprintable):
-        inst = cls(face)
-        inst.associate_imprintable(imprintable)
-        return inst
-
-    def associate_imprintable(self, imprintable):
-        self._associated_imprintables.add(imprintable)
-
-
 class ImprintableSolid:
     """Represents a solid that can be imprinted."""
 
-    def __init__(self, label: str, bm_solid: BluemiraSolid, occ_solid):
+    def __init__(self, label: str, bm_solid: BluemiraSolid, occ_solid: TopoDS_Solid):
         self._label = label
         self._bm_solid = bm_solid
         self._imprinted_occ_solid = occ_solid
         self._has_imprinted = False
-        self._imprinted_faces = {
-            ImprintedFace.from_imprintable(f, self)
-            for f in TopologyExplorer(occ_solid).faces()
-        }
-        self._shadow_imprinted_faces: set[ImprintedFace] = set()
+        self._imprinted_faces: set[TopoDS_Face] = set(
+            TopologyExplorer(occ_solid).faces()
+        )
+        self._shadow_imprinted_faces: set[TopoDS_Face] = set()
 
     @classmethod
     def from_bluemira_solid(cls, label: str, bm_solid: BluemiraSolid):
@@ -61,39 +45,22 @@ class ImprintableSolid:
         return cls(label, bm_solid, Part.__toPythonOCC__(bm_solid.shape))
 
     @property
-    def occ_solid(self):
+    def label(self) -> str:
+        return self._label
+
+    @property
+    def occ_solid(self) -> TopoDS_Solid:
         return self._imprinted_occ_solid
 
     @property
-    def imprinted_faces(self) -> set[ImprintedFace]:
+    def imprinted_faces(self) -> set[TopoDS_Face]:
         return self._imprinted_faces
 
-    def bind_imprinted_face(self, face: ImprintedFace):
+    def bind_imprinted_face(self, face: TopoDS_Face):
         """
-        Binds the imprinted face to the imprintable solid.
-
-        This add the ImprintedFace to shadow_imprinted_faces set.
-        Call the finalise_binding method to update the imprinted_faces set.
-
-        If the underlying occ face is already in the list of imprinted faces,
-        then that instance of the ImprintedFace is added to the shoadow set instead.
-        """  # noqa: DOC501
-        # this is really nb
-        m = 0
-        for f in self._imprinted_faces:
-            if f._face == face._face:
-                face = f
-                m += 1
-
-        # new face
-        # would matter if this if wasn't here
-        if m == 0:
-            face.associate_imprintable(self)
-
-        # this should never happen
-        if m > 1:
-            raise ValueError("ImprintableSolid has multiple faces that are the same.")
-
+        Binds a face to the imprintable solid, adding it to the shadow set.
+        The finalise_binding method must be called after binding all faces.
+        """
         self._shadow_imprinted_faces.add(face)
 
     def finalise_binding(self):
@@ -105,7 +72,7 @@ class ImprintableSolid:
         self._has_imprinted = True
 
     def to_bluemira_solid(self) -> BluemiraSolid:
-        if self._imprinted_occ_solid:
+        if self._has_imprinted:
             api_solid = Part.__fromPythonOCC__(self._imprinted_occ_solid)
             return BluemiraSolid._create(Part.Solid(api_solid), self._label)
         return self._bm_solid
@@ -186,24 +153,15 @@ class Imprinter:
             if i == 2:
                 imprints_performed += 1
 
-            imprinted_face = ImprintedFace(resulting_face)
+            # bind faces
             for org_f in original_faces:
                 imp_from_face = org_face_to_imp_map[org_f]
-                imp_from_face.bind_imprinted_face(imprinted_face)
+                imp_from_face.bind_imprinted_face(resulting_face)
 
         for imp in imprintables:
             imp.finalise_binding()
 
         return imprints_performed
-
-
-def _extract_imprinted_faces(
-    imprintables: Iterable[ImprintableSolid],
-) -> set[ImprintedFace]:
-    full_set = set()
-    for imp in imprintables:
-        full_set.update(imp.imprinted_faces)
-    return full_set
 
 
 def imprint_solids(solids: Iterable[BluemiraSolid]):
@@ -220,6 +178,4 @@ def imprint_solids(solids: Iterable[BluemiraSolid]):
     for a, b in track(pairs):
         total_imprints += imprinter([imprintables[a], imprintables[b]])
 
-    all_imprinted_faces = _extract_imprinted_faces(imprintables)
-
-    return imprintables, all_imprinted_faces
+    return imprintables
