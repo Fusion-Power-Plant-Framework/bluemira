@@ -27,6 +27,7 @@ from bluemira.base.constants import (
     combined_unit_defaults,
     combined_unit_dimensions,
     raw_uc,
+    units_compatible,
 )
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
@@ -41,6 +42,7 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
+from pint.errors import DimensionalityError
 
 
 @dataclass
@@ -218,8 +220,23 @@ class ParameterFrame:
     def _set_param(self, name: str, o_param: Parameter):
         """
         Sets the information from a Parameter to an existing Parameter in this frame.
+
+        Raises
+        ------
+        DimensionalityError
+            if the units are mismatched
         """
         param = getattr(self, name)
+
+        if not units_compatible(param.unit, o_param.unit):
+            raise DimensionalityError(
+                units1=param.unit,
+                units2=o_param.unit,
+                dim1=param.value,
+                dim2=o_param.value,
+                extra_msg=f": incompatible unit for parameter {name}",
+            )
+
         param.set_value(
             (
                 o_param.value
