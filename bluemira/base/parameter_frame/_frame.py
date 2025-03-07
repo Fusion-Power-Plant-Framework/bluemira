@@ -27,6 +27,7 @@ from bluemira.base.constants import (
     combined_unit_defaults,
     combined_unit_dimensions,
     raw_uc,
+    units_compatible,
 )
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
@@ -218,8 +219,17 @@ class ParameterFrame:
     def _set_param(self, name: str, o_param: Parameter):
         """
         Sets the information from a Parameter to an existing Parameter in this frame.
+
+        Raises
+        ------
+        ValueError
+            if the units are mismatched
         """
         param = getattr(self, name)
+
+        if not units_compatible(param.unit, o_param.unit):
+            raise ValueError(f"Given Unit ({o_param.unit}) is not compatible for {name}")
+
         param.set_value(
             (
                 o_param.value
