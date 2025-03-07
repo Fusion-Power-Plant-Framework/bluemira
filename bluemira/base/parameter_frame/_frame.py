@@ -234,7 +234,7 @@ class ParameterFrame:
                 units2=o_param.unit,
                 dim1=param.value,
                 dim2=o_param.value,
-                extra_msg=f": incomaptible unit for parameter {name}",
+                extra_msg=f": incompatible unit for parameter {name}",
             )
 
         param.set_value(
