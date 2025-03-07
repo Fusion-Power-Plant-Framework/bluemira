@@ -271,6 +271,18 @@ class TestParameterFrame:
         assert self.frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert self.frame.age.source != "a test"
 
+        incompatible_unit_frame = BasicFrame.from_dict({
+            "height": {
+                "value": 135,
+                "unit": "m",
+                "source": "a test",
+            },
+            "age": {"value": 25, "unit": "meter"},
+        })
+
+        with pytest.raises(pint.errors.DimensionalityError):
+            getattr(self.frame, func)(incompatible_unit_frame)
+
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame_with_None(self, func):
         update_frame = BasicFrame.from_dict({
