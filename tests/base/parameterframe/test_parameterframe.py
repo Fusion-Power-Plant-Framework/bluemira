@@ -271,18 +271,6 @@ class TestParameterFrame:
         assert self.frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert self.frame.age.source != "a test"
 
-        incompatible_unit_frame = BasicFrame.from_dict({
-            "height": {
-                "value": 135,
-                "unit": "m",
-                "source": "a test",
-            },
-            "age": {"value": 25, "unit": "meter"},
-        })
-
-        with pytest.raises(pint.errors.DimensionalityError):
-            getattr(self.frame, func)(incompatible_unit_frame)
-
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame_with_None(self, func):
         update_frame = BasicFrame.from_dict({
@@ -299,6 +287,32 @@ class TestParameterFrame:
         assert self.frame.height.source == "a test"
         assert self.frame.age.value is None
         assert self.frame.age.source != "a test"
+
+    @pytest.mark.parametrize(
+        ("value", "unit", "new_value", "wrong_unit"),
+        [
+            (6, "", 3, "m"),
+            (6.5, "", 7, "years"),
+            (3.5, "m", 5, ""),
+            (56, "cm", 10, "kA"),
+        ],
+    )
+    def test_DimensionalityError_update_from_frame(
+        self, value, unit, new_value, wrong_unit
+    ):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            test_param: Parameter
+
+        test_frame = GenericFrame.from_dict({
+            "test_param": {"value": value, "unit": unit}
+        })
+        wrong_frame = GenericFrame.from_dict({
+            "test_param": {"value": new_value, "unit": wrong_unit}
+        })
+
+        with pytest.raises(pint.errors.DimensionalityError):
+            test_frame.update_from_frame(wrong_frame)
 
     @pytest.mark.parametrize("func", ["update_from_dict", "update"])
     def test_update_from_dict_with_None(self, func):
