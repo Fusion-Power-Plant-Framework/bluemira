@@ -1648,7 +1648,7 @@ def save_cad(
             shapes,
             names,
             filename,
-            faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
+            faceting_tolerance=kwargs.get("faceting_tolerance", 1e-2),
         )
     else:
         cadapi.save_cad(

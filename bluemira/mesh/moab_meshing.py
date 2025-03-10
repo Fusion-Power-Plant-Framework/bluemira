@@ -11,8 +11,10 @@ from OCC.Core.TopoDS import topods
 from OCC.Extend.TopologyUtils import TopologyExplorer
 from rich.progress import track
 
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display.displayer import show_cad
 from bluemira.geometry.base import BluemiraGeoT
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.imprint_solids import ImprintableSolid, imprint_solids
 
 try:
@@ -304,10 +306,17 @@ class MoabMesher:
             self.mbc.define_parent_child(curve_set, vertex_set)
 
     def _process_surfaces(self, faceting_tolerance):
+        bluemira_print("MoabMesher: Processing surfaces.")
+
         self._establish_surface_sets()
 
-        for face, surf_set in self.face_to_surf_set.items():
-            BRepMesh_IncrementalMesh(face, faceting_tolerance)
+        bluemira_print(
+            f"MoabMesher: Meshing {len(self.face_to_surf_set)} w. "
+            f"faceting_tolerance {faceting_tolerance}"
+        )
+
+        for face, surf_set in track(self.face_to_surf_set.items()):
+            BRepMesh_IncrementalMesh(face, faceting_tolerance, False, 0.5, True)
 
             location = TopLoc_Location()
             triangulation = self.bt.Triangulation(face, location)
@@ -345,6 +354,8 @@ class MoabMesher:
             )
 
     def _process_volumes(self):
+        bluemira_print("MoabMesher: Processing volumes.")
+
         self._establish_volume_sets()
 
         for mbl in self.meshables:
@@ -374,13 +385,15 @@ class MoabMesher:
                 self.mbc.define_parent_child(meshable_volm_set, surf_set)
 
     def _process_groups(self):
+        bluemira_print("MoabMesher: Processing groups.")
+
         for label, volm_sets in self.label_to_volume_sets.items():
             group_set = self.mbc.create_tagged_entity_set(4)
             self.mbc.tag_name_material(group_set, label)
             self.mbc.add_entities(group_set, volm_sets)
 
     def _create_file_set(self, faceting_tolerance):
-        file_set = self.mbc.create_meshset(types.MBENTITYSET)
+        file_set = self.mbc.core.create_meshset(types.MBENTITYSET)
         self.mbc.tag_faceting_tol(file_set, faceting_tolerance)
 
         all_sets = self.mbc.core.get_entities_by_handle(0)
@@ -397,9 +410,11 @@ class MoabMesher:
 
         self.meshed = True
 
-    def to_file(self, file_name, *, include_vtk=False):
+    def write_file(self, file_name, *, include_vtk=False):
         if not self.meshed:
             raise RuntimeError("Meshing has not been performed yet.")
+
+        bluemira_print(f"MoabMesher: Writing file to {file_name}.h5m")
 
         self.mbc.core.write_file(f"{file_name}.h5m")
         if include_vtk:
@@ -418,7 +433,7 @@ def save_cad_to_dagmc_model(
 
     # do a per compound imprint for now.
     # In the future, one should extract all solids then do the imprint on _all_ of them
-    for shape in track(shapes):
+    for shape in shapes:
         if isinstance(shape, BluemiraCompound):
             imps = imprint_solids(shape.solids)
             mesher.add_imprintables(imps)
@@ -426,12 +441,11 @@ def save_cad_to_dagmc_model(
             mesher.add_solid(shape)
 
     mesher.perform(faceting_tolerance)
-    mesher.to_file(filename)
+    mesher.write_file(filename, include_vtk=True)
 
 
 if __name__ == "__main__":
     from bluemira.geometry.base import BluemiraGeoT
-    from bluemira.geometry.compound import BluemiraCompound
     from bluemira.geometry.face import BluemiraFace
     from bluemira.geometry.tools import (
         extrude_shape,
