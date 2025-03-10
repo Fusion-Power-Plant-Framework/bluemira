@@ -840,7 +840,7 @@ class PFConductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ipfres"
+        return "i_pf_conductor"
 
     SUPERCONDUCTING = 0
     RESISTIVE = 1
@@ -856,7 +856,7 @@ class PFSuperconductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isumatpf"
+        return "i_pf_superconductor"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2, ("fhts",)
@@ -881,7 +881,14 @@ class PFCurrentControlModel(PROCESSModel):
         """
         return "i_pf_current"
 
-    INPUT = 0, ("curpfb", "curpff", "curpfs")
+    INPUT = (
+        0,
+        (
+            "c_pf_cs_coil_pulse_start_ma",
+            "c_pf_cs_coil_flat_top_ma",
+            "c_pf_cs_coil_pulse_end_ma",
+        ),
+    )
     SVD = 1
 
 
@@ -928,7 +935,7 @@ class CSSuperconductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isumatoh"
+        return "i_cs_superconductor"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2
