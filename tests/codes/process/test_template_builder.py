@@ -278,8 +278,8 @@ class TestInDatOneForOne:
             "dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1
         )
         template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-        template_builder.add_variable("oh_steel_frac", 0.57875)
-        template_builder.add_variable("coheof", 2.0726e07)
+        template_builder.add_variable("f_a_cs_steel", 0.57875)
+        template_builder.add_variable("j_cs_flat_top_end", 2.0726e07)
         template_builder.add_variable(
             "cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
         )
@@ -291,7 +291,7 @@ class TestInDatOneForOne:
         template_builder.add_variable(
             "fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94
         )
-        template_builder.add_variable("fcohbop", 0.93176)
+        template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
         template_builder.add_variable("fvsbrnni", 0.39566)
         template_builder.add_variable("fncycle", 1.0)
 
@@ -425,13 +425,31 @@ class TestInDatOneForOne:
             # CS / PF coil inputs
             "t_crack_vertical": 0.4e-3,
             "fcuohsu": 0.7,
-            "ohhghf": 0.9,
+            "f_z_cs_tf_internal": 0.9,
             "rpf2": -1.825,
-            "cptdin": [4.22e4, 4.22e4, 4.22e4, 4.22e4, 4.3e4, 4.3e4, 4.3e4, 4.3e4],
-            "ipfloc": [2, 2, 3, 3],
-            "ncls": [1, 1, 2, 2],
-            "ngrp": 4,
-            "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+            "c_pf_coil_turn_peak_input": [
+                4.22e4,
+                4.22e4,
+                4.22e4,
+                4.22e4,
+                4.3e4,
+                4.3e4,
+                4.3e4,
+                4.3e4,
+            ],
+            "i_pf_location": [2, 2, 3, 3],
+            "n_pf_coils_in_group": [1, 1, 2, 2],
+            "n_pf_coil_groups": 4,
+            "j_pf_coil_wp_peak": [
+                1.1e7,
+                1.1e7,
+                6.0e6,
+                6.0e6,
+                8.0e6,
+                8.0e6,
+                8.0e6,
+                8.0e6,
+            ],
             # TF coil inputs
             "n_tf_coils": 16,
             "casthi": 0.06,

@@ -45,12 +45,12 @@ boundl(18) = 3.0
 ixc = 29 * dr_bore
 boundl(29) = 0.1
 ixc = 36 * fbeta_max
-ixc = 37 * coheof
+ixc = 37 * j_cs_flat_top_end
 ixc = 38 * fjohc
 boundu(38) = 0.25
 ixc = 39 * fjohc0
 boundu(39) = 0.25
-ixc = 41 * fcohbop
+ixc = 41 * f_j_cs_start_pulse_end_flat_top
 ixc = 42 * dr_cs_tf_gap
 boundl(42) = 0.05
 *boundu(42) = 0.1
@@ -193,16 +193,16 @@ minmax   = 1 * Switch for figure-of-merit (see lablmm for descriptions)
 epsvmc   = 1.0e-5 * Error tolerance for vmcon
 *----------------Pf Power Variables----------------*
 *-----------------Pfcoil Variables-----------------*
-coheof   = 1.3465e+07 * Central solenoid overall current density at end of flat-top (a/m2)
-cptdin   = 4.22d4, 4.22d4, 4.22d4, 4.22d4, 4.3d4, 4.3d4, 4.3d4, 4.3d4, * Peak current per turn input for pf coil i (a)
-fcohbop  = 9.3592e-01 * Ratio of central solenoid overall current density at
-ipfloc   = 2,2,3,3 * Switch for locating scheme of pf coil group i;
-isumatpf = 3 * Switch for superconductor material in pf coils;
-ncls     = 1,1,2,2, * Number of pf coils in group j
-ngrp     = 4 * Number of groups of pf coils;
-ohhghf   = 0.9 * Central solenoid height / tf coil internal height
-rjconpf  = 1.1d7, 1.1d7, 6.d6, 6.d6, 8.d6, 8.0d6, 8.0d6, 8.0d6, * Average winding pack current density of pf coil i (a/m2)
-rpf2     = -1.825 * Offset (m) of radial position of ipfloc=2 pf coils
+j_cs_flat_top_end   = 1.3465e+07 * Central solenoid overall current density at end of flat-top (a/m2)
+c_pf_coil_turn_peak_input   = 4.22d4, 4.22d4, 4.22d4, 4.22d4, 4.3d4, 4.3d4, 4.3d4, 4.3d4, * Peak current per turn input for pf coil i (a)
+f_j_cs_start_pulse_end_flat_top  = 9.3592e-01 * Ratio of central solenoid overall current density at
+i_pf_location   = 2,2,3,3 * Switch for locating scheme of pf coil group i;
+i_pf_superconductor = 3 * Switch for superconductor material in pf coils;
+n_pf_coils_in_group     = 1,1,2,2, * Number of pf coils in group j
+n_pf_coil_groups     = 4 * Number of groups of pf coils;
+f_z_cs_tf_internal   = 0.9 * Central solenoid height / tf coil internal height
+j_pf_coil_wp_peak  = 1.1d7, 1.1d7, 6.d6, 6.d6, 8.d6, 8.0d6, 8.0d6, 8.0d6, * Average winding pack current density of pf coil i (a/m2)
+rpf2     = -1.825 * Offset (m) of radial position of i_pf_location=2 pf coils
 
 maxpoloidalpower = 250
 fpoloidalpower = 1.00
