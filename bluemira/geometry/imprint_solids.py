@@ -177,5 +177,6 @@ def imprint_solids(solids: Iterable[BluemiraSolid]):
     bluemira_print(f"Imprinting solids together: {len(pairs)} potential pairs found.")
     for a, b in track(pairs):
         total_imprints += imprinter([imprintables[a], imprintables[b]])
+    bluemira_print(f"Total imprints performed: {total_imprints}")
 
     return imprintables

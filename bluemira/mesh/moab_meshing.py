@@ -4,8 +4,14 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from OCC.Core.BRep import BRep_Tool
+from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+from OCC.Core.TopLoc import TopLoc_Location
+from OCC.Core.TopoDS import topods
+from OCC.Extend.TopologyUtils import TopologyExplorer
 from rich.progress import track
 
+from bluemira.display.displayer import show_cad
 from bluemira.geometry.base import BluemiraGeoT
 from bluemira.geometry.imprint_solids import ImprintableSolid, imprint_solids
 
@@ -15,11 +21,6 @@ try:
     pymoab_available = True
 except ImportError:
     pymoab_available = False
-
-import Mesh
-import MeshPart
-
-import Part  # isort: skip
 
 
 class MoabCore:
@@ -56,7 +57,46 @@ class MoabCore:
             types.MB_TAG_DENSE,
             create_if_missing=True,
         )
+        #   result = MBI()->tag_get_handle("FACETING_TOL", 1, moab::MB_TYPE_DOUBLE,
+        #                          faceting_tol_tag,
+        #                          moab::MB_TAG_SPARSE | moab::MB_TAG_CREAT);
+        self.tags_faceting_tol = self.core.tag_get_handle(
+            "FACETING_TOL",
+            1,
+            types.MB_TYPE_DOUBLE,
+            types.MB_TAG_SPARSE | types.MB_TAG_CREAT,
+        )
         self.tags_global_id = self.core.tag_get_handle(types.GLOBAL_ID_TAG_NAME)
+
+        self._dim_global_ids = {
+            0: 0,  # vertex
+            1: 0,  # curve
+            2: 0,  # surface
+            3: 0,  # volume
+            4: 0,  # group
+        }
+        self._dim_categories = {
+            0: "Vertex\0",
+            1: "Curve\0",
+            2: "Surface\0",
+            3: "Volume\0",
+            4: "Group\0",
+        }
+
+    def create_tagged_entity_set(self, dim: int):
+        ms = self.core.create_meshset(
+            types.MESHSET_ORDERED if dim == 1 else types.MESHSET_SET
+        )
+
+        dim_id = self._dim_global_ids[dim] + 1
+        self._dim_global_ids[dim] = dim_id
+
+        self.core.tag_set_data(self.tags_global_id, ms, dim_id)
+        self.core.tag_set_data(self.tags_category, ms, self._dim_categories[dim])
+        if dim <= 3:
+            self.core.tag_set_data(self.tags_geom_dimension, ms, dim)
+
+        return ms
 
     def add_entity(self, entity_set, entity):
         self.core.add_entity(entity_set, entity)
@@ -91,6 +131,9 @@ class MoabCore:
     def tag_surf_sense(self, entity_set, sense_data):
         self.core.tag_set_data(self.tags_surf_sense, entity_set, sense_data)
 
+    def tag_faceting_tol(self, entity_set, tol):
+        self.core.tag_set_data(self.tags_faceting_tol, entity_set, tol)
+
 
 class MoabMeshable:
     def __init__(self, id: int, label: str, occ_faces: list[Any]):
@@ -100,6 +143,10 @@ class MoabMeshable:
         self.volume_set: Any | None = None
         self.group_set: Any | None = None
         self._sets_established = False
+
+    @classmethod
+    def from_imprintable(cls, imp: ImprintableSolid):
+        return cls(id(imp.occ_solid), imp.label, imp.imprinted_faces)
 
     def establish_sets(self, mbc: MoabCore):
         group_set = mbc.create_meshset()
@@ -122,10 +169,6 @@ class MoabMeshable:
 
         self._sets_established = True
 
-    @classmethod
-    def from_imprintable(cls, imp: ImprintableSolid):
-        return cls(id(imp.occ_solid), imp.label, imp.imprinted_faces)
-
 
 class MoabMesher:
     def __init__(
@@ -133,13 +176,24 @@ class MoabMesher:
     ):
         self.mbc = MoabCore()
 
+        self._dbg_imps = []
         self.meshables: set[MoabMeshable] = set()
         self.face_to_meshables: dict[Any, set[MoabMeshable]] = {}
         self.processed_faces = set()
 
+        self.label_to_volume_sets: dict[str, set[Any]] = {}
+        self.face_to_surf_set = {}
+        self.edge_to_curve_set = {}
+        self.vertex_to_vertex_set = {}
+
+        self.vertex_to_node = {}
+
         self.meshed = False
 
+        self.bt = BRep_Tool()
+
     def add_imprintable(self, imprintable: ImprintableSolid):
+        self._dbg_imps.append(imprintable)
         mbl = MoabMeshable.from_imprintable(imprintable)
         self.meshables.add(mbl)
         for face in mbl.occ_faces:
@@ -154,38 +208,150 @@ class MoabMesher:
         for imp in imprintables:
             self.add_imprintable(imp)
 
-    def _establish_meshable_sets(self):
+    def _init_meshable_sets(self):
         for mbl in self.meshables:
             mbl.establish_sets(self.mbc)
 
-    def mesh_to_file(
-        self,
-        faceting_tolerance=0.001,
-    ):
-        if self.meshed:
-            return
+    def _find_or_add_curve_set(self, edge):
+        if edge in self.edge_to_curve_set:
+            return self.edge_to_curve_set[edge], True
+        curve_set = self.mbc.create_tagged_entity_set(1)
+        self.edge_to_curve_set[edge] = curve_set
+        return curve_set, False
 
-        self._establish_meshable_sets()
+    def _find_or_add_vertex_set(self, vertex):
+        if vertex in self.vertex_to_vertex_set:
+            return self.vertex_to_vertex_set[vertex], True
+        vertex_set = self.mbc.create_tagged_entity_set(0)
+        self.vertex_to_vertex_set[vertex] = vertex_set
+        return vertex_set, False
+
+    def _find_or_add_vertex_node(self, vertex: tuple[float, float, float]):
+        # keeps vertex mapping stable
+        vertex = tuple(np.round(vertex, 6))
+        if vertex in self.vertex_to_node:
+            return self.vertex_to_node[vertex]
+        node_id = self.mbc.create_vertices([vertex])[0]
+        self.vertex_to_node[vertex] = node_id
+        return node_id
+
+    def _find_or_add_vertex_nodes(self, vertices):
+        return [self._find_or_add_vertex_node(vertex) for vertex in vertices]
+
+    def _establish_volume_sets(self):
+        for mbl in self.meshables:
+            volm_set = self.mbc.create_tagged_entity_set(3)
+            mbl.volume_set = volm_set
+            self.label_to_volume_sets.setdefault(mbl.label, set()).add(volm_set)
+
+    def _establish_surface_sets(self):
+        for face in self.face_to_meshables:
+            # shouldn't be possible, given we're iterating over the keys
+            if face in self.face_to_surf_set:
+                continue
+            # TODO: create enum of the magic numbers
+            surf_set = self.mbc.create_tagged_entity_set(2)
+            self.face_to_surf_set[face] = surf_set
+
+    def _populate_surface_curve_sets(
+        self, face, surf_set, triangulation, location, nodes
+    ):
+        ex = TopologyExplorer(face)
+        for edge in ex.edges():
+            curve_set, existed = self._find_or_add_curve_set(edge)
+            if not existed:
+                edge_mesh_vert_idxs = (
+                    self.bt.PolygonOnTriangulation(edge, triangulation, location)
+                    .Nodes()
+                    .to_numpy_array()
+                )
+
+                # remove the last index if it's closed (circular)
+                closed = edge_mesh_vert_idxs[0] == edge_mesh_vert_idxs[-1]
+                if closed:
+                    edge_mesh_vert_idxs = edge_mesh_vert_idxs[:-1]
+
+                # subtract 1 to make it 0-based index
+                curve_nodes = [nodes[i - 1] for i in edge_mesh_vert_idxs]
+                curve_edges = [
+                    self.mbc.create_element(
+                        types.MBEDGE, (curve_nodes[i], curve_nodes[i + 1])
+                    )
+                    for i in range(len(curve_nodes) - 1)
+                ]
+                if closed:
+                    curve_edges.append(
+                        self.mbc.create_element(
+                            types.MBEDGE, (curve_nodes[-1], curve_nodes[0])
+                        )
+                    )
+
+                self.mbc.add_entities(curve_set, curve_edges)
+                self.mbc.add_entities(curve_set, curve_nodes)
+
+                self._populate_curve_vertex_sets(edge, curve_set)
+
+            self.mbc.define_parent_child(surf_set, curve_set)
+
+    def _populate_curve_vertex_sets(self, edge, curve_set):
+        ex = TopologyExplorer(edge)
+        for edge_vertex in ex.vertices():
+            vertex_set, existed = self._find_or_add_vertex_set(edge_vertex)
+            if not existed:
+                vtx = self.bt.Pnt(topods.Vertex(edge_vertex)).Coord()
+                node = self._find_or_add_vertex_node(vtx)
+                self.mbc.add_entity(vertex_set, node)
+            self.mbc.define_parent_child(curve_set, vertex_set)
+
+    def _process_surfaces(self, faceting_tolerance):
+        self._establish_surface_sets()
+
+        for face, surf_set in self.face_to_surf_set.items():
+            BRepMesh_IncrementalMesh(face, faceting_tolerance)
+
+            location = TopLoc_Location()
+            triangulation = self.bt.Triangulation(face, location)
+
+            vertices = []
+            for i in range(1, triangulation.NbNodes() + 1):
+                transform = location.Transformation()
+                vert_node_xyz = triangulation.Node(i).XYZ()
+                transform.Transforms(vert_node_xyz)
+                vertices.append(vert_node_xyz.Coord())
+
+            tris = triangulation.Triangles()
+            tris_vert_idxs = [
+                tris.Value(i).Get() for i in range(1, triangulation.NbTriangles() + 1)
+            ]
+
+            nodes = self._find_or_add_vertex_nodes(vertices)
+            moab_triangles = [
+                self.mbc.create_element(
+                    types.MBTRI,
+                    (
+                        nodes[tri_vert_idxs[0] - 1],
+                        nodes[tri_vert_idxs[1] - 1],
+                        nodes[tri_vert_idxs[2] - 1],
+                    ),
+                )
+                for tri_vert_idxs in tris_vert_idxs
+            ]
+
+            self.mbc.add_entities(surf_set, nodes)
+            self.mbc.add_entities(surf_set, moab_triangles)
+
+            self._populate_surface_curve_sets(
+                face, surf_set, triangulation, location, nodes
+            )
+
+    def _process_volumes(self):
+        self._establish_volume_sets()
 
         for mbl in self.meshables:
             meshable_volm_set = mbl.volume_set
 
             for face in mbl.occ_faces:
-                # create the surface set
-
-                # if it's been created before,
-                # create a new one but don't tag it
-                # (only define the parent-child relationship and inverse sense)
-                if face in self.processed_faces:
-                    surf_set = self.mbc.create_meshset()
-                else:
-                    surf_set = self.mbc.create_meshset()
-                    self.mbc.tag_global_id(surf_set, id(face))
-                    self.mbc.tag_category(surf_set, "Surface")
-                    self.mbc.tag_geom_dimension(surf_set, 2)
-                self.processed_faces.add(face)
-
-                self.mbc.define_parent_child(meshable_volm_set, surf_set)
+                surf_set = self.face_to_surf_set[face]
 
                 # define the surface sense
                 linked_meshables = self.face_to_meshables[face]
@@ -205,75 +371,39 @@ class MoabMesher:
 
                 self.mbc.tag_surf_sense(surf_set, sense_data_volm_sets)
 
-                # mesh the face and associate it with the surface set
-                """             AllowQuad=0)
+                self.mbc.define_parent_child(meshable_volm_set, surf_set)
 
-Args:
-    Shape (required, topology) - TopoShape to create mesh of.
-    LinearDeflection (required, float)
-    AngularDeflection (optional, float)
-    Segments (optional, boolean)
-    GroupColors (optional, list of (Red, Green, Blue) tuples)
-    MaxLength (required, float)
-    MaxArea (required, float)
-    LocalLength (required, float)
-    Deflection (required, float)
-    MinLength (required, float)
-    Fineness (required, integer)
-    SecondOrder (optional, integer boolean)
-    Optimize (optional, integer boolean)
-    AllowQuad (optional, integer boolean)
-    GrowthRate (optional, float)
-    SegPerEdge (optional, float)
-    SegPerRadius (optional, float)"""
+    def _process_groups(self):
+        for label, volm_sets in self.label_to_volume_sets.items():
+            group_set = self.mbc.create_tagged_entity_set(4)
+            self.mbc.tag_name_material(group_set, label)
+            self.mbc.add_entities(group_set, volm_sets)
 
-                msh: Mesh.Mesh = MeshPart.meshFromShape(
-                    Part.__fromPythonOCC__(face),
-                    LinearDeflection=0.1,
-                    AngularDeflection=0.5,
-                    Segments=True,
-                    MaxLength=0.1,
-                    AllowQuad=0,
-                )
-                mesh_pts = [(p.x, p.y, p.z) for p in msh.Points]
+    def _create_file_set(self, faceting_tolerance):
+        file_set = self.mbc.create_meshset(types.MBENTITYSET)
+        self.mbc.tag_faceting_tol(file_set, faceting_tolerance)
 
-                # This creates the vertices in moab (globally)
-                # Use this to map the local vertex index to the global vertex index
-                verts = self.mbc.create_vertices(mesh_pts)
-                self.mbc.add_entity(surf_set, verts)
-
-                # for facet in msh.Facets:
-                #     tri = (
-                #         verts[facet.PointIndices[0]],
-                #         verts[facet.PointIndices[1]],
-                #         verts[facet.PointIndices[2]],
-                #     )
-
-                #     moab_triangle = self.mbc.create_element(types.MBTRI, tri)
-                #     self.mbc.add_entity(surf_set, moab_triangle)
-
-                moab_triangles = [
-                    self.mbc.create_element(
-                        types.MBTRI,
-                        (
-                            verts[facet.PointIndices[0]],
-                            verts[facet.PointIndices[1]],
-                            verts[facet.PointIndices[2]],
-                        ),
-                    )
-                    for facet in msh.Facets
-                ]
-                self.mbc.add_entities(surf_set, moab_triangles)
         all_sets = self.mbc.core.get_entities_by_handle(0)
+        self.mbc.add_entities(file_set, all_sets.to_array())
 
-        file_set = self.mbc.core.create_meshset()
+    def perform(self, faceting_tolerance=0.1):
+        if self.meshed:
+            return
 
-        self.mbc.add_entities(file_set, all_sets)
-
-        self.mbc.core.write_file("dagmc.h5m")
-        self.mbc.core.write_file("dagmc.vtk")
+        self._process_surfaces(faceting_tolerance)
+        self._process_volumes()
+        self._process_groups()
+        self._create_file_set(faceting_tolerance)
 
         self.meshed = True
+
+    def to_file(self, file_name, *, include_vtk=False):
+        if not self.meshed:
+            raise RuntimeError("Meshing has not been performed yet.")
+
+        self.mbc.core.write_file(f"{file_name}.h5m")
+        if include_vtk:
+            self.mbc.core.write_file(f"{file_name}.vtk")
 
 
 def save_cad_to_dagmc_model(
@@ -281,24 +411,22 @@ def save_cad_to_dagmc_model(
     names: list[str],
     filename: Path,
     *,
-    faceting_tolerance=0.001,
+    faceting_tolerance=0.1,
 ):
     """Converts the shapes with their associated names to a dagmc file using PyMOAB."""
-    imprinted_solids = []
+    mesher = MoabMesher()
 
     # do a per compound imprint for now.
     # In the future, one should extract all solids then do the imprint on _all_ of them
     for shape in track(shapes):
         if isinstance(shape, BluemiraCompound):
-            imprinted_solids.extend(imprint_solids(shape.solids))
+            imps = imprint_solids(shape.solids)
+            mesher.add_imprintables(imps)
         else:
-            imprinted_solids.append(shape)
+            mesher.add_solid(shape)
 
-    # for each solid, extract the face
-    # look up the face to see if it exists
-    # if it does, associate the face with the solid (this one)
-    # if it doesn't, create the face and associate it with the solid
-    # it's mesh (faceting)
+    mesher.perform(faceting_tolerance)
+    mesher.to_file(filename)
 
 
 if __name__ == "__main__":
@@ -307,6 +435,7 @@ if __name__ == "__main__":
     from bluemira.geometry.face import BluemiraFace
     from bluemira.geometry.tools import (
         extrude_shape,
+        make_circle,
         make_polygon,
     )
 
@@ -316,14 +445,16 @@ if __name__ == "__main__":
     )
     box_a = extrude_shape(box_a, [0, 0, 1])
     box_b = deepcopy(box_a)
-    box_b.translate([-0.6, -0.6, 1])
+    box_b.translate([-0.6, 1, -0.6])
     box_c = deepcopy(box_a)
-    box_c.translate([0.6, 0.6, 1])
+    box_c.translate([0.6, 1, 0.6])
+    circ = BluemiraFace(make_circle(0.5, (0, 0, 1)), label="circ")
+    circ = extrude_shape(circ, [0, 0, 1])
 
-    pre_imps = [box_a, box_b, box_c]
-    # show_cad(pre_imps)
+    pre_imps = [circ, box_a, box_b, box_c]
+    show_cad(pre_imps)
     imps = imprint_solids(pre_imps)
 
     mesher = MoabMesher()
     mesher.add_imprintables(imps)
-    mesher.mesh_to_file()
+    mesher.perform()
