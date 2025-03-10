@@ -1771,7 +1771,7 @@
     "var_mod": "Vertical Build",
     "scan01": 0.15
   },
-  "ohhghf": {
+  "f_z_cs_tf_internal": {
     "var_mod": "Vertical Build",
     "scan01": 0.9
   },
@@ -2379,15 +2379,15 @@
     "var_mod": "Superconducting TF Coils",
     "scan01": 0.65509
   },
-  "isumatoh": {
+  "i_cs_superconductor": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5.0
   },
-  "bmaxoh0": {
+  "b_cs_peak_pulse_start": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 14.046
   },
-  "jscoh_bop": {
+  "j_cs_conductor_critical_pulse_start": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 351730000.0
   },
@@ -2395,19 +2395,19 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 105520000.0
   },
-  "rjohc0": {
+  "j_cs_critical_pulse_start": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 42783000.0
   },
-  "cohbop": {
+  "j_cs_pulse_start": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 22125000.0
   },
-  "bmaxoh": {
+  "b_cs_peak_flat_top_end": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 13.878
   },
-  "jscoh_eof": {
+  "j_cs_conductor_critical_flat_top_end": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 368200000.0
   },
@@ -2415,15 +2415,15 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 110460000.0
   },
-  "rjohc": {
+  "j_cs_critical_flat_top_end": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 44785000.0
   },
-  "coheof": {
+  "j_cs_flat_top_end": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 23666000.0
   },
-  "areaoh": {
+  "a_cs_poloidal": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 9.4963
   },
@@ -2431,19 +2431,19 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5.5004
   },
-  "awpoh*(1-vfohc)": {
+  "awpoh*(1-f_a_cs_void)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.8503
   },
-  "awpoh*vfohc": {
+  "awpoh*f_a_cs_void": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.6501
   },
-  "areaoh-awpoh": {
+  "a_cs_poloidal-awpoh": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.996
   },
-  "oh_steel_frac": {
+  "f_a_cs_steel": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.42079
   },
@@ -2479,7 +2479,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.7
   },
-  "vfohc": {
+  "f_a_cs_void": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.3
   },
@@ -2487,7 +2487,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 4.75
   },
-  "tmargoh": {
+  "temp_cs_margin": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.5
   },
@@ -2495,7 +2495,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.5
   },
-  "isumatpf": {
+  "i_pf_superconductor": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.0
   },
@@ -2511,11 +2511,11 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.666
   },
-  "rpf(01)": {
+  "r_pf_coil_middle(01)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5.4373
   },
-  "zpf(01)": {
+  "z_pf_coil_middle(01)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 11.38
   },
@@ -2527,23 +2527,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.0625
   },
-  "turns(01)": {
+  "n_pf_coil_turns(01)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 294.28
   },
-  "ric(01)": {
+  "c_pf_cs_coils_peak_ma(01)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 12.419
   },
-  "bpf(01)": {
+  "b_pf_coil_peak(01)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.3113
   },
-  "rpf(02)": {
+  "r_pf_coil_middle(02)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5.4373
   },
-  "zpf(02)": {
+  "z_pf_coil_middle(02)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -12.897
   },
@@ -2555,23 +2555,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -1.098
   },
-  "turns(02)": {
+  "n_pf_coil_turns(02)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 314.26
   },
-  "ric(02)": {
+  "c_pf_cs_coils_peak_ma(02)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 13.262
   },
-  "bpf(02)": {
+  "b_pf_coil_peak(02)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 2.9628
   },
-  "rpf(03)": {
+  "r_pf_coil_middle(03)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 19.444
   },
-  "zpf(03)": {
+  "z_pf_coil_middle(03)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.6678
   },
@@ -2583,23 +2583,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.3846
   },
-  "turns(03)": {
+  "n_pf_coil_turns(03)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 272.56
   },
-  "ric(03)": {
+  "c_pf_cs_coils_peak_ma(03)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -11.502
   },
-  "bpf(03)": {
+  "b_pf_coil_peak(03)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.2246
   },
-  "rpf(04)": {
+  "r_pf_coil_middle(04)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 19.444
   },
-  "zpf(04)": {
+  "z_pf_coil_middle(04)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -3.6678
   },
@@ -2611,23 +2611,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -1.3846
   },
-  "turns(04)": {
+  "n_pf_coil_turns(04)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 272.56
   },
-  "ric(04)": {
+  "c_pf_cs_coils_peak_ma(04)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -11.502
   },
-  "bpf(04)": {
+  "b_pf_coil_peak(04)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.2246
   },
-  "rpf(05)": {
+  "r_pf_coil_middle(05)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 16.913
   },
-  "zpf(05)": {
+  "z_pf_coil_middle(05)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 10.27
   },
@@ -2639,23 +2639,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.93766
   },
-  "turns(05)": {
+  "n_pf_coil_turns(05)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 163.57
   },
-  "ric(05)": {
+  "c_pf_cs_coils_peak_ma(05)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -7.0337
   },
-  "bpf(05)": {
+  "b_pf_coil_peak(05)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.0134
   },
-  "rpf(06)": {
+  "r_pf_coil_middle(06)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 16.913
   },
-  "zpf(06)": {
+  "z_pf_coil_middle(06)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -10.27
   },
@@ -2667,23 +2667,23 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -0.93766
   },
-  "turns(06)": {
+  "n_pf_coil_turns(06)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 163.57
   },
-  "ric(06)": {
+  "c_pf_cs_coils_peak_ma(06)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -7.0337
   },
-  "bpf(06)": {
+  "b_pf_coil_peak(06)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.0134
   },
-  "rpf(nohc)": {
+  "r_pf_coil_middle(n_cs_pf_coils)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.4884
   },
-  "zpf(nohc)": {
+  "z_pf_coil_middle(n_cs_pf_coils)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.0
   },
@@ -2695,15 +2695,15 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 18.993
   },
-  "turns(nohc)": {
+  "n_pf_coil_turns(n_cs_pf_coils)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5226.5
   },
-  "ric(nohc)": {
+  "c_pf_cs_coils_peak_ma(n_cs_pf_coils)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -224.74
   },
-  "bpf(nohc)": {
+  "b_pf_coil_peak(n_cs_pf_coils)": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 14.046
   },
@@ -2715,15 +2715,15 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 5e-10
   },
-  "vstot": {
+  "vs_cs_pf_total_pulse": {
     "var_mod": "Volt Second Consumption",
     "scan01": -401.46
   },
-  "fcohbop": {
+  "f_j_cs_start_pulse_end_flat_top": {
     "var_mod": "Waveforms",
     "scan01": 0.9349
   },
-  "ncirt": {
+  "n_pf_cs_plasma_circuits": {
     "var_mod": "PF Circuit Waveform Data",
     "scan01": 8.0
   },

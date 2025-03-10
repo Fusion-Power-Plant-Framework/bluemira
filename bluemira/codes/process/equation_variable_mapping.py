@@ -414,7 +414,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Reinke criterion impurity fraction lower limit",
     )
-    BMAX_CS_UPPER_LIMIT = 79, (149,), ("bmaxcs_lim",), "Peak CS field upper limit"
+    BMAX_CS_UPPER_LIMIT = 79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit"
     PDIVT_LOWER_LIMIT = 80, (153,), ("pdivtlim",), "Divertor power lower limit"
     DENSITY_PROFILE_CONSISTENCY = 81, (154,), (), "Ne(0) > ne(ped) constraint"
     STELLARATOR_COIL_CONSISTENCY = (
@@ -585,11 +585,11 @@ ITERATION_VAR_MAPPING = {
     "fdivcol": 34,
     "fpeakb": 35,
     "fbeta_max": 36,
-    "coheof": 37,
+    "j_cs_flat_top_end": 37,
     "fjohc": 38,
     "fjohc0": 39,
     "fgamcd": 40,
-    "fcohbop": 41,
+    "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
     # 43 NOT USED
     "fvsbrnni": 44,
@@ -664,7 +664,7 @@ ITERATION_VAR_MAPPING = {
     "tesep": 119,
     "ttarget": 120,
     "neratio": 121,
-    "oh_steel_frac": 122,
+    "f_a_cs_steel": 122,
     "foh_stress": 123,
     "qtargettotal": 124,
     "fimp(3)": 125,  # Beryllium
@@ -691,14 +691,14 @@ ITERATION_VAR_MAPPING = {
     "fcpttf": 146,
     "freinke": 147,
     "fzactual": 148,
-    "fbmaxcs": 149,
+    "fb_cs_limit_max": 149,
     # 150, 151 NOT USED
     "fgwsep": 152,
     "fpdivlim": 153,
     "fne0": 154,
     "pfusife": 155,
     "rrin": 156,
-    "fvssu": 157,
+    "fvs_cs_pf_total_ramp": 157,
     "croco_thick": 158,
     "ftoroidalgap": 159,
     "f_avspace": 160,
