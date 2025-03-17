@@ -405,11 +405,11 @@ class TestInDatOneForOne:
             "dr_cryostat": 0.15,
             "gapomin": 0.2,
             # Vertical build inputs
-            "d_vv_top": 0.3,
-            "vgap_vv_thermalshield": 0.05,
-            "shldtth": 0.3,
-            "divfix": 0.621,
-            "d_vv_bot": 0.3,
+            "dz_vv_upper": 0.3,
+            "dz_shld_vv_gap": 0.05,
+            "dz_shld_upper": 0.3,
+            "dz_divertor": 0.621,
+            "dz_vv_lower": 0.3,
             # HCD inputs
             "pinjalw": 51.0,
             "gamma_ecrh": 0.3,
