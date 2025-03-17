@@ -118,15 +118,15 @@ NONE_mappings = {
     # The following mappings are not 1:1
     "tk_sh_in": ("dr_shld_inboard", "m"),
     "tk_sh_out": ("dr_shld_outboard", "m"),
-    "tk_sh_top": ("shldtth", "m"),
-    "tk_sh_bot": ("shldlth", "m"),
+    "tk_sh_top": ("dz_shld_upper", "m"),
+    "tk_sh_bot": ("dz_shld_lower", "m"),
     "tk_vv_out": ("dr_vv_outboard", "m"),
-    "tk_vv_top": ("d_vv_top", "m"),
-    "tk_vv_bot": ("d_vv_bot", "m"),
+    "tk_vv_top": ("dz_vv_upper", "m"),
+    "tk_vv_bot": ("dz_vv_lower", "m"),
     # Thermal shield thickness is a constant for us
     "tk_ts": ("dr_shld_thermal_inboard", "m"),
     # "tk_ts": ("dr_shld_thermal_outboard", "m"),
-    # "tk_ts": ("thshield_vb", "m"),
+    # "tk_ts": ("dz_shld_thermal", "m"),
     "q_95": ("q95", "dimensionless"),
 }
 
