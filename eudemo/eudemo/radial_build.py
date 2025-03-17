@@ -229,8 +229,8 @@ template_builder.add_input_values({
     "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
-    "vgap_vv_thermalshield": 0.05,
-    "divfix": 0.621,
+    "dz_shld_vv_gap": 0.05,
+    "dz_divertor": 0.621,
     # HCD inputs
     "pinjalw": 51.0,
     "gamma_ecrh": 0.3,
@@ -327,7 +327,7 @@ def apply_specific_interface_rules(params: ParameterFrame):
     template_builder.add_input_values({
         "dr_shld_thermal_inboard": tk_ts,
         "dr_shld_thermal_outboard": tk_ts,
-        "thshield_vb": tk_ts,
+        "dz_shld_thermal": tk_ts,
     })
 
     # Apply the summation of "shield" and "VV" thicknesses in PROCESS
@@ -339,12 +339,12 @@ def apply_specific_interface_rules(params: ParameterFrame):
     template_builder.add_input_values({
         "dr_shld_inboard": tk_sh_ib,
         "dr_shld_outboard": tk_sh_ob,
-        "shldtth": tk_sh_ib,
-        "shldlth": tk_sh_ib,
+        "dz_shld_upper": tk_sh_ib,
+        "dz_shld_lower": tk_sh_ib,
         "dr_vv_inboard": default_vv_tk,
         "dr_vv_outboard": default_vv_tk,
-        "d_vv_top": default_vv_tk,
-        "d_vv_bot": default_vv_tk,
+        "dz_vv_upper": default_vv_tk,
+        "dz_vv_lower": default_vv_tk,
     })
 
 
