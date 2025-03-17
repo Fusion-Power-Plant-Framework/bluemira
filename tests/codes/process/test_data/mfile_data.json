@@ -1663,7 +1663,7 @@
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
-  "thshield_vb": {
+  "dz_shld_thermal": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
@@ -1727,23 +1727,23 @@
     "var_mod": "Vertical Build",
     "scan01": 1.0
   },
-  "vgap_vv_thermalshield": {
+  "dz_shld_vv_gap": {
     "var_mod": "Vertical Build",
     "scan01": 0.05
   },
-  "d_vv_top": {
+  "dz_vv_upper": {
     "var_mod": "Vertical Build",
     "scan01": 0.3
   },
-  "shldtth": {
+  "dz_shld_upper": {
     "var_mod": "Vertical Build",
     "scan01": 0.3
   },
-  "fwtth": {
+  "dz_fw_upper": {
     "var_mod": "Vertical Build",
     "scan01": 0.018
   },
-  "vgaptop": {
+  "dz_fw_plasma_gap": {
     "var_mod": "Vertical Build",
     "scan01": 0.6
   },
@@ -1751,19 +1751,19 @@
     "var_mod": "Vertical Build",
     "scan01": 6.778
   },
-  "vgap_xpoint_divertor": {
+  "dz_xpoint_divertor": {
     "var_mod": "Vertical Build",
     "scan01": 2.0024
   },
-  "divfix": {
+  "dz_divertor": {
     "var_mod": "Vertical Build",
     "scan01": 0.621
   },
-  "shldlth": {
+  "dz_shld_lower": {
     "var_mod": "Vertical Build",
     "scan01": 0.7
   },
-  "d_vv_bot": {
+  "dz_vv_lower": {
     "var_mod": "Vertical Build",
     "scan01": 0.3
   },
