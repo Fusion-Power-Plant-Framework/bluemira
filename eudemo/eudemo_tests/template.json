@@ -2185,7 +2185,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldlth",
+        "name": "dz_shld_lower",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2230,7 +2230,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldtth",
+        "name": "dz_shld_upper",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2417,7 +2417,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_bot",
+        "name": "dz_vv_lower",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2459,7 +2459,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_top",
+        "name": "dz_vv_upper",
         "send": true,
         "recv": false,
         "unit": "m"
