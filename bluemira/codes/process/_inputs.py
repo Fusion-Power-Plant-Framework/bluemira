@@ -404,7 +404,7 @@ class ProcessInputs:
     fwalld: float | None = None
     fzeffmax: float | None = None
     gammax: float | None = None
-    maxradwallload: float | None = None
+    pflux_fw_rad_max: float | None = None
     mvalim: float | None = None
     nbshinefmax: float | None = None
     nflutfmax: float | None = None
@@ -500,7 +500,7 @@ class ProcessInputs:
     tbeamin: float | None = None
 
     # Impurity radiation
-    coreradius: float | None = None
+    radius_plasma_core_norm: float | None = None
     coreradiationfraction: float | None = None
     fimp: list[float] | None = None
 

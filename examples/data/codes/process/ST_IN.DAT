@@ -172,7 +172,7 @@ baseel   = 55.0d6 * Base plant electric load (w)
 htpmw_min = 0.0 * Minimum total electrical power for primary coolant pumps (mw)
 *------------------Ife Variables-------------------*
 *------------Impurity Radiation Module-------------*
-coreradius = 0.6 * Normalised radius defining the 'core' region
+radius_plasma_core_norm = 0.6 * Normalised radius defining the 'core' region
 fimp(1) = 1.0
 fimp(2) = 0.1
 fimp(3) = 0.0
