@@ -622,7 +622,7 @@ class TFCSTopologyModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "tf_in_cs"
+        return "i_tf_inside_cs"
 
     ITER = 0
     INSANITY = 1
