@@ -1131,7 +1131,7 @@
     "var_mod": "Plasma",
     "scan01": 0.6
   },
-  "coreradius": {
+  "radius_plasma_core_norm": {
     "var_mod": "Plasma",
     "scan01": 0.75
   },
@@ -1171,7 +1171,7 @@
     "var_mod": "Plasma",
     "scan01": 3.33
   },
-  "maxradwallload": {
+  "pflux_fw_rad_max": {
     "var_mod": "Plasma",
     "scan01": 1.0
   },
@@ -1179,7 +1179,7 @@
     "var_mod": "Plasma",
     "scan01": 1.1275
   },
-  "wallmw": {
+  "pflux_fw_neutron_mw": {
     "var_mod": "Plasma",
     "scan01": 1.2856
   },

@@ -201,7 +201,7 @@ template_builder.add_input_values({
     "nesep": 0.2e20,
     "beta_norm_max": 3.0,
     # Plasma impurity stuff
-    "coreradius": 0.75,
+    "radius_plasma_core_norm": 0.75,
     "coreradiationfraction": 0.6,
     # Important stuff
     "pnetelin": 500.0,

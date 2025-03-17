@@ -288,7 +288,7 @@ ipowerflow = 0 * switch for power flow model;
 
 *------------Impurity Radiation Module-------------*
 
-coreradius = 0.6 * coreradius /0;6/ ; normalised radius defining the 'core' region
+radius_plasma_core_norm = 0.6 * radius_plasma_core_norm /0;6/ ; normalised radius defining the 'core' region
 fimp(1) = 1.0
 fimp(2) = 0.1
 fimp(3) = 0.0
