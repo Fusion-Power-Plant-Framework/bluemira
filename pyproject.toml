@@ -354,6 +354,7 @@ ignore-names = [
     "N802",
     "PLC2701",
     "PT023",
+    "RUF059",
     "T201",
 ]
 "tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
