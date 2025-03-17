@@ -172,7 +172,7 @@ class TestTeardown:
                 return [
                     "dr_shld_thermal_inboard",
                     "dr_shld_thermal_outboard",
-                    "thshield_vb",
+                    "dz_shld_thermal",
                 ]
             return param
 
@@ -186,7 +186,7 @@ class TestTeardown:
         outputs = teardown.get_raw_outputs([
             "dr_shld_thermal_inboard",
             "dr_shld_thermal_outboard",
-            "thshield_vb",
+            "dz_shld_thermal",
         ])
         # value from the 'thshield' param in ./test_data/mfile_data.json
         assert outputs == [0.05, 0.05, 0.05]
