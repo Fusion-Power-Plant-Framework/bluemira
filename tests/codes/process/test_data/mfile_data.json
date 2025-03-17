@@ -1939,7 +1939,7 @@
     "var_mod": "TF coils",
     "scan01": 486720000.0
   },
-  "sig_tf_tresca_max(1)": {
+  "s_shear_tf_peak(1)": {
     "var_mod": "TF coils",
     "scan01": 548190000.0
   },
@@ -1959,7 +1959,7 @@
     "var_mod": "TF coils",
     "scan01": 517180000.0
   },
-  "sig_tf_tresca_max(2)": {
+  "s_shear_tf_peak(2)": {
     "var_mod": "TF coils",
     "scan01": 580000000.0
   },
@@ -2463,7 +2463,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -825420000.0
   },
-  "s_tresca_oh": {
+  "s_shear_cs_peak": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 660000000.0
   },
