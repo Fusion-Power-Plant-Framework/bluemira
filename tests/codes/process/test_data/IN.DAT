@@ -277,7 +277,7 @@ vfblkt   = 0.10 * coolant void fraction in blanket (`blktmodel=0`); (calculated 
 
 *-------------Heat Transport Variables-------------*
 
-etath    = 0.375 * thermal to electric conversion efficiency if `secondary_cycle=2`; otherwise calculated;
+etath    = 0.375 * thermal to electric conversion efficiency if `i_thermal_electric_conversion=2`; otherwise calculated;
 ipowerflow = 0 * switch for power flow model;
 
 *--------------------Ife Module--------------------*

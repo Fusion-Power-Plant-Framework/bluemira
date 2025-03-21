@@ -2979,15 +2979,15 @@
     "var_mod": "Pumping for primary coolant (helium)",
     "scan01": 0.012629
   },
-  "fbltibe12": {
+  "f_vol_blkt_tibe12": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.375
   },
-  "fblli2sio4": {
+  "f_vol_blkt_li4sio4": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.375
   },
-  "fblss_ccfe": {
+  "f_vol_blkt_steel": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.09705
   },
@@ -3007,7 +3007,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 27.823
   },
-  "volblkt": {
+  "vol_blkt_total": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1690.1
   },
@@ -3015,7 +3015,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 877.86
   },
-  "vdewin": {
+  "vol_vv": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1346.6
   },
@@ -3027,19 +3027,19 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 217020.0
   },
-  "whtblkt": {
+  "m_blkt_total": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 4232900.0
   },
-  "whtbltibe12": {
+  "m_blkt_tibe12": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1432400.0
   },
-  "whtblli4sio4": {
+  "m_blkt_li4sio4": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1521100.0
   },
-  "whtblss": {
+  "m_blkt_steel_total": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1279400.0
   },
@@ -3051,7 +3051,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2738900.0
   },
-  "vvmass": {
+  "m_vv": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 10503000.0
   },
@@ -3063,7 +3063,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 415.51
   },
-  "pnucblkt": {
+  "p_blkt_nuclear_heat_total_mw": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2340.3
   },
@@ -3071,7 +3071,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2.5259
   },
-  "pnucdiv": {
+  "p_div_nuclear_heat_total_mw": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 282.71
   },
@@ -3087,11 +3087,11 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.25427
   },
-  "fdiv": {
+  "f_ster_div_single": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.115
   },
-  "secondary_cycle": {
+  "i_thermal_electric_conversion": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2.0
   },
@@ -3099,23 +3099,23 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 15500000.0
   },
-  "blpressure": {
+  "pres_blkt_coolant": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 15500000.0
   },
-  "nblktmodpi": {
+  "n_blkt_inboard_modules_poloidal": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 7.0
   },
-  "nblktmodti": {
+  "n_blkt_inboard_modules_toroidal": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 32.0
   },
-  "nblktmodpo": {
+  "n_blkt_outboard_modules_poloidal": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 8.0
   },
-  "nblktmodto": {
+  "n_blkt_outboard_modules_toroidal": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 48.0
   },
@@ -3547,15 +3547,15 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 1.269
   },
-  "fhcd": {
+  "f_a_fw_hcd": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
-  "1-fdiv-fhcd": {
+  "1-f_ster_div_single-f_a_fw_hcd": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.885
   },
-  "primary_pumping": {
+  "i_coolant_pumping": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3.0
   },

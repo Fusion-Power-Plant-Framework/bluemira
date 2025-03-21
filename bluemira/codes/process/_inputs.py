@@ -60,12 +60,12 @@ class ProcessInputs:
     denstl: float | None = None
     emult: float | None = None
     fblss: float | None = None
-    fdiv: float | None = None
-    fwbsshape: int | None = None
+    f_ster_div_single: float | None = None
+    i_fw_blkt_vv_shape: int | None = None
     fw_armour_thickness: float | None = None
     i_blanket_type: int | None = None
     i_blkt_inboard: int | None = None
-    li6enrich: float | None = None
+    f_blkt_li6_enrichment: float | None = None
     breeder_f: float | None = None
     breeder_multiplier: float | None = None
     vfcblkt: float | None = None
@@ -85,7 +85,7 @@ class ProcessInputs:
     nphcdout: int | None = None
     wallpf: float | None = None
     iblanket_thickness: int | None = None
-    secondary_cycle: int | None = None  # Listed as an output...
+    i_thermal_electric_conversion: int | None = None  # Listed as an output...
     secondary_cycle_liq: int | None = None
     afwi: float | None = None
     afwo: float | None = None
@@ -98,15 +98,15 @@ class ProcessInputs:
     roughness: float | None = None
     len_fw_channel: float | None = None
     f_fw_peak: float | None = None
-    blpressure: float | None = None
-    inlet_temp: float | None = None
-    outlet_temp: float | None = None
+    pres_blkt_coolant: float | None = None
+    temp_blkt_coolant_in: float | None = None
+    temp_blkt_coolant_out: float | None = None
     coolp: float | None = None
-    coolwh: int | None = None
-    nblktmodpo: int | None = None
-    nblktmodpi: int | None = None
-    nblktmodto: int | None = None
-    nblktmodti: int | None = None
+    i_blkt_coolant_type: int | None = None
+    n_blkt_outboard_modules_poloidal: int | None = None
+    n_blkt_inboard_modules_poloidal: int | None = None
+    n_blkt_outboard_modules_toroidal: int | None = None
+    n_blkt_inboard_modules_toroidal: int | None = None
     temp_fw_max: float | None = None
     fw_th_conductivity: float | None = None
     fvoldw: float | None = None
@@ -337,7 +337,7 @@ class ProcessInputs:
     f_copperaoh_m2: float | None = None
 
     # Primary pumping
-    primary_pumping: int | None = None
+    i_coolant_pumping: int | None = None
     gamma_he: float | None = None
     t_in_bb: float | None = None
     t_out_bb: float | None = None
@@ -699,11 +699,11 @@ class ProcessInputs:
     # first wall, blanket and
     # shield components variables
     i_fw_coolant_type: str | None = None
-    icooldual: int | None = None
-    ipump: int | None = None
-    i_bb_liq: int | None = None
+    i_blkt_dual_coolant: int | None = None
+    i_fw_blkt_shared_coolant: int | None = None
+    i_blkt_liquid_breeder_type: int | None = None
     ims: int | None = None
-    ifci: int | None = None
+    i_blkt_liquid_breeder_channel_type: int | None = None
 
     def __iter__(self) -> Iterator[tuple[str, float | list | dict]]:
         """
