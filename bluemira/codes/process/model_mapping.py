@@ -555,7 +555,7 @@ class BlanketModel(PROCESSModel):
             "dr_blkt_inboard",
             "dr_blkt_outboard",
             "iblanket_thickness",
-            "li6enrich",
+            "f_blkt_li6_enrichment",
             "breeder_f",
         ),
         "CCFE HCPB model with Tritium Breeding Ratio calculation",
@@ -576,8 +576,8 @@ class StelleratorBlanketModel(PROCESSModel):
         """
         return "blktmodel"
 
-    SIMPLE = 0, ("coolwh",)
-    KIT_HCPB = 1, ("coolwh",)
+    SIMPLE = 0, ("i_blkt_coolant_type",)
+    KIT_HCPB = 1, ("i_blkt_coolant_type",)
 
 
 class InboardBlanketSwitch(PROCESSModel):
@@ -606,7 +606,7 @@ class InVesselGeometryModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "fwbsshape"
+        return "i_fw_blkt_vv_shape"
 
     CYL_ELLIPSE = 1
     TWO_ELLIPSE = 2
@@ -1059,7 +1059,7 @@ class PrimaryPumpingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "primary_pumping"
+        return "i_coolant_pumping"
 
     INPUT = 0
     FRACTION = 1
@@ -1077,7 +1077,7 @@ class SecondaryCycleModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "secondary_cycle"
+        return "i_thermal_electric_conversion"
 
     FIXED = 0
     FIXED_W_DIVERTOR = 1
@@ -1304,7 +1304,7 @@ class VacuumPumpSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ipump"
+        return "i_fw_blkt_shared_coolant"
 
     SAME = 0, (), "FW and BB have the same primary coolant"
     DIFFERENT = (
@@ -1356,7 +1356,7 @@ class LiquidMetalBreederMaterialSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_bb_liq"
+        return "i_blkt_liquid_breeder_type"
 
     PBLI = 0, (), "PbLi"
     LI = 1, (), "Li"
@@ -1372,7 +1372,7 @@ class BBCoolantSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "icooldual"
+        return "i_blkt_dual_coolant"
 
     SINGLE_FOR_SB = (
         0,
@@ -1397,7 +1397,7 @@ class FlowChannelInsertSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ifci"
+        return "i_blkt_liquid_breeder_channel_type"
 
     THIN = (
         0,
