@@ -643,7 +643,7 @@ ITERATION_VAR_MAPPING = {
     "fptfnuc": 95,
     "fvvhe": 96,
     "fpsepr": 97,
-    "li6enrich": 98,
+    "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
     "fl_h_threshold": 103,
     "fcwr": 104,

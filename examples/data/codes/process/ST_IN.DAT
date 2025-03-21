@@ -152,8 +152,8 @@ emult    = 1.18 * Energy multiplication in blanket and shield
 fblss    = 0.13 * Kit blanket model; steel fraction of breeding zone
 fhole    = 0.05 * Area fraction taken up by other holes (not used)
 fblbe    = 0.47 * Beryllium fraction of blanket by volume
-secondary_cycle = 2 * Switch for thermodynamic model of power conversion cycle;
-temp_fw_max = 873  * Maximum temperature of first wall material (k) (secondary_cycle>1)
+i_thermal_electric_conversion = 2 * Switch for thermodynamic model of power conversion cycle;
+temp_fw_max = 873  * Maximum temperature of first wall material (k) (i_thermal_electric_conversion>1)
 fwclfr   = 0.1 * First wall coolant fraction
 vfshld   = 0.60 * Coolant void fraction in shield
 vfblkt   = 0.10 * Coolant void fraction in blanket (blktmodel=0)
@@ -161,7 +161,7 @@ len_fw_channel = 7.0  * Length of a single first wall channel (all in parallel) 
 temp_fw_coolant_in  = 573  * inlet temperature of first wall coolant (K) (15/11/27)
 temp_fw_coolant_out = 773 * outlet temperature of first wall coolant (K) (15/11/27)
 dx_fw_module = 0.020  * pitch of first wall cooling channels (m) (27/11/15)
-pres_fw_coolant = 8.0e6  * first wall coolant pressure (Pa) (secondary_cycle>1)
+pres_fw_coolant = 8.0e6  * first wall coolant pressure (Pa) (i_thermal_electric_conversion>1)
 f_fw_peak = 2.0 * peaking factor for first wall heat loads (15/11/27)
 *-----------------Global Variables-----------------*
 runtitle = Michael's test file

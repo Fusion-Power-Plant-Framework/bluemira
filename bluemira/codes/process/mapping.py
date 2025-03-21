@@ -31,8 +31,8 @@ IN_mappings = {
     "H_star": ("hfact", "dimensionless"),
     "bb_pump_eta_el": ("etahtp", "dimensionless"),
     "bb_pump_eta_isen": ("etaiso", "dimensionless"),
-    "bb_t_inlet": ("inlet_temp", "K"),
-    "bb_t_outlet": ("outlet_temp", "K"),
+    "bb_t_inlet": ("temp_blkt_coolant_in", "K"),
+    "bb_t_outlet": ("temp_blkt_coolant_out", "K"),
     "eta_ecrh": ("etaech", "dimensionless"),
     "gamma_ecrh": ("gamma_ecrh", "1e20 A/W/m^2"),
 }
