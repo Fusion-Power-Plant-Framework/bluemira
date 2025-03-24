@@ -93,7 +93,6 @@ class Imprinter:
 
     def __call__(self, imprintables: list[ImprintableSolid]) -> int:
         """Imprints the solids together, internally mutating the ImprintableSolid."""
-        imprints_performed = 0
         bldr = self._imprint_builder
         bldr.Clear()
 
@@ -109,6 +108,7 @@ class Imprinter:
 
         bldr.Perform()
         res = bldr.Shape()
+
         ex = TopologyExplorer(res)
 
         # you have to update the occ_solid of the imprintable
@@ -133,6 +133,8 @@ class Imprinter:
                 imp_from_solid.set_imprinted_solid(resulting_solid)
                 solid_origin_iter.Next()
 
+        imprints_performed = 0
+
         for resulting_face in ex.faces():
             face_origin = bldr.GetOrigins(resulting_face)
             face_origin_iter = TopTools_ListIteratorOfListOfShape(face_origin)
@@ -147,8 +149,11 @@ class Imprinter:
                 # get the original face
                 original_faces.append(face_origin_iter.Value())
                 face_origin_iter.Next()
+
             if i == 0:
                 original_faces.append(resulting_face)
+
+            # i = 1 means the face was changed, but it's not the imprinted face
 
             if i == 2:
                 imprints_performed += 1
@@ -164,10 +169,18 @@ class Imprinter:
         return imprints_performed
 
 
-def imprint_solids(solids: Iterable[BluemiraSolid]):
+def imprint_solids(solids: Iterable[BluemiraSolid], labels: Iterable[str] | None = None):
     """Imprints solids together."""
+    if labels is None or len(labels) == 0:
+        labels = [sld.label for sld in solids]
+    if len(labels) != len(solids):
+        raise ValueError(
+            "Labels must be the same length as the solids iterable: "
+            f"{len(labels)} vs. {len(solids)}"
+        )
     imprintables = [
-        ImprintableSolid.from_bluemira_solid(sld.label, sld) for sld in solids
+        ImprintableSolid.from_bluemira_solid(lbl, sld)
+        for sld, lbl in zip(solids, labels, strict=False)
     ]
     pairs = find_approx_overlapping_pairs(solids)
 

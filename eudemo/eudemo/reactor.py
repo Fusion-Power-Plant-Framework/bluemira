@@ -578,8 +578,8 @@ if __name__ == "__main__":
         ivc_shapes.divertor_face,
     )
 
-    reactor.save_cad("xyz", {"without_components": [reactor.plasma]}, cad_format="dagmc")
-    exit()
+    # reactor.save_cad("xyz", {"without_components": [reactor.plasma]}, cad_format="dagmc")
+    # exit()
 
     upper_port_designer = UpperPortKOZDesigner(
         reactor_config.params_for("Upper Port"),
@@ -657,6 +657,9 @@ if __name__ == "__main__":
             lower_port_koz_xz,
         ],
     )
+
+    # reactor.save_cad("xyz", {"without_components": [reactor.plasma]}, cad_format="dagmc")
+    # exit()
 
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
@@ -751,6 +754,9 @@ if __name__ == "__main__":
         rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
+
+    reactor.save_cad("xyz", {"without_components": [reactor.plasma]}, cad_format="dagmc")
+    exit()
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary)
