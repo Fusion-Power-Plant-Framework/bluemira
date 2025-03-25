@@ -3,8 +3,6 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-import Mesh
-import Part
 import numpy as np
 import openmc
 from OCC.Core.BRep import BRep_Tool
@@ -24,7 +22,7 @@ from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.imprint_solids import ImprintableSolid, imprint_solids
 from bluemira.mesh.shimwell import vertices_to_h5m
 
-import MeshPart  # isort:skip
+import MeshPart, Mesh, Part  # isort:skip
 
 try:
     from pymoab import core, types
@@ -640,8 +638,8 @@ if __name__ == "__main__":
     circ = BluemiraFace(make_circle(0.1, (0.3, 0.3, 1)), label="circ")
     circ = extrude_shape(circ, [0, 0, 0.5])
 
-    pre_imps = [box_a, circ]
-    names = ["box_a", "circ"]
+    pre_imps = [box_a]
+    names = ["box_a"]
     # show_cad(pre_imps)
     imps = imprint_solids(pre_imps, names)
 
@@ -650,7 +648,7 @@ if __name__ == "__main__":
     mesher = MoabMesher()
     mesher.add_imprintables(imps)
     # mesher.p_new(filename, 0.001, "air")
-    mesher.perform(0.001, mesh=True)
+    mesher.perform(0.001, mesh=False)
     mesher.write_file(filename, include_vtk=True)
     print(mesher._get_volumes_and_materials_from_h5m(f"{filename}.h5m"))
 
