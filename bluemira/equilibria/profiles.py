@@ -372,6 +372,7 @@ class OPointCalcOptions(Enum):
 
     RAISE = auto()
     GRID_CENTRE = auto()
+    MAJOR_RADIUS = auto()
 
 
 class Profile(ABC):
@@ -381,6 +382,8 @@ class Profile(ABC):
     following some implementation in B. Dudson, FreeGS:
         https://github.com/bendudson/freegs
     """
+
+    R_0: float
 
     def _scalar_denorm(self, prime, norm):
         """
@@ -439,8 +442,8 @@ class Profile(ABC):
             o_vals[i] = np.sqrt(2 * val + fvacuum**2)
         return np.reshape(o_vals, psinorm.shape)
 
-    @staticmethod
     def _jtor(
+        self,
         x: npt.NDArray[np.float64],
         z: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
@@ -499,6 +502,12 @@ class Profile(ABC):
                 case OPointCalcOptions.GRID_CENTRE:
                     nx, nz = psi.shape
                     o_points = [Opoint(x[nx // 2], z[nz // 2], psi[nx // 2, nz // 2])]
+                case OPointCalcOptions.MAJOR_RADIUS:
+                    o_points = [
+                        Opoint(
+                            self.R_0, 0, psi[np.abs(x - self.R_0).argmin(), z.argmin()]
+                        )
+                    ]
                 case _:
                     _f, ax = plt.subplots()
                     ax.contour(x, z, psi, cmap="viridis")
