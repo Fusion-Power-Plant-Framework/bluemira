@@ -48,18 +48,17 @@ from bluemira.equilibria.optimisation.constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
 )
+from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    fs_fit_metric,
+)
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     toroidal_harmonic_approximation,
 )
-from bluemira.equilibria.optimisation.problem import (
-    MinimalCurrentCOP,
-)
 from bluemira.equilibria.optimisation.problem._tikhonov import (
-    TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentGradientCOP,  # noqa: PLC2701
+    TikhonovCurrentCOP,  # noqa: PLC2701
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.equilibria.solve import (
@@ -258,7 +257,7 @@ o_points, x_points = eq.get_OX_points()
 # %%
 # Information needed for TH Approximation
 psi_norm = 1.0
-th_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi = (
+th_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi, psi_approx_coilset = (
     toroidal_harmonic_approximation(
         eq=eq, psi_norm=psi_norm, acceptable_fit_metric=0.001
     )
@@ -488,14 +487,14 @@ inner_leg_points_z = (
 
 
 # fmt: off
-outer_legs_x_unmoved = np.array([#9.2,
-                                 #9.5,
+outer_legs_x_unmoved = np.array([  # 9.2,
+                                 # 9.5,
                                  9.7,
                                  9.89,
                                  10.1])
 
-outer_legs_z_unmoved = np.array([#5.5,
-                                 #6.0,
+outer_legs_z_unmoved = np.array([  # 5.5,
+                                 # 6.0,
                                  6.5,
                                  7.0,
                                  7.5])
@@ -638,6 +637,7 @@ DN_unmoved_outer_leg_upper.plot(ax=ax)
 DN_unmoved_outer_leg_lower.plot(ax=ax)
 plt.show()
 
+# %%
 # Plot the two approches
 f, (ax_1, ax_2) = plt.subplots(1, 2)
 
@@ -715,3 +715,45 @@ eq.coilset.plot(ax=ax)
 plt.show()
 
 # %%
+# eq.to_eqdsk(Path("original_eq.json"), directory=".", qpsi_calcmode=0)
+# th_current_opt_eq.to_eqdsk(
+#     Path("th_current_opt_eq.json"), directory=".", qpsi_calcmode=0
+# )
+
+# %%
+
+f, ax = plt.subplots(2, 2, sharex=True)  # , dpi=2000)
+ax[0][0].contour(eq.grid.x, eq.grid.z, eq.psi(), levels=nlevels, cmap=cmap)
+ax[0][0].set_title("Total")
+ax[0][1].contour(eq.grid.x, eq.grid.z, eq.plasma.psi(), levels=nlevels, cmap=cmap)
+ax[0][1].set_title("Plasma")
+ax[1][0].contour(
+    eq.grid.x, eq.grid.z, eq.coilset.psi(eq.grid.x, eq.grid.z), levels=nlevels, cmap=cmap
+)
+ax[1][0].set_title("Coilset")
+ax[1][1].contour(th_params.R, th_params.Z, psi_approx_coilset, levels=nlevels, cmap=cmap)
+ax[1][1].set_title("TH Approx. Coilset")
+
+
+f, ax = plt.subplots(1, 3)
+ax[0].contour(eq.grid.x, eq.grid.z, eq.psi(), levels=nlevels, cmap=cmap)
+ax[0].set_title("Total")
+ax[1].contour(eq.grid.x, eq.grid.z, eq.plasma.psi(), levels=nlevels, cmap=cmap)
+ax[1].set_title("Plasma")
+ax[2].contour(
+    eq.grid.x, eq.grid.z, eq.coilset.psi(eq.grid.x, eq.grid.z), levels=nlevels, cmap=cmap
+)
+ax[2].set_title("Coilset")
+plt.savefig("3-way-split-psi.png", dpi=1200)
+# ax[3].contour(th_params.R, th_params.Z, psi_approx_coilset, levels=nlevels, cmap=cmap)
+# ax[3].set_title("TH Approx. Coilset")
+
+
+# %%
+
+# compare eq and opt eq fit metrics
+original_FS = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
+approx_FS = th_current_opt_eq.get_flux_surface(psi_norm)
+
+fit_metric = fs_fit_metric(original_FS, approx_FS)
+print(f"fit metric = {fit_metric}")

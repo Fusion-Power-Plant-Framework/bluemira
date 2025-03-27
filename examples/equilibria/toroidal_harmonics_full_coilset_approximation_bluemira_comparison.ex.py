@@ -123,7 +123,7 @@ R_approx = th_params.R
 Z_approx = th_params.Z
 
 psi_approx, _, _ = toroidal_harmonic_approximate_psi(
-    eq=eq, th_params=th_params, max_degree=6
+    eq=eq, th_params=th_params, max_degree=5
 )
 
 nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
@@ -168,7 +168,7 @@ approx_eq = deepcopy(eq)
 o_points, x_points = approx_eq.get_OX_points(total_psi)
 
 # TODO Use psi_norm = 0.99 for DN, use 1.0 for single null
-psi_norm = 0.99
+psi_norm = 1.0
 f_s = find_flux_surf(
     R_approx, Z_approx, total_psi, psi_norm, o_points=o_points, x_points=x_points
 )
@@ -244,8 +244,8 @@ total_psi_diff = np.abs(total_psi - interpolated_bm_total_psi) / np.max(
 )
 total_psi_diff_plot = total_psi_diff * mask
 f, ax = plt.subplots()
-ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
-ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
+ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approx FS from TH")
+# ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="FS from Bluemira")
 im = ax.contourf(R_approx, Z_approx, total_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
 ax.set_title("Absolute relative difference between total psi and TH approximation psi")
@@ -270,8 +270,14 @@ print(f"fit metric value = {fit_metric_value}")
 # Here is an example of using the function, setting plot to True outputs a graph of the
 # difference in total psi between the TH approximation and bluemira.
 # %%
-toroidal_harmonics_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi = (
-    toroidal_harmonic_approximation(eq=eq, th_params=th_params, plot=True)
+(
+    toroidal_harmonics_params,
+    Am_cos,
+    Am_sin,
+    degree,
+    fit_metric,
+    approx_total_psi,
+    psi_approx_coilset,
+) = toroidal_harmonic_approximation(
+    eq=eq, th_params=th_params, plot=True, psi_norm=psi_norm
 )
-
-# %%
