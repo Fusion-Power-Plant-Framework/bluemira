@@ -527,6 +527,8 @@ def toroidal_harmonic_approximation(
         Fit metric achieved
     approx_total_psi:
         Total psi obtained using the TH approximation
+    psi_approx:
+        Coilset psi obtained using the TH approximation
 
     Raises
     ------
@@ -638,11 +640,17 @@ def toroidal_harmonic_approximation(
             np.abs(interpolated_bm_total_psi)
         )
         f, ax = plt.subplots()
-        ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approximate LCFS from TH")
-        ax.plot(original_fs.x, original_fs.z, color="blue", label="LCFS from Bluemira")
+        ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approx FS from TH")
+        ax.plot(
+            original_fs.x,
+            original_fs.z,
+            color="c",
+            linestyle="dashed",
+            label="FS from Bluemira",
+        )
         im = ax.contourf(R_approx, Z_approx, total_psi_diff, levels=nlevels, cmap=cmap)
         f.colorbar(mappable=im)
-        ax.set_title("|th_approx_psi - psi| / max(psi)")
+        # ax.set_title("|th_approx_psi - psi| / max(psi)")
         ax.legend(loc="upper right")
         eq.coilset.plot(ax=ax)
         plt.show()
@@ -654,4 +662,5 @@ def toroidal_harmonic_approximation(
         degree,
         fit_metric_value,
         approx_total_psi,
+        psi_approx,
     )
