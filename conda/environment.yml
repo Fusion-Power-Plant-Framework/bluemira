@@ -2,6 +2,7 @@ name: bluemira
 channels:
   - conda-forge
   - nodefaults
+  - freecad/label/dev
 
 variables:
   # Avoid use of .local
@@ -22,7 +23,7 @@ dependencies:
   - python >=3.10,<3.13
   - cmake
   - fenics-dolfinx=0.9.0
-  - freecad=1.0
+  - freecad=1.1dev
   - pivy >= 0.6.10
   - h5py
   - openmc>=0.15.0=dagmc_*
@@ -32,9 +33,9 @@ dependencies:
   - pybind11==3.0.0
   - pybind11-global==3.0.0
   - pytools==2025.2.2
-  - vtk==9.3.1
   - libopenblas
   - pythonocc-core
+  - vtk
   - pip
   - pip:
       - -r ../requirements/uv/all.txt
