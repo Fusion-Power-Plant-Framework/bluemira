@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.coils import CoilGroup, CoilSet
+from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -447,6 +448,8 @@ class TestFixedPlasmaEquilibrium:
         path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
         cls.eq = FixedPlasmaEquilibrium.from_eqdsk(path)
 
-    @pytest.mark.parametrize("field", [False, True])
+    @pytest.mark.parametrize(
+        "field", [EqBPlotParam.PSI, EqBPlotParam.BP, EqBPlotParam.BT]
+    )
     def test_plotting(self, field):
         self.eq.plot(field=field)
