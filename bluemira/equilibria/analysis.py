@@ -946,9 +946,9 @@ class EqAnalysis:
         ax:
             Matplotlib Axes object
         target_flux:
-            Flux surfaces crossing target for input equilibria
+            Coodinates of flux surfaces crossing target for input equilibria
         ref_target_flux:
-            Flux surfaces crossing target for reference equilibria
+            Coodinates of flux surfaces crossing target for reference equilibria
 
         """
         if ax is None:

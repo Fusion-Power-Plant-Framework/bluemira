@@ -445,16 +445,10 @@ class PicardIterator:
         The relaxation parameter to use between iterations
     maxiter:
         The maximum number of iterations
-    plot:
-        Whether or not to plot
-    gif:
-        Whether or not to make a GIF
-    figure_folder:
-        The path where figures will be saved. If the input value is None (e.g. default)
-        then this will be reinterpreted as the path data/plots/equilibria under the
-        bluemira root folder, if that path is available.
-    plot_name:
-        GIF plot file base-name
+    diagnostic_plotting:
+        PicardDiagnosticOptions - dataclass containing plot type or not plot option,
+        whether or not to make a GIF, the path where figures will be saved
+        and the plot name.
     """
 
     def __init__(

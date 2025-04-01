@@ -110,7 +110,9 @@ class TestEqAnalysis:
         plot_10 = eq_analysis_1.plot_compare_psi()
         plot_10b = eq_analysis_2.plot_compare_psi()
         plot_11 = eq_analysis_3.plot_compare_psi()
-        plot_12 = eq_analysis_1.plot_target_flux(target, target_coords)
+        plot_12_1, plot_12_2, plot_12_3 = eq_analysis_1.plot_target_flux(
+            target, target_coords
+        )
 
         assert isinstance(plot_1, Axes)
         assert isinstance(plot_2[0], Axes)
@@ -128,7 +130,9 @@ class TestEqAnalysis:
         assert isinstance(plot_9, Axes)
         assert plot_10 is None
         assert plot_11 is None
-        assert isinstance(plot_12, Axes)
+        assert isinstance(plot_12_1, Axes)
+        assert isinstance(plot_12_2, list)
+        assert isinstance(plot_12_3[0], Coordinates)
         assert isinstance(plot_1b, Axes)
         assert isinstance(plot_2b[0], Axes)
         assert len(plot_2b) == 2
