@@ -215,45 +215,47 @@ class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
             "F": F,
             "FFprime": ff_prime,
         }
-        cls.f, cls.ax = plt.subplots(2, 4)
+        cls.f, cls.axes = plt.subplots(2, 4)
 
     @classmethod
     def teardown_class(cls):
-        for i, a in enumerate(cls.ax.flat):
+        for i, a in enumerate(cls.axes.flat):
             if i < 4:
                 a.legend()
             else:
                 a.set_xlabel("x")
-        cls.ax[1, 0].set_ylabel("PLASMOD-bluemira")
+        cls.axes[1, 0].set_ylabel("PLASMOD-bluemira")
 
     def test_plasma_current(self):
         # 15/03/23: Max relative difference: 4.71793662e-05
         np.testing.assert_allclose(self.results["I_p"], self.I_p, rtol=5e-5)
 
     def test_psi(self):
-        self.ax[0, 0].plot(self.rho, self.psi, label="PLASMOD")
-        self.ax[0, 0].plot(self.rho, self.results["psi_1D"], ls="--", label="bluemira")
-        self.ax[0, 0].set_title("$\\psi$")
-        self.ax[1, 0].plot(self.rho, self.psi - self.results["psi_1D"])
+        self.axes[0, 0].plot(self.rho, self.psi, label="PLASMOD")
+        self.axes[0, 0].plot(self.rho, self.results["psi_1D"], ls="--", label="bluemira")
+        self.axes[0, 0].set_title("$\\psi$")
+        self.axes[1, 0].plot(self.rho, self.psi - self.results["psi_1D"])
         np.testing.assert_allclose(self.results["psi_1D"], self.psi, rtol=0.01)
 
     def test_phi(self):
-        self.ax[0, 1].plot(self.rho, self.phi, label="PLASMOD")
-        self.ax[0, 1].plot(self.rho, self.results["phi_1D"], ls="--", label="bluemira")
-        self.ax[0, 1].set_title("$\\phi$")
-        self.ax[1, 1].plot(self.rho, self.phi - self.results["phi_1D"])
+        self.axes[0, 1].plot(self.rho, self.phi, label="PLASMOD")
+        self.axes[0, 1].plot(self.rho, self.results["phi_1D"], ls="--", label="bluemira")
+        self.axes[0, 1].set_title("$\\phi$")
+        self.axes[1, 1].plot(self.rho, self.phi - self.results["phi_1D"])
         np.testing.assert_allclose(self.results["phi_1D"][1:], self.phi[1:], rtol=0.0175)
 
     def test_pprime(self):
-        self.ax[0, 2].plot(self.rho, self.pprime, label="PLASMOD")
-        self.ax[0, 2].plot(self.rho, self.results["pprime"], ls="--", label="bluemira")
-        self.ax[0, 2].set_title("$p^{'}$")
-        self.ax[1, 2].plot(self.rho, self.pprime - self.results["pprime"])
+        self.axes[0, 2].plot(self.rho, self.pprime, label="PLASMOD")
+        self.axes[0, 2].plot(self.rho, self.results["pprime"], ls="--", label="bluemira")
+        self.axes[0, 2].set_title("$p^{'}$")
+        self.axes[1, 2].plot(self.rho, self.pprime - self.results["pprime"])
         np.testing.assert_allclose(self.results["pprime"], self.pprime, rtol=0.35)
 
     def test_ffprime(self):
-        self.ax[0, 3].plot(self.rho, self.ffprime, label="PLASMOD")
-        self.ax[0, 3].plot(self.rho, self.results["FFprime"], ls="--", label="bluemira")
-        self.ax[0, 3].set_title("$FF^{'}$")
-        self.ax[1, 3].plot(self.rho, self.ffprime - self.results["FFprime"])
+        self.axes[0, 3].plot(self.rho, self.ffprime, label="PLASMOD")
+        self.axes[0, 3].plot(
+            self.rho, self.results["FFprime"], ls="--", label="bluemira"
+        )
+        self.axes[0, 3].set_title("$FF^{'}$")
+        self.axes[1, 3].plot(self.rho, self.ffprime - self.results["FFprime"])
         np.testing.assert_allclose(self.results["FFprime"], self.ffprime, rtol=0.25)
