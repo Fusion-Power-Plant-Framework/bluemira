@@ -42,7 +42,6 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
-from pint.errors import DimensionalityError
 
 
 @dataclass
@@ -223,18 +222,15 @@ class ParameterFrame:
 
         Raises
         ------
-        DimensionalityError
+        ValueError
             if the units are mismatched
         """
         param = getattr(self, name)
 
         if not units_compatible(param.unit, o_param.unit):
-            raise DimensionalityError(
-                units1=param.unit,
-                units2=o_param.unit,
-                dim1=param.value,
-                dim2=o_param.value,
-                extra_msg=f": incompatible unit for parameter {name}",
+            raise ValueError(
+                f"Incompatible unit for parameter: {name}."
+                f"Expected: {param.unit}, Received: {o_param.unit}"
             )
 
         param.set_value(
