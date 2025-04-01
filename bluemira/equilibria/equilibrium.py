@@ -442,7 +442,7 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: Axes | None = None, *, field: bool = False):
+    def plot(self, ax: Axes | None = None, *, field: EqBPlotParam = EqBPlotParam.PSI):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
 

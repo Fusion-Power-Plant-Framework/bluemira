@@ -383,7 +383,7 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
         dx = x + target_offsets
         dz = np.full(n_layers, z)
     else:
-        x = target_coords.z[np.argmin(target_coords.z)]
+        x = target_coords.x[np.argmin(target_coords.z)]
         z = np.min(target_coords.z)
         target_size = np.abs(np.max(target_coords.z) - np.min(target_coords.z))
         if target_size == 0:
@@ -945,10 +945,15 @@ class EqAnalysis:
         -------
         ax:
             Matplotlib Axes object
+        target_flux:
+            Flux surfaces crossing target for input equilibria
+        ref_target_flux:
+            Flux surfaces crossing target for reference equilibria
 
         """
         if ax is None:
             _, ax = plt.subplots()
+            ax.set_aspect("equal")
 
         if use_reference:
             ref = self._get_reference()
@@ -1015,7 +1020,7 @@ class EqAnalysis:
         ax.set_aspect("equal")
         if show:
             plt.show()
-        return ax
+        return ax, target_flux, ref_target_flux
 
 
 class COPAnalysis(EqAnalysis):

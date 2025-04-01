@@ -230,26 +230,26 @@ eq_analysis_2.plot_compare_psi()
 
 # %%
 # Plot the leg flux for a given divertor target and compare to reference.
-ax = eq_analysis_2.plot_target_flux(
+ax, _, _ = eq_analysis_2.plot_target_flux(
     target="lower_outer",
     target_coords=Coordinates({"x": [10, 11], "z": [-7.5, -7.5]}),
     vertical=False,
 )
 
 # %%
-ax = eq_analysis_2.plot_target_flux(
+ax, _, _ = eq_analysis_2.plot_target_flux(
     target="upper_outer",
     target_coords=Coordinates({"x": [10, 11], "z": [7.5, 7.5]}),
 )
 
 # %%
-ax = eq_analysis_2.plot_target_flux(
+ax, _, _ = eq_analysis_2.plot_target_flux(
     target="lower_inner",
     target_coords=Coordinates({"x": [5.5, 6.5], "z": [-7.5, -7.5]}),
 )
 
 # %%
-ax = eq_analysis_2.plot_target_flux(
+ax, _, _ = eq_analysis_2.plot_target_flux(
     target="upper_inner",
     target_coords=Coordinates({"x": [5.5, 6.5], "z": [7.5, 7.5]}),
 )
