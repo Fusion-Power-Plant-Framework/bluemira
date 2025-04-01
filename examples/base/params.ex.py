@@ -38,8 +38,6 @@ An example of how to use Parameters and ParameterFrames within bluemira.
 # %%
 from dataclasses import dataclass
 
-from pint.errors import DimensionalityError
-
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 
 # %% [markdown]
@@ -82,8 +80,8 @@ mydiffval = MyParameterFrame.from_dict({
 
 try:
     mypf.update_from_frame(mydiffval)
-except DimensionalityError as de:
-    print(de)
+except ValueError as ve:
+    print(ve)
 
 # %% [markdown]
 # Changing a value of a parameter with a compatible but different unit

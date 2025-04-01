@@ -297,9 +297,7 @@ class TestParameterFrame:
             (56, "cm", 10, "kA"),
         ],
     )
-    def test_DimensionalityError_update_from_frame(
-        self, value, unit, new_value, wrong_unit
-    ):
+    def test_ValueError_update_from_frame(self, value, unit, new_value, wrong_unit):
         @dataclass
         class GenericFrame(ParameterFrame):
             test_param: Parameter
@@ -311,7 +309,7 @@ class TestParameterFrame:
             "test_param": {"value": new_value, "unit": wrong_unit}
         })
 
-        with pytest.raises(pint.errors.DimensionalityError):
+        with pytest.raises(ValueError, match=r"Incompatible unit for parameter"):
             test_frame.update_from_frame(wrong_frame)
 
     @pytest.mark.parametrize("func", ["update_from_dict", "update"])
