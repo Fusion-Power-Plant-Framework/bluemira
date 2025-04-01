@@ -228,9 +228,10 @@ class ParameterFrame:
         param = getattr(self, name)
 
         if not units_compatible(param.unit, o_param.unit):
+            expected_unit_str = f"{param.unit}" if param.unit else "None"
             raise ValueError(
-                f"Incompatible unit for parameter: {name}."
-                f"Expected: {param.unit}, Received: {o_param.unit}"
+                f"Incompatible unit for parameter {name}.\n"
+                f"Expected unit: {expected_unit_str}, Received: {o_param.unit}"
             )
 
         param.set_value(

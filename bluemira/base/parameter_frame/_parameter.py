@@ -144,7 +144,7 @@ class Parameter(Generic[ParameterValueType]):
             return NotImplemented
         try:
             o_value_with_correct_unit = raw_uc(o.value, o.unit, self.unit)
-        except pint.DimensionalityError:
+        except ValueError:
             # incompatible units
             return False
         return (self.name == o.name) and (self.value == o_value_with_correct_unit)
@@ -229,8 +229,8 @@ class Parameter(Generic[ParameterValueType]):
         """
         try:
             return raw_uc(self.value, self.unit, unit)
-        except pint.errors.PintError as pe:
-            raise ValueError("Unit conversion failed") from pe
+        except ValueError as ve:
+            raise ValueError("Unit conversion failed") from ve
         except TypeError as te:
             if self.value is None:
                 if units_compatible(self.unit, unit):

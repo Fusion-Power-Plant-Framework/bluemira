@@ -17,7 +17,6 @@ import numpy as np
 import numpy.typing as npt
 from periodictable import elements
 from pint import Context, Quantity, Unit, UnitRegistry, set_application_registry
-from pint.errors import PintError
 from pint.util import UnitsContainer
 
 if TYPE_CHECKING:
@@ -421,7 +420,7 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
     """
     try:
         raw_uc(1, unit_1, unit_2)
-    except PintError:
+    except ValueError:
         return False
     else:
         return True
