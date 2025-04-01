@@ -103,7 +103,7 @@ class AngleAnnotation(Arc):
             annotation_clip=True,
         )
         self.kw.update(text_kw or {})
-        self.text = self.ax.annotate(text, xy=self._center, **self.kw)
+        self.text = ax.annotate(text, xy=self._center, **self.kw)
 
     def get_size(self):  # noqa: D102
         factor = 1.0
