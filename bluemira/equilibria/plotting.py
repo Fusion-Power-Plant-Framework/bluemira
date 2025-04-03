@@ -613,7 +613,6 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 "Toroidal feild plot not available for fixed plasma."
                 "Plotting poloidal feild."
             )
-            self.plot_B_component()
         self.plot_LCFS()
 
     def plot_LCFS(self):
