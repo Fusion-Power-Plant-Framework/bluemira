@@ -1434,6 +1434,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     def __init__(self, var_dict: VarDictT | None = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
+
         super().__init__(variables)
 
     def create_shape(self, label: str = "") -> BluemiraWire:
@@ -1555,7 +1556,85 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         # TODO @je-cook: add labels for height top upper dz flat tilt bottom lower
         # l0s - l3s l0e - l3e
         # 3587
-        _offset_x, _offset_z = super()._label_function(ax, shape)
+
+        x1, x2, z2, height = self.variables.values[:4]
+        dz, flat, tilt = self.variables.values[6:9]
+        # Label for xs
+        offset_ar_x = 0
+        for v, name in zip([x1, x2], ["x1", "x2"], strict=False):
+            offset_ar_x = max(z for x, _, z in shape.vertexes.T if np.isclose(x, v)) / 2
+            self._annotator(
+                ax,
+                name,
+                (0, offset_ar_x),
+                (v, offset_ar_x),
+                (v * 0.4, offset_ar_x),
+            )
+            ax.plot([0, 0], [offset_ar_x - 0.1, offset_ar_x + 0.1], color="k")
+            ax.plot([v, v], [offset_ar_x - 0.1, offset_ar_x + 0.1], color="k")
+
+        # Label for z2, dz
+        offset_ar_z = 0
+        for v, name in zip([z2, dz], ["z2", "dz"], strict=False):
+            xcor = shape.center_of_mass[0] + offset_ar_z
+            self._annotator(
+                ax,
+                name,
+                (xcor, 0),
+                (xcor, v),
+                (xcor, v * 0.4),
+            )
+            ax.plot([xcor - 0.1, xcor + 0.1], [0, 0], color="k")
+            ax.plot([xcor - 0.1, xcor + 0.1], [v, v], color="k")
+            offset_ar_z += 2
+
+        # Label for height
+        self._annotator(
+            ax,
+            "height",
+            (shape.center_of_mass[0], dz - height / 2),
+            (shape.center_of_mass[0], dz + height / 2),
+            (shape.center_of_mass[0] + 0.1, dz + height / 4),
+        )
+        ax.plot(
+            [shape.center_of_mass[0] - 0.1, shape.center_of_mass[0] + 0.1],
+            [dz - height / 2, dz - height / 2],
+            color="k",
+        )
+        ax.plot(
+            [shape.center_of_mass[0] - 0.1, shape.center_of_mass[0] + 0.1],
+            [dz + height / 2, dz + height / 2],
+            color="k",
+        )
+
+        ax.grid(visible=True)
+
+        # Label annotation for flat
+        if flat != 0:
+            ax.text(x2 + 0.1, z2 * height * 0.5 + dz + 0.5, "flat outboard leg")
+
+            ax.plot(
+                [
+                    x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)) - 0.1,
+                    x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)) + 0.1,
+                ],
+                [
+                    (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+                    (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+                ],
+                color="k",
+            )
+            ax.plot(
+                [
+                    x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)) - 0.1,
+                    x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)) + 0.1,
+                ],
+                [
+                    (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+                    (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+                ],
+                color="k",
+            )
 
 
 class PictureFrameTools:
