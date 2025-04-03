@@ -1559,82 +1559,79 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         x1, x2, z2, height = self.variables.values[:4]
         dz, flat, tilt = self.variables.values[6:9]
-        # Label for xs
-        offset_ar_x = 0
-        for v, name in zip([x1, x2], ["x1", "x2"], strict=False):
-            offset_ar_x = max(z for x, _, z in shape.vertexes.T if np.isclose(x, v)) / 2
-            self._annotator(
-                ax,
-                name,
-                (0, offset_ar_x),
-                (v, offset_ar_x),
-                (v * 0.4, offset_ar_x),
-            )
-            ax.plot([0, 0], [offset_ar_x - 0.1, offset_ar_x + 0.1], color="k")
-            ax.plot([v, v], [offset_ar_x - 0.1, offset_ar_x + 0.1], color="k")
-
-        # Label for z2, dz
-        offset_ar_z = 0
-        for v, name in zip([z2, dz], ["z2", "dz"], strict=False):
-            xcor = shape.center_of_mass[0] + offset_ar_z
-            self._annotator(
-                ax,
-                name,
-                (xcor, 0),
-                (xcor, v),
-                (xcor, v * 0.4),
-            )
-            ax.plot([xcor - 0.1, xcor + 0.1], [0, 0], color="k")
-            ax.plot([xcor - 0.1, xcor + 0.1], [v, v], color="k")
-            offset_ar_z += 2
-
-        # Label for height
-        self._annotator(
-            ax,
-            "height",
-            (shape.center_of_mass[0], dz - height / 2),
-            (shape.center_of_mass[0], dz + height / 2),
-            (shape.center_of_mass[0] + 0.1, dz + height / 4),
-        )
-        ax.plot(
-            [shape.center_of_mass[0] - 0.1, shape.center_of_mass[0] + 0.1],
-            [dz - height / 2, dz - height / 2],
-            color="k",
-        )
-        ax.plot(
-            [shape.center_of_mass[0] - 0.1, shape.center_of_mass[0] + 0.1],
-            [dz + height / 2, dz + height / 2],
-            color="k",
-        )
 
         ax.grid(visible=True)
+        # Label for xs
+        annotate_offset_z = 0
+        for v, name in zip([x1, x2], ["x1", "x2"], strict=False):
+            annotate_offset_z = (
+                max(matching_xs)
+                if (
+                    matching_xs := [
+                        z
+                        for x, z in zip(
+                            shape.vertexes[0], shape.vertexes[2], strict=False
+                        )
+                        if np.isclose(v, x)
+                    ]
+                )
+                else np.mean([
+                    z
+                    for _, z in sorted(
+                        zip(abs(shape.vertexes[0] - v), shape.vertexes[2], strict=False)
+                    )[:2]
+                ])
+            )  # So that the endpoint of the arrow lies on the curve
+
+            self._annotator(
+                ax,
+                name,
+                (0, annotate_offset_z),
+                (v, annotate_offset_z),
+                (v * 0.4, annotate_offset_z),
+            )
+            ax.plot(
+                [0, 0], [annotate_offset_z - 0.1, annotate_offset_z + 0.1], color="k"
+            )
+            ax.plot(
+                [v, v], [annotate_offset_z - 0.1, annotate_offset_z + 0.1], color="k"
+            )
+
+        # Label for height, z2, dz
+        annotate_offset_x = -0.5
+        for v, name in zip([height, z2, dz], ["height", "z2", "dz"], strict=False):
+            xcor = shape.center_of_mass[0] + annotate_offset_x
+            zcors = [0, v] if name != "height" else [dz - height / 2, dz + height / 2]
+            self._annotator(
+                ax,
+                name,
+                (xcor, zcors[0]),
+                (xcor, zcors[1]),
+                (xcor + 0.1, zcors[1] * 0.8),
+            )
+            ax.plot([xcor - 0.1, xcor + 0.1], [zcors[0], zcors[0]], color="k")
+            ax.plot([xcor - 0.1, xcor + 0.1], [zcors[1], zcors[1]], color="k")
+            annotate_offset_x += 1.5
 
         # Label annotation for flat
         if flat != 0:
-            ax.text(x2 + 0.1, z2 * height * 0.5 + dz + 0.5, "flat outboard leg")
-
-            ax.plot(
-                [
-                    x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)) - 0.1,
-                    x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)) + 0.1,
-                ],
-                [
-                    (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-                    (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-                ],
-                color="k",
+            xcors = [
+                x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+                x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+            ]
+            zcors = [
+                (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+                (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+            ]
+            self._annotator(
+                ax,
+                "flat \\times height",
+                (xcors[0], zcors[0]),
+                (xcors[1], zcors[1]),
+                (x2 + 0.5, z2 * height * 0.5 + dz + 0.5),
             )
-            ax.plot(
-                [
-                    x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)) - 0.1,
-                    x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)) + 0.1,
-                ],
-                [
-                    (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-                    (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-                ],
-                color="k",
-            )
+            ax.plot([xcors[0] - 0.1, xcors[0] + 0.1], [zcors[0], zcors[0]], color="k")
+            ax.plot([xcors[1] - 0.1, xcors[1] + 0.1], [zcors[1], zcors[1]], color="k")
 
 
 class PictureFrameTools:
