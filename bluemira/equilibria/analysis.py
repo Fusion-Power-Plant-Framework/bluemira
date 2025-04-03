@@ -54,15 +54,12 @@ if TYPE_CHECKING:
     from bluemira.equilibria.physics import EqSummary
 
 
-# Functions used in different toolboxes ###
-
-
 def select_eq(
     file_path: str,
     fixed_or_free: FixedOrFree = FixedOrFree.FREE,
     dummy_coils: CoilSet | None = None,
-    from_cocos: int = 3,
-    to_cocos: int = 3,
+    from_cocos: int = BLUEMIRA_DEFAULT_COCOS,
+    to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
     qpsi_positive: bool = False,  # noqa: FBT001, FBT002
     control: CoilType | list[str] | None = None,
 ) -> FixedPlasmaEquilibrium | Equilibrium:
@@ -124,19 +121,20 @@ def select_eq(
 
 
 def select_multi_eqs(
-    equilibrium_input,
-    fixed_or_free=FixedOrFree.FREE,
-    equilibrium_names=None,
+    equilibrium_input: str | Equilibrium | Iterable[str | Equilibrium],
+    fixed_or_free: FixedOrFree=FixedOrFree.FREE,
+    equilibrium_names: str | Iterable[str] | None=None,
     dummy_coils=None,
-    from_cocos=3,
-    to_cocos=3,
-    qpsi_positive=False,  # noqa: FBT002
+    from_cocos: int | Iterable[int] =3,
+    to_cocos: int | Iterable[int] =3, 
+    *,
+    qpsi_positive: bool | Iterable[bool] =False,  # noqa: FBT002
     control_coils: CoilType | list[str] | None = None,
 ):
     """
     Put information needed to load eq into a dictionary.
 
-    Cocos indecis and qpsi sign are set to Bluemira Defaults unless specified.
+    Cocos indices and qpsi sign are set to Bluemira Defaults unless specified.
 
     Parameters
     ----------

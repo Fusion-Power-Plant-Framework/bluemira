@@ -268,7 +268,7 @@ def get_legs_length_and_angle(
         lengths = []
         angles = []
         for leg in leg_list:
-            if leg is None or isinstance(leg, list):
+            if leg is None or list == []:
                 con_length = 0.0
                 grazing_ang = np.pi
             else:
