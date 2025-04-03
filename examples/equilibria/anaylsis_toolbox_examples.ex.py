@@ -21,7 +21,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Example of equilibria anaylsis utilities.
+Example of equilibria analysis utilities.
 """
 
 from pathlib import Path
@@ -49,11 +49,11 @@ from bluemira.geometry.coordinates import Coordinates
 # %% [markdown]
 # # Analysis Examples
 #
-# Below we highlight some example uses of the anaylsis classes in equilibria/analysis.py.
+# Below we highlight some example uses of the analysis classes in equilibria/analysis.py.
 #
 # **EqAnalysis:**
 #
-# Used to compare selected equilibrium to a refernce equilibrium,
+# Used to compare selected equilibrium to a reference equilibrium,
 # e.g., for comparing optimisation results to a starting equilibrium.
 #
 # **MultiEqAnalysis:**
@@ -66,7 +66,7 @@ from bluemira.geometry.coordinates import Coordinates
 #
 # Both EqAnalysis and MultiEqAnalysis can take equilibria of different types
 # (i.e, fixed or free), and/or with different grid sizes and grid resolutions.
-# However, it should be noted that not all of the avaible tools can be applied
+# However, it should be noted that not all of the available tools can be applied
 # to the fixed boundary equilibria.
 
 # %% [markdown]
@@ -97,7 +97,7 @@ double_demoish_eq.label = "DEMO-DN"
 # %% [markdown]
 # ## EqAnalysis Part 1
 #
-# Fisrt we will look at the untilities avilable in the EqAnalysis class
+# First we will look at the utilities available in the EqAnalysis class
 # for our input equilibria.
 
 # %%
@@ -138,7 +138,7 @@ ax = eq_analysis_double.plot_field()
 ax = eq_analysis_double.plot_eq_core_mag_axis()
 
 # %%
-# Plot an assortment of physics parameters for the plamsa core.
+# Plot an assortment of physics parameters for the plasma core.
 # Note that the dataclass with the results is also output.
 core_results, ax = eq_analysis_single.plot_eq_core_analysis()
 
@@ -150,18 +150,18 @@ physics_datclass = eq_analysis_double.physics_info_table()
 # %%
 # Control coil information in a table.
 # Note that control can be a coil type, list of control coil names,
-# or None if all coils are contol coils.
+# or None if all coils are control coils.
 table = eq_analysis_single.control_coil_table(control=CoilType.PF)
 
 # %% [markdown]
 # ## EqAnalysis Part 2
 #
-# Now we will look at the untilities avilable in the EqAnalysis class
-# for comparision to a reference equilibria.
+# Now we will look at the utilities available in the EqAnalysis class
+# for comparison to a reference equilibria.
 #
 # The EqDiagnosticOptions class contains the information needed to
 # set up the comparison plots used during an optimisation or
-# (as is the case here) for anaylsis purposes.
+# (as is the case here) for analysis purposes.
 #
 # We will use the single null DEMO-like equilibrium as our reference equilibrium.
 
@@ -172,15 +172,15 @@ diag_ops_1 = EqDiagnosticOptions(
     split_psi_plots=EqSubplots.XZ,
 )
 # Diagnostic settings for looking at the relative psi difference,
-# with the plasma and coilset psi contributions plotted seperately.
+# with the plasma and coilset psi contributions plotted separately.
 # We have also added a mask so that we only plot values from inside
-# the reefrence LCFS.
+# the reference LCFS.
 diag_ops_2 = EqDiagnosticOptions(
     psi_diff=PsiPlotType.PSI_REL_DIFF,
     split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
     plot_mask=EqPlotMask.IN_REF_LCFS,
 )
-# Here we create our two anaylsis classes
+# Here we create our two analysis classes
 eq_analysis_1 = EqAnalysis(
     input_eq=double_demoish_eq, diag_ops=diag_ops_1, reference_eq=single_demoish_eq
 )
@@ -224,8 +224,8 @@ print(
 
 # %%
 # For eq_analysis_2 we chose to use diag_ops_2, which is absolute psi diff
-# for seperate plasma and coilset contruibutions. A mask has also been applied,
-# so that only the values inside the reference LCFS are visable.
+# for separate plasma and coilset contributions. A mask has also been applied,
+# so that only the values inside the reference LCFS are visible.
 eq_analysis_2.plot_compare_psi()
 
 # %%
@@ -257,20 +257,20 @@ ax, _, _ = eq_analysis_2.plot_target_flux(
 # %% [markdown]
 # ## MultiEqAnalysis
 #
-# Now we will look at the untilities avilable in the
+# Now we will look at the utilities available in the
 # MultiEqAnalysis class for multiple equilibria.
 #
 # We will use the same set of Equilibria as before,
 # but the way that they are input is different.
 
 # %%
-# First we create a list of paths to equlibria of interest.
+# First we create a list of paths to equilibria of interest.
 paths = [masty_path, double_demoish_path, single_demoish_path]
-# Correponding list of names for plt legends etc.
+# Corresponding list of names for plt legends etc.
 # If these are not chosen them the equilibria names are set to
 # Eq_1, Eq_2, etc.
 equilibrium_names = ["MAST", "DEMO-DN", "DEMO-SN"]
-# Don't forget to make sure the corrcet cocos value is used
+# Don't forget to make sure the correct cocos value is used
 # if they are not all the same
 from_cocos = [3, 3, 7]
 # Load all the equilibria info into a dictionary.
@@ -283,13 +283,13 @@ equilibria_dictionary = select_multi_eqs(
 )
 # Note: equilibrium_input cam also be a list of equilibrium
 # objects, in which case, fixed_or_free, dummy_coils, from_cocos,
-# to_cocos, and qpsi_positive parameters are not nessisary.
+# to_cocos, and qpsi_positive parameters are not necessary.
 equilibria_dictionary = select_multi_eqs(
     equilibrium_input=[masty_eq, double_demoish_eq, single_demoish_eq],
     equilibrium_names=equilibrium_names,
     control_coils=CoilType.PF,
 )
-# Now create the anaylsis class for multiple equilibria
+# Now create the analysis class for multiple equilibria
 multi_analysis = MultiEqAnalysis(equilibria_dictionary)
 
 # %%
@@ -297,12 +297,12 @@ multi_analysis = MultiEqAnalysis(equilibria_dictionary)
 table = multi_analysis.physics_info_table()
 
 # %%
-# Plot physics parameters for the plamsa core
+# Plot physics parameters for the plasma core
 # Note that a list with the results is also output
 core_results, ax = multi_analysis.plot_core_physics()
 
 # %%
-# Plot the noramlised profiles
+# Plot the normalised profiles
 ax = multi_analysis.plot_compare_profiles()
 
 # %%
@@ -319,10 +319,10 @@ ax = multi_analysis.plot_compare_flux_surfaces(
 
 # %%
 # Now we will plot some divertor leg values of interest,
-# but first we set up some duummy first wall coordinates to use in our example.
+# but first we set up some dummy first wall coordinates to use in our example.
 def make_dummy_pfb(radius, offset):
     """
-    Make circular poilodal component of first wall coords.
+    Make circular poloidal component of first wall coords.
 
     Parameters
     ----------
@@ -356,11 +356,11 @@ _ax = multi_analysis.plot_compare_flux_surfaces(
 )
 
 # %%
-# Plot grazing angle and connection length for equilibia divertor legs,
+# Plot grazing angle and connection length for equilibria divertor legs,
 # for a given number of flux surfaces and a given spacing between flux surfaces,
 # defaults are n_layers = 10 and dx_off = 0.10 [m] respectfully.
 
-# First wall coordinates are an input to the plotting fintion,
+# First wall coordinates are an input to the plotting function,
 # will default to the grid edges if no first wall is set.
 # We have set 'radians' to False to plot in degrees.
 ax = multi_analysis.plot_divertor_length_angle(
@@ -371,13 +371,13 @@ ax = multi_analysis.plot_divertor_length_angle(
 )
 
 # %%
-# Print a table compairing coilset information,
-# the equillibria can have different coilsets.
+# Print a table comparing coilset information,
+# the equilibria can have different coilsets.
 # Note: when we defined multi_analysis, we set the control_coils to be PF type coils,
 # so only coils with that type are printed for each equilibria.
 coilset_table = multi_analysis.coilset_info_table()
 
 # %%
 # Default value_type in coilset comparison table is coil current,
-# but we can also chosse from: x-position, z-position, coil feild, and coil force.
+# but we can also choose from: x-position, z-position, coil field, and coil force.
 coilset_table = multi_analysis.coilset_info_table(value_type=CSData.B)

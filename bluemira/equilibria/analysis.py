@@ -24,6 +24,7 @@ from bluemira.base.constants import CoilType, raw_uc
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._tools import rename_coilset
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.diagnostics import (
     CSData,
     DivLegsToPlot,
@@ -122,13 +123,13 @@ def select_eq(
 
 def select_multi_eqs(
     equilibrium_input: str | Equilibrium | Iterable[str | Equilibrium],
-    fixed_or_free: FixedOrFree=FixedOrFree.FREE,
-    equilibrium_names: str | Iterable[str] | None=None,
+    fixed_or_free: FixedOrFree = FixedOrFree.FREE,
+    equilibrium_names: str | Iterable[str] | None = None,
     dummy_coils=None,
-    from_cocos: int | Iterable[int] =3,
-    to_cocos: int | Iterable[int] =3, 
+    from_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
+    to_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
     *,
-    qpsi_positive: bool | Iterable[bool] =False,  # noqa: FBT002
+    qpsi_positive: bool | Iterable[bool] = False,
     control_coils: CoilType | list[str] | None = None,
 ):
     """
@@ -1149,7 +1150,7 @@ class MultiEqAnalysis:
 
     def plot_core_physics(
         self,
-        title="Physics Parmeters",
+        title="Physics Parameters",
         n_points: int = 50,
         ax=None,
         show=True,  # noqa: FBT002

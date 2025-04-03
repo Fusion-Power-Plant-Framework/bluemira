@@ -148,7 +148,7 @@ class CSData(Enum):
     """
     For the coilset comparision tables.
     Value to be compared: current, x-position, z-position,
-    feild, and force.
+    field, and force.
     """
 
     CURRENT = "I [MA]"

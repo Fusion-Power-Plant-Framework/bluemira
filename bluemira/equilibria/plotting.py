@@ -610,8 +610,8 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.plot_B_component()
         elif field is EqBPlotParam.BT:
             bluemira_warn(
-                "Toroidal feild plot not available for fixed plasma."
-                "Plotting poloidal feild."
+                "Toroidal field plot not available for fixed plasma."
+                "Plotting poloidal field."
             )
         self.plot_LCFS()
 
