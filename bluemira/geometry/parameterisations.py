@@ -1410,9 +1410,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     height: float
         Full height [m]
     top: float
-        Horizontal shift [m]
+        Horizontal shift []
     upper: float
-        Vertical shift [m]
+        Vertical shift []
     dz: float
         Vertical offset [m]
     flat: float
@@ -1420,9 +1420,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     tilt: float
         Outboard angle [degrees]
     bottom: float
-        Lower horizontal shift [m]
+        Lower horizontal shift []
     lower: float
-        Lower vertical shift [m]
+        Lower vertical shift []
     l0s - l3s: float
         Tension variable segment start
     l0e - l3e: float
