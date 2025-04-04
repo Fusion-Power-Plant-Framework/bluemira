@@ -1571,8 +1571,6 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             lower,
         ) = self.variables.values[:11]
 
-        ax.grid(visible=True)
-
         # Label for xs
         annotate_offset_z = 0
         for v, name in zip(
