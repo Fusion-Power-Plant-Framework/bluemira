@@ -1542,6 +1542,35 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
+    @staticmethod
+    def _get_annotator_offset_z(shape: BluemiraWire, x_value: float) -> float:
+        """
+        Gives the z-offset for the annotator.
+
+        Returns
+        -------
+        float:
+            z-Offset for the annotator.
+        """
+        return (
+            max(matching_xs)
+            if (
+                matching_xs := [
+                    z
+                    for x, z in zip(shape.vertexes[0], shape.vertexes[2], strict=False)
+                    if np.isclose(x_value, x)
+                ]
+            )
+            else np.mean([
+                z
+                for _, z in sorted(
+                    zip(
+                        abs(shape.vertexes[0] - x_value), shape.vertexes[2], strict=False
+                    )
+                )[:2]
+            ])  # So that the endpoint of the arrow lies on the curve
+        )
+
     def _label_function(self, ax: plt.Axes, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
@@ -1572,30 +1601,12 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         ) = self.variables.values[:11]
 
         # Label for xs
-        annotate_offset_z = 0
         for v, name in zip(
             [x1, x2],
             ["x1", "x2"],
             strict=False,
         ):
-            annotate_offset_z = (
-                max(matching_xs)
-                if (
-                    matching_xs := [
-                        z
-                        for x, z in zip(
-                            shape.vertexes[0], shape.vertexes[2], strict=False
-                        )
-                        if np.isclose(v, x)
-                    ]
-                )
-                else np.mean([
-                    z
-                    for _, z in sorted(
-                        zip(abs(shape.vertexes[0] - v), shape.vertexes[2], strict=False)
-                    )[:2]
-                ])
-            )  # So that the endpoint of the arrow lies on the curve
+            annotate_offset_z = self._get_annotator_offset_z(shape, v)
 
             self._annotator(
                 ax,
@@ -1612,34 +1623,12 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             )
 
         # top, bottom
-        annotate_offset_z = 0
         for v, name in zip(
             [top * (x2 - x1), bottom * (x2 - x1)],
             ["top \\times (x2-x1)", "bottom \\times (x2-x1)"],
             strict=False,
         ):
-            annotate_offset_z = (
-                max(matching_xs)
-                if (
-                    matching_xs := [
-                        z
-                        for x, z in zip(
-                            shape.vertexes[0], shape.vertexes[2], strict=False
-                        )
-                        if np.isclose(x1 + v, x)
-                    ]
-                )
-                else np.mean([
-                    z
-                    for _, z in sorted(
-                        zip(
-                            abs(shape.vertexes[0] - (x1 + v)),
-                            shape.vertexes[2],
-                            strict=False,
-                        )
-                    )[:2]
-                ])
-            )  # So that the endpoint of the arrow lies on the curve
+            annotate_offset_z = self._get_annotator_offset_z(shape, x1 + v)
 
             self._annotator(
                 ax,
