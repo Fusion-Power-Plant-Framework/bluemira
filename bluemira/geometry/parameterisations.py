@@ -1692,24 +1692,26 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             annotate_offset_x += 0.5
 
         # Label annotation for flat
-        if flat != 0:
-            xcors = [
-                x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
-                x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
-            ]
-            zcors = [
-                (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-                (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
-            ]
 
-            self._annotator(
-                ax,
-                "flat \\times height",
-                (xcors[0], zcors[0]),
-                (xcors[1], zcors[1]),
-                (x2 + 0.5, z2 * height * 0.5 + dz + 0.5),
-                arrowstyle="|-|",
-            )
+        xcors = [
+            x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+            x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+        ]
+        zcors = [
+            (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+            (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+        ]
+
+        self._annotator(
+            ax,
+            "flat \\times height",
+            (xcors[0], zcors[0]),
+            (xcors[1], zcors[1]),
+            (np.mean(xcors) + 0.2, np.mean(zcors)),
+            arrowstyle="|-|",
+        )
+        if flat == 0:
+            ax.plot(xcors[0], zcors[0], "*", color="r")
 
 
 class PictureFrameTools:
