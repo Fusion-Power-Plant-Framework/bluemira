@@ -144,7 +144,7 @@ class LoggerAdapter(logging.Logger):
             self.progress.stop()
             self.progress = None
 
-        func(msg, *args, stacklevel=kwargs.pop("stacklevel", 3), **kwargs)
+        func(msg, *args, stacklevel=kwargs.pop("stacklevel", 1) + 2, **kwargs)
 
     def makeRecord(self, *args, **kwargs) -> logging.LogRecord:  # noqa: N802
         """Overridden makeRecord to pass variables to handler"""  # noqa: DOC201
