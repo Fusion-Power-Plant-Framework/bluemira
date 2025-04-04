@@ -266,6 +266,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         xy1: tuple[float, float],
         xy2: tuple[float, float],
         xy3: tuple[float, float],
+        arrowstyle: str = "<|-",
     ):
         """
         Create annotation arrow with label
@@ -291,7 +292,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             xytext=xy2,
             textcoords="data",
             arrowprops={
-                "arrowstyle": "<|-",
+                "arrowstyle": arrowstyle,
                 "edgecolor": "k",
                 "facecolor": "k",
                 "shrinkA": 0,
@@ -1409,9 +1410,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     height: float
         Full height [m]
     top: float
-        Horizontal shift [m]
+        Horizontal shift []
     upper: float
-        Vertical shift [m]
+        Vertical shift []
     dz: float
         Vertical offset [m]
     flat: float
@@ -1419,9 +1420,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     tilt: float
         Outboard angle [degrees]
     bottom: float
-        Lower horizontal shift [m]
+        Lower horizontal shift []
     lower: float
-        Lower vertical shift [m]
+        Lower vertical shift []
     l0s - l3s: float
         Tension variable segment start
     l0e - l3e: float
@@ -1434,6 +1435,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     def __init__(self, var_dict: VarDictT | None = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
+
         super().__init__(variables)
 
     def create_shape(self, label: str = "") -> BluemiraWire:
@@ -1540,6 +1542,35 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
+    @staticmethod
+    def _get_annotator_offset_z(shape: BluemiraWire, x_value: float) -> float:
+        """
+        Gives the z-offset for the annotator.
+
+        Returns
+        -------
+        float:
+            z-Offset for the annotator.
+        """
+        return (
+            max(matching_xs)
+            if (
+                matching_xs := [
+                    z
+                    for x, z in zip(shape.vertexes[0], shape.vertexes[2], strict=False)
+                    if np.isclose(x_value, x)
+                ]
+            )
+            else np.mean([
+                z
+                for _, z in sorted(
+                    zip(
+                        abs(shape.vertexes[0] - x_value), shape.vertexes[2], strict=False
+                    )
+                )[:2]
+            ])  # So that the endpoint of the arrow lies on the curve
+        )
+
     def _label_function(self, ax: plt.Axes, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
@@ -1552,10 +1583,135 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
-        # TODO @je-cook: add labels for height top upper dz flat tilt bottom lower
-        # l0s - l3s l0e - l3e
+        # TODO @athoynilimanew: add labels for tilt l0s - l3s l0e - l3e
         # 3587
-        _offset_x, _offset_z = super()._label_function(ax, shape)
+
+        (
+            x1,
+            x2,
+            z2,
+            height,
+            top,
+            upper,
+            dz,
+            flat,
+            tilt,
+            bottom,
+            lower,
+        ) = self.variables.values[:11]
+
+        # Label for xs
+        for v, name in zip(
+            [x1, x2],
+            ["x1", "x2"],
+            strict=False,
+        ):
+            annotate_offset_z = self._get_annotator_offset_z(shape, v)
+
+            self._annotator(
+                ax,
+                name,
+                (0, annotate_offset_z),
+                (v, annotate_offset_z),
+                (v * 0.85, annotate_offset_z),
+            )
+            ax.plot(
+                [0, 0], [annotate_offset_z - 0.1, annotate_offset_z + 0.1], color="k"
+            )
+            ax.plot(
+                [v, v], [annotate_offset_z - 0.1, annotate_offset_z + 0.1], color="k"
+            )
+
+        # top, bottom
+        for v, name in zip(
+            [top * (x2 - x1), bottom * (x2 - x1)],
+            ["top \\times (x2-x1)", "bottom \\times (x2-x1)"],
+            strict=False,
+        ):
+            annotate_offset_z = self._get_annotator_offset_z(shape, x1 + v)
+
+            self._annotator(
+                ax,
+                name,
+                (x1, annotate_offset_z),
+                (x1 + v, annotate_offset_z),
+                ((x1 + v) * 0.4, annotate_offset_z),
+            )
+            ax.plot(
+                [x1, x1], [annotate_offset_z - 0.1, annotate_offset_z + 0.1], color="k"
+            )
+            ax.plot(
+                [x1 + v, x1 + v],
+                [annotate_offset_z - 0.1, annotate_offset_z + 0.1],
+                color="k",
+            )
+
+        # Label for upper, lower
+        for v, name in zip(
+            [upper * height * 0.5, -lower * height * 0.5],
+            [
+                "upper \\times \\frac{{height}}{2}",
+                "lower \\times \\frac{{height}}{2}",
+            ],
+            strict=False,
+        ):
+            self._annotator(
+                ax,
+                name,
+                (x1, dz),
+                (x1, dz + v),
+                (x1 + 0.2, (dz + v) * 0.5),
+                arrowstyle="<->",
+            )
+            ax.plot([x1 - 0.1, x1 + 0.1], [dz, dz], color="k")
+            ax.plot([x1 - 0.1, x1 + 0.1], [dz + v, dz + v], color="k")
+
+        # Label for height, z2, dz
+        annotate_offset_x = -0.5
+        for v, name in zip(
+            [height, z2, dz],
+            ["height", "z2", "dz"],
+            strict=False,
+        ):
+            xcor = (
+                x1 - 0.7
+                if name == "dz"
+                else (shape.center_of_mass[0] + annotate_offset_x)
+            )
+            zcors = [dz - height / 2, dz + height / 2] if name == "height" else [0, v]
+
+            self._annotator(
+                ax,
+                name,
+                (xcor, zcors[0]),
+                (xcor, zcors[1]),
+                (xcor, zcors[1] * 0.8),
+            )
+            ax.plot([xcor - 0.05, xcor + 0.05], [zcors[0], zcors[0]], color="k")
+            ax.plot([xcor - 0.05, xcor + 0.05], [zcors[1], zcors[1]], color="k")
+            annotate_offset_x += 0.5
+
+        # Label annotation for flat
+
+        xcors = [
+            x2 - flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+            x2 + flat * height * 0.5 * np.sin(np.deg2rad(tilt)),
+        ]
+        zcors = [
+            (z2 - flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+            (z2 + flat * np.cos(np.deg2rad(tilt))) * height * 0.5 + dz,
+        ]
+
+        self._annotator(
+            ax,
+            "flat \\times height",
+            (xcors[0], zcors[0]),
+            (xcors[1], zcors[1]),
+            (np.mean(xcors) + 0.2, np.mean(zcors)),
+            arrowstyle="|-|",
+        )
+        if flat == 0:
+            ax.plot(xcors[0], zcors[0], "*", color="r")
 
 
 class PictureFrameTools:
