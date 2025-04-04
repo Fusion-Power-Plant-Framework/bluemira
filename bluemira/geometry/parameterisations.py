@@ -1554,7 +1554,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
-        # TODO @vr2150: add labels for tilt l0s - l3s l0e - l3e
+        # TODO @athoynilimanew: add labels for tilt l0s - l3s l0e - l3e
         # 3587
 
         (
