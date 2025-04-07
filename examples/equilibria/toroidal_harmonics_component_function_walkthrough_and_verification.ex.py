@@ -329,7 +329,7 @@ psi_func = RectBivariateSpline(grid.x[:, 0], grid.z[0, :], bm_coil_psi)
 interpolated_coilset_psi = psi_func.ev(R, Z)
 plt.contour(R, Z, interpolated_coilset_psi, levels=nlevels, cmap=cmap)
 plt.plot(R_c, Z_c, marker="o", markersize=10, label="Coil")
-plt.title("Bluemira Coilset Psi")
+plt.title("Bluemira Coilset Psi Interpolated onto TH grid")
 plt.legend(loc="upper left")
 plt.show()
 
