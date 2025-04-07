@@ -42,7 +42,7 @@ contourpy==1.3.1
     #   matplotlib
 coolprop==6.7.0
     # via bluemira (pyproject.toml)
-coverage==7.7.1
+coverage==7.8.0
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -73,9 +73,9 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.56.0
+fonttools==4.57.0
     # via matplotlib
-fortranformat==2.0.0
+fortranformat==2.0.2
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -129,7 +129,7 @@ jupyter-core==5.7.2
     #   jupyter-client
     #   nbclient
     #   nbformat
-jupytext==1.16.7
+jupytext==1.17.0
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.8
     # via matplotlib
@@ -275,7 +275,7 @@ pygments==2.19.1
     #   ipython
     #   rich
     #   sphinx
-pyparsing==3.2.2
+pyparsing==3.2.3
     # via
     #   matplotlib
     #   periodictable
@@ -286,7 +286,7 @@ pytest==8.3.5
     #   pytest-html
     #   pytest-json-report
     #   pytest-metadata
-pytest-cov==6.0.0
+pytest-cov==6.1.1
     # via bluemira (pyproject.toml)
 pytest-html==4.1.1
     # via bluemira (pyproject.toml)
@@ -302,7 +302,7 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
@@ -314,7 +314,7 @@ pyyaml==6.0.2
     #   myst-parser
     #   pre-commit
     #   sphinx-autoapi
-pyzmq==26.3.0
+pyzmq==26.4.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -326,11 +326,11 @@ requests==2.32.3
     # via
     #   pooch
     #   sphinx
-rich==13.9.4
+rich==14.0.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   jsonschema
     #   referencing
@@ -382,7 +382,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.39
+sqlalchemy==2.0.40
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
@@ -419,7 +419,7 @@ traitlets==5.14.3
     #   nbformat
 typeguard==4.4.2
     # via bluemira (pyproject.toml)
-typing-extensions==4.12.2
+typing-extensions==4.13.1
     # via
     #   astroid
     #   flexcache
@@ -438,7 +438,7 @@ tzdata==2025.2
     # via pandas
 urllib3==2.3.0
     # via requests
-virtualenv==20.29.3
+virtualenv==20.30.0
     # via pre-commit
 vtk==9.3.1
     # via
