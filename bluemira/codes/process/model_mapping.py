@@ -168,7 +168,7 @@ class PlasmaProfileModel(PROCESSModel):
         return "iprofile"
 
     INPUT = 0, ("alphaj", "ind_plasma_internal_norm")
-    CONSISTENT = 1, ("q", "q0")
+    CONSISTENT = 1, ("q95", "q0")
 
 
 class BetaLimitModel(PROCESSModel):
