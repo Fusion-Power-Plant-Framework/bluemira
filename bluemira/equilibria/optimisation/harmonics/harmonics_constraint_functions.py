@@ -14,6 +14,9 @@ import numpy.typing as npt
 from bluemira.equilibria.optimisation.constraints import ConstraintFunction
 
 
+# TODO ToroidalHarmonicConstraintFunction, and paste back in
+# SphericalHarmonicConstraintFunction, and search in the code to make sure
+# nothing is referencing HarmonicConstraintFunction any more
 class HarmonicConstraintFunction(ConstraintFunction):
     """
     Constraint function to constrain harmonics starting from initial
