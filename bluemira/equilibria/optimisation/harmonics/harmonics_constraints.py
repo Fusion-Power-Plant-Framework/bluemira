@@ -24,7 +24,8 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     coil_harmonic_amplitude_matrix,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
-    HarmonicConstraintFunction,
+    SphericalHarmonicConstraintFunction,
+    ToroidalHarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     ToroidalHarmonicsParams,
@@ -161,9 +162,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """  # noqa: DOC201
         return np.zeros(len(self.target_harmonics))
 
-    def f_constraint(self) -> HarmonicConstraintFunction:
+    def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
@@ -306,9 +307,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """  # noqa: DOC201
         return np.zeros(len(self.target_harmonics_cos))
 
-    def f_constraint(self) -> HarmonicConstraintFunction:
+    def f_constraint(self) -> ToroidalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = HarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = ToroidalHarmonicConstraintFunction(name=self.name, **self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
