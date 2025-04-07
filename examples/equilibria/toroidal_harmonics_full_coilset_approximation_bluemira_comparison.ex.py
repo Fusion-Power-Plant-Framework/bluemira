@@ -167,7 +167,9 @@ total_psi *= mask
 approx_eq = deepcopy(eq)
 o_points, x_points = approx_eq.get_OX_points(total_psi)
 
-# TODO Use psi_norm = 0.99 for DN, use 1.0 for single null
+# The fit metric is a measure of how 'good' the approximation is.
+# Fit metric value = total area within one but not both FSs /
+#                    (input FS area + approximation FS area)
 psi_norm = 1.0
 f_s = find_flux_surf(
     R_approx, Z_approx, total_psi, psi_norm, o_points=o_points, x_points=x_points
@@ -222,6 +224,9 @@ plt.title("Interpolated Bluemira Coilset Psi")
 plt.show()
 # %%
 # Difference plot to compare TH approximation to Bluemira coilset psi
+# We see zero difference in the core region, which we expect as we are constraining
+# the flux in this region, and we see larger differences outside of the approximation
+# region.
 coilset_psi_diff = np.abs(psi_approx - interpolated_coilset_psi) / np.max(
     np.abs(interpolated_coilset_psi)
 )
