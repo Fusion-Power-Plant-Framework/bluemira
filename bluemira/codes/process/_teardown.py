@@ -244,10 +244,6 @@ class _MFileWrapper:
 
         Store the result in ``data`` attribute.
         """
-        # Process Version
-        process_version_str = self.mfile.data["procver"]["scan01"]
-        process_version = float(".".join(process_version_str.split()[0].split(".")[:2]))
-        min_version = 3.1  # minimum process version for reading  ordered radial build
         rb_vector = []
 
         self.data = {}
@@ -263,10 +259,7 @@ class _MFileWrapper:
                 for name in param_name:
                     self.data[name] = value["scan01"]
             else:
-                if (
-                    process_version >= min_version
-                    and "radial_label" in process_param_name
-                ):
+                if "radial_label" in process_param_name:
                     # Get the order of the component
                     comp_order = int(process_param_name.split("(")[-1].split(")")[0])
 
