@@ -45,6 +45,45 @@ from Bluemira.
 #
 # - We can decompose the vacuum field into Toroidal Harmonics (TH)
 #   to create a minimal set of constraints for use in optimisation.
+#
+# There are benefits to using TH as a minimal set of constraints:
+# - We can choose not to re-solve for the plasma equilibrium at each step, since the
+# coilset contribution to the core plasma (within the LCFS) is constrained.
+# - We have a minimal set of constraints (a set of harmonic amplitudes) for the core
+# plasma contribution, which can reduce the dimensionality of the problem we are
+# considering.
+#
+# We get the TH amplitudes/coefficients, $A(\tau, \sigma)$, from the following equations:
+#
+# $$ A(\tau, \sigma) = \sum_{m=0}^{\infty} A_m^{\cos} \epsilon_m m! \sqrt{\frac{2}{\pi}}
+# \Delta^{\frac{1}{2}} \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \cos(m \sigma) + A_m^
+# {\sin}
+# \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}}
+# \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \sin(m \sigma) $$
+#
+# where
+#
+# $$ A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} factorial\_term \frac{\sinh(
+# \tau_c)}
+# {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) ^{\cos}_{\sin}(m
+# \sigma_c) $$
+#
+# where
+# - $A_m^{\cos, \sin}$ are coefficients for a single coil
+# - subscript $c$ refers to a single coil
+# - $I_c, \tau_c, \sigma_c$ are the coil current, and coil position in toroidal
+# coordinates $(\tau, \sigma)$
+# - $m$ is the poloidal mode number
+# - $P_{\nu}^{\mu}$ is the associated Legendre function of the first kind of degree $\nu$
+#  and order $\mu$
+# - $\textbf{Q}_{\nu}^{\mu}$ is Olver's definition of the associated Legendre function of
+# the second kind. See [here](https://dlmf.nist.gov/14) or F. W. J. Olver (1997b)
+# Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information.
+# - $\varepsilon_m = 1 $ for $m = 0$ and $\varepsilon_m = 2$ for $m \ge 1$
+# - $ \Delta = \cosh(\tau) - \cos(\sigma) $
+# - $ \Delta_c = \cosh(\tau_c) - \cos(\sigma_c) $
+# - $ factorial\_term = \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right) $
+#
 # %% [markdown]
 # ## Imports
 
@@ -237,7 +276,7 @@ ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemir
 im = ax.contourf(R_approx, Z_approx, coilset_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
 ax.set_title("Absolute relative difference between coilset psi and TH approximation psi")
-ax.legend(loc="upper right")
+ax.legend(loc="upper right", bbox_to_anchor=(1.1, 1.0))
 eq.coilset.plot(ax=ax)
 plt.show()
 
