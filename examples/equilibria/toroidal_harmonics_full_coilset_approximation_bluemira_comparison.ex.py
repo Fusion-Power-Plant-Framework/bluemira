@@ -105,6 +105,9 @@ plt.show()
 
 # %%
 # Want to compare to Bluemira coilset and find the fit metric
+# The fit metric is a measure of how 'good' the approximation is.
+# Fit metric value = total area within one but not both FSs /
+#                    (input FS area + approximation FS area)
 
 # Interpolation so we can compare psi over the same grid
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.plasma.psi())
@@ -157,6 +160,9 @@ plt.title("Interpolated Bluemira Coilset Psi")
 plt.show()
 
 # Difference plot to compare TH approximation to Bluemira coil
+# We see zero difference in the core region, which we expect as we are constraining
+# the flux in this region, and we see larger differences outside of the approximation
+# region.
 coilset_psi_diff = np.abs(psi_approx - interpolated_coilset_psi) / np.max(
     interpolated_coilset_psi
 )
