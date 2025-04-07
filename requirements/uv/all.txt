@@ -66,7 +66,7 @@ contourpy==1.3.1
     #   matplotlib
 coolprop==6.7.0
     # via bluemira (pyproject.toml)
-coverage==7.7.1
+coverage==7.8.0
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -100,9 +100,9 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.56.0
+fonttools==4.57.0
     # via matplotlib
-fortranformat==2.0.0
+fortranformat==2.0.2
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -160,7 +160,7 @@ jinja2==3.1.6
     #   sphinx-autoapi
 joblib==1.4.2
     # via scikit-learn
-json5==0.10.0
+json5==0.12.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
@@ -208,7 +208,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-jupytext==1.16.7
+jupytext==1.17.0
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.8
     # via matplotlib
@@ -360,7 +360,7 @@ platformdirs==4.3.7
     #   virtualenv
 pluggy==1.5.0
     # via pytest
-polyscope==2.3.0
+polyscope==2.4.0
     # via bluemira (pyproject.toml)
 pooch==1.8.2
     # via pyvista
@@ -392,7 +392,7 @@ pygments==2.19.1
     #   nbconvert
     #   rich
     #   sphinx
-pyparsing==3.2.2
+pyparsing==3.2.3
     # via
     #   matplotlib
     #   periodictable
@@ -403,7 +403,7 @@ pytest==8.3.5
     #   pytest-html
     #   pytest-json-report
     #   pytest-metadata
-pytest-cov==6.0.0
+pytest-cov==6.1.1
     # via bluemira (pyproject.toml)
 pytest-html==4.1.1
     # via bluemira (pyproject.toml)
@@ -422,7 +422,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==3.3.0
     # via jupyter-events
-pytz==2025.1
+pytz==2025.2
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
@@ -435,7 +435,7 @@ pyyaml==6.0.2
     #   myst-parser
     #   pre-commit
     #   sphinx-autoapi
-pyzmq==26.3.0
+pyzmq==26.4.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -460,11 +460,11 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
-rich==13.9.4
+rich==14.0.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.23.1
+rpds-py==0.24.0
     # via
     #   jsonschema
     #   referencing
@@ -484,7 +484,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==77.0.3
+setuptools==78.1.0
     # via jupyterlab
 six==1.17.0
     # via
@@ -526,7 +526,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.39
+sqlalchemy==2.0.40
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
@@ -580,7 +580,7 @@ typeguard==4.4.2
     # via bluemira (pyproject.toml)
 types-python-dateutil==2.9.0.20241206
     # via arrow
-typing-extensions==4.12.2
+typing-extensions==4.13.1
     # via
     #   anyio
     #   astroid
@@ -605,7 +605,7 @@ uri-template==1.3.0
     # via jsonschema
 urllib3==2.3.0
     # via requests
-virtualenv==20.29.3
+virtualenv==20.30.0
     # via pre-commit
 vtk==9.3.1
     # via
