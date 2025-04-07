@@ -35,7 +35,7 @@ from bluemira.base.look_and_feel import (
 ROOT = get_bluemira_root()
 
 
-GIT_WORKTREE = subprocess.run(  # noqa: S603
+GIT_WORKTREE = subprocess.run(
     ["git", "rev-parse", "--is-inside-work-tree"],  # noqa: S607
     shell=False,
     check=False,

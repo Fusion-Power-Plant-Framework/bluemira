@@ -51,7 +51,7 @@ class SuperSankey(Sankey):
         rotation: float = 0,
         **kwargs,
     ):
-        __doc__ = super().__doc__  # noqa: A001, F841
+        __doc__ = super().__doc__  # noqa: F841
         # Here we first check if the "add" method has received arguments that
         # the Sankey class can't handle.
         if future is None:
