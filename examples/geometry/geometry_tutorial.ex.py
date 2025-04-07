@@ -148,6 +148,10 @@ wire_plotter.plot_2d(closed_wire)
 print(f"wire is closed: {closed_wire.is_closed()}")
 
 # %% [markdown]
+# Also, note that the sub-wires have been passed in "end-to-start": the end point of the
+# current wire in the list should match the start point of the next wire in the list.
+
+# %% [markdown]
 # ## Geometry creation (2-D and 3-D)
 #
 # A closed planar 1-D geometry can be used as boundary to generate a 2-D face.

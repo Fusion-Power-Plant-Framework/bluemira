@@ -535,11 +535,9 @@ class PicardIterator:
             try:
                 next(iterator)
             except StopIteration:  # noqa: PERF203
-                print()  # noqa: T201
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
-            print()  # noqa: T201
             bluemira_warn(
                 "EQUILIBRIA G-S unable to find converged value after"
                 f" {self.i} iterations."

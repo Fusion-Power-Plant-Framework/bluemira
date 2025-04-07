@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from eqdsk import EQDSKInterface
-from scipy.integrate import quad, quadrature
+from scipy.integrate import quad
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
@@ -43,7 +43,7 @@ def _fpol_profile(ffprime, psi_norm, psi_mag, fvac):
     for i in range(len(psi_norm)):
         fpol[i] = np.sqrt(
             2
-            * quadrature(ffprime, psi_norm[i], 1.0, maxiter=500, rtol=1e-6, tol=1e-6)[0]
+            * quad(ffprime, psi_norm[i], 1.0, limit=500, epsrel=1e-6, epsabs=1e-6)[0]
             * psi_mag
             + fvac**2
         )

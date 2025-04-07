@@ -20,8 +20,8 @@ from matplotlib.collections import LineCollection
 from rich.progress import track
 from scipy.interpolate import (
     LinearNDInterpolator,
+    RectBivariateSpline,
     interp1d,
-    interp2d,
 )
 from scipy.spatial import Delaunay
 
@@ -153,7 +153,7 @@ def target_temperature(
     b_tot_tar: float,
 ) -> float:
     """
-    Calculate the target as suggested from the 2PM.
+    Calculate the target as suggested from the 2-point model.
     It includes hydrogen recycle loss energy.
 
     Parameters
@@ -253,9 +253,9 @@ def specific_point_temperature(
     Parameters
     ----------
     x_p:
-        x coordinate of the point [m]
+        x coordinate of the point of interest [m]
     z_p:
-        z coordinate of the point [m]
+        z coordinate of the point of interest [m]
     t_u:
         upstream temperature [eV]
     p_sol:
@@ -264,10 +264,10 @@ def specific_point_temperature(
         Power decay length in the near SOL at the midplane [m]
     eq:
         Equilibrium in which to calculate the point temperature
-    r_sep_omp:
-        Upstream location radial coordinate [m]
+    r_sep_mp:
+        radial coordinate (i.e. x coordinate on the xz plane) of the x-point [m]
     z_mp:
-        Upstream location z coordinate [m]
+        z coordinate of the x-point [m]
     k_0:
         Material's conductivity
     firstwall_geom:
@@ -878,12 +878,13 @@ def grid_interpolator(
         calculate the field values for a new set of points
         or to be provided to a tracing code such as CHERAB
     """
-    # scipy deprecation of interp2d ~3x slower:
+    # scipy deprecated interp2d ~3x faster than RegularGridInterpolator:
+    # it used to be used.
     # grid = RegularGridInterpolator(
     #     (x, z), field_grid.T, bounds_error=False, fill_value=None, method="cubic"
     # )
-    # return lambda xx, zz: grid((xx, zz))
-    return interp2d(x, z, field_grid, kind="cubic")
+    grid = RectBivariateSpline(x, z, field_grid.T)
+    return lambda xx, zz: grid(xx, zz).T
 
 
 def pfr_filter(
@@ -1009,6 +1010,8 @@ def detect_radiation(
     world: World,
     *,
     verbose: bool = False,
+    # TODO @DarioV86: remove these debugs/put into tests?
+    # 3812
 ) -> DetectedRadiation:
     """
     To sample the wall and detect radiation
@@ -1128,6 +1131,8 @@ def make_wall_detectors(
     ctr = 0
 
     if debug:
+        # TODO @DarioV86: remove these debugs/put into tests?
+        # 3812
         _fig, ax = plt.subplots()
 
     for index in range(num + 1):
@@ -1295,7 +1300,10 @@ def plot_radiation_loads(
 
 class FirstWallRadiationSolver:
     """
-    ...
+    Parameters
+    ----------
+    firstwall_shape:
+        BluemiraWire defining the first wall.
     """
 
     def __init__(self, source_func: Callable, firstwall_shape: BluemiraWire):
@@ -1309,7 +1317,8 @@ class FirstWallRadiationSolver:
         n_samples: int = 500,
         *,
         plot: bool = True,
-        verbose: bool = False,
+        verbose: bool = False,  # TODO @DarioV86: remove these debugs/put into tests?
+        # 3812
     ) -> DetectedRadiation:
         """
         Solve first wall radiation problem

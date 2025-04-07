@@ -1,0 +1,63 @@
+name: Bug Report
+description: Create a report to help us improve Bluemira.
+type: "Bug"
+labels: []
+projects: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the bug
+      description: Please provide a clear and concise description of what the bug is.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: If the bug is not straightforward please show us how to reproduce the problem (screenshots can be useful here)
+      placeholder: |
+        1. Using script '...'
+        2. Run command '...'
+        3. Note output '...'
+        4. See error '...'
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Tracebacks
+      description: Any tracebacks that may help diagnose the issue?
+      render: bash
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: What version of Bluemira are you using (copy from `pip show bluemira` or provide the branch)?
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      description: What operating system are you using?
+      options:
+        - Ubuntu 24 (or equivalent recent Linux distribution)
+        - WSL
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os-other
+    attributes:
+      label: "OS details"
+      description: If OS type is other please enter your OS here. Also include any other useful information
+    validations:
+      required: false

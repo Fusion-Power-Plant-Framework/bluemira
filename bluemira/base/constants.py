@@ -77,13 +77,6 @@ class BMUnitRegistry(UnitRegistry):
             ],
         )
 
-        # Extra units
-        self.define("displacements_per_atom  = count = dpa")
-        self.define("full_power_year = year = fpy")
-        self.define("atomic_parts_per_million = appm = ppm")
-        # Other currencies need to be set up in a new context
-        self.define("USD = [currency]")
-
         self._gas_flow_temperature = None
         self._contexts_added = False
 
@@ -114,6 +107,12 @@ class BMUnitRegistry(UnitRegistry):
         self._add_contexts(contexts)
 
         super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
+        # Extra units
+        self.define("displacements_per_atom  = count = dpa")
+        self.define("full_power_year = year = fpy")
+        self.define("@alias ppm = atomic_parts_per_million = appm")
+        # Other currencies need to be set up in a new context
+        self.define("USD = [currency]")
 
     def _energy_temperature_context(self):
         """

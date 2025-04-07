@@ -305,6 +305,28 @@ class TestTripleArc:
         length = 2 * np.pi * 3
         assert np.isclose(wire.length, length)
 
+    def test_too_big_circle(self):
+        # curve too long, defined over too much angle.
+        p = TripleArc()
+        for i in range(1, 3):
+            p.adjust_variable(f"a{i}", getattr(p.variables, f"a{i}").upper_bound)
+        with pytest.raises(GeometryParameterisationError):
+            p.create_shape()
+
+        # curve too tight, crosses the symmetry plane too early due to strict conditions.
+        p.variables.a1.adjust(120)
+        p.variables.a2.adjust(40)
+        p.variables.f1.adjust(2)
+        p.variables.f2.adjust(12)
+        p.variables.sl.adjust(5)
+        with pytest.raises(GeometryParameterisationError):
+            p.create_shape()
+
+    def test_plot(self):
+        p = TripleArc()
+        p.variables.dz.adjust(1.0)
+        p.plot(labels=True)
+
 
 class TestPolySpline:
     def test_segments(self):
@@ -343,3 +365,52 @@ class TestSextupleArc:
         wire = p.create_shape()
 
         assert np.isclose(wire.length, 2 * np.pi * 4)
+
+    def test_too_wide_cirlce(self):
+        """
+        Top half of this circle is too wide, so the bottom half of the circle has to
+        curl past the start point (crossing over itself).
+        """
+        p = SextupleArc()
+        p.variables.a1.adjust(50)
+        p.variables.a2.adjust(80)
+        p.variables.a3.adjust(100)
+        p.variables.a4.adjust(80)
+        p.variables.a5.adjust(20)
+        p.variables.r1.adjust(12)
+        p.variables.r2.adjust(12)
+        p.variables.r3.adjust(12)
+        p.variables.r4.adjust(10)
+        p.variables.r5.adjust(10)
+        with pytest.raises(GeometryParameterisationError):
+            p.create_shape()
+
+    def test_too_narrow_circle(self):
+        """
+        Top half of this circle is too narrow, so the bottom half crosses into the
+        territory where x< starting x-coordinate.
+        """
+        p = SextupleArc()
+        p.variables.a1.adjust(50)
+        p.variables.a2.adjust(80)
+        p.variables.a3.adjust(100)
+        p.variables.a4.adjust(80)
+        p.variables.a5.adjust(20)
+        p.variables.r1.adjust(4)
+        p.variables.r2.adjust(4)
+        p.variables.r3.adjust(4)
+        p.variables.r4.adjust(10)
+        p.variables.r5.adjust(10)
+        with pytest.raises(GeometryParameterisationError):
+            p.create_shape()
+
+    def test_too_big_circle(self):
+        p = SextupleArc()
+        for i in range(1, 6):
+            p.adjust_variable(f"a{i}", getattr(p.variables, f"a{i}").upper_bound)
+        with pytest.raises(GeometryParameterisationError):
+            p.create_shape()
+
+    def test_plot(self):
+        p = SextupleArc()
+        p.plot(labels=True)

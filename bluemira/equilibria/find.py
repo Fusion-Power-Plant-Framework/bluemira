@@ -348,7 +348,6 @@ def find_OX_points(
     o_points, x_points = triage_OX_points(f_psi, points)
 
     if len(o_points) == 0:
-        print()  # stdout flusher  # noqa: T201
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to"
             " grid centre."
@@ -366,7 +365,6 @@ def find_OX_points(
     if len(x_points) == 0:
         # There is an O-point, but no X-points or L-points, so we will take the grid
         # as a boundary
-        print()  # stdout flusher  # noqa: T201
         bluemira_warn(
             "EQUILIBRIA::find_OX: No X-points found during an iteration, using grid"
             " boundary to limit the plasma."

@@ -45,10 +45,13 @@ from bluemira.radiation_transport.radiation_tools import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     import numpy.typing as npt
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
     from bluemira.radiation_transport.midplane_temperature_density import (
@@ -374,8 +377,25 @@ class Radiation:
 class CoreRadiation(Radiation):
     """
     Specific class to calculate the core radiation source.
-    Temperature and density are assumed to be constant along a
-    single flux tube.
+
+    Temperature and density are assumed to be constant along a single flux tube.
+    In addition to `Radiation`, this class also includes the impurity data of all
+    gases except Argon.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    midplane_profiles:
+        Electron density and electron temperature profile at the mid-plane.
+    impurity_content:
+        The dictionary of impurities (e.g. 'H') and their fractions (e.g. 1E-2)
+        in the core.
+    impurity_data:
+        The dictionary of impurities in the core at a defined time, sorted by
+        species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
     """
 
     def __init__(
@@ -383,13 +403,9 @@ class CoreRadiation(Radiation):
         eq: Equilibrium,
         params: ParameterFrame,
         midplane_profiles: MidplaneProfiles,
-        impurity_content,
-        impurity_data,
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
     ):
-        """
-        In addition to `Radiation`, this class also includes the impurity data of all
-        gases except Argon.
-        """
         super().__init__(eq, params)
 
         # Picking impurity species
@@ -578,16 +594,29 @@ class ScrapeOffLayerRadiation(Radiation):
     In the SOL is assumed a conduction dominated regime until the
     x-point, with no heat sinks, and a convection dominated regime
     between x-point and target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    x_sep_imp
+        inboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
+    dx_imp
+        The midplane spatial resolution between flux surfaces at the inboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        x_sep_omp=None,
-        x_sep_imp=None,
-        dx_omp=None,
-        dx_imp=None,
+        x_sep_omp: float | None = None,
+        x_sep_imp: float | None = None,
+        dx_omp: float | None = None,
+        dx_imp: float | None = None,
     ):
         super().__init__(eq, params)
 
@@ -1353,20 +1382,45 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     Here the SOL is divided into for regions. From the outer midplane to the
     outer lower target; from the omp to the outer upper target; from the inboard
     midplane to the inner lower target; from the imp to the inner upper target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    flux_surfaces:
+        list of flux surfaces, all of which terminating at the first walls.
+    impurity_content:
+        The dictionary of impurities in the double-null's scrape-off layer
+        (e.g. 'H') and their fractions (e.g. 1E-2).
+    impurity_data:
+        The dictionary of impurities in the double-null's scrape-off layer at a
+        defined time, sorted by species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
+    firstwall_geom:
+        The closed first wall geometry
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    x_sep_imp
+        inboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
+    dx_imp:
+        The midplane spatial resolution between flux surfaces at the inboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        flux_surfaces,
-        impurity_content,
-        impurity_data,
-        firstwall_geom,
-        x_sep_omp=None,
-        x_sep_imp=None,
-        dx_omp=None,
-        dx_imp=None,
+        flux_surfaces: list[PartialOpenFluxSurface],
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
+        firstwall_geom: Coordinates,
+        x_sep_omp: float | None = None,
+        x_sep_imp: float | None = None,
+        dx_omp: float | None = None,
+        dx_imp: float | None = None,
     ):
         super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
 
@@ -1589,7 +1643,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         Returns
         -------
         :
-            the sol radiation map
+            the SOL radiation map
         """
         # total line radiation loss along the open flux tubes
         self.total_rad_lfs_low = np.sum(np.array(lfs_low, dtype=object), axis=0).tolist()
@@ -1659,18 +1713,39 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     Here the SOL is divided into for regions. From the outer midplane to the
     outer lower target; from the omp to the outer upper target; from the inboard
     midplane to the inner lower target; from the imp to the inner upper target.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    flux_surfaces:
+        list of flux surfaces, all of which terminating at the first walls.
+    impurity_content:
+        The dictionary of impurities in the single-null scrape-off layer
+        (e.g. 'H') and their fractions (e.g. 1E-2).
+    impurity_data:
+        The dictionary of impurities in the single-null scrape-off layer at a defined
+        time, sorted by species, then sorted by "T_ref" v.s. "L_ref", where
+        T_ref = reference ion temperature [eV],
+        L_ref = the loss function value $L_z(n_e, T_e)$ [W m^3].
+    firstwall_geom:
+        The closed first wall geometry
+    x_sep_omp:
+        outboard mid-plane separatrix x-coordinates [m]
+    dx_omp:
+        The midplane spatial resolution between flux surfaces at the outboard [m]
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        flux_surfaces,
-        impurity_content,
-        impurity_data,
-        firstwall_geom,
-        x_sep_omp,
-        dx_omp,
+        flux_surfaces: list[PartialOpenFluxSurface],
+        impurity_content: dict[str, float],
+        impurity_data: dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]],
+        firstwall_geom: Coordinates,
+        x_sep_omp: float,
+        dx_omp: float,
     ):
         super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
 
@@ -1869,6 +1944,25 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 class RadiationSource:
     """
     Simplified solver to easily access the radiation model location inputs.
+
+    Parameters
+    ----------
+    eq:
+        The equilibrium defining flux surfaces.
+    firstwall_shape:
+        BluemiraWire defining the first wall.
+    midplane_profiles:
+        Electron density and electron temperature profile at the mid-plane.
+    core_impurities:
+        The dictionary of impurities in the core (e.g. 'H') and their fractions
+        (e.g. 1E-2).
+    sol_impurities:
+        The dictionary of impurities in the scrape-off layer (e.g. 'H') and their
+        fractions (e.g. 1E-2).
+    confinement_time_sol:
+        Confinement timescale at the scrape-off layer [s]
+    confinement_time_core:
+        Confinement timescale in the core [s]
     """
 
     params: RadiationSourceParams
@@ -1931,7 +2025,7 @@ class RadiationSource:
         self, firstwall_geom: Coordinates
     ) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
         """
-        Using core radiation model and sol radiation model
+        Using core radiation model and SOL radiation model
         to calculate the radiation source at all points
 
         Parameters
@@ -1981,18 +2075,19 @@ class RadiationSource:
 
         return self.core_rad, self.sol_rad
 
-    def rad_core_by_psi_n(self, psi_n):
+    def rad_core_by_psi_n(self, psi_n: float | np.ndarray) -> np.ndarray:
         """
         Calculation of core radiation source for a given (set of) psi norm value(s)
 
         Parameters
         ----------
-        psi_n: float (list)
-            The normalised magnetic flux value(s)
+        psi_n:
+            The normalised magnetic flux value(s), between the minimum and maximum of
+            [self.midplane_profiles.psi_n.min(), self.midplane_profiles.psi_n.max()].
 
         Returns
         -------
-        rad_new: float (list)
+        rad_new:
             Local radiation source value(s) associated to the given psi_n
         """
         core_rad = CoreRadiation(
@@ -2006,7 +2101,9 @@ class RadiationSource:
         rad_tot = np.sum(np.array(core_rad.rad_mp, dtype=object), axis=0)
         return interp1d(self.midplane_profiles.psi_n, rad_tot)(psi_n)
 
-    def rad_core_by_points(self, x, z):
+    def rad_core_by_points(
+        self, x: float | np.ndarray, z: float | np.ndarray
+    ) -> np.ndarray:
         """
         Calculation of core radiation source for a given (set of) x, z coordinates
 
@@ -2026,14 +2123,21 @@ class RadiationSource:
         psi_n = calc_psi_norm(psi, *self.eq.get_OX_psis(psi))
         return self.rad_core_by_psi_n(psi_n)
 
-    def rad_sol_by_psi_n(self, psi_n):
+    def rad_sol_by_psi_n(self, psi_n: float | np.ndarray[float]) -> np.ndarray:
         """
-        Calculation of sol radiation source for a given psi norm value
+        Calculation of SOL radiation sources for a given psi norm value.
+
+        Each psi_n corresponds to a flux surface defined by a list of
+        x-z coordinates. In the SOL (i.e. outside the LCFS) the radiation intensity
+        is not constant, but rather varies across the flux surface. Therefore this
+        method returns a radiation intensity value for each x-z coordinates in the list
+        defining each flux surface.
 
         Parameters
         ----------
         psi_n: float
-            The normalised magnetic flux value
+            The normalised magnetic flux value, between the minimum and maximum of
+            [self.eq.psi_norm().min(), self.eq.psi_norm().max()].
 
         Returns
         -------
@@ -2047,9 +2151,11 @@ class RadiationSource:
             for x, z in zip(fs.x, fs.z, strict=False)
         ])
 
-    def rad_sol_by_points(self, x_lst, z_lst):
+    def rad_sol_by_points(
+        self, x_lst: Iterable[float], z_lst: Iterable[float]
+    ) -> np.ndarray:
         """
-        Calculation of sol radiation source for a given (set of) x, z coordinates
+        Calculation of SOL radiation source for a given (set of) x, z coordinates
 
         Parameters
         ----------
@@ -2069,14 +2175,15 @@ class RadiationSource:
             for x, z in zip(x_lst, z_lst, strict=False)
         ])
 
-    def rad_by_psi_n(self, psi_n):
+    def rad_by_psi_n(self, psi_n: float) -> np.ndarray:
         """
         Calculation of any radiation source for a given (set of) psi norm value(s)
 
         Parameters
         ----------
         psi_n:
-            The normalised magnetic flux value(s)
+            The normalised magnetic flux value(s), between the minimum and maximum of
+            [self.eq.psi_norm().min(), self.eq.psi_norm().max()].
 
         Returns
         -------
@@ -2087,7 +2194,7 @@ class RadiationSource:
             return self.rad_core_by_psi_n(psi_n)
         return self.rad_sol_by_psi_n(psi_n)
 
-    def rad_by_points(self, x, z):
+    def rad_by_points(self, x: float | np.ndarray, z: float | np.ndarray) -> np.ndarray:
         """
         Calculation of any radiation source for a given (set of) x, z coordinates
 
@@ -2101,7 +2208,8 @@ class RadiationSource:
         Returns
         -------
         rad_any:
-            Local radiation source value(s) associated to the point(s)
+            Local radiation source values located at the meshgrid formed by meshgrid of
+            x and z.
         """
         f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return interpolated_field_values(x, z, f)

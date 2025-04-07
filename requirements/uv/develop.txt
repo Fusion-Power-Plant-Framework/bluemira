@@ -12,18 +12,18 @@ astroid==3.3.8
     # via sphinx-autoapi
 asttokens==3.0.0
     # via stack-data
-attrs==24.3.0
+attrs==25.1.0
     # via
     #   jsonschema
     #   jupyter-cache
     #   referencing
-babel==2.16.0
+babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
 blosc2==2.7.1
     # via tables
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 cfgv==3.4.0
     # via pre-commit
@@ -42,11 +42,11 @@ contourpy==1.3.1
     #   matplotlib
 coolprop==6.6.0
     # via bluemira (pyproject.toml)
-coverage==7.6.10
+coverage==7.6.12
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.11
+debugpy==1.8.12
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -63,17 +63,17 @@ exceptiongroup==1.2.2
     # via
     #   ipython
     #   pytest
-executing==2.1.0
+executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
     # via nbformat
-filelock==3.16.1
+filelock==3.17.0
     # via virtualenv
 flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.55.3
+fonttools==4.56.0
     # via matplotlib
 fortranformat==2.0.0
     # via
@@ -83,15 +83,15 @@ gmsh==4.13.1
     # via bluemira (pyproject.toml)
 greenlet==3.1.1
     # via sqlalchemy
-identify==2.6.5
+identify==2.6.7
     # via pre-commit
 idna==3.10
     # via requests
-imageio==2.36.1
+imageio==2.37.0
     # via bluemira (pyproject.toml)
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.5.0
+importlib-metadata==8.6.1
     # via
     #   jupyter-cache
     #   myst-nb
@@ -99,7 +99,7 @@ iniconfig==2.0.0
     # via pytest
 ipykernel==6.29.5
     # via myst-nb
-ipython==8.31.0
+ipython==8.32.0
     # via
     #   ipykernel
     #   myst-nb
@@ -129,11 +129,11 @@ jupyter-core==5.7.2
     #   jupyter-client
     #   nbclient
     #   nbformat
-jupytext==1.16.6
+jupytext==1.16.7
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.8
     # via matplotlib
-llvmlite==0.43.0
+llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
     # via
@@ -163,13 +163,13 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.0
     # via blosc2
-mypy==1.14.1
+mypy==1.15.0
     # via bluemira (pyproject.toml)
 mypy-extensions==1.0.0
     # via mypy
-myst-nb==1.1.1
+myst-nb==1.2.0
     # via bluemira (pyproject.toml)
-myst-parser==4.0.0
+myst-parser==4.0.1
     # via myst-nb
 nbclient==0.10.2
     # via
@@ -191,11 +191,11 @@ nlopt==2.7.1
     # via bluemira (pyproject.toml)
 nodeenv==1.9.1
     # via pre-commit
-numba==0.60.0
+numba==0.61.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
-numba-scipy==0.4.0
+numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787
     # via bluemira (pyproject.toml)
 numexpr==2.10.2
     # via
@@ -257,11 +257,11 @@ pluggy==1.5.0
     # via pytest
 pooch==1.8.2
     # via pyvista
-pre-commit==4.0.1
+pre-commit==4.1.0
     # via bluemira (pyproject.toml)
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via ipython
-psutil==6.1.1
+psutil==7.0.0
     # via ipykernel
 ptyprocess==0.7.0
     # via pexpect
@@ -307,7 +307,7 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-pytz==2024.2
+pytz==2025.1
     # via pandas
 pyvista==0.44.2
     # via bluemira (pyproject.toml)
@@ -319,11 +319,11 @@ pyyaml==6.0.2
     #   myst-parser
     #   pre-commit
     #   sphinx-autoapi
-pyzmq==26.2.0
+pyzmq==26.2.1
     # via
     #   ipykernel
     #   jupyter-client
-referencing==0.35.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -339,11 +339,11 @@ rpds-py==0.22.3
     # via
     #   jsonschema
     #   referencing
-ruff==0.9.1
+ruff==0.9.7
     # via bluemira (pyproject.toml)
 scikit-learn==1.6.1
     # via bluemira (pyproject.toml)
-scipy==1.10.1
+scipy==1.15.2
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
@@ -368,7 +368,7 @@ sphinx==8.1.3
     #   sphinx-copybutton
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx-autoapi==3.4.0
+sphinx-autoapi==3.6.0
     # via bluemira (pyproject.toml)
 sphinx-copybutton==0.5.2
     # via bluemira (pyproject.toml)
@@ -388,11 +388,11 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.37
+sqlalchemy==2.0.38
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
-sybil==9.0.0
+sybil==9.1.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
     # via
@@ -425,7 +425,7 @@ traitlets==5.14.3
     #   matplotlib-inline
     #   nbclient
     #   nbformat
-typeguard==4.4.1
+typeguard==4.4.2
     # via bluemira (pyproject.toml)
 typing-extensions==4.12.2
     # via
@@ -437,15 +437,16 @@ typing-extensions==4.12.2
     #   myst-nb
     #   pint
     #   pyvista
+    #   referencing
     #   rich
     #   sqlalchemy
     #   tables
     #   typeguard
-tzdata==2024.2
+tzdata==2025.1
     # via pandas
 urllib3==2.3.0
     # via requests
-virtualenv==20.28.1
+virtualenv==20.29.2
     # via pre-commit
 vtk==9.3.1
     # via

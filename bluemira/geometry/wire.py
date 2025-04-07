@@ -39,9 +39,16 @@ class BluemiraWire(BluemiraGeo):
     Parameters
     ----------
     boundary:
-        List of wires from which to make the BluemiraWire
+        List of wires from which to make the BluemiraWire. The wires should be passed in
+        "end-to-start", i.e. the end point of the current wire in the list should match
+        the start point of the next wire in the list.
     label:
         Label to assign to the wire
+
+    Note
+    ----
+    The construction of the BluemiraWire can usually handle one wire that is not in the
+    correct order in the :code:`boundary` argument, but it is best not to test your luck.
     """
 
     def __init__(self, boundary: list[cadapi.apiWire | BluemiraWire], label: str = ""):

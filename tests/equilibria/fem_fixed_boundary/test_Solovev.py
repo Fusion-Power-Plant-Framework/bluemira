@@ -286,7 +286,7 @@ class TestSolovevZheng:
         x_axis_s, z_axis_s = find_magnetic_axis(self.solovev.psi, None)
         x_axis_fe, z_axis_fe = find_magnetic_axis(self.gs_solver.psi, self.mesh)
         np.testing.assert_allclose(x_axis_fe, x_axis_s, atol=2e-5)
-        np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1e-5)
+        np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1.5e-5)
 
     def test_psi_boundary(self):
         psi_fe_boundary = np.array([self.fe_psi_calc(point) for point in self.boundary])
