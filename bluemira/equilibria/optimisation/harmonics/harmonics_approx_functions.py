@@ -345,7 +345,7 @@ def collocation_points(
 
 def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     """
-    Calculate the value of the metric used for evaluating the SH approximation.
+    Calculate the value of the metric used for evaluating the SH&TH approximation.
     This is equal to 1 for non-intersecting flux surfaces, and 0 for identical surfaces.
     The flux surface of interest is usually the LCFS, or a closed flux surface that
     is close to the last closed flux surface., e.g., psi_norm = 0.95 or 0.98.
@@ -365,7 +365,9 @@ def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
         (input FS area + approximation FS area)
 
     """
-    # Test to see if the FS for the SH approx is not closed for some reason
+    # Test to see if the FS for the SH/TH approx is not closed for some reason
+    # We need to use a slightly higher tolerance here to deal with the grid used by the
+    # TH approx
     if not (
         len(coords2) > 2  # noqa: PLR2004
         and np.allclose(coords2[:, 0], coords2[:, -1], atol=1e-15)
