@@ -995,17 +995,25 @@ def make_table(data, column_names):
         table
     """
     if not isinstance(data, Iterable):
+        data = (
+            data.dict_with_units(latex=False)
+            if callable(data.dict_with_units)
+            else data.__dict__
+        )
         return tabulate(
-            list(asdict(data).items()),
+            list(data.items()),
             headers=[column_names],
             tablefmt="simple",
             showindex=False,
             numalign="right",
         )
 
-    table_data = [data[0].__dataclass_fields__] + [
-        list(asdict(column).values()) for column in data
-    ]
+    row_names = (
+        list(data[0].dict_with_units(latex=False).keys())
+        if callable(data[0].dict_with_units)
+        else list(data[0].__dict__.keys())
+    )
+    table_data = [row_names] + [list(asdict(column).values()) for column in data]
     return tabulate(
         list(zip(*table_data, strict=False)),
         headers=["Parameter", *column_names],

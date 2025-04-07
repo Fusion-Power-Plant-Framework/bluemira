@@ -20,6 +20,7 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
+from bluemira.utilities.plot_tools import make_dict_with_units
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -375,6 +376,21 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
 
 
 @dataclass
+class EqSummaryPlotUnits:
+    """
+    Units for EqSummary.
+    """
+
+    W: str = "[J]"
+    V: str = "[m^3]"
+    R_0: str = "[m]"
+    a: str = "[m]"
+    I_p: str = "[A]"
+    dx_shaf: str = "[m]"
+    dz_shaf: str = "[m]"
+
+
+@dataclass
 class EqSummary:
     """
     Calculates interesting values in one go.
@@ -457,6 +473,22 @@ class EqSummary:
             kappa=kappa,
             delta=delta,
             zeta=zeta,
+        )
+
+    def dict_with_units(self, latex=True):  # noqa: FBT002
+        """
+        Add appropriate units to value names.
+        Make latex ready if latex=true.
+
+        Returns
+        -------
+        :
+            Dictionary with updated keys for tables and plotting.
+        """
+        return make_dict_with_units(
+            data_dict=self.__dict__,
+            units_dict=EqSummaryPlotUnits().__dict__,
+            latex=latex,
         )
 
 

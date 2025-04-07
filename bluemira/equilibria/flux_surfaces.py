@@ -37,6 +37,7 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import _signed_distance_2D
+from bluemira.utilities.plot_tools import make_dict_with_units
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
@@ -515,6 +516,19 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
 
 @dataclass
+class CoreResultsPlotUnits:
+    """
+    Units for CoreResults.
+    """
+
+    R_0: str = "[m]"
+    a: str = "[m]"
+    area: str = "[m^2]"
+    V: str = "[m^3]"
+    Delta_shaf: str = "[m]"
+
+
+@dataclass
 class CoreResults:
     """
     Dataclass for core results.
@@ -537,6 +551,22 @@ class CoreResults:
     zeta_lower: Iterable
     q: Iterable
     Delta_shaf: Iterable
+
+    def dict_with_units(self, latex=True):  # noqa: FBT002
+        """
+        Add appropriate units to value names.
+        Make latex ready if latex=true.
+
+        Returns
+        -------
+        :
+            Dictionary with updated keys for tables and plotting.
+        """
+        return make_dict_with_units(
+            data_dict=self.__dict__,
+            units_dict=CoreResultsPlotUnits().__dict__,
+            latex=latex,
+        )
 
 
 def analyse_plasma_core(eq: Equilibrium, n_points: int = 50) -> CoreResults:

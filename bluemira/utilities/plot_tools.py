@@ -85,6 +85,56 @@ def str_to_latex(string: str) -> str:
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
+def str_to_latex_units(string: str) -> str:
+    """
+    Create a new string which can be printed in LaTEX nicely.
+
+    Parameters
+    ----------
+    string:
+        The string to be converted
+
+    Returns
+    -------
+    The mathified string
+
+    '(A^2.s^4)/kg/m^3' ==> '$(A^{2}.s^{4})/kg/m^{3}$'
+    """
+    characters = list(string)
+    ind = [i for i, c in enumerate(characters) if c == "^"]
+    n = 0
+    for i in ind:
+        characters.insert(i + n + 2, "}")
+        characters.insert(i + n + 1, "{")
+        n += 2
+    string = "".join(characters)
+    return "$" + string + "$"
+
+
+def make_dict_with_units(data_dict: dict, units_dict: dict, latex: bool = True):  # noqa: FBT001, FBT002
+    """
+    For use with Summary dataclasses.
+
+    Creates a dictionary of data values with the keys updated with units,
+    and changed to a latex format if required.
+
+    Returns
+    -------
+    :
+        Dictionary with updated keys
+
+    """
+    new_dict = {}
+    for k, v in data_dict.items():
+        varname = str_to_latex(k) if latex else k
+        if units_dict.get(k) is not None:
+            units = str_to_latex_units(units_dict[k]) if latex else units_dict[k]
+            new_dict[varname + units] = v
+        else:
+            new_dict[varname] = v
+    return new_dict
+
+
 def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool = True):
     """
     Make a GIF image from a set of images with similar names in a folder.

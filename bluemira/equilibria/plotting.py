@@ -1635,14 +1635,14 @@ class CorePlotter(Plotter):
     def plot_core(self, results, eq_name=None):
         if eq_name is None:
             ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
-            for i, (k, v) in enumerate(results.__dict__.items()):
+            for i, (k, v) in enumerate(results.dict_with_units().items()):
                 color = next(ccycle)
-                self.ax[i].plot(results.psi_n, v, label=str_to_latex(k), color=color)
+                self.ax[i].plot(results.psi_n, v, label=k, color=color)
                 self.ax[i].legend()
         else:
-            for i, (k, v) in enumerate(results.__dict__.items()):
+            for i, (k, v) in enumerate(results.dict_with_units().items()):
                 self.ax[i].plot(results.psi_n, v, label=eq_name)
-                self.ax[i].set_ylabel(str_to_latex(k))
+                self.ax[i].set_ylabel(k)
             self.ax[0].legend()
 
 

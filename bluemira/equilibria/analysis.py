@@ -1229,7 +1229,7 @@ class MultiEqAnalysis:
                 )
             else:
                 cc_tab_list.extend([[None] * max_n_cc, [None] * (max_n_cc - len(n))])
-            cc_eq_names.extend(name)
+            cc_eq_names.extend([name, value_type.value])
 
         table = tabulate(
             list(zip(*cc_tab_list, strict=False)),
