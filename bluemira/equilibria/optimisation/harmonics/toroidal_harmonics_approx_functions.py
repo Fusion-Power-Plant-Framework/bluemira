@@ -481,7 +481,9 @@ def toroidal_harmonic_approximation(
     nlevels: int = 50,
     *,
     plot: bool = False,
-) -> tuple[ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray]:
+) -> tuple[
+    ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray
+]:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
