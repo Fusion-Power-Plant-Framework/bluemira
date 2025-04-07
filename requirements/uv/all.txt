@@ -313,7 +313,6 @@ numpy==1.26.4
     #   pandas
     #   periodictable
     #   polyscope
-    #   pypet
     #   pyvista
     #   raysect
     #   scikit-learn
@@ -337,9 +336,7 @@ packaging==24.2
     #   sphinx
     #   tables
 pandas==2.2.3
-    # via
-    #   pypet
-    #   seaborn
+    # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.4
@@ -399,8 +396,6 @@ pyparsing==3.2.2
     # via
     #   matplotlib
     #   periodictable
-pypet==0.6.1
-    # via bluemira (pyproject.toml)
 pytest==8.3.5
     # via
     #   bluemira (pyproject.toml)
@@ -473,7 +468,7 @@ rpds-py==0.23.1
     # via
     #   jsonschema
     #   referencing
-ruff==0.11.3
+ruff==0.11.4
     # via bluemira (pyproject.toml)
 scikit-learn==1.6.1
     # via bluemira (pyproject.toml)
@@ -482,7 +477,6 @@ scipy==1.15.2
     #   bluemira (pyproject.toml)
     #   cherab
     #   numba-scipy
-    #   pypet
     #   scikit-learn
 scooby==0.10.0
     # via pyvista
@@ -539,9 +533,7 @@ stack-data==0.6.3
 sybil==9.1.0
     # via bluemira (pyproject.toml)
 tables==3.10.1
-    # via
-    #   bluemira (pyproject.toml)
-    #   pypet
+    # via bluemira (pyproject.toml)
 tabulate==0.9.0
     # via
     #   bluemira (pyproject.toml)
