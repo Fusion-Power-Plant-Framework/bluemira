@@ -12,7 +12,7 @@ from bluemira.structural.material import make_structural_material
 
 MATERIAL_DATA_PATH = get_bluemira_path("materials", subfolder="data")
 MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(MATERIAL_DATA_PATH, "materials_mag.json"))
+MATERIAL_CACHE.load_from_file(Path(MATERIAL_DATA_PATH, "materials.json"))
 MATERIAL_CACHE.load_from_file(Path(MATERIAL_DATA_PATH, "mixtures.json"))
 
 

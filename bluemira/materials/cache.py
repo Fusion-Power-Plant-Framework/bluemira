@@ -46,6 +46,7 @@ class MaterialCache:
     _material_dict: ClassVar = {}
 
     default_classes = (
+        HomogenisedMixture,
         BePebbleBed,
         Liquid,
         MassFractionMaterial,
