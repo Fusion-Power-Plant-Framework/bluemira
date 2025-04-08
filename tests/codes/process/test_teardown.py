@@ -56,6 +56,10 @@ class TestTeardown:
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
         # auto unit conversion
         assert teardown.params.P_el_net.value == pytest.approx(6e8)
+        # see if radial build dict is correctly built
+        assert len(teardown._mfile_wrapper.ordered_radial_build.keys()) == 3
+        # confirm radial build vector is correctly built
+        assert len(teardown._mfile_wrapper.ordered_radial_build["Radial Build"]) == 24
 
     def test_read_unknown_outputs_set_to_nan(self):
         """
@@ -194,6 +198,8 @@ class TestTeardown:
     def test_CodesError_if_process_parameter_missing_from_radial_build_calculation(self):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
         del self.mfile_mock.data["dr_bore"]
+        del self.mfile_mock.data["radial_label(1)"]
+        del self.mfile_mock.data["radial_cum(1)"]
 
         with (
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),

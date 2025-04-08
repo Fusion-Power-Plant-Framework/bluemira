@@ -259,7 +259,7 @@ class _MFileWrapper:
                 comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
 
                 # description of the component
-                comp_name = self.mfile.data[var_name].var_description
+                comp_name = self.mfile.data[var_name]["var_description"]
 
                 if "gap" in comp_name:
                     # do not need to know gap between whom
