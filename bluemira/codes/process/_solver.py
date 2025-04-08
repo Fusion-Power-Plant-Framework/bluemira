@@ -159,7 +159,7 @@ class Solver(CodesSolver):
         self,
         run_mode: str | RunMode,
         *,
-        plot: bool = True,
+        plot: bool = False,
         plot_kwargs: dict | None = None,
     ) -> ParameterFrame:
         """
