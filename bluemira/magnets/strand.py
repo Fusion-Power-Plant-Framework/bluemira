@@ -129,7 +129,8 @@ class Strand(HomogenisedMixture):
             Circular face representing the strand geometry.
         """
         if self._shape is None:
-            self._shape = BluemiraFace([make_circle(self.d_strand)])
+            diameter = self.d_strand.value
+            self._shape = BluemiraFace([make_circle(diameter)])
         return self._shape
 
     def plot(self, ax=None, *, show: bool = True, **kwargs):
