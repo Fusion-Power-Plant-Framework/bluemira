@@ -142,68 +142,6 @@ class Teardown(CodesTeardown):
             outputs.append(value)
         return outputs
 
-    def get_radial_build_for_plotting(self) -> dict | None:
-        """
-        Get radial build variables from the MFILE
-        for plotting purposes.
-
-        Returns
-        -------
-        dict:
-            radial build dict
-
-        Raises
-        ------
-        CodesError
-            If cannot find the MFILE wrapper
-        OSError
-            unreadable input
-        """
-        if not self._mfile_wrapper:
-            raise CodesError(
-                f"Cannot retrieve output from {self._name} MFile. "
-                "The solver has not been run, so no MFile is available to read."
-            )
-
-        data = self._mfile_wrapper.data
-
-        # Check Process Version
-        process_version_str = data["procver"]
-        process_version = float(".".join(process_version_str.split()[0].split(".")[:2]))
-        min_version = 3.1
-        if process_version < min_version:
-            # Return radial build from MFILE
-            bluemira_warn(
-                "MFILE.DAT file in old format. cannot get radial build output from MFILE"
-            )
-            return None
-
-        # Get rest of the information from the data
-        n_TF = data["n_tf"]
-        R_0 = data["rmajor"]
-
-        rb = []
-        for key, value in data.items():
-            if "radial_label" in key:
-                # Get the order of the component
-                comp_order = int(key.split("(")[-1].split(")")[0])
-
-                # name of the component
-
-                comp_name = data[value]
-                if "gap" in comp_name:
-                    # do not need to know gap between whom
-                    # for plotting
-                    comp_name = "Gap"
-
-                # thickness and cumulative radius
-                comp_tk = data[value]
-                comp_cum_tk = data[f"radial_cum({comp_order})"]
-
-                rb.append([comp_name, comp_tk, comp_cum_tk])
-
-        return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
-
     def _load_mfile(self, path: str, *, recv_all: bool):
         """
         Load the MFile at the given path, and update this object's
