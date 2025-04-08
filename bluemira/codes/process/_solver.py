@@ -131,7 +131,6 @@ class Solver(CodesSolver):
         self._teardown: Teardown | None = None
 
         _build_config = copy.deepcopy(build_config)
-        self.plot = _build_config.pop("plot", False)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
@@ -156,7 +155,13 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
+    def execute(
+        self,
+        run_mode: str | RunMode,
+        *,
+        plot: bool = True,
+        plot_kwargs: dict | None = None,
+    ) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -204,8 +209,9 @@ class Solver(CodesSolver):
         if teardown := self._get_execution_method(self._teardown, run_mode):
             teardown()
 
-        if self.plot:
-            self.plot_radial_build()
+        if plot:
+            plot_kwargs = plot_kwargs or {"width": 1.5}
+            self.plot_radial_build(**plot_kwargs)
 
         return self.params
 
@@ -231,9 +237,6 @@ class Solver(CodesSolver):
         -------
         The plot Axes object.
         """
-        if not self._teardown:
-            return None
-
         radial_build = self._teardown._mfile_wrapper.ordered_radial_build
 
         if not radial_build:
@@ -243,43 +246,36 @@ class Solver(CodesSolver):
         R_0 = radial_build["R_0"]
 
         col = {
-            "Gap": "w",
+            "gap": "w",
             "blanket": "#edb120",
-            "TF coil": "#7e2f8e",
-            "Vacuum vessel": "k",
-            "Radiation shield": "#5dbb63",
-            "Plasma": "#f77ec7",
-            "first wall": "#edb120",
-            "Machine bore": "w",
-            "dr_cs_precomp": "#0072bd",
+            "TF_coil": "#7e2f8e",
+            "vacuum_vessel": "k",
+            "radiation_shield": "#5dbb63",
+            "minor_radius": "#f77ec7",
+            "first_wall": "#edb120",
+            "bore": "w",
+            "CS_precompression": "#0072bd",
             "scrape-off": "#a2142f",
             "solenoid": "#0072bd",
-            "Thermal shield": "#77ac30",
+            "thermal_shield": "#77ac30",
         }
 
         _, ax = plt.subplots(figsize=[14, 10])
 
         lpatches = []
-        gkeys = [
-            "blanket",
-            "TF coil",
-            "Vacuum vessel",
-            "Radiation shield",
-            "Plasma",
-            "scrape-off",
-            "solenoid",
-            "Thermal shield",
-        ]
+
         glabels = {
+            "first_wall": "First Wall",
             "blanket": "Breeding blanket",
-            "TF coil": "TF coil",
-            "Plasma": "Plasma",
-            "Vacuum vessel": "Vacuum vessel",
-            "Radiation shield": "Radiation shield",
+            "TF_coil": "TF coil",
+            "minor_radius": "Plasma",
+            "vacuum_vessel": "Vacuum vessel",
+            "radiation_shield": "Radiation shield",
             "scrape-off": "Scrape-off layer",
             "solenoid": "Central solenoid",
-            "Thermal shield": "Thermal shield",
+            "thermal_shield": "Thermal shield",
         }
+        gkeys = list(glabels.keys())
 
         for comp in radial_build["Radial Build"]:
             # Generate coordinates for an arbitrary
@@ -295,16 +291,20 @@ class Solver(CodesSolver):
             yc = np.array(yc)
             coords = Coordinates({"x": xc, "y": yc})
 
+            colour = None
             for key, c in col.items():
                 if key.upper() in comp[0].upper():
-                    ax.plot(xc, yc, color=c, linewidth=0, label=key)
-                    if comp[1] > 0:
-                        plot_coordinates(
-                            coords, ax=ax, facecolor=c, edgecolor="k", linewidth=0
-                        )
-                    if key in gkeys:
-                        gkeys.remove(key)
-                        lpatches.append(patches.Patch(color=c, label=glabels[key]))
+                    colour = c
+                    break
+            if colour:
+                ax.plot(xc, yc, color=colour, linewidth=0, label=key)
+                if comp[1] > 0:
+                    plot_coordinates(
+                        coords, ax=ax, facecolor=c, edgecolor="k", linewidth=0
+                    )
+                if key in gkeys:
+                    gkeys.remove(key)  # No need to double-print legend
+                    lpatches.append(patches.Patch(color=c, label=glabels[key]))
 
         ax.set_xlim([0, np.ceil(radial_build["Radial Build"][-1][-1])])
         ax.set_ylim([-width * 0.5, width * 0.5])
