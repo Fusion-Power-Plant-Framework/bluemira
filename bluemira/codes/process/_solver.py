@@ -243,16 +243,15 @@ class Solver(CodesSolver):
 
         col = {
             "gap": "w",
-            "blanket": "#edb120",
-            "TF_coil": "#7e2f8e",
-            "vacuum_vessel": "k",
-            "radiation_shield": "#5dbb63",
-            "minor_radius": "#f77ec7",
-            "first_wall": "#edb120",
-            "bore": "w",
-            "CS_precompression": "#0072bd",
-            "scrape-off": "#a2142f",
-            "solenoid": "#0072bd",
+            "dr_blkt": "#edb120",
+            "dr_tf": "#7e2f8e",
+            "dr_vv": "k",
+            "dr_shld": "#5dbb63",
+            "rminor": "#f77ec7",
+            "dr_fw": "#cb9832",
+            "dr_bore": "w",
+            "scrape_off_layer": "#a2142f",
+            "dr_cs": "#0072bd",
             "thermal_shield": "#77ac30",
         }
 
@@ -261,18 +260,17 @@ class Solver(CodesSolver):
         lpatches = []
 
         glabels = {
-            "first_wall": "First Wall",
-            "blanket": "Breeding blanket",
-            "TF_coil": "TF coil",
-            "minor_radius": "Plasma",
-            "vacuum_vessel": "Vacuum vessel",
-            "radiation_shield": "Radiation shield",
-            "scrape-off": "Scrape-off layer",
-            "solenoid": "Central solenoid",
+            "dr_fw": "First Wall",
+            "dr_blkt": "Breeding blanket",
+            "dr_tf": "TF coil",
+            "rminor": "Plasma",
+            "dr_vv": "Vacuum vessel",
+            "dr_shld": "Radiation shield",
+            "scrape_off_layer": "Scrape-off layer",
+            "dr_cs": "Central solenoid",
             "thermal_shield": "Thermal shield",
         }
         gkeys = list(glabels.keys())
-
         for comp in radial_build["Radial Build"]:
             # Generate coordinates for an arbitrary
             # height radial width.

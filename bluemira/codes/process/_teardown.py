@@ -258,13 +258,14 @@ class _MFileWrapper:
 
                 comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
 
-                # description of the component
-                comp_name = self.mfile.data[var_name]["var_description"]
-
-                if "gap" in comp_name:
-                    # do not need to know gap between whom
-                    # for plotting
-                    comp_name = "Gap"
+                if "dr_fw_plasma_gap" in var_name:
+                    comp_name = var_name.replace("dr_fw_plasma_gap", "scrape_off_layer")
+                elif "gap" in var_name:
+                    comp_name = "gap"
+                elif "dr_shld_thermal" in var_name:
+                    comp_name = var_name.replace("dr_shld_thermal", "thermal_shield")
+                else:
+                    comp_name = var_name
 
                 rb_vector.append([comp_name, comp_tk, comp_cum_tk])
 
