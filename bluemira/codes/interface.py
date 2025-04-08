@@ -330,13 +330,7 @@ class CodesSolver(abc.ABC):
         Common run modes are RUN, MOCK, READ, etc,.
         """
 
-    def execute(
-        self,
-        run_mode: str | BaseRunMode,
-        *,
-        plot: bool = True,
-        plot_kwargs: dict | None = None,
-    ) -> Any:
+    def execute(self, run_mode: str | BaseRunMode) -> Any:
         """
         Execute the setup, run, and teardown tasks, in order.
         """  # noqa: DOC201
@@ -349,22 +343,7 @@ class CodesSolver(abc.ABC):
             result = run(result)
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(result)
-
-        if plot:
-            plot_kwargs = plot_kwargs or {"width": 1.5}
-            self.plot_radial_build(**plot_kwargs)
         return result
-
-    def plot_radial_build(self, *args, **kwargs):
-        """
-        Calls the solver's own `plot_radial_build` method if implemented.
-        """  # noqa: DOC201
-        # Check if subclass implements its own plotting logic
-        plot_method = getattr(self, "plot_radial_build", None)
-        if callable(plot_method):
-            return plot_method(*args, **kwargs)
-        bluemira_warn("Radial build plotting is not available for this solver.")
-        return None
 
     def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
         """
