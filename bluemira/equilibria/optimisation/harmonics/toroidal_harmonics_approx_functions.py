@@ -410,18 +410,12 @@ def toroidal_harmonic_approximate_psi(
 
     Returns
     -------
-    th_params:
-        Dataclass holding necessary parameters for the TH approximation
-    Am_cos:
+    approx_coilset_psi:
+        Matrix of coilset psi values approximated using TH
+    Am_cos @ currents:
         TH cos coefficients for required number of degrees
-    Am_sin:
+    Am_sin @ currents:
         TH sin coefficients for required number of degrees
-    degree:
-        Number of degrees required for a TH approx with the desired fit metric
-    fit_metric_value:
-        Fit metric achieved
-    approx_total_psi:
-        Matrix of psi values aproximated using TH
 
     """
     if max_degree is None:
@@ -431,7 +425,7 @@ def toroidal_harmonic_approximate_psi(
     currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
 
     # Initialise psi and A arrays
-    psi_approx = np.zeros_like(th_params.R)
+    approx_coilset_psi = np.zeros_like(th_params.R)
     A = np.zeros_like(th_params.R)
     # Useful combination
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
@@ -468,9 +462,9 @@ def toroidal_harmonic_approximate_psi(
     A = np.array(
         np.sum(np.einsum("ijkl, j", A_coil_matrix, currents), axis=0), dtype=float
     )
-    psi_approx = A * th_params.R
+    approx_coilset_psi = A * th_params.R
 
-    return psi_approx, Am_cos @ currents, Am_sin @ currents
+    return approx_coilset_psi, Am_cos @ currents, Am_sin @ currents
 
 
 def toroidal_harmonic_approximation(
@@ -529,7 +523,7 @@ def toroidal_harmonic_approximation(
         Fit metric achieved
     approx_total_psi:
         Total psi obtained using the TH approximation
-    psi_approx:
+    approx_coilset_psi:
         Coilset psi obtained using the TH approximation
 
     Raises
@@ -597,11 +591,11 @@ def toroidal_harmonic_approximation(
 
     for degree in range(min_degree, max_degree + 1):
         # Construct matrix from harmonic amplitudes for the coils and approximate psi
-        psi_approx, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
+        approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
             eq=eq, th_params=th_params, max_degree=degree
         )
         # Add the interpolated non TH coil contribution to the total
-        approx_total_psi = psi_approx + interpolated_non_th_contribution_psi
+        approx_total_psi = approx_coilset_psi + interpolated_non_th_contribution_psi
         approx_total_psi *= mask
 
         # Find LCFS from TH approx
@@ -664,5 +658,5 @@ def toroidal_harmonic_approximation(
         degree,
         fit_metric_value,
         approx_total_psi,
-        psi_approx,
+        approx_coilset_psi,
     )
