@@ -151,7 +151,7 @@ Z_0 = eq._o_points[0].z
 # with the equilibrium, eq, and the ToroidalHarmonicsParams dataclass, which contains
 # necessary parameters for the TH approximation, such as the relevant coordinates
 # and coil names for use in the approximation. The
-# function returns the psi_approx array and the TH coefficient matrix A_m.
+# function returns the approx_coilset_psi array and the TH coefficient matrix A_m.
 # The default focus point is the plasma o point.
 # The white dot in the plot shows the focus point.
 # %%
@@ -161,13 +161,13 @@ th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 R_approx = th_params.R
 Z_approx = th_params.Z
 
-psi_approx, _, _ = toroidal_harmonic_approximate_psi(
+approx_coilset_psi, _, _ = toroidal_harmonic_approximate_psi(
     eq=eq, th_params=th_params, max_degree=5
 )
 
 nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
 cmap = PLOT_DEFAULTS["psi"]["cmap"]
-plt.contourf(R_approx, Z_approx, psi_approx, nlevels, cmap=cmap)
+plt.contourf(R_approx, Z_approx, approx_coilset_psi, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("TH Approximation for Coilset Psi")
@@ -199,7 +199,7 @@ mask = R_mask * Z_mask
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.plasma.psi())
 interpolated_plasma_psi = psi_func.ev(R_approx, Z_approx)
 
-total_psi = psi_approx + interpolated_plasma_psi
+total_psi = approx_coilset_psi + interpolated_plasma_psi
 total_psi *= mask
 
 # Find LCFS from TH approx
@@ -266,7 +266,7 @@ plt.show()
 # We see zero difference in the core region, which we expect as we are constraining
 # the flux in this region, and we see larger differences outside of the approximation
 # region.
-coilset_psi_diff = np.abs(psi_approx - interpolated_coilset_psi) / np.max(
+coilset_psi_diff = np.abs(approx_coilset_psi - interpolated_coilset_psi) / np.max(
     np.abs(interpolated_coilset_psi)
 )
 coilset_psi_diff_plot = coilset_psi_diff * mask
@@ -321,7 +321,7 @@ print(f"fit metric value = {fit_metric_value}")
     degree,
     fit_metric,
     approx_total_psi,
-    psi_approx_coilset,
+    approx_coilset_psi,
 ) = toroidal_harmonic_approximation(
     eq=eq, th_params=th_params, plot=True, psi_norm=psi_norm
 )
