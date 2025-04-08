@@ -239,10 +239,6 @@ class Solver(CodesSolver):
         """
         radial_build = self._teardown._mfile_wrapper.ordered_radial_build
 
-        if not radial_build:
-            bluemira_warn("MFILE.DAT file in old format. Cannot plot radial build.")
-            return None
-
         R_0 = radial_build["R_0"]
 
         col = {
