@@ -207,7 +207,7 @@ class Solver(CodesSolver):
 
     def plot_radial_build(
         self,
-        width: float = 1.0,
+        width: float = 1.5,
         *,
         show: bool = False,
     ) -> plt.Axes:
@@ -232,23 +232,24 @@ class Solver(CodesSolver):
         R_0 = radial_build["R_0"]
 
         col = {
-            "gap": ["Gap", "w"],
-            "dr_blkt": ["Breeding blanket", "#edb120"],
-            "dr_tf": ["TF coil", "#7e2f8e"],
-            "dr_vv": ["Vacuum vessel", "k"],
-            "dr_shld": ["Radiation shield", "#5dbb63"],
-            "rminor": ["Plasma", "#f77ec7"],
-            "dr_fw": ["First Wall", "#cb9832"],
-            "dr_bore": ["bore", "w"],
-            "scrape_off_layer": ["Scrape-off layer", "#a2142f"],
-            "dr_cs": ["Central solenoid", "#0072bd"],
-            "thermal_shield": ["Thermal shield", "#77ac30"],
+            "Gap": "w",
+            "Breeding blanket": "#edb120",
+            "TF coil": "#7e2f8e",
+            "Vacuum vessel": "k",
+            "Radiation shield": "#5dbb63",
+            "Plasma": "#f77ec7",
+            "First Wall": "#cb9832",
+            "bore": "w",
+            "Scrape-off layer": "#a2142f",
+            "Central solenoid": "#0072bd",
+            "Thermal shield": "#77ac30",
         }
 
         _, ax = plt.subplots(figsize=[14, 10])
 
         lpatches = []
         for comp in radial_build["Radial Build"]:
+            colour = col.get(comp[0], "w")
             # Generate coordinates for an arbitrary
             # height radial width.
             xc = [
@@ -259,24 +260,16 @@ class Solver(CodesSolver):
                 comp[2] - comp[1],
             ]
             yc = [-width, width, width, -width, -width]
-
-            coords = Coordinates({"x": xc, "y": yc})
-            matching_key = next(
-                (key for key in col if key.upper() in comp[0].upper()), None
-            )
-
-            if matching_key:
-                label, colour = col[matching_key]
-                ax.plot(xc, yc, color=colour, linewidth=0, label=matching_key)
-                if comp[1] > 0:
-                    coords = Coordinates({"x": xc, "y": yc})
-                    plot_coordinates(
-                        coords, ax=ax, facecolor=colour, edgecolor="k", linewidth=0
-                    )
-                if colour != "w" and label not in [
-                    patch.get_label() for patch in lpatches
-                ]:
-                    lpatches.append(patches.Patch(color=colour, label=label))
+            ax.plot(xc, yc, color=colour, linewidth=0, label=comp[0])
+            if comp[1] > 0:
+                coords = Coordinates({"x": xc, "y": yc})
+                plot_coordinates(
+                    coords, ax=ax, facecolor=colour, edgecolor="k", linewidth=0
+                )
+            if colour != "w" and comp[0] not in [
+                patch.get_label() for patch in lpatches
+            ]:
+                lpatches.append(patches.Patch(color=colour, label=comp[0]))
 
         ax.set_xlim([0, np.ceil(radial_build["Radial Build"][-1][-1])])
         ax.set_ylim([-width * 0.5, width * 0.5])
