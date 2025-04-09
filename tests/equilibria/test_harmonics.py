@@ -26,6 +26,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
+    ToroidalHarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
@@ -1452,3 +1453,34 @@ class TestRegressionTH:
 
         assert all(test_eval == 0)
         assert len(test_eval) == len(ref_harmonics_cos)
+
+    def test_ToroidalHarmonicConstraintFunction(self):
+        cur_expand_mat = self.eq.coilset._opt_currents_expand_mat
+        a_mat_cos, a_mat_sin = coil_toroidal_harmonic_amplitude_matrix(
+            input_coils=self.eq.coilset, th_params=self.test_th_params, max_degree=5
+        )
+        b_vec_cos = np.array([1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6])
+        b_vec_sin = np.array([1e-6, 1e-6, 1e-6, 1e-6, 1e-6, 1e-6])
+        b_vec = np.append(b_vec_cos, b_vec_sin, axis=0)
+
+        test_vector = cur_expand_mat @ np.ones(len(self.eq.coilset.name))
+        test_result_cos = a_mat_cos @ test_vector
+        test_result_sin = a_mat_sin @ test_vector
+        test_result = np.append(test_result_cos, test_result_sin, axis=0)
+        test_constraint = ToroidalHarmonicConstraintFunction(
+            a_mat_cos=a_mat_cos,
+            a_mat_sin=a_mat_sin,
+            b_vec_cos=b_vec_cos,
+            b_vec_sin=b_vec_sin,
+            value=0.0,
+            scale=1,
+        )
+
+        test_f_constraint = test_constraint.f_constraint(test_vector)
+
+        for fc, res in zip(
+            test_f_constraint,
+            (test_result - b_vec),
+            strict=False,
+        ):
+            assert fc == res
