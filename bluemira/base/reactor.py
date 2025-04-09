@@ -426,7 +426,7 @@ class Reactor(BaseManager):
 
     def _component_managers(
         self,
-        with_components: list[ComponentManager] | None = None,
+        with_components: ComponentManager | list[ComponentManager] | None = None,
     ) -> list[ComponentManager]:
         """
         Get the component managers for the reactor.
@@ -454,6 +454,10 @@ class Reactor(BaseManager):
                 "correctly defined component managers for it. "
                 "Please see the examples for a template Reactor."
             )
+
+        if isinstance(with_components, ComponentManager):
+            with_components = [with_components]
+
         comp_managers = [
             getattr(self, comp_name)
             for comp_name, comp_type in get_type_hints(type(self)).items()
