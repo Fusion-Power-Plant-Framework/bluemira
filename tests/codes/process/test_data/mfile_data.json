@@ -1635,97 +1635,242 @@
     "var_mod": "Radial Build",
     "scan01": 1.2384
   },
+  "radial_label(1)": {
+    "scan01": "dr_bore"
+  },
+  "radial_cum(1)": {
+    "scan01": 1.2384
+  },
   "dr_cs": {
     "var_mod": "Radial Build",
     "scan01": 0.5
+  },
+  "radial_label(2)": {
+    "scan01": "dr_cs"
+  },
+  "radial_cum(2)": {
+    "scan01": 1.7384
   },
   "dr_cs_precomp": {
     "var_mod": "Radial Build",
     "scan01": 0.10396
   },
+  "radial_label(3)": {
+    "scan01": "dr_cs_precomp"
+  },
+  "radial_cum(3)": {
+    "scan01": 1.84236
+  },
   "dr_cs_tf_gap": {
     "var_mod": "Radial Build",
     "scan01": 0.05
+  },
+  "radial_label(4)": {
+    "scan01": "dr_cs_tf_gap"
+  },
+  "radial_cum(4)": {
+    "scan01": 1.89236
   },
   "dr_tf_inboard": {
     "var_mod": "Radial Build",
     "scan01": 1.486
   },
+  "radial_label(5)": {
+    "scan01": "dr_tf_inboard"
+  },
+  "radial_cum(5)": {
+    "scan01": 3.37836
+  },
   "dr_tf_shld_gap": {
     "var_mod": "Radial Build",
     "scan01": 0.05
+  },
+  "radial_label(6)": {
+    "scan01": "dr_tf_shld_gap"
+  },
+  "radial_cum(6)": {
+    "scan01": 3.42836
   },
   "dr_shld_thermal_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.05
   },
-  "dr_shld_thermal_outboard": {
-    "var_mod": "Radial Build",
-    "scan01": 0.05
+  "radial_label(7)": {
+    "scan01": "dr_shld_thermal_inboard"
   },
-  "dz_shld_thermal": {
-    "var_mod": "Radial Build",
-    "scan01": 0.05
+  "radial_cum(7)": {
+    "scan01": 3.47836
   },
   "dr_shld_vv_gap_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.02
   },
+  "radial_label(8)": {
+    "scan01": "dr_shld_vv_gap_inboard"
+  },
+  "radial_cum(8)": {
+    "scan01": 3.49836
+  },
   "dr_vv_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.3
+  },
+  "radial_label(9)": {
+    "scan01": "dr_vv_inboard"
+  },
+  "radial_cum(9)": {
+    "scan01": 3.79836
   },
   "dr_shld_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.3
   },
+  "radial_label(10)": {
+    "scan01": "dr_shld_inboard"
+  },
+  "radial_cum(10)": {
+    "scan01": 4.09836
+  },
   "dr_shld_blkt_gap": {
     "var_mod": "Radial Build",
     "scan01": 0.02
+  },
+  "radial_label(11)": {
+    "scan01": "dr_shld_blkt_gap"
+  },
+  "radial_cum(11)": {
+    "scan01": 4.11836
   },
   "dr_blkt_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.755
   },
+  "radial_label(12)": {
+    "scan01": "dr_blkt_inboard"
+  },
+  "radial_cum(12)": {
+    "scan01": 4.87336
+  },
   "dr_fw_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.018
+  },
+  "radial_label(13)": {
+    "scan01": "dr_fw_inboard"
+  },
+  "radial_cum(13)": {
+    "scan01": 4.89136
   },
   "dr_fw_plasma_gap_inboard": {
     "var_mod": "Radial Build",
     "scan01": 0.225
   },
+  "radial_label(14)": {
+    "scan01": "dr_fw_plasma_gap_inboard"
+  },
+  "radial_cum(14)": {
+    "scan01": 5.11636
+  },
   "dr_fw_plasma_gap_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.225
+  },
+  "radial_label(15)": {
+    "scan01": "dr_fw_plasma_gap_outboard"
+  },
+  "radial_cum(15)": {
+    "scan01": 5.34136
   },
   "dr_fw_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.018
   },
+  "radial_label(16)": {
+    "scan01": "dr_fw_outboard"
+  },
+  "radial_cum(16)": {
+    "scan01": 5.35936
+  },
   "dr_blkt_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.982
+  },
+  "radial_label(17)": {
+    "scan01": "dr_blkt_outboard"
+  },
+  "radial_cum(17)": {
+    "scan01": 6.34136
+  },
+  "radial_label(18)": {
+    "scan01": "dr_shld_blkt_gap"
+  },
+  "radial_cum(18)": {
+    "scan01": 6.36136
   },
   "dr_shld_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.8
   },
+  "radial_label(19)": {
+    "scan01": "dr_shld_outboard"
+  },
+  "radial_cum(19)": {
+    "scan01": 7.16136
+  },
+
   "dr_vv_outboard": {
     "var_mod": "Radial Build",
     "scan01": 0.3
+  },
+  "radial_label(20)": {
+    "scan01": "dr_vv_outboard"
+  },
+  "radial_cum(20)": {
+    "scan01": 7.46136
   },
   "dr_shld_vv_gap": {
     "var_mod": "Radial Build",
     "scan01": 1.9036
   },
+  "radial_label(21)": {
+    "scan01": "dr_shld_vv_gap"
+  },
+  "radial_cum(21)": {
+    "scan01": 9.36496
+  },
+  "dr_shld_thermal_outboard": {
+    "var_mod": "Radial Build",
+    "scan01": 0.05
+  },
+  "radial_label(22)": {
+    "scan01": "dr_shld_thermal_outboard"
+  },
+  "radial_cum(22)": {
+    "scan01": 9.41496
+  },
+  "radial_label(23)": {
+    "scan01": "dr_tf_shld_gap"
+  },
+  "radial_cum(23)": {
+    "scan01": 9.46496
+  },
   "dr_tf_outboard": {
     "var_mod": "Radial Build",
     "scan01": 1.486
   },
+  "radial_label(24)": {
+    "scan01": "dr_tf_shld_gap"
+  },
+  "radial_cum(24)": {
+    "scan01": 10.95096
+  },
   "i_single_null": {
     "var_mod": "Vertical Build",
     "scan01": 1.0
+  },
+  "dz_shld_thermal": {
+    "var_mod": "Radial Build",
+    "scan01": 0.05
   },
   "dz_shld_vv_gap": {
     "var_mod": "Vertical Build",
