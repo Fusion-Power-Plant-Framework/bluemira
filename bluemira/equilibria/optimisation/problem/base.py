@@ -276,5 +276,4 @@ class CoilsetOptimisationProblem(abc.ABC):
     @property
     def scale(self) -> float:
         """Problem scaling value"""
-        # FIXME
         return 1e6
