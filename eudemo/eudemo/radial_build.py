@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bluemira.codes import plot_radial_build, systems_code_solver
+from bluemira.codes import systems_code_solver
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
@@ -375,7 +375,7 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     new_params = solver.execute(run_mode)
 
     if plot:
-        plot_radial_build(solver.read_directory)
+        solver.plot_radial_build(show=True)
 
     params.update_from_frame(new_params)
     return params
