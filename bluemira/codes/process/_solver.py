@@ -211,7 +211,7 @@ class Solver(CodesSolver):
 
         if plot:
             plot_kwargs = plot_kwargs or {"width": 1.5}
-            self.plot_radial_build(**plot_kwargs)
+            _ = self.plot_radial_build(**plot_kwargs)
 
         return self.params
 
@@ -220,7 +220,7 @@ class Solver(CodesSolver):
         width: float = 1.0,
         *,
         show: bool = True,
-    ) -> plt.Axes | None:
+    ) -> plt.Axes:
         """
         Plot PROCESS radial build.
 
@@ -242,35 +242,22 @@ class Solver(CodesSolver):
         R_0 = radial_build["R_0"]
 
         col = {
-            "gap": "w",
-            "dr_blkt": "#edb120",
-            "dr_tf": "#7e2f8e",
-            "dr_vv": "k",
-            "dr_shld": "#5dbb63",
-            "rminor": "#f77ec7",
-            "dr_fw": "#cb9832",
-            "dr_bore": "w",
-            "scrape_off_layer": "#a2142f",
-            "dr_cs": "#0072bd",
-            "thermal_shield": "#77ac30",
+            "gap": ["Gap", "w"],
+            "dr_blkt": ["Breeding blanket", "#edb120"],
+            "dr_tf": ["TF coil", "#7e2f8e"],
+            "dr_vv": ["Vacuum vessel", "k"],
+            "dr_shld": ["Radiation shield", "#5dbb63"],
+            "rminor": ["Plasma", "#f77ec7"],
+            "dr_fw": ["First Wall", "#cb9832"],
+            "dr_bore": ["bore", "w"],
+            "scrape_off_layer": ["Scrape-off layer", "#a2142f"],
+            "dr_cs": ["Central solenoid", "#0072bd"],
+            "thermal_shield": ["Thermal shield", "#77ac30"],
         }
 
         _, ax = plt.subplots(figsize=[14, 10])
 
         lpatches = []
-
-        glabels = {
-            "dr_fw": "First Wall",
-            "dr_blkt": "Breeding blanket",
-            "dr_tf": "TF coil",
-            "rminor": "Plasma",
-            "dr_vv": "Vacuum vessel",
-            "dr_shld": "Radiation shield",
-            "scrape_off_layer": "Scrape-off layer",
-            "dr_cs": "Central solenoid",
-            "thermal_shield": "Thermal shield",
-        }
-        gkeys = list(glabels.keys())
         for comp in radial_build["Radial Build"]:
             # Generate coordinates for an arbitrary
             # height radial width.
@@ -284,39 +271,35 @@ class Solver(CodesSolver):
             yc = [-width, width, width, -width, -width]
             yc = np.array(yc)
             coords = Coordinates({"x": xc, "y": yc})
+            matching_key = next(
+                (key for key in col if key.upper() in comp[0].upper()), None
+            )
 
-            colour = None
-            for key, c in col.items():
-                if key.upper() in comp[0].upper():
-                    colour = c
-                    break
-            if colour:
-                ax.plot(xc, yc, color=colour, linewidth=0, label=key)
+            if matching_key:
+                label, colour = col[matching_key]
+                ax.plot(xc, yc, color=colour, linewidth=0, label=matching_key)
                 if comp[1] > 0:
+                    coords = Coordinates({"x": xc, "y": yc})
                     plot_coordinates(
-                        coords, ax=ax, facecolor=c, edgecolor="k", linewidth=0
+                        coords, ax=ax, facecolor=colour, edgecolor="k", linewidth=0
                     )
-                if key in gkeys:
-                    gkeys.remove(key)  # No need to double-print legend
-                    lpatches.append(patches.Patch(color=c, label=glabels[key]))
+                if colour != "w" and label not in [
+                    patch.get_label() for patch in lpatches
+                ]:
+                    lpatches.append(patches.Patch(color=colour, label=label))
 
         ax.set_xlim([0, np.ceil(radial_build["Radial Build"][-1][-1])])
         ax.set_ylim([-width * 0.5, width * 0.5])
         ax.set_xticks([*list(ax.get_xticks()), R_0])
         ax.axes.set_axisbelow(b=False)
-
-        def tick_format(value, n):  # noqa: ARG001
-            if value == R_0:
-                return "\n$R_{0}$"
-            return int(value)
-
-        def tick_formaty(value, n):  # noqa: ARG001
-            if value == 0:
-                return int(value)
-            return ""
-
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
+        ax.xaxis.set_major_formatter(
+            plt.FuncFormatter(
+                lambda value, _: "\n$R_{0}$" if value == R_0 else int(value)
+            )
+        )
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda value, _: "" if value != 0 else int(value))
+        )
         ax.set_xlabel("$x$ [m]")
         ax.set_aspect("equal")
         ax.legend(
