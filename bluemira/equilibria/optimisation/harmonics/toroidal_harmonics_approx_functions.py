@@ -282,7 +282,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
     max_degree: int | None = None,
     sig_figures: int = 15,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """# FIXME check wording and equations
+    """
     Construct coefficient matrices from toroidal harmonic amplitudes at given coil
     locations.
 
