@@ -1272,6 +1272,8 @@ def _split_edge(edge, parameter):
     if np.isclose(parameter, p1, rtol=0, atol=EPS_FREECAD):
         return edge, None
     if p0 + EPS_FREECAD < parameter < p1 - EPS_FREECAD:
+        if edge.Orientation == "Reversed":
+            p0, p1 = p1, p0
         return edge.Curve.toShape(p0, parameter), edge.Curve.toShape(parameter, p1)
     raise FreeCADError(
         f"The splitting parameter {parameter} exists beyond the allowed parameter "
