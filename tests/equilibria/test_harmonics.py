@@ -29,6 +29,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions i
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
+    ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     coil_toroidal_harmonic_amplitude_matrix,
@@ -1383,3 +1384,71 @@ class TestRegressionTH:
             test_approx_coilset_psi[0], expected_coilset_psi
         )
         assert np.shape(test_approx_coilset_psi) == expected_shape
+
+    def test_ToroidalHarmonicConstraint(self):
+        psi_norm = 1.0
+        (th_params, ref_harmonics_cos, ref_harmonics_sin, degree, _, _, _) = (
+            toroidal_harmonic_approximation(
+                eq=self.eq, psi_norm=psi_norm, acceptable_fit_metric=0.01
+            )
+        )
+
+        test_constraint_class = ToroidalHarmonicConstraint(
+            ref_harmonics_cos=ref_harmonics_cos,
+            ref_harmonics_sin=ref_harmonics_sin,
+            th_params=th_params,
+            tolerance=None,
+            invert=False,
+            constraint_type="equality",
+        )
+
+        assert test_constraint_class.constraint_type == "equality"
+        assert test_constraint_class.max_degree == degree
+
+        for test_tol, ref_tol in zip(
+            test_constraint_class.tolerance,
+            np.abs(
+                np.array([
+                    ref_harmonics_cos[0] * 1e-3,
+                    ref_harmonics_cos[1] * 1e-3,
+                    ref_harmonics_cos[2] * 1e-3,
+                    ref_harmonics_cos[3] * 1e-3,
+                    ref_harmonics_cos[4] * 1e-3,
+                    ref_harmonics_cos[5] * 1e-3,
+                    ref_harmonics_cos[6] * 1e-3,
+                    ref_harmonics_sin[0] * 1e-3,
+                    ref_harmonics_sin[1] * 1e-3,
+                    ref_harmonics_sin[2] * 1e-3,
+                    ref_harmonics_sin[3] * 1e-3,
+                    ref_harmonics_sin[4] * 1e-3,
+                    ref_harmonics_sin[5] * 1e-3,
+                    ref_harmonics_sin[6] * 1e-3,
+                ])
+            ),
+            strict=False,
+        ):
+            assert test_tol == ref_tol
+
+        tolerance = 0.0
+        test_constraint_class = ToroidalHarmonicConstraint(
+            ref_harmonics_cos=ref_harmonics_cos,
+            ref_harmonics_sin=ref_harmonics_sin,
+            th_params=th_params,
+            tolerance=tolerance,
+            invert=False,
+            constraint_type="equality",
+        )
+        assert len(test_constraint_class.tolerance) == len(ref_harmonics_cos) + len(
+            ref_harmonics_sin
+        )
+        for test_name, ref_name in zip(
+            test_constraint_class.control_coil_names,
+            self.test_th_params.th_coil_names,
+            strict=False,
+        ):
+            assert test_name == ref_name
+
+        test_eval = test_constraint_class.evaluate(self.eq)
+
+        assert all(test_eval == 0)
+        assert len(test_eval) == len(ref_harmonics_cos)
