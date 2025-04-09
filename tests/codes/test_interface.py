@@ -24,6 +24,9 @@ class NoOpSolver(interface.CodesSolver):
     teardown_cls = NoOpTask
     run_mode_cls = NoOpRunMode
 
+    def plot_radial_build(self, *args, **kwargs):
+        pass
+
 
 @dataclass
 class Params(MappedParameterFrame):
