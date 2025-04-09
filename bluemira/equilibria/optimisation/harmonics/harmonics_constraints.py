@@ -313,7 +313,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
-    def plot(self, ax=None):  # FIXME
+    def plot(self, ax=None):
         """
         Plot the constraint onto an Axes.
         """
@@ -323,11 +323,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         min_R = np.min(self.th_params.R)  # noqa: N806
         max_Z = np.max(self.th_params.Z)  # noqa: N806
         min_Z = np.min(self.th_params.Z)  # noqa: N806
-        centre_R = max_R - min_R  # noqa: N806
-        centre_Z = max_Z - min_Z  # noqa: N806
+        centre_R = (max_R - min_R) / 2 + min_R  # noqa: N806
+        centre_Z = (max_Z - np.abs(min_Z)) / 2  # noqa: N806
         radius = (max_R - min_R) / 2
-        # TODO find max x and centre of grid and then make circle
-        # TODO check this is okay
+
         ax.add_patch(
             patch.Circle(
                 (centre_R, centre_Z), radius, ec="orange", fill=True, fc="orange"
