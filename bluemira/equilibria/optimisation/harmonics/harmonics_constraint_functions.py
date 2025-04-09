@@ -61,8 +61,7 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
     """
     Constraint function to constrain harmonics starting from initial
     coil currents and associated core plasma.
-    Used for spherical and toroidal harmonics.
-    # FIXME
+    Used for toroidal harmonics.
 
     Parameters
     ----------
