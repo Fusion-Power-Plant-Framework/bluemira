@@ -108,7 +108,8 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         result_sin -= self.b_vec_sin + self.value
         return np.append(result_cos, result_sin, axis=0)
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
+        """Constraint derivative"""  # noqa: DOC201
         scaled_cos = self.a_mat_cos * self.scale
         scaled_sin = self.a_mat_sin * self.scale
         return np.append(scaled_cos, scaled_sin, axis=0)
