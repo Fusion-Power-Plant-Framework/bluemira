@@ -368,5 +368,5 @@ ignore-names = [
 # TODO future removal
 "bluemira/structural/*" = ["DOC201"]  # 22
 "bluemira/codes/openmc/{make_csg.py,output.py,solver.py}" = ["DOC201"]
-"bluemira/codes/process/{_plotting.py,_profiles.py}" = ["DOC201"]
+"bluemira/codes/process/_profiles.py" = ["DOC201"]
 "bluemira/codes/plasmod/*" = ["DOC201"]
