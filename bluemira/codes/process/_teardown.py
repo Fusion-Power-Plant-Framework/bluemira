@@ -49,6 +49,7 @@ class Teardown(CodesTeardown):
         self.run_directory = run_directory
         self.read_directory = read_directory
         self._mfile_wrapper: _MFileWrapper = None
+        self.ordered_radial_build = {}
 
     def run(self):
         """
@@ -154,6 +155,7 @@ class Teardown(CodesTeardown):
         """
         mfile = self._read_mfile(path)
         self._update_params_with_outputs(mfile.data, recv_all=recv_all)
+        self.ordered_radial_build = mfile.ordered_radial_build
 
     def _read_mfile(self, path: str):
         """
@@ -236,6 +238,7 @@ class _MFileWrapper:
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self)
         self.data = {}
+        self.ordered_radial_build = {}
 
     def read(self) -> dict:
         """
@@ -259,6 +262,55 @@ class _MFileWrapper:
                 self.data[param_name] = value["scan01"]
 
         self.data.update(self._derive_radial_build_params(self.data))
+        self._load_ordered_radial_build_vector()
+
+    def _load_ordered_radial_build_vector(self):
+        """
+        Read the data from the PROCESS MFile.
+
+        Store the result in ``ordered_radial_build`` attribute.
+        """
+        rb_vector = []
+
+        col = {
+            "dr_fw_plasma_gap": "Scrape-off layer",
+            "gap": "Gap",
+            "dr_blkt": "Breeding blanket",
+            "dr_tf": "TF coil",
+            "dr_vv": "Vacuum vessel",
+            "dr_shld_thermal": "Thermal shield",
+            "dr_shld": "Radiation shield",
+            "rminor": "Plasma",
+            "dr_fw": "First Wall",
+            "dr_bore": "bore",
+            "dr_cs": "Central solenoid",
+        }
+
+        radial_build_labels = [
+            (k, v) for k, v in self.mfile.data.items() if "radial_label" in k
+        ]
+
+        for label, process_var_name in radial_build_labels:
+            # Get the order of the component
+            comp_order = int(label.split("(")[-1].split(")")[0])
+            # variable name
+            var_name = process_var_name["scan01"]
+            # thickness and cumulative radius
+            comp_tk = self.mfile.data[var_name]["scan01"]
+            comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
+
+            matching_key = next((key for key in col if key in var_name), None)
+            # For dr_fw_plasma_gap and dr_shld_thermal only the
+            # first matched key will be returned
+
+            comp_type = col[matching_key] if matching_key else var_name
+            rb_vector.append([comp_type, comp_tk, comp_cum_tk])
+
+        self.ordered_radial_build = {
+            "Radial Build": rb_vector,
+            "n_TF": self.data["n_tf_coils"],
+            "R_0": self.data["rmajor"],
+        }
 
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
