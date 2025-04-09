@@ -49,6 +49,7 @@ class Teardown(CodesTeardown):
         self.run_directory = run_directory
         self.read_directory = read_directory
         self._mfile_wrapper: _MFileWrapper = None
+        self.ordered_radial_build = {}
 
     def run(self):
         """
@@ -154,6 +155,7 @@ class Teardown(CodesTeardown):
         """
         mfile = self._read_mfile(path)
         self._update_params_with_outputs(mfile.data, recv_all=recv_all)
+        self.ordered_radial_build = mfile.ordered_radial_build
 
     def _read_mfile(self, path: str):
         """

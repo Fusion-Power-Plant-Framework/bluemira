@@ -345,6 +345,17 @@ class CodesSolver(abc.ABC):
             result = teardown(result)
         return result
 
+    @abc.abstractmethod
+    def plot_radial_build(
+        self,
+        width: float = 1.0,
+        *,
+        show: bool = True,
+    ):
+        """
+        Plot radial build.
+        """
+
     def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
         """
         Modify the send/receive truth values of a parameter.

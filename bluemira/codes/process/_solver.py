@@ -155,13 +155,7 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(
-        self,
-        run_mode: str | RunMode,
-        *,
-        plot: bool = False,
-        plot_kwargs: dict | None = None,
-    ) -> ParameterFrame:
+    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -209,17 +203,13 @@ class Solver(CodesSolver):
         if teardown := self._get_execution_method(self._teardown, run_mode):
             teardown()
 
-        if plot:
-            plot_kwargs = plot_kwargs or {"width": 1.5}
-            _ = self.plot_radial_build(**plot_kwargs)
-
         return self.params
 
     def plot_radial_build(
         self,
         width: float = 1.0,
         *,
-        show: bool = True,
+        show: bool = False,
     ) -> plt.Axes:
         """
         Plot PROCESS radial build.
@@ -237,7 +227,7 @@ class Solver(CodesSolver):
         -------
         The plot Axes object.
         """
-        radial_build = self._teardown._mfile_wrapper.ordered_radial_build
+        radial_build = self._teardown.ordered_radial_build
 
         R_0 = radial_build["R_0"]
 
@@ -269,7 +259,7 @@ class Solver(CodesSolver):
                 comp[2] - comp[1],
             ]
             yc = [-width, width, width, -width, -width]
-            yc = np.array(yc)
+
             coords = Coordinates({"x": xc, "y": yc})
             matching_key = next(
                 (key for key in col if key.upper() in comp[0].upper()), None
@@ -292,14 +282,19 @@ class Solver(CodesSolver):
         ax.set_ylim([-width * 0.5, width * 0.5])
         ax.set_xticks([*list(ax.get_xticks()), R_0])
         ax.axes.set_axisbelow(b=False)
-        ax.xaxis.set_major_formatter(
-            plt.FuncFormatter(
-                lambda value, _: "\n$R_{0}$" if value == R_0 else int(value)
-            )
-        )
-        ax.yaxis.set_major_formatter(
-            plt.FuncFormatter(lambda value, _: "" if value != 0 else int(value))
-        )
+
+        def tick_format(value, n):  # noqa: ARG001
+            if value == R_0:
+                return "\n$R_{0}$"
+            return int(value)
+
+        def tick_formaty(value, n):  # noqa: ARG001
+            if value == 0:
+                return int(value)
+            return ""
+
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
         ax.set_xlabel("$x$ [m]")
         ax.set_aspect("equal")
         ax.legend(

@@ -57,9 +57,16 @@ class TestTeardown:
         # auto unit conversion
         assert teardown.params.P_el_net.value == pytest.approx(6e8)
         # see if radial build dict is correctly built
-        assert len(teardown._mfile_wrapper.ordered_radial_build.keys()) == 3
+        assert len(teardown.ordered_radial_build.keys()) == 3
+        assert teardown.ordered_radial_build["n_TF"] == 16
         # confirm radial build vector is correctly built
-        assert len(teardown._mfile_wrapper.ordered_radial_build["Radial Build"]) == 24
+        assert len(teardown.ordered_radial_build["Radial Build"]) == 24
+        assert teardown.ordered_radial_build["Radial Build"][4][1] == pytest.approx(
+            1.486
+        )
+        assert teardown.ordered_radial_build["Radial Build"][4][2] == pytest.approx(
+            3.37836
+        )
 
     def test_read_unknown_outputs_set_to_nan(self):
         """

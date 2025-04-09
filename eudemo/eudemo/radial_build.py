@@ -364,6 +364,7 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     Updated parameters following the solve.
     """
     run_mode = build_config.pop("run_mode", "mock")
+    plot = build_config.pop("plot", False)
     if run_mode == "run":
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
@@ -371,7 +372,10 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
         apply_specific_interface_rules(params)
         build_config["template_in_dat"] = template_builder.make_inputs()
     solver = systems_code_solver(params, build_config)
-    new_params = solver.execute(run_mode, plot=True)
+    new_params = solver.execute(run_mode)
+
+    if plot:
+        solver.plot_radial_build(show=True)
 
     params.update_from_frame(new_params)
     return params
