@@ -378,8 +378,9 @@ def toroidal_harmonic_approximate_psi(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     max_degree: int | None = None,
-    # TODO add different ways to set th grid size
+    # TODO @clmould: add different ways to set th grid size
     # e.g. limit_type: TH_GRID_LIMIT = TH_GRID_LIMIT.LCFS or TH_GRID_LIMIT.COILSET
+    # 3870
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Approximate psi using toroidal harmonic amplitudes calculated in
