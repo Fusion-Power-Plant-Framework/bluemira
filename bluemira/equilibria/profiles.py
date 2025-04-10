@@ -22,6 +22,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
 from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
@@ -620,6 +621,9 @@ class BetaIpProfile(Profile):
             ii, jj = np.nonzero(mask)
             jtorshape *= mask
             pfunc = speedy_pressure_mask(ii, jj, psi_norm, psio, psix, self.shape)
+            if np.isnan(pfunc).any():
+                bluemira_warn("Found NaN in pressure mask, setting NaN's to 0")
+                np.nan_to_num(pfunc, nan=0.0, copy=False)
 
         if x_points != []:  # NOTE: Necessary unpythonic formulation
             # More accurate beta_p constraint calculation
