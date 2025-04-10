@@ -10,8 +10,10 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 from contourpy import LineType, contour_generator
@@ -24,7 +26,7 @@ from bluemira.geometry.coordinates import Coordinates, get_area_2d, in_polygon
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     import numpy.typing as npt
 
@@ -32,6 +34,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "Lpoint",
+    "OPointCalcOptions",
     "Opoint",
     "Xpoint",
     "find_LCFS_separatrix",
@@ -41,6 +44,7 @@ __all__ = [
     "grid_2d_contour",
     "in_plasma",
     "in_zone",
+    "o_point_fallback_calculator",
 ]
 
 
@@ -262,6 +266,77 @@ def triage_OX_points(
     return o_points, x_points
 
 
+class OPointCalcOptions(Enum):
+    """
+    O point estimation fallback options
+    """
+
+    RAISE = auto()
+    GRID_CENTRE = auto()
+    MAJOR_RADIUS = auto()
+
+
+def o_point_fallback_calculator(
+    o_point_fallback: OPointCalcOptions,
+    x: npt.NDArray,
+    z: npt.NDArray,
+    psi: npt.NDArray | Callable[[float, float], float] | None,
+    R_0: float | None = None,
+) -> list[Opoint]:
+    """Calculate fallback options for O point finding.
+
+    Parameters
+    ----------
+    o_point_fallback:
+        Selection of fallback type
+    x:
+        x point(s) to use. If using psi callable the x point itself
+    z:
+        z point(s) to use. If using psi callable the z point itself
+    psi:
+        psi array or callable. When the callable is used psi is calculated
+        with x and z as inputs,
+    R_0:
+        R_O value used for major radius fallback
+
+    Returns
+    -------
+    :
+        Calculated O-point
+
+    Raises
+    ------
+    ValueError
+        Raised when R_0 not provided for major radius fallback
+    EquilibriaError
+        Raised when raise fallback is used
+    """
+    as_points = callable(psi)
+
+    match o_point_fallback:
+        case OPointCalcOptions.GRID_CENTRE:
+            if as_points:
+                o_points = [Opoint(x, z, psi(x, z))]
+            else:
+                nx, nz = psi.shape
+                o_points = [Opoint(x[nx // 2], z[nz // 2], psi[nx // 2, nz // 2])]
+        case OPointCalcOptions.MAJOR_RADIUS:
+            if R_0 is None:
+                raise ValueError("R_0 not provided for major radius fallback")
+            o_points = [
+                Opoint(R_0, 0, psi[np.abs(x - R_0).argmin(), z.argmin()])
+                if as_points
+                else Opoint(R_0, 0, psi(R_0, 0))
+            ]
+        case _:
+            if not as_points:
+                _f, ax = plt.subplots()
+                ax.contour(x, z, psi, cmap="viridis")
+            raise EquilibriaError("No O-points found!")
+
+    return o_points
+
+
 def find_OX_points(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
@@ -269,6 +344,8 @@ def find_OX_points(
     limiter: Limiter | None = None,
     *,
     field_cut_off: float = 1.0,
+    o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
+    R_0: float | None = None,
 ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
     """
     Finds O-points and X-points by minimising the poloidal field.
@@ -345,11 +422,12 @@ def find_OX_points(
 
     if len(o_points) == 0:
         bluemira_warn(
-            "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to"
-            " grid centre."
+            "EQUILIBRIA::find_OX: No O-points found during an iteration."
+            f" Defaulting to {o_point_fallback.name.lower()}."
         )
-        o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
-        return o_points, x_points
+        return o_point_fallback_calculator(
+            o_point_fallback, x_m, z_m, f_psi, R_0
+        ), x_points
 
     # Sort O-points by centrality to the grid
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
