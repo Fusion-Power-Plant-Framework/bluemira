@@ -1082,7 +1082,14 @@ class Equilibrium(CoilSetMHDState):
         )
 
         profiles = CustomProfile.from_eqdsk(e)
-        o_points, x_points = find_OX_points(grid.x, grid.z, e.psi, limiter=limiter)
+        o_points, x_points = find_OX_points(
+            grid.x,
+            grid.z,
+            e.psi,
+            limiter=limiter,
+            o_point_fallback=o_point_fallback,
+            R_0=e.R_0,
+        )
         jtor = profiles.jtor(
             grid.x,
             grid.z,
@@ -1851,7 +1858,11 @@ class Equilibrium(CoilSetMHDState):
         self._x_points = None
 
     def get_OX_points(
-        self, psi: npt.NDArray[np.float64] | None = None, *, force_update: bool = False
+        self,
+        psi: npt.NDArray[np.float64] | None = None,
+        *,
+        force_update: bool = False,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
         Returns
@@ -1869,6 +1880,8 @@ class Equilibrium(CoilSetMHDState):
                 self.z,
                 psi,
                 limiter=self.limiter,
+                o_point_fallback=o_point_fallback,
+                R_0=self.R_0,
             )
         return self._o_points, self._x_points
 
