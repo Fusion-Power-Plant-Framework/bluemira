@@ -132,7 +132,10 @@ def _validate_display_inputs(parts, options, labels):
 
 def show_cad(
     parts: BluemiraGeo | list[BluemiraGeo] | None = None,  # avoiding circular deps
-    options: DisplayCADOptions | list[DisplayCADOptions] | None = None,
+    options: DisplayCADOptions
+    | list[DisplayCADOptions]
+    | list[dict[str, float | str | None]]
+    | None = None,
     labels: str | list[str] | None = None,
     backend: str | ViewerBackend = ViewerBackend.FREECAD,
     **kwargs,
@@ -169,7 +172,9 @@ def show_cad(
             temp.modify(**kwargs)
             new_options.append(temp)
         else:
-            new_options.append(DisplayCADOptions(**kwargs, backend=backend))
+            new_options.append(
+                DisplayCADOptions(**{**kwargs, **(o or {})}, backend=backend)
+            )
 
     backend.get_module().show_cad(
         [part.shape for part in parts],

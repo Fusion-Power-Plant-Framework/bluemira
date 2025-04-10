@@ -2889,8 +2889,7 @@ def show_cad(
     if options is None:
         options = [None] * len(parts)
 
-    if None in options:
-        options = [asdict(DefaultDisplayOptions()) if o is None else o for o in options]
+    options = [{**asdict(DefaultDisplayOptions()), **(o or {})} for o in options]
 
     if len(options) != len(parts):
         raise FreeCADError(
