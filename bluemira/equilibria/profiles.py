@@ -11,7 +11,6 @@ Plasma profile objects, shape functions, and associated tools
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -26,7 +25,14 @@ from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import Opoint, find_LCFS_separatrix, in_plasma, in_zone
+from bluemira.equilibria.find import (
+    OPointCalcOptions,
+    Opoint,
+    find_LCFS_separatrix,
+    in_plasma,
+    in_zone,
+    o_point_fallback_calculator,
+)
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
 from bluemira.equilibria.plotting import ProfilePlotter
 
@@ -365,16 +371,6 @@ class LuxonExpFunc(ShapeFunction):
 # =============================================================================
 
 
-class OPointCalcOptions(Enum):
-    """
-    O point estimation fallback options
-    """
-
-    RAISE = auto()
-    GRID_CENTRE = auto()
-    MAJOR_RADIUS = auto()
-
-
 class Profile(ABC):
     """
     Profile base class
@@ -498,20 +494,7 @@ class Profile(ABC):
             return x_points[0].psi, o_points[0].psi, in_zone(x, z, lcfs)
 
         if not o_points:
-            match o_point_fallback:
-                case OPointCalcOptions.GRID_CENTRE:
-                    nx, nz = psi.shape
-                    o_points = [Opoint(x[nx // 2], z[nz // 2], psi[nx // 2, nz // 2])]
-                case OPointCalcOptions.MAJOR_RADIUS:
-                    o_points = [
-                        Opoint(
-                            self.R_0, 0, psi[np.abs(x - self.R_0).argmin(), z.argmin()]
-                        )
-                    ]
-                case _:
-                    _f, ax = plt.subplots()
-                    ax.contour(x, z, psi, cmap="viridis")
-                    raise EquilibriaError("No O-points found!")
+            o_point_fallback_calculator(o_point_fallback, x, z, psi, self.R_0)
 
         psio = o_points[0].psi
         if x_points:
