@@ -381,13 +381,13 @@ class EqSummaryPlotUnits:
     Units for EqSummary.
     """
 
-    W: str = "[J]"
-    V: str = "[m^3]"
-    R_0: str = "[m]"
-    a: str = "[m]"
-    I_p: str = "[A]"
-    dx_shaf: str = "[m]"
-    dz_shaf: str = "[m]"
+    W: str = "J"
+    V: str = "m^3"
+    R_0: str = "m"
+    a: str = "m"
+    I_p: str = "A"
+    dx_shaf: str = "m"
+    dz_shaf: str = "m"
 
 
 @dataclass

@@ -521,11 +521,11 @@ class CoreResultsPlotUnits:
     Units for CoreResults.
     """
 
-    R_0: str = "[m]"
-    a: str = "[m]"
-    area: str = "[m^2]"
-    V: str = "[m^3]"
-    Delta_shaf: str = "[m]"
+    R_0: str = "m"
+    a: str = "m"
+    area: str = "m^2"
+    V: str = "m^3"
+    Delta_shaf: str = "m"
 
 
 @dataclass

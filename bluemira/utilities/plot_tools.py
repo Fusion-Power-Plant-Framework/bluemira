@@ -23,7 +23,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS, ureg
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
@@ -100,15 +100,7 @@ def str_to_latex_units(string: str) -> str:
 
     '(A^2.s^4)/kg/m^3' ==> '$(A^{2}.s^{4})/kg/m^{3}$'
     """
-    characters = list(string)
-    ind = [i for i, c in enumerate(characters) if c == "^"]
-    n = 0
-    for i in ind:
-        characters.insert(i + n + 2, "}")
-        characters.insert(i + n + 1, "{")
-        n += 2
-    string = "".join(characters)
-    return "$" + string + "$"
+    return f" [${ureg.Unit(string):~L}$]"
 
 
 def make_dict_with_units(data_dict: dict, units_dict: dict, latex: bool = True):  # noqa: FBT001, FBT002

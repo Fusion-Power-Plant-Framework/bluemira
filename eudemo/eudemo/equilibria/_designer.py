@@ -134,7 +134,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
         self.diagnostic_plotting = PicardDiagnosticOptions(
-            *self.build_config.get("diagnostic_plotting", {})
+            **self.build_config.get("diagnostic_plotting", {})
         )
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
@@ -645,7 +645,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
         self.diagnostic_plotting = PicardDiagnosticOptions(
-            *self.build_config.get("diagnostic_plotting", {})
+            **self.build_config.get("diagnostic_plotting", {})
         )
         self.lcfs_coords = lcfs_coords
         self.profiles = profiles
