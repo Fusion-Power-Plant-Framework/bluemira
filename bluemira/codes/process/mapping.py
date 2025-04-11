@@ -46,7 +46,7 @@ OUT_mappings = {
     "delta": ("triang", "dimensionless"),
     "I_p": ("plasma_current_ma", "MA"),
     "P_fus": ("fusion_power", "MW"),
-    "P_fus_DT": ("dt_power", "MW"),
+    "P_fus_DT": ("dt_power_total", "MW"),
     "P_fus_DD": ("dd_power", "MW"),
     "H_star": ("hfact", "dimensionless"),
     "P_sep": ("pdivt", "MW"),
