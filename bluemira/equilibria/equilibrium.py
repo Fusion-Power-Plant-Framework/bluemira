@@ -1092,7 +1092,7 @@ class Equilibrium(CoilSetMHDState):
             e.psi,
             limiter=limiter,
             o_point_fallback=o_point_fallback,
-            R_0=e.R_0,
+            R_0=profiles.R_0,
         )
         jtor = profiles.jtor(
             grid.x,
@@ -1885,7 +1885,7 @@ class Equilibrium(CoilSetMHDState):
                 psi,
                 limiter=self.limiter,
                 o_point_fallback=o_point_fallback,
-                R_0=self.R_0,
+                R_0=self.profiles.R_0,
             )
         return self._o_points, self._x_points
 
