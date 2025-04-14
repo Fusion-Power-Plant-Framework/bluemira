@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, Flag, auto
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.file import try_get_bluemira_path
 
@@ -221,6 +221,40 @@ class PicardDiagnostic(Enum):
     NO_PLOT = auto()
 
 
+class _PicardDiagnosticDescriptor:
+    """Descriptor for Picard diagnostics"""
+
+    def __init__(self):
+        self._default = PicardDiagnostic.NO_PLOT
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> PicardDiagnostic:
+        """Get the Diagnostic type
+
+        Returns
+        -------
+        :
+            The diagnostic
+        """
+        if obj is None:
+            return self._default
+
+        return getattr(obj, self._name, self._default)
+
+    def __set__(self, obj: Any, value: str | int | PicardDiagnostic):
+        """
+        Set the diagnostic
+        """
+        if isinstance(value, str):
+            value = PicardDiagnostic[value.upper()]
+        else:
+            value = PicardDiagnostic(value)
+        setattr(obj, self._name, value)
+
+
 @dataclass
 class PicardDiagnosticOptions:
     """
@@ -238,7 +272,7 @@ class PicardDiagnosticOptions:
         bluemira root folder, if that path is available.
     """
 
-    plot: PicardDiagnostic = PicardDiagnostic.NO_PLOT
+    plot: PicardDiagnostic = _PicardDiagnosticDescriptor()
     gif: bool = False
     plot_name: str = "default_0"
     figure_folder: str | PathLike | None = None
