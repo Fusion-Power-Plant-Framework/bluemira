@@ -807,7 +807,7 @@
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "beam_energy": {
+  "e_beam_kev": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
@@ -1239,11 +1239,11 @@
     "var_mod": "Plasma",
     "scan01": 299.22
   },
-  "pinjimw": {
+  "p_hcd_injected_ions_mw": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "pinjemw": {
+  "p_hcd_injected_electrons_mw": {
     "var_mod": "Plasma",
     "scan01": 225.0
   },
@@ -1451,15 +1451,15 @@
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "bscf_iter89": {
+  "f_c_plasma_bootstrap_iter89": {
     "var_mod": "Plasma",
     "scan01": 0.45241
   },
-  "bscf_sauter": {
+  "f_c_plasma_bootstrap_sauter": {
     "var_mod": "Plasma",
     "scan01": 0.525
   },
-  "bscf_nevins": {
+  "f_c_plasma_bootstrap_nevins": {
     "var_mod": "Plasma",
     "scan01": 0.48466
   },
@@ -1467,19 +1467,19 @@
     "var_mod": "Plasma",
     "scan01": 0.48155
   },
-  "diacf_hender": {
+  "f_c_plasma_diamagnetic_hender": {
     "var_mod": "Plasma",
     "scan01": 0.023935
   },
-  "diacf_scene": {
+  "f_c_plasma_diamagnetic_scene": {
     "var_mod": "Plasma",
     "scan01": 0.021919
   },
-  "pscf_scene": {
+  "f_c_plasma_pfirsch_schluter_scene": {
     "var_mod": "Plasma",
     "scan01": -0.0060317
   },
-  "bootstrap_current_fraction.": {
+  "f_c_plasma_bootstrap.": {
     "var_mod": "Plasma",
     "scan01": 0.525
   },
@@ -1527,11 +1527,11 @@
     "var_mod": "Plasma",
     "scan01": 0.20217
   },
-  "iefrf": {
+  "i_hcd_primary": {
     "var_mod": "Current Drive System",
     "scan01": 10.0
   },
-  "pheat": {
+  "p_hcd_primary_extra_heat_mw": {
     "var_mod": "Current Drive System",
     "scan01": 1.7391
   },
@@ -1547,19 +1547,19 @@
     "var_mod": "Current Drive System",
     "scan01": 11885000.0
   },
-  "effcd": {
+  "eta_cd_hcd_primary": {
     "var_mod": "Current Drive System",
     "scan01": 0.053235
   },
-  "gamcd": {
+  "eta_cd_norm_hcd_primary": {
     "var_mod": "Current Drive System",
     "scan01": 0.3
   },
-  "etacd": {
+  "eta_hcd_primary_injector_wall_plug": {
     "var_mod": "Current Drive System",
     "scan01": 0.4
   },
-  "bootstrap_current_fraction": {
+  "f_c_plasma_bootstrap": {
     "var_mod": "Current Drive System",
     "scan01": 0.525
   },
@@ -1587,15 +1587,15 @@
     "var_mod": "Current Drive System",
     "scan01": 1.0
   },
-  "echpwr": {
+  "p_ecrh_injected_mw": {
     "var_mod": "Current Drive System",
     "scan01": 225.0
   },
-  "pinjalw": {
+  "p_hcd_injected_max": {
     "var_mod": "Current Drive System",
     "scan01": 225.0
   },
-  "etaech": {
+  "eta_ecrh_injector_wall_plug": {
     "var_mod": "Current Drive System",
     "scan01": 0.4
   },
@@ -3812,7 +3812,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 1.4837e-10
   },
-  "pinjmw": {
+  "p_hcd_injected_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 225.0
   },
@@ -3824,7 +3824,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 584.73
   },
-  "pinjmw.": {
+  "p_hcd_injected_total_mw.": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 225.0
   },

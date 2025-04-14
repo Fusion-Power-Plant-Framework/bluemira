@@ -610,7 +610,7 @@
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating wallplug efficiency"
   },
-  "gamma_ecrh": {
+  "eta_cd_norm_ecrh": {
     "value": 0.3e20,
     "unit": "A/W/m^2",
     "source": "Input",
