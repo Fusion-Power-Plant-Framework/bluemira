@@ -42,6 +42,7 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
+from bluemira.optimisation._tools import approx_derivative
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -1484,3 +1485,8 @@ class TestRegressionTH:
             strict=False,
         ):
             assert fc == res
+
+        vector = self.eq.coilset.current
+        assert test_constraint.df_constraint(vector) == pytest.approx(
+            approx_derivative(test_constraint.f_constraint, vector)
+        )
