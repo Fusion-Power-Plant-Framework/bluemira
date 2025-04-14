@@ -42,7 +42,7 @@ class Setup(CodesSetup):
     """
 
     MODELS: ClassVar = {
-        "iefrf": CurrentDriveEfficiencyModel,
+        "i_hcd_primary": CurrentDriveEfficiencyModel,
         "i_tf_sup": TFCoilConductorTechnology,
     }
 

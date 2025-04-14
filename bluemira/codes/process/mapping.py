@@ -14,9 +14,9 @@ IN_mappings = {
     "n_TF": ("n_tf_coils", "dimensionless"),
     "TF_ripple_limit": ("ripmax", "%"),
     "C_Ejima": ("ejima_coeff", "dimensionless"),
-    "e_nbi": ("beam_energy", "keV"),
-    "P_hcd_ss": ("pinjalw", "MW"),
-    "eta_nb": ("etanbi", "dimensionless"),
+    "e_nbi": ("e_beam_kev", "keV"),
+    "P_hcd_ss": ("p_hcd_injected_max", "MW"),
+    "eta_nb": ("eta_beam_injector_wall_plug", "dimensionless"),
     "e_mult": ("emult", "dimensionless"),
     "tk_cr_vv": ("dr_cryostat", "m"),
     "tk_tf_front_ib": ("casthi", "m"),
@@ -33,8 +33,8 @@ IN_mappings = {
     "bb_pump_eta_isen": ("etaiso", "dimensionless"),
     "bb_t_inlet": ("temp_blkt_coolant_in", "K"),
     "bb_t_outlet": ("temp_blkt_coolant_out", "K"),
-    "eta_ecrh": ("etaech", "dimensionless"),
-    "gamma_ecrh": ("gamma_ecrh", "1e20 A/W/m^2"),
+    "eta_ecrh": ("eta_ecrh_injector_wall_plug", "dimensionless"),
+    "eta_cd_norm_ecrh": ("eta_cd_norm_ecrh", "1e20 A/W/m^2"),
 }
 
 OUT_mappings = {
@@ -56,7 +56,7 @@ OUT_mappings = {
     "P_line": ("plinepv*vol", "MW"),
     "P_sync": ("pden_plasma_sync_mw*vol", "MW"),
     "P_brehms": ("pbrempv*plasma_volume", "MW"),
-    "f_bs": ("bootstrap_current_fraction", "dimensionless"),
+    "f_bs": ("f_c_plasma_bootstrap", "dimensionless"),
     "beta_p": ("beta_poloidal", "dimensionless"),
     "beta": ("beta", "dimensionless"),
     "tau_e": ("t_energy_confinement", "s"),
@@ -86,7 +86,7 @@ OUT_mappings = {
     "TF_E_stored": ("estotftgj", "GJ"),
     "TF_respc_ob": ("res_tf_leg", "ohm"),
     "TF_currpt_ob": ("cpttf", "A"),
-    "P_bd_in": ("pinjmw", "MW"),
+    "P_bd_in": ("p_hcd_injected_total_mw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
 }
 

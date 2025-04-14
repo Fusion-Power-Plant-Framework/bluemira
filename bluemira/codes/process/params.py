@@ -128,7 +128,7 @@ class ProcessSolverParams(MappedParameterFrame):
     eta_ecrh: Parameter[float]
     """Electron cyclotron resonce heating wallplug efficiency [dimensionless]"""
 
-    gamma_ecrh: Parameter[float]
+    eta_cd_norm_ecrh: Parameter[float]
     """Electron cyclotron resonce heating current drive efficiency [TODO: UNITS!]"""
 
     # Out parameters
