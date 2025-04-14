@@ -161,6 +161,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             diagnostic_plotting=self.diagnostic_plotting,
         )
         self._result = iterator_program()
+        self._iterator = iterator_program
         self._update_params_from_eq(eq)
         return eq
 
@@ -727,6 +728,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             **settings,
         )
         self._result = iterator_program()
+        self._iterator = iterator_program
 
         if self.build_config.get("plot", False):
             _, ax = plt.subplots()

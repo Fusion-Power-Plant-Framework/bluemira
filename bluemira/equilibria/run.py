@@ -90,6 +90,7 @@ class Snapshot:
     constraints: CoilsetOptimisationProblem | None = None
     profiles: Profile | None = None
     optimisation_result: CoilsetOptimiserResult | None = None
+    iterator: PicardIterator | None = None
     limiter: Limiter | None = None
     tfcoil: Coordinates | None = None
 
@@ -360,13 +361,14 @@ class PulsedCoilsetDesign(ABC):
         coilset: CoilSet,
         problem: CoilsetOptimisationProblem,
         profiles: Profile | None = None,
+        iterator: PicardIterator | None = None,
     ):
         """Take a snapshot of the pulse."""
         if name in self.snapshots:
             bluemira_warn(f"Over-writing snapshot {name}!")
 
         self.snapshots[name] = Snapshot(
-            eq, coilset, problem, profiles, limiter=self.limiter
+            eq, coilset, problem, profiles, iterator=iterator, limiter=self.limiter
         )
 
     def _get_psi_premag(self):
@@ -472,7 +474,9 @@ class PulsedCoilsetDesign(ABC):
         )
         program()
 
-        self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
+        self.take_snapshot(
+            self.EQ_REF, eq, coilset, opt_problem, self.profiles, iterator=program
+        )
 
     def calculate_sof_eof_fluxes(
         self, psi_premag: float | None = None
@@ -545,7 +549,13 @@ class PulsedCoilsetDesign(ABC):
         return opt_problems
 
     def converge_equilibrium(self, eq: Equilibrium, problem: CoilsetOptimisationProblem):
-        """Converge an equilibrium problem from a 'frozen' plasma optimised state."""
+        """Converge an equilibrium problem from a 'frozen' plasma optimised state.
+
+        Returns
+        -------
+        :
+            The iterator
+        """
         program = PicardIterator(
             eq,
             problem,
@@ -555,6 +565,7 @@ class PulsedCoilsetDesign(ABC):
             diagnostic_plotting=self.eq_settings.diagnostic_plotting,
         )
         program()
+        return program
 
     def converge_and_snapshot(
         self,
@@ -564,8 +575,10 @@ class PulsedCoilsetDesign(ABC):
         """Converge equilibrium optimisation problems and take snapshots."""
         for snap, problem in zip(problem_names, sub_opt_problems, strict=False):
             eq = problem.eq
-            self.converge_equilibrium(eq, problem)
-            self.take_snapshot(snap, eq, eq.coilset, problem, eq.profiles)
+            program = self.converge_equilibrium(eq, problem)
+            self.take_snapshot(
+                snap, eq, eq.coilset, problem, eq.profiles, iterator=program
+            )
 
     def plot(self):
         """Plot the pulsed equilibrium problem.
