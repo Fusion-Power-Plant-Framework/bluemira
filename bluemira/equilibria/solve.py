@@ -61,6 +61,17 @@ class ConvergenceCriterion(ABC):
         self.limit = limit
         self.progress = []
         self.math_string = NotImplemented
+        self._relax = 0
+
+    @property
+    def relax_steps(self):
+        """Number of relaxation steps"""
+        return self._relax
+
+    @relax_steps.setter
+    def relax_steps(self, value: int):
+        """Number of relaxation steps"""
+        self._relax = int(value)
 
     @abstractmethod
     def __call__(
@@ -119,7 +130,9 @@ class ConvergenceCriterion(ABC):
         """
         if ax is None:
             _f, ax = plt.subplots()
-        ax.semilogy([0, len(self.progress)], [self.limit, self.limit])
+        rl = self.relax_steps + 1
+        ax.semilogy([0, len(self.progress) // rl], [self.limit, self.limit])
+        ax.semilogy(np.arange(len(self.progress)) / rl, self.progress)
         ax.grid(visible=True, which="both")
         ax.set_xlabel("Iterations [n]")
         ax.set_ylabel(self.math_string)
@@ -474,6 +487,7 @@ class PicardIterator:
                 "Optimiser convergence specification must be a sub-class of"
                 " ConvergenceCriterion."
             )
+        self.convergence.relax_steps = 1
         self.fixed_coils = fixed_coils
 
         self.relaxation = relaxation
