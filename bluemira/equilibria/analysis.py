@@ -1017,6 +1017,7 @@ class EqAnalysis:
             plt.show()
         return ax, target_flux, ref_target_flux
 
+
 @dataclass
 class MultiEqProfiles:
     """Profile dataclass for plotting."""
