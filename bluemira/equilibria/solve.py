@@ -478,9 +478,7 @@ class PicardIterator:
 
         self.relaxation = relaxation
         self.maxiter = maxiter
-        if diagnostic_plotting is None:
-            diagnostic_plotting = PicardDiagnosticOptions()
-        self.diagnostic_plotting = diagnostic_plotting
+        self.diagnostic_plotting = diagnostic_plotting or PicardDiagnosticOptions()
         self.store = []
         self.i = 0
         if diagnostic_plotting.plot is not PicardDiagnostic.NO_PLOT:
