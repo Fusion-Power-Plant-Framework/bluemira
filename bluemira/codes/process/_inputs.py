@@ -87,8 +87,6 @@ class ProcessInputs:
     iblanket_thickness: int | None = None
     i_thermal_electric_conversion: int | None = None  # Listed as an output...
     secondary_cycle_liq: int | None = None
-    afwi: float | None = None
-    afwo: float | None = None
     dr_fw_wall: float | None = None
     radius_fw_channel: float | None = None
     dx_fw_module: float | None = None
