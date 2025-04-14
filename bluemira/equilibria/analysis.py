@@ -51,7 +51,6 @@ from bluemira.utilities.tools import is_num, make_table
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.flux_surfaces import CoreResults
-    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
     from bluemira.equilibria.physics import EqSummary
 
 
