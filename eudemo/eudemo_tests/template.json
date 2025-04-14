@@ -1272,14 +1272,14 @@
     "unit": "m",
     "source": "Input"
   },
-  "h_cp_top": {
+  "z_cp_top": {
     "name": "Height of the TF coil inboard Tapered section end",
     "value": 6.0,
     "unit": "m",
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "h_cp_top",
+        "name": "z_cp_top",
         "send": false,
         "recv": false,
         "unit": "m"
@@ -2341,7 +2341,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "thkcas",
+        "name": "dr_tf_nose_case",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2375,7 +2375,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "casths",
+        "name": "dx_tf_side_case",
         "send": true,
         "recv": false,
         "unit": "m"
