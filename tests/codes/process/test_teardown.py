@@ -87,7 +87,7 @@ class TestTeardown:
         with (
             mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=utils.mfw()),
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
-            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"beam_energy": None}),
+            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"e_beam_kev": None}),
         ):
             teardown.read()
 

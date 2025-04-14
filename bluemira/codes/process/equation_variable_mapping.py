@@ -202,7 +202,12 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation for minor radius lower limit OR Inboard radial build consistency",
     )
-    PINJ_UPPER_LIMIT = 30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit"
+    PINJ_UPPER_LIMIT = (
+        30,
+        (11, 46, 47),
+        ("p_hcd_injected_max",),
+        "Injection Power Upper Limit",
+    )
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
         (48, 56, 57, 58, 59, 60),
@@ -318,7 +323,7 @@ class Constraint(ConstraintSelection, Model):
     NBI_SHINETHROUGH_UPPER_LIMIT = (
         59,
         (4, 6, 19, 105),
-        ("nbshinefmax",),
+        ("f_p_beam_shine_through_max",),
         "Neutral beam shinethrough fraction upper limit (NBI)",
     )
     CS_T_MARGIN_LOWER_LIMIT = (
@@ -559,7 +564,7 @@ ITERATION_VAR_MAPPING = {
     "fbeta": 8,
     "fdene": 9,
     "hfact": 10,
-    "pheat": 11,
+    "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
     "dr_tf_inboard": 13,
     "fwalld": 14,
@@ -567,7 +572,7 @@ ITERATION_VAR_MAPPING = {
     "dr_cs": 16,
     "t_between_pulse": 17,
     "q95": 18,
-    "beam_energy": 19,
+    "e_beam_kev": 19,
     "tcpav": 20,
     "ft_burn": 21,
     # 22 NOT USED
