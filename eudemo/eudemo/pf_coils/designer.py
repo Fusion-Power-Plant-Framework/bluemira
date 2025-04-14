@@ -237,6 +237,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
                     "ftol_rel": 1e-6,
                 },
             },
+            "diagnostic_plotting": {"plot": "no_plot"},
         }
         eq_settings = {
             **eq_defaults,

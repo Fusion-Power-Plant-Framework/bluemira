@@ -730,7 +730,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         self._result = iterator_program()
         self._iterator = iterator_program
 
-        if self.build_config.get("plot", False):
+        if self.build_config.get("summary_plot", False):
             _, ax = plt.subplots()
             eq.plot(ax=ax)
             eq.coilset.plot(ax=ax, label=True)
