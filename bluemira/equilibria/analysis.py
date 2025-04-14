@@ -805,7 +805,7 @@ class EqAnalysis:
         return EquilibriumComparisonPostOptPlotter(
             equilibrium=eq,
             reference_equilibrium=ref,
-            diag_ops=self.diag_ops,
+            diag_ops=diag_ops,
             ax=ax,
         ).plot_compare_psi()
 
