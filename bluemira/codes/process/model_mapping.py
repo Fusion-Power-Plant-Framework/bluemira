@@ -1109,7 +1109,7 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iefrf"
+        return "i_hcd_primary"
 
     FENSTER_LH = 1
     ICYCCD = 2
@@ -1135,7 +1135,7 @@ class ECRHWaveModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "wave_mode"
+        return "i_ecrh_wave_mode"
 
     O_MODE = 0
     X_MODE = 1

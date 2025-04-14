@@ -267,7 +267,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("beta", 3.1421e-2)
         template_builder.add_variable("dene", 7.4321e19)
         template_builder.add_variable("q95", 3.5, lower_bound=3.5)
-        template_builder.add_variable("pheat", 50.0)
+        template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
         template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
         template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
         template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
@@ -411,10 +411,10 @@ class TestInDatOneForOne:
             "dz_divertor": 0.621,
             "dz_vv_lower": 0.3,
             # HCD inputs
-            "pinjalw": 51.0,
-            "gamma_ecrh": 0.3,
-            "etaech": 0.4,
-            "bootstrap_current_fraction_max": 0.99,
+            "p_hcd_injected_max": 51.0,
+            "eta_cd_norm_ecrh": 0.3,
+            "eta_ecrh_injector_wall_plug": 0.4,
+            "f_c_plasma_bootstrap_max": 0.99,
             # BOP inputs
             "etath": 0.375,
             "etahtp": 0.87,
