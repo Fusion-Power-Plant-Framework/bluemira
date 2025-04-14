@@ -155,7 +155,7 @@ template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
 template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
 template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
 template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
-template_builder.add_variable("thkcas", 0.52465)
+template_builder.add_variable("dr_tf_nose_case", 0.52465)
 template_builder.add_variable("dr_tf_inboard", 1.2080)
 template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
 template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
@@ -275,7 +275,7 @@ template_builder.add_input_values({
     # TF coil inputs
     "n_tf_coils": 16,
     "casthi": 0.06,
-    "casths": 0.05,
+    "dx_tf_side_case": 0.05,
     "ripmax": 0.6,
     "dhecoil": 0.01,
     "tftmp": 4.75,

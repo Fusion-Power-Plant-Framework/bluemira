@@ -322,7 +322,7 @@ class ProcessSolverParams(MappedParameterFrame):
     f_ni: Parameter[float]
     """Non-inductive current drive fraction [dimensionless]."""
 
-    h_cp_top: Parameter[float]
+    z_cp_top: Parameter[float]
     """Height of the TF coil inboard Tapered section end [meter]."""
 
     h_tf_max_in: Parameter[float]

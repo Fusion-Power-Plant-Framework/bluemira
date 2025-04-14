@@ -42,7 +42,7 @@
   "g_ts_tf": 0.05,
   "g_vv_bb": 0.02,
   "g_vv_ts": 0.02,
-  "h_cp_top": 6.0,
+  "z_cp_top": 6.0,
   "h_tf_max_in": 6.5,
   "kappa": 1.848,
   "kappa_95": 1.65,
