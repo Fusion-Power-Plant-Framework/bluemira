@@ -510,7 +510,6 @@ class ProcessInputs:
     fzactual: float | None = None
 
     # Divertor
-    divdum: int | None = None
     anginc: float | None = None
     beta_div: float | None = None
     betai: float | None = None
@@ -532,14 +531,12 @@ class ProcessInputs:
     flux_exp: float | None = None
     frrp: float | None = None
     hldivlim: float | None = None
-    ksic: float | None = None
     omegan: float | None = None
     prn1: float | None = None
     rlenmax: float | None = None
     tdiv: float | None = None
     xparain: float | None = None
     xpertin: float | None = None
-    zeffdiv: float | None = None
     i_hldiv: int | None = None
 
     # Pulse
