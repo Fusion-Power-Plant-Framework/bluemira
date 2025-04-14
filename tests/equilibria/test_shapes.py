@@ -29,7 +29,7 @@ from bluemira.equilibria.shapes import (
 class TestCunningham:
     @classmethod
     def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(4, 2)
+        cls.f, cls.axes = plt.subplots(4, 2)
 
     @pytest.mark.parametrize(
         ("kappa", "delta", "delta2", "ax", "label"),
@@ -56,9 +56,9 @@ class TestCunningham:
     def test_cunningham(self, kappa, delta, delta2, ax, label):
         ax0, ax1 = ax
         f_s = flux_surface_cunningham(9, 0, 3, kappa, delta, delta2=delta2, n=100)
-        self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
-        self.ax[ax0, ax1].set_aspect("equal")
-        self.ax[ax0, ax1].legend()
+        self.axes[ax0, ax1].plot(f_s.x, f_s.z, label=label)
+        self.axes[ax0, ax1].set_aspect("equal")
+        self.axes[ax0, ax1].legend()
 
     @classmethod
     def teardown_class(cls):
@@ -69,7 +69,7 @@ class TestCunningham:
 class TestHirschman:
     @classmethod
     def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(2, 2)
+        cls.f, cls.axes = plt.subplots(2, 2)
 
     @pytest.mark.parametrize(
         ("a", "kappa", "ax", "label"),
@@ -108,9 +108,9 @@ class TestHirschman:
         f_s = flux_surface_hirshman(9, 0, a, kappa, n=100)
 
         ax0, ax1 = ax
-        self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
-        self.ax[ax0, ax1].set_aspect("equal")
-        self.ax[ax0, ax1].legend()
+        self.axes[ax0, ax1].plot(f_s.x, f_s.z, label=label)
+        self.axes[ax0, ax1].set_aspect("equal")
+        self.axes[ax0, ax1].legend()
 
     @classmethod
     def teardown_class(cls):
@@ -121,7 +121,7 @@ class TestHirschman:
 class TestManickam:
     @classmethod
     def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(4, 2)
+        cls.f, cls.axes = plt.subplots(4, 2)
 
     @pytest.mark.parametrize(
         ("kappa", "delta", "indent", "ax", "label"),
@@ -149,9 +149,9 @@ class TestManickam:
         f_s = flux_surface_manickam(9, 0, 3, kappa, delta, indent=indent, n=100)
 
         ax0, ax1 = ax
-        self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
-        self.ax[ax0, ax1].set_aspect("equal")
-        self.ax[ax0, ax1].legend()
+        self.axes[ax0, ax1].plot(f_s.x, f_s.z, label=label)
+        self.axes[ax0, ax1].set_aspect("equal")
+        self.axes[ax0, ax1].legend()
 
     @classmethod
     def teardown_class(cls):
@@ -171,7 +171,7 @@ class TestKuiroukidis:
 
     @classmethod
     def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(2, 3)
+        cls.f, cls.axes = plt.subplots(2, 3)
 
     @pytest.mark.parametrize(
         ("R_0", "A", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"),
@@ -196,10 +196,10 @@ class TestKuiroukidis:
         z_outer = 0.0
 
         n1, n2 = ax
-        self.ax[n1, n2].plot(flux_surface.x, flux_surface.z)
-        self.ax[n1, n2].set_xlabel("x")
-        self.ax[n1, n2].set_ylabel("z")
-        self.ax[n1, n2].set_aspect("equal")
+        self.axes[n1, n2].plot(flux_surface.x, flux_surface.z)
+        self.axes[n1, n2].set_xlabel("x")
+        self.axes[n1, n2].set_ylabel("z")
+        self.axes[n1, n2].set_aspect("equal")
 
         np.testing.assert_allclose(
             np.array([x_lower, z_lower]), flux_surface.xz.T[arg_lower]
@@ -284,16 +284,16 @@ johner_params = [
 class TestJohner:
     @classmethod
     def setup_class(cls):
-        cls.f, cls.ax = plt.subplots(4, 2)
+        cls.f, cls.axes = plt.subplots(4, 2)
 
     @pytest.mark.parametrize("kwargs", johner_params)
     def test_johner(self, kwargs):
         ax0, ax1 = kwargs.pop("ax")
         label = kwargs.pop("label")
         f_s = flux_surface_johner(9, 0, 9 / 3, n=100, **kwargs)
-        self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
-        self.ax[ax0, ax1].set_aspect("equal")
-        self.ax[ax0, ax1].legend()
+        self.axes[ax0, ax1].plot(f_s.x, f_s.z, label=label)
+        self.axes[ax0, ax1].set_aspect("equal")
+        self.axes[ax0, ax1].legend()
 
     @classmethod
     def teardown_class(cls):

@@ -794,12 +794,12 @@ class CorePlotter(Plotter):
     def __init__(self, results):
         r, c = int((len(results.__dict__) - 1) / 2) + 1, 2
         gs = GridSpec(r, c)
-        self.ax = [plt.subplot(gs[i]) for i in range(r * c)]
+        self.axes = [plt.subplot(gs[i]) for i in range(r * c)]
         ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
         for i, (k, v) in enumerate(results.__dict__.items()):
             color = next(ccycle)
-            self.ax[i].plot(results.psi_n, v, label=str_to_latex(k), color=color)
-            self.ax[i].legend()
+            self.axes[i].plot(results.psi_n, v, label=str_to_latex(k), color=color)
+            self.axes[i].legend()
 
 
 class CorePlotter2(Plotter):
@@ -821,18 +821,18 @@ class CorePlotter2(Plotter):
         ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
 
         psi = eq.psi(xx, zz) * 2 * np.pi
-        self.ax = [plt.subplot(gs[i]) for i in range(3)]
-        self.ax[0].plot(xx, pfunc(xx, zz, grid=False), color=next(ccycle))
-        self.ax[0].annotate("$p$", xy=[0.05, 0.8], xycoords="axes fraction")
-        self.ax[0].set_ylabel("[Pa]")
-        self.ax[1].plot(xx, jfunc(xx, zz, grid=False), color=next(ccycle))
-        self.ax[1].set_ylabel("[A/m^2]")
-        self.ax[1].annotate("$J_{\\phi}$", xy=[0.05, 0.8], xycoords="axes fraction")
-        self.ax[2].plot(xx, psi, color=next(ccycle))
-        self.ax[2].set_ylabel("[V.s]")
-        self.ax[2].annotate("$\\psi$", xy=[0.05, 0.8], xycoords="axes fraction")
-        self.ax[2].axhline(psib * 2 * np.pi, color="r", linestyle="--")
-        for ax in self.ax:
+        self.axes = [plt.subplot(gs[i]) for i in range(3)]
+        self.axes[0].plot(xx, pfunc(xx, zz, grid=False), color=next(ccycle))
+        self.axes[0].annotate("$p$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.axes[0].set_ylabel("[Pa]")
+        self.axes[1].plot(xx, jfunc(xx, zz, grid=False), color=next(ccycle))
+        self.axes[1].set_ylabel("[A/m^2]")
+        self.axes[1].annotate("$J_{\\phi}$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.axes[2].plot(xx, psi, color=next(ccycle))
+        self.axes[2].set_ylabel("[V.s]")
+        self.axes[2].annotate("$\\psi$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.axes[2].axhline(psib * 2 * np.pi, color="r", linestyle="--")
+        for ax in self.axes:
             ax.axvline(xmag, color="r")
 
 
