@@ -346,7 +346,7 @@
     "source": "Input",
     "long_name": "Gap between VV and TS"
   },
-  "h_cp_top": {
+  "z_cp_top": {
     "value": 6.0,
     "unit": "meter",
     "source": "Input",
