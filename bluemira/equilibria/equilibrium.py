@@ -1098,7 +1098,9 @@ class Equilibrium(CoilSetMHDState):
         return self
 
     def to_dict(
-        self, qpsi_calcmode: int | QpsiCalcMode = QpsiCalcMode.NO_CALC
+        self,
+        qpsi_calcmode: int | QpsiCalcMode = QpsiCalcMode.NO_CALC,
+        cocos: int = BLUEMIRA_DEFAULT_COCOS,
     ) -> dict[str, Any]:
         """
         Creates dictionary for equilibrium object, in preparation for saving
@@ -1126,7 +1128,8 @@ class Equilibrium(CoilSetMHDState):
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
             # This is too damn slow..
-            q = self.q(psinorm, o_points=opoints, x_points=xpoints)
+            sign = -1 if cocos in {3, 4, 5, 6, 13, 14, 15, 16} else 1
+            q = sign * self.q(psinorm, o_points=opoints, x_points=xpoints)
         elif qpsi_calcmode is QpsiCalcMode.ZEROS:
             q = np.zeros(n_x)
 
@@ -1198,7 +1201,7 @@ class Equilibrium(CoilSetMHDState):
             qpsi_calcmode = QpsiCalcMode.ZEROS
 
         super().to_eqdsk(
-            self.to_dict(qpsi_calcmode),
+            self.to_dict(qpsi_calcmode, kwargs.get("to_cocos", BLUEMIRA_DEFAULT_COCOS)),
             filename,
             header,
             directory,

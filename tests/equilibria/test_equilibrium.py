@@ -407,7 +407,7 @@ class TestEqReadWrite:
 
         eq2 = Equilibrium.from_eqdsk(
             new_file_path,
-            from_cocos=7 if qpsi_calcmode else 3,
+            from_cocos=3,
             to_cocos=None,
             qpsi_positive=None if qpsi_calcmode else False,
         )
