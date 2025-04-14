@@ -475,13 +475,10 @@ class TestInDatOneForOne:
             "adivflnc": 20.0,
             # For sanity...
             "hldivlim": 10,
-            "ksic": 1.4,
             "prn1": 0.4,
-            "zeffdiv": 3.5,
             "bmxlim": 11.2,
             "ffuspow": 1.0,
             "fpeakb": 1.0,
-            "divdum": 1,
             "ibkt_life": 1,
             "fkzohm": 1.0245,
             "dintrt": 0.0,
