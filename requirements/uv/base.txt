@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml --resolution=highest --python-version=3.10 --extra pinned -o requirements/uv/base.txt
 annotated-types==0.7.0
     # via pydantic
-anytree==2.12.1
+anytree==2.13.0
     # via bluemira (pyproject.toml)
 asteval==1.0.6
     # via
@@ -36,7 +36,7 @@ flexparser==0.4
     # via pint
 fonttools==4.57.0
     # via matplotlib
-fortranformat==2.0.2
+fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -110,7 +110,7 @@ pandas==2.2.3
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
-pillow==11.1.0
+pillow==11.2.1
     # via
     #   imageio
     #   matplotlib
@@ -165,9 +165,7 @@ scooby==0.10.0
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
 six==1.17.0
-    # via
-    #   anytree
-    #   python-dateutil
+    # via python-dateutil
 tables==3.10.1
     # via bluemira (pyproject.toml)
 tabulate==0.9.0
@@ -176,7 +174,7 @@ threadpoolctl==3.6.0
     # via scikit-learn
 typeguard==4.4.2
     # via bluemira (pyproject.toml)
-typing-extensions==4.13.1
+typing-extensions==4.13.2
     # via
     #   flexcache
     #   flexparser
@@ -192,7 +190,7 @@ typing-inspection==0.4.0
     # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.3.0
+urllib3==2.4.0
     # via requests
 vtk==9.3.1
     # via
