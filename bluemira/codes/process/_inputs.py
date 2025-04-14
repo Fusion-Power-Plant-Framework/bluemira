@@ -196,12 +196,12 @@ class ProcessInputs:
     n_tf_coils: int | None = None
     tftmp: float | None = None
     thicndut: float | None = None
-    thkcas: float | None = None
+    dr_tf_nose_case: float | None = None
     thwcndut: float | None = None
     tinstf: float | None = None
     tmaxpro: float | None = None
     tmax_croco: float | None = None
-    tmpcry: float | None = None
+    temp_tf_cryo: float | None = None
     vdalw: float | None = None
     f_vforce_inboard: float | None = None
     vftf: float | None = None
@@ -223,7 +223,7 @@ class ProcessInputs:
     dr_tf_inboard: float | None = None
     dr_tf_shld_gap: float | None = None
     casthi: float | None = None
-    casths: float | None = None
+    dx_tf_side_case: float | None = None
     tmargmin: float | None = None
     tmargmin_cs: float | None = None
     oacdcp: float | None = None
