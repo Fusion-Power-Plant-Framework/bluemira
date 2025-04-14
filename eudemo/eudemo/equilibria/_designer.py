@@ -722,7 +722,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             eq,
             self.opt_problem,
             convergence=DudsonConvergence(iter_err_max),
-            diagnotic_plotting=self.diagnostic_plotting,
+            diagnostic_plotting=self.diagnostic_plotting,
             fixed_coils=True,
             **settings,
         )
@@ -740,7 +740,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             eq.to_eqdsk(self.file_path, directory=str(Path().cwd()))
 
         self._update_params_from_eq(eq)
-
         return eq
 
     def read(self) -> Equilibrium:

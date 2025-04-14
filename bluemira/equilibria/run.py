@@ -358,7 +358,7 @@ class PulsedCoilsetDesign(ABC):
         program = PicardIterator(
             eq,
             opt_problem,
-            convergence=self.eq_settings.convergence,
+            convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
         )
@@ -378,7 +378,7 @@ class PulsedCoilsetDesign(ABC):
         program = PicardIterator(
             eq,
             opt_problem,
-            convergence=self.eq_settings.convergence,
+            convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
         )
@@ -501,7 +501,7 @@ class PulsedCoilsetDesign(ABC):
             eq,
             problem,
             fixed_coils=True,
-            convergence=self._eq_settings.convergence,
+            convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
         )
         program()
