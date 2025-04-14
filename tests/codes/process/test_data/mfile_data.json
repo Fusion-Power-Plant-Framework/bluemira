@@ -2148,7 +2148,7 @@
     "var_mod": "TF coils",
     "scan01": 17.544
   },
-  "tftort": {
+  "dx_tf_inboard_out_toroidal": {
     "var_mod": "TF coils",
     "scan01": 1.3182
   },
@@ -2204,7 +2204,7 @@
     "var_mod": "TF coils",
     "scan01": -6.3309
   },
-  "tfareain": {
+  "a_tf_coil_inboard": {
     "var_mod": "TF coils",
     "scan01": 24.606
   },
@@ -2232,11 +2232,11 @@
     "var_mod": "TF coils",
     "scan01": 0.06
   },
-  "thkcas": {
+  "dr_tf_nose_case": {
     "var_mod": "TF coils",
     "scan01": 0.32795
   },
-  "casths": {
+  "dx_tf_side_case": {
     "var_mod": "TF coils",
     "scan01": 0.05
   },
@@ -2276,11 +2276,11 @@
     "var_mod": "TF coils",
     "scan01": 0.45478
   },
-  "aiwp/awpc": {
+  "a_tf_coil_wp_turn_insulation/awpc": {
     "var_mod": "TF coils",
     "scan01": 0.13156
   },
-  "awpc-aswp-aiwp)": {
+  "awpc-aswp-a_tf_coil_wp_turn_insulation)": {
     "var_mod": "TF coils",
     "scan01": 0.41367
   },
@@ -2372,7 +2372,7 @@
     "var_mod": "TF coils",
     "scan01": 75643.0
   },
-  "whtconsh": {
+  "m_tf_turn_steel": {
     "var_mod": "TF coils",
     "scan01": 169640.0
   },
@@ -2384,15 +2384,15 @@
     "var_mod": "TF coils",
     "scan01": 264180.0
   },
-  "whttf/n_tf_coils": {
+  "m_tf_coils_total/n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 1466600.0
   },
-  "whttf": {
+  "m_tf_coils_total": {
     "var_mod": "TF coils",
     "scan01": 23466000.0
   },
-  "bmaxtf": {
+  "b_tf_inboard_peak": {
     "var_mod": "TF coils",
     "scan01": 11.2
   },
@@ -2408,7 +2408,7 @@
     "var_mod": "TF coils",
     "scan01": 11.716
   },
-  "jwptf": {
+  "j_tf_wp": {
     "var_mod": "TF coils",
     "scan01": 15197000.0
   },
@@ -3676,7 +3676,7 @@
     "var_mod": "Cryogenics",
     "scan01": 0.077998
   },
-  "tmpcry": {
+  "temp_tf_cryo": {
     "var_mod": "Cryogenics",
     "scan01": 4.5
   },

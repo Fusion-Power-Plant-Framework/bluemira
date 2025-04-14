@@ -61,7 +61,7 @@ ixc = 51 * fvdump
 ixc = 53 * fjprot
 ixc = 56 * tdmptf
 boundl(56) = 30.0
-ixc = 57 * thkcas
+ixc = 57 * dr_tf_nose_case
 ixc = 58 * thwcndut
 boundl(58) = 8.0d-3
 ixc = 61 * dr_shld_vv_gap_inboard
@@ -513,7 +513,7 @@ i_pulsed_plant   = 1 * Switch for reactor model;
 *-----------------Tfcoil Variables-----------------*
 
 casthi   = 0.05 * inboard TF coil case plasma side thickness (m) (calculated for stellarators)
-casths   = 0.10 * inboard TF coil sidewall case thickness (m) (calculated for stellarators)
+dx_tf_side_case   = 0.10 * inboard TF coil sidewall case thickness (m) (calculated for stellarators)
 cpttf    = 6.5e+04 * TF coil current per turn (A); (calculated for stellarators) (calculated for
 fcutfsu  = 0.6667 * copper fraction of cable conductor (TF coils)
 oacdcp   = 9.9963e+06 * Overall current density in TF coil inboard legs midplane (A/m2)
@@ -522,7 +522,7 @@ tdmptf   = 3.0000e+01 * fast discharge time for TF coil in event of quench (s) (
 n_tf_coils     = 18 * Number of TF coils (default = 50 for stellarators); Number of TF coils outer legs for ST
 tftmp    = 4.75 * peak helium coolant temperature in TF coils and PF coils (K)
 thicndut = 2.0d-3 * conduit insulation thickness (m)
-thkcas   = 4.9102e-01 * inboard TF coil case outer (non-plasma side) thickness (m) (`iteration variable 57`)
+dr_tf_nose_case   = 4.9102e-01 * inboard TF coil case outer (non-plasma side) thickness (m) (`iteration variable 57`)
 thwcndut = 8.0000e-03 * TF coil conduit case thickness (m) (`iteration variable 58`)
 tinstf   = 0.013 * Thickness of the ground insulation layer surrounding (m)
 tmargmin = 1.7 * minimum allowable temperature margin ; TFC AND CS (K)

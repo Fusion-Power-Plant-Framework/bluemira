@@ -42,7 +42,7 @@ class EUDEMOReactorParams(ParameterFrame):
     g_ts_tf: Parameter[float]
     g_vv_bb: Parameter[float]
     g_vv_ts: Parameter[float]
-    h_cp_top: Parameter[float]
+    z_cp_top: Parameter[float]
     H_star: Parameter[float]
     h_tf_max_in: Parameter[float]
     I_p: Parameter[float]

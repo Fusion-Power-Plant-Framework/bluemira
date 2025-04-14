@@ -512,7 +512,7 @@
     "source": "Input",
     "long_name": "Non-inductive current drive fraction"
   },
-  "h_cp_top": {
+  "z_cp_top": {
     "value": 6.0,
     "unit": "meter",
     "source": "Input",

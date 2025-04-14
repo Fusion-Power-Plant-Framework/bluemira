@@ -605,7 +605,7 @@ ITERATION_VAR_MAPPING = {
     "ftmargtf": 54,
     # 55 NOT USED
     "tdmptf": 56,
-    "thkcas": 57,
+    "dr_tf_nose_case": 57,
     "thwcndut": 58,
     "fcutfsu": 59,
     "cpttf": 60,
