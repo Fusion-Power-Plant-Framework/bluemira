@@ -84,7 +84,6 @@ class ProcessInputs:
     nphcdin: int | None = None
     nphcdout: int | None = None
     wallpf: float | None = None
-    iblanket_thickness: int | None = None
     i_thermal_electric_conversion: int | None = None  # Listed as an output...
     secondary_cycle_liq: int | None = None
     dr_fw_wall: float | None = None
