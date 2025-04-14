@@ -894,7 +894,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         else:
             x, z = grid.x, grid.z
 
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             vmin = 0
             vmax = 1
         else:
@@ -903,10 +903,10 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
 
         title_type = "Difference "
         cbar_label = "[V.s/rad]"
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             title_type = "Relative difference "
             cbar_label = " "
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             title_type = "Absolute difference "
             cbar_label = "[V.s/rad]"
 
@@ -971,7 +971,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         else:
             x, z = grid.x, grid.z
 
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             vmin = 0
             vmax = 1
         else:
@@ -1031,7 +1031,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         else:
             x, z = grid.x, grid.z
 
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             vmin = 0
             vmax = 1
         else:
@@ -1039,9 +1039,9 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             vmax = np.amax(self.total_psi)
 
         title_type = "Difference "
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             title_type = "Relative difference "
-        if self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        if self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             title_type = "Absolute difference "
 
         if self.diag_ops.psi_diff in PsiPlotType.DIFF:
@@ -1145,9 +1145,9 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_coilset_psi):
             self.coilset_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.coilset_psi = np.abs(diff_coilset_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.coilset_psi = np.abs(diff_coilset_psi) / np.max(
                 np.abs(diff_coilset_psi)
             )
@@ -1158,9 +1158,9 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_plasma_psi):
             self.plasma_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.plasma_psi = np.abs(diff_plasma_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.plasma_psi = np.abs(diff_plasma_psi) / np.max(np.abs(diff_plasma_psi))
         else:
             self.plasma_psi = diff_plasma_psi
@@ -1169,9 +1169,9 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_total_psi):
             self.total_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.total_psi = np.abs(diff_total_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.total_psi = np.abs(diff_total_psi) / np.max(np.abs(diff_total_psi))
         else:
             self.total_psi = diff_total_psi
@@ -1420,9 +1420,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_coilset_psi):
             self.coilset_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.coilset_psi = np.abs(diff_coilset_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.coilset_psi = np.abs(diff_coilset_psi) / np.max(
                 np.abs(diff_coilset_psi)
             )
@@ -1433,9 +1433,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_plasma_psi):
             self.plasma_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.plasma_psi = np.abs(diff_plasma_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.plasma_psi = np.abs(diff_plasma_psi) / np.max(np.abs(diff_plasma_psi))
         else:
             self.plasma_psi = diff_plasma_psi
@@ -1444,9 +1444,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         # if all zeros
         if not np.all(diff_total_psi):
             self.total_psi = None
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_ABS_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_ABS_DIFF:
             self.total_psi = np.abs(diff_total_psi)
-        elif self.diag_ops.psi_diff in PsiPlotType.PSI_REL_DIFF:
+        elif self.diag_ops.psi_diff is PsiPlotType.PSI_REL_DIFF:
             self.total_psi = np.abs(diff_total_psi) / np.max(np.abs(diff_total_psi))
         else:
             self.total_psi = diff_total_psi
