@@ -14,10 +14,17 @@ from enum import Enum, Flag, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import matplotlib.pyplot as plt
+
 from bluemira.base.file import try_get_bluemira_path
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 if TYPE_CHECKING:
     from os import PathLike
+
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.solve import ConvergenceCriterion
 
 
 class GridPlotType(Flag):
@@ -286,3 +293,40 @@ class PicardDiagnosticOptions:
                 "", subfolder="generated_data", allow_missing=not self.gif
             )
         self.figure_folder = figure_folder
+
+        if self.plot is PicardDiagnostic.NO_PLOT:
+            self.update_figure = self.make_gif = self.finalise_plots = self._noop
+        else:
+            self.f, self.ax = plt.subplots()
+
+    @staticmethod
+    def _noop(*args, **kwargs):  # noqa: ARG004
+        return
+
+    @staticmethod
+    def finalise_plots():
+        """Finalise plotting showing"""
+        plt.show(block=False)
+
+    def make_gif(self):
+        """Make gif of iterator plot"""
+        if self.gif:
+            make_gif(self.figure_folder, self.plot_name)
+
+    def update_figure(self, eq: Equilibrium, convergence: ConvergenceCriterion, i: int):
+        """
+        Updates the figure if plotting is used
+        """
+        self.ax.clear()
+        if self.plot is PicardDiagnostic.EQ:
+            eq.plot(ax=self.ax)
+        elif self.plot is PicardDiagnostic.CONVERGENCE:
+            convergence.plot(ax=self.ax)
+        plt.pause(PLT_PAUSE)
+        save_figure(
+            self.f,
+            f"{self.plot_name}{i}",
+            save=self.gif,
+            folder=self.figure_folder,
+            dpi=DPI_GIF,
+        )

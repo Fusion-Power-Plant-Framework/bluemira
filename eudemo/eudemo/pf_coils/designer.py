@@ -21,6 +21,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.diagnostics import PicardDiagnosticOptions
 from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
@@ -280,6 +281,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 gamma=eq_settings["gamma"],
                 relaxation=eq_settings["relaxation"],
                 peak_PF_current_factor=eq_settings["peak_PF_current_factor"],
+                diagnostic_plotting=PicardDiagnosticOptions(
+                    **eq_settings["diagnostic_plotting"]
+                ),
             ),
             position_settings=PositionSettings(
                 problem=PulsedNestedPositionCOP,

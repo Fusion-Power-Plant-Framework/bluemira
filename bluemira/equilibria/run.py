@@ -20,6 +20,7 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.equilibria.diagnostics import PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium, MHDState
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import (
@@ -114,6 +115,30 @@ class BreakdownCOPSettings:
     )
     B_stray_con_tol: float = 1e-8
     n_B_stray_points: int = 20
+    iter_max: int = 30
+
+    def make_opt_problem(
+        self, breakdown, strategy, max_currents, constraints, B_stray_max
+    ):
+        """Make breakdown optimisation problem
+
+        Returns
+        -------
+        :
+            The breakdown problem
+        """
+        return self.problem(
+            breakdown.coilset,
+            breakdown,
+            strategy,
+            B_stray_max=B_stray_max,
+            B_stray_con_tol=self.B_stray_con_tol,
+            n_B_stray_points=self.n_B_stray_points,
+            max_currents=max_currents,
+            opt_algorithm=self.algorithm,
+            opt_conditions=self.opt_conditions,
+            constraints=constraints,
+        )
 
 
 @dataclass
@@ -135,6 +160,60 @@ class EQSettings:
     gamma: float = 1e-8
     relaxation: float = 0.1
     peak_PF_current_factor: float = 1.5
+    diagnostic_plotting: PicardDiagnosticOptions = field(
+        default_factory=PicardDiagnosticOptions
+    )
+
+    def make_opt_problem(
+        self,
+        eq: Equilibrium,
+        max_currents: npt.NDArray[np.float64],
+        current_constraints: list[UpdateableConstraint] | None,
+        eq_constraints: list[MagneticConstraint],
+    ) -> CoilsetOptimisationProblem:
+        """Make equilibria optimisation problem
+
+        Returns
+        -------
+        :
+            The equilibria problem
+
+        Raises
+        ------
+        EquilibriaError
+            Unimplemented setup for equilibria problem
+        """
+        if self.problem == MinimalCurrentCOP:
+            constraints = eq_constraints
+            if current_constraints:
+                constraints += current_constraints
+
+            problem = self.problem(
+                eq.coilset,
+                eq,
+                max_currents=max_currents,
+                opt_conditions=self.opt_conditions,
+                opt_algorithm=self.algorithm,
+                constraints=constraints,
+            )
+        elif self.problem == TikhonovCurrentCOP:
+            problem = self.problem(
+                eq.coilset,
+                eq,
+                max_currents=max_currents,
+                opt_conditions=self.opt_conditions,
+                opt_algorithm=self.algorithm,
+                opt_parameters=self.opt_parameters,
+                constraints=current_constraints,
+                targets=MagneticConstraintSet(eq_constraints),
+                gamma=self.gamma,
+            )
+        else:
+            raise EquilibriaError(
+                "Only MinimalCurrentCOP and TikhonovCurrentCOP"
+                " equilibrium problems supported"
+            )
+        return problem
 
 
 @dataclass
@@ -146,6 +225,24 @@ class PositionSettings:
     opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )
+
+    def make_opt_problem(self, position_mapper, sub_opt_problems):
+        """
+        Make outer position optimisation problem
+
+        Returns
+        -------
+        :
+            The position problem
+        """
+        return self.problem(
+            sub_opt_problems[0].eq.coilset,
+            position_mapper,
+            sub_opt_problems,
+            self.algorithm,
+            self.opt_conditions,
+            constraints=None,
+        )
 
 
 @dataclass
@@ -238,12 +335,10 @@ class PulsedCoilsetDesign(ABC):
     @bd_settings.setter
     def bd_settings(self, value: dict | BreakdownCOPSettings | None = None):
         """Breakdown COP settings."""
-        if value is None:
-            self._bd_settings = BreakdownCOPSettings()
-        elif isinstance(value, BreakdownCOPSettings):
+        if isinstance(value, BreakdownCOPSettings):
             self._bd_settings = value
         else:
-            self._bd_settings = BreakdownCOPSettings(**value)
+            self._bd_settings = BreakdownCOPSettings(**(value or {}))
 
     @property
     def eq_settings(self) -> EQSettings:
@@ -253,12 +348,10 @@ class PulsedCoilsetDesign(ABC):
     @eq_settings.setter
     def eq_settings(self, value: EQSettings | dict | None = None):
         """Equilibrium COP settings."""
-        if value is None:
-            self._eq_settings = EQSettings()
-        elif isinstance(value, EQSettings):
+        if isinstance(value, EQSettings):
             self._eq_settings = value
         else:
-            self._eq_settings = EQSettings(**value)
+            self._eq_settings = EQSettings(**(value or {}))
 
     def take_snapshot(
         self,
@@ -290,14 +383,12 @@ class PulsedCoilsetDesign(ABC):
         EquilibriaError
             Unable to relax breakdown for given coil sizes
         """
-        R_0 = self.params.R_0.value
         strategy = self.bd_settings.strategy(
-            R_0, self.params.A.value, self.params.tk_sol_ib.value
+            self.params.R_0.value, self.params.A.value, self.params.tk_sol_ib.value
         )
 
-        i_max = 30
         relaxed = all(self.coilset.get_control_coils()._flag_sizefix)
-        for i in range(i_max):
+        for i in range(self.bd_settings.iter_max):
             coilset = deepcopy(self.coilset)
             breakdown = Breakdown(coilset, self.grid)
             constraints = deepcopy(self._coil_cons)
@@ -311,17 +402,12 @@ class PulsedCoilsetDesign(ABC):
                 cc.current = max_currents
                 cc.discretisation = self.eq_settings.coil_mesh_size
 
-            problem = self.bd_settings.problem(
-                breakdown.coilset,
+            problem = self.bd_settings.make_opt_problem(
                 breakdown,
                 strategy,
-                B_stray_max=self.params.B_premag_stray_max.value,
-                B_stray_con_tol=self.bd_settings.B_stray_con_tol,
-                n_B_stray_points=self.bd_settings.n_B_stray_points,
                 max_currents=max_currents,
-                opt_algorithm=self.bd_settings.algorithm,
-                opt_conditions=self.bd_settings.opt_conditions,
                 constraints=constraints,
+                B_stray_max=self.params.B_premag_stray_max.value,
             )
             result = problem.optimise(fixed_coils=False)
             breakdown.set_breakdown_point(*strategy.breakdown_point)
@@ -361,10 +447,11 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
+            diagnostic_plotting=self.eq_settings.diagnostic_plotting,
         )
         program()
 
-        opt_problem = self._make_opt_problem(
+        opt_problem = self.eq_settings.make_opt_problem(
             eq,
             self._get_max_currents(eq.coilset),
             current_constraints=None,
@@ -381,6 +468,7 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
             fixed_coils=True,
+            diagnostic_plotting=self.eq_settings.diagnostic_plotting,
         )
         program()
 
@@ -449,51 +537,12 @@ class PulsedCoilsetDesign(ABC):
                     constraint.target_value = psi_boundary / (2 * np.pi)
 
             opt_problems.append(
-                self._make_opt_problem(
+                self.eq_settings.make_opt_problem(
                     eq, max_currents, current_constraints, eq_constraints
                 )
             )
 
         return opt_problems
-
-    def _make_opt_problem(
-        self,
-        eq: Equilibrium,
-        max_currents: npt.NDArray[np.float64],
-        current_constraints: list[UpdateableConstraint] | None,
-        eq_constraints: list[MagneticConstraint],
-    ) -> CoilsetOptimisationProblem:
-        if self.eq_settings.problem == MinimalCurrentCOP:
-            constraints = eq_constraints
-            if current_constraints:
-                constraints += current_constraints
-
-            problem = self.eq_settings.problem(
-                eq.coilset,
-                eq,
-                max_currents=max_currents,
-                opt_conditions=self.eq_settings.opt_conditions,
-                opt_algorithm=self.eq_settings.algorithm,
-                constraints=constraints,
-            )
-        elif self.eq_settings.problem == TikhonovCurrentCOP:
-            problem = self.eq_settings.problem(
-                eq.coilset,
-                eq,
-                MagneticConstraintSet(eq_constraints),
-                gamma=self.eq_settings.gamma,
-                opt_conditions=self.eq_settings.opt_conditions,
-                opt_algorithm=self.eq_settings.algorithm,
-                opt_parameters=self.eq_settings.opt_parameters,
-                max_currents=max_currents,
-                constraints=current_constraints,
-            )
-        else:
-            raise EquilibriaError(
-                "Only MinimalCurrentCOP and TikhonovCurrentCOP"
-                " equilibrium problems supported"
-            )
-        return problem
 
     def converge_equilibrium(self, eq: Equilibrium, problem: CoilsetOptimisationProblem):
         """Converge an equilibrium problem from a 'frozen' plasma optimised state."""
@@ -503,6 +552,7 @@ class PulsedCoilsetDesign(ABC):
             fixed_coils=True,
             convergence=deepcopy(self.eq_settings.convergence),
             relaxation=self.eq_settings.relaxation,
+            diagnostic_plotting=self.eq_settings.diagnostic_plotting,
         )
         program()
 
@@ -631,12 +681,10 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     @pos_settings.setter
     def pos_settings(self, value: PositionSettings | dict | None = None):
         """Position COP settings."""
-        if value is None:
-            self._pos_settings = PositionSettings()
-        elif isinstance(value, PositionSettings):
+        if isinstance(value, PositionSettings):
             self._pos_settings = value
         else:
-            self._pos_settings = PositionSettings(**value)
+            self._pos_settings = PositionSettings(**(value or {}))
 
     def _prepare_coilset(self, coilset: CoilSet) -> CoilSet:
         coilset = deepcopy(coilset)
@@ -656,14 +704,8 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             self.run_reference_equilibrium()
 
         sub_opt_problems = self.get_sof_eof_opt_problems(psi_sof, psi_eof)
-
-        pos_opt_problem = self.pos_settings.problem(
-            sub_opt_problems[0].eq.coilset,
-            self.position_mapper,
-            sub_opt_problems,
-            self.pos_settings.algorithm,
-            self.pos_settings.opt_conditions,
-            constraints=None,
+        pos_opt_problem = self.pos_settings.make_opt_problem(
+            self.position_mapper, sub_opt_problems
         )
         result = pos_opt_problem.optimise(verbose=verbose)
         optimised_coilset = self._consolidate_coilset(result.coilset, sub_opt_problems)
