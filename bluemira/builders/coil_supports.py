@@ -494,7 +494,10 @@ class PFCoilSupportBuilder(Builder):
         v3 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
         v4 += 0.1 * np.array([np.cos(angle), 0, np.sin(angle)])
 
-        cut_box = make_polygon([v2, v1, v3, v4], closed=True)
+        if v3[0] < v4[0]:
+            v3, v4 = v4, v3
+
+        cut_box = make_polygon([v1, v2, v3, v4], closed=True)
 
         return min(
             boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
