@@ -91,7 +91,9 @@ class TestPulsedCoilSetDesign:
     def test_take_snapshot(self, snapshot, caplog):
         mypcs = self.MyPulsedCoilset(self.params, *[None] * 4)
         mypcs.take_snapshot("test", "eq", "coilset", "problem", "profiles")
-        snapshot.assert_called_with("eq", "coilset", "problem", "profiles", limiter=None)
+        snapshot.assert_called_with(
+            "eq", "coilset", "problem", "profiles", iterator=None, limiter=None
+        )
 
         assert mypcs.snapshots["test"] == "SNAP"
         # Overwrite snapshot
