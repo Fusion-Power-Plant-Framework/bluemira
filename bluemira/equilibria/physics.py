@@ -20,6 +20,7 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
+from bluemira.utilities.plot_tools import make_dict_with_units
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -375,6 +376,21 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
 
 
 @dataclass
+class EqSummaryPlotUnits:
+    """
+    Units for EqSummary.
+    """
+
+    W: str = "J"
+    V: str = "m^3"
+    R_0: str = "m"
+    a: str = "m"
+    I_p: str = "A"
+    dx_shaf: str = "m"
+    dz_shaf: str = "m"
+
+
+@dataclass
 class EqSummary:
     """
     Calculates interesting values in one go.
@@ -389,8 +405,10 @@ class EqSummary:
     q_95: float
     kappa_95: float
     delta_95: float
+    zeta_95: float
     kappa: float
     delta: float
+    zeta: float
     R_0: float
     A: float
     a: float
@@ -420,14 +438,18 @@ class EqSummary:
         if is_double_null:
             kappa_95 = f95.kappa
             delta_95 = f95.delta
+            zeta_95 = f95.zeta
             kappa = f100.kappa
             delta = f100.delta
+            zeta = f100.zeta
 
         else:
             kappa_95 = f95.kappa_upper
             delta_95 = f95.delta_upper
+            zeta_95 = f95.delta_upper
             kappa = f100.kappa_upper
             delta = f100.delta_upper
+            zeta = f100.delta_upper
 
         # d['dXsep'] = self.calc_dXsep()
         dx_shaf, dz_shaf = f100.shafranov_shift(eq)
@@ -447,8 +469,26 @@ class EqSummary:
             dz_shaf=dz_shaf,
             kappa_95=kappa_95,
             delta_95=delta_95,
+            zeta_95=zeta_95,
             kappa=kappa,
             delta=delta,
+            zeta=zeta,
+        )
+
+    def dict_with_units(self, latex=True):  # noqa: FBT002
+        """
+        Add appropriate units to value names.
+        Make latex ready if latex=true.
+
+        Returns
+        -------
+        :
+            Dictionary with updated keys for tables and plotting.
+        """
+        return make_dict_with_units(
+            data_dict=self.__dict__,
+            units_dict=EqSummaryPlotUnits().__dict__,
+            latex=latex,
         )
 
 

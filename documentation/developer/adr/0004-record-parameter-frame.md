@@ -63,7 +63,7 @@ The final design landed on consists of some of both options:
   )
 
   @dataclass
-  class MyFrameForAJob(ParmeterFrame):
+  class MyFrameForAJob(ParameterFrame):
      R_0: Parameter[float]
      A: Parameter[float]
 

@@ -15,6 +15,7 @@ from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.coils import CoilGroup, CoilSet
+from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -63,7 +64,7 @@ class TestFields:
             eq.coilset, eq, targets, gamma=1e-8
         )
 
-        program = PicardIterator(eq, opt_problem, relaxation=0.1, plot=False)
+        program = PicardIterator(eq, opt_problem, relaxation=0.1)
         program()
         cls.eq = eq
 
@@ -271,8 +272,6 @@ class TestSolveEquilibrium:
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
             relaxation=0.2,
-            plot=False,
-            gif=False,
         )
         program()
         assert program.check_converged()
@@ -290,8 +289,6 @@ class TestSolveEquilibrium:
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
             relaxation=0.2,
-            plot=False,
-            gif=False,
         )
         program()
         assert program.check_converged()
@@ -319,8 +316,6 @@ class TestSolveEquilibrium:
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
             relaxation=0.2,
-            plot=False,
-            gif=False,
         )
         program()
         assert abs_rel_difference(calc_li3(eq), self.l_i) <= rel_tol
@@ -453,6 +448,8 @@ class TestFixedPlasmaEquilibrium:
         path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
         cls.eq = FixedPlasmaEquilibrium.from_eqdsk(path)
 
-    @pytest.mark.parametrize("field", [False, True])
+    @pytest.mark.parametrize(
+        "field", [EqBPlotParam.PSI, EqBPlotParam.BP, EqBPlotParam.BT]
+    )
     def test_plotting(self, field):
         self.eq.plot(field=field)

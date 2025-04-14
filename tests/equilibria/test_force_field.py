@@ -39,7 +39,7 @@ class TestForceField:
         """
         forces = self.eq.get_coil_forces()
         (x, xc), (z, zc) = self.coilset.x, self.coilset.z
-        i1 = i2 = 10e6
+        i1, i2 = self.coilset.current
         a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
         k = 4 * x * xc / a**2
         fz = (

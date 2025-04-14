@@ -54,6 +54,7 @@ Z_LABEL = f"z {UNIT_LABEL}"
 class Zorder(Enum):
     """Layer ordering of common plots"""
 
+    GRID = 0.5
     POSITION_1D = 1
     POSITION_2D = 2
     PLASMACURRENT = 7
