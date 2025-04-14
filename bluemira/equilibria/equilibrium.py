@@ -61,7 +61,12 @@ from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
     FixedPlasmaEquilibriumPlotter,
 )
-from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
+from bluemira.equilibria.profiles import (
+    BetaLiIpProfile,
+    CustomProfile,
+    OPointCalcOptions,
+    Profile,
+)
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
@@ -96,7 +101,7 @@ class MHDState:
     Base class for magneto-hydrodynamic states
     """
 
-    def __init__(self):
+    def __init__(self, *, o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE):
         # Constructors
         self.x: npt.NDArray[np.float64] | None = None
         self.z: npt.NDArray[np.float64] | None = None
@@ -104,6 +109,7 @@ class MHDState:
         self.dz: float | None = None
         self.grid: Grid | None = None
         self.limiter: Limiter | None = None
+        self.o_point_fallback = o_point_fallback
         self._label: str | None = None
 
     @property
@@ -254,15 +260,23 @@ class FixedPlasmaEquilibrium(MHDState):
         psi_ax: float,
         psi_b: float,
         filename: Path | str | None = None,
+        *,
         label: str = "Fixed Plasma Equilibrium",
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ):
-        super().__init__()
+        super().__init__(o_point_fallback=o_point_fallback)
         self.set_grid(grid)
         # We just need the flux values, not the locations
         o_points = [Opoint(0.0, 0.0, psi_ax)]
         x_points = [Xpoint(0.0, 0.0, psi_b)]
         j_tor = profiles.jtor(
-            grid.x, grid.z, psi, o_points=o_points, x_points=x_points, lcfs=lcfs.xz.T
+            grid.x,
+            grid.z,
+            psi,
+            o_points=o_points,
+            x_points=x_points,
+            lcfs=lcfs.xz.T,
+            o_point_fallback=self.o_point_fallback,
         )
         self._psi = psi
         self._jtor = j_tor
@@ -459,8 +473,8 @@ class CoilSetMHDState(MHDState):
     Base class for magneto-hydrodynamic states with a CoilSet
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *, o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE):
+        super().__init__(o_point_fallback=o_point_fallback)
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
@@ -991,8 +1005,9 @@ class Equilibrium(CoilSetMHDState):
         jtor: npt.NDArray[np.float64] | None = None,
         filename: Path | str | None = None,
         label: str = "Equilibrium",
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ):
-        super().__init__()
+        super().__init__(o_point_fallback=o_point_fallback)
         # Constructors
         self._jtor = jtor
         self.profiles = profiles
@@ -1035,6 +1050,7 @@ class Equilibrium(CoilSetMHDState):
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
         **kwargs,
     ):
         """
@@ -1079,8 +1095,22 @@ class Equilibrium(CoilSetMHDState):
         )
 
         profiles = CustomProfile.from_eqdsk(e)
-        o_points, x_points = find_OX_points(grid.x, grid.z, e.psi, limiter=limiter)
-        jtor = profiles.jtor(grid.x, grid.z, e.psi, o_points=o_points, x_points=x_points)
+        o_points, x_points = find_OX_points(
+            grid.x,
+            grid.z,
+            e.psi,
+            limiter=limiter,
+            o_point_fallback=o_point_fallback,
+            R_0=profiles.R_0,
+        )
+        jtor = profiles.jtor(
+            grid.x,
+            grid.z,
+            e.psi,
+            o_points=o_points,
+            x_points=x_points,
+            o_point_fallback=o_point_fallback,
+        )
 
         self = cls(
             coilset,
@@ -1091,6 +1121,7 @@ class Equilibrium(CoilSetMHDState):
             psi=e.psi,
             jtor=jtor,
             filename=filename,
+            o_point_fallback=o_point_fallback,
         )
 
         self._eqdsk = e
@@ -1312,7 +1343,14 @@ class Equilibrium(CoilSetMHDState):
 
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
-            jtor = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor = self.profiles.jtor(
+                self.x,
+                self.z,
+                psi,
+                o_points,
+                x_points,
+                o_point_fallback=self.o_point_fallback,
+            )
 
         plasma_psi = self.plasma.psi()
         self.boundary(plasma_psi, jtor)
@@ -1386,7 +1424,14 @@ class Equilibrium(CoilSetMHDState):
                 Stop iterating
             """
             self.profiles.shape.adjust_parameters(x)
-            jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor_opt = self.profiles.jtor(
+                self.x,
+                self.z,
+                psi,
+                o_points,
+                x_points,
+                o_point_fallback=self.o_point_fallback,
+            )
             plasma_psi = self.plasma.psi()
             self.boundary(plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
@@ -1821,7 +1866,11 @@ class Equilibrium(CoilSetMHDState):
         self._x_points = None
 
     def get_OX_points(
-        self, psi: npt.NDArray[np.float64] | None = None, *, force_update: bool = False
+        self,
+        psi: npt.NDArray[np.float64] | None = None,
+        *,
+        force_update: bool = False,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
         Returns
@@ -1839,6 +1888,8 @@ class Equilibrium(CoilSetMHDState):
                 self.z,
                 psi,
                 limiter=self.limiter,
+                o_point_fallback=o_point_fallback,
+                R_0=self.profiles.R_0,
             )
         return self._o_points, self._x_points
 
