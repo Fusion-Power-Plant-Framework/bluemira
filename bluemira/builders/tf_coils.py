@@ -547,7 +547,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             If None then the current Axes will be used.
         """
         if ax is None:
-            ax = plt.gca()
+            _f, ax = plt.subplots()
 
         plot_2d(
             self.ripple_wire,
