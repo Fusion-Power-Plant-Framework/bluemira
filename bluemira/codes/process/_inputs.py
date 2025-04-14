@@ -354,7 +354,6 @@ class ProcessInputs:
     fbetatry_lower: float | None = None
     fcwr: float | None = None
     fdene: float | None = None
-    fdivcol: float | None = None
     fdtmp: float | None = None
     fecrh_ignition: float | None = None
     fflutf: float | None = None
@@ -511,28 +510,15 @@ class ProcessInputs:
     beta_div: float | None = None
     betai: float | None = None
     betao: float | None = None
-    bpsout: float | None = None
-    c1div: float | None = None
-    c2div: float | None = None
-    c3div: float | None = None
-    c4div: float | None = None
-    c5div: float | None = None
-    delld: float | None = None
     divclfr: float | None = None
     divdens: float | None = None
     dz_divertor: float | None = None
     divplt: float | None = None
-    fdfs: float | None = None
     fdiva: float | None = None
-    fififi: float | None = None
     flux_exp: float | None = None
-    frrp: float | None = None
     hldivlim: float | None = None
-    omegan: float | None = None
     prn1: float | None = None
-    rlenmax: float | None = None
     tdiv: float | None = None
-    xparain: float | None = None
     xpertin: float | None = None
     i_hldiv: int | None = None
 
