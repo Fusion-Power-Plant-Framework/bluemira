@@ -481,9 +481,9 @@ class PicardIterator:
         self.diagnostic_plotting = diagnostic_plotting or PicardDiagnosticOptions()
         self.store = []
         self.i = 0
-        if diagnostic_plotting.plot is not PicardDiagnostic.NO_PLOT:
+        if self.diagnostic_plotting.plot is not PicardDiagnostic.NO_PLOT:
             self.f, self.ax = plt.subplots()
-            self.pname = diagnostic_plotting.plot_name
+            self.pname = self.diagnostic_plotting.plot_name
 
     def _optimise_coilset(self):
         self.result = None
