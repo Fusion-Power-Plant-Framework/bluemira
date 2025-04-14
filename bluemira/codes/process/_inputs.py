@@ -679,7 +679,6 @@ class ProcessInputs:
     # first wall, blanket and
     # shield components variables
     i_fw_coolant_type: str | None = None
-    i_blkt_dual_coolant: int | None = None
     i_fw_blkt_shared_coolant: int | None = None
     i_blkt_liquid_breeder_type: int | None = None
     ims: int | None = None
