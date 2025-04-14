@@ -406,7 +406,7 @@ class ProcessInputs:
     gammax: float | None = None
     pflux_fw_rad_max: float | None = None
     mvalim: float | None = None
-    nbshinefmax: float | None = None
+    f_p_beam_shine_through_max: float | None = None
     nflutfmax: float | None = None
     pdivtlim: float | None = None
     f_fw_rad_max: float | None = None
@@ -480,23 +480,23 @@ class ProcessInputs:
 
     # Current drive
     beamwd: float | None = None
-    bootstrap_current_fraction_max: float | None = None
+    f_c_plasma_bootstrap_max: float | None = None
     cboot: float | None = None
-    harnum: float | None = None
-    beam_energy: float | None = None
-    etaech: float | None = None
-    etanbi: float | None = None
+    n_ecrh_harmonic: float | None = None
+    e_beam_kev: float | None = None
+    eta_ecrh_injector_wall_plug: float | None = None
+    eta_beam_injector_wall_plug: float | None = None
     feffcd: float | None = None
     frbeam: float | None = None
-    f_tritium_beam: float | None = None
-    gamma_ecrh: float | None = None
+    f_beam_tritium: float | None = None
+    eta_cd_norm_ecrh: float | None = None
     xi_ebw: float | None = None
-    iefrf: int | None = None
-    wave_mode: int | None = None
+    i_hcd_primary: int | None = None
+    i_ecrh_wave_mode: int | None = None
     irfcf: int | None = None
-    nbshield: float | None = None
-    pheat: float | None = None  # Listed as an output
-    pinjalw: float | None = None
+    dx_beam_shield: float | None = None
+    p_hcd_primary_extra_heat_mw: float | None = None  # Listed as an output
+    p_hcd_injected_max: float | None = None
     tbeamin: float | None = None
 
     # Impurity radiation
@@ -564,7 +564,7 @@ class ProcessInputs:
     pwpm2: float | None = None
     trithtmw: float | None = None
     vachtmw: float | None = None
-    irfcd: int | None = None
+    i_hcd_calculations: int | None = None
     # Water usage
 
     # Vacuum
