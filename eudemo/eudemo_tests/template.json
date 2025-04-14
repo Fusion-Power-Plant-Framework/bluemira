@@ -194,7 +194,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pinjmw",
+        "name": "p_hcd_injected_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -304,7 +304,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pinjalw",
+        "name": "p_hcd_injected_max",
         "send": true,
         "recv": false,
         "unit": "MW"
@@ -921,7 +921,7 @@
     "description": "Check units!",
     "mapping": {
       "PROCESS": {
-        "name": "etanbi",
+        "name": "eta_beam_injector_wall_plug",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -941,7 +941,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bootstrap_current_fraction",
+        "name": "f_c_plasma_bootstrap",
         "send": false,
         "recv": true,
         "unit": "dimensionless"

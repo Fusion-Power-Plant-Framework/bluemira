@@ -184,14 +184,14 @@ ucme     = 3.0d8 * cost of maintenance equipment ($)
 
 *-------------Current Drive Variables--------------*
 
-bootstrap_current_fraction_max = 0.99 * maximum fraction of plasma current from bootstrap; if `bscfmax < 0`;
-beam_energy  = 1000.0 * neutral beam energy (keV) (`iteration variable 19`)
-etanbi   = 0.4 * neutral beam wall plug to injector efficiency
+f_c_plasma_bootstrap_max = 0.99 * maximum fraction of plasma current from bootstrap; if `bscfmax < 0`;
+e_beam_kev  = 1000.0 * neutral beam energy (keV) (`iteration variable 19`)
+eta_beam_injector_wall_plug   = 0.4 * neutral beam wall plug to injector efficiency
 feffcd   = 1.0 * current drive efficiency fudge factor (`iteration variable 47`)
 frbeam   = 1.0 * R_tangential / R_major for neutral beam injection
-iefrf    = 5 * Switch for current drive efficiency model;
-irfcd    = 1 * Switch for current drive calculation;
-pinjalw  = 50. * maximum allowable value for injected power (MW) (`constraint equation 30`)
+i_hcd_primary    = 5 * Switch for current drive efficiency model;
+i_hcd_calculations    = 1 * Switch for current drive calculation;
+p_hcd_injected_max  = 50. * maximum allowable value for injected power (MW) (`constraint equation 30`)
 
 *------------Define Iteration Variables------------*
 

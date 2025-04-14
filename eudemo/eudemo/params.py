@@ -140,7 +140,7 @@ class EUDEMOReactorParams(ParameterFrame):
 
     # Heating and current drive
     eta_ecrh: Parameter[float]
-    gamma_ecrh: Parameter[float]
+    eta_cd_norm_ecrh: Parameter[float]
 
     # Equilibrium
     div_L2D_ib: Parameter[float]
