@@ -444,9 +444,7 @@ class EqAnalysis:
     ):
         self.input = input_eq
         self.reference = reference_eq
-        if diag_ops is None:
-            diag_ops = EqDiagnosticOptions()
-        self.diag_ops = diag_ops
+        self.diag_ops = diag_ops or EqDiagnosticOptions()
 
     def set_input(self, input_eq: Equilibrium | FixedPlasmaEquilibrium):
         """Sets input equilibrium."""
@@ -804,8 +802,7 @@ class EqAnalysis:
         """
         eq = self._get_input()
         ref = self._get_reference()
-        if diag_ops is not None:
-            self.diag_ops = diag_ops
+        diag_ops = diag_ops or self.diag_ops
         return EquilibriumComparisonPostOptPlotter(
             equilibrium=eq,
             reference_equilibrium=ref,
@@ -1022,12 +1019,6 @@ class EqAnalysis:
         return ax, target_flux, ref_target_flux
 
 
-class COPAnalysis(EqAnalysis):
-    """Coilset Optimisation Problem analysis toolbox"""
-
-    def __init__(self, cop: CoilsetOptimisationProblem):
-        super().__init__(cop.eq)
-        self._cop = cop
 
 
 @dataclass
