@@ -1272,7 +1272,7 @@
     "unit": "m",
     "source": "Input"
   },
-  "z_cp_top": {
+  "h_cp_top": {
     "name": "Height of the TF coil inboard Tapered section end",
     "value": 6.0,
     "unit": "m",
