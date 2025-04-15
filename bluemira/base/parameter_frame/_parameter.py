@@ -169,7 +169,7 @@ class Parameter(Generic[ParameterValueType]):
         self._source = source
         self._add_history_record()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, *, latex_unit: bool = False) -> dict[str, Any]:
         """Serialise the parameter to a dictionary.
 
         Returns
@@ -177,10 +177,15 @@ class Parameter(Generic[ParameterValueType]):
         :
             A dictionary representation of the parameter.
         """
+        if latex_unit:
+            unit = "" if not self.unit else self.latex_unit
+        else:
+            unit = "dimensionless" if not self.unit else self.unit
+
         out = {
             "name": self.name,
             "value": self.value,
-            "unit": "dimensionless" if not self.unit else self.unit,
+            "unit": unit,
         }
         for field in ["source", "description", "long_name"]:
             if value := getattr(self, field):
@@ -242,6 +247,11 @@ class Parameter(Generic[ParameterValueType]):
     def unit(self) -> str:
         """Return the physical unit of the parameter."""
         return f"{self._unit:~P}"
+
+    @property
+    def latex_unit(self) -> str:
+        """Return the physical unit of the parameter."""
+        return f"{self._unit:~L}"
 
     @property
     def source(self) -> str:
