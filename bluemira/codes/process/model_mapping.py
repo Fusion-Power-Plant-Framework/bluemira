@@ -548,19 +548,6 @@ class BlanketModel(PROCESSModel):
         return "i_blanket_type"
 
     CCFE_HCPB = 1, ("dr_blkt_inboard", "dr_blkt_outboard", "tbrmin"), "CCFE HCPB model"
-    KIT_HCPB = 2, ("dr_blkt_inboard", "dr_blkt_outboard"), "KIT HCPB model"
-    CCFE_HCPB_TBR = (
-        3,
-        (
-            "dr_blkt_inboard",
-            "dr_blkt_outboard",
-            "iblanket_thickness",
-            "f_blkt_li6_enrichment",
-            "breeder_f",
-        ),
-        "CCFE HCPB model with Tritium Breeding Ratio calculation",
-    )
-    KIT_HCLL = 4, ("dr_blkt_inboard", "dr_blkt_outboard"), "KIT HCLL model"
     DCLL = 5, ("blbuith", "blbuoth"), "no neutronics model included"
 
 
