@@ -359,7 +359,7 @@ class ProcessInputs:
     fflutf: float | None = None
     ffuspow: float | None = None
     fgamcd: float | None = None
-    fhldiv: float | None = None
+    fpflux_div_heat_load_mw: float | None = None
     fiooic: float | None = None
     fipir: float | None = None
     fjohc: float | None = None
@@ -404,7 +404,7 @@ class ProcessInputs:
     mvalim: float | None = None
     f_p_beam_shine_through_max: float | None = None
     nflutfmax: float | None = None
-    pdivtlim: float | None = None
+    p_plasma_separatrix_min_mw: float | None = None
     f_fw_rad_max: float | None = None
     pnetelin: float | None = None
     powfmax: float | None = None
@@ -507,20 +507,20 @@ class ProcessInputs:
 
     # Divertor
     anginc: float | None = None
-    beta_div: float | None = None
+    deg_div_field_plate: float | None = None
     betai: float | None = None
     betao: float | None = None
-    divclfr: float | None = None
-    divdens: float | None = None
+    f_vol_div_coolant: float | None = None
+    den_div_structure: float | None = None
     dz_divertor: float | None = None
-    divplt: float | None = None
+    dx_div_plate: float | None = None
     fdiva: float | None = None
-    flux_exp: float | None = None
-    hldivlim: float | None = None
+    f_div_flux_expansion: float | None = None
+    pflux_div_heat_load_max_mw: float | None = None
     prn1: float | None = None
     tdiv: float | None = None
     xpertin: float | None = None
-    i_hldiv: int | None = None
+    i_div_heat_load: int | None = None
 
     # Pulse
     bctmp: float | None = None
@@ -616,7 +616,7 @@ class ProcessInputs:
     epbetmax: float | None = None
     f_alpha_plasma: float | None = None
     f_deuterium: float | None = None
-    ftar: float | None = None
+    f_p_div_lower: float | None = None
     ffwal: float | None = None
     fgwped: float | None = None
     fgwsep: float | None = None
