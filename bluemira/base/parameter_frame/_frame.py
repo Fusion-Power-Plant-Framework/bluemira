@@ -445,11 +445,63 @@ class ParameterFrame:
             out[param_name] = param_data
         return out
 
+    def tabulation_data(
+        self,
+        keys: list[str] | None = None,
+        floatfmt: str = ".5g",
+        value_label: str | None = "value",
+    ) -> tuple[list[str], list[list[str]]]:
+        try:
+            pkey = keys.index("Parameter")
+            keys.pop(pkey)
+            if "name" in keys:
+                keys.pop(keys.index("name"))
+            if "unit" in keys:
+                keys.pop(keys.index("unit"))
+            keys.insert(pkey, "unit")
+            keys.insert(pkey, "name")
+        except (ValueError, AttributeError):
+            pkey = None
+
+        columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
+        rec_col = copy.deepcopy(columns)
+        nindex = columns.index("name")
+        rec_col.pop(nindex)
+
+        try:
+            vindex = rec_col.index("value")
+            columns[columns.index("value")] = value_label
+        except ValueError:
+            vindex = None
+
+        records = sorted([
+            [key, *[param.get(col, "N/A") for col in rec_col]]
+            for key, param in self.to_dict().items()
+        ])
+        if pkey is not None:
+            columns.pop(pkey)
+            columns.pop(pkey)
+            columns.insert(pkey, "Parameter")
+
+        for r in records:
+            if vindex is not None and isinstance(r[vindex], float):
+                # tabulate's floatfmt only works if the whole column is a float
+                r[vindex] = f"{r[vindex]: {floatfmt}}"
+
+            if pkey is not None:
+                unit = r.pop(pkey + 1)
+                r[0] += f" [{'' if unit == 'dimensionless' else unit}]"
+            if nindex != 0:
+                r.insert(nindex, r.pop(0))
+
+        return columns, records
+
     def tabulate(
         self,
         keys: list[str] | None = None,
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".5g",
+        value_label: str | None = "value",
     ) -> str:
         """
         Tabulate the ParameterFrame
@@ -470,22 +522,14 @@ class ParameterFrame:
         """
         column_widths = dict(
             zip(
-                list(ParamDictT.__annotations__.keys()),
-                [20, None, 20, 20, 20, 20],
+                [*list(ParamDictT.__annotations__.keys()), "Parameter"],
+                [20, None, 20, 20, 20, 20, 20],
                 strict=False,
             )
         )
-        columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
-        rec_col = copy.deepcopy(columns)
-        rec_col.pop(columns.index("name"))
-        records = sorted([
-            [key, *[param.get(col, "N/A") for col in rec_col]]
-            for key, param in self.to_dict().items()
-        ])
-        # tabulate's floatfmt only works if the whole column is a float
-        for r in records:
-            if isinstance(r[1], float):
-                r[1] = f"{r[1]: {floatfmt}}"
+
+        columns, records = self.tabulation_data(keys, floatfmt, value_label)
+        column_widths[value_label] = column_widths["value"]
 
         return tabulate(
             records,
@@ -810,3 +854,33 @@ def make_parameter_frame(
     if isinstance(params, ConfigParams):
         return param_cls.from_config_params(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")
+
+
+def tabulate_values_from_multiple_frames(
+    frames: Iterable[ParameterFrameT],
+    value_labels: Iterable[str],
+    tablefmt: str = "fancy_grid",
+    floatfmt: str = ".5g",
+):
+    names = iter(value_labels)
+    columns, records = frames[0].tabulation_data(
+        ["Parameter", "value"], floatfmt=floatfmt, value_label=next(names)
+    )
+    for frame in frames[1:]:
+        if not isinstance(frame, type(frames[0])):
+            raise TypeError("All ParameterFrames must be of the same type")
+        column, record = frame.tabulation_data(
+            ["value"], floatfmt=floatfmt, value_labe=next(names)
+        )
+        columns.append(column)
+        for r_ind in range(len(records)):
+            records[r_ind].extend(record[r_ind])
+
+    return tabulate(
+        records,
+        headers=columns,
+        tablefmt=tablefmt,
+        showindex=False,
+        numalign="right",
+        maxcolwidths=[20, *(None for _ in columns[1:])],
+    )

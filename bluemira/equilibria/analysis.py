@@ -23,6 +23,7 @@ from tabulate import tabulate
 from bluemira.base.constants import CoilType, raw_uc
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import tabulate_values_from_multiple_frames
 from bluemira.equilibria.coils._tools import rename_coilset
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.diagnostics import (
@@ -46,7 +47,7 @@ from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
 )
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.utilities.tools import is_num, make_table
+from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
@@ -597,7 +598,11 @@ class EqAnalysis:
                 "This function can only be used for Free Boundary Equilbria."
             )
         eq_summary = eq.analyse_plasma()
-        print(make_table(eq_summary, eq.label))  # noqa: T201
+        print(  # noqa: T201
+            eq_summary.tabulate(
+                ["Parameter", "value"], tablefmt="simple", value_label=eq.label
+            )
+        )
         return eq_summary
 
     def control_coil_table(self, control: list | None = None):
@@ -1119,7 +1124,11 @@ class MultiEqAnalysis:
 
         """
         eq_summaries = self.make_eq_dataclass_list(Equilibrium.analyse_plasma)
-        table = make_table(eq_summaries, self.equilibria_dict.keys())
+
+        table = tabulate_values_from_multiple_frames(
+            eq_summaries, self.equilibria_dict.keys()
+        )
+
         print(table)  # noqa: T201
         return table
 

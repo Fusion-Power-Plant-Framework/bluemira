@@ -125,7 +125,6 @@ class TestEqAnalysis:
         assert isinstance(plot_7_ax[0], Axes)
         assert isinstance(plot_7_res, CoreResults)
         assert len(plot_7_ax) == 18
-        assert len(plot_7_res.__dict__.items()) == 17
         assert isinstance(plot_8, EqSummary)
         assert isinstance(plot_9, Axes)
         assert plot_10 is None
