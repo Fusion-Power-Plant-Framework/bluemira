@@ -387,31 +387,30 @@ class TestEquilibrium:
 class TestEqReadWrite:
     @pytest.mark.parametrize("qpsi_calcmode", [0, 1])
     @pytest.mark.parametrize("file_format", ["json", "eqdsk"])
-    def test_read_write(self, qpsi_calcmode, file_format):
+    @pytest.mark.parametrize("to_cocos", [3, 5])
+    def test_read_write(self, qpsi_calcmode, file_format, to_cocos):
         data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
         file_name = "eqref_OOB.json"
         new_file_name = f"eqref_OOB_temp1.{file_format}"
         new_file_path = Path(data_path, new_file_name)
 
-        eq = Equilibrium.from_eqdsk(
-            Path(data_path, file_name), from_cocos=7, to_cocos=None
-        )
+        eq = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
         # Note we have recalculated the qpsi data here
         eq.to_eqdsk(
             directory=data_path,
             filename=new_file_name,
             qpsi_calcmode=qpsi_calcmode,
             filetype=file_format,
+            to_cocos=to_cocos,
         )
-        d1 = eq.to_dict(qpsi_calcmode=qpsi_calcmode)
+        d1 = eq.to_dict(qpsi_calcmode=qpsi_calcmode, to_cocos=to_cocos)
 
         eq2 = Equilibrium.from_eqdsk(
             new_file_path,
-            from_cocos=7 if qpsi_calcmode else 3,
-            to_cocos=None,
+            from_cocos=to_cocos,
             qpsi_positive=None if qpsi_calcmode else False,
         )
-        d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
+        d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode, to_cocos=to_cocos)
         new_file_path.unlink()
         if file_format == "eqdsk":
             d1.pop("coil_names")

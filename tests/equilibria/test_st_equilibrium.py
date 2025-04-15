@@ -47,7 +47,7 @@ class TestSTEquilibrium:
         private = Path(private, "bluemira-private-data/equilibria/STEP_SPR_08")
         eq_name = "STEP_SPR08_BLUEPRINT.json"
         cls.eq_blueprint = Equilibrium.from_eqdsk(
-            Path(private, eq_name), from_cocos=3, to_cocos=11, qpsi_positive=False
+            Path(private, eq_name), from_cocos=3, qpsi_positive=False
         )
         jeq_name = "jetto.eqdsk_out"
         filename = Path(private, jeq_name)

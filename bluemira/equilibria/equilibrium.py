@@ -136,7 +136,6 @@ class MHDState:
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         *,
         qpsi_positive: bool | None = None,
         full_coil: bool = False,
@@ -153,8 +152,6 @@ class MHDState:
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos:
-            The COCOS index to convert the EQDSK file to.
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
@@ -178,7 +175,7 @@ class MHDState:
         e = EQDSKInterface.from_file(
             filename,
             from_cocos=from_cocos,
-            to_cocos=to_cocos,
+            to_cocos=BLUEMIRA_DEFAULT_COCOS,
             qpsi_positive=qpsi_positive,
             **kwargs,
         )
@@ -202,6 +199,7 @@ class MHDState:
         header: str = "bluemira_equilibria",
         directory: str | None = None,
         filetype: str = "json",
+        to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
         **kwargs,
     ):
         """
@@ -237,6 +235,8 @@ class MHDState:
                 ct if isinstance(ct, str) else ct.name for ct in data["coil_types"]
             ]
         eqdsk = EQDSKInterface(**data)
+        eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
+        eqdsk = eqdsk.to_cocos(to_cocos)
         eqdsk.write(filename.as_posix(), file_format=filetype, **kwargs)
 
 
@@ -277,7 +277,6 @@ class FixedPlasmaEquilibrium(MHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         *,
         qpsi_positive: bool | None = None,
         full_coil: bool = False,
@@ -295,8 +294,6 @@ class FixedPlasmaEquilibrium(MHDState):
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos:
-            The COCOS index to convert the EQDSK file to.
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
@@ -307,7 +304,6 @@ class FixedPlasmaEquilibrium(MHDState):
         e, grid = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
-            to_cocos=to_cocos,
             full_coil=full_coil,
             qpsi_positive=qpsi_positive,
             **kwargs,
@@ -471,7 +467,6 @@ class CoilSetMHDState(MHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         *,
         qpsi_positive: bool | None = None,
         user_coils: CoilSet | None = None,
@@ -490,8 +485,6 @@ class CoilSetMHDState(MHDState):
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos:
-            The COCOS index to convert the EQDSK file to.
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
@@ -520,7 +513,6 @@ class CoilSetMHDState(MHDState):
         e, grid = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
-            to_cocos=to_cocos,
             qpsi_positive=qpsi_positive,
             full_coil=full_coil,
             **kwargs,
@@ -662,7 +654,6 @@ class Breakdown(CoilSetMHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         *,
         qpsi_positive: bool | None = None,
         force_symmetry: bool,
@@ -682,8 +673,6 @@ class Breakdown(CoilSetMHDState):
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos:
-            The COCOS index to convert the EQDSK file to.
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
@@ -699,7 +688,6 @@ class Breakdown(CoilSetMHDState):
         eqdsk, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
-            to_cocos,
             qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
@@ -750,6 +738,7 @@ class Breakdown(CoilSetMHDState):
         header: str = "bluemira_equilibria",
         directory: str | None = None,
         filetype: str = "json",
+        to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
         **kwargs,
     ):
         """
@@ -758,7 +747,9 @@ class Breakdown(CoilSetMHDState):
         data = self.to_dict()
         data["xcentre"] = 0
         data["bcentre"] = 0
-        super().to_eqdsk(data, filename, header, directory, filetype, **kwargs)
+        super().to_eqdsk(
+            data, filename, header, directory, filetype, to_cocos=to_cocos, **kwargs
+        )
 
     def set_breakdown_point(self, x_bd: float, z_bd: float):
         """
@@ -1029,7 +1020,6 @@ class Equilibrium(CoilSetMHDState):
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
-        to_cocos: int | None = BLUEMIRA_DEFAULT_COCOS,
         *,
         qpsi_positive: bool | None = None,
         force_symmetry: bool = False,
@@ -1053,8 +1043,6 @@ class Equilibrium(CoilSetMHDState):
             The COCOS index of the EQDSK file. Used when the determined
             COCOS is ambiguous. Will raise if given and not one of
             the determined COCOS indices.
-        to_cocos:
-            The COCOS index to convert the EQDSK file to.
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
@@ -1070,7 +1058,6 @@ class Equilibrium(CoilSetMHDState):
         e, grid, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
-            to_cocos=to_cocos,
             qpsi_positive=qpsi_positive,
             force_symmetry=force_symmetry,
             user_coils=user_coils,
@@ -1098,7 +1085,9 @@ class Equilibrium(CoilSetMHDState):
         return self
 
     def to_dict(
-        self, qpsi_calcmode: int | QpsiCalcMode = QpsiCalcMode.NO_CALC
+        self,
+        qpsi_calcmode: int | QpsiCalcMode = QpsiCalcMode.NO_CALC,
+        to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
     ) -> dict[str, Any]:
         """
         Creates dictionary for equilibrium object, in preparation for saving
@@ -1126,7 +1115,8 @@ class Equilibrium(CoilSetMHDState):
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
             # This is too damn slow..
-            q = self.q(psinorm, o_points=opoints, x_points=xpoints)
+            sign = -1 if to_cocos in {3, 4, 5, 6, 13, 14, 15, 16} else 1
+            q = sign * self.q(psinorm, o_points=opoints, x_points=xpoints)
         elif qpsi_calcmode is QpsiCalcMode.ZEROS:
             q = np.zeros(n_x)
 
@@ -1188,6 +1178,7 @@ class Equilibrium(CoilSetMHDState):
         directory: str | None = None,
         filetype: str = "json",
         qpsi_calcmode: int | QpsiCalcMode = QpsiCalcMode.NO_CALC,
+        to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
         **kwargs,
     ):
         """
@@ -1198,11 +1189,12 @@ class Equilibrium(CoilSetMHDState):
             qpsi_calcmode = QpsiCalcMode.ZEROS
 
         super().to_eqdsk(
-            self.to_dict(qpsi_calcmode),
+            self.to_dict(qpsi_calcmode, to_cocos),
             filename,
             header,
             directory,
             filetype,
+            to_cocos=to_cocos,
             **kwargs,
         )
 

@@ -126,7 +126,7 @@ class FluxSurface:
         Plot the FluxSurface.
         """
         if ax is None:
-            ax = plt.gca()
+            _f, ax = plt.subplots()
 
         kwargs["linewidth"] = kwargs.get("linewidth", 0.05)
         kwargs["color"] = kwargs.get("color", "r")
@@ -633,7 +633,7 @@ class FieldLine:
             Matplotlib axes onto which to plot
         """
         if ax is None:
-            ax = plt.gca()
+            _f, ax = plt.subplots()
 
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
         xi, _, zi = coords_plane_intersect(self.coords, xz_plane).T
