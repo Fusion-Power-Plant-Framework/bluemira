@@ -187,3 +187,7 @@ tmp_env.yml
 *.svg
 *.xml
 *.out
+
+# dagmc outputs
+*.h5m
+*.vtk
