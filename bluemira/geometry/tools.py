@@ -213,7 +213,7 @@ def log_geometry_on_failure(func):
 
             else:
                 bluemira_warn(
-                    "Set logging level to debug to save the geometry"
+                    "Set logging level to debug to save the geometry "
                     "and other function arguments to json"
                 )
 
