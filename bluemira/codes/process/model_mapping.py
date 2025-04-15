@@ -122,7 +122,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
         """
         return "i_single_null"
 
-    DOUBLE_NULL = 0, ("ftar",)
+    DOUBLE_NULL = 0, ("f_p_div_lower",)
     SINGLE_NULL = 1
 
 
@@ -979,7 +979,7 @@ class DivertorHeatFluxModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_hldiv"
+        return "i_div_heat_load"
 
     INPUT = 0
     CHAMBER = 1
