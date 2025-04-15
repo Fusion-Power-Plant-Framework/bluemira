@@ -11,7 +11,12 @@ from dataclasses import dataclass
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_debug,
+    bluemira_debug_flush,
+    bluemira_print,
+    bluemira_warn,
+)
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
@@ -158,7 +163,9 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             :
                 The geometry length
             """
-            return geom.create_shape().length
+            sh_len = geom.create_shape().length
+            bluemira_debug_flush(f"Shape length: {sh_len}")
+            return sh_len
 
         bluemira_print("Solving WallSilhouette optimisation")
         bluemira_debug(

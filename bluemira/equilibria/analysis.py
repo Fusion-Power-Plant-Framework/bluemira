@@ -59,7 +59,6 @@ def select_eq(
     fixed_or_free: FixedOrFree = FixedOrFree.FREE,
     dummy_coils: CoilSet | None = None,
     from_cocos: int = BLUEMIRA_DEFAULT_COCOS,
-    to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
     qpsi_positive: bool = False,  # noqa: FBT001, FBT002
     control: CoilType | list[str] | None = None,
 ) -> FixedPlasmaEquilibrium | Equilibrium:
@@ -81,8 +80,6 @@ def select_eq(
         The COCOS index of the EQDSK file. Used when the determined
         COCOS is ambiguous. Will raise if given and not one of
         the determined COCOS indices.
-    to_cocos:
-        The COCOS index to convert the EQDSK file to.
     qpsi_positive:
         Whether or not qpsi is positive, required for identification
         when qpsi is not present in the file.
@@ -103,7 +100,6 @@ def select_eq(
             file_path,
             from_cocos=from_cocos,
             user_coils=dummy_coils,
-            to_cocos=to_cocos,
             qpsi_positive=qpsi_positive,
         )
         eq.coilset = rename_coilset(eq.coilset)
@@ -115,7 +111,6 @@ def select_eq(
     return FixedPlasmaEquilibrium.from_eqdsk(
         file_path,
         from_cocos=from_cocos,
-        to_cocos=to_cocos,
         qpsi_positive=qpsi_positive,
     )
 
@@ -126,7 +121,6 @@ def select_multi_eqs(
     equilibrium_names: str | Iterable[str] | None = None,
     dummy_coils=None,
     from_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
-    to_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
     *,
     qpsi_positive: bool | Iterable[bool] = False,
     control_coils: CoilType | list[str] | None = None,
@@ -151,8 +145,6 @@ def select_multi_eqs(
         The COCOS index of the EQDSK file. Used when the determined
         COCOS is ambiguous. Will raise if given and not one of
         the determined COCOS indices.
-    to_cocos:
-        The COCOS index to convert the EQDSK file to.
     qpsi_positive:
         Whether or not qpsi is positive, required for identification
         when qpsi is not present in the file.
@@ -189,8 +181,6 @@ def select_multi_eqs(
         )
     if is_num(from_cocos):
         from_cocos = np.ones(len(equilibrium_input)) * from_cocos
-    if is_num(to_cocos):
-        to_cocos = np.ones(len(equilibrium_input)) * to_cocos
     if isinstance(qpsi_positive, bool):
         qpsi_positive = len(equilibrium_input) * [qpsi_positive]
     if equilibrium_names is None:
@@ -210,13 +200,12 @@ def select_multi_eqs(
         equilibrium_paths = equilibrium_input
 
     equilibria_dict = {}
-    for name, file, eq_type, dc, fc, tc, qp, cc in zip(
+    for name, file, eq_type, dc, fc, qp, cc in zip(
         equilibrium_names,
         equilibrium_paths,
         fixed_or_free,
         dummy_coils,
         from_cocos,
-        to_cocos,
         qpsi_positive,
         control_coils,
         strict=False,
@@ -227,7 +216,6 @@ def select_multi_eqs(
                 "fixed_or_free": eq_type,
                 "dummy_coils": dc,
                 "from_cocos": fc,
-                "to_cocos": tc,
                 "qpsi_positive": qp,
                 "control_coils": cc,
             }
@@ -263,7 +251,6 @@ def get_eqs(equilibria_dict):
             fixed_or_free=equilibrium_dict["fixed_or_free"],
             dummy_coils=equilibrium_dict["dummy_coils"],
             from_cocos=equilibrium_dict["from_cocos"],
-            to_cocos=equilibrium_dict["to_cocos"],
             qpsi_positive=equilibrium_dict["qpsi_positive"],
             control=equilibrium_dict["control_coils"],
         )
