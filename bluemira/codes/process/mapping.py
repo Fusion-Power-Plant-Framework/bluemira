@@ -49,7 +49,7 @@ OUT_mappings = {
     "P_fus_DT": ("dt_power_total", "MW"),
     "P_fus_DD": ("dd_power", "MW"),
     "H_star": ("hfact", "dimensionless"),
-    "P_sep": ("pdivt", "MW"),
+    "P_sep": ("p_plasma_separatrix_mw", "MW"),
     "P_rad_core": ("p_plasma_inner_rad_mw", "MW"),
     "P_rad_edge": ("p_plasma_outer_rad_mw", "MW"),
     "P_rad": ("p_plasma_rad_mw", "MW"),
