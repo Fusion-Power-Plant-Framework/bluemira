@@ -561,7 +561,7 @@ class CalcMethod(Enum):
 def calculate_connection_length(
     eq: Equilibrium,
     div_target_start_point: Coordinates | None = None,
-    first_wall: Coordinates | None = None,
+    flux_intercepting_surface: Coordinates | None = None,
     div_norm_psi: float | None = None,
     forward: bool = True,  # noqa: FBT001, FBT002
     psi_n_tol: float = 1e-6,
@@ -570,6 +570,7 @@ def calculate_connection_length(
     n_turns_max: int = 50,
     n_points: int = 1000,
     calculation_method: str = "flux_surface_geometry",
+    verbose=False,  # noqa: FBT002
 ):
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -599,10 +600,13 @@ def calculate_connection_length(
     """
     calculation_method = CalcMethod[calculation_method.upper()]
 
-    if first_wall is None:
+    if flux_intercepting_surface is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
         z1, z2 = eq.grid.z_min, eq.grid.z_max
-        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
+        flux_intercepting_surface = Coordinates({
+            "x": [x1, x2, x2, x1, x1],
+            "z": [z1, z1, z2, z2, z1],
+        })
 
     # Use intersection between plasma facing surface and flux surface
     # with chosen normalised psi. Note: this will override an input
@@ -616,7 +620,7 @@ def calculate_connection_length(
         coords.sort(key=lambda coords: -coords.length)
         xcrss, zcrss = np.array([]), np.array([])
         for c in coords[:2]:
-            x_int, z_int = get_intersect(c.xz, first_wall.xz)
+            x_int, z_int = get_intersect(c.xz, flux_intercepting_surface.xz)
             xcrss, zcrss = np.append(xcrss, x_int), np.append(zcrss, z_int)
         # Pick lower inner or outer corner for div crossing points
         # N.B. forward = True = LFS
@@ -684,7 +688,7 @@ def calculate_connection_length(
             z=z,
             forward=forward,
             n_points=n_points,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
             n_turns_max=n_turns_max,
         )
 
@@ -694,8 +698,9 @@ def calculate_connection_length(
             x=x,
             z=z,
             forward=forward,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
             f_s=f_s,
+            verbose=verbose,
         )
 
     raise BluemiraError("Please select a valid calculation_method option.")
