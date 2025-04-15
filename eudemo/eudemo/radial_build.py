@@ -285,7 +285,7 @@ template_builder.add_input_values({
     "abktflnc": 15.0,
     "adivflnc": 20.0,
     # For sanity...
-    "hldivlim": 10,
+    "pflux_div_heat_load_max_mw": 10,
     "prn1": 0.4,
     "bmxlim": 11.2,
     "ffuspow": 1.0,

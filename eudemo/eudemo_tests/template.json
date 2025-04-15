@@ -396,7 +396,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pdivt",
+        "name": "p_plasma_separatrix_mw",
         "send": false,
         "recv": true,
         "unit": "MW"

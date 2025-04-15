@@ -1187,7 +1187,7 @@
     "var_mod": "Plasma",
     "scan01": 32.842
   },
-  "ftar": {
+  "f_p_div_lower": {
     "var_mod": "Plasma",
     "scan01": 1.0
   },
@@ -1251,7 +1251,7 @@
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "pdivt": {
+  "p_plasma_separatrix_mw": {
     "var_mod": "Plasma",
     "scan01": 164.21
   },
@@ -3284,11 +3284,11 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 6.068
   },
-  "divsur": {
+  "a_div_surface_total": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 224.7
   },
-  "divmas": {
+  "m_div_plate": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 55052.0
   },
