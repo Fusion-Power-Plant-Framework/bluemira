@@ -420,7 +420,12 @@ class Constraint(ConstraintSelection, Model):
         "Reinke criterion impurity fraction lower limit",
     )
     BMAX_CS_UPPER_LIMIT = 79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit"
-    PDIVT_LOWER_LIMIT = 80, (153,), ("pdivtlim",), "Divertor power lower limit"
+    PDIVT_LOWER_LIMIT = (
+        80,
+        (153,),
+        ("p_plasma_separatrix_min_mw",),
+        "Divertor power lower limit",
+    )
     DENSITY_PROFILE_CONSISTENCY = 81, (154,), (), "Ne(0) > ne(ped) constraint"
     STELLARATOR_COIL_CONSISTENCY = (
         82,
@@ -580,7 +585,7 @@ ITERATION_VAR_MAPPING = {
     # 24 NOT USED
     "fpnetel": 25,
     "ffuspow": 26,
-    "fhldiv": 27,
+    "fpflux_div_heat_load_mw": 27,
     "fradpwr": 28,
     "dr_bore": 29,
     "fmva": 30,
@@ -716,7 +721,7 @@ ITERATION_VAR_MAPPING = {
     "fncycle": 167,
     "fecrh_ignition": 168,
     "te0_ecrh_achievable": 169,
-    "beta_div": 170,
+    "deg_div_field_plate": 170,
 }
 
 
