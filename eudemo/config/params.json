@@ -346,7 +346,7 @@
     "source": "Input",
     "long_name": "Gap between VV and TS"
   },
-  "z_cp_top": {
+  "h_cp_top": {
     "value": 6.0,
     "unit": "meter",
     "source": "Input",
@@ -1057,7 +1057,7 @@
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating wallplug efficiency"
   },
-  "eta_cd_norm_ecrh": {
+  "gamma_ecrh": {
     "value": 0.3e20,
     "unit": "A/W/m^2",
     "source": "Input",
