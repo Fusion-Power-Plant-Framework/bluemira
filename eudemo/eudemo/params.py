@@ -42,7 +42,7 @@ class EUDEMOReactorParams(ParameterFrame):
     g_ts_tf: Parameter[float]
     g_vv_bb: Parameter[float]
     g_vv_ts: Parameter[float]
-    z_cp_top: Parameter[float]
+    h_cp_top: Parameter[float]
     H_star: Parameter[float]
     h_tf_max_in: Parameter[float]
     I_p: Parameter[float]
@@ -140,7 +140,7 @@ class EUDEMOReactorParams(ParameterFrame):
 
     # Heating and current drive
     eta_ecrh: Parameter[float]
-    eta_cd_norm_ecrh: Parameter[float]
+    gamma_ecrh: Parameter[float]
 
     # Equilibrium
     div_L2D_ib: Parameter[float]
