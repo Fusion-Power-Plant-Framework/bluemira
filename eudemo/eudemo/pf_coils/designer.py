@@ -31,10 +31,10 @@ from bluemira.equilibria.optimisation.constraints import (
 )
 from bluemira.equilibria.optimisation.problem import PulsedNestedPositionCOP
 from bluemira.equilibria.run import (
-    BreakdownCOPSettings,
-    EQSettings,
+    BreakdownCOPConfig,
+    EQConfig,
     OptimisedPulsedCoilsetDesign,
-    PositionSettings,
+    PositionConfig,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.utilities.tools import get_class_from_module, json_writer
@@ -239,11 +239,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
             },
             "diagnostic_plotting": {"plot": "no_plot"},
         }
-        eq_settings = {
+        eq_config = {
             **eq_defaults,
             **self.build_config.get("equilibrium_settings", {}),
         }
-        eq_converger = get_class_from_module(eq_settings["convergence_class"])
+        eq_converger = get_class_from_module(eq_config["convergence_class"])
 
         pos_defaults = {
             "optimisation_settings": {
@@ -255,7 +255,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 },
             },
         }
-        pos_settings = {**pos_defaults, **self.build_config.get("position_settings", {})}
+        pos_config = {**pos_defaults, **self.build_config.get("position_settings", {})}
 
         return OptimisedPulsedCoilsetDesign(
             self.params,
@@ -266,7 +266,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coil_constraints=constraints["coil_field"],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
-            breakdown_settings=BreakdownCOPSettings(
+            breakdown_settings=BreakdownCOPConfig(
                 strategy=get_class_from_module(breakdown_settings["param_class"]),
                 problem=get_class_from_module(breakdown_settings["problem_class"]),
                 algorithm=breakdown_settings["optimisation_settings"]["algorithm_name"],
@@ -274,22 +274,22 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 B_stray_con_tol=breakdown_settings["B_stray_con_tol"],
                 n_B_stray_points=breakdown_settings["n_B_stray_points"],
             ),
-            equilibrium_settings=EQSettings(
-                problem=get_class_from_module(eq_settings["problem_class"]),
-                convergence=eq_converger(eq_settings["conv_limit"]),
-                algorithm=eq_settings["optimisation_settings"]["algorithm_name"],
-                opt_conditions=eq_settings["optimisation_settings"]["conditions"],
-                gamma=eq_settings["gamma"],
-                relaxation=eq_settings["relaxation"],
-                peak_PF_current_factor=eq_settings["peak_PF_current_factor"],
+            equilibrium_settings=EQConfig(
+                problem=get_class_from_module(eq_config["problem_class"]),
+                convergence=eq_converger(eq_config["conv_limit"]),
+                algorithm=eq_config["optimisation_settings"]["algorithm_name"],
+                opt_conditions=eq_config["optimisation_settings"]["conditions"],
+                gamma=eq_config["gamma"],
+                relaxation=eq_config["relaxation"],
+                peak_PF_current_factor=eq_config["peak_PF_current_factor"],
                 diagnostic_plotting=PicardDiagnosticOptions(
-                    **eq_settings["diagnostic_plotting"]
+                    **eq_config["diagnostic_plotting"]
                 ),
             ),
-            position_settings=PositionSettings(
+            position_settings=PositionConfig(
                 problem=PulsedNestedPositionCOP,
-                algorithm=pos_settings["optimisation_settings"]["algorithm_name"],
-                opt_conditions=pos_settings["optimisation_settings"]["conditions"],
+                algorithm=pos_config["optimisation_settings"]["algorithm_name"],
+                opt_conditions=pos_config["optimisation_settings"]["conditions"],
             ),
             limiter=None,
         )
