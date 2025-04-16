@@ -416,7 +416,7 @@ class TestGeometry:
 class TestShapeTransformations:
     @classmethod
     def setup_class(cls):
-        cls.wire = make_polygon(
+        cls._wire = make_polygon(
             [
                 (4.0, -0.5, 0.0),
                 (5.0, -0.5, 0.0),
@@ -427,12 +427,17 @@ class TestShapeTransformations:
             label="test_wire",
         )
 
-        cls.face = BluemiraFace(cls.wire.deepcopy(), label="test_face")
-        cls.solid = extrude_shape(cls.face.deepcopy(), (0, 0, 1), label="test_solid")
+        cls._face = BluemiraFace(cls._wire.deepcopy(), label="test_face")
+        cls._solid = extrude_shape(cls._face.deepcopy(), (0, 0, 1), label="test_solid")
 
     @staticmethod
     def _centroids_close(new_centroid, centroid, vector):
         return np.allclose(new_centroid, np.array(centroid) + np.array(vector))
+
+    def setup_method(self):
+        self.wire = self._wire.deepcopy()
+        self.face = self._face.deepcopy()
+        self.solid = self._solid.deepcopy()
 
     def test_rotate_wire(self):
         base = (0, 0, 0)
