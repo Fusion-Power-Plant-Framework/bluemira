@@ -28,7 +28,6 @@ from scipy.special import iv as bessel
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -645,6 +644,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 def _process_constant_tension_solver(
     solver, r, z, n_tf, tf_wp_width, tf_wp_depth
 ) -> CurrentSource:
+    from bluemira.geometry.coordinates import Coordinates  # noqa: PLC0415
     from bluemira.magnetostatics.biot_savart import BiotSavartFilament  # noqa: PLC0415
     from bluemira.magnetostatics.circuits import (  # noqa: PLC0415
         ArbitraryPlanarRectangularXSCircuit,
@@ -800,7 +800,7 @@ def _calculate_discrete_constant_tension_shape(
                 rr_intb[i] - rr_intb[i - 1]
             )
 
-        intB_fh = interp1d(rr_intb, int_b, kind="linear", fill_value="extrapolate")
+        int_b_fh = interp1d(rr_intb, int_b, kind="linear", fill_value="extrapolate")
         interpolator = interp1d(rr, Btor, kind="linear", fill_value="extrapolate")
 
         tension = MU_0 * n_tf / (8 * np.pi) * int_b[-1]
@@ -814,8 +814,8 @@ def _calculate_discrete_constant_tension_shape(
             inner_iter = 0
             while error > tolerance:
                 inner_iter += 1
-                F = intB_fh(x0) + k * (sin_theta[i] - 1)
-                xx = x0 - F / interpolator(x0)
+                f = int_b_fh(x0) + k * (sin_theta[i] - 1)
+                xx = x0 - f / interpolator(x0)
                 error = abs(xx - x0) / abs(x0)
                 x0 = xx
                 if inner_iter > 49:  # noqa: PLR2004
