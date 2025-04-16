@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.base.constants import MU_0
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import _princeton_d
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
@@ -13,10 +13,10 @@ from bluemira.magnetostatics.circuits import (
 
 
 class DummyToroidalFieldSolver:
-
     def field(x, y, z):
-        return np.array([np.zeros_like(x), 1.0/x, np.zeros_like(z)])
-    
+        return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
+
+
 def calculate_discrete_constant_tension_shape(
     r1: float,
     r2: float,
@@ -25,9 +25,9 @@ def calculate_discrete_constant_tension_shape(
     tf_wp_depth: float,
     n_points: int,
     solver=ArbitraryPlanarRectangularXSCircuit,
-    tolerance: float =1e-3,
-    plot: bool =False,
-    include_inboard: bool =False,
+    tolerance: float = 1e-3,
+    plot: bool = False,
+    include_inboard: bool = False,
 ):
     """
     Calculate a "constant tension" shape for a TF coil winding pack, for a discrete number
@@ -57,7 +57,7 @@ def calculate_discrete_constant_tension_shape(
     Notes
     -----
     This procedure numerically calculates a constant tension shape for a TF coil
-    by assuming a circle first and using magnetostatic solvers to integrate the 
+    by assuming a circle first and using magnetostatic solvers to integrate the
     toroidal field along the shape. Iteration is used to modify the shape until
     convergence.
 
@@ -107,22 +107,22 @@ def calculate_discrete_constant_tension_shape(
             plt.xlabel("r [m]", fontsize=20)
             plt.draw()
             plt.pause(0.001)
-        
+
         if solver == BiotSavartFilament and include_inboard:
             # Improve B-S discretisation at the inboard
-            dl_0 = np.hypot(rs[1]-rs[0], zs[1]-zs[0])
-            dl_straight = np.hypot(rs[-1]-rs[0], zs[-1]-zs[0])
+            dl_0 = np.hypot(rs[1] - rs[0], zs[1] - zs[0])
+            dl_straight = np.hypot(rs[-1] - rs[0], zs[-1] - zs[0])
             n_inboard = dl_straight / dl_0
             n_inboard = int(max(3, np.ceil(n_inboard)))
-            
+
             r_straight = np.linspace(rs[-1], rs[0], n_inboard)[1:-1]
             z_straight = np.linspace(zs[-1], zs[0], n_inboard)[1:-1]
-            rc = np.concatenate([rs,  r_straight])
-            zc = np.concatenate([zs,  z_straight])
+            rc = np.concatenate([rs, r_straight])
+            zc = np.concatenate([zs, z_straight])
         else:
             rc = rs
             zc = zs
-     
+
         coordinates = Coordinates({"x": rc, "y": 0.0, "z": zc})
         coordinates.close()
         coordinates.set_ccw([0, -1, 0])
@@ -143,15 +143,17 @@ def calculate_discrete_constant_tension_shape(
 
         B = cage.field(rs[:n_points], np.zeros_like(rs)[:n_points], zs[:n_points])
         Btor = B[1, :]
-        rr_intb =  r[::-1]
-        rr = r[::-1]      
+        rr_intb = r[::-1]
+        rr = r[::-1]
 
         Btor = 2 * np.pi * Btor / (MU_0 * n_tf)
 
         intB = np.zeros(n_points)
 
         for i in range(1, n_points):
-            intB[i] = intB[i - 1] + 0.5 * (Btor[i - 1] + Btor[i]) * (rr_intb[i] - rr_intb[i - 1])
+            intB[i] = intB[i - 1] + 0.5 * (Btor[i - 1] + Btor[i]) * (
+                rr_intb[i] - rr_intb[i - 1]
+            )
 
         intB_fh = interp1d(rr_intb, intB, kind="linear", fill_value="extrapolate")
         interpolator = interp1d(rr, Btor, kind="linear", fill_value="extrapolate")
@@ -214,11 +216,7 @@ def calculate_discrete_constant_tension_shape(
                 / (h**2 + theta**2)
             )
             rho[i] = (1 + dzdr[i] ** 2) ** (3 / 2) / dzdr2[i]
-            Tc[i] = (
-                -rho[i]
-                / 2
-                * (Btor[i] * n_tf * MU_0 / (2 * np.pi))
-            )
+            Tc[i] = -rho[i] / 2 * (Btor[i] * n_tf * MU_0 / (2 * np.pi))
 
         plt.figure(100)
         plt.plot(r[2:-1], Tc[2:-1] * 1e-6, "r", linewidth=2)
@@ -228,9 +226,6 @@ def calculate_discrete_constant_tension_shape(
 
 
 if __name__ == "__main__":
-
-    import os
-
     from bluemira.base.file import get_bluemira_path
     from bluemira.geometry.coordinates import Coordinates
 
@@ -238,13 +233,13 @@ if __name__ == "__main__":
 
     r1 = 1.18
     r2 = 4.7198
-    n_tf =  12
+    n_tf = 12
     current = 1.0
     tf_wp_width = 0.2
     tf_wp_depth = 0.4
     n_points = 100
 
-    rPD, zPD = PrincetonD._princeton_d(r1, r2, 0.0, 200)
+    rPD, zPD = _princeton_d(r1, r2, 0.0, 200)
     rPD = rPD[100:]
     zPD = zPD[100:]
 
@@ -273,8 +268,8 @@ if __name__ == "__main__":
 
     f, ax = plt.subplots()
     ax.plot(rPD, zPD, color="r", label="Princeton-D")
-    ax.plot(ra, za, label=f"Numerical 1/r", ls="--", color="g")
-    ax.plot(rap, zap, label=f"Numerical true integral", color="b")
+    ax.plot(ra, za, label="Numerical 1/r", ls="--", color="g")
+    ax.plot(rap, zap, label="Numerical true integral", color="b")
     ax.set_aspect("equal")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")

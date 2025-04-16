@@ -25,7 +25,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.special import iv as bessel
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS, MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
@@ -687,6 +687,7 @@ def _process_constant_tension_solver(
             raise TypeError(f"Not a valid solver: {solver}") from AttributeError
         if not callable(field_func):
             raise TypeError(f"Not a valid solver: {solver}")
+        cage = solver
     return cage
 
 
@@ -825,7 +826,7 @@ def _calculate_discrete_constant_tension_shape(
                     )
                     break
             r[i] = xx
-            if i != 0:
+            if i > 0:
                 z[i] = z[i - 1] - k * (
                     sin_theta[i - 1] / Btor[i - 1] + sin_theta[i] / Btor[i]
                 ) / 2 * (theta[i] - theta[i - 1])
@@ -838,10 +839,11 @@ def _calculate_discrete_constant_tension_shape(
 
     r = np.concatenate((r, [r[-1]]))
     z = np.concatenate((z, [0]))
-    r = np.concatenate((r[::-1], r[1::]))
-    z = np.concatenate((z[::-1], z[1::]))
-
-    return r, z
+    r = np.concatenate((r[::-1], r[1:]))
+    z = np.concatenate((z[::-1], -z[1:]))
+    # Mask to subtract the straight leg (which is treated differently in CAD)
+    mask = np.where(r > (1.0 + 2.0 * EPS) * np.min(r))
+    return r[mask], z[mask]
 
 
 class PrincetonDDiscrete(PrincetonD):

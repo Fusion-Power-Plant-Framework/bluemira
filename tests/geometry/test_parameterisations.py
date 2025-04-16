@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 
 from bluemira.codes._freecadapi import _wire_edges_tangent
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
@@ -114,6 +115,11 @@ class TestPrincetonD:
         assert not p.variables["x2"].fixed
 
 
+class DummyToroidalFieldSolver:
+    def field(x, y, z):
+        return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
+
+
 class TestPrincetonDDiscrete:
     @pytest.mark.parametrize("x1", [4, 5])
     @pytest.mark.parametrize("x2", [6, 10])
@@ -123,14 +129,27 @@ class TestPrincetonDDiscrete:
     )
     def test_princeton_d_discrete(self, x1, x2, n_tf, solver):
         x, z = _calculate_discrete_constant_tension_shape(
-            x1, x2, n_tf, 0.25, 0.5, 30, solver, tolerance=1e-2
+            x1, x2, n_tf, 0.25, 0.1, 40, solver, tolerance=1e-2
         )
-        assert len(x) == 30
-        assert len(z) == 30
+        assert len(x) == 40
+        assert len(z) == 40
         assert np.isclose(np.min(x), x1)
         assert np.isclose(np.max(x), x2, rtol=1e-3)
         # check symmetry
         assert np.allclose(x[:15], x[15:][::-1])
+
+    def test_verify_princeton_d_discrete(self):
+        x, z = _calculate_discrete_constant_tension_shape(
+            4.0, 16, 1, 0.0, 0.0, 300, DummyToroidalFieldSolver, tolerance=1e-3
+        )
+        c1 = Coordinates({"x": x, "z": z})
+        xd, zd = _princeton_d(4.0, 16.0, 0.0, 200)
+        c2 = Coordinates({"x": xd, "z": zd})
+        assert not c1.closed
+        assert np.isclose(c1.length, c2.length, rtol=1e-2)
+        c1.close()
+        c2.close()
+        assert np.isclose(c1.length, c2.length, rtol=1e-4)
 
 
 class TestPictureFrame:
