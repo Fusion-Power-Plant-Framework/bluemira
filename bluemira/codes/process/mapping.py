@@ -40,6 +40,8 @@ IN_mappings = {
 OUT_mappings = {
     "R_0": ("rmajor", "m"),
     "B_0": ("bt", "T"),
+    "B_cs_peak_flat_top_end": ("b_cs_peak_flat_top_end", "T"),
+    "B_cs_peak_pulse_start": ("b_cs_peak_pulse_start", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
     "kappa": ("kappa", "dimensionless"),
     "delta_95": ("triang95", "dimensionless"),
@@ -59,6 +61,7 @@ OUT_mappings = {
     "f_bs": ("f_c_plasma_bootstrap", "dimensionless"),
     "beta_p": ("beta_poloidal", "dimensionless"),
     "beta": ("beta", "dimensionless"),
+    "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
     "tk_fw_in": ("dr_fw_inboard", "m"),
