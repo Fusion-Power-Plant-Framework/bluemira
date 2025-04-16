@@ -21,10 +21,9 @@ from bluemira.base.look_and_feel import (
     bluemira_print_flush,
     bluemira_warn,
 )
-from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
-from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
+from bluemira.equilibria.constants import PSI_REL_TOL
+from bluemira.equilibria.diagnostics import PicardDiagnosticOptions
 from bluemira.optimisation.error import OptimisationError
-from bluemira.utilities.plot_tools import make_gif, save_figure
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -493,11 +492,7 @@ class PicardIterator:
         self.relaxation = relaxation
         self.maxiter = maxiter
         self.diagnostic_plotting = diagnostic_plotting or PicardDiagnosticOptions()
-        self.store = []
         self.i = 0
-        if self.diagnostic_plotting.plot is not PicardDiagnostic.NO_PLOT:
-            self.f, self.ax = plt.subplots()
-            self.pname = self.diagnostic_plotting.plot_name
 
     def _optimise_coilset(self):
         self.result = None
@@ -505,7 +500,7 @@ class PicardIterator:
             self.result = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
             self.coilset = self.result.coilset
         except OptimisationError:
-            self.coilset = self.store[-1]
+            self.coilset = None
 
     @property
     def psi(self) -> npt.NDArray[np.float64]:
@@ -569,6 +564,7 @@ class PicardIterator:
             self._setup()
 
         if self.i > 0 and self.check_converged(print_status=False):
+            self.diagnostic_plotting.finalise_plots()
             raise StopIteration
 
         self._psi_old = self.psi.copy()
@@ -577,11 +573,9 @@ class PicardIterator:
         self._psi = self.eq.psi()
         self._j_tor = self.eq._jtor
         check = self.check_converged()
-        if self.diagnostic_plotting.plot is not PicardDiagnostic.NO_PLOT:
-            self.update_fig()
+        self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
         if check:
-            if self.diagnostic_plotting.gif:
-                make_gif(self.diagnostic_plotting.figure_folder, self.pname)
+            self.diagnostic_plotting.make_gif()
             raise StopIteration
         self._optimise_coilset()
         self._psi = (
@@ -630,24 +624,6 @@ class PicardIterator:
 
         return self.convergence(
             self._j_tor_old, self.j_tor, self.i, print_status=print_status
-        )
-
-    def update_fig(self):
-        """
-        Updates the figure if plotting is used
-        """
-        self.ax.clear()
-        if self.diagnostic_plotting.plot is PicardDiagnostic.EQ:
-            self.eq.plot(ax=self.ax)
-        elif self.diagnostic_plotting.plot is PicardDiagnostic.CONVERGENCE:
-            self.convergence.plot(ax=self.ax)
-        plt.pause(PLT_PAUSE)
-        save_figure(
-            self.f,
-            self.pname + str(self.i),
-            save=self.diagnostic_plotting.gif,
-            folder=self.diagnostic_plotting.figure_folder,
-            dpi=DPI_GIF,
         )
 
     def _solve(self):

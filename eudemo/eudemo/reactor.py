@@ -137,15 +137,18 @@ def build_reference_equilibrium(
     reference_eq = designer.execute()
     constraints = None
     result = None
+    iterator = None
     if designer.opt_problem is not None:
         constraints = designer.opt_problem.targets
         result = designer._result
+        iterator = designer._iterator
     ref_snapshot = Snapshot(
         reference_eq,
         reference_eq.coilset,
         constraints,
         reference_eq.profiles,
         result,
+        iterator,
         reference_eq.limiter,
     )
     equilibrium_manager.add_state(equilibrium_manager.REFERENCE, ref_snapshot)
