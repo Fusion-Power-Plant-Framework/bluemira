@@ -65,7 +65,10 @@
   },
   "Free boundary equilibrium": {
     "run_mode": "run",
-    "plot": true,
+    "diagnostic_plotting": {
+      "plot": "convergence"
+    },
+    "summary_plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
     "file_path": "$path_expand:./equilibrium_eqdsk.json",
@@ -208,6 +211,9 @@
           "max_eval": 5000,
           "ftol_rel": 1e-6
         }
+      },
+      "diagnostic_plotting": {
+        "plot": "convergence"
       }
     },
     "position_settings": {
