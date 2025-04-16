@@ -103,7 +103,7 @@ def doublepowerfunc(x: float, *args) -> float:
     return np.sign(f) * (np.abs(f)) ** n
 
 
-@nb.jit(cache=True, forceobj=True)
+# @nb.jit(cache=True, forceobj=True)
 def pshape(
     shape: Callable[[float], float], psinorm: float, psio: float, psix: float
 ) -> float:
