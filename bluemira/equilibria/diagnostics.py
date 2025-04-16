@@ -295,13 +295,13 @@ class PicardDiagnosticOptions:
         self.figure_folder = figure_folder
 
         if self.plot is PicardDiagnostic.NO_PLOT:
-            self.update_figure = self.make_gif = self.finalise_plots = self._noop
+
+            def noop(*args, **kwargs):  # noqa: ARG001
+                return
+
+            self.update_figure = self.make_gif = self.finalise_plots = noop
         else:
             self.f, self.ax = plt.subplots()
-
-    @staticmethod
-    def _noop(*args, **kwargs):  # noqa: ARG004
-        return
 
     @staticmethod
     def finalise_plots():
