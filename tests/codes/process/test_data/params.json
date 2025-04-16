@@ -615,5 +615,20 @@
     "unit": "A/W/m^2",
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
+  },
+  "B_cs_peak_flat_top_end": {
+    "value": 13.0,
+    "unit": "T",
+    "long_name": "Peak poloidal field in the CS at the end of flat-top"
+  },
+  "B_cs_peak_pulse_start": {
+    "value": 13.0,
+    "unit": "T",
+    "long_name": "Peak poloidal field in the CS at the start of a pulse"
+  },
+  "j_cs_critical": {
+    "value": 20.0e6,
+    "unit": "A/m**2",
+    "long_name": "Maximum allowable current density in the central solenoid"
   }
 }
