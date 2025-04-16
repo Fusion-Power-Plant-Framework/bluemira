@@ -8,7 +8,7 @@
     "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
-    "plot": true
+    "plot": false
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
@@ -90,6 +90,7 @@
   },
   "IVC": {
     "Wall silhouette": {
+      "run_mode": "read",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": {
@@ -99,7 +100,6 @@
           "value": "r_fw_ob_in"
         }
       },
-      "run_mode": "read",
       "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": {
         "n_koz_points": 70
@@ -192,10 +192,11 @@
       "grid_scale_z": 2.0
     },
     "breakdown_settings": {
-      "param_class": "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy",
+      "param_class": "bluemira.equilibria.optimisation.problem::InboardBreakdownZoneStrategy",
       "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
-      "B_stray_con_tol": 1e-6,
-      "n_B_stray_points": 10,
+      "B_stray_con_tol": 1e-3,
+      "n_B_stray_points": 5,
+      "coil_mesh_size": 0.02,
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
         "conditions": {
