@@ -530,7 +530,7 @@ class PrincetonDOptVariables(OptVariablesFrame):
 
 class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     """
-    Princeton D geometry parameterisation.
+    Princeton D geometry parameterisation, with n_TF = ∞.
 
     Parameters
     ----------
@@ -635,6 +635,103 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         if not self.variables.x2.fixed:
             grad[0][self.get_x_norm_index("x2")] = -1
         return grad
+
+
+class PrincetonDDiscrete(GeometryParameterisation[PrincetonDOptVariables]):
+    """
+    Princeton D geometry parameterisation, with finite n_TF.
+
+    Parameters
+    ----------
+    var_dict:
+        Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import PrincetonD
+        PrincetonD().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    x2: float
+        Radial position of outer limb [m]
+    dz: float
+        Vertical offset from z=0 [m]
+
+    """
+
+    __slots__ = ()
+    n_ineq_constraints: int = 1
+
+    def __init__(
+        self,
+        var_dict: VarDictT | None = None,
+        n_TF: int | None = None,
+        tf_wp_width: float | None = None,
+        tf_wp_depth: float | None = None,
+    ):
+        variables = PrincetonDOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+        if n_TF is not None and (tf_wp_width is None or tf_wp_depth is None):
+            raise GeometryParameterisationError(
+                "Must specify tf_wp_width and tf_wp_depth if n_TF is specified."
+            )
+        self.n_TF = n_TF
+        self._tf_wp_width = tf_wp_width
+        self._tf_wp_depth = tf_wp_depth
+
+    def create_shape(
+        self,
+        label: str = "",
+        n_points: int = 50,
+        *,
+        tolerance: float = 1e-3,
+        with_tangency: bool = False,
+    ) -> BluemiraWire:
+        """
+        Make a CAD representation of the Princeton D.
+
+        Parameters
+        ----------
+        label:
+            Label to give the wire
+        n_points:
+            The number of points to use when calculating the geometry of the Princeton
+            D.
+
+        Returns
+        -------
+        CAD Wire of the geometry
+        """
+        x, z = _princeton_d(
+            self.variables.x1.value,
+            self.variables.x2.value,
+            self.variables.dz.value,
+            n_points,
+        )
+        xyz = np.array([x, np.zeros(len(x)), z])
+
+        outer_arc = interpolate_bspline(
+            xyz.T,
+            label="outer_arc",
+            **(
+                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, -1]}
+                if with_tangency
+                else {}
+            ),
+        )
+        # TODO @CoronelBuendia: Enforce tangency of this bspline...
+        # causing issues with offsetting
+        # The real irony is that tangencies don't solve the problem..
+        # 3586
+        straight_segment = wire_closure(outer_arc, label="straight_segment")
+        return BluemiraWire([outer_arc, straight_segment], label=label)
 
 
 @dataclass

@@ -7,3 +7,6 @@
 """
 The bluemira magnetostatics module
 """
+
+
+# This function will be moved to the magnets module
