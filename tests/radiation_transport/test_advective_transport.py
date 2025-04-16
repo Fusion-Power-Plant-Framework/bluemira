@@ -90,8 +90,23 @@ class TestChargedParticleRecursionSN:
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
         x, z, hf = solver.analyse(fw)
-        cls.x, cls.z, cls.hf = np.array(x), np.array(z), np.array(hf)
+        cls._x, cls._z, cls._hf = np.array(x), np.array(z), np.array(hf)
         cls.solver = solver
+        cls._eq = cls.solver.eq
+        cls._fs_ob_d = solver.flux_surfaces_ob_down
+        cls._fs_ob_u = solver.flux_surfaces_ob_up
+        cls._fs_ib_u = solver.flux_surfaces_ib_up
+        cls._fs_ib_d = solver.flux_surfaces_ib_down
+
+    def setup_method(self):
+        self.x = deepcopy(self._x)
+        self.z = deepcopy(self._z)
+        self.hf = deepcopy(self._hf)
+
+        self.solver.flux_surfaces_ob_down = deepcopy(self._fs_ob_d)
+        self.solver.flux_surfaces_ob_up = deepcopy(self._fs_ob_u)
+        self.solver.flux_surfaces_ib_up = deepcopy(self._fs_ib_u)
+        self.solver.flux_surfaces_ib_down = deepcopy(self._fs_ib_d)
 
     def test_single_null_warnings(self, caplog):
         params = {
