@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -92,7 +92,7 @@
         "x1": { "value": "r_fw_ib_in" },
         "x2": { "value": "r_fw_ob_in" }
       },
-      "run_mode": "run",
+      "run_mode": "read",
       "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": { "n_koz_points": 100 },
       "optimisation_settings": {
@@ -115,7 +115,8 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+    "enabled": false,
+    "cross_section_xml": "$path_expand:./materials_data/cross_sections.xml",
     "particles": 16800,
     "batches": 3,
     "photon_transport": true,
@@ -134,7 +135,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
