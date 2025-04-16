@@ -671,6 +671,8 @@ def find_flux_surface_through_point(
     def f_min(x_opt, z_opt):
         return np.min(np.hypot(x_opt - point_x, z_opt - point_z))
 
+    if isinstance(point_psi, np.ndarray):
+        point_psi = point_psi.item()
     flux_contours = get_contours(x, z, psi, point_psi)
 
     error = [f_min(*group.T) for group in flux_contours]
