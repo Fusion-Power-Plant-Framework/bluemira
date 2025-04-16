@@ -23,9 +23,13 @@ from bluemira.geometry.parameterisations import (
     PrincetonD,
     SextupleArc,
     TripleArc,
+    _calculate_discrete_constant_tension_shape,
+    _princeton_d,
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 
@@ -88,7 +92,7 @@ class TestPrincetonD:
     @pytest.mark.parametrize("x2", [6, 10, 200])
     @pytest.mark.parametrize("dz", [0, 100])
     def test_princeton_d(self, x1, x2, dz):
-        x, z = PrincetonD._princeton_d(x1, x2, dz, 500)
+        x, z = _princeton_d(x1, x2, dz, 500)
         assert len(x) == 500
         assert len(z) == 500
         assert np.isclose(np.min(x), x1)
@@ -99,7 +103,7 @@ class TestPrincetonD:
 
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
-            PrincetonD._princeton_d(10, 3, 0)
+            _princeton_d(10, 3, 0)
 
     def test_instantiation_fixed(self):
         p = PrincetonD({
@@ -108,6 +112,25 @@ class TestPrincetonD:
         })
         assert p.variables["x1"].fixed
         assert not p.variables["x2"].fixed
+
+
+class TestPrincetonDDiscrete:
+    @pytest.mark.parametrize("x1", [4, 5])
+    @pytest.mark.parametrize("x2", [6, 10])
+    @pytest.mark.parametrize("n_tf", [12, 18])
+    @pytest.mark.parametrize(
+        "solver", [ArbitraryPlanarRectangularXSCircuit, BiotSavartFilament]
+    )
+    def test_princeton_d_discrete(self, x1, x2, n_tf, solver):
+        x, z = _calculate_discrete_constant_tension_shape(
+            x1, x2, n_tf, 0.25, 0.5, solver, 30
+        )
+        assert len(x) == 500
+        assert len(z) == 500
+        assert np.isclose(np.min(x), x1)
+        assert np.isclose(np.max(x), x2, rtol=1e-3)
+        # check symmetry
+        assert np.allclose(x[:250], x[250:][::-1])
 
 
 class TestPictureFrame:

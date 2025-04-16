@@ -844,7 +844,7 @@ def _calculate_discrete_constant_tension_shape(
     return r, z
 
 
-class PrincetonDDiscrete(GeometryParameterisation[PrincetonDOptVariables]):
+class PrincetonDDiscrete(PrincetonD):
     """
     Princeton D geometry parameterisation, with finite n_TF.
 
