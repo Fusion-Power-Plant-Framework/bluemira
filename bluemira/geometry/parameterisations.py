@@ -25,7 +25,10 @@ import numpy as np
 import numpy.typing as npt
 from scipy.special import iv as bessel
 
+from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -40,6 +43,8 @@ from bluemira.utilities.plot_tools import str_to_latex
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
 
 __all__ = [
     "GeometryParameterisation",
@@ -637,6 +642,208 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         return grad
 
 
+def _process_constant_tension_solver(
+    solver, r, z, n_tf, tf_wp_width, tf_wp_depth
+) -> CurrentSource:
+    from bluemira.magnetostatics.biot_savart import BiotSavartFilament  # noqa: PLC0415
+    from bluemira.magnetostatics.circuits import (  # noqa: PLC0415
+        ArbitraryPlanarRectangularXSCircuit,
+        HelmholtzCage,
+    )
+
+    # I really think this should be the default, but it is limiting
+    # (rectangular XS) so we allow for alternatives
+    if solver in {ArbitraryPlanarRectangularXSCircuit, None}:
+        coordinates = Coordinates({"x": r, "y": 0.0, "z": z})
+        coordinates.close()
+        coordinates.set_ccw([0, -1, 0])
+        filament = ArbitraryPlanarRectangularXSCircuit(
+            coordinates, 0.5 * tf_wp_width, 0.5 * tf_wp_depth, 1.0
+        )
+        cage = HelmholtzCage(filament, n_tf)
+    elif solver == BiotSavartFilament:
+        # Improve B-S discretisation at the inboard
+        dl_0 = np.hypot(r[1] - r[0], z[1] - z[0])
+        dl_straight = np.hypot(r[-1] - r[0], z[-1] - z[0])
+        n_inboard = dl_straight / dl_0
+        n_inboard = int(max(3, np.ceil(n_inboard)))
+
+        r_straight = np.linspace(r[-1], r[0], n_inboard)[1:-1]
+        z_straight = np.linspace(z[-1], z[0], n_inboard)[1:-1]
+        rc = np.concatenate([r, r_straight])
+        zc = np.concatenate([z, z_straight])
+        coordinates = Coordinates({"x": rc, "y": 0.0, "z": zc})
+        coordinates.close()
+        coordinates.set_ccw([0, -1, 0])
+        radius = (0.5 * tf_wp_width + 0.5 * tf_wp_depth) * 0.5
+        filament = BiotSavartFilament(coordinates, radius=radius, current=1.0)
+        cage = HelmholtzCage(filament, n_tf)
+
+    # This nightmare is to enable testing and development of surrogate models
+    else:  # I miss traits...
+        try:
+            field_func = solver.field
+        except AttributeError:
+            raise TypeError(f"Not a valid solver: {solver}") from AttributeError
+        if not callable(field_func):
+            raise TypeError(f"Not a valid solver: {solver}")
+    return cage
+
+
+# This procedure will be moved to the magnets module
+def _calculate_discrete_constant_tension_shape(
+    r1: float,
+    r2: float,
+    n_tf: int,
+    tf_wp_width: float,
+    tf_wp_depth: float,
+    n_points: int,
+    solver: SourceGroup | CurrentSource | None = None,
+    tolerance: float = 1e-3,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Calculate a "constant tension" shape for a TF coil winding pack, for a discrete
+    number of TF coils.
+
+    Parameters
+    ----------
+    r1:
+        Inboard TF winding pack centreline radius
+    r2:
+        Outboard TF winding pack centreline radius
+    n_tf:
+        Number of TF coils
+    tf_wp_width:
+        Radial extent of the TF coil WP
+    tf_wp_depth:
+        Toroidal extent of the TF coil WP
+    n_points:
+        Number of points in the TF coil (no guarantees on output size)
+    solver:
+        Solver object which provides the magnetic field calculation
+    tolerance:
+        Tolerance for convergence [m]
+
+    Returns
+    -------
+    x:
+        Radial coordinates of the constant tension shape
+    z:
+        Vertical coordinates of the constant tension shape (about 0.0)
+
+    Raises
+    ------
+    TypeError:
+        If the solver specified is invalid
+
+    Notes
+    -----
+    This procedure numerically calculates a constant tension shape for a TF coil
+    by assuming a circle first and using magnetostatic solvers to integrate the
+    toroidal field along the shape. Iteration is used to modify the shape until
+    convergence.
+
+    Note that the tension is constant only along the centreline. This is an
+    approximation, that I hope should keep the average tension in a coil of
+    non-zero thickness relatively low, but no promises.
+
+    The current is not required, but would be technically for the absolute value of
+    the tension.
+
+    A rectangular cross-section is assumed.
+
+    The procedure was originally developed by Dr. L. Giannini for use with ANSYS, and
+    has been quite heavily modified here.
+
+    BiotSavartFilament is a poor choice of solver for this procedure, but does yield
+    interesting results.
+
+    Using the associated DummyToroidalFieldSolver, one can pretty perfectly recreate
+    the closed-form solution for the Princeton-D.
+    """
+    from scipy.interpolate import interp1d  # noqa: PLC0415
+
+    n_points //= 2  # We solve for a half-coil
+    theta = np.linspace(-np.pi / 2, np.pi / 2, n_points)
+    sin_theta = np.sin(theta)
+    r = (r2 + r1) / 2 + (r2 - r1) / 2 * np.cos(theta + np.pi / 2)
+    z = (r2 - r1) / 2 * np.sin(theta + np.pi / 2)
+    r = r[:n_points]
+    z = z[:n_points]
+    ra = r.copy()
+    za = z.copy()
+
+    errorr = 1.0
+    errorz = 1.0
+    iter_count = 0
+
+    while (errorz > tolerance or errorr > tolerance) and iter_count < 100:  # noqa: PLR2004
+        iter_count += 1
+        rs = np.r_[r[::-1], r[1:]]
+        zs = np.r_[z[::-1], -z[1:]]
+
+        cage = _process_constant_tension_solver(
+            solver, rs, zs, n_tf, tf_wp_width, tf_wp_depth
+        )
+
+        B = cage.field(rs[:n_points], np.zeros_like(rs)[:n_points], zs[:n_points])
+        Btor = B[1, :]
+        rr_intb = r[::-1]
+        rr = r[::-1]
+
+        Btor = 2 * np.pi * Btor / (MU_0 * n_tf)
+
+        int_b = np.zeros(n_points)
+
+        for i in range(1, n_points):
+            int_b[i] = int_b[i - 1] + 0.5 * (Btor[i - 1] + Btor[i]) * (
+                rr_intb[i] - rr_intb[i - 1]
+            )
+
+        intB_fh = interp1d(rr_intb, int_b, kind="linear", fill_value="extrapolate")
+        interpolator = interp1d(rr, Btor, kind="linear", fill_value="extrapolate")
+
+        tension = MU_0 * n_tf / (8 * np.pi) * int_b[-1]
+        k = 4 * np.pi * tension / (MU_0 * n_tf)
+
+        x0 = r2
+        Btor = Btor[::-1]
+        for i in range(n_points):
+            xx = x0
+            error = 1.0
+            inner_iter = 0
+            while error > tolerance:
+                inner_iter += 1
+                F = intB_fh(x0) + k * (sin_theta[i] - 1)
+                xx = x0 - F / interpolator(x0)
+                error = abs(xx - x0) / abs(x0)
+                x0 = xx
+                if inner_iter > 49:  # noqa: PLR2004
+                    bluemira_warn(
+                        "discrete constant tension: inner iterations = 50. Attempting "
+                        "to proceed anyway."
+                    )
+                    break
+            r[i] = xx
+            if i != 0:
+                z[i] = z[i - 1] - k * (
+                    sin_theta[i - 1] / Btor[i - 1] + sin_theta[i] / Btor[i]
+                ) / 2 * (theta[i] - theta[i - 1])
+
+        errorr = np.linalg.norm(r - ra) / np.linalg.norm(r)
+        errorz = np.linalg.norm(z - za) / np.linalg.norm(z)
+
+        ra = r.copy()
+        za = z.copy()
+
+    r = np.concatenate((r, [r[-1]]))
+    z = np.concatenate((z, [0]))
+    r = r[::-1]
+    z = z[::-1]
+
+    return r, z
+
+
 class PrincetonDDiscrete(GeometryParameterisation[PrincetonDOptVariables]):
     """
     Princeton D geometry parameterisation, with finite n_TF.
@@ -709,12 +916,17 @@ class PrincetonDDiscrete(GeometryParameterisation[PrincetonDOptVariables]):
         -------
         CAD Wire of the geometry
         """
-        x, z = _princeton_d(
+        x, z = _calculate_discrete_constant_tension_shape(
             self.variables.x1.value,
             self.variables.x2.value,
-            self.variables.dz.value,
+            self.n_TF,
+            self._tf_wp_width,
+            self._tf_wp_depth,
             n_points,
+            solver=None,
+            tolerance=tolerance,
         )
+        z += self.variables.dz.value
         xyz = np.array([x, np.zeros(len(x)), z])
 
         outer_arc = interpolate_bspline(
