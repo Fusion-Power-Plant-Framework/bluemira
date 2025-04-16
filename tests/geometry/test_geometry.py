@@ -42,9 +42,8 @@ def param_face(*coords):
 
 
 class TestGeometry:
-    @classmethod
-    def setup_class(cls):
-        cls.square_points = [
+    def setup_method(self):
+        self.square_points = [
             (0.0, 0.0, 0.0),
             (1.0, 0.0, 0.0),
             (1.0, 1.0, 0.0),
