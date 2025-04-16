@@ -209,14 +209,14 @@
       "grid_scale_z": 1.6
     },
     "breakdown_settings": {
-      "param_class": "bluemira.equilibria.optimisation.problem::InboardBreakdownZoneStrategy",
+      "param_class": "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy",
       "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
-      "B_stray_con_tol": 1e-3,
-      "n_B_stray_points": 5,
-      "coil_mesh_size": 0.02,
+      "B_stray_con_tol": 1e-6,
+      "n_B_stray_points": 10,
+      "coil_mesh_size": 0.01,
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
-        "conditions": { "max_eval": 1000, "ftol_rel": 1e-10 }
+        "conditions": { "max_eval": 5000, "ftol_rel": 1e-10 }
       }
     },
     "equilibrium_settings": {
@@ -235,7 +235,7 @@
     "position_settings": {
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
-        "conditions": { "max_eval": 100, "ftol_rel": 1e-10 }
+        "conditions": { "max_eval": 500, "ftol_rel": 1e-10 }
       }
     }
   },
