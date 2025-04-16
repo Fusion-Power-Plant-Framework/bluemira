@@ -838,8 +838,8 @@ def _calculate_discrete_constant_tension_shape(
 
     r = np.concatenate((r, [r[-1]]))
     z = np.concatenate((z, [0]))
-    r = r[::-1]
-    z = z[::-1]
+    r = np.concatenate((r[::-1], r[1::]))
+    z = np.concatenate((z[::-1], z[1::]))
 
     return r, z
 

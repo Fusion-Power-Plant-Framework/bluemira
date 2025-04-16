@@ -123,14 +123,14 @@ class TestPrincetonDDiscrete:
     )
     def test_princeton_d_discrete(self, x1, x2, n_tf, solver):
         x, z = _calculate_discrete_constant_tension_shape(
-            x1, x2, n_tf, 0.25, 0.5, solver, 30
+            x1, x2, n_tf, 0.25, 0.5, 30, solver, tolerance=1e-2
         )
-        assert len(x) == 500
-        assert len(z) == 500
+        assert len(x) == 30
+        assert len(z) == 30
         assert np.isclose(np.min(x), x1)
         assert np.isclose(np.max(x), x2, rtol=1e-3)
         # check symmetry
-        assert np.allclose(x[:250], x[250:][::-1])
+        assert np.allclose(x[:15], x[15:][::-1])
 
 
 class TestPictureFrame:
