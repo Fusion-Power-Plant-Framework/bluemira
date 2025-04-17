@@ -602,6 +602,8 @@ class Reactor(BaseManager):
         component_filter:
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
+        show:
+            Whether or not to immediately display the plot
         """
         self._validate_plot_dims(dim)
 
