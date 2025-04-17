@@ -874,7 +874,7 @@ class PrincetonDDiscrete(PrincetonD):
 
     """
 
-    __slots__ = ()
+    __slots__ = ("_n_TF", "_n_points", "_tf_wp_depth", "_tf_wp_width", "_tolerance")
     n_ineq_constraints: int = 1
 
     def __init__(
@@ -883,25 +883,29 @@ class PrincetonDDiscrete(PrincetonD):
         n_TF: int | None = None,
         tf_wp_width: float | None = None,
         tf_wp_depth: float | None = None,
+        n_points: int = 50,
+        tolerance: float = 1e-3,
     ):
-        variables = PrincetonDOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+        super().__init__(var_dict)
 
         if n_TF is not None and (tf_wp_width is None or tf_wp_depth is None):
             raise GeometryParameterisationError(
                 "Must specify tf_wp_width and tf_wp_depth if n_TF is specified."
             )
-        self.n_TF = n_TF
+        self._n_TF = n_TF
         self._tf_wp_width = tf_wp_width
         self._tf_wp_depth = tf_wp_depth
+        # This is to avoid having to specify e.g. "shape_args" on
+        # GeometryOptimisationProblems
+        self._n_points = n_points
+        self._tolerance = tolerance
 
     def create_shape(
         self,
         label: str = "",
-        n_points: int = 50,
+        n_points: int | None = None,
         *,
-        tolerance: float = 1e-3,
+        tolerance: float | None = None,
         with_tangency: bool = False,
     ) -> BluemiraWire:
         """
@@ -922,13 +926,14 @@ class PrincetonDDiscrete(PrincetonD):
         x, z = _calculate_discrete_constant_tension_shape(
             self.variables.x1.value,
             self.variables.x2.value,
-            self.n_TF,
+            self._n_TF,
             self._tf_wp_width,
             self._tf_wp_depth,
-            n_points,
+            n_points=self._n_points if n_points is None else n_points,
             solver=None,
-            tolerance=tolerance,
+            tolerance=self._tolerance if tolerance is None else tolerance,
         )
+
         z += self.variables.dz.value
         xyz = np.array([x, np.zeros(len(x)), z])
 
