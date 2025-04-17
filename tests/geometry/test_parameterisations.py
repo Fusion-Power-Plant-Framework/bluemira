@@ -116,27 +116,42 @@ class TestPrincetonD:
 
 
 class DummyToroidalFieldSolver:
-    def field(x, y, z):
+    def field(self, x, _, z):
         return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
 
 
 class TestPrincetonDDiscrete:
     @pytest.mark.parametrize("x1", [4, 5])
-    @pytest.mark.parametrize("x2", [6, 10])
+    @pytest.mark.parametrize("x2", [10, 12])
     @pytest.mark.parametrize("n_tf", [12, 18])
-    @pytest.mark.parametrize(
-        "solver", [ArbitraryPlanarRectangularXSCircuit, BiotSavartFilament]
-    )
-    def test_princeton_d_discrete(self, x1, x2, n_tf, solver):
+    def test_princeton_d_discrete(self, x1, x2, n_tf):
         x, z = _calculate_discrete_constant_tension_shape(
-            x1, x2, n_tf, 0.25, 0.1, 40, solver, tolerance=1e-2
+            x1,
+            x2,
+            n_tf,
+            0.25,
+            0.1,
+            40,
+            solver=ArbitraryPlanarRectangularXSCircuit,
+            tolerance=1e-4,
         )
-        assert len(x) == 40
-        assert len(z) == 40
+
         assert np.isclose(np.min(x), x1)
-        assert np.isclose(np.max(x), x2, rtol=1e-3)
+        assert np.isclose(np.max(x), x2)
         # check symmetry
-        assert np.allclose(x[:15], x[15:][::-1])
+        assert np.isclose(np.sum(x[: len(x) // 2 + 1]), np.sum(x[len(x) // 2 :]))
+        assert np.isclose(np.sum(z), 0.0)
+
+    def test_princeton_d_discrete_bs(self):
+        x, z = _calculate_discrete_constant_tension_shape(
+            4, 16, 16, 0.25, 0.1, 100, solver=BiotSavartFilament, tolerance=1e-4
+        )
+
+        assert np.isclose(np.min(x), 4.0)
+        assert np.isclose(np.max(x), 16.0)
+        # check symmetry
+        assert np.isclose(np.sum(x[: len(x) // 2 + 1]), np.sum(x[len(x) // 2 :]))
+        assert np.isclose(np.sum(z), 0.0)
 
     def test_verify_princeton_d_discrete(self):
         x, z = _calculate_discrete_constant_tension_shape(

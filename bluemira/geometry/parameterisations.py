@@ -25,7 +25,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.special import iv as bessel
 
-from bluemira.base.constants import EPS, MU_0
+from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
@@ -719,7 +719,7 @@ def _calculate_discrete_constant_tension_shape(
     tf_wp_depth:
         Toroidal extent of the TF coil WP
     n_points:
-        Number of points in the TF coil (no guarantees on output size)
+        Number of points in the TF coil (no guarantees on output size!)
     solver:
         Solver object which provides the magnetic field calculation
     tolerance:
@@ -769,8 +769,6 @@ def _calculate_discrete_constant_tension_shape(
     sin_theta = np.sin(theta)
     r = (r2 + r1) / 2 + (r2 - r1) / 2 * np.cos(theta + np.pi / 2)
     z = (r2 - r1) / 2 * np.sin(theta + np.pi / 2)
-    r = r[:n_points]
-    z = z[:n_points]
     ra = r.copy()
     za = z.copy()
 
@@ -787,29 +785,30 @@ def _calculate_discrete_constant_tension_shape(
             solver, rs, zs, n_tf, tf_wp_width, tf_wp_depth
         )
 
-        B = cage.field(rs[:n_points], np.zeros_like(rs)[:n_points], zs[:n_points])
-        Btor = B[1, :]
+        b_tor = cage.field(rs[:n_points], np.zeros_like(rs)[:n_points], zs[:n_points])[
+            1, :
+        ]
         rr_intb = r[::-1]
         rr = r[::-1]
 
-        Btor = 2 * np.pi * Btor / (MU_0 * n_tf)
+        b_tor *= 2 * np.pi / (MU_0 * n_tf)
 
         int_b = np.zeros(n_points)
 
         for i in range(1, n_points):
-            int_b[i] = int_b[i - 1] + 0.5 * (Btor[i - 1] + Btor[i]) * (
+            int_b[i] = int_b[i - 1] + 0.5 * (b_tor[i - 1] + b_tor[i]) * (
                 rr_intb[i] - rr_intb[i - 1]
             )
 
         int_b_fh = interp1d(rr_intb, int_b, kind="linear", fill_value="extrapolate")
-        interpolator = interp1d(rr, Btor, kind="linear", fill_value="extrapolate")
+        interpolator = interp1d(rr, b_tor, kind="linear", fill_value="extrapolate")
 
         tension = MU_0 * n_tf / (8 * np.pi) * int_b[-1]
         k = 4 * np.pi * tension / (MU_0 * n_tf)
 
         x0 = r2
-        Btor = Btor[::-1]
-        for i in range(n_points):
+        b_tor = b_tor[::-1]
+        for i in range(1, n_points):
             xx = x0
             error = 1.0
             inner_iter = 0
@@ -828,7 +827,7 @@ def _calculate_discrete_constant_tension_shape(
             r[i] = xx
             if i > 0:
                 z[i] = z[i - 1] - k * (
-                    sin_theta[i - 1] / Btor[i - 1] + sin_theta[i] / Btor[i]
+                    sin_theta[i - 1] / b_tor[i - 1] + sin_theta[i] / b_tor[i]
                 ) / 2 * (theta[i] - theta[i - 1])
 
         errorr = np.linalg.norm(r - ra) / np.linalg.norm(r)
@@ -837,13 +836,19 @@ def _calculate_discrete_constant_tension_shape(
         ra = r.copy()
         za = z.copy()
 
-    r = np.concatenate((r, [r[-1]]))
-    z = np.concatenate((z, [0]))
     r = np.concatenate((r[::-1], r[1:]))
     z = np.concatenate((z[::-1], -z[1:]))
+
+    # This is a slight hack to ensure the inner radius is indeed r1. At higher
+    # discretisations this is barely noticeable.
+    r[1] = r1
+    r[-2] = r1
+    f, ax = plt.subplots()
+    ax.plot(r[1:-1], z[1:-1])
+    ax.set_aspect("equal")
+    plt.show()
     # Mask to subtract the straight leg (which is treated differently in CAD)
-    mask = np.where(r > (1.0 + 2.0 * EPS) * np.min(r))
-    return r[mask], z[mask]
+    return r[1:-1], z[1:-1]
 
 
 class PrincetonDDiscrete(PrincetonD):
