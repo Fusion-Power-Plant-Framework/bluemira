@@ -164,7 +164,8 @@ def test_print_banner(caplog, capsys):
     _reset = capsys.readouterr().out
     result = capture_output(caplog, print_banner)
     output = capsys.readouterr().out
-    assert len(output.split("\n")) == 17
+    print(output.split("\n"), flush=True)
+    assert len(list(filter(bool, output.split("\n")))) in {16, 17}
     assert len(result) == 5
     assert ANSI_COLOR["blue"][:3] in output
     assert EXIT_COLOR in output

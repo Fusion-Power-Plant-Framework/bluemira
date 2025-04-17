@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -44,7 +46,10 @@ class TestMembership:
         geometry.add_element(0, 1, i_300_200, SS316)
         geometry.add_element(1, 2, i_300_200, SS316)
         geometry.add_element(2, 3, i_300_200, SS316)
-        cls.geometry = geometry
+        cls._geometry = geometry
+
+    def setup_method(self):
+        self.geometry = deepcopy(self._geometry)
 
     def test_node_membership(self):
         self.geometry.add_node(0, 0, 0)
@@ -76,7 +81,7 @@ class TestMembership:
         eiyy = i_300_300.i_yy * SS316.E
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
-        elem_id = self.geometry.add_element(3, 4, i_300_300, SS316)
+        elem_id = self.geometry.add_element(3, 3, i_300_300, SS316)
         assert len(self.geometry.elements) == 4
         assert elem_id == 3
 
