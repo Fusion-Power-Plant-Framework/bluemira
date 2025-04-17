@@ -843,10 +843,6 @@ def _calculate_discrete_constant_tension_shape(
     # discretisations this is barely noticeable.
     r[1] = r1
     r[-2] = r1
-    f, ax = plt.subplots()
-    ax.plot(r[1:-1], z[1:-1])
-    ax.set_aspect("equal")
-    plt.show()
     # Mask to subtract the straight leg (which is treated differently in CAD)
     return r[1:-1], z[1:-1]
 
