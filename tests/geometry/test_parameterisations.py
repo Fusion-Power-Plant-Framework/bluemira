@@ -154,6 +154,10 @@ class TestPrincetonDDiscrete:
         assert np.isclose(np.sum(z), 0.0)
 
     def test_verify_princeton_d_discrete(self):
+        """
+        This to verify that we recover the semi-analytical Princeton-D form
+        with this numerical prodecure
+        """
         x, z = _calculate_discrete_constant_tension_shape(
             4.0, 16, 1, 0.0, 0.0, 300, DummyToroidalFieldSolver, tolerance=1e-3
         )
