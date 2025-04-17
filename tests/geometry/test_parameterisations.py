@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 
 from bluemira.codes._freecadapi import _wire_edges_tangent
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
@@ -23,9 +24,13 @@ from bluemira.geometry.parameterisations import (
     PrincetonD,
     SextupleArc,
     TripleArc,
+    _calculate_discrete_constant_tension_shape,
+    _princeton_d,
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 
@@ -88,7 +93,7 @@ class TestPrincetonD:
     @pytest.mark.parametrize("x2", [6, 10, 200])
     @pytest.mark.parametrize("dz", [0, 100])
     def test_princeton_d(self, x1, x2, dz):
-        x, z = PrincetonD._princeton_d(x1, x2, dz, 500)
+        x, z = _princeton_d(x1, x2, dz, 500)
         assert len(x) == 500
         assert len(z) == 500
         assert np.isclose(np.min(x), x1)
@@ -99,7 +104,7 @@ class TestPrincetonD:
 
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
-            PrincetonD._princeton_d(10, 3, 0)
+            _princeton_d(10, 3, 0)
 
     def test_instantiation_fixed(self):
         p = PrincetonD({
@@ -108,6 +113,62 @@ class TestPrincetonD:
         })
         assert p.variables["x1"].fixed
         assert not p.variables["x2"].fixed
+
+
+class DummyToroidalFieldSolver:
+    def field(x, _, z):  # NOQA: N805
+        return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
+
+
+class TestPrincetonDDiscrete:
+    @pytest.mark.parametrize("x1", [4, 5])
+    @pytest.mark.parametrize("x2", [10, 12])
+    @pytest.mark.parametrize("n_tf", [12, 18])
+    def test_princeton_d_discrete(self, x1, x2, n_tf):
+        x, z = _calculate_discrete_constant_tension_shape(
+            x1,
+            x2,
+            n_tf,
+            0.25,
+            0.1,
+            40,
+            solver=ArbitraryPlanarRectangularXSCircuit,
+            tolerance=1e-4,
+        )
+
+        assert np.isclose(np.min(x), x1)
+        assert np.isclose(np.max(x), x2)
+        # check symmetry
+        assert np.isclose(np.sum(x[: len(x) // 2 + 1]), np.sum(x[len(x) // 2 :]))
+        assert np.isclose(np.sum(z), 0.0)
+
+    def test_princeton_d_discrete_bs(self):
+        x, z = _calculate_discrete_constant_tension_shape(
+            4, 16, 16, 0.25, 0.1, 100, solver=BiotSavartFilament, tolerance=1e-4
+        )
+
+        assert np.isclose(np.min(x), 4.0)
+        assert np.isclose(np.max(x), 16.0)
+        # check symmetry
+        assert np.isclose(np.sum(x[: len(x) // 2 + 1]), np.sum(x[len(x) // 2 :]))
+        assert np.isclose(np.sum(z), 0.0)
+
+    def test_verify_princeton_d_discrete(self):
+        """
+        This to verify that we recover the semi-analytical Princeton-D form
+        with this numerical prodecure
+        """
+        x, z = _calculate_discrete_constant_tension_shape(
+            4.0, 16, 1, 0.0, 0.0, 300, DummyToroidalFieldSolver, tolerance=1e-3
+        )
+        c1 = Coordinates({"x": x, "z": z})
+        xd, zd = _princeton_d(4.0, 16.0, 0.0, 200)
+        c2 = Coordinates({"x": xd, "z": zd})
+        assert not c1.closed
+        assert np.isclose(c1.length, c2.length, rtol=1e-2)
+        c1.close()
+        c2.close()
+        assert np.isclose(c1.length, c2.length, rtol=1e-4)
 
 
 class TestPictureFrame:
