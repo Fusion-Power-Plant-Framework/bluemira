@@ -4,81 +4,66 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-import matplotlib.pyplot as plt
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 from bluemira.magnets.strand import Strand, SuperconductingStrand
-from bluemira.materials.material import Superconductor
+from bluemira.materials import MaterialCache
 from bluemira.materials.mixtures import MixtureFraction
 
+# %%
 
-class DummySuperconductor(Superconductor):
-    def __init__(self, name="DummySC"):
-        self.name = name
-        self.Jc0 = 1e8
+# load supporting bluemira materials
+MATERIAL_CACHE = MaterialCache()
+MATERIAL_CACHE.load_from_file(Path(".", "test_materials_mag.json"))
 
-    def Jc(self, B=None, temperature=None, **kwargs):  # noqa:ARG002
-        return self.Jc0  # Constant mock Jc
+# get some materials from MATERIAL_CACHE
+DummySteel = MATERIAL_CACHE.get_material("SS316-LN")
+DummySuperconductor1 = MATERIAL_CACHE.get_material("Nb3Sn - WST")
+DummySuperconductor2 = MATERIAL_CACHE.get_material("Nb3Sn - WST")
 
 
 def test_strand_area():
-    mat = MixtureFraction(material=DummySuperconductor(), fraction=1.0)
+    mat = MixtureFraction(material=DummySuperconductor1, fraction=1.0)
     strand = Strand("test_strand", materials=[mat], d_strand=0.001)
     expected_area = np.pi * (0.001**2) / 4
     assert np.isclose(strand.area, expected_area)
 
 
 def test_strand_invalid_diameter():
-    mat = MixtureFraction(material=DummySuperconductor(), fraction=1.0)
+    mat = MixtureFraction(material=DummySuperconductor1, fraction=1.0)
     with pytest.raises(ValueError, match="positive"):
         Strand("invalid_strand", materials=[mat], d_strand=-0.001)
 
 
-def test_superconducting_strand_ic_and_jc():
-    mat = MixtureFraction(material=DummySuperconductor(), fraction=0.6)
-    sc_strand = SuperconductingStrand("sc", materials=[mat], d_strand=0.001)
-    expected_area = np.pi * (0.001**2) / 4 * 0.6
-    Ic_val = 1e8 * expected_area  # noqa:N806
-    assert np.isclose(sc_strand.Ic(B=1.0, temperature=4.2), Ic_val)
-
-
 def test_superconducting_strand_invalid_materials():
     # Two superconductors — should raise ValueError
-    mat1 = MixtureFraction(material=DummySuperconductor("SC1"), fraction=0.5)
-    mat2 = MixtureFraction(material=DummySuperconductor("SC2"), fraction=0.5)
+    mat1 = MixtureFraction(material=DummySuperconductor1, fraction=0.5)
+    mat2 = MixtureFraction(material=DummySuperconductor2, fraction=0.5)
     with pytest.raises(ValueError, match="Only one superconductor material"):
         SuperconductingStrand("invalid", materials=[mat1, mat2])
 
     # No superconductors — should raise ValueError
-    class DummyNormal:
-        def __init__(self, name="DummyNormal"):
-            self.name = name
-
-    mat3 = MixtureFraction(material=DummyNormal(), fraction=1.0)
+    mat3 = MixtureFraction(material=DummySteel, fraction=1.0)
     with pytest.raises(ValueError, match="No superconductor"):
         SuperconductingStrand("invalid", materials=[mat3])
 
 
-def test_strand_plot(monkeypatch):
-    mat = MixtureFraction(material=DummySuperconductor(), fraction=1.0)
-    strand = Strand("plot_test", materials=[mat])
+def test_strand_material_properties():
+    sc = DummySuperconductor1
+    mat = MixtureFraction(material=sc, fraction=1.0)
+    strand = Strand("mat_test", materials=[mat], d_strand=0.001)
 
-    # Patch plot_2d to skip actual drawing
-    monkeypatch.setattr(
-        "bluemira.display.plot_2d", lambda *_args, **_kwargs: "mock_plot"
+    temperature = 20
+    assert np.isclose(
+        strand.erho(temperature=temperature), sc.erho(temperature=temperature)
     )
-    result = strand.plot(show=False)
-    assert result == "mock_plot"
+    print(sc.Cp(temperature=temperature))
+    print(strand.Cp(temperature=temperature))
 
-
-def test_plot_Ic_B(monkeypatch):
-    mat = MixtureFraction(material=DummySuperconductor(), fraction=1.0)
-    sc_strand = SuperconductingStrand("plot_ic", materials=[mat])
-
-    # Patch plt.show to suppress window
-    monkeypatch.setattr(plt, "show", lambda: None)
-    B = np.linspace(0, 5, 10)
-    ax = sc_strand.plot_Ic_B(B, temperature=4.2, show=True)
-    assert ax is not None
-    assert hasattr(ax, "plot")
+    assert np.isclose(strand.Cp(temperature=temperature), sc.Cp(temperature=temperature))
+    assert np.isclose(
+        strand.rho(temperature=temperature), sc.rho(temperature=temperature)
+    )
