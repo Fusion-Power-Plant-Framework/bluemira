@@ -127,7 +127,7 @@ def upstream_temperature(
             eq,
             r_sep_mp,
             z_mp,
-            first_wall=firstwall_geom,
+            flux_intercepting_surface=firstwall_geom,
         )
         if connection_length is None
         else connection_length
@@ -310,7 +310,7 @@ def specific_point_temperature(
         x_p + (d * f_exp),
         z_p,
         forward=forward,
-        first_wall=firstwall_geom,
+        flux_intercepting_surface=firstwall_geom,
     )
     # connection length from the midplane to the target
     l_tot = (
@@ -319,7 +319,7 @@ def specific_point_temperature(
             r_sep_mp,
             z_mp,
             forward=forward,
-            first_wall=firstwall_geom,
+            flux_intercepting_surface=firstwall_geom,
         )
         if connection_length is None
         else connection_length

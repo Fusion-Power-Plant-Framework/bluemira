@@ -20,7 +20,7 @@ import numba as nb
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
@@ -455,22 +455,24 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         self.alpha = None
 
-    def clip(self, first_wall: Coordinates):
+    def clip(self, flux_intercepting_surface: Coordinates, verbose: bool = True):  # noqa: FBT001, FBT002
         """
-        Clip the PartialOpenFluxSurface to a first wall.
+        Clip the PartialOpenFluxSurface to a flux-intercepting surface.
+        E.g., first wall or divertor target.
 
         Parameters
         ----------
-        first_wall:
+        flux_intercepting_surface:
             The geometry of the first wall to clip the OpenFluxSurface to
         """
-        first_wall = deepcopy(first_wall)
+        flux_intercepting_surface = deepcopy(flux_intercepting_surface)
 
-        args = join_intersect(self.coords, first_wall, get_arg=True)
+        args = join_intersect(self.coords, flux_intercepting_surface, get_arg=True)
 
-        if not args:
-            bluemira_warn(
-                "No intersection detected between flux surface and first_wall."
+        if not args and verbose:
+            bluemira_print(
+                "No intersection detected between flux surface"
+                " and flux intercepting surface."
             )
             self.alpha = None
             return
@@ -479,20 +481,22 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         # is at the smallest argument
         self.coords = Coordinates(self.coords[:, : min(args) + 1])
 
-        fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
+        fis_arg = int(flux_intercepting_surface.argmin([self.x_end, 0, self.z_end]))
 
-        if fw_arg + 1 == len(first_wall):
+        if fis_arg + 1 == len(flux_intercepting_surface):
             pass
         elif check_linesegment(
-            first_wall.xz.T[fw_arg],
-            first_wall.xz.T[fw_arg + 1],
+            flux_intercepting_surface.xz.T[fis_arg],
+            flux_intercepting_surface.xz.T[fis_arg + 1],
             np.array([self.x_end, self.z_end]),
         ):
-            fw_arg += 1
+            fis_arg += 1
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
+            self.coords.points[-2],
+            self.coords.points[-1],
+            flux_intercepting_surface.points[fis_arg],
         )
 
     def flux_expansion(self, eq: Equilibrium) -> float:
@@ -652,7 +656,7 @@ class FieldLineTracer:
     ----------
     eq:
         Equilibrium in which to trace a field line
-    first_wall:
+    flux_intercepting_surface:
         Boundary at which to stop tracing the field line
 
     Notes
@@ -719,16 +723,23 @@ class FieldLineTracer:
             """
             return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
-    def __init__(self, eq: Equilibrium, first_wall: Grid | Coordinates | None = None):
+    def __init__(
+        self,
+        eq: Equilibrium,
+        flux_intercepting_surface: Grid | Coordinates | None = None,
+    ):
         self.eq = eq
-        if first_wall is None:
-            first_wall = self.eq.grid
-        elif isinstance(first_wall, Coordinates) and not first_wall.is_planar:
+        if flux_intercepting_surface is None:
+            flux_intercepting_surface = self.eq.grid
+        elif (
+            isinstance(flux_intercepting_surface, Coordinates)
+            and not flux_intercepting_surface.is_planar
+        ):
             raise EquilibriaError(
                 "When tracing a field line, the coordinates object of the boundary must"
                 " be planar."
             )
-        self.first_wall = first_wall
+        self.flux_intercepting_surface = flux_intercepting_surface
 
     def trace_field_line(
         self,
@@ -767,7 +778,7 @@ class FieldLineTracer:
             y0=np.array([x, z, 0]),
             t_span=(0, 2 * np.pi * n_turns_max),
             t_eval=phi,
-            events=self.CollisionTerminator(self.first_wall),
+            events=self.CollisionTerminator(self.flux_intercepting_surface),
             method="LSODA",
             args=(forward,),
         )
@@ -820,7 +831,7 @@ def calculate_connection_length_flt(
     eq: Equilibrium,
     x: float,
     z: float,
-    first_wall: Coordinates | Grid,
+    flux_intercepting_surface: Coordinates | Grid,
     *,
     forward: bool = True,
     n_points: float = 200,
@@ -840,8 +851,8 @@ def calculate_connection_length_flt(
         Vertical coordinate of the starting point
     forward:
         Whether or not to follow the field line forwards or backwards (+B or -B)
-    first_wall:
-        Flux-intercepting surface. Defaults to the grid of the equilibrium
+    flux_intercepting_surface:
+        Coordinates of flux-intercepting surface. Defaults to the grid of the equilibrium
     n_turns_max:
         Maximum number of toroidal turns to trace the field line
 
@@ -859,7 +870,7 @@ def calculate_connection_length_flt(
     be intercepted beforehand!
 
     """
-    flt = FieldLineTracer(eq, first_wall)
+    flt = FieldLineTracer(eq, flux_intercepting_surface)
     field_line = flt.trace_field_line(
         x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
     )
@@ -870,10 +881,11 @@ def calculate_connection_length_fs(
     eq: Equilibrium,
     x: float,
     z: float,
-    first_wall: Coordinates,
+    flux_intercepting_surface: Coordinates,
     *,
     forward: bool = True,
     f_s: Coordinates | None = None,
+    verbose: bool = True,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -889,10 +901,11 @@ def calculate_connection_length_fs(
         Vertical coordinate of the starting point
     forward:
         Whether or not to follow the field line forwards or backwards
-    first_wall:
-        Flux-intercepting surface. Defaults to the grid of the equilibrium
+    flux_intercepting_surface:
+        Coordinates of the flux-intercepting surface
+        Defaults to the grid of the equilibrium
     f_s:
-        Coordniates of flux surface through x and z.
+        Coordinates of flux surface through x and z.
 
     Returns
     -------
@@ -928,7 +941,7 @@ def calculate_connection_length_fs(
     lfs, hfs = f_s.split(Point(x=x, z=z))
     fs = lfs if forward else hfs
 
-    fs.clip(first_wall)
+    fs.clip(flux_intercepting_surface=flux_intercepting_surface, verbose=verbose)
     return fs.connection_length(eq)
 
 
