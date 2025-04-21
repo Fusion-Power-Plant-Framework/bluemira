@@ -51,7 +51,7 @@ cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.4.1
     # via requests
-cherab==1.5.0
+cherab==1.4.0
     # via bluemira (pyproject.toml)
 click==8.1.8
     # via
@@ -70,6 +70,8 @@ coverage==7.8.0
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
+cython==3.0.12
+    # via raysect
 debugpy==1.8.14
     # via ipykernel
 decorator==5.2.1
@@ -297,7 +299,7 @@ numexpr==2.10.2
     # via
     #   blosc2
     #   tables
-numpy==1.26.4
+numpy==2.2.5
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
@@ -440,7 +442,7 @@ pyzmq==26.4.0
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
-raysect==0.8.1.post1
+raysect==0.7.1
     # via cherab
 referencing==0.36.2
     # via
