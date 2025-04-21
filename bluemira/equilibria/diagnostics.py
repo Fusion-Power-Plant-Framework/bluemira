@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
@@ -218,13 +219,15 @@ class EqDiagnosticOptions:
         self.folder = Path.cwd() if self.folder is None else Path(self.folder)
 
 
-class PicardDiagnostic(Enum):
+class PicardDiagnostic(Flag):
     """Type of plot to view during optimisation."""
 
     EQ = auto()
     """Plot the equilibrium"""
     CONVERGENCE = auto()
     """Plot the convergence"""
+    EQ_AND_CONVERGENCE = EQ | CONVERGENCE
+    """Plot both equilibrium and convergence"""
     NO_PLOT = auto()
 
 
@@ -251,14 +254,33 @@ class _PicardDiagnosticDescriptor:
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: str | int | PicardDiagnostic):
+    def __set__(
+        self,
+        obj: Any,
+        value: bool | str | int | list[str | int] | PicardDiagnostic,  # noqa: FBT001
+    ):
         """
         Set the diagnostic
         """
-        if isinstance(value, str):
-            value = PicardDiagnostic[value.upper()]
+
+        def _setup(value):
+            if isinstance(value, str):
+                return PicardDiagnostic[value.upper()]
+            if isinstance(value, bool):
+                return PicardDiagnostic.EQ if value else PicardDiagnostic.NO_PLOT
+            return PicardDiagnostic(value)
+
+        if isinstance(value, list):
+            fv = list({_setup(v) for v in value})
+            if PicardDiagnostic.NO_PLOT in fv:
+                value = PicardDiagnostic.NO_PLOT
+            else:
+                value = fv[0]
+                for v in fv[1:]:
+                    value |= v
         else:
-            value = PicardDiagnostic(value)
+            value = _setup(value)
+
         setattr(obj, self._name, value)
 
 
@@ -301,7 +323,12 @@ class PicardDiagnosticOptions:
 
             self.update_figure = self.make_gif = self.finalise_plots = noop
         else:
-            self.f, self.ax = plt.subplots()
+            self.f, ax = plt.subplots(
+                ncols=2 if self.plot is PicardDiagnostic.EQ_AND_CONVERGENCE else 1
+            )
+            self.ax = ax if isinstance(ax, np.ndarray) else [ax]
+            self.ax_eq = self.ax[0]
+            self.ax_con = self.ax[1] if len(self.ax) == 2 else self.ax[0]  # noqa: PLR2004
 
     @staticmethod
     def finalise_plots():
@@ -317,11 +344,12 @@ class PicardDiagnosticOptions:
         """
         Updates the figure if plotting is used
         """
-        self.ax.clear()
-        if self.plot is PicardDiagnostic.EQ:
-            eq.plot(ax=self.ax)
-        elif self.plot is PicardDiagnostic.CONVERGENCE:
-            convergence.plot(ax=self.ax)
+        if PicardDiagnostic.EQ in self.plot:
+            self.ax_eq.clear()
+            eq.plot(ax=self.ax_eq)
+        if PicardDiagnostic.CONVERGENCE in self.plot:
+            self.ax_con.clear()
+            convergence.plot(ax=self.ax_con)
         plt.pause(PLT_PAUSE)
         save_figure(
             self.f,

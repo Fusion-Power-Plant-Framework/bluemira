@@ -178,7 +178,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
         result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
         self._save_equilibria(opt_problem)
-        if self.build_config.get("plot", False):
+        if self.build_config.get("summary_plot", False):
             opt_problem.plot()
             plt.show()
 
