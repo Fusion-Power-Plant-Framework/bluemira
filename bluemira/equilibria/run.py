@@ -600,8 +600,12 @@ class PulsedCoilsetDesign(ABC):
             if k == self.BREAKDOWN:
                 psi_name, psi_val = r"$\Psi_{bd}$", snap.eq.breakdown_psi
             else:
-                psi_name, psi_val = r"$\Psi_{b}$", snap.eq.get_OX_points()[1][0].psi
-
+                psi_name = r"$\Psi_{b}$"
+                try:
+                    psi_val = snap.eq.get_OX_points()[1][0].psi
+                except IndexError:
+                    bluemira_warn("No x point found setting psi plot title to 0")
+                    psi_val = 0
             axi.set_title(f"{k} {psi_name}: {2 * np.pi * psi_val:.2f} V.s")
         return f
 

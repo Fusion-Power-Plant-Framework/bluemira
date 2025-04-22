@@ -17,12 +17,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.look_and_feel import (
+    bluemira_error,
     bluemira_print,
     bluemira_print_flush,
     bluemira_warn,
 )
 from bluemira.equilibria.constants import PSI_REL_TOL
 from bluemira.equilibria.diagnostics import PicardDiagnosticOptions
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.optimisation.error import OptimisationError
 
 if TYPE_CHECKING:
@@ -532,6 +534,10 @@ class PicardIterator:
             except StopIteration:  # noqa: PERF203
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
+            except EquilibriaError:
+                self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+                bluemira_error("No X point found. Failed to solve")
+                break
         else:
             bluemira_warn(
                 "EQUILIBRIA G-S unable to find converged value after"
@@ -592,16 +598,15 @@ class PicardIterator:
         :
             The result
 
-        Raises
-        ------
-        StopIteration
-            if converged
         """
         try:
             next(self)
         except StopIteration:
             bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
+        except EquilibriaError:
+            self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+            bluemira_error("No X point found. Failed to solve")
         return self.result
 
     def check_converged(self, *, print_status: bool = True) -> bool:
