@@ -784,13 +784,13 @@
     "source": "Input"
   },
   "CS_bmax": {
-    "value": 13.2,
+    "value": 1,
     "unit": "tesla",
     "source": "Input",
     "long_name": "Maximum peak field to use in CS modules"
   },
   "CS_jmax": {
-    "value": 40.5,
+    "value": 1,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in CS modules"

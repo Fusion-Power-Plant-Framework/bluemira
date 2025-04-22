@@ -745,6 +745,12 @@ if __name__ == "__main__":
             lower_port_koz_xz,
         ],
     )
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
+    debug.extend([reactor.tf_coils.xz_outer_boundary])
+    debug.extend(reactor.pf_coils.xz_boundary)
+    # I know there are clashes, I need to put in dynamic bounds on position opt to
+    # include coil XS.
+    show_cad(debug)
 
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
