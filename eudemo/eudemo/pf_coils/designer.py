@@ -53,38 +53,68 @@ if TYPE_CHECKING:
 class PFCoilsDesignerParams(ParameterFrame):
     """Parameters for :class:`PFCoilsDesigner`."""
 
-    # TODO(hsaunders1904): docstrings for these parameters?
     A: Parameter[float]
+    """Plasma Aspect Ratio"""
     B_0: Parameter[float]
+    """Magnetic toroidal field at plasma centre"""
     B_premag_stray_max: Parameter[float]
+    """Maximum stray field inside the breakdown zone during premagnetisation"""
     beta_p: Parameter[float]
+    """Ratio of plasma pressure to poloidal magnetic pressure"""
     C_Ejima: Parameter[float]
+    """Ejima constant"""
     CS_bmax: Parameter[float]
+    """Maximum peak field to use in CS modules"""
     CS_jmax: Parameter[float]
+    """Maximum current density to use in CS modules"""
     delta: Parameter[float]
+    """Last closed surface plasma triangularity"""
     F_cs_sepmax: Parameter[float]
+    """Maximum separation force between CS modules"""
     F_cs_ztotmax: Parameter[float]
+    """Maximum total vertical force in the CS stack"""
     F_pf_zmax: Parameter[float]
+    """Maximum vertical force on a single PF coil"""
     g_cs_mod: Parameter[float]
+    """Gap between CS modules"""
     I_p: Parameter[float]
+    """Plasma current"""
     kappa: Parameter[float]
+    """Last closed surface plasma elongation"""
     l_i: Parameter[float]
+    """Normalised internal plasma inductance"""
     n_CS: Parameter[int]
+    """Number of CS coil divisions"""
     n_PF: Parameter[int]
+    """Number of PF coils"""
     PF_bmax: Parameter[float]
+    """Maximum peak field to use in PF modules"""
     PF_jmax: Parameter[float]
+    """Maximum current density to use in PF modules"""
     R_0: Parameter[float]
+    """Major radius"""
     r_cs_in: Parameter[float]
+    """Central Solenoid inner radius"""
     tau_flattop: Parameter[float]
+    """Flat-top duration"""
     tk_cs_casing: Parameter[float]
+    """Thickness of the CS coil casing"""
     tk_cs_insulation: Parameter[float]
+    """Thickness of the CS coil insulation"""
     tk_pf_casing: Parameter[float]
+    """Thickness of the PF coil casing"""
     tk_pf_insulation: Parameter[float]
+    """Thickness of the PF coil insulation"""
     pf_s_tk_plate: Parameter[float]
+    """PF coil support plate thickness"""
     pf_s_g: Parameter[float]
+    """Gap between PF coil and support"""
     tk_cs: Parameter[float]
+    """Central Solenoid radial thickness"""
     tk_sol_ib: Parameter[float]
+    """Inboard SOL thickness"""
     v_burn: Parameter[float]
+    """Loop voltage during burn"""
 
 
 class PFCoilsDesigner(Designer[CoilSet]):
