@@ -46,6 +46,8 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import distance_to
 from bluemira.optimisation import Algorithm, AlgorithmType
 
 if TYPE_CHECKING:
@@ -227,7 +229,7 @@ class PositionConfig:
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )
 
-    def make_opt_problem(self, position_mapper, sub_opt_problems):
+    def make_opt_problem(self, position_mapper, current_bounder, sub_opt_problems):
         """
         Make outer position optimisation problem
 
@@ -243,6 +245,7 @@ class PositionConfig:
             self.algorithm,
             self.opt_conditions,
             constraints=None,
+            current_bounder=current_bounder,
         )
 
 
@@ -623,6 +626,36 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
         self.converge_and_snapshot(self.get_sof_eof_opt_problems(psi_sof, psi_eof))
 
 
+class MovingCurrentBoundStrategy:
+    def __init__(
+        self,
+        keep_out_zones: list[BluemiraFace],
+        pf_max_current: float,
+        pf_current_density: float,
+    ):
+        self.keep_out_zones = keep_out_zones
+        self.pf_max_current = pf_max_current
+        self.pf_current_density = pf_current_density
+
+    def get_max_currents(
+        self, pos_map: dict[str, npt.NDArray[np.float64]], coil_names: list[str]
+    ) -> npt.NDArray[np.float64]:
+        max_currents = np.zeros(len(coil_names))
+        for k, pos in pos_map.items():
+            distances = []
+            for koz in self.keep_out_zones:
+                distance, _ = distance_to([pos[0], 0, pos[1]], koz)
+                # Crude, for now; need to do the reverse inscribed square problem
+                distances.append(distance)
+            d_min = max(0, np.min(distances))
+            # Again, crude for now
+            max_current = 4.0 * d_min * self.pf_current_density
+            idx = coil_names.index(k)
+            # Overwrite the max PF current if the coil is restricted by a KOZ
+            max_currents[idx] = min(max_current, self.pf_max_current)
+        return max_currents
+
+
 class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     """
     Procedural design for a pulsed tokamak with no prescribed PF coil positions.
@@ -668,6 +701,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         current_opt_constraints: list[UpdateableConstraint] | None = None,
         coil_constraints: list[UpdateableConstraint] | None = None,
         limiter: Limiter | None = None,
+        current_bounder: MovingCurrentBoundStrategy | None = None,
         position_settings: dict | PositionConfig | None = None,
     ):
         super().__init__(
@@ -684,6 +718,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         self.coilset = self._prepare_coilset(self.coilset)
         self.position_mapper = position_mapper
+        self.current_bounder = current_bounder
         self.pos_config = position_settings
 
     @property
@@ -718,7 +753,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
         sub_opt_problems = self.get_sof_eof_opt_problems(psi_sof, psi_eof)
         pos_opt_problem = self.pos_config.make_opt_problem(
-            self.position_mapper, sub_opt_problems
+            self.position_mapper, self.current_bounder, sub_opt_problems
         )
         result = pos_opt_problem.optimise(verbose=verbose)
         optimised_coilset = self._consolidate_coilset(result.coilset, sub_opt_problems)
