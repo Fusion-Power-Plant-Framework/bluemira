@@ -11,6 +11,7 @@ Used by pytest for configuration like adding command line options.
 import doctest
 import os
 from contextlib import suppress
+from operator import itemgetter
 from pathlib import Path
 from unittest import mock
 
@@ -75,6 +76,36 @@ rest_examples = Sybil(
 
 
 pytest_collect_file = rest_examples.pytest()
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(config, items):  # noqa: ARG001
+    """Collect tests and order dependent doctests"""
+    doc_dict = {}
+    for i_no, item in enumerate(items):
+        if item.location[0].endswith("rst"):
+            if item.location[0] in doc_dict:
+                doc_dict[item.location[0]].append((i_no, item.location[1]))
+            else:
+                doc_dict[item.location[0]] = [(i_no, item.location[1])]
+
+    new_list = []
+    for v in doc_dict.values():
+        new_list.extend([entry for entry, _ in sorted(v, key=itemgetter(1))])
+
+    items_doc = []
+    items_not_doc = []
+    already = []
+    for nl in new_list:
+        for no, item in enumerate(items):
+            if no == nl:
+                items_doc.append(item)
+                break
+            if no not in already:
+                items_not_doc.append(item)
+                already.append(no)
+
+    items[:] = items_doc + items_not_doc
 
 
 def pytest_addoption(parser):
