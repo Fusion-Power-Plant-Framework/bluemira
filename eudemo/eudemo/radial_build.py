@@ -314,9 +314,9 @@ template_builder.add_input_values({
 })
 
 
-def apply_specific_interface_rules(params: ParameterFrame):
+def apply_specific_B_to_P_interface_rules(params: ParameterFrame):
     """
-    Apply specific rules for the interface between PROCESS and BLUEMIRA
+    Apply specific rules for the interface between BLUEMIRA and PROCESS
     that relate to the EU-DEMO design parameterisation
     """
     # Apply q_95 as a boundary on the iteration vector rather than a fixed input
@@ -349,6 +349,23 @@ def apply_specific_interface_rules(params: ParameterFrame):
     })
 
 
+def apply_specific_P_to_B_interface_rules(
+    params: ParameterFrame, process_params: ParameterFrame
+):
+    """
+    Apply specific rules for the interface between BLUEMIRA and PROCESS
+    that relate to the EU-DEMO design parameterisation
+    """
+    # CS maxima over pulse and name conventions
+    cs_b_max = max(
+        process_params.get_values("B_cs_peak_flat_top_end", "B_cs_peak_pulse_start")
+    )
+    params.update_values({
+        "CS_bmax": cs_b_max,
+        "CS_jmax": process_params.get_values("j_cs_critical")[0],
+    })
+
+
 def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
@@ -370,13 +387,13 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
         )
-        apply_specific_interface_rules(params)
+        apply_specific_B_to_P_interface_rules(params)
         build_config["template_in_dat"] = template_builder.make_inputs()
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
     if plot:
         solver.plot_radial_build(show=True)
-
     params.update_from_frame(new_params)
+    apply_specific_P_to_B_interface_rules(params, new_params)
     return params
