@@ -42,6 +42,9 @@ if TYPE_CHECKING:
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
     from bluemira.utilities.positioning import PositionMapper
 
+if TYPE_CHECKING:
+    from bluemira.equilibria.run import MovingCurrentBoundStrategy
+
 
 class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
     """
@@ -294,12 +297,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             self.debug[i] = []
 
         if self.current_bounder is not None:
-            max_currents = (
-                self.current_bounder.get_max_currents(
-                    pos_map, self.coilset.get_control_coils().name
-                )
-                / 1.1
-            )  # For later expansion
+            max_currents = self.current_bounder.get_max_currents(
+                pos_map, self.coilset.get_control_coils().name
+            )
 
         fom_values = []
         for sub_opt_prob in self.sub_opt_problems:
