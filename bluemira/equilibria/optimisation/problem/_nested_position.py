@@ -29,20 +29,20 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print_flush
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.optimisation.constraints import (
-    UpdateableConstraint,
-)
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
     EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
-from bluemira.utilities.positioning import PositionMapper
 
 if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.optimisation.constraints import (
+        UpdateableConstraint,
+    )
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
+    from bluemira.utilities.positioning import PositionMapper
 
 
 class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
