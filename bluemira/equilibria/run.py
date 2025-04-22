@@ -47,6 +47,7 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to
 from bluemira.optimisation import Algorithm, AlgorithmType
 
