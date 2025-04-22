@@ -34,6 +34,7 @@ from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.run import (
     BreakdownCOPConfig,
     EQConfig,
+    MovingCurrentBoundStrategy,
     OptimisedPulsedCoilsetDesign,
     PositionConfig,
 )
@@ -326,12 +327,17 @@ class PFCoilsDesigner(Designer[CoilSet]):
                     **eq_config["diagnostic_plotting"]
                 ),
             ),
+            limiter=None,
+            current_bounder=MovingCurrentBoundStrategy(
+                self.keep_out_zones,
+                eq_config["peak_PF_current_factor"] * self.params.I_p.value,
+                self.params.PF_jmax.value,
+            ),
             position_settings=PositionConfig(
                 problem=PulsedNestedPositionCOP,
                 algorithm=pos_config["optimisation_settings"]["algorithm_name"],
                 opt_conditions=pos_config["optimisation_settings"]["conditions"],
             ),
-            limiter=None,
         )
 
     def _make_opt_constraints(self, coilset):

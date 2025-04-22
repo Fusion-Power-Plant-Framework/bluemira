@@ -21,6 +21,10 @@ the method used to map the coilset object to the state vector
 
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import numpy.typing as npt
 
@@ -36,6 +40,9 @@ from bluemira.equilibria.optimisation.problem.base import (
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.run import MovingCurrentBoundStrategy
 
 
 class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
@@ -195,6 +202,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         opt_parameters: dict[str, float] | None = None,
         constraints=None,
         initial_currents=None,
+        current_bounder: MovingCurrentBoundStrategy | None = None,
         *,
         debug: bool = False,
     ):
@@ -219,6 +227,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.iter = {0: 0.0}
         opt_dimension = self.position_mapper.dimension
         self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
+        self.current_bounder = current_bounder
 
     @staticmethod
     def _run_reporting(itern, max_fom, verbose):
@@ -270,9 +279,16 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             i = max(list(self.debug.keys())) + 1
             self.debug[i] = []
 
+        if self.current_bounder is not None:
+            max_currents = self.current_bounder.get_max_currents(
+                pos_map, self.coilset.get_control_coils().name
+            )
+
         fom_values = []
         for sub_opt_prob in self.sub_opt_problems:
             sub_opt_prob.coilset.set_optimisation_state(coil_position_map=pos_map)
+            if self.current_bounder is not None:
+                sub_opt_prob.set_current_bounds(max_currents)
 
             result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
 
