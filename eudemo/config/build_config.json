@@ -64,10 +64,8 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
-    "diagnostic_plotting": {
-      "plot": "convergence"
-    },
+    "run_mode": "read",
+    "diagnostic_plotting": {},
     "summary_plot": true,
     "plot": true,
     "save": true,
@@ -143,7 +141,7 @@
     "show_data": false
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -219,9 +217,7 @@
           "ftol_rel": 1e-8
         }
       },
-      "diagnostic_plotting": {
-        "plot": "convergence"
-      }
+      "diagnostic_plotting": {}
     },
     "position_settings": {
       "optimisation_settings": {
