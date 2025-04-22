@@ -534,9 +534,9 @@ class PicardIterator:
             except StopIteration:  # noqa: PERF203
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
-            except EquilibriaError:
+            except EquilibriaError as ee:
                 self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
-                bluemira_error("No X point found. Failed to solve")
+                bluemira_error(f"Failed to solve. {ee.args[0]}")
                 break
         else:
             bluemira_warn(
