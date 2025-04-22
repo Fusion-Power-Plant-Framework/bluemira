@@ -42,9 +42,6 @@ if TYPE_CHECKING:
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
     from bluemira.utilities.positioning import PositionMapper
 
-if TYPE_CHECKING:
-    from bluemira.equilibria.run import MovingCurrentBoundStrategy
-
 
 class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
     """
