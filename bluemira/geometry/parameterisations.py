@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from scipy.interpolate import interp1d
 from scipy.special import iv as bessel
 
 from bluemira.base.constants import MU_0
@@ -762,8 +763,6 @@ def _calculate_discrete_constant_tension_shape(
     Using the associated DummyToroidalFieldSolver, one can pretty perfectly recreate
     the closed-form solution for the Princeton-D.
     """
-    from scipy.interpolate import interp1d  # noqa: PLC0415
-
     n_points //= 2  # We solve for a half-coil
     theta = np.linspace(-np.pi / 2, np.pi / 2, n_points)
     sin_theta = np.sin(theta)
