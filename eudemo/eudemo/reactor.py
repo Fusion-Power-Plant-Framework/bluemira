@@ -824,12 +824,6 @@ if __name__ == "__main__":
         n_TF=reactor_config.global_params.n_TF.value,
     )
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-    debug.extend(reactor.pf_coils.xz_boundary)
-    # I know there are clashes, I need to put in dynamic bounds on position opt to
-    # include coil XS.
-    show_cad(debug)
-
     reactor.plot("xz")
     reactor.show_cad(n_sectors=2)
 

@@ -826,13 +826,13 @@
     "long_name": "Number of PF coils"
   },
   "PF_bmax": {
-    "value": 11,
+    "value": 12,
     "unit": "tesla",
     "source": "Input",
     "long_name": "Maximum peak field to use in PF modules"
   },
   "PF_jmax": {
-    "value": 12.5,
+    "value": 15,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in PF modules"
