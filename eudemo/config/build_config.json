@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "diagnostic_plotting": {},
     "summary_plot": true,
     "plot": true,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "run",
+      "run_mode": "read",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -136,7 +136,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -208,7 +208,7 @@
     "position_settings": {
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
-        "conditions": { "max_eval": 500, "ftol_rel": 1e-10 }
+        "conditions": { "max_eval": 1000, "ftol_rel": 1e-10 }
       }
     }
   },
