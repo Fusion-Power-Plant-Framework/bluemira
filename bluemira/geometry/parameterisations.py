@@ -926,13 +926,25 @@ class PrincetonDDiscrete(PrincetonD):
             The number of points to use when calculating the geometry of the Princeton
             D.
 
+        Raises
+        ------
+        GeometryParameterisationError
+            If x2 <= x1
+
         Returns
         -------
         CAD Wire of the geometry
         """
+        x1, x2 = self.variables.x1.value, self.variables.x2.value
+        if x2 <= x1:
+            raise GeometryParameterisationError(
+                "Princeton D parameterisation requires an x2 value "
+                f"greater than x1: {x1} >= {x2}"
+            )
+
         x, z = _calculate_discrete_constant_tension_shape(
-            self.variables.x1.value,
-            self.variables.x2.value,
+            x1,
+            x2,
             self._n_TF,
             self._tf_wp_width,
             self._tf_wp_depth,
