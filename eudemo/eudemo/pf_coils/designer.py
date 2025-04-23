@@ -365,6 +365,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         lcfs = self.ref_eq.eq.get_LCFS()
         x_lcfs, z_lcfs = lcfs.x, lcfs.z
         arg_inner = np.argmin(x_lcfs)
+        arg_outer = np.argmax(x_lcfs)
         arg_xp = np.argmin(z_lcfs)
 
         isoflux = IsofluxConstraint(
@@ -377,8 +378,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
             constraint_value=0.0,
         )
         psi_inner = PsiConstraint(
-            x_lcfs[arg_inner],
-            z_lcfs[arg_inner],
+            [x_lcfs[i] for i in [arg_outer]],
+            [z_lcfs[i] for i in [arg_outer]],
             target_value=1.0,
             tolerance=1e-3,
         )
