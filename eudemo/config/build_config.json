@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": false
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
     "summary_plot": true,
     "plot": true,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -136,7 +136,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
