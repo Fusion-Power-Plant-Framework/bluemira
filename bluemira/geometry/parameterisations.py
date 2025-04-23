@@ -23,8 +23,11 @@ from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from scipy.interpolate import interp1d
 from scipy.special import iv as bessel
 
+from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -41,6 +44,8 @@ from bluemira.utilities.plot_tools import str_to_latex
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
+
 __all__ = [
     "GeometryParameterisation",
     "PFrameSection",
@@ -48,6 +53,7 @@ __all__ = [
     "PictureFrameTools",
     "PolySpline",
     "PrincetonD",
+    "PrincetonDDiscrete",
     "SextupleArc",
     "TripleArc",
 ]
@@ -429,6 +435,84 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return ax
 
 
+def _princeton_d(
+    x1: float, x2: float, dz: float, npoints: int = 2000
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
+    File, Mills, and Sheffield, 1971)
+
+    Parameters
+    ----------
+    x1:
+        The inboard centreline radius of the Princeton D
+    x2:
+        The outboard centreline radius of the Princeton D
+    dz:
+        The vertical offset (from z=0)
+    npoints: int (default = 2000)
+        The size of the x, z coordinate sets to return
+
+    Returns
+    -------
+    x:
+        The x coordinates of the Princeton D shape
+    z:
+        The z coordinates of the Princeton D shape
+
+    Raises
+    ------
+    GeometryParameterisationError
+        Input parameters cannot create shape
+
+    Notes
+    -----
+    Returns an open set of coordinates
+
+    :math:`x = X_{0}e^{ksin(\\theta)}`
+    :math:`z = X_{0}k\\Bigg[\\theta I_{1}(k)+\\sum_{n=1}^{\\infty}{\\frac{i}{n}
+    e^{\\frac{in\\pi}{2}}\\bigg(e^{-in\\theta}-1\\bigg)\\bigg(1+e^{in(\\theta+\\pi)}
+    \\bigg)\\frac{I_{n-1}(k)+I_{n+1}(k)}{2}}\\Bigg]`
+
+    Where:
+        :math:`X_{0} = \\sqrt{x_{1}x_{2}}`
+        :math:`k = \\frac{ln(x_{2}/x_{1})}{2}`
+
+    Where:
+        :math:`I_{n}` is the n-th order modified Bessel function
+        :math:`x_{1}` is the inner radial position of the shape
+        :math:`x_{2}` is the outer radial position of the shape
+    """
+    if x2 <= x1:
+        raise GeometryParameterisationError(
+            "Princeton D parameterisation requires an x2 value "
+            f"greater than x1: {x1} >= {x2}"
+        )
+
+    xo = np.sqrt(x1 * x2)
+    k = 0.5 * np.log(x2 / x1)
+    theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
+    s = np.zeros(npoints, dtype="complex128")
+    n = 0
+    ds = 1
+
+    # sum convergent series
+    while np.max(abs(ds)) >= 1e-14:  # noqa: PLR2004
+        n += 1
+
+        ds = 1j / n * (np.exp(-1j * n * theta) - 1)
+        ds *= 1 + np.exp(1j * n * (theta + np.pi))
+        ds *= np.exp(1j * n * np.pi / 2)
+        ds *= (bessel(n - 1, k) + bessel(n + 1, k)) / 2
+        s += ds
+
+    z = abs(xo * k * (bessel(1, k) * theta + s))
+    x = xo * np.exp(k * np.sin(theta))
+    z -= np.mean(z)
+    z += dz  # vertical shift
+    return x, z
+
+
 @dataclass
 class PrincetonDOptVariables(OptVariablesFrame):
     x1: OptVariable = ov(
@@ -452,7 +536,7 @@ class PrincetonDOptVariables(OptVariablesFrame):
 
 class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     """
-    Princeton D geometry parameterisation.
+    Princeton D geometry parameterisation, with n_TF = ∞.
 
     Parameters
     ----------
@@ -503,7 +587,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         -------
         CAD Wire of the geometry
         """
-        x, z = self._princeton_d(
+        x, z = _princeton_d(
             self.variables.x1.value,
             self.variables.x2.value,
             self.variables.dz.value,
@@ -558,83 +642,346 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
             grad[0][self.get_x_norm_index("x2")] = -1
         return grad
 
-    @staticmethod
-    def _princeton_d(
-        x1: float, x2: float, dz: float, npoints: int = 2000
-    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+
+def _process_constant_tension_solver(
+    solver, r, z, n_tf, tf_wp_width, tf_wp_depth
+) -> CurrentSource:
+    from bluemira.geometry.coordinates import Coordinates  # noqa: PLC0415
+    from bluemira.magnetostatics.biot_savart import BiotSavartFilament  # noqa: PLC0415
+    from bluemira.magnetostatics.circuits import (  # noqa: PLC0415
+        ArbitraryPlanarRectangularXSCircuit,
+        HelmholtzCage,
+    )
+
+    # I really think this should be the default, but it is limiting
+    # (rectangular XS) so we allow for alternatives
+    if solver in {ArbitraryPlanarRectangularXSCircuit, None}:
+        coordinates = Coordinates({"x": r, "y": 0.0, "z": z})
+        coordinates.close()
+        coordinates.set_ccw([0, -1, 0])
+        filament = ArbitraryPlanarRectangularXSCircuit(
+            coordinates, 0.5 * tf_wp_width, 0.5 * tf_wp_depth, 1.0
+        )
+        cage = HelmholtzCage(filament, n_tf)
+    elif solver == BiotSavartFilament:
+        # Improve B-S discretisation at the inboard
+        dl_0 = np.hypot(r[1] - r[0], z[1] - z[0])
+        dl_straight = np.hypot(r[-1] - r[0], z[-1] - z[0])
+        n_inboard = dl_straight / dl_0
+        n_inboard = int(max(3, np.ceil(n_inboard)))
+
+        r_straight = np.linspace(r[-1], r[0], n_inboard)[1:-1]
+        z_straight = np.linspace(z[-1], z[0], n_inboard)[1:-1]
+        rc = np.concatenate([r, r_straight])
+        zc = np.concatenate([z, z_straight])
+        coordinates = Coordinates({"x": rc, "y": 0.0, "z": zc})
+        coordinates.close()
+        coordinates.set_ccw([0, -1, 0])
+        radius = (0.5 * tf_wp_width + 0.5 * tf_wp_depth) * 0.5
+        filament = BiotSavartFilament(coordinates, radius=radius, current=1.0)
+        cage = HelmholtzCage(filament, n_tf)
+
+    # This nightmare is to enable testing and development of surrogate models
+    else:  # I miss traits...
+        try:
+            field_func = solver.field
+        except AttributeError:
+            raise TypeError(f"Not a valid solver: {solver}") from AttributeError
+        if not callable(field_func):
+            raise TypeError(f"Not a valid solver: {solver}")
+        cage = solver
+    return cage
+
+
+# This procedure will be moved to the magnets module
+def _calculate_discrete_constant_tension_shape(
+    r1: float,
+    r2: float,
+    n_tf: int,
+    tf_wp_width: float,
+    tf_wp_depth: float,
+    n_points: int,
+    solver: SourceGroup | CurrentSource | None = None,
+    tolerance: float = 1e-3,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Calculate a "constant tension" shape for a TF coil winding pack, for a discrete
+    number of TF coils.
+
+    Parameters
+    ----------
+    r1:
+        Inboard TF winding pack centreline radius
+    r2:
+        Outboard TF winding pack centreline radius
+    n_tf:
+        Number of TF coils
+    tf_wp_width:
+        Radial extent of the TF coil WP
+    tf_wp_depth:
+        Toroidal extent of the TF coil WP
+    n_points:
+        Number of points in the TF coil (no guarantees on output size!)
+    solver:
+        Solver object which provides the magnetic field calculation
+    tolerance:
+        Tolerance for convergence [m]
+
+    Returns
+    -------
+    x:
+        Radial coordinates of the constant tension shape
+    z:
+        Vertical coordinates of the constant tension shape (about 0.0)
+
+    Raises
+    ------
+    TypeError
+        If the solver specified is invalid
+
+    Notes
+    -----
+    This procedure numerically calculates a constant tension shape for a TF coil
+    by assuming a circle first and using magnetostatic solvers to integrate the
+    toroidal field along the shape. Iteration is used to modify the shape until
+    convergence.
+
+    Note that the tension is constant only along the centreline. This is an
+    approximation, that I hope should keep the average tension in a coil of
+    non-zero thickness relatively low, but no promises.
+
+    The current is not required, but would be technically for the absolute value of
+    the tension.
+
+    A rectangular cross-section is assumed by default.
+
+    The procedure was originally developed by Dr. L. Giannini for use with ANSYS, and
+    has been quite heavily modified here.
+
+    BiotSavartFilament is a poor choice of solver for this procedure, but does yield
+    interesting results.
+
+    Using a dummy field solver with 1/x for the toroidal field component, one can
+    pretty perfectly recreate the closed-form solution for the Princeton-D (at
+    infinite n_TF).
+    """
+    n_points //= 2  # We solve for a half-coil
+    theta = np.linspace(-np.pi / 2, np.pi / 2, n_points)
+    sin_theta = np.sin(theta)
+    r = (r2 + r1) / 2 + (r2 - r1) / 2 * np.cos(theta + np.pi / 2)
+    z = (r2 - r1) / 2 * np.sin(theta + np.pi / 2)
+    ra = r.copy()
+    za = z.copy()
+
+    errorr = 1.0
+    errorz = 1.0
+    iter_count = 0
+
+    while (errorz > tolerance or errorr > tolerance) and iter_count < 100:  # noqa: PLR2004
+        iter_count += 1
+        rs = np.r_[r[::-1], r[1:]]
+        zs = np.r_[z[::-1], -z[1:]]
+
+        cage = _process_constant_tension_solver(
+            solver, rs, zs, n_tf, tf_wp_width, tf_wp_depth
+        )
+
+        b_tor = cage.field(rs[:n_points], np.zeros_like(rs)[:n_points], zs[:n_points])[
+            1, :
+        ]
+        rr_intb = r[::-1]
+        rr = r[::-1]
+
+        b_tor *= 2 * np.pi / (MU_0 * n_tf)
+
+        int_b = np.zeros(n_points)
+
+        for i in range(1, n_points):
+            int_b[i] = int_b[i - 1] + 0.5 * (b_tor[i - 1] + b_tor[i]) * (
+                rr_intb[i] - rr_intb[i - 1]
+            )
+
+        int_b_fh = interp1d(rr_intb, int_b, kind="linear", fill_value="extrapolate")
+        interpolator = interp1d(rr, b_tor, kind="linear", fill_value="extrapolate")
+
+        tension = MU_0 * n_tf / (8 * np.pi) * int_b[-1]
+        k = 4 * np.pi * tension / (MU_0 * n_tf)
+
+        x0 = r2
+        b_tor = b_tor[::-1]
+        for i in range(1, n_points):
+            xx = x0
+            error = 1.0
+            inner_iter = 0
+            while error > tolerance:
+                inner_iter += 1
+                f = int_b_fh(x0) + k * (sin_theta[i] - 1)
+                xx = x0 - f / interpolator(x0)
+                error = abs(xx - x0) / abs(x0)
+                x0 = xx
+                if inner_iter > 49:  # noqa: PLR2004
+                    bluemira_warn(
+                        "discrete constant tension: inner iterations = 50. Attempting "
+                        "to proceed anyway."
+                    )
+                    break
+            r[i] = xx
+            if i > 0:
+                z[i] = z[i - 1] - k * (
+                    sin_theta[i - 1] / b_tor[i - 1] + sin_theta[i] / b_tor[i]
+                ) / 2 * (theta[i] - theta[i - 1])
+
+        errorr = np.linalg.norm(r - ra) / np.linalg.norm(r)
+        errorz = np.linalg.norm(z - za) / np.linalg.norm(z)
+
+        ra = r.copy()
+        za = z.copy()
+
+    r = np.concatenate((r[::-1], r[1:]))
+    z = np.concatenate((z[::-1], -z[1:]))
+
+    # This is a slight hack to ensure the inner radius is indeed r1. At higher
+    # discretisations this is barely noticeable.
+    if not np.isclose(r[1], r1, atol=1e-6, rtol=0):
+        dx = r[2] - r[1]
+        dz = z[2] - z[1]
+        t = (r1 - r[1]) / dx
+        # Smooth the transition to the vertical segment
+        z1 = z[1] + 2.0 * t * dz
+
+        r[1] = r1
+        r[-2] = r1
+        z[1] = z1
+        z[-2] = -z1
+
+    # Mask to subtract the straight leg (which is treated differently in CAD)
+    return r[1:-1], z[1:-1]
+
+
+class PrincetonDDiscrete(PrincetonD):
+    """
+    Princeton D geometry parameterisation, with finite n_TF.
+
+    Parameters
+    ----------
+    var_dict:
+        Dictionary with which to update the default values of the parameterisation.
+
+    Raises
+    ------
+    GeometryParameterisationError
+        If n_TF is specified, tf_wp_width and tf_wp_depth must also be specified.
+
+    Notes
+    -----
+    .. plot::
+        :caption: Princeton D at finite n_TF
+
+        from bluemira.geometry.parameterisations import PrincetonDDiscrete
+        PrincetonDDiscrete(n_TF=16, tf_wp_width=0.5, tf_wp_depth=0.8).plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    x2: float
+        Radial position of outer limb [m]
+    dz: float
+        Vertical offset from z=0 [m]
+
+    """
+
+    __slots__ = ("_n_TF", "_n_points", "_tf_wp_depth", "_tf_wp_width", "_tolerance")
+    n_ineq_constraints: int = 1
+
+    def __init__(
+        self,
+        var_dict: VarDictT | None = None,
+        n_TF: int | None = None,
+        tf_wp_width: float | None = None,
+        tf_wp_depth: float | None = None,
+        n_points: int = 50,
+        tolerance: float = 1e-3,
+    ):
+        super().__init__(var_dict)
+        if n_TF is None:
+            raise GeometryParameterisationError("Must specify n_TF.")
+        if tf_wp_width is None or tf_wp_depth is None:
+            raise GeometryParameterisationError(
+                "Must specify tf_wp_width and tf_wp_depth."
+            )
+        self._n_TF = n_TF
+        self._tf_wp_width = tf_wp_width
+        self._tf_wp_depth = tf_wp_depth
+        # This is to avoid having to specify e.g. "shape_args" on
+        # GeometryOptimisationProblems
+        self._n_points = n_points
+        self._tolerance = tolerance
+
+    def create_shape(
+        self,
+        label: str = "",
+        n_points: int | None = None,
+        *,
+        tolerance: float | None = None,
+        with_tangency: bool = False,
+    ) -> BluemiraWire:
         """
-        Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
-        File, Mills, and Sheffield, 1971)
+        Make a CAD representation of the Princeton D.
 
         Parameters
         ----------
-        x1:
-            The inboard centreline radius of the Princeton D
-        x2:
-            The outboard centreline radius of the Princeton D
-        dz:
-            The vertical offset (from z=0)
-        npoints: int (default = 2000)
-            The size of the x, z coordinate sets to return
-
-        Returns
-        -------
-        x:
-            The x coordinates of the Princeton D shape
-        z:
-            The z coordinates of the Princeton D shape
+        label:
+            Label to give the wire
+        n_points:
+            The number of points to use when calculating the geometry of the Princeton
+            D.
 
         Raises
         ------
         GeometryParameterisationError
-            Input parameters cannot create shape
+            If x2 <= x1
 
-        Notes
-        -----
-        Returns an open set of coordinates
-
-        :math:`x = X_{0}e^{ksin(\\theta)}`
-        :math:`z = X_{0}k\\Bigg[\\theta I_{1}(k)+\\sum_{n=1}^{\\infty}{\\frac{i}{n}
-        e^{\\frac{in\\pi}{2}}\\bigg(e^{-in\\theta}-1\\bigg)\\bigg(1+e^{in(\\theta+\\pi)}
-        \\bigg)\\frac{I_{n-1}(k)+I_{n+1}(k)}{2}}\\Bigg]`
-
-        Where:
-            :math:`X_{0} = \\sqrt{x_{1}x_{2}}`
-            :math:`k = \\frac{ln(x_{2}/x_{1})}{2}`
-
-        Where:
-            :math:`I_{n}` is the n-th order modified Bessel function
-            :math:`x_{1}` is the inner radial position of the shape
-            :math:`x_{2}` is the outer radial position of the shape
+        Returns
+        -------
+        CAD Wire of the geometry
         """
+        x1, x2 = self.variables.x1.value, self.variables.x2.value
         if x2 <= x1:
             raise GeometryParameterisationError(
                 "Princeton D parameterisation requires an x2 value "
                 f"greater than x1: {x1} >= {x2}"
             )
 
-        xo = np.sqrt(x1 * x2)
-        k = 0.5 * np.log(x2 / x1)
-        theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
-        s = np.zeros(npoints, dtype="complex128")
-        n = 0
-        ds = 1
+        x, z = _calculate_discrete_constant_tension_shape(
+            x1,
+            x2,
+            self._n_TF,
+            self._tf_wp_width,
+            self._tf_wp_depth,
+            n_points=self._n_points if n_points is None else n_points,
+            solver=None,
+            tolerance=self._tolerance if tolerance is None else tolerance,
+        )
 
-        # sum convergent series
-        while np.max(abs(ds)) >= 1e-14:  # noqa: PLR2004
-            n += 1
+        z += self.variables.dz.value
+        xyz = np.array([x, np.zeros(len(x)), z])
 
-            ds = 1j / n * (np.exp(-1j * n * theta) - 1)
-            ds *= 1 + np.exp(1j * n * (theta + np.pi))
-            ds *= np.exp(1j * n * np.pi / 2)
-            ds *= (bessel(n - 1, k) + bessel(n + 1, k)) / 2
-            s += ds
-
-        z = abs(xo * k * (bessel(1, k) * theta + s))
-        x = xo * np.exp(k * np.sin(theta))
-        z -= np.mean(z)
-        z += dz  # vertical shift
-        return x, z
+        outer_arc = interpolate_bspline(
+            xyz.T,
+            label="outer_arc",
+            **(
+                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, -1]}
+                if with_tangency
+                else {}
+            ),
+        )
+        # TODO @CoronelBuendia: Enforce tangency of this bspline...
+        # causing issues with offsetting
+        # The real irony is that tangencies don't solve the problem..
+        # 3586
+        straight_segment = wire_closure(outer_arc, label="straight_segment")
+        return BluemiraWire([outer_arc, straight_segment], label=label)
 
 
 @dataclass
