@@ -47,7 +47,6 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to
 from bluemira.optimisation import Algorithm, AlgorithmType
 
@@ -513,7 +512,10 @@ class PulsedCoilsetDesign(ABC):
             self.params.l_i.value,
             self.params.C_Ejima.value,
         )
-        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
+
+        psi_eof = (
+            psi_sof - 0.85 * self.params.tau_flattop.value * self.params.v_burn.value
+        )
         return psi_sof, psi_eof
 
     def _get_max_currents(self, coilset: CoilSet) -> npt.NDArray[np.float64]:

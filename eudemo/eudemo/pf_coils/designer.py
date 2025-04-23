@@ -26,7 +26,6 @@ from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
     FieldNullConstraint,
-    IsofluxConstraint,
     PsiConstraint,
 )
 from bluemira.equilibria.optimisation.problem import PulsedNestedPositionCOP
@@ -354,7 +353,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         arg_outer = np.argmax(x_lcfs)
         arg_xp = np.argmin(z_lcfs)
 
-        isoflux = IsofluxConstraint(
+        isoflux = PsiConstraint(
             x_lcfs,
             z_lcfs,
             x_lcfs[arg_inner],
