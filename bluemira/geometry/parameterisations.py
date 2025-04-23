@@ -842,8 +842,18 @@ def _calculate_discrete_constant_tension_shape(
 
     # This is a slight hack to ensure the inner radius is indeed r1. At higher
     # discretisations this is barely noticeable.
-    r[1] = r1
-    r[-2] = r1
+    if not np.isclose(r[1], r1, atol=1e-6, rtol=0):
+        dx = r[2] - r[1]
+        dz = z[2] - z[1]
+        t = (r1 - r[1]) / dx
+        # Smooth the transition to the vertical segment
+        z1 = z[1] + 2.0 * t * dz
+
+        r[1] = r1
+        r[-2] = r1
+        z[1] = z1
+        z[-2] = -z1
+
     # Mask to subtract the straight leg (which is treated differently in CAD)
     return r[1:-1], z[1:-1]
 
