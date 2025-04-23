@@ -347,6 +347,8 @@ def apply_specific_B_to_P_interface_rules(params: ParameterFrame):
         "dz_vv_upper": default_vv_tk,
         "dz_vv_lower": default_vv_tk,
     })
+    # This is because these parameters are in the mapping, but they are not 1:1
+    params.update_values({"tk_vv_in": default_vv_tk, "tk_vv_out": default_vv_tk})
 
 
 def apply_specific_P_to_B_interface_rules(
