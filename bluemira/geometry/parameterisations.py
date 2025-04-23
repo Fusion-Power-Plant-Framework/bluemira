@@ -863,6 +863,12 @@ class PrincetonDDiscrete(PrincetonD):
 
     Notes
     -----
+    .. plot::
+        :caption: Princeton D at finite n_TF
+
+        from bluemira.geometry.parameterisations import PrincetonDDiscrete
+        PrincetonDDiscrete(n_TF=16, tf_wp_width=0.5, tf_wp_depth=0.8).plot(labels=True)
+
     The dictionary keys in var_dict are:
 
     x1: float
