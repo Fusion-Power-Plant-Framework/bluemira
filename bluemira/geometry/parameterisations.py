@@ -53,6 +53,7 @@ __all__ = [
     "PictureFrameTools",
     "PolySpline",
     "PrincetonD",
+    "PrincetonDDiscrete",
     "SextupleArc",
     "TripleArc",
 ]
