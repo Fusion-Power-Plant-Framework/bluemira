@@ -64,10 +64,10 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
-    "summary_plot": false,
-    "plot": false,
+    "summary_plot": true,
+    "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
     "file_path": "$path_expand:./equilibrium_eqdsk.json",
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -163,7 +163,7 @@
     }
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
