@@ -8,6 +8,7 @@ routines.
 Our currently available parameterisations are:
 
 * :py:class:`bluemira.geometry.parameterisations.PrincetonD`
+* :py:class:`bluemira.geometry.parameterisations.PrincetonDDiscrete`
 * :py:class:`bluemira.geometry.parameterisations.TripleArc`
 * :py:class:`bluemira.geometry.parameterisations.SextupleArc`
 * :py:class:`bluemira.geometry.parameterisations.PolySpline`
@@ -19,13 +20,28 @@ PrincetonD
 ^^^^^^^^^^
 
 .. plot::
-    :caption: Princeton D
+    :caption: Princeton D at infinite n_TF
 
     from bluemira.geometry.parameterisations import PrincetonD
     PrincetonD().plot(labels=True)
 
 The famous PrincetonD only has a few customisations available the inside lim radius, x1,
-the outer lim radius, x2, and the z offset, dz.
+the outer lim radius, x2, and the z offset, dz. It is constant tension in the case of
+infinite n_TF.
+
+PrincetonDDiscrete
+^^^^^^^^^^^^^^^^^^
+
+.. plot::
+    :caption: Princeton D at finite n_TF
+
+    from bluemira.geometry.parameterisations import PrincetonDDiscrete
+    PrincetonDDiscrete(n_TF=16, tf_wp_width=0.5, tf_wp_depth=0.8).plot(labels=True)
+
+The discrete formulation of a constant tension shape, with the same parameters as the
+Princeton D (x1, x2, dz). It is constant tension in the case of finite n_TF. Note
+that this shape parameterisation requires magnetostatic calculations to be performed
+in an iterative procedure and is considerably slower than other shape parameterisations.
 
 TripleArc
 ^^^^^^^^^
