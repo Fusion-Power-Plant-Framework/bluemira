@@ -310,7 +310,6 @@ def build_pf_coils(
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
     # to stop clashes between ports and PF coil corners
-    # TODO: Implement adjustable current bounds on sub-opt problems
     offset_value = 0.15 * np.sqrt(
         params.global_params.I_p.value / params.global_params.PF_jmax.value
     )
@@ -623,6 +622,7 @@ if __name__ == "__main__":
         reactor_config.params_for("Radial build").global_params,
         reactor_config.config_for("Radial build"),
     )
+
     lcfs_coords, profiles = run_designer(
         FixedEquilibriumDesigner,
         reactor_config.params_for("Fixed boundary equilibrium"),
