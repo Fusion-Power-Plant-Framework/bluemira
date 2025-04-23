@@ -179,6 +179,16 @@ class TestPrincetonDDiscrete:
                     "x2": {"value": 14, "fixed": False},
                     "dz": {"value": 0.1},
                 },
+            )
+
+    def test_princeton_d_discrete_parameterisation_init_error_2(self):
+        with pytest.raises(GeometryParameterisationError):
+            PrincetonDDiscrete(
+                {
+                    "x1": {"value": 5, "fixed": True},
+                    "x2": {"value": 14, "fixed": False},
+                    "dz": {"value": 0.1},
+                },
                 n_TF=16,
             )
 

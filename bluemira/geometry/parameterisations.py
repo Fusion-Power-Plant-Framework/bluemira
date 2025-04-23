@@ -887,10 +887,11 @@ class PrincetonDDiscrete(PrincetonD):
         tolerance: float = 1e-3,
     ):
         super().__init__(var_dict)
-
-        if n_TF is not None and (tf_wp_width is None or tf_wp_depth is None):
+        if n_TF is None:
+            raise GeometryParameterisationError("Must specify n_TF.")
+        if tf_wp_width is None or tf_wp_depth is None:
             raise GeometryParameterisationError(
-                "Must specify tf_wp_width and tf_wp_depth if n_TF is specified."
+                "Must specify tf_wp_width and tf_wp_depth."
             )
         self._n_TF = n_TF
         self._tf_wp_width = tf_wp_width
