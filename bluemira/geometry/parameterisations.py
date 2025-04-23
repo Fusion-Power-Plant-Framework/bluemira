@@ -752,7 +752,7 @@ def _calculate_discrete_constant_tension_shape(
     The current is not required, but would be technically for the absolute value of
     the tension.
 
-    A rectangular cross-section is assumed.
+    A rectangular cross-section is assumed by default.
 
     The procedure was originally developed by Dr. L. Giannini for use with ANSYS, and
     has been quite heavily modified here.
@@ -760,8 +760,9 @@ def _calculate_discrete_constant_tension_shape(
     BiotSavartFilament is a poor choice of solver for this procedure, but does yield
     interesting results.
 
-    Using the associated DummyToroidalFieldSolver, one can pretty perfectly recreate
-    the closed-form solution for the Princeton-D.
+    Using a dummy field solver with 1/x for the toroidal field component, one can
+    pretty perfectly recreate the closed-form solution for the Princeton-D (at
+    infinite n_TF).
     """
     n_points //= 2  # We solve for a half-coil
     theta = np.linspace(-np.pi / 2, np.pi / 2, n_points)
@@ -855,13 +856,13 @@ class PrincetonDDiscrete(PrincetonD):
     var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
+    Raises
+    ------
+    GeometryParameterisationError
+        If n_TF is specified, tf_wp_width and tf_wp_depth must also be specified.
+
     Notes
     -----
-    .. plot::
-
-        from bluemira.geometry.parameterisations import PrincetonD
-        PrincetonD().plot(labels=True)
-
     The dictionary keys in var_dict are:
 
     x1: float
