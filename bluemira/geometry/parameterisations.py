@@ -735,7 +735,7 @@ def _calculate_discrete_constant_tension_shape(
 
     Raises
     ------
-    TypeError:
+    TypeError
         If the solver specified is invalid
 
     Notes

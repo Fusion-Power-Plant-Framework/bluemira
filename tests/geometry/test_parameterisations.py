@@ -116,7 +116,7 @@ class TestPrincetonD:
 
 
 class DummyToroidalFieldSolver:
-    def field(x, _, z):  # NOQA: N805
+    def field(x, _, z):  # noqa: N805
         return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
 
 
