@@ -47,7 +47,6 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
-from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to
 from bluemira.optimisation import Algorithm, AlgorithmType
 
@@ -65,6 +64,7 @@ if TYPE_CHECKING:
     )
     from bluemira.equilibria.profiles import Profile
     from bluemira.geometry.coordinates import Coordinates
+    from bluemira.geometry.face import BluemiraFace
     from bluemira.utilities.positioning import PositionMapper
 
 
@@ -509,7 +509,10 @@ class PulsedCoilsetDesign(ABC):
             self.params.l_i.value,
             self.params.C_Ejima.value,
         )
-        psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
+
+        psi_eof = (
+            psi_sof - 0.85 * self.params.tau_flattop.value * self.params.v_burn.value
+        )
         return psi_sof, psi_eof
 
     def _get_max_currents(self, coilset: CoilSet) -> npt.NDArray[np.float64]:
@@ -632,6 +635,11 @@ class FixedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
 
 class MovingCurrentBoundStrategy:
+    """
+    Tool to adjust current bounds in sub-optimisation problems in accordance with
+    the KOZ and PF coil current density.
+    """
+
     def __init__(
         self,
         keep_out_zones: list[BluemiraFace],
@@ -645,6 +653,14 @@ class MovingCurrentBoundStrategy:
     def get_max_currents(
         self, pos_map: dict[str, npt.NDArray[np.float64]], coil_names: list[str]
     ) -> npt.NDArray[np.float64]:
+        """
+        Get the maximum currents for the PF coils in accordance with the potential
+        size and current density.
+
+        Returns
+        -------
+        The vector of maximum currents
+        """
         max_currents = np.zeros(len(coil_names))
         for k, pos in pos_map.items():
             distances = []
