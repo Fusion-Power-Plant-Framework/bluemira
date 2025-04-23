@@ -22,6 +22,7 @@ from bluemira.geometry.parameterisations import (
     PictureFrameTools,
     PolySpline,
     PrincetonD,
+    PrincetonDDiscrete,
     SextupleArc,
     TripleArc,
     _calculate_discrete_constant_tension_shape,
@@ -169,6 +170,39 @@ class TestPrincetonDDiscrete:
         c1.close()
         c2.close()
         assert np.isclose(c1.length, c2.length, rtol=1e-4)
+
+    def test_princeton_d_discrete_parameterisation_init_error(self):
+        with pytest.raises(GeometryParameterisationError):
+            PrincetonDDiscrete(
+                {
+                    "x1": {"value": 5, "fixed": True},
+                    "x2": {"value": 14, "fixed": False},
+                    "dz": {"value": 0.1},
+                },
+                n_TF=16,
+            )
+
+    def test_princeton_d_disctrete_shape(self):
+        parameterisation = PrincetonDDiscrete(
+            {
+                "x1": {"value": 5, "fixed": True},
+                "x2": {"value": 14, "fixed": False},
+                "dz": {"value": 0.1},
+            },
+            n_TF=16,
+            tf_wp_depth=0.7,
+            tf_wp_width=0.4,
+            n_points=30,
+            tolerance=0.01,
+        )
+        shape = parameterisation.create_shape()
+        assert shape.is_closed()
+        com = shape.center_of_mass
+        bb = shape.bounding_box
+        assert np.isclose(bb.x_min, 5.0)
+        assert np.isclose(bb.x_max, 14.0, rtol=1e-3)
+        assert np.isclose(com[1], 0.0)
+        assert np.isclose(com[2], 0.1)
 
 
 class TestPictureFrame:
