@@ -64,8 +64,8 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
-    "diagnostic_plotting": { "plot": ["eq", "convergence"] },
+    "run_mode": "run",
+    "diagnostic_plotting": {},
     "summary_plot": true,
     "plot": true,
     "save": true,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -136,7 +136,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -203,7 +203,7 @@
         "algorithm_name": "SLSQP",
         "conditions": { "max_eval": 5000, "ftol_rel": 1e-8 }
       },
-      "diagnostic_plotting": { "plot": ["eq", "convergence"] }
+      "diagnostic_plotting": {}
     },
     "position_settings": {
       "optimisation_settings": {
