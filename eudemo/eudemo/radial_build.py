@@ -385,6 +385,12 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     """
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
+
+    # We stash these and reset them later because we need to run PROCESS with
+    # out changing the default mapping
+    tk_vv_ib = params.tk_vv_in.value
+    tk_vv_ob = params.tk_vv_out.value
+
     if run_mode == "run":
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
@@ -397,5 +403,6 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     if plot:
         solver.plot_radial_build(show=True)
     params.update_from_frame(new_params)
+    params.update_values({"tk_vv_in": tk_vv_ib, "tk_vv_out": tk_vv_ob})
     apply_specific_P_to_B_interface_rules(params, new_params)
     return params
