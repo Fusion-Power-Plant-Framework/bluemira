@@ -14,7 +14,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
-from bluemira.base.look_and_feel import bluemira_error, bluemira_print
+from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
 from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.magnets.utils import parall_r, serie_r
 
@@ -667,6 +667,59 @@ class ABCCable(ABC):
             f"n stab strand: {self.n_stab_strand}"
         )
 
+    def to_dict(self) -> dict:
+        """
+        Return a dictionary with all base cable parameters.
+
+        This method serializes the cable configuration into a dictionary format,
+        which can be useful for saving, logging, or exporting the data.
+
+        Returns
+        -------
+        dict
+            A dictionary containing:
+            - "name" (str): Name of the cable.
+            - "n_sc_strand" (int): Number of superconducting strands.
+            - "n_stab_strand" (int): Number of stabilizer strands.
+            - "d_cooling_channel" (float): Diameter of the cooling channel [m].
+            - "void_fraction" (float): Fraction of void (non-material) volume in the
+            cable.
+            - "cos_theta" (float): Cosine of the winding angle theta.
+            - "sc_strand" (dict): Dictionary with parameters of the superconducting
+            strand.
+            - "stab_strand" (dict): Dictionary with parameters of the stabilizer strand.
+        """
+        return {
+            "name": self.name,
+            "n_sc_strand": self.n_sc_strand,
+            "n_stab_strand": self.n_stab_strand,
+            "d_cooling_channel": self.d_cooling_channel,
+            "void_fraction": self.void_fraction,
+            "cos_theta": self.cos_theta,
+            "sc_strand": self.sc_strand.to_dict(),
+            "stab_strand": self.stab_strand.to_dict(),
+        }
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, cable_dict: dict) -> "ABCCable":
+        """
+        Construct a cable object from a dictionary configuration.
+
+        This method must be implemented by all concrete cable subclasses to handle
+        their specific parameters.
+
+        Parameters
+        ----------
+        cable_dict : dict
+            Dictionary containing the cable configuration, including strand definitions.
+
+        Returns
+        -------
+        ABCCable
+            A fully instantiated cable object of the appropriate type.
+        """
+
 
 class RectangularCable(ABCCable):
     """
@@ -798,6 +851,114 @@ class RectangularCable(ABCCable):
             Homogenized stiffness in the y-direction [Pa].
         """
         return self.E(**kwargs) * self.dx / self.dy
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the rectangular cable configuration to a dictionary.
+
+        This includes all base cable properties (strand configuration, geometry,
+        cooling, etc.) and shape-specific parameters like `dx` and `aspect_ratio`.
+
+        Returns
+        -------
+        dict
+            A complete dictionary representation of the rectangular cable, including:
+            - type : str
+            - name : str
+            - dx : float
+            - aspect_ratio : float
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - void_fraction : float
+            - cos_theta : float
+            - sc_strand : dict
+            - stab_strand : dict
+        """
+        data = super().to_dict()
+        data["type"] = "rectangular"
+        data["dx"] = self.dx
+        data["aspect_ratio"] = self.aspect_ratio
+        return data
+
+    @classmethod
+    def from_dict(cls, config: dict) -> "RectangularCable":
+        """
+        Construct a `RectangularCable` instance from a dictionary.
+
+        This method deserializes the cable and its nested strands. It accepts either
+        a direct width (`dx`) or an aspect ratio (`aspect_ratio`) to compute geometry.
+
+        Behavior:
+        - If both `dx` and `aspect_ratio` are given, a warning is issued and
+        `aspect_ratio`
+          is applied (overwriting dx).
+        - If only `aspect_ratio` is given, a default `dx = 0.01` m is used.
+        - If only `dx` is given, it is used as-is.
+        - If neither is provided, a `ValueError` is raised.
+
+        Parameters
+        ----------
+        config : dict
+            Required:
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - sc_strand : dict
+            - stab_strand : dict
+
+            Optional:
+            - dx : float
+            - aspect_ratio : float
+            - name : str
+            - void_fraction : float
+            - cos_theta : float
+
+        Returns
+        -------
+        RectangularCable
+            A fully configured rectangular cable instance.
+
+        Raises
+        ------
+        ValueError
+            If neither `dx` nor `aspect_ratio` is provided in the configuration.
+        """
+        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
+        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+
+        dx = config.get("dx")
+        aspect_ratio = config.get("aspect_ratio")
+
+        # Handle geometry logic
+        if dx is not None and aspect_ratio is not None:
+            bluemira_warn(
+                "Both 'dx' and 'aspect_ratio' specified. Aspect ratio will override dx."
+            )
+
+        if aspect_ratio is not None:
+            dx = 0.01  # default dx if only aspect ratio is provided
+
+        if dx is None:
+            raise ValueError("At least one of 'dx' or 'aspect_ratio' must be specified.")
+
+        # Construct cable
+        cable = cls(
+            dx=dx,
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=config["n_sc_strand"],
+            n_stab_strand=config["n_stab_strand"],
+            d_cooling_channel=config["d_cooling_channel"],
+            void_fraction=config.get("void_fraction", 0.725),
+            cos_theta=config.get("cos_theta", 0.97),
+            name=config.get("name", "RectangularCable"),
+        )
+
+        if aspect_ratio is not None:
+            cable.set_aspect_ratio(aspect_ratio)
+
+        return cable
 
 
 class DummyRectangularCableHTS(RectangularCable):
@@ -958,6 +1119,74 @@ class SquareCable(ABCCable):
             Homogenized stiffness in the y-direction [Pa].
         """
         return self.E(**kwargs) * self.dx / self.dy
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the square cable configuration to a dictionary.
+
+        Includes all base cable properties (strand configuration, cooling, geometry,
+        etc.)
+        and adds the cable type identifier.
+
+        Returns
+        -------
+        dict
+            A complete dictionary representation of the square cable, including:
+            - type : str
+            - name : str
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - void_fraction : float
+            - cos_theta : float
+            - sc_strand : dict
+            - stab_strand : dict
+        """
+        data = super().to_dict()
+        data["type"] = "square"
+        return data
+
+    @classmethod
+    def from_dict(cls, config: dict) -> "SquareCable":
+        """
+        Construct a `SquareCable` instance from a dictionary.
+
+        This method deserializes both the cable's structural parameters and
+        its nested strand configurations.
+
+        Parameters
+        ----------
+        config : dict
+            Dictionary containing the square cable configuration. Required keys:
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - sc_strand : dict
+            - stab_strand : dict
+
+            Optional keys:
+            - name : str
+            - void_fraction : float
+            - cos_theta : float
+
+        Returns
+        -------
+        SquareCable
+            A new instance of the `SquareCable` class with populated fields.
+        """
+        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
+        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+
+        return cls(
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=config["n_sc_strand"],
+            n_stab_strand=config["n_stab_strand"],
+            d_cooling_channel=config["d_cooling_channel"],
+            void_fraction=config.get("void_fraction", 0.725),
+            cos_theta=config.get("cos_theta", 0.97),
+            name=config.get("name", "SquareCable"),
+        )
 
 
 class DummySquareCableHTS(SquareCable):
@@ -1166,6 +1395,73 @@ class RoundCable(ABCCable):
         if show:
             plt.show()
         return ax
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the round cable configuration to a dictionary.
+
+        This includes all base cable properties (strand configuration, cooling,
+        etc.) and adds the type identifier.
+
+        Returns
+        -------
+        dict
+            A complete dictionary representation of the round cable, including:
+            - type : str
+            - name : str
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - void_fraction : float
+            - cos_theta : float
+            - sc_strand : dict
+            - stab_strand : dict
+        """
+        data = super().to_dict()
+        data["type"] = "round"
+        return data
+
+    @classmethod
+    def from_dict(cls, config: dict) -> "RoundCable":
+        """
+        Construct a `RoundCable` instance from a dictionary.
+
+        This method deserializes both the cable's structural parameters and
+        its nested strand configurations.
+
+        Parameters
+        ----------
+        config : dict
+            Dictionary containing the round cable configuration. Required keys:
+            - n_sc_strand : int
+            - n_stab_strand : int
+            - d_cooling_channel : float
+            - sc_strand : dict
+            - stab_strand : dict
+
+            Optional keys:
+            - name : str
+            - void_fraction : float
+            - cos_theta : float
+
+        Returns
+        -------
+        RoundCable
+            A new instance of the `RoundCable` class with populated fields.
+        """
+        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
+        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+
+        return cls(
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=config["n_sc_strand"],
+            n_stab_strand=config["n_stab_strand"],
+            d_cooling_channel=config["d_cooling_channel"],
+            void_fraction=config.get("void_fraction", 0.725),
+            cos_theta=config.get("cos_theta", 0.97),
+            name=config.get("name", "RoundCable"),
+        )
 
 
 class DummyRoundCableHTS(RoundCable):

@@ -658,14 +658,16 @@ class CaseTF:
                 bounds=bounds_dy_vault,
             )
 
-            bluemira_debug(f"after optimization: case dy_vault = {self.dy_vault}")
             delta_case_dy_vault = abs(self.dy_vault - case_dy_vault0)
             err_dy_vault = delta_case_dy_vault / self.dy_vault
             tot_err = err_dy_vault + err_conductor_area_jacket
 
-            bluemira_debug(f"err_dy_jacket = {err_conductor_area_jacket}")
-            bluemira_debug(f"err_dy_vault = {err_dy_vault}")
-            bluemira_debug(f"tot_err = {tot_err}")
+            bluemira_debug(
+                f"after optimization: case dy_vault = {self.dy_vault}\n"
+                f"err_dy_jacket = {err_conductor_area_jacket}\n "
+                f"err_dy_vault = {err_dy_vault}\n "
+                f"tot_err = {tot_err}"
+            )
 
     def plot(self, ax=None, *, show: bool = False, homogenized: bool = False):
         """

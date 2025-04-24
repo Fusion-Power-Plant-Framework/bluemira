@@ -4,7 +4,15 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-"""Strand class"""
+"""
+Strand definition and builder module.
+
+Includes:
+- Strand and SuperconductingStrand classes (material + geometry + Ic/Jc)
+- StrandBuilder to construct strands from config parameters
+"""
+
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,8 +23,13 @@ from bluemira.base.parameter_frame import Parameter
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
+from bluemira.materials.cache import MaterialCache, get_cached_material
 from bluemira.materials.material import Superconductor
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
+
+# ------------------------------------------------------------------------------
+# Strand & SuperconductingStrand Classes
+# ------------------------------------------------------------------------------
 
 
 class Strand(HomogenisedMixture):
@@ -104,7 +117,7 @@ class Strand(HomogenisedMixture):
             self._d_strand = d
             self._shape = None
         else:
-            msg = "The new value for the strand diameter is equal to the old one."
+            msg = "New strand diameter equals current."
 
     @property
     def area(self) -> float:
@@ -174,6 +187,75 @@ class Strand(HomogenisedMixture):
             f"shape = {self.shape}\n"
         )
 
+    @classmethod
+    def from_dict(
+        cls, name: str, strand_dict: dict[str, Any], material_cache: MaterialCache = None
+    ) -> "Strand":
+        """
+        Construct a Strand instance from a dictionary.
+
+        Parameters
+        ----------
+        name:
+            the name of the strand
+        strand_dict : dict
+            Dictionary with keys:
+                - "name" (str): Strand name
+                - "d_strand" (float): Diameter of the strand [m]
+                - "temperature" (float): Operating temperature [K]
+                - "materials" (list of dict): Each entry must contain:
+                    - "material" (str): Material name
+                    - "fraction" (float): Volume or weight fraction
+        material_cache:
+            The cache to load the constituent materials from
+
+        Returns
+        -------
+        Strand
+            A fully initialized Strand instance.
+        """
+        material_mix = [
+            MixtureFraction(
+                material=(
+                    material_cache.get_material(m["material"])
+                    if material_cache is not None
+                    else get_cached_material(m["material"])
+                ),
+                fraction=m["fraction"],
+            )
+            for m in strand_dict["materials"]
+        ]
+
+        return cls(
+            name=name or strand_dict["name"],
+            materials=material_mix,
+            temperature=strand_dict["temperature"],
+            d_strand=strand_dict["d_strand"],
+        )
+
+    def to_dict(self) -> dict:
+        """
+        Convert the Strand instance to a dictionary representation.
+
+        Returns
+        -------
+        dict
+            A dictionary with keys:
+                - "name": Name of the strand
+                - "d_strand": Strand diameter [m]
+                - "temperature": Operating temperature [K]
+                - "materials": List of {material, fraction} pairs
+        """
+        return {
+            "name": self.name,
+            "d_strand": self.d_strand.value,
+            "temperature": self.temperature,
+            "materials": [
+                {"material": m.material.name, "fraction": m.fraction}
+                for m in self.materials
+            ],
+        }
+
 
 class SuperconductingStrand(Strand, Superconductor):
     """
@@ -238,12 +320,13 @@ class SuperconductingStrand(Strand, Superconductor):
                 else:
                     msg = (
                         f"Only one superconductor material can be defined per "
-                        f"strand. At least two have been found: {sc} and {material}."
+                        f"superconducting strand. At least two have been found: {sc} and"
+                        f" {material}."
                     )
                     bluemira_error(msg)
                     raise ValueError(msg)
         if sc is None:
-            msg = "No superconductor material found."
+            msg = "No superconducting material found in strand."
             bluemira_error(msg)
             raise ValueError(msg)
         return sc

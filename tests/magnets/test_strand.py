@@ -47,7 +47,7 @@ def test_superconducting_strand_invalid_materials():
 
     # No superconductors — should raise ValueError
     mat3 = MixtureFraction(material=DummySteel, fraction=1.0)
-    with pytest.raises(ValueError, match="No superconductor"):
+    with pytest.raises(ValueError, match="No superconducting material"):
         SuperconductingStrand("invalid", materials=[mat3])
 
 

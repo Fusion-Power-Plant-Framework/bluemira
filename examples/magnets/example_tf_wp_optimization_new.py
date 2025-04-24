@@ -196,11 +196,10 @@ sc_strand = SuperconductingStrand(
     name="Nb3Sn_strand",
     materials=materials,
     material_id=1,
-    temperature=4,
+    temperature=T_sc,
     d_strand=1.0e-3,
 )
 stab_strand = Strand("Stabilizer", [MixtureFraction(copper300, 1)], 2, d_strand=1.0e-3)
-
 
 # plot the critical current in a range of B between [10,16]
 Bt_arr = np.linspace(10, 16, 100)
@@ -291,212 +290,226 @@ cable.set_aspect_ratio(
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
 
-# operational_point = {"temperature": 5.7, "B": B(0)}
-nb3sn = cable.sc_strand.materials[0].material
-copper100 = cable.sc_strand.materials[1].material
-copper300 = cable.stab_strand.materials[0].material
+if True:
+    # operational_point = {"temperature": 5.7, "B": B(0)}
+    nb3sn = cable.sc_strand.materials[0].material
+    copper100 = cable.sc_strand.materials[1].material
+    copper300 = cable.stab_strand.materials[0].material
 
-mats = [nb3sn, copper100, copper300, ss316]
-mat_names = ["nb3sn", "copper100", "copper300", "ss316"]
-temperatures = np.linspace(5, 250, 500)
-operational_point = {"B": B_fun(0)}
+    mats = [nb3sn, copper100, copper300, ss316]
+    mat_names = ["nb3sn", "copper100", "copper300", "ss316"]
+    temperatures = np.linspace(5, 250, 500)
+    operational_point = {"B": B_fun(0)}
 
-# Prepare plots
-# Adjusted for 5 plots (3x2 grid)
-fig, axes = plt.subplots(3, 2, figsize=(12, 15))
-fig.suptitle("Material Properties vs Temperature", fontsize=16)
+    # Prepare plots
+    # Adjusted for 5 plots (3x2 grid)
+    fig, axes = plt.subplots(3, 2, figsize=(12, 15))
+    fig.suptitle("Material Properties vs Temperature", fontsize=16)
 
-ax1, ax2, ax3, ax4, ax5 = axes.flatten()[:5]  # Extracting the first five axes
+    ax1, ax2, ax3, ax4, ax5 = axes.flatten()[:5]  # Extracting the first five axes
 
-for mat, name in zip(mats, mat_names, strict=False):
-    # Calculate properties over the temperature range
-    density = np.array([
-        mat.density(temperature=T, **operational_point) for T in temperatures
-    ])
-    cp_per_mass = np.array([
-        mat.Cp(temperature=T, **operational_point) for T in temperatures
-    ])
-    cp_per_volume = cp_per_mass * density
-    erho = np.array([mat.erho(temperature=T, **operational_point) for T in temperatures])
-    E = np.array([mat.E(temperature=T, **operational_point) for T in temperatures])
+    for mat, name in zip(mats, mat_names, strict=False):
+        # Calculate properties over the temperature range
+        density = np.array([
+            mat.density(temperature=T, **operational_point) for T in temperatures
+        ])
+        cp_per_mass = np.array([
+            mat.Cp(temperature=T, **operational_point) for T in temperatures
+        ])
+        cp_per_volume = cp_per_mass * density
+        erho = np.array([
+            mat.erho(temperature=T, **operational_point) for T in temperatures
+        ])
+        E = np.array([mat.E(temperature=T, **operational_point) for T in temperatures])
 
-    # Plot density
-    ax1.plot(temperatures, density, label=name)
-    # Plot Cp [J/Kg/K]
-    ax2.plot(temperatures, cp_per_mass, label=name)
-    # Plot Cp [J/K/m³]
-    ax3.plot(temperatures, cp_per_volume, label=name)
-    # Plot erho [Ohm m]
-    ax4.plot(temperatures, erho, label=name)
-    # Plot E (assuming Young's modulus)
-    ax5.plot(temperatures, E, label=name)
+        # Plot density
+        ax1.plot(temperatures, density, label=name)
+        # Plot Cp [J/Kg/K]
+        ax2.plot(temperatures, cp_per_mass, label=name)
+        # Plot Cp [J/K/m³]
+        ax3.plot(temperatures, cp_per_volume, label=name)
+        # Plot erho [Ohm m]
+        ax4.plot(temperatures, erho, label=name)
+        # Plot E (assuming Young's modulus)
+        ax5.plot(temperatures, E, label=name)
 
-# Configure plots
-ax1.set_title("Density [kg/m³] vs Temperature")
-ax1.set_xlabel("Temperature [K]")
-ax1.set_ylabel("Density [kg/m³]")
-ax1.legend()
-ax1.grid(visible=True)
+    # Configure plots
+    ax1.set_title("Density [kg/m³] vs Temperature")
+    ax1.set_xlabel("Temperature [K]")
+    ax1.set_ylabel("Density [kg/m³]")
+    ax1.legend()
+    ax1.grid(visible=True)
 
-ax2.set_title("Heat Capacity per Mass [J/Kg/K] vs Temperature")
-ax2.set_xlabel("Temperature [K]")
-ax2.set_ylabel("Cp [J/Kg/K]")
-ax2.legend()
-ax2.grid(visible=True)
+    ax2.set_title("Heat Capacity per Mass [J/Kg/K] vs Temperature")
+    ax2.set_xlabel("Temperature [K]")
+    ax2.set_ylabel("Cp [J/Kg/K]")
+    ax2.legend()
+    ax2.grid(visible=True)
 
-ax3.set_title("Heat Capacity per Volume [J/K/m³] vs Temperature")
-ax3.set_xlabel("Temperature [K]")
-ax3.set_ylabel("Cp [J/K/m³]")
-ax3.legend()
-ax3.grid(visible=True)
+    ax3.set_title("Heat Capacity per Volume [J/K/m³] vs Temperature")
+    ax3.set_xlabel("Temperature [K]")
+    ax3.set_ylabel("Cp [J/K/m³]")
+    ax3.legend()
+    ax3.grid(visible=True)
 
-ax4.set_title("Electrical Resistivity [Ohm·m] vs Temperature")
-ax4.set_xlabel("Temperature [K]")
-ax4.set_ylabel("Resistivity [Ohm·m]")
-ax4.legend()
-ax4.grid(visible=True)
+    ax4.set_title("Electrical Resistivity [Ohm·m] vs Temperature")
+    ax4.set_xlabel("Temperature [K]")
+    ax4.set_ylabel("Resistivity [Ohm·m]")
+    ax4.legend()
+    ax4.grid(visible=True)
 
-ax5.set_title("E vs Temperature")  # Modify title according to the meaning of E
-ax5.set_xlabel("Temperature [K]")
-ax5.set_ylabel("E [Unit]")  # Change to correct unit
-ax5.legend()
-ax5.grid(visible=True)
+    ax5.set_title("E vs Temperature")  # Modify title according to the meaning of E
+    ax5.set_xlabel("Temperature [K]")
+    ax5.set_ylabel("E [Unit]")  # Change to correct unit
+    ax5.legend()
+    ax5.grid(visible=True)
 
-plt.tight_layout(rect=[0, 0, 1, 0.96])
-plt.show()
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
+if True:
+    # %%
+    # optimize the number of stabilizer strands using the hot spot criteria.
+    # Note: optimize_n_stab_ths changes adjust cable.dy while maintaining cable.dx. It
+    # could be possible to add a parameter maintain constant the aspect ratio if
+    # necessary.
+    bluemira_print(
+        f"before optimization: dx_cable = {cable.dx}, aspect ratio = "
+        f"{cable.aspect_ratio}"
+    )
+    T_for_hts = T0
+    result = cable.optimize_n_stab_ths(
+        t0,
+        tf,
+        T_for_hts,
+        hotspot_target_temperature,
+        B_fun,
+        I_fun,
+        bounds=[1, 10000],
+        show=show,
+    )
+    bluemira_print(
+        f"after optimization: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}"
+    )
 
-# %%
-# optimize the number of stabilizer strands using the hot spot criteria.
-# Note: optimize_n_stab_ths changes adjust cable.dy while maintaining cable.dx. It
-# could be possible to add a parameter maintain constant the aspect ratio if necessary.
-bluemira_print(
-    f"before optimization: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}"
-)
-T_for_hts = T0
-result = cable.optimize_n_stab_ths(
-    t0,
-    tf,
-    T_for_hts,
-    hotspot_target_temperature,
-    B_fun,
-    I_fun,
-    bounds=[1, 10000],
-    show=show,
-)
-bluemira_print(
-    f"after optimization: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}"
-)
+    cable.set_aspect_ratio(aspect_ratio)
+    bluemira_print(
+        f"Adjust aspect ratio: dx_cable = {cable.dx}, aspect ratio = "
+        f"{cable.aspect_ratio}"
+    )
 
-cable.set_aspect_ratio(aspect_ratio)
-bluemira_print(
-    f"Adjust aspect ratio: dx_cable = {cable.dx}, aspect ratio = {cable.aspect_ratio}"
-)
+    # %%
+    ###########################################################
+    # Create a conductor with the specified cable
+    conductor = SymmetricConductor(
+        cable=cable,
+        mat_jacket=ss316,
+        mat_ins=dummy_insulator,
+        dx_jacket=0.01,
+        dx_ins=1e-3,
+    )
 
+if True:
+    # %%
+    # case parameters
+    layout = "auto"  # "layer" or "pancake"
+    wp_reduction_factor = 0.7
+    min_gap_x = 2 * dr_plasma_side
+    n_layers_reduction = 2
 
-# %%
-###########################################################
-# Create a conductor with the specified cable
-conductor = SymmetricConductor(
-    cable=cable, mat_jacket=ss316, mat_ins=dummy_insulator, dx_jacket=0.01, dx_ins=1e-3
-)
-# %%
-# case parameters
-layout = "auto"  # "layer" or "pancake"
-wp_reduction_factor = 0.7
-min_gap_x = 2 * dr_plasma_side
-n_layers_reduction = 2
+    # creation of the case
+    wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
+    case = CaseTF(
+        Ri=Ri,
+        dy_ps=dr_plasma_side,
+        dy_vault=0.6,
+        theta_TF=360 / n_TF,
+        mat_case=ss316,
+        WPs=[wp1],
+    )
 
-# creation of the case
-wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
-case = CaseTF(
-    Ri=Ri,
-    dy_ps=dr_plasma_side,
-    dy_vault=0.6,
-    theta_TF=360 / n_TF,
-    mat_case=ss316,
-    WPs=[wp1],
-)
+    print(f"pre-wp reduction factor: {wp_reduction_factor}")
 
-print(f"pre-wp reduction factor: {wp_reduction_factor}")
+if True:
+    # arrangement of conductors into the winding pack and case
+    case.rearrange_conductors_in_wp(
+        n_conductors=n_cond,
+        cond=conductor,
+        R_wp_i=case.R_wp_i,
+        wp_reduction_factor=wp_reduction_factor,
+        min_gap_x=min_gap_x,
+        n_layers_reduction=n_layers_reduction,
+        layout=layout,
+    )
 
-# arrangement of conductors into the winding pack and case
-case.rearrange_conductors_in_wp(
-    n_conductors=n_cond,
-    cond=conductor,
-    R_wp_i=case.R_wp_i,
-    wp_reduction_factor=wp_reduction_factor,
-    min_gap_x=min_gap_x,
-    n_layers_reduction=n_layers_reduction,
-    layout=layout,
-)
+    ax = case.plot(show=False, homogenized=False)
+    ax.set_title("Case design before optimization")
+    plt.show()
 
-ax = case.plot(show=False, homogenized=False)
-ax.set_title("Case design before optimization")
-plt.show()
+    bluemira_print(f"Previous number of conductors: {n_cond}")
+    bluemira_print(f"New number of conductors: {case.n_conductors}")
 
-bluemira_print(f"Previous number of conductors: {n_cond}")
-bluemira_print(f"New number of conductors: {case.n_conductors}")
-# %% md
-# ## Optimize cable jacket and case vault thickness
-# %%
-# Optimization parameters
-bounds_cond_jacket = [1e-5, 0.1]
-bounds_dy_vault = [0.1, 2]
-max_niter = 100
-err = 1e-3
+if True:
+    # %% md
+    # ## Optimize cable jacket and case vault thickness
+    # %%
+    # Optimization parameters
+    bounds_cond_jacket = [1e-5, 0.1]
+    bounds_dy_vault = [0.1, 2]
+    max_niter = 100
+    err = 1e-3
 
-case.optimize_jacket_and_vault(
-    pm,
-    t_z,
-    T0,
-    B_TF_i,
-    S_Y,
-    bounds_cond_jacket,
-    bounds_dy_vault,
-    layout,
-    wp_reduction_factor,
-    min_gap_x,
-    n_layers_reduction,
-    max_niter,
-    err,
-    n_cond,
-)
+    case.optimize_jacket_and_vault(
+        pm,
+        t_z,
+        T0,
+        B_TF_i,
+        S_Y,
+        bounds_cond_jacket,
+        bounds_dy_vault,
+        layout,
+        wp_reduction_factor,
+        min_gap_x,
+        n_layers_reduction,
+        max_niter,
+        err,
+        n_cond,
+    )
 
-if show:
-    scalex = np.array([2, 1])
-    scaley = np.array([1, 1.2])
+    if show:
+        scalex = np.array([2, 1])
+        scaley = np.array([1, 1.2])
 
-    ax = case.plot(homogenized=homogenized)
-    ax.set_aspect("equal")
+        ax = case.plot(homogenized=homogenized)
+        ax.set_aspect("equal")
 
-    # Fix the x and y limits
-    ax.set_xlim(-scalex[0] * case.dx_i, scalex[1] * case.dx_i)
-    ax.set_ylim(scaley[0] * 0, scaley[1] * case.Ri)
+        # Fix the x and y limits
+        ax.set_xlim(-scalex[0] * case.dx_i, scalex[1] * case.dx_i)
+        ax.set_ylim(scaley[0] * 0, scaley[1] * case.Ri)
 
-    deltax = [-case.dx_i / 2, case.dx_i / 2]
+        deltax = [-case.dx_i / 2, case.dx_i / 2]
 
-    ax.plot([-scalex[0] * case.dx_i, -case.dx_i / 2], [case.Ri, case.Ri], "k:")
+        ax.plot([-scalex[0] * case.dx_i, -case.dx_i / 2], [case.Ri, case.Ri], "k:")
 
-    for i in range(len(case.WPs)):
+        for i in range(len(case.WPs)):
+            ax.plot(
+                [-scalex[0] * case.dx_i, -case.dx_i / 2],
+                [case.R_wp_i[i], case.R_wp_i[i]],
+                "k:",
+            )
+
         ax.plot(
             [-scalex[0] * case.dx_i, -case.dx_i / 2],
-            [case.R_wp_i[i], case.R_wp_i[i]],
+            [case.R_wp_k[-1], case.R_wp_k[-1]],
             "k:",
         )
+        ax.plot([-scalex[0] * case.dx_i, -case.dx_i / 2], [case.Rk, case.Rk], "k:")
 
-    ax.plot(
-        [-scalex[0] * case.dx_i, -case.dx_i / 2],
-        [case.R_wp_k[-1], case.R_wp_k[-1]],
-        "k:",
-    )
-    ax.plot([-scalex[0] * case.dx_i, -case.dx_i / 2], [case.Rk, case.Rk], "k:")
+        ax.set_title("Equatorial cross section of the TF WP")
+        ax.set_xlabel("Toroidal direction [m]")
+        ax.set_ylabel("Radial direction [m]")
 
-    ax.set_title("Equatorial cross section of the TF WP")
-    ax.set_xlabel("Toroidal direction [m]")
-    ax.set_ylabel("Radial direction [m]")
-
-    plt.show()
-# %%
-# new operational current
-bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")
+        plt.show()
+    # %%
+    # new operational current
+    bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")

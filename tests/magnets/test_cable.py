@@ -99,9 +99,9 @@ def test_geometry_and_area(cable):
 
 
 def test_material_properties(cable):
-    assert cable.rho() > 0
-    assert cable.erho() > 0
-    assert cable.Cp() > 0
+    assert cable.rho() > 0.0
+    assert cable.erho() > 0.0
+    assert cable.Cp() > 0.0
 
 
 def test_str_output(cable):
