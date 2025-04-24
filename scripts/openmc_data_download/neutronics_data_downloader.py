@@ -166,11 +166,17 @@ def combine_xml(
     thermal_files: tuple[str, ...],
     thermal_prefix: Path,
 ):
-    """Combine xml files"""
+    """Combine cross_section.xml files from all libraries.
+
+    The cross_section.xml file is parsed in a way that, if there are duplicate isotopes,
+    the first appearance of this isotope will be used when extracting its cross-sections.
+    This behaviour is enforced by :meth:`openmc.data.library.DataLibrary.get_by_material`
+    where the first xml record with matching 'materials' string is returned.
+    """
     bluemira_print("Removing uneeded files")
     for i in thermal_files:
         Path(thermal_prefix / f"{i}.h5").unlink()
-    for file in ["bebeo", "obeo"]:
+    for file in ["bebeo", "obeo"]:  # acer files aren't needed.
         Path("endf-b7.1-ace", f"{file}.acer").unlink()
 
     bluemira_print("Combining cross section xml files")
