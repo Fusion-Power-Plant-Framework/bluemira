@@ -53,6 +53,8 @@ if TYPE_CHECKING:
         Equilibrium,
         FixedPlasmaEquilibrium,
     )
+    from bluemira.equilibria.flux_surfaces import CoreResults
+    from bluemira.equilibria.profiles import Profile
 
 __all__ = [
     "BreakdownPlotter",
@@ -1624,7 +1626,7 @@ class CorePlotter(Plotter):
     profiles.
     """
 
-    def __init__(self, results, ax=None, eq_name=None):
+    def __init__(self, results: CoreResults, ax=None, eq_name: str | None = None):
         num_plots = len(results.__dict__)
         r, c = int((num_plots - 1) / 2) + 1, 2
         super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM_STACK, nrows=r, ncols=c)
@@ -1632,15 +1634,15 @@ class CorePlotter(Plotter):
         for a in self.ax[num_plots:]:
             a.axis("off")
 
-    def plot_core(self, results, eq_name=None):
+    def plot_core(self, results: CoreResults, eq_name: str | None = None):
         if eq_name is None:
             ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
-            for i, (k, v) in enumerate(results.dict_with_units().items()):
+            for i, (k, v) in enumerate(results.to_dict(latex_unit=True).items()):
                 color = next(ccycle)
-                self.ax[i].plot(results.psi_n, v, label=k, color=color)
+                self.ax[i].plot(results.psi_n, v, label=f"${k}$", color=color)
                 self.ax[i].legend()
         else:
-            for i, (k, v) in enumerate(results.dict_with_units().items()):
+            for i, (k, v) in enumerate(results.to_dict(latex_unit=True).items()):
                 self.ax[i].plot(results.psi_n, v, label=eq_name)
                 self.ax[i].set_ylabel(k)
             self.ax[0].legend()
@@ -1651,11 +1653,11 @@ class CorePlotter2(Plotter):
     Utility class for plotting plasma equilibrium cross-core profiles.
     """
 
-    def __init__(self, eq, ax=None, n=50):
+    def __init__(self, eq: Equilibrium, ax=None, n: int = 50):
         super().__init__(ax, subplots=EqSubplots.VS_X, nrows=3, ncols=1)
         self.plot_core2(eq, n)
 
-    def plot_core2(self, eq, n=50):
+    def plot_core2(self, eq: Equilibrium, n: int = 50):
         """
         Plot the plasma equilibrium cross-core profiles.
         """
@@ -1691,14 +1693,19 @@ class ProfilePlotter(Plotter):
     Utility class for plotting profile objects
     """
 
-    def __init__(self, profiles, ax=None):
+    def __init__(self, profiles: Profile, ax=None):
         super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM)
         self.prof = profiles
         self.plot_profiles()
 
-    def plot_profiles(self, n=50):
+    def plot_profiles(self, n: int = 50):
         """
         Plot the plasma profiles.
+
+        Parameters
+        ----------
+        n:
+            the amount of discretisation in the profiles
         """
         x = np.linspace(0, 1, n)
         self.ax.plot(x, self.prof.shape(x), label="shape function")

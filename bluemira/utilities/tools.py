@@ -15,7 +15,6 @@ import string
 import warnings
 from collections import Counter
 from collections.abc import Callable, Iterable
-from dataclasses import asdict
 from functools import wraps
 from importlib import import_module as imp
 from importlib import machinery as imp_mach
@@ -29,7 +28,6 @@ import nlopt
 import numpy as np
 import numpy.typing as npt
 from matplotlib import colors
-from tabulate import tabulate
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.file import force_file_extension
@@ -976,51 +974,6 @@ def compare_dicts(
         if verbose:
             bluemira_error(result)
     return the_same
-
-
-def make_table(data, column_names):
-    """
-    Create a table using a dataclass or  list of dataclasses.
-
-    Parameteres
-    -----------
-    data:
-        Dataclass or list of dataclasses
-    column_names:
-        column names or list of column names
-
-    Returns
-    -------
-    :
-        table
-    """
-    if not isinstance(data, Iterable):
-        data = (
-            data.dict_with_units(latex=False)
-            if callable(data.dict_with_units)
-            else data.__dict__
-        )
-        return tabulate(
-            list(data.items()),
-            headers=[column_names],
-            tablefmt="simple",
-            showindex=False,
-            numalign="right",
-        )
-
-    row_names = (
-        list(data[0].dict_with_units(latex=False).keys())
-        if callable(data[0].dict_with_units)
-        else list(data[0].__dict__.keys())
-    )
-    table_data = [row_names] + [list(asdict(column).values()) for column in data]
-    return tabulate(
-        list(zip(*table_data, strict=False)),
-        headers=["Parameter", *column_names],
-        tablefmt="grid",
-        showindex=False,
-        numalign="right",
-    )
 
 
 # ======================================================================================

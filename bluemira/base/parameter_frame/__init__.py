@@ -9,6 +9,7 @@ from bluemira.base.parameter_frame._frame import (
     EmptyFrame,
     ParameterFrame,
     make_parameter_frame,
+    tabulate_values_from_multiple_frames,
 )
 from bluemira.base.parameter_frame._parameter import Parameter
 
@@ -17,4 +18,5 @@ __all__ = [
     "Parameter",
     "ParameterFrame",
     "make_parameter_frame",
+    "tabulate_values_from_multiple_frames",
 ]
