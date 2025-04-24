@@ -1701,6 +1701,11 @@ class ProfilePlotter(Plotter):
     def plot_profiles(self, n: int = 50):
         """
         Plot the plasma profiles.
+
+        Parameters
+        ----------
+        n:
+            the amount of discretisation in the profiles
         """
         x = np.linspace(0, 1, n)
         self.ax.plot(x, self.prof.shape(x), label="shape function")

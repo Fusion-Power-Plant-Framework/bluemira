@@ -451,6 +451,27 @@ class ParameterFrame:
         floatfmt: str = ".5g",
         value_label: str | None = "value",
     ) -> tuple[list[str], list[list[str]]]:
+        """
+        Create the tabulated data for use with tabulate.
+        Useful for combining frames for comparison
+
+        Parameters
+        ----------
+        keys:
+            table column keys
+        tablefmt:
+            The format of the table (default="fancy_grid") - see
+            https://github.com/astanin/python-tabulate#table-format
+        floatfmt:
+            Format floats to this precision
+        value_label:
+            The header title for the 'value' column
+
+        Returns
+        -------
+        :
+            The tabulated data as column headers and a list of rows
+        """
         try:
             pkey = keys.index("Parameter")
             keys.pop(pkey)
@@ -508,17 +529,20 @@ class ParameterFrame:
 
         Parameters
         ----------
-        keys
+        keys:
             table column keys
-        tablefmt
+        tablefmt:
             The format of the table (default="fancy_grid") - see
             https://github.com/astanin/python-tabulate#table-format
-        floatfmt
+        floatfmt:
             Format floats to this precision
+        value_label:
+            The header title for the 'value' column
 
         Returns
         -------
-        The tabulated data
+        :
+            The tabulated data
         """
         column_widths = dict(
             zip(
@@ -861,7 +885,37 @@ def tabulate_values_from_multiple_frames(
     value_labels: Iterable[str],
     tablefmt: str = "fancy_grid",
     floatfmt: str = ".5g",
-):
+) -> str:
+    """
+    Tabulate the contents of parameter frames of the same type.
+
+    Parameters
+    ----------
+    frames:
+        ParameterFrames to compare
+    value_labels:
+        The header title for each 'value' column
+    tablefmt:
+        The format of the table (default="fancy_grid") - see
+        https://github.com/astanin/python-tabulate#table-format
+    floatfmt:
+        Format floats to this precision
+
+    Returns
+    -------
+    :
+        The tabulated data
+
+    Raises
+    ------
+    TypeError
+        The ParameterFrames must all be the same type
+
+    Notes
+    -----
+    This function creates a table with a single "Parameter" column and
+    multiple value columns
+    """
     names = iter(value_labels)
     columns, records = frames[0].tabulation_data(
         ["Parameter", "value"], floatfmt=floatfmt, value_label=next(names)
