@@ -567,8 +567,6 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            convergence=deepcopy(self.eq_settings.convergence),
-            relaxation=self.eq_settings.relaxation,
             o_point_fallback=self.eq_settings.o_point_fallback,
         )
         program()
