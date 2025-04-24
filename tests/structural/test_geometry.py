@@ -81,7 +81,8 @@ class TestMembership:
         eiyy = i_300_300.i_yy * SS316.E
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
-        elem_id = self.geometry.add_element(3, 3, i_300_300, SS316)
+        self.geometry.add_node(2, 2, 2)
+        elem_id = self.geometry.add_element(3, 4, i_300_300, SS316)
         assert len(self.geometry.elements) == 4
         assert elem_id == 3
 
