@@ -83,7 +83,8 @@ class TestMaterials:
 
 
 class TestLiquids:
-    water = MATERIAL_CACHE.get_material("H2O")
+    def setup_method(self):
+        self.water = MATERIAL_CACHE.get_material("H2O")
 
     def test_temp_pressure(self):
         assert self.water.temperature == pytest.approx(293.15, rel=0, abs=EPS)

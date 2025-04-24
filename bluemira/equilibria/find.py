@@ -638,7 +638,7 @@ def find_flux_surface_through_point(
     psi: npt.NDArray[np.float64],
     point_x: float,
     point_z: float,
-    point_psi: float,
+    point_psi: float | npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """
     Get a flux surface passing through a point.
@@ -667,6 +667,8 @@ def find_flux_surface_through_point(
     def f_min(x_opt, z_opt):
         return np.min(np.hypot(x_opt - point_x, z_opt - point_z))
 
+    if isinstance(point_psi, np.ndarray):
+        point_psi = point_psi.item()
     flux_contours = get_contours(x, z, psi, point_psi)
 
     error = [f_min(*group.T) for group in flux_contours]

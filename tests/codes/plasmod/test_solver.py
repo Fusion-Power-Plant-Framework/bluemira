@@ -309,9 +309,8 @@ class TestPlasmodSolver:
         )
         cls.run_subprocess_mock = cls._run_subprocess_patch.start()
 
-    @classmethod
-    def teardown_class(cls):
-        cls._run_subprocess_patch.stop()
+    def teardown_method(self):
+        self.run_subprocess_mock.reset_mock()
 
     @pytest.mark.parametrize(
         ("key", "default"),
