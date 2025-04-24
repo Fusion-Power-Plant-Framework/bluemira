@@ -20,6 +20,7 @@ from bluemira.equilibria.coils import (
     make_mutual_inductance_matrix,
     symmetrise_coilset,
 )
+from bluemira.equilibria.coils._coil import CoilNumber
 from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
@@ -71,15 +72,21 @@ class TestCoil:
         assert self.cs_coil.ctype == CoilType.CS
         assert self.dum_coil.ctype == CoilType.DUM
         assert self.no_coil.ctype == CoilType.NONE
+
+        num_pf = CoilNumber._CoilNumber__PF_counter
+        num_cs = CoilNumber._CoilNumber__CS_counter
+        num_dum = CoilNumber._CoilNumber__DUM_counter
+        num_no = CoilNumber._CoilNumber__no_counter
+
         coil = Coil(x=4, z=4, current=10e6, ctype="PF", j_max=NBTI_J_MAX)
         cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
         dum_coil = Coil(x=4, z=4, current=0.0, ctype="DUM", j_max=0.0)
         no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
-        assert coil._number == self.coil._number + 1
-        assert cs_coil._number == self.cs_coil._number + 1
-        assert dum_coil._number == self.dum_coil._number + 1
-        assert no_coil._number == self.no_coil._number + 1
+        assert num_pf == coil._number
+        assert num_cs == cs_coil._number
+        assert num_dum == dum_coil._number
+        assert num_no == no_coil._number
 
     @pytest.mark.parametrize("Bx_an", [True, False])
     @pytest.mark.parametrize("Bz_an", [True, False])
