@@ -65,9 +65,7 @@
   },
   "Free boundary equilibrium": {
     "run_mode": "run",
-    "diagnostic_plotting": {
-      "plot": "convergence"
-    },
+    "diagnostic_plotting": { "plot": ["eq", "convergence"] },
     "summary_plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
@@ -91,24 +89,15 @@
     "Wall silhouette": {
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
-        "x1": {
-          "value": "r_fw_ib_in"
-        },
-        "x2": {
-          "value": "r_fw_ob_in"
-        }
+        "x1": { "value": "r_fw_ib_in" },
+        "x2": { "value": "r_fw_ob_in" }
       },
       "run_mode": "run",
       "file_path": "$path_expand:./FirstWallDesign.json",
-      "problem_settings": {
-        "n_koz_points": 100
-      },
+      "problem_settings": { "n_koz_points": 100 },
       "optimisation_settings": {
         "algorithm_name": "SLSQP",
-        "conditions": {
-          "max_eval": 200,
-          "ftol_rel": 1e-6
-        }
+        "conditions": { "max_eval": 200, "ftol_rel": 1e-6 }
       }
     },
     "Divertor silhouette": {}
@@ -163,10 +152,7 @@
     },
     "optimisation_settings": {
       "algorithm_name": "SLSQP",
-      "conditions": {
-        "max_eval": 200,
-        "ftol_rel": 1e-6
-      }
+      "conditions": { "max_eval": 200, "ftol_rel": 1e-6 }
     }
   },
   "PF coils": {
@@ -178,7 +164,7 @@
       "Casing": "Poloidal_Field_Coil"
     },
     "verbose": false,
-    "plot": true,
+    "summary_plot": true,
     "grid_settings": {
       "nx": 127,
       "nz": 127,
@@ -192,10 +178,7 @@
       "n_B_stray_points": 10,
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-10
-        }
+        "conditions": { "max_eval": 5000, "ftol_rel": 1e-10 }
       }
     },
     "equilibrium_settings": {
@@ -207,22 +190,14 @@
       "peak_PF_current_factor": 1.5,
       "optimisation_settings": {
         "algorithm_name": "SLSQP",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-6
-        }
+        "conditions": { "max_eval": 5000, "ftol_rel": 1e-6 }
       },
-      "diagnostic_plotting": {
-        "plot": "convergence"
-      }
+      "diagnostic_plotting": { "plot": ["eq", "convergence"] }
     },
     "position_settings": {
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 50,
-          "ftol_rel": 1e-10
-        }
+        "conditions": { "max_eval": 50, "ftol_rel": 1e-10 }
       }
     }
   },
