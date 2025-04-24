@@ -11,7 +11,7 @@ Flux surface utility classes and calculations
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -37,7 +37,7 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import _signed_distance_2D
-from bluemira.utilities.plot_tools import make_dict_with_units
+from bluemira.utilities.plot_tools import str_to_latex, str_to_latex_units
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
@@ -516,43 +516,40 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
 
 @dataclass
-class CoreResultsPlotUnits:
-    """
-    Units for CoreResults.
-    """
-
-    R_0: str = "m"
-    a: str = "m"
-    area: str = "m^2"
-    V: str = "m^3"
-    Delta_shaf: str = "m"
-
-
-@dataclass
 class CoreResults:
     """
     Dataclass for core results.
     """
 
-    psi_n: Iterable
-    R_0: Iterable
-    a: Iterable
-    A: Iterable
-    area: Iterable
-    V: Iterable
-    kappa: Iterable
-    delta: Iterable
-    zeta: Iterable
-    kappa_upper: Iterable
-    delta_upper: Iterable
-    zeta_upper: Iterable
-    kappa_lower: Iterable
-    delta_lower: Iterable
-    zeta_lower: Iterable
-    q: Iterable
-    Delta_shaf: Iterable
+    psi_n: Iterable[float]
+    R_0: Iterable[float]
+    a: Iterable[float]
+    A: Iterable[float]
+    area: Iterable[float]
+    V: Iterable[float]
+    kappa: Iterable[float]
+    delta: Iterable[float]
+    zeta: Iterable[float]
+    kappa_upper: Iterable[float]
+    delta_upper: Iterable[float]
+    zeta_upper: Iterable[float]
+    kappa_lower: Iterable[float]
+    delta_lower: Iterable[float]
+    zeta_lower: Iterable[float]
+    q: Iterable[float]
+    Delta_shaf: Iterable[float]
 
-    def dict_with_units(self, latex=True):  # noqa: FBT002
+    def __post_init__(self):
+        """Setup plot units"""
+        self._plot_units = {
+            "R_0": "m",
+            "a": "m",
+            "area": "m^2",
+            "V": "m^3",
+            "Delta_shaf": "m",
+        }
+
+    def to_dict(self, *, latex_unit: bool = False):
         """
         Add appropriate units to value names.
         Make latex ready if latex=true.
@@ -562,11 +559,19 @@ class CoreResults:
         :
             Dictionary with updated keys for tables and plotting.
         """
-        return make_dict_with_units(
-            data_dict=self.__dict__,
-            units_dict=CoreResultsPlotUnits().__dict__,
-            latex=latex,
-        )
+        new_dict = {}
+        for k, v in asdict(self).items():
+            varname = str_to_latex(k) if latex_unit else k
+            if self._plot_units.get(k) is not None:
+                units = (
+                    str_to_latex_units(self._plot_units[k])
+                    if latex_unit
+                    else self._plot_units[k]
+                )
+                new_dict[varname + units] = v
+            else:
+                new_dict[varname] = v
+        return new_dict
 
 
 def analyse_plasma_core(eq: Equilibrium, n_points: int = 50) -> CoreResults:

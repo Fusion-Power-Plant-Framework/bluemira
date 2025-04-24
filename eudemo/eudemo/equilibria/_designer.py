@@ -64,7 +64,7 @@ def plasma_data(eq):
         "kappa": p_dat.kappa,
         "l_i": p_dat.li,
         "q_95": p_dat.q_95,
-        "shaf_shift": np.hypot(p_dat.dx_shaf, p_dat.dz_shaf),
+        "shaf_shift": np.hypot(p_dat.dx_shaf.value, p_dat.dz_shaf.value),
     }
 
 

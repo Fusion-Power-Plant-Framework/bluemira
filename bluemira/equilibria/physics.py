@@ -18,9 +18,10 @@ import numpy.typing as npt
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
+from bluemira.base.parameter_frame._frame import ParameterFrame
+from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
-from bluemira.utilities.plot_tools import make_dict_with_units
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -224,6 +225,10 @@ def calc_energy(eq: Equilibrium) -> float:
     return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
+def _calc_Li_from_energy(p_energy, i_p) -> float:
+    return 2 * p_energy / i_p**2
+
+
 def calc_Li(eq: Equilibrium) -> float:
     """
     Calculates the internal inductance of the plasma [H]
@@ -231,7 +236,11 @@ def calc_Li(eq: Equilibrium) -> float:
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
     """  # noqa: DOC201
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._I_p**2
+    return _calc_Li_from_energy(p_energy, eq._I_p)
+
+
+def _calc_li_from_Li(big_li, R_0):
+    return 2 * big_li / (MU_0 * R_0)
 
 
 def calc_li(eq: Equilibrium) -> float:
@@ -241,7 +250,7 @@ def calc_li(eq: Equilibrium) -> float:
     \t:math:`l_i=\\dfrac{2L_i}{\\mu_{0}R_{0}}`
     """  # noqa: DOC201
     li = calc_Li(eq)
-    return 2 * li / (MU_0 * eq._R_0)
+    return _calc_li_from_Li(li, eq._R_0)
 
 
 def calc_li3(eq: Equilibrium) -> float:
@@ -258,10 +267,9 @@ def calc_li3(eq: Equilibrium) -> float:
 
     where: Bp is the poloidal magnetic field and V is the plasma volume
     """  # noqa: DOC201
-    mask = in_plasma(eq.x, eq.z, eq.psi())
-    Bp = eq.Bp()
-    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)
+    return calc_li3minargs(
+        eq.x, eq.z, eq.psi(), eq.Bp(), eq.profiles.R_0, eq.profiles.I_p, eq.dx, eq.dz
+    )
 
 
 def calc_li3minargs(
@@ -376,46 +384,31 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
 
 
 @dataclass
-class EqSummaryPlotUnits:
-    """
-    Units for EqSummary.
-    """
-
-    W: str = "J"
-    V: str = "m^3"
-    R_0: str = "m"
-    a: str = "m"
-    I_p: str = "A"
-    dx_shaf: str = "m"
-    dz_shaf: str = "m"
-
-
-@dataclass
-class EqSummary:
+class EqSummary(ParameterFrame):
     """
     Calculates interesting values in one go.
     """
 
-    W: float
-    Li: float
-    li: float
-    li_3: float
-    V: float
-    beta_p: float
-    q_95: float
-    kappa_95: float
-    delta_95: float
-    zeta_95: float
-    kappa: float
-    delta: float
-    zeta: float
-    R_0: float
-    A: float
-    a: float
-    # dXsep : float
-    I_p: float
-    dx_shaf: float
-    dz_shaf: float
+    W: Parameter[float]
+    Li: Parameter[float]
+    li: Parameter[float]
+    li_3: Parameter[float]
+    V: Parameter[float]
+    beta_p: Parameter[float]
+    q_95: Parameter[float]
+    kappa_95: Parameter[float]
+    delta_95: Parameter[float]
+    zeta_95: Parameter[float]
+    kappa: Parameter[float]
+    delta: Parameter[float]
+    zeta: Parameter[float]
+    R_0: Parameter[float]
+    A: Parameter[float]
+    a: Parameter[float]
+    # dXsep : Parameter[float]
+    I_p: Parameter[float]
+    dx_shaf: Parameter[float]
+    dz_shaf: Parameter[float]
 
     @classmethod
     def from_equilibrium(
@@ -430,11 +423,8 @@ class EqSummary:
         Create summary from equilibrium
         """  # noqa: DOC201
         R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
-        mask = in_plasma(eq.x, eq.z, eq.psi())
-        Bp = eq.Bp()
-        bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-        energy = bpavg / (2 * MU_0)
-        li_true = 2 * energy / I_p**2
+        energy = calc_energy(eq)
+        li_true = _calc_Li_from_energy(energy, I_p)
         if is_double_null:
             kappa_95 = f95.kappa
             delta_95 = f95.delta
@@ -453,42 +443,39 @@ class EqSummary:
 
         # d['dXsep'] = self.calc_dXsep()
         dx_shaf, dz_shaf = f100.shafranov_shift(eq)
+        eq_name = eq.label
         return cls(
-            W=energy,
-            Li=li_true,
-            li=2 * li_true / (MU_0 * R_0),
-            li_3=2 * bpavg / (R_0 * (MU_0 * R_0) ** 2),
-            V=calc_volume(eq),
-            beta_p=calc_beta_p(eq),
-            q_95=f95.safety_factor(eq),
-            R_0=f100.major_radius,
-            A=f100.aspect_ratio,
-            a=f100.area,
-            I_p=eq.profiles.I_p,
-            dx_shaf=dx_shaf,
-            dz_shaf=dz_shaf,
-            kappa_95=kappa_95,
-            delta_95=delta_95,
-            zeta_95=zeta_95,
-            kappa=kappa,
-            delta=delta,
-            zeta=zeta,
-        )
-
-    def dict_with_units(self, latex=True):  # noqa: FBT002
-        """
-        Add appropriate units to value names.
-        Make latex ready if latex=true.
-
-        Returns
-        -------
-        :
-            Dictionary with updated keys for tables and plotting.
-        """
-        return make_dict_with_units(
-            data_dict=self.__dict__,
-            units_dict=EqSummaryPlotUnits().__dict__,
-            latex=latex,
+            W=Parameter("W", energy, "J", eq_name),
+            Li=Parameter("Li", li_true, "", eq_name, long_name="internal_inductance"),
+            li=Parameter(
+                "li", _calc_li_from_Li(li_true, R_0), "", eq_name, long_name=""
+            ),
+            li_3=Parameter(
+                "li_3",
+                calc_li3(eq),
+                "",
+                eq_name,
+                description="normalised internal plasma inductance",
+            ),
+            V=Parameter("V", calc_volume(eq), "m^3", eq_name, long_name="plasma_volume"),
+            beta_p=Parameter("beta_p", calc_beta_p(eq), "", eq_name),
+            q_95=Parameter("q_95", f95.safety_factor(eq), "", eq_name),
+            R_0=Parameter("R_0", f100.major_radius, "m", eq_name),
+            A=Parameter("A", f100.aspect_ratio, "", eq_name, long_name="aspect_ratio"),
+            a=Parameter("a", f100.area, "m^2", eq_name, long_name="plasma_area"),
+            I_p=Parameter("I_p", I_p, "A", eq_name, long_name="plasma_current"),
+            dx_shaf=Parameter(
+                "dx_shaf", dx_shaf, "m", eq_name, long_name="x_shafranov_shift"
+            ),
+            dz_shaf=Parameter(
+                "dz_shaf", dz_shaf, "m", eq_name, long_name="z_shafranov_shift"
+            ),
+            kappa_95=Parameter("kappa_95", kappa_95, "", eq_name),
+            delta_95=Parameter("delta_95", delta_95, "", eq_name),
+            zeta_95=Parameter("zeta_95", zeta_95, "", eq_name),
+            kappa=Parameter("kappa", kappa, "", eq_name),
+            delta=Parameter("delta", delta, "", eq_name),
+            zeta=Parameter("zeta", zeta, "", eq_name),
         )
 
 
