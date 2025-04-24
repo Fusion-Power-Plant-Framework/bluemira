@@ -642,7 +642,7 @@ def find_flux_surface_through_point(
     psi: npt.NDArray[np.float64],
     point_x: float,
     point_z: float,
-    point_psi: float,
+    point_psi: float | npt.NDArray[np.float64],
 ) -> npt.NDArray[np.float64]:
     """
     Get a flux surface passing through a point.
