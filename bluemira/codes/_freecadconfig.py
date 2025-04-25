@@ -15,6 +15,8 @@ from pathlib import Path
 import freecad  # noqa: F401
 import FreeCAD
 
+from bluemira.base.look_and_feel import bluemira_warn
+
 
 class FCUnit(enum.IntEnum):
     """Available units in FreeCAD"""
@@ -91,6 +93,11 @@ def _patch_pivy():
     import pivy  # noqa: PLC0415
 
     if pivy.__version__ == "0.6.9":
+        bluemira_warn(
+            "Your conda python environment is outdated. "
+            "Please upgrade to get the latest dependencies. "
+            "This helper patch will be removed for v2.8."
+        )
         try:
             subprocess.run(  # noqa: S602
                 [
