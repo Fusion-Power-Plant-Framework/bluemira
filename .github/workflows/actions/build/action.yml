@@ -68,11 +68,6 @@ runs:
         conda-remove-defaults: true
         python-version: ${{ inputs.python-version }}
 
-    - name: Patch pivy
-      shell: bash -l {0}
-      run: |
-        /usr/bin/patch -l -p2 -N -d /home/runner/miniconda3/envs/bluemira/lib/python${{ inputs.python-version}}/site-packages/pivy/ < ./bluemira/codes/pivy.patch
-
     - name: Install bluemira
       shell: bash -l {0}
       run: pip install -U -e .
