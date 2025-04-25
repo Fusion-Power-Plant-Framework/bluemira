@@ -32,6 +32,7 @@ from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import CoilGroupPlotter
+from bluemira.utilities.positioning import PositionMapper
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
 if TYPE_CHECKING:
@@ -1339,6 +1340,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self,
         opt_currents: np.ndarray | None = None,
         coil_position_map: dict[str, np.ndarray] | None = None,
+        position_mapper: PositionMapper | None = None,
         current_scale: float = 1.0,
     ):
         """
@@ -1359,6 +1361,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         if opt_currents is not None:
             cc._opt_currents = opt_currents * current_scale
         if coil_position_map is not None:
+            if position_mapper is not None:
+                if position_mapper.dimension == 2:
+                    pass
             cc._set_opt_positions(coil_position_map)
 
     @property

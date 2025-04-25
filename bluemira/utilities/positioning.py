@@ -17,6 +17,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 from bluemira.utilities.error import PositionerError
@@ -42,6 +43,16 @@ class XZGeometryInterpolator(abc.ABC):
 
     def __init__(self, geometry: BluemiraWire):
         self.geometry = geometry
+        self.geo_discr = self.geometry.discretise()
+
+    @property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, value):
+        self._geometry = value
+        self.geo_discr = self._geometry.discretise()
 
     def _get_xz_coordinates(self, num_pts):
         """
@@ -134,6 +145,12 @@ class PathInterpolator(XZGeometryInterpolator):
         """
         return 1
 
+    def region_adjustment(x_c, z_c, dx, dz, outward: bool = True):
+        if outward:
+            normals = -_calculate_normals_2d(self._get_xz_coordinates(100))
+        else:
+            normals = _calculate_normals_2d(self._get_xz_coordinates(100))
+
 
 class RegionInterpolator(XZGeometryInterpolator):
     """
@@ -166,6 +183,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         self._check_geometry_feasibility(geometry)
         self.z_min = geometry.bounding_box.z_min
         self.z_max = geometry.bounding_box.z_max
+        self._xz_coordinates = self._get_xz_coordinates(100)
 
     def _check_geometry_feasibility(self, geometry: BluemiraWire):
         """
@@ -332,6 +350,16 @@ class RegionInterpolator(XZGeometryInterpolator):
         Dimension of the parametric space of the RegionInterpolator
         """
         return 2
+
+    def region_adjustment(self, x_c, z_c, dx, dz):
+        x, z = self._xz_coordinates
+        dx_max, dz_max = inscribed_rect_in_poly(x, z, x_c, z_c, dx / dz)
+        return min(dx, dx_max), min(dz, dz_max)
+
+    # def region_adjustment(
+    #     self,
+    # ):
+    #     inscribed_rect_in_poly(self.geometry)
 
 
 class PositionMapper:
