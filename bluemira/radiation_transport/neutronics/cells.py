@@ -11,6 +11,7 @@ from collections.abc import Iterable, Sequence
 from itertools import chain, pairwise
 from typing import TYPE_CHECKING
 
+import matplotlib as mpl
 import numpy as np
 from numpy import typing as npt
 
@@ -219,7 +220,7 @@ class CellStack(ParentLinkable, Sequence):
 
     @ccw_wall.setter
     def ccw_wall(self, _ccw_wall: CellWall):
-        """This should only be set by the parent.
+        """ccw_wall should only be set by the parent.
 
         Raises
         ------
@@ -235,7 +236,7 @@ class CellStack(ParentLinkable, Sequence):
 
     @cw_wall.setter
     def cw_wall(self, _cw_wall: CellWall):
-        """This should only be set by the parent.
+        """cw_wall should only be set by the parent.
 
         Raises
         ------
@@ -274,8 +275,14 @@ class CellStack(ParentLinkable, Sequence):
         :
             The interface that separates the n-th and n+1-th cell (if n is positive); or
             the interface that separates the n-th and (n-1)-th cell (if n is negative).
+
+        Raises
+        ------
+        IndexError
+            Can only accept integer between the range [-l+1, l-2], where
+            l = len(self)
         """
-        l = len(self.cells)
+        l = len(self.cells)  # noqa: E741
         if index >= 0:
             if index > l - 2:
                 raise IndexError(f"Can only go up to the {l - 2}-th interface.")
@@ -378,11 +385,12 @@ class Cell(ParentLinkable):
         """
         self.in_face = in_face
         self.ex_face = ex_face
+        # all RadialInterface should have wires that run clockwise
         self.vertices = Vertices.from_bluemira_coordinates(
-            in_face.start_point(),
-            in_face.end_point(),
-            ex_face.start_point(),
-            ex_face.end_point(),
+            in_face.wire.start_point(),
+            in_face.wire.end_point(),
+            ex_face.wire.start_point(),
+            ex_face.wire.end_point(),
         )
         self._parent = None
 
@@ -443,6 +451,18 @@ class Cell(ParentLinkable):
         """Plot 3D plots of the poloidal"""
         return show_cad(self.half_solid, *args, **kwargs)
 
+    def plot_and_fill(self, color) -> Axes:
+        ax = plot_2d(show=False)
+        in_p = self.in_face.wire.discretize(
+            5 * len(self.in_face.wire.edges), byedges=True
+        )
+        ex_p = self.ex_face.wire.discretize(
+            5 * len(self.ex_face.wire.edges), byedges=True
+        )
+        approx_outline = np.concatenate([in_p.xz.T, ex_p.xz.T[::-1]])
+        ax.add_patch(mpl.patches.Polygon(approx_outline.xz.T), color=color)
+        return ax
+
 
 class CSGSurfacesCollection:
     """An object that can be translated into a unique surface/collection of surfaces
@@ -481,7 +501,7 @@ class RadialInterface(CSGSurfacesCollection):
         return self.wire.is_same(other.wire) and self.csg == other.csg
 
     def __hash__(self):
-        pass
+        return hash((self.wire, self.csg))
 
 
 class StraightLine(CSGSurfacesCollection):
@@ -508,7 +528,7 @@ class CellWall(StraightLine):
 class Vertices:
     """A collection of vertices denoting the corners of a cell/cell stack."""
 
-    index_mapping = {0: "ccw_in", 1: "cw_in", 2: "ccw_ex", 3: "cw_ex"}
+    _index_mapping = {0: "ccw_in", 1: "cw_in", 2: "ccw_ex", 3: "cw_ex"}
 
     def __init__(
         self,
@@ -543,7 +563,7 @@ class Vertices:
     @property
     def centroid(self) -> npt.NDArray[np.float64]:
         """Give the centroid of the"""
-        return np.array([self[i] for i in self.index_mapping]).mean(axis=0)
+        return np.array([self[i] for i in self._index_mapping]).mean(axis=0)
 
     @staticmethod
     def to_3D(coord_2d: npt.NDArray[np.float64]) -> Coordinates:
@@ -558,7 +578,7 @@ class Vertices:
         :class:`bluemira.geometry.coordinates.Coordinates` (on the x-z plane) into a
         2D numpy array.
         """
-        return np.array([coord_3d.x[0], coord_3d.z[0]])
+        return np.squeeze(coord_3d.xz)
 
     @classmethod
     def from_bluemira_coordinates(
@@ -576,13 +596,29 @@ class Vertices:
         )
 
     def __getitem__(self, index: int) -> npt.NDArray[np.float64]:
-        """Get vertices using integer indices, rather than their names names."""
+        """Get vertices using integer indices, rather than their names names.
+
+        Raises
+        ------
+        TypeError
+            When slices or keys or other non-integer indices are passed in, this error
+            is thrown.
+        """
         if not isinstance(index, int):
             raise TypeError("Vertices only support integer indices.")
-        return getattr(self, self.index_mapping[index])
+        return getattr(self, self._index_mapping[index])
 
     def __eq__(self, other_vertices: Vertices) -> bool:
-        """Two sets of vertices are equal if they land on the same coordinates."""
+        """Two sets of vertices are equal if they land on the same coordinates.
+
+        Raises
+        ------
+        TypeError
+            Can only compare against other Vertices object.
+        """
         if not isinstance(other_vertices, Vertices):
             raise TypeError(f"Cannot compare {type(self)} with {type(other_vertices)}.")
-        return all([(self[i] == other_vertices[i]).all() for i in self.index_mapping])
+        return all((self[i] == other_vertices[i]).all() for i in self._index_mapping)
+
+    def __hash__(self):
+        return hash(tuple(self[i] for i in self._index_mapping))

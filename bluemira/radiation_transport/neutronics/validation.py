@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+"""Validate the geometry of the csg model created."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -21,7 +28,7 @@ def check_stacks_are_neighbours(stack_ccw: CellStack, stack_cw: CellStack) -> No
 
     Raises
     ------
-    CSGGeometryValidationError:
+    CSGGeometryValidationError
         raised if the two stacks don't have 2 matching vertices where we expect them.
     """
     if stack_ccw.vertices.cw_in != stack_cw.vertices.ccw_in:
@@ -46,7 +53,7 @@ def check_cells_are_neighbours_by_vertices(in_cell: Cell, ex_cell: Cell) -> None
 
     Raises
     ------
-    CSGGeometryValidationError:
+    CSGGeometryValidationError
         Raised if the two stacks don't have 2 matching vertices where we expect them.
     """
     if in_cell.vertices.ccw_ex != ex_cell.vertices.ccw_in:
@@ -72,8 +79,9 @@ def check_cells_are_neighbours_by_face(in_cell: Cell, ex_cell: Cell) -> None:
 
     Raises
     ------
-    CSGGeometryValidationError:
-        Raised if the two stacks don't share a :class:`~RadialInterface` where we expect them.
+    CSGGeometryValidationError
+        Raised if the two stacks don't share a :class:`~RadialInterface` where we expect
+        them.
     """
     if in_cell.ex_face != ex_cell.in_face:
         raise CSGGeometryValidationError(
@@ -88,7 +96,7 @@ def check_cell_wall_alignment(
 
     Raises
     ------
-    CSGGeometryValidationError:
+    CSGGeometryValidationError
         Thrown if cells' corners do not start and end in the ccw and cw cell walls.
     """
     # ccw wall
