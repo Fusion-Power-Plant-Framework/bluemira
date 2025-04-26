@@ -9,7 +9,7 @@ Strand definition and builder module.
 
 Includes:
 - Strand and SuperconductingStrand classes (material + geometry + Ic/Jc)
-- StrandBuilder to construct strands from config parameters
+- Automatic class and instance registration mechanisms
 """
 
 from typing import Any
@@ -23,78 +23,173 @@ from bluemira.base.parameter_frame import Parameter
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-from bluemira.materials.cache import MaterialCache, get_cached_material
+from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import Superconductor
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 
 # ------------------------------------------------------------------------------
-# Strand & SuperconductingStrand Classes
+# Global Registries
+# ------------------------------------------------------------------------------
+
+STRAND_REGISTRY = {}
+STRAND_INSTANCE_CACHE = {}
+
+
+# ------------------------------------------------------------------------------
+# Strand Class
 # ------------------------------------------------------------------------------
 
 
-class Strand(HomogenisedMixture):
+class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
     """
     Represents a strand with a circular cross-section, composed of a homogenized
     mixture of materials.
+
+    This class automatically registers itself and its instances.
     """
+
+    _registry_ = STRAND_REGISTRY
+    _global_instance_cache_ = STRAND_INSTANCE_CACHE
+    _name_in_registry_ = "Strand"
 
     def __init__(
         self,
         name: str,
         materials: list[MixtureFraction],
-        material_id: int | None = None,
-        temperature: float | None = None,
         d_strand: float | Parameter | None = 0.82e-3,
+        temperature: float | None = None,
     ):
         """
-        Initialize a Strand instance with a homogenized material mixture.
+        Initialize a Strand instance.
 
         Parameters
         ----------
         name : str
-            The name of the strand.
+            Name of the strand.
         materials : list of MixtureFraction
-            List of materials composing the strand with their fractions.
-        material_id : int or None, optional
-            Index of the primary material (default is None).
-        temperature : float or None, optional
-            Operating temperature of the strand [K].
+            Materials composing the strand with their fractions.
         d_strand : float or Parameter, optional
-            Diameter of the strand cross-section in meters (default: 0.82e-3).
+            Strand diameter in meters (default 0.82e-3).
+        temperature : float, optional
+            Operating temperature [K].
         """
-        percent_type: str = "vo"
-        packing_fraction = 1
-        enrichment = None
-        super().__init__(
+        self._d_strand = None
+        self._shape = None
+        self._materials = None
+        self._temperature = None
+
+        self.d_strand = d_strand
+        self.materials = materials
+        self.name = name
+        self.temperature = temperature
+
+        # Create homogenised material
+        self._homogenised_material = HomogenisedMixture(
             name=name,
             materials=materials,
-            material_id=material_id,
-            percent_type=percent_type,
-            packing_fraction=packing_fraction,
-            enrichment=enrichment,
-            temperature=temperature,
+            percent_type="vo",
+            packing_fraction=1,
+            enrichment=None,
         )
-        self._d_strand = None
-        self.d_strand = d_strand
-        self._shape = None
 
     @property
-    def d_strand(self):
+    def materials(self) -> list:
         """
-        Strand diameter.
+        List of MixtureFraction materials composing the strand.
+
+        Returns
+        -------
+        list of MixtureFraction
+            Materials and their fractions.
+        """
+        return self._materials
+
+    @materials.setter
+    def materials(self, new_materials: list):
+        """
+        Set a new list of materials for the strand.
+
+        Parameters
+        ----------
+        new_materials : list of MixtureFraction
+            New materials to set.
+
+        Raises
+        ------
+        TypeError
+            If new_materials is not a list or contains invalid elements.
+        """
+        if not isinstance(new_materials, list):
+            raise TypeError(
+                f"materials must be a list, got {type(new_materials).__name__}."
+            )
+
+        for item in new_materials:
+            if not isinstance(item, MixtureFraction):
+                raise TypeError(
+                    f"Each item in materials must be a MixtureFraction, got "
+                    f"{type(item).__name__}."
+                )
+
+        self._materials = new_materials
+
+    @property
+    def temperature(self) -> float | None:
+        """
+        Operating temperature of the strand.
+
+        Returns
+        -------
+        float or None
+            Temperature in Kelvin.
+        """
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, value: float | None):
+        """
+        Set a new operating temperature for the strand.
+
+        Parameters
+        ----------
+        value : float or None
+            New operating temperature in Kelvin.
+
+        Raises
+        ------
+        ValueError
+            If temperature is negative.
+        TypeError
+            If temperature is not a float or None.
+        """
+        if value is not None:
+            if not isinstance(value, (float, int)):
+                raise TypeError(
+                    f"temperature must be a float or int, got {type(value).__name__}."
+                )
+
+            if value < 0:
+                raise ValueError("Temperature cannot be negative.")
+
+        self._temperature = float(value) if value is not None else None
+
+    @property
+    def d_strand(self) -> Parameter:
+        """
+        Diameter of the strand.
 
         Returns
         -------
         Parameter
-            Diameter of the strand [m].
+            Diameter [m].
         """
         return self._d_strand
 
     @d_strand.setter
     def d_strand(self, d: float | Parameter):
         """
-        Set the strand diameter, ensuring it is positive and different from
-        the current value. Triggers geometry reset if updated.
+        Set the strand diameter and reset shape if changed.
 
         Parameters
         ----------
@@ -104,65 +199,136 @@ class Strand(HomogenisedMixture):
         Raises
         ------
         ValueError
-            If the diameter is non-positive or identical to the current one.
+            If diameter is non-positive.
         """
-        if type(d) is float:
+        if isinstance(d, float):
             d = Parameter("diameter", d, "m")
 
-        if d.value < 0:
+        if d.value <= 0:
             msg = "Strand diameter must be positive."
             bluemira_error(msg)
             raise ValueError(msg)
-        if self.d_strand is None or d.value != self.d_strand.value:
+
+        if self._d_strand is None or d.value != self._d_strand.value:
             self._d_strand = d
             self._shape = None
-        else:
-            msg = "New strand diameter equals current."
 
     @property
     def area(self) -> float:
         """
-        Compute the cross-sectional area of the strand.
+        Cross-sectional area of the strand.
 
         Returns
         -------
         float
-            Area of the strand [m²].
+            Area [m²].
         """
-        return np.pi * self.d_strand.value**2 / 4
+        return np.pi * (self.d_strand.value**2) / 4
 
     @property
-    def shape(self):
+    def shape(self) -> BluemiraFace:
         """
-        Returns the 2D geometric representation of the strand.
+        2D geometric representation of the strand.
 
         Returns
         -------
         BluemiraFace
-            Circular face representing the strand geometry.
+            Circular face of the strand.
         """
         if self._shape is None:
             diameter = self.d_strand.value
             self._shape = BluemiraFace([make_circle(diameter)])
         return self._shape
 
-    def plot(self, ax=None, *, show: bool = True, **kwargs):
+    def E(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
         """
-        Plot a 2D view of the strand cross-section.
+        Young's modulus of the strand material.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes or None, optional
-            Axis object to plot on. If None, a new figure is created.
+        temperature : float, optional
+            Temperature in Kelvin.
+        **kwargs : dict
+            Additional parameters passed to the underlying material model.
+
+        Returns
+        -------
+        float
+            Young's modulus [Pa].
+        """
+        return self._homogenised_material.E(temperature=temperature, **kwargs)
+
+    def rho(self, temperature: float | None = None, **kwargs) -> float:
+        """
+        Density of the strand material.
+
+        Parameters
+        ----------
+        temperature : float, optional
+            Temperature in Kelvin.
+        **kwargs : dict
+            Additional parameters passed to the underlying material model.
+
+        Returns
+        -------
+        float
+            Density [kg/m³].
+        """
+        return self._homogenised_material.rho(temperature=temperature, **kwargs)
+
+    def erho(self, temperature: float | None = None, **kwargs) -> float:
+        """
+        Electrical resistivity of the strand material.
+
+        Parameters
+        ----------
+        temperature : float, optional
+            Temperature in Kelvin.
+        **kwargs : dict
+            Additional parameters passed to the underlying material model.
+
+        Returns
+        -------
+        float
+            Electrical resistivity [Ohm·m].
+        """
+        return self._homogenised_material.erho(temperature=temperature, **kwargs)
+
+    def Cp(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
+        """
+        Specific heat capacity of the strand material.
+
+        Parameters
+        ----------
+        temperature : float, optional
+            Temperature in Kelvin.
+        **kwargs : dict
+            Additional parameters passed to the underlying material model.
+
+        Returns
+        -------
+        float
+            Specific heat [J/kg/K].
+        """
+        return self._homogenised_material.Cp(temperature=temperature, **kwargs)
+
+    def plot(self, ax=None, *, show: bool = True, **kwargs):
+        """
+        Plot a 2D cross-section of the strand.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            Axis to plot on.
         show : bool, optional
-            Whether to display the plot immediately.
+            Whether to show the plot immediately.
         kwargs : dict
-            Additional keyword arguments passed to the plotting function.
+            Additional arguments passed to the plot function.
 
         Returns
         -------
         matplotlib.axes.Axes
-            Axis with the plot rendered.
+            Matplotlib axis with the plot.
         """
         plot_options = PlotOptions()
         plot_options.view = "xy"
@@ -170,15 +336,14 @@ class Strand(HomogenisedMixture):
             self.shape, options=plot_options, ax=ax, show=show, **kwargs
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
-        Generate a formatted string summarizing the strand.
+        String representation of the strand.
 
         Returns
         -------
         str
-            Human-readable description of the strand including name, diameter,
-            material, and shape.
+            Description of the strand.
         """
         return (
             f"name = {self.name}\n"
@@ -189,121 +354,135 @@ class Strand(HomogenisedMixture):
 
     def to_dict(self) -> dict:
         """
-        Serialize the Strand instance to a dictionary representation,
-        including all necessary data to reconstruct the object later.
-
-        The dictionary includes the class name to support proper
-        deserialization using a factory function like `create_strand_from_dict`.
+        Serialize the strand instance to a dictionary.
 
         Returns
         -------
         dict
-            A dictionary containing the serialized strand data. Keys include:
-                - "class_name" (str): The name of the class (e.g., "Strand")
-                - "name" (str): Name of the strand
-                - "d_strand" (float): Diameter of the strand cross-section [m]
-                - "temperature" (float): Operating temperature [K]
-                - "materials" (list of dicts): Each dict contains:
-                    - "material" (str): Name of the material
-                    - "fraction" (float): Volume or weight fraction
+            Dictionary with serialized strand data.
         """
         return {
-            "class_name": self.__class__.__name__,
+            "name_in_registry": getattr(
+                self, "_name_in_registry_", self.__class__.__name__
+            ),
             "name": self.name,
             "d_strand": self.d_strand.value,
             "temperature": self.temperature,
             "materials": [
-                {"material": m.material.name, "fraction": m.fraction}
+                {
+                    "material": m.material.name,
+                    "fraction": m.fraction,
+                }
                 for m in self.materials
             ],
         }
 
     @classmethod
     def from_dict(
-        cls, name: str, strand_dict: dict[str, Any], material_cache: MaterialCache = None
-    ):
+        cls,
+        name: str,
+        strand_dict: dict[str, Any],
+        *,
+        unique_name: bool = True,
+    ) -> "Strand":
         """
-        Create an instance of the current Strand subclass from a dictionary,
-        ensuring that the class name stored in the dictionary matches the class
-        being instantiated.
-
-        This method should only be used when the caller is certain of the
-        class type. For dynamically loading any strand subclass, use
-        `create_strand_from_dict()` instead.
+        Deserialize a Strand instance from a dictionary.
 
         Parameters
         ----------
         cls : type
-            The class on which this method is called. Must match the "class_name"
-            entry in the dictionary.
+            Class to instantiate (Strand or subclass).
         name : str
-            The name to assign to the resulting strand instance. If empty or None,
-            the name from the dictionary will be used instead.
-        strand_dict : dict[str, Any]
-            Dictionary representation of a strand. Expected keys include:
-                - "class_name" (str): Name of the strand class (e.g., "Strand")
-                - "name" (str): Original name of the strand
-                - "d_strand" (float): Diameter of the strand cross-section [m]
-                - "temperature" (float): Operating temperature [K]
-                - "materials" (list of dicts): Each dict must include:
-                    - "material" (str): Material name
-                    - "fraction" (float): Volume or weight fraction
-        material_cache : MaterialCache, optional
-            A cache instance to retrieve material objects. If not provided,
-            the global material cache is used.
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary,
+            or generates a default name.
+        strand_dict : dict
+            Dictionary containing serialized strand data.
+        unique_name : bool, optional
+            If True, automatically generates a unique name in case of conflict.
+            If False, raises a ValueError if the name already exists.
 
         Returns
         -------
         Strand
-            A new instance of the specified class populated with the
-            parameters from the dictionary.
+            A new instantiated Strand object.
 
         Raises
         ------
         ValueError
-            If the "class_name" entry in the dictionary does not match `cls.__name__`.
-        KeyError
-            If required keys are missing from the input dictionary.
+            If the name_in_registry in the dictionary does not match the expected
+            class registration name.
+            If unique_name is False and the desired name already exists.
         """
-        class_name = strand_dict.get("class_name", cls.__name__)
-        if class_name != cls.__name__:
+        # Validate registration name
+        name_in_registry = strand_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
             raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with class_name '"
-                f"{class_name}'"
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. "
+                f"Expected '{expected_name_in_registry}'."
             )
 
-        material_mix = [
-            MixtureFraction(
-                material=(
-                    material_cache.get_material(m["material"])
-                    if material_cache is not None
-                    else get_cached_material(m["material"])
-                ),
-                fraction=m["fraction"],
+        # Deserialize materials
+        material_mix = []
+        for m in strand_dict["materials"]:
+            material_data = m["material"]
+            if isinstance(material_data, str):
+                material_obj = get_cached_material(material_data)
+            else:
+                material_obj = material_data
+
+            material_mix.append(
+                MixtureFraction(material=material_obj, fraction=m["fraction"])
             )
-            for m in strand_dict["materials"]
-        ]
+
+        # Determine final name
+        base_name = name or strand_dict.get("name", "UnnamedStrand")
+
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            # strict mode
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
 
         return cls(
-            name=name or strand_dict["name"],
+            name=final_name,
             materials=material_mix,
-            temperature=strand_dict["temperature"],
-            d_strand=strand_dict["d_strand"],
+            temperature=strand_dict.get("temperature"),
+            d_strand=strand_dict.get("d_strand"),
         )
 
 
-class SuperconductingStrand(Strand, Superconductor):
+# ------------------------------------------------------------------------------
+# SuperconductingStrand Class
+# ------------------------------------------------------------------------------
+
+
+class SuperconductingStrand(Strand):
     """
     Represents a superconducting strand with a circular cross-section.
+
+    Includes methods to compute critical current (Ic) and critical current
+    density (Jc) based on the superconducting material.
+
+    Automatically registered using the RegistrableMeta metaclass.
     """
+
+    _name_in_registry_ = "SuperconductingStrand"
 
     def __init__(
         self,
         name: str,
         materials: list[MixtureFraction],
-        material_id: int | None = None,
-        temperature: float | None = None,
         d_strand: float | Parameter | None = 0.82e-3,
+        temperature: float | None = None,
     ):
         """
         Initialize a superconducting strand.
@@ -311,30 +490,25 @@ class SuperconductingStrand(Strand, Superconductor):
         Parameters
         ----------
         name : str
-            The name of the strand.
+            Name of the strand.
         materials : list of MixtureFraction
-            List of materials composing the strand, including one superconductor.
-        material_id : int or None, optional
-            Index of the primary material.
-        temperature : float or None, optional
-            Operating temperature of the strand [K].
+            Materials composing the strand (must include one superconductor).
         d_strand : float or Parameter, optional
             Diameter of the strand cross-section [m].
+        temperature : float, optional
+            Operating temperature [K].
         """
         super().__init__(
             name=name,
             materials=materials,
-            material_id=material_id,
+            d_strand=d_strand,
             temperature=temperature,
         )
         self._sc = self._check_materials()
-        self._d_strand = None
-        self.d_strand = d_strand
-        self._shape = None
 
-    def _check_materials(self):
+    def _check_materials(self) -> MixtureFraction:
         """
-        Validates the presence of exactly one superconducting material.
+        Ensure there is exactly one superconducting material.
 
         Returns
         -------
@@ -344,7 +518,7 @@ class SuperconductingStrand(Strand, Superconductor):
         Raises
         ------
         ValueError
-            If no or multiple superconducting materials are found.
+            If no superconducting material or multiple are found.
         """
         sc = None
         for material in self.materials:
@@ -355,37 +529,38 @@ class SuperconductingStrand(Strand, Superconductor):
                 else:
                     msg = (
                         f"Only one superconductor material can be defined per "
-                        f"superconducting strand. At least two have been found: {sc} and"
-                        f" {material}."
+                        f"superconducting strand. Found multiple: {sc} and {material}."
                     )
                     bluemira_error(msg)
                     raise ValueError(msg)
+
         if sc is None:
             msg = "No superconducting material found in strand."
             bluemira_error(msg)
             raise ValueError(msg)
+
         return sc
 
     @property
-    def sc_area(self):
+    def sc_area(self) -> float:
         """
-        Compute the superconducting portion of the strand's area.
+        Cross-sectional area of the superconducting material.
 
         Returns
         -------
         float
-            Area of the superconducting material [m²].
+            Superconducting area [m²].
         """
         return self.area * self._sc.fraction
 
     def Jc(self, **kwargs) -> float:  # noqa:N802
         """
-        Return the critical current density of the superconducting material.
+        Critical current density of the superconducting material.
 
         Parameters
         ----------
         kwargs : dict
-            Additional inputs to the Jc model (e.g., B, temperature).
+            Additional arguments for the Jc model (e.g., magnetic field B, temperature).
 
         Returns
         -------
@@ -396,12 +571,12 @@ class SuperconductingStrand(Strand, Superconductor):
 
     def Ic(self, **kwargs) -> float:  # noqa:N802
         """
-        Compute the total critical current based on Jc and sc_area.
+        Critical current based on Jc and superconducting area.
 
         Parameters
         ----------
         kwargs : dict
-            Additional arguments forwarded to the Jc computation.
+            Additional arguments forwarded to Jc computation.
 
         Returns
         -------
@@ -420,40 +595,90 @@ class SuperconductingStrand(Strand, Superconductor):
         **kwargs,
     ):
         """
-        Plot the critical current as a function of magnetic field.
+        Plot critical current Ic as a function of magnetic field B.
 
         Parameters
         ----------
         B : np.ndarray
-            Magnetic field values [T].
+            Array of magnetic field values [T].
         temperature : float
             Operating temperature [K].
-        ax : matplotlib.axes.Axes or None, optional
-            Axis to plot on. A new one is created if None.
+        ax : matplotlib.axes.Axes, optional
+            Axis to plot on. If None, a new figure is created.
         show : bool, optional
-            Whether to show the plot immediately.
+            Whether to immediately show the plot.
         kwargs : dict
-            Additional arguments passed to the `Ic()` method.
+            Additional arguments passed to Ic calculation.
 
         Returns
         -------
         matplotlib.axes.Axes
-            The axis with the Ic-B curve plotted.
+            Axis with the plotted Ic vs B curve.
         """
         if ax is None:
             _, ax = plt.subplots()
 
-        Ic_sc = [self.Ic(B=Bi, temperature=temperature, **kwargs) for Bi in B]  # noqa:N806
-        ax.plot(B, Ic_sc)
-        # Adding the plot title and axis labels
-        plt.title(
-            f"Critical current for {self.__class__.__name__}\n"
-            f"Temperature = {temperature} [K]"
-        )  # Title
-        plt.xlabel("B [T]")  # X-axis label
-        plt.ylabel("Ic [A]")  # Y-axis label
-        # Enabling the grid
-        plt.grid(visible=True)
+        ic_values = [self.Ic(B=Bi, temperature=temperature, **kwargs) for Bi in B]
+        ax.plot(B, ic_values)
+        ax.set_title(
+            f"Critical Current for {self.__class__.__name__}\nTemperature = "
+            f"{temperature} K"
+        )
+        ax.set_xlabel("Magnetic Field B [T]")
+        ax.set_ylabel("Critical Current Ic [A]")
+        ax.grid(visible=True)
+
         if show:
             plt.show()
+
         return ax
+
+
+# ------------------------------------------------------------------------------
+# Supporting functions
+# ------------------------------------------------------------------------------
+def create_strand_from_dict(
+    strand_dict: dict[str, Any],
+    name: str | None = None,
+    *,
+    unique_name: bool = True,
+):
+    """
+    Factory function to create a Strand or its subclass from a serialized dictionary.
+
+    Parameters
+    ----------
+    strand_dict : dict
+        Dictionary with serialized strand data. Must include a 'name_in_registry' field
+        corresponding to a registered class.
+    name : str, optional
+        If given, overrides the name from the dictionary.
+    unique_name : bool, optional
+        If True, generates a unique name in case of conflict.
+        If False, raises an error if the name already exists.
+
+    Returns
+    -------
+    Strand
+        An instance of the appropriate Strand subclass.
+
+    Raises
+    ------
+    ValueError
+        If 'name_in_registry' is missing from the dictionary.
+        If no matching registered class is found.
+    """
+    name_in_registry = strand_dict.get("name_in_registry")
+    if name_in_registry is None:
+        raise ValueError(
+            "Serialized strand dictionary must contain a 'name_in_registry' field."
+        )
+
+    cls = STRAND_REGISTRY.get(name_in_registry)
+    if cls is None:
+        raise ValueError(
+            f"No registered strand class with registration name '{name_in_registry}'. "
+            "Available classes are: " + ", ".join(STRAND_REGISTRY.keys())
+        )
+
+    return cls.from_dict(name=name, strand_dict=strand_dict, unique_name=unique_name)

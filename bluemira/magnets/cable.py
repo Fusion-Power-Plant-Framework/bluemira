@@ -15,17 +15,43 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
-from bluemira.magnets.strand import Strand, SuperconductingStrand
+from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+from bluemira.magnets.strand import (
+    Strand,
+    SuperconductingStrand,
+    create_strand_from_dict,
+)
 from bluemira.magnets.utils import parall_r, serie_r
 
+# ------------------------------------------------------------------------------
+# Global Registries
+# ------------------------------------------------------------------------------
 
-class ABCCable(ABC):
-    """
-    Abstract base class for cable representations.
+CABLE_REGISTRY = {}
+CABLE_INSTANCE_CACHE = {}
 
-    This class models a generic superconducting cable with both stabilizer and
-    superconducting strands, incorporating void fractions and geometrical details.
+
+# ------------------------------------------------------------------------------
+# Strand Class
+# ------------------------------------------------------------------------------
+
+
+class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
     """
+    Abstract base class for superconducting cables.
+
+    Defines the general structure and common methods for cables
+    composed of superconducting and stabilizer strands.
+
+    Notes
+    -----
+    - This class is abstract and cannot be instantiated directly.
+    - Subclasses must define `dx`, `dy`, `Kx`, `Ky`, and `from_dict`.
+    """
+
+    _registry_ = CABLE_REGISTRY
+    _global_instance_cache_ = CABLE_INSTANCE_CACHE
+    _name_in_registry_: str | None = None  # Abstract base classes should NOT register
 
     def __init__(
         self,
@@ -74,6 +100,7 @@ class ABCCable(ABC):
         self._shape = None
 
         # assign
+        # Setting self.name triggers automatic instance registration
         self.name = name
         self.sc_strand = sc_strand
         self.stab_strand = stab_strand
@@ -680,27 +707,17 @@ class ABCCable(ABC):
 
     def to_dict(self) -> dict:
         """
-        Return a dictionary with all base cable parameters.
-
-        This method serializes the cable configuration into a dictionary format,
-        which can be useful for saving, logging, or exporting the data.
+        Serialize the cable instance to a dictionary.
 
         Returns
         -------
         dict
-            A dictionary containing:
-            - "name" (str): Name of the cable.
-            - "n_sc_strand" (int): Number of superconducting strands.
-            - "n_stab_strand" (int): Number of stabilizer strands.
-            - "d_cooling_channel" (float): Diameter of the cooling channel [m].
-            - "void_fraction" (float): Fraction of void (non-material) volume in the
-            cable.
-            - "cos_theta" (float): Cosine of the winding angle theta.
-            - "sc_strand" (dict): Dictionary with parameters of the superconducting
-            strand.
-            - "stab_strand" (dict): Dictionary with parameters of the stabilizer strand.
+            Dictionary containing cable and strand configuration.
         """
         return {
+            "name_in_registry": getattr(
+                self, "_name_in_registry_", self.__class__.__name__
+            ),
             "name": self.name,
             "n_sc_strand": self.n_sc_strand,
             "n_stab_strand": self.n_stab_strand,
@@ -712,24 +729,79 @@ class ABCCable(ABC):
         }
 
     @classmethod
-    @abstractmethod
-    def from_dict(cls, cable_dict: dict) -> "ABCCable":
+    def from_dict(
+        cls,
+        name: str,
+        cable_dict: dict,
+        *,
+        unique_name: bool = True,
+    ) -> "ABCCable":
         """
-        Construct a cable object from a dictionary configuration.
-
-        This method must be implemented by all concrete cable subclasses to handle
-        their specific parameters.
+        Deserialize a cable instance from a dictionary.
 
         Parameters
         ----------
+        name : str
+            Desired name for the cable instance.
         cable_dict : dict
-            Dictionary containing the cable configuration, including strand definitions.
+            Dictionary with serialized cable configuration.
+        unique_name : bool, optional
+            If True, generates a unique name in case of conflict.
 
         Returns
         -------
         ABCCable
-            A fully instantiated cable object of the appropriate type.
+            Instantiated cable object.
+
+        Raises
+        ------
+        ValueError
+            If name_in_registry mismatch or duplicate instance name.
         """
+        name_in_registry = cable_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
+
+        # Deserialize strands
+        sc_strand_data = cable_dict["sc_strand"]
+        if isinstance(sc_strand_data, Strand):
+            sc_strand = sc_strand_data
+        else:
+            sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
+
+        stab_strand_data = cable_dict["stab_strand"]
+        if isinstance(stab_strand_data, Strand):
+            stab_strand = stab_strand_data
+        else:
+            stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
+
+        base_name = name or cable_dict.get("name", "UnnamedCable")
+
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
+
+        return cls(
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=cable_dict["n_sc_strand"],
+            n_stab_strand=cable_dict["n_stab_strand"],
+            d_cooling_channel=cable_dict["d_cooling_channel"],
+            void_fraction=cable_dict.get("void_fraction", 0.725),
+            cos_theta=cable_dict.get("cos_theta", 0.97),
+            name=final_name,
+        )
 
 
 class RectangularCable(ABCCable):
@@ -739,6 +811,8 @@ class RectangularCable(ABCCable):
     The x-dimension is provided directly. The y-dimension is derived based on
     the total area and x-dimension.
     """
+
+    _name_in_registry_ = "RectangularCable"
 
     def __init__(
         self,
@@ -865,107 +939,120 @@ class RectangularCable(ABCCable):
 
     def to_dict(self) -> dict:
         """
-        Serialize the rectangular cable configuration to a dictionary.
-
-        This includes all base cable properties (strand configuration, geometry,
-        cooling, etc.) and shape-specific parameters like `dx` and `aspect_ratio`.
+        Serialize the rectangular cable into a dictionary.
 
         Returns
         -------
         dict
-            A complete dictionary representation of the rectangular cable, including:
-            - type : str
-            - name : str
-            - dx : float
-            - aspect_ratio : float
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - void_fraction : float
-            - cos_theta : float
-            - sc_strand : dict
-            - stab_strand : dict
+            Dictionary including rectangular cable parameters.
         """
         data = super().to_dict()
-        data["type"] = "rectangular"
-        data["dx"] = self.dx
-        data["aspect_ratio"] = self.aspect_ratio
+        data.update({
+            "dx": self.dx,
+            "aspect_ratio": self.aspect_ratio,
+        })
         return data
 
     @classmethod
-    def from_dict(cls, config: dict) -> "RectangularCable":
+    def from_dict(
+        cls,
+        name: str,
+        cable_dict: dict,
+        *,
+        unique_name: bool = True,
+    ) -> "RectangularCable":
         """
-        Construct a `RectangularCable` instance from a dictionary.
-
-        This method deserializes the cable and its nested strands. It accepts either
-        a direct width (`dx`) or an aspect ratio (`aspect_ratio`) to compute geometry.
+        Deserialize a RectangularCable from a dictionary.
 
         Behavior:
-        - If both `dx` and `aspect_ratio` are given, a warning is issued and
-        `aspect_ratio`
-          is applied (overwriting dx).
-        - If only `aspect_ratio` is given, a default `dx = 0.01` m is used.
-        - If only `dx` is given, it is used as-is.
-        - If neither is provided, a `ValueError` is raised.
+        - If both 'dx' and 'aspect_ratio' are provided, a warning is issued and
+        aspect_ratio is applied.
+        - If only 'aspect_ratio' is provided, dx and dy are calculated accordingly.
+        - If only 'dx' is provided, it is used as-is.
+        - If neither is provided, raises a ValueError.
 
         Parameters
         ----------
-        config : dict
-            Required:
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - sc_strand : dict
-            - stab_strand : dict
-
-            Optional:
-            - dx : float
-            - aspect_ratio : float
-            - name : str
-            - void_fraction : float
-            - cos_theta : float
+        name : str
+            Name to assign to the cable.
+        cable_dict : dict
+            Dictionary containing serialized cable data.
+        unique_name : bool, optional
+            If True, generates a unique name if conflict arises.
 
         Returns
         -------
         RectangularCable
-            A fully configured rectangular cable instance.
+            Instantiated rectangular cable object.
 
         Raises
         ------
         ValueError
-            If neither `dx` nor `aspect_ratio` is provided in the configuration.
+            If neither 'dx' nor 'aspect_ratio' is provided.
         """
-        sc_strand = SuperconductingStrand.from_dict(None, config["sc_strand"])
-        stab_strand = Strand.from_dict(None, config["stab_strand"])
+        # Recreate strands
+        sc_strand = create_strand_from_dict(
+            strand_dict=cable_dict["sc_strand"], unique_name=unique_name
+        )
+        stab_strand = create_strand_from_dict(
+            strand_dict=cable_dict["stab_strand"], unique_name=unique_name
+        )
 
-        dx = config.get("dx")
-        aspect_ratio = config.get("aspect_ratio")
+        # Geometry parameters
+        dx = cable_dict.get("dx")
+        aspect_ratio = cable_dict.get("aspect_ratio")
 
-        # Handle geometry logic
         if dx is not None and aspect_ratio is not None:
             bluemira_warn(
-                "Both 'dx' and 'aspect_ratio' specified. Aspect ratio will override dx."
+                "Both 'dx' and 'aspect_ratio' specified. Aspect ratio will override dx "
+                "after creation."
             )
 
-        if aspect_ratio is not None:
-            dx = 0.01  # default dx if only aspect ratio is provided
+        if aspect_ratio is not None and dx is None:
+            # Default dx if only aspect ratio is provided. It will be recalculated at
+            # the end when set_aspect_ratio is called
+            dx = 0.01
 
         if dx is None:
-            raise ValueError("At least one of 'dx' or 'aspect_ratio' must be specified.")
+            raise ValueError(
+                "Serialized RectangularCable must include at least 'dx' or "
+                "'aspect_ratio'."
+            )
 
-        # Construct cable
+        # Base cable parameters
+        n_sc_strand = cable_dict["n_sc_strand"]
+        n_stab_strand = cable_dict["n_stab_strand"]
+        d_cooling_channel = cable_dict["d_cooling_channel"]
+        void_fraction = cable_dict.get("void_fraction", 0.725)
+        cos_theta = cable_dict.get("cos_theta", 0.97)
+
+        base_name = name or cable_dict.get("name", "RectangularCable")
+
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            # strict mode
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
+
+        # Create cable
         cable = cls(
             dx=dx,
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=config["n_sc_strand"],
-            n_stab_strand=config["n_stab_strand"],
-            d_cooling_channel=config["d_cooling_channel"],
-            void_fraction=config.get("void_fraction", 0.725),
-            cos_theta=config.get("cos_theta", 0.97),
-            name=config.get("name", "RectangularCable"),
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
+            name=final_name,
         )
 
+        # Adjust aspect ratio if needed
         if aspect_ratio is not None:
             cable.set_aspect_ratio(aspect_ratio)
 
@@ -977,7 +1064,11 @@ class DummyRectangularCableHTS(RectangularCable):
     Dummy rectangular cable with young's moduli set to 120 GPa.
     """
 
-    name = "DummyRectangularCableHTS"
+    _name_in_registry_ = "DummyRectangularCableHTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummyRectangularCableHTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1005,7 +1096,11 @@ class DummyRectangularCableLTS(RectangularCable):
     Dummy square cable with young's moduli set to 0.1 GPa
     """
 
-    name = "DummyRectangularCableLTS"
+    _name_in_registry_ = "DummyRectangularCableLTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummyRectangularCableLTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1034,6 +1129,8 @@ class SquareCable(ABCCable):
 
     Both dx and dy are derived from the total cross-sectional area.
     """
+
+    _name_in_registry_ = "SquareCable"
 
     def __init__(
         self,
@@ -1133,70 +1230,70 @@ class SquareCable(ABCCable):
 
     def to_dict(self) -> dict:
         """
-        Serialize the square cable configuration to a dictionary.
-
-        Includes all base cable properties (strand configuration, cooling, geometry,
-        etc.)
-        and adds the cable type identifier.
+        Serialize the SquareCable.
 
         Returns
         -------
         dict
-            A complete dictionary representation of the square cable, including:
-            - type : str
-            - name : str
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - void_fraction : float
-            - cos_theta : float
-            - sc_strand : dict
-            - stab_strand : dict
+            Serialized dictionary.
         """
-        data = super().to_dict()
-        data["type"] = "square"
-        return data
+        return super().to_dict()
 
     @classmethod
-    def from_dict(cls, config: dict) -> "SquareCable":
+    def from_dict(
+        cls,
+        name: str,
+        cable_dict: dict,
+        *,
+        unique_name: bool = True,
+    ) -> "SquareCable":
         """
-        Construct a `SquareCable` instance from a dictionary.
-
-        This method deserializes both the cable's structural parameters and
-        its nested strand configurations.
+        Deserialize a SquareCable from a dictionary.
 
         Parameters
         ----------
-        config : dict
-            Dictionary containing the square cable configuration. Required keys:
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - sc_strand : dict
-            - stab_strand : dict
-
-            Optional keys:
-            - name : str
-            - void_fraction : float
-            - cos_theta : float
+        name : str
+            Desired name.
+        cable_dict : dict
+            Dictionary configuration.
+        unique_name : bool, optional
+            If True, ensure name uniqueness.
 
         Returns
         -------
         SquareCable
-            A new instance of the `SquareCable` class with populated fields.
+            Instantiated square cable.
+
+        Raises
+        ------
+        ValueError
+            If unique_name is False and a duplicate name is detected in the instance
+            cache.
         """
-        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
-        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+        sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
+        stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
+
+        base_name = name or cable_dict.get("name", "SquareCable")
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            # strict mode
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
 
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=config["n_sc_strand"],
-            n_stab_strand=config["n_stab_strand"],
-            d_cooling_channel=config["d_cooling_channel"],
-            void_fraction=config.get("void_fraction", 0.725),
-            cos_theta=config.get("cos_theta", 0.97),
-            name=config.get("name", "SquareCable"),
+            n_sc_strand=cable_dict["n_sc_strand"],
+            n_stab_strand=cable_dict["n_stab_strand"],
+            d_cooling_channel=cable_dict["d_cooling_channel"],
+            void_fraction=cable_dict.get("void_fraction", 0.725),
+            cos_theta=cable_dict.get("cos_theta", 0.97),
+            name=final_name,
         )
 
 
@@ -1205,7 +1302,11 @@ class DummySquareCableHTS(SquareCable):
     Dummy square cable with Young's modulus set to 120 GPa.
     """
 
-    name = "DummySquareCableHTS"
+    _name_in_registry_ = "DummySquareCableHTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummySquareCableHTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1229,7 +1330,11 @@ class DummySquareCableLTS(SquareCable):
     Dummy square cable with Young's modulus set to 0.1 GPa.
     """
 
-    name = "DummySquareCableLTS"
+    _name_in_registry_ = "DummySquareCableLTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummySquareCableLTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1255,6 +1360,8 @@ class RoundCable(ABCCable):
     This cable type includes superconducting and stabilizer strands arranged
     around a central cooling channel.
     """
+
+    _name_in_registry_ = "RoundCable"
 
     def __init__(
         self,
@@ -1409,69 +1516,70 @@ class RoundCable(ABCCable):
 
     def to_dict(self) -> dict:
         """
-        Serialize the round cable configuration to a dictionary.
-
-        This includes all base cable properties (strand configuration, cooling,
-        etc.) and adds the type identifier.
+        Serialize the RoundCable.
 
         Returns
         -------
         dict
-            A complete dictionary representation of the round cable, including:
-            - type : str
-            - name : str
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - void_fraction : float
-            - cos_theta : float
-            - sc_strand : dict
-            - stab_strand : dict
+            Serialized dictionary.
         """
-        data = super().to_dict()
-        data["type"] = "round"
-        return data
+        return super().to_dict()
 
     @classmethod
-    def from_dict(cls, config: dict) -> "RoundCable":
+    def from_dict(
+        cls,
+        name: str,
+        cable_dict: dict,
+        *,
+        unique_name: bool = True,
+    ) -> "RoundCable":
         """
-        Construct a `RoundCable` instance from a dictionary.
-
-        This method deserializes both the cable's structural parameters and
-        its nested strand configurations.
+        Deserialize a RoundCable from a dictionary.
 
         Parameters
         ----------
-        config : dict
-            Dictionary containing the round cable configuration. Required keys:
-            - n_sc_strand : int
-            - n_stab_strand : int
-            - d_cooling_channel : float
-            - sc_strand : dict
-            - stab_strand : dict
-
-            Optional keys:
-            - name : str
-            - void_fraction : float
-            - cos_theta : float
+        name : str
+            Desired name.
+        cable_dict : dict
+            Dictionary configuration.
+        unique_name : bool, optional
+            If True, ensure name uniqueness.
 
         Returns
         -------
         RoundCable
-            A new instance of the `RoundCable` class with populated fields.
+            Instantiated square cable.
+
+        Raises
+        ------
+        ValueError
+            If unique_name is False and a duplicate name is detected in the instance
+            cache.
         """
-        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
-        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+        sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
+        stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
+
+        base_name = name or cable_dict.get("name", "SquareCable")
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            # strict mode
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
 
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=config["n_sc_strand"],
-            n_stab_strand=config["n_stab_strand"],
-            d_cooling_channel=config["d_cooling_channel"],
-            void_fraction=config.get("void_fraction", 0.725),
-            cos_theta=config.get("cos_theta", 0.97),
-            name=config.get("name", "RoundCable"),
+            n_sc_strand=cable_dict["n_sc_strand"],
+            n_stab_strand=cable_dict["n_stab_strand"],
+            d_cooling_channel=cable_dict["d_cooling_channel"],
+            void_fraction=cable_dict.get("void_fraction", 0.725),
+            cos_theta=cable_dict.get("cos_theta", 0.97),
+            name=final_name,
         )
 
 
@@ -1483,7 +1591,11 @@ class DummyRoundCableHTS(RoundCable):
     superconducting (HTS) analysis with a fixed stiffness value.
     """
 
-    name = "DummyRoundCableHTS"
+    _name_in_registry_ = "DummyRoundCableHTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummyRoundCableHTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1510,7 +1622,11 @@ class DummyRoundCableLTS(RoundCable):
     superconducting (LTS) analysis with a fixed, softer stiffness value.
     """
 
-    name = "DummyRoundCableLTS"
+    _name_in_registry_ = "DummyRoundCableLTS"
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("name", "DummyRoundCableLTS")
+        super().__init__(*args, **kwargs)
 
     def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
         """
@@ -1527,3 +1643,47 @@ class DummyRoundCableLTS(RoundCable):
             Young's modulus in Pascals [Pa].
         """
         return 0.1e9
+
+
+def create_cable_from_dict(
+    cable_dict: dict,
+    name: str | None = None,
+    *,
+    unique_name: bool = True,
+):
+    """
+    Factory function to create a Cable or its subclass from a serialized dictionary.
+
+    Parameters
+    ----------
+    cable_dict : dict
+        Dictionary with serialized cable data. Must include a 'name_in_registry' field.
+    name : str, optional
+        If given, overrides the name from the dictionary.
+    unique_name : bool, optional
+        If True, generates a unique name in case of conflict.
+
+    Returns
+    -------
+    ABCCable
+        Instantiated cable object.
+
+    Raises
+    ------
+    ValueError
+        If 'name_in_registry' is missing or no matching class is found.
+    """
+    name_in_registry = cable_dict.get("name_in_registry")
+    if name_in_registry is None:
+        raise ValueError(
+            "Serialized cable dictionary must contain a 'name_in_registry' field."
+        )
+
+    cls = CABLE_REGISTRY.get(name_in_registry)
+    if cls is None:
+        raise ValueError(
+            f"No registered cable class with registration name '{name_in_registry}'. "
+            "Available classes are: " + ", ".join(CABLE_REGISTRY.keys())
+        )
+
+    return cls.from_dict(name=name, cable_dict=cable_dict, unique_name=unique_name)

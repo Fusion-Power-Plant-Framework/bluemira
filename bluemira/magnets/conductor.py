@@ -11,7 +11,8 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.magnets.cable import ABCCable
+from bluemira.magnets.cable import ABCCable, create_cable_from_dict
+from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
 from bluemira.magnets.utils import (
     parall_k,
     parall_r,
@@ -21,12 +22,28 @@ from bluemira.magnets.utils import (
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import MassFractionMaterial
 
+# ------------------------------------------------------------------------------
+# Global Registries
+# ------------------------------------------------------------------------------
 
-class Conductor:
+CONDUCTOR_REGISTRY = {}
+CONDUCTOR_INSTANCE_CACHE = {}
+
+
+# ------------------------------------------------------------------------------
+# Strand Class
+# ------------------------------------------------------------------------------
+
+
+class Conductor(InstanceRegistrable, metaclass=RegistrableMeta):
     """
     A generic conductor consisting of a cable surrounded by a jacket and an
     insulator.
     """
+
+    _registry_ = CONDUCTOR_REGISTRY
+    _global_instance_cache_ = CONDUCTOR_INSTANCE_CACHE
+    _name_in_registry_ = "Conductor"
 
     def __init__(
         self,
@@ -142,18 +159,17 @@ class Conductor:
 
     def to_dict(self) -> dict:
         """
-        Serialize the conductor configuration to a dictionary.
+        Serialize the conductor instance to a dictionary.
 
         Returns
         -------
         dict
-            A complete dictionary representation of the conductor, including:
-            - name
-            - cable (as dict)
-            - jacket and insulation material names
-            - geometric thickness values
+            Dictionary with serialized conductor data.
         """
         return {
+            "name_in_registry": getattr(
+                self, "_name_in_registry_", self.__class__.__name__
+            ),
             "name": self.name,
             "cable": self.cable.to_dict(),
             "mat_jacket": self.mat_jacket.name,
@@ -166,46 +182,90 @@ class Conductor:
 
     @classmethod
     def from_dict(
-        cls, config: dict, cable_cls: type, material_cache=None
+        cls,
+        name: str,
+        conductor_dict: dict,
+        *,
+        unique_name: bool = True,
     ) -> "Conductor":
         """
-        Reconstruct a Conductor instance from a dictionary.
+        Deserialize a Conductor instance from a dictionary.
 
         Parameters
         ----------
-        config : dict
-            Serialized conductor data.
-        cable_cls : type
-            The class of cable to deserialize (e.g., RectangularCable).
-        material_cache : MaterialCache or None
-            If provided, use it to resolve materials.
+        cls : type
+            Class to instantiate (Conductor or subclass).
+        name : str
+            Desired name for the conductor instance. If None, uses the name from the
+            dictionary
+            or generates a default one.
+        conductor_dict : dict
+            Dictionary containing serialized conductor data.
+        unique_name : bool, optional
+            If True, generates a unique name in case of conflict.
 
         Returns
         -------
         Conductor
-            Deserialized instance.
+            A fully reconstructed Conductor instance.
+
+        Raises
+        ------
+        ValueError
+            If the 'name_in_registry' field does not match the expected class
+            registration name,
+            or if the name already exists and unique_name is False.
         """
+        # Validate registration name
+        name_in_registry = conductor_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
 
-        # Resolve materials
-        def get_material(name):
-            if material_cache is not None:
-                return material_cache.get_material(name)
-            return get_cached_material(name)
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
 
-        mat_jacket = get_material(config["mat_jacket"])
-        mat_ins = get_material(config["mat_ins"])
+        # Deserialize cable
+        cable = create_cable_from_dict(
+            cable_dict=conductor_dict["cable"],
+            name=None,
+            unique_name=unique_name,
+        )
 
-        cable = cable_cls.from_dict(config["cable"])
+        # Resolve jacket material
+        mat_jacket = conductor_dict["mat_jacket"]
+        if isinstance(mat_jacket, str):
+            mat_jacket = get_cached_material(mat_jacket)
 
+        # Resolve insulation material
+        mat_ins = conductor_dict["mat_ins"]
+        if isinstance(mat_ins, str):
+            mat_ins = get_cached_material(mat_ins)
+
+        # Determine final name
+        base_name = name or conductor_dict.get("name", "UnnamedConductor")
+
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
+
+        # Instantiate
         return cls(
             cable=cable,
             mat_jacket=mat_jacket,
             mat_ins=mat_ins,
-            dx_jacket=config["dx_jacket"],
-            dy_jacket=config["dy_jacket"],
-            dx_ins=config["dx_ins"],
-            dy_ins=config["dy_ins"],
-            name=config.get("name", "Conductor"),
+            dx_jacket=conductor_dict["dx_jacket"],
+            dy_jacket=conductor_dict["dy_jacket"],
+            dx_ins=conductor_dict["dx_ins"],
+            dy_ins=conductor_dict["dy_ins"],
+            name=final_name,
         )
 
     def erho(self, **kwargs):
@@ -735,6 +795,8 @@ class SymmetricConductor(Conductor):
     mantain a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
     """
 
+    _name_in_registry_ = "SymmetricConductor"
+
     def __init__(
         self,
         cable: ABCCable,
@@ -806,3 +868,51 @@ class SymmetricConductor(Conductor):
         Assumes the same value as `dx_ins`, ensuring symmetry in both directions.
         """
         return self.dx_ins
+
+
+def create_conductor_from_dict(
+    conductor_dict: dict,
+    name: str | None = None,
+    *,
+    unique_name: bool = True,
+) -> "Conductor":
+    """
+    Factory function to create a Conductor (or subclass) from a serialized dictionary.
+
+    Parameters
+    ----------
+    conductor_dict : dict
+        Serialized conductor dictionary, must include 'name_in_registry' field.
+    name : str, optional
+        Name to assign to the created conductor. If None, uses the name in the
+        dictionary.
+    unique_name : bool, optional
+        If True, generates a unique name in case of conflict.
+
+    Returns
+    -------
+    Conductor
+        A fully instantiated Conductor (or subclass) object.
+
+    Raises
+    ------
+    ValueError
+        If no class is registered with the given name_in_registry.
+    """
+    name_in_registry = conductor_dict.get("name_in_registry")
+    if name_in_registry is None:
+        raise ValueError("Conductor dictionary must include 'name_in_registry' field.")
+
+    conductor_cls = CONDUCTOR_REGISTRY.get(name_in_registry)
+    if conductor_cls is None:
+        available = list(CONDUCTOR_REGISTRY.keys())
+        raise ValueError(
+            f"No registered conductor class with name_in_registry '{name_in_registry}'. "
+            f"Available: {available}"
+        )
+
+    return conductor_cls.from_dict(
+        name=name,
+        conductor_dict=conductor_dict,
+        unique_name=unique_name,
+    )
