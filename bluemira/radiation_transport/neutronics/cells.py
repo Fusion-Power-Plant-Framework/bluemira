@@ -9,10 +9,12 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from itertools import chain, pairwise
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Polygon as mpl_Polygon
 from numpy import typing as npt
 
 from bluemira.base.constants import EPS
@@ -21,7 +23,11 @@ from bluemira.geometry.coordinates import (
     Coordinates,
 )
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_polygon, revolve_shape
+from bluemira.geometry.tools import (
+    make_polygon,
+    polygon_revolve_signed_volume,
+    revolve_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.neutronics.error import (
     CSGGeometryValidationError,
@@ -415,6 +421,7 @@ class Cell(ParentLinkable):
     def volume(self) -> np.float64:
         """Calculate the volume of the cell"""
         return abs(self.half_solid.volume * 2)
+        return polygon_revolve_signed_volume  # might be faster but more fiddly.
 
     @property
     def solid(self) -> BluemiraSolid:
@@ -451,8 +458,10 @@ class Cell(ParentLinkable):
         """Plot 3D plots of the poloidal"""
         return show_cad(self.half_solid, *args, **kwargs)
 
-    def plot_and_fill(self, color) -> Axes:
-        ax = plot_2d(show=False)
+    def plot_and_fill(self, color, ax=None) -> Axes:
+        if not ax:
+            ax = plt.axes()
+        plot_2d(show=False, ax=ax)
         in_p = self.in_face.wire.discretize(
             5 * len(self.in_face.wire.edges), byedges=True
         )
@@ -460,7 +469,7 @@ class Cell(ParentLinkable):
             5 * len(self.ex_face.wire.edges), byedges=True
         )
         approx_outline = np.concatenate([in_p.xz.T, ex_p.xz.T[::-1]])
-        ax.add_patch(mpl.patches.Polygon(approx_outline.xz.T), color=color)
+        ax.add_patch(mpl_Polygon(approx_outline), color=color)
         return ax
 
 
@@ -517,6 +526,15 @@ class StraightLine(CSGSurfacesCollection):
         self.point_1 = point_1
         self.point_2 = point_2
 
+    @property
+    def wire(self) -> BluemiraWire:
+        if not hasattr(self, "_wire"):
+            self._wire = make_polygon([
+                Vertices.to_3D(self.point_1),
+                Vertices.to_3D(self.point_2),
+            ])
+        return self._wire
+
     def includes_point(self, point: npt.NDArray[np.float64], tol=EPS):
         pass
 
@@ -528,7 +546,7 @@ class CellWall(StraightLine):
 class Vertices:
     """A collection of vertices denoting the corners of a cell/cell stack."""
 
-    _index_mapping = {0: "ccw_in", 1: "cw_in", 2: "ccw_ex", 3: "cw_ex"}
+    index_mapping = MappingProxyType({0: "ccw_in", 1: "cw_in", 2: "ccw_ex", 3: "cw_ex"})
 
     def __init__(
         self,
@@ -563,7 +581,7 @@ class Vertices:
     @property
     def centroid(self) -> npt.NDArray[np.float64]:
         """Give the centroid of the"""
-        return np.array([self[i] for i in self._index_mapping]).mean(axis=0)
+        return np.array([self[i] for i in self.index_mapping]).mean(axis=0)
 
     @staticmethod
     def to_3D(coord_2d: npt.NDArray[np.float64]) -> Coordinates:
@@ -606,7 +624,7 @@ class Vertices:
         """
         if not isinstance(index, int):
             raise TypeError("Vertices only support integer indices.")
-        return getattr(self, self._index_mapping[index])
+        return getattr(self, self.index_mapping[index])
 
     def __eq__(self, other_vertices: Vertices) -> bool:
         """Two sets of vertices are equal if they land on the same coordinates.
@@ -618,7 +636,7 @@ class Vertices:
         """
         if not isinstance(other_vertices, Vertices):
             raise TypeError(f"Cannot compare {type(self)} with {type(other_vertices)}.")
-        return all((self[i] == other_vertices[i]).all() for i in self._index_mapping)
+        return all((self[i] == other_vertices[i]).all() for i in self.index_mapping)
 
     def __hash__(self):
-        return hash(tuple(self[i] for i in self._index_mapping))
+        return hash(tuple(self[i] for i in self.index_mapping))
