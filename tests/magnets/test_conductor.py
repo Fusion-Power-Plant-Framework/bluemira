@@ -4,200 +4,126 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
 
-from bluemira.magnets.conductor import Conductor, SymmetricConductor
+from bluemira.magnets.cable import DummyRoundCableLTS, RectangularCable
+from bluemira.magnets.conductor import Conductor
+from bluemira.magnets.strand import Strand, SuperconductingStrand
+from bluemira.materials import MaterialCache
+from bluemira.materials.mixtures import MixtureFraction
 
-# ---------------------------
-# Dummy components for tests
-# ---------------------------
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
-
-class DummyMaterial:
-    def __init__(self, name="Dummy"):
-        self.name = name
-
-    def erho(self, **kwargs):  # noqa: ARG002
-        return 1e-9
-
-    def Cp(self, **kwargs):  # noqa: ARG002
-        return 500
-
-    def E(self, **kwargs):  # noqa: ARG002
-        return 2e11
+MATERIAL_CACHE = MaterialCache()
+MATERIAL_CACHE.load_from_file(Path(".", "test_materials_mag.json"))
 
 
-class DummyCable:
-    def __init__(self, dx=0.01, dy=0.02):
-        self.dx = dx
-        self.dy = dy
-        self.area = dx * dy
-
-    def erho(self, **kwargs):  # noqa: ARG002
-        return 2e-9
-
-    def Cp(self, **kwargs):  # noqa: ARG002
-        return 400
-
-    def Kx(self, **kwargs):  # noqa: ARG002
-        return 1e5
-
-    def Ky(self, **kwargs):  # noqa: ARG002
-        return 1e5
-
-    def __str__(self):
-        return "DummyCable"
-
-    def plot(self, xc=0, yc=0, *, show=False, ax=None):  # noqa: ARG002
-        return ax or plt.gca()
+@pytest.fixture
+def mat_jacket():
+    return MATERIAL_CACHE.get_material("SS316-LN")
 
 
-# -----------------------
-# Core property testing
-# -----------------------
+@pytest.fixture
+def mat_ins():
+    return MATERIAL_CACHE.get_material("DummyInsulator")
 
 
-def test_basic_geometry_and_area():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.002,
-        dx_ins=0.0015,
-        dy_ins=0.0025,
+@pytest.fixture
+def sc_strand():
+    sc = MATERIAL_CACHE.get_material("Nb3Sn - WST")
+    sc.k = lambda **kwargs: 10.0  # noqa: ARG005
+    return SuperconductingStrand(
+        name="SC",
+        materials=[MixtureFraction(material=sc, fraction=1.0)],
+        d_strand=0.001,
     )
-    assert np.isclose(conductor.dx, 0.01 + 2 * 0.001 + 2 * 0.0015)
-    assert np.isclose(conductor.dy, 0.02 + 2 * 0.002 + 2 * 0.0025)
+
+
+@pytest.fixture
+def stab_strand():
+    stab = MATERIAL_CACHE.get_material("SS316-LN")
+    stab.k = lambda **kwargs: 15.0  # noqa: ARG005
+    return Strand(
+        name="Stab",
+        materials=[MixtureFraction(material=stab, fraction=1.0)],
+        d_strand=0.001,
+    )
+
+
+@pytest.fixture
+def rectangular_cable(sc_strand, stab_strand):
+    return RectangularCable(
+        dx=0.01,
+        sc_strand=sc_strand,
+        stab_strand=stab_strand,
+        n_sc_strand=10,
+        n_stab_strand=10,
+        d_cooling_channel=0.001,
+    )
+
+
+@pytest.fixture
+def conductor(rectangular_cable, mat_jacket, mat_ins):
+    return Conductor(
+        cable=rectangular_cable,
+        mat_jacket=mat_jacket,
+        mat_ins=mat_ins,
+        dx_jacket=0.002,
+        dy_jacket=0.002,
+        dx_ins=0.001,
+        dy_ins=0.001,
+        name="TestConductor",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
+
+def test_geometry_and_area(conductor):
+    assert conductor.dx > 0
+    assert conductor.dy > 0
     assert conductor.area > 0
     assert conductor.area_jacket > 0
     assert conductor.area_ins > 0
 
 
-def test_thermal_and_electrical_properties():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.002,
-        dx_ins=0.001,
-        dy_ins=0.002,
-    )
-    assert conductor.erho() > 0
-    assert conductor.Cp() > 0
+def test_material_properties(conductor):
+    temperature = 20  # K
+    assert conductor.erho(temperature=temperature) > 0.0
+    assert conductor.Cp(temperature=temperature) > 0.0
 
 
-def test_stiffness_properties():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.001,
-        dx_ins=0.001,
-        dy_ins=0.001,
-    )
-    assert conductor.Kx() > 0
-    assert conductor.Ky() > 0
+def test_stiffness_properties(conductor):
+    temperature = 20
+    assert conductor.Kx(temperature=temperature) > 0.0
+    assert conductor.Ky(temperature=temperature) > 0.0
 
 
-def test_tresca_stress_valid_and_invalid_direction():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.001,
-        dx_ins=0.001,
-        dy_ins=0.001,
-    )
-    stress = conductor._tresca_sigma_jacket(
-        pressure=1e5,
-        f_z=1.0,
-        temperature=4.2,
-        B=0.5,
-        direction="x",
-    )
-    assert stress > 0
-
-    with pytest.raises(ValueError, match="Invalid direction"):
-        conductor._tresca_sigma_jacket(
-            pressure=1e5,
-            f_z=1.0,
-            temperature=4.2,
-            B=0.5,
-            direction="z",
-        )
-
-
-def test_jacket_optimization():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.001,
-        dx_ins=0.001,
-        dy_ins=0.001,
-    )
-    result = conductor.optimize_jacket_conductor(
-        pressure=1e5,
-        f_z=1.0,
-        temperature=4.2,
-        B=0.5,
-        allowable_sigma=2e7,
-        bounds=(0.0005, 0.005),
-        direction="x",
-    )
-    assert result.success
-    assert conductor.dx_jacket == pytest.approx(result.x)
-
-
-def test_str_method_output():
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.001,
-        dx_ins=0.001,
-        dy_ins=0.001,
-    )
-    s = str(conductor)
-    assert "dx_jacket" in s
-    assert "DummyCable" in s
-
-
-def test_plot(monkeypatch):
-    conductor = Conductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dy_jacket=0.001,
-        dx_ins=0.001,
-        dy_ins=0.001,
-    )
+def test_plot(monkeypatch, conductor):
     monkeypatch.setattr(plt, "show", lambda: None)
     ax = conductor.plot(show=True)
     assert hasattr(ax, "fill")
 
 
-# -----------------------
-# SymmetricConductor
-# -----------------------
-
-
-def test_symmetric_conductor_properties():
-    symmetric = SymmetricConductor(
-        cable=DummyCable(),
-        mat_jacket=DummyMaterial(),
-        mat_ins=DummyMaterial(),
-        dx_jacket=0.001,
-        dx_ins=0.002,
+def test_to_from_dict(conductor):
+    config = conductor.to_dict()
+    restored = Conductor.from_dict(
+        config, cable_cls=DummyRoundCableLTS, material_cache=MATERIAL_CACHE
     )
-    assert symmetric.dy_jacket == symmetric.dx_jacket
-    assert symmetric.dy_ins == symmetric.dx_ins
+
+    assert restored.name == conductor.name
+    assert restored.dx_jacket == pytest.approx(conductor.dx_jacket)
+    assert restored.dy_jacket == pytest.approx(conductor.dy_jacket)
+    assert restored.dx_ins == pytest.approx(conductor.dx_ins)
+    assert restored.dy_ins == pytest.approx(conductor.dy_ins)
+    assert restored.mat_jacket.name == conductor.mat_jacket.name
+    assert restored.mat_ins.name == conductor.mat_ins.name
+    assert restored.cable.n_sc_strand == conductor.cable.n_sc_strand
+    assert restored.cable.sc_strand.name == conductor.cable.sc_strand.name

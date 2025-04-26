@@ -183,37 +183,95 @@ class Strand(HomogenisedMixture):
         return (
             f"name = {self.name}\n"
             f"d_strand = {self.d_strand}\n"
-            f"material = {self.material}\n"
+            f"materials = {self.materials}\n"
             f"shape = {self.shape}\n"
         )
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the Strand instance to a dictionary representation,
+        including all necessary data to reconstruct the object later.
+
+        The dictionary includes the class name to support proper
+        deserialization using a factory function like `create_strand_from_dict`.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the serialized strand data. Keys include:
+                - "class_name" (str): The name of the class (e.g., "Strand")
+                - "name" (str): Name of the strand
+                - "d_strand" (float): Diameter of the strand cross-section [m]
+                - "temperature" (float): Operating temperature [K]
+                - "materials" (list of dicts): Each dict contains:
+                    - "material" (str): Name of the material
+                    - "fraction" (float): Volume or weight fraction
+        """
+        return {
+            "class_name": self.__class__.__name__,
+            "name": self.name,
+            "d_strand": self.d_strand.value,
+            "temperature": self.temperature,
+            "materials": [
+                {"material": m.material.name, "fraction": m.fraction}
+                for m in self.materials
+            ],
+        }
 
     @classmethod
     def from_dict(
         cls, name: str, strand_dict: dict[str, Any], material_cache: MaterialCache = None
-    ) -> "Strand":
+    ):
         """
-        Construct a Strand instance from a dictionary.
+        Create an instance of the current Strand subclass from a dictionary,
+        ensuring that the class name stored in the dictionary matches the class
+        being instantiated.
+
+        This method should only be used when the caller is certain of the
+        class type. For dynamically loading any strand subclass, use
+        `create_strand_from_dict()` instead.
 
         Parameters
         ----------
-        name:
-            the name of the strand
-        strand_dict : dict
-            Dictionary with keys:
-                - "name" (str): Strand name
-                - "d_strand" (float): Diameter of the strand [m]
+        cls : type
+            The class on which this method is called. Must match the "class_name"
+            entry in the dictionary.
+        name : str
+            The name to assign to the resulting strand instance. If empty or None,
+            the name from the dictionary will be used instead.
+        strand_dict : dict[str, Any]
+            Dictionary representation of a strand. Expected keys include:
+                - "class_name" (str): Name of the strand class (e.g., "Strand")
+                - "name" (str): Original name of the strand
+                - "d_strand" (float): Diameter of the strand cross-section [m]
                 - "temperature" (float): Operating temperature [K]
-                - "materials" (list of dict): Each entry must contain:
+                - "materials" (list of dicts): Each dict must include:
                     - "material" (str): Material name
                     - "fraction" (float): Volume or weight fraction
-        material_cache:
-            The cache to load the constituent materials from
+        material_cache : MaterialCache, optional
+            A cache instance to retrieve material objects. If not provided,
+            the global material cache is used.
 
         Returns
         -------
         Strand
-            A fully initialized Strand instance.
+            A new instance of the specified class populated with the
+            parameters from the dictionary.
+
+        Raises
+        ------
+        ValueError
+            If the "class_name" entry in the dictionary does not match `cls.__name__`.
+        KeyError
+            If required keys are missing from the input dictionary.
         """
+        class_name = strand_dict.get("class_name", cls.__name__)
+        if class_name != cls.__name__:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with class_name '"
+                f"{class_name}'"
+            )
+
         material_mix = [
             MixtureFraction(
                 material=(
@@ -232,29 +290,6 @@ class Strand(HomogenisedMixture):
             temperature=strand_dict["temperature"],
             d_strand=strand_dict["d_strand"],
         )
-
-    def to_dict(self) -> dict:
-        """
-        Convert the Strand instance to a dictionary representation.
-
-        Returns
-        -------
-        dict
-            A dictionary with keys:
-                - "name": Name of the strand
-                - "d_strand": Strand diameter [m]
-                - "temperature": Operating temperature [K]
-                - "materials": List of {material, fraction} pairs
-        """
-        return {
-            "name": self.name,
-            "d_strand": self.d_strand.value,
-            "temperature": self.temperature,
-            "materials": [
-                {"material": m.material.name, "fraction": m.fraction}
-                for m in self.materials
-            ],
-        }
 
 
 class SuperconductingStrand(Strand, Superconductor):

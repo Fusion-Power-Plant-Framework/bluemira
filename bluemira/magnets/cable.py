@@ -279,7 +279,7 @@ class ABCCable(ABC):
             self.area_sc + self.area_stab
         ) / self.void_fraction / self.cos_theta + self.area_cc
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, **kwargs):  # noqa: N802
         """
         Return the effective Young's modulus of the cable [Pa].
 
@@ -296,7 +296,7 @@ class ABCCable(ABC):
         float
             Default Young's modulus (0).
         """
-        return 0
+        raise NotImplementedError("E for Cable is not implemented.")
 
     def _heat_balance_model_cable(
         self,
@@ -496,9 +496,20 @@ class ABCCable(ABC):
         solution = self._temperature_evolution(t0, tf, initial_temperature, B_fun, I_fun)
         final_temperature = solution.y[0][-1]
 
+        if final_temperature > target_temperature:
+            bluemira_error(
+                f"Final temperature ({final_temperature:.2f} K) exceeds target "
+                f"temperature "
+                f"({target_temperature} K) even with maximum n_stab = "
+                f"{self.n_stab_strand}."
+            )
+            raise ValueError(
+                "Optimization failed to keep final temperature ≤ target. "
+                "Try increasing the upper bound of n_stab or adjusting cable parameters."
+            )
         bluemira_print(f"Optimal n_stab: {self.n_stab_strand}")
         bluemira_print(
-            f"Final temperature with optimal n_stab: {final_temperature} Kelvin"
+            f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
         )
 
         if show:
@@ -924,8 +935,8 @@ class RectangularCable(ABCCable):
         ValueError
             If neither `dx` nor `aspect_ratio` is provided in the configuration.
         """
-        sc_strand = SuperconductingStrand.from_dict("sc_strand", config["sc_strand"])
-        stab_strand = Strand.from_dict("stab_strand", config["stab_strand"])
+        sc_strand = SuperconductingStrand.from_dict(None, config["sc_strand"])
+        stab_strand = Strand.from_dict(None, config["stab_strand"])
 
         dx = config.get("dx")
         aspect_ratio = config.get("aspect_ratio")

@@ -18,6 +18,7 @@ from bluemira.magnets.utils import (
     serie_k,
     serie_r,
 )
+from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import MassFractionMaterial
 
 
@@ -138,6 +139,74 @@ class Conductor:
             float [m²]
         """
         return self.area - self.area_jacket - self.cable.area
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the conductor configuration to a dictionary.
+
+        Returns
+        -------
+        dict
+            A complete dictionary representation of the conductor, including:
+            - name
+            - cable (as dict)
+            - jacket and insulation material names
+            - geometric thickness values
+        """
+        return {
+            "name": self.name,
+            "cable": self.cable.to_dict(),
+            "mat_jacket": self.mat_jacket.name,
+            "mat_ins": self.mat_ins.name,
+            "dx_jacket": self.dx_jacket,
+            "dy_jacket": self.dy_jacket,
+            "dx_ins": self.dx_ins,
+            "dy_ins": self.dy_ins,
+        }
+
+    @classmethod
+    def from_dict(
+        cls, config: dict, cable_cls: type, material_cache=None
+    ) -> "Conductor":
+        """
+        Reconstruct a Conductor instance from a dictionary.
+
+        Parameters
+        ----------
+        config : dict
+            Serialized conductor data.
+        cable_cls : type
+            The class of cable to deserialize (e.g., RectangularCable).
+        material_cache : MaterialCache or None
+            If provided, use it to resolve materials.
+
+        Returns
+        -------
+        Conductor
+            Deserialized instance.
+        """
+
+        # Resolve materials
+        def get_material(name):
+            if material_cache is not None:
+                return material_cache.get_material(name)
+            return get_cached_material(name)
+
+        mat_jacket = get_material(config["mat_jacket"])
+        mat_ins = get_material(config["mat_ins"])
+
+        cable = cable_cls.from_dict(config["cable"])
+
+        return cls(
+            cable=cable,
+            mat_jacket=mat_jacket,
+            mat_ins=mat_ins,
+            dx_jacket=config["dx_jacket"],
+            dy_jacket=config["dy_jacket"],
+            dx_ins=config["dx_ins"],
+            dy_ins=config["dy_ins"],
+            name=config.get("name", "Conductor"),
+        )
 
     def erho(self, **kwargs):
         """
