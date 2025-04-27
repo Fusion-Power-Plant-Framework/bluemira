@@ -784,7 +784,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=name,
+            name=name or cable_dict.get("name"),
         )
 
 
@@ -1033,7 +1033,7 @@ class RectangularCable(ABCCable):
             d_cooling_channel=d_cooling_channel,
             void_fraction=void_fraction,
             cos_theta=cos_theta,
-            name=name,
+            name=name or cable_dict.get("name"),
         )
 
         # Adjust aspect ratio if needed
@@ -1273,7 +1273,7 @@ class SquareCable(ABCCable):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=name,
+            name=name or cable_dict.get("name"),
         )
 
 
@@ -1555,7 +1555,7 @@ class RoundCable(ABCCable):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=name,
+            name=name or cable_dict.get("name"),
         )
 
 

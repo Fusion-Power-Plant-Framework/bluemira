@@ -429,7 +429,7 @@ class Strand(metaclass=RegistrableMeta):
             materials=material_mix,
             temperature=strand_dict.get("temperature"),
             d_strand=strand_dict.get("d_strand"),
-            name=name,
+            name=name or strand_dict.get("name"),
         )
 
 
