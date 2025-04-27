@@ -384,11 +384,11 @@ class Strand(metaclass=RegistrableMeta):
         ----------
         cls : type
             Class to instantiate (Strand or subclass).
+        strand_dict : dict
+            Dictionary containing serialized strand data.
         name : str
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
-        strand_dict : dict
-            Dictionary containing serialized strand data.
 
         Returns
         -------

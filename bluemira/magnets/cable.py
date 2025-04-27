@@ -8,6 +8,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +16,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
-from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+from bluemira.magnets.registry_utils import RegistrableMeta
 from bluemira.magnets.strand import (
     Strand,
     SuperconductingStrand,
@@ -26,17 +27,14 @@ from bluemira.magnets.utils import parall_r, serie_r
 # ------------------------------------------------------------------------------
 # Global Registries
 # ------------------------------------------------------------------------------
-
 CABLE_REGISTRY = {}
-CABLE_INSTANCE_CACHE = {}
-
 
 # ------------------------------------------------------------------------------
 # Strand Class
 # ------------------------------------------------------------------------------
 
 
-class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
+class ABCCable(ABC, metaclass=RegistrableMeta):
     """
     Abstract base class for superconducting cables.
 
@@ -50,7 +48,6 @@ class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
     """
 
     _registry_ = CABLE_REGISTRY
-    _global_instance_cache_ = CABLE_INSTANCE_CACHE
     _name_in_registry_: str | None = None  # Abstract base classes should NOT register
 
     def __init__(
@@ -731,22 +728,21 @@ class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
     @classmethod
     def from_dict(
         cls,
-        name: str,
-        cable_dict: dict,
-        *,
-        unique_name: bool = True,
+        cable_dict: dict[str, Any],
+        name: str | None = None,
     ) -> "ABCCable":
         """
         Deserialize a cable instance from a dictionary.
 
         Parameters
         ----------
-        name : str
-            Desired name for the cable instance.
+        cls : type
+            Class to instantiate (Cable or subclass).
         cable_dict : dict
-            Dictionary with serialized cable configuration.
-        unique_name : bool, optional
-            If True, generates a unique name in case of conflict.
+            Dictionary containing serialized cable data.
+        name : str
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary.
 
         Returns
         -------
@@ -780,18 +776,6 @@ class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
         else:
             stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
 
-        base_name = name or cable_dict.get("name", "UnnamedCable")
-
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
-
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
@@ -800,7 +784,7 @@ class ABCCable(ABC, InstanceRegistrable, metaclass=RegistrableMeta):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=final_name,
+            name=name,
         )
 
 
@@ -956,10 +940,8 @@ class RectangularCable(ABCCable):
     @classmethod
     def from_dict(
         cls,
-        name: str,
-        cable_dict: dict,
-        *,
-        unique_name: bool = True,
+        cable_dict: dict[str, Any],
+        name: str | None = None,
     ) -> "RectangularCable":
         """
         Deserialize a RectangularCable from a dictionary.
@@ -973,12 +955,13 @@ class RectangularCable(ABCCable):
 
         Parameters
         ----------
-        name : str
-            Name to assign to the cable.
+        cls : type
+            Class to instantiate (Cable or subclass).
         cable_dict : dict
             Dictionary containing serialized cable data.
-        unique_name : bool, optional
-            If True, generates a unique name if conflict arises.
+        name : str
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary.
 
         Returns
         -------
@@ -990,13 +973,27 @@ class RectangularCable(ABCCable):
         ValueError
             If neither 'dx' nor 'aspect_ratio' is provided.
         """
-        # Recreate strands
-        sc_strand = create_strand_from_dict(
-            strand_dict=cable_dict["sc_strand"], unique_name=unique_name
-        )
-        stab_strand = create_strand_from_dict(
-            strand_dict=cable_dict["stab_strand"], unique_name=unique_name
-        )
+        name_in_registry = cable_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
+
+        # Deserialize strands
+        sc_strand_data = cable_dict["sc_strand"]
+        if isinstance(sc_strand_data, Strand):
+            sc_strand = sc_strand_data
+        else:
+            sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
+
+        stab_strand_data = cable_dict["stab_strand"]
+        if isinstance(stab_strand_data, Strand):
+            stab_strand = stab_strand_data
+        else:
+            stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
 
         # Geometry parameters
         dx = cable_dict.get("dx")
@@ -1026,19 +1023,6 @@ class RectangularCable(ABCCable):
         void_fraction = cable_dict.get("void_fraction", 0.725)
         cos_theta = cable_dict.get("cos_theta", 0.97)
 
-        base_name = name or cable_dict.get("name", "RectangularCable")
-
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            # strict mode
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
-
         # Create cable
         cable = cls(
             dx=dx,
@@ -1049,7 +1033,7 @@ class RectangularCable(ABCCable):
             d_cooling_channel=d_cooling_channel,
             void_fraction=void_fraction,
             cos_theta=cos_theta,
-            name=final_name,
+            name=name,
         )
 
         # Adjust aspect ratio if needed
@@ -1242,22 +1226,21 @@ class SquareCable(ABCCable):
     @classmethod
     def from_dict(
         cls,
-        name: str,
-        cable_dict: dict,
-        *,
-        unique_name: bool = True,
+        cable_dict: dict[str, Any],
+        name: str | None = None,
     ) -> "SquareCable":
         """
         Deserialize a SquareCable from a dictionary.
 
         Parameters
         ----------
-        name : str
-            Desired name.
+        cls : type
+            Class to instantiate (Cable or subclass).
         cable_dict : dict
-            Dictionary configuration.
-        unique_name : bool, optional
-            If True, ensure name uniqueness.
+            Dictionary containing serialized cable data.
+        name : str
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary.
 
         Returns
         -------
@@ -1270,20 +1253,17 @@ class SquareCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
+        name_in_registry = cable_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
+
         sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
         stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
-
-        base_name = name or cable_dict.get("name", "SquareCable")
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            # strict mode
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
 
         return cls(
             sc_strand=sc_strand,
@@ -1293,7 +1273,7 @@ class SquareCable(ABCCable):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=final_name,
+            name=name,
         )
 
 
@@ -1528,22 +1508,21 @@ class RoundCable(ABCCable):
     @classmethod
     def from_dict(
         cls,
-        name: str,
-        cable_dict: dict,
-        *,
-        unique_name: bool = True,
+        cable_dict: dict[str, Any],
+        name: str | None = None,
     ) -> "RoundCable":
         """
         Deserialize a RoundCable from a dictionary.
 
         Parameters
         ----------
-        name : str
-            Desired name.
+        cls : type
+            Class to instantiate (Cable or subclass).
         cable_dict : dict
-            Dictionary configuration.
-        unique_name : bool, optional
-            If True, ensure name uniqueness.
+            Dictionary containing serialized cable data.
+        name : str
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary.
 
         Returns
         -------
@@ -1556,20 +1535,17 @@ class RoundCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
+        name_in_registry = cable_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
+
         sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
         stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
-
-        base_name = name or cable_dict.get("name", "SquareCable")
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            # strict mode
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
 
         return cls(
             sc_strand=sc_strand,
@@ -1579,7 +1555,7 @@ class RoundCable(ABCCable):
             d_cooling_channel=cable_dict["d_cooling_channel"],
             void_fraction=cable_dict.get("void_fraction", 0.725),
             cos_theta=cable_dict.get("cos_theta", 0.97),
-            name=final_name,
+            name=name,
         )
 
 
@@ -1648,8 +1624,6 @@ class DummyRoundCableLTS(RoundCable):
 def create_cable_from_dict(
     cable_dict: dict,
     name: str | None = None,
-    *,
-    unique_name: bool = True,
 ):
     """
     Factory function to create a Cable or its subclass from a serialized dictionary.
@@ -1660,8 +1634,6 @@ def create_cable_from_dict(
         Dictionary with serialized cable data. Must include a 'name_in_registry' field.
     name : str, optional
         If given, overrides the name from the dictionary.
-    unique_name : bool, optional
-        If True, generates a unique name in case of conflict.
 
     Returns
     -------
@@ -1686,4 +1658,4 @@ def create_cable_from_dict(
             "Available classes are: " + ", ".join(CABLE_REGISTRY.keys())
         )
 
-    return cls.from_dict(name=name, cable_dict=cable_dict, unique_name=unique_name)
+    return cls.from_dict(name=name, cable_dict=cable_dict)
