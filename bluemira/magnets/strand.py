@@ -19,11 +19,10 @@ import numpy as np
 
 from bluemira import display
 from bluemira.base.look_and_feel import bluemira_error
-from bluemira.base.parameter_frame import Parameter
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+from bluemira.magnets.registry_utils import RegistrableMeta
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import Superconductor
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
@@ -33,15 +32,13 @@ from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 # ------------------------------------------------------------------------------
 
 STRAND_REGISTRY = {}
-STRAND_INSTANCE_CACHE = {}
-
 
 # ------------------------------------------------------------------------------
 # Strand Class
 # ------------------------------------------------------------------------------
 
 
-class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
+class Strand(metaclass=RegistrableMeta):
     """
     Represents a strand with a circular cross-section, composed of a homogenized
     mixture of materials.
@@ -50,29 +47,28 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
     """
 
     _registry_ = STRAND_REGISTRY
-    _global_instance_cache_ = STRAND_INSTANCE_CACHE
     _name_in_registry_ = "Strand"
 
     def __init__(
         self,
-        name: str,
         materials: list[MixtureFraction],
-        d_strand: float | Parameter | None = 0.82e-3,
+        d_strand: float = 0.82e-3,
         temperature: float | None = None,
+        name: str | None = "Strand",
     ):
         """
         Initialize a Strand instance.
 
         Parameters
         ----------
-        name : str
-            Name of the strand.
         materials : list of MixtureFraction
             Materials composing the strand with their fractions.
-        d_strand : float or Parameter, optional
+        d_strand : float, optional
             Strand diameter in meters (default 0.82e-3).
         temperature : float, optional
             Operating temperature [K].
+        name : str or None, optional
+            Name of the strand. Defaults to "Strand".
         """
         self._d_strand = None
         self._shape = None
@@ -175,7 +171,7 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
         self._temperature = float(value) if value is not None else None
 
     @property
-    def d_strand(self) -> Parameter:
+    def d_strand(self) -> float:
         """
         Diameter of the strand.
 
@@ -187,7 +183,7 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
         return self._d_strand
 
     @d_strand.setter
-    def d_strand(self, d: float | Parameter):
+    def d_strand(self, d: float):
         """
         Set the strand diameter and reset shape if changed.
 
@@ -200,17 +196,16 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
         ------
         ValueError
             If diameter is non-positive.
+        TypeError
+            If diameter is not a float number.
         """
-        if isinstance(d, float):
-            d = Parameter("diameter", d, "m")
+        if not isinstance(d, (float, int)):
+            raise TypeError(f"d_strand must be a float, got {type(d).__name__}")
+        if d <= 0:
+            raise ValueError("d_strand must be positive.")
 
-        if d.value <= 0:
-            msg = "Strand diameter must be positive."
-            bluemira_error(msg)
-            raise ValueError(msg)
-
-        if self._d_strand is None or d.value != self._d_strand.value:
-            self._d_strand = d
+        if self.d_strand is None or d != self.d_strand:
+            self._d_strand = float(d)
             self._shape = None
 
     @property
@@ -223,7 +218,7 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
         float
             Area [m²].
         """
-        return np.pi * (self.d_strand.value**2) / 4
+        return np.pi * (self.d_strand**2) / 4
 
     @property
     def shape(self) -> BluemiraFace:
@@ -236,8 +231,7 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
             Circular face of the strand.
         """
         if self._shape is None:
-            diameter = self.d_strand.value
-            self._shape = BluemiraFace([make_circle(diameter)])
+            self._shape = BluemiraFace([make_circle(self.d_strand)])
         return self._shape
 
     def E(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
@@ -366,7 +360,7 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
                 self, "_name_in_registry_", self.__class__.__name__
             ),
             "name": self.name,
-            "d_strand": self.d_strand.value,
+            "d_strand": self.d_strand,
             "temperature": self.temperature,
             "materials": [
                 {
@@ -380,10 +374,8 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
     @classmethod
     def from_dict(
         cls,
-        name: str,
         strand_dict: dict[str, Any],
-        *,
-        unique_name: bool = True,
+        name: str | None = None,
     ) -> "Strand":
         """
         Deserialize a Strand instance from a dictionary.
@@ -394,13 +386,9 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
             Class to instantiate (Strand or subclass).
         name : str
             Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary,
-            or generates a default name.
+            the dictionary.
         strand_dict : dict
             Dictionary containing serialized strand data.
-        unique_name : bool, optional
-            If True, automatically generates a unique name in case of conflict.
-            If False, raises a ValueError if the name already exists.
 
         Returns
         -------
@@ -412,7 +400,6 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
         ValueError
             If the name_in_registry in the dictionary does not match the expected
             class registration name.
-            If unique_name is False and the desired name already exists.
         """
         # Validate registration name
         name_in_registry = strand_dict.get("name_in_registry")
@@ -438,25 +425,11 @@ class Strand(InstanceRegistrable, metaclass=RegistrableMeta):
                 MixtureFraction(material=material_obj, fraction=m["fraction"])
             )
 
-        # Determine final name
-        base_name = name or strand_dict.get("name", "UnnamedStrand")
-
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            # strict mode
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
-
         return cls(
-            name=final_name,
             materials=material_mix,
             temperature=strand_dict.get("temperature"),
             d_strand=strand_dict.get("d_strand"),
+            name=name,
         )
 
 
@@ -479,30 +452,31 @@ class SuperconductingStrand(Strand):
 
     def __init__(
         self,
-        name: str,
         materials: list[MixtureFraction],
-        d_strand: float | Parameter | None = 0.82e-3,
+        d_strand: float = 0.82e-3,
         temperature: float | None = None,
+        name: str | None = "SuperconductingStrand",
     ):
         """
         Initialize a superconducting strand.
 
         Parameters
         ----------
-        name : str
-            Name of the strand.
         materials : list of MixtureFraction
-            Materials composing the strand (must include one superconductor).
-        d_strand : float or Parameter, optional
-            Diameter of the strand cross-section [m].
+            Materials composing the strand with their fractions. One material must be
+            a supercoductor.
+        d_strand : float, optional
+            Strand diameter in meters (default 0.82e-3).
         temperature : float, optional
             Operating temperature [K].
+        name : str or None, optional
+            Name of the strand. Defaults to "Strand".
         """
         super().__init__(
-            name=name,
             materials=materials,
             d_strand=d_strand,
             temperature=temperature,
+            name=name,
         )
         self._sc = self._check_materials()
 
@@ -640,8 +614,6 @@ class SuperconductingStrand(Strand):
 def create_strand_from_dict(
     strand_dict: dict[str, Any],
     name: str | None = None,
-    *,
-    unique_name: bool = True,
 ):
     """
     Factory function to create a Strand or its subclass from a serialized dictionary.
@@ -653,9 +625,6 @@ def create_strand_from_dict(
         corresponding to a registered class.
     name : str, optional
         If given, overrides the name from the dictionary.
-    unique_name : bool, optional
-        If True, generates a unique name in case of conflict.
-        If False, raises an error if the name already exists.
 
     Returns
     -------
@@ -681,4 +650,4 @@ def create_strand_from_dict(
             "Available classes are: " + ", ".join(STRAND_REGISTRY.keys())
         )
 
-    return cls.from_dict(name=name, strand_dict=strand_dict, unique_name=unique_name)
+    return cls.from_dict(name=name, strand_dict=strand_dict)
