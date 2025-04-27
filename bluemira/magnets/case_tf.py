@@ -804,7 +804,9 @@ class CaseTF:
                 )
 
             if n_layers_max >= remaining_conductors:
-                WPs.append(WindingPack(conductor=cond, nx=remaining_conductors, ny=1))
+                WPs.append(
+                    WindingPack(conductor=cond, nx=remaining_conductors, ny=1, name=None)
+                )
                 remaining_conductors = 0
             else:
                 dx_WP = n_layers_max * cond.dx  # noqa: N806
@@ -834,11 +836,15 @@ class CaseTF:
                 if n_layers_max * n_turns_max > remaining_conductors:
                     n_turns_max -= 1
                     WPs.append(
-                        WindingPack(conductor=cond, nx=n_layers_max, ny=n_turns_max)
+                        WindingPack(
+                            conductor=cond, nx=n_layers_max, ny=n_turns_max, name=None
+                        )
                     )
                     remaining_conductors -= n_layers_max * n_turns_max
                     WPs.append(
-                        WindingPack(conductor=cond, nx=remaining_conductors, ny=1)
+                        WindingPack(
+                            conductor=cond, nx=remaining_conductors, ny=1, name=None
+                        )
                     )
                     remaining_conductors = 0
                 else:

@@ -6,127 +6,113 @@
 
 """Winding pack module"""
 
+from typing import ClassVar
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.magnets.conductor import Conductor
+from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
+from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+
+# Global registries
+WINDINGPACK_REGISTRY = {}
+WINDINGPACK_INSTANCE_CACHE = {}
 
 
-class WindingPack:
+class WindingPack(InstanceRegistrable, metaclass=RegistrableMeta):
     """
-    A class to represent a winding pack which contains multiple conductors arranged in
-    a grid pattern.
+    Represents a winding pack composed of a grid of conductors.
+
+    Attributes
+    ----------
+    conductor : Conductor
+        The base conductor type used in the winding pack.
+    nx : int
+        Number of conductors along the x-axis.
+    ny : int
+        Number of conductors along the y-axis.
     """
 
-    def __init__(self, conductor: Conductor, nx: int, ny: int):
+    _registry_: ClassVar[dict] = WINDINGPACK_REGISTRY
+    _global_instance_cache_: ClassVar[dict] = WINDINGPACK_INSTANCE_CACHE
+    _name_in_registry_: ClassVar[str] = "WindingPack"
+
+    def __init__(
+        self, conductor: Conductor, nx: int, ny: int, name: str = "WindingPack"
+    ):
         """
-        Initializes the WindingPack with the given conductor, number of conductors
-        along x and y axes, and an optional name.
+        Initialize a WindingPack instance.
 
         Parameters
         ----------
         conductor : Conductor
-            An instance of the Conductor class.
+            The conductor instance.
         nx : int
-            Number of conductors along the x-axis.
+            Number of conductors along the x-direction.
         ny : int
-            Number of conductors along the y-axis.
+            Number of conductors along the y-direction.
+        name : str, optional
+            Name of the winding pack instance.
         """
+        self.conductor = conductor
         self.nx = int(nx)
         self.ny = int(ny)
-        self.conductor = conductor
+        self.name = name
 
     @property
-    def dx(self):
-        """
-        Total horizontal size of the winding pack [m].
-
-        Returns
-        -------
-        float
-            Width of the winding pack in the x-direction.
-        """
+    def dx(self) -> float:
+        """Return the total width of the winding pack [m]."""
         return self.conductor.dx * self.nx
 
     @property
-    def dy(self):
-        """
-        Total vertical size of the winding pack [m].
-
-        Returns
-        -------
-        float
-            Height of the winding pack in the y-direction.
-        """
+    def dy(self) -> float:
+        """Return the total height of the winding pack [m]."""
         return self.conductor.dy * self.ny
 
     @property
-    def area(self):
-        """
-        Total cross-sectional area of the winding pack.
-
-        Returns
-        -------
-        float
-            Total area of the winding pack [m²].
-        """
+    def area(self) -> float:
+        """Return the total cross-sectional area [m²]."""
         return self.dx * self.dy
 
     @property
-    def n_conductors(self):
-        """
-        Total number of conductors in the winding pack.
-
-        Returns
-        -------
-        int
-            Number of conductors (nx * ny).
-        """
+    def n_conductors(self) -> int:
+        """Return the total number of conductors."""
         return self.nx * self.ny
 
     @property
-    def jacket_area(self):
-        """
-        Total jacket material area in the winding pack.
-
-        Returns
-        -------
-        float
-            Combined jacket area of all conductors in the pack [m²].
-        """
+    def jacket_area(self) -> float:
+        """Return the total jacket material area [m²]."""
         return self.conductor.area_jacket * self.n_conductors
 
     def Kx(self, **kwargs) -> float:  # noqa: N802
         """
-        Compute the equivalent mechanical stiffness in the x-direction.
-
-        This models the stiffness as a composite structure based on
-        conductor properties and arrangement.
+        Compute the equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        **kwargs : dict
-            Additional arguments passed to the conductor stiffness model.
+        **kwargs
+            Additional arguments forwarded to the conductor.
 
         Returns
         -------
         float
-            Effective axial stiffness along the x-axis [N/m].
+            Stiffness along the x-axis [N/m].
         """
         return self.conductor.Kx(**kwargs) * self.ny / self.nx
 
     def Ky(self, **kwargs) -> float:  # noqa: N802
         """
-        Calculates the total equivalent stiffness of the winding pack along the y-axis.
+        Compute the equivalent stiffness along the y-axis.
 
         Parameters
         ----------
         **kwargs
-            Additional parameters to pass to the stiffness calculation methods.
+            Additional arguments forwarded to the conductor.
 
         Returns
         -------
-            The total equivalent stiffness along the y-axis.
+        float
+            Stiffness along the y-axis [N/m].
         """
         return self.conductor.Ky(**kwargs) * self.nx / self.ny
 
@@ -140,31 +126,28 @@ class WindingPack:
         homogenized: bool = True,
     ):
         """
-        Plots the winding pack and its conductors.
+        Plot the winding pack geometry.
 
         Parameters
         ----------
-        xc :
-            The x-coordinate of the center of the winding pack (default is 0).
-        yc :
-            The y-coordinate of the center of the winding pack (default is 0).
-        show :
-            Whether to show the plot immediately (default is False).
-        ax :
-            The axes on which to plot (default is None, which creates a new figure and
-            axes).
-        homogenized :
-            Whether to plot the winding pack as a homogenized block or show individual
-            conductors (default is True).
+        xc : float
+            Center x-coordinate [m].
+        yc : float
+            Center y-coordinate [m].
+        show : bool, optional
+            If True, immediately show the plot.
+        ax : matplotlib.axes.Axes, optional
+            Axes object to draw on.
+        homogenized : bool, optional
+            If True, plot as a single block. Otherwise, plot individual conductors.
 
         Returns
         -------
-            The axes with the plotted winding pack.
+        matplotlib.axes.Axes
+            Axes object containing the plot.
         """
         if ax is None:
             _, ax = plt.subplots()
-
-        ax.plot([0], [0])
 
         pc = np.array([xc, yc])
         a = self.dx / 2
@@ -190,3 +173,88 @@ class WindingPack:
         if show:
             plt.show()
         return ax
+
+    def to_dict(self) -> dict:
+        """
+        Serialize the WindingPack to a dictionary.
+
+        Returns
+        -------
+        dict
+            Serialized dictionary of winding pack attributes.
+        """
+        return {
+            "name_in_registry": getattr(
+                self, "_name_in_registry_", self.__class__.__name__
+            ),
+            "name": self.name,
+            "conductor": self.conductor.to_dict(),
+            "nx": self.nx,
+            "ny": self.ny,
+        }
+
+    @classmethod
+    def from_dict(
+        cls,
+        name: str,
+        windingpack_dict: dict,
+        *,
+        unique_name: bool = True,
+    ) -> "WindingPack":
+        """
+        Deserialize a WindingPack from a dictionary.
+
+        Parameters
+        ----------
+        name : str
+            Desired name for the instance.
+        windingpack_dict : dict
+            Serialized winding pack dictionary.
+        unique_name : bool, optional
+            Whether to enforce uniqueness of the instance name.
+
+        Returns
+        -------
+        WindingPack
+            Reconstructed WindingPack instance.
+
+        Raises
+        ------
+        ValueError
+            If 'name_in_registry' does not match the expected class.
+        """
+        # Validate name_in_registry
+        name_in_registry = windingpack_dict.get("name_in_registry")
+        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
+
+        if name_in_registry != expected_name_in_registry:
+            raise ValueError(
+                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
+                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
+            )
+
+        # Deserialize conductor
+        conductor = create_conductor_from_dict(
+            conductor_dict=windingpack_dict["conductor"],
+            name=None,
+            unique_name=unique_name,
+        )
+
+        base_name = name or windingpack_dict.get("name", "UnnamedWindingPack")
+
+        if unique_name:
+            final_name = cls.generate_unique_name(base_name)
+        else:
+            if base_name in cls._global_instance_cache_:
+                raise ValueError(
+                    f"Instance with name '{base_name}' already registered. "
+                    "Use unique_name=True to allow automatic renaming."
+                )
+            final_name = base_name
+
+        return cls(
+            conductor=conductor,
+            nx=windingpack_dict["nx"],
+            ny=windingpack_dict["ny"],
+            name=final_name,
+        )

@@ -133,20 +133,118 @@ class RegistrableMeta(ABCMeta):
 # ------------------------------------------------------------------------------
 # InstanceRegistrable
 # ------------------------------------------------------------------------------
+
+
 class InstanceRegistrable:
     """
-    Mixin to provide automatic instance registration into a global instance cache.
+    Mixin class to automatically register instances into a global instance cache.
 
-    Classes using this mixin must define:
-    - _global_instance_cache_: dict
-        The dictionary where instances are registered.
+    This class provides:
+    - Automatic instance registration into a global cache.
+    - Optional control over registration (register or not).
+    - Optional automatic generation of unique names to avoid conflicts.
 
-    Provides:
-    - Automatic registration and unregistration when 'name' is set.
-    - Unique name generation to avoid collisions in the registry.
+    Attributes
+    ----------
+    _global_instance_cache_ : dict
+        Class-level cache shared among all instances for lookup by name.
+    _do_not_register : bool
+        If True, the instance will not be registered.
+    _unique : bool
+        If True, automatically generate a unique name if the desired name already exists.
     """
 
-    _global_instance_cache_: ClassVar[dict] = {}  # Must be overridden in subclasses.
+    _global_instance_cache_: ClassVar[dict] = {}
+
+    def __init__(self, name: str, *, unique_name: bool = False):
+        """
+        Initialize an instance and optionally register it.
+
+        Parameters
+        ----------
+        name : str
+            Desired name of the instance.
+        unique_name : bool, optional
+            If True, generate a unique name if the given name already exists.
+            If False (strict mode), raise a ValueError on duplicate names.
+        """
+        self._unique_name = None
+        self.unique_name = unique_name
+
+        # Setting the name will trigger registration (unless do_registration is False)
+        self._name = None
+        self.name = name
+
+    @property
+    def unique_name(self) -> bool:
+        """
+        Flag indicating whether to automatically generate a unique name on conflict.
+
+        Returns
+        -------
+        bool
+            True if automatic unique name generation is enabled (the passed name is
+            neglected)
+            False if strict name checking is enforced.
+        """
+        return self._unique_name
+
+    @unique_name.setter
+    def unique_name(self, value: bool):
+        """
+        Set whether automatic unique name generation should be enabled.
+
+        Parameters
+        ----------
+        value : bool
+            If True, automatically generate a unique name if the desired name
+            is already registered.
+            If False, raise a ValueError if the name already exists.
+        """
+        self._unique_name = value
+
+    @property
+    def name(self) -> str:
+        """Return the instance name."""
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        """
+        Set the instance name and (re)register it according to registration rules.
+
+        Behavior
+        --------
+        - If `_do_not_register` is True, just assign the name without caching.
+        - If `unique_name` is True and the name already exists, automatically generate
+        a unique name.
+        - If `unique_name` is False and the name already exists, raise ValueError.
+
+        Parameters
+        ----------
+        value : str
+            Desired instance name.
+
+        Raises
+        ------
+        ValueError
+            If `unique_name` is False and the name is already registered.
+        """
+        if hasattr(self, "_name") and self._name is not None:
+            self._unregister_self()
+
+        if value is None:
+            self._name = None
+            return
+
+        if value in self._global_instance_cache_:
+            if self.unique_name:
+                value = self.generate_unique_name(value)
+            else:
+                raise ValueError(f"Instance with name '{value}' already registered.")
+
+        self._name = value
+        self._register_self()
 
     def _register_self(self):
         """
@@ -155,89 +253,30 @@ class InstanceRegistrable:
         Raises
         ------
         AttributeError
-            If the instance has no 'name' attribute.
+            If the instance does not have a 'name' attribute.
         ValueError
-            If an instance with the same name is already registered.
+            If an instance with the same name already exists and unique is False.
         """
-        if not hasattr(self, "name") or self._name is None:
+        if getattr(self, "_do_not_register", False):
+            return  # Skip registration if explicitly disabled
+
+        if not hasattr(self, "name") or self.name is None:
             raise AttributeError("Instance must have a 'name' attribute to register.")
 
-        if self._name in self._global_instance_cache_:
-            raise ValueError(f"Instance with name '{self._name}' already registered.")
+        if self.name in self._global_instance_cache_:
+            if self.unique_name:
+                self.name = self.generate_unique_name(self.name)
+            else:
+                raise ValueError(f"Instance with name '{self.name}' already registered.")
 
-        self._global_instance_cache_[self._name] = self
+        self._global_instance_cache_[self.name] = self
 
     def _unregister_self(self):
         """
         Unregister this instance from the global instance cache.
-
-        Does nothing if the instance is not registered.
         """
-        if hasattr(self, "_name") and self._name in self._global_instance_cache_:
-            del self._global_instance_cache_[self._name]
-
-    @property
-    def name(self) -> str:
-        """
-        Get the name of the instance.
-
-        Returns
-        -------
-        str
-            Current name of the instance.
-        """
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        """
-        Set a new name for the instance and update the registry accordingly.
-
-        Parameters
-        ----------
-        value : str
-            New name for the instance.
-
-        Raises
-        ------
-        ValueError
-            If the new name is already registered.
-        """
-        if hasattr(self, "_name"):
-            self._unregister_self()
-
-        self._name = value
-
-        if value is not None:
-            self._register_self()
-
-    @classmethod
-    def generate_unique_name(cls, base_name: str) -> str:
-        """
-        Generate a unique name based on a given base name.
-
-        If the base name already exists in the instance cache,
-        appends an incremental suffix (_1, _2, etc.) until a unique name is found.
-
-        Parameters
-        ----------
-        base_name : str
-            Proposed base name.
-
-        Returns
-        -------
-        str
-            A unique name not already registered.
-        """
-        if base_name not in cls._global_instance_cache_:
-            return base_name
-
-        counter = 1
-        while True:
-            candidate = f"{base_name}_{counter}"
-            if candidate not in cls._global_instance_cache_:
-                return candidate
-            counter += 1
+        if hasattr(self, "name") and self.name in self._global_instance_cache_:
+            del self._global_instance_cache_[self.name]
 
     @classmethod
     def get_registered_instance(cls, name: str):
@@ -247,32 +286,53 @@ class InstanceRegistrable:
         Parameters
         ----------
         name : str
-            Name of the instance to retrieve.
+            Name of the registered instance.
 
         Returns
         -------
         InstanceRegistrable or None
-            The instance if found, otherwise None.
+            The registered instance, or None if not found.
         """
         return cls._global_instance_cache_.get(name)
 
     @classmethod
     def list_registered_instances(cls) -> list[str]:
         """
-        List all currently registered instance names.
+        List names of all registered instances.
 
         Returns
         -------
         list of str
-            List of registered instance names.
+            List of names of registered instances.
         """
         return list(cls._global_instance_cache_.keys())
 
     @classmethod
     def clear_registered_instances(cls):
         """
-        Clear all instances from the global instance cache.
-
-        Useful for testing or reloading.
+        Clear all registered instances from the global cache.
         """
         cls._global_instance_cache_.clear()
+
+    @classmethod
+    def generate_unique_name(cls, base_name: str) -> str:
+        """
+        Generate a unique name by appending a numeric suffix if necessary.
+
+        Parameters
+        ----------
+        base_name : str
+            Desired base name.
+
+        Returns
+        -------
+        str
+            Unique name guaranteed not to conflict with existing instances.
+        """
+        if base_name not in cls._global_instance_cache_:
+            return base_name
+
+        i = 1
+        while f"{base_name}_{i}" in cls._global_instance_cache_:
+            i += 1
+        return f"{base_name}_{i}"
