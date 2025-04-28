@@ -1866,7 +1866,6 @@ class Equilibrium(CoilSetMHDState):
         psi: npt.NDArray[np.float64] | None = None,
         *,
         force_update: bool = False,
-        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
         Returns
@@ -1884,7 +1883,7 @@ class Equilibrium(CoilSetMHDState):
                 self.z,
                 psi,
                 limiter=self.limiter,
-                o_point_fallback=o_point_fallback,
+                o_point_fallback=self.o_point_fallback,
                 R_0=self.profiles.R_0,
             )
         return self._o_points, self._x_points
