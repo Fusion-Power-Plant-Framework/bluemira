@@ -10,7 +10,7 @@ babel==2.17.0
     # via bluemira (pyproject.toml)
 blosc2==2.7.1
     # via tables
-certifi==2025.1.31
+certifi==2025.4.26
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -18,11 +18,11 @@ click==8.1.8
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-contourpy==1.3.1
+contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==6.7.0
+coolprop==6.8.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
@@ -99,7 +99,7 @@ numpy==1.26.4
     #   scipy
     #   seaborn
     #   tables
-packaging==24.2
+packaging==25.0
     # via
     #   matplotlib
     #   pooch
@@ -139,7 +139,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.44.2
+pyvista==0.45.0
     # via bluemira (pyproject.toml)
 requests==2.32.3
     # via pooch
@@ -154,7 +154,7 @@ scipy==1.15.2
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.10.0
+scooby==0.10.1
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
