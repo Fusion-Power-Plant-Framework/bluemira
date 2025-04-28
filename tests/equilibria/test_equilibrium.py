@@ -310,7 +310,12 @@ class TestSolveEquilibrium:
             li_min_iter=0,
             li_rel_tol=rel_tol,
         )
-        eq = Equilibrium(deepcopy(self.coilset), self.grid, deepcopy(profiles))
+        eq = Equilibrium(
+            deepcopy(self.coilset),
+            self.grid,
+            deepcopy(profiles),
+            o_point_fallback=o_point_fallback,
+        )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq.coilset, eq, self.targets, gamma=1e-8
         )
@@ -320,7 +325,6 @@ class TestSolveEquilibrium:
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
             relaxation=0.2,
-            o_point_fallback=o_point_fallback,
         )
         program()
         assert abs_rel_difference(calc_li3(eq), self.l_i) <= rel_tol

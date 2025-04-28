@@ -141,9 +141,6 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         self.diagnostic_plotting = PicardDiagnosticOptions(
             **self.build_config.get("diagnostic_plotting", {})
         )
-        self.o_point_fallback = self.build_config.get(
-            "o_point_fallback", OPointCalcOptions.RAISE
-        )
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
@@ -167,7 +164,6 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             relaxation=0.2,
             fixed_coils=True,
             diagnostic_plotting=self.diagnostic_plotting,
-            o_point_fallback=self.o_point_fallback,
         )
         self._result = iterator_program()
         self._iterator = iterator_program
@@ -210,6 +206,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
                 self.params.delta_95.value,
             ),
             self.build_config.get("grid_settings", {}),
+            self.build_config.get("o_point_fallback", OPointCalcOptions.RAISE),
         )
 
     def _make_opt_problem(
