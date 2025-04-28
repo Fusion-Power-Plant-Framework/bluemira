@@ -6,20 +6,19 @@
 
 """Winding pack module"""
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
-from bluemira.magnets.registry_utils import InstanceRegistrable, RegistrableMeta
+from bluemira.magnets.registry import RegistrableMeta
 
 # Global registries
 WINDINGPACK_REGISTRY = {}
-WINDINGPACK_INSTANCE_CACHE = {}
 
 
-class WindingPack(InstanceRegistrable, metaclass=RegistrableMeta):
+class WindingPack(metaclass=RegistrableMeta):
     """
     Represents a winding pack composed of a grid of conductors.
 
@@ -34,7 +33,6 @@ class WindingPack(InstanceRegistrable, metaclass=RegistrableMeta):
     """
 
     _registry_: ClassVar[dict] = WINDINGPACK_REGISTRY
-    _global_instance_cache_: ClassVar[dict] = WINDINGPACK_INSTANCE_CACHE
     _name_in_registry_: ClassVar[str] = "WindingPack"
 
     def __init__(
@@ -196,22 +194,19 @@ class WindingPack(InstanceRegistrable, metaclass=RegistrableMeta):
     @classmethod
     def from_dict(
         cls,
-        name: str,
-        windingpack_dict: dict,
-        *,
-        unique_name: bool = True,
+        windingpack_dict: dict[str, Any],
+        name: str | None = None,
     ) -> "WindingPack":
         """
         Deserialize a WindingPack from a dictionary.
 
         Parameters
         ----------
-        name : str
-            Desired name for the instance.
         windingpack_dict : dict
             Serialized winding pack dictionary.
-        unique_name : bool, optional
-            Whether to enforce uniqueness of the instance name.
+        name : str
+            Name for the new instance. If None, attempts to use the 'name' field from
+            the dictionary.
 
         Returns
         -------
@@ -237,24 +232,11 @@ class WindingPack(InstanceRegistrable, metaclass=RegistrableMeta):
         conductor = create_conductor_from_dict(
             conductor_dict=windingpack_dict["conductor"],
             name=None,
-            unique_name=unique_name,
         )
-
-        base_name = name or windingpack_dict.get("name", "UnnamedWindingPack")
-
-        if unique_name:
-            final_name = cls.generate_unique_name(base_name)
-        else:
-            if base_name in cls._global_instance_cache_:
-                raise ValueError(
-                    f"Instance with name '{base_name}' already registered. "
-                    "Use unique_name=True to allow automatic renaming."
-                )
-            final_name = base_name
 
         return cls(
             conductor=conductor,
             nx=windingpack_dict["nx"],
             ny=windingpack_dict["ny"],
-            name=final_name,
+            name=name or windingpack_dict.get("name"),
         )

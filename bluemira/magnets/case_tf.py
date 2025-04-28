@@ -17,6 +17,7 @@ from scipy.optimize import minimize_scalar
 from bluemira.base.logs import logger_setup
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.magnets.conductor import Conductor
+from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import parall_k, serie_k
 from bluemira.magnets.winding_pack import WindingPack
 from bluemira.materials.material import Material
@@ -24,8 +25,21 @@ from bluemira.materials.material import Material
 logger = logger_setup()
 
 
-class CaseTF:
+# ------------------------------------------------------------------------------
+# Global Registries
+# ------------------------------------------------------------------------------
+CABLE_REGISTRY = {}
+
+# ------------------------------------------------------------------------------
+# CaseTF Class
+# ------------------------------------------------------------------------------
+
+
+class CaseTF(metaclass=RegistrableMeta):
     """TF case class"""
+
+    _registry_ = CABLE_REGISTRY
+    _name_in_registry_ = "CaseTF"
 
     def __init__(
         self,
@@ -35,7 +49,7 @@ class CaseTF:
         theta_TF: float,
         mat_case: Material,
         WPs: list[WindingPack],  # noqa: N803
-        name: str = "",
+        name: str = "CaseTF",
     ):
         """
         Case structure for TF coils
@@ -804,9 +818,7 @@ class CaseTF:
                 )
 
             if n_layers_max >= remaining_conductors:
-                WPs.append(
-                    WindingPack(conductor=cond, nx=remaining_conductors, ny=1, name=None)
-                )
+                WPs.append(WindingPack(conductor=cond, nx=remaining_conductors, ny=1))
                 remaining_conductors = 0
             else:
                 dx_WP = n_layers_max * cond.dx  # noqa: N806
@@ -836,15 +848,11 @@ class CaseTF:
                 if n_layers_max * n_turns_max > remaining_conductors:
                     n_turns_max -= 1
                     WPs.append(
-                        WindingPack(
-                            conductor=cond, nx=n_layers_max, ny=n_turns_max, name=None
-                        )
+                        WindingPack(conductor=cond, nx=n_layers_max, ny=n_turns_max)
                     )
                     remaining_conductors -= n_layers_max * n_turns_max
                     WPs.append(
-                        WindingPack(
-                            conductor=cond, nx=remaining_conductors, ny=1, name=None
-                        )
+                        WindingPack(conductor=cond, nx=remaining_conductors, ny=1)
                     )
                     remaining_conductors = 0
                 else:

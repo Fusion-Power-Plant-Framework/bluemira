@@ -16,7 +16,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
-from bluemira.magnets.registry_utils import RegistrableMeta
+from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.strand import (
     Strand,
     SuperconductingStrand,
@@ -30,7 +30,7 @@ from bluemira.magnets.utils import parall_r, serie_r
 CABLE_REGISTRY = {}
 
 # ------------------------------------------------------------------------------
-# Strand Class
+# Cable Class
 # ------------------------------------------------------------------------------
 
 

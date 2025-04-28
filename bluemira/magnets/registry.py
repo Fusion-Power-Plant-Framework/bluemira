@@ -129,6 +129,113 @@ class RegistrableMeta(ABCMeta):
 
         return cls
 
+    @classmethod
+    def unregister(cls):
+        """
+        Unregister the class from its associated registry.
+
+        This method removes the class from the `_registry_` dictionary under its
+        '_name_in_registry_' key. It is safe to call at runtime to dynamically
+        de-register classes, such as when reloading modules or cleaning up.
+
+        Raises
+        ------
+        AttributeError
+            If the class does not have a '_registry_' or '_name_in_registry_' attribute.
+        KeyError
+            If the class is not found in the registry (already unregistered or never
+            registered).
+
+        Notes
+        -----
+        - Only registered (non-abstract) classes have the 'unregister' method.
+        - Abstract base classes (ABCs) are skipped and do not perform registration.
+        """
+        registry = getattr(cls, "_registry_", None)
+        name_in_registry = getattr(cls, "_name_in_registry_", None)
+
+        if registry is None or name_in_registry is None:
+            raise AttributeError(
+                "Cannot unregister: missing '_registry_' or '_name_in_registry_'."
+            )
+
+        try:
+            del registry[name_in_registry]
+        except KeyError:
+            raise KeyError(
+                f"Class '{name_in_registry}' not found in the registry; it may have "
+                f"already been unregistered."
+            ) from None
+
+    @classmethod
+    def get_registered_class(cls, name: str):
+        """
+        Retrieve a registered class by name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the registered class.
+
+        Returns
+        -------
+        type or None
+            The registered class, or None if not found.
+
+        Raises
+        ------
+        AttributeError
+            If the class does not define or inherit a '_registry_' attribute.
+        """
+        registry = getattr(cls, "_registry_", None)
+        if registry is None:
+            raise AttributeError(
+                f"Class {cls.__name__} must define or inherit a '_registry_' attribute."
+            )
+        return registry.get(name)
+
+    @classmethod
+    def list_registered_classes(cls) -> list[str]:
+        """
+        List names of all registered classes.
+
+        Returns
+        -------
+        list of str
+            List of names of registered classes.
+
+        Raises
+        ------
+        AttributeError
+            If the class does not define or inherit a '_registry_' attribute.
+        """
+        registry = getattr(cls, "_registry_", None)
+        if registry is None:
+            raise AttributeError(
+                f"Class {cls.__name__} must define or inherit a '_registry_' attribute."
+            )
+        return list(registry.keys())
+
+    @classmethod
+    def clear_registered_classes(cls):
+        """
+        Clear all registered classes from the registry.
+
+        This method removes all entries from the `_registry_` dictionary,
+        effectively unregistering all previously registered classes.
+
+        Raises
+        ------
+        AttributeError
+            If the class does not define or inherit a '_registry_' attribute.
+        """
+        registry = getattr(cls, "_registry_", None)
+        if registry is None:
+            raise AttributeError(
+                f"Class {cls.__name__} must define or inherit a '_registry_' attribute."
+            )
+        registry.clear()
+
 
 # ------------------------------------------------------------------------------
 # InstanceRegistrable

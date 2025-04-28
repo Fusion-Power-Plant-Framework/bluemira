@@ -22,7 +22,7 @@ from bluemira.base.look_and_feel import bluemira_error
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-from bluemira.magnets.registry_utils import RegistrableMeta
+from bluemira.magnets.registry import RegistrableMeta
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import Superconductor
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction

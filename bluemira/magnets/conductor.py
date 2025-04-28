@@ -14,7 +14,7 @@ from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
-from bluemira.magnets.registry_utils import RegistrableMeta
+from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import (
     parall_k,
     parall_r,
