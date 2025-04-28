@@ -44,23 +44,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
 
-def closed_iterator(iterable: Iterable) -> Iterable:
-    """Turn the iterable into a list of len==len(iterable)+1, where the final element is
-    the first element of the iterable.
-
-    Yields
-    ------
-    :
-        [0,1,2,...,100,0]
-    """
-    for index, item in enumerate(iterable):
-        if index == 0:
-            first_item = item
-        yield item
-    yield first_item
-
-
-def closed_sequence(iterable: Iterable) -> tuple:
+def cyclic_sequence(iterable: Iterable) -> tuple:
     """Turn the iterable into a list of len==len(iterable)+1, where the final element is
     the first element of the iterable.
 
@@ -120,7 +104,7 @@ class CSGReactor(Sequence):
         CSGGeometryValidationError
             Thrown if stacks are not ordered correctly (cw) and neighbouring.
         """
-        for stack_ccw, stack_cw in pairwise(closed_sequence(cell_stacks)):
+        for stack_ccw, stack_cw in pairwise(cyclic_sequence(cell_stacks)):
             check_stacks_are_neighbours(stack_ccw, stack_cw)
 
     @staticmethod
@@ -134,7 +118,7 @@ class CSGReactor(Sequence):
             Thrown when a cell stack's parent has already been set, but 'parent' is still
             parsed here.
         """
-        for stack_ccw, stack_cw in pairwise(closed_sequence(cell_stacks)):
+        for stack_ccw, stack_cw in pairwise(cyclic_sequence(cell_stacks)):
             if parent:
                 stack_ccw.parent = parent
             stack_ccw.cw_wall = stack_cw.ccw_wall = CellWall(
