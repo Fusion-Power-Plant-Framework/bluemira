@@ -195,7 +195,7 @@ class OpenMCResult:
         df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
         power = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
         error = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
-        return power, 100 * error / power
+        return power.sum(), 100 * (error / power).mean()
 
     @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
