@@ -161,6 +161,10 @@ class CSGReactor(Sequence):
         return [stack.volumes for stack in self.cell_stacks]
 
     @property
+    def total_volume(self):
+        return sum(sum(vlist) for vlist in self.volumes)
+
+    @property
     def outlines(self) -> list[list[BluemiraWire]]:
         return [stack.outline for stack in self.cell_stacks]
 
@@ -325,6 +329,10 @@ class CellStack(ParentLinkable, Sequence):
     @property
     def volumes(self) -> list[np.float64]:
         return [cell.volume for cell in self.cells]
+
+    @property
+    def total_volume(self):
+        return sum(self.volumes)
 
     @property
     def outlines(self) -> list[BluemiraWire]:
