@@ -59,6 +59,12 @@ class OpenMCResult:
     tbr_err: float
     heating: dict
     neutron_wall_load: dict
+    blanket_power: float
+    blanket_power_err: float
+    divertor_power: float
+    divertor_power_err: float
+    vessel_power: float
+    vessel_power_err: float
     """Neutron wall load (eV)"""
 
     photon_heat_flux: dict
@@ -99,6 +105,15 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
+        blanket_power, blanket_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "breeding blanket power"
+        )
+        divertor_power, divertor_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "divertor power"
+        )
+        vessel_power, vessel_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "vacuum vessel power"
+        )
 
         return cls(
             universe=universe,
@@ -111,6 +126,12 @@ class OpenMCResult:
             tbr=tbr,
             tbr_err=tbr_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
+            blanket_power=blanket_power,
+            blanket_power_err=blanket_power_err,
+            divertor_power=divertor_power,
+            divertor_power_err=divertor_power_err,
+            vessel_power=vessel_power,
+            vessel_power_err=vessel_power_err,
             neutron_wall_load=cls._load_neutron_wall_loading(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -166,6 +187,15 @@ class OpenMCResult:
         """Load the TBR value and uncertainty."""
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
+
+    @classmethod
+    def _load_filter_power_err(
+        cls, statepoint, src_rate: float, filter_name: str
+    ) -> tuple[float, float]:
+        df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
+        power = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+        error = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
+        return power, 100 * error / power
 
     @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
