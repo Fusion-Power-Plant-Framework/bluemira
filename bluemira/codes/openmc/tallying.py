@@ -53,15 +53,15 @@ def filter_cells(
         *(stack[-1] for stack in blanket_cell_array),
         *(stack[-1] for stack in divertor_cell_array),
     ]
-    bz_cells = [stack[2] for stack in blanket_cell_array]
+    # bz_cells = [stack[2] for stack in blanket_cell_array]
 
     # Cell filters
-    # blanket_cell_filter = openmc.CellFilter(blanket_cells)
+    blanket_cell_filter = openmc.CellFilter(blanket_cells)
     div_cell_filter = openmc.CellFilter(div_cells)
     cell_filter = openmc.CellFilter(cells)
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
     vv_filter = openmc.CellFilter(vv_cells)
-    bz_filter = openmc.CellFilter(bz_cells)
+    # bz_filter = openmc.CellFilter(bz_cells)
 
     # material filters
     mat_filter = openmc.MaterialFilter(material_list[:-1])
@@ -76,7 +76,7 @@ def filter_cells(
         ("Total power", "heating", [mat_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
-        ("breeding blanket power", "heating", [bz_filter]),
+        ("breeding blanket power", "heating", [blanket_cell_filter]),
         # Fluence
         ("neutron flux in every cell", "flux", [cell_filter, neutron_filter]),
         ("photon heating", "heating", [fw_surf_filter, photon_filter]),
