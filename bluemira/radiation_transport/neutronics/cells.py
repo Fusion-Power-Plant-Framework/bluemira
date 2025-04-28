@@ -83,8 +83,29 @@ class CSGReactor(Sequence):
         self.cell_stacks = cell_stacks
         if validate:
             self.validate_stacks_contiguity(self.cell_stacks)
+        self._contiguity_validated = validate
         if link_children:
             self.set_cell_stacks_properties(self.cell_stacks, self)
+        # these are extra regions trackers, won't be directly used.
+        self.subtracted_regions = []
+        self.added_regions = []
+
+
+    def add_region(self, region):
+        for stack in self.cell_stacks:
+            stack.add_region(region)
+        self.added_regions.append(region)
+
+    def subtract_region(self, region):
+        for stack in self.cell_stacks:
+            stack.subtract_region(region)
+        self.subtracted_regions.append(region)
+
+    @property
+    def csg_region(self):
+        self.added_regions
+        self.subtracted_regions
+        return sum(cell_stack.csg_region for cell_stack in self.cell_stacks)  # some sort of flat union
 
     def __getitem__(self, index) -> CellStack | CSGReactor:
         if isinstance(index, slice):
@@ -186,6 +207,7 @@ class CellStack(ParentLinkable, Sequence):
         self._parent = None
         self._ccw_wall = None
         self._cw_wall = None
+
         if link_children:
             self.set_cells_properties(self.cells, self)
         if validate:
@@ -203,6 +225,25 @@ class CellStack(ParentLinkable, Sequence):
             cells[0].vertices.ccw_ex,
             cells[0].vertices.cw_ex,
         )
+        # these are extra regions trackers, won't be directly used.
+        self.subtracted_regions = []
+        self.added_regions = []
+
+    def add_region(self, region):
+        for cell in self.cells:
+            cell.add_region(region)
+        self.added_regions.append(region)
+
+    def subtract_region(self, region):
+        for cell in self.cells:
+            cell.subtract_region(region)
+        self.subtracted_regions.append(region)
+
+    @property
+    def csg_region(self):
+        self.added_regions
+        self.subtracted_regions
+        return sum(cell.csg_region for cell in self.cells)  # some sort of flat union
 
     @property
     def ccw_wall(self):
@@ -383,6 +424,22 @@ class Cell(ParentLinkable):
             ex_face.wire.end_point(),
         )
         self._parent = None
+        self.subtracted_regions = []
+        self.added_regions = []
+
+
+    def add_region(self, region):
+        self.added_regions.append(region)
+
+    def subtract_region(self, region):
+        self.subtracted_regions.append(region)
+
+    @property
+    def csg_region(self):
+        self.added_regions
+        self.subtracted_regions
+        return ...
+
 
     def __repr__(self) -> str:
         centroid = self.vertices.centroid
