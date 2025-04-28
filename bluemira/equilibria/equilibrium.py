@@ -1120,8 +1120,16 @@ class Equilibrium(CoilSetMHDState):
         elif qpsi_calcmode is QpsiCalcMode.ZEROS:
             q = np.zeros(n_x)
 
-        lcfs = self.get_LCFS(psi)
-        nbdry = lcfs.xz.shape[1]
+        try:
+            lcfs = self.get_LCFS(psi)
+            nbdry = lcfs.xz.shape[1]
+            xbdry = lcfs.x
+            zbdry = lcfs.z
+        except EquilibriaError:
+            bluemira_warn("No lcfs found")
+            nbdry = 0
+            xbdry = zbdry = [], []
+
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
         result = {
@@ -1147,8 +1155,8 @@ class Equilibrium(CoilSetMHDState):
             "pressure": self.pressure(psinorm),
             "psinorm": psinorm,
             "nbdry": nbdry,
-            "xbdry": lcfs.x,
-            "zbdry": lcfs.z,
+            "xbdry": xbdry,
+            "zbdry": zbdry,
             "ncoil": self.coilset.n_coils(),
             "coil_names": self.coilset.name,
             "coil_types": self.coilset.ctype,
