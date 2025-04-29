@@ -83,14 +83,11 @@ def make_mutual_inductance_matrix(
     )
     M[jtri, itri] = M[itri, jtri]
 
-    ind = np.diag_indices_from(M)
-
-    if square_coil:
-        M[ind] = square_coil_inductance_kirchhoff(xcoord, dx, dz)
-    else:
-        radius = np.hypot(dx, dz)
-        M[ind] = n_turns**2 * circular_coil_inductance_elliptic(xcoord, radius)
-
+    M[np.diag_indices_from(M)] = (
+        square_coil_inductance_kirchhoff(xcoord, dx, dz)
+        if square_coil
+        else (n_turns**2 * circular_coil_inductance_elliptic(xcoord, np.hypot(dx, dz)))
+    )
     return M
 
 
