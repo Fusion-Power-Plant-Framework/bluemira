@@ -1266,7 +1266,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return CoilSet(*coils)
 
     def get_uncontrolled_coils(self) -> CoilSet:
-        """Get uncontrolled coils"""
+        """
+        Returns
+        -------
+        :
+            Uncontrolled coils
+        """
         coils = []
         for c in self._coils:
             if isinstance(c, CoilSet):
@@ -1318,7 +1323,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def get_coiltype(self, *ctype: str | CoilType) -> CoilSet | None:
         """Get coils by coils type"""  # noqa: DOC201
         if coiltype := self._get_coiltype(*ctype):
-            return CoilSet(*coiltype)  # noqa: DOC201
+            return CoilSet(*coiltype)
         return None
 
     @classmethod
