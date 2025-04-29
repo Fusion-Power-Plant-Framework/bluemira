@@ -644,10 +644,28 @@ class Conductor(metaclass=RegistrableMeta):
                 self.dy_jacket = jacket_thickness
 
             sigma_r = self._tresca_sigma_jacket(pressure, fz, temperature, B, direction)
-            # diff = abs(sigma_r - allowable_sigma)
-            return abs(sigma_r - allowable_sigma)
+
+            # Normal difference
+            diff = abs(sigma_r - allowable_sigma)
+
+            # Penalty if stress exceeds allowable
+            if sigma_r > allowable_sigma:
+                penalty = 1e6 + (sigma_r - allowable_sigma) * 1e6
+                return diff + penalty
+
+            return diff
+
+        debug_msg = ["Method optimize_jacket_conductor:"]
+
+        if direction == "x":
+            debug_msg.append(f"Previous dx_jacket: {self.dx_jacket}")
+        else:
+            debug_msg.append(f"Previous dy_jacket: {self.dy_jacket}")
 
         method = "bounded" if bounds is not None else None
+
+        if method == "bounded":
+            debug_msg.append(f"bounds: {bounds}")
 
         result = minimize_scalar(
             fun=sigma_difference,
@@ -659,15 +677,20 @@ class Conductor(metaclass=RegistrableMeta):
 
         if not result.success:
             raise ValueError("Optimization of the jacket conductor did not converge.")
-        self.dx_jacket = result.x
         if direction == "x":
-            bluemira_debug(f"Optimal dx_jacket: {self.dx_jacket}")
+            self.dx_jacket = result.x
+            debug_msg.append(f"Optimal dx_jacket: {self.dx_jacket}")
         else:
-            bluemira_debug(f"Optimal dy_jacket: {self.dy_jacket}")
-        bluemira_debug(
+            self.dy_jacket = result.x
+            debug_msg.append(f"Optimal dy_jacket: {self.dy_jacket}")
+        debug_msg.append(
             f"Averaged sigma in the {direction}-direction: "
-            f"{self._tresca_sigma_jacket(pressure, f_z, temperature, B) / 1e6} MPa"
+            f"{self._tresca_sigma_jacket(pressure, f_z, temperature, B) / 1e6} MPa\n"
+            f"Allowable stress in the {direction}-direction: {allowable_sigma / 1e6} "
+            f"MPa."
         )
+        debug_msg = "\n".join(debug_msg)
+        bluemira_debug(debug_msg)
 
         return result
 

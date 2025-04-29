@@ -240,3 +240,48 @@ class WindingPack(metaclass=RegistrableMeta):
             ny=windingpack_dict["ny"],
             name=name or windingpack_dict.get("name"),
         )
+
+
+def create_wp_from_dict(
+    windingpack_dict: dict[str, Any],
+    name: str | None = None,
+) -> WindingPack:
+    """
+    Factory function to create a WindingPack or its subclass from a serialized
+    dictionary.
+
+    Parameters
+    ----------
+    windingpack_dict : dict
+        Dictionary containing serialized winding pack data.
+        Must include a 'name_in_registry' field matching a registered class.
+    name : str, optional
+        Optional name override for the reconstructed WindingPack.
+
+    Returns
+    -------
+    WindingPack
+        An instance of the appropriate WindingPack subclass.
+
+    Raises
+    ------
+    ValueError
+        If 'name_in_registry' is missing from the dictionary.
+        If no matching registered class is found.
+    """
+    name_in_registry = windingpack_dict.get("name_in_registry")
+    if name_in_registry is None:
+        raise ValueError(
+            "Serialized winding pack dictionary must contain a 'name_in_registry' field."
+        )
+
+    cls = WINDINGPACK_REGISTRY.get(name_in_registry)
+    if cls is None:
+        available = ", ".join(WINDINGPACK_REGISTRY.keys())
+        raise ValueError(
+            f"No registered winding pack class with registration name '"
+            f"{name_in_registry}'. "
+            f"Available: {available}."
+        )
+
+    return cls.from_dict(windingpack_dict=windingpack_dict, name=name)
