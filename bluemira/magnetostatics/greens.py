@@ -117,6 +117,13 @@ def _elliptic_derivatives(e, k, k2):
         \frac{dK}{dk} &= \frac{E}{k}\frac{1}{1-k^2} - \frac{K}{k}
 
         \frac{dE}{dk} &= \frac{E}{k} - \frac{K}{k}
+
+    Returns
+    -------
+    :
+        ellipk derivative
+    :
+        ellipe derivative
     """
     sqk2 = np.sqrt(k2)
     e_sqk = e / sqk2
@@ -143,6 +150,12 @@ def _dkdr(g3, xc, x):
             &= -2 \frac{(x+xc)\sqrt{x xc}}{g_3^{\frac{3}{2}}}  + \sqrt{\frac{xc}{g_3x}}
 
     unit: [m^(-1)]
+
+    Returns
+    -------
+    :
+        dkdr
+
     """
     # old_expression = (-2 * x * xc * (x + xc) / (g3**2) + x / g3) / sqrt(x * xc / g3)
     term_1 = -2 * (x + xc) * np.sqrt(x * xc) / g3**1.5
@@ -162,6 +175,17 @@ def _g(xc, zc, x, z):
         g_2 &= (xc - x)^2 + z^2
         g_3 &= (xc + x)^2 + z^2
         g_4 &= xc^2 + x^2 + z^2
+
+    Returns
+    -------
+    :
+        g1
+    :
+        g2
+    :
+        g3
+    :
+        g4
     """
     x2 = x**2
     xc2 = xc**2
@@ -186,6 +210,15 @@ def _g_r(xc, x):
         g_{3r} &= \frac{dg_3}{dxc} = 2xc + 2x
 
     :math:`g_{4r}` is not used anywhere so is not computed.
+
+    Returns
+    -------
+    :
+        g1r
+    :
+        g2r
+    :
+        g3r
     """
     xc2 = 2 * xc
     x2 = 2 * x
@@ -429,7 +462,7 @@ def greens_dbz_dx(
     Returns
     -------
     :
-        the gradient to the mangetic field
+        the gradient to the magnetic field
     """
     _, k2 = calc_a_k2(xc, zc, x, z)
     e, k = calc_e_k(k2)
@@ -439,9 +472,9 @@ def greens_dbz_dx(
     dkdr = _dkdr(g3, xc, x)
 
     # Avoid divide by 0
-    g2 = np.where(g2 == 0, GREENS_ZERO, g2)
-    g3 = np.where(g3 == 0, GREENS_ZERO, g3)
-    logic_or = np.logical_or(g2 == 0, g3 == 0)
+    g2 = np.where(np.isclose(g2, 0), GREENS_ZERO, g2)
+    g3 = np.where(np.isclose(g3, 0), GREENS_ZERO, g3)
+    logic_or = np.logical_or(np.isclose(g2, 0), np.isclose(g3, 0))
     inv_g2 = g2**-1
     inv_g2_2 = g2**-2
 
