@@ -14,6 +14,7 @@ from dolfinx import mesh as dmesh
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
@@ -290,6 +291,99 @@ class TestSolovevZheng:
 
     def test_psi_boundary(self):
         psi_fe_boundary = np.array([self.fe_psi_calc(point) for point in self.boundary])
+        psi_exact_boundary = np.array([
+            self.solovev.psi(point) for point in self.boundary
+        ])
+        assert np.max(np.abs(psi_fe_boundary - psi_exact_boundary)) < 4e-7
+
+
+class TestSolovevZhengEquilibrium:
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_class(self, tmp_path_factory):
+        cls = type(self)
+        tmp_path = tmp_path_factory.mktemp("Solvev")
+        # set problem parameters
+        R_0 = 9.07
+        A = 3.1
+        delta = 0.5
+        kappa = 1.7
+        a = R_0 / A
+
+        # Solovev parameters for pprime and ffprime
+        A1 = -6.84256806e-02  # noqa: N806
+        A2 = -6.52918977e-02  # noqa: N806
+
+        # create the Solovev instance to get the exact psi
+        cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
+
+        levels = np.linspace(cls.solovev.psi_b, cls.solovev.psi_ax, 20)
+        _ax, cntr, _cntrf, _points, _psi = cls.solovev.plot_psi(
+            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
+        )
+
+        # Find the boundary of the FEM model as the closed flux surface for psi = 0.
+        # Note: the points can have a small "interpolation" error,
+        # thus psi on the boundary could not be exaclty 0. For this reason, the boundary
+        # conditions will be calculated using the exact solution
+        cls.boundary = cntr.get_paths()[0].vertices
+
+        # another way to find the flux surface
+        # cls.boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=500)
+
+        # create the mesh
+        lcar = 1.0
+
+        (cls.mesh, ct, ft), labels, psi_ax = create_mesh(cls.solovev, cls.boundary, lcar)
+
+        gs_solver = FemGradShafranovFixedBoundary(
+            p_prime=lambda x: -A1 / MU_0,
+            ff_prime=lambda x: A2,
+            mesh=cls.mesh,
+            I_p=None,
+            B_0=None,
+            R_0=R_0,
+            p_order=2,
+            max_iter=3,
+            iter_err_max=1e-8,
+            relaxation=0.0,
+        )
+
+        # solve the Grad-Shafranov equation
+        cls.gs_solver = gs_solver
+        cls.eq = gs_solver.solve(plot=True)
+
+        # select the dofs coordinates in the xz plane
+        dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+        # interpolate the exact solution on the solver function space
+        psi_exact_fun = fem.Function(gs_solver.V)
+        psi_exact_fun.x.array[:] = cls.solovev.psi(dof_points.T)
+        cls.psi_exact_fun = psi_exact_fun
+
+    def test_psi_dofs_array(self):
+        """
+        Compare the psi Solovev analytical solution as described in [Zheng1996] with the
+        one calculated using the implemented magnetostic module.
+
+        .. [Zheng1996] S. B. Zheng, A. J. Wootton, and Emilia R. Solano , "Analytical
+           tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
+           1996) :doi:`10.1063/1.871772`
+        """
+        diff = self.gs_solver.psi.x.array - self.psi_exact_fun.x.array
+        eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(
+            self.psi_exact_fun.x.array, ord=2
+        )
+        assert eps < 2e-5
+
+    def test_psi_axis(self):
+        x_axis_s, z_axis_s = find_magnetic_axis(self.solovev.psi, None)
+        x_axis_fe, z_axis_fe = find_magnetic_axis(self.gs_solver.psi, self.mesh)
+        np.testing.assert_allclose(x_axis_fe, x_axis_s, atol=2e-5)
+        np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1.5e-5)
+
+    def test_psi_boundary(self):
+        psi_fe_boundary = np.array([
+            self.gs_solver.psi(point) for point in self.boundary
+        ])
         psi_exact_boundary = np.array([
             self.solovev.psi(point) for point in self.boundary
         ])
