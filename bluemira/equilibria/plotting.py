@@ -1245,7 +1245,7 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
 
 class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     """
-    Class for comparing equilibria during post opt. anaylsys.
+    Class for comparing equilibria during post opt. analysis.
     Allows for different equilibrium types, grid sizes, etc.,
     to be compared to each other.
     """
@@ -1332,12 +1332,12 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def interpolate_psi(self, psi, psi_grid):
         """
-        Interpolate psi over new comparision grid
+        Interpolate psi over new comparison grid
 
         Returns
         -------
         :
-            iterpolated psi values
+            interpolated psi values
 
         """
         psi_func = RectBivariateSpline(psi_grid.x[:, 0], psi_grid.z[0, :], psi)
@@ -1360,7 +1360,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def _make_lcfs_mask(self, mask_type):
         """
-        Make a LCFS shaped mask to use with equilibria comparisions.
+        Make a LCFS shaped mask to use with equilibria comparisons.
 
         Returns
         -------
@@ -1416,7 +1416,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def _calculate_psi_diff(self):
         """
-        Find the difference betwwen the reference and input equilibrium psi values.
+        Find the difference between the reference and input equilibrium psi values.
         """
         diff_coilset_psi = self.ref_coilset_psi - self.coilset_psi
         # if all zeros
@@ -1454,7 +1454,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             self.total_psi = diff_total_psi
 
     def plot_compare_psi(self):
-        """Plot flux differnces"""
+        """Plot flux differences"""
         # Apply mask
         if self.diag_ops.plot_mask is not None:
             if self.diag_ops.plot_mask not in EqPlotMask.LCFS:

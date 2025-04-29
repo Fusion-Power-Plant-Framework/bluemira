@@ -427,7 +427,7 @@ def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> 
     Returns
     -------
     :
-         Flux surfaces offset from separatix leg
+         Flux surfaces offset from separatrix leg
     """
     offset_legs = []
     for dx in dx_offsets:
@@ -593,8 +593,8 @@ def calculate_connection_length(
         If an invalid div_norm_psi value is entered.
         If no target is provided for FLT calculation_method - this is because the
         flux interception point found is not accurate enough to be used
-        on a seperatrix automatically found by bluemira (n.b., the FLT can not
-        distingish between open and closed flux).
+        on a separatrix automatically found by bluemira (n.b., the FLT can not
+        distinguish between open and closed flux).
 
     """
     calculation_method = CalcMethod[calculation_method.upper()]

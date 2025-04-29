@@ -66,7 +66,7 @@ def select_eq(
     """
     Return an Equilibrium or FixedPlasmaEquilibrium object given a particular file name.
 
-    Cocos indicies and qpsi sign are set to Bluemira Defaults unless specified.
+    Cocos indices and qpsi sign are set to Bluemira Defaults unless specified.
 
     Parameters
     ----------
@@ -88,8 +88,8 @@ def select_eq(
         Set which coils are control coils.
         Can be a coil type, a list of coil names,
         or None for all coils.
-        N.B. many equilibrium objetcs already have coilsets with
-        control coils set, and this input may not be nessisary.
+        N.B. many equilibrium objects already have coilsets with
+        control coils set, and this input may not be necessary.
 
     Returns
     -------
@@ -153,8 +153,8 @@ def select_multi_eqs(
         Set which coils are control coils.
         Can be a coil type, a list of coil names,
         or None for all coils.
-        N.B. many equilibrium objetcs already have coilsets with
-        control coils set, and this input may not be nessisary.
+        N.B. many equilibrium objects already have coilsets with
+        control coils set, and this input may not be necessary.
 
     Returns
     -------
@@ -244,7 +244,7 @@ def get_eqs(equilibria_dict):
     Returns
     -------
     equilibria_dict:
-        Dictionary updated with equlibrium and profile objects.
+        Dictionary updated with equilibrium and profile objects.
     """
     for equilibrium_dict in equilibria_dict.values():
         eq = select_eq(
@@ -334,7 +334,7 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
     target:
         Location of divertor target, lower_outer, lower_inner, upper_outer or upper_inner
     target_coords:
-        Corrinates of divertor target
+        Coordinates of divertor target
     n_layers:
         Number of flux surfaces to extract for each leg
     vertical:
@@ -345,7 +345,7 @@ def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noq
     Raises
     ------
     BluemiraError
-        If the target is set to vertical or horizontal incorectly.
+        If the target is set to vertical or horizontal incorrectly.
 
     Returns
     -------
@@ -409,9 +409,9 @@ class EqAnalysis:
     """
     Equilibria analysis toolbox for selected Equilibrium.
 
-    Can  compare selected equilibrium to a refernce equilibrium.
+    Can  compare selected equilibrium to a reference equilibrium.
     The input and reference equilibria be different types (i.e, fixed or free),
-    and have differentgrid sizes and grid resolutions.
+    and have different grid sizes and grid resolutions.
 
     Parameters
     ----------
@@ -698,7 +698,7 @@ class EqAnalysis:
         show=True,  # noqa: FBT002
     ):
         """
-        Plot separatrices of input equilibria and reference equilibria.
+        Plot seperatricies of input equilibria and reference equilibria.
         N.B. Plots LCFS if a fixed boundary is used.
 
         Parameters
@@ -771,7 +771,7 @@ class EqAnalysis:
         ax=None,
     ):
         """
-        Plot Psi comparision.
+        Plot Psi comparison.
 
         Parameters
         ----------
@@ -783,7 +783,7 @@ class EqAnalysis:
         Raises
         ------
         BluemiraError
-            if no refernce equilibrium is provided
+            if no reference equilibrium is provided
 
         Returns
         -------
@@ -809,7 +809,7 @@ class EqAnalysis:
     ):
         """
         Plot equilibria reference and input profiles. The diff option can be used to plot
-        the difference beween the reference and input profiles on the same axis.
+        the difference between the reference and input profiles on the same axis.
 
         Parameters
         ----------
@@ -905,7 +905,7 @@ class EqAnalysis:
         show=True,  # noqa: FBT002
     ):
         """
-        Plot the divertor leg flux. Will find flux suraces at evenely spaced points
+        Plot the divertor leg flux. Will find flux surfaces at evenly spaced points
         in x- or z- direction for a set of target coordinates.
 
         Parameters
@@ -914,7 +914,7 @@ class EqAnalysis:
             Location of divertor target, i.e.,
             lower_outer, lower_inner, upper_outer or upper_inner
         target_coords:
-            Corrinates of divertor target
+            Coordinates of divertor target
         use_reference:
             Plot reference as well as input
         n_layers:
@@ -933,9 +933,9 @@ class EqAnalysis:
         ax:
             Matplotlib Axes object
         target_flux:
-            Coodinates of flux surfaces crossing target for input equilibria
+            Coordinates of flux surfaces crossing target for input equilibria
         ref_target_flux:
-            Coodinates of flux surfaces crossing target for reference equilibria
+            Coordinates of flux surfaces crossing target for reference equilibria
 
         """
         if ax is None:
@@ -1053,7 +1053,7 @@ class MultiEqAnalysis:
 
     def set_equilibria(self, equilibria_dict: dict, n_points: int = 50):
         """
-        Use dictionary of equilibria infomation to get values for plotting.
+        Use dictionary of equilibria information to get values for plotting.
 
         Parameters
         ----------
@@ -1078,7 +1078,7 @@ class MultiEqAnalysis:
     def make_eq_dataclass_list(self, method, *args):
         """
         Create a list of dataclasses from a function with
-        equilbrium as the first argument.
+        equilibrium as the first argument.
 
         Parameters
         ----------
@@ -1114,7 +1114,7 @@ class MultiEqAnalysis:
     def physics_info_table(self):
         """
         Create a table with the the physics information
-        from all listed Equilbria.
+        from all listed Equilibria.
         Not for use with FixedPlasmaEquilibrium.
 
         Returns
@@ -1178,7 +1178,7 @@ class MultiEqAnalysis:
     def coilset_info_table(self, value_type=CSData.CURRENT):
         """
         Create a table with the the control coil information
-        from all listed Equilbria.
+        from all listed Equilibria.
 
         Parameters
         ----------
@@ -1239,7 +1239,7 @@ class MultiEqAnalysis:
         ax:
             List of Matplotlib Axes objects set by user
         header:
-            Tesxt to be added at the top of the figure
+            Text to be added at the top of the figure
         show:
             Whether or not to display the plot
         n_points:
@@ -1304,7 +1304,7 @@ class MultiEqAnalysis:
     ):
         """
         Plot a flux surface of choice for each equilibrium on the same axes.
-        User can select either the LCFS, seperatrix or a flux surface with
+        User can select either the LCFS, separatrix or a flux surface with
         a given psi_norm.
 
         Always plots a LCFS for a fixed boundary equilibrium,
@@ -1320,7 +1320,7 @@ class MultiEqAnalysis:
         flux_surface:
             Type of flux surface to be plotted
         plot_fixed:
-            Weather or not to plot the LCFS for any fixed boundary equilbria.
+            Weather or not to plot the LCFS for any fixed boundary equilibria.
         psi_norm:
             The normalised psi value to use, if the user selects
             the psi norm comparison option.
