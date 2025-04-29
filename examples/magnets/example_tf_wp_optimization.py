@@ -27,17 +27,19 @@ from bluemira.magnets.cable import (
     DummyRectangularCableHTS,
     DummyRectangularCableLTS,
 )
-from bluemira.magnets.case_tf import CaseTF
+from bluemira.magnets.case_tf import TrapezoidalCaseTF
 from bluemira.magnets.conductor import SymmetricConductor
-from bluemira.magnets.strand import Strand, SuperconductingStrand
+from bluemira.magnets.init_magnets_registry import register_all_magnets
+from bluemira.magnets.strand import create_strand_from_dict
 from bluemira.magnets.utils import (
     delayed_exp_func,
 )
 from bluemira.magnets.winding_pack import WindingPack
 from bluemira.materials import MaterialCache
-from bluemira.materials.mixtures import MixtureFraction
 
 # %%
+# cache all the magnets classes for future use
+register_all_magnets()
 
 # load supporting bluemira materials
 MATERIAL_DATA_PATH = get_bluemira_path("magnets", subfolder="examples")
@@ -81,7 +83,7 @@ Iop = 50.0e3  # operational current in each conductor
 dr_plasma_side = R0 * 2 / 3 * 1e-2  # thickness of the plate before the WP
 T_sc = 4.2  # operational temperature of superconducting cable
 T_margin = 1.5  # temperature margin
-T0 = T_sc + T_margin  # temperature considered for the superconducting cable
+T_op = T_sc + T_margin  # temperature considered for the superconducting cable
 t_delay = 3  # [s]
 t0 = 0  # [s]
 hotspot_target_temperature = 250.0  # [K]
@@ -191,15 +193,29 @@ plt.show()
 # of stabilizer strands)
 # %%
 # create the strand
-materials = [MixtureFraction(nb3sn, 0.5), MixtureFraction(copper100, 0.5)]
-sc_strand = SuperconductingStrand(
-    name="Nb3Sn_strand",
-    materials=materials,
-    material_id=1,
-    temperature=T_sc,
-    d_strand=1.0e-3,
-)
-stab_strand = Strand("Stabilizer", [MixtureFraction(copper300, 1)], 2, d_strand=1.0e-3)
+# Define strand configurations as dictionaries
+sc_strand_dict = {
+    "name_in_registry": "SuperconductingStrand",
+    "name": "Nb3Sn_strand",
+    "d_strand": 1.0e-3,
+    "temperature": T_op,
+    "materials": [
+        {"material": "Nb3Sn - WST", "fraction": 0.5},
+        {"material": "Copper100", "fraction": 0.5},
+    ],
+}
+
+stab_strand_dict = {
+    "name_in_registry": "Strand",
+    "name": "Stabilizer",
+    "d_strand": 1.0e-3,
+    "temperature": T_op,
+    "materials": [{"material": "Copper300", "fraction": 1.0}],
+}
+
+# Create strand objects using class-based factory methods
+sc_strand = create_strand_from_dict(name="Nb3Sn_strand", strand_dict=sc_strand_dict)
+stab_strand = create_strand_from_dict(name="Stabilizer", strand_dict=stab_strand_dict)
 
 # plot the critical current in a range of B between [10,16]
 Bt_arr = np.linspace(10, 16, 100)
@@ -247,7 +263,7 @@ plt.show()
 # **Calculate number of superconducting strands considering the strand critical
 # current at B_TF_i and T_sc + T_margin**
 # %%
-Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=(T_sc + T_margin))
+Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=(T_op))
 n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 ###########################################################
@@ -377,7 +393,7 @@ if True:
         f"before optimization: dx_cable = {cable.dx}, aspect ratio = "
         f"{cable.aspect_ratio}"
     )
-    T_for_hts = T0
+    T_for_hts = T_op
     result = cable.optimize_n_stab_ths(
         t0,
         tf,
@@ -413,13 +429,14 @@ if True:
     # %%
     # case parameters
     layout = "auto"  # "layer" or "pancake"
-    wp_reduction_factor = 0.7
+    wp_reduction_factor = 0.75
     min_gap_x = 2 * dr_plasma_side
-    n_layers_reduction = 2
+    n_layers_reduction = 4
 
     # creation of the case
-    wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
-    case = CaseTF(
+    wp1 = WindingPack(conductor, 1, 1, name=None)  # just a dummy WP to create the case
+
+    case = TrapezoidalCaseTF(
         Ri=Ri,
         dy_ps=dr_plasma_side,
         dy_vault=0.6,
@@ -434,8 +451,6 @@ if True:
     # arrangement of conductors into the winding pack and case
     case.rearrange_conductors_in_wp(
         n_conductors=n_cond,
-        cond=conductor,
-        R_wp_i=case.R_wp_i,
         wp_reduction_factor=wp_reduction_factor,
         min_gap_x=min_gap_x,
         n_layers_reduction=n_layers_reduction,
@@ -454,26 +469,27 @@ if True:
     # ## Optimize cable jacket and case vault thickness
     # %%
     # Optimization parameters
-    bounds_cond_jacket = [1e-5, 0.1]
-    bounds_dy_vault = [0.1, 2]
+    bounds_cond_jacket = np.array([1e-5, 0.2])
+    bounds_dy_vault = np.array([0.1, 2])
     max_niter = 100
-    err = 1e-3
+    err = 5e-3
 
+    # case.optimize_jacket_and_vault(
     case.optimize_jacket_and_vault(
-        pm,
-        t_z,
-        T0,
-        B_TF_i,
-        S_Y,
-        bounds_cond_jacket,
-        bounds_dy_vault,
-        layout,
-        wp_reduction_factor,
-        min_gap_x,
-        n_layers_reduction,
-        max_niter,
-        err,
-        n_cond,
+        pm=pm,
+        fz=t_z,
+        temperature=T_op,
+        B=B_TF_i,
+        allowable_sigma=S_Y,
+        bounds_cond_jacket=bounds_cond_jacket,
+        bounds_dy_vault=bounds_dy_vault,
+        layout=layout,
+        wp_reduction_factor=wp_reduction_factor,
+        min_gap_x=min_gap_x,
+        n_layers_reduction=n_layers_reduction,
+        max_niter=max_niter,
+        eps=err,
+        n_conds=n_cond,
     )
 
     if show:
@@ -513,3 +529,5 @@ if True:
     # %%
     # new operational current
     bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")
+
+    case.plot_convergence()
