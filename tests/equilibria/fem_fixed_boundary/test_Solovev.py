@@ -384,4 +384,4 @@ class TestSolovevZhengEquilibrium:
         psi_exact_boundary = np.array([
             self.solovev.psi(point) for point in self.boundary
         ])
-        assert np.max(np.abs(psi_fe_boundary - psi_exact_boundary)) < 0.09281
+        assert np.max(np.abs(psi_fe_boundary - psi_exact_boundary)) < 4e-7
