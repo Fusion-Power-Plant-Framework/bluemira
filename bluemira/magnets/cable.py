@@ -29,6 +29,7 @@ from bluemira.magnets.utils import parall_r, serie_r
 # ------------------------------------------------------------------------------
 CABLE_REGISTRY = {}
 
+
 # ------------------------------------------------------------------------------
 # Cable Class
 # ------------------------------------------------------------------------------
@@ -537,64 +538,68 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         )
 
         if show:
-            # _, ax = plt.subplots()
-            # ax.plot(solution.t, solution.y[0], "r*")
-            # time_steps = np.linspace(t0, tf, 100)
-            # ax.plot(time_steps, solution.sol(time_steps)[0], "b")
-            # plt.grid(True)
-            # plt.xlabel("Time [s]")
-            # plt.ylabel("Temperature [K]")
-            # plt.title("Quench temperature evoltuion")
-            #
-            # # *** Additional info ***
-            # additional_info = [f"Hot spot temp. = {target_temperature} [K]",
-            #                    f"Initial temp. = {initial_temperature} [K]",
-            #                    f"Sc. strand = {self.sc_strand.__class__.__name__}",
-            #                    f"n. sc. strand = {self.n_sc_strand}",
-            #                    f"Stab. strand = {self.stab_strand.__class__.__name__}",
-            #                    f"n. stab. strand = {self.n_stab_strand}"]
-            #
-            # additional_info = '\n'.join(additional_info)
-            # plt.text(50, 80, additional_info)
-            # plt.show()
+            _, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
 
-            _, ax = plt.subplots()
-
-            # Plot the main solution
-            ax.plot(solution.t, solution.y[0], "r*")
+            # --- Plot Temperature Evolution ---
+            ax_temp.plot(solution.t, solution.y[0], "r*", label="Simulation points")
             time_steps = np.linspace(t0, tf, 100)
-            ax.plot(time_steps, solution.sol(time_steps)[0], "b")
-            plt.grid(visible=True)
-            plt.xlabel("Time [s]")
-            plt.ylabel("Temperature [K]")
-            plt.title("Quench temperature evolution")
+            ax_temp.plot(
+                time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve"
+            )
+            ax_temp.grid(visible=True)
+            ax_temp.set_ylabel("Temperature [K]", fontsize=10)
+            ax_temp.set_title("Quench temperature evolution", fontsize=11)
+            ax_temp.legend(fontsize=9)
 
-            # Create secondary axis on the right (no ticks or labels needed)
-            ax2 = ax.twinx()  # This creates a new y-axis that shares the same x-axis
-            ax2.set_yticks([])  # Remove y-axis ticks
-            ax2.set_ylabel("")  # Remove y-axis label
+            ax_temp.tick_params(axis="y", labelcolor="k", labelsize=9)
 
-            # Plot additional info next to the right y-axis
-            additional_info = [
-                f"Hot spot temp. = {target_temperature} [K]",
-                f"Initial temp. = {initial_temperature} [K]",
-                f"Sc. strand = {self.sc_strand.__class__.__name__}",
-                f"n. sc. strand = {self.n_sc_strand}",
-                f"Stab. strand = {self.stab_strand.__class__.__name__}",
-                f"n. stab. strand = {self.n_stab_strand}",
-            ]
-            additional_info = "\n".join(additional_info)
-
-            # Set text position right after the right y-axis
-            ax2.text(
-                1.05,
+            # Insert text box with additional info
+            info_text = (
+                f"Target T: {target_temperature:.2f} K\n"
+                f"Initial T: {initial_temperature:.2f} K\n"
+                f"SC Strand: {self.sc_strand.name}\n"
+                f"n. sc. strand = {self.n_sc_strand}\n"
+                f"Stab. strand = {self.stab_strand.name}\n"
+                f"n. stab. strand = {self.n_stab_strand}\n"
+            )
+            props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.8}
+            ax_temp.text(
+                0.65,
                 0.5,
-                additional_info,
-                transform=ax2.transAxes,
-                verticalalignment="center",
-                fontsize=10,
+                info_text,
+                transform=ax_temp.transAxes,
+                fontsize=9,
+                verticalalignment="top",
+                bbox=props,
             )
 
+            # --- Plot I_fun(t) and B_fun(t) ---
+            time_steps_fine = np.linspace(t0, tf, 300)
+            I_values = [I_fun(t) for t in time_steps_fine]  # noqa: N806
+            B_values = [B_fun(t) for t in time_steps_fine]
+
+            ax_ib.plot(time_steps_fine, I_values, "g", label="Current [A]")
+            ax_ib.set_ylabel("Current [A]", color="g", fontsize=10)
+            ax_ib.tick_params(axis="y", labelcolor="g", labelsize=9)
+            ax_ib.grid(visible=True)
+
+            ax_ib_right = ax_ib.twinx()
+            ax_ib_right.plot(
+                time_steps_fine, B_values, "m--", label="Magnetic field [T]"
+            )
+            ax_ib_right.set_ylabel("Magnetic field [T]", color="m", fontsize=10)
+            ax_ib_right.tick_params(axis="y", labelcolor="m", labelsize=9)
+
+            # Labels
+            ax_ib.set_xlabel("Time [s]", fontsize=10)
+            ax_ib.tick_params(axis="x", labelsize=9)
+
+            # Combined legend for both sides
+            lines, labels = ax_ib.get_legend_handles_labels()
+            lines2, labels2 = ax_ib_right.get_legend_handles_labels()
+            ax_ib.legend(lines + lines2, labels + labels2, loc="best", fontsize=9)
+
+            plt.tight_layout()
             plt.show()
 
         return result

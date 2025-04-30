@@ -79,7 +79,7 @@ a = R0 / A  # minor radius
 # **Inputs for the TF coils**
 # %%
 d = 1.82  # additional distance to calculate the max external radius of the inner TF leg
-Iop = 50.0e3  # operational current in each conductor
+Iop = 70.0e3  # operational current in each conductor
 dr_plasma_side = R0 * 2 / 3 * 1e-2  # thickness of the plate before the WP
 T_sc = 4.2  # operational temperature of superconducting cable
 T_margin = 1.5  # temperature margin
@@ -439,7 +439,7 @@ if True:
     case = TrapezoidalCaseTF(
         Ri=Ri,
         dy_ps=dr_plasma_side,
-        dy_vault=0.6,
+        dy_vault=0.7,
         theta_TF=360 / n_TF,
         mat_case=ss316,
         WPs=[wp1],
@@ -472,7 +472,7 @@ if True:
     bounds_cond_jacket = np.array([1e-5, 0.2])
     bounds_dy_vault = np.array([0.1, 2])
     max_niter = 100
-    err = 5e-3
+    err = 1e-6
 
     # case.optimize_jacket_and_vault(
     case.optimize_jacket_and_vault(

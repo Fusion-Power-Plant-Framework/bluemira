@@ -1676,8 +1676,8 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         conductor = self.WPs[0].conductor
 
         i = 0
-        err_conductor_area_jacket = 100 * eps
-        err_dy_vault = 100 * eps
+        err_conductor_area_jacket = 10000 * eps
+        err_dy_vault = 10000 * eps
         tot_err = err_dy_vault + err_conductor_area_jacket
 
         self._convergence_array.append([
