@@ -110,6 +110,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._grad_psi = None
         self._pprime = None
         self._ffprime = None
+        self._mesh_area = None
 
         self._curr_target = I_p
         self._R_0 = R_0
@@ -179,8 +180,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
         """
+        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
+
         super().set_mesh(mesh=mesh)
         self._reset_psi_cache()
+        self._mesh_area = calculate_area(self.mesh, None, None)
 
     def _create_g_func(
         self,
@@ -205,11 +209,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
-        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
-
-        area = calculate_area(self.mesh, None, None)
-
-        j_target = curr_target / area if curr_target else 1.0
+        j_target = curr_target / self._mesh_area if curr_target else 1.0
 
         if not isinstance(pprime, Callable):
             _pprime = pprime
