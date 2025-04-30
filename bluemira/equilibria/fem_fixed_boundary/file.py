@@ -129,6 +129,7 @@ def save_fixed_boundary_to_file(
     pressure = _pressure_profile(p_prime_func, psi_vector, psi_mag)
     fpol = _fpol_profile(ff_prime_func, psi_norm, psi_mag, fvac)
 
+    # Flux in V.s
     data = EQDSKInterface(
         bcentre=B_0,
         cplasma=equilibrium.I_p,
