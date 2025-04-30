@@ -316,7 +316,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         self.define_g()
 
-        if self._curr_target:
+        if self._curr_target is not None:
             self.k = self._curr_target / self._calculate_curr_tot()
 
     def _reset_psi_cache(self):
