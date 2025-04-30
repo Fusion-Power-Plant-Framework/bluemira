@@ -18,19 +18,19 @@ class TestVertices:
     v = Vertices(rand(2), rand(2), rand(2), rand(2))
 
     def test_as_3d_array(self):
-        assert (self.v.as_3d_array[0, ::2] == self.v[0]).all()
-        assert (self.v.as_3d_array[1, ::2] == self.v[1]).all()
-        assert (self.v.as_3d_array[2, ::2] == self.v[2]).all()
-        assert (self.v.as_3d_array[3, ::2] == self.v[3]).all()
+        assert (self.v.as_3d_array[0][::2] == self.v[0]).all()
+        assert (self.v.as_3d_array[1][::2] == self.v[1]).all()
+        assert (self.v.as_3d_array[2][::2] == self.v[2]).all()
+        assert (self.v.as_3d_array[3][::2] == self.v[3]).all()
 
     def test_centroid(self):
-        assert self.centroid[0] == np.mean([
+        assert self.v.centroid[0] == np.mean([
             self.v[0][0],
             self.v[1][0],
             self.v[2][0],
             self.v[3][0],
         ])
-        assert self.centroid[1] == np.mean([
+        assert self.v.centroid[1] == np.mean([
             self.v[0][1],
             self.v[1][1],
             self.v[2][1],
@@ -72,13 +72,13 @@ class TestVertices:
         u = Vertices(self.v[0], self.v[1], self.v[2], self.v[3])
         assert self.v == u
         with pytest.raises(TypeError):
-            bool(self.v == u.as_3d_array)  # noqa: B015
+            bool(self.v == u.as_3d_array)
 
     def test_getitem(self):
-        assert self.v[0] == getattr(self, self.index_mapping[0])
-        assert self.v[1] == getattr(self, self.index_mapping[1])
-        assert self.v[2] == getattr(self, self.index_mapping[2])
-        assert self.v[3] == getattr(self, self.index_mapping[3])
+        assert (self.v[0] == getattr(self.v, Vertices.index_mapping[0])).all()
+        assert (self.v[1] == getattr(self.v, Vertices.index_mapping[1])).all()
+        assert (self.v[2] == getattr(self.v, Vertices.index_mapping[2])).all()
+        assert (self.v[3] == getattr(self.v, Vertices.index_mapping[3])).all()
         with pytest.raises(TypeError):
             self["an_unknown_variable"]
 
