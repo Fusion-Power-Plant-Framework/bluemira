@@ -11,6 +11,10 @@ Error classes for use in the radiation_transport.neutronics module.
 from bluemira.base.error import BluemiraError
 
 
+class CSGGeometryError(BluemiraError):
+    """Error when creating invalid CSG geometry."""
+
+
 class CSGGeometryValidationError(BluemiraError):
     """Error for validating csg geometry.
     Thrown when generating incorrect CSG neutronics model.
