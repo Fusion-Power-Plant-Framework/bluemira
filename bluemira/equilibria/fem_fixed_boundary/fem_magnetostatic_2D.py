@@ -236,7 +236,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             a = r * pprime(x_psi)
             b = 1 / MU_0 / r * ffprime(x_psi)
 
-            return self.k * 2 * np.pi * (a + b)
+            return self.k * (a + b)
 
         return g
 
@@ -318,6 +318,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         if self._curr_target is not None:
             self.k = self._curr_target / self._calculate_curr_tot()
+
+        self.define_g()
 
     def _reset_psi_cache(self):
         """
