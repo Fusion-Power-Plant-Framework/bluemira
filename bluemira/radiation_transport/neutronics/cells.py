@@ -599,11 +599,18 @@ class RadialInterface(CSGSurfaces):
         resolution:
             The higher this integer is, the more sample points are chosen.
             self.wire is made of n wires. the number of points sampled = num_wires*n
+
+        Notes
+        -----
+        This uses the BluemiraWire.discretise(byedges=True) option, which means that if
+        one of the underlying wires is a splne, the 'resolution' parameter would have no
+        effect on that wire.
         """
-        self._samples = self.wire.discretize(
+        self._samples = self.wire.discretise(
             resolution * len(self.wire.edges), byedges=True
         )
 
+    @property
     def samples(self) -> Coordinates:
         """A numpy array of sample points, each point is a 3D numpy array (xyz)."""
         if not hasattr(self, "_samples"):
@@ -698,11 +705,11 @@ class Vertices:
     @property
     def centroid(self) -> npt.NDArray[np.float64]:
         """Give the centroid of the four vertices"""
-        return np.array([v for v in self.index_mapping]).mean(axis=0)
+        return np.array(list(self)).mean(axis=0)
 
     @property
     def as_3d_array(self) -> npt.NDArray:
-        return np.insert([v for v in self], 1, 0, axis=1)
+        return np.insert(list(self), 1, 0, axis=1)
 
     @staticmethod
     def convert_to_coordinates(coord_2d: npt.NDArray[np.float64]) -> Coordinates:
@@ -757,7 +764,7 @@ class Vertices:
         """
         if not isinstance(other, Vertices):
             raise TypeError(f"Cannot compare {type(self)} with {type(other)}.")
-        return all(my_v == their_v for my_v, their_v in zip(self, other, strict=True))
+        return all((my_v == their_v).all() for my_v, their_v in zip(self, other, strict=True))
 
     def __iter__(self):
         return iter(getattr(self, attr) for attr in self.index_mapping.values())
