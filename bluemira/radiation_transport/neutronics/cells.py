@@ -30,6 +30,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.neutronics.error import (
+    CSGGeometryError,
     CSGGeometryValidationError,
     check_if_read_only_attr_has_been_set,
 )
@@ -90,7 +91,6 @@ class CSGReactor(Sequence):
         self.subtracted_regions = []
         self.added_regions = []
 
-
     def add_region(self, region):
         for stack in self.cell_stacks:
             stack.add_region(region)
@@ -101,11 +101,19 @@ class CSGReactor(Sequence):
             stack.subtract_region(region)
         self.subtracted_regions.append(region)
 
+    def get_edge_points(self) -> npt.NDArray:
+        """Get a list of sample points on the edge of the volume of the cell,
+        such that if these points are included in the CSG volume, the rest of the cell is
+        guaranteed to also be included in the CSG volume.
+        """
+        return [*self.in_face.samples, *self.ex_face.samples]
+
     @property
-    def csg_region(self):
-        self.added_regions
-        self.subtracted_regions
-        return sum(cell_stack.csg_region for cell_stack in self.cell_stacks)  # some sort of flat union
+    def csg_regions(self):
+        return [
+            *chain(*[stack.csg_regions[0] for stack in self.cell_stacks]),
+            *self.added_regions,
+        ], self.subtracted_regions
 
     def __getitem__(self, index) -> CellStack | CSGReactor:
         if isinstance(index, slice):
@@ -233,6 +241,13 @@ class CellStack(ParentLinkable, Sequence):
         self.subtracted_regions = []
         self.added_regions = []
 
+    def get_edge_points(self):
+        """Get a list of sample points on the edge of the volume of the cell stack, such
+        that if these points are included in the CSG volume, the rest of the cell stack
+        is guaranteed to also be included in the CSG volume.
+        """
+        return [*self.in_face.samples, *self.ex_face.samples]
+
     def add_region(self, region):
         for cell in self.cells:
             cell.add_region(region)
@@ -244,10 +259,11 @@ class CellStack(ParentLinkable, Sequence):
         self.subtracted_regions.append(region)
 
     @property
-    def csg_region(self):
-        self.added_regions
-        self.subtracted_regions
-        return sum(cell.csg_region for cell in self.cells)  # some sort of flat union
+    def csg_regions(self):
+        return [
+            *chain(*[cell.csg_region[0] for cell in self.cells]),
+            *self.added_regions,
+        ], self.subtracted_regions
 
     @property
     def ccw_wall(self):
@@ -432,9 +448,8 @@ class Cell(ParentLinkable):
             ex_face.wire.end_point(),
         )
         self._parent = None
-        self.subtracted_regions = []
-        self.added_regions = []
-
+        self.subtracted_regions = []  # each is an intersection list
+        self.added_regions = []  # each is an intersection list
 
     def add_region(self, region):
         self.added_regions.append(region)
@@ -442,12 +457,27 @@ class Cell(ParentLinkable):
     def subtract_region(self, region):
         self.subtracted_regions.append(region)
 
+    def get_edge_points(self) -> npt.NDArray:
+        """Get a list of sample points on the edge of the volume of the cell,
+        such that if these points are included in the CSG volume, the rest of the cell is
+        guaranteed to also be included in the CSG volume.
+        """
+        return [*self.in_face.samples, *self.ex_face.samples]
+
     @property
     def csg_region(self):
-        self.added_regions
-        self.subtracted_regions
-        return ...
-
+        return (
+            [  # union list
+                [  # intersection list
+                    self.choose_region(self.ccw_wall.csg_surf),
+                    self.choose_region(self.in_face.csg_surf),
+                    self.choose_region(self.cw_wall.csg_surf),
+                    self.choose_region(self.ex_face.csg_surf),
+                ],
+                *self.added_regions,
+            ],
+            self.subtracted_regions,
+        )
 
     def __repr__(self) -> str:
         centroid = self.vertices.centroid
@@ -482,12 +512,12 @@ class Cell(ParentLinkable):
     def outline(self) -> BluemiraWire:
         if not hasattr(self, "_outline"):
             self._ccw_wire = make_polygon([
-                Vertices.to_3D(self.vertices.ccw_ex),
-                Vertices.to_3D(self.vertices.ccw_in),
+                Vertices.convert_to_coordinates(self.vertices.ccw_ex),
+                Vertices.convert_to_coordinates(self.vertices.ccw_in),
             ])
             self._cw_wire = make_polygon([
-                Vertices.to_3D(self.vertices.cw_in),
-                Vertices.to_3D(self.vertices.cw_ex),
+                Vertices.convert_to_coordinates(self.vertices.cw_in),
+                Vertices.convert_to_coordinates(self.vertices.cw_ex),
             ])
             self._outline = BluemiraWire([
                 self.in_face.wire,
@@ -508,46 +538,45 @@ class Cell(ParentLinkable):
         return show_cad(self.half_solid, *args, **kwargs)
 
     def plot_and_fill(self, color, ax=None) -> Axes:
+        """
+        Plot the edges of the polygon, and then fill it with the specified color.
+        """
         if not ax:
             ax = plt.axes()
         plot_2d(show=False, ax=ax)
-        in_p = self.in_face.wire.discretize(
-            5 * len(self.in_face.wire.edges), byedges=True
-        )
-        ex_p = self.ex_face.wire.discretize(
-            5 * len(self.ex_face.wire.edges), byedges=True
-        )
+        in_p = self.in_face.samples
+        ex_p = self.ex_face.samples
         approx_outline = np.concatenate([in_p.xz.T, ex_p.xz.T[::-1]])
         ax.add_patch(mpl_Polygon(approx_outline), color=color)
         return ax
 
 
-class CSGSurfacesCollection:
+class CSGSurfaces:
     """An object that can be translated into a unique surface/collection of surfaces
     in CSG representation.
     """
 
     def __init__(self):
-        """Create an empty slot ._csg to be filled in later."""
-        self._csg = None
+        """Create an empty slot ._csg_surf to be filled in later."""
+        self._csg_surf = None
 
     @property
-    def csg(self):
-        return self._csg
+    def csg_surf(self):  # type not defined yet since we don't want to import openmc here
+        return self._csg_surf
 
-    @csg.setter
-    def csg(self, csg_surfaces):  # type not defined since we don't want to import openmc
+    @csg_surf.setter
+    def csg_surf(self, csg_surfaces):
         """
         Raises
         ------
         ReadOnlyAttributeError
             if the csg_surfaces has already been set once, it cannot be set again.
         """
-        check_if_read_only_attr_has_been_set(self._csg, self)
-        self._csg = csg_surfaces
+        check_if_read_only_attr_has_been_set(self._csg_surf, self)
+        self._csg_surf = csg_surfaces
 
 
-class RadialInterface(CSGSurfacesCollection):
+class RadialInterface(CSGSurfaces):
     """A wire with an associated csg surface representation."""
 
     def __init__(self, wire: BluemiraWire):
@@ -556,31 +585,68 @@ class RadialInterface(CSGSurfacesCollection):
         self.wire = wire
 
     def __eq__(self, other: RadialInterface):
-        return self.wire.is_same(other.wire) and self.csg == other.csg
+        return self.wire.is_same(other.wire) and self.csg_surf == other.csg_surf
 
     def __hash__(self):
-        return hash((self.wire, self.csg))
+        return hash((self.wire, self.csg_surf))
+
+    def make_samples(self, resolution: int = 5) -> None:
+        """
+        Choose how many points to sample.
+
+        Parameters
+        ----------
+        resolution:
+            The higher this integer is, the more sample points are chosen.
+            self.wire is made of n wires. the number of points sampled = num_wires*n
+        """
+        self._samples = self.wire.discretize(
+            resolution * len(self.wire.edges), byedges=True
+        )
+
+    def samples(self) -> Coordinates:
+        """A numpy array of sample points, each point is a 3D numpy array (xyz)."""
+        if not hasattr(self, "_samples"):
+            self.make_samples()
+        return self._samples
 
 
-class StraightLine(CSGSurfacesCollection):
+class StraightLine(CSGSurfaces):
     """Straight line representable in CSG surface form."""
 
     def __init__(
-        self, point_1: npt.NDArray[np.float64], point_2: npt.NDArray[np.float64]
+        self,
+        point_1: npt.NDArray[np.float64],
+        point_2: npt.NDArray[np.float64] | None,
+        *,
+        snapped_to_vertical: bool = False,
+        snapped_to_horizontal: bool = False,
     ):
         """A line, anchored at two points, and made into an associated infinite CSG
         plane/cone/cylinder.
+
+        Raises
+        ------
+        CSGGeometryError
+            Raised if the user is trying to simultaneously snap to vertical and horizonal
         """
         super().__init__()
         self.point_1 = point_1
-        self.point_2 = point_2
+        self.point_2 = point_2  # no need if snapped to vertical/horizontal.
+        if snapped_to_vertical and snapped_to_horizontal:
+            raise CSGGeometryError(
+                f"{self} can only be snapped to be either horizontal or vertical, not"
+                "both at the same time!"
+            )
+        self.snapped_to_vertical = snapped_to_vertical  # makes for a ZCylinder
+        self.snapped_to_horizontal = snapped_to_horizontal  # makes for a ZPlane
 
     @property
     def wire(self) -> BluemiraWire:
         if not hasattr(self, "_wire"):
             self._wire = make_polygon([
-                Vertices.to_3D(self.point_1),
-                Vertices.to_3D(self.point_2),
+                Vertices.convert_to_coordinates(self.point_1),
+                Vertices.convert_to_coordinates(self.point_2),
             ])
         return self._wire
 
@@ -593,7 +659,9 @@ class CellWall(StraightLine):
 
 
 class Vertices:
-    """A collection of vertices denoting the corners of a cell/cell stack."""
+    """A collection of vertices denoting the corners of a cell/cell stack.
+    Only record the x- and z-coordinates.
+    """
 
     index_mapping = MappingProxyType({0: "ccw_in", 1: "cw_in", 2: "ccw_ex", 3: "cw_ex"})
 
@@ -629,18 +697,22 @@ class Vertices:
 
     @property
     def centroid(self) -> npt.NDArray[np.float64]:
-        """Give the centroid of the"""
-        return np.array([self[i] for i in self.index_mapping]).mean(axis=0)
+        """Give the centroid of the four vertices"""
+        return np.array([v for v in self.index_mapping]).mean(axis=0)
+
+    @property
+    def as_3d_array(self) -> npt.NDArray:
+        return np.insert([v for v in self], 1, 0, axis=1)
 
     @staticmethod
-    def to_3D(coord_2d: npt.NDArray[np.float64]) -> Coordinates:
+    def convert_to_coordinates(coord_2d: npt.NDArray[np.float64]) -> Coordinates:
         """Convert a single point represented by a 2D numpy array into a 3D
         :class:`bluemira.geometry.coordinates.Coordinates` (on the x-z plane).
         """
         return Coordinates([coord_2d[0], 0, coord_2d[-1]])
 
     @staticmethod
-    def from_3D(coord_3d: Coordinates) -> npt.NDArray[np.float64]:
+    def convert_from_coordinates(coord_3d: Coordinates) -> npt.NDArray[np.float64]:
         """Convert a single point represented by a 3D
         :class:`bluemira.geometry.coordinates.Coordinates` (on the x-z plane) into a
         2D numpy array.
@@ -648,7 +720,7 @@ class Vertices:
         return np.squeeze(coord_3d.xz)
 
     @classmethod
-    def from_bluemira_coordinates(
+    def from_coordinates(
         cls,
         ccw_in: Coordinates,
         cw_in: Coordinates,
@@ -656,10 +728,10 @@ class Vertices:
         cw_ex: Coordinates,
     ) -> Vertices:
         return cls(
-            cls.from_3D(ccw_in),
-            cls.from_3D(cw_in),
-            cls.from_3D(ccw_ex),
-            cls.from_3D(cw_ex),
+            cls.convert_from_coordinates(ccw_in),
+            cls.convert_from_coordinates(cw_in),
+            cls.convert_from_coordinates(ccw_ex),
+            cls.convert_from_coordinates(cw_ex),
         )
 
     def __getitem__(self, index: int) -> npt.NDArray[np.float64]:
@@ -675,7 +747,7 @@ class Vertices:
             raise TypeError("Vertices only support integer indices.")
         return getattr(self, self.index_mapping[index])
 
-    def __eq__(self, other_vertices: Vertices) -> bool:
+    def __eq__(self, other: Vertices) -> bool:
         """Two sets of vertices are equal if they land on the same coordinates.
 
         Raises
@@ -683,9 +755,12 @@ class Vertices:
         TypeError
             Can only compare against other Vertices object.
         """
-        if not isinstance(other_vertices, Vertices):
-            raise TypeError(f"Cannot compare {type(self)} with {type(other_vertices)}.")
-        return all((self[i] == other_vertices[i]).all() for i in self.index_mapping)
+        if not isinstance(other, Vertices):
+            raise TypeError(f"Cannot compare {type(self)} with {type(other)}.")
+        return all(my_v == their_v for my_v, their_v in zip(self, other, strict=True))
+
+    def __iter__(self):
+        return iter(getattr(self, attr) for attr in self.index_mapping.values())
 
     def __hash__(self):
-        return hash(tuple(self[i] for i in self.index_mapping))
+        return hash(tuple(tuple(v) for v in self))
