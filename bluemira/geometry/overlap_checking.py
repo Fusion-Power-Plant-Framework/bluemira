@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+"""Contains functions to efficiently check for overlaps between solids."""
+
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 
@@ -217,7 +219,8 @@ def scale_points_from_centroid(points, scale_factor):
     Returns
     -------
     scaled_points : np.ndarray
-        An array of shape (n, 3) representing the scaled x, y, z coordinates of the points.
+        An array of shape (n, 3) representing the scaled x, y, z
+        coordinates of the points.
     """
     # Calculate the centroid
     centroid = np.mean(points, axis=0)
@@ -234,7 +237,32 @@ def scale_points_from_centroid(points, scale_factor):
     return scaled_points
 
 
-def tri_mesh_to_cgal_mesh(points, tris, scale=1):
+def tri_mesh_to_cgal_mesh(points: np.ndarray, tris: np.ndarray, scale: float = 1):
+    """
+    Convert a triangle mesh to a CGAL Polyhedron_3 object.
+    This function is used to create a CGAL mesh from a set of points and triangles.
+    It scales the points from their centroid by a given scale factor.
+
+    Parameters
+    ----------
+    points
+        An array of shape (n, 3) representing the x, y, z coordinates of the points.
+    tris
+        An array of shape (m, 3) representing the indices of the points that form
+        the triangles.
+    scale
+        The scale factor by which to scale the points from their centroid.
+
+    Returns
+    -------
+    Polyhedron_3
+        A CGAL Polyhedron_3 object representing the mesh.
+
+    Raises
+    ------
+    ImportError
+        If CGAL is not available, an ImportError is raised.
+    """
     if not cgal_available:
         raise ImportError(
             "CGAL is not available. Please install it to use this function."
@@ -260,7 +288,23 @@ def tri_mesh_to_cgal_mesh(points, tris, scale=1):
 
 
 def find_approx_overlapping_pairs(solids: Iterable[BluemiraSolid]):
-    """Finds the pairs of solids that are approximately overlapping."""
+    """Finds the pairs of solids that are approximately overlapping.
+
+    This function uses bounding boxes to quickly eliminate non-overlapping pairs,
+    and then refines the results using a numpy (or CGAL, if installed) based apporach
+    to refind the number of overlapping pairs taking into the geometry,
+    in a confirmal manner.
+
+    Parameters
+    ----------
+    solids
+        An iterable of BluemiraSolid objects to check for overlaps between.
+
+    Returns
+    -------
+        A list of tuples of indices of overlapping pairs.
+
+    """
 
     def to_bb_matrix(bb: BoundingBox):
         return np.array([

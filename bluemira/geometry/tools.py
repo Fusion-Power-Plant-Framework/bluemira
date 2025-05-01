@@ -1654,14 +1654,13 @@ def save_cad(
         #     filename,
         #     faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
         # )
-    else:
-        cadapi.save_cad(
-            [s.shape for s in shapes],
-            filename,
-            cad_format=cad_format,
-            labels=names,
-            **kwargs,
-        )
+    cadapi.save_cad(
+        [s.shape for s in shapes],
+        filename,
+        cad_format=cad_format,
+        labels=names,
+        **kwargs,
+    )
 
 
 def import_cad(
