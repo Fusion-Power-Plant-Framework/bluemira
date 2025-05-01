@@ -1,11 +1,28 @@
-from collections.abc import Iterable
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+"""
+Utilities for converting CAD to DAGMC using PyMOAB.
+"""
+
+from __future__ import annotations
+
 from copy import deepcopy
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rich.progress import track
 
-from bluemira.geometry.base import BluemiraGeoT
+from bluemira.geometry.compound import BluemiraCompound
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.imprint_solids import imprint_solids
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
+
+    from bluemira.geometry.base import BluemiraGeoT
 
 try:
     from pymoab import core, types
@@ -47,8 +64,8 @@ def save_cad_to_dagmc_model(
 
 
 if __name__ == "__main__":
-    from bluemira.geometry.base import BluemiraGeoT
-    from bluemira.geometry.compound import BluemiraCompound
+    # from bluemira.geometry.base import BluemiraGeoT
+    # from bluemira.geometry.compound import BluemiraCompound
     from bluemira.geometry.face import BluemiraFace
     from bluemira.geometry.tools import (
         extrude_shape,
