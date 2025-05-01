@@ -174,8 +174,60 @@ class Imprinter:
         return imprints_performed
 
 
-def imprint_solids(solids: Iterable[BluemiraSolid], labels: Iterable[str] | None = None):
-    """Imprints solids together."""
+class ImprintResult:
+    """Result of imprinting solids together."""
+
+    def __init__(self, imprintables: list[ImprintableSolid], total_imprints: int):
+        self._imprintables = imprintables
+        self.total_imprints = total_imprints
+
+    @property
+    def imprintables(self) -> list[ImprintableSolid]:
+        return self._imprintables
+
+    @property
+    def labels(self) -> list[str]:
+        """Returns the labels of the imprintables."""
+        return [imp.label for imp in self._imprintables]
+
+    @property
+    def solids(self) -> list[BluemiraSolid]:
+        """Returns the imprinted BluemiraSolids."""
+        return [imp.to_bluemira_solid() for imp in self._imprintables]
+
+    @property
+    def occ_solids(self) -> list[TopoDS_Solid]:
+        """Returns the imprinted TopoDS_Solids."""
+        return [imp.occ_solid for imp in self._imprintables]
+
+    @property
+    def occ_faces(self) -> list[TopoDS_Face]:
+        """Returns the imprinted TopoDS_Face."""
+        return [face for imp in self._imprintables for face in imp.imprinted_faces]
+
+
+def imprint_solids(
+    solids: Iterable[BluemiraSolid], labels: Iterable[str] | None = None
+) -> ImprintResult:
+    """Imprints solids together.
+
+    Parameters
+    ----------
+    solids : Iterable[BluemiraSolid]
+        The solids to imprint together.
+    labels : Iterable[str] | None
+        The labels to use for the solids. If None, the labels will be
+        taken from the solids. Must be the same length as solids.
+
+    Returns
+    -------
+        The imprintable solids.
+
+    Raises
+    ------
+    ValueError
+        If the labels are not the same length as the solids.
+    """
     if labels is None or len(labels) == 0:
         labels = [sld.label for sld in solids]
     if len(labels) != len(solids):
@@ -197,4 +249,4 @@ def imprint_solids(solids: Iterable[BluemiraSolid], labels: Iterable[str] | None
         total_imprints += imprinter([imprintables[a], imprintables[b]])
     bluemira_print(f"Total imprints performed: {total_imprints}")
 
-    return imprintables
+    return ImprintResult(imprintables, total_imprints)
