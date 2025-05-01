@@ -15,8 +15,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import cm
+from matplotlib.collections import LineCollection, PolyCollection
 from matplotlib.patches import PathPatch, Polygon
 from mpl_toolkits.mplot3d import art3d
 
@@ -1133,3 +1136,166 @@ def _plot_2d(coords: Coordinates, ax: Axes | None = None, *, points: bool, **kwa
             ax.annotate(i, xy=(p[0], p[1]))
 
     ax.set_aspect("equal")
+
+
+def plot_2d_mesh_plt(
+    nodes: np.ndarray,
+    faces: np.ndarray,
+    face_groups: np.ndarray | None = None,
+    group_colors: dict[int, str] | None = None,
+    cmap: str = "tab20",
+    figsize: tuple = (6, 6),
+    title: str = "2D Triangular Mesh",
+    ax=None,
+    *,
+    show: bool = False,
+) -> plt.Axes:
+    """
+    Plots a 2D triangular mesh with optional face group coloring.
+
+    If no face_groups and no group_colors are provided, only the triangle edges
+    will be plotted without face coloring.
+
+    Parameters
+    ----------
+    nodes : np.ndarray
+        Array of node coordinates, shape (N, 2)
+    faces : np.ndarray
+        Array of triangle indices, shape (M, 3)
+    face_groups : np.ndarray, optional
+        Face group IDs for coloring, shape (M,)
+    group_colors : dict[int, str], optional
+        Custom mapping from group ID to color
+    cmap : str
+        Colormap used for automatic color assignment
+    figsize : tuple
+        Figure size (only used if ax is None)
+    title : str
+        Title of the plot
+    ax : matplotlib.axes.Axes, optional
+        An existing Axes to plot on
+    show : bool
+        Whether to display the plot with plt.show()
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes object the mesh is plotted on.
+    """
+    if ax is None:
+        _, ax = plt.subplots(figsize=figsize)
+
+    triangles = [nodes[face] for face in faces]
+
+    if face_groups is not None:
+        face_groups = np.asarray(face_groups)
+        unique_groups = np.unique(face_groups)
+        n_groups = len(unique_groups)
+
+        if group_colors is None:
+            color_map = cm.get_cmap(cmap, n_groups)
+            group_colors = {group: color_map(i) for i, group in enumerate(unique_groups)}
+
+        face_colors = [group_colors[group] for group in face_groups]
+
+        collection = PolyCollection(
+            triangles, facecolors=face_colors, edgecolors="k", linewidths=1
+        )
+        ax.add_collection(collection)
+
+    else:
+        # No face colors specified → draw only triangle edges
+        edges = []
+        for tri in triangles:
+            edges.extend([
+                [tri[0], tri[1]],
+                [tri[1], tri[2]],
+                [tri[2], tri[0]],
+            ])
+        edge_collection = LineCollection(edges, colors="k", linewidths=1)
+        ax.add_collection(edge_collection)
+
+    ax.set_aspect("equal")
+    ax.autoscale()
+    ax.set_title(title)
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.grid(visible=True)
+
+    if show:
+        plt.show()
+
+    return ax
+
+
+def plot_dolfinx_2d_mesh_plt(
+    mesh: dolfinx.mesh.Mesh,
+    face_groups: np.ndarray | None = None,
+    group_colors: dict[int, str] | None = None,
+    cmap: str = "tab20",
+    figsize: tuple = (6, 6),
+    title: str = "2D Triangular Mesh (DOLFINx)",
+    ax=None,
+    *,
+    show: bool = False,
+) -> plt.Axes:
+    """
+    Plot a 2D triangular mesh from a DOLFINx mesh using matplotlib by leveraging
+    `plot_2d_mesh_plt`.
+
+    Parameters
+    ----------
+    mesh : dolfinx.mesh.Mesh
+        A 2D DOLFINx triangular mesh.
+    face_groups : np.ndarray, optional
+        Group IDs for each face (element), same length as number of cells.
+    group_colors : dict[int, str], optional
+        Mapping from group ID to color.
+    cmap : str
+        Colormap for automatic coloring of groups.
+    show_nodes : bool
+        If True, plot red dots at node positions.
+    figsize : tuple
+        Size of the figure if ax is None.
+    title : str
+        Title of the plot.
+    ax : matplotlib.axes.Axes, optional
+        Axes object to draw on.
+    show : bool
+        Whether to show the plot immediately.
+
+    Raises
+    ------
+    ValueError
+        If the mesh is not a triangular mesh.
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The axes object used for plotting.
+    """
+    # Extract node coordinates
+    nodes = mesh.geometry.x[:, :2]  # Use only x and y
+
+    # Ensure mesh is triangular
+    if mesh.topology.cell_type != dolfinx.mesh.CellType.triangle:
+        raise ValueError("Only triangular meshes are supported.")
+
+    # Ensure connectivities are computed
+    mesh.topology.create_connectivity(mesh.topology.dim, 0)
+
+    # Extract cell-to-vertex connectivity (triangles)
+    faces = mesh.topology.connectivity(mesh.topology.dim, 0).array.reshape(-1, 3)
+
+    # Delegate to general-purpose plotting function
+    return plot_2d_mesh_plt(
+        nodes=nodes,
+        faces=faces,
+        face_groups=face_groups,
+        group_colors=group_colors,
+        cmap=cmap,
+        figsize=figsize,
+        title=title,
+        ax=ax,
+        show=show,
+    )
