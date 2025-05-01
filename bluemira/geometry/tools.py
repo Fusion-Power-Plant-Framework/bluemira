@@ -40,7 +40,6 @@ from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-from bluemira.mesh.moab_meshing import save_cad_to_dagmc_model
 from bluemira.utilities.tools import iterable_to_list
 
 if TYPE_CHECKING:
@@ -1644,12 +1643,17 @@ def save_cad(
     filename = Path(filename).as_posix()
 
     if cad_format == "dagmc":
-        save_cad_to_dagmc_model(
-            shapes,
-            names,
-            filename,
-            faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
+        # for now
+        raise NotImplementedError(
+            "DAGMC export is not yet implemented in Bluemira. "
+            "Please use the FreeCAD GUI to export to DAGMC."
         )
+        # save_cad_to_dagmc_model(
+        #     shapes,
+        #     names,
+        #     filename,
+        #     faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
+        # )
     else:
         cadapi.save_cad(
             [s.shape for s in shapes],
