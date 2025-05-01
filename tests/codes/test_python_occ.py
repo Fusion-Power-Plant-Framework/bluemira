@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from copy import deepcopy
 
+from bluemira.codes import python_occ
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.imprint_solids import imprint_solids
 from bluemira.geometry.tools import extrude_shape, make_polygon
 
 
@@ -22,7 +22,7 @@ class TestImprintSolids:
         box_c.translate([0.6, 0.6, 1])
 
         pre_imps = [box_a, box_b, box_c]
-        imp_result = imprint_solids(pre_imps)
+        imp_result = python_occ.imprint_solids(pre_imps)
 
         imps = imp_result.imprintables
         imp_solids = imp_result.solids

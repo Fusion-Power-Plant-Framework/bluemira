@@ -5,31 +5,21 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Contains functions to efficiently check for overlaps between solids."""
 
-from collections.abc import Iterable
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.geometry.bound_box import BoundingBox
+import bluemira.codes.cgal_ext as cgal
 from bluemira.geometry.constants import D_TOLERANCE
-from bluemira.geometry.solid import BluemiraSolid
 
-try:
-    from CGAL.CGAL_Kernel import Point_3
-    from CGAL.CGAL_Polygon_mesh_processing import (
-        Int_Vector,
-        Point_3_Vector,
-        Polygon_Vector,
-        polygon_soup_to_polygon_mesh,
-    )
-    from CGAL.CGAL_Polygon_mesh_processing import (
-        do_intersect as cgal_do_intersect,
-    )
-    from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
-    cgal_available = True
-except ImportError:
-    cgal_available = False
+    from bluemira.geometry.bound_box import BoundingBox
+    from bluemira.geometry.solid import BluemiraSolid
 
 
 def two_set_mutually_exclusive(
@@ -237,57 +227,9 @@ def scale_points_from_centroid(points, scale_factor):
     return scaled_points
 
 
-def tri_mesh_to_cgal_mesh(points: np.ndarray, tris: np.ndarray, scale: float = 1):
-    """
-    Convert a triangle mesh to a CGAL Polyhedron_3 object.
-    This function is used to create a CGAL mesh from a set of points and triangles.
-    It scales the points from their centroid by a given scale factor.
-
-    Parameters
-    ----------
-    points
-        An array of shape (n, 3) representing the x, y, z coordinates of the points.
-    tris
-        An array of shape (m, 3) representing the indices of the points that form
-        the triangles.
-    scale
-        The scale factor by which to scale the points from their centroid.
-
-    Returns
-    -------
-    Polyhedron_3
-        A CGAL Polyhedron_3 object representing the mesh.
-
-    Raises
-    ------
-    ImportError
-        If CGAL is not available, an ImportError is raised.
-    """
-    if not cgal_available:
-        raise ImportError(
-            "CGAL is not available. Please install it to use this function."
-        )
-    points = np.asarray(points)
-    points = scale_points_from_centroid(points, scale)
-    pt_3_vec = Point_3_Vector()
-    pt_3_vec.reserve(3)
-    for p in points:
-        pt_3_vec.append(Point_3(p[0], p[1], p[2]))
-    poly_vec = Polygon_Vector()
-    poly_vec.reserve(len(tris))
-    for t in tris:
-        poly = Int_Vector()
-        poly.reserve(3)
-        poly.append(int(t[0]))
-        poly.append(int(t[1]))
-        poly.append(int(t[2]))
-        poly_vec.append(poly)
-    p = Polyhedron_3()
-    polygon_soup_to_polygon_mesh(pt_3_vec, poly_vec, p)
-    return p
-
-
-def find_approx_overlapping_pairs(solids: Iterable[BluemiraSolid]):
+def find_approx_overlapping_pairs(
+    solids: Iterable[BluemiraSolid], *, use_cgal: bool = False
+):
     """Finds the pairs of solids that are approximately overlapping.
 
     This function uses bounding boxes to quickly eliminate non-overlapping pairs,
@@ -332,10 +274,10 @@ def find_approx_overlapping_pairs(solids: Iterable[BluemiraSolid]):
         tsl = solid._tessellate(1)
         points = tsl[0]
         tris = tsl[1]
-        if cgal_available:
+        if use_cgal:
             # we scale the geometry by 1.1 to slightly over-approximate
             # intersections later (need to error on the side of caution).
-            approx_geometry.append(tri_mesh_to_cgal_mesh(points, tris, scale=1.1))
+            approx_geometry.append(cgal.tri_mesh_to_cgal_mesh(points, tris, scale=1.1))
         else:
             # we build bbs around each triangle
             # which creates an approximation of the geometry.
@@ -359,8 +301,8 @@ def find_approx_overlapping_pairs(solids: Iterable[BluemiraSolid]):
         geo_i = approx_geometry[i]
         geo_j = approx_geometry[j]
         itc = (
-            cgal_do_intersect(geo_i, geo_j)
-            if cgal_available
+            cgal.polys_collide(geo_i, geo_j)
+            if use_cgal
             else np.any(check_two_sets_bb_non_interference(geo_i, geo_j))
         )
         return (i, j) if itc else None
