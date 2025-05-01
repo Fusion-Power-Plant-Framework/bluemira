@@ -77,6 +77,30 @@ class TestReactor:
         call_arg = mock_show.call_args[0][0]
         assert all(isinstance(component, BluemiraGeo) for component in call_arg)
 
+    def test_show_3d_cad_displays_components_set_by_with_components(self):
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            self.reactor.show_cad(
+                "xyz",
+                construction_params={
+                    "with_components": [self.reactor.plasma, self.reactor.vvts]
+                },
+            )
+
+        call_arg = mock_show.call_args[0][0]
+        assert len(call_arg) == 2
+
+    def test_show_3d_cad_displays_components_set_by_without_components(self):
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            self.reactor.show_cad(
+                "xyz",
+                construction_params={"without_components": [self.reactor.vvts]},
+            )
+
+        call_arg = mock_show.call_args[0][0]
+        # would be len(call_arg) == 1,
+        # but because it's a single component, gets extracted
+        assert isinstance(call_arg, BluemiraGeo)
+
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
         with pytest.raises(ComponentError):
