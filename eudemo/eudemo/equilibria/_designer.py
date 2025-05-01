@@ -56,14 +56,14 @@ from eudemo.equilibria.tools import (
 def plasma_data(eq):
     p_dat = eq.analyse_plasma()
     return {
-        "beta_p": p_dat.beta_p,
-        "delta_95": p_dat.delta_95,
-        "delta": p_dat.delta,
-        "I_p": p_dat.I_p,
-        "kappa_95": p_dat.kappa_95,
-        "kappa": p_dat.kappa,
-        "l_i": p_dat.li,
-        "q_95": p_dat.q_95,
+        "beta_p": p_dat.beta_p.value,
+        "delta_95": p_dat.delta_95.value,
+        "delta": p_dat.delta.value,
+        "I_p": p_dat.I_p.value,
+        "kappa_95": p_dat.kappa_95.value,
+        "kappa": p_dat.kappa.value,
+        "l_i": p_dat.li.value,
+        "q_95": p_dat.q_95.value,
         "shaf_shift": np.hypot(p_dat.dx_shaf.value, p_dat.dz_shaf.value),
     }
 
