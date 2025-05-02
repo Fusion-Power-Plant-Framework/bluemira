@@ -616,10 +616,19 @@ class ChargedParticleSolver:
         for f_s in self.flux_surfaces:
             plot_coordinates(f_s.coords, ax=ax, linewidth=0.01)
 
+        idx = np.where(
+            (self.result[1] < self.eq._x_points[0].z - 0.001)
+            & (self.result[1] > self.eq._x_points[1].z)
+        )[0]
+
+        x_wall = self.result[0][idx]
+        z_wall = self.result[1][idx]
+        hf_wall = self.result[2][idx]
+
         cm = ax.scatter(
-            self.result[0],
-            self.result[1],
-            c=self.result[2],
+            x_wall,
+            z_wall,
+            c=hf_wall,
             s=10,
             zorder=Zorder.RADIATION.value,
             cmap="plasma",
