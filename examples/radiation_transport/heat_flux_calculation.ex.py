@@ -67,9 +67,9 @@ if DOUBLE_NULL:
     params = {
         "P_sep_particle": 150,
         "f_p_sol_near": 0.65,
-        "fw_lambda_q_near_omp": 0.003,
+        "fw_lambda_q_near_omp": 0.002,
         "fw_lambda_q_far_omp": 0.1,
-        "fw_lambda_q_near_imp": 0.003,
+        "fw_lambda_q_near_imp": 0.002,
         "fw_lambda_q_far_imp": 0.1,
         "f_lfs_lower_target": 0.9 * 0.5,
         "f_hfs_lower_target": 0.1 * 0.5,
