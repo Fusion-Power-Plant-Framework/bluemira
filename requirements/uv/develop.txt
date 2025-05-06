@@ -21,13 +21,13 @@ babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
-blosc2==2.7.1
+blosc2==3.3.2
     # via tables
 certifi==2025.4.26
     # via requests
 cfgv==3.4.0
     # via pre-commit
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
 click==8.1.8
     # via
@@ -111,7 +111,7 @@ jinja2==3.1.6
     #   pytest-html
     #   sphinx
     #   sphinx-autoapi
-joblib==1.4.2
+joblib==1.5.0
     # via scikit-learn
 jsonschema==4.23.0
     # via nbformat
@@ -246,6 +246,7 @@ pint==0.24.4
     # via bluemira (pyproject.toml)
 platformdirs==4.3.7
     # via
+    #   blosc2
     #   jupyter-core
     #   pint
     #   pooch
@@ -324,6 +325,7 @@ referencing==0.36.2
     #   jsonschema-specifications
 requests==2.32.3
     # via
+    #   blosc2
     #   pooch
     #   sphinx
 rich==14.0.0
@@ -436,7 +438,7 @@ tzdata==2025.2
     # via pandas
 urllib3==2.4.0
     # via requests
-virtualenv==20.30.0
+virtualenv==20.31.1
     # via pre-commit
 vtk==9.3.1
     # via

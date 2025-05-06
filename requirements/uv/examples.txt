@@ -32,7 +32,7 @@ beautifulsoup4==4.13.4
     # via nbconvert
 bleach==6.2.0
     # via nbconvert
-blosc2==2.7.1
+blosc2==3.3.2
     # via tables
 certifi==2025.4.26
     # via
@@ -41,7 +41,7 @@ certifi==2025.4.26
     #   requests
 cffi==1.17.1
     # via argon2-cffi-bindings
-charset-normalizer==3.4.1
+charset-normalizer==3.4.2
     # via requests
 click==8.1.8
     # via
@@ -115,7 +115,7 @@ jinja2==3.1.6
     #   jupyterlab
     #   jupyterlab-server
     #   nbconvert
-joblib==1.4.2
+joblib==1.5.0
     # via scikit-learn
 json5==0.12.0
     # via jupyterlab-server
@@ -155,7 +155,7 @@ jupyter-server==2.15.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.1
+jupyterlab==4.4.2
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -284,6 +284,7 @@ pint==0.24.4
     # via bluemira (pyproject.toml)
 platformdirs==4.3.7
     # via
+    #   blosc2
     #   jupyter-core
     #   pint
     #   pooch
@@ -346,6 +347,7 @@ referencing==0.36.2
     #   jupyter-events
 requests==2.32.3
     # via
+    #   blosc2
     #   jupyterlab-server
     #   pooch
 rfc3339-validator==0.1.4
@@ -377,7 +379,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==80.0.0
+setuptools==80.3.1
     # via jupyterlab
 six==1.17.0
     # via
