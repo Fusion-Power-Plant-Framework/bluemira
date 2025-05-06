@@ -419,7 +419,7 @@ class TestNloptOptimiser:
     @pytest.mark.parametrize(
         ("nlopt_err", "msg"),
         [
-            (nlopt.MAXEVAL_REACHED, ["succeeded", "maximum", "evaluations"]),
+            (nlopt.MAXEVAL_REACHED, ["finished", "maximum", "iterations"]),
             (nlopt.MAXTIME_REACHED, ["succeeded", "maximum", "duration"]),
             (nlopt.ROUNDOFF_LIMITED, ["round-off", "last", "parameterisation"]),
             (nlopt.FAILURE, ["failed"]),
