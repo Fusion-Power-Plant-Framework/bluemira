@@ -29,8 +29,8 @@ from pathlib import Path
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
     Efficiency,
-    LibraryConfig,
-    LoadConfig,
+    Load,
+    PowerCycle,
     interpolate_extra,
 )
 
@@ -43,13 +43,15 @@ from bluemira.power_cycle.net import (
 # %%
 
 reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
-config = LibraryConfig.from_dict(
-    reactor_config.config_for("Power Cycle"),
-    durations={
-        "cs_recharge_time": 300,
-        "pumpdown_time": 600,
-        "ramp_up_time": 157,
-        "ramp_down_time": 157,
+config = PowerCycle(
+    **{
+        **reactor_config.config_for("Power Cycle"),
+        "durations": {
+            "cs_recharge_time": 300,
+            "pumpdown_time": 600,
+            "ramp_up_time": 157,
+            "ramp_down_time": 157,
+        },
     },
 )
 
@@ -57,15 +59,15 @@ config = LibraryConfig.from_dict(
 # We can then dynamically add a new load to a specific subphase of the config.
 # %%
 
-config.add_load_config(
-    load=LoadConfig(
-        "cs_power",
+config.add_load(
+    "cs_power",
+    load=Load(
         data={"active": [1, 2], "reactive": [10, 20]},
-        efficiencies=[Efficiency(0.1)],
+        efficiencies=[Efficiency(value=0.1)],
         description="something made up",
     ),
     subphases=["cru", "bri"],
-    subphase_efficiency=[Efficiency({"reactive": 0.2})],
+    subphase_efficiency=[Efficiency(value={"reactive": 0.2})],
 )
 
 # %% [markdown]
@@ -76,15 +78,15 @@ config.add_load_config(
 
 phase = config.get_phase("dwl")
 
-timeseries = interpolate_extra(phase.build_timeseries(), 1)
+timeseries = interpolate_extra(phase.timeseries(), 1)
 
-active_loads = phase.get_load_data_with_efficiencies(timeseries, "active", "MW")
-active_load_total = phase.load_total(timeseries, "active", "MW")
+active_loads = phase.load("active", "MW", timeseries=timeseries)
+active_load_total = phase.total_load("active", "MW", timeseries=timeseries)
 
 # %% [markdown]
 # Note for reactive loads the unit is 'var' (volt-ampere reactive). Although numerically
 # identical to a watt it is the wrong unit for reactive loads.
 # %%
 
-reactive_loads = phase.get_load_data_with_efficiencies(timeseries, "reactive", "Mvar")
-reactive_load_total = phase.load_total(timeseries, "reactive", "Mvar")
+reactive_loads = phase.load("reactive", "Mvar", timeseries=timeseries)
+reactive_load_total = phase.total_load("reactive", "Mvar", timeseries=timeseries)
