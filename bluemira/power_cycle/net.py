@@ -7,329 +7,50 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypedDict,
-)
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
+import numpy.typing as npt
+from numpydantic import NDArray, Shape  # noqa: TC002
+from numpydantic.dtype import Number  # noqa: TC002
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    RootModel,
+    model_validator,
+)
 from scipy.interpolate import interp1d
-from typing_extensions import NotRequired
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.power_cycle.tools import read_json
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from pathlib import Path
+    from collections.abc import Iterable
 
-    import numpy.typing as npt
 
+class PCBaseModel(BaseModel):
+    """Base model for PowerCycle"""
 
-@dataclass
-class Config:
-    """Configuration base dataclass"""
+    model_config = ConfigDict(validate_assignment=True)
 
-    name: str
 
+class PCRootModel(RootModel):
+    """Root model for PowerCycle"""
 
-class LoadType(Enum):
-    """Possibly load types"""
+    model_config = ConfigDict(validate_assignment=True)
 
-    ACTIVE = auto()
-    REACTIVE = auto()
 
-    @classmethod
-    def from_str(cls, load_type: str | LoadType | None) -> LoadType | None:
-        """Create loadtype from str"""
-        if isinstance(load_type, str):
-            return cls[load_type.upper()]
-        return load_type
-
-    @classmethod
-    def check(cls, load_type: str | LoadType | None) -> type[LoadType] | set[LoadType]:
-        """Check for all loadtypes or specific loadtype"""
-        return (
-            cls
-            if load_type is None
-            else {cls[load_type.upper()] if isinstance(load_type, str) else load_type}
-        )
-
-
-class LoadModel(Enum):
-    """
-    Members define possible models used.
-
-    Maps model names to 'interp1d' interpolation behaviour.
-    """
-
-    RAMP = "linear"
-    STEP = "previous"
-
-
-@dataclass
-class Efficiency:
-    """Efficiency data container"""
-
-    value: float | dict[str, float] | dict[LoadType, float]
-    description: str = ""
-
-    def __post_init__(self):
-        """Enforce value structure"""
-        self.value = efficiency_type(self.value)
-
-
-class EfficiencyDictType(TypedDict):
-    """Typing for efficiency object"""
-
-    value: dict[LoadType | str, float]
-    description: NotRequired[str]
-
-
-class Descriptor:
-    """Data class property descriptor
-
-    See https://docs.python.org/3/library/dataclasses.html#descriptor-typed-fields
-    """
-
-    def __set_name__(self, _, name: str):
-        """Set the attribute name from a dataclass"""
-        self._name = f"_{name}"
-
-
-class ActiveReactiveDescriptor(Descriptor):
-    """Descriptor for setting up active and reactive data dictionaries"""
-
-    def __get__(
-        self, obj: Any, _
-    ) -> Callable[[], dict[LoadType, np.ndarray]] | dict[LoadType, np.ndarray]:
-        """Get the config"""
-        if obj is None:
-            return lambda: {
-                LoadType.ACTIVE: np.arange(2),
-                LoadType.REACTIVE: np.arange(2),
-            }
-        return getattr(obj, self._name)
-
-    def __set__(
-        self,
-        obj: Any,
-        value: Callable[[], dict[LoadType, np.ndarray]]
-        | dict[LoadType | str, np.ndarray | list]
-        | np.ndarray,
-    ):
-        """Setup the config"""
-        if callable(value):
-            value = value()
-
-        if isinstance(value, np.ndarray | list):
-            value = {
-                LoadType.ACTIVE: np.asarray(value),
-                LoadType.REACTIVE: np.asarray(value).copy(),
-            }
-        else:
-            ld_t = {LoadType.ACTIVE, LoadType.REACTIVE}
-            value = {
-                k if isinstance(k, LoadType) else LoadType[k.upper()]: np.asarray(v)
-                for k, v in value.items()
-            }
-            if missing_keys := ld_t - value.keys():
-                value[missing_keys.pop()] = np.zeros_like(
-                    value[(value.keys() - missing_keys).pop()]
-                )
-        setattr(obj, self._name, value)
-
-
-def efficiency_type(
-    value: float | dict[str, float] | dict[LoadType, float],
-) -> dict[LoadType, float]:
-    """Convert efficiency value to the correct structure"""
-    if isinstance(value, float | int):
-        value = {LoadType.ACTIVE: value, LoadType.REACTIVE: value}
-    else:
-        ld_t = {LoadType.ACTIVE, LoadType.REACTIVE}
-        value = {
-            k if isinstance(k, LoadType) else LoadType[k.upper()]: v
-            for k, v in value.items()
-        }
-        if missing_keys := ld_t - value.keys():
-            value[missing_keys.pop()] = np.ones_like(
-                value[(value.keys() - missing_keys).pop()]
-            )
-    return value
-
-
-class PhaseEfficiencyDescriptor(Descriptor):
-    """Efficiency descriptor for use with dataclasses"""
-
-    def __get__(self, obj: Any, _) -> Callable[[], dict] | dict[str, list[Efficiency]]:
-        """Get the config"""
-        if obj is None:
-            return dict
-        return getattr(obj, self._name)
-
-    def __set__(
-        self,
-        obj: Any,
-        value: Callable[[], dict] | dict[str, list[Efficiency | EfficiencyDictType]],
-    ):
-        """Setup the config"""
-        if callable(value):
-            value = value()
-        for k, val in value.items():
-            for no, v in enumerate(val):
-                if not isinstance(v, Efficiency):
-                    v["value"] = efficiency_type(v["value"])
-                    value[k][no] = Efficiency(**v)
-
-        setattr(obj, self._name, value)
-
-
-class LoadEfficiencyDescriptor(Descriptor):
-    """Efficiency descriptor for use with dataclasses"""
-
-    def __get__(self, obj: Any, _) -> Callable[[], list] | list[Efficiency]:
-        """Get the config"""
-        if obj is None:
-            return list
-        return getattr(obj, self._name)
-
-    def __set__(
-        self,
-        obj: Any,
-        value: Callable[[], list] | list[EfficiencyDictType | Efficiency],
-    ):
-        """Setup the config"""
-        if callable(value):
-            value = value()
-        for no, v in enumerate(value):
-            if not isinstance(v, Efficiency):
-                v["value"] = efficiency_type(v["value"])
-                value[no] = Efficiency(**v)
-
-        setattr(obj, self._name, value)
-
-
-@dataclass
-class ScenarioConfig(Config):
-    """Power cycle scenario config"""
-
-    pulses: dict[str, int]
-    description: str = ""
-
-
-@dataclass
-class PulseConfig(Config):
-    """Power cycle pulse config"""
-
-    phases: list[str]
-    description: str = ""
-
-
-@dataclass
-class PhaseConfig(Config):
-    """Power cycle phase config"""
-
-    operation: str
-    subphases: list[str]
-    description: str = ""
-
-
-@dataclass
-class SubPhaseConfig(Config):
-    """SubPhase Config"""
-
-    duration: float | str
-    loads: list[str] = field(default_factory=list)
-    efficiencies: PhaseEfficiencyDescriptor = PhaseEfficiencyDescriptor()
-    unit: str = "s"
-    description: str = ""
-    reference: str = ""
-
-    def __post_init__(self):
-        """Enforce unit conversion"""
-        if isinstance(self.duration, float | int):
-            self.duration = raw_uc(self.duration, self.unit, "second")
-            self.unit = "s"
-
-
-@dataclass
-class SystemConfig(Config):
-    """Power cycle system config"""
-
-    subsystems: list[str]
-    description: str = ""
-
-
-@dataclass
-class SubSystemConfig(Config):
-    """Power cycle sub system config"""
-
-    loads: list[str]
-    description: str = ""
-
-
-@dataclass
-class LoadConfig(Config):
-    """Power cycle load config"""
-
-    time: ActiveReactiveDescriptor = ActiveReactiveDescriptor()
-    data: ActiveReactiveDescriptor = ActiveReactiveDescriptor()
-    efficiencies: LoadEfficiencyDescriptor = LoadEfficiencyDescriptor()
-    model: LoadModel | str = LoadModel.RAMP
-    unit: str = "W"
-    description: str = ""
-    normalised: bool = True
-    consumption: bool = True
-
-    def __post_init__(self):
-        """Validate load"""
-        if isinstance(self.model, str):
-            self.model = LoadModel[self.model.upper()]
-        for lt in LoadType:
-            if self.data[lt].size != self.time[lt].size:
-                raise ValueError(
-                    f"time and data must be the same length for {self.name}: "
-                    f"{self.data[lt]}"
-                )
-            if any(np.diff(self.time[lt]) < 0):
-                raise ValueError("time must increase")
-
-            self.data[lt] = raw_uc(self.data[lt], self.unit, "W")
-        self.unit = "W"
-
-    def interpolate(
-        self,
-        time: npt.ArrayLike,
-        end_time: float | None = None,
-        load_type: str | LoadType = LoadType.ACTIVE,
-    ) -> np.ndarray:
-        """
-        Interpolate load for a given time vector
-
-        Notes
-        -----
-        The interpolation type is set by load.model.
-        Any out-of-bound values are set to zero.
-        """
-        if isinstance(load_type, str):
-            load_type = LoadType[load_type.upper()]
-        return interp1d(
-            self.time[load_type],
-            self.data[load_type],
-            kind=self.model.value,
-            bounds_error=False,  # turn-off error for out-of-bound
-            fill_value=(0, 0),  # below-/above-bounds extrapolations
-        )(time if self.normalised or end_time is None else np.array(time) * end_time)
-
-
-def interpolate_extra(vector: npt.NDArray, n_points: int):
+def interpolate_extra(vector: npt.NDArray, n_points: int) -> npt.NDArray:
     """
     Add points between each point in a vector.
+
+    Returns
+    -------
+    :
+        Interpolated vector
     """
     if n_points == 0:
         return vector
@@ -344,9 +65,14 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
 
 
 def _normalise_timeseries(
-    time: npt.ArrayLike,
-    end_time: float | None = None,
-) -> tuple[np.ndarray, float | None]:
+    time: npt.ArrayLike, end_time: float | None = None
+) -> tuple[npt.NDArray, float | None]:
+    """
+    Returns
+    -------
+    :
+        Normalised array optionally to end time
+    """
     time = np.asarray(time)
     if min(time) < 0:
         raise NotImplementedError("Negative time not supported")
@@ -357,28 +83,248 @@ def _normalise_timeseries(
     return time, end_time
 
 
-class LoadSet:
-    """LoadSet of a phase"""
+def _consumption_flag(*, consumption: bool | None = None) -> set[bool]:
+    """
+    Returns
+    -------
+    :
+        Consumption boolean set
+    """
+    return {True, False} if consumption is None else {consumption}
 
-    def __init__(
+
+def _gettime(
+    load: Load,
+    load_type: str | LoadTypeOptions | None,
+    *,
+    consumption: bool | None = None,
+):
+    """
+    Yields
+    ------
+    :
+        Time array from load
+    """
+    load_type = None if load_type is None else LoadTypeOptions(load_type)
+    if load.consumption in _consumption_flag(consumption=consumption):
+        if load_type is None:
+            yield from dict(iter(load.time)).values()
+        else:
+            yield load.time[load_type]
+
+
+class Efficiency(PCBaseModel):
+    """Efficiency Model"""
+
+    value: LoadType
+    description: str = ""
+
+    @model_validator(mode="before")
+    def value_validation(self) -> Efficiency:
+        """
+        Returns
+        -------
+        :
+            Validated value
+        """
+        if not isinstance(self, dict):
+            return {"value": self}
+        return self
+
+
+class Duration(PCBaseModel):
+    """Duration Model"""
+
+    value: float | int
+    unit: str = "s"
+
+    @model_validator(mode="before")
+    def value_validator(self) -> Duration:
+        """
+        Returns
+        -------
+        :
+            Validated value
+        """
+        if not isinstance(self, dict):
+            return {"value": self}
+        return self
+
+
+class Durations(PCRootModel):
+    """Durations Model"""
+
+    root: dict[str, Duration]
+
+
+class SubSystem(PCBaseModel):
+    """Sub system model"""
+
+    loads: list[str]
+    description: str = ""
+
+
+class SubSystemLibrary(PCRootModel):
+    """Sub system library model"""
+
+    root: dict[str, SubSystem]
+
+
+class System(PCBaseModel):
+    """System Model"""
+
+    subsystems: list[str]
+    description: str = ""
+
+
+class SystemLibrary(PCRootModel):
+    """System library model"""
+
+    root: dict[str, System]
+
+
+class PhaseConfig(PCBaseModel):
+    """Phase configuration"""
+
+    description: str = ""
+    operation: str
+    subphases: list[str]
+
+    def duration(self, subphase_library: SubphaseLibrary) -> npt.NDArray:
+        """
+        Returns
+        -------
+        :
+            Duration of phase
+        """
+        return getattr(np, self.operation)([
+            subphase_library.root[s_ph].duration for s_ph in self.subphases
+        ])
+
+
+class PhaseLibrary(PCRootModel):
+    """Phase library model"""
+
+    root: dict[str, PhaseConfig]
+
+
+class Pulse(PCBaseModel):
+    """Pulse Model"""
+
+    description: str = ""
+    phases: list[str]
+
+
+class PulseLibrary(PCRootModel):
+    """Pulse library model"""
+
+    root: dict[str, Pulse]
+
+
+class PulseRuns(PCRootModel):
+    """Pulse runs model"""
+
+    root: dict[str, int]
+
+
+class Scenario(PCBaseModel):
+    """Scenario Model"""
+
+    name: str
+    description: str = ""
+    pulses: PulseRuns
+
+
+class SubPhase(PCBaseModel):
+    """Sub phase model"""
+
+    duration: str | float | int
+    loads: list[str] = Field(default_factory=list)
+    efficiencies: dict[str, list[Efficiency]] = Field(default_factory=dict)
+    unit: str = "s"
+    description: str = ""
+    reference: str = ""
+    _duration_key: str = PrivateAttr(default="")
+
+    @model_validator(mode="after")
+    def duration_unit(self) -> SubPhase:
+        """
+        Returns
+        -------
+        :
+            Enforced unit conversion
+        """
+        if isinstance(self.duration, float | int):
+            object.__setattr__(  # noqa: PLC2801
+                self, "duration", raw_uc(self.duration, self.unit, "second")
+            )
+        object.__setattr__(self, "unit", "s")  # noqa: PLC2801
+        return self
+
+    def import_durations(self, durations: Durations):
+        """Import durations from external keys"""
+        if isinstance(self.duration, str):
+            key = self.duration.replace("$", "")
+            self._duration_key = key
+            dur = durations.root[key]
+            self.duration = raw_uc(dur.value, dur.unit, "second")
+        elif self._duration_key:
+            dur = durations.root[key]
+            self.duration = raw_uc(dur.value, dur.unit, "second")
+
+    def build_timeseries(
         self,
-        loads: dict[str, LoadConfig],
-    ):
-        self._loads = loads
+        load_library: LoadLibrary,
+        load_type: str | LoadTypeOptions | None = None,
+        end_time: float | None = None,
+        *,
+        consumption: bool | None = None,
+    ) -> npt.NDArray:
+        """Build a combined time series based on loads
 
-    @staticmethod
-    def _consumption_flag(*, consumption: bool | None = None) -> set[bool]:
-        return {True, False} if consumption is None else {consumption}
+        Returns
+        -------
+        :
+            Time array
+        """
+        times = []
+        for load_name in self.loads:
+            load = load_library.root[load_name]
+            for time in _gettime(load, load_type, consumption=consumption):
+                if load.normalised:
+                    times.append(time)
+                else:
+                    times.append(time / (max(time) if end_time is None else end_time))
+        if len(times) > 0:
+            return np.unique(np.concatenate(times))
+        return times
+
+    def _find_duplicate_loads(self):
+        """Add duplication efficiency.
+
+        If a load is duplicated in subphase.loads,
+        the resultant data array is multiplied by the number of repeats
+
+        Returns
+        -------
+        :
+            Duplicated loads
+        :
+            Number of duplicates
+        """
+        u, c = np.unique(self.loads, return_counts=True)
+        return u[c > 1].tolist(), c[c > 1]
 
     def get_load_data_with_efficiencies(
         self,
-        timeseries: np.ndarray,
-        load_type: str | LoadType,
+        load_library: LoadLibrary,
+        timeseries: npt.NDArray,
+        load_type: str | LoadTypeOptions,
         unit: str | None = None,
         end_time: float | None = None,
         *,
         consumption: bool | None = None,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[str, npt.NDArray]:
         """
         Get load data taking into account efficiencies and consumption
 
@@ -395,29 +341,44 @@ class LoadSet:
             applied at the right point in time
         consumption:
             return only consumption loads
-        """
-        data = self.get_explicit_data_consumption(
-            timeseries, load_type, unit, end_time, consumption=consumption
-        )
-        load_check = LoadType.check(load_type)
-        for ld_name in data:
-            load_conf = self._loads[ld_name]
-            for eff in load_conf.efficiencies:
-                for eff_type, eff_val in eff.value.items():
-                    if eff_type in load_check:
-                        data[ld_name] *= eff_val
 
+        Returns
+        -------
+        :
+            Load data per load
+        """
+        load_type = LoadTypeOptions(load_type)
+        data = self.get_explicit_data_consumption(
+            load_library, timeseries, load_type, unit, end_time, consumption=consumption
+        )
+        dup, count = self._find_duplicate_loads()
+        for ld_name in data:
+            for eff in load_library.root[ld_name].efficiencies:
+                for eff_type in LoadTypeOptions.check(load_type, dict(eff.value).keys()):
+                    data[ld_name] *= eff.value[eff_type]
+            if ld_name in dup:
+                dup_eff = count[dup.index(ld_name)]
+                bluemira_debug(
+                    f"Duplicate load {ld_name}, duplication efficiency of {dup_eff}"
+                )
+                data[ld_name] *= dup_eff
+
+        for eff_name in self.efficiencies.keys() & data.keys():
+            for eff in self.efficiencies[eff_name]:
+                for eff_type in LoadTypeOptions.check(load_type, dict(eff.value).keys()):
+                    data[eff_name] *= eff.value[eff_type]
         return data
 
     def get_explicit_data_consumption(
         self,
-        timeseries: np.ndarray,
+        load_library: LoadLibrary,
+        timeseries: npt.NDArray,
         load_type: str | LoadType,
         unit: str | None = None,
         end_time: float | None = None,
         *,
         consumption: bool | None = None,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[str, npt.NDArray]:
         """
         Get data with consumption resulting in an oppositely signed load
 
@@ -434,52 +395,34 @@ class LoadSet:
             applied at the right point in time
         consumption:
             return only consumption loads
+
+        Returns
+        -------
+        :
+            Load data per load
         """
-        loads = self.get_interpolated_loads(
-            timeseries, load_type, unit, end_time, consumption=consumption
-        )
         return {
-            ld_n: -ld if self._loads[ld_n].consumption else ld
-            for ld_n, ld in loads.items()
+            ld_n: -ld if load_library.root[ld_n].consumption else ld
+            for ld_n, ld in self.get_interpolated_loads(
+                load_library,
+                timeseries,
+                load_type,
+                unit,
+                end_time,
+                consumption=consumption,
+            ).items()
         }
-
-    def build_timeseries(
-        self,
-        load_type: str | LoadType | None = None,
-        end_time: float | None = None,
-        *,
-        consumption: bool | None = None,
-    ) -> np.ndarray:
-        """Build a combined time series based on loads"""
-        times = []
-        for load in self._loads.values():
-            for time in self._gettime(
-                load, load_type, self._consumption_flag(consumption=consumption)
-            ):
-                if load.normalised:
-                    times.append(time)
-                else:
-                    times.append(time / (max(time) if end_time is None else end_time))
-        return np.unique(np.concatenate(times))
-
-    @staticmethod
-    def _gettime(load, load_type: str | LoadType | None, consumption_check: set[bool]):
-        load_type = LoadType.from_str(load_type)
-        if load.consumption in consumption_check:
-            if load_type is None:
-                yield from load.time.values()
-            else:
-                yield load.time[load_type]
 
     def get_interpolated_loads(
         self,
-        timeseries: np.ndarray,
-        load_type: str | LoadType,
+        load_library: LoadLibrary,
+        timeseries: npt.NDArray,
+        load_type: str | LoadTypeOptions,
         unit: str | None = None,
         end_time: float | None = None,
         *,
         consumption: bool | None = None,
-    ) -> dict[str, np.ndarray]:
+    ) -> dict[str, npt.NDArray]:
         """
         Get loads for a given time series
 
@@ -496,185 +439,353 @@ class LoadSet:
             applied at the right point in time
         consumption:
             return only consumption loads
+
+        Returns
+        -------
+        :
+            Load data per load
         """
         timeseries, end_time = _normalise_timeseries(timeseries, end_time)
-        load_type = LoadType.from_str(load_type)
-        _cnsmptn = self._consumption_flag(consumption=consumption)
-
+        load_type = LoadTypeOptions(load_type)
+        _cnsmptn = _consumption_flag(consumption=consumption)
         return {
-            load.name: load.interpolate(timeseries, end_time, load_type)
+            ld_name: load.interpolate(timeseries, end_time, load_type)
             if unit is None
             else raw_uc(
                 load.interpolate(timeseries, end_time, load_type),
                 load.unit,
                 unit,
             )
-            for load in self._loads.values()
-            if load.consumption in _cnsmptn
+            for ld_name, load in load_library.root.items()
+            if ld_name in self.loads and load.consumption in _cnsmptn
         }
 
-    def load_total(
-        self,
-        timeseries: np.ndarray,
-        load_type: str | LoadType,
-        unit: str | None = None,
-        end_time: float | None = None,
-        *,
-        consumption: bool | None = None,
-    ) -> np.ndarray:
-        """Total load for each timeseries point for a given load_type
 
-        Parameters
-        ----------
-        timeseries:
-            time array
-        load_type:
-            Type of load
-        unit:
-            return unit, defaults to [W] or [var]
-        end_time:
-            for unnormalised loads this assures the load is
-            applied at the right point in time
-        consumption:
-            return only consumption loads
-        """
-        return np.sum(
-            list(
-                self.get_load_data_with_efficiencies(
-                    timeseries, load_type, unit, end_time, consumption=consumption
-                ).values()
-            ),
-            axis=0,
-        )
+class SubphaseLibrary(PCRootModel):
+    """Subphase library model"""
+
+    root: dict[str, SubPhase]
 
 
-@dataclass
-class Phase:
-    """Phase container"""
+class LoadModel(Enum):
+    """
+    Members define possible models used.
 
-    config: PhaseConfig
-    subphases: dict[str, SubPhaseConfig]
-    loads: LoadSet
+    Maps model names to 'interp1d' interpolation behaviour.
+    """
 
-    def __post_init__(self):
-        """Validate duration"""
-        if self.duration < 0:
+    RAMP = "linear"
+    STEP = "previous"
+
+    @classmethod
+    def _missing_(cls, value: str) -> LoadModel:
+        try:
+            return cls[value.upper()]
+        except (KeyError, AttributeError):
             raise ValueError(
-                f"{self.config.name} phase duration must be positive: {self.duration}s"
+                f"{cls.__name__} has no type {value}."
+                f" Select from {(*cls._member_names_,)}"
+            ) from None
+
+
+class LoadTypeOptions(Enum):
+    """Possibly load types"""
+
+    ACTIVE = auto()
+    REACTIVE = auto()
+
+    @classmethod
+    def _missing_(cls, value: str) -> LoadTypeOptions:
+        try:
+            return cls[value.upper()]
+        except (KeyError, AttributeError):
+            raise ValueError(
+                f"{cls.__name__} has no type {value}."
+                f" Select from {(*cls._member_names_,)}"
+            ) from None
+
+    @classmethod
+    def check(
+        cls, self: LoadTypeOptions, other: str | LoadTypeOptions
+    ) -> set[LoadTypeOptions]:
+        """Checks allowed Load types
+
+        Returns
+        -------
+        :
+            Allowed load types
+        """
+        ops = set(cls) if self is None else {self}
+        return ops & {cls(o) for o in other}
+
+
+class LoadType(PCBaseModel):
+    """Load type model"""
+
+    active: int | float | NDArray[Shape["*"], Number] | None = None  # noqa: F722
+    reactive: int | float | NDArray[Shape["*"], Number] | None = None  # noqa: F722
+
+    @model_validator(mode="before")
+    def _(self):
+        if not isinstance(self, dict):
+            return {"active": self, "reactive": self}
+
+        return self
+
+    @model_validator(mode="after")
+    def missing_lt(self):
+        """
+        Returns
+        -------
+        :
+            Validated load
+        """
+        if self.active is None:
+            object.__setattr__(  # noqa: PLC2801
+                self, "active", np.atleast_1d(np.zeros_like(self.reactive, dtype=float))
             )
+
+        if self.reactive is None:
+            object.__setattr__(  # noqa: PLC2801
+                self, "reactive", np.atleast_1d(np.zeros_like(self.active, dtype=float))
+            )
+        if not isinstance(self.reactive, np.ndarray):
+            object.__setattr__(self, "reactive", np.atleast_1d(self.reactive))  # noqa: PLC2801
+
+        if not isinstance(self.active, np.ndarray):
+            object.__setattr__(self, "active", np.atleast_1d(self.active))  # noqa: PLC2801
+        return self
+
+    def __getitem__(self, value: str | LoadTypeOptions) -> npt.NDArray:
+        """
+        Item access for load
+
+        Returns
+        -------
+        :
+            Item
+        """
+        if isinstance(value, LoadTypeOptions):
+            value = value.name.lower()
+        return getattr(self, value)
+
+
+class Load(PCBaseModel):
+    """Load Model"""
+
+    time: LoadType = Field(default_factory=LoadType)
+    data: LoadType = Field(default_factory=LoadType)
+    efficiencies: Efficiency | list[Efficiency] = Field(default_factory=list)
+    model: LoadModel = LoadModel.RAMP
+    unit: str = "W"
+    description: str = ""
+    normalised: bool = True
+    consumption: bool = True
+
+    @model_validator(mode="after")
+    def load_validator(self):
+        """
+        Raises
+        ------
+        ValueError
+            Time and data are not of the same size
+
+        Returns
+        -------
+        :
+            Validated load
+        """
+        default_unit = type(self).model_fields["unit"].default
+        for lt in LoadTypeOptions:
+            if self.data[lt].size != self.time[lt].size:
+                if all(self.time[lt] == 0):
+                    setattr(self.time, lt.name.lower(), np.zeros_like(self.data[lt]))
+                else:
+                    raise ValueError(
+                        f"time and data must be the same length: {self.data[lt]}"
+                    )
+            if any(np.diff(self.time[lt]) < 0):
+                raise ValueError("time must increase")
+
+            object.__setattr__(  # noqa: PLC2801
+                self.data,
+                lt.name.lower(),
+                raw_uc(self.data[lt], self.unit, default_unit),
+            )
+        object.__setattr__(self, "unit", default_unit)  # noqa: PLC2801
+
+        if not isinstance(self.efficiencies, list):
+            object.__setattr__(self, "efficiencies", [self.efficiencies])  # noqa: PLC2801
+
+        return self
+
+    def interpolate(
+        self,
+        time: npt.ArrayLike,
+        end_time: float | None = None,
+        load_type: str | LoadTypeOptions = LoadTypeOptions.ACTIVE,
+    ) -> npt.NDArray:
+        """
+        Returns
+        -------
+        :
+            Interpolate load for a given time vector
+
+        Notes
+        -----
+        The interpolation type is set by model.
+        Any out-of-bound values are set to zero.
+        """
+        load_type = LoadTypeOptions(load_type)
+        return interp1d(
+            self.time[load_type],
+            self.data[load_type],
+            kind=self.model.value,
+            bounds_error=False,  # turn-off error for out-of-bound
+            fill_value=(0, 0),  # below-/above-bounds extrapolations
+        )(time if self.normalised or end_time is None else np.array(time) * end_time)
+
+
+class LoadLibrary(PCRootModel):
+    """Load library Model"""
+
+    root: dict[str, Load]
+
+
+class Phase:
+    """Phase definition object"""
+
+    def __init__(
+        self, config: PhaseConfig, subphases: SubphaseLibrary, loads: LoadLibrary
+    ):
+        self._config = config
+        self.subphases = subphases
+        self.loads = loads
 
     @property
-    def duration(self):
+    def duration(self) -> float:
         """Duration of phase"""
-        return getattr(np, self.config.operation)([
-            s_ph.duration for s_ph in self.subphases.values()
-        ])
+        return self._config.duration(self.subphases)
 
-    def _process_phase_efficiencies(
-        self, loads: dict[str, np.ndarray], load_type: str | LoadType
-    ):
-        load_check = LoadType.check(load_type)
-        for subphase in self.subphases.values():
-            self._find_duplicate_loads(subphase, loads)
-            for eff_name, effs in subphase.efficiencies.items():
-                for eff in effs:
-                    for eff_type, eff_val in eff.value.items():
-                        if eff_type in load_check and eff_name in loads:
-                            loads[eff_name] *= eff_val
-        return loads
-
-    @staticmethod
-    def _find_duplicate_loads(subphase: SubPhaseConfig, loads: dict[str, np.ndarray]):
-        """Add duplication efficiency.
-
-        If a load is duplicated in subphase.loads,
-        the resultant data array is multiplied by the number of repeats
-        """
-        u, c = np.unique(subphase.loads, return_counts=True)
-        counts = c[c > 1]
-        for cnt, dup in enumerate(u[c > 1]):
-            if dup in loads:
-                eff = counts[cnt]
-                bluemira_debug(f"Duplicate load {dup}, duplication efficiency of {eff}")
-                loads[dup] *= eff
-
-    def build_timeseries(
+    def timeseries(
         self,
-        load_type: str | LoadType | None = None,
+        load_type: str | LoadTypeOptions | None = None,
         *,
         consumption: bool | None = None,
-    ) -> np.ndarray:
-        """Build a combined time series based on loads"""
-        return (
-            self.loads.build_timeseries(
-                load_type=load_type, end_time=self.duration, consumption=consumption
-            )
-            * self.duration
+    ) -> npt.NDArray:
+        """
+        Returns
+        -------
+        :
+            A combined time series based on loads
+        """
+        return np.unique(
+            np.concatenate([
+                sp.build_timeseries(
+                    self.loads,
+                    load_type=load_type,
+                    end_time=self.duration,
+                    consumption=consumption,
+                )
+                * self.duration
+                for sp in self.subphases.root.values()
+            ])
         )
 
-    def load_total(
+    def _load(
         self,
-        timeseries: np.ndarray,
-        load_type: str | LoadType,
+        timeseries: npt.NDArray,
+        load_type: str | LoadTypeOptions,
         unit: str | None = None,
         *,
         consumption: bool | None = None,
-    ) -> np.ndarray:
-        """Total load for each timeseries point for a given load_type
-
-        Parameters
-        ----------
-        timeseries:
-            time array
-        load_type:
-            Type of load
-        unit:
-            return unit, defaults to [W] or [var]
-        consumption:
-            return only consumption loads
-        """
-        timeseries, _ = _normalise_timeseries(timeseries, self.duration)
-        return np.sum(
-            list(
-                self.get_load_data_with_efficiencies(
-                    timeseries, load_type, unit, consumption=consumption
-                ).values()
-            ),
-            axis=0,
-        )
-
-    def get_load_data_with_efficiencies(
-        self,
-        timeseries: np.ndarray,
-        load_type: str | LoadType,
-        unit: str | None = None,
-        *,
-        consumption: bool | None = None,
-    ) -> dict[str, np.ndarray]:
-        """
-        Get load data taking into account efficiencies and consumption
-
-        Parameters
-        ----------
-        timeseries:
-            time array
-        load_type:
-            Type of load
-        unit:
-            return unit, defaults to [W] or [var]
-        consumption:
-            return only consumption loads
-        """
-        timeseries, _ = _normalise_timeseries(timeseries, self.duration)
-        return self._process_phase_efficiencies(
-            self.loads.get_load_data_with_efficiencies(
+    ) -> dict[str, npt.NDArray]:
+        load_data = [
+            sp.get_load_data_with_efficiencies(
+                self.loads,
                 timeseries,
                 load_type,
                 unit,
                 end_time=self.duration,
                 consumption=consumption,
+            )
+            for sp in self.subphases.root.values()
+        ]
+        if len(load_data) > 1:
+            data = {}
+            for ld_name in self.loads.root:
+                for dat in load_data:
+                    if ld_name in dat:
+                        data[ld_name] = data.get(ld_name, 0) + dat[ld_name]
+            return data
+        return load_data[0]
+
+    def total_load(
+        self,
+        load_type: str | LoadTypeOptions,
+        unit: str | None = None,
+        *,
+        timeseries: npt.NDArray | None = None,
+        consumption: bool | None = None,
+    ) -> npt.NDArray:
+        """Total load for each timeseries point for a given load_type
+
+        Parameters
+        ----------
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+
+        Returns
+        -------
+        :
+            Total load
+        """
+        if timeseries is None:
+            timeseries = self.timeseries(load_type, consumption=consumption)
+        timeseries, _ = _normalise_timeseries(timeseries, self.duration)
+        return np.sum(
+            list(
+                self._load(timeseries, load_type, unit, consumption=consumption).values()
             ),
+            axis=0,
+        )
+
+    def load(
+        self,
+        load_type: str | LoadTypeOptions,
+        unit: str | None = None,
+        *,
+        timeseries: npt.NDArray | None = None,
+        consumption: bool | None = None,
+    ) -> dict[str, npt.NDArray]:
+        """
+        Get load data taking into account efficiencies and consumption
+
+        Parameters
+        ----------
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+
+        Returns
+        -------
+        :
+            Load
+        """
+        if timeseries is None:
+            timeseries = self.timeseries(load_type, consumption=consumption)
+        return self._load(
+            _normalise_timeseries(timeseries, self.duration)[0],
             load_type,
+            unit,
+            consumption=consumption,
         )
 
 
@@ -685,84 +796,146 @@ class PulseDictType(TypedDict):
     data: dict[str, Phase]
 
 
-class LibraryConfig:
-    """Power Cycle Configuration"""
+class PowerCycle(PCBaseModel):
+    """Power cycle Model"""
 
-    def __init__(
-        self,
-        scenario: ScenarioConfig,
-        pulse: dict[str, PulseConfig],
-        phase: dict[str, PhaseConfig],
-        subphase: dict[str, SubPhaseConfig],
-        system: dict[str, SystemConfig],
-        subsystem: dict[str, SubSystemConfig],
-        loads: dict[str, LoadConfig],
-        durations: dict[str, float] | None = None,
-    ):
-        self.scenario = scenario
-        self.pulse = pulse
-        self.phase = phase
-        self.subphase = subphase
-        self.system = system
-        self.subsystem = subsystem
-        self.loads = loads
-        self._import_subphase_duration(durations)
+    scenario: Scenario
+    pulse_library: PulseLibrary
+    phase_library: PhaseLibrary
+    subphase_library: SubphaseLibrary
+    system_library: SystemLibrary
+    sub_system_library: SubSystemLibrary
+    load_library: LoadLibrary
+    durations: Durations = Field(default_factory=dict)
 
+    @model_validator(mode="after")
     def check_config(self):
-        """Check powercycle configuration"""
-        ph_keys = self.phase.keys()
-        sph_keys = self.subphase.keys()
-        ss_keys = self.subsystem.keys()
-        loads = self.loads.keys()
+        """
+        Returns
+        -------
+        :
+            Validated powercycle configuration
+
+        Raises
+        ------
+        ValueError
+            Missing entries for pulses, phases etc
+        """
+        ph_keys = self.phase_library.root.keys()
+        sph_keys = self.subphase_library.root.keys()
+        ss_keys = self.sub_system_library.root.keys()
+        loads = self.load_library.root.keys()
         # scenario has known pulses
-        if unknown_pulse := self.scenario.pulses.keys() - self.pulse.keys():
+        if (
+            unknown_pulse := self.scenario.pulses.root.keys()
+            - self.pulse_library.root.keys()
+        ):
             raise ValueError(f"Unknown pulses {unknown_pulse}")
         # pulses have known phases
-        for pulse in self.pulse.values():
+        for pulse in self.pulse_library.root.values():
             if unknown_phase := pulse.phases - ph_keys:
                 raise ValueError(f"Unknown phases {unknown_phase}")
         # phases have known subphases
-        for ph_c in self.phase.values():
+        for ph_c in self.phase_library.root.values():
             if unknown_s_ph := ph_c.subphases - sph_keys:
                 raise ValueError(f"Unknown subphase configurations {unknown_s_ph}")
         # subphases have known loads
-        for subphase in self.subphase.values():
+        for subphase in self.subphase_library.root.values():
             if unknown_load := subphase.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
 
         # systems have known subsystems
-        for sys_c in self.system.values():
+        for sys_c in self.system_library.root.values():
             if unknown := sys_c.subsystems - ss_keys:
                 raise ValueError(f"Unknown subsystem configurations {unknown}")
         # subsystems have known loads
-        for s_sys_c in self.subsystem.values():
+        for s_sys_c in self.sub_system_library.root.values():
             if unknown_load := s_sys_c.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
+        return self
 
-    def _import_subphase_duration(
-        self, subphase_duration_params: dict[str, float] | None = None
-    ):
-        """Import subphase data"""
-        for s_ph in self.subphase.values():
-            if isinstance(s_ph.duration, str):
-                key = s_ph.duration.replace("$", "")
-                if subphase_duration_params is None:
-                    raise KeyError(key)
-                s_ph.duration = subphase_duration_params[key]
+    @model_validator(mode="after")
+    def duration_validation(self):
+        """Import subphase data and validate duration
 
-    def add_load_config(
+        Returns
+        -------
+        :
+            Model with imported durations
+
+        Raises
+        ------
+        ValueError
+            Phase duration < 0
+        """
+        for s_ph in self.subphase_library.root.values():
+            s_ph.import_durations(self.durations)
+
+        for ph_name, phase in self.phase_library.root.items():
+            dur = phase.duration(self.subphase_library)
+            if dur < 0:
+                raise ValueError(f"{ph_name} phase duration must be positive: {dur}s")
+        return self
+
+    def get_phase(self, phase: str) -> Phase:
+        """
+        Returns
+        -------
+        :
+            A single phase object
+        """
+        phase_config = self.phase_library.root[phase]
+        subphases = SubphaseLibrary({
+            k: self.subphase_library.root[k] for k in phase_config.subphases
+        })
+        return Phase(
+            phase_config,
+            subphases,
+            LoadLibrary({
+                ld: self.load_library.root[ld]
+                for subphase in subphases.root.values()
+                for ld in subphase.loads
+            }),
+        )
+
+    def get_scenario(self) -> dict[str, PulseDictType]:
+        """
+        Returns
+        -------
+        :
+            A scenario dictionary
+        """
+        return {
+            pulse: {"repeat": reps, "data": self.get_pulse(pulse)}
+            for pulse, reps in self.scenario.pulses.root.items()
+        }
+
+    def get_pulse(self, pulse: str) -> dict[str, Phase]:
+        """
+        Returns
+        -------
+        :
+            A pulse dictionary
+        """
+        return {
+            phase: self.get_phase(phase)
+            for phase in self.pulse_library.root[pulse].phases
+        }
+
+    def add_load(
         self,
-        load: LoadConfig,
+        name: str,
+        load: Load,
         subphases: str | Iterable[str] | None = None,
         subphase_efficiency: list[Efficiency] | None = None,
     ):
         """Add load config"""
-        self.loads[load.name] = load
-        self.link_load_to_subphase(load.name, subphases or [], subphase_efficiency)
+        self.load_library.root[name] = load
+        self.link_load_to_subphase(name, subphases or [], subphase_efficiency)
 
     def link_load_to_subphase(
         self,
-        load_name: str,
+        name: str,
         subphases: str | Iterable[str],
         subphase_efficiency: list[Efficiency] | None = None,
     ):
@@ -770,76 +943,38 @@ class LibraryConfig:
         if isinstance(subphases, str):
             subphases = [subphases]
         for subphase in subphases:
-            self.subphase[subphase].loads.append(load_name)
+            self.subphase_library.root[subphase].loads.append(name)
             if subphase_efficiency is not None:
-                self.subphase[subphase].efficiencies[load_name] = subphase_efficiency
+                self.subphase_library.root[subphase].efficiencies[name] = (
+                    subphase_efficiency
+                )
 
-    @classmethod
-    def from_json(
-        cls,
-        manager_config_path: Path | str,
-        durations: dict[str, float] | None = None,
-    ):
-        """Create configuration from pure json"""
-        return cls.from_dict(read_json(manager_config_path), durations)
 
-    @classmethod
-    def from_dict(cls, data: dict[str, Any], durations: dict[str, float] | None = None):
-        """Create configuration from dictionary"""
-        return cls(
-            scenario=ScenarioConfig(**data["scenario"]),
-            pulse={
-                k: PulseConfig(name=k, **v) for k, v in data["pulse_library"].items()
-            },
-            phase={
-                k: PhaseConfig(name=k, **v) for k, v in data["phase_library"].items()
-            },
-            subphase={
-                k: SubPhaseConfig(name=k, **v)
-                for k, v in data["subphase_library"].items()
-            },
-            system={
-                k: SystemConfig(name=k, **v) for k, v in data["system_library"].items()
-            },
-            subsystem={
-                k: SubSystemConfig(name=k, **v)
-                for k, v in data["sub_system_library"].items()
-            },
-            loads={k: LoadConfig(name=k, **v) for k, v in data["load_library"].items()},
-            durations=durations,
-        )
+def make_power_cycle(
+    scenario_name: str,
+    pulse_runs: PulseRuns | None = None,
+    pulses: dict[str, Pulse] | None = None,
+    phases: dict[str, PhaseConfig] | None = None,
+    subphases: dict[str, SubPhase] | None = None,
+    systems: dict[str, System] | None = None,
+    subsystems: dict[str, SubSystem] | None = None,
+    loads: dict[str, Load] | None = None,
+    durations: Durations | None = None,
+) -> PowerCycle:
+    """Create a power cycle with minimal inputs
 
-    def get_phase(self, phase: str, *, check=True) -> Phase:
-        """Create a single phase object"""
-        if check:
-            self.check_config()
-
-        phase_config = self.phase[phase]
-        subphases = {k: self.subphase[k] for k in phase_config.subphases}
-
-        return Phase(
-            phase_config,
-            subphases,
-            LoadSet({
-                ld: self.loads[ld]
-                for subphase in subphases.values()
-                for ld in subphase.loads
-            }),
-        )
-
-    def get_pulse(self, pulse: str, *, check=True) -> dict[str, Phase]:
-        """Create a pulse dictionary"""
-        if check:
-            self.check_config()
-        return {
-            phase: self.get_phase(phase, check=False)
-            for phase in self.pulse[pulse].phases
-        }
-
-    def get_scenario(self) -> dict[str, PulseDictType]:
-        """Create a scenario dictionary"""
-        self.check_config()
-        return {
-            pulse: {"repeat": reps, "data": self.get_pulse(pulse, check=False)}
-            for pulse, reps in self.scenario.pulses.items()
-        }
+    Returns
+    -------
+    :
+        Initialised powercycle
+    """
+    return PowerCycle(
+        scenario={"name": scenario_name, "pulses": pulse_runs or {}},
+        pulse_library=pulses or {},
+        phase_library=phases or {},
+        subphase_library=subphases or {},
+        system_library=systems or {},
+        sub_system_library=subsystems or {},
+        load_library=loads or {},
+        durations=durations or {},
+    )
