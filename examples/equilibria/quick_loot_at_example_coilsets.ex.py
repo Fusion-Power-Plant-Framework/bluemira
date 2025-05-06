@@ -6,7 +6,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Notebook displaying example coilset positions for different devices
+Notebook displaying example coilset positions for different devices.
+To be used in examples and tests.
 """
 
 # In[1]:
@@ -16,7 +17,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet
 
 # In[2]:
@@ -24,7 +24,7 @@ from bluemira.equilibria.coils import Coil, CoilSet
 
 def read_coil_json(name):
     """Read coil info and return data."""
-    file_path = Path(get_bluemira_path("data/coilsets", subfolder="examples"), name)
+    file_path = Path("../../tests/equilibria/test_data/coilsets/", name)
     with open(file_path) as f:
         return json.load(f)
 
