@@ -464,10 +464,14 @@ def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:
         The optimisation algorithm
     """
     result = opt.last_optimize_result()
+
     message = None
     log_func = bluemira_warn
     if result == nlopt.MAXEVAL_REACHED:
-        message = "optimiser succeeded but stopped at the maximum number of evaluations."
+        message = (
+            "The optimiser finished without error but failed to"
+            f"converge after maximum number of iterations ({opt.get_maxeval()})."
+        )
         if algorithm is Algorithm.ISRES:
             log_func = bluemira_debug
             message += f"\nThis is expected for the {Algorithm.ISRES.name} algorithm."
