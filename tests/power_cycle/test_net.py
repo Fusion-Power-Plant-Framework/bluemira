@@ -12,20 +12,22 @@ import pytest
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
     Efficiency,
-    LibraryConfig,
-    LoadConfig,
-    LoadSet,
-    LoadType,
+    Load,
+    LoadLibrary,
+    LoadTypeOptions,
     Phase,
     PhaseConfig,
-    SubPhaseConfig,
+    PowerCycle,
+    SubPhase,
+    SubphaseLibrary,
     interpolate_extra,
+    make_power_cycle,
 )
 
 
-def test_LoadType_from_str():
-    assert LoadType.from_str("active") == LoadType.ACTIVE
-    assert LoadType.from_str("reactive") == LoadType.REACTIVE
+def test_LoadTypeOptions_from_str():
+    assert LoadTypeOptions("active") == LoadTypeOptions.ACTIVE
+    assert LoadTypeOptions("reactive") == LoadTypeOptions.REACTIVE
 
 
 def test_interpolate_extra_returns_the_correct_length():
@@ -36,21 +38,52 @@ def test_interpolate_extra_returns_the_correct_length():
 
 
 def test_SubPhaseConfig_duration():
-    pcb = SubPhaseConfig("name", 5, unit="hours")
+    pcb = SubPhase(duration=5, unit="hours")
     assert pcb.duration == 18000
     assert pcb.unit == "s"
 
 
-class TestSubLoad:
+def test_make_powercycle():
+    pc = make_power_cycle("s_name")
+    assert pc.scenario.name == "s_name"
+    pc = make_power_cycle(
+        "s_name",
+        {"std": 1, "other": 2},
+        {"std": {"phases": ["one"]}, "other": {"phases": ["one"]}},
+        {"one": {"operation": "max", "subphases": ["spone"]}},
+        {"spone": {"duration": 5, "loads": ["lone"]}},
+        loads={"lone": {"time": [0, 1, 2], "data": [2, 0, 4]}},
+    )
+    sc = pc.get_scenario()
+    assert isinstance(sc["std"]["data"]["one"], Phase)
+    assert isinstance(sc["other"]["data"]["one"], Phase)
+    ph = pc.get_phase("one")
+    assert np.allclose(ph.timeseries(), [0, 5, 10])
+    assert np.allclose(ph.load("active")["lone"], [-2, -1, 0])
+    assert np.allclose(ph.total_load("active"), [-2, -1, 0])
+    assert ph.duration == 5
+
+    pc = make_power_cycle(
+        "s_name",
+        systems={"sone": {"subsystems": ["ssone"]}},
+        subsystems={"ssone": {"loads": ["lone"]}},
+        loads={"lone": {"time": [0, 1, 2], "data": [2, 0, 4]}},
+    )
+    # Systems are not yet used...
+    assert pc.system_library.root.keys() == {"sone"}
+    assert pc.sub_system_library.root.keys() == {"ssone"}
+
+
+class TestLoad:
     def test_interpolate(self):
-        pcsl = LoadConfig(
-            "name", np.array([0, 0.5, 1]), {"reactive": np.arange(3)}, model="ramp"
+        pcsl = Load(
+            time=np.array([0, 0.5, 1]), data={"reactive": np.arange(3)}, model="ramp"
         )
         assert np.allclose(
             pcsl.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="reactive"),
             np.array([0, 0.2, 0.4, 0.6, 2]),
         )
-        pcsl2 = LoadConfig("name", np.array([0, 0.5, 1]), np.arange(3), model="ramp")
+        pcsl2 = Load(time=np.array([0, 0.5, 1]), data=np.arange(3), model="ramp")
         assert np.allclose(
             pcsl2.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="reactive"),
             np.array([0, 0.2, 0.4, 0.6, 2]),
@@ -60,9 +93,8 @@ class TestSubLoad:
             np.array([0, 0.2, 0.4, 0.6, 2]),
         )
 
-        pcsl = LoadConfig(
-            "name",
-            np.array([0, 0.5, 2]),
+        pcsl = Load(
+            time=np.array([0, 0.5, 2]),
             data={"active": np.arange(3)},
             model="ramp",
             normalised=False,
@@ -74,50 +106,58 @@ class TestSubLoad:
 
     def test_validation_raises_ValueError(self):
         with pytest.raises(ValueError, match="time and data"):
-            LoadConfig("name", np.array([0, 0.1, 1]), np.zeros(2), model="ramp")
+            Load(time=np.array([0, 0.1, 1]), data=np.zeros(2), model="ramp")
 
         with pytest.raises(ValueError, match="time and data"):
-            LoadConfig("name", [0, 0.1, 1], np.zeros(2), model="ramp")
+            Load(time=[0, 0.1, 1], data=np.zeros(2), model="ramp")
 
         with pytest.raises(ValueError, match="time must increase"):
-            LoadConfig("name", [0, 1, 0.1], np.zeros(3), model="ramp")
+            Load(time=[0, 1, 0.1], data=np.zeros(3), model="ramp")
 
-        pcsl = LoadConfig("name", [0, 0.1, 1], np.zeros(3), model="ramp", unit="MW")
-        assert np.allclose(pcsl.time[LoadType.ACTIVE], np.array([0, 0.1, 1]))
-        assert np.allclose(pcsl.time[LoadType.REACTIVE], np.array([0, 0.1, 1]))
+        pcsl = Load(time=[0, 0.1, 1], data=np.zeros(3), model="ramp", unit="MW")
+        assert np.allclose(pcsl.time[LoadTypeOptions.ACTIVE], np.array([0, 0.1, 1]))
+        assert np.allclose(pcsl.time[LoadTypeOptions.REACTIVE], np.array([0, 0.1, 1]))
         assert pcsl.unit == "W"
 
 
-class TestLoadSet:
+class TestSubPhase:
     @classmethod
     def setup_class(cls):
         reactor_config = ReactorConfig(
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
-        cls._config = LibraryConfig.from_dict(
-            reactor_config.config_for("Power Cycle"),
-            {
-                "cs_recharge_time": 300,
-                "pumpdown_time": 600,
-                "ramp_up_time": 157,
-                "ramp_down_time": 157,
+        cls._config = PowerCycle(
+            **{
+                **reactor_config.config_for("Power Cycle"),
+                "durations": {
+                    "cs_recharge_time": 300,
+                    "pumpdown_time": 600,
+                    "ramp_up_time": 157,
+                    "ramp_down_time": 157,
+                },
             },
         )
-        cls._loads = cls._config.get_phase("dwl").loads
+        cls._subphases = cls._config.get_phase("dwl").subphases
 
     def setup_method(self):
-        self.loads = deepcopy(self._loads)
+        self.subphases = deepcopy(self._subphases)
 
     @pytest.mark.parametrize("load_type", ["active", "reactive", None])
     @pytest.mark.parametrize("end_time", [200, None])
     @pytest.mark.parametrize("consumption", [True, False, None])
     def test_build_timeseries(self, load_type, end_time, consumption):
-        assert np.allclose(
-            self.loads.build_timeseries(
-                load_type=load_type, end_time=end_time, consumption=consumption
-            ),
-            [0, 0.6, 1] if consumption in {True, None} and end_time == 200 else [0, 1],
-        )
+        for sp in self.subphases.root.values():
+            assert np.allclose(
+                sp.build_timeseries(
+                    load_library=self._config.load_library,
+                    load_type=load_type,
+                    end_time=end_time,
+                    consumption=consumption,
+                ),
+                [0, 0.6, 1]
+                if consumption in {True, None} and end_time == 200
+                else [0, 1],
+            )
 
     @pytest.mark.parametrize(
         ("time", "et", "res1", "res2"),
@@ -143,47 +183,104 @@ class TestLoadSet:
         ],
     )
     def test_get_load_data_with_efficiencies(self, time, et, res1, res2):
-        load_data = self.loads.get_load_data_with_efficiencies(
-            time, "reactive", "MW", end_time=et
+        for sp in self.subphases.root.values():
+            load_data = sp.get_load_data_with_efficiencies(
+                self._config.load_library, time, "reactive", unit="MW", end_time=et
+            )
+            assert np.allclose(load_data["vv"], res1)
+            # not normalised
+            assert np.allclose(load_data["eps_upk"], res2)
+
+
+class TestPhaseFromScenario:
+    @classmethod
+    def setup_class(cls):
+        reactor_config = ReactorConfig(
+            Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
+        cls._config = PowerCycle(
+            **{
+                **reactor_config.config_for("Power Cycle"),
+                "durations": {
+                    "cs_recharge_time": 300,
+                    "pumpdown_time": 600,
+                    "ramp_up_time": 157,
+                    "ramp_down_time": 157,
+                },
+            },
+        )
+        cls._phase = cls._config.get_phase("dwl")
+
+    def setup_method(self):
+        self.phase = deepcopy(self._phase)
+
+    @pytest.mark.parametrize("load_type", ["active", "reactive", None])
+    @pytest.mark.parametrize("consumption", [True, False, None])
+    def test_build_timeseries(self, load_type, consumption):
+        assert np.allclose(
+            self.phase.timeseries(load_type, consumption=consumption),
+            [0, 120, 600] if consumption in {True, None} else [0, 600],
+        )
+
+    @pytest.mark.parametrize(
+        ("time", "res1", "res2"),
+        [
+            (
+                np.array([0, 0.005, 0.6, 1]),  # seen as already normalised time
+                np.full(4, -9.4),
+                np.array([-20.4, -20.4, 0.0, 0.0]),
+            ),
+            (
+                np.array([0, 0.005, 0.6, 100]),
+                np.full(4, -9.4),
+                np.array([-20.4, -20.4, -20.4, 0.0]),
+            ),
+            (
+                np.array([0, 1, 120, 200]),
+                np.full(4, -9.4),
+                np.array([-20.4, -20.4, 0.0, 0.0]),
+            ),
+        ],
+    )
+    def test_get_load(self, time, res1, res2):
+        load_data = self.phase.load("reactive", "MW", timeseries=time)
         assert np.allclose(load_data["vv"], res1)
         # not normalised
         assert np.allclose(load_data["eps_upk"], res2)
 
     @pytest.mark.parametrize(
-        ("time", "et", "res"),
+        ("time", "res"),
         [
-            (np.array([0, 0.6, 1]), 200, np.array([165.4, 165.4, 175.6])),
-            (np.array([0, 120, 200]), None, np.array([165.4, 165.4, 175.6])),
-            (np.array([0, 0.6, 1]), None, np.full(3, 165.4)),
+            (np.array([0, 0.6, 1]), np.array([214.35, 234.75, 234.75])),
+            (np.array([0, 120, 150]), np.array([214.35, 234.75, 234.75])),
+            (np.array([0, 0.6, 600]), np.array([214.35, 214.35, 234.75])),
         ],
     )
-    def test_get_load_total(self, time, et, res):
-        assert np.allclose(
-            self.loads.load_total(time, "reactive", "MW", end_time=et), res
-        )
+    def test_get_load_total(self, time, res):
+        assert np.allclose(self.phase.total_load("reactive", "MW", timeseries=time), res)
 
 
 class TestPhase:
     def setup_method(self):
         self.phase = Phase(
-            PhaseConfig("dwl", "max", ["a", "b"]),
-            {  # the loads list is not checked again...should we?
-                "a": SubPhaseConfig("a", 5, ["name", "name"]),
-                "b": SubPhaseConfig("b", 10, ["name2"], {"name2": [Efficiency(0.1)]}),
-            },
-            LoadSet({
-                "name": LoadConfig(
-                    "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
+            PhaseConfig(operation="max", subphases=["a", "b"]),
+            SubphaseLibrary(
+                a=SubPhase(duration=5, loads=["name", "name"]),
+                b=SubPhase(
+                    duration=10,
+                    loads=["name2"],
+                    efficiencies={"name2": [Efficiency(value=0.1)]},
                 ),
-                "name2": LoadConfig(
-                    "name2",
-                    np.array([0, 0.2, 1]),
-                    np.arange(3),
+            ),
+            LoadLibrary(
+                name=Load(time=np.array([0, 0.5, 1]), data=np.arange(3), model="ramp"),
+                name2=Load(
+                    time=np.array([0, 0.2, 1]),
+                    data=np.arange(3),
                     model="ramp",
                     consumption=False,
                 ),
-            }),
+            ),
         )
 
     def test_duration_validation_and_extraction(self):
@@ -193,7 +290,7 @@ class TestPhase:
     @pytest.mark.parametrize("consumption", [True, False, None])
     def test_build_timeseries(self, load_type, consumption):
         assert np.allclose(
-            self.phase.build_timeseries(load_type=load_type, consumption=consumption),
+            self.phase.timeseries(load_type=load_type, consumption=consumption),
             [0, 2, 5, 10]
             if consumption is None
             else [0, 5, 10]
@@ -203,9 +300,11 @@ class TestPhase:
 
     @pytest.mark.parametrize("consumption", [True, False, None])
     @pytest.mark.parametrize("load_type", ["active", "reactive"])
-    def test_load_total(self, load_type, consumption):
+    def test_total_load(self, load_type, consumption):
         assert np.allclose(
-            self.phase.load_total([0, 2, 5, 10], load_type, consumption=consumption),
+            self.phase.total_load(
+                load_type, timeseries=[0, 2, 5, 10], consumption=consumption
+            ),
             [0.0, -0.7, -1.8625, -3.8]
             if consumption is None
             else [0.0, -0.8, -2.0, -4.0]
@@ -215,10 +314,10 @@ class TestPhase:
 
     @pytest.mark.parametrize("consumption", [True, False, None])
     @pytest.mark.parametrize("load_type", ["active", "reactive"])
-    def test_get_load_data_with_efficiencies(self, load_type, consumption):
+    def test_load(self, load_type, consumption):
         for _ in range(2):  # run the duplicates twice doesnt keep doubling load
-            res = self.phase.get_load_data_with_efficiencies(
-                [0, 2, 5, 10], load_type, consumption=consumption
+            res = self.phase.load(
+                load_type, timeseries=[0, 2, 5, 10], consumption=consumption
             )
             if (name := res.get("name", None)) is not None:
                 assert np.allclose(name, np.array([-0.0, -0.8, -2.0, -4.0]))
@@ -226,19 +325,21 @@ class TestPhase:
                 assert np.allclose(name2, np.array([0.0, 0.1, 0.1375, 0.2]))
 
 
-class TestLibraryConfig:
+class TestPowerCycle:
     @classmethod
     def setup_class(cls):
         reactor_config = ReactorConfig(
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
-        cls._config = LibraryConfig.from_dict(
-            reactor_config.config_for("Power Cycle"),
-            {
-                "cs_recharge_time": 300,
-                "pumpdown_time": 600,
-                "ramp_up_time": 157,
-                "ramp_down_time": 157,
+        cls._config = PowerCycle(
+            **{
+                **reactor_config.config_for("Power Cycle"),
+                "durations": {
+                    "cs_recharge_time": 300,
+                    "pumpdown_time": 600,
+                    "ramp_up_time": 157,
+                    "ramp_down_time": 157,
+                },
             },
         )
 
@@ -251,29 +352,26 @@ class TestLibraryConfig:
         assert scenario["std"]["repeat"] == 1
         assert len(scenario["std"]["data"].keys()) == 4
         assert all(isinstance(val, Phase) for val in scenario["std"]["data"].values())
-        assert scenario["std"]["data"]["dwl"].subphases.keys() == {"csr", "pmp"}
+        assert scenario["std"]["data"]["dwl"].subphases.root.keys() == {"csr", "pmp"}
 
-        sph = scenario["std"]["data"]["dwl"].subphases
-        assert scenario["std"]["data"]["dwl"].loads._loads.keys() == set(
+        sph = scenario["std"]["data"]["dwl"].subphases.root
+        assert scenario["std"]["data"]["dwl"].loads.root.keys() == set(
             sph["csr"].loads + sph["pmp"].loads
         )
 
     def test_import_subphase_data(self):
-        assert self.config.subphase["csr"].duration == 300
+        assert self.config.subphase_library.root["csr"].duration == 300
 
     def test_add_load_config(self):
-        self.config.add_load_config(
-            LoadConfig(
-                "cs_power",
-                [0, 1],
-                [10, 20],
-                model="RAMP",
-                unit="MW",
-                description="dunno",
+        self.config.add_load(
+            "cs_power",
+            Load(
+                time=[0, 1], data=[10, 20], model="RAMP", unit="MW", description="dunno"
             ),
             ["cru", "bri"],
         )
         assert np.allclose(
-            self.config.loads["cs_power"].data[LoadType.REACTIVE], [10e6, 20e6]
+            self.config.load_library.root["cs_power"].data[LoadTypeOptions.REACTIVE],
+            [10e6, 20e6],
         )
-        assert self.config.loads["cs_power"].unit == "W"
+        assert self.config.load_library.root["cs_power"].unit == "W"
