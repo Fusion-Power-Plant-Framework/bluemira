@@ -1977,7 +1977,7 @@ def boolean_cut(
     shape: BluemiraGeoT, tools: BluemiraGeoT | Iterable[BluemiraGeoT]
 ) -> BluemiraGeoT | list[BluemiraGeoT]:
     """
-    Difference of shape and a given (list of) topo shape cut(tools)
+    Subtract from the base, a (list of) topo shapes cut (tools).
 
     Parameters
     ----------
