@@ -417,6 +417,17 @@ class TestEqReadWrite:
             d2.pop("coil_names")
         assert compare_dicts(d1, d2, almost_equal=True)
 
+    def test_regrid_on_read(self):
+        data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+        file_name = "eqref_OOB.json"
+
+        eq_ng = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
+        eq = Equilibrium.from_eqdsk(
+            Path(data_path, file_name), from_cocos=7, regrid_nx_nz=(100, 100)
+        )
+
+        raise NotImplementedError
+
 
 @pytest.mark.private
 class TestQBenchmark:
