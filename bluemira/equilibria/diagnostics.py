@@ -194,7 +194,7 @@ class EqBPlotParam(Flag):
 class FluxSurfaceType(Enum):
     """
     For flux surface comparison plotting.
-    Compare LCFSs, seperatricies or flux surfaces with a given normalised psi.
+    Compare LCFSs, separatricies or flux surfaces with a given normalised psi.
     """
 
     LCFS = auto()
