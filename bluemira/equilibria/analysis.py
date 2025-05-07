@@ -698,7 +698,7 @@ class EqAnalysis:
         show=True,  # noqa: FBT002
     ):
         """
-        Plot seperatricies of input equilibria and reference equilibria.
+        Plot separatricies of input equilibria and reference equilibria.
         N.B. Plots LCFS if a fixed boundary is used.
 
         Parameters
