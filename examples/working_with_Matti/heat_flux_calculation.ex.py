@@ -41,7 +41,7 @@ from bluemira.radiation_transport.advective_transport import ChargedParticleSolv
 # If you would like to view the double null version change the variable below
 
 # %%
-DOUBLE_NULL = False
+DOUBLE_NULL = True
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "DN-DEMO_eqref.json" if DOUBLE_NULL else "EU-DEMO_EOF.json"
 eq_name = Path(read_path, eq_name)
@@ -79,7 +79,7 @@ if DOUBLE_NULL:
 else:
     params = {
         "P_sep_particle": 150,
-        "f_p_sol_near": 0.50,
+        "f_p_sol_near": 0.60,
         "fw_lambda_q_near_omp": 0.01,
         "fw_lambda_q_far_omp": 0.05,
         "f_lfs_lower_target": 0.75,
@@ -93,9 +93,12 @@ else:
 # Finally, we initialise the `ChargedParticleSolver` and run it.
 
 # %%
-solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
+solver = ChargedParticleSolver(params, eq, dx_mp=0.0001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
-# Plot the analysis
-solver.plot()
-plt.show()
+# Make the plot
+ax = solver.plot()
+fig = ax.figure
+
+fig.savefig("charged_particles.png", dpi=300, bbox_inches="tight")
+plt.close(fig)
