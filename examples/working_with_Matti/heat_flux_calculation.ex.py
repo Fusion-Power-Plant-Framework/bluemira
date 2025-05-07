@@ -96,6 +96,9 @@ else:
 solver = ChargedParticleSolver(params, eq, dx_mp=0.0001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
-# Plot the analysis
-solver.plot()
-plt.show()
+# Make the plot
+ax = solver.plot()
+fig = ax.figure
+
+fig.savefig("charged_particles.png", dpi=300, bbox_inches="tight")
+plt.close(fig)

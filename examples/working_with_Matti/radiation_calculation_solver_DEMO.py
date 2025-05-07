@@ -41,8 +41,8 @@ from bluemira.radiation_transport.radiation_tools import (
 # %%
 
 SINGLE_NULL = False
-CORE_RADIATION = False
-SOL_RADIATION = True
+CORE_RADIATION = True
+SOL_RADIATION = False
 
 if SINGLE_NULL:
     eq_name = "EU-DEMO_EOF.json"
