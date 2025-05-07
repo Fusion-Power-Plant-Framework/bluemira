@@ -184,7 +184,17 @@ class OpenMCResult:
 
     @classmethod
     def _load_tbr(cls, statepoint):
-        """Load the TBR value and uncertainty."""
+        """
+        Load the TBR value and uncertainty.
+
+        Returns
+        -------
+        mean:
+            average TBR, i.e. average (n,Xt) per source particle.
+        error:
+            absolute error, but since the table is only 1 row long, we can turn the array
+            into a float by .sum().
+        """
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
 
@@ -192,10 +202,28 @@ class OpenMCResult:
     def _load_filter_power_err(
         cls, statepoint, src_rate: float, filter_name: str
     ) -> tuple[float, float]:
+        """
+        Power is initially loaded as eV/source particle. To convert to Watt, we need the
+        source particle rate.
+
+        Parameters
+        ----------
+        filter_name:
+            the literal name that was used in tallying.py to refer to this tally.
+        src_rate:
+            source particle rate.
+
+        Returns
+        -------
+        power:
+            The total power [W].
+        errors:
+            The absolute error on the total power [W]. RMS of errors from each cell.
+        """
         df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
-        power = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
-        error = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
-        return power.sum(), 100 * (error / power).mean()
+        powers = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+        errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
+        return powers.sum(), np.sqrt((errors**2).sum())
 
     @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
