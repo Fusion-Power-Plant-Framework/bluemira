@@ -1977,7 +1977,8 @@ def boolean_cut(
     shape: BluemiraGeoT, tools: BluemiraGeoT | Iterable[BluemiraGeoT]
 ) -> BluemiraGeoT | list[BluemiraGeoT]:
     """
-    Difference of shape and a given (list of) topo shape cut(tools)
+    Subtract from the base, a (list of) topo shapes cut (tools).
+
 
     Parameters
     ----------
@@ -1994,6 +1995,18 @@ def boolean_cut(
     ------
     error: GeometryError
         In case the boolean operation fails.
+
+    Notes
+    -----
+    Example:
+
+    Before cutting: `shape` = a cube, `tools` = a sphere.
+
+    .. figure:: /geometry/images/before_cut.png
+
+    After cutting: a cube with a sphere subtracted out of it.
+
+    .. figure:: /geometry/images/after_cut.png
     """
     apishape = shape.shape
     if not isinstance(tools, Iterable):
