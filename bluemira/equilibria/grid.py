@@ -58,6 +58,7 @@ class Grid:
         "edges",
         "nx",
         "nz",
+        "step",
         "x",
         "x_1d",
         "x_max",
@@ -131,6 +132,7 @@ class Grid:
             [(0, z) for z in range(nz)],
             [(nx - 1, z) for z in range(nz)],
         ])
+        self.step = np.ptp(self.x_1d[:2]) * np.ptp(self.z_1d[:2])
 
     @classmethod
     def from_eqdict(cls, e) -> Grid:
