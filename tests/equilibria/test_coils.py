@@ -175,6 +175,9 @@ class TestCoil:
     def test_bp(self):
         callable_tester(self.coil.Bp)
 
+    def test_db_d(self):
+        callable_tester(self.coil.dB_d)
+
     @pytest.mark.parametrize("analytic", [True, False])
     def test_psi(self, analytic):
         self.coil._psi_analytic = analytic
