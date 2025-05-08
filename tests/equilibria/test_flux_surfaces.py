@@ -99,31 +99,34 @@ class TestOpenFluxSurfaceStuff:
         # Check the calculate_connection_length functions
         x1, x2 = self.eq.grid.x_min, self.eq.grid.x_max
         z1, z2 = self.eq.grid.z_min, self.eq.grid.z_max
-        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
+        flux_intercepting_surface = Coordinates({
+            "x": [x1, x2, x2, x1, x1],
+            "z": [z1, z1, z2, z2, z1],
+        })
         l_fsg_fwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
         )
         l_flt_fwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
         )
         l_fsg_bwd = calculate_connection_length_fs(
             eq=self.eq,
             x=x_start,
             z=z_start,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
             forward=False,
         )
         l_flt_bwd = calculate_connection_length_flt(
             eq=self.eq,
             x=x_start,
             z=z_start,
-            first_wall=first_wall,
+            flux_intercepting_surface=flux_intercepting_surface,
             forward=False,
         )
         assert np.isclose(l_fsg_fwd, l_flt_fwd, rtol=2e-2)
@@ -187,7 +190,7 @@ class TestOpenFluxSurfaceStuff:
         l_fw1 = calculate_connection_length(
             self.eq,
             div_norm_psi=psi_norm_start,
-            first_wall=first_wall_1,
+            flux_intercepting_surface=first_wall_1,
             calculation_method="flux_surface_geometry",
         )
         first_wall_2 = Coordinates({
@@ -197,7 +200,7 @@ class TestOpenFluxSurfaceStuff:
         l_fw2 = calculate_connection_length(
             self.eq,
             div_norm_psi=psi_norm_start,
-            first_wall=first_wall_2,
+            flux_intercepting_surface=first_wall_2,
             forward=False,
             calculation_method="flux_surface_geometry",
         )
