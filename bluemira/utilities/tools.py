@@ -1206,5 +1206,6 @@ def qtapp_instance() -> QApplication:
     try:
         app = QApplication([])
     except RuntimeError:
+        bluemira_debug("QApplication instance already exists")
         app = QApplication.instance()
     return app
