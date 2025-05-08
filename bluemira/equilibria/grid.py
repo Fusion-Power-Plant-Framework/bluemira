@@ -132,7 +132,7 @@ class Grid:
             [(0, z) for z in range(nz)],
             [(nx - 1, z) for z in range(nz)],
         ])
-        self.step = abs(self.x_1d[0] - self.x_1d[1]) * abs(self.z_1d[0] - self.z_1d[1])
+        self.step = np.ptp(self.x_1d[:2]) * np.ptp(self.z_1d[:2])
 
     @classmethod
     def from_eqdict(cls, e) -> Grid:
