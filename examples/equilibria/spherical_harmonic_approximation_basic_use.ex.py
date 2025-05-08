@@ -89,7 +89,7 @@ plt.show()
 #   to use with grid point distribution
 # - acceptable_fit_metric: how 'good' we require the approximation to be
 # - psi_norm: 'None' will default to LCFS, otherwise choose the desired
-#   normalised psi value of a closed flux surface that containe the core plasma
+#   normalised psi value of a closed flux surface that contain the core plasma
 # - seed: Seed value to use with random point distribution
 # - sig_figures: Number of significant figures for rounding during SH approximation
 # - plot: Whether or not to plot the results
@@ -205,7 +205,7 @@ program = PicardIterator(
 program()
 
 # %%
-# Plot the two approches
+# Plot the two approaches
 f, (ax_1, ax_2) = plt.subplots(1, 2)
 
 sh_eq.plot(ax=ax_1)

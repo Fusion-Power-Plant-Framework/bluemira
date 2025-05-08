@@ -50,7 +50,7 @@ class GeomOptimiserResult(Generic[_GeomT]):
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
     history: list[tuple[np.ndarray, float]] = field(repr=False)
-    """The history of the parametrisation at each iteration."""
+    """The history of the parameterisation at each iteration."""
     constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.

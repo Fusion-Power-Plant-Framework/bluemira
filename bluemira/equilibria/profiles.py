@@ -96,7 +96,7 @@ def doublepowerfunc(x: float, *args) -> float:
 
     \t:math:`g(x)=(1-x^{m})^{n}`
     """  # noqa: DOC201
-    # sign tweak needed to avoid runtimewarnings in np
+    # sign tweak needed to avoid runtime warnings in np
     m, n = args
     f = 1 - np.sign(x) * np.abs(x) ** m
     return np.sign(f) * (np.abs(f)) ** n
@@ -625,7 +625,7 @@ class BetaIpProfile(Profile):
                 bluemira_warn("Found NaN in pressure mask, setting NaN's to 0")
                 np.nan_to_num(pfunc, nan=0.0, copy=False)
 
-        if x_points != []:  # NOTE: Necessary unpythonic formulation
+        if x_points != []:  # NOTE: Necessary un-pythonic formulation
             # More accurate beta_p constraint calculation
             # This is the Freidberg approximation
             lcfs, _ = find_LCFS_separatrix(

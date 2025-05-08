@@ -89,7 +89,7 @@ class DivLegsToPlot(Flag):
     LW = auto()
     """Lower pair of legs."""
     ALL = auto()
-    """All availble legs."""
+    """All available legs."""
     PAIR = UP | LW
 
 
@@ -116,11 +116,11 @@ class EqPlotMask(Flag):
     DIV_AREA = (
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
-    """Mask out the values oustsie divertor area."""
+    """Mask out the values outside divertor area."""
     POLYGON = (
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
-    """Mask out the values oustsie a chosen polygon area."""
+    """Mask out the values outside a chosen polygon area."""
     INPUT = IN_LCFS | OUT_LCFS
     REF = IN_REF_LCFS | OUT_REF_LCFS
     COMBO = IN_COMBO_LCFS | OUT_COMBO_LCFS
@@ -154,7 +154,7 @@ class InterpGrid(Enum):
 
 class CSData(Enum):
     """
-    For the coilset comparision tables.
+    For the coilset comparison tables.
     Value to be compared: current, x-position, z-position,
     field, and force.
     """
@@ -193,8 +193,8 @@ class EqBPlotParam(Flag):
 
 class FluxSurfaceType(Enum):
     """
-    For flux surface comparision plotting.
-    Compare LCFSs, separatices or flux surfaces with a given normalised psi.
+    For flux surface comparison plotting.
+    Compare LCFSs, separatricies or flux surfaces with a given normalised psi.
     """
 
     LCFS = auto()

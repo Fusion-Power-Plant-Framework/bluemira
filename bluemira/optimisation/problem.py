@@ -172,7 +172,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         Parameters
         ----------
         x:
-            The parametrisation to check the constraints against.
+            The parameterisation to check the constraints against.
         warn:
             If ``True`` print a warning that lists the violated
             constraints.

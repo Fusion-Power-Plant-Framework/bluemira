@@ -203,7 +203,7 @@ def validate_constraints(
     warn: bool = True,
 ) -> bool:
     """
-    Check the given parametrisation satisfies the given constraints.
+    Check the given parameterisation satisfies the given constraints.
 
     Additionally, print warnings listing constraints that are not
     satisfied.

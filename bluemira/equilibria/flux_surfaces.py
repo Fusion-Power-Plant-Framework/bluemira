@@ -630,7 +630,7 @@ class FieldLine:
 
     def pointcare_plot(self, ax: plt.Axes | None = None):
         """
-        Pointcaré plot of the field line intersections with the half-xz-plane.
+        Poincaré plot of the field line intersections with the half-xz-plane.
 
         Parameters
         ----------
@@ -897,7 +897,7 @@ def calculate_connection_length_fs(
     first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
     f_s:
-        Coordniates of flux surface through x and z.
+        Coordinates of flux surface through x and z.
 
     Returns
     -------

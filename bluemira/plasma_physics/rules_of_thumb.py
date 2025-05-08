@@ -258,7 +258,7 @@ def estimate_q95_uckan(
     Returns
     -------
     :
-        Estimate of 95th percentile safty factor
+        Estimate of 95th percentile safety factor
 
     Notes
     -----

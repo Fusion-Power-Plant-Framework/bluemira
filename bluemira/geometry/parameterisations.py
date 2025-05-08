@@ -369,10 +369,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         -------
         offset_ar_x:
             Suggested location for where to plot the next set of labels related to the
-            radii in the parametrisation. (z-coordinates only)
+            radii in the parameterisation. (z-coordinates only)
         offset_ar_z:
             Suggested location for where to plot the next set of labels related to the
-            height in the parametrisation. (x-coordinates only)
+            height in the parameterisation. (x-coordinates only)
         """
         offset_ar_x = 0
         offset_ar_z: float = 0
@@ -1343,7 +1343,7 @@ def _get_centres(
     *,
     reflection_zplane: float | None = None,
 ) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
-    """Get the centres of each arc for parametrisations that are made purely of arcs.
+    """Get the centres of each arc for parameterisations that are made purely of arcs.
 
     Parameters
     ----------

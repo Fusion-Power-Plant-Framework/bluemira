@@ -40,7 +40,7 @@ class CoilsetOptimiserResult:
     """The number of evaluations of the objective function in the optimisation."""
     history: list[tuple[np.ndarray, float]] = field(repr=False)
     """
-    The history of the parametrisation at each iteration.
+    The history of the parameterisation at each iteration.
 
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).

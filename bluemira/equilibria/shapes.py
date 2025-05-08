@@ -869,7 +869,7 @@ def flux_surface_johner_quadrants(
     n: int = 100,
 ) -> tuple[list[npt.NDArray[np.float64]], list[npt.NDArray[np.float64]]]:
     """
-    Initial plasma shape parametrerisation from HELIOS author
+    Initial plasma shape parameterisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core
     (does not handle divertor target points or legs).
     Can handle:
@@ -965,7 +965,7 @@ def flux_surface_johner(
     n: int = 100,
 ) -> Coordinates:
     """
-    Initial plasma shape parametrerisation from HELIOS author
+    Initial plasma shape parameterisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core
     (does not handle divertor target points or legs).
     Can handle:

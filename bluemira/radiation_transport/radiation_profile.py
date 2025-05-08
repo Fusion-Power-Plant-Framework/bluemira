@@ -61,7 +61,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class RadiationSourceParams(ParameterFrame):
-    """Radiaition source parameter frame"""
+    """Radiation source parameter frame"""
 
     sep_corrector_omp: Parameter[float]
     """Separation correction for double and single null plasma"""
@@ -78,11 +78,11 @@ class RadiationSourceParams(ParameterFrame):
     f_ion_t: Parameter[float]
     """Hydrogen first ionization"""
     main_ext: Parameter[float]
-    """radiation region extention in main chamber"""
+    """radiation region extension in main chamber"""
     rec_ext_out_leg: Parameter[float]
-    """recyccling region extetion in outer leg"""
+    """recycling region extension in outer leg"""
     rec_ext_in_leg: Parameter[float]
-    """recyccling region extetion in inner leg"""
+    """recycling region extension in inner leg"""
     fw_lambda_q_far_imp: Parameter[float]
     """Lambda_q far SOL imp"""
     fw_lambda_q_far_omp: Parameter[float]
@@ -573,7 +573,7 @@ class CoreRadiation(Radiation):
 
     def plot_radiation_distribution(self):
         """
-        Plot poloiadal radiation distribution
+        Plot poloidal radiation distribution
         within the plasma core
         """
         self.radiation_distribution_plot(self.flux_tubes, self.total_rad)
@@ -1003,15 +1003,15 @@ class ScrapeOffLayerRadiation(Radiation):
         z_strike: float
             z coordinate of the first open flux surface strike point [m]
         main_ext: float
-            extention of the radiation region from the x-point
+            extension of the radiation region from the x-point
             towards the main plasma [m]
         firstwall_geom:
             first wall geometry
         pfr_ext:
-            extention of the radiation region from the x-point
+            extension of the radiation region from the x-point
             towards private flux region [m]
         rec_ext:
-            extention of the recycling region,
+            extension of the recycling region,
             along the separatrix, from the target [m]
         x_point_rad:
             if True, it assumes there is no radiation at all
@@ -1049,7 +1049,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # Validity condition for not x-point radiative
         if not x_point_rad and rec_ext is None:
-            raise ValueError("Required recycling region extention: rec_ext")
+            raise ValueError("Required recycling region extension: rec_ext")
         if not x_point_rad and rec_ext is not None and lfs:
             ion_front_z = ion_front_distance(
                 x_strike,
@@ -1072,7 +1072,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # Validity condition for x-point radiative
         elif x_point_rad and pfr_ext is None:
-            raise ValueError("Required extention towards pfr: pfr_ext")
+            raise ValueError("Required extension towards pfr: pfr_ext")
 
         # setting radiation and recycling regions
         z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div=low_div)
@@ -1233,7 +1233,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
     def radiation_distribution_plot(self, flux_tubes, power_density, firstwall, ax=None):
         """
-        2D plot of the radation power distribution.
+        2D plot of the radiation power distribution.
 
         Parameters
         ----------
@@ -1682,7 +1682,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
         """
-        Plot poloiadal radiation distribution
+        Plot poloidal radiation distribution
         within the scrape-off layer
 
         Parameters
@@ -1926,7 +1926,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Coordinates):
         """
-        Plot poloiadal radiation distribution
+        Plot poloidal radiation distribution
         within the scrape-off layer
 
         Parameters
