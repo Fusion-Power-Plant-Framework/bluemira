@@ -871,7 +871,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     @resistance.setter
     def resistance(self, values: float | Iterable[float]):
         """Set coil resistance"""
-        self.__setter("b_max", values)
+        self.__setter("resistance", values)
 
     @discretisation.setter
     def discretisation(self, values: float | Iterable[float]):
