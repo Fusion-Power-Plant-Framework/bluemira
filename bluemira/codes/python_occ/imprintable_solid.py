@@ -7,10 +7,12 @@
 Working class for imprinting solids.
 """
 
+from __future__ import annotations
+
 from bluemira.geometry.solid import BluemiraSolid
 
 try:
-    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
+    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid  # noqa: TC002
     from OCC.Extend.TopologyUtils import TopologyExplorer
 
     import Part  # isort: skip

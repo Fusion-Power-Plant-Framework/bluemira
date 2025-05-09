@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from rich.progress import track
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.codes.python_occ._guard import occ_available
+from bluemira.codes.python_occ._guard import guard_occ_available
 from bluemira.codes.python_occ.imprintable_solid import ImprintableSolid
 from bluemira.geometry.overlap_checking import find_approx_overlapping_pairs
 
@@ -174,7 +174,7 @@ class ImprintResult:
         return [face for imp in self._imprintables for face in imp.imprinted_faces]
 
 
-@occ_available
+@guard_occ_available
 def imprint_solids(
     solids: Iterable[BluemiraSolid],
     labels: Iterable[str] | None = None,
