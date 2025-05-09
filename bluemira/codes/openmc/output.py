@@ -59,6 +59,12 @@ class OpenMCResult:
     tbr_err: float
     heating: dict
     neutron_wall_load: dict
+    blanket_power: float
+    blanket_power_err: float
+    divertor_power: float
+    divertor_power_err: float
+    vessel_power: float
+    vessel_power_err: float
     """Neutron wall load (eV)"""
 
     photon_heat_flux: dict
@@ -99,6 +105,15 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
+        blanket_power, blanket_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "breeding blanket power"
+        )
+        divertor_power, divertor_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "divertor power"
+        )
+        vessel_power, vessel_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "vacuum vessel power"
+        )
 
         return cls(
             universe=universe,
@@ -111,6 +126,12 @@ class OpenMCResult:
             tbr=tbr,
             tbr_err=tbr_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
+            blanket_power=blanket_power,
+            blanket_power_err=blanket_power_err,
+            divertor_power=divertor_power,
+            divertor_power_err=divertor_power_err,
+            vessel_power=vessel_power,
+            vessel_power_err=vessel_power_err,
             neutron_wall_load=cls._load_neutron_wall_loading(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -163,9 +184,46 @@ class OpenMCResult:
 
     @classmethod
     def _load_tbr(cls, statepoint):
-        """Load the TBR value and uncertainty."""
+        """
+        Load the TBR value and uncertainty.
+
+        Returns
+        -------
+        mean:
+            average TBR, i.e. average (n,Xt) per source particle.
+        error:
+            absolute error, but since the table is only 1 row long, we can turn the array
+            into a float by .sum().
+        """
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
+
+    @classmethod
+    def _load_filter_power_err(
+        cls, statepoint, src_rate: float, filter_name: str
+    ) -> tuple[float, float]:
+        """
+        Power is initially loaded as eV/source particle. To convert to Watt, we need the
+        source particle rate.
+
+        Parameters
+        ----------
+        filter_name:
+            the literal name that was used in tallying.py to refer to this tally.
+        src_rate:
+            source particle rate.
+
+        Returns
+        -------
+        power:
+            The total power [W].
+        errors:
+            The absolute error on the total power [W]. RMS of errors from each cell.
+        """
+        df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
+        powers = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+        errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
+        return powers.sum(), np.sqrt((errors**2).sum())
 
     @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
