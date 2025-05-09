@@ -16,10 +16,10 @@ from multiprocessing import TimeoutError as mpTimeoutError
 
 import numpy as np
 import seaborn as sns
-from PySide6 import QtWidgets
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+from bluemira.utilities.tools import qtapp_instance
 
 
 @functools.lru_cache(1)
@@ -74,13 +74,7 @@ def _get_primary_screen_size():
         return None, None
 
     # IPython detection (of sorts)
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        # if IPython isn't open then a QApplication is created to get screen size
-        app = QtWidgets.QApplication([])
-        rect = app.primaryScreen().availableGeometry()
-    else:
-        rect = app.primaryScreen().availableGeometry()
+    rect = qtapp_instance().primaryScreen().availableGeometry()
 
     return rect.width(), rect.height()
 
