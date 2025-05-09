@@ -13,7 +13,9 @@ from bluemira.geometry.tools import extrude_shape, make_polygon
 class TestImprintSolids:
     def test_imprint_solids(self):
         box_a = BluemiraFace(
-            make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+            make_polygon(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]], closed=True
+            )
         )
         box_a = extrude_shape(box_a, [0, 0, 1])
         box_b = deepcopy(box_a)
@@ -27,6 +29,8 @@ class TestImprintSolids:
         imps = imp_result.imprintables
         imp_solids = imp_result.solids
 
+        assert imp_result.total_imprints == 2
+
         assert len(imp_solids) == 3
         assert len(imp_solids[0].faces) == 8
         assert imps[0]._has_imprinted
@@ -34,3 +38,51 @@ class TestImprintSolids:
         assert imps[1]._has_imprinted
         assert len(imp_solids[2].faces) == 7
         assert imps[2]._has_imprinted
+
+    def test_imprint_solids_2(self):
+        box_a = BluemiraFace(
+            make_polygon(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]], closed=True
+            )
+        )
+        box_a = extrude_shape(box_a, [0, 0, 1])
+        box_b = deepcopy(box_a)
+        box_b.translate([-0.3, -0.5, 1])
+        box_c = deepcopy(box_a)
+        box_c.translate([0.3, 0.5, 1])
+
+        pre_imps = [box_a, box_b, box_c]
+        imp_result = python_occ.imprint_solids(pre_imps)
+
+        imps = imp_result.imprintables
+        imp_solids = imp_result.solids
+
+        assert imp_result.total_imprints == 3
+
+        assert len(imp_solids) == 3
+        assert len(imp_solids[0].faces) == 9
+        assert imps[0]._has_imprinted
+        assert len(imp_solids[1].faces) == 8
+        assert imps[1]._has_imprinted
+        assert len(imp_solids[2].faces) == 8
+        assert imps[2]._has_imprinted
+
+    def test_imprint_solids_no_imprint(self):
+        box_a = BluemiraFace(
+            make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+        )
+        box_a = extrude_shape(box_a, [0, 0, 1])
+        box_b = deepcopy(box_a)
+        box_b.translate([2.5, 2.5, 1])
+
+        pre_imps = [box_a, box_b]
+        imp_result = python_occ.imprint_solids(pre_imps)
+
+        imps = imp_result.imprintables
+        imp_solids = imp_result.solids
+
+        assert len(imp_solids) == 2
+        assert len(imp_solids[0].faces) == 6
+        assert not imps[0]._has_imprinted
+        assert len(imp_solids[1].faces) == 6
+        assert not imps[1]._has_imprinted
