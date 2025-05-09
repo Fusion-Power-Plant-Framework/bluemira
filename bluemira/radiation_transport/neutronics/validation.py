@@ -12,7 +12,29 @@ from typing import TYPE_CHECKING
 from bluemira.radiation_transport.neutronics.error import CSGGeometryValidationError
 
 if TYPE_CHECKING:
-    from bluemira.radiation_transport.neutronics.cell import Cell, CellStack, CellWall
+    from bluemira.radiation_transport.neutronics.cell import (
+        Cell,
+        CellStack,
+        CellWall,
+        Vertices,
+    )
+
+
+def check_vertices_ordering(vertices: Vertices) -> None:
+    """Check that the vertices are correctly ordered.
+
+    Raises
+    ------
+    CSGGeometryValidationError
+        If the vertices are incorrectly ordered, it suggests that we may have an
+        incorrectly ordered wire.
+    """
+    in_vec = -vertices.ccw_in + vertices.cw_in
+    ex_vec = -vertices.ccw_ex + vertices.cw_ex
+    if (in_vec @ ex_vec) <= 0:
+        raise CSGGeometryValidationError(
+            "The interior wire should point in the same direction as the exterior wire!"
+        )
 
 
 def check_stacks_are_neighbours(stack_ccw: CellStack, stack_cw: CellStack) -> None:

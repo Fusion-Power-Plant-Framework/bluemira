@@ -17,11 +17,9 @@ import numpy as np
 from matplotlib.patches import Polygon as mpl_Polygon
 from numpy import typing as npt
 
-from bluemira.base.constants import EPS
 from bluemira.display import plot_2d, show_cad
-from bluemira.geometry.coordinates import (
-    Coordinates,
-)
+from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     make_polygon,
@@ -39,6 +37,7 @@ from bluemira.radiation_transport.neutronics.validation import (
     check_cell_wall_alignment,
     check_cells_are_neighbours_by_face,
     check_stacks_are_neighbours,
+    check_vertices_ordering,
 )
 
 if TYPE_CHECKING:
@@ -150,9 +149,10 @@ class CSGReactor(Sequence):
         for stack_ccw, stack_cw in pairwise(cyclic_sequence(cell_stacks)):
             if parent:
                 stack_ccw.parent = parent
-            stack_ccw.cw_wall = stack_cw.ccw_wall = CellWall(
-                stack_ccw.cw_in, stack_ccw.cw_ex
-            )
+            stack_ccw.cw_wall = stack_cw.ccw_wall = CellWall([
+                stack_ccw.cw_in,
+                stack_ccw.cw_ex,
+            ])
 
     @property
     def in_faces(self) -> list[RadialInterface]:
@@ -177,14 +177,14 @@ class CSGReactor(Sequence):
         return [stack.outline for stack in self.cell_stacks]
 
     @property
-    def half_solids(self) -> list[list[BluemiraSolid]]:
-        return [stack.half_solids for stack in self.cell_stacks]
+    def solids(self) -> list[list[BluemiraSolid]]:
+        return [stack.solids for stack in self.cell_stacks]
 
     def plot_2d(self, *args, **kwargs) -> Axes:
         return plot_2d(chain(*self.outlines), *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> Axes:
-        return show_cad(chain(*self.half_solids), *args, **kwargs)
+        return show_cad(chain(*self.solids), *args, **kwargs)
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f"of {len(self)} stacks at ")
@@ -355,14 +355,14 @@ class CellStack(ParentLinkable, Sequence):
         return [cell.outline for cell in self.cells]
 
     @property
-    def half_solids(self) -> list[BluemiraSolid]:
-        return [cell.half_solids for cell in self.cells]
+    def solids(self) -> list[BluemiraSolid]:
+        return [cell.solid for cell in self.cells]
 
     def plot_2d(self, *args, **kwargs) -> Axes:
         return plot_2d(self.outlines, *args, **kwargs)
 
     def show_cad(self, *args, **kwargs) -> Axes:
-        return show_cad(self.half_solids, *args, **kwargs)
+        return show_cad(self.solids, *args, **kwargs)
 
     @staticmethod
     def set_cells_properties(cells: Sequence[Cell], parent: CellStack) -> None:
@@ -437,16 +437,24 @@ class Cell(ParentLinkable):
         ----------
         vertices:
             A collection of vertices defining the four corners of the cell.
+
+        Raises
+        ------
+        CSGGeometryValidationError
+            If the vertices are incorrectly ordered, it suggests that we may have an
+            incorrectly ordered wire. Thus an error is raised.
         """
         self.in_face = in_face
         self.ex_face = ex_face
         # all RadialInterface should have wires that run clockwise
-        self.vertices = Vertices.from_bluemira_coordinates(
+        vertices = Vertices.from_bluemira_coordinates(
             in_face.wire.start_point(),
             in_face.wire.end_point(),
             ex_face.wire.start_point(),
             ex_face.wire.end_point(),
         )
+        check_vertices_ordering(vertices)
+        self.vertices = vertices
         self._parent = None
         self.subtracted_regions = []  # each is an intersection list
         self.added_regions = []  # each is an intersection list
@@ -498,18 +506,31 @@ class Cell(ParentLinkable):
 
     @property
     def volume(self) -> np.float64:
-        """Calculate the volume of the cell"""
-        return abs(self.half_solid.volume * 2)
-        return polygon_revolve_signed_volume  # might be faster but more fiddly.
+        """Either calculate, or obtain from freecad, the volume of the cell, in [m^3]."""
+        if isinstance(self.in_face, LineSegments) and isinstance(
+            self.ex_face, LineSegments
+        ):
+            return polygon_revolve_signed_volume(  # faster, more accurate implementation
+                np.concatenate([self.in_face.xz.T[::-1], self.ex_face.xz.T])  # clockwise
+            )
+        return abs(self.solid.volume)
 
     @property
     def solid(self) -> BluemiraSolid:
-        if not hasattr(self, "_half_solid"):
-            self._half_solid = BluemiraSolid(revolve_shape(self.outline))
-        return self._half_solid
+        if not hasattr(self, "_solid"):
+            self._solid = BluemiraSolid(revolve_shape(self.outline, 360))
+        return self._solid
 
     @property
     def outline(self) -> BluemiraWire:
+        """
+        Raises
+        ------
+        CSGGeometryValidationError
+            If, for any reason, the outline drawn isn't closed as the final wire is not
+            joined onto the first wire, then this error is raised. This would typically
+            be due to developer error.
+        """
         if not hasattr(self, "_outline"):
             self._ccw_wire = make_polygon([
                 Vertices.convert_to_coordinates(self.vertices.ccw_ex),
@@ -535,7 +556,7 @@ class Cell(ParentLinkable):
 
     def show_cad(self, *args, **kwargs) -> Axes:
         """Plot 3D plots of the poloidal"""
-        return show_cad(self.half_solid, *args, **kwargs)
+        return show_cad(self.solid, *args, **kwargs)
 
     def plot_and_fill(self, color, ax=None) -> Axes:
         """
@@ -546,7 +567,7 @@ class Cell(ParentLinkable):
         plot_2d(show=False, ax=ax)
         in_p = self.in_face.samples
         ex_p = self.ex_face.samples
-        approx_outline = np.concatenate([in_p.xz.T, ex_p.xz.T[::-1]])
+        approx_outline = np.concatenate([in_p.xz.T[::-1], ex_p.xz.T])  # clockwise
         ax.add_patch(mpl_Polygon(approx_outline), color=color)
         return ax
 
@@ -575,6 +596,15 @@ class CSGSurfaces:
         check_if_read_only_attr_has_been_set(self._csg_surf, self)
         self._csg_surf = csg_surfaces
 
+    @property
+    def wire(self):
+        if not hasattr(self, "_wire"):
+            self._make_wire()
+        return self._wire
+
+    def _make_wire(self):
+        raise NotImplementedError(f"{self.__class__} does not have a _make_wire method.")
+
 
 class RadialInterface(CSGSurfaces):
     """A wire with an associated csg surface representation."""
@@ -582,7 +612,7 @@ class RadialInterface(CSGSurfaces):
     def __init__(self, wire: BluemiraWire):
         """Wrap a bluemira wire along with its csg surface representation."""
         super().__init__()
-        self.wire = wire
+        self._wire = wire
 
     def __eq__(self, other: RadialInterface):
         return self.wire.is_same(other.wire) and self.csg_surf == other.csg_surf
@@ -618,16 +648,55 @@ class RadialInterface(CSGSurfaces):
         return self._samples
 
 
-class StraightLine(CSGSurfaces):
+class LineSegments(CSGSurfaces):
+    """An abstract class for n-1 several straight line segments joint together."""
+
+    def __init__(self, points: Iterable[npt.NDArray[np.float64]]):
+        """Store the points at the start and ends of the n-1 straight lines.
+
+        Parameters
+        ----------
+        points:
+            len(points)==n
+
+        Raises
+        ------
+        CSGGeometryValidationError
+            If only one point or no point is provided, then no line can be drawn.
+        """
+        if len(points) < 2:
+            raise CSGGeometryValidationError(
+                f"Must use at least 2 points to form {self.__class__}"
+            )
+        self.points = points
+
+    def _make_wire(self):
+        """Create a wire if it does not already exists"""
+        self._wire = make_polygon(
+            [Vertices.convert_to_coordinates(p) for p in self.points],
+            closed=False,
+        )
+
+    def contains_all_points(
+        self, *points: Iterable[npt.NDArray[np.float64]], atol=EPS_FREECAD
+    ) -> bool:
+        """Check if a list of points all lie on this line."""
+        return all(self.contains(p) for p in points)
+
+    def contains(self, point: npt.NDArray[np.float64], atol=EPS_FREECAD) -> bool:
+        """Check if a single point lies on this line."""
+        return self.wire.contains(point)
+
+
+class StraightLine(LineSegments):
     """Straight line representable in CSG surface form."""
 
     def __init__(
         self,
-        point_1: npt.NDArray[np.float64],
-        point_2: npt.NDArray[np.float64] | None,
+        points: npt.NDArray[np.float64],
         *,
-        snapped_to_vertical: bool = False,
         snapped_to_horizontal: bool = False,
+        snapped_to_vertical: bool = False,
     ):
         """A line, anchored at two points, and made into an associated infinite CSG
         plane/cone/cylinder.
@@ -637,28 +706,26 @@ class StraightLine(CSGSurfaces):
         CSGGeometryError
             Raised if the user is trying to simultaneously snap to vertical and horizonal
         """
-        super().__init__()
-        self.point_1 = point_1
-        self.point_2 = point_2  # no need if snapped to vertical/horizontal.
-        if snapped_to_vertical and snapped_to_horizontal:
+        super().__init__(points)
+        if snapped_to_horizontal and snapped_to_vertical:
             raise CSGGeometryError(
                 f"{self} can only be snapped to be either horizontal or vertical, not"
                 "both at the same time!"
             )
-        self.snapped_to_vertical = snapped_to_vertical  # makes for a ZCylinder
         self.snapped_to_horizontal = snapped_to_horizontal  # makes for a ZPlane
+        self.snapped_to_vertical = snapped_to_vertical  # makes for a ZCylinder
 
-    @property
-    def wire(self) -> BluemiraWire:
-        if not hasattr(self, "_wire"):
-            self._wire = make_polygon([
-                Vertices.convert_to_coordinates(self.point_1),
-                Vertices.convert_to_coordinates(self.point_2),
-            ])
-        return self._wire
-
-    def includes_point(self, point: npt.NDArray[np.float64], tol=EPS):
-        pass
+    def _make_wire(self):
+        """Create a wire if it does not already exists"""
+        if self.snapped_to_horizontal:
+            point_1 = self.points[0]
+            point_2 = np.array([self.points[1][0], self.points[0][1]])
+        elif self.snapped_to_vertical:
+            point_1 = self.points[0]
+            point_2 = np.array([self.points[0][0], self.points[1][1]])
+        else:
+            point_1, point_2 = self.points
+        self._wire = make_polygon([point_1, point_2], closed=False)
 
 
 class CellWall(StraightLine):
@@ -764,7 +831,9 @@ class Vertices:
         """
         if not isinstance(other, Vertices):
             raise TypeError(f"Cannot compare {type(self)} with {type(other)}.")
-        return all((my_v == their_v).all() for my_v, their_v in zip(self, other, strict=True))
+        return all(
+            (my_v == their_v).all() for my_v, their_v in zip(self, other, strict=True)
+        )
 
     def __iter__(self):
         return iter(getattr(self, attr) for attr in self.index_mapping.values())
