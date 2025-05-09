@@ -40,6 +40,9 @@ from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
+from bluemira.radiation_transport.neutronics.dagmc import (
+    save_cad_to_dagmc,
+)
 from bluemira.utilities.tools import iterable_to_list
 
 if TYPE_CHECKING:
@@ -1643,15 +1646,19 @@ def save_cad(
     filename = Path(filename).as_posix()
 
     if cad_format == "dagmc":
-        # for now
-        raise NotImplementedError("DAGMC export is not yet implemented in Bluemira.")
-    cadapi.save_cad(
-        [s.shape for s in shapes],
-        filename,
-        cad_format=cad_format,
-        labels=names,
-        **kwargs,
-    )
+        save_cad_to_dagmc(
+            shapes,
+            names=names,
+            filename=filename,
+        )
+    else:
+        cadapi.save_cad(
+            [s.shape for s in shapes],
+            filename,
+            cad_format=cad_format,
+            labels=names,
+            **kwargs,
+        )
 
 
 def import_cad(
