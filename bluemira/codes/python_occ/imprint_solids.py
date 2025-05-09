@@ -209,7 +209,7 @@ def imprint_solids(
         )
     imprintables = [
         ImprintableSolid.from_bluemira_solid(lbl, sld)
-        for sld, lbl in zip(solids, labels, strict=False)
+        for sld, lbl in zip(solids, labels, strict=True)
     ]
     pairs = find_approx_overlapping_pairs(solids, use_cgal=use_cgal)
 
