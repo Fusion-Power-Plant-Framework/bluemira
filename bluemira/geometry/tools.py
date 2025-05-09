@@ -1644,16 +1644,7 @@ def save_cad(
 
     if cad_format == "dagmc":
         # for now
-        raise NotImplementedError(
-            "DAGMC export is not yet implemented in Bluemira. "
-            "Please use the FreeCAD GUI to export to DAGMC."
-        )
-        # save_cad_to_dagmc_model(
-        #     shapes,
-        #     names,
-        #     filename,
-        #     faceting_tolerance=kwargs.get("faceting_tolerance", 1e-3),
-        # )
+        raise NotImplementedError("DAGMC export is not yet implemented in Bluemira.")
     cadapi.save_cad(
         [s.shape for s in shapes],
         filename,
