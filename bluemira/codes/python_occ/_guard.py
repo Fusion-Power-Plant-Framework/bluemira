@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Importer for external code API and related functions
+API guard for the OCC package.
 """
 
 try:
@@ -16,7 +16,7 @@ except ImportError:
     occ_available = False
 
 
-def occ_available(f):
+def guard_occ_available(f):
     """
     Check if the OCC module is available.
 

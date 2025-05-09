@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-The API for the plasmod solver.
+API guard for the CGAL package.
 """
 
 try:
@@ -15,7 +15,7 @@ except ImportError:
     cgal_available = False
 
 
-def cgal_api_available(f):
+def guard_cgal_available(f):
     """API guard for CGAL functions.
 
     Raises
