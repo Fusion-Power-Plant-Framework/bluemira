@@ -20,8 +20,11 @@ from numpy import typing as npt
 from bluemira.display import plot_2d, show_cad
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
+    boolean_cut,
+    extrude_shape,
     make_polygon,
     polygon_revolve_signed_volume,
     revolve_shape,
@@ -507,9 +510,13 @@ class Cell(ParentLinkable):
     @property
     def volume(self) -> np.float64:
         """Either calculate, or obtain from freecad, the volume of the cell, in [m^3]."""
-        if isinstance(self.in_face, LineSegments) and isinstance(
-            self.ex_face, LineSegments
-        ):
+        if all([
+            # made of straight lines, and is axisymmetric:
+            isinstance(self.in_face, LineSegments),
+            isinstance(self.ex_face, LineSegments),
+            not self.added_regions,
+            not self.subtracted_regions,
+        ]):
             return polygon_revolve_signed_volume(  # faster, more accurate implementation
                 np.concatenate([self.in_face.xz.T[::-1], self.ex_face.xz.T])  # clockwise
             )
@@ -554,9 +561,27 @@ class Cell(ParentLinkable):
         """Plot the poloidal cross-section on a 2d plot"""
         return plot_2d(self.outline, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> Axes:
+    def show_cad(self, *args, show_half_only=True, **kwargs) -> Axes:
         """Plot 3D plots of the poloidal"""
-        return show_cad(self.solid, *args, **kwargs)
+        if show_half_only:
+            bb = self.solid.bounding_box
+            r = abs(bb.x_max) + EPS_FREECAD * 10
+            x_min = -r
+            x_max = r
+            z_min = bb.z_min - EPS_FREECAD * 10
+            z_max = bb.z_max + EPS_FREECAD * 10
+            boundary = make_polygon(
+                [
+                    [x_min, 0, z_min],
+                    [x_min, 0, z_max],
+                    [x_max, 0, z_max],
+                    [x_max, 0, z_min],
+                ],
+                closed=True,
+            )
+            half_bb = extrude_shape(BluemiraFace(boundary), [0, -r, 0])
+            solid = boolean_cut(self.solid, half_bb)
+        return show_cad(solid, *args, **kwargs)
 
     def plot_and_fill(self, color, ax=None) -> Axes:
         """
