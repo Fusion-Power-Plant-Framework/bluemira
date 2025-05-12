@@ -754,8 +754,8 @@ class Conductor(metaclass=RegistrableMeta):
         p3 = np.array([-c, d])
         points_ext_ins = np.vstack((p0, p1, p2, p3, p0)) + pc
 
-        ax.fill(points_ext_ins[:, 0], points_ext_ins[:, 1], "red")
-        ax.fill(points_ext_jacket[:, 0], points_ext_jacket[:, 1], "blue")
+        ax.fill(points_ext_ins[:, 0], points_ext_ins[:, 1], "red", snap=False)
+        ax.fill(points_ext_jacket[:, 0], points_ext_jacket[:, 1], "blue", snap=False)
 
         ax = self.cable.plot(xc=xc, yc=yc, show=False, ax=ax)
 
