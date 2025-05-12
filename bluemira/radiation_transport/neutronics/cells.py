@@ -186,8 +186,31 @@ class CSGReactor(Sequence):
     def plot_2d(self, *args, **kwargs) -> Axes:
         return plot_2d(chain(*self.outlines), *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> Axes:
-        return show_cad(chain(*self.solids), *args, **kwargs)
+    def show_cad(self, *args, show_half_only: bool = False, **kwargs) -> Axes:
+        solids = chain(*self.solids)
+        if show_half_only:
+            bounding_boxes = [sol.bounding_box for sol in solids]
+            limits = np.array([
+                (bb.x_min, bb.x_max, bb.y_min, bb.z_min, bb.z_max)
+                for bb in bounding_boxes
+            ])
+            x_min = limits[:, 0].min() - EPS_FREECAD * 10
+            x_max = limits[:, 1].max() + EPS_FREECAD * 10
+            y_min = limits[:, 2].min() - EPS_FREECAD * 10
+            z_min = limits[:, 3].min() - EPS_FREECAD * 10
+            z_max = limits[:, 4].max() + EPS_FREECAD * 10
+            boundary = make_polygon(
+                [
+                    [x_min, 0, z_min],
+                    [x_min, 0, z_max],
+                    [x_max, 0, z_max],
+                    [x_max, 0, z_min],
+                ],
+                closed=True,
+            )
+            half_bb = extrude_shape(BluemiraFace(boundary), [0, y_min, 0])
+            solids = [boolean_cut(sol, half_bb) for sol in solids]
+        return show_cad(solids, *args, **kwargs)
 
     def __repr__(self) -> str:
         return super().__repr__().replace(" at ", f"of {len(self)} stacks at ")
@@ -364,8 +387,31 @@ class CellStack(ParentLinkable, Sequence):
     def plot_2d(self, *args, **kwargs) -> Axes:
         return plot_2d(self.outlines, *args, **kwargs)
 
-    def show_cad(self, *args, **kwargs) -> Axes:
-        return show_cad(self.solids, *args, **kwargs)
+    def show_cad(self, *args, show_half_only: bool = False, **kwargs) -> Axes:
+        solids = self.solids
+        if show_half_only:
+            bounding_boxes = [sol.bounding_box for sol in solids]
+            limits = np.array([
+                (bb.x_min, bb.x_max, bb.y_min, bb.z_min, bb.z_max)
+                for bb in bounding_boxes
+            ])
+            x_min = limits[:, 0].min() - EPS_FREECAD * 10
+            x_max = limits[:, 1].max() + EPS_FREECAD * 10
+            y_min = limits[:, 2].min() - EPS_FREECAD * 10
+            z_min = limits[:, 3].min() - EPS_FREECAD * 10
+            z_max = limits[:, 4].max() + EPS_FREECAD * 10
+            boundary = make_polygon(
+                [
+                    [x_min, 0, z_min],
+                    [x_min, 0, z_max],
+                    [x_max, 0, z_max],
+                    [x_max, 0, z_min],
+                ],
+                closed=True,
+            )
+            half_bb = extrude_shape(BluemiraFace(boundary), [0, y_min, 0])
+            solids = [boolean_cut(sol, half_bb) for sol in solids]
+        return show_cad(solids, *args, **kwargs)
 
     @staticmethod
     def set_cells_properties(cells: Sequence[Cell], parent: CellStack) -> None:
@@ -563,6 +609,7 @@ class Cell(ParentLinkable):
 
     def show_cad(self, *args, show_half_only=True, **kwargs) -> Axes:
         """Plot 3D plots of the poloidal"""
+        solid = self.solid
         if show_half_only:
             bb = self.solid.bounding_box
             r = abs(bb.x_max) + EPS_FREECAD * 10
@@ -580,7 +627,7 @@ class Cell(ParentLinkable):
                 closed=True,
             )
             half_bb = extrude_shape(BluemiraFace(boundary), [0, -r, 0])
-            solid = boolean_cut(self.solid, half_bb)
+            solid = boolean_cut(solid, half_bb)
         return show_cad(solid, *args, **kwargs)
 
     def plot_and_fill(self, color, ax=None) -> Axes:

@@ -53,11 +53,11 @@ def check_stacks_are_neighbours(stack_ccw: CellStack, stack_cw: CellStack) -> No
     CSGGeometryValidationError
         raised if the two stacks don't have 2 matching vertices where we expect them.
     """
-    if stack_ccw.vertices.cw_in != stack_cw.vertices.ccw_in:
+    if stack_ccw.vertices.cw_in is not stack_cw.vertices.ccw_in:
         raise CSGGeometryValidationError(
             f"{stack_ccw} and {stack_cw} has mismatched interior (plasma-facing) vertex!"
         )
-    if stack_ccw.vertices.cw_ex != stack_cw.vertices.ccw_ex:
+    if stack_ccw.vertices.cw_ex is not stack_cw.vertices.ccw_ex:
         raise CSGGeometryValidationError(
             f"{stack_ccw} and {stack_cw} has mismatched exterior vertex!"
         )
@@ -78,11 +78,11 @@ def check_cells_are_neighbours_by_vertices(in_cell: Cell, ex_cell: Cell) -> None
     CSGGeometryValidationError
         Raised if the two stacks don't have 2 matching vertices where we expect them.
     """
-    if in_cell.vertices.ccw_ex != ex_cell.vertices.ccw_in:
+    if in_cell.vertices.ccw_ex is not ex_cell.vertices.ccw_in:
         raise CSGGeometryValidationError(
             f"{in_cell} and {ex_cell} has mismatched ccw vertex!"
         )
-    if in_cell.vertices.cw_ex != ex_cell.vertices.cw_in:
+    if in_cell.vertices.cw_ex is not ex_cell.vertices.cw_in:
         raise CSGGeometryValidationError(
             f"{in_cell} and {ex_cell} has mismatched cw vertex!"
         )
@@ -105,7 +105,7 @@ def check_cells_are_neighbours_by_face(in_cell: Cell, ex_cell: Cell) -> None:
         Raised if the two stacks don't share a :class:`~RadialInterface` where we expect
         them.
     """
-    if in_cell.ex_face != ex_cell.in_face:
+    if in_cell.ex_face is not ex_cell.in_face:
         raise CSGGeometryValidationError(
             f"{in_cell} and {ex_cell} does not share an interface!"
         )
