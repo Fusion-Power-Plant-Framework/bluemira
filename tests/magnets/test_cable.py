@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.magnets.cable import (
     DummyRoundCableLTS,
     DummySquareCableLTS,
@@ -20,9 +21,9 @@ from bluemira.materials import MaterialCache
 from bluemira.materials.mixtures import MixtureFraction
 
 # -- Load materials from cache ------------------------------------------------
-
+directory = get_bluemira_path("magnets", subfolder="tests")
 MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(".", "test_materials_mag.json"))
+MATERIAL_CACHE.load_from_file(Path(directory, "test_materials_mag.json"))
 
 DummySteel = MATERIAL_CACHE.get_material("SS316-LN")
 DummySuperconductor = MATERIAL_CACHE.get_material("Nb3Sn - WST")
