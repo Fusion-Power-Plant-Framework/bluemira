@@ -178,7 +178,7 @@ markupsafe==3.0.2
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.10.1
+matplotlib==3.10.3
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
