@@ -1120,10 +1120,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             raise ValueError("At least one non-empty winding pack must be provided.")
 
         first_conductor = WPs[0].conductor
-        for wp in WPs[1:]:
+        for i, wp in enumerate(WPs[1:], start=1):
             if wp.conductor is not first_conductor:
-                raise ValueError(
-                    "All winding packs must share the same conductor object."
+                bluemira_warn(
+                    f"[Winding pack at index {i} uses a different conductor object "
+                    f"than the first one. This module requires all WPs to "
+                    f"share the same conductor instance."
+                    f"Please verify the inputs or unify the conductor assignment."
                 )
 
     @property
@@ -1673,7 +1676,10 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         if n_conds is None:
             n_conds = self.n_conductors
+
         conductor = self.WPs[0].conductor
+
+        self._check_WPs(self.WPs)
 
         i = 0
         err_conductor_area_jacket = 10000 * eps
