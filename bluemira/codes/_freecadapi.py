@@ -2923,7 +2923,7 @@ def show_cad(
         light.intensity = 1.2
 
         viewer.show()
-        app.exec_()
+        app.exec()
 
 
 def rotate_into_position(
