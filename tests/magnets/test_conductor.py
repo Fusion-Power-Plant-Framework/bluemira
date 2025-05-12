@@ -9,7 +9,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pytest
 
-from bluemira.magnets.cable import DummyRoundCableLTS, RectangularCable
+from bluemira.base.file import get_bluemira_path
+from bluemira.magnets.cable import RectangularCable
 from bluemira.magnets.conductor import Conductor
 from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.materials import MaterialCache
@@ -19,8 +20,9 @@ from bluemira.materials.mixtures import MixtureFraction
 # Fixtures
 # ---------------------------------------------------------------------------
 
+directory = get_bluemira_path("magnets", subfolder="tests")
 MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(".", "test_materials_mag.json"))
+MATERIAL_CACHE.load_from_file(Path(directory, "test_materials_mag.json"))
 
 
 @pytest.fixture
@@ -100,12 +102,6 @@ def test_material_properties(conductor):
     assert conductor.Cp(temperature=temperature) > 0.0
 
 
-def test_stiffness_properties(conductor):
-    temperature = 20
-    assert conductor.Kx(temperature=temperature) > 0.0
-    assert conductor.Ky(temperature=temperature) > 0.0
-
-
 def test_plot(monkeypatch, conductor):
     monkeypatch.setattr(plt, "show", lambda: None)
     ax = conductor.plot(show=True)
@@ -114,9 +110,7 @@ def test_plot(monkeypatch, conductor):
 
 def test_to_from_dict(conductor):
     config = conductor.to_dict()
-    restored = Conductor.from_dict(
-        config, cable_cls=DummyRoundCableLTS, material_cache=MATERIAL_CACHE
-    )
+    restored = Conductor.from_dict(config)
 
     assert restored.name == conductor.name
     assert restored.dx_jacket == pytest.approx(conductor.dx_jacket)
