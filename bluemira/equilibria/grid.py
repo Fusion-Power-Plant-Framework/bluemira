@@ -132,6 +132,23 @@ class Grid:
             [(nx - 1, z) for z in range(nz)],
         ])
 
+    def regrid(self, nx: int, nz: int) -> Grid:
+        """Reinitialise the grid with different x and z discretisation
+
+        Parameters
+        ----------
+        nx:
+            number of x grid points
+        nz:
+            number of z grid points
+
+        Returns
+        -------
+        :
+            New grid object
+        """
+        return type(self)(self.x_min, self.x_max, self.z_min, self.z_max, nx, nz)
+
     @classmethod
     def from_eqdict(cls, e) -> Grid:
         """
