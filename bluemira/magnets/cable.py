@@ -670,8 +670,8 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             + pc
         )
 
-        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
-        ax.fill(points_cc[:, 0], points_cc[:, 1], "r")
+        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold", snap=False)
+        ax.fill(points_cc[:, 0], points_cc[:, 1], "r", snap=False)
         ax.set_aspect("equal")
 
         if show:
@@ -1492,8 +1492,8 @@ class RoundCable(ABCCable):
             + pc
         )
 
-        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
-        ax.fill(points_cc[:, 0], points_cc[:, 1], "r")
+        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold", snap=False)
+        ax.fill(points_cc[:, 0], points_cc[:, 1], "r", snap=False)
 
         if show:
             plt.show()

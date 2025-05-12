@@ -158,7 +158,7 @@ class WindingPack(metaclass=RegistrableMeta):
 
         points_ext = np.vstack((p0, p1, p2, p3, p0)) + pc
 
-        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold")
+        ax.fill(points_ext[:, 0], points_ext[:, 1], "gold", snap=False)
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
         if not homogenized:
