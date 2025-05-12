@@ -5,5 +5,5 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Magnets module for the bluemira code.
+The bluemira magnets module
 """
