@@ -211,7 +211,7 @@ def solve_transport_fixed_boundary(
     kappa95_t: float,
     delta95_t: float,
     lcar_mesh: float = 0.15,
-    max_iter: int = 30,
+    maxiter: int = 30,
     iter_err_max: float = 1e-5,
     max_inner_iter: int = 20,
     inner_iter_err_max: float = 1e-4,
@@ -248,7 +248,7 @@ def solve_transport_fixed_boundary(
     lcar_mesh:
         Value of the characteristic length used to generate the mesh to solve the
         Grad-Shafranov problem
-    max_iter:
+    maxiter:
         Maximum number of iteration between Grad-Shafranov and the transport solver
     iter_err_max:
         Convergence maximum error to stop the iteration
@@ -310,7 +310,7 @@ def solve_transport_fixed_boundary(
     figname = "Transport iteration "
     f, ax = None, None
 
-    for n_iter in range(max_iter):
+    for n_iter in range(maxiter):
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
             transport_solver, transport_params, transport_run_mode
         )
@@ -466,7 +466,7 @@ def solve_transport_fixed_boundary(
     else:
         # If we don't break we didn't converge
         message = bluemira_warn
-        line_1 = f"did not converge within {max_iter} iterations"
+        line_1 = f"did not converge within {maxiter} iterations"
         ltgt = ">"
 
     message(

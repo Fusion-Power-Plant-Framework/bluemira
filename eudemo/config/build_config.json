@@ -34,13 +34,13 @@
     },
     "fixed_equilibrium_settings": {
       "p_order": 2,
-      "max_iter": 30,
+      "maxiter": 30,
       "iter_err_max": 1e-3,
       "relaxation": 0.0
     },
     "transport_eq_settings": {
       "lcar_mesh": 0.2,
-      "max_iter": 15,
+      "maxiter": 15,
       "iter_err_max": 1e-1,
       "relaxation": 0.0,
       "plot": false,
@@ -72,7 +72,7 @@
     "file_path": "$path_expand:./equilibrium_eqdsk.json",
     "settings": {
       "iter_err_max": 1e-3,
-      "max_iter": 50,
+      "maxiter": 50,
       "relaxation": 0.15,
       "coil_discretisation": 0.3,
       "gamma": 1e-7

@@ -56,7 +56,7 @@ class TestFemGradShafranovFixedBoundary:
             "I_p": 17e6,
             "B_0": 5,
             "p_order": 1,
-            "max_iter": 2,
+            "maxiter": 2,
             "iter_err_max": 1.0,
             "relaxation": 0.0,
         }

@@ -103,7 +103,7 @@ solver = FemGradShafranovFixedBoundary(
     R_0=R_0,
     B_0=B_0,
     p_order=2,
-    max_iter=30,
+    maxiter=30,
     iter_err_max=1e-4,
     relaxation=0.05,
 )
