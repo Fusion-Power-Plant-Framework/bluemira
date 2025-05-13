@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
+import numpy as np
 from cadquery.assembly import Assembly
 from cadquery.occ_impl import geom, shapes
 from cadquery.occ_impl.assembly import Color
@@ -37,6 +38,26 @@ apiShape = shapes.Shape  # noqa: N816
 # apiPlacement = Base.Placement
 apiPlane = shapes.Plane  # noqa: N816
 apiCompound = shapes.Compound  # noqa: N816
+
+
+# ======================================================================================
+# Array, List, Vector, Point manipulation
+# ======================================================================================
+
+
+def vector_to_list(vectors: list[apiVector]) -> list[list[float]]:
+    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""  # noqa: DOC201
+    return [list(v) for v in vectors]
+
+
+def vector_to_numpy(vectors: list[apiVector]) -> np.ndarray:
+    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""  # noqa: DOC201
+    return np.array(vector_to_list(vectors))
+
+
+# ======================================================================================
+# Geometry visualisation
+# ======================================================================================
 
 
 @dataclass
