@@ -25,6 +25,12 @@ class FreeCADError(base_err.BluemiraError):
     """
 
 
+class CadQueryError(base_err.BluemiraError):
+    """
+    Error class for use in the geometry module where CadQuery throws an error.
+    """
+
+
 class InvalidCADInputsError(base_err.BluemiraError):
     """
     Error class for use in the geometry module where inputs are not valid.
