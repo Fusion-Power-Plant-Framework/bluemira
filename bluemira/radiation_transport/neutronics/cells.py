@@ -401,12 +401,10 @@ class CellStack(ParentLinkable, Sequence):
             z_min = limits[:, 3].min() - EPS_FREECAD * 10
             z_max = limits[:, 4].max() + EPS_FREECAD * 10
             boundary = make_polygon(
-                [
-                    [x_min, 0, z_min],
-                    [x_min, 0, z_max],
-                    [x_max, 0, z_max],
-                    [x_max, 0, z_min],
-                ],
+                Coordinates({
+                    "x": [x_min, x_min, x_max, x_max],
+                    "z": [z_min, z_max, z_max, z_min],
+                }),
                 closed=True,
             )
             half_bb = extrude_shape(BluemiraFace(boundary), [0, y_min, 0])
@@ -618,12 +616,10 @@ class Cell(ParentLinkable):
             z_min = bb.z_min - EPS_FREECAD * 10
             z_max = bb.z_max + EPS_FREECAD * 10
             boundary = make_polygon(
-                [
-                    [x_min, 0, z_min],
-                    [x_min, 0, z_max],
-                    [x_max, 0, z_max],
-                    [x_max, 0, z_min],
-                ],
+                Coordinates({
+                    "x": [x_min, x_min, x_max, x_max],
+                    "z": [z_min, z_max, z_max, z_min],
+                }),
                 closed=True,
             )
             half_bb = extrude_shape(BluemiraFace(boundary), [0, -r, 0])
