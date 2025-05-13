@@ -29,7 +29,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes.cadapi import cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE

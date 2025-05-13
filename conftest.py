@@ -126,7 +126,7 @@ def pytest_configure(config):
         # Note that if we use a new CAD backend, this must be changed.
         with suppress(ImportError):
             mock.patch("bluemira.codes._polyscope.ps").start()
-        mock.patch("bluemira.codes._freecadapi.show_cad").start()
+        mock.patch("bluemira.codes.cadapi.cadapi.show_cad").start()
 
     options = {
         "longrun": config.option.longrun,

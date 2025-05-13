@@ -6,7 +6,7 @@
 
 import pytest
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes.cadapi._freecad.api as cadapi
 import bluemira.geometry.tools as geo_tools
 from bluemira.geometry.error import MixedOrientationWireError
 from bluemira.geometry.face import BluemiraFace

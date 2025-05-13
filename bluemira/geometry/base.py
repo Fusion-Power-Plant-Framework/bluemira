@@ -15,7 +15,7 @@ import enum
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes.cadapi import cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 

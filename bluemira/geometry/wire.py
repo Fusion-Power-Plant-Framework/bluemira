@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
+from bluemira.codes.cadapi import cadapi
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.constants import EPS_FREECAD

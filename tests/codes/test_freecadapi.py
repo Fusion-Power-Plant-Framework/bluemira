@@ -14,7 +14,7 @@ import pytest
 from FreeCAD import Base, closeDocument, newDocument
 from scipy.special import ellipe
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes.cadapi._freecad.api as cadapi
 from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
@@ -70,7 +70,7 @@ class TestFreecadapi:
 
         circ = cadapi.make_circle(10)
         with patch(
-            "bluemira.codes._freecadapi.arrange_edges",
+            "bluemira.codes.cadapi._freecad.api.arrange_edges",
             new=lambda a, b: b,  # noqa: ARG005
         ):
             wire1 = self.offsetter(circ)

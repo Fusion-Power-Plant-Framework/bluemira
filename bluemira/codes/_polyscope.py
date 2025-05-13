@@ -13,8 +13,8 @@ import numpy as np
 import polyscope as ps
 from matplotlib import colors
 
-import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.cadapi import cadapi
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:

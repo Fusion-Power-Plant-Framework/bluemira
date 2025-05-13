@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 from numpy.linalg import norm
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes.cadapi._freecad.api as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import get_log_level, set_log_level

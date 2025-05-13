@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import bluemira.codes._freecadapi as cadapi
+from bluemira.codes.cadapi import cadapi
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
 
