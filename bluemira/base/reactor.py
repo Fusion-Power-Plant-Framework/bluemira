@@ -33,8 +33,8 @@ from bluemira.base.tools import (
 if TYPE_CHECKING:
     from os import PathLike
 
-    import bluemira.codes._freecadapi as cadapi
     from bluemira.base.components import ComponentT
+    from bluemira.codes.cadapi import cadapi
 
 
 DIM_2D = Literal["xy", "xz"]

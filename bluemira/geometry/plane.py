@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import bluemira.codes._freecadapi as cadapi
+from bluemira.codes.cadapi import cadapi
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 

@@ -15,15 +15,15 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-import bluemira.codes._freecadapi as cadapi
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.codes.cadapi import cadapi
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 
-_FREECAD_REF = "bluemira.codes._freecadapi"
+_CAD_REF = "bluemira.codes.cadapi.cadapi"
 
 
 def _skip_polyscope():
@@ -198,7 +198,7 @@ class TestGeometryDisplayer:
         ],
     )
     def test_labels_passed_in_correctly(self, labels, result):
-        with patch(f"{_FREECAD_REF}.show_cad") as show_cad_mock:
+        with patch(f"{_CAD_REF}.show_cad") as show_cad_mock:
             displayer.show_cad([self._make_shape(), self._make_shape()], labels=labels)
 
         assert show_cad_mock.call_args_list[0][0][2] == result

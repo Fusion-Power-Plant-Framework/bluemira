@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bluemira.codes._freecadapi import _wire_edges_tangent
+from bluemira.codes.cadapi._freecad.api import _wire_edges_tangent
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (

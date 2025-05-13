@@ -41,14 +41,14 @@ from matplotlib import colors
 try:
     from pivy import coin, quarter
 except ImportError:
-    from bluemira.codes._freecadconfig import _patch_pivy
+    from bluemira.codes.cadapi._freecad.config import _patch_pivy
 
     coin, quarter = _patch_pivy()
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadconfig import _freecad_save_config
+from bluemira.codes.cadapi._freecad.config import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance

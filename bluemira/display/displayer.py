@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class ViewerBackend(Enum):
     """CAD viewer backends."""
 
-    FREECAD = "bluemira.codes._freecadapi"
+    FREECAD = "bluemira.codes.cadapi._freecad.api"
     POLYSCOPE = "bluemira.codes._polyscope"
 
     @lru_cache(2)

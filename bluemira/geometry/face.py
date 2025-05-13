@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes._freecadapi as cadapi
+from bluemira.codes.cadapi import cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo

@@ -44,8 +44,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from pathlib import Path
 
-    import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
+    from bluemira.codes.cadapi import cadapi
 
 
 _T = TypeVar("_T")
