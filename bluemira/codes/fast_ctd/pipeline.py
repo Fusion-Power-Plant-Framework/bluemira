@@ -7,18 +7,22 @@
 Pipeline for converting STEP files to DAGMC models using fast_ctd.
 """
 
+import contextlib
 from pathlib import Path
 
-from fast_ctd import (
-    facet_brep_to_dagmc,
-    make_watertight,
-    merge_brep_geometries,
-    step_to_brep,
-)
-
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.codes.fast_ctd._guard import fast_ctd_guard
+
+with contextlib.suppress(ImportError):
+    from fast_ctd import (
+        facet_brep_to_dagmc,
+        make_watertight,
+        merge_brep_geometries,
+        step_to_brep,
+    )
 
 
+@fast_ctd_guard
 def step_to_dagmc_pipeline(
     step_file_path: str | Path,
     output_dagmc_model_path: str | Path,
