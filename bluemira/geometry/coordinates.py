@@ -1942,8 +1942,8 @@ def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndar
             # Parallel segments. Will raise numpy RuntimeWarnings
             xz[0, i] = np.nan
     in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
-    xz = xz[2:, in_range].T
-    return np.unique(xz, axis=0).T
+    xz = xz[2:, in_range].T  # shape: (N, 2)
+    return np.unique(xz, axis=0).T  # transposed from (unique(N), 2) to (2, unique(N))
 
 
 @nb.jit(cache=True, nopython=True)
