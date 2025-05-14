@@ -13,6 +13,7 @@ from bluemira.geometry.tools import extrude_shape, make_polygon
 
 
 class TestImprintSolids:
+    @pytest.mark.parametrize("use_cgal", [True, False])
     @pytest.mark.parametrize(
         ("translate_x", "translate_y", "t_imprints", "a_faces", "bc_faces"),
         [
@@ -23,6 +24,7 @@ class TestImprintSolids:
     )
     def test_imprint_solids(
         self,
+        use_cgal: bool,  # noqa: FBT001
         translate_x: float,
         translate_y: float,
         t_imprints: int,
@@ -41,7 +43,7 @@ class TestImprintSolids:
         box_c.translate([-translate_x, -translate_y, 1])
 
         pre_imps = [box_a, box_b, box_c]
-        imp_result = python_occ.imprint_solids(pre_imps, use_cgal=True)
+        imp_result = python_occ.imprint_solids(pre_imps, use_cgal=use_cgal)
 
         imps = imp_result.imprintables
         imp_solids = imp_result.solids

@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import bluemira.codes.cgal_ext as cgal
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.geometry.constants import D_TOLERANCE
 
 if TYPE_CHECKING:
@@ -228,7 +229,7 @@ def scale_points_from_centroid(points, scale_factor):
 
 
 def find_approx_overlapping_pairs(
-    solids: Iterable[BluemiraSolid], *, use_cgal: bool = False
+    solids: Iterable[BluemiraSolid], *, use_cgal: bool = True
 ):
     """Finds the pairs of solids that are approximately overlapping.
 
@@ -272,7 +273,12 @@ def find_approx_overlapping_pairs(
     aabbs = []
     approx_geometry = []
 
-    use_cgal = use_cgal and cgal.cgal_available()
+    if use_cgal and not cgal.cgal_available():
+        use_cgal = False
+        bluemira_debug(
+            "CGAL is not available. Falling back to numpy based overlap checking."
+            "`pip install cgal` for a faster more accurate result."
+        )
 
     for solid in solids:
         aabbs.append(to_bb_matrix(solid.bounding_box))

@@ -179,17 +179,23 @@ def imprint_solids(
     solids: Iterable[BluemiraSolid],
     labels: Iterable[str] | None = None,
     *,
-    use_cgal=False,
+    use_cgal=True,
 ) -> ImprintResult:
     """Imprints solids together.
 
     Parameters
     ----------
-    solids : Iterable[BluemiraSolid]
+    solids:
         The solids to imprint together.
-    labels : Iterable[str] | None
+    labels:
         The labels to use for the solids. If None, the labels will be
         taken from the solids. Must be the same length as solids.
+    use_cgal:
+        Whether to use CGAL for improved overlap checking speed and precision.
+        If True and CGAL is not available, a numpy based approach will be used
+        as a fallback.
+        If False, the numpy based approach will be used regardless of CGAL
+        availability.
 
     Returns
     -------

@@ -11,7 +11,7 @@ from bluemira.codes.utilities import code_guard, is_code_available
 
 
 def cgal_available():
-    is_code_available("CGAL")
+    return is_code_available("CGAL")
 
 
 cgal_guard = code_guard(
