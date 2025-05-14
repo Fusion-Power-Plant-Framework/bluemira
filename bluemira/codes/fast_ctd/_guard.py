@@ -8,11 +8,11 @@ API guard for the fast_ctd package.
 """
 
 try:
-    import CGAL  # noqa: F401
+    import fast_ctd  # noqa: F401
 
-    cgal_available = True
+    fast_ctd_available = True
 except ImportError:
-    cgal_available = False
+    fast_ctd_available = False
 
 
 def cgal_api_available(f):
@@ -25,7 +25,7 @@ def cgal_api_available(f):
     """  # noqa: DOC201
 
     def wrap(*args, **kwargs):
-        if not cgal_available:
+        if not fast_ctd_available:
             raise ImportError(
                 "CGAL is not available. Run `conda install CGAL` to use this function."
             )

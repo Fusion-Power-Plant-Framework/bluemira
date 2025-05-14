@@ -6,9 +6,3 @@
 """
 DAGMC related classes and functions.
 """
-
-from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter import (
-    DAGMCConverter,
-    DAGMCConverterFastCTD,
-    save_cad_to_dagmc,
-)
