@@ -24,7 +24,7 @@ class TestImprintSolids:
         box_c.translate([0.6, 0.6, 1])
 
         pre_imps = [box_a, box_b, box_c]
-        imp_result = python_occ.imprint_solids(pre_imps)
+        imp_result = python_occ.imprint_solids(pre_imps, use_cgal=True)
 
         imps = imp_result.imprintables
         imp_solids = imp_result.solids

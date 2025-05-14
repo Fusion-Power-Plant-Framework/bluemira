@@ -14,6 +14,7 @@ import subprocess  # noqa: S404
 import threading
 from collections.abc import Callable
 from enum import Enum
+from functools import wraps
 from types import ModuleType
 from typing import Any
 
@@ -94,6 +95,37 @@ def get_code_interface(module: str) -> ModuleType:
         return get_module(f"bluemira.codes.{module.lower()}")
     except ImportError:
         return get_module(module)
+
+
+def code_guard(code_module: str, add_message: str = ""):
+    """
+    Import guard for a code at runtime.
+
+    Parameters
+    ----------
+    code_module:
+        The name of the code module to check.
+
+    Raises
+    ------
+    ImportError
+        If the code is not available (installed).
+    """  # noqa: DOC201
+
+    def decorator(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            try:
+                get_module(code_module)
+            except ImportError as e:
+                raise ImportError(
+                    f"{code_module} is not installed or available.\n{add_message}"
+                ) from e
+            return function(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def create_mapping(

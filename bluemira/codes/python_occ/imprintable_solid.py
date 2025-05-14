@@ -7,24 +7,22 @@
 Working class for imprinting solids.
 """
 
-from __future__ import annotations
-
+from bluemira.codes.python_occ._guard import occ_guard
 from bluemira.geometry.solid import BluemiraSolid
 
 try:
-    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid  # noqa: TC002
+    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid
     from OCC.Extend.TopologyUtils import TopologyExplorer
 
     import Part  # isort: skip
-
-    occ_available = True
 except ImportError:
-    occ_available = False
+    pass
 
 
 class ImprintableSolid:
     """Represents a solid that can be imprinted."""
 
+    @occ_guard
     def __init__(self, label: str, bm_solid: BluemiraSolid, occ_solid: TopoDS_Solid):
         self._label = label
         self._bm_solid = bm_solid
@@ -57,9 +55,6 @@ class ImprintableSolid:
         ImportError
             If OCC is not available.
         """
-        if not occ_available:
-            raise ImportError("OCC is not available")
-
         return cls(label, bm_solid, Part.__toPythonOCC__(bm_solid.shape))
 
     @property

@@ -8,11 +8,9 @@ Contains functions to efficiently convert to
 CGAL geometry and perform meshed-based collision detections.
 """
 
-from __future__ import annotations
-
 import numpy as np
 
-from bluemira.codes.cgal_ext._guard import guard_cgal_available
+from bluemira.codes.cgal_ext._guard import cgal_guard
 
 try:
     from CGAL.CGAL_Kernel import Point_3
@@ -60,7 +58,7 @@ def _scale_points_from_centroid(points, scale_factor):
     return scaled_points
 
 
-@guard_cgal_available
+@cgal_guard
 def tri_mesh_to_cgal_mesh(points: np.ndarray, tris: np.ndarray, scale: float = 1):
     """
     Convert a triangle mesh to a CGAL Polyhedron_3 object.
@@ -107,7 +105,7 @@ def tri_mesh_to_cgal_mesh(points: np.ndarray, tris: np.ndarray, scale: float = 1
     return p
 
 
-@guard_cgal_available
+@cgal_guard
 def polys_collide(
     mesh_a: Polyhedron_3,
     mesh_b: Polyhedron_3,
