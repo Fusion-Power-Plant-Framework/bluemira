@@ -9,7 +9,10 @@ API guard for the CGAL package.
 
 from bluemira.codes.utilities import code_guard, is_code_available
 
-cgal_available = is_code_available("CGAL")
+
+def cgal_available():
+    is_code_available("CGAL")
+
 
 cgal_guard = code_guard(
     "CGAL",

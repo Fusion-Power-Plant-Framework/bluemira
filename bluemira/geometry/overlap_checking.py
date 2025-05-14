@@ -272,7 +272,7 @@ def find_approx_overlapping_pairs(
     aabbs = []
     approx_geometry = []
 
-    use_cgal = use_cgal and cgal.cgal_available
+    use_cgal = use_cgal and cgal.cgal_available()
 
     for solid in solids:
         aabbs.append(to_bb_matrix(solid.bounding_box))

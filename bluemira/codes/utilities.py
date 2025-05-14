@@ -112,7 +112,7 @@ def is_code_available(code_module: str) -> bool:
         True if the code is available, False otherwise.
     """
     try:
-        get_code_interface(code_module)
+        get_module(code_module)
     except ImportError:
         return False
     else:
