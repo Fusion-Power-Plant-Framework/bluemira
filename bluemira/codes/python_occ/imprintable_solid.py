@@ -52,9 +52,11 @@ class ImprintableSolid:
 
         Raises
         ------
-        ImportError
-            If OCC is not available.
+        TypeError
+            If bm_solid is not a BluemiraSolid.
         """
+        if not isinstance(bm_solid, BluemiraSolid):
+            raise TypeError(f"bm_solid must be a BluemiraSolid, got: {type(bm_solid)}")
         return cls(label, bm_solid, Part.__toPythonOCC__(bm_solid.shape))
 
     @property

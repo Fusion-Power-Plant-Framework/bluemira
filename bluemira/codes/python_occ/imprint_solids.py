@@ -17,11 +17,11 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.python_occ._guard import occ_guard
 from bluemira.codes.python_occ.imprintable_solid import ImprintableSolid
 from bluemira.geometry.overlap_checking import find_approx_overlapping_pairs
+from bluemira.geometry.solid import BluemiraSolid
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.geometry.solid import BluemiraSolid
 
 try:
     from OCC.Core.BOPAlgo import BOPAlgo_MakeConnected
@@ -199,6 +199,8 @@ def imprint_solids(
     ------
     ValueError
         If the labels are not the same length as the solids.
+    TypeError
+        If the solids are not of type BluemiraSolid.
     """
     if labels is None or len(labels) == 0:
         labels = [sld.label for sld in solids]
@@ -207,11 +209,18 @@ def imprint_solids(
             "Labels must be the same length as the solids iterable: "
             f"{len(labels)} vs. {len(solids)}"
         )
+    for sld, lbl in zip(solids, labels, strict=True):
+        if not isinstance(sld, BluemiraSolid):
+            raise TypeError(f"solids must be BluemiraSolid only - {lbl} is {type(sld)}")
+
+    pairs = find_approx_overlapping_pairs(solids, use_cgal=use_cgal)
     imprintables = [
         ImprintableSolid.from_bluemira_solid(lbl, sld)
         for sld, lbl in zip(solids, labels, strict=False)
     ]
-    pairs = find_approx_overlapping_pairs(solids, use_cgal=use_cgal)
+
+    # pairs and imprintables have the same ordering
+    # ie indexes match
 
     imprinter = _Imprinter(parallel_mode=True, run_parallel=True)
 
