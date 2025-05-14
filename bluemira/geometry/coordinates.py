@@ -1943,10 +1943,7 @@ def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndar
             xz[0, i] = np.nan
     in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
     xz = xz[2:, in_range].T
-    x, z = xz[:, 0], xz[:, 1]
-    if len(x) > 0:
-        x, z = np.unique([x, z], axis=1)
-    return x, z
+    return np.unique(xz, axis=0).T
 
 
 @nb.jit(cache=True, nopython=True)
