@@ -371,14 +371,23 @@ def save_components_cad(
     cad_format:
         CAD file format
     """
-    shapes, names = get_properties_from_components(components, ("shape", "name"))
+    shapes, names, mats = get_properties_from_components(
+        components, ("shape", "name", "material")
+    )
 
     if cad_format == "dagmc":
         save_cad_to_dagmc(
             shapes,
             names,
             filename,
-            material_name_map={},
+            material_name_map={
+                n: "undef_material" if m is None else m.name
+                for n, m in zip(
+                    names,
+                    mats,
+                    strict=False,
+                )
+            },
             converter_config=kwargs.get("converter_config"),
         )
     else:
@@ -494,7 +503,7 @@ def _group_physical_components_by_material(
     return mat_to_comps_map
 
 
-def _build_compounds_from_map(
+def _build_compounds_from_mat_map(
     mat_to_comps_map: dict[str, list[PhysicalComponent]],
     manager_name: str,
 ) -> list[PhysicalComponent]:
@@ -561,7 +570,7 @@ def build_comp_manager_save_xyz_cad_tree(
     else:
         mat_to_comps_map = {"": constructed_phy_comps}
 
-    return_comp.children = _build_compounds_from_map(
+    return_comp.children = _build_compounds_from_mat_map(
         mat_to_comps_map,
         manager_name,
     )
