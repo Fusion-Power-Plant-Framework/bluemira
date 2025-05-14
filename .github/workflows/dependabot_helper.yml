@@ -8,11 +8,38 @@ permissions:
   contents: write
 
 jobs:
+  dependency_changes:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'Fusion-Power-Plant-Framework/bluemira' }}
+    outputs:
+      changed: ${{ steps.check_pyproject_change.outputs.changed }}
+    steps:
+      - name: Fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+      - name: Check pyproject
+        env:
+          DEPENDABOT: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
+        id: check_pyproject_change
+        run: |
+          hasdiff=$(git diff --quiet HEAD~$((${{ env.PR_FETCH_DEPTH }} - 1)) HEAD pyproject.toml && echo 0 || echo 1)
+          if [ $DEPENDABOT == 'true' ] ; then
+            hasdiff=1
+          fi
+          echo "changed=$hasdiff" >> "$GITHUB_OUTPUT"
+
   dependabot:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'Fusion-Power-Plant-Framework/bluemira'
+    needs: [dependency_changes]
+    if: needs.dependency_changes.outputs.changed == 1
     steps:
       - name: Dependabot metadata
+        if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
