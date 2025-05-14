@@ -129,6 +129,9 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         TypeError
             If the shapes are not of type BluemiraSolid or BluemiraCompound.
         """
+        bluemira_print("Running fast_ctd CAD to DAGMC workflow")
+
+        bluemira_print("Imprinting shapes")
         imprinted_shapes = (
             self._run_imprint_per_compound()
             if converter_config.imprint_per_compound
@@ -139,7 +142,10 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
             ".imp.stp"
         )
         try:
-            bluemira_print(f"Saving imprinted geometry to {imprinted_geom_step_file_p}")
+            bluemira_print(
+                f"Saving imprinted geometry to {imprinted_geom_step_file_p} "
+                "(will be cleaned up)"
+            )
             cadapi.save_cad(
                 [s.shape for s in imprinted_shapes],
                 imprinted_geom_step_file_p.as_posix(),
