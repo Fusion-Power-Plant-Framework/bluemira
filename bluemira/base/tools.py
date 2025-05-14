@@ -38,9 +38,11 @@ from bluemira.geometry.tools import (
     serialise_shape,
 )
 from bluemira.materials.material import Material, Void
+from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from pathlib import Path
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
@@ -353,7 +355,7 @@ def copy_and_filter_component(
 
 def save_components_cad(
     components: ComponentT | Iterable[ComponentT],
-    filename: str,
+    filename: Path,
     cad_format: str | cadapi.CADFileType = "stp",
     **kwargs,
 ):
@@ -365,12 +367,22 @@ def save_components_cad(
     components:
         Components to save
     filename:
-        The filename of the
+        The full filename path to save the CAD to
     cad_format:
         CAD file format
     """
     shapes, names = get_properties_from_components(components, ("shape", "name"))
-    save_cad(shapes, filename, cad_format, names, **kwargs)
+
+    if cad_format == "dagmc":
+        save_cad_to_dagmc(
+            shapes,
+            names,
+            filename,
+            material_name_map={},
+            converter_config=kwargs.get("converter_config"),
+        )
+    else:
+        save_cad(shapes, filename, cad_format, names, **kwargs)
 
 
 def show_components_cad(

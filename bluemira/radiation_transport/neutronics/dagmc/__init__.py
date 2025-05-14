@@ -6,3 +6,7 @@
 """
 DAGMC related classes and functions.
 """
+
+from bluemira.radiation_transport.neutronics.dagmc.save_cad_to_dagmc import (
+    save_cad_to_dagmc,
+)

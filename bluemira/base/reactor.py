@@ -272,7 +272,7 @@ class ComponentManager(BaseManager):
 
         save_components_cad(
             comp,
-            filename=Path(directory, filename).as_posix(),
+            filename=Path(directory, filename),
             cad_format=cad_format,
             **kwargs,
         )
@@ -561,7 +561,7 @@ class Reactor(BaseManager):
                 self._init_construction_param_values(construction_params, kwargs),
                 for_save=True,
             ),
-            Path(directory, filename).as_posix(),
+            Path(directory, filename),
             cad_format,
             **kwargs,
         )
