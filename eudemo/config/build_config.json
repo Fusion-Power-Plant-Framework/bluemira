@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,9 +64,8 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
-    "diagnostic_plotting": { "plot": ["eq", "convergence"] },
-    "summary_plot": true,
+    "run_mode": "read",
+    "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
     "file_path": "$path_expand:./equilibrium_eqdsk.json",
@@ -92,7 +91,7 @@
         "x1": { "value": "r_fw_ib_in" },
         "x2": { "value": "r_fw_ob_in" }
       },
-      "run_mode": "run",
+      "run_mode": "read",
       "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": { "n_koz_points": 100 },
       "optimisation_settings": {
@@ -130,7 +129,7 @@
     "show_data": false
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -156,7 +155,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
