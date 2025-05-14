@@ -1640,14 +1640,10 @@ def save_cad(
         shapes = list(shapes) if isinstance(shapes, Iterable) else [shapes]
     if names is not None and not isinstance(names, list):
         names = [names]
-    filename = Path(filename).as_posix()
 
-    if cad_format == "dagmc":
-        # for now
-        raise NotImplementedError("DAGMC export is not yet implemented in Bluemira.")
     cadapi.save_cad(
         [s.shape for s in shapes],
-        filename,
+        Path(filename).as_posix(),
         cad_format=cad_format,
         labels=names,
         **kwargs,
