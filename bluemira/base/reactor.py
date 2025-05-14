@@ -272,8 +272,8 @@ class ComponentManager(BaseManager):
 
         save_components_cad(
             comp,
-            filename=Path(directory, filename),
-            cad_format=cad_format,
+            Path(directory, filename),
+            cad_format,
             **kwargs,
         )
 

@@ -14,6 +14,9 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_error, bluemira
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.codes import fast_ctd
 from bluemira.codes.python_occ import imprint_solids
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.compound import BluemiraCompound
+from bluemira.geometry.solid import BluemiraSolid
 from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter import (
     DAGMCConverter,
     DAGMCConverterConfig,
@@ -26,6 +29,8 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
     """
 
     converter_type: Literal["fast_ctd"] = "fast_ctd"
+
+    imprint_per_compound: bool = True
 
     minimum_include_volume: float = 1
     fix_step_to_brep_geometry: bool = False
@@ -72,6 +77,38 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
     Bluemira radiation transport module using fast_ctd.
     """
 
+    def _run_imprint_all(self) -> list[BluemiraSolid]:
+        slds = []
+        names = []
+        for shape, name in zip(self.shapes, self.names, strict=True):
+            if isinstance(shape, BluemiraCompound):
+                slds.extend(shape.solids)
+                names.extend([name] * len(shape.solids))
+            elif isinstance(shape, BluemiraSolid):
+                slds.append(shape)
+                names.append(name)
+            else:
+                raise TypeError(
+                    f"Shape {shape} is not a BluemiraSolid or BluemiraCompound."
+                )
+        return imprint_solids(slds, names).solids
+
+    def _run_imprint_per_compound(self) -> list[BluemiraGeo]:
+        imprinted_shapes: list[BluemiraGeo] = []
+        for shape, name in zip(self.shapes, self.names, strict=True):
+            if isinstance(shape, BluemiraCompound):
+                slds = shape.solids
+                imprinted_shapes.append(
+                    imprint_solids(slds, [name] * len(slds)).as_compound
+                )
+            elif isinstance(shape, BluemiraSolid):
+                imprinted_shapes.append(shape)
+            else:
+                raise TypeError(
+                    f"Shape {shape} is not a BluemiraSolid or BluemiraCompound."
+                )
+        return imprinted_shapes
+
     def run(
         self,
         output_dagmc_model_path: str | Path,
@@ -84,10 +121,19 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         ----------
         output_dagmc_model_path:
             Path to the output DAGMC model file.
-        kwargs:
-            Additional keyword arguments to pass to the conversion function.
+        converter_config:
+            Configuration options for the converter.
+
+        Raises
+        ------
+        TypeError
+            If the shapes are not of type BluemiraSolid or BluemiraCompound.
         """
-        imp_res = imprint_solids(self.shapes, self.names)
+        imprinted_shapes = (
+            self._run_imprint_per_compound()
+            if converter_config.imprint_per_compound
+            else self._run_imprint_all()
+        )
 
         imprinted_geom_step_file_p = Path(output_dagmc_model_path).with_suffix(
             ".imp.stp"
@@ -95,10 +141,10 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         try:
             bluemira_print(f"Saving imprinted geometry to {imprinted_geom_step_file_p}")
             cadapi.save_cad(
-                [s.shape for s in imp_res.solids],
+                [s.shape for s in imprinted_shapes],
                 imprinted_geom_step_file_p.as_posix(),
                 cad_format="step",
-                labels=imp_res.labels,
+                labels=self.names,  # they will match the order of the shapes
             )
             bluemira_print("Converting to DAGMC model")
             fast_ctd.step_to_dagmc_pipeline(

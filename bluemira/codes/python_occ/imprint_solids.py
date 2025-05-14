@@ -18,9 +18,12 @@ from bluemira.codes.python_occ._guard import occ_guard
 from bluemira.codes.python_occ.imprintable_solid import ImprintableSolid
 from bluemira.geometry.overlap_checking import find_approx_overlapping_pairs
 from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.tools import make_compound
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from bluemira.geometry.compound import BluemiraCompound
 
 
 try:
@@ -162,6 +165,12 @@ class ImprintResult:
     def solids(self) -> list[BluemiraSolid]:
         """Returns the imprinted BluemiraSolids."""
         return [imp.to_bluemira_solid() for imp in self._imprintables]
+
+    @property
+    def as_compound(self) -> BluemiraCompound:
+        """Returns the imprinted BluemiraCompound."""
+        # will throw if only one solid
+        return make_compound(self.solids)
 
     @property
     def occ_solids(self) -> list[TopoDS_Solid]:

@@ -12,6 +12,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from bluemira.base.file import force_file_extension
 from bluemira.geometry.base import BluemiraGeoT
 from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter_fast_ctd import (
     DAGMCConverterFastCTDConfig,
@@ -56,6 +57,8 @@ def save_cad_to_dagmc(
     NotImplementedError
         If the converter is not implemented.
     """
+    filename = force_file_extension(filename.as_posix(), ".h5m")
+
     # runs it through the pydantic model to validate the config
     # and convert it to the correct type
     return DAGMCConverterConfigModel(
