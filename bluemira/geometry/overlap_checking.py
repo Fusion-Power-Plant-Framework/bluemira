@@ -239,8 +239,12 @@ def find_approx_overlapping_pairs(
 
     Parameters
     ----------
-    solids
+    solids:
         An iterable of BluemiraSolid objects to check for overlaps between.
+
+    use_cgal:
+        If True, use CGAL to check for overlaps. Otherwise, use numpy.
+        If CGAL is not available, this will default to numpy (even if True).
 
     Returns
     -------
@@ -267,6 +271,8 @@ def find_approx_overlapping_pairs(
 
     aabbs = []
     approx_geometry = []
+
+    use_cgal = use_cgal and cgal.cgal_available
 
     for solid in solids:
         aabbs.append(to_bb_matrix(solid.bounding_box))
@@ -301,7 +307,7 @@ def find_approx_overlapping_pairs(
         geo_i = approx_geometry[i]
         geo_j = approx_geometry[j]
         itc = (
-            cgal.polys_collide(geo_i, geo_j)
+            cgal.do_polys_collide(geo_i, geo_j)
             if use_cgal
             else np.any(check_two_sets_bb_non_interference(geo_i, geo_j))
         )

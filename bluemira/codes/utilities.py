@@ -97,6 +97,28 @@ def get_code_interface(module: str) -> ModuleType:
         return get_module(module)
 
 
+def is_code_available(code_module: str) -> bool:
+    """
+    Check if a code is available
+
+    Parameters
+    ----------
+    code_module:
+        The name of the code module to check.
+
+    Returns
+    -------
+    :
+        True if the code is available, False otherwise.
+    """
+    try:
+        get_code_interface(code_module)
+    except ImportError:
+        return False
+    else:
+        return True
+
+
 def code_guard(code_module: str, add_message: str = ""):
     """
     Import guard for a code at runtime.
@@ -115,12 +137,10 @@ def code_guard(code_module: str, add_message: str = ""):
     def decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
-            try:
-                get_module(code_module)
-            except ImportError as e:
+            if not is_code_available(code_module):
                 raise ImportError(
                     f"{code_module} is not installed or available.\n{add_message}"
-                ) from e
+                )
             return function(*args, **kwargs)
 
         return wrapper

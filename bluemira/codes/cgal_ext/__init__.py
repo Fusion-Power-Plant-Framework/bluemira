@@ -7,12 +7,14 @@
 The API for CGAL.
 """
 
+from bluemira.codes.cgal_ext._guard import cgal_available
 from bluemira.codes.cgal_ext.collision_detection import (
-    polys_collide,
+    do_polys_collide,
     tri_mesh_to_cgal_mesh,
 )
 
 __all__ = [
-    "polys_collide",
+    "cgal_available",
+    "do_polys_collide",
     "tri_mesh_to_cgal_mesh",
 ]
