@@ -1947,18 +1947,18 @@ def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndar
 
 
 @nb.jit(cache=True, nopython=True)
-def _intersect_count(
-    x_inter: np.ndarray, z_inter: np.ndarray, x2: np.ndarray, z2: np.ndarray
-) -> np.ndarray:
+def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
     """Get the indices of the intersects that are
 
     Parameters
     ----------
-    x_inter, z_inter:
-        x and z coordinates of the points created by the get_intersect function.
-    x2, z2:
+    xz_inter:
+        x and z coordinates of the points created by the get_intersect function,
+        shape = (N, 2)
+    xz_2:
         x and z coordinates of one of the vertices of the polygon inputted into the
         get_intersect function.
+        shape = (N, 2)
 
     Returns
     -------
@@ -1967,16 +1967,12 @@ def _intersect_count(
         the [j]-th edge.
     """
     args = []
-    for i in range(len(x_inter)):
-        for j in range(len(x2) - 1):
-            if check_linesegment(
-                np.array([x2[j], z2[j]]),
-                np.array([x2[j + 1], z2[j + 1]]),
-                np.array([x_inter[i], z_inter[i]]),
-            ):
+    for xz_inter_point in xz_inter:
+        for j in range(len(xz_2) - 1):
+            if check_linesegment(xz_2[j], xz_2[j + 1], xz_inter_point):
                 args.append(j)
                 break
-    return np.array(args)
+    return args
 
 
 def join_intersect(
@@ -1993,7 +1989,8 @@ def join_intersect(
     ref_poly:
         The reference polygon's vertices expressed as Coordinates.
     get_arg:
-        Whether or not to return the intersection arguments
+        Whether or not to return the indices in the MODIFIED tgt_poly which are newly
+        inerted (intersection) points.
 
     Returns
     -------
@@ -2003,16 +2000,16 @@ def join_intersect(
     -----
     Modifies tgt_poly
     """
-    xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz)
+    xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
     # Get the insertion order
-    args = _intersect_count(*xz_inter, *tgt_poly.xz)
+    args = _intersect_count(xz_inter, tgt_poly.xz.T)
 
     # Use the insertion order to sort the intersection points,
     # then get the NEW insertion order.
     orderr = np.argsort(args)
-    xz_int = xz_inter[:, orderr]
-    args = _intersect_count(*xz_int, *tgt_poly.xz)
+    xz_int = xz_inter[orderr]
+    args = _intersect_count(xz_int, tgt_poly.xz.T)
 
     # TODO @CoronelBuendia: Check for duplicates and order correctly based on distance
     # 3585
@@ -2022,13 +2019,13 @@ def join_intersect(
     for i, arg in enumerate(args):
         # Two intersection points, one after the other
         bump = 0 if i > 0 and args[i - 1] == arg else 1
-        if not np.isclose(tgt_poly.xz.T, xz_int[:, i]).all(axis=1).any():
+        if not np.isclose(tgt_poly.xz.T, xz_int[i]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Coordinates
-            tgt_poly.insert([xz_int[0, i], 0, xz_int[1, i]], index=arg + count + bump)
+            tgt_poly.insert([xz_int[i, 0], 0, xz_int[i, 1]], index=arg + count + bump)
             count += 1
 
     if get_arg:
-        args = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter]
+        args = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter.T]
         return list(set(args))
     return None
 
