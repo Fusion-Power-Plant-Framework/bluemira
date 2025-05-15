@@ -32,8 +32,9 @@ dependencies:
   - pybind11-global==2.13.6
   - pytools==2025.1.2
   - vtk==9.3.1
+  - pythonocc-core
   - pip
   - pip:
       - -r ../requirements/uv/all.txt
       - -r ../requirements/conda.txt
-      - -e ../[openmc]
+      - -e ../[openmc,dagmc]

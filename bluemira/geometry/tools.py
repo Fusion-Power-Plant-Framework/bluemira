@@ -1628,7 +1628,7 @@ def save_cad(
     shapes:
         shapes to save
     filename:
-        Full path filename of the STP assembly
+        Full path filename for the CAD file
     cad_format:
         file format to save as
     names:
