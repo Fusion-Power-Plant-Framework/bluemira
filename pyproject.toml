@@ -36,6 +36,7 @@ dependencies = [
     "pint>=0.24",
     "periodictable>=1.4",
     "pyclipper>=1.3.0.post5",
+    "pydantic>=2.11.0",
     "pyvista>=0.44",
     "rich>=11.2",
     "scikit-learn>=1.3",
@@ -50,9 +51,9 @@ dependencies = [
 init = "numba_scipy:_init_extension"
 
 [project.urls]
-homepage = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+homepage      = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
 documentation = "https://bluemira.readthedocs.io"
-repository = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+repository    = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
 
 [project.optional-dependencies]
 dev = [
@@ -80,21 +81,21 @@ pinned = [
     "numpy==1.26.4",
     "matplotlib==3.10.1",
     "scipy==1.15.2",
-    "vtk==9.3.1",  # needed for uv resolution
+    "vtk==9.3.1",                                                                                      # needed for uv resolution
 ]
 
 conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
-openmc = ["openmc>=0.14.0", "openmc_data==2.2.12"]
-process = ["process==3.1.0"]
-polyscope = ["polyscope"]
-radiation = ["cherab"]
-dagmc = ["cgal>=6.0.1"]
+openmc       = ["openmc>=0.14.0", "openmc_data==2.2.12"]
+process      = ["process==3.1.0"]
+polyscope    = ["polyscope"]
+radiation    = ["cherab"]
+dagmc        = ["cgal>=6.0.1"]
 
 [build-system]
 requires = ["setuptools>=62", "setuptools_scm[toml]>=7.0"]
 
 [tool.setuptools.packages.find]
-where = ["."]
+where   = ["."]
 include = ["bluemira*"]
 exclude = ["tests*"]
 
@@ -104,27 +105,27 @@ exclude = ["tests*"]
 "exclude_also" = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
-    "@nb"  # awaiting https://github.com/numba/numba/issues/4268
+    "@nb",                        # awaiting https://github.com/numba/numba/issues/4268
 ]
 
 [tool.mypy]
-python_version = "3.10"
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_incomplete_defs = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
+python_version              = "3.10"
+check_untyped_defs          = true
+disallow_any_generics       = true
+disallow_incomplete_defs    = true
+disallow_subclassing_any    = true
+disallow_untyped_calls      = true
 disallow_untyped_decorators = true
-disallow_untyped_defs = false
-extra_checks = true
-ignore_missing_imports = true
-no_implicit_reexport = true
-strict_equality = true
-warn_no_return = false
-warn_redundant_casts = true
-warn_return_any = false
-warn_unused_configs = true
-warn_unused_ignores = true
+disallow_untyped_defs       = false
+extra_checks                = true
+ignore_missing_imports      = true
+no_implicit_reexport        = true
+strict_equality             = true
+warn_no_return              = false
+warn_redundant_casts        = true
+warn_return_any             = false
+warn_unused_configs         = true
+warn_unused_ignores         = true
 
 [tool.pytest.ini_options]
 markers = [
@@ -134,14 +135,16 @@ markers = [
     "classplot: Show and close figures after running all tests in class",
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
-filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning',
-                  'ignore:FigureCanvasAgg is non-interactive:UserWarning']
+filterwarnings = [
+    'ignore:Matplotlib is currently using agg:UserWarning',
+    'ignore:FigureCanvasAgg is non-interactive:UserWarning',
+]
 pythonpath = ['.', 'eudemo']
 
 [tool.ruff]
 target-version = "py310"
 line-length = 89
-output-format= "concise"
+output-format = "concise"
 exclude = [
     ".git",
     "__pycache__",
@@ -178,17 +181,17 @@ ignore = [
     "PTH123",  # use Path.open
     "RUF052",  # not dummy variables just private
     "TRY003",  # put error messages in error class
-    "FURB152",  # 3.14 != pi
+    "FURB152", # 3.14 != pi
     # should remove
-    "ERA",  # remove commented out code
-    "SLF001",  # private method use
+    "ERA",    # remove commented out code
+    "SLF001", # private method use
 
 ]
 
 [tool.ruff.lint.isort]
-case-sensitive = true
+case-sensitive    = true
 known-first-party = ["bluemira", "eudemo", "eudemo_tests"]
-force-to-top = ["freecad", "FreeCAD"]
+force-to-top      = ["freecad", "FreeCAD"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -198,14 +201,14 @@ max-complexity = 20
 
 [tool.ruff.lint.pylint]
 # These should be made stricter
-max-args = 30
-max-statements = 73
-max-returns = 12
-max-branches = 23
+max-args           = 30
+max-statements     = 73
+max-returns        = 12
+max-branches       = 23
 max-public-methods = 38
-max-bool-expr = 6
-max-locals = 48
-max-nested-blocks = 7
+max-bool-expr      = 6
+max-locals         = 48
+max-nested-blocks  = 7
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [
@@ -302,7 +305,7 @@ ignore-names = [
     "*_F",
     "*eV",
     "I_not_dI",
-    "*Li*"
+    "*Li*",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -362,7 +365,7 @@ ignore-names = [
 "tests/utilities/test_opt_variables.py" = ["E501"]
 
 # TODO future removal
-"bluemira/structural/*" = ["DOC201"]  # 22
+"bluemira/structural/*"                                   = ["DOC201"] # 22
 "bluemira/codes/openmc/{make_csg.py,output.py,solver.py}" = ["DOC201"]
-"bluemira/codes/process/{_plotting.py,_profiles.py}" = ["DOC201"]
-"bluemira/codes/plasmod/*" = ["DOC201"]
+"bluemira/codes/process/{_plotting.py,_profiles.py}"      = ["DOC201"]
+"bluemira/codes/plasmod/*"                                = ["DOC201"]
