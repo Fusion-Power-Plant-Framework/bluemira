@@ -310,6 +310,10 @@ class TestGetModule:
         with pytest.raises(ImportError):
             get_module(Path(get_bluemira_path(), "../README.md").as_posix())
 
+        # Not a module and no path
+        with pytest.raises(FileNotFoundError):
+            get_module("TEST")
+
     def test_get_weird_ext_python_file(self, tmp_path):
         path1 = tmp_path / "file"
         path2 = tmp_path / "file.hello"
