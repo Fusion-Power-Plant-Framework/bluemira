@@ -92,6 +92,7 @@ def step_to_dagmc_pipeline(
     save_vtk_model: bool = True,
     enable_debug_logging: bool = False,
     clean_up: bool = True,
+    **kwargs,  # noqa: ARG001
 ):
     """
     Convert a STEP file to a DAGMC model using fast_ctd.

@@ -32,7 +32,7 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
 
     imprint_per_compound: bool = True
 
-    minimum_include_volume: float = 1
+    minimum_include_volume: float = 10.0
     fix_step_to_brep_geometry: bool = False
     merge_dist_tolerance: float = 0.001
     lin_deflection_tol: float = 0.001
@@ -159,15 +159,17 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
                 output_dagmc_model_path=output_dagmc_model_path,
                 comp_name_to_material_name_map=self.material_name_map,
                 # Config options
-                minimum_include_volume=converter_config.minimum_include_volume,
-                fix_step_to_brep_geometry=converter_config.fix_step_to_brep_geometry,
-                merge_dist_tolerance=converter_config.merge_dist_tolerance,
-                lin_deflection_tol=converter_config.lin_deflection_tol,
-                lin_deflection_is_absolute=converter_config.lin_deflection_is_absolute,
-                angular_deflection_tol=converter_config.angular_deflection_tol,
-                run_make_watertight=converter_config.run_make_watertight,
-                enable_debug_logging=converter_config.enable_debug_logging,
-                clean_up=converter_config.clean_up,
+                **converter_config.model_dump(),
+                # minimum_include_volume=converter_config.minimum_include_volume,
+                # fix_step_to_brep_geometry=converter_config.fix_step_to_brep_geometry,
+                # merge_dist_tolerance=converter_config.merge_dist_tolerance,
+                # lin_deflection_tol=converter_config.lin_deflection_tol,
+                # lin_deflection_is_absolute=converter_config.lin_deflection_is_absolute,
+                # angular_deflection_tol=converter_config.angular_deflection_tol,
+                # run_make_watertight=converter_config.run_make_watertight,
+                # save_vtk_model=converter_config.save_vtk_model,
+                # enable_debug_logging=converter_config.enable_debug_logging,
+                # clean_up=converter_config.clean_up,
             )
             bluemira_print(
                 "Conversion to DAGMC model complete, "
