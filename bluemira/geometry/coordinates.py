@@ -1883,7 +1883,9 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def get_intersect(
+    xy1: np.ndarray, xy2: np.ndarray
+) -> np.ndarray[np.ndarray[np.float64], np.ndarray[np.float64]]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).
@@ -1962,17 +1964,17 @@ def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    :
-        a list of indices j, where the [i]-th intersection point is expected to lie on
-        the [j]-th edge.
+    insertion_locations:
+        a list of indices j, where the xz_inter[i] is expected to lie on the
+        [j]-th edge, i.e. between xz_2[j] and xz_2[j+1]
     """
-    args = []
+    insertion_locations = []
     for xz_inter_point in xz_inter:
         for j in range(len(xz_2) - 1):
             if check_linesegment(xz_2[j], xz_2[j + 1], xz_inter_point):
-                args.append(j)
+                insertion_locations.append(j)
                 break
-    return args
+    return np.array(insertion_locations)
 
 
 def join_intersect(
@@ -1994,21 +1996,23 @@ def join_intersect(
 
     Returns
     -------
-    The arguments of tgt_poly in which the intersections were added (if get_arg is True)
+    set of insertion_locations:
+        The indices in tgt_poly in which the intersections were added
+        (only returned if get_arg is True)
 
     Notes
     -----
     Modifies tgt_poly
     """
-    xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
+    # TODO @OceanNuclear: re-write join_intersect so that it DOESN'T directly modify the
+    # tgt_poly. Need to propagate the change downstream. Will be an API breaking change.
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3926
 
-    # Get the insertion order
-    insertion_locations = _intersect_count(xz_inter, tgt_poly.xz.T)
+    xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
     # Use the insertion order to sort the intersection points,
     # then get the NEW insertion order.
-    reorder_insertion = np.argsort(insertion_locations)
-    xz_int = xz_inter[reorder_insertion]
+    xz_int = xz_inter[_intersect_count(xz_inter, tgt_poly.xz.T).argsort()]
     insertion_locations = _intersect_count(xz_int, tgt_poly.xz.T)
 
     num_inserted = 0
@@ -2023,7 +2027,7 @@ def join_intersect(
             num_inserted += 1
 
     if get_arg:
-        insertion_locations = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter.T]
+        insertion_locations = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter]
         return list(set(insertion_locations))
     return None
 
