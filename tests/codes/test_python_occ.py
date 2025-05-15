@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from copy import deepcopy
+from unittest import mock
 
 import pytest
 
@@ -49,9 +50,24 @@ class TestImprintSolids:
         imp_solids = imp_result.solids
 
         assert imp_result.total_imprints == t_imprints
-
         assert len(imp_solids) == 3
+        assert len(imp_solids[0].faces) == a_faces
+        assert imps[0]._has_imprinted if t_imprints > 0 else not imps[0]._has_imprinted
+        assert len(imp_solids[1].faces) == bc_faces
+        assert imps[1]._has_imprinted if t_imprints > 0 else not imps[0]._has_imprinted
+        assert len(imp_solids[2].faces) == bc_faces
+        assert imps[2]._has_imprinted if t_imprints > 0 else not imps[0]._has_imprinted
 
+        # Rerun the tests mocking cgal as not available
+        if use_cgal:
+            with mock.patch(
+                "bluemira.geometry.overlap_checking.cgal.cgal_available",
+                return_value=False,
+            ):
+                imp_result = python_occ.imprint_solids(pre_imps, use_cgal=use_cgal)
+
+        assert imp_result.total_imprints == t_imprints
+        assert len(imp_solids) == 3
         assert len(imp_solids[0].faces) == a_faces
         assert imps[0]._has_imprinted if t_imprints > 0 else not imps[0]._has_imprinted
         assert len(imp_solids[1].faces) == bc_faces
