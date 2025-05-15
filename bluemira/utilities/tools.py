@@ -1025,6 +1025,8 @@ def _loadfromspec(name: str) -> ModuleType:
         Cant find module
     """
     full_dirname = name.rsplit("/", 1)
+    if len(full_dirname) < 2:  # noqa: PLR2004
+        full_dirname = ["", full_dirname[0]]
     dirname = Path("." if len(full_dirname[0]) == 0 else full_dirname[0])
     path = Path(full_dirname[1])
 
