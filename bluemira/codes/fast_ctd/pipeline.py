@@ -9,8 +9,9 @@ Pipeline for converting STEP files to DAGMC models using fast_ctd.
 
 import contextlib
 from pathlib import Path
+from subprocess import CalledProcessError  # noqa: S404
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.codes.fast_ctd._guard import fast_ctd_guard
 
 with contextlib.suppress(ImportError):
@@ -61,6 +62,11 @@ def step_to_dagmc_pipeline(
         If None, the component names are used as the material names.
     enable_debug_logging:
         If True, enable debug logging within the C++ extension code. Default is False.
+
+    Raises
+    ------
+    CalledProcessError
+        If make_watertight fails.
     """
     step_file_path = Path(step_file_path)
     output_dagmc_model_path = Path(output_dagmc_model_path)
@@ -69,6 +75,9 @@ def step_to_dagmc_pipeline(
     intm_brep_file = step_file_path.with_suffix(".brep")
     intm_merged_brep_file = step_file_path.with_suffix(".merged.brep")
     intm_dagmc_file = output_dagmc_model_path.with_suffix(".nwt.h5m")
+
+    # Set the output to output_dagmc_model_path when not running make_watertight
+    output_h5m_file = intm_dagmc_file if run_make_watertight else output_dagmc_model_path
 
     try:
         comps_info = step_to_brep(
@@ -101,27 +110,34 @@ def step_to_dagmc_pipeline(
         )
         facet_brep_to_dagmc(
             intm_merged_brep_file,
-            # Set the output to the output file name
-            # when not running make_watertight
-            output_h5m_file=intm_dagmc_file
-            if run_make_watertight
-            else output_dagmc_model_path,
+            output_h5m_file=output_h5m_file,
             materials_csv_file=intm_materials_csv_file_path,
             lin_deflection_tol=lin_deflection_tol,
             tol_is_absolute=lin_deflection_is_absolute,
             ang_deflection_tol=angular_deflection_tol,
             enable_logging=enable_debug_logging,
         )
+
+        mwt_success = False
         if run_make_watertight:
             bluemira_debug("Running DAGMC make_watertight...")
-            make_watertight(
-                intm_dagmc_file,
-                output_dagmc_model_path,
-            )
+            try:
+                make_watertight(intm_dagmc_file, output_h5m_file)
+                mwt_success = True
+            except CalledProcessError as e:
+                bluemira_warn(
+                    f"make_watertight failed, "
+                    f"dagmc model saved to {intm_dagmc_file}"
+                    f"\n{e}\n{e.stdout}\n{e.stderr}\n"
+                    "make_watertight not run, run `make_watertight` or "
+                    f"`check_watertight {intm_dagmc_file}` "
+                    "manually to make sure the model is watertight."
+                )
+                raise
         else:
             bluemira_print(
                 "make_watertight not run, run `make_watertight` or "
-                f"`check_watertight {output_dagmc_model_path}` "
+                f"`check_watertight {output_h5m_file}` "
                 "manually to make sure the model is watertight."
             )
     finally:
@@ -133,6 +149,10 @@ def step_to_dagmc_pipeline(
                 intm_merged_brep_file,
                 intm_dagmc_file,
             ]:
+                # if make_watertight not successfully run, do not delete the file
+                if not mwt_success and file == intm_dagmc_file:
+                    continue
+
                 bluemira_debug(f"Cleaning up: {file}")
                 if file.exists():
                     file.unlink()
