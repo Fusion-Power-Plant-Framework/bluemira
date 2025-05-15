@@ -39,6 +39,7 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
     lin_deflection_is_absolute: bool = False
     angular_deflection_tol: float = 0.5
     run_make_watertight: bool = True
+    save_vtk_model: bool = True
     enable_debug_logging: bool = False
     clean_up: bool = True
 
@@ -152,7 +153,7 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
                 cad_format="step",
                 labels=self.names,  # they will match the order of the shapes
             )
-            bluemira_print("Converting to DAGMC model")
+            bluemira_print("Converting to DAGMC model using fast_ctd")
             fast_ctd.step_to_dagmc_pipeline(
                 step_file_path=imprinted_geom_step_file_p,
                 output_dagmc_model_path=output_dagmc_model_path,
@@ -169,7 +170,8 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
                 clean_up=converter_config.clean_up,
             )
             bluemira_print(
-                f"Conversion to DAGMC model completed: {output_dagmc_model_path}"
+                "Conversion to DAGMC model complete, "
+                f"model saved to: {output_dagmc_model_path}"
             )
         except Exception as e:
             bluemira_error(f"Error during DAGMCConverterFastCTD run: {e}")
