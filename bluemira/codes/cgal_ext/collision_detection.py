@@ -8,6 +8,8 @@ Contains functions to efficiently convert to
 CGAL geometry and perform meshed-based collision detections.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 from bluemira.codes.cgal_ext._guard import cgal_guard
