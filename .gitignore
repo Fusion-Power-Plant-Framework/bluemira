@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 **.h5m
+**.vtk
 
 # C extensions
 *.so
