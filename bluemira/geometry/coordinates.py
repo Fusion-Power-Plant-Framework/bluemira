@@ -2003,30 +2003,28 @@ def join_intersect(
     xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
     # Get the insertion order
-    args = _intersect_count(xz_inter, tgt_poly.xz.T)
+    insertion_locations = _intersect_count(xz_inter, tgt_poly.xz.T)
 
     # Use the insertion order to sort the intersection points,
     # then get the NEW insertion order.
-    orderr = np.argsort(args)
-    xz_int = xz_inter[orderr]
-    args = _intersect_count(xz_int, tgt_poly.xz.T)
+    reorder_insertion = np.argsort(insertion_locations)
+    xz_int = xz_inter[reorder_insertion]
+    insertion_locations = _intersect_count(xz_int, tgt_poly.xz.T)
 
-    # TODO @CoronelBuendia: Check for duplicates and order correctly based on distance
-    # 3585
-    # u, counts = np.unique(args, return_counts=True)
-
-    count = 0
-    for i, arg in enumerate(args):
+    num_inserted = 0
+    for i, insert_loc in enumerate(insertion_locations):
         # Two intersection points, one after the other
-        bump = 0 if i > 0 and args[i - 1] == arg else 1
+        bump = 0 if i > 0 and insertion_locations[i - 1] == insert_loc else 1
         if not np.isclose(tgt_poly.xz.T, xz_int[i]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Coordinates
-            tgt_poly.insert([xz_int[i, 0], 0, xz_int[i, 1]], index=arg + count + bump)
-            count += 1
+            tgt_poly.insert(
+                [xz_int[i, 0], 0, xz_int[i, 1]], index=insert_loc + num_inserted + bump
+            )
+            num_inserted += 1
 
     if get_arg:
-        args = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter.T]
-        return list(set(args))
+        insertion_locations = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter.T]
+        return list(set(insertion_locations))
     return None
 
 
