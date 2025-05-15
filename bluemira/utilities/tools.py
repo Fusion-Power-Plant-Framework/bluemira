@@ -992,7 +992,17 @@ def get_module(name: str) -> ModuleType:
 
     Returns
     -------
-    Loaded module
+    :
+        Loaded module
+
+    Raises
+    ------
+    ImportError
+        Unable to import module
+    FileNotFoundError
+        Cant find specified module file
+    ModuleNotFoundError
+        Cant find module
     """
     try:
         module = imp(name)
@@ -1013,7 +1023,8 @@ def _loadfromspec(name: str) -> ModuleType:
 
     Returns
     -------
-    Loaded module
+    :
+        Loaded module
 
     Raises
     ------
@@ -1093,12 +1104,17 @@ def get_class_from_module(name: str, default_module: str = "") -> type:
 
     Returns
     -------
-    Loaded class
+    :
+        Loaded class
 
     Raises
     ------
     ImportError
         Unable to import class from module
+    FileNotFoundError
+        Cant find specified module file
+    ModuleNotFoundError
+        Cant find module
     """
     module = default_module
     class_name = name
