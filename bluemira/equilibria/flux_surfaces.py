@@ -10,7 +10,6 @@ Flux surface utility classes and calculations
 
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 from typing import TYPE_CHECKING
@@ -136,8 +135,14 @@ class FluxSurface:
     def copy(self):
         """
         Make a deep copy of the FluxSurface.
-        """  # noqa: DOC201
-        return deepcopy(self)
+
+        Returns
+        -------
+        :
+            An instance of FluxSurface, with exactly the same class and coordinates,
+            but sharing a different underlying copy of the data (Coordinates).
+        """
+        return self.__class__(self.coords.copy())
 
 
 class ClosedFluxSurface(FluxSurface):
@@ -408,14 +413,14 @@ class OpenFluxSurface(FluxSurface):
                 [psi_point.x, 1, psi_point.z],
             )
 
-        ref_coords = deepcopy(self.coords)
+        ref_coords = self.coords.copy()
         intersections = coords_plane_intersect(ref_coords, plane)
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
         deltas = x_inter - psi_point.x
-        arg_inter = np.argmax(deltas >= 0)
-        x_mp = x_inter[arg_inter]
+        first_intersection = np.argmax(deltas >= 0)
+        x_mp = x_inter[first_intersection]
         z_mp = psi_point.z
 
         # Split the flux surface geometry into LFS and HFS geometries
@@ -423,11 +428,12 @@ class OpenFluxSurface(FluxSurface):
         delta = 1e-1 if psi_point.x < x_mp else -1e-1
         radial_line = Coordinates({"x": [psi_point.x, x_mp + delta], "z": [z_mp, z_mp]})
         # Add the intersection point to the Coordinates
-        arg_inter = join_intersect(ref_coords, radial_line, get_arg=True)[0]
+        ref_coords, insertion_loc = join_intersect(ref_coords, radial_line, get_arg=True)
 
         # Split the flux surface geometry
-        coords1 = Coordinates(ref_coords[:, : arg_inter + 1])
-        coords2 = Coordinates(ref_coords[:, arg_inter:])
+        first_intersection = insertion_loc[0]
+        coords1 = Coordinates(ref_coords[:, : first_intersection + 1])
+        coords2 = Coordinates(ref_coords[:, first_intersection:])
 
         coords1 = reset_direction(coords1)
         coords2 = reset_direction(coords2)
@@ -464,9 +470,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         first_wall:
             The geometry of the first wall to clip the OpenFluxSurface to
         """
-        first_wall = deepcopy(first_wall)
-
-        args = join_intersect(self.coords, first_wall, get_arg=True)
+        coords_union_inters, args = join_intersect(self.coords, first_wall, get_arg=True)
 
         if not args:
             bluemira_warn(
@@ -477,7 +481,8 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Because we oriented the Coordinates the "right" way, the first intersection
         # is at the smallest argument
-        self.coords = Coordinates(self.coords[:, : min(args) + 1])
+        shortened_coords = coords_union_inters[:, : min(args) + 1]
+        self.coords = Coordinates(shortened_coords)
 
         fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
 

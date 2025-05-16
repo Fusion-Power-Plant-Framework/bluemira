@@ -587,11 +587,11 @@ class TestIntersections:
             "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5],
         })
         loop2 = Coordinates({"x": [1.5, 1.5, 2.5, 2.5], "z": [4, -4, -4, 5]})
-        join_intersect(loop1, loop2)
+        new_loop = join_intersect(loop1, loop2)
 
-        np.testing.assert_allclose(loop1.points[3], [1.5, 0, 1])
-        np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
-        np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
+        np.testing.assert_allclose(new_loop.points[3], [1.5, 0, 1])
+        np.testing.assert_allclose(new_loop.points[5], [2.5, 0, 1.5])
+        np.testing.assert_allclose(new_loop.points[10], [2.5, 0, 5])
 
     @pytest.mark.parametrize("file", ["", "2"])
     def test_join_intersect_arg(self, file):
@@ -608,20 +608,20 @@ class TestIntersections:
         intx, intz = [], []
         for coords in [lp, eq, up]:
             i = get_intersect(tf.xz, coords.xz)
-            a = join_intersect(tf, coords, get_arg=True)
+            new_tf, a = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
 
-        for coords in [tf, up, eq, lp]:
+        for coords in [new_tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)
 
-        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
+        ax.plot(*new_tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
 
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        np.testing.assert_allclose(np.sort(intx), np.sort(tf.x[args]))
-        np.testing.assert_allclose(np.sort(intz), np.sort(tf.z[args]))
+        np.testing.assert_allclose(np.sort(intx), np.sort(new_tf.x[args]))
+        np.testing.assert_allclose(np.sort(intz), np.sort(new_tf.z[args]))
 
 
 @pytest.mark.classplot
