@@ -68,20 +68,18 @@ class PROCESSTemplateBuilder:
         """
         self.ioptimiz = algorithm_choice.value
 
-    def set_optimisation_numerics(
-        self, max_iterations: int = 1000, tolerance: float = 1e-8
-    ):
+    def set_optimisation_numerics(self, maxiter: int = 1000, tolerance: float = 1e-8):
         """
         Set optimisation numerics
 
         Parameters
         ----------
-        max_iterations:
+        maxiter:
             maximum number of iteration/calculations in process.
         tolerance:
             VMCON tolerance epsvmc
         """
-        self.maxcal = max_iterations
+        self.maxcal = maxiter
         self.epsvmc = tolerance
 
     def set_minimisation_objective(self, objective: Objective):
