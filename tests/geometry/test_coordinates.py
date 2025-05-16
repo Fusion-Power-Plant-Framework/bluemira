@@ -356,6 +356,13 @@ class TestCoordinates:
         assert c.z[7] == 10
         assert len(c) == 8
 
+    def test_copy(self):
+        c = Coordinates({"x": [0.0, 1, 2], "y": [3.0, 4, 5], "z": [6.0, 7, 8]})
+        copy = c.copy()
+        np.testing.assert_array_equal(c.x, copy.x)
+        np.testing.assert_array_equal(c.y, copy.y)
+        np.testing.assert_array_equal(c.z, copy.z)
+
 
 class TestShortCoordinates:
     point = Coordinates({"x": 0, "y": 0, "z": 0})
