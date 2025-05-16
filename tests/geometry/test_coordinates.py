@@ -608,20 +608,20 @@ class TestIntersections:
         intx, intz = [], []
         for coords in [lp, eq, up]:
             i = get_intersect(tf.xz, coords.xz)
-            new_tf, a = join_intersect(tf, coords, get_arg=True)
+            tf, a = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
 
-        for coords in [new_tf, up, eq, lp]:
+        for coords in [tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)
 
-        ax.plot(*new_tf.xz.T[args].T, marker="o", color="r")
+        ax.plot(*tf.xz.T[args].T, marker="o", color="r")
         ax.plot(intx, intz, marker="^", color="k")
 
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        np.testing.assert_allclose(np.sort(intx), np.sort(new_tf.x[args]))
-        np.testing.assert_allclose(np.sort(intz), np.sort(new_tf.z[args]))
+        np.testing.assert_allclose(np.sort(intx), np.sort(tf.x[args]))
+        np.testing.assert_allclose(np.sort(intz), np.sort(tf.z[args]))
 
 
 @pytest.mark.classplot
