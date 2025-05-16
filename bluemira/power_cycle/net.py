@@ -18,6 +18,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    NonNegativeFloat,
     PrivateAttr,
     RootModel,
     model_validator,
@@ -135,7 +136,7 @@ class Efficiency(PCBaseModel):
 class Duration(PCBaseModel):
     """Duration Model"""
 
-    value: float | int
+    value: NonNegativeFloat
     unit: str = "s"
 
     @model_validator(mode="before")
@@ -187,7 +188,7 @@ class PhaseConfig(PCBaseModel):
     """Phase configuration"""
 
     description: str = ""
-    operation: str
+    operation: str = "max"
     subphases: list[str]
 
     def duration(self, subphase_library: SubphaseLibrary) -> npt.NDArray:
@@ -238,7 +239,7 @@ class Scenario(PCBaseModel):
 class SubPhase(PCBaseModel):
     """Sub phase model"""
 
-    duration: str | float | int
+    duration: NonNegativeFloat | str
     loads: list[str] = Field(default_factory=list)
     efficiencies: dict[str, list[Efficiency]] = Field(default_factory=dict)
     unit: str = "s"
@@ -269,7 +270,7 @@ class SubPhase(PCBaseModel):
             dur = durations.root[key]
             self.duration = raw_uc(dur.value, dur.unit, "second")
         elif self._duration_key:
-            dur = durations.root[key]
+            dur = durations.root[self._duration_key]
             self.duration = raw_uc(dur.value, dur.unit, "second")
 
     def build_timeseries(
