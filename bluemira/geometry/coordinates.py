@@ -1788,7 +1788,7 @@ class Coordinates:
         An instance of Coordinates, with exactly the same class and coordinates,
         but sharing a different underlying copy of the data array.
         """
-        return self.__class__(self.as_dict())
+        return type(self)({"x": self.x.copy(), "y": self.y.copy(), "z": self.z.copy()})
 
 
 # =============================================================================

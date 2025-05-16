@@ -142,7 +142,7 @@ class FluxSurface:
             An instance of FluxSurface, with exactly the same class and coordinates,
             but sharing a different underlying copy of the data (Coordinates).
         """
-        return self.__class__(self.coords.copy())
+        return type(self)(self.coords.copy())
 
 
 class ClosedFluxSurface(FluxSurface):
