@@ -717,8 +717,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         )
 
         iter_err_max = settings.pop("iter_err_max")
-        maxiter = settings.pop("maxiter")
-        settings["maxiter"] = maxiter
         iterator_program = PicardIterator(
             eq,
             self.opt_problem,
