@@ -481,8 +481,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Because we oriented the Coordinates the "right" way, the first intersection
         # is at the smallest argument
-        shortened_coords = coords_union_inters[:, : min(args) + 1]
-        self.coords = Coordinates(shortened_coords)
+        self.coords = Coordinates(coords_union_inters[:, : min(args) + 1])
 
         fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
 
