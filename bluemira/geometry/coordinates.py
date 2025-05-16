@@ -1779,6 +1779,17 @@ class Coordinates:
         """
         return iter(self._array)
 
+    def copy(self):
+        """
+        Copy of itself
+
+        Returns
+        -------
+        An instance of Coordinates, with exactly the same class and coordinates,
+        but sharing a different underlying copy of the data array.
+        """
+        return type(self)({"x": self.x.copy(), "y": self.y.copy(), "z": self.z.copy()})
+
 
 # =============================================================================
 # Intersection tools
@@ -1996,18 +2007,14 @@ def join_intersect(
 
     Returns
     -------
+    dest_poly:
+        Destination polygon, which is the union of the
+        (target polygon) and (intersection points).
+
     set of insertion_locations:
-        The indices in tgt_poly in which the intersections were added
-        (only returned if get_arg is True)
-
-    Notes
-    -----
-    Modifies tgt_poly
+        Only returned if get_arg is True:
+        The indices in tgt_poly in which the intersections were added.
     """
-    # TODO @OceanNuclear: re-write join_intersect so that it DOESN'T directly modify the
-    # tgt_poly. Need to propagate the change downstream. Will be an API breaking change.
-    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3926
-
     xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
     # Use the insertion order to sort the intersection points,
@@ -2015,21 +2022,22 @@ def join_intersect(
     xz_int = xz_inter[_intersect_count(xz_inter, tgt_poly.xz.T).argsort()]
     insertion_locations = _intersect_count(xz_int, tgt_poly.xz.T)
 
+    dest_poly = tgt_poly.copy()
     num_inserted = 0
     for i, insert_loc in enumerate(insertion_locations):
         # Two intersection points, one after the other
         bump = 0 if i > 0 and insertion_locations[i - 1] == insert_loc else 1
-        if not np.isclose(tgt_poly.xz.T, xz_int[i]).all(axis=1).any():
+        if not np.isclose(dest_poly.xz.T, xz_int[i]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Coordinates
-            tgt_poly.insert(
+            dest_poly.insert(
                 [xz_int[i, 0], 0, xz_int[i, 1]], index=insert_loc + num_inserted + bump
             )
             num_inserted += 1
 
     if get_arg:
-        insertion_locations = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter]
-        return list(set(insertion_locations))
-    return None
+        insertion_locations = [dest_poly.argmin([x, 0, z]) for x, z in xz_inter]
+        return dest_poly, list(set(insertion_locations))
+    return dest_poly
 
 
 def choose_direction(

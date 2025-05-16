@@ -356,6 +356,13 @@ class TestCoordinates:
         assert c.z[7] == 10
         assert len(c) == 8
 
+    def test_copy(self):
+        c = Coordinates({"x": [0.0, 1, 2], "y": [3.0, 4, 5], "z": [6.0, 7, 8]})
+        copy = c.copy()
+        np.testing.assert_array_equal(c.x, copy.x)
+        np.testing.assert_array_equal(c.y, copy.y)
+        np.testing.assert_array_equal(c.z, copy.z)
+
 
 class TestShortCoordinates:
     point = Coordinates({"x": 0, "y": 0, "z": 0})
@@ -587,11 +594,11 @@ class TestIntersections:
             "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5],
         })
         loop2 = Coordinates({"x": [1.5, 1.5, 2.5, 2.5], "z": [4, -4, -4, 5]})
-        join_intersect(loop1, loop2)
+        new_loop = join_intersect(loop1, loop2)
 
-        np.testing.assert_allclose(loop1.points[3], [1.5, 0, 1])
-        np.testing.assert_allclose(loop1.points[5], [2.5, 0, 1.5])
-        np.testing.assert_allclose(loop1.points[10], [2.5, 0, 5])
+        np.testing.assert_allclose(new_loop.points[3], [1.5, 0, 1])
+        np.testing.assert_allclose(new_loop.points[5], [2.5, 0, 1.5])
+        np.testing.assert_allclose(new_loop.points[10], [2.5, 0, 5])
 
     @pytest.mark.parametrize("file", ["", "2"])
     def test_join_intersect_arg(self, file):
@@ -608,7 +615,7 @@ class TestIntersections:
         intx, intz = [], []
         for coords in [lp, eq, up]:
             i = get_intersect(tf.xz, coords.xz)
-            a = join_intersect(tf, coords, get_arg=True)
+            tf, a = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])

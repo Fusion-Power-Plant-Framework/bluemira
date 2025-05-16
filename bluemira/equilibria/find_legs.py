@@ -501,11 +501,7 @@ def _extract_leg(
         "x": [x_cut - delta_x, x_cut + delta_x],
         "z": [z_cut, z_cut],
     })
-    arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
-    # TODO @OceanNuclear: 2025-05-15: Have confirmed with Georgie that join_intersect
-    # can output new_flux_line instead of modifying flux_line silently. This allows
-    # issue 3926 to be fixed more easily.
-    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3926
+    new_flux_line, arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
     arg_inters.sort()
     # Lower null vs upper null
     func = operator.lt if z_cut < o_point_z else operator.gt
@@ -517,10 +513,10 @@ def _extract_leg(
 
     flux_legs = []
     for arg in arg_inters:
-        if func(flux_line.z[arg + 1], flux_line.z[arg]):
-            leg = Coordinates(flux_line[:, arg:])
+        if func(new_flux_line.z[arg + 1], new_flux_line.z[arg]):
+            leg = Coordinates(new_flux_line[:, arg:])
         else:
-            leg = Coordinates(flux_line[:, : arg + 1])
+            leg = Coordinates(new_flux_line[:, : arg + 1])
 
         # Make the leg flow away from the plasma core
         if leg.argmin((x_cut, 0, z_cut)) > 3:  # noqa: PLR2004
