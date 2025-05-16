@@ -1883,7 +1883,9 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def get_intersect(
+    xy1: np.ndarray, xy2: np.ndarray
+) -> np.ndarray[np.ndarray[np.float64], np.ndarray[np.float64]]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).
@@ -1891,16 +1893,16 @@ def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndar
     Parameters
     ----------
     xy1:
-        The 2-D coordinates between which intersection points should be calculated
+        The 2-D coordinates between which intersection points should be calculated.
+        Shape = (2, N)
     xy2:
-        The 2-D coordinates between which intersection points should be calculated
+        The 2-D coordinates between which intersection points should be calculated.
+        Shape = (2, N)
 
     Returns
     -------
-    xi:
-        The x coordinates of the intersection points
-    zi:
-        The z coordinates of the intersection points#
+    :
+        The x, z coordinates of the intersection points. shape = (2, N)
 
     Notes
     -----
@@ -1942,80 +1944,91 @@ def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndar
             # Parallel segments. Will raise numpy RuntimeWarnings
             xz[0, i] = np.nan
     in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
-    xz = xz[2:, in_range].T
-    x, z = xz[:, 0], xz[:, 1]
-    if len(x) > 0:
-        x, z = np.unique([x, z], axis=1)
-    return x, z
+    xz = xz[2:, in_range].T  # shape: (N, 2)
+    return np.unique(xz, axis=0).T  # transposed from (unique(N), 2) to (2, unique(N))
 
 
 @nb.jit(cache=True, nopython=True)
-def _intersect_count(
-    x_inter: np.ndarray, z_inter: np.ndarray, x2: np.ndarray, z2: np.ndarray
-) -> np.ndarray:
-    args = []
-    for i in range(len(x_inter)):
-        for j in range(len(x2) - 1):
-            if check_linesegment(
-                np.array([x2[j], z2[j]]),
-                np.array([x2[j + 1], z2[j + 1]]),
-                np.array([x_inter[i], z_inter[i]]),
-            ):
-                args.append(j)
-                break
-    return np.array(args)
-
-
-def join_intersect(
-    coords1: Coordinates, coords2: Coordinates, *, get_arg: bool = False
-) -> list[int] | None:
-    """
-    Add the intersection points between coords1 and coords2 to coords1.
+def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
+    """Get the indices of the intersects that are
 
     Parameters
     ----------
-    coords1:
-        The Coordinates to which the intersection points should be added
-    coords2:
-        The intersecting Coordinates
-    get_arg:
-        Whether or not to return the intersection arguments
+    xz_inter:
+        x and z coordinates of the points created by the get_intersect function,
+        shape = (N, 2)
+    xz_2:
+        x and z coordinates of one of the vertices of the polygon inputted into the
+        get_intersect function.
+        shape = (N, 2)
 
     Returns
     -------
-    The arguments of coords1 in which the intersections were added (if get_arg is True)
+    insertion_locations:
+        a list of indices j, where the xz_inter[i] is expected to lie on the
+        [j]-th edge, i.e. between xz_2[j] and xz_2[j+1]
+    """
+    insertion_locations = []
+    for xz_inter_point in xz_inter:
+        for j in range(len(xz_2) - 1):
+            if check_linesegment(xz_2[j], xz_2[j + 1], xz_inter_point):
+                insertion_locations.append(j)
+                break
+    return np.array(insertion_locations)
+
+
+def join_intersect(
+    tgt_poly: Coordinates, ref_poly: Coordinates, *, get_arg: bool = False
+) -> list[int] | None:
+    """
+    Add the intersection points between tgt_poly and ref_poly to tgt_poly.
+
+    Parameters
+    ----------
+    tgt_poly:
+        The target polygon's vertices expressed as Coordinates. The intersection
+        points should be inserted into this polygon.
+    ref_poly:
+        The reference polygon's vertices expressed as Coordinates.
+    get_arg:
+        Whether or not to return the indices in the MODIFIED tgt_poly which are newly
+        inerted (intersection) points.
+
+    Returns
+    -------
+    set of insertion_locations:
+        The indices in tgt_poly in which the intersections were added
+        (only returned if get_arg is True)
 
     Notes
     -----
-    Modifies coords1
+    Modifies tgt_poly
     """
-    x_inter, z_inter = get_intersect(coords1.xz, coords2.xz)
-    args = _intersect_count(x_inter, z_inter, coords1.x, coords1.z)
+    # TODO @OceanNuclear: re-write join_intersect so that it DOESN'T directly modify the
+    # tgt_poly. Need to propagate the change downstream. Will be an API breaking change.
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3926
 
-    orderr = args.argsort()
-    x_int = x_inter[orderr]
-    z_int = z_inter[orderr]
+    xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
-    args = _intersect_count(x_int, z_int, coords1.x, coords1.z)
+    # Use the insertion order to sort the intersection points,
+    # then get the NEW insertion order.
+    xz_int = xz_inter[_intersect_count(xz_inter, tgt_poly.xz.T).argsort()]
+    insertion_locations = _intersect_count(xz_int, tgt_poly.xz.T)
 
-    # TODO @CoronelBuendia: Check for duplicates and order correctly based on distance
-    # 3585
-    # u, counts = np.unique(args, return_counts=True)
-
-    count = 0
-    for i, arg in enumerate(args):
+    num_inserted = 0
+    for i, insert_loc in enumerate(insertion_locations):
         # Two intersection points, one after the other
-        bump = 0 if i > 0 and args[i - 1] == arg else 1
-        if not np.isclose(coords1.xyz.T, [x_int[i], 0, z_int[i]]).all(axis=1).any():
+        bump = 0 if i > 0 and insertion_locations[i - 1] == insert_loc else 1
+        if not np.isclose(tgt_poly.xz.T, xz_int[i]).all(axis=1).any():
             # Only increment counter if the intersection isn't already in the Coordinates
-            coords1.insert([x_int[i], 0, z_int[i]], index=arg + count + bump)
-            count += 1
+            tgt_poly.insert(
+                [xz_int[i, 0], 0, xz_int[i, 1]], index=insert_loc + num_inserted + bump
+            )
+            num_inserted += 1
 
     if get_arg:
-        args = []
-        for x, z in zip(x_inter, z_inter, strict=False):
-            args.append(coords1.argmin([x, 0, z]))
-        return list(set(args))
+        insertion_locations = [tgt_poly.argmin([x, 0, z]) for x, z in xz_inter]
+        return list(set(insertion_locations))
     return None
 
 

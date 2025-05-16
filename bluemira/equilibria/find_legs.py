@@ -477,16 +477,35 @@ def _extract_leg(
 ):
     """Extract legs from a flux surface using a chosen intersection point.
 
+    Parameters
+    ----------
+    flux_line:
+        Coordinates of a flux surface
+    x_cut, z_cut:
+        a point on the horizontal line (radial_line) that intersects the flux surface,
+        below beyond which the flux surface becomes the legs
+    delta:
+        the width of the radial_line (used for cutting)
+    o_point_z:
+        the approximate height of the o-point (center of the plasma). Used to determine
+        whether the leg being processed in a loop is a top or button of a double-null
+        divertor tokamak.
+
+
     Returns
     -------
     :
-        the flux legs
+        A list of the flux legs
     """
     radial_line = Coordinates({
         "x": [x_cut - delta_x, x_cut + delta_x],
         "z": [z_cut, z_cut],
     })
     arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
+    # TODO @OceanNuclear: 2025-05-15: Have confirmed with Georgie that join_intersect
+    # can output new_flux_line instead of modifying flux_line silently. This allows
+    # issue 3926 to be fixed more easily.
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3926
     arg_inters.sort()
     # Lower null vs upper null
     func = operator.lt if z_cut < o_point_z else operator.gt
