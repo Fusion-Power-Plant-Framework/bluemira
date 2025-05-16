@@ -78,7 +78,7 @@ class PROCESSTemplateBuilder:
         ----------
         max_iterations:
             maximum number of iteration/calculations in process.
-        toleratnce:
+        tolerance:
             VMCON tolerance epsvmc
         """
         self.maxcal = max_iterations
