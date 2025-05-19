@@ -999,15 +999,14 @@ def get_module(name: str) -> ModuleType:
     ------
     ImportError
         Unable to import module
-    FileNotFoundError
-        Cant find specified module file
-    ModuleNotFoundError
-        Cant find module
     """
     try:
         module = imp(name)
     except ImportError:
-        module = _loadfromspec(name)
+        try:
+            module = _loadfromspec(name)
+        except (FileNotFoundError, ModuleNotFoundError) as load_err:
+            raise ImportError(load_err.args[0]) from load_err
     bluemira_debug(f"Loaded module {module.__name__}")
     return module
 
@@ -1111,10 +1110,6 @@ def get_class_from_module(name: str, default_module: str = "") -> type:
     ------
     ImportError
         Unable to import class from module
-    FileNotFoundError
-        Cant find specified module file
-    ModuleNotFoundError
-        Cant find module
     """
     module = default_module
     class_name = name

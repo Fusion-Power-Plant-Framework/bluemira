@@ -17,6 +17,7 @@ import pytest
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
     NumpyJSONEncoder,
+    _loadfromspec,
     asciistr,
     cartesian_to_polar,
     compare_dicts,
@@ -298,21 +299,26 @@ class TestGetModule:
         assert module.__name__.rsplit(".", 1)[-1] == self.test_mod.rsplit(".", 1)[-1]
 
     def test_getmodule_failures(self):
+        opts = [[_loadfromspec, FileNotFoundError], [get_module, ImportError]]
         # Path doesn't exist
-        with pytest.raises(FileNotFoundError):
-            get_module("/This/file/doesnt/exist.py")
+        for func, err in opts:
+            with pytest.raises(err):
+                func("/This/file/doesnt/exist.py")
 
         # Directory exists but not file
-        with pytest.raises(FileNotFoundError):
-            get_module(Path(get_bluemira_path(), "README.md").as_posix())
+        for func, err in opts:
+            with pytest.raises(err):
+                func(Path(get_bluemira_path(), "README.md").as_posix())
 
         # Not a python module
-        with pytest.raises(ImportError):
-            get_module(Path(get_bluemira_path(), "../README.md").as_posix())
+        for func, err in [[_loadfromspec, ImportError], [get_module, ImportError]]:
+            with pytest.raises(err):
+                func(Path(get_bluemira_path(), "../README.md").as_posix())
 
         # Not a module and no path
-        with pytest.raises(FileNotFoundError):
-            get_module("TEST")
+        for func, err in opts:
+            with pytest.raises(err):
+                func("TEST")
 
     def test_get_weird_ext_python_file(self, tmp_path):
         path1 = tmp_path / "file"
