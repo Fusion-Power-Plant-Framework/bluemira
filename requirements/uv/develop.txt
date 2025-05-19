@@ -201,7 +201,7 @@ numexpr==2.10.2
     # via
     #   blosc2
     #   tables
-numpy==1.26.4
+numpy==2.2.6
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
