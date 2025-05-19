@@ -992,12 +992,21 @@ def get_module(name: str) -> ModuleType:
 
     Returns
     -------
-    Loaded module
+    :
+        Loaded module
+
+    Raises
+    ------
+    ImportError
+        Unable to import module
     """
     try:
         module = imp(name)
     except ImportError:
-        module = _loadfromspec(name)
+        try:
+            module = _loadfromspec(name)
+        except (FileNotFoundError, ModuleNotFoundError) as load_err:
+            raise ImportError(load_err.args[0]) from load_err
     bluemira_debug(f"Loaded module {module.__name__}")
     return module
 
@@ -1013,7 +1022,8 @@ def _loadfromspec(name: str) -> ModuleType:
 
     Returns
     -------
-    Loaded module
+    :
+        Loaded module
 
     Raises
     ------
@@ -1025,6 +1035,8 @@ def _loadfromspec(name: str) -> ModuleType:
         Cant find module
     """
     full_dirname = name.rsplit("/", 1)
+    if len(full_dirname) < 2:  # noqa: PLR2004
+        full_dirname = ["", full_dirname[0]]
     dirname = Path("." if len(full_dirname[0]) == 0 else full_dirname[0])
     path = Path(full_dirname[1])
 
@@ -1091,7 +1103,8 @@ def get_class_from_module(name: str, default_module: str = "") -> type:
 
     Returns
     -------
-    Loaded class
+    :
+        Loaded class
 
     Raises
     ------
