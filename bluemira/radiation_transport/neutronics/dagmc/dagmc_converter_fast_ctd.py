@@ -26,7 +26,7 @@ from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter import (
 
 class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
     """
-    Enum for DAGMC converters.
+    Converter config model for DAGMCConverterFastCTD.
     """
 
     converter_type: Literal["fast_ctd"] = "fast_ctd"
@@ -95,8 +95,7 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
 
 class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
     """
-    Class to convert a DAGMC file to a format suitable for use in the
-    Bluemira radiation transport module using fast_ctd.
+    fast_ctd CA to DAGMC converter workflow.
     """
 
     def __init__(

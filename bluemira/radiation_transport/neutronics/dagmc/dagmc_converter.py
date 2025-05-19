@@ -19,7 +19,7 @@ from bluemira.geometry.base import BluemiraGeoT
 
 class DAGMCConverterConfig(BaseModel, ABC):
     """
-    Enum for DAGMC converters.
+    DAGMC converter config base model.
     """
 
     converter_type: str
@@ -42,8 +42,7 @@ T = TypeVar("T", bound=DAGMCConverterConfig)
 
 class DAGMCConverter(ABC, Generic[T]):
     """
-    Class to convert a DAGMC file to a format suitable for use in the
-    Bluemira radiation transport module.
+    Class representing a converter from Bluemira CAD to a DAGMC model.
     """
 
     def __init__(
@@ -85,5 +84,12 @@ class DAGMCConverter(ABC, Generic[T]):
     @abstractmethod
     def run(self, output_dagmc_model_path: str | Path, converter_config: T) -> None:
         """
-        Convert the DAGMC file to a format suitable for use in Bluemira.
+        Run the converter.
+
+        Parameters
+        ----------
+        output_dagmc_model_path:
+            Path to the output DAGMC model file.
+        converter_config:
+            Configuration for the converter.
         """
