@@ -209,6 +209,16 @@ tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_c, Z=Z_c)
 # Using approximate value for d2_min to avoid infinities
 # Approximating tau at the focus instead of using coordinate transform functions
 # (in order to avoid divide by 0 errors)
+# These approximate values come from the toroidal coordinate transform functions
+# given at the start of this notebook.
+# We have that $\tau = \ln \frac{d_1}{d_2}$, so we can see that the maximum value
+# of tau occurs when $d_1$ is at its largest value and when $d_2$ is at its smallest
+# value.
+# We have that $d_1^2 = (R + R_0)^2 + (z - z_0)^2$, and so $d_1$ is largest when R = R_0
+# and z = z_0, and this gives $d_1 = 2 * R_0$
+# We have that $d_2 = \\sqrt((R - R_0)^2 + (z - z_0)^2)$, and so $d_2$ is smallest when
+# R = R_0 and z = z_0. However this would give $d_2 = 0$ and this would cause divide by
+# zero errors. To avoid this, we set d2_min to be equal to a small number instead of 0.
 
 # Change the value of tau_offset to change the extent of the toroidal harmonic
 # approximation. If the toroidal approximation grid contains the coil, you will
