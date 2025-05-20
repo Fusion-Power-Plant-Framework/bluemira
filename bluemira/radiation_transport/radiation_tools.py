@@ -1010,8 +1010,6 @@ def detect_radiation(
     world: World,
     *,
     verbose: bool = False,
-    # TODO @DarioV86: remove these debugs/put into tests?
-    # 3812
 ) -> DetectedRadiation:
     """
     To sample the wall and detect radiation
@@ -1112,7 +1110,7 @@ def detect_radiation(
 
 
 def make_wall_detectors(
-    wall_r, wall_z, max_wall_len, x_width, *, debug=False
+    wall_r, wall_z, max_wall_len, x_width, *, plot=False
 ) -> list[WallDetector]:
     """
     To make the detectors on the wall
@@ -1130,9 +1128,7 @@ def make_wall_detectors(
 
     ctr = 0
 
-    if debug:
-        # TODO @DarioV86: remove these debugs/put into tests?
-        # 3812
+    if plot:
         _fig, ax = plt.subplots()
 
     for index in range(num + 1):
@@ -1204,15 +1200,15 @@ def make_wall_detectors(
                     )
                 )
 
-                if debug:
-                    ax.plot([p1x, p2x], [p1y, p2y], "k")
-                    ax.plot([p1x, p2x], [p1y, p2y], ".k")
-                    pcn = detector_center + normal_vector * 0.05
-                    ax.plot([detector_center.x, pcn.x], [detector_center.z, pcn.z], "r")
+            if plot:
+                ax.plot([p1x, p2x], [p1y, p2y], "k")
+                ax.plot([p1x, p2x], [p1y, p2y], ".k")
+                pcn = detector_center + normal_vector * 0.05
+                ax.plot([detector_center.x, pcn.x], [detector_center.z, pcn.z], "r")
 
             ctr += 1
 
-    if debug:
+    if plot:
         plt.show()
 
     return wall_detectors
@@ -1304,11 +1300,24 @@ class FirstWallRadiationSolver:
     ----------
     firstwall_shape:
         BluemiraWire defining the first wall.
+    source_func:
+        Function describing radiation source
+    verbose:
+        Whether or not to print and plot additional information:
+            - plot wall detectors and their normal vectors
+            - print Raysect information i.e., incident power,
+            incident power error, time for render and rays per second.
     """
 
-    def __init__(self, source_func: Callable, firstwall_shape: BluemiraWire):
+    def __init__(
+        self,
+        source_func: Callable,
+        firstwall_shape: BluemiraWire,
+        verbose: bool = False,  # noqa: FBT001, FBT002
+    ):
         self.rad_source = source_func
         self.fw_shape = firstwall_shape
+        self.verbose = verbose
 
     def solve(
         self,
@@ -1317,8 +1326,6 @@ class FirstWallRadiationSolver:
         n_samples: int = 500,
         *,
         plot: bool = True,
-        verbose: bool = False,  # TODO @DarioV86: remove these debugs/put into tests?
-        # 3812
     ) -> DetectedRadiation:
         """
         Solve first wall radiation problem
@@ -1349,9 +1356,11 @@ class FirstWallRadiationSolver:
             material=emitter,
         )
         wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, debug=verbose
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=self.verbose
         )
-        wall_loads = detect_radiation(wall_detectors, n_samples, world, verbose=verbose)
+        wall_loads = detect_radiation(
+            wall_detectors, n_samples, world, verbose=self.verbose
+        )
 
         if plot:
             plot_radiation_loads(
