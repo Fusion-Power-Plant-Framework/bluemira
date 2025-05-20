@@ -158,18 +158,18 @@ class TestSolveTransportFixedBoundary:
     transport_solver = DummyTransportSolver()
     gs_solver = FemGradShafranovFixedBoundary(
         p_order=2,
-        max_iter=30,
+        maxiter=30,
         iter_err_max=1.0,
         relaxation=0,
     )
 
     @pytest.mark.parametrize(
-        ("max_iter", "message"),
+        ("maxiter", "message"),
         [
             (1, "did not"),
         ],
     )
-    def test_full_run_through(self, max_iter, message, caplog, tmp_path):
+    def test_full_run_through(self, maxiter, message, caplog, tmp_path):
         johner_parameterisation = JohnerLCFS({
             "r_0": {"value": 8.9830e00},
             "a": {"value": 8.983 / 3.1},
@@ -186,7 +186,7 @@ class TestSolveTransportFixedBoundary:
             0.4,
             iter_err_max=1e-3,
             inner_iter_err_max=1,
-            max_iter=max_iter,
+            maxiter=maxiter,
             lcar_mesh=0.3,
             refine=True,
             num_levels=1,

@@ -82,7 +82,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Major radius [m]. Used when saving to file.
     p_order:
         Order of the approximating polynomial basis functions
-    max_iter:
+    maxiter:
         Maximum number of iterations
     iter_err_max:
         Convergence criterion value
@@ -99,7 +99,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         R_0: float | None = None,
         B_0: float | None = None,
         p_order: int = 2,
-        max_iter: int = 10,
+        maxiter: int = 10,
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
     ):
@@ -122,7 +122,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self.set_mesh(mesh)
 
         self.iter_err_max = iter_err_max
-        self.max_iter = max_iter
+        self.maxiter = maxiter
         self.relaxation = relaxation
         self.k = 1
 
@@ -387,7 +387,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             f, ax, cax = self._setup_plot(debug=debug)
 
         diff = np.zeros(len(points))
-        for i in range(1, self.max_iter + 1):
+        for i in range(1, self.maxiter + 1):
             prev_psi = self.psi.x.array[:]
             prev = self.psi_norm_2d(points)
 

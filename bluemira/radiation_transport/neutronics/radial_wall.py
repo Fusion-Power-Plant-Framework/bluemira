@@ -267,7 +267,7 @@ class CellWalls:
         ) + partial_diff_of_volume([start_i, new_end, next_end], dir_i)
 
     def optimise_to_match_individual_volumes(
-        self, volume_list: Iterable[float], *, max_iter=1000
+        self, volume_list: Iterable[float], *, maxiter=1000
     ):
         """
         Allow the lengths of each wall to increase, so that the overall volumes are
@@ -299,7 +299,7 @@ class CellWalls:
         num_passes_counter = -1
         forward_pass_result = np.zeros(self.num_cells + 1)
 
-        while num_passes_counter < max_iter:
+        while num_passes_counter < maxiter:
             # do not allow length to decrease beyond their original value.
 
             def excess_volume(test_length, i=i):

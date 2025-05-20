@@ -387,7 +387,7 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         # Solve converged transport - fixed boundary equilibrium
         defaults = {
             "lcar_mesh": 0.3,
-            "max_iter": 15,
+            "maxiter": 15,
             "iter_err_max": 1e-3,
             "relaxation": 0.0,
             "plot": False,
@@ -494,7 +494,7 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
         eq_settings = self.build_config.get("fixed_equilibrium_settings", {})
         defaults = {
             "p_order": 2,
-            "max_iter": 30,
+            "maxiter": 30,
             "iter_err_max": 1e-4,
             "relaxation": 0.05,
         }
@@ -695,7 +695,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             "coil_discretisation": 0.3,
             "gamma": 1e-8,
             "iter_err_max": 1e-2,
-            "max_iter": 30,
+            "maxiter": 30,
         }
         settings = self.build_config.get("settings", {})
         settings = {**defaults, **settings}
@@ -717,8 +717,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         )
 
         iter_err_max = settings.pop("iter_err_max")
-        max_iter = settings.pop("max_iter")
-        settings["maxiter"] = max_iter  # TODO: Standardise name in PicardIterator
         iterator_program = PicardIterator(
             eq,
             self.opt_problem,
