@@ -422,7 +422,7 @@ class TestCoreRadiation:
         rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
         solver = FirstWallRadiationSolver(
-            source_func=func, firstwall_shape=self.fw_shape
+            source_func=func, firstwall_shape=self.fw_shape, verbose=False
         )
         assert solver.fw_shape == self.fw_shape
 

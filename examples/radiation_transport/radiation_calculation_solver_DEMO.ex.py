@@ -142,7 +142,7 @@ config = {
 
 # %% [markdown]
 #
-
+#
 # Get core midplane profiles
 # %%
 
@@ -170,10 +170,12 @@ source.rad_map(fw_shape)
 #
 # Defining whether to run the radiation source only [MW/m^3]
 # or to calculate radiation loads on the first wall [MW/m^2].
+# Verbose option is also available when calculating radiation loads.
 
 
 # %%
 only_source = True
+verbose = False
 if only_source:
     source.plot()
     plt.show()
@@ -233,5 +235,7 @@ else:
 
     func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
     # Calculate radiation of FW points
-    solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
+    solver = FirstWallRadiationSolver(
+        source_func=func, firstwall_shape=fw_shape, verbose=verbose
+    )
     wall_loads = solver.solve()
