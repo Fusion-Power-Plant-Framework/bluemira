@@ -31,6 +31,8 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
 
     converter_type: Literal["fast_ctd"] = "fast_ctd"
 
+    imprint_geometry: bool = True
+    """If True, imprint the geometry before converting to DAGMC."""
     imprint_per_compound: bool = True
     """If True, imprint solids grouped in a compound together only.
     Set to False to imprint all solids together. This may take much longer."""
@@ -56,15 +58,15 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
     on the output if it's not watertight."""
     save_vtk_model: bool = True
     """Save the DAGMC model as a VTK file, viewable in ParaView."""
-    enable_debug_logging: bool = False
+    enable_ext_debug_logging: bool = False
     """Enable debug logging in the fast_ctd pipeline, in the C++ extension code."""
-    used_cached_files: bool = True
+    use_cached_files: bool = True
     """Use the cached intermediary files if they exist, picking up where
     the last run ended. This can happen if the converter failed
     during a run and the intermediate files were not cleaned up.
     """
-    clean_up: bool = True
-    """Clean up the intermediate files after the conversion is
+    clean_up_cached: bool = True
+    """Clean up the cach intermediate files after the conversion is
     completes successfully."""
 
     def run_converter(
@@ -116,11 +118,12 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         comp_mat_mapping:
             Mapping of component names to material names.
         """
-        # fast_ctd internals convert names with spaces to underscores
+        # fast_ctd internals convert names with spaces and -'s to underscores
         # do it here so the mapping is correct
-        names = [name.replace(" ", "_") for name in names]
+        names = [name.replace(" ", "_").replace("-", "_") for name in names]
         comp_mat_mapping = {
-            k.replace(" ", "_"): comp_mat_mapping[k] for k in comp_mat_mapping
+            k.replace(" ", "_").replace("-", "_"): comp_mat_mapping[k]
+            for k in comp_mat_mapping
         }
         super().__init__(shapes, names, comp_mat_mapping)
 
@@ -180,21 +183,24 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         )
 
         try:
-            if (
-                converter_config.used_cached_files
-                and imprinted_geom_step_file_p.exists()
-            ):
+            if converter_config.use_cached_files and imprinted_geom_step_file_p.exists():
                 bluemira_print(
                     f"Using cached imprinted geometry: '{imprinted_geom_step_file_p}'"
                 )
             else:
-                bluemira_print("Imprinting shapes")
-                imprinted_shapes = (
-                    self._run_imprint_per_compound()
-                    if converter_config.imprint_per_compound
-                    else self._run_imprint_all()
-                )
-                bluemira_print("Saving imprinted geometry")
+                if converter_config.imprint_geometry:
+                    bluemira_print("Imprinting shapes")
+                    imprinted_shapes = (
+                        self._run_imprint_per_compound()
+                        if converter_config.imprint_per_compound
+                        else self._run_imprint_all()
+                    )
+                    bluemira_print("Saving imprinted geometry to .step file")
+                else:
+                    bluemira_print(
+                        "Skipping imprinting, saving input geometry to .step file"
+                    )
+                    imprinted_shapes = self.shapes
                 cadapi.save_cad(
                     [s.shape for s in imprinted_shapes],
                     imprinted_geom_step_file_p.as_posix(),
@@ -219,11 +225,6 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
             bluemira_error(f"Error during DAGMCConverterFastCTD run: {e}")
             raise
 
-        # Remove the intermediate STEP file
-        if converter_config.clean_up and imprinted_geom_step_file_p.exists():
-            bluemira_debug(f"Cleaning up {imprinted_geom_step_file_p}")
-            imprinted_geom_step_file_p.unlink()
-
         model_meta_json_path = output_dagmc_model_path.with_suffix(".meta.json")
         bluemira_print(f"Writing model meta.json file to: '{model_meta_json_path}'")
         with open(model_meta_json_path, "w", encoding="utf-8") as f:
@@ -237,3 +238,8 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
                 f,
                 indent=2,
             )
+
+        # Remove the intermediate STEP file
+        if converter_config.clean_up_cached and imprinted_geom_step_file_p.exists():
+            bluemira_debug(f"Cleaning up {imprinted_geom_step_file_p}")
+            imprinted_geom_step_file_p.unlink()

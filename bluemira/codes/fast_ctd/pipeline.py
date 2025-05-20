@@ -52,10 +52,10 @@ def _run_check_or_make_watertight(
 
     if non_zero:
         stout_log_dump_path = dagmc_file.with_name(
-            f"{dagmc_file.stem}-{cmd}.stdout.txt",
+            f"{output_h5m_file.stem}-{cmd}.stdout.txt",
         )
         sterr_log_dump_path = dagmc_file.with_name(
-            f"{dagmc_file.stem}-{cmd}.stderr.txt",
+            f"{output_h5m_file.stem}-{cmd}.stderr.txt",
         )
         with stout_log_dump_path.open("w") as log_dump:
             log_dump.write(comp_proc.stdout)
@@ -90,9 +90,9 @@ def step_to_dagmc_pipeline(
     angular_deflection_tol: float = 0.5,
     run_make_watertight: bool = True,
     save_vtk_model: bool = True,
-    enable_debug_logging: bool = False,
-    used_cached_files: bool = True,
-    clean_up: bool = True,
+    enable_ext_debug_logging: bool = False,
+    use_cached_files: bool = True,
+    clean_up_cached: bool = True,
     **kwargs,  # noqa: ARG001
 ) -> list[str]:
     """
@@ -130,7 +130,7 @@ def step_to_dagmc_pipeline(
     output_dagmc_model_path = Path(output_dagmc_model_path)
     output_vtk_file_path = output_dagmc_model_path.with_suffix(".vtk")
 
-    intm_materials_csv_file_path = output_dagmc_model_path.with_suffix(".csv")
+    intm_materials_csv_file_path = output_dagmc_model_path.with_suffix(".mats.csv")
     intm_brep_file = output_dagmc_model_path.with_suffix(".brep")
     intm_merged_brep_file = output_dagmc_model_path.with_suffix(".merged.brep")
     intm_dagmc_file = (
@@ -139,8 +139,15 @@ def step_to_dagmc_pipeline(
         else output_dagmc_model_path
     )
 
-    if used_cached_files and intm_brep_file.exists():
+    if (
+        use_cached_files
+        and intm_brep_file.exists()
+        and intm_materials_csv_file_path.exists()
+    ):
         bluemira_print(f"Skipping `step_to_brep`, using '{intm_brep_file}'")
+        bluemira_print(
+            f"Skipping materials files creation, using '{intm_materials_csv_file_path}'"
+        )
     else:
         bluemira_print("Running `step_to_brep`")
         comps_info = step_to_brep(
@@ -148,14 +155,8 @@ def step_to_dagmc_pipeline(
             intm_brep_file,
             minimum_volume=minimum_include_volume,
             fix_geometry=fix_step_to_brep_geometry,
-            enable_logging=enable_debug_logging,
+            enable_logging=enable_ext_debug_logging,
         )
-
-    if used_cached_files and intm_materials_csv_file_path.exists():
-        bluemira_print(
-            f"Skipping materials files creation, using '{intm_materials_csv_file_path}'"
-        )
-    else:
         bluemira_print("Mapping components to materials and writing materials CSV file")
         # If comp_name_to_material_name_map is None,
         # use the component names as the material
@@ -170,7 +171,7 @@ def step_to_dagmc_pipeline(
                 if i != len(mats_list) - 1:
                     f.write("\n")
 
-    if used_cached_files and intm_merged_brep_file.exists():
+    if use_cached_files and intm_merged_brep_file.exists():
         bluemira_print(
             f"Skipping `merge_brep_geometries`, using '{intm_merged_brep_file}'"
         )
@@ -180,7 +181,7 @@ def step_to_dagmc_pipeline(
             intm_brep_file,
             intm_merged_brep_file,
             dist_tolerance=merge_dist_tolerance,
-            enable_logging=enable_debug_logging,
+            enable_logging=enable_ext_debug_logging,
         )
 
     bluemira_print("Running `facet_brep_to_dagmc`")
@@ -191,7 +192,7 @@ def step_to_dagmc_pipeline(
         lin_deflection_tol=lin_deflection_tol,
         tol_is_absolute=lin_deflection_is_absolute,
         ang_deflection_tol=angular_deflection_tol,
-        enable_logging=enable_debug_logging,
+        enable_logging=enable_ext_debug_logging,
     )
 
     mwt_did_run = False
@@ -229,7 +230,7 @@ def step_to_dagmc_pipeline(
         bluemira_print("Running `dagmc_to_vtk`, converting model to VTK")
         dagmc_to_vtk(output_dagmc_model_path, output_vtk_file_path)
 
-    if clean_up:
+    if clean_up_cached:
         bluemira_print("Cleaning up intermediate files")
 
         # Clean up intermediate files

@@ -10,9 +10,9 @@ import pytest
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_polygon
-from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
-from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter_fast_ctd import (
+from bluemira.radiation_transport.neutronics.dagmc import (
     DAGMCConverterFastCTDConfig,
+    save_cad_to_dagmc,
 )
 
 

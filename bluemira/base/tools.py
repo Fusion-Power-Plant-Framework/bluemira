@@ -143,7 +143,7 @@ class ConstructionParams(TypedDict):
     disable_composite_grouping: NotRequired[bool]
 
 
-@dataclass(frozen=True)
+@dataclass
 class ConstructionParamValues:
     """
     Parameters for the construction of CAD.
@@ -527,6 +527,7 @@ def _build_compounds_from_mat_map(
             name=f"{manager_name}_mat_{mat_name}" if mat_name else manager_name,
             components=comps,
             # all comps in the list have the same material
+            # (when not grouped by material correctly, in the map)
             material=comps[0].material,
         )
         for mat_name, comps in mat_to_comps_map.items()
@@ -538,15 +539,14 @@ def build_comp_manager_save_xyz_cad_tree(
     construction_params: ConstructionParamValues,
 ) -> Component:
     """
-    Build the CAD of the component manager's components
-    and save the CAD to a file.
+    Build the CAD of the component manager's components.
 
     Parameters
     ----------
     comp_manager:
         Component manager
-    component_filter:
-        Filter to apply to the components
+    construction_params:
+        Construction parameters to use for CAD building.
 
     Returns
     -------
@@ -568,6 +568,14 @@ def build_comp_manager_save_xyz_cad_tree(
     if construction_params.group_by_materials:
         mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
     else:
+        # note: by assigning the empty string as the key, we are
+        # grouping all phy. components together. They could
+        # have different materials, which will get lost.
+        # Only the first material will be used in _build_compounds_from_mat_map.
+        # This option makes the CAD output cleaner
+        # (and material information is not saved in the CAD file)
+        # so it is not a problem (usually), except for code that operates
+        # on the shapes downstream (such as DAGMC exporting).
         mat_to_comps_map = {"": constructed_phy_comps}
 
     return_comp.children = _build_compounds_from_mat_map(

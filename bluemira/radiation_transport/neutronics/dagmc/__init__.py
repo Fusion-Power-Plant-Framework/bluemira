@@ -7,10 +7,14 @@
 DAGMC related classes and functions.
 """
 
+from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter import (
+    DAGMCConverter,
+    DAGMCConverterConfig,
+)
+from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter_fast_ctd import (
+    DAGMCConverterFastCTD,
+    DAGMCConverterFastCTDConfig,
+)
 from bluemira.radiation_transport.neutronics.dagmc.save_cad_to_dagmc import (
     save_cad_to_dagmc,
 )
-
-__all__ = [
-    "save_cad_to_dagmc",
-]
