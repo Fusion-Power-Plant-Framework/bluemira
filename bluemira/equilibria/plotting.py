@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
@@ -47,6 +46,7 @@ from bluemira.utilities.plot_tools import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import (
@@ -133,57 +133,57 @@ class Plotter:
         match subplots:
             case EqSubplots.XZ:
                 if ax is None:
-                    _, self.ax = plt.subplots()
+                    self.f, self.ax = plt.subplots()
                 else:
                     self.ax = ax
+                    self.f = self.ax.get_figure()
                 self.ax.set_xlabel("$x$ [m]")
                 self.ax.set_ylabel("$z$ [m]")
                 self.ax.set_aspect("equal")
 
             case EqSubplots.VS_PSI_NORM:
                 if ax is None:
-                    _, self.ax = plt.subplots()
+                    self.f, self.ax = plt.subplots()
                 else:
                     self.ax = ax
+                    self.f = self.ax.get_figure()
                 self.ax.set_xlabel(str_to_latex("psi_n"))
                 self.ax.set_aspect("equal")
 
             case EqSubplots.XZ_COMPONENT_PSI:
                 if ax is None:
-                    _, self.ax = plt.subplots(
+                    self.f, self.ax = plt.subplots(
                         nrows=nrows, ncols=ncols, sharex=True, sharey=True
                     )
                 else:
                     self.ax = ax
+                    self.f = self.ax.get_figure()
                 set_ax_for_psi_components(self.ax)
-            # TODO @geograham: review use of self.ax in BM
-            # 3807
+
             case EqSubplots.VS_PSI_NORM_STACK:
                 if ax is None:
+                    self.f = plt.figure()
                     gs = GridSpec(nrows, ncols)
                     self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
                 else:
                     self.ax = ax
+                    self.f = self.ax[0].get_figure()
                 for c in range(1, ncols):
                     self.ax[(nrows * ncols) - c].set_xlabel(str_to_latex("psi_n"))
 
             case EqSubplots.VS_X:
                 if ax is None:
+                    self.f = plt.figure()
                     gs = GridSpec(nrows, ncols)
                     self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
                 else:
                     self.ax = ax
+                    self.f = self.ax[0].get_figure()
                 for a in self.ax:
                     a.set_xlabel("$x$ [m]")
 
             case _:
                 raise BluemiraError(f"{subplots} is not a valid option for subplots.")
-
-        # Set figure for use in
-        if isinstance(self.ax, Axes):
-            self.f = self.ax.get_figure()
-        else:
-            self.f = self.ax[0].get_figure()
 
 
 class GridPlotter(Plotter):
