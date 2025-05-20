@@ -10,7 +10,7 @@ Notebook displaying example coilset positions for different devices.
 To be used in examples and tests.
 """
 
-# In[1]:
+# %%
 
 import json
 from pathlib import Path
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.equilibria.coils import Coil, CoilSet
 
-# In[2]:
+# %%
 
 
 def read_coil_json(name):
@@ -29,7 +29,7 @@ def read_coil_json(name):
         return json.load(f)
 
 
-# In[3]:
+# %%
 
 
 def make_coilset(data):
@@ -51,7 +51,7 @@ def make_coilset(data):
 
 # DEMO Single Null
 
-# In[4]:
+# %%
 
 
 data = read_coil_json("DEMO-SN_coilset.json")
@@ -62,7 +62,7 @@ plt.show()
 
 # DEMO Double Null
 
-# In[5]:
+# %%
 
 
 data = read_coil_json("DEMO-DN_coilset.json")
@@ -73,7 +73,7 @@ plt.show()
 
 # MAST-U
 
-# In[6]:
+# %%
 
 
 data = read_coil_json("MAST-U_coilset.json")
@@ -84,7 +84,7 @@ plt.show()
 
 # ITER
 
-# In[7]:
+# %%
 
 
 data = read_coil_json("ITER_coilset.json")
