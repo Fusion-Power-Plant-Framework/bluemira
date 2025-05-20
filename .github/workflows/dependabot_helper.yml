@@ -10,7 +10,7 @@ permissions:
 jobs:
   dependency_changes:
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'Fusion-Power-Plant-Framework/bluemira' }}
+    if: ${{ !github.event.pull_request.head.repo.fork && github.repository == 'Fusion-Power-Plant-Framework/bluemira' }}
     outputs:
       changed: ${{ steps.check_pyproject_change.outputs.changed }}
     steps:
