@@ -32,6 +32,8 @@ class TestImprintSolids:
         a_faces: int,
         bc_faces: int,
     ):
+        pytest.importorskip("OCC", reason="python_occ not available")
+
         box_a = BluemiraFace(
             make_polygon(
                 [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]], closed=True
