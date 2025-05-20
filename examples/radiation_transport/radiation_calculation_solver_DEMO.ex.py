@@ -174,8 +174,8 @@ source.rad_map(fw_shape)
 
 
 # %%
-only_source = True
-verbose = False
+only_source = False
+verbose = True
 if only_source:
     source.plot()
     plt.show()
@@ -236,6 +236,7 @@ else:
     func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
     # Calculate radiation of FW points
     solver = FirstWallRadiationSolver(
-        source_func=func, firstwall_shape=fw_shape, verbose=verbose
+        source_func=func,
+        firstwall_shape=fw_shape,
     )
-    wall_loads = solver.solve()
+    wall_loads = solver.solve(verbose=verbose)

@@ -1302,37 +1302,53 @@ class FirstWallRadiationSolver:
         BluemiraWire defining the first wall.
     source_func:
         Function describing radiation source
-    verbose:
-        Whether or not to print and plot additional information:
-            - plot wall detectors and their normal vectors
-            - print Raysect information i.e., incident power,
-            incident power error, time for render and rays per second.
     """
 
     def __init__(
         self,
         source_func: Callable,
         firstwall_shape: BluemiraWire,
-        verbose: bool = False,  # noqa: FBT001, FBT002
     ):
         self.rad_source = source_func
+        self.rad_3d = AxisymmetricMapper(self.rad_source)
         self.fw_shape = firstwall_shape
-        self.verbose = verbose
+        self.wall_detectors = None
+        self.wall_loads = None
 
     def solve(
         self,
         max_wall_len: float = 0.1,
         x_width: float = 0.01,
         n_samples: int = 500,
+        ray_stepsize=1.0,
+        # TODO @DarioV86: '2.0e-4' was commented out for ray_stepsize,
+        # is it important to keep a record of this number?
+        # 3939
         *,
         plot: bool = True,
+        verbose: bool = False,
     ) -> DetectedRadiation:
         """
         Solve first wall radiation problem
 
-        Plots
-        -----
-        Plot and show the radiation on the wall [MW/m^2], if plot=True.
+        Parameters
+        ----------
+        max_wall_len:
+            Maximum wall length
+        x_width:
+            Detector (rectangular) width in x-direction (local coords)
+            Note: y_width is calculated.
+        n_samples:
+            Number of samples to generate per pixel
+        ray_stepsize:
+            cherab radiation function step size
+        plot:
+            Whether or not to plot and show the radiation on the wall [MW/m^2].
+        verbose:
+            Whether or not to print and plot additional information:
+                - plot wall detectors and their normal vectors
+                - print Raysect information i.e., incident power,
+                incident power error, time for render and rays per second.
 
         Returns
         -------
@@ -1341,10 +1357,10 @@ class FirstWallRadiationSolver:
         """
         shift = translate(0, 0, np.min(self.fw_shape.z))
         height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
-        rad_3d = AxisymmetricMapper(self.rad_source)
-        ray_stepsize = 1.0  # 2.0e-4
         emitter = VolumeTransform(
-            RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
+            RadiationFunction(self.rad_3d, step=ray_stepsize * 0.1),
+            # TODO @DarioV86: Why is ray_stepsize multiplied by 0.1 here?
+            # 3939
             translate(0, 0, np.max(self.fw_shape.z)),
         )
         world = World()
@@ -1355,20 +1371,24 @@ class FirstWallRadiationSolver:
             parent=world,
             material=emitter,
         )
-        wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=self.verbose
+        self.wall_detectors = make_wall_detectors(
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=verbose
         )
-        wall_loads = detect_radiation(
-            wall_detectors, n_samples, world, verbose=self.verbose
+        self.wall_loads = detect_radiation(
+            self.wall_detectors, n_samples, world, verbose=verbose
         )
 
         if plot:
-            plot_radiation_loads(
-                rad_3d,
-                wall_detectors,
-                wall_loads,
-                "SOL & divertor radiation loads",
-                self.fw_shape,
-            )
+            self.plot()
 
-        return wall_loads
+        return self.wall_loads
+
+    def plot(self):
+        """Plot the radiation on the wall [MW/m^2]."""
+        plot_radiation_loads(
+            self.rad_3d,
+            self.wall_detectors,
+            self.wall_loads,
+            "SOL & divertor radiation loads",
+            self.fw_shape,
+        )
