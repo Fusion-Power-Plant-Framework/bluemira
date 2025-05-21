@@ -228,12 +228,14 @@ def imprint_solids(
     # pairs and imprintables have the same ordering
     # ie indexes match
 
-    imprinter = _Imprinter(parallel_mode=True, run_parallel=True)
-
+    bluemira_print(f"{len(pairs)} potential pairs found.")
     total_imprints = 0
-    bluemira_print(f"Imprinting solids together: {len(pairs)} potential pairs found.")
-    for a, b in track(pairs):
-        total_imprints += imprinter([imprintables[a], imprintables[b]])
-    bluemira_print(f"Total imprints performed: {total_imprints}")
+
+    if len(pairs) > 0:
+        imprinter = _Imprinter(parallel_mode=True, run_parallel=True)
+        for a, b in track(pairs):
+            total_imprints += imprinter([imprintables[a], imprintables[b]])
+
+        bluemira_print(f"Total imprints performed: {total_imprints}")
 
     return ImprintResult(imprintables, total_imprints)
