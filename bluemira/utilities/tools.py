@@ -10,6 +10,7 @@ A collection of miscellaneous tools.
 
 from __future__ import annotations
 
+import functools
 import operator
 import string
 import warnings
@@ -981,6 +982,7 @@ def compare_dicts(
 # ======================================================================================
 
 
+@functools.lru_cache
 def get_module(name: str) -> ModuleType:
     """
     Load module dynamically.
