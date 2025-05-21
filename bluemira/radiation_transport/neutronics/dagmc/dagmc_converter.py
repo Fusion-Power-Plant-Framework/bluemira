@@ -50,7 +50,7 @@ class DAGMCConverter(ABC, Generic[T]):
         self,
         shapes: Iterable[BluemiraGeoT],
         names: list[str],
-        material_name_map: dict[str, str] | None = None,
+        comp_mat_mapping: dict[str, str],
     ):
         """
         Abstract class representing a converter from CAD to a DAGMC .h5m model file.
@@ -61,28 +61,26 @@ class DAGMCConverter(ABC, Generic[T]):
             List of shapes to be converted.
         names:
             List of names for the shapes.
-        material_name_map:
+        comp_mat_mapping:
             Mapping of component names to material names.
-            If None, the component names are used as the material names.
 
         Raises
         ------
         ValueError
-            If any name is not in the keys of the material_name_map.
+            If any name is not in the keys of the comp_mat_mapping.
         """
-        if material_name_map:
-            names_set = set(names)
-            keys_set = set(material_name_map.keys())
-            if not names_set.issubset(keys_set):
-                raise ValueError(
-                    "Every name must be in the keys of the material_name_map.\n"
-                    f"Provided set of names:\n{names_set}\n\n"
-                    f"Keys:\n{keys_set}"
-                )
+        names_set = set(names)
+        keys_set = set(comp_mat_mapping.keys())
+        if not names_set.issubset(keys_set):
+            raise ValueError(
+                "Every name must be in the keys of the comp_mat_mapping.\n"
+                f"Provided set of names:\n{names_set}\n\n"
+                f"Keys:\n{keys_set}"
+            )
 
         self.shapes = shapes
         self.names = names
-        self.material_name_map = material_name_map
+        self.comp_mat_mapping = comp_mat_mapping
 
     @abstractmethod
     def run(self, output_dagmc_model_path: str | Path, converter_config: T) -> None:

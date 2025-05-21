@@ -380,7 +380,7 @@ def save_components_cad(
             shapes,
             names,
             filename,
-            material_name_map={
+            comp_mat_mapping={
                 n: "undef_material" if m is None else m.name
                 for n, m in zip(
                     names,

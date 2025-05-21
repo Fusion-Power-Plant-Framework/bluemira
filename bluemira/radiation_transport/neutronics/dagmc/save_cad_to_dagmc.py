@@ -7,7 +7,6 @@
 Saving CAD to DAGMC helper function.
 """
 
-from collections.abc import Iterable
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -26,10 +25,10 @@ class DAGMCConverterConfigModel(BaseModel):
 
 
 def save_cad_to_dagmc(
-    shapes: Iterable[BluemiraGeoT],
+    shapes: list[BluemiraGeoT],
     names: list[str],
     filename: Path,
-    material_name_map: dict[str, str] | None = None,
+    comp_mat_mapping: dict[str, str],
     *,
     converter_config: dict | DAGMCConverterFastCTDConfig | None = None,
 ) -> None:
@@ -44,7 +43,7 @@ def save_cad_to_dagmc(
         List of names for the shapes.
     filename:
         Path to the output DAGMC file.
-    material_name_map:
+    comp_mat_mapping:
         Mapping of component names to material names.
     converter_config:
         Configuration for the converter. If None, the default (fast_ctd) is used.
@@ -57,14 +56,14 @@ def save_cad_to_dagmc(
     NotImplementedError
         If the converter is not implemented.
     """
-    filename = force_file_extension(filename.as_posix(), ".h5m")
+    filename = Path(force_file_extension(filename.as_posix(), ".h5m"))
 
     # runs it through the pydantic model to validate the config
     # and convert it to the correct type
     return DAGMCConverterConfigModel(
         # Use fast_ctd as the default converter
         config=converter_config or DAGMCConverterFastCTDConfig()
-    ).config.run_converter(shapes, names, material_name_map, filename)
+    ).config.run_converter(shapes, names, comp_mat_mapping, filename)
 
 
 if __name__ == "__main__":

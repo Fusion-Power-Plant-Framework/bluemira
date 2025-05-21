@@ -21,7 +21,7 @@ from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import make_compound
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Collection
 
     from bluemira.geometry.compound import BluemiraCompound
 
@@ -185,8 +185,8 @@ class ImprintResult:
 
 @occ_guard
 def imprint_solids(
-    solids: Iterable[BluemiraSolid],
-    labels: Iterable[str] | None = None,
+    solids: Collection[BluemiraSolid],
+    labels: Collection[str] | str,
     *,
     use_cgal=True,
 ) -> ImprintResult:
@@ -217,8 +217,9 @@ def imprint_solids(
     TypeError
         If the solids are not of type BluemiraSolid.
     """
-    if labels is None or len(labels) == 0:
-        labels = [sld.label for sld in solids]
+    if isinstance(labels, str):
+        # if a single label is passed, make it a list
+        labels = [labels] * len(solids)
     if len(labels) != len(solids):
         raise ValueError(
             "Labels must be the same length as the solids iterable: "
@@ -227,6 +228,8 @@ def imprint_solids(
     for sld, lbl in zip(solids, labels, strict=True):
         if not isinstance(sld, BluemiraSolid):
             raise TypeError(f"solids must be BluemiraSolid only - {lbl} is {type(sld)}")
+
+    bluemira_print(f"Imprinting {set(labels)}")
 
     pairs = find_approx_overlapping_pairs(solids, use_cgal=use_cgal)
     imprintables = [
