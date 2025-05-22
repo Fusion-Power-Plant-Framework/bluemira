@@ -14,7 +14,6 @@ from math import factorial
 
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.interpolate import RectBivariateSpline
 from scipy.special import gamma, poch
 
 from bluemira.base.constants import MU_0
@@ -557,46 +556,17 @@ def toroidal_harmonic_approximation(
 
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for TH approximation.")
-
-    # Interpolation so we can compare psi over the same grid
+    # Use R and Z from th_params so we can compare psi over the same grid
     R_approx = th_params.R  # noqa: N806
     Z_approx = th_params.Z  # noqa: N806
 
-    # Mask set-up
-    # We don't use interpolated values that are outside the bluemira equilibria grid
-    min_grid_x = np.min(eq.grid.x)
-    max_grid_x = np.max(eq.grid.x)
-    min_grid_z = np.min(eq.grid.z)
-    max_grid_z = np.max(eq.grid.z)
-    R_mask = R_approx  # noqa: N806
-    R_mask = np.where(R_approx < min_grid_x, 0.0, 1.0)  # noqa: N806
-    R_mask = np.where(R_approx > max_grid_x, 0.0, 1.0)  # noqa: N806
-    Z_mask = Z_approx  # noqa: N806
-    Z_mask = np.where(Z_approx < min_grid_z, 0.0, 1.0)  # noqa: N806
-    Z_mask = np.where(Z_approx > max_grid_z, 0.0, 1.0)  # noqa: N806
-    mask = R_mask * Z_mask
+    bluemira_total_psi = eq.psi(R_approx, Z_approx)
+    # Non TH contribution to psi field
+    non_th_contribution_psi = eq.plasma.psi(R_approx, Z_approx)
+    excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
-    # Interpolate bluemira plasma psi so we can compare to TH over same region
-    psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.plasma.psi())
-    interpolated_non_th_contribution_psi = psi_func.ev(R_approx, Z_approx)
-
-    # Interpolate bluemira total psi
-    psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.psi())
-    interpolated_bm_total_psi = psi_func.ev(R_approx, Z_approx)
-    interpolated_bm_total_psi *= mask
-
-    # If there are coils which are not used in the TH approximation, we need to
-    # account for their contribution to psi
-    if len(th_params.th_coil_names) < len(eq.coilset.name):
-        non_th_coils = deepcopy(eq.coilset)
-        non_th_coils.control = list(
-            set(non_th_coils.name) - set(th_params.th_coil_names)
-        )
-        non_cc_psi = non_th_coils.psi(eq.grid.x, eq.grid.z, control=True)
-        psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], non_cc_psi)
-        interpolated_non_th_contribution_psi += psi_func.ev(R_approx, Z_approx)
-
-    interpolated_non_th_contribution_psi *= mask
+    for coil in excluded_coils:
+        non_th_contribution_psi += eq.coilset[coil].psi(R_approx, Z_approx)
 
     # Set min degree to save some time
     min_degree = 2
@@ -608,9 +578,8 @@ def toroidal_harmonic_approximation(
         approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
             eq=eq, th_params=th_params, max_degree=degree
         )
-        # Add the interpolated non TH coil contribution to the total
-        approx_total_psi = approx_coilset_psi + interpolated_non_th_contribution_psi
-        approx_total_psi *= mask
+        # Add the non TH coil contribution to the total
+        approx_total_psi = approx_coilset_psi + non_th_contribution_psi
 
         # Find LCFS from TH approx
         approx_eq = deepcopy(eq)
@@ -646,8 +615,8 @@ def toroidal_harmonic_approximation(
         nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
         cmap = PLOT_DEFAULTS["psi"]["cmap"]
         # Plot difference between approx total psi and bluemira total psi
-        total_psi_diff = np.abs(approx_total_psi - interpolated_bm_total_psi) / np.max(
-            np.abs(interpolated_bm_total_psi)
+        total_psi_diff = np.abs(approx_total_psi - bluemira_total_psi) / np.max(
+            np.abs(bluemira_total_psi)
         )
         f, ax = plt.subplots()
         ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approx FS from TH")
