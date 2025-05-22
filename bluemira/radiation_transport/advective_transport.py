@@ -10,9 +10,11 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 from dataclasses import dataclass, fields
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
+from matplotlib.ticker import FuncFormatter
 from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
@@ -616,16 +618,34 @@ class ChargedParticleSolver:
         for f_s in self.flux_surfaces:
             plot_coordinates(f_s.coords, ax=ax, linewidth=0.01)
 
+        idx = np.where(
+            (self.result[1] < self.eq._x_points[0].z - 0.001)
+            & (self.result[1] > self.eq._x_points[1].z)
+        )[0]
+
+        x_wall = self.result[0][idx]
+        z_wall = self.result[1][idx]
+        hf_wall = self.result[2][idx]
+
+        vmin = hf_wall[hf_wall > 0].min()
+        norm = mcolors.LogNorm(vmin=vmin, vmax=hf_wall.max())
+
         cm = ax.scatter(
-            self.result[0],
-            self.result[1],
-            c=self.result[2],
+            x_wall,
+            z_wall,
+            c=hf_wall,
             s=10,
-            zorder=Zorder.RADIATION.value,
             cmap="plasma",
+            norm=norm,
+            zorder=Zorder.RADIATION.value,
         )
-        f = ax.figure
-        f.colorbar(cm, label="MW/m²")
+
+        # build the colourbar
+        cb = ax.figure.colorbar(cm, label=r"MW/m²")
+
+        # reformat tick labels: 0.001 instead of 10^{-3}
+        cb.ax.yaxis.set_major_formatter(FuncFormatter(lambda val, _: f"{val:g}"))
+
         if show:
             plt.show()
         return ax
