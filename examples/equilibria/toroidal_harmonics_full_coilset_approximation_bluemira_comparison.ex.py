@@ -93,7 +93,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -172,35 +171,17 @@ plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("TH Approximation for Coilset Psi")
 plt.show()
-# %% [markdown]
-# We need to set up a mask to use when interpolating because we don't want
-# to use interpolated values that are outside of the bluemira equilibria
-# grid.
 
-# %%
-# Mask
-min_grid_x, max_grid_x = np.min(eq.grid.x), np.max(eq.grid.x)
-min_grid_z, max_grid_z = np.min(eq.grid.z), np.max(eq.grid.z)
-
-R_mask = R_approx
-R_mask = np.where(R_approx < min_grid_x, 0.0, 1.0)
-R_mask = np.where(R_approx > max_grid_x, 0.0, 1.0)
-Z_mask = Z_approx
-Z_mask = np.where(Z_approx < min_grid_z, 0.0, 1.0)
-Z_mask = np.where(Z_approx > max_grid_z, 0.0, 1.0)
-mask = R_mask * Z_mask
 
 # %% [markdown]
 # Now we want to compare this approximation to the solution from bluemira.
 
 # %%
 # Plot total psi using approximate coilset psi from TH, and plasma psi from bluemira
-# Interpolation so we can compare psi over the same grid
-psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.plasma.psi())
-interpolated_plasma_psi = psi_func.ev(R_approx, Z_approx)
 
-total_psi = approx_coilset_psi + interpolated_plasma_psi
-total_psi *= mask
+plasma_psi = eq.plasma.psi(R_approx, Z_approx)
+
+total_psi = approx_coilset_psi + plasma_psi
 
 # Find LCFS from TH approx
 approx_eq = deepcopy(eq)
@@ -231,7 +212,7 @@ plt.legend(loc="upper right")
 plt.show()
 
 # %%
-# Plot interpolated bluemira total psi
+# Plot bluemira total psi
 # Obtain psi from Bluemira coilset
 bm_coil_psi = np.zeros(np.shape(eq.grid.x))
 for n in eq.coilset.name:
@@ -239,24 +220,21 @@ for n in eq.coilset.name:
 
 
 # Obtain total psi from Bluemira
-psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], eq.psi())
-interpolated_bm_total_psi = psi_func.ev(R_approx, Z_approx)
-interpolated_bm_total_psi *= mask
+
+bluemira_total_psi = eq.psi(R_approx, Z_approx)
 
 # Plotting
-plt.contourf(R_approx, Z_approx, interpolated_bm_total_psi, levels=nlevels, cmap=cmap)
+plt.contourf(R_approx, Z_approx, bluemira_total_psi, levels=nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("Interpolated Total Bluemira Psi")
 plt.show()
 # %%
-# Plot interpolated bluemira coilset psi
-# Interpolation to use same grid
-psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], bm_coil_psi)
-interpolated_coilset_psi = psi_func.ev(R_approx, Z_approx)
+# Plot bluemira coilset psi
+coilset_psi = eq.coilset.psi(R_approx, Z_approx)
 
 # Plotting
-plt.contourf(R_approx, Z_approx, interpolated_coilset_psi * mask, nlevels, cmap=cmap)
+plt.contourf(R_approx, Z_approx, coilset_psi, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
 plt.title("Interpolated Bluemira Coilset Psi")
@@ -266,10 +244,8 @@ plt.show()
 # We see zero difference in the core region, which we expect as we are constraining
 # the flux in this region, and we see larger differences outside of the approximation
 # region.
-coilset_psi_diff = np.abs(approx_coilset_psi - interpolated_coilset_psi) / np.max(
-    np.abs(interpolated_coilset_psi)
-)
-coilset_psi_diff_plot = coilset_psi_diff * mask
+coilset_psi_diff = np.abs(approx_coilset_psi - coilset_psi) / np.max(np.abs(coilset_psi))
+coilset_psi_diff_plot = coilset_psi_diff
 f, ax = plt.subplots()
 ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
 ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
@@ -283,10 +259,10 @@ plt.show()
 
 # %%
 # Difference plot to compare TH approximation to Bluemira total psi
-total_psi_diff = np.abs(total_psi - interpolated_bm_total_psi) / np.max(
-    np.abs(interpolated_bm_total_psi)
+total_psi_diff = np.abs(total_psi - bluemira_total_psi) / np.max(
+    np.abs(bluemira_total_psi)
 )
-total_psi_diff_plot = total_psi_diff * mask
+total_psi_diff_plot = total_psi_diff
 f, ax = plt.subplots()
 ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approx FS from TH")
 # ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="FS from Bluemira")
