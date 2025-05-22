@@ -41,6 +41,8 @@ class TestDAGMCConverter:
         """
         Test the DAGMC converter using fast_ctd.
         """
+        pytest.importorskip("fast_ctd")
+
         box_a = BluemiraFace(
             make_polygon(
                 [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]], closed=True
