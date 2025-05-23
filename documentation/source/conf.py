@@ -215,3 +215,30 @@ class SkipAlreadyDocumented:
                 skip = True
             self.skip_dict[name] += 1
         return skip
+
+
+# autoapi inheritance diagram hack
+import sphinx.ext.inheritance_diagram as inheritance_diagram  # noqa: E402
+
+_old_InheritanceGraph = inheritance_diagram.InheritanceGraph
+
+
+class InheritanceGraph(_old_InheritanceGraph):
+    def __init__(self, class_names, *args, **kwargs) -> None:
+        if (
+            "bluemira.radiation_transport.neutronics.dagmc.save_cad_to_dagmc.DAGMCConverterConfigModel"
+            in class_names
+        ):
+            self.get_all_class_names = self._noop
+            self.generate_dot = self._gen_dot
+        else:
+            super().__init__(class_names, *args, **kwargs)
+
+    def _noop(self, *args, **kwargs):
+        return []
+
+    def _gen_dot(self, *args, **kwargs):
+        return "digraph {\n}"
+
+
+inheritance_diagram.InheritanceGraph = InheritanceGraph
