@@ -27,7 +27,7 @@ point and calculating solution due to a single wire as a sum of toroidal harmoni
 
 # %% [markdown]
 # # 1. Example of plotting the internal harmonics in toroidal coordinates
-
+#
 # This example starts by showing how to plot the individual cos and sin toroidal harmonic
 # contributions about a focus point.
 
@@ -39,9 +39,6 @@ from math import factorial
 
 import matplotlib.pyplot as plt
 import numpy as np
-from IPython.display import display
-from PIL import Image
-from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils._coil import Coil  # noqa: PLC2701
@@ -133,7 +130,9 @@ for i_nu in range(len(nu)):
     axs_sin[i_nu].title.set_text(f"m = {i_nu}")
     axs_cos[i_nu].contour(R, Z, psi_cos, levels=nlevels, cmap=cmap)
     axs_cos[i_nu].title.set_text(f"m = {i_nu}")
-
+    axs_sin[i_nu].set_aspect("equal")
+    axs_cos[i_nu].set_aspect("equal")
+plt.show()
 
 # %% [markdown]
 # # 2. Calculating the flux solution due to a single wire as a sum of toroidal harmonics
@@ -170,11 +169,6 @@ for i_nu in range(len(nu)):
 # (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more
 # information.
 #
-# The following image shows the psi field we are expecting to obtain at the end of this
-# example.
-# %%
-single_wire_image = Image.open("single_wire_output_image.png")
-display(single_wire_image)
 # %% [markdown]
 # First we define the location in cylindrical coordinates of the focus $(R_0, z_0)$ and
 # of the wire $(R_c, z_c)$, and the current in the wire, $I_c$.
@@ -282,7 +276,6 @@ for m in range(m_max + 1):
 # {\sin}
 # \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}}
 # \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \sin(m \sigma) $$
-
 # along with $$\psi = R A$$
 # to calculate the solution and plot the psi graph. Here we have that
 # $ \epsilon_0 = 1$ and $\epsilon_{m\ge 1} = 2$.
@@ -302,12 +295,7 @@ for m in range(m_max + 1):
     ) * np.sin(m * sigma)
 
 psi_th_approx = R * A
-nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-cmap = PLOT_DEFAULTS["psi"]["cmap"]
-plt.contour(R, Z, psi_th_approx, nlevels, cmap=cmap)
-plt.xlabel("R")
-plt.ylabel("Z")
-plt.title("TH Approximation of Psi")
+
 # %%[markdown]
 # Now we can compare this approximation for psi with the solution from Bluemira.
 
@@ -318,38 +306,29 @@ coil = Coil(R_c, Z_c, current=I_c, dx=0.1, dz=0.1, ctype="PF", name="PF_0")
 coilset = CoilSet(coil)
 grid = Grid(np.min(R), np.max(R), np.min(Z), np.max(Z), 150, 200)
 
-bm_coil_psi = np.zeros(np.shape(R))
-for n in coilset.name:
-    bm_coil_psi = np.sum([bm_coil_psi, coilset[n].psi(grid.x, grid.z)], axis=0)
-
-nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-cmap = PLOT_DEFAULTS["psi"]["cmap"]
-plt.contour(grid.x, grid.z, bm_coil_psi, nlevels, cmap=cmap)
-plt.xlabel("R")
-plt.ylabel("Z")
-plt.title("Bluemira Coil Psi")
-
-# %% [markdown]
-# We interpolate the solution from Bluemira to compare over the same grid as that used
-# for the toroidal harmonics approximation.
+# Used the same grid to get the bluemira coilset psi values
+bm_coil_psi = coilset["PF_0"].psi(R, Z)
 
 # %%
-# Interpolation to compare over same grid
-psi_func = RectBivariateSpline(grid.x[:, 0], grid.z[0, :], bm_coil_psi)
-interpolated_coilset_psi = psi_func.ev(R, Z)
-plt.contour(R, Z, interpolated_coilset_psi, levels=nlevels, cmap=cmap)
-plt.plot(R_c, Z_c, marker="o", markersize=10, label="Coil")
-plt.title("Bluemira Coilset Psi Interpolated onto TH grid")
-plt.legend(loc="upper left")
-plt.show()
-
 # Difference plot to compare TH approximation to Bluemira coil
-coilset_psi_diff = psi_th_approx - interpolated_coilset_psi
-im = plt.contourf(R, Z, coilset_psi_diff, levels=nlevels, cmap=cmap, zorder=8)
-plt.colorbar(mappable=im)
-plt.plot(R_c, Z_c, marker="o", markersize=10, label="Coil")
-plt.title("Difference in coilset psi between TH approximation and Bluemira")
-plt.legend(loc="upper left")
-plt.show()
+coilset_psi_diff = np.abs(psi_th_approx - bm_coil_psi) / np.max(bm_coil_psi)
 
-# %%
+levels = np.linspace(
+    np.min([bm_coil_psi, psi_th_approx]), np.max([bm_coil_psi, psi_th_approx]), nlevels
+)
+f, axs = plt.subplots(1, 3)
+axs0_plot = axs[0].contourf(R, Z, bm_coil_psi, levels=nlevels, cmap=cmap)
+f.colorbar(axs0_plot, ax=axs[0], fraction=0.05)
+axs[0].set_title("Bluemira coilset psi")
+axs1_plot = axs[1].contourf(R, Z, psi_th_approx, levels=nlevels, cmap=cmap)
+f.colorbar(axs1_plot, ax=axs[1], fraction=0.05)
+axs[1].set_title("TH approximation of coilset \npsi")
+
+axs2_plot = axs[2].contourf(R, Z, coilset_psi_diff, levels=nlevels, cmap=cmap)
+f.colorbar(axs2_plot, ax=axs[2], fraction=0.05)
+axs[2].set_title("Difference in coilset psi between \nBluemira and TH approx.")
+
+axs[0].set_aspect("equal")
+axs[1].set_aspect("equal")
+axs[2].set_aspect("equal")
+plt.show()
