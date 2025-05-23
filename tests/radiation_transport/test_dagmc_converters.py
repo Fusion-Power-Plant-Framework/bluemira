@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from copy import deepcopy
-from pathlib import Path
 
 import pytest
 
@@ -20,7 +19,9 @@ class TestDAGMCConverter:
     @pytest.mark.parametrize(
         ("converter_config"),
         [
-            DAGMCConverterFastCTDConfig(),
+            DAGMCConverterFastCTDConfig(
+                fix_step_to_brep_geometry=True,
+            ),
             None,
         ],
     )
@@ -34,6 +35,7 @@ class TestDAGMCConverter:
     )
     def test_dagmc_converter_fast_ctd(
         self,
+        tmp_path,
         converter_config: DAGMCConverterFastCTDConfig | None,
         translate_x: float,
         translate_y: float,
@@ -60,7 +62,7 @@ class TestDAGMCConverter:
         save_cad_to_dagmc(
             shapes=shapes,
             names=names,
-            filename=Path("test.h5m"),
+            filename=tmp_path / "test.h5m",
             comp_mat_mapping={
                 "box_a": "mat_a",
                 "box_b": "mat_b",

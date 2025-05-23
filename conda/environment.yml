@@ -38,4 +38,4 @@ dependencies:
   - pip:
       - -r ../requirements/uv/all.txt
       - -r ../requirements/conda.txt
-      - -e ../[openmc,dagmc]
+      - -e ../[openmc]
