@@ -546,9 +546,7 @@ def toroidal_harmonic_approximation(
 
     """
     if th_params is None:
-        eq.get_OX_points()
-        R_0 = eq._o_points[0].x
-        Z_0 = eq._o_points[0].z
+        R_0, Z_0 = eq.effective_centre()
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
     # Get original flux surface from Bluemira for equilibrium

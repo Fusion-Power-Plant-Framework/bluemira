@@ -136,9 +136,7 @@ plt.show()
 # the default is to use the plasma o point.
 # %%
 # Set the focus point
-eq.get_OX_points()
-R_0 = eq._o_points[0].x
-Z_0 = eq._o_points[0].z
+R_0, Z_0 = eq.effective_centre()
 
 # %% [markdown]
 # Use the `toroidal_harmonic_grid_and_coil_setup` to obtain the necessary
@@ -220,14 +218,13 @@ for n in eq.coilset.name:
 
 
 # Obtain total psi from Bluemira
-
 bluemira_total_psi = eq.psi(R_approx, Z_approx)
 
 # Plotting
 plt.contourf(R_approx, Z_approx, bluemira_total_psi, levels=nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
-plt.title("Interpolated Total Bluemira Psi")
+plt.title("Total Bluemira Psi")
 plt.show()
 # %%
 # Plot bluemira coilset psi
@@ -237,7 +234,7 @@ coilset_psi = eq.coilset.psi(R_approx, Z_approx)
 plt.contourf(R_approx, Z_approx, coilset_psi, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
-plt.title("Interpolated Bluemira Coilset Psi")
+plt.title("Bluemira Coilset Psi")
 plt.show()
 # %%
 # Difference plot to compare TH approximation to Bluemira coilset psi

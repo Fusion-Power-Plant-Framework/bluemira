@@ -100,11 +100,9 @@ plt.show()
 # %%
 # Information needed for TH Approximation
 # The acceptable fit metric value used here forces the approximation to use 10 degrees
-psi_norm = 1.0
+psi_norm = 0.95
 th_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi, approx_coilset_psi = (
-    toroidal_harmonic_approximation(
-        eq=eq, psi_norm=psi_norm, acceptable_fit_metric=0.001
-    )
+    toroidal_harmonic_approximation(eq=eq, psi_norm=psi_norm, acceptable_fit_metric=0.01)
 )
 
 # %% [markdown]
@@ -368,12 +366,24 @@ total_psi_diff = np.abs(eq.psi() - th_current_opt_eq.psi()) / np.max(
 f, ax = plt.subplots()
 nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
 cmap = PLOT_DEFAULTS["psi"]["cmap"]
-ax.plot(approx_FS.x, approx_FS.z, color="red", label="Approximate FS from TH")
-ax.plot(original_FS.x, original_FS.z, color="blue", label="FS from Bluemira")
+ax.plot(
+    approx_FS.x,
+    approx_FS.z,
+    color="red",
+    label="Approximate FS after \noptimising using TH",
+)
+ax.plot(
+    original_FS.x,
+    original_FS.z,
+    color="blue",
+    label="Original equilibrium FS \nfrom Bluemira",
+)
 im = ax.contourf(eq.grid.x, eq.grid.z, total_psi_diff, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
-ax.set_title("Absolute relative difference between total psi and TH approximation psi")
-ax.legend(loc="upper right")
+ax.set_title(
+    "Absolute relative difference between total psi and TH approximation psi", y=1.05
+)
+ax.legend(bbox_to_anchor=(1.1, 1.05))
 eq.coilset.plot(ax=ax)
 plt.show()
 
