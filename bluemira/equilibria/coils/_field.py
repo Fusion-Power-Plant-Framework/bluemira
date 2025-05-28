@@ -200,8 +200,12 @@ class CoilGroupFieldsMixin:
         for j, coil in enumerate(coil_grp.all_coils()):
             xw = np.nonzero(x == coil.x)[0]
             zw = np.nonzero(z == coil.z)[0]
-            same_pos = np.nonzero(xw == zw)[0]
-            if same_pos.size > 0:
+            self_ind = False
+            for ix in xw:
+                if self_ind := (ix in zw):
+                    same_pos = np.nonzero(ix == zw)[0]
+                    break
+            if self_ind:
                 # self inductance
                 # same_pos could be an array that is indexed from zw.
                 # This loops over zw and creates an index in xw where xw == zw
