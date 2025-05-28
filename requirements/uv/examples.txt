@@ -34,7 +34,7 @@ beautifulsoup4==4.13.4
     # via nbconvert
 bleach==6.2.0
     # via nbconvert
-blosc2==3.3.3
+blosc2==3.3.4
     # via tables
 certifi==2025.4.26
     # via
@@ -45,7 +45,7 @@ cffi==1.17.1
     # via argon2-cffi-bindings
 charset-normalizer==3.4.2
     # via requests
-click==8.2.0
+click==8.2.1
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -117,13 +117,13 @@ jinja2==3.1.6
     #   jupyterlab
     #   jupyterlab-server
     #   nbconvert
-joblib==1.5.0
+joblib==1.5.1
     # via scikit-learn
 json5==0.12.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.23.0
+jsonschema==4.24.0
     # via
     #   jupyter-events
     #   jupyterlab-server
@@ -135,7 +135,7 @@ jupyter-client==8.6.3
     #   ipykernel
     #   jupyter-server
     #   nbclient
-jupyter-core==5.7.2
+jupyter-core==5.8.1
     # via
     #   ipykernel
     #   jupyter-client
@@ -157,7 +157,7 @@ jupyter-server==2.16.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.2
+jupyterlab==4.4.3
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -210,7 +210,7 @@ nbformat==5.10.4
     #   jupytext
     #   nbclient
     #   nbconvert
-ndindex==1.9.2
+ndindex==1.10.0
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
@@ -218,7 +218,7 @@ neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
-notebook==7.4.2
+notebook==7.4.3
     # via bluemira (pyproject.toml)
 notebook-shim==0.2.4
     # via
@@ -368,7 +368,7 @@ rich==14.0.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.25.0
+rpds-py==0.25.1
     # via
     #   jsonschema
     #   referencing
@@ -385,7 +385,7 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==1.8.3
     # via jupyter-server
-setuptools==80.7.1
+setuptools==80.9.0
     # via jupyterlab
 six==1.17.0
     # via
@@ -413,7 +413,7 @@ tomli==2.2.1
     # via
     #   jupyterlab
     #   jupytext
-tornado==6.5
+tornado==6.5.1
     # via
     #   ipykernel
     #   jupyter-client
