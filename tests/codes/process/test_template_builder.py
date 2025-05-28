@@ -19,9 +19,11 @@ from bluemira.base.file import try_get_bluemira_private_data_root
 from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
+    AlphaJModel,
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
+    BetaNormMaxModel,
     BootstrapCurrentScalingLaw,
     CSSuperconductorModel,
     ConfinementTimeScalingLaw,
@@ -292,7 +294,7 @@ class TestInDatOneForOne:
             "fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94
         )
         template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
-        template_builder.add_variable("fvsbrnni", 0.39566)
+        template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
         template_builder.add_variable("fncycle", 1.0)
 
         # Modified f-values and bounds w.r.t. defaults
@@ -326,7 +328,9 @@ class TestInDatOneForOne:
             BootstrapCurrentScalingLaw.SAUTER,
             ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
             PlasmaCurrentScalingLaw.ITER_REVISED,
-            PlasmaProfileModel.CONSISTENT,
+            BetaNormMaxModel.WESSON,
+            PlasmaProfileModel.WESSON,
+            AlphaJModel.WESSON,
             PlasmaPedestalModel.PEDESTAL_GW,
             PlasmaNullConfigurationModel.SINGLE_NULL,
             BetaLimitModel.THERMAL,
@@ -477,7 +481,7 @@ class TestInDatOneForOne:
             "pflux_div_heat_load_max_mw": 10,
             "prn1": 0.4,
             "bmxlim": 11.2,
-            "ffuspow": 1.0,
+            "fp_fusion_total_max_mw": 1.0,
             "fpeakb": 1.0,
             "ibkt_life": 1,
             "fkzohm": 1.0245,

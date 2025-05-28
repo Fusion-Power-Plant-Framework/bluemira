@@ -40,9 +40,11 @@ from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
+    AlphaJModel,
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
+    BetaNormMaxModel,
     BootstrapCurrentScalingLaw,
     CSSuperconductorModel,
     ConfinementTimeScalingLaw,
@@ -162,7 +164,7 @@ template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("tdmptf", 2.5829e01)
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
-template_builder.add_variable("fvsbrnni", 0.39566)
+template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 
 # %% [markdown]
 # Many of the PROCESS constraints use so-called 'f-values', which are automatically
@@ -295,7 +297,9 @@ for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.CONSISTENT,
+    BetaNormMaxModel.WESSON,
+    PlasmaProfileModel.WESSON,
+    AlphaJModel.WESSON,
     PlasmaPedestalModel.PEDESTAL_GW,
     PlasmaNullConfigurationModel.SINGLE_NULL,
     BetaLimitModel.THERMAL,

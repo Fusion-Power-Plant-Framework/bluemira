@@ -357,7 +357,7 @@ class ProcessInputs:
     fdtmp: float | None = None
     fecrh_ignition: float | None = None
     fflutf: float | None = None
-    ffuspow: float | None = None
+    fp_fusion_total_max_mw: float | None = None
     fgamcd: float | None = None
     fpflux_div_heat_load_mw: float | None = None
     fiooic: float | None = None
@@ -407,7 +407,7 @@ class ProcessInputs:
     p_plasma_separatrix_min_mw: float | None = None
     f_fw_rad_max: float | None = None
     pnetelin: float | None = None
-    powfmax: float | None = None
+    p_fusion_total_max_mw: float | None = None
     psepbqarmax: float | None = None
     pseprmax: float | None = None
     ptfnucmax: float | None = None
@@ -477,6 +477,7 @@ class ProcessInputs:
     # Current drive
     beamwd: float | None = None
     f_c_plasma_bootstrap_max: float | None = None
+    f_c_plasma_bootstrap: float | None = None
     cboot: float | None = None
     n_ecrh_harmonic: float | None = None
     e_beam_kev: float | None = None
@@ -625,7 +626,7 @@ class ProcessInputs:
     fne0: float | None = None
     f_tritium: float | None = None
     f_helium3: float | None = None
-    fvsbrnni: float | None = None
+    f_c_plasma_non_inductive: float | None = None
     ejima_coeff: float | None = None
     hfact: float | None = None
     taumax: float | None = None
@@ -646,7 +647,9 @@ class ProcessInputs:
     tbeta: float | None = None
     teped: float | None = None
     tesep: float | None = None
-    iprofile: int | None = None
+    i_alphaj: int | None = None
+    i_beta_norm_max: int | None = None
+    i_ind_plasma_internal_norm: int | None = None
     iradloss: int | None = None
     i_confinement_time: int | None = None
     iscrp: int | None = None
