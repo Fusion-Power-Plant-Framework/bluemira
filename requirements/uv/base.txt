@@ -8,13 +8,13 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.3.3
+blosc2==3.3.4
     # via tables
 certifi==2025.4.26
     # via requests
 charset-normalizer==3.4.2
     # via requests
-click==8.2.0
+click==8.2.1
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -44,7 +44,7 @@ idna==3.10
     # via requests
 imageio==2.37.0
     # via bluemira (pyproject.toml)
-joblib==1.5.0
+joblib==1.5.1
     # via scikit-learn
 kiwisolver==1.4.8
     # via matplotlib
@@ -64,7 +64,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.0
     # via blosc2
-ndindex==1.9.2
+ndindex==1.10.0
     # via blosc2
 neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
