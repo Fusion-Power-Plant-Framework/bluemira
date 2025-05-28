@@ -195,3 +195,4 @@ tmp_env.yml
 *.svg
 *.xml
 *.out
+examples/design/materials_data
