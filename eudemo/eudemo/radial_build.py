@@ -13,9 +13,11 @@ from bluemira.codes import systems_code_solver
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
+    AlphaJModel,
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
+    BetaNormMaxModel,
     BootstrapCurrentScalingLaw,
     CSSuperconductorModel,
     ConfinementTimeScalingLaw,
@@ -106,7 +108,7 @@ template_builder.add_variable("fimp(13)", 3.573e-04)
 # so no fancy mechanics for now...
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
 template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
-template_builder.add_variable("fvsbrnni", 0.39566)
+template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 template_builder.add_variable("fncycle", 1.0)
 # template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
 
@@ -141,7 +143,9 @@ for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.CONSISTENT,
+    PlasmaProfileModel.WESSON,
+    BetaNormMaxModel.WESSON,
+    AlphaJModel.WESSON,
     PlasmaPedestalModel.PEDESTAL_GW,
     PlasmaNullConfigurationModel.SINGLE_NULL,
     BetaLimitModel.THERMAL,
@@ -285,10 +289,10 @@ template_builder.add_input_values({
     "abktflnc": 15.0,
     "adivflnc": 20.0,
     # For sanity...
-    "pflux_div_heat_load_max_mw": 10,
+    "pflux_div_heat_loadfp_fusion_total_max_mw": 10,
     "prn1": 0.4,
     "bmxlim": 11.2,
-    "ffuspow": 1.0,
+    "fp_fusion_total_max_mw": 1.0,
     "fpeakb": 1.0,
     "ibkt_life": 1,
     "fkzohm": 1.0245,

@@ -247,7 +247,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "fusion_power",
+        "name": "p_fusion_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -266,7 +266,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "dd_power",
+        "name": "p_dd_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"

@@ -1079,7 +1079,7 @@
     "var_mod": "Plasma",
     "scan01": 0.5
   },
-  "fusion_power": {
+  "p_fusion_total_mw": {
     "var_mod": "Plasma",
     "scan01": 3072.9
   },
@@ -1087,7 +1087,7 @@
     "var_mod": "Plasma",
     "scan01": 3068.0
   },
-  "dd_power": {
+  "p_dd_total_mw": {
     "var_mod": "Plasma",
     "scan01": 4.9193
   },
@@ -1095,15 +1095,15 @@
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "alpha_power_total": {
+  "p_alpha_total_mw": {
     "var_mod": "Plasma",
     "scan01": 613.6
   },
-  "alpha_power_beams": {
+  "p_beam_alpha_mw": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "non_alpha_charged_power": {
+  "p_non_alpha_charged_mw": {
     "var_mod": "Plasma",
     "scan01": 2456.2
   },
@@ -1175,7 +1175,7 @@
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "pflux_fw_rad_max_mw": {
+  "pflux_fw_radfp_fusion_total_max_mw": {
     "var_mod": "Plasma",
     "scan01": 1.1275
   },
@@ -1247,7 +1247,7 @@
     "var_mod": "Plasma",
     "scan01": 225.0
   },
-  "ignite": {
+  "i_plasma_ignited": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
@@ -1583,7 +1583,7 @@
     "var_mod": "Current Drive System",
     "scan01": 1.0
   },
-  "fvsbrnni": {
+  "f_c_plasma_non_inductive": {
     "var_mod": "Current Drive System",
     "scan01": 1.0
   },
@@ -3800,7 +3800,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 811.09
   },
-  "f_alpha_plasma*alpha_power_total": {
+  "f_alpha_plasma*p_alpha_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 582.92
   },
@@ -3816,7 +3816,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 225.0
   },
-  "fusion_power.": {
+  "p_fusion_total_mw.": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3072.9
   },
@@ -3856,7 +3856,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 500.0
   },
-  "pinjwp": {
+  "p_hcd_electric_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 562.5
   },
@@ -3876,11 +3876,11 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2634.7
   },
-  "pnetelmw/(fusion_power+emultmw": {
+  "pnetelmw/(p_fusion_total_mw+emultmw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 13.67
   },
-  "pnetelmw/fusion_power": {
+  "pnetelmw/p_fusion_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 16.271
   },
