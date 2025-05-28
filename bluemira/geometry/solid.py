@@ -11,7 +11,7 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from cadapi
-import bluemira.codes.cadapi as cadapi
+from bluemira.codes import cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -40,7 +40,7 @@ class BluemiraSolid(BluemiraGeo):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_solid(self, *, check_reverse: bool = True):
+    def _create_solid(self):
         """Creation of the solid
 
         Raises
@@ -64,9 +64,7 @@ class BluemiraSolid(BluemiraGeo):
             else:
                 raise DisjointedSolidError("Disjointed solids are not accepted.")
 
-        if check_reverse:
-            return self._check_reverse(cadapi.apiSolid(solid))
-        return solid
+        return cadapi.make_solid(solid)
 
     def _create_shape(self):
         """
@@ -94,7 +92,6 @@ class BluemiraSolid(BluemiraGeo):
             # assign shape, boundary, and orientation
             bmsolid._set_shape(obj)
             bmsolid._boundary = bm_shells
-            bmsolid._orientation = obj.Orientation
             return bmsolid
 
         raise TypeError(

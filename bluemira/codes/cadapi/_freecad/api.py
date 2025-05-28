@@ -47,7 +47,7 @@ except ImportError:
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_error, bluemira_warn
 from bluemira.codes.cadapi._freecad.config import _freecad_save_config
 from bluemira.codes.cadapi.error import (
     CADError,
@@ -82,10 +82,6 @@ MIN_PRECISION = 1e-5
 MAX_PRECISION = 1e-5
 ONE_PERIOD = 2 * np.pi
 
-# ======================================================================================
-# Error catching
-# ======================================================================================
-
 
 def catch_caderr(new_error_type):
     """
@@ -101,7 +97,7 @@ def catch_caderr(new_error_type):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except FreeCADError as fe:
+            except CADError as fe:
                 raise new_error_type(fe.args[0]) from fe
 
         return wrapper
@@ -179,9 +175,9 @@ def check_data_type(data_type):
     return _apply_to_list
 
 
-@check_data_type(Base.Vector)
+@check_data_type(apiVector)
 def vector_to_list(vectors: list[apiVector]) -> list[list[float]]:
-    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""  # noqa: DOC201
+    """Converts a FreeCAD apiVector or list(apiVector) into a list"""  # noqa: DOC201
     return [list(v) for v in vectors]
 
 
@@ -197,9 +193,9 @@ def vertex_to_list(vertexes: list[apiVertex]) -> list[list[float]]:
     return [[v.X, v.Y, v.Z] for v in vertexes]
 
 
-@check_data_type(Base.Vector)
+@check_data_type(apiVector)
 def vector_to_numpy(vectors: list[apiVector]) -> np.ndarray:
-    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""  # noqa: DOC201
+    """Converts a FreeCAD apiVector or list(apiVector) into a numpy array"""  # noqa: DOC201
     return np.array([np.array(v) for v in vectors])
 
 
@@ -218,16 +214,73 @@ def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
 # ======================================================================================
 # Geometry creation
 # ======================================================================================
+class _Orientation(enum.Enum):
+    FORWARD = "Forward"
+    REVERSED = "Reversed"
+
+
+def _check_reverse(obj, orient=_Orientation.FORWARD):
+    if _Orientation(obj.Orientation) != orient:
+        bluemira_debug("Orientation not forward")
+        obj.reverse()
+        if _Orientation(obj.Orientation) != orient:
+            bluemira_error("Orientation not forward")
+
+
+def check_wire(boundary: apiWire | list[apiWire], cls):
+    orientations = []
+    if isinstance(boundary, apiWire):
+        boundary = [boundary]
+    for _boundary in boundary:
+        if isinstance(_boundary, apiWire):
+            orient = _boundary.Orientation
+        elif isinstance(_boundary, cls):
+            orient = _boundary.shape.Orientation
+        else:
+            raise CADError(f"Unknown boundary type: {type(_boundary)}")
+        orientations.append(orient)
+
+    if orientations.count(orientations[0]) != len(orientations):
+        raise MixedOrientationWireError(
+            "Cannot make a BluemiraWire from wires of mixed orientations:"
+            f" {orientations}"
+        )
+
+
+def make_wire(wire: apiWire | list[apiWire]) -> list[apiWire]:
+    wires_out = []
+    if isinstance(wire, apiWire):
+        _check_reverse(wire)
+        return wire.copy()
+    if len(wire) == 1:
+        wire = wire[0]
+        _check_reverse(wire)
+        return wire.copy()
+
+    for wi in wire:
+        int_wires = []
+        for _w in wires(wi):
+            w = edges(_w)
+            int_wires += w
+        wires_out += [apiWire(int_wires)]
+
+    w_out = apiWire(wires_out)
+    _check_reverse(w_out)
+    return w_out.copy()
 
 
 def make_solid(shell: apiShell) -> apiSolid:
     """Make a solid from a shell."""  # noqa: DOC201
-    return Part.makeSolid(shell)
+    solid = Part.makeSolid(shell)
+    _check_reverse(solid)
+    return solid
 
 
 def make_shell(faces: list[apiFace]) -> apiShell:
     """Make a shell from faces."""  # noqa: DOC201
-    return Part.makeShell(faces)
+    shell = Part.makeShell(faces)
+    _check_reverse(shell)
+    return shell
 
 
 def make_compound(shapes: list[apiShape]) -> apiCompound:
@@ -262,8 +315,10 @@ def make_polygon(points: list | np.ndarray) -> apiWire:
         A FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
-    pntslist = [Base.Vector(x) for x in points]
-    return Part.makePolygon(pntslist)
+    pntslist = [apiVector(x) for x in points]
+    p = Part.makePolygon(pntslist)
+    _check_reverse(p)
+    return p
 
 
 def make_bezier(points: list | np.ndarray) -> apiWire:
@@ -282,7 +337,7 @@ def make_bezier(points: list | np.ndarray) -> apiWire:
         A FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
-    pntslist = [Base.Vector(x) for x in points]
+    pntslist = [apiVector(x) for x in points]
     bc = Part.BezierCurve()
     bc.setPoles(pntslist)
     return Part.Wire(bc.toShape())
@@ -327,7 +382,7 @@ def make_bspline(
     -----
     This function wraps the FreeCAD function of bsplines buildFromPolesMultsKnots
     """
-    poles = [Base.Vector(p) for p in np.asarray(poles)]
+    poles = [apiVector(p) for p in np.asarray(poles)]
     bspline = Part.BSplineCurve()
     bspline.buildFromPolesMultsKnots(
         poles, mults, knots, periodic, degree, weights, check_rational
@@ -354,7 +409,7 @@ def make_bsplinesurface(
     Parameters
     ----------
     poles:
-        poles (sequence of Base.Vector).
+        poles (sequence of apiVector).
     mults_u:
         list of integers for the u-multiplicity
     mults_v:
@@ -384,7 +439,7 @@ def make_bsplinesurface(
     This function wraps the FreeCAD function of bsplinesurface buildFromPolesMultsKnots
     """
     # Create base vectors from poles
-    poles = [[Base.Vector(p[0], p[1], p[2]) for p in row] for row in np.asarray(poles)]
+    poles = [[apiVector(p[0], p[1], p[2]) for p in row] for row in np.asarray(poles)]
     bsplinesurface = Part.BSplineSurface()
     bsplinesurface.buildFromPolesMultsKnots(
         poles,
@@ -438,7 +493,7 @@ def interpolate_bspline(
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
-    pntslist = [Base.Vector(x) for x in points]
+    pntslist = [apiVector(x) for x in points]
 
     # Recreate checks that are made in freecad/src/MOD/Draft/draftmake/make_bspline.py
     # function make_bspline, line 75
@@ -461,8 +516,8 @@ def interpolate_bspline(
     start_tang_present = start_tangent is not None
     end_tang_present = end_tangent is not None
     if start_tang_present and end_tang_present:
-        kwargs["InitialTangent"] = Base.Vector(start_tangent)
-        kwargs["FinalTangent"] = Base.Vector(end_tangent)
+        kwargs["InitialTangent"] = apiVector(start_tangent)
+        kwargs["FinalTangent"] = apiVector(end_tangent)
     elif start_tang_present or end_tang_present:
         bluemira_warn(
             "You must set both start and end tangencies or neither when creating a "
@@ -538,7 +593,7 @@ def make_circle(
     :
         FreeCAD wire that contains the arc or circle
     """
-    output = make_circle_curve(radius, Base.Vector(center), Base.Vector(axis))
+    output = make_circle_curve(radius, apiVector(center), apiVector(axis))
     if start_angle != end_angle:
         output = Part.ArcOfCircle(
             output, math.radians(start_angle), math.radians(end_angle)
@@ -575,14 +630,14 @@ def make_circle_arc_3P(  # noqa: N802
         Raised if the three points are collinear.
     """
     try:
-        arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+        arc = Part.ArcOfCircle(apiVector(p1), apiVector(p2), apiVector(p3))
     except Part.OCCError as error:
         raise FreeCADError(error.args[0]) from error
 
     # next steps are made to create an arc of circle that is consistent with that
     # created by 'make_circle'
     output = make_circle_curve(
-        arc.Radius, arc.Center, arc.Axis if axis is None else Base.Vector(axis)
+        arc.Radius, arc.Center, arc.Axis if axis is None else apiVector(axis)
     )
     arc = Part.ArcOfCircle(
         output, output.parameter(arc.StartPoint), output.parameter(arc.EndPoint)
@@ -626,9 +681,9 @@ def make_ellipse(
     :
         FreeCAD wire that contains the ellipse or arc of ellipse
     """
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
-    center = Base.Vector(center)
+    s1 = apiVector(major_axis).normalize().multiply(major_radius) + apiVector(center)
+    s2 = apiVector(minor_axis).normalize().multiply(minor_radius) + apiVector(center)
+    center = apiVector(center)
     output = Part.Ellipse(s1, s2, center)
 
     start_angle %= 360.0
@@ -722,7 +777,7 @@ def offset_wire(
     return wire
 
 
-def make_face(wire: apiWire) -> apiFace:
+def make_face(wire: apiWire | list[apiWire]) -> apiFace:
     """
     Make a face given a wire boundary.
 
@@ -747,6 +802,7 @@ def make_face(wire: apiWire) -> apiFace:
     face.fix(WORKING_PRECISION, MIN_PRECISION, MAX_PRECISION)
     if face.isValid():
         return face
+    _check_reverse(face)
     raise FreeCADError("An invalid face has been generated")
 
 
@@ -894,7 +950,11 @@ def ordered_edges(obj: apiShape) -> np.ndarray:
 
 def wires(obj: apiShape) -> list[apiWire]:
     """Wires of the object"""  # noqa: DOC201
-    return _get_api_attr(obj, "Wires")
+    wires = _get_api_attr(obj, "Wires")
+    orient = _Orientation(obj.Orientation)
+    for w in wires:
+        _check_reverse(w, orient)
+    return wires
 
 
 def faces(obj: apiShape) -> list[apiFace]:
@@ -938,6 +998,8 @@ def wire_closure(wire: apiWire) -> apiWire:
     closure = None
     if not wire.isClosed():
         vertexes = wire.OrderedVertexes
+        if len(vertexes) == 1:
+            vertexes = wire.Vertexes
         points = [v.Point for v in vertexes]
         closure = make_polygon([points[-1], points[0]])
     return closure
@@ -1330,9 +1392,7 @@ def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
     """
     Get the plane intersection points of any wire (possibly anything, needs testing)
     """  # noqa: DOC201
-    circ = Part.Circle(
-        Base.Vector(*shift), Base.Vector(*normal_plane), BIG_NUMBER
-    ).toShape()
+    circ = Part.Circle(apiVector(*shift), apiVector(*normal_plane), BIG_NUMBER).toShape()
     plane = apiFace(apiWire(circ))
     intersect_obj = wire.section(plane)
     return np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
@@ -1342,7 +1402,7 @@ def _slice_solid(obj, normal_plane, shift):
     """
     Get the plane intersection wires of a face or solid
     """  # noqa: DOC201
-    return obj.slice(Base.Vector(*normal_plane), shift)
+    return obj.slice(apiVector(*normal_plane), shift)
 
 
 # ======================================================================================
@@ -1936,7 +1996,7 @@ def translate_shape(shape: apiShape, vector: tuple[float, float, float]) -> apiS
     :
         The translated shape
     """
-    return shape.translate(Base.Vector(vector))
+    return shape.translate(apiVector(vector))
 
 
 def rotate_shape(
@@ -1989,8 +2049,8 @@ def mirror_shape(
     :
         The mirrored shape
     """
-    base = Base.Vector(base)
-    direction = Base.Vector(direction)
+    base = apiVector(base)
+    direction = apiVector(direction)
     mirrored_shape = shape.mirror(base, direction)
     if isinstance(shape, apiSolid):
         return mirrored_shape.Solids[0]
@@ -2030,8 +2090,8 @@ def revolve_shape(
     :
         The revolved shape.
     """
-    base = Base.Vector(base)
-    direction = Base.Vector(direction)
+    base = apiVector(base)
+    direction = apiVector(direction)
     return shape.revolve(base, direction, degree)
 
 
@@ -2051,7 +2111,7 @@ def extrude_shape(shape: apiShape, vec: tuple[float, float, float]) -> apiShape:
     :
         The extruded shape.
     """
-    vec = Base.Vector(vec)
+    vec = apiVector(vec)
     return shape.extrude(vec)
 
 
@@ -2534,6 +2594,8 @@ def fix_shape(
     """
     shape.fix(precision, min_length, min_length)
 
+    _check_reverse(shape)
+
 
 # ======================================================================================
 # Placement manipulations
@@ -2553,8 +2615,8 @@ def make_placement(
     angle:
         rotation angle in degree
     """  # noqa: DOC201
-    base = Base.Vector(base)
-    axis = Base.Vector(axis)
+    base = apiVector(base)
+    axis = apiVector(axis)
 
     return Base.Placement(base, axis, angle)
 
@@ -2604,7 +2666,7 @@ def move_placement(placement: apiPlacement, vector: Iterable[float]):
     vector:
         direction along which the placement is moved
     """
-    placement.move(Base.Vector(vector))
+    placement.move(apiVector(vector))
 
 
 def make_placement_from_vectors(
@@ -2657,8 +2719,8 @@ def make_plane(
     -------
     Plane from base and axis
     """
-    base = Base.Vector(base)
-    axis = Base.Vector(axis)
+    base = apiVector(base)
+    axis = apiVector(axis)
 
     return Part.Plane(base, axis)
 
@@ -2684,9 +2746,9 @@ def make_plane_from_3_points(
     -------
     Plane from three points
     """
-    point1 = Base.Vector(point1)
-    point2 = Base.Vector(point2)
-    point3 = Base.Vector(point3)
+    point1 = apiVector(point1)
+    point2 = apiVector(point2)
+    point3 = apiVector(point3)
 
     return Part.Plane(point1, point2, point3)
 
@@ -2716,10 +2778,10 @@ def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
     """
     # as suggested in https://forum.freecadweb.org/viewtopic.php?t=46418
     corners = [
-        Base.Vector(-width / 2, -height / 2, 0),
-        Base.Vector(width / 2, -height / 2, 0),
-        Base.Vector(width / 2, height / 2, 0),
-        Base.Vector(-width / 2, height / 2, 0),
+        apiVector(-width / 2, -height / 2, 0),
+        apiVector(width / 2, -height / 2, 0),
+        apiVector(width / 2, height / 2, 0),
+        apiVector(-width / 2, height / 2, 0),
     ]
     # create the closed border
     border = Part.makePolygon([*corners, corners[0]])
@@ -2947,11 +3009,11 @@ def rotate_into_position(
     # scene.fitAll()
 
     # the camera's position, i.e. the user's eye point
-    position = Base.Vector(*cam.position.getValue().getValue())
+    position = apiVector(*cam.position.getValue().getValue())
     distance = cam.focalDistance.getValue()
 
     # view direction
-    vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+    vec = rot_camera.multVec(apiVector(0, 0, -1))
 
     # this is the point on the screen the camera looks at
     # when rotating the camera we should make this point fix
@@ -2960,7 +3022,7 @@ def rotate_into_position(
     for axis in axes:
         rot_camera = axis.multiply(rot_camera)
         cam.orientation.setValue(*rot_camera.Q)
-        vec = rot_camera.multVec(Base.Vector(0, 0, -1))
+        vec = rot_camera.multVec(apiVector(0, 0, -1))
         pos = lookat - vec * distance
         cam.position.setValue(pos.x, pos.y, pos.z)
 

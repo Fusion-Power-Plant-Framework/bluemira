@@ -11,7 +11,7 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from cadapi
-import bluemira.codes.cadapi as cadapi
+from bluemira.codes import cadapi
 from bluemira.geometry.base import BluemiraGeo
 
 # import from bluemira
@@ -38,7 +38,7 @@ class BluemiraShell(BluemiraGeo):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_shell(self, *, check_reverse: bool = True):
+    def _create_shell(self):
         """Creation of the shell
 
         Returns
@@ -46,12 +46,7 @@ class BluemiraShell(BluemiraGeo):
         :
             FreeCAD shell.
         """
-        faces = [f._create_face(check_reverse=True) for f in self.boundary]
-        shell = cadapi.apiShell(faces)
-
-        if check_reverse:
-            return self._check_reverse(shell)
-        return shell
+        return cadapi.make_shell([f._create_face() for f in self.boundary])
 
     def _create_shape(self):
         """
@@ -71,7 +66,6 @@ class BluemiraShell(BluemiraGeo):
             bmshell = BluemiraShell(None, label=label)
             bmshell._set_shape(obj)
             bmshell._set_boundary(bmfaces, replace_shape=False)
-            bmshell._orientation = obj.Orientation
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"

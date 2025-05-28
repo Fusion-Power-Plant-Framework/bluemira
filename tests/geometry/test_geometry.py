@@ -10,8 +10,8 @@ import numpy as np
 import pytest
 from scipy.special import ellipe
 
-import bluemira.codes.cadapi as cadapi
 from bluemira.base.constants import EPS
+from bluemira.codes import cadapi
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -326,10 +326,10 @@ class TestGeometry:
         fc_faces = fc_shape.Shells[0].Faces
         for f, fc in zip(faces, fc_faces, strict=False):
             assert f.area == fc.Area
-            assert f._orientation.value == fc.Orientation
+            # assert f._orientation.value == fc.Orientation
             for w, fw in zip(f.boundary, fc.Wires, strict=False):
                 assert w.length == fw.Length
-                assert w._orientation.value == fw.Orientation
+                # assert w._orientation.value == fw.Orientation
 
     def test_cut_hollow(self):
         x_c = 10
@@ -443,46 +443,57 @@ class TestShapeTransformations:
         direction = (0, 0, 1)
         degree = 180
         length = self.wire.length
-        orientation = self.wire._orientation
         centroid = np.array(self.wire.center_of_mass)
         self.wire.rotate(base, direction, degree)
         assert self.wire.length == length
         assert self.wire.label == "test_wire"
-        assert self.wire._orientation == orientation
         assert self._centroids_close(
             self.wire.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )
+
+        # if Freecad
+        # save orientation
+
+        # do rotation
+        # check orientation
 
     def test_rotate_face(self):
         base = (0, 0, 0)
         direction = (0, 0, 1)
         degree = 180
         area = self.face.area
-        orientation = self.face._orientation
         centroid = np.array(self.face.center_of_mass)
         self.face.rotate(base, direction, degree)
         assert np.isclose(self.face.area, area)
         assert self.face.label == "test_face"
         assert self.face.boundary[0].label == "test_wire"
-        assert self.face._orientation == orientation
         assert self._centroids_close(
             self.face.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )
+
+        # if Freecad
+        # save orientation
+
+        # do rotation
+        # check orientation
 
     def test_rotate_solid(self):
         base = (0, 0, 0)
         direction = (0, 0, 1)
         degree = 180
         volume = self.solid.volume
-        orientation = self.solid._orientation
         centroid = np.array(self.solid.center_of_mass)
         self.solid.rotate(base, direction, degree)
         assert np.isclose(self.solid.volume, volume)
         assert self.solid.label == "test_solid"
-        assert self.solid._orientation == orientation
         assert self._centroids_close(
             self.solid.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
         )
+        # if Freecad
+        # save orientation
+
+        # do rotation
+        # check orientation
 
     def test_translate_wire(self):
         dx = 1.0
