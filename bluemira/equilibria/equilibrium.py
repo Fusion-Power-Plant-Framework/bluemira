@@ -1892,7 +1892,7 @@ class Equilibrium(CoilSetMHDState):
 
     def analyse_core(
         self, n_points: int = 50, *, plot: bool = True, ax=None
-    ) -> CoreResults:
+    ) -> tuple[CoreResults, Axes]:
         """
         Analyse the shape and characteristics of the plasma core.
 
