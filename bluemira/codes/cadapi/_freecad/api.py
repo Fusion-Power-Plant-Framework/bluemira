@@ -47,9 +47,14 @@ except ImportError:
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes.cadapi._freecad.config import _freecad_save_config
-from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.codes.cadapi.error import (
+    CADError,
+    FreeCADError,
+    InvalidCADInputsError,
+    MixedOrientationWireError,
+)
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
 

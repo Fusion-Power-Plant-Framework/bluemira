@@ -13,7 +13,7 @@ import pytest
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.cadapi.error import CADError
 from bluemira.geometry._private_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
@@ -275,7 +275,7 @@ class TestMixedFaces:
         coords = Coordinates.from_json(fn)
         make_mixed_wire(*coords.xyz, allow_fallback=False)
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             make_mixed_wire(*coords.xyz, allow_fallback=False, cleaning_atol=1e-8)
 
 

@@ -7,7 +7,7 @@
 import numpy as np
 import pytest
 
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.cadapi import CADError
 from bluemira.display import show_cad
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -105,7 +105,7 @@ class TestSweep:
         profile_2 = make_polygon(
             [[-1, -1, 10], [1, -1, 10], [1, 1, 10], [-1, 1, 10]], closed=False
         )
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             sweep = sweep_shape([profile_1, profile_2], path)
 
     def test_bad_path(self):
@@ -113,7 +113,7 @@ class TestSweep:
         profile = make_circle(
             axis=[0, 0, 1], center=[0, 0, 0], start_angle=0, end_angle=360
         )
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             sweep = sweep_shape(profile, path)
 
     def test_open_shell(self):

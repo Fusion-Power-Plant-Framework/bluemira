@@ -14,7 +14,7 @@ import polyscope as ps
 from matplotlib import colors
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:

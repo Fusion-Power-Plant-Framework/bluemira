@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from bluemira.base.reactor import ComponentManager
-    from bluemira.codes.cadapi import cadapi
+    import bluemira.codes.cadapi as cadapi
 
 
 _T = TypeVar("_T")

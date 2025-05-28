@@ -13,8 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
-from bluemira.codes.cadapi import cadapi
-from bluemira.codes.error import FreeCADError
+import bluemira.codes.cadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
@@ -259,7 +258,7 @@ class BluemiraWire(BluemiraGeo):
             return cadapi.wire_parameter_at(
                 self.shape, vertex=vertex, tolerance=tolerance
             )
-        except FreeCADError as e:
+        except cadapi.CADError as e:
             raise GeometryError(e.args[0]) from None
 
     def start_point(self) -> Coordinates:

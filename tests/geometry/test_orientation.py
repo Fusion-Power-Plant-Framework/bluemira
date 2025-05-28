@@ -6,7 +6,7 @@
 
 import pytest
 
-import bluemira.codes.cadapi._freecad.api as cadapi
+import bluemira.codes.cadapi as cadapi
 import bluemira.geometry.tools as geo_tools
 from bluemira.geometry.error import MixedOrientationWireError
 from bluemira.geometry.face import BluemiraFace
@@ -33,7 +33,7 @@ class TestOrientation:
         wire = cadapi.make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
-        face = cadapi.apiFace(wire)
+        face = cadapi.make_face(wire)
         bm_face = BluemiraFace._create(face)
 
         assert bm_face.shape.Orientation == face.Orientation
@@ -48,7 +48,7 @@ class TestOrientation:
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
         )
         circle = cadapi.make_circle(radius=10, axis=[0, 1, 0])
-        face = cadapi.apiFace([circle, wire])
+        face = cadapi.make_face([circle, wire])
         bm_face = BluemiraFace._create(face)
 
         assert bm_face.shape.Orientation == face.Orientation
@@ -85,7 +85,7 @@ class TestExtrudeOrientation:
     @pytest.fixture(autouse=True)
     def _setup(self, extrusion):
         profile = cadapi.make_polygon(self.VERTS)
-        face = cadapi.apiFace(profile)
+        face = cadapi.make_face(profile)
         self.solid_fc = cadapi.extrude_shape(face, (0, extrusion, 0))
 
         profile = geo_tools.make_polygon(self.VERTS)

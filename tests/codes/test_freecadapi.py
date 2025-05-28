@@ -91,32 +91,32 @@ class TestFreecadapi:
 
     def test_single_vector_to_numpy(self):
         inp = np.array((1.0, 0.5, 2.0))
-        vector = Base.Vector(inp)
+        vector = cadapi.apiVector(inp)
         arr = cadapi.vector_to_numpy(vector)
         comparison = arr == inp
         assert comparison.all()
 
     def test_vector_to_numpy(self):
-        vectors = [Base.Vector(v) for v in self.square_points]
+        vectors = [cadapi.apiVector(v) for v in self.square_points]
         arr = cadapi.vector_to_numpy(vectors)
         comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_point_to_numpy(self):
-        vectors = [Part.Point(Base.Vector(v)) for v in self.square_points]
+        vectors = [Part.Point(cadapi.apiVector(v)) for v in self.square_points]
         arr = cadapi.point_to_numpy(vectors)
         comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_vertex_to_numpy(self):
-        vertexes = [Part.Vertex(Base.Vector(v)) for v in self.square_points]
+        vertexes = [cadapi.apiVertex(cadapi.apiVector(v)) for v in self.square_points]
         arr = cadapi.vertex_to_numpy(vertexes)
         comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_make_polygon(self):
         # open wire
-        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
+        open_wire: cadapi.apiWire = cadapi.make_polygon(self.square_points)
         vertexes = open_wire.Vertexes
         assert len(vertexes) == 4
         assert len(open_wire.Edges) == 3
@@ -125,7 +125,7 @@ class TestFreecadapi:
         assert comparison.all()
         assert not open_wire.isClosed()
         # closed wire
-        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        closed_wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         vertexes = closed_wire.Vertexes
         assert len(vertexes) == 4
         assert len(closed_wire.Edges) == 4
@@ -135,18 +135,18 @@ class TestFreecadapi:
         assert closed_wire.isClosed()
 
     def test_make_bezier(self):
-        bezier: Part.Wire = cadapi.make_bezier(self.square_points)
+        bezier: cadapi.apiWire = cadapi.make_bezier(self.square_points)
         curve = bezier.OrderedEdges[0].Curve
         assert type(curve) is Part.BezierCurve
 
     def test_interpolate_bspline(self):
         pntslist = self.square_points
-        bspline: Part.Wire = cadapi.interpolate_bspline(pntslist)
+        bspline: cadapi.apiWire = cadapi.interpolate_bspline(pntslist)
         curve = bspline.OrderedEdges[0].Curve
         assert type(curve) is Part.BSplineCurve
         # assert that the bspline pass through the points
         # get the points parameter
-        params = [curve.parameter(Base.Vector(p)) for p in pntslist]
+        params = [curve.parameter(cadapi.apiVector(p)) for p in pntslist]
         # get the points on the curve at the calculated parameters
         test_points = cadapi.vector_to_list([curve.value(par) for par in params])
         # assert that the points on the curve are equal (within a tolerance) to the
@@ -156,13 +156,13 @@ class TestFreecadapi:
         )
 
     def test_length(self):
-        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
+        open_wire: cadapi.apiWire = cadapi.make_polygon(self.square_points)
         assert (
             cadapi.length(open_wire)
             == open_wire.Length
             == pytest.approx(3.0, rel=0, abs=EPS)
         )
-        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        closed_wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         assert (
             cadapi.length(closed_wire)
             == closed_wire.Length
@@ -170,14 +170,14 @@ class TestFreecadapi:
         )
 
     def test_area(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         assert cadapi.area(wire) == wire.Area == pytest.approx(0.0, rel=0, abs=EPS)
-        face: Part.Face = Part.Face(wire)
+        face: cadapi.apiFace = cadapi.apiFace(wire)
         assert cadapi.area(face) == face.Area == pytest.approx(1.0, rel=0, abs=EPS)
 
     def test_center_of_mass(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        face: Part.Face = Part.Face(wire)
+        wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
+        face: cadapi.apiFace = cadapi.apiFace(wire)
         com = cadapi.center_of_mass(wire)
         comparison = com == np.array((0.5, 0.5, 0.0))
         assert isinstance(com, np.ndarray)
@@ -204,11 +204,11 @@ class TestFreecadapi:
             "so one of the wires must have zero length."
         )
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(cadapi.CADError):
             cadapi.split_wire(full_circle, (3, 0, 0), EPS * 10)
-        with pytest.raises(FreeCADError):
+        with pytest.raises(cadapi.CADError):
             cadapi.split_wire(arc_of_circ, (3, 0, 0), EPS * 10)
-        with pytest.raises(FreeCADError):
+        with pytest.raises(cadapi.CADError):
             cadapi._split_edge(
                 arc_of_circ.OrderedEdges[0], 0.0
             )  # angle=0.0 radian is invalid here.
@@ -221,7 +221,7 @@ class TestFreecadapi:
         assert np.isclose(arc_of_ellipse.Edges[0].LastParameter, 2 * np.pi)
         same_arc, none = cadapi.split_wire(arc_of_ellipse, [2, 0, 0], EPS * 10)
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(cadapi.CADError):
             cadapi._split_edge(arc_of_ellipse.OrderedEdges[0], 0.0)
 
     def test_split_nonperiodic_wire(self):
@@ -234,22 +234,22 @@ class TestFreecadapi:
 
     def test_scale_shape(self):
         factor = 2.0
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
-        face: Part.Face = Part.Face(scaled_wire)
+        face: cadapi.apiFace = cadapi.apiFace(scaled_wire)
         assert cadapi.area(face) == pytest.approx(1.0 * factor**2, rel=0, abs=EPS)
         assert (
             cadapi.length(face)
             == cadapi.length(scaled_wire)
             == pytest.approx(4.0 * factor, rel=0, abs=EPS)
         )
-        face_from_wire = Part.Face(wire)
+        face_from_wire = cadapi.apiFace(wire)
         scaled_face = cadapi.scale_shape(face_from_wire.copy(), factor)
         assert cadapi.length(scaled_face) == cadapi.length(face)
         assert cadapi.area(scaled_face) == cadapi.area(face)
 
     def test_discretise(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
         points = cadapi.discretise(wire, ndiscr)
         assert len(points) == ndiscr
@@ -259,7 +259,7 @@ class TestFreecadapi:
         assert len(points) == ndiscr
 
     def test_discretise_by_edges(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
+        wire: cadapi.apiWire = cadapi.make_polygon(self.closed_square_points)
         ndiscr = 10
         points = cadapi.discretise_by_edges(wire, ndiscr)
 
@@ -274,7 +274,7 @@ class TestFreecadapi:
         wire1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
         wire2 = cadapi.make_polygon([[0, 0, 0], [0, 1, 0], [1, 1, 0]])
         wire2.reverse()
-        wire = Part.Wire([wire1, wire2])
+        wire = cadapi.apiWire([wire1, wire2])
 
         # ndiscr is chosen in such a way that both discretise and discretise_by_edges
         # give the same points (so that a direct comparison is possible).
@@ -303,7 +303,7 @@ class TestFreecadapi:
     def test_catcherror(self):
         @cadapi.catch_caderr(ValueError)
         def func():
-            raise FreeCADError("Error")
+            raise cadapi.CADError("Error")
 
         with pytest.raises(ValueError):  # noqa: PT011
             func()
@@ -360,7 +360,7 @@ class TestFreecadapi:
         assert np.allclose(
             cadapi.discretise(arc, 10), cadapi.discretise(arc3, 10)
         )  # check arc3 matches arc
-        with pytest.raises(FreeCADError):
+        with pytest.raises(cadapi.CADError):
             cadapi.make_circle_arc_3P([1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0])
 
         # from make_ellipse
@@ -418,7 +418,7 @@ class TestFreecadapi:
             instead of "anti-clockwise".
 
         reverse:
-            whether to run the .reverse() method on the Part.Wire or not.
+            whether to run the .reverse() method on the cadapi.apiWire or not.
             Note: this test-method proves that .reverse() does NOT alter any information
             about the `Part.Circle`, only alters the .StartPoint and .EndPoint of
             `Part.ArcOfCircle`, but this information does not gets stored.
@@ -428,14 +428,14 @@ class TestFreecadapi:
         assert np.isclose(circle.FirstParameter, 0, rtol=0, atol=EPS_FREECAD)
         assert np.isclose(circle.LastParameter, 2 * np.pi, rtol=0, atol=EPS_FREECAD)
         if positive_y_axis:
-            arc_wire = Part.Wire(
-                Part.Edge(
+            arc_wire = cadapi.apiWire(
+                cadapi.apiEdge(
                     Part.ArcOfCircle(circle, 0, 0.5 * np.pi + 2 * np.pi * two_pi_offset)
                 )
             )
         else:
-            arc_wire = Part.Wire(
-                Part.Edge(
+            arc_wire = cadapi.apiWire(
+                cadapi.apiEdge(
                     Part.ArcOfCircle(
                         circle, 1.5 * np.pi, 2 * np.pi + 2 * np.pi * two_pi_offset
                     )
@@ -533,7 +533,7 @@ class TestFreecadapi:
         ellipse = Part.Ellipse()
         ellipse.Axis = cadapi.apiVector([0.1, -0.2, 0.3]).normalize()
         ellipse_arc = Part.ArcOfEllipse(ellipse, 0.0, 5.0)
-        arc_of_ellipse = Part.Wire(Part.Edge(ellipse_arc))
+        arc_of_ellipse = cadapi.apiWire(cadapi.apiEdge(ellipse_arc))
         if reverse:
             arc_of_ellipse.reverse()
 
