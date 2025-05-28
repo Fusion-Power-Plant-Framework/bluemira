@@ -11,12 +11,11 @@ import freecad  # noqa: F401
 import Part
 import numpy as np
 import pytest
-from FreeCAD import Base, closeDocument, newDocument
+from FreeCAD import closeDocument, newDocument
 from scipy.special import ellipe
 
-import bluemira.codes.cadapi._freecad.api as cadapi
 from bluemira.base.constants import EPS
-from bluemira.codes.error import FreeCADError
+from bluemira.codes import cadapi
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from tests._helpers import skipif_import_error
 

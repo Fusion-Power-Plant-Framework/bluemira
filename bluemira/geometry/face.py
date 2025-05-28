@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes.cadapi as cadapi
+from bluemira.codes import cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -122,7 +122,7 @@ class BluemiraFace(BluemiraGeo):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _create_face(self, *, check_reverse: bool = True):
+    def _create_face(self):
         """Create the primitive face
 
         Raises
@@ -136,7 +136,7 @@ class BluemiraFace(BluemiraGeo):
             The primitive face.
         """
         external: BluemiraWire = self.boundary[0]
-        face = cadapi.apiFace(external._create_wire(check_reverse=False))
+        face = cadapi.apiFace(external._create_wire())
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
@@ -149,8 +149,6 @@ class BluemiraFace(BluemiraGeo):
         if not cadapi.is_valid(face):
             cadapi.fix_shape(face)
 
-        if check_reverse:
-            return self._check_reverse(face)
         return face
 
     def _create_shape(self) -> cadapi.apiFace:
@@ -166,10 +164,8 @@ class BluemiraFace(BluemiraGeo):
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
             bmwires = []
-            for w in obj.Wires:
-                w_orientation = w.Orientation
+            for w in cadapi.wires(obj):
                 bm_wire = BluemiraWire(w)
-                bm_wire._orientation = w_orientation
                 if cadapi.is_closed(w):
                     bm_wire.close()
                 bmwires += [bm_wire]
@@ -177,7 +173,6 @@ class BluemiraFace(BluemiraGeo):
             bmface = cls(None, label=label)
             bmface._set_shape(obj)
             bmface._boundary = bmwires
-            bmface._orientation = obj.Orientation
 
             return bmface
 

@@ -15,7 +15,7 @@ import enum
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
-import bluemira.codes.cadapi as cadapi
+from bluemira.codes import cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
@@ -56,23 +56,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
     ):
         super().__init__()
         self._boundary_classes = boundary_classes or []
-        self.__orientation = _Orientation.FORWARD
         self.label = label
         self._set_boundary(boundary)
-
-    @property
-    def _orientation(self):
-        return self.__orientation
-
-    @_orientation.setter
-    def _orientation(self, value):
-        self.__orientation = _Orientation(value)
-
-    def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
-        return obj
 
     @staticmethod
     def _converter(func):
