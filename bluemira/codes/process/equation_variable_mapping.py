@@ -109,7 +109,7 @@ class Constraint(ConstraintSelection, Model):
     FUSION_POWER_UPPER_LIMIT = (
         9,
         (1, 2, 3, 4, 6, 26),
-        ("powfmax",),
+        ("p_fusion_total_max_mw",),
         "Equation for fusion power upper limit",
     )
     # 10 NOT USED
@@ -584,7 +584,7 @@ ITERATION_VAR_MAPPING = {
     "fcoolcp": 23,
     # 24 NOT USED
     "fpnetel": 25,
-    "ffuspow": 26,
+    "fp_fusion_total_max_mw": 26,
     "fpflux_div_heat_load_mw": 27,
     "fradpwr": 28,
     "dr_bore": 29,
@@ -602,7 +602,7 @@ ITERATION_VAR_MAPPING = {
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
     # 43 NOT USED
-    "fvsbrnni": 44,
+    "f_c_plasma_non_inductive": 44,
     "fqval": 45,
     "fpinj": 46,
     "feffcd": 47,
