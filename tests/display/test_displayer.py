@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE

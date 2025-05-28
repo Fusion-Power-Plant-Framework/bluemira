@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 
@@ -101,7 +101,7 @@ class BluemiraPlane:
         value:
             Base vector
         """
-        self._shape.Position = cadapi.Base.Vector(value)
+        self._shape.Position = cadapi.apiVector(value)
 
     @property
     def axis(self) -> np.ndarray:
@@ -118,7 +118,7 @@ class BluemiraPlane:
         value:
             Axis vector
         """
-        self._shape.Axis = cadapi.Base.Vector(value)
+        self._shape.Axis = cadapi.apiVector(value)
 
     def move(self, vector: Iterable[float]):
         """Moves the Plane along the given vector"""

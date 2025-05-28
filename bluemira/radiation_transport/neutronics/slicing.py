@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import choose_direction, get_bisection_line
 from bluemira.geometry.error import GeometryError

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 from scipy.special import ellipe
 
-import bluemira.codes.cadapi._freecad.api as cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (

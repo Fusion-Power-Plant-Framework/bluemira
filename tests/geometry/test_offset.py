@@ -12,7 +12,7 @@ import pytest
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.codes.error import InvalidCADInputsError
+from bluemira.codes.cadapi.error import InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.parameterisations import (
     PictureFrame,

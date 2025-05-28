@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
 
@@ -130,7 +130,7 @@ class BluemiraPlacement:
         value:
             Base vector
         """
-        self._shape.Base = cadapi.Base.Vector(value)
+        self._shape.Base = cadapi.apiVector(value)
 
     @property
     def axis(self) -> np.ndarray:
@@ -147,7 +147,7 @@ class BluemiraPlacement:
         value:
             Axis vector
         """
-        self._shape.Axis = cadapi.Base.Vector(value)
+        self._shape.Axis = cadapi.apiVector(value)
 
     @property
     def angle(self) -> float:
@@ -255,7 +255,7 @@ class BluemiraPlacement:
         :
             A placement from a vector.
         """
-        return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
+        return cadapi.vector_to_numpy(self._shape.multVec(cadapi.apiVector(vec)))
 
     def extract_plane(
         self, v1: Iterable[float], v2: Iterable[float], base: float | None = None

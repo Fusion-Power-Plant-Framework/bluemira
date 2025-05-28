@@ -16,7 +16,7 @@ from typing import Any
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.cadapi import cadapi
+import bluemira.codes.cadapi as cadapi
 from bluemira.geometry.coordinates import (
     _validate_coordinates,
     get_angle_between_points,
