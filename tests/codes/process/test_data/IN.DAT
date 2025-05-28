@@ -52,7 +52,7 @@ ixc = 41 * f_j_cs_start_pulse_end_flat_top
 ixc = 42 * dr_cs_tf_gap
 boundl(42) = 0.05
 boundu(42) = 0.1
-ixc = 44 * fvsbrnni
+ixc = 44 * f_c_plasma_non_inductive
 ixc = 48 * fstrcase
 ixc = 49 * fstrcond
 ixc = 50 * fiooic
@@ -128,7 +128,7 @@ dz_xpoint_divertor    = 1.60 * vertical gap between x-point and divertor (m) (if
 bmxlim   = 14.0 * maximum peak toroidal field (T) (`constraint equation 25`)
 fbeta_max = 4.8361e-01 * f-value for beta limit (`constraint equation 24`; `iteration variable 36`)
 fdene    = 1.2000e+00 * f-value for density limit (`constraint equation 5`; `iteration variable 9`)
-ffuspow  = 1 * f-value for maximum fusion power (`constraint equation 9`; `iteration variable 26`)
+fp_fusion_total_max_mw  = 1 * f-value for maximum fusion power (`constraint equation 9`; `iteration variable 26`)
 fpflux_div_heat_load_mw   = 2.0e0 * f-value for divertor heat load (`constraint equation 18`; `iteration variable 27`)
 fiooic   = 3.6068e-01 * f-value for TF coil operating current / critical current ratio
 fjohc    = 2.5000e-01 * f-value for central solenoid current at end-of-flattop
@@ -212,7 +212,7 @@ p_hcd_injected_max  = 50. * maximum allowable value for injected power (MW) (`co
 
 anginc   = 0.175 * angle of incidence of field line on plate (rad)
 dz_divertor   = 0.621 * divertor structure vertical thickness (m)
-pflux_div_heat_load_max_mw = 10 * heat load limit (MW/m2)
+pflux_div_heat_loadfp_fusion_total_max_mw = 10 * heat load limit (MW/m2)
 prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `ipedestal=0`; = nesep/dene if `ipedestal>=1`)
 
 *------------------Error Handling------------------*
@@ -387,7 +387,7 @@ zref(8) = 1.0
 
 *----------------Physics Variables-----------------*
 
-alphaj   = 2.0 * current profile index (calculated from q_0; q if `iprofile=1`)
+alphaj   = 2.0 * current profile index
 alphan   = 1.0 * density profile index
 alphat   = 1.45 * temperature profile index
 aspect   = 3.5 * aspect ratio (`iteration variable 1`)
@@ -396,7 +396,7 @@ bt       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
 dene     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `ipedestal=3`)
 beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
-fvsbrnni = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
+f_c_plasma_non_inductive = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
 ejima_coeff    = 0.3 * Ejima coefficient for resistive startup V-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times; radiation corrected (`iteration variable 10`); If
 i_bootstrap_current     = 4 * switch for bootstrap current scaling
@@ -412,7 +412,9 @@ rhopedt  = 0.94 * r/a of temperature pedestal (`ipedestal>=1`)
 tbeta    = 2.0 * temperature profile index beta  (`ipedestal=1;2`)
 teped    = 5.5 * electron temperature of pedestal (keV) (`ipedestal>=1; ieped=0; calculated for ieped=1`)
 tesep    = 0.1 * electron temperature at separatrix (keV) (`ipedestal>=1`) calculated if reinke
-iprofile = 1 * switch for current profile consistency;
+i_ind_plasma_internal_norm = 1 * Switch for current profile consistency;
+i_alphaj = 1
+i_beta_norm_max = 1
 i_confinement_time      = 34 * switch for energy confinement time scaling law (see description in `labels_confinement_scalings`)
 i_plasma_geometry   = 2 * switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * plasma separatrix elongation (calculated if `i_plasma_geometry = 1-5 or 7`)

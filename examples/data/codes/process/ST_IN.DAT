@@ -54,7 +54,7 @@ ixc = 41 * f_j_cs_start_pulse_end_flat_top
 ixc = 42 * dr_cs_tf_gap
 boundl(42) = 0.05
 *boundu(42) = 0.1
-ixc = 44 * fvsbrnni
+ixc = 44 * f_c_plasma_non_inductive
 ixc = 48 * fstrcase
 ixc = 49 * fstrcond
 ixc = 50 * fiooic
@@ -113,7 +113,7 @@ dr_shld_blkt_gap = 0.02
 bmxlim   = 14.0 * Maximum peak toroidal field (t)
 fbeta_max = 4.8361e-01 * F-value for beta limit
 fdene    = 1.2000e+00 * F-value for density limit
-ffuspow  = 1 * F-value for maximum fusion power
+fp_fusion_total_max_mw  = 1 * F-value for maximum fusion power
 fpflux_div_heat_load_mw   = 2.0e0 * F-value for divertor heat load
 fiooic   = 3.6068e-01 * F-value for tf coil operating current / critical
 fjohc    = 2.5000e-01 * F-value for central solenoid current at end-of-flattop
@@ -226,7 +226,7 @@ bt       = 5.6476e+00 * Toroidal field on axis (t) (iteration variable 2)
 dene     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
 beta_norm_max   = 3.0 * (troyon-like) coefficient for beta scaling;
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (i_plasma_geometry=2; 3)
-fvsbrnni = 4.4628e-01 * Fraction of the plasma current produced by
+f_c_plasma_non_inductive = 4.4628e-01 * Fraction of the plasma current produced by
 ejima_coeff    = 0.3 * Ejima coefficient for resistive startup v-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times (iteration variable 10)
 ibss     = 4 * Switch for bootstrap current scaling;
@@ -243,7 +243,9 @@ rhopedt  = 0.94 * R/a of temperature pedestal (ipedestal=1)
 tbeta    = 2.0 * Temperature profile index beta  (ipedestal=1)
 teped    = 5.5 * Electron temperature of pedestal (kev) (ipedestal=1)
 tesep    = 0.1 * Electron temperature at separatrix (kev) (ipedestal=1)
-iprofile = 1 * Switch for current profile consistency;
+i_ind_plasma_internal_norm = 1 * Switch for current profile consistency;
+i_alphaj = 1
+i_beta_norm_max = 1
 i_confinement_time      = 34 * Switch for energy confinement time scaling law
 i_plasma_geometry   = 2 * Switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * Plasma separatrix elongation (calculated if i_plasma_geometry > 0)

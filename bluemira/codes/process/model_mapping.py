@@ -155,6 +155,26 @@ class PlasmaPedestalModel(PROCESSModel):
     )
 
 
+class BetaNormMaxModel(PROCESSModel):
+    """
+    Switch for determining how the beta g coefficient beta_norm_max is calculated.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_beta_norm_max"
+
+    INPUT = 0, ("beta_norm_max",)
+    WESSON = 1, ("q0", "q95", "i_alphaj", "i_ind_plasma_internal_norm")
+    ORIG_SCALING = 2
+    MENARD = 3, ("i_ind_plasma_internal_norm")
+    THOLERUS = 4
+    STAMBAUGH = 5
+
+
 class PlasmaProfileModel(PROCESSModel):
     """
     Switch for current profile consistency
@@ -165,10 +185,27 @@ class PlasmaProfileModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprofile"
+        return "i_ind_plasma_internal_norm"
+
+    INPUT = 0, ("ind_plasma_internal_norm",)
+    WESSON = 1, ("q95", "q0")
+    MENARD = 2, ("q95", "q0", "ind_plasma_internal_norm")
+
+
+class AlphaJModel(PROCESSModel):
+    """
+    Switch for current profile index
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_alphaj"
 
     INPUT = 0, ("alphaj", "ind_plasma_internal_norm")
-    CONSISTENT = 1, ("q95", "q0")
+    WESSON = 1, ("q95", "q0")
 
 
 class BetaLimitModel(PROCESSModel):
@@ -187,25 +224,6 @@ class BetaLimitModel(PROCESSModel):
     THERMAL = 1
     THERMAL_NBI = 2
     TOTAL_TF = 3  # Calculated using only the toroidal field
-
-
-class BetaGScalingModel(PROCESSModel):
-    """
-    Switch for the beta g coefficient beta_norm_max model
-
-    NOTE: Over-ridden if iprofile = 1
-    """
-
-    @classproperty
-    def switch_name(self) -> str:
-        """
-        PROCESS switch name
-        """
-        return "gtscale"
-
-    INPUT = 0, ("beta_norm_max",)
-    CONVENTIONAL = 1
-    MENARD_ST = 2
 
 
 class AlphaPressureModel(PROCESSModel):
@@ -260,7 +278,7 @@ class PlasmaCurrentScalingLaw(PROCESSModel):
     PENG = 1
     PENG_DN = 2
     ITER_SIMPLE = 3
-    ITER_REVISED = 4  # Recommended for iprofile = 1
+    ITER_REVISED = 4  # Recommended for i_ind_plasma_internal_norm = 1
     TODD_I = 5
     TODD_II = 6
     CONNOR_HASTIE = 7
@@ -343,6 +361,7 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
         """
         return "i_bootstrap_current"
 
+    FIXED = 0
     ITER = 1, ("cboot",)
     GENERAL = 2
     NUMERICAL = 3
@@ -1138,7 +1157,7 @@ class PlasmaIgnitionModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ignite"
+        return "i_plasma_ignited"
 
     NOT_IGNITED = 0
     IGNITED = 1
