@@ -486,8 +486,20 @@ class ParameterFrame:
 
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
-        nindex = columns.index("name")
-        rec_col.pop(nindex)
+
+        try:
+            nindex = columns.index("name")
+            rec_col.pop(nindex)
+            records = sorted([
+                [key, *[param.get(col, "N/A") for col in rec_col]]
+                for key, param in self.to_dict().items()
+            ])
+        except ValueError:
+            nindex = 0
+            records = sorted([
+                [*[param.get(col, "N/A") for col in rec_col]]
+                for param in self.to_dict().values()
+            ])
 
         try:
             vindex = rec_col.index("value")
@@ -495,10 +507,6 @@ class ParameterFrame:
         except ValueError:
             vindex = None
 
-        records = sorted([
-            [key, *[param.get(col, "N/A") for col in rec_col]]
-            for key, param in self.to_dict().items()
-        ])
         if pkey is not None:
             columns.pop(pkey)
             columns.pop(pkey)
@@ -924,9 +932,9 @@ def tabulate_values_from_multiple_frames(
         if not isinstance(frame, type(frames[0])):
             raise TypeError("All ParameterFrames must be of the same type")
         column, record = frame.tabulation_data(
-            ["value"], floatfmt=floatfmt, value_labe=next(names)
+            ["value"], floatfmt=floatfmt, value_label=next(names)
         )
-        columns.append(column)
+        columns.extend([*column, *([""] * (len(record[0]) - len(column)))])
         for r_ind in range(len(records)):
             records[r_ind].extend(record[r_ind])
 

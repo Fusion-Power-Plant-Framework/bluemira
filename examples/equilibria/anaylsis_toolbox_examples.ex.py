@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import CoilType
+from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.analysis import (
     EqAnalysis,
     MultiEqAnalysis,
@@ -82,15 +83,17 @@ from bluemira.geometry.coordinates import Coordinates
 
 # %%
 # MAST-U-like
-masty_path = Path("../../tests/equilibria/test_data/SH_test_file.json")
+root_path = get_bluemira_root()
+
+masty_path = Path(root_path, "tests/equilibria/test_data/SH_test_file.json")
 masty_eq = select_eq(masty_path)
 masty_eq.label = "MAST"
 # DEMO-like-SN
-single_demoish_path = Path("../../tests/equilibria/test_data/eqref_OOB.json")
+single_demoish_path = Path(root_path, "tests/equilibria/test_data/eqref_OOB.json")
 single_demoish_eq = select_eq(single_demoish_path, from_cocos=7)
 single_demoish_eq.label = "DEMO-SN"
 # DEMO-like-DN
-double_demoish_path = Path("../../tests/equilibria/test_data/DN-DEMO_eqref.json")
+double_demoish_path = Path(root_path, "tests/equilibria/test_data/DN-DEMO_eqref.json")
 double_demoish_eq = select_eq(double_demoish_path)
 double_demoish_eq.label = "DEMO-DN"
 
