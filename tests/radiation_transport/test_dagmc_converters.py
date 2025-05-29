@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-import sys
 from copy import deepcopy
 
 import pytest
@@ -23,9 +22,7 @@ class TestDAGMCConverter:
             DAGMCConverterFastCTDConfig(
                 fix_step_to_brep_geometry=True,
             ),
-            DAGMCConverterFastCTDConfig(
-                lin_deflection_tol=1e-4, lin_deflection_is_absolute=True
-            ),
+            None,
         ],
     )
     @pytest.mark.parametrize(
@@ -39,7 +36,7 @@ class TestDAGMCConverter:
     def test_dagmc_converter_fast_ctd(
         self,
         tmp_path,
-        converter_config: DAGMCConverterFastCTDConfig,
+        converter_config: DAGMCConverterFastCTDConfig | None,
         translate_x: float,
         translate_y: float,
     ) -> None:
@@ -47,11 +44,6 @@ class TestDAGMCConverter:
         Test the DAGMC converter using fast_ctd.
         """
         pytest.importorskip("fast_ctd")
-
-        # should be removed in the future when
-        # the weird make_watertight not writing file on CI issue is fixed
-        if sys.version_info.major == 3 and sys.version_info.minor == 11:
-            converter_config.save_vtk_model = False
 
         box_a = BluemiraFace(
             make_polygon(
