@@ -3112,15 +3112,15 @@
     "var_mod": "Pumping for primary coolant (helium)",
     "scan01": 573.13
   },
-  "htpmw_fw_blkt": {
+  "p_blkt_coolant_pump_mw": {
     "var_mod": "Pumping for primary coolant (helium)",
     "scan01": 330.03
   },
-  "htpmw_div": {
+  "p_div_coolant_pump_mw": {
     "var_mod": "Pumping for primary coolant (helium)",
     "scan01": 2.6065
   },
-  "htpmw_shld": {
+  "p_shld_coolant_pump_mw": {
     "var_mod": "Pumping for primary coolant (helium)",
     "scan01": 0.012629
   },
@@ -3708,7 +3708,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
-  "htpmw_blkt": {
+  "p_blkt_coolant_pump_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
