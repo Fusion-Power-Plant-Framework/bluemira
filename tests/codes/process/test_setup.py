@@ -97,9 +97,11 @@ class TestSetupIntegration:
         writer_cls_mock.return_value.data = {"x": 0}
 
         setup.run()
-        # 'dr_tf_case_out' is old name for 'casthi'
+        # 'dr_tf_case_out' is old name for 'dr_tf_plasma_case'
         assert "Obsolete dr_tf_case_out" in caplog.records[0].message
-        assert "name is casthi" in caplog.records[0].message
+        assert "name is dr_tf_plasma_case" in caplog.records[0].message
 
         writer = writer_cls_mock.return_value
-        assert mock.call("casthi", 0.04) in writer.add_parameter.call_args_list
+        assert (
+            mock.call("dr_tf_plasma_case", 0.04) in writer.add_parameter.call_args_list
+        )

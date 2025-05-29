@@ -19,7 +19,7 @@ IN_mappings = {
     "eta_nb": ("eta_beam_injector_wall_plug", "dimensionless"),
     "e_mult": ("emult", "dimensionless"),
     "tk_cr_vv": ("dr_cryostat", "m"),
-    "tk_tf_front_ib": ("casthi", "m"),
+    "tk_tf_front_ib": ("dr_tf_plasma_case", "m"),
     "tk_tf_side": ("dx_tf_side_case", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
     "q_0": ("q0", "dimensionless"),

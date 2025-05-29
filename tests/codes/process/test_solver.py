@@ -196,7 +196,7 @@ class TestSolverIntegration:
             self._indat_patch as indat_cls_mock,
             file_exists("template/path/in.dat", f"{self.MODULE_REF}.Path.is_file"),
         ):
-            indat_cls_mock.return_value.data = {"casthi": BLANK}
+            indat_cls_mock.return_value.data = {"dr_tf_plasma_case": BLANK}
             Solver(self.params, build_config)
 
         indat_cls_mock.assert_called_once_with(filename="template/path/in.dat")
