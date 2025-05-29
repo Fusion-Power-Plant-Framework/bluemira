@@ -456,7 +456,7 @@ class TestInDatOneForOne:
             ],
             # TF coil inputs
             "n_tf_coils": 16,
-            "casthi": 0.06,
+            "dr_tf_plasma_case": 0.06,
             "dx_tf_side_case": 0.05,
             "ripmax": 0.6,
             "dhecoil": 0.01,
