@@ -92,7 +92,7 @@ class ProcessInputs:
     temp_fw_coolant_in: float | None = None
     temp_fw_coolant_out: float | None = None
     pres_fw_coolant: float | None = None
-    roughness: float | None = None
+    roughness_fw_channel: float | None = None
     len_fw_channel: float | None = None
     f_fw_peak: float | None = None
     pres_blkt_coolant: float | None = None
