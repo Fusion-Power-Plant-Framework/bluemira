@@ -147,7 +147,7 @@ class Plotter:
                 else:
                     self.ax = ax
                     self.f = self.ax.get_figure()
-                self.ax.set_xlabel(str_to_latex("psi_n"))
+                self.ax.set_xlabel(str_to_latex(r"\psi_n"))
                 self.ax.set_aspect("equal")
 
             case EqSubplots.XZ_COMPONENT_PSI:
@@ -164,12 +164,21 @@ class Plotter:
                 if ax is None:
                     self.f = plt.figure()
                     gs = GridSpec(nrows, ncols)
-                    self.ax = [plt.subplot(gs[i]) for i in range(nrows * ncols)]
+                    self.ax = []
+                    for col in range(ncols):
+                        i = col * nrows
+                        ax = [plt.subplot(gs[i])]
+                        [
+                            ax.append(plt.subplot(gs[j], sharex=ax[0]))
+                            for j in range(i + 1, i + nrows)
+                        ]
+                        [a.set_xticks([]) for a in ax[1:nrows]]
+                        self.ax = [*self.ax, *ax]
                 else:
                     self.ax = ax
                     self.f = self.ax[0].get_figure()
-                for c in range(1, ncols):
-                    self.ax[(nrows * ncols) - c].set_xlabel(str_to_latex("psi_n"))
+                for c in range(1, ncols + 1):
+                    self.ax[(nrows * ncols) - c].set_xlabel(str_to_latex(r"\psi_n"))
 
             case EqSubplots.VS_X:
                 if ax is None:
@@ -1639,7 +1648,7 @@ class CorePlotter(Plotter):
             ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
             for i, (k, v) in enumerate(results.to_dict(latex_unit=True).items()):
                 color = next(ccycle)
-                self.ax[i].plot(results.psi_n, v, label=f"${k}$", color=color)
+                self.ax[i].plot(results.psi_n, v, label=f"{k}", color=color)
                 self.ax[i].legend()
         else:
             for i, (k, v) in enumerate(results.to_dict(latex_unit=True).items()):
