@@ -26,6 +26,7 @@ dependencies:
   - pivy >= 0.6.10
   - h5py
   - openmc>=0.14.0=dagmc_*
+  - openblas
   - mpi4py
   - graphviz
   - h5py==3.13.0
