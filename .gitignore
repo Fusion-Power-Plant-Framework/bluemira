@@ -7,6 +7,9 @@ __pycache__/
 **.h5m
 **.vtk
 **.meta.json
+**.vti
+**.pkl
+**.vtu
 
 # C extensions
 *.so
