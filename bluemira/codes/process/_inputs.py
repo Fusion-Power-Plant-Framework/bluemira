@@ -134,7 +134,7 @@ class ProcessInputs:
     sig_tf_case_max: float | None = None
     sig_tf_wp_max: float | None = None
     bcritsc: float | None = None
-    casthi_fraction: float | None = None
+    f_dr_tf_plasma_case: float | None = None
     casths_fraction: float | None = None
     f_t_turn_tf: float | None = None
     t_turn_tf_max: float | None = None
