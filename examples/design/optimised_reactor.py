@@ -1,7 +1,12 @@
+"""Optimised Reactor Example"""
+
+import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
+import openmc
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -13,6 +18,7 @@ from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -22,15 +28,17 @@ from bluemira.equilibria.optimisation.constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
 )
-from bluemira.equilibria.optimisation.problem._tikhonov import (
+from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import (
+    distance_to,
     interpolate_bspline,
     make_polygon,
     offset_wire,
@@ -38,7 +46,8 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.materials.cache import establish_material_cache
+from bluemira.materials.cache import establish_material_cache, get_cached_material
+from bluemira.optimisation import Algorithm
 
 
 def lcfs_parameterisation(R_0, A):
@@ -192,8 +201,13 @@ class VVBuilder(Builder):
     param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
     params: OptimisedReactorParams
 
-    def __init__(self, params: OptimisedReactorParams, lcfs_wire: BluemiraWire):
-        super().__init__(params, {"material": {self.VV: "SS316-LN"}})
+    def __init__(
+        self,
+        params: OptimisedReactorParams,
+        lcfs_wire: BluemiraWire,
+        material_name: str,
+    ):
+        super().__init__(params, {"material": {self.VV: material_name}})
         self.lcfs_wire = lcfs_wire
 
     def build(self) -> Component:
@@ -212,16 +226,61 @@ class VVBuilder(Builder):
 
 class VV(ComponentManager):
     def xz_face(self) -> BluemiraFace:
-        return (
-            self.component()
-            .get_component("xz")
-            .get_component(VVBuilder.VV)
-            .shape.boundary[0]
+        return self.component().get_component("xz").get_component(VVBuilder.VV).shape
+
+
+class TFDesigner(Designer[OptimisedReactorParams]):
+    param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
+    params: OptimisedReactorParams
+
+    def __init__(self, params, vv_xz_face: BluemiraFace):
+        super().__init__(params, {})
+        self.vv_xz_face = vv_xz_face
+
+    def run(self) -> PrincetonD:
+        bluemira_print("Optimising TF coil centreline...")
+        p = PrincetonD({
+            "x1": {"value": self.vv_xz_face.bounding_box.x_min - 2},
+            "x2": {"value": self.vv_xz_face.bounding_box.x_max + 2},
+        })
+
+        distance_constraint = {
+            "f_constraint": self._constrain_distance,
+            "tolerance": np.array([1e-6]),
+        }
+        optimisation_result = optimise_geometry(
+            algorithm=Algorithm.SLSQP,
+            keep_history=True,
+            opt_conditions={"max_eval": 500, "ftol_rel": 1e-6},
+            geom=p,
+            f_objective=lambda g: g.create_shape().length,
+            ineq_constraints=[distance_constraint],
         )
 
+        geom = PrincetonD()
+        ax = plot_2d(self.vv_xz_face.boundary[0], show=False)
+        for i, (x, _) in enumerate(optimisation_result.history):
+            geom.variables.set_values_from_norm(x)
+            wire = geom.create_shape()
+            wire_options = {
+                "alpha": 0.5 + ((i + 1) / len(optimisation_result.history)) / 2,
+                "color": "red",
+                "linewidth": 0.1,
+            }
+            ax = plot_2d(
+                wire, options=PlotOptions(wire_options=wire_options), ax=ax, show=False
+            )
+        plot_2d(optimisation_result.geom.create_shape(), ax=ax, show=True)
+        return optimisation_result.geom
 
-class TFDesigner(Designer):
-    pass
+    def _constrain_distance(self, geom: PrincetonD) -> float:
+        vv_ob_wire = self.vv_xz_face.boundary[0]
+        min_dist = self.params.g_vv_tf.value + self.params.tk_tf.value
+        r = min_dist - distance_to(geom.create_shape(), vv_ob_wire)[0]
+        g = r
+        if r > 0:
+            g = math.exp(10 * r) - 1
+        return g
 
 
 class TFBuilder(Builder):
@@ -230,19 +289,18 @@ class TFBuilder(Builder):
     param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
     params: OptimisedReactorParams
 
-    def __init__(self, params: OptimisedReactorParams, vv_xz_face: BluemiraFace):
-        super().__init__(params, {"material": {self.TF: "Toroidal_Field_Coil_2015"}})
-        self.vv_xz_face = vv_xz_face
+    def __init__(
+        self,
+        params: OptimisedReactorParams,
+        centerline: PrincetonD,
+        material_name: str,
+    ):
+        super().__init__(params, {"material": {self.TF: material_name}})
+        self.centerline = centerline
 
     def build(self) -> Component:
-        p = PrincetonD({
-            "x1": {
-                "value": self.vv_xz_face.bounding_box.x_min - self.params.g_vv_tf.value
-            },
-            "x2": {
-                "value": self.vv_xz_face.bounding_box.x_max + self.params.g_vv_tf.value
-            },
-        })
+        p = self.centerline
+
         x2 = p.variables.x2
         dx = self.params.tk_tf.value / 2
         dy = self.params.tk_tf.value / 2
@@ -255,7 +313,9 @@ class TFBuilder(Builder):
             ],
             closed=True,
         )
+
         tf_cl = p.create_shape()
+
         tf_sweep = sweep_shape(profile, tf_cl)
         pc_xyz = PhysicalComponent(self.TF, tf_sweep, self.get_material(self.TF))
         apply_component_display_options(pc_xyz, color=BLUE_PALETTE["TF"][0])
@@ -277,7 +337,6 @@ class OptimisedReactor(Reactor):  # noqa: D101
         ])
 
     def build_plasma(self) -> Plasma:
-        # don't use, just show the solve.
         _rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
 
         lcfs_wire = lcfs_parameterisation(
@@ -285,17 +344,22 @@ class OptimisedReactor(Reactor):  # noqa: D101
         ).create_shape()
         self.plasma = Plasma(PlasmaBuilder(self.params, {}, lcfs_wire).build())
 
-    def build_vv(self) -> None:
+    def build_vv(self, mat_name: str) -> None:
         lcfs = self.plasma.lcfs()
-        self.vv = VV(VVBuilder(self.params, lcfs).build())
+        self.vv = VV(VVBuilder(self.params, lcfs, mat_name).build())
 
-    def build_tf_coils(self) -> None:
+    def build_tf_coils(self, mat_name: str) -> None:
         vv_face = self.vv.xz_face()
-        self.tf = ComponentManager(TFBuilder(self.params, vv_face).build())
+        centerline = TFDesigner(self.params, vv_face).run()
+        self.tf = ComponentManager(TFBuilder(self.params, centerline, mat_name).build())
 
 
 set_log_level("INFO")
 
+build = False
+show = False
+save = False
+run_openmc = True
 
 r = OptimisedReactor(
     OptimisedReactorParams(
@@ -313,25 +377,114 @@ r = OptimisedReactor(
     )
 )
 
-r.build_plasma()
-r.build_vv()
-r.build_tf_coils()
+if build:
+    r.build_plasma()
+    r.build_vv("SS316-LN")
+    # r.build_vv("Homogenised_HCPB_2015_v3_BZ")
+    r.build_tf_coils("Toroidal_Field_Coil_2015")
 
-major_rad = r.params.R_0.value
-aspect_ratio = r.params.A.value
-minor_rad = major_rad / aspect_ratio
-bluemira_print(
-    "Plasma parameters: "
-    f"Major radius: {major_rad:.2f} m, "
-    f"minor radius: {minor_rad:.2f} m, "
-    f"aspect ratio: {aspect_ratio:.2f}"
-)
+if show:
+    r.show_cad(construction_params={"n_sectors": 8})
 
-# exit()
-r.show_cad(construction_params={"n_sectors": 8})
-r.save_cad(
-    cad_format="dagmc",
-    construction_params={
-        "without_components": [r.plasma],
-    },
-)
+if save:
+    r.save_cad(
+        cad_format="dagmc",
+        construction_params={
+            "without_components": [r.plasma],
+        },
+    )
+
+if run_openmc:
+    par = Path(__file__).parent
+    omc_output_path = par / "omc"
+    dag_model_path = par / "OptimisedReactor.h5m"
+    meta_data_path = par / "OptimisedReactor.meta.json"
+
+    # load model materials
+    with open(meta_data_path) as meta_file:
+        bom = json.load(meta_file)["bom"]
+    openmc_mats = [
+        get_cached_material(mat_name).to_openmc_material() for mat_name in bom
+    ]
+
+    # load DAG model
+    dagmc_univ = openmc.DAGMCUniverse(
+        filename=dag_model_path.as_posix(),
+        auto_geom_ids=True,
+    ).bounded_universe()
+    geometry = openmc.Geometry(dagmc_univ)
+
+    # source and settings
+    major_radius = r.params.R_0.value * 100
+    aspect_ratio = r.params.A.value
+    minor_radius = major_radius / aspect_ratio
+    bluemira_print(
+        "Plasma parameters: "
+        f"Major radius: {major_radius:.1f} cm, "
+        f"minor radius: {minor_radius:.1f} cm, "
+        f"aspect ratio: {aspect_ratio:.2f}"
+    )
+
+    # based on https://github.com/fusion-energy/magnetic_fusion_openmc_dagmc_paramak_example
+    radius = openmc.stats.Discrete(
+        [major_radius - minor_radius, major_radius + minor_radius], [1, 1]
+    )
+    z_values = openmc.stats.Discrete([-minor_radius, minor_radius], [1, 1])
+    angle = openmc.stats.Uniform(a=0.0, b=math.radians(360))
+    my_source = openmc.IndependentSource(
+        space=openmc.stats.CylindricalIndependent(
+            r=radius, phi=angle, z=z_values, origin=(0.0, 0.0, 0.0)
+        ),
+        angle=openmc.stats.Isotropic(),
+        energy=openmc.stats.muir(e0=14080000.0, m_rat=5.0, kt=20000.0),
+    )
+
+    settings = openmc.Settings()
+    settings.batches = 10
+    settings.particles = 10000
+    settings.inactive = 0
+    settings.run_mode = "fixed source"
+    settings.source = my_source
+    settings.output = {"path": omc_output_path.as_posix()}
+
+    # TALLIES
+
+    # record the heat deposited in entire geometry
+    heating_cell_tally = openmc.Tally(name="heating")
+    heating_cell_tally.scores = ["heating"]
+
+    # record the total TBR
+    tbr_cell_tally = openmc.Tally(name="tbr")
+    tbr_cell_tally.scores = ["(n,Xt)"]
+
+    # mesh that covers the geometry
+    mesh = openmc.RegularMesh.from_domain(geometry, dimension=(100, 100, 100))
+    mesh_filter = openmc.MeshFilter(mesh)
+
+    # mesh tally using the previously created mesh and records heating on the mesh
+    heating_mesh_tally = openmc.Tally(name="heating_on_mesh")
+    heating_mesh_tally.filters = [mesh_filter]
+    heating_mesh_tally.scores = ["heating"]
+
+    # mesh tally using the previously created mesh and records TBR on the mesh
+    tbr_mesh_tally = openmc.Tally(name="tbr_on_mesh")
+    tbr_mesh_tally.filters = [mesh_filter]
+    tbr_mesh_tally.scores = ["(n,Xt)"]
+
+    tallies = openmc.Tallies([
+        tbr_cell_tally,
+        tbr_mesh_tally,
+        heating_cell_tally,
+        heating_mesh_tally,
+    ])
+
+    model = openmc.Model(
+        materials=openmc_mats,
+        geometry=geometry,
+        tallies=tallies,
+        settings=settings,
+    )
+    model.export_to_model_xml()
+
+    sp_filename = model.run()
+    print(f"OpenMC completed, results saved to {sp_filename}")
