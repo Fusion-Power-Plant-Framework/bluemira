@@ -25,7 +25,7 @@ dependencies:
   - freecad=1.0
   - pivy >= 0.6.10
   - h5py
-  - openmc=0.15.0=dagmc_*
+  - openmc>=0.14.0=dagmc_*
   - mpi4py
   - graphviz
   - h5py==3.13.0
