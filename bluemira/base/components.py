@@ -538,7 +538,10 @@ class MagneticComponent(PhysicalComponent):
 
 
 def get_properties_from_components(
-    comps: ComponentT | Iterable[ComponentT], properties: str | Sequence[str]
+    comps: ComponentT | Iterable[ComponentT],
+    properties: str | Sequence[str],
+    *,
+    extract: bool = True,
 ) -> tuple[list[Any], ...] | list[Any] | Any:
     """
     Get properties from Components
@@ -572,10 +575,11 @@ def get_properties_from_components(
         for i, prop in enumerate(props):
             property_lists[i].extend(prop)
 
-    if len(property_lists[0]) == 1:
-        property_lists = [p[0] for p in property_lists]
+    if extract:
+        if len(property_lists[0]) == 1:
+            property_lists = [p[0] for p in property_lists]
 
-    if len(property_lists) == 1:
-        property_lists = property_lists[0]
+        if len(property_lists) == 1:
+            property_lists = property_lists[0]
 
     return property_lists

@@ -372,7 +372,7 @@ def save_components_cad(
         CAD file format
     """
     shapes, names, mats = get_properties_from_components(
-        components, ("shape", "name", "material")
+        components, ("shape", "name", "material"), extract=False
     )
 
     if cad_format == "dagmc":
