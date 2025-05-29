@@ -2284,7 +2284,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "casthi",
+        "name": "dr_tf_plasma_case",
         "send": true,
         "recv": false,
         "unit": "m"

@@ -2228,7 +2228,7 @@
     "var_mod": "TF coils",
     "scan01": 0.72861
   },
-  "casthi": {
+  "dr_tf_plasma_case": {
     "var_mod": "TF coils",
     "scan01": 0.06
   },
