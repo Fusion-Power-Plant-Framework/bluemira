@@ -934,8 +934,7 @@ def tabulate_values_from_multiple_frames(
         column, record = frame.tabulation_data(
             ["value"], floatfmt=floatfmt, value_label=next(names)
         )
-
-        columns.extend([*column, *([""] * (len(records[0]) - len(column)))])
+        columns.extend([*column, *([""] * (len(record[0]) - len(column)))])
         for r_ind in range(len(records)):
             records[r_ind].extend(record[r_ind])
 
