@@ -212,7 +212,7 @@ p_hcd_injected_max  = 50. * maximum allowable value for injected power (MW) (`co
 
 anginc   = 0.175 * angle of incidence of field line on plate (rad)
 dz_divertor   = 0.621 * divertor structure vertical thickness (m)
-pflux_div_heat_loadfp_fusion_total_max_mw = 10 * heat load limit (MW/m2)
+pflux_div_heat_load_max_mw = 10 * heat load limit (MW/m2)
 prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `ipedestal=0`; = nesep/dene if `ipedestal>=1`)
 
 *------------------Error Handling------------------*
