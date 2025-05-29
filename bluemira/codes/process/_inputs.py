@@ -219,7 +219,7 @@ class ProcessInputs:
     i_tf_inside_cs: int | None = None
     dr_tf_inboard: float | None = None
     dr_tf_shld_gap: float | None = None
-    casthi: float | None = None
+    dr_tf_plasma_case: float | None = None
     dx_tf_side_case: float | None = None
     tmargmin: float | None = None
     tmargmin_cs: float | None = None
