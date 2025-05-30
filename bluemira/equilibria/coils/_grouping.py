@@ -23,7 +23,11 @@ from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin, CoilSetFieldsMixin
-from bluemira.equilibria.coils._tools import _get_symmetric_coils, get_max_current
+from bluemira.equilibria.coils._tools import (
+    _get_symmetric_coils,
+    check_coilset_symmetric,
+    get_max_current,
+)
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
@@ -65,9 +69,15 @@ def symmetrise_coilset(
     EquilibriaError
         Superposition of coils or unrecognised type
     """
-    coilset = deepcopy(coilset)
+    if not check_coilset_symmetric(coilset):
+        bluemira_warn(
+            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can"
+            " result in undesirable behaviour."
+        )
 
+    coilset = deepcopy(coilset)
     _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol or 1e-5)
+
     new_coils = []
     coils = coilset._coils
     for count, index in zip(counts, indexes, strict=True):
@@ -949,6 +959,11 @@ class SymmetricCircuit(Circuit):
     ):
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
+            if "U" in coils[0].name:
+                coils[1].name = coils[0].name.replace("U", "L")
+            else:
+                coils[1].name = coils[0].name + "L"
+                coils[0].name += "U"
         if len(coils) != 2:  # noqa: PLR2004
             raise EquilibriaError(
                 f"Wrong number of coils to create a {type(self).__name__}"
