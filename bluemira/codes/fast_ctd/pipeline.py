@@ -12,7 +12,12 @@ from pathlib import Path
 from subprocess import CalledProcessError  # noqa: S404
 from typing import Literal
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_critical,
+    bluemira_debug,
+    bluemira_print,
+    bluemira_warn,
+)
 from bluemira.codes.fast_ctd._guard import fast_ctd_guard
 
 with contextlib.suppress(ImportError):
@@ -42,15 +47,15 @@ def _run_check_or_make_watertight(
         )
 
     bluemira_print(f"Running DAGMC `{cmd}`")
-    comp_proc = (
+    # will raise CalledProcessError if the command fails
+    sub_proc_res = (
         check_watertight(dagmc_file)
         if check_or_make == "check"
         else make_watertight(dagmc_file, output_h5m_file)
     )
-    percentages = decode_tightness_checks(comp_proc.stdout)
-    non_zero = percentages is None or any(p > 0 for p in percentages)
 
-    if non_zero:
+    percentages = decode_tightness_checks(sub_proc_res.stdout)
+    if not percentages or any(p > 0 for p in percentages):
         stout_log_dump_path = dagmc_file.with_name(
             f"{output_h5m_file.stem}-{cmd}.stdout.txt",
         )
@@ -58,21 +63,19 @@ def _run_check_or_make_watertight(
             f"{output_h5m_file.stem}-{cmd}.stderr.txt",
         )
         with stout_log_dump_path.open("w") as log_dump:
-            log_dump.write(comp_proc.stdout)
+            log_dump.write(sub_proc_res.stdout)
         with sterr_log_dump_path.open("w") as log_dump:
-            log_dump.write(comp_proc.stderr)
+            log_dump.write(sub_proc_res.stderr)
 
         bluemira_warn(
-            f"`{cmd}` finished successfully, "
+            f"`{cmd}` completed successfully, "
             "but the model is not watertight or the output could not be parsed. "
             "Check log files for further details.:\n"
             f"stout_log: {stout_log_dump_path}\n"
             f"sterr_log: {sterr_log_dump_path}\n",
         )
     else:
-        bluemira_print(f"`{cmd}` finished successfully, showing no leaky volumes.")
-
-    return True
+        bluemira_print(f"`{cmd}` completed successfully, showing no leaky volumes.")
 
 
 @fast_ctd_guard
@@ -195,36 +198,19 @@ def step_to_dagmc_pipeline(
         enable_logging=enable_ext_debug_logging,
     )
 
-    mwt_did_run = False
-    if run_make_watertight:
-        try:
-            mwt_did_run = _run_check_or_make_watertight(
-                intm_dagmc_file, output_dagmc_model_path, check_or_make="make"
-            )
-        except CalledProcessError:
-            bluemira_warn(
-                "make_watertight failed to run, "
-                f"dagmc model saved to {intm_dagmc_file}"
-                "run `check_watertight`"
-                "manually to make sure the model is watertight "
-                "and use the -t to perform checks with tighter bounds"
-            )
-            raise
-    else:
-        try:
-            _run_check_or_make_watertight(
-                output_dagmc_model_path,
-                output_dagmc_model_path,  # is ignored
-                check_or_make="check",
-            )
-        except CalledProcessError:
-            bluemira_warn(
-                "check_watertight failed to run, "
-                f"run `check_watertight {output_dagmc_model_path}`"
-                "manually to make sure the model is watertight "
-                "and use the -t to perform checks with tighter bounds"
-            )
-            raise
+    try:
+        _run_check_or_make_watertight(
+            intm_dagmc_file,
+            output_dagmc_model_path,
+            check_or_make="make" if run_make_watertight else "check",
+        )
+    except CalledProcessError as e:
+        bluemira_critical(
+            f"Process failed to run, dagmc model saved to {intm_dagmc_file}"
+        )
+        bluemira_critical(f"stdout:\n{e.stdout}")
+        bluemira_critical(f"stderr:\n{e.stderr}")
+        raise
 
     if save_vtk_model:
         bluemira_print("Running `dagmc_to_vtk`, converting model to VTK")
@@ -240,8 +226,8 @@ def step_to_dagmc_pipeline(
             intm_merged_brep_file,
             intm_dagmc_file,
         ]:
-            # if make_watertight not successfully run, do not delete the file
-            if not mwt_did_run and file == intm_dagmc_file:
+            # if make_watertight not run, do not delete the file
+            if not run_make_watertight and file == intm_dagmc_file:
                 continue
 
             bluemira_debug(f"Cleaning up: {file}")
