@@ -94,6 +94,7 @@ numpy==1.26.4
     #   nlopt
     #   numba
     #   numexpr
+    #   numpydantic
     #   pandas
     #   periodictable
     #   pyvista
@@ -101,6 +102,8 @@ numpy==1.26.4
     #   scipy
     #   seaborn
     #   tables
+numpydantic==1.6.9
+    # via bluemira (pyproject.toml)
 packaging==24.2
     # via
     #   matplotlib
@@ -130,7 +133,9 @@ py-cpuinfo==9.0.0
 pyclipper==1.3.0.post6
     # via bluemira (pyproject.toml)
 pydantic==2.11.4
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   numpydantic
 pydantic-core==2.33.2
     # via pydantic
 pygments==2.19.1
@@ -180,6 +185,7 @@ typing-extensions==4.13.1
     # via
     #   flexcache
     #   flexparser
+    #   numpydantic
     #   pint
     #   pydantic
     #   pydantic-core
