@@ -1,5 +1,11 @@
 {
   "Power Cycle": {
+    "durations": {
+      "cs_recharge_time": 10,
+      "pumpdown_time": { "value": 10, "unit": "s" },
+      "ramp_up_time": 10,
+      "ramp_down_time": 10
+    },
     "scenario": {
       "name": "std_scenario",
       "description": "Standard scenario",
