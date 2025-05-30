@@ -547,7 +547,7 @@ class EqAnalysis:
             raise BluemiraError(
                 "This function can only be used for Free Boundary Equilbria."
             )
-        core_results, ax = eq.analyse_core(ax=ax)
+        core_results, ax = eq.analyse_core(plot=True, ax=ax)
         plt.suptitle(eq.label)
         return core_results, ax
 
@@ -1163,6 +1163,7 @@ class MultiEqAnalysis:
         core_results = self.make_eq_dataclass_list(analyse_plasma_core, n_points)
 
         if ax is None:
+            _ = plt.figure()
             r, c = int((len(core_results[0].__dict__) - 1) / 2) + 1, 2
             gs = GridSpec(r, c)
             ax = [plt.subplot(gs[i]) for i in range(r * c)]

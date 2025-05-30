@@ -302,6 +302,7 @@ table = multi_analysis.physics_info_table()
 # %%
 # Plot physics parameters for the plasma core
 # Note that a list with the results is also output
+
 core_results, ax = multi_analysis.plot_core_physics()
 
 # %%
