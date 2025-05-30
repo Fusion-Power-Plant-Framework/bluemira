@@ -180,7 +180,7 @@ def target_temperature(
     r_u:
         Upstream location radial coordinate [m]
     r_tar:
-        stike point radial coordinate [m]
+        strike point radial coordinate [m]
     lambda_q_near:
         Power decay length in the near SOL at the midplane [m]
     b_tot_tar:
@@ -214,7 +214,7 @@ def target_temperature(
     m_i_kg = raw_uc(D_MOLAR_MASS, "amu", "kg")
 
     # converting upstream temperature
-    # upstream electron density - no fifference hfs/lfs?
+    # upstream electron density - no difference hfs/lfs?
     # Numerator and denominator of the upstream forcing function
     # forcing function
     f_ev = (m_i_kg * 4 * (q_u**2)) / (
@@ -344,7 +344,7 @@ def electron_density_and_temperature_sol_decay(
     n_factor_det: float | None = None,
 ) -> tuple[np.ndarray, ...]:
     """
-    Generic radial esponential decay to be applied from a generic starting point
+    Generic radial exponential decay to be applied from a generic starting point
     at the separatrix (not only at the mid-plane).
     The vertical location is dictated by the choice of the flux expansion f_exp.
     By default f_exp = 1, meaning mid-plane.
@@ -442,7 +442,7 @@ def gaussian_decay(
     # setting values on the horizontal axis
     x = np.linspace(no_points, 0, no_points)
 
-    # centering the gaussian on its highest value
+    # centring the gaussian on its highest value
     mu = max(x)
 
     # setting sigma to be consistent with min_value
@@ -535,7 +535,7 @@ def ion_front_distance(
     n_r:
         density at the recycling region entrance [1/m^3]
     rec_ext:
-        recycling region extention (along the field line)
+        recycling region extension (along the field line)
         from the target [m]
 
     Returns
@@ -858,7 +858,7 @@ def grid_interpolator(
     x: np.ndarray, z: np.ndarray, field_grid: np.ndarray
 ) -> Callable[[np.ndarray], np.ndarray]:
     """
-    Interpolated field function obtainded for a given grid.
+    Interpolated field function obtained for a given grid.
     Needed: length(xx) = m, length(zz) = n, field_grid.shape = n x m.
 
     Parameters
@@ -946,7 +946,7 @@ def filtering_in_or_out(
     domain_z:
         list of x coordinates defining the domain
     include_points:
-        wheter the points inside or outside the domain must be excluded
+        whether the points inside or outside the domain must be excluded
 
     Returns
     -------

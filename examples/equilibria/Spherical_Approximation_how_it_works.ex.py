@@ -82,9 +82,9 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 # If you have coils in this region then we need to specify a list of the
 # coil names that are outside of the radial limit
 # (this is done automatically in the spherical_harmonic_approximation class).
-# N.N.B.: We use the LCFS thoughout this example, however,
+# N.N.B.: We use the LCFS throughout this example, however,
 # in the spherical_harmonic_approximation class 'psi_norm' can be used to
-# select a different closed flux surface that contrains the core plasma,
+# select a different closed flux surface that constrains the core plasma,
 # see spherical_harmonic_approximation_basic_use.ex.py.
 
 # %%

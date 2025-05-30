@@ -109,7 +109,7 @@ class MHDState:
     @property
     def label(self) -> str:
         """
-        A name used to idenify the MHD state.
+        A name used to identify the MHD state.
         """
         return self._label
 
@@ -966,7 +966,7 @@ class Equilibrium(CoilSetMHDState):
     filename:
         The filename of the Equilibrium. Default = None (no file)
     label:
-        The name used to identify this equilibirium
+        The name used to identify this equilibrium
     """
 
     def __init__(
@@ -1033,7 +1033,7 @@ class Equilibrium(CoilSetMHDState):
         of the (non-linear) Grad-Shafranov equation, values of psi may differ
         from those stored in eqdsk.
 
-        NOTE: Need to solve again with some profiles in order to refind...
+        NOTE: Need to solve again with some profiles in order to re-find...
 
         Parameters
         ----------
@@ -1407,7 +1407,7 @@ class Equilibrium(CoilSetMHDState):
             self._li_iter += 1
             return abs(self._li - li)
 
-        try:  # Kein physischer Grund dafür, ist aber nützlich
+        try:  # There is no physical reason for it, but it is useful.
             bounds = [[-1, 3] for _ in range(len(self.profiles.shape.coeffs))]
             res = minimize(
                 minimise_dli,
