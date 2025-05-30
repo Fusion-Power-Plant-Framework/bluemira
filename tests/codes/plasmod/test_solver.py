@@ -294,6 +294,11 @@ class TestPlasmodTeardown:
 
 class TestPlasmodSolver:
     def setup_method(self):
+        self._run_subprocess_patch = mock.patch(
+            RUN_SUBPROCESS_REF,
+            wraps=self._plasmod_run_subprocess_fake,
+        )
+        self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)
         self.build_config = {}
 
@@ -301,16 +306,8 @@ class TestPlasmodSolver:
             with tempfile.NamedTemporaryFile("w") as tf:
                 self.build_config[key] = tf.name
 
-    @classmethod
-    def setup_class(cls):
-        cls._run_subprocess_patch = mock.patch(
-            RUN_SUBPROCESS_REF,
-            wraps=cls._plasmod_run_subprocess_fake,
-        )
-        cls.run_subprocess_mock = cls._run_subprocess_patch.start()
-
     def teardown_method(self):
-        self.run_subprocess_mock.reset_mock()
+        self._run_subprocess_patch.stop()
 
     @pytest.mark.parametrize(
         ("key", "default"),
