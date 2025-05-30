@@ -88,10 +88,6 @@ class TestEqAnalysis:
             diag_ops=self.diag_ops_2,
         )
 
-        # Target for legflux plotting.
-        target = "lower_outer"
-        target_coords = Coordinates({"x": [10, 11], "z": [-7.5, -7.5]})
-
         plot_1 = eq_analysis_1.plot()
         plot_1b = eq_analysis_2.plot()
         plot_2 = eq_analysis_1.plot_field()
@@ -103,6 +99,47 @@ class TestEqAnalysis:
         plot_5 = eq_analysis_1.plot_eq_core_mag_axis()
         plot_6 = eq_analysis_1.plot_compare_profiles()
         plot_6b = eq_analysis_2.plot_compare_profiles()
+
+        assert isinstance(plot_1, Axes)
+        assert isinstance(plot_2[0], Axes)
+        assert len(plot_2) == 2
+        assert isinstance(plot_3, Axes)
+        assert isinstance(plot_4[0], Axes)
+        assert len(plot_4) == 2
+        assert isinstance(plot_5[0], Axes)
+        assert isinstance(plot_1b, Axes)
+        assert isinstance(plot_2b[0], Axes)
+        assert len(plot_2b) == 2
+        assert isinstance(plot_3b, Axes)
+        assert isinstance(plot_4b[0], Axes)
+        assert len(plot_4b) == 2
+        assert isinstance(plot_6[0, 0], Axes)
+        assert isinstance(plot_6b[0, 0], Axes)
+
+    def test_plotting_2(self):
+        # Compare free DN to free SN
+        eq_analysis_1 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_free,
+            diag_ops=self.diag_ops_1,
+        )
+        # Compare free DN to fixed SN
+        eq_analysis_2 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_fixed,
+            diag_ops=self.diag_ops_1,
+        )
+        # Compare free DN to free SN, with psi components splitting for plots
+        eq_analysis_3 = EqAnalysis(
+            input_eq=self.double_demoish_eq,
+            reference_eq=self.ref_free,
+            diag_ops=self.diag_ops_2,
+        )
+
+        # Target for legflux plotting.
+        target = "lower_outer"
+        target_coords = Coordinates({"x": [10, 11], "z": [-7.5, -7.5]})
+
         plot_7_res, plot_7_ax = eq_analysis_1.plot_eq_core_analysis()
         plot_8 = eq_analysis_1.physics_info_table()
         plot_9 = eq_analysis_1.plot_compare_separatrix()
@@ -114,14 +151,6 @@ class TestEqAnalysis:
             target, target_coords
         )
 
-        assert isinstance(plot_1, Axes)
-        assert isinstance(plot_2[0], Axes)
-        assert len(plot_2) == 2
-        assert isinstance(plot_3, Axes)
-        assert isinstance(plot_4[0], Axes)
-        assert len(plot_4) == 2
-        assert isinstance(plot_5[0], Axes)
-        assert isinstance(plot_6[0, 0], Axes)
         assert isinstance(plot_7_ax[0], Axes)
         assert isinstance(plot_7_res, CoreResults)
         assert len(plot_7_ax) == 18
@@ -132,13 +161,6 @@ class TestEqAnalysis:
         assert isinstance(plot_12_1, Axes)
         assert isinstance(plot_12_2, list)
         assert isinstance(plot_12_3[0], Coordinates)
-        assert isinstance(plot_1b, Axes)
-        assert isinstance(plot_2b[0], Axes)
-        assert len(plot_2b) == 2
-        assert isinstance(plot_3b, Axes)
-        assert isinstance(plot_4b[0], Axes)
-        assert len(plot_4b) == 2
-        assert isinstance(plot_6b[0, 0], Axes)
         assert isinstance(plot_9b, Axes)
         assert plot_10b is None
 
