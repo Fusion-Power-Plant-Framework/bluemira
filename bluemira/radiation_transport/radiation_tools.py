@@ -1329,7 +1329,7 @@ class FirstWallRadiationSolver:
         verbose: bool = False,
     ) -> DetectedRadiation:
         """
-        Solve first wall radiation problem
+        Solve first wall radiation problem.
 
         Parameters
         ----------
@@ -1345,10 +1345,10 @@ class FirstWallRadiationSolver:
         plot:
             Whether or not to plot and show the radiation on the wall [MW/m^2].
         verbose:
-            Whether or not to print and plot additional information:
-                - plot wall detectors and their normal vectors
-                - print Raysect information i.e., incident power,
-                incident power error, time for render and rays per second.
+            Whether or not to print and plot additional information, i.e.,
+            plot wall detectors and their normal vectors,
+            and print Raysect information (incident power, incident power error,
+            time for render and rays per second).
 
         Returns
         -------
