@@ -37,6 +37,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.coils import Coil, CoilSet
 
 # %%
@@ -44,7 +45,9 @@ from bluemira.equilibria.coils import Coil, CoilSet
 
 def read_coil_json(name):
     """Read coil info and return data."""
-    file_path = Path("../../tests/equilibria/test_data/coilsets/", name)
+    root_path = get_bluemira_root()
+
+    file_path = Path(root_path, "tests/equilibria/test_data/coilsets/", name)
     with open(file_path) as f:
         return json.load(f)
 
