@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# DAGMC related files
+**.h5m
+**.vtk
+**.meta.json
+**.vti
+**.pkl
+**.vtu
+
 # C extensions
 *.so
 

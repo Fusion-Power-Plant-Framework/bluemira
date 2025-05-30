@@ -12,5 +12,5 @@ from bluemira.codes.utilities import code_guard
 
 occ_guard = code_guard(
     "OCC",
-    "OCC is not available. Run `conda install pythonocc-core` to use this function.",
+    "Run `conda install pythonocc-core` to use this function.",
 )

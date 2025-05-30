@@ -46,7 +46,10 @@ class TestImprintSolids:
         box_c.translate([-translate_x, -translate_y, 1])
 
         pre_imps = [box_a, box_b, box_c]
-        imp_result = python_occ.imprint_solids(pre_imps, use_cgal=use_cgal)
+        pre_imps_labels = ["box_a", "box_b", "box_c"]
+        imp_result = python_occ.imprint_solids(
+            pre_imps, labels=pre_imps_labels, use_cgal=use_cgal
+        )
 
         imps = imp_result.imprintables
         imp_solids = imp_result.solids
@@ -66,7 +69,9 @@ class TestImprintSolids:
                 "bluemira.geometry.overlap_checking.cgal.cgal_available",
                 return_value=False,
             ):
-                imp_result = python_occ.imprint_solids(pre_imps, use_cgal=use_cgal)
+                imp_result = python_occ.imprint_solids(
+                    pre_imps, labels=pre_imps_labels, use_cgal=use_cgal
+                )
 
         assert imp_result.total_imprints == t_imprints
         assert len(imp_solids) == 3

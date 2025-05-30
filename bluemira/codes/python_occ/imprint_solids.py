@@ -18,9 +18,12 @@ from bluemira.codes.python_occ._guard import occ_guard
 from bluemira.codes.python_occ.imprintable_solid import ImprintableSolid
 from bluemira.geometry.overlap_checking import find_approx_overlapping_pairs
 from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.tools import make_compound
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Collection
+
+    from bluemira.geometry.compound import BluemiraCompound
 
 
 try:
@@ -164,6 +167,12 @@ class ImprintResult:
         return [imp.to_bluemira_solid() for imp in self._imprintables]
 
     @property
+    def as_compound(self) -> BluemiraCompound:
+        """Returns the imprinted BluemiraCompound."""
+        # will throw if only one solid
+        return make_compound(self.solids)
+
+    @property
     def occ_solids(self) -> list[TopoDS_Solid]:
         """Returns the imprinted TopoDS_Solids."""
         return [imp.occ_solid for imp in self._imprintables]
@@ -176,8 +185,8 @@ class ImprintResult:
 
 @occ_guard
 def imprint_solids(
-    solids: Iterable[BluemiraSolid],
-    labels: Iterable[str] | None = None,
+    solids: Collection[BluemiraSolid],
+    labels: Collection[str] | str,
     *,
     use_cgal=True,
 ) -> ImprintResult:
@@ -208,8 +217,9 @@ def imprint_solids(
     TypeError
         If the solids are not of type BluemiraSolid.
     """
-    if labels is None or len(labels) == 0:
-        labels = [sld.label for sld in solids]
+    if isinstance(labels, str):
+        # if a single label is passed, make it a list
+        labels = [labels] * len(solids)
     if len(labels) != len(solids):
         raise ValueError(
             "Labels must be the same length as the solids iterable: "
@@ -219,10 +229,12 @@ def imprint_solids(
         if not isinstance(sld, BluemiraSolid):
             raise TypeError(f"solids must be BluemiraSolid only - {lbl} is {type(sld)}")
 
+    bluemira_print(f"Imprinting {set(labels)}")
+
     pairs = find_approx_overlapping_pairs(solids, use_cgal=use_cgal)
     imprintables = [
         ImprintableSolid.from_bluemira_solid(lbl, sld)
-        for sld, lbl in zip(solids, labels, strict=False)
+        for sld, lbl in zip(solids, labels, strict=True)
     ]
 
     # pairs and imprintables have the same ordering

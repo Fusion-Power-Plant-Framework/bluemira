@@ -18,6 +18,7 @@ from bluemira.base.components import (
     Component,
 )
 from bluemira.base.error import ComponentError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
     CADConstructionType,
     ConstructionParamValues,
@@ -272,8 +273,8 @@ class ComponentManager(BaseManager):
 
         save_components_cad(
             comp,
-            filename=Path(directory, filename).as_posix(),
-            cad_format=cad_format,
+            Path(directory, filename),
+            cad_format,
             **kwargs,
         )
 
@@ -555,13 +556,25 @@ class Reactor(BaseManager):
 
         filename = filename or self.name
 
+        cpvs = self._init_construction_param_values(construction_params, kwargs)
+
+        if cad_format == "dagmc":
+            if cpvs.disable_composite_grouping:
+                bluemira_warn(
+                    "DAGMC export requires composite grouping, setting "
+                    "`disable_composite_grouping` ot False."
+                )
+                cpvs.disable_composite_grouping = False
+            if not cpvs.group_by_materials:
+                bluemira_warn(
+                    "DAGMC export requires grouping by materials, setting "
+                    "`group_by_materials` to True."
+                )
+                cpvs.group_by_materials = True
+
         save_components_cad(
-            self._build_component_tree(
-                dim,
-                self._init_construction_param_values(construction_params, kwargs),
-                for_save=True,
-            ),
-            Path(directory, filename).as_posix(),
+            self._build_component_tree(dim, cpvs, for_save=True),
+            Path(directory, filename),
             cad_format,
             **kwargs,
         )

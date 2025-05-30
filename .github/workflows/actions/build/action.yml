@@ -70,7 +70,12 @@ runs:
 
     - name: Install bluemira
       shell: bash -l {0}
-      run: pip install -U -e .
+      run: |
+        if [[ "${{ inputs.python-version }}" == "3.10" ]]; then
+          pip install -U -e .
+        else
+          pip install -U -e '.[dagmc]'
+        fi
 
     - name: Freeze conda env
       if: ${{ inputs.with-artifact == 'true' }}

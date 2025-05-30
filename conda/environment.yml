@@ -20,11 +20,12 @@ variables:
 
 dependencies:
   - python >=3.10,<3.13
+  - cmake
   - fenics-dolfinx=0.9.0
   - freecad=1.0
   - pivy >= 0.6.10
   - h5py
-  - openmc>=0.14.0
+  - openmc>=0.14.0=dagmc_*
   - mpi4py
   - graphviz
   - h5py==3.13.0
@@ -37,4 +38,4 @@ dependencies:
   - pip:
       - -r ../requirements/uv/all.txt
       - -r ../requirements/conda.txt
-      - -e ../[openmc,dagmc]
+      - -e ../[openmc]

@@ -38,9 +38,11 @@ from bluemira.geometry.tools import (
     serialise_shape,
 )
 from bluemira.materials.material import Material, Void
+from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+    from pathlib import Path
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
@@ -141,7 +143,7 @@ class ConstructionParams(TypedDict):
     disable_composite_grouping: NotRequired[bool]
 
 
-@dataclass(frozen=True)
+@dataclass
 class ConstructionParamValues:
     """
     Parameters for the construction of CAD.
@@ -353,7 +355,7 @@ def copy_and_filter_component(
 
 def save_components_cad(
     components: ComponentT | Iterable[ComponentT],
-    filename: str,
+    filename: Path,
     cad_format: str | cadapi.CADFileType = "stp",
     **kwargs,
 ):
@@ -365,12 +367,31 @@ def save_components_cad(
     components:
         Components to save
     filename:
-        The filename of the
+        The full filename path to save the CAD to
     cad_format:
         CAD file format
     """
-    shapes, names = get_properties_from_components(components, ("shape", "name"))
-    save_cad(shapes, filename, cad_format, names, **kwargs)
+    shapes, names, mats = get_properties_from_components(
+        components, ("shape", "name", "material"), extract=False
+    )
+
+    if cad_format == "dagmc":
+        save_cad_to_dagmc(
+            shapes,
+            names,
+            filename,
+            comp_mat_mapping={
+                n: "undef_material" if m is None else m.name
+                for n, m in zip(
+                    names,
+                    mats,
+                    strict=False,
+                )
+            },
+            converter_config=kwargs.get("converter_config"),
+        )
+    else:
+        save_cad(shapes, filename, cad_format, names, **kwargs)
 
 
 def show_components_cad(
@@ -482,7 +503,7 @@ def _group_physical_components_by_material(
     return mat_to_comps_map
 
 
-def _build_compounds_from_map(
+def _build_compounds_from_mat_map(
     mat_to_comps_map: dict[str, list[PhysicalComponent]],
     manager_name: str,
 ) -> list[PhysicalComponent]:
@@ -506,6 +527,7 @@ def _build_compounds_from_map(
             name=f"{manager_name}_mat_{mat_name}" if mat_name else manager_name,
             components=comps,
             # all comps in the list have the same material
+            # (when not grouped by material correctly, in the map)
             material=comps[0].material,
         )
         for mat_name, comps in mat_to_comps_map.items()
@@ -517,15 +539,14 @@ def build_comp_manager_save_xyz_cad_tree(
     construction_params: ConstructionParamValues,
 ) -> Component:
     """
-    Build the CAD of the component manager's components
-    and save the CAD to a file.
+    Build the CAD of the component manager's components.
 
     Parameters
     ----------
     comp_manager:
         Component manager
-    component_filter:
-        Filter to apply to the components
+    construction_params:
+        Construction parameters to use for CAD building.
 
     Returns
     -------
@@ -547,9 +568,17 @@ def build_comp_manager_save_xyz_cad_tree(
     if construction_params.group_by_materials:
         mat_to_comps_map = _group_physical_components_by_material(constructed_phy_comps)
     else:
+        # note: by assigning the empty string as the key, we are
+        # grouping all phy. components together. They could
+        # have different materials, which will get lost.
+        # Only the first material will be used in _build_compounds_from_mat_map.
+        # This option makes the CAD output cleaner
+        # (and material information is not saved in the CAD file)
+        # so it is not a problem (usually), except for code that operates
+        # on the shapes downstream (such as DAGMC exporting).
         mat_to_comps_map = {"": constructed_phy_comps}
 
-    return_comp.children = _build_compounds_from_map(
+    return_comp.children = _build_compounds_from_mat_map(
         mat_to_comps_map,
         manager_name,
     )
