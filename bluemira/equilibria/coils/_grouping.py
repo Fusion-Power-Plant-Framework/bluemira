@@ -68,7 +68,17 @@ def symmetrise_coilset(
     EquilibriaError
         Superposition of coils or unrecognised type
     """
+<<<<<<< HEAD
+=======
+    if not check_coilset_symmetric(coilset):
+        bluemira_warn(
+            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can"
+            " result in undesirable behaviour."
+        )
+
+>>>>>>> f006131a (Modify symmetric circuits loop and add coil naming)
     coilset = deepcopy(coilset)
+    sym_stack, sym_inds = _get_symmetric_coils(coilset)
 
     _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol or 1e-5)
     new_coils = []
@@ -87,6 +97,10 @@ def symmetrise_coilset(
                 raise EquilibriaError(f"Unrecognised class {type(coil).__name__}")
         else:
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+=======
+    counts = np.array(sym_stack, dtype=object).T[1]
+    if np.array(counts).any() > 2:  # noqa: PLR2004
+        raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
     return CoilSet(*new_coils, control_names=coilset.control)
 
@@ -961,6 +975,11 @@ class SymmetricCircuit(Circuit):
     ):
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
+            if "U" in coils[0].name:
+                coils[1].name = coils[0].name.replace("U", "L")
+            else:
+                coils[1].name = coils[0].name + "L"
+                coils[0].name += "U"
         if len(coils) != 2:  # noqa: PLR2004
             raise EquilibriaError(
                 f"Wrong number of coils to create a {type(self).__name__}"
