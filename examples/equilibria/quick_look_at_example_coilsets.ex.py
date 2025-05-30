@@ -21,10 +21,15 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Notebook displaying example coilset positions for different devices.
-To be used in examples and tests.
+Notebook displaying example coilsets for different devices.
 """
 
+# %% [markdown]
+#
+# # Examples of Device Coilsets
+#
+# Notebook displaying example coilset positions and sizes for different devices.
+# To be used in examples and tests.
 # %%
 
 import json
