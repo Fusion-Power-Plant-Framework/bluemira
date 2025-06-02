@@ -756,7 +756,7 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
         return pint.Unit(modified_unit)
 
     new_unit = _non_comutative_unit_conversion(
-        dict(modified_unit.dimensionality), unit_str.split("/")[0], dpa, fpy
+        dict(modified_unit.dimensionality), unit_str.split("/", 1)[0], dpa, fpy
     )
 
     # Deal with angles
