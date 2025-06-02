@@ -79,7 +79,7 @@ class Run(CodesTask):
             If callable should be used for flushed output
         """
         try:
-            int(line.split("|")[0])
+            int(line.split("|", 1)[0])
         except ValueError:
             return False
         else:
@@ -87,7 +87,7 @@ class Run(CodesTask):
 
     def flush_printer(self, line: str):
         description, convergence = line.rsplit(":", 1)
-        description = f"{convergence} | {description.split('|')[0]}"
+        description = f"{convergence} | {description.split('|', 1)[0]}"
         bluemira_debug_flush(f"Convergence {description}")
         self._progress.update(
             self._task,
@@ -100,7 +100,7 @@ class Run(CodesTask):
         with open(self.in_dat_path) as f:
             for line in f:
                 if line.startswith("epsvmc"):
-                    self._epsvmc = float(line.split("=")[1].split("*")[0])
+                    self._epsvmc = float(line.split("=", 2)[1].split("*", 1)[0])
                     break
 
     def _run_process(self):
