@@ -3200,7 +3200,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 10503000.0
   },
-  "ptfnuc": {
+  "p_tf_nuclear_heat_mw": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 0.082044
   },
@@ -3212,7 +3212,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2340.3
   },
-  "pnucshld": {
+  "p_shld_nuclear_heat_mw": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 2.5259
   },
@@ -3564,7 +3564,7 @@
     "var_mod": "Plant Buildings System",
     "scan01": 46.03
   },
-  "efloor": {
+  "a_plant_floor_effective": {
     "var_mod": "Plant Buildings System",
     "scan01": 461950.0
   },
@@ -3636,7 +3636,7 @@
     "var_mod": "Electric Power Requirements",
     "scan01": 562.5
   },
-  "trithtmw..": {
+  "p_tritium_plant_elec_mw..": {
     "var_mod": "Electric Power Requirements",
     "scan01": 15.0
   },
@@ -3684,7 +3684,7 @@
     "var_mod": "Cryogenics",
     "scan01": 0.0020277
   },
-  "crypmw": {
+  "p_cryo_plant_electric_mw": {
     "var_mod": "Cryogenics",
     "scan01": 38.466
   },
@@ -3744,7 +3744,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.375
   },
-  "pdivfraction": {
+  "f_p_div_primary_heat": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.12428
   },
@@ -3756,7 +3756,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 74.293
   },
-  "htpsecmw": {
+  "p_coolant_pump_loss_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 49.706
   },
@@ -3764,7 +3764,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 337.5
   },
-  "trithtmw": {
+  "p_tritium_plant_elec_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 15.0
   },
@@ -3776,11 +3776,11 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
-  "psechtmw": {
+  "p_plant_secondary_heat_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 523.23
   },
-  "pthermmw": {
+  "p_plant_primary_heat_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 4215.5
   },
@@ -3832,19 +3832,19 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 332.65
   },
-  "pthermfw_blkt": {
+  "p_fw_blkt_heat_deposited_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3689.0
   },
-  "pthermshld": {
+  "p_shld_heat_deposited_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2.5385
   },
-  "pthermdiv": {
+  "p_div_heat_deposited_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 523.92
   },
-  "psechcd": {
+  "p_hcd_secondary_heat_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
@@ -3872,7 +3872,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 600.0
   },
-  "rejected_main": {
+  "p_turbine_loss_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2634.7
   },
