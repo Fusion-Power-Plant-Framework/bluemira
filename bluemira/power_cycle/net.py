@@ -29,7 +29,7 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class PCBaseModel(BaseModel):
@@ -156,6 +156,27 @@ class Durations(PCRootModel):
     """Durations Model"""
 
     root: dict[str, Duration]
+    _revalidate: Callable[[], None] = PrivateAttr(default=lambda: None)
+
+    def __getattr__(self, name):
+        """Getattr for root model
+
+        Returns
+        -------
+        :
+            the duration
+        """
+        return self.root[name]
+
+    def __setattr__(self, name, value):
+        """Setattr for root model that revalidates the durations in the powercycle"""
+        if name == "_revalidate":
+            object.__setattr__(self, "_revalidate", value)
+        else:
+            self.root[name] = (
+                value if isinstance(value, Duration) else Duration(value=value)
+            )
+            self._revalidate()
 
 
 class SubSystem(PCBaseModel):
@@ -688,9 +709,9 @@ class Phase:
                     end_time=self.duration,
                     consumption=consumption,
                 )
-                * self.duration
                 for sp in self.subphases.root.values()
             ])
+            * self.duration
         )
 
     def _load(
@@ -869,6 +890,7 @@ class PowerCycle(PCBaseModel):
         ValueError
             Phase duration < 0
         """
+        self.durations._revalidate = self.duration_validation
         for s_ph in self.subphase_library.root.values():
             s_ph.import_durations(self.durations)
 
