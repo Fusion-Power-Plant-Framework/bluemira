@@ -81,7 +81,7 @@ def msh_to_xdmf(
     if not file_path.exists():
         raise MeshConversionError(f"No such file: {file_path}")
 
-    file_prefix = mesh_name.split(".")[0]
+    file_prefix = mesh_name.split(".", 1)[0]
     mesh = meshio.read(file_path.as_posix())
     _export_domain(mesh, file_prefix, directory, dimensions)
     _export_boundaries(mesh, file_prefix, directory, dimensions)
