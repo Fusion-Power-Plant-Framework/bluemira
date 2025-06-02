@@ -3740,7 +3740,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.87
   },
-  "etath": {
+  "eta_turbine": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.375
   },

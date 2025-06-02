@@ -537,13 +537,13 @@ class ProcessInputs:
     crypw_max: float | None = None
     f_crypmw: float | None = None
     etatf: float | None = None
-    etath: float | None = None
+    eta_turbine: float | None = None
     fpumpblkt: float | None = None
     fpumpdiv: float | None = None
     fpumpfw: float | None = None
     fpumpshld: float | None = None
     ipowerflow: int | None = None
-    iprimshld: int | None = None
+    i_shld_primary_heat: int | None = None
     pinjmax: float | None = None
     pwpm2: float | None = None
     p_tritium_plant_elec_mw: float | None = None
