@@ -1016,7 +1016,7 @@ class DivertorThermalHeatUse(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprimdiv"
+        return "i_div_primary_heat"
 
     LOW_GRADE_HEAT = 0
     HIGH_GRADE_HEAT = 1
@@ -1032,7 +1032,7 @@ class ShieldThermalHeatUse(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprimshld"
+        return "i_shld_primary_heat"
 
     NOT_USED = 0
     LOW_GRADE_HEAT = 1
