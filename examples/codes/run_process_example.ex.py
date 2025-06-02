@@ -249,7 +249,7 @@ template_builder.add_input_values({
     "eta_ecrh_injector_wall_plug": 0.4,
     "f_c_plasma_bootstrap_max": 0.99,
     # BOP inputs
-    "etath": 0.375,
+    "eta_turbine": 0.375,
     "etahtp": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
