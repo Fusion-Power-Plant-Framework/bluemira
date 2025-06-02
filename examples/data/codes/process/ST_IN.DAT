@@ -167,9 +167,8 @@ f_fw_peak = 2.0 * peaking factor for first wall heat loads (15/11/27)
 runtitle = Michael's test file
 verbose = 1
 *-------------Heat Transport Variables-------------*
-baseel   = 55.0d6 * Base plant electric load (w)
+p_plant_electric_base_mw   = 55.0d6 * Base plant electric load (w)
 
-htpmw_min = 0.0 * Minimum total electrical power for primary coolant pumps (mw)
 *------------------Ife Variables-------------------*
 *------------Impurity Radiation Module-------------*
 radius_plasma_core_norm = 0.6 * Normalised radius defining the 'core' region

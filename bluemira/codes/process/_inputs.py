@@ -533,7 +533,7 @@ class ProcessInputs:
     # IFE
 
     # Heat transport
-    baseel: float | None = None
+    p_plant_electric_base_mw: float | None = None
     crypw_max: float | None = None
     f_crypmw: float | None = None
     etatf: float | None = None
@@ -546,7 +546,7 @@ class ProcessInputs:
     iprimshld: int | None = None
     pinjmax: float | None = None
     pwpm2: float | None = None
-    trithtmw: float | None = None
+    p_tritium_plant_elec_mw: float | None = None
     vachtmw: float | None = None
     i_hcd_calculations: int | None = None
     # Water usage
