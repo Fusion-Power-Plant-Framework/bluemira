@@ -1,3 +1,9 @@
+# %% tags=["remove-cell"]
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
 """Optimised Reactor Example"""
 
 import json
@@ -54,7 +60,7 @@ from bluemira.materials.cache import establish_material_cache, get_cached_materi
 from bluemira.optimisation import Algorithm
 
 
-def lcfs_parameterisation(R_0, A):
+def _lcfs_parameterisation(R_0, A):
     return JohnerLCFS({
         "r_0": {"value": R_0},
         "z_0": {"value": 0.0},
@@ -97,9 +103,6 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
     coilset = CoilSet(*coils)
     coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
     coilset.assign_material("PF", j_max=12.5e6, b_max=11.0)
-
-    # Later on, we will optimise the PF coil positions, but for the CS coils we can fix sizes
-    # and mesh them already.
 
     cs = coilset.get_coiltype("CS")
     cs.fix_sizes()
@@ -145,7 +148,7 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
     eq = Equilibrium(coilset, grid, profiles, psi=None)
 
     lcfs = (
-        lcfs_parameterisation(R_0, A).create_shape().discretise(byedges=True, ndiscr=50)
+        _lcfs_parameterisation(R_0, A).create_shape().discretise(byedges=True, ndiscr=50)
     )
 
     x_bdry, z_bdry = lcfs.x, lcfs.z
@@ -201,6 +204,8 @@ class OptimisedReactorParams(ParameterFrame):
 
 
 class BBBuilder(Builder):
+    """Builder for the breeding blanket."""
+
     BB = "BB"
 
     param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
@@ -216,6 +221,7 @@ class BBBuilder(Builder):
         self.lcfs_wire = lcfs_wire
 
     def build(self) -> Component:
+        """Build the breeding blanket component."""
         inner_bb = offset_wire(self.lcfs_wire, self.params.g_p_bb.value, ndiscr=100)
         inner_bb = interpolate_bspline(inner_bb.vertexes, closed=True)
         outer_bb = offset_wire(inner_bb, self.params.tk_bb.value, ndiscr=100)
@@ -230,11 +236,16 @@ class BBBuilder(Builder):
 
 
 class BB(ComponentManager):
+    """Breeding blanket component manager."""
+
     def xz_face(self) -> BluemiraFace:
+        """Get the 2D xz face of the breeding blanket."""
         return self.component().get_component("xz").get_component(BBBuilder.BB).shape
 
 
 class TFDesigner(Designer[OptimisedReactorParams]):
+    """Designer for the TF coil centreline."""
+
     param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
     params: OptimisedReactorParams
 
@@ -243,6 +254,7 @@ class TFDesigner(Designer[OptimisedReactorParams]):
         self.bb_xz_face = bb_xz_face
 
     def run(self) -> PrincetonD:
+        """Run the TF coil centreline optimisation."""
         bluemira_print("Optimising TF coil centreline...")
         gap = self.params.g_bb_tf_min.value + self.params.tk_tf.value
         p = PrincetonD({
@@ -302,6 +314,8 @@ class TFDesigner(Designer[OptimisedReactorParams]):
 
 
 class TFBuilder(Builder):
+    """Builder for the TF coils."""
+
     TF = "TF"
 
     param_cls: type[OptimisedReactorParams] = OptimisedReactorParams
@@ -317,6 +331,7 @@ class TFBuilder(Builder):
         self.centerline = centerline
 
     def build(self) -> Component:
+        """Build the TF coils component."""
         p = self.centerline
 
         x2 = p.variables.x2
@@ -355,15 +370,18 @@ class OptimisedReactor(Reactor):  # noqa: D101
         ])
 
     def build_plasma(self):
+        """Build the plasma component."""
         rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
         lcfs_wire = make_polygon(rf_eq.get_LCFS().xyz, closed=True)
         self.plasma = Plasma(PlasmaBuilder(self.params, {}, lcfs_wire).build())
 
     def build_bb(self, mat_name: str):
+        """Build the breeding blanket component."""
         lcfs = self.plasma.lcfs()
         self.bb = BB(BBBuilder(self.params, lcfs, mat_name).build())
 
     def build_tf_coils(self, mat_name: str):
+        """Build the TF coils component."""
         bb_face = self.bb.xz_face()
         centerline = TFDesigner(self.params, bb_face).run()
         self.tf = ComponentManager(TFBuilder(self.params, centerline, mat_name).build())
@@ -416,6 +434,7 @@ if save:
 
 
 def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
+    """Convert a numpy array to a VTK image data file."""
     data_type = vtk.VTK_FLOAT
     shape = data.shape
 
@@ -557,7 +576,8 @@ if extract_results:
     bluemira_print(f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}")
 
     bluemira_print(
-        f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV per source particle is deposited"
+        f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
+        "per source particle is deposited"
     )
     bluemira_print(
         f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
