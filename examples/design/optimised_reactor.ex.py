@@ -473,24 +473,25 @@ r.show_cad(construction_params={"n_sectors": 8})
 # is not relevant for neutron transport, however it's parameters are used.
 
 # %%
+par = Path(__file__).parent
+dag_model_path = par / "OptimisedReactor.h5m"
+meta_data_path = par / "OptimisedReactor.meta.json"
+
 r.save_cad(
     cad_format="dagmc",
     construction_params={
         "without_components": [r.plasma],
+        "group_by_materials": True,
     },
+    directory=par,
 )
 
 # %% [markdown]
 # ## Running the DAGMC model in OpenMC
 
-
 # %%
-par = Path(__file__).parent
 omc_output_path = par / "omc"
-dag_model_path = par / "OptimisedReactor.h5m"
-meta_data_path = par / "OptimisedReactor.meta.json"
-
-# Ensure output directory exists
+# Ensure OpenMC output directory exists
 omc_output_path.mkdir(parents=True, exist_ok=True)
 
 # Used in extract_results too

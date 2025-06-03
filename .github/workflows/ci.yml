@@ -73,12 +73,6 @@ jobs:
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
           with-artifact: ${{ matrix.with-process == 'process_disabled' && 'false' || 'true' }}
 
-      - name: Install OpenBLAS for Python 3.11
-        if: ${{ matrix.python-version == '3.11' }}
-        shell: bash -l {0}
-        run: |
-          sudo apt-get install libopenblas-dev
-
       - name: Install PROCESS
         if: ${{ matrix.with-process != 'process_disabled' }}
         uses: ./.github/workflows/actions/process
