@@ -39,6 +39,9 @@ jobs:
           version: ${{ matrix.process-version }}
 
       - name: Run examples
+        env:
+          RUN_DAGMC_EX: ${{ matrix.python-version == '3.10' && '-e "design/optimised_reactor.py"' || '' }}
+
         shell: bash -l {0}
         run: |
           # Exclude examples using plasmod or process, as these aren't available
@@ -55,3 +58,4 @@ jobs:
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
             -e 'mesh/mesh_tutorial' \
+            ${RUN_DAGMC_EX} \

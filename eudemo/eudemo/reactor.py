@@ -534,6 +534,7 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
             cad_format="dagmc",
             construction_params={
                 "without_components": [reactor.plasma],
+                "group_by_materials": True,
             },
         )
 
