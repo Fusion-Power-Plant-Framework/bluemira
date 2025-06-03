@@ -621,6 +621,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             markeredgewidth=2,
             zorder=Zorder.CONSTRAINT.value,
             linestyle="None",
+            label="Field Null Constraint",
         )
 
     def __len__(self) -> int:
@@ -687,6 +688,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             color="b",
             linestyle="None",
             zorder=Zorder.CONSTRAINT.value,
+            label="Psi Constraint",
         )
 
 
@@ -758,6 +760,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             "linestyle": "None",
             "markerfacecolor": "None",
             "zorder": Zorder.CONSTRAINT.value,
+            "label": "Isoflux Constraint",
         }
         ax.plot(self.x, self.z, **kwargs)
         kwargs["markerfacecolor"] = "m"
@@ -822,6 +825,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
             color="b",
             linestyle="None",
             zorder=Zorder.CONSTRAINT.value,
+            label="Psi Boundary Constraint",
         )
 
 

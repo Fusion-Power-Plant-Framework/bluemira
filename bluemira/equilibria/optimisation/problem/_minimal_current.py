@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from copy import deepcopy
 
 import numpy as np
 import numpy.typing as npt
@@ -18,7 +17,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
+from bluemira.equilibria.plotting import EquilibriumComparisonPlotter, EquilibriumPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
@@ -80,14 +79,14 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         # TODO @geograham: Should we have diagnostic plotting as an option for all COPs?
         # 3798
         if self.plotting_enabled:
-            eq_copy = deepcopy(self.eq)
-            self.comp_plot = EquilibriumComparisonPlotter(
-                equilibrium=self.eq,
-                reference_equilibrium=Equilibrium(eq=eq_copy, label="Reference")
-                if reference_eq is None
-                else reference_eq,
-                diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
-            )
+            if reference_eq is None:
+                self.comp_plot = EquilibriumPlotter(equilibrium=self.eq)
+            else:
+                self.comp_plot = EquilibriumComparisonPlotter(
+                    equilibrium=self.eq,
+                    reference_equilibrium=reference_eq,
+                    diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
+                )
 
     def optimise(
         self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True
