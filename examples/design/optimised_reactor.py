@@ -354,19 +354,16 @@ class OptimisedReactor(Reactor):  # noqa: D101
             Path(__file__).parent / "materials_data" / "mixtures.json",
         ])
 
-    def build_plasma(self) -> Plasma:
-        _rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
-
-        lcfs_wire = lcfs_parameterisation(
-            self.params.R_0.value, self.params.A.value
-        ).create_shape()
+    def build_plasma(self):
+        rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
+        lcfs_wire = make_polygon(rf_eq.get_LCFS().xyz, closed=True)
         self.plasma = Plasma(PlasmaBuilder(self.params, {}, lcfs_wire).build())
 
-    def build_bb(self, mat_name: str) -> None:
+    def build_bb(self, mat_name: str):
         lcfs = self.plasma.lcfs()
         self.bb = BB(BBBuilder(self.params, lcfs, mat_name).build())
 
-    def build_tf_coils(self, mat_name: str) -> None:
+    def build_tf_coils(self, mat_name: str):
         bb_face = self.bb.xz_face()
         centerline = TFDesigner(self.params, bb_face).run()
         self.tf = ComponentManager(TFBuilder(self.params, centerline, mat_name).build())
@@ -383,7 +380,9 @@ extract_results = True
 r = OptimisedReactor(
     OptimisedReactorParams(
         n_TF=Parameter("n_TF", 16, "dimensionless", "Number of TF coils"),
+        # Can try setting this to 7
         R_0=Parameter("R_0", 9, "m", "Major radius of the plasma"),
+        # And this to 2, for a more spherical reactor design
         A=Parameter("A", 3, "dimensionless", "Aspect ratio of the plasma"),
         g_p_bb=Parameter(
             "g_p_bb", 0.3, "m", "Gap between the plasma and the vacuum vessel"
@@ -447,6 +446,9 @@ par = Path(__file__).parent
 omc_output_path = par / "omc"
 dag_model_path = par / "OptimisedReactor.h5m"
 meta_data_path = par / "OptimisedReactor.meta.json"
+
+# Ensure output directory exists
+omc_output_path.mkdir(parents=True, exist_ok=True)
 
 # Used in extract_results too
 n_batches = 5
@@ -542,7 +544,6 @@ if run_openmc:
     print(f"OpenMC completed, results saved to {sp_path}")
 else:
     sp_path = omc_output_path / f"statepoint.{n_batches}.h5"
-    sp_path = omc_output_path / "statepoint.10.h5"
 
 if extract_results:
     sp = openmc.StatePoint(sp_path.as_posix())
@@ -565,19 +566,10 @@ if extract_results:
     mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
     mesh.write_data_to_vtk(
         filename="tbr_mesh_mean.vtk",
-        datasets={
-            "mean": tbr_mesh_tally.mean
-        },  # the first "mean" is the name of the data set label inside the vtk file
+        datasets={"mean": tbr_mesh_tally.mean},
     )
 
     model_w = dagmc_univ.bounding_box.width
-    # not working for some reason
-    # tbr_mesh_mean = tbr_mesh_tally.mean
-    # tbr_mesh_mean = tbr_mesh_mean.reshape(100, 100, 100)
-    # scaling = tuple(
-    #     round(t / c) for c, t in zip(tbr_mesh_mean.shape, model_w, strict=False)
-    # )
-    # numpy_to_vtk(tbr_mesh_mean, "tbr_mesh_mean", scaling)
 
     heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
     scaling = tuple(

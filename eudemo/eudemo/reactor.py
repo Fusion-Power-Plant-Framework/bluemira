@@ -517,6 +517,27 @@ def build_radiation_plugs(
     return builder.build()
 
 
+def export_dagmc_model(reactor: EUDEMO, build_config):
+    """
+    Export the reactor model to a DAGMC model.
+
+    Parameters
+    ----------
+    reactor : EUDEMO
+        The reactor instance to export.
+    build_config : dict
+        The build configuration parameters.
+    """
+    if build_config.get("export_dagmc_model", False):
+        reactor.save_cad(
+            directory=build_config.get("dagmc_export_dir", None),
+            cad_format="dagmc",
+            construction_params={
+                "without_components": [reactor.plasma],
+            },
+        )
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
 
@@ -750,6 +771,11 @@ if __name__ == "__main__":
     reactor.radiation_shield.add_plugs(
         rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
+    )
+
+    export_dagmc_model(
+        reactor,
+        reactor_config.config_for("CAD_Neutronics"),
     )
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]

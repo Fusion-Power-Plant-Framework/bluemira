@@ -129,6 +129,10 @@
     "neutronics_output_path": "$path_expand:./neutronics",
     "show_data": false
   },
+  "CAD_Neutronics": {
+    "export_dagmc_model": true,
+    "dagmc_export_dir": "$path_expand:./dagmc_export"
+  },
   "TF coils": {
     "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
