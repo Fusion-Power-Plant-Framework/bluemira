@@ -36,7 +36,6 @@ import FreeCADGui
 import Part
 import numpy as np
 from FreeCAD import Base
-from PySide6.QtWidgets import QApplication
 from matplotlib import colors
 
 try:
@@ -52,7 +51,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
-from bluemira.utilities.tools import ColourDescriptor, floatify
+from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -2898,9 +2897,7 @@ def show_cad(
             "there are parts to display."
         )
 
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
+    app = qtapp_instance()
 
     root = coin.SoSeparator()
 
@@ -2927,7 +2924,7 @@ def show_cad(
         light.intensity = 1.2
 
         viewer.show()
-        app.exec_()
+        app.exec()
 
 
 def rotate_into_position(

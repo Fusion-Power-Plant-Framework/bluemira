@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 import nlopt
 import numpy as np
 import numpy.typing as npt
+from PySide6.QtWidgets import QApplication
 from matplotlib import colors
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
@@ -1205,3 +1206,21 @@ def deprecation_wrapper(
         return _decorate(message)
 
     return _decorate
+
+
+def qtapp_instance() -> QApplication:
+    """Get at QtWidgets.QApplication instance
+
+    Can be used as a crude way to detect ipython/jupyter instances
+
+    Returns
+    -------
+    :
+        QApplication instance
+    """
+    try:
+        app = QApplication([])
+    except RuntimeError:
+        bluemira_debug("QApplication instance already exists")
+        app = QApplication.instance()
+    return app
