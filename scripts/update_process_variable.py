@@ -10,14 +10,18 @@ Usage
     deletion and renames.
     - verify that all variables are surrounded by ``
     - verify that all name-changes lines are denoted as `BEFORE` -> `AFTER`.
-2. Save this text into /tmp/var_change.txt. `cd bluemira-process-develop/`
+2. Save this text into /tmp/var.txt.
 3. Run this file by
+    - cd bluemira-process-develop/
     - python scripts/update_process_variable.py /tmp/var.txt
-4. Carry out the manual instructions at the bottom of the
-5. `cd ../bluemira-private-data/`. Re-run this same file by
+    3.1 Carry out the manual action specified in the summary printed at the end.
+4. Re-run this same file in bluemira private data by
+    - cd ../bluemira-private-data/
     - python ../bluemira-process-develop/scripts/update_process_variable.py /tmp/var.txt
+    4.1 Carry out the manual action specified in the summary printed at the end.
 """
 
+import os
 import sys
 from subprocess import getstatusoutput  # noqa: S404
 
@@ -150,25 +154,22 @@ if __name__ == "__main__":
                 )
                 # find the variable
 
-            out_status, grep_matched_files = grep(
-                var_before, exclude_process=not delete_var
-            )
+            out_status, grepped_files = grep(var_before, exclude_process=not delete_var)
             if out_status == 0:
                 if delete_var:
-                    key_str = (
-                        populate_template(var_before, exclude_process=False)
-                        + f"\nDelete '{var_before}' from:"
-                    )
+                    unsafe_variables[f"Delete '{var_before}' from:"] = grepped_files
                 else:
-                    key_str = (
-                        populate_template(var_before, exclude_process=True)
-                        + f"\nRename '{var_before}' into '{var_after}' in:"
+                    unsafe_variables[f"Rename '{var_before}' into '{var_after}' in:"] = (
+                        grepped_files
                     )
-                unsafe_variables[key_str] = grep_matched_files
 
-    print("Check the following files manually:")
-    for command, locations in unsafe_variables.items():
-        print()
-        print(command)
-        for loc in locations.split("\n"):
-            print(" " * 4 + loc)
+    print("█" * os.get_terminal_size().columns)
+    if unsafe_variables:
+        print("Please perform the following recommended actions manually.")
+        print("Recommended actions:")
+        for command, locations in unsafe_variables.items():
+            print(command)
+            for loc in locations.split("\n"):
+                print(" " * 4 + loc)
+    else:
+        print("No manual actions is required.")
