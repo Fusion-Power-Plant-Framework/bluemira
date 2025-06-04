@@ -490,100 +490,105 @@ r.save_cad(
 # ## Running the DAGMC model in OpenMC
 
 # %%
+run_openmc = False  # Set to True to run the OpenMC simulation
+extract_results = False  # Set to True to extract results from OpenMC
+
 omc_output_path = par / "omc"
-# Ensure OpenMC output directory exists
-omc_output_path.mkdir(parents=True, exist_ok=True)
-
-# Used in extract_results too
 n_batches = 5
-dagmc_univ = openmc.DAGMCUniverse(
-    filename=dag_model_path.as_posix(),
-    auto_geom_ids=True,
-).bounded_universe()
 
+if run_openmc:
+    # Ensure OpenMC output directory exists
+    omc_output_path.mkdir(parents=True, exist_ok=True)
 
-# load model materials
-with open(meta_data_path) as meta_file:
-    bom = json.load(meta_file)["bom"]
-openmc_mats = [
-    get_cached_material(mat_name).to_openmc_material(temperature=294) for mat_name in bom
-]
+    # Used in extract_results too
+    dagmc_univ = openmc.DAGMCUniverse(
+        filename=dag_model_path.as_posix(),
+        auto_geom_ids=True,
+    ).bounded_universe()
 
-# load DAG model
-geometry = openmc.Geometry(dagmc_univ)
+    # load model materials
+    with open(meta_data_path) as meta_file:
+        bom = json.load(meta_file)["bom"]
+    openmc_mats = [
+        get_cached_material(mat_name).to_openmc_material(temperature=294)
+        for mat_name in bom
+    ]
 
-# source and settings
-major_radius = r.params.R_0.value * 100
-aspect_ratio = r.params.A.value
-minor_radius = major_radius / aspect_ratio
-bluemira_print(
-    "Plasma parameters: "
-    f"Major radius: {major_radius:.1f} cm, "
-    f"minor radius: {minor_radius:.1f} cm, "
-    f"aspect ratio: {aspect_ratio:.2f}"
-)
+    # load DAG model
+    geometry = openmc.Geometry(dagmc_univ)
 
-# based on https://github.com/fusion-energy/magnetic_fusion_openmc_dagmc_paramak_example
-radius = openmc.stats.Discrete(
-    [major_radius - minor_radius, major_radius + minor_radius], [1, 1]
-)
-z_values = openmc.stats.Discrete([-minor_radius, minor_radius], [1, 1])
-angle = openmc.stats.Uniform(a=0.0, b=math.radians(360))
-my_source = openmc.IndependentSource(
-    space=openmc.stats.CylindricalIndependent(
-        r=radius, phi=angle, z=z_values, origin=(0.0, 0.0, 0.0)
-    ),
-    angle=openmc.stats.Isotropic(),
-    energy=openmc.stats.muir(e0=14080000.0, m_rat=5.0, kt=20000.0),
-)
+    # source and settings
+    major_radius = r.params.R_0.value * 100
+    aspect_ratio = r.params.A.value
+    minor_radius = major_radius / aspect_ratio
+    bluemira_print(
+        "Plasma parameters: "
+        f"Major radius: {major_radius:.1f} cm, "
+        f"minor radius: {minor_radius:.1f} cm, "
+        f"aspect ratio: {aspect_ratio:.2f}"
+    )
 
-settings = openmc.Settings()
-settings.batches = n_batches
-settings.particles = 10000
-settings.inactive = 0
-settings.run_mode = "fixed source"
-settings.source = my_source
-settings.output = {"path": omc_output_path.as_posix()}
+    # based on https://github.com/fusion-energy/magnetic_fusion_openmc_dagmc_paramak_example
+    radius = openmc.stats.Discrete(
+        [major_radius - minor_radius, major_radius + minor_radius], [1, 1]
+    )
+    z_values = openmc.stats.Discrete([-minor_radius, minor_radius], [1, 1])
+    angle = openmc.stats.Uniform(a=0.0, b=math.radians(360))
+    my_source = openmc.IndependentSource(
+        space=openmc.stats.CylindricalIndependent(
+            r=radius, phi=angle, z=z_values, origin=(0.0, 0.0, 0.0)
+        ),
+        angle=openmc.stats.Isotropic(),
+        energy=openmc.stats.muir(e0=14080000.0, m_rat=5.0, kt=20000.0),
+    )
 
-# TALLIES
+    settings = openmc.Settings()
+    settings.batches = n_batches
+    settings.particles = 10000
+    settings.inactive = 0
+    settings.run_mode = "fixed source"
+    settings.source = my_source
+    settings.output = {"path": omc_output_path.as_posix()}
 
-# record the heat deposited in entire geometry
-heating_cell_tally = openmc.Tally(name="heating")
-heating_cell_tally.scores = ["heating"]
+    # TALLIES
 
-# record the total TBR
-tbr_cell_tally = openmc.Tally(name="tbr")
-tbr_cell_tally.scores = ["(n,Xt)"]
+    # record the heat deposited in entire geometry
+    heating_cell_tally = openmc.Tally(name="heating")
+    heating_cell_tally.scores = ["heating"]
 
-# mesh that covers the geometry
-mesh = openmc.RegularMesh.from_domain(geometry, dimension=(100, 100, 100))
-mesh_filter = openmc.MeshFilter(mesh)
+    # record the total TBR
+    tbr_cell_tally = openmc.Tally(name="tbr")
+    tbr_cell_tally.scores = ["(n,Xt)"]
 
-# mesh tally using the previously created mesh and records heating on the mesh
-heating_mesh_tally = openmc.Tally(name="heating_on_mesh")
-heating_mesh_tally.filters = [mesh_filter]
-heating_mesh_tally.scores = ["heating"]
+    # mesh that covers the geometry
+    mesh = openmc.RegularMesh.from_domain(geometry, dimension=(100, 100, 100))
+    mesh_filter = openmc.MeshFilter(mesh)
 
-# mesh tally using the previously created mesh and records TBR on the mesh
-tbr_mesh_tally = openmc.Tally(name="tbr_on_mesh")
-tbr_mesh_tally.filters = [mesh_filter]
-tbr_mesh_tally.scores = ["(n,Xt)"]
+    # mesh tally using the previously created mesh and records heating on the mesh
+    heating_mesh_tally = openmc.Tally(name="heating_on_mesh")
+    heating_mesh_tally.filters = [mesh_filter]
+    heating_mesh_tally.scores = ["heating"]
 
-tallies = openmc.Tallies([
-    tbr_cell_tally,
-    tbr_mesh_tally,
-    heating_cell_tally,
-    heating_mesh_tally,
-])
+    # mesh tally using the previously created mesh and records TBR on the mesh
+    tbr_mesh_tally = openmc.Tally(name="tbr_on_mesh")
+    tbr_mesh_tally.filters = [mesh_filter]
+    tbr_mesh_tally.scores = ["(n,Xt)"]
 
-model = openmc.Model(
-    materials=openmc_mats,
-    geometry=geometry,
-    tallies=tallies,
-    settings=settings,
-)
-model.export_to_model_xml()
-model.run()
+    tallies = openmc.Tallies([
+        tbr_cell_tally,
+        tbr_mesh_tally,
+        heating_cell_tally,
+        heating_mesh_tally,
+    ])
+
+    model = openmc.Model(
+        materials=openmc_mats,
+        geometry=geometry,
+        tallies=tallies,
+        settings=settings,
+    )
+    model.export_to_model_xml()
+    model.run()
 
 # %% [markdown]
 # ## Extracting the OpenMC results
@@ -621,35 +626,36 @@ def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
     writer.Write()
 
 
-sp_path = omc_output_path / f"statepoint.{n_batches}.h5"
-sp = openmc.StatePoint(sp_path.as_posix())
+if extract_results:
+    sp_path = omc_output_path / f"statepoint.{n_batches}.h5"
+    sp = openmc.StatePoint(sp_path.as_posix())
 
-tbr_cell_tally = sp.get_tally(name="tbr")
-tbr_mesh_tally = sp.get_tally(name="tbr_on_mesh")
-heating_cell_tally = sp.get_tally(name="heating")
-heating_mesh_tally = sp.get_tally(name="heating_on_mesh")
+    tbr_cell_tally = sp.get_tally(name="tbr")
+    tbr_mesh_tally = sp.get_tally(name="tbr_on_mesh")
+    heating_cell_tally = sp.get_tally(name="heating")
+    heating_mesh_tally = sp.get_tally(name="heating_on_mesh")
 
-bluemira_print(f"The reactor has a TBR of {tbr_cell_tally.mean.sum()}")
-bluemira_print(f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}")
+    bluemira_print(f"The reactor has a TBR of {tbr_cell_tally.mean.sum()}")
+    bluemira_print(f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}")
 
-bluemira_print(
-    f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
-    "per source particle is deposited"
-)
-bluemira_print(
-    f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
-)
+    bluemira_print(
+        f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
+        "per source particle is deposited"
+    )
+    bluemira_print(
+        f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
+    )
 
-mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
-mesh.write_data_to_vtk(
-    filename="tbr_mesh_mean.vtk",
-    datasets={"mean": tbr_mesh_tally.mean},
-)
+    mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
+    mesh.write_data_to_vtk(
+        filename="tbr_mesh_mean.vtk",
+        datasets={"mean": tbr_mesh_tally.mean},
+    )
 
-model_w = dagmc_univ.bounding_box.width
+    model_w = dagmc_univ.bounding_box.width
 
-heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
-scaling = tuple(
-    round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
-)
-numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)
+    heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
+    scaling = tuple(
+        round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
+    )
+    numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)

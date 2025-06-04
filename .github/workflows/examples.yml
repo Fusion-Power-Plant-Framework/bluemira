@@ -36,7 +36,6 @@ jobs:
           RUN_DAGMC_EX: ${{ matrix.python-version == '3.10' && '-e design/optimised_reactor' || '' }}
         shell: bash -l {0}
         run: |
-          echo ${RUN_DAGMC_EX}
           # Exclude examples using plasmod or process, as these aren't available
           # to the CI runners
           # Reasons:
