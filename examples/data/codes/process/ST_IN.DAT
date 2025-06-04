@@ -70,7 +70,7 @@ boundl(58) = 8.0d-3
 ixc = 59 * fcutfsu
 *boundl(59) = 0.66667
 boundl(59) = 0.4
-ixc = 60 * cpttf
+ixc = 60 * c_tf_turn
 boundl(60) = 1.0d4
 boundu(60) = 9.0d4
 ixc = 61 * dr_shld_vv_gap_inboard
@@ -148,7 +148,7 @@ p_hcd_injected_max  = 50. * Maximum allowable value for injected power (mw)
 *------------------Fwbs Variables------------------*
 
 denstl   = 7800.0 * Density of steel (kg/m3)
-emult    = 1.18 * Energy multiplication in blanket and shield
+f_p_blkt_multiplication    = 1.18 * Energy multiplication in blanket and shield
 fblss    = 0.13 * Kit blanket model; steel fraction of breeding zone
 fhole    = 0.05 * Area fraction taken up by other holes (not used)
 fblbe    = 0.47 * Beryllium fraction of blanket by volume
@@ -270,7 +270,7 @@ sig_tf_case_max  = 5.50d8 * Allowable von mises stress in tf coil structural mat
 sig_tf_wp_max  = 5.50d8 * Allowable von mises stress in tf coil structural material (pa)
 dr_tf_plasma_case   = 0.05 * Inboard tf coil case inner (plasma side) thickness (m)
 dx_tf_side_case   = 0.10 * Inboard tf coil sidewall case thickness (m)
-cpttf    = 7.5e+04 * Tf coil current per turn (a);
+c_tf_turn    = 7.5e+04 * Tf coil current per turn (a);
 fcutfsu  = 0.4 * Copper fraction of cable conductor (tf coils)
 oacdcp   = 9.9963e+06 * Overall current density in tf coil inboard legs (a/m2)
 ripmax   = 0.6 * Maximum allowable toroidal field ripple amplitude

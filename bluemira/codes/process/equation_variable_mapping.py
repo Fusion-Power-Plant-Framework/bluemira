@@ -618,7 +618,7 @@ ITERATION_VAR_MAPPING = {
     "dr_tf_nose_case": 57,
     "thwcndut": 58,
     "fcutfsu": 59,
-    "cpttf": 60,
+    "c_tf_turn": 60,
     "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
     "ftpeak": 63,

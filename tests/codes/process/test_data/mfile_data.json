@@ -2516,7 +2516,7 @@
     "var_mod": "Superconducting TF Coils",
     "scan01": 86431.0
   },
-  "cpttf": {
+  "c_tf_turn": {
     "var_mod": "Superconducting TF Coils",
     "scan01": 56620.0
   },
@@ -3404,7 +3404,7 @@
     "var_mod": "Superconducting TF Coil Power Conversion",
     "scan01": 20.192
   },
-  "tfacpd": {
+  "p_tf_electric_supplies_mw": {
     "var_mod": "Superconducting TF Coil Power Conversion",
     "scan01": 6.949
   },
@@ -3688,7 +3688,7 @@
     "var_mod": "Cryogenics",
     "scan01": 38.466
   },
-  "emult": {
+  "f_p_blkt_multiplication": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 1.269
   },
@@ -3760,7 +3760,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 49.706
   },
-  "pinjht": {
+  "p_hcd_electric_loss_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 337.5
   },
@@ -3820,7 +3820,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3072.9
   },
-  "emultmw": {
+  "p_blkt_multiplication_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 584.73
   },
@@ -3860,7 +3860,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 562.5
   },
-  "pfwpmw": {
+  "p_pf_electric_supplies": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.73638
   },
@@ -3876,7 +3876,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2634.7
   },
-  "pnetelmw/(p_fusion_total_mw+emultmw": {
+  "pnetelmw/(p_fusion_total_mw+p_blkt_multiplication_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 13.67
   },
