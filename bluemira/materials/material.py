@@ -1131,9 +1131,8 @@ class BePebbleBed(UnitCellCompound):
                     return 0.5
                 if temp >= 500:  # noqa: PLR2004
                     return 0.3
-                if temp < 500:  # noqa: PLR2004
-                    return 0.2
-                return None
+                # if temp < 500:
+                return 0.2
 
             eps_vol = np.vectorize(calc_eps_vol)(temperature)
         if is_num(eps_vol):
