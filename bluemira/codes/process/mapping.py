@@ -17,7 +17,7 @@ IN_mappings = {
     "e_nbi": ("e_beam_kev", "keV"),
     "P_hcd_ss": ("p_hcd_injected_max", "MW"),
     "eta_nb": ("eta_beam_injector_wall_plug", "dimensionless"),
-    "e_mult": ("emult", "dimensionless"),
+    "e_mult": ("f_p_blkt_multiplication", "dimensionless"),
     "tk_cr_vv": ("dr_cryostat", "m"),
     "tk_tf_front_ib": ("dr_tf_plasma_case", "m"),
     "tk_tf_side": ("dx_tf_side_case", "m"),
@@ -88,7 +88,7 @@ OUT_mappings = {
     "TF_res_tot": ("res_tf_system_total", "ohm"),
     "TF_E_stored": ("estotftgj", "GJ"),
     "TF_respc_ob": ("res_tf_leg", "ohm"),
-    "TF_currpt_ob": ("cpttf", "A"),
+    "TF_currpt_ob": ("c_tf_turn", "A"),
     "P_bd_in": ("p_hcd_injected_total_mw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
 }

@@ -58,7 +58,7 @@ class ProcessInputs:
     # FWBS
     ibkt_life: int | None = None
     denstl: float | None = None
-    emult: float | None = None
+    f_p_blkt_multiplication: float | None = None
     fblss: float | None = None
     f_ster_div_single: float | None = None
     i_fw_blkt_vv_shape: int | None = None
@@ -138,7 +138,7 @@ class ProcessInputs:
     casths_fraction: float | None = None
     f_t_turn_tf: float | None = None
     t_turn_tf_max: float | None = None
-    cpttf: float | None = None
+    c_tf_turn: float | None = None
     cpttf_max: float | None = None
     dcase: float | None = None
     dcond: list[float] | None = None
