@@ -475,7 +475,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "cpttf",
+        "name": "c_tf_turn",
         "send": false,
         "recv": true,
         "unit": "A"
@@ -623,7 +623,7 @@
     "source": "HCPB classic",
     "mapping": {
       "PROCESS": {
-        "name": "emult",
+        "name": "f_p_blkt_multiplication",
         "send": true,
         "recv": false,
         "unit": "dimensionless"

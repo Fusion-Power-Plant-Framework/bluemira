@@ -283,7 +283,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("f_a_cs_steel", 0.57875)
         template_builder.add_variable("j_cs_flat_top_end", 2.0726e07)
         template_builder.add_variable(
-            "cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
+            "c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
         )
         template_builder.add_variable("tdmptf", 2.5829e01)
         template_builder.add_variable("fimp(13)", 3.573e-04)
