@@ -21,11 +21,39 @@ Usage
 import sys
 from subprocess import getstatusoutput  # noqa: S404
 
-template_str = r"grep -rlw {v_before} | grep -v pycache | grep -vi process"
+template_str = r"grep -rlw {v_before} | grep -v pycache"
 
 
 def populate_template(v_before, *, exclude_process=False, only_process=False):
-    """Fill the template string."""  # noqa: DOC201, DOC501
+    """Fill the template grep string.
+
+    Parameters
+    ----------
+    v_before:
+        the variable to be grepping for.
+    exclude_process:
+        Whether to exclude file paths with the word 'process' in its path.
+    only_process:
+        If true, only output files with the word 'process' in its path.
+
+    Returns
+    -------
+    :
+        A string that, when inputted into the terminal, greps for exact matches of
+        v_before, and outputs the full file paths where at least one v_before is present
+        in the file.
+
+    Raises
+    ------
+    ValueError
+        Prevents both exclude_process and only_process to be simultaneously true.
+
+    Example
+    -------
+    1. grep -rlw v_before | grep -v pycache
+    2. grep -rlw v_before | grep -v pycache | grep -vi process
+    3. grep -rlw v_before | grep -v pycache | grep -i process
+    """
     if exclude_process and only_process:
         raise ValueError(
             "The result of 'grep process' and 'grep -v process' would be null."
@@ -42,10 +70,22 @@ def safe_variable_rename(v_before, v_after):
     """Bash instructions to rename a variable.
     Safely renames as it only renames if it has 'process' in the file name.
 
+    Parameters
+    ----------
+    v_before:
+        The old variable name.
+    v_after:
+        The new variable name.
+
+    Returns
+    -------
+    :
+        The sed command that can be used to perform this precise renaming.
+
     Example
     -------
     sed -i "s/\bBEFORE\b/AFTER/g" $(grep -rlw BEFORE | grep -v pycache | grep -i process)
-    """  # noqa: DOC201
+    """
     return (
         r'sed -i "s/\b'
         + v_before
@@ -60,10 +100,27 @@ def safe_variable_rename(v_before, v_after):
 def grep(v_before, *, exclude_process=False):
     """Runs, using subprocess, grep.
 
-    Examples
-    --------
+    Parameters
+    ----------
+    v_before:
+        the variable to be grepped.
+    exclude_process:
+        Whether to exclude files with the word 'process' in its path from the the grepped
+        results.
+
+    Returns
+    -------
+    status:
+        Integer. The subprocess returned status. 0 for match(es) found, 1 for no matches
+        found, any other integers (e.g. 255) means the command has failed, likely due to
+        malformed syntax or any other interruptions.
+    output:
+        A single string of all file paths, separated by newline characters.
+
+    Example
+    -------
     output of `grep -r `
-    """  # noqa: DOC201
+    """
     return getstatusoutput(populate_template(v_before, exclude_process=exclude_process))  # noqa: S605
 
 
