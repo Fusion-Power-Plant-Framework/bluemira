@@ -83,3 +83,4 @@ Other Examples
     examples/plasma_physics/fusion_reactions
     examples/radiation_transport/heat_flux_calculation
     examples/structural/tour_eiffel_example
+    examples/design/optimised_reactor

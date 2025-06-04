@@ -201,6 +201,8 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
                         "Skipping imprinting, saving input geometry to .step file"
                     )
                     imprinted_shapes = self.shapes
+
+                imprinted_geom_step_file_p.parent.mkdir(parents=True, exist_ok=True)
                 cadapi.save_cad(
                     [s.shape for s in imprinted_shapes],
                     imprinted_geom_step_file_p.as_posix(),
