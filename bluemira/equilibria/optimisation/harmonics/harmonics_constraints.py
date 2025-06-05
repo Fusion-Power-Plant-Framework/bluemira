@@ -170,4 +170,13 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if ax is None:
             _, ax = plt.subplots()
 
-        ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
+        ax.add_patch(
+            patch.Circle(
+                (0, 0),
+                self.r_t,
+                ec="orange",
+                fill=True,
+                fc="orange",
+                label="SH Constraint",
+            )
+        )
