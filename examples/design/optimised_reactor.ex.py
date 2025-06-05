@@ -26,16 +26,12 @@ to a DAGMC model and run it in OpenMC.
 """
 
 # %%
-import json
 import math
 from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import openmc
-import vtk
-from vtkmodules.util import numpy_support
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -77,7 +73,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.materials.cache import establish_material_cache, get_cached_material
+from bluemira.materials.cache import establish_material_cache
 from bluemira.optimisation import Algorithm
 
 
@@ -459,6 +455,16 @@ r.build_plasma()
 r.build_bb("Homogenised_HCPB_2015_v3_BZ")
 r.build_tf_coils("Toroidal_Field_Coil_2015")
 
+major_radius = r.params.R_0.value * 100
+aspect_ratio = r.params.A.value
+minor_radius = major_radius / aspect_ratio
+bluemira_print(
+    "Machine parameters: "
+    f"Major radius: {major_radius:.1f} cm, "
+    f"minor radius: {minor_radius:.1f} cm, "
+    f"aspect ratio: {aspect_ratio:.2f}"
+)
+
 # %%
 # Show the reactor CAD
 r.show_cad(construction_params={"n_sectors": 8})
@@ -473,189 +479,11 @@ r.show_cad(construction_params={"n_sectors": 8})
 # is not relevant for neutron transport, however it's parameters are used.
 
 # %%
-par = Path(__file__).parent
-dag_model_path = par / "OptimisedReactor.h5m"
-meta_data_path = par / "OptimisedReactor.meta.json"
-
 r.save_cad(
     cad_format="dagmc",
     construction_params={
         "without_components": [r.plasma],
         "group_by_materials": True,
     },
-    directory=par,
+    directory=Path(__file__).parent,
 )
-
-# %% [markdown]
-# ## Running the DAGMC model in OpenMC
-
-# %%
-run_openmc = False  # Set to True to run the OpenMC simulation
-extract_results = False  # Set to True to extract results from OpenMC
-
-omc_output_path = par / "omc"
-n_batches = 5
-
-if run_openmc:
-    # Ensure OpenMC output directory exists
-    omc_output_path.mkdir(parents=True, exist_ok=True)
-
-    # Used in extract_results too
-    dagmc_univ = openmc.DAGMCUniverse(
-        filename=dag_model_path.as_posix(),
-        auto_geom_ids=True,
-    ).bounded_universe()
-
-    # load model materials
-    with open(meta_data_path) as meta_file:
-        bom = json.load(meta_file)["bom"]
-    openmc_mats = [
-        get_cached_material(mat_name).to_openmc_material(temperature=294)
-        for mat_name in bom
-    ]
-
-    # load DAG model
-    geometry = openmc.Geometry(dagmc_univ)
-
-    # source and settings
-    major_radius = r.params.R_0.value * 100
-    aspect_ratio = r.params.A.value
-    minor_radius = major_radius / aspect_ratio
-    bluemira_print(
-        "Plasma parameters: "
-        f"Major radius: {major_radius:.1f} cm, "
-        f"minor radius: {minor_radius:.1f} cm, "
-        f"aspect ratio: {aspect_ratio:.2f}"
-    )
-
-    # based on https://github.com/fusion-energy/magnetic_fusion_openmc_dagmc_paramak_example
-    radius = openmc.stats.Discrete(
-        [major_radius - minor_radius, major_radius + minor_radius], [1, 1]
-    )
-    z_values = openmc.stats.Discrete([-minor_radius, minor_radius], [1, 1])
-    angle = openmc.stats.Uniform(a=0.0, b=math.radians(360))
-    my_source = openmc.IndependentSource(
-        space=openmc.stats.CylindricalIndependent(
-            r=radius, phi=angle, z=z_values, origin=(0.0, 0.0, 0.0)
-        ),
-        angle=openmc.stats.Isotropic(),
-        energy=openmc.stats.muir(e0=14080000.0, m_rat=5.0, kt=20000.0),
-    )
-
-    settings = openmc.Settings()
-    settings.batches = n_batches
-    settings.particles = 10000
-    settings.inactive = 0
-    settings.run_mode = "fixed source"
-    settings.source = my_source
-    settings.output = {"path": omc_output_path.as_posix()}
-
-    # TALLIES
-
-    # record the heat deposited in entire geometry
-    heating_cell_tally = openmc.Tally(name="heating")
-    heating_cell_tally.scores = ["heating"]
-
-    # record the total TBR
-    tbr_cell_tally = openmc.Tally(name="tbr")
-    tbr_cell_tally.scores = ["(n,Xt)"]
-
-    # mesh that covers the geometry
-    mesh = openmc.RegularMesh.from_domain(geometry, dimension=(100, 100, 100))
-    mesh_filter = openmc.MeshFilter(mesh)
-
-    # mesh tally using the previously created mesh and records heating on the mesh
-    heating_mesh_tally = openmc.Tally(name="heating_on_mesh")
-    heating_mesh_tally.filters = [mesh_filter]
-    heating_mesh_tally.scores = ["heating"]
-
-    # mesh tally using the previously created mesh and records TBR on the mesh
-    tbr_mesh_tally = openmc.Tally(name="tbr_on_mesh")
-    tbr_mesh_tally.filters = [mesh_filter]
-    tbr_mesh_tally.scores = ["(n,Xt)"]
-
-    tallies = openmc.Tallies([
-        tbr_cell_tally,
-        tbr_mesh_tally,
-        heating_cell_tally,
-        heating_mesh_tally,
-    ])
-
-    model = openmc.Model(
-        materials=openmc_mats,
-        geometry=geometry,
-        tallies=tallies,
-        settings=settings,
-    )
-    model.export_to_model_xml()
-    model.run()
-
-# %% [markdown]
-# ## Extracting the OpenMC results
-#
-# This section extracts the results from the OpenMC simulation, including the
-# total breeding ratio (TBR) and the heating deposited in the reactor.
-
-
-# %%
-def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
-    """Convert a numpy array to a VTK image data file."""
-    data_type = vtk.VTK_FLOAT
-    shape = data.shape
-
-    flat_data_array = data.flatten()
-    vtk_data = numpy_support.numpy_to_vtk(
-        num_array=flat_data_array, deep=True, array_type=data_type
-    )
-    vtk_data.SetName(output_name)
-
-    half_x = int(0.5 * scaling[0] * (shape[0] - 1))
-    half_y = int(0.5 * scaling[1] * (shape[1] - 1))
-    half_z = int(0.5 * scaling[2] * (shape[2] - 1))
-
-    img = vtk.vtkImageData()
-    img.GetPointData().SetScalars(vtk_data)
-    img.SetSpacing(scaling[0], scaling[1], scaling[2])
-    img.SetDimensions(shape[0], shape[1], shape[2])
-    img.SetOrigin(-half_x, -half_y, -half_z)
-
-    # Save the VTK file
-    writer = vtk.vtkXMLImageDataWriter()
-    writer.SetFileName(f"{output_name}.vti")
-    writer.SetInputData(img)
-    writer.Write()
-
-
-if extract_results:
-    sp_path = omc_output_path / f"statepoint.{n_batches}.h5"
-    sp = openmc.StatePoint(sp_path.as_posix())
-
-    tbr_cell_tally = sp.get_tally(name="tbr")
-    tbr_mesh_tally = sp.get_tally(name="tbr_on_mesh")
-    heating_cell_tally = sp.get_tally(name="heating")
-    heating_mesh_tally = sp.get_tally(name="heating_on_mesh")
-
-    bluemira_print(f"The reactor has a TBR of {tbr_cell_tally.mean.sum()}")
-    bluemira_print(f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}")
-
-    bluemira_print(
-        f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
-        "per source particle is deposited"
-    )
-    bluemira_print(
-        f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
-    )
-
-    mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
-    mesh.write_data_to_vtk(
-        filename="tbr_mesh_mean.vtk",
-        datasets={"mean": tbr_mesh_tally.mean},
-    )
-
-    model_w = dagmc_univ.bounding_box.width
-
-    heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
-    scaling = tuple(
-        round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
-    )
-    numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)

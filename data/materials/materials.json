@@ -2,6 +2,9 @@
   "Void": {
     "material_class": "Void"
   },
+  "undef_material": {
+    "material_class": "Void"
+  },
   "Bronze": {
     "material_class": "MassFractionMaterial",
     "elements": { "Cu": 0.95, "Sn": 0.05 },
