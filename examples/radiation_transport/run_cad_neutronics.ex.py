@@ -40,8 +40,6 @@ from bluemira.materials.cache import establish_material_cache, get_cached_materi
 par = Path(__file__).parent
 # %% [markdown]
 # # Running a DAGMC model in OpenMC
-#
-# Enter
 
 # %%
 n_batches = 5
@@ -205,7 +203,7 @@ flux_mesh_mean = flux_mesh_tally.mean.reshape(100, 100, 100)
 scaling = tuple(
     round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
 )
-heating_mesh_mean[:, :, heating_mesh_mean.shape[2] // 2 : -1] = 0
-# heating_mesh_mean = heating_mesh_mean[50:, :, :]
+# If you want to view only the +ve x half of the tally, uncomment the next line
+# heating_mesh_mean[:, :, heating_mesh_mean.shape[2] // 2 : -1] = 0
 numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)
 numpy_to_vtk(flux_mesh_mean, "flux_mesh_mean", scaling)
