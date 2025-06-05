@@ -109,7 +109,7 @@ class Constraint(ConstraintSelection, Model):
     FUSION_POWER_UPPER_LIMIT = (
         9,
         (1, 2, 3, 4, 6, 26),
-        ("powfmax",),
+        ("p_fusion_total_max_mw",),
         "Equation for fusion power upper limit",
     )
     # 10 NOT USED
@@ -202,7 +202,12 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation for minor radius lower limit OR Inboard radial build consistency",
     )
-    PINJ_UPPER_LIMIT = 30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit"
+    PINJ_UPPER_LIMIT = (
+        30,
+        (11, 46, 47),
+        ("p_hcd_injected_max",),
+        "Injection Power Upper Limit",
+    )
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
         (48, 56, 57, 58, 59, 60),
@@ -306,7 +311,7 @@ class Constraint(ConstraintSelection, Model):
         55,
         (93, 94, 96),
         ("vvhealw",),
-        "Vacuum vessel helium concentration upper limit iblanket=2",
+        "Vacuum vessel helium concentration upper limit i_blanket_type=2",
     )
     PSEPR_UPPER_LIMIT = (
         56,
@@ -318,7 +323,7 @@ class Constraint(ConstraintSelection, Model):
     NBI_SHINETHROUGH_UPPER_LIMIT = (
         59,
         (4, 6, 19, 105),
-        ("nbshinefmax",),
+        ("f_p_beam_shine_through_max",),
         "Neutral beam shinethrough fraction upper limit (NBI)",
     )
     CS_T_MARGIN_LOWER_LIMIT = (
@@ -332,8 +337,11 @@ class Constraint(ConstraintSelection, Model):
     CONFINEMENT_RATIO_LOWER_LIMIT = (
         62,
         (110,),
-        ("taulimit",),
-        "taup/taueff the ratio of particle to energy confinement times",
+        ("f_alpha_energy_confinement_min",),
+        (
+            "t_alpha_confinement/t_energy_confinement "
+            "the ratio of particle to energy confinement times"
+        ),
     )
     NITERPUMP_UPPER_LIMIT = (
         63,
@@ -351,13 +359,13 @@ class Constraint(ConstraintSelection, Model):
     PF_ENERGY_RATE_UPPER_LIMIT = (
         66,
         (65, 113),
-        ("tohs",),
+        ("t_current_ramp_up",),
         "Limit on rate of change of energy in poloidal field",
     )
     WALL_RADIATION_UPPER_LIMIT = (
         67,
         (4, 6, 116),
-        ("peakfactrad", "peakradwallload"),
+        ("f_fw_rad_max", "pflux_fw_rad_max_mw"),
         "Simple radiation wall load limit",
     )
     PSEPB_QAR_UPPER_LIMIT = (
@@ -411,8 +419,13 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Reinke criterion impurity fraction lower limit",
     )
-    BMAX_CS_UPPER_LIMIT = 79, (149,), ("bmaxcs_lim",), "Peak CS field upper limit"
-    PDIVT_LOWER_LIMIT = 80, (153,), ("pdivtlim",), "Divertor power lower limit"
+    BMAX_CS_UPPER_LIMIT = 79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit"
+    PDIVT_LOWER_LIMIT = (
+        80,
+        (153,),
+        ("p_plasma_separatrix_min_mw",),
+        "Divertor power lower limit",
+    )
     DENSITY_PROFILE_CONSISTENCY = 81, (154,), (), "Ne(0) > ne(ped) constraint"
     STELLARATOR_COIL_CONSISTENCY = (
         82,
@@ -552,44 +565,44 @@ ITERATION_VAR_MAPPING = {
     "te": 4,
     "beta": 5,
     "dene": 6,
-    "rnbeam": 7,
+    "f_nd_beam_electron": 7,
     "fbeta": 8,
     "fdene": 9,
     "hfact": 10,
-    "pheat": 11,
+    "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
-    "tfcth": 13,
+    "dr_tf_inboard": 13,
     "fwalld": 14,
     "fvs": 15,
-    "ohcth": 16,
-    "tdwell": 17,
-    "q": 18,
-    "enbeam": 19,
+    "dr_cs": 16,
+    "t_between_pulse": 17,
+    "q95": 18,
+    "e_beam_kev": 19,
     "tcpav": 20,
-    "ftburn": 21,
+    "ft_burn": 21,
     # 22 NOT USED
     "fcoolcp": 23,
     # 24 NOT USED
     "fpnetel": 25,
-    "ffuspow": 26,
-    "fhldiv": 27,
+    "fp_fusion_total_max_mw": 26,
+    "fpflux_div_heat_load_mw": 27,
     "fradpwr": 28,
-    "bore": 29,
+    "dr_bore": 29,
     "fmva": 30,
     "gapomin": 31,
     "frminor": 32,
     "fportsz": 33,
     "fdivcol": 34,
     "fpeakb": 35,
-    "fbetatry": 36,
-    "coheof": 37,
+    "fbeta_max": 36,
+    "j_cs_flat_top_end": 37,
     "fjohc": 38,
     "fjohc0": 39,
     "fgamcd": 40,
-    "fcohbop": 41,
-    "gapoh": 42,
+    "f_j_cs_start_pulse_end_flat_top": 41,
+    "dr_cs_tf_gap": 42,
     # 43 NOT USED
-    "fvsbrnni": 44,
+    "f_c_plasma_non_inductive": 44,
     "fqval": 45,
     "fpinj": 46,
     "feffcd": 47,
@@ -602,27 +615,27 @@ ITERATION_VAR_MAPPING = {
     "ftmargtf": 54,
     # 55 NOT USED
     "tdmptf": 56,
-    "thkcas": 57,
+    "dr_tf_nose_case": 57,
     "thwcndut": 58,
     "fcutfsu": 59,
-    "cpttf": 60,
-    "gapds": 61,
+    "c_tf_turn": 60,
+    "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
     "ftpeak": 63,
     "fauxmn": 64,
-    "tohs": 65,
-    "ftohs": 66,
+    "t_current_ramp_up": 65,
+    "ft_current_ramp_up": 66,
     "ftcycl": 67,
     "fptemp": 68,
     "rcool": 69,
     "vcool": 70,
     "fq": 71,
     "fipir": 72,
-    "scrapli": 73,
-    "scraplo": 74,
+    "dr_fw_plasma_gap_inboard": 73,
+    "dr_fw_plasma_gap_outboard": 74,
     "tfootfi": 75,
     # 76, 77, 78 NOT USED
-    "fbetap": 79,
+    "fbeta_poloidal": 79,
     # 80 NOT USED
     "edrive": 81,
     "drveff": 82,
@@ -635,25 +648,25 @@ ITERATION_VAR_MAPPING = {
     "blbuith": 90,
     "blbuoth": 91,
     "fflutf": 92,
-    "shldith": 93,
-    "shldoth": 94,
+    "dr_shld_inboard": 93,
+    "dr_shld_outboard": 94,
     "fptfnuc": 95,
     "fvvhe": 96,
     "fpsepr": 97,
-    "li6enrich": 98,
+    "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
-    "flhthresh": 103,
+    "fl_h_threshold": 103,
     "fcwr": 104,
     "fnbshinef": 105,
     "ftmargoh": 106,
     "favail": 107,
     "breeder_f": 108,
-    "ralpne": 109,
-    "ftaulimit": 110,
+    "f_nd_alpha_electron": 109,
+    "falpha_energy_confinement": 110,
     "fniterpump": 111,
     "fzeffmax": 112,
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
-    "fw_channel_length": 114,
+    "len_fw_channel": 114,
     "fpoloidalpower": 115,
     "fradwall": 116,
     "fpsepbqar": 117,
@@ -661,7 +674,7 @@ ITERATION_VAR_MAPPING = {
     "tesep": 119,
     "ttarget": 120,
     "neratio": 121,
-    "oh_steel_frac": 122,
+    "f_a_cs_steel": 122,
     "foh_stress": 123,
     "qtargettotal": 124,
     "fimp(3)": 125,  # Beryllium
@@ -688,14 +701,14 @@ ITERATION_VAR_MAPPING = {
     "fcpttf": 146,
     "freinke": 147,
     "fzactual": 148,
-    "fbmaxcs": 149,
+    "fb_cs_limit_max": 149,
     # 150, 151 NOT USED
     "fgwsep": 152,
     "fpdivlim": 153,
     "fne0": 154,
     "pfusife": 155,
     "rrin": 156,
-    "fvssu": 157,
+    "fvs_cs_pf_total_ramp": 157,
     "croco_thick": 158,
     "ftoroidalgap": 159,
     "f_avspace": 160,
@@ -708,7 +721,7 @@ ITERATION_VAR_MAPPING = {
     "fncycle": 167,
     "fecrh_ignition": 168,
     "te0_ecrh_achievable": 169,
-    "beta_div": 170,
+    "deg_div_field_plate": 170,
 }
 
 
