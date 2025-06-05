@@ -132,7 +132,7 @@
     "show_data": false
   },
   "CAD_Neutronics": {
-    "export_dagmc_model": true,
+    "export_dagmc_model": false,
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
