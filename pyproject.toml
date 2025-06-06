@@ -91,7 +91,7 @@ polyscope = ["polyscope"]
 radiation = ["cherab"]
 dagmc = [
     "cgal>=6.0.1",
-    "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@main",
+    "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
 ]
 
 [build-system]
