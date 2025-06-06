@@ -166,6 +166,111 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 
 
+def ols(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+):
+    """
+    Ordinary Least Squares (OLS)
+
+    Can use as objective function to minimise the Residual Sum of Squares (RSS).
+
+    \t:math:`\\textrm{minimise} \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    return np.sum((a_mat @ x - b_vec) ** 2)
+
+
+def lasso(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+):
+    """
+    LASSO (Least Absolute Shrinkage and Selection Operator)  a.k.a. L1 Regression
+
+    Regularisation with the absolute value of magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce some of the values to zero, in order to select only
+    the important features and ignore the less important ones.
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma \\sum_{j=1}^{p} || x_{j} ||`
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    return ols(x, a_mat, b_vec) + gamma * np.sum(np.abs(x))
+
+
+def tiknonov2(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+):
+    """
+    Tiknonov a.k.a L2 Regression
+
+    Regularisation with the squared magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce the coefficient values (but not to zero as in LASSO).
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\sum_{j=1}^{p} || \\gamma x_{j} ||^{2}`
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    return ols(x, a_mat, b_vec) + gamma**2 * np.sum(x**2)
+
+
+def elastic_net(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+    alpha: np.ndarray,
+):
+    """
+    Regression with a combination of both L1 and L2 regularization terms.
+
+    Have a hyperparameter, alpha, to control the ratio of regularisation terms.
+
+    L1 - promotes sparsity and variable selection
+    L2 - handles multicollinearity
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma`
+    \t:math:`((1-\\alpha) \\sum_{j=1}^{p} || x_{j} || +`
+    \t:math:`\\alpha \\sum_{j=1}^{p} || \\gamma x_{j} ||^{2})`
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    return ols(x, a_mat, b_vec) + gamma * (
+        (1 - alpha) * np.sum(np.abs(x)) + alpha * gamma * np.sum(x**2)
+    )
+
+
 def tikhonov(
     a_mat: np.ndarray,
     b_vec: np.ndarray,

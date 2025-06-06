@@ -40,6 +40,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     Parameters
     ----------
+    degrees:
+        Degrees required for approximation of desired core plasma
+        (Returned by spherical_harmonic_approximation)
     ref_harmonics:
         Initial harmonic amplitudes obtained from desired core plasma
         (Returned by spherical_harmonic_approximation)
@@ -55,6 +58,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
+        ref_degrees: npt.NDArray[np.float64],
         ref_harmonics: npt.NDArray[np.float64],
         r_t: float,
         sh_coil_names: list,
@@ -86,6 +90,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             self.tolerance = np.append(tolerance, tolerance, axis=0)
             self.target_harmonics = np.append(ref_harmonics, ref_harmonics, axis=0)
 
+        self.degrees = ref_degrees
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
 
@@ -148,7 +153,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         # N.B., cannot use coil located within r_lcfs as part of this method.
         return coil_harmonic_amplitude_matrix(
             coilset,
-            self.max_degree,
+            self.degrees,
             self.r_t,
             self.sh_coil_names,
         )
