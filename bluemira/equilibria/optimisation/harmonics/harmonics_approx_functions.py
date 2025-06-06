@@ -15,17 +15,19 @@ from enum import Enum, auto
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
+from scipy.optimize import minimize
 from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0, RNGSeeds
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
-from bluemira.display.plotter import Zorder
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.equilibria.analysis import EqAnalysis
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions, EqSubplots, PsiPlotType
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_zone
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.plotting import PLOT_DEFAULTS
+from bluemira.equilibria.optimisation.objectives import lasso
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
@@ -34,148 +36,6 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
-from bluemira.utilities.tools import sig_fig_round, ten_power
-
-
-def coil_harmonic_amplitude_matrix(
-    input_coils: CoilSet,
-    max_degree: int,
-    r_t: float,
-    sh_coil_names: list,
-    sig_figures: int = 15,
-) -> np.ndarray:
-    """
-    Construct matrix from harmonic amplitudes at given coil locations.
-
-    To get an array of spherical harmonic amplitudes/coefficients (A_l)
-    which can be used in a spherical harmonic approximation of the
-    vacuum/coil contribution to the poloidal flux (psi) do:
-
-    A_l = matrix harmonic amplitudes @ vector of coil currents
-
-    A_l can be used as constraints in optimisation, see spherical_harmonics_constraint.
-
-    N.B. for a single filament (coil):
-
-    .. math::
-        A_{l} = \\frac{1}{2} \\mu_{0} I_{f} \\sin{\\theta_{f}}
-        (\\frac{r_{t}}{r_{f}})^l
-        \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}
-
-    Where l = degree, and :math: P_{l} \\cos{\\theta_{f}} are the associated
-    Legendre polynomials of degree l and order (m) = 1.
-
-    Parameters
-    ----------
-    input_coils:
-        Bluemira CoilSet
-    max_degree:
-        Maximum degree of harmonic to calculate up to
-    r_t:
-        Typical length scale (e.g. radius at outer midplane)
-    sh_coil_names:
-        Names of the coils to use with SH approximation (always located outside bdry_r)
-    sig_figures:
-        Number of significant figures for rounding currents2harmonics values
-
-    Returns
-    -------
-    currents2harmonics:
-        Matrix of harmonic amplitudes
-
-    """
-    x_f = []
-    z_f = []
-    for n in sh_coil_names:
-        x_f.append(input_coils[n].x)
-        z_f.append(input_coils[n].z)
-
-    # Spherical coords
-    r_f = np.linalg.norm([x_f, z_f], axis=0)
-    theta_f = np.arctan2(x_f, z_f)
-
-    # [number of degrees, number of coils]
-    currents2harmonics = np.zeros([max_degree, np.size(r_f)])
-    # First 'harmonic' is constant (this line avoids Nan issues)
-    currents2harmonics[0, :] = 1
-
-    # SH coefficients from function of the current distribution
-    # outside of the sphere containing the core plamsa
-    # SH coefficients = currents2harmonics @ coil currents
-    degrees = np.arange(1, max_degree)[:, None]
-    ones = np.ones_like(degrees)
-    currents2harmonics[1:, :] = (
-        0.5
-        * MU_0
-        * (r_t / r_f)[None, :] ** degrees
-        * np.sin(theta_f)[None, :]
-        * lpmv(ones, degrees, np.cos(theta_f)[None, :])
-        / np.sqrt(degrees * (degrees + 1))
-    )
-    return sig_fig_round(currents2harmonics, sig_figures)
-
-
-def harmonic_amplitude_marix(
-    collocation_r: np.ndarray,
-    collocation_theta: np.ndarray,
-    r_t: float,
-    sig_figures: int = 15,
-) -> np.ndarray:
-    """
-    Construct matrix from harmonic amplitudes at given points (in spherical coords).
-
-    The matrix is used in a spherical harmonic approximation of the vacuum/coil
-    contribution to the poloidal flux (psi):
-
-    .. math::
-        \\psi = \\sum{A_{l} \\frac{r^{l+1}}{r_{t}^l} \\sin{\\theta_{f}}
-        \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}}
-
-    Where l = degree, A_l are the spherical harmonic coefficients/amplitudes,
-    and :math: P_{l} \\cos{\\theta_{f}} are the associated Legendre polynomials of
-    degree l and order (m) = 1.
-
-    N.B. Vacuum Psi = Total Psi - Plasma Psi.
-
-    Parameters
-    ----------
-    collocation_r:
-        R values of collocation points
-    collocation_theta:
-        Theta values of collocation points
-    r_t:
-        Typical length scale (e.g. radius at outer midplane)
-    sig_figures:
-        Number of significant figures for rounding harmonics2collocation values
-
-    Returns
-    -------
-    harmonics2collocation: np.array
-        Matrix of harmonic amplitudes (to get spherical harmonic coefficients
-        use matrix @ coefficients = vector psi_vacuum at collocation points)
-    """
-    # Maximum number of degree of harmonic to calculate up to is n_collocation - 1
-    # or 12 (i.e., l=11) if there are lots of collocation points,
-    # do not need to go higher (see Bardsley et al, 2024,  Plasma Phys. Control. Fusion)
-    # in order to acheive a vary low fit metric for the approximation.
-    # [number of points, number of degrees]
-    n = len(collocation_r)
-    n_deg = min(n - 1, 12)
-    harmonics2collocation = np.zeros([n, n_deg])
-    # First 'harmonic' is constant (this line avoids Nan issues)
-    harmonics2collocation[:, 0] = 1
-
-    # SH coefficient matrix
-    # SH coefficients = harmonics2collocation \ vector psi_vacuum at collocation points
-    degrees = np.arange(1, n_deg)[None]
-    ones = np.ones_like(degrees)
-    harmonics2collocation[:, 1:] = (
-        collocation_r[:, None] ** (degrees + 1)
-        * np.sin(collocation_theta)[:, None]
-        * lpmv(ones, degrees, np.cos(collocation_theta)[:, None])
-        / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
-    )
-    return sig_fig_round(harmonics2collocation, sig_figures)
 
 
 class PointType(Enum):
@@ -343,6 +203,146 @@ def collocation_points(
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
+def coil_harmonic_amplitude_matrix(
+    input_coils: CoilSet,
+    degrees: np.ndarray,
+    r_t: float,
+    sh_coil_names: list,
+) -> np.ndarray:
+    """
+    Construct matrix from harmonic amplitudes at given coil locations.
+
+    To get an array of spherical harmonic amplitudes/coefficients (A_l)
+    which can be used in a spherical harmonic approximation of the
+    vacuum/coil contribution to the poloidal flux (psi) do:
+
+    A_l = matrix harmonic amplitudes @ vector of coil currents
+
+    A_l can be used as constraints in optimisation, see spherical_harmonics_constraint.
+
+    N.B. for a single filament (coil):
+
+    .. math::
+        A_{l} = \\frac{1}{2} \\mu_{0} I_{f} \\sin{\\theta_{f}}
+        (\\frac{r_{t}}{r_{f}})^l
+        \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}
+
+    Where l = degree, and :math: P_{l} \\cos{\\theta_{f}} are the associated
+    Legendre polynomials of degree l and order (m) = 1.
+
+    Parameters
+    ----------
+    input_coils:
+        Bluemira CoilSet
+    max_degree:
+        Maximum degree of harmonic to calculate up to
+    r_t:
+        Typical length scale (e.g. radius at outer midplane)
+    sh_coil_names:
+        Names of the coils to use with SH approximation (always located outside bdry_r)
+    sig_figures:
+        Number of significant figures for rounding currents2harmonics values
+
+    Returns
+    -------
+    currents2harmonics:
+        SH coil current matrix
+
+    """
+    x_f = []
+    z_f = []
+    for n in sh_coil_names:
+        x_f.append(input_coils[n].x)
+        z_f.append(input_coils[n].z)
+
+    # Spherical coords
+    r_f = np.linalg.norm([x_f, z_f], axis=0)
+    theta_f = np.arctan2(x_f, z_f)
+
+    # [number of degrees, number of coils]
+    currents2harmonics = np.ones([len(degrees), np.size(r_f)])
+
+    # First 'harmonic' is constant (this line avoids Nan issues)
+    # If the first degree is zero then we keep =1 and do not need to calculate
+    start = 1 if degrees[0] == 0 else 0
+
+    # SH coefficients from function of the current distribution
+    # outside of the sphere containing the core plasma
+    # SH coefficients = currents2harmonics @ coil currents
+    ones = np.ones_like(degrees[start:, None])
+    currents2harmonics[start:, :] = (
+        0.5
+        * MU_0
+        * (r_t / r_f)[None, :] ** degrees[start:, None]
+        * np.sin(theta_f)[None, :]
+        * lpmv(ones, degrees[start:, None], np.cos(theta_f)[None, :])
+        / np.sqrt(degrees[start:, None] * (degrees[start:, None] + 1))
+    )
+    return currents2harmonics
+
+
+def harmonic_amplitude_marix(
+    collocation: Collocation,
+    r_t: float,
+) -> np.ndarray:
+    """
+    Construct matrix from harmonic amplitudes at given points (in spherical coords).
+
+    The matrix is used in a spherical harmonic approximation of the vacuum/coil
+    contribution to the poloidal flux (psi):
+
+    .. math::
+        \\psi = \\sum{A_{l} \\frac{r^{l+1}}{r_{t}^l} \\sin{\\theta_{f}}
+        \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}}
+
+    Where l = degree, A_l are the spherical harmonic coefficients/amplitudes,
+    and :math: P_{l} \\cos{\\theta_{f}} are the associated Legendre polynomials of
+    degree l and order (m) = 1.
+
+    N.B. Vacuum Psi = Total Psi - Plasma Psi.
+
+    Parameters
+    ----------
+    collocation_r:
+        R values of collocation points
+    collocation_theta:
+        Theta values of collocation points
+    r_t:
+        Typical length scale (e.g. radius at outer midplane)
+    sig_figures:
+        Number of significant figures for rounding harmonics2collocation values
+
+    Returns
+    -------
+    harmonics2collocation: np.array
+        SH matrix for flux function at collocation points
+        (to get spherical harmonic amplitudes use
+        matrix @ coefficients = vector psi_vacuum at collocation points)
+    """
+    # Maximum number of degree of harmonic to calculate up to is n_collocation - 1
+    # or 12 (i.e., l=11) if there are lots of collocation points,
+    # do not need to go higher (see Bardsley et al, 2024,  Plasma Phys. Control. Fusion)
+    # in order to achieve a vary low fit metric for the approximation.
+    # [number of points, number of degrees]
+    n = len(collocation.r)
+    n_deg = min(n - 1, 12)
+    harmonics2collocation = np.zeros([n, n_deg])
+    # First 'harmonic' is constant (this line avoids Nan issues)
+    harmonics2collocation[:, 0] = 1
+
+    # SH coefficients = harmonics2collocation \ vector psi_vacuum at collocation points
+    degrees = np.arange(1, n_deg)[None]
+    ones = np.ones_like(degrees)
+    # N.B. First 'harmonic' is constant, so calculate from 1 not 0
+    harmonics2collocation[:, 1:] = (
+        collocation.r[:, None] ** (degrees + 1)
+        * np.sin(collocation.theta)[:, None]
+        * lpmv(ones, degrees, np.cos(collocation.theta)[:, None])
+        / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
+    )
+    return harmonics2collocation
+
+
 def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     """
     Calculate the value of the metric used for evaluating the SH approximation.
@@ -428,7 +428,7 @@ def coils_outside_fs_sphere(
 ) -> tuple[list, float]:
     """
     Find the coils located outside of the sphere containing the core plasma,
-    e.g., LCFS of the equilibrium state.
+    i.e., a chosen closed (FS) of the equilibrium state.
 
     Parameters
     ----------
@@ -463,8 +463,8 @@ def coils_outside_fs_sphere(
             "Names of coils that can be used in the SH"
             f" approximation: {not_too_close_coils}."
         )
-        return not_too_close_coils, bdry_r
-    return c_names.tolist(), bdry_r
+        return not_too_close_coils, bdry_r, bndry
+    return c_names.tolist(), bdry_r, bndry
 
 
 def get_psi_harmonic_amplitudes(
@@ -472,13 +472,26 @@ def get_psi_harmonic_amplitudes(
     grid: Grid,
     collocation: Collocation,
     r_t: float,
-    sig_figures: int = 15,
+    gamma_max: int = 10,
+    amplitude_variation_thresh: float = 2.0,
+    plot: bool = False,  # noqa: FBT001, FBT002
 ) -> np.ndarray:
     """
     Calculate the Spherical Harmonic (SH) amplitudes/coefficients needed to produce
     a SH approximation of the vacuum (i.e. control coil) contribution to
     the poloidal flux (psi).The number of degrees used in the approximation is
     one less than the number of collocation points.
+
+    In order to select only the harmonics with significant contribution for use
+    in our approximation, we optimise for the harmonic amplitude values using
+    Lasso as the objective function to be minimised.
+    Lasso regularisation is equivalent to Ordinary Least Squares (OLS) with
+    a penalty term for zeroing out less important harmonics.
+    Gamma sets the strength of the regularisation penalty, and gamma = 0 is
+    equivalent to just using OLS.
+    We calculate the harmonic amplitudes for gamma = 0 to 10 and then use a
+    maximum allowable coefficient of variation for the harmonic amplitudes to
+    select the significant contributions.
 
     Parameters
     ----------
@@ -491,48 +504,140 @@ def get_psi_harmonic_amplitudes(
     r_t:
         Typical length scale for spherical harmonic approximation
         (default = maximum x value of LCFS).
-    sig_figures:
-        Number of significant figures for rounding psi_harmonic_amplitudes values
-
+    gamma_max:
+        Maximum value of gamma to use in optimisation.
+        Range of 0 to gamma_max is used.
+    amplitude_variation_thresh:
+        Maximium value for harmonic amplitude coefficient of variation.
+        Threshold for significant harmonic selection.
+    plot:
+        Whether or not to plot the details of determining the significant
+        spherical harmonics needed for a good approximation.
 
     Returns
     -------
-    psi_harmonic_amplitudes:
-        SH coefficients for given number of degrees
+    :
+        degrees and associated SH amplitudes
 
     """
-    # Set up interpolation with gridded values
+    # Set up vacuum psi interpolation with gridded values.
     psi_func = RectBivariateSpline(grid.x[:, 0], grid.z[0, :], vacuum_psi)
 
-    # Evaluate at collocation points
+    # Evaluate psi at collocation points.
     collocation_psivac = psi_func.ev(collocation.x, collocation.z)
 
-    # Construct matrix from SH amplitudes for flux function at collocation points
-    harmonics2collocation = harmonic_amplitude_marix(
-        collocation.r, collocation.theta, r_t
-    )
+    # Construct SH matrix for flux function at collocation points.
+    harmonics2collocation = harmonic_amplitude_marix(collocation, r_t)
 
-    # matrix condition number for debug invetigations
-    _cond_num_h2c = np.linalg.cond(harmonics2collocation)
-    # Fit harmonics to match values at collocation points
-    # rcond=None for default of machine precision times max(harmonics2collocation)
-    psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
-        harmonics2collocation, collocation_psivac, rcond=None
-    )
+    # Determine harmonic amplitude values and which harmonic contributions
+    # are significant.
+    # Step 1: Optimise
+    if plot:
+        _f, ax = plt.subplots(2, 1)
+    opt_results = np.zeros([len(harmonics2collocation[0, :]), gamma_max + 1])
+    for gamma in range(gamma_max + 1):
+        args = (harmonics2collocation, collocation_psivac, gamma)
+        result = minimize(
+            fun=lasso,
+            x0=np.zeros(len(harmonics2collocation[0, :])),
+            args=args,
+            method="SLSQP",
+        )
+        opt_results[:, gamma] = result.x
+        if plot:
+            ax[0].plot(np.abs(result.x), label=f"gamma = {gamma}")
+            ax[0].set_ylabel("amplitude")
+            ax[0].set_yscale("log")
+            ax[0].legend(loc="best")
+    # Step 2: Calculate the coefficient of variation for each harmonic amplitude.
+    coeff_var = np.zeros(len(harmonics2collocation[0, :]))
+    for degree in range(len(harmonics2collocation[0, :])):
+        coeff_var[degree] = np.std(opt_results[degree, :]) / np.mean(
+            opt_results[degree, :]
+        )
+    if plot:
+        ax[1].plot(coeff_var, marker="o")
+        ax[1].set_xlabel("degree")
+        ax[1].set_ylabel("coefficient of variation")
+        ax[1].plot(
+            [0, 11],
+            [amplitude_variation_thresh, amplitude_variation_thresh],
+            color="red",
+            label="threshold (maximum)",
+        )
+        ax[1].plot(
+            [0, 11],
+            [-amplitude_variation_thresh, -amplitude_variation_thresh],
+            color="red",
+        )
+        ax[1].legend(loc="best")
+        plt.show()
 
-    return sig_fig_round(psi_harmonic_amplitudes, sig_figures)
+    # Apply amplitude threshold to select significant amplitude values.
+    important = np.abs(coeff_var) <= amplitude_variation_thresh
+    # Return degrees and amplitude values
+    return (np.argwhere(important)[:, 0], opt_results[important, 0])
+
+
+def sh_approx_psi(
+    psi,
+    grid,
+    degrees,
+    amplitudes,
+    r_t,
+):
+    """
+    Calculate the SH approximation of the vacuum/coilset contribution to the
+    core plasma.
+
+    Parameters
+    ----------
+    psi:
+        Psi to approximate
+    grid:
+        Psi grid
+    degrees:
+        Degrees used in approximation
+    amplitudes:
+        Amplitudes os SHs for given degrees
+    r_t:
+        Typical length scale (e.g. radius at outer midplane)
+
+    Returns
+    -------
+    sh_approx_psi:
+        SH approximation psi (on input grid)
+
+    """
+    # Spherical Coords
+    r = np.sqrt(grid.x**2 + grid.z**2)
+    theta = np.arctan2(grid.x, grid.z)
+    # Sum harmonics
+    sh_approx_psi = np.zeros(np.shape(psi))
+    for i, amp in zip(degrees, amplitudes, strict=False):
+        if i == 0:
+            # First 'harmonic' is constant (this line avoids Nan issues)
+            sh_approx_psi += amp
+        else:
+            sh_approx_psi += (
+                amp
+                * grid.x
+                * (r / r_t) ** i
+                * lpmv(1, i, np.cos(theta))
+                / np.sqrt(i * (i + 1))
+            )
+    return sh_approx_psi
 
 
 def spherical_harmonic_approximation(
     eq: Equilibrium,
-    n_points: int = 8,
-    point_type: PointType = PointType.ARC_PLUS_EXTREMA,
+    n_points: int = 10,
+    point_type: PointType = PointType.GRID_POINTS,
     grid_num: tuple[int, int] | None = None,
-    acceptable_fit_metric: float = 0.01,
-    psi_norm: float | None = None,
-    nlevels: int = 50,
+    psi_norm: float | None = 0.98,
     seed: int | None = None,
-    sig_figures: int = 15,
+    gamma_max: int = 10,
+    amplitude_variation_thresh: float = 2.0,
     *,
     plot: bool = False,
 ) -> tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
@@ -540,8 +645,6 @@ def spherical_harmonic_approximation(
     Calculate the spherical harmonic (SH) amplitudes/coefficients
     needed as a reference value for the 'spherical_harmonics_constraint'
     used in coilset optimisation.
-
-    Use a FS fit metric to determine the required number of degrees.
 
     The number of degrees used in the approximation is one less than
     the number of collocation points.
@@ -555,7 +658,7 @@ def spherical_harmonic_approximation(
         while being able to vary the vacuum (coil) contribution, so that
         we do not need to re-solve for the equilibria during optimisation.
     n_points:
-        Number of desired collocation points (default=8)
+        Number of desired collocation points (default=10)
         excluding extrema (always +4 automatically)
     point_type:
         Name that determines how the collocation points are selected,
@@ -571,23 +674,17 @@ def spherical_harmonic_approximation(
     grid_num:
         Number of points in x-direction and z-direction,
         to use with grid point distribution.
-    acceptable_fit_metric:
-        The default flux surface (FS) used for this metric is the LCFS.
-        (psi_norm value is used to select an alternative)
-        If the FS found using the SH approximation method perfectly matches the
-        FS of the input equilibria then the fit metric = 0.
-        A fit metric of 1 means that they do not overlap at all.
-        fit_metric_value = total area within one but not both FSs /
-        (input FS area + approximation FS area)
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
-    nlevels:
-        Plot setting, higher n = greater number of contour lines
     seed:
         Seed value to use with random point distribution
-    sig_figures:
-        Number of significant figures for rounding during SH approximation
+    gamma_max:
+        Maximum value of gamma to use in optimisation.
+        Range of 0 to gamma_max is used.
+    amplitude_variation_thresh:
+        Maximium value for harmonic amplitude coefficient of variation.
+        Threshold for significant harmonic selection.
     plot:
         Whether or not to plot the results
 
@@ -595,18 +692,31 @@ def spherical_harmonic_approximation(
     -------
     sh_coil_names:
         Names of the coils to use with SH approximation (always located outside bdry_r)
-    coil_current_harmonic_amplitudes:
+    amplitudes:
         SH coefficients/amplitudes for required number of degrees
-    degree:
+    degrees:
         Number of degrees required for a SH approx with the desired fit metric
     fit_metric_value:
         Fit metric achieved
+        The default flux surface (FS) used for this metric is the LCFS.
+        (psi_norm value is used to select an alternative)
+        If the FS found using the SH approximation method perfectly matches the
+        FS of the input equilibria then the fit metric = 0.
+        A fit metric of 1 means that they do not overlap at all.
+        fit_metric_value = total area within one but not both FSs /
+        (input FS area + approximation FS area)
+    r_t:
+        length scale used in the approximation - r for sphere containing core plasma
+    sh_coilset_current:
+        Coil currents found using the SH approximation
     approx_total_psi:
         Total psi obtained using the SH approximation
-    bdry_r:
-        Approximation boundary - sphere containing core plasma for chosen equilibrium.
-    sh_eq.coilset.current:
-        Coil currents found using the spherical harmonic approximation
+    approx_coilset_psi:
+        Vacuum/Coilset psi obtained using the SH approximation
+    original_fs:
+        Coordinates of plasma boundary (closed flux surface) from input equilibrium state
+    approx_fs:
+        Coordinates of plasma boundary from SH Approximation
 
     Raises
     ------
@@ -623,35 +733,23 @@ def spherical_harmonic_approximation(
           fit metric.
 
     """
-    # Get the necessary boundary locations and length scale
-    # for use in spherical harmonic approximations.
-    # Starting FS
-    original_fs = eq.get_LCFS() if psi_norm is None else eq.get_flux_surface(psi_norm)
+    # Get the names of coils located outside of the sphere containing the chosen
+    # closed Flux Surface (FS), the 'typical length scale' for use in approximation
+    # and the starting FS coordinates.
+    sh_coil_names, r_t, original_fs = coils_outside_fs_sphere(eq, psi_norm=psi_norm)
 
-    if eq.grid is None or eq.plasma is None:
-        raise EquilibriaError("eq not setup for SH approximation.")
-
-    # Grid keep the same as input equilibrium
-    grid = eq.grid
-
-    # Psi contribution from plasma
-    plasma_psi = eq.plasma.psi(grid.x, grid.z)
-
-    # Names of coils located outside of the sphere containing the FS
-    sh_coil_names, bdry_r = coils_outside_fs_sphere(eq, psi_norm=psi_norm)
-
-    # Typical length scale
-    r_t = bdry_r
+    # Psi contribution from plasma.
+    plasma_psi = eq.plasma.psi(eq.grid.x, eq.grid.z)
 
     # Calculate psi contribution from the vacuum, i.e.,
-    # from coils located outside of the sphere containing FS
-    vacuum_psi = np.zeros(np.shape(grid.x))
+    # from coils located outside of the sphere containing FS.
+    vacuum_psi = np.zeros((eq.grid.nx, eq.grid.nz))
     for n in sh_coil_names:
         vacuum_psi = np.sum(
             [vacuum_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
         )
 
-    # Create the set of collocation points within the FS for the SH calculations
+    # Create the set of collocation points within the FS for the SH calculations.
     collocation = collocation_points(
         original_fs,
         point_type,
@@ -660,217 +758,118 @@ def spherical_harmonic_approximation(
         grid_num,
     )
 
-    # SH amplitudes needed to produce an approximation of vacuum psi contribution
-    psi_harmonic_amplitudes = get_psi_harmonic_amplitudes(
-        vacuum_psi, grid, collocation, r_t, sig_figures
+    # Spherical Harmonic (SH) degrees and amplitudes needed to produce
+    # an approximation of vacuum psi contribution.
+    degrees, amplitudes = get_psi_harmonic_amplitudes(
+        vacuum_psi=vacuum_psi,
+        grid=eq.grid,
+        collocation=collocation,
+        r_t=r_t,
+        gamma_max=gamma_max,
+        amplitude_variation_thresh=amplitude_variation_thresh,
+        plot=plot,
     )
 
-    # Set min to save some time
-    min_degree = 2
-    # Can't have more degrees then sampled psi
-    max_degree = min(len(collocation.x) - 1, 12)
+    # Calculate the SH approximation of vacuum psi contribution.
+    _sh_approx_vacuum_psi = sh_approx_psi(
+        vacuum_psi,
+        eq.grid,
+        degrees,
+        amplitudes,
+        r_t,
+    )
 
+    # Construct SH coil current matrix.
+    currents2harmonics = coil_harmonic_amplitude_matrix(
+        eq.coilset,
+        degrees,
+        r_t,
+        sh_coil_names,
+    )
+
+    # Calculate matrix condition number.
+    _cond_num_c2h = np.linalg.cond(currents2harmonics)
+
+    # Calculate necessary coil currents.
+    currents, _residual, _rank, _s = np.linalg.lstsq(
+        currents2harmonics,
+        amplitudes,
+        rcond=None,
+    )
+
+    # Set currents in coilset.
     sh_eq = deepcopy(eq)
+    for n, i in zip(sh_coil_names, currents, strict=False):
+        sh_eq.coilset[n].current = i
 
-    for degree in range(min_degree, max_degree + 1):
-        # Construct matrix from harmonic amplitudes for coils
-        currents2harmonics = coil_harmonic_amplitude_matrix(
-            eq.coilset, degree, r_t, sh_coil_names, sig_figures
+    # Calculate the approximate psi contribution from the coils.
+    sh_approx_coilset_psi = sh_eq.coilset.psi(sh_eq.grid.x, sh_eq.grid.z)
+    # Total psi from approximation.
+    sh_approx_total_psi = sh_approx_coilset_psi + plasma_psi
+    sh_eq.get_OX_points(sh_approx_total_psi, force_update=True)
+
+    try:
+        # Get plasma boundary for comparison to starting equilibrium.
+        if psi_norm is None:
+            approx_fs = sh_eq.get_LCFS(psi=sh_approx_total_psi, delta_start=0.015)
+        else:
+            approx_fs = sh_eq.get_flux_surface(psi_norm)
+    except EquilibriaError:
+        bluemira_print(
+            "Could not find closed FS (at chosen normalised psi)"
+            "for the approximate psi field."
         )
 
-        # matrix condition number
-        cond_num_c2h = np.linalg.cond(currents2harmonics)
+    # Compare staring equilibrium to new approximate equilibrium.
+    fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 
-        # SH amplitudes to be returned (and used as constraints)
-        # Set even harmonics to 0 -> should be very small already
-        coil_current_harmonic_amplitudes = psi_harmonic_amplitudes[:degree]
-        coil_current_harmonic_amplitudes[0::2] = 0.0
-
-        # Calculate necessary coil currents
-        currents, _residual, _rank, _s = np.linalg.lstsq(
-            currents2harmonics[:, :], coil_current_harmonic_amplitudes, rcond=None
-        )
-        currents = sig_fig_round(currents, int(sig_figures - ten_power(cond_num_c2h)))
-
-        # Set currents in coilset
-        for n, i in zip(sh_coil_names, currents, strict=False):
-            sh_eq.coilset[n].current = i
-
-        # Calculate the approximate Psi contribution from the coils
-        coilset_approx_psi = sh_eq.coilset.psi(grid.x, grid.z)
-
-        # Total
-        approx_total_psi = coilset_approx_psi + plasma_psi
-        sh_eq.get_OX_points(approx_total_psi, force_update=True)
-
-        try:
-            # Get plasma boundary for comparison to starting equilibrium using fit metric
-            if psi_norm is None:
-                approx_fs = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
-            else:
-                approx_fs = sh_eq.get_flux_surface(psi_norm)
-        except EquilibriaError:
-            bluemira_print(
-                "Could not find closed FS (at chosen normalised psi)"
-                "for the approximate psi field."
-                "Trying again with more degrees."
-            )
-            continue
-
-        # Compare staring equilibrium to new approximate equilibrium
-        fit_metric_value = fs_fit_metric(original_fs, approx_fs)
-
-        bluemira_print(f"Fit metric value = {fit_metric_value} using {degree} degrees.")
-
-        if fit_metric_value <= acceptable_fit_metric:
-            break
-        if degree == max_degree:
-            bluemira_warn(
-                "You may need to use more degrees for a fit metric of"
-                f" {acceptable_fit_metric}! Use a greater number of collocation points"
-                " please."
-            )
-
-    # plot comparing original psi to the SH approximation
     if plot:
-        _p1, _p2, _p3, _p4 = plot_psi_comparision(
-            grid=grid,
-            eq=eq,
-            vac_psi_app=coilset_approx_psi,
-            nlevels=nlevels,
-            original_flux_surface=original_fs,
-            approx_flux_surface=approx_fs,
-        )
+        _f, ax = plt.subplots()
+        plot_psi_comparision(eq=eq, sh_eq=sh_eq, ax=ax)
 
     return (
         sh_coil_names,
-        coil_current_harmonic_amplitudes,
-        degree,
+        amplitudes,
+        degrees,
         fit_metric_value,
-        approx_total_psi,
-        bdry_r,
+        r_t,
         sh_eq.coilset.current,
+        sh_approx_coilset_psi,
+        sh_approx_total_psi,
+        original_fs,
+        approx_fs,
     )
 
 
 def plot_psi_comparision(
-    grid: Grid,
     eq: Equilibrium,
-    vac_psi_app: np.ndarray,
-    axes: list[plt.Axes] | None = None,
-    nlevels: int = 50,
-    original_flux_surface: Coordinates | None = None,
-    approx_flux_surface: Coordinates | None = None,
-    *,
-    show: bool = True,
-) -> tuple[plt.Axes, ...]:
+    sh_eq: Equilibrium,
+    ax: plt.Axes | None = None,
+) -> plt.Axes:
     """
     Create plot comparing an original psi to psi obtained from harmonic approximation.
 
     Parameters
     ----------
-    grid:
-        Need x and z values to plot psi.
     eq:
         Starting Equilibrium
-    vac_psi_app:
-        Approximation Vacuum Psi (contribution from entire coilset)
+    sh_eq:
+        SH Approximation Equilibrium
     axes:
-        List of Matplotlib Axes objects set by user
-    nlevels:
-        Plot setting, higher n = greater number of contour lines
-    original_flux_surface:
-        Coordinates of flux surcae of interest (e.g. LCFS) for starting equilibrium
-    approx_flux_surface:
-        Coordinates of flux surcae of interest (e.g. LCFS) from approximation
-    show:
-        Whether or not to display the plot
+        Matplotlib Axes object
 
     Returns
     -------
-    plot1, plot2, plot3, plot4:
-        The Matplotlib Axes objects for each subplot.
-
-    Raises
-    ------
-    ValueError
-        4 plots must be provided
-
+    ax:
+        Matplotlib Axes object
     """
-    tot_psi_org = eq.psi(grid.x, grid.z)
-    vac_psi_org = eq.coilset.psi(grid.x, grid.z)
-    tot_psi_app = eq.plasma.psi(grid.x, grid.z) + vac_psi_app
-
-    cmap = PLOT_DEFAULTS["psi"]["cmap"]
-    clevels_org = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
-    clevels_app = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_app), nlevels)
-    n_ax = 4
-
-    if axes is not None:
-        if len(axes) != n_ax:
-            raise ValueError(
-                f"There are 4 subplots, you have provided settings for {len(axes)}."
-            )
-        plot1, plot2, plot3, plot4 = axes[0], axes[1], axes[2], axes[3]
-    else:
-        plot1, plot2, plot3, plot4 = (
-            plt.subplot2grid((5, 4), (0, 0), rowspan=2, colspan=1),
-            plt.subplot2grid((5, 4), (0, 2), rowspan=2, colspan=1),
-            plt.subplot2grid((5, 4), (3, 0), rowspan=2, colspan=1),
-            plt.subplot2grid((5, 4), (3, 2), rowspan=2, colspan=1),
-        )
-
-    plot1.set_title("Original, Total Psi")
-    plot1.contour(
-        grid.x,
-        grid.z,
-        tot_psi_org,
-        levels=clevels_org,
-        cmap=cmap,
-        zorder=Zorder.PSI.value,
+    eq._label = "Original Equilibrium"
+    sh_eq._label = "Spherical Harmonic Approximation"
+    diag_ops = EqDiagnosticOptions(
+        psi_diff=PsiPlotType.PSI_REL_DIFF,
+        split_psi_plots=EqSubplots.XZ,
     )
-    plot2.set_title("SH Approximation, Total Psi")
-    plot2.contour(
-        grid.x,
-        grid.z,
-        tot_psi_app,
-        levels=clevels_app,
-        cmap=cmap,
-        zorder=Zorder.PSI.value,
-    )
-    plot3.set_title("Original, Vacuum Psi")
-    plot3.contour(
-        grid.x,
-        grid.z,
-        vac_psi_org,
-        levels=clevels_org,
-        cmap=cmap,
-        zorder=Zorder.PSI.value,
-    )
-    plot4.set_title("SH Approximation, Vacuum Psi")
-    plot4.contour(
-        grid.x,
-        grid.z,
-        vac_psi_app,
-        levels=clevels_app,
-        cmap=cmap,
-        zorder=Zorder.PSI.value,
-    )
+    eq_analysis = EqAnalysis(input_eq=sh_eq, reference_eq=eq, diag_ops=diag_ops)
+    eq_analysis.plot_compare_psi(ax=ax)
 
-    if original_flux_surface is not None:
-        plot1.plot(original_flux_surface.x, original_flux_surface.z, color="r")
-        plot2.plot(original_flux_surface.x, original_flux_surface.z, color="r")
-        plot3.plot(original_flux_surface.x, original_flux_surface.z, color="r")
-        plot4.plot(original_flux_surface.x, original_flux_surface.z, color="r")
-    if approx_flux_surface is not None:
-        plot2.plot(
-            approx_flux_surface.x, approx_flux_surface.z, color="b", linestyle="--"
-        )
-        plot4.plot(
-            approx_flux_surface.x, approx_flux_surface.z, color="b", linestyle="--"
-        )
-
-    if show:
-        plt.show()
-
-    return plot1, plot2, plot3, plot4
+    return ax
