@@ -1839,3 +1839,45 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         plt.tight_layout()
         plt.show()
+
+
+def create_case_tf_from_dict(
+    case_dict: dict,
+    name: str | None = None,
+) -> BaseCaseTF:
+    """
+    Factory function to create a CaseTF (or subclass) from a serialized dictionary.
+
+    Parameters
+    ----------
+    case_dict : dict
+        Serialized case dictionary, must include 'name_in_registry' field.
+    name : str, optional
+        Name to assign to the created case. If None, uses the name in the dictionary.
+
+    Returns
+    -------
+    BaseCaseTF
+        A fully instantiated CaseTF (or subclass) object.
+
+    Raises
+    ------
+    ValueError
+        If no class is registered with the given name_in_registry.
+    """
+    name_in_registry = case_dict.get("name_in_registry")
+    if name_in_registry is None:
+        raise ValueError("CaseTF dictionary must include 'name_in_registry' field.")
+
+    case_cls = CASETF_REGISTRY.get(name_in_registry)
+    if case_cls is None:
+        available = list(CASETF_REGISTRY.keys())
+        raise ValueError(
+            f"No registered CaseTF class with name_in_registry '{name_in_registry}'. "
+            f"Available: {available}"
+        )
+
+    return case_cls.from_dict(
+        name=name,
+        case_dict=case_dict,
+    )
