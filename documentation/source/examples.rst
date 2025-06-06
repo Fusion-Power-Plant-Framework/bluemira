@@ -84,3 +84,4 @@ Other Examples
     examples/radiation_transport/heat_flux_calculation
     examples/structural/tour_eiffel_example
     examples/design/optimised_reactor
+    examples/radiation_transport/run_cad_neutronics
