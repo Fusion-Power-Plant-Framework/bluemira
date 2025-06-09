@@ -269,7 +269,12 @@ def main(p):
     import openmc_data.convert.convert_endf as endf  # noqa: PLC0415
     import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
 
-    libs = (tendl, endf)
+    with open(Path(Path(__file__).resolve().parent, p.isotope_file)) as fh:
+        isotope_data = json.load(fh)
+
+    libs = tuple(
+        a for a in (tendl, endf) if a.__name__.rsplit("_", 1)[-1] in isotope_data
+    )
     lib_names = tuple(lib.__name__.split("_")[-1] for lib in libs)
 
     with ChgDir(root_folder):
