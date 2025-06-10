@@ -101,7 +101,12 @@ class MHDState:
     Base class for magneto-hydrodynamic states
     """
 
-    def __init__(self, grid: Grid,*, o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE):
+    def __init__(
+        self,
+        grid: Grid,
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
+    ):
         # Constructors
         self.x: npt.NDArray[np.float64] | None = None
         self.z: npt.NDArray[np.float64] | None = None
@@ -262,7 +267,7 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str | None = None,
         *,
         label: str = "Fixed Plasma Equilibrium",
-        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ):
         super().__init__(grid, o_point_fallback=o_point_fallback)
         # We just need the flux values, not the locations
@@ -468,7 +473,13 @@ class CoilSetMHDState(MHDState):
     Base class for magneto-hydrodynamic states with a CoilSet
     """
 
-    def __init__(self, grid: Grid, coilset: CoilSet, *, o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE):
+    def __init__(
+        self,
+        grid: Grid,
+        coilset: CoilSet,
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
+    ):
         super().__init__(grid, o_point_fallback=o_point_fallback)
         self._psi_green = None
         self._bx_green = None
@@ -1003,7 +1014,7 @@ class Equilibrium(CoilSetMHDState):
         jtor: npt.NDArray[np.float64] | None = None,
         filename: Path | str | None = None,
         label: str = "Equilibrium",
-        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ):
         self.force_symmetry: bool = force_symmetry
         super().__init__(grid, coilset, o_point_fallback=o_point_fallback)
@@ -1044,7 +1055,7 @@ class Equilibrium(CoilSetMHDState):
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
-        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
         **kwargs,
     ):
         """
@@ -1866,6 +1877,7 @@ class Equilibrium(CoilSetMHDState):
         psi: npt.NDArray[np.float64] | None = None,
         *,
         force_update: bool = False,
+        o_point_fallback: OPointCalcOptions | None = None,
     ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
         """
         Returns
@@ -1883,7 +1895,7 @@ class Equilibrium(CoilSetMHDState):
                 self.z,
                 psi,
                 limiter=self.limiter,
-                o_point_fallback=self.o_point_fallback,
+                o_point_fallback=o_point_fallback or self.o_point_fallback,
                 R_0=self.profiles.R_0,
             )
         return self._o_points, self._x_points

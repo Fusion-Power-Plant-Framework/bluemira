@@ -34,7 +34,13 @@ from bluemira.equilibria.diagnostics import (
     PsiPlotType,
 )
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import Xpoint, _in_plasma, get_contours, grid_2d_contour
+from bluemira.equilibria.find import (
+    OPointCalcOptions,
+    Xpoint,
+    _in_plasma,
+    get_contours,
+    grid_2d_contour,
+)
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import (
@@ -670,7 +676,13 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         # Do some housework
         self.psi = self.eq.psi()
 
-        self.o_points, self.x_points = self.eq.get_OX_points(self.psi, force_update=True)
+        self.o_points, self.x_points = self.eq.get_OX_points(
+            self.psi,
+            force_update=True,
+            o_point_fallback=OPointCalcOptions.GRID_CENTRE
+            if self.eq.o_point_fallback is OPointCalcOptions.RAISE
+            else self.eq.o_point_fallback,
+        )
 
         if self.x_points:
             self.xp_psi = self.x_points[0][2]  # Psi at separatrix

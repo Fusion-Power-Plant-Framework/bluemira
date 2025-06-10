@@ -206,7 +206,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
                 self.params.delta_95.value,
             ),
             self.build_config.get("grid_settings", {}),
-            self.build_config.get("o_point_fallback", OPointCalcOptions.RAISE),
+            self.build_config.get("o_point_fallback", OPointCalcOptions.GRID_CENTRE),
         )
 
     def _make_opt_problem(
