@@ -493,7 +493,7 @@ class Profile:
             return x_points[0].psi, o_points[0].psi, in_zone(x, z, lcfs)
 
         if not o_points:
-            o_point_fallback_calculator(o_point_fallback, x, z, psi, self.R_0)
+            o_points = o_point_fallback_calculator(o_point_fallback, x, z, psi, self.R_0)
 
         psio = o_points[0].psi
         if x_points:
