@@ -44,7 +44,7 @@ def make_equilibrium(
     _params: EquilibriumParams | dict,
     tf_coil_boundary: BluemiraWire,
     grid_settings: dict,
-    o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
+    o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
 ) -> Equilibrium:
     """
     Build an equilibrium using a coilset and a `BetaIpProfile` profile.

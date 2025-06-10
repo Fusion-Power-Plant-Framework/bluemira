@@ -167,7 +167,7 @@ class EQConfig:
     diagnostic_plotting: PicardDiagnosticOptions = field(
         default_factory=PicardDiagnosticOptions
     )
-    o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE
+    o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE
 
     def make_opt_problem(
         self,
