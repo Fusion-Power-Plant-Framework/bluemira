@@ -472,7 +472,7 @@ def get_psi_harmonic_amplitudes(
     grid: Grid,
     collocation: Collocation,
     r_t: float,
-    gamma_max: int = 10,
+    gamma_max: int = 0.1,
     amplitude_variation_thresh: float = 2.0,
     plot: bool = False,  # noqa: FBT001, FBT002
 ) -> np.ndarray:
@@ -534,8 +534,9 @@ def get_psi_harmonic_amplitudes(
     # Step 1: Optimise
     if plot:
         _f, ax = plt.subplots(2, 1)
-    opt_results = np.zeros([len(harmonics2collocation[0, :]), gamma_max + 1])
-    for gamma in range(gamma_max + 1):
+    gammas = np.linspace(0.0, gamma_max, 11)
+    opt_results = np.zeros([len(harmonics2collocation[0, :]), len(gammas)])
+    for i, gamma in enumerate(gammas):
         args = (harmonics2collocation, collocation_psivac, gamma)
         result = minimize(
             fun=lasso,
@@ -543,22 +544,23 @@ def get_psi_harmonic_amplitudes(
             args=args,
             method="SLSQP",
         )
-        opt_results[:, gamma] = result.x
+        opt_results[:, i] = result.x
         if plot:
             ax[0].plot(np.abs(result.x), label=f"gamma = {gamma}")
             ax[0].set_ylabel("amplitude")
             ax[0].set_yscale("log")
-            ax[0].legend(loc="best")
+            ax[0].legend(loc="right")
     # Step 2: Calculate the coefficient of variation for each harmonic amplitude.
     coeff_var = np.zeros(len(harmonics2collocation[0, :]))
     for degree in range(len(harmonics2collocation[0, :])):
-        coeff_var[degree] = np.std(opt_results[degree, :]) / np.mean(
-            opt_results[degree, :]
+        coeff_var[degree] = np.std(opt_results[degree, :]) / np.abs(
+            np.mean(opt_results[degree, :])
         )
     if plot:
         ax[1].plot(coeff_var, marker="o")
         ax[1].set_xlabel("degree")
         ax[1].set_ylabel("coefficient of variation")
+        ax[1].set_ylim(-1, 10)
         ax[1].plot(
             [0, 11],
             [amplitude_variation_thresh, amplitude_variation_thresh],
@@ -567,8 +569,9 @@ def get_psi_harmonic_amplitudes(
         )
         ax[1].plot(
             [0, 11],
-            [-amplitude_variation_thresh, -amplitude_variation_thresh],
-            color="red",
+            [0, 0],
+            color="black",
+            linestyle="--",
         )
         ax[1].legend(loc="best")
         plt.show()
@@ -636,7 +639,7 @@ def spherical_harmonic_approximation(
     grid_num: tuple[int, int] | None = None,
     psi_norm: float | None = 0.98,
     seed: int | None = None,
-    gamma_max: int = 10,
+    gamma_max: int = 0.1,
     amplitude_variation_thresh: float = 2.0,
     *,
     plot: bool = False,

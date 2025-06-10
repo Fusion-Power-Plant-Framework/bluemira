@@ -14,7 +14,10 @@ from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
 )
-from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
+from bluemira.equilibria.optimisation.objectives import (
+    RegularisedLsqObjective,
+    tikhonov_ridge_solution,
+)
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
@@ -111,12 +114,18 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         else:
             x0 = np.clip(x0 / self.scale, *self.bounds)
 
+        # Get the optimisation currents expansion matrix.
+        currents_expand_mat = self.eq.coilset._opt_currents_expand_mat
+        # If it is not None then, use to convert the optimisable
+        # currents to the full set of currents in the CoilSet.
+        if currents_expand_mat is not None:
+            a_mat = a_mat @ currents_expand_mat  # nlopt read only  # noqa: PLR6104
+
         objective = RegularisedLsqObjective(
             scale=self.scale,
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
-            currents_expand_mat=self.eq.coilset._opt_currents_expand_mat,
         )
         eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
         opt_result = optimise(
@@ -189,9 +198,17 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
 
         c_cs = self.eq.coilset.get_control_coils()
 
+        # Get the optimisation currents expansion matrix.
+        currents_expand_mat = c_cs._opt_currents_expand_mat
+        # If it is not None then, use to convert the optimisable
+        # currents to the full set of currents in the CoilSet.
+        if currents_expand_mat is not None:
+            a_mat = a_mat @ currents_expand_mat  # nlopt read only  # noqa: PLR6104
         # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(
-            a_mat, b_vec, self.gamma, currents_expand_mat=c_cs._opt_currents_expand_mat
+        current_adjustment = tikhonov_ridge_solution(
+            a_mat,
+            b_vec,
+            self.gamma,
         )
 
         # Update parameterisation (coilset).
