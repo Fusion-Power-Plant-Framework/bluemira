@@ -65,24 +65,33 @@ def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
             "Symmetrising a CoilSet which is not purely symmetric about z=0. This can"
             " result in undesirable behaviour."
         )
+
     coilset = deepcopy(coilset)
+    sym_stack, sym_inds = _get_symmetric_coils(coilset)
 
-    sym_stack = _get_symmetric_coils(coilset)
     counts = np.array(sym_stack, dtype=object).T[1]
+    if np.array(counts).any() > 2:  # noqa: PLR2004
+        raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
+    circuit_inds = np.arange(len(coilset._coils))
     new_coils = []
-    for coil, count in zip(coilset._coils, counts, strict=False):
-        if count == 1:
-            new_coils.append(coil)
-        elif count == 2:  # noqa: PLR2004
-            if isinstance(coil, SymmetricCircuit):
+    i = 0
+    for j, coil in enumerate(coilset._coils):
+        if (circuit_inds[j] in sym_inds) and (i <= len(sym_inds) - 1):
+            if counts[i] == 1:
                 new_coils.append(coil)
-            elif isinstance(coil, Coil):
-                new_coils.append(SymmetricCircuit(coil))
-            else:
-                raise EquilibriaError(f"Unrecognised class {coil.__class__.__name__}")
-        else:
-            raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+            if counts[i] == 2:  # noqa: PLR2004
+                if isinstance(coil, SymmetricCircuit):
+                    new_coils.append(coil)
+                    circuit_inds[j + 1 :] += 1
+                elif isinstance(coil, Coil):
+                    new_coils.append(SymmetricCircuit(coil))
+                else:
+                    raise EquilibriaError(
+                        f"Unrecognised class {coil.__class__.__name__}"
+                    )
+
+            i += 1
 
     return CoilSet(*new_coils)
 
@@ -955,6 +964,11 @@ class SymmetricCircuit(Circuit):
     ):
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
+            if "U" in coils[0].name:
+                coils[1].name = coils[0].name.replace("U", "L")
+            else:
+                coils[1].name = coils[0].name + "L"
+                coils[0].name += "U"
         if len(coils) != 2:  # noqa: PLR2004
             raise EquilibriaError(
                 f"Wrong number of coils to create a {type(self).__name__}"

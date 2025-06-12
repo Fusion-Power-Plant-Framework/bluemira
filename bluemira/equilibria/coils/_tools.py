@@ -79,19 +79,22 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     return M
 
 
-def _get_symmetric_coils(coilset: CoilSet) -> list[list]:
+def _get_symmetric_coils(coilset: CoilSet) -> tuple[list[list], list[int]]:
     """
     Coilset symmetry utility
 
     Returns
     -------
     :
-        Symmetric coilset
+        Symmetric coilset, indices of first coil in symmetric pairs
     """
     x, z, dx, dz, currents = coilset.to_group_vecs()
+    ind = [coilset.name.index(cn) for cn in coilset.name]
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
     sym_stack = [[coil_matrix[0], 1]]
+    inds = [ind[0]]
+
     for i in range(1, len(x)):
         coil = coil_matrix[i]
 
@@ -102,8 +105,9 @@ def _get_symmetric_coils(coilset: CoilSet) -> list[list]:
 
         else:
             sym_stack.append([coil, 1])
+            inds.append(ind[i])
 
-    return sym_stack
+    return sym_stack, inds
 
 
 def check_coilset_symmetric(coilset: CoilSet) -> bool:
@@ -119,7 +123,7 @@ def check_coilset_symmetric(coilset: CoilSet) -> bool:
     -------
     Whether or not the CoilSet is symmetric about z=0
     """
-    sym_stack = _get_symmetric_coils(coilset)
+    sym_stack, _ = _get_symmetric_coils(coilset)
     for coil, count in sym_stack:
         if count != 2 and not np.isclose(coil[1], 0.0):  # noqa: PLR2004
             # therefore z = 0
