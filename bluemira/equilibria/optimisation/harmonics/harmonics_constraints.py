@@ -220,7 +220,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
         self.target_harmonics_cos = ref_harmonics_cos
         self.target_harmonics_sin = ref_harmonics_sin
-        self.max_degree = len(ref_harmonics_cos) - 1
+        self.max_degree = len(ref_harmonics_cos)
 
         if invert and constraint_type == "equality":
             bluemira_warn(
