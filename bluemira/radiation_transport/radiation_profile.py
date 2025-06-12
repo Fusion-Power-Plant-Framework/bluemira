@@ -21,9 +21,10 @@ from scipy.interpolate import interp1d
 
 from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.display.plotter import Zorder, plot_coordinates
+from bluemira.display.plotter import Zorder, plot_2d, plot_coordinates
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.flux_surfaces_maker import (
     analyse_first_wall_flux_surfaces,
 )
@@ -2246,7 +2247,7 @@ class RadiationSource:
 
         return self.x_tot, self.z_tot, self.rad_tot
 
-    def plot(self, ax=None) -> plt.Axes:
+    def plot(self, ax=None, *, plot_flux_tubes=False) -> plt.Axes:
         """
         Plot the RadiationSolver results.
 
@@ -2278,5 +2279,28 @@ class RadiationSource:
         )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
+
+        if plot_flux_tubes:
+            # for Debugging issue #3944
+            # plot the flux tube surfaces as well
+            core_rad_flux_tube_contours = [
+                make_polygon(flux_tube, closed=True)
+                for flux_tube in self.core_rad.flux_tubes
+            ]
+            sol_rad_flux_tubes = functools.reduce(
+                operator.iadd,
+                [
+                    self.sol_rad.flux_tubes_lfs_low,
+                    self.sol_rad.flux_tubes_hfs_low,
+                    self.sol_rad.flux_tubes_lfs_up,
+                    self.sol_rad.flux_tubes_hfs_up,
+                ],
+                [],
+            )
+            sol_rad_flux_tube_contours = [
+                make_polygon(flux_tube.coords) for flux_tube in sol_rad_flux_tubes
+            ]
+            plot_2d(core_rad_flux_tube_contours, ax=ax, show=False)
+            plot_2d(sol_rad_flux_tube_contours, ax=ax, show=False)
 
         return ax
