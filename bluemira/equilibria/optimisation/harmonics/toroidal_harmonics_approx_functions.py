@@ -330,7 +330,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
     th_params:
         Dataclass holding necessary parameters for the TH approximation
     max_degree:
-        Maximum degree of harmonic to calculate up to
+        Maximum number of degrees to calculate up to
     sig_figures:
         Number of significant figures for rounding currents2harmonics values
 
@@ -364,14 +364,14 @@ def coil_toroidal_harmonic_amplitude_matrix(
     Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
 
     # [number of degrees, number of coils]
-    currents2harmonics = np.zeros([max_degree + 1, np.size(tau_c)])
+    currents2harmonics = np.zeros([max_degree, np.size(tau_c)])
 
     # TH coefficients from function of the current distribution
     # outside of the region containing the core plamsa
     # TH coefficients = currents2harmonics @ coil currents
-    degrees = np.arange(0, max_degree + 1)[:, None]
+    degrees = np.arange(0, max_degree)[:, None]
     factorial_term = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in range(max_degree + 1)
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in range(max_degree)
     ])
 
     currents2harmonics[:, :] = (
@@ -380,7 +380,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
         * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
         * legendre_p(degrees - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
     )
-    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree + 1)]
+    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree)]
     Am_cos = currents2harmonics * np.cos(sigma_c_mult_degree)  # noqa: N806
     Am_sin = currents2harmonics * np.sin(sigma_c_mult_degree)  # noqa: N806
     return sig_fig_round(Am_cos, sig_figures), sig_fig_round(Am_sin, sig_figures)
@@ -419,7 +419,7 @@ def toroidal_harmonic_approximate_psi(
     th_params:
         Dataclass holding necessary parameters for the TH approximation
     max_degree:
-        Maximum degree of harmonic to calculate up to
+        Maximum number of degrees to calculate up to
 
     Returns
     -------
@@ -443,12 +443,12 @@ def toroidal_harmonic_approximate_psi(
     # Useful combination
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
     # Get sigma values for the grid
-    sigma_mult_degree = [m * th_params.sigma for m in range(max_degree + 1)]
+    sigma_mult_degree = [m * th_params.sigma for m in range(max_degree)]
 
-    epsilon = 2 * np.ones(max_degree + 1)
+    epsilon = 2 * np.ones(max_degree)
     epsilon[0] = 1
-    factorial_m = np.array([factorial(m) for m in range(max_degree + 1)])
-    degrees = np.arange(0, max_degree + 1)[:, None, None]
+    factorial_m = np.array([factorial(m) for m in range(max_degree)])
+    degrees = np.arange(0, max_degree)[:, None, None]
     # TH coefficient matrix
     Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
         input_coils=eq.coilset,
@@ -570,11 +570,13 @@ def toroidal_harmonic_approximation(
     min_degree = 2
     # Can't have more degrees than sampled psi
     max_degree = len(th_params.th_coil_names) - 1
+    # Have cos and sin components so this must be half
+    allowable_n_degrees = int(np.trunc(max_degree / 2))
 
-    for degree in range(min_degree, max_degree + 1):
+    for degree in range(min_degree, allowable_n_degrees):
         # Construct matrix from harmonic amplitudes for the coils and approximate psi
         approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
-            eq=eq, th_params=th_params, max_degree=degree
+            eq=eq, th_params=th_params, max_degree=degree + 1
         )
         # Add the non TH coil contribution to the total
         approx_total_psi = approx_coilset_psi + non_th_contribution_psi
@@ -598,11 +600,13 @@ def toroidal_harmonic_approximation(
         # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 
-        bluemira_print(f"Fit metric value = {fit_metric_value} using {degree} degrees.")
+        bluemira_print(
+            f"Fit metric value = {fit_metric_value} using {degree + 1} degrees."
+        )
 
         if fit_metric_value <= acceptable_fit_metric:
             break
-        if degree == max_degree:
+        if degree + 1 == max_degree:
             bluemira_warn(
                 "You may need to use more degrees for a fit metric of"
                 f" {acceptable_fit_metric}!"
@@ -636,7 +640,7 @@ def toroidal_harmonic_approximation(
         th_params,
         Am_cos,
         Am_sin,
-        degree,
+        degree + 1,
         fit_metric_value,
         approx_total_psi,
         approx_coilset_psi,

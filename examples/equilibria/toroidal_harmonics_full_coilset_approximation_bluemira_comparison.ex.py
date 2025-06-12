@@ -188,22 +188,22 @@ o_points, x_points = approx_eq.get_OX_points(total_psi)
 # The fit metric is a measure of how 'good' the approximation is.
 # Fit metric value = total area within one but not both FSs /
 #                    (input FS area + approximation FS area)
-psi_norm = 1.0
+psi_norm = 0.95
 f_s = find_flux_surf(
     R_approx, Z_approx, total_psi, psi_norm, o_points=o_points, x_points=x_points
 )
-approx_LCFS = Coordinates({"x": f_s[0], "z": f_s[1]})
-original_LCFS = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
+approx_fs = Coordinates({"x": f_s[0], "z": f_s[1]})
+original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
 
 # Plot
 plt.contourf(R_approx, Z_approx, total_psi, nlevels, cmap=cmap)
 plt.xlabel("R")
 plt.ylabel("Z")
 plt.plot(
-    approx_LCFS.x,
-    approx_LCFS.z,
+    approx_fs.x,
+    approx_fs.z,
     color="red",
-    label="Approximate LCFS from TH approximation",
+    label=f"Closed Flux Surface (psi_n={psi_norm}) from TH approximation",
 )
 plt.title("Total Psi using TH approximation for coilset psi")
 plt.legend(loc="upper right")
@@ -244,8 +244,8 @@ plt.show()
 coilset_psi_diff = np.abs(approx_coilset_psi - coilset_psi) / np.max(np.abs(coilset_psi))
 coilset_psi_diff_plot = coilset_psi_diff
 f, ax = plt.subplots()
-ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approximate LCFS from TH")
-ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="LCFS from Bluemira")
+ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approximate LCFS from TH")
+ax.plot(original_fs.x, original_fs.z, color="blue", label="LCFS from Bluemira")
 im = ax.contourf(R_approx, Z_approx, coilset_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
 ax.set_title("Absolute relative difference between coilset psi and TH approximation psi")
@@ -261,8 +261,8 @@ total_psi_diff = np.abs(total_psi - bluemira_total_psi) / np.max(
 )
 total_psi_diff_plot = total_psi_diff
 f, ax = plt.subplots()
-ax.plot(approx_LCFS.x, approx_LCFS.z, color="red", label="Approx FS from TH")
-# ax.plot(original_LCFS.x, original_LCFS.z, color="blue", label="FS from Bluemira")
+ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approx FS from TH")
+ax.plot(original_fs.x, original_fs.z, color="blue", label="FS from Bluemira")
 im = ax.contourf(R_approx, Z_approx, total_psi_diff_plot, levels=nlevels, cmap=cmap)
 f.colorbar(mappable=im)
 ax.set_title("Absolute relative difference between total psi and TH approximation psi")
@@ -275,7 +275,7 @@ plt.show()
 
 # %%
 # Fit metric to evaluate TH approximation
-fit_metric_value = fs_fit_metric(original_LCFS, approx_LCFS)
+fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 print(f"fit metric value = {fit_metric_value}")
 
 # %% [markdown]
