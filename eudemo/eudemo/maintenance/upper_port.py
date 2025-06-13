@@ -89,7 +89,11 @@ class UpperPortOP(OptimisationProblem):
             List of inequality constraints
         """
         return [
-            {"f_constraint": self.constrain_blanket_cut, "tolerance": np.full(3, 1e-6)}
+            {
+                "name": "Upper Port",
+                "f_constraint": self.constrain_blanket_cut,
+                "tolerance": np.full(3, 1e-6),
+            }
         ]
 
     def bounds(self) -> tuple[np.ndarray, np.ndarray]:

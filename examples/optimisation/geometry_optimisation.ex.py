@@ -156,6 +156,7 @@ class ContractLengthGOP(GeomOptimisationProblem):
         """List of inequality constraints to satisfy."""
         return [
             {
+                "name": "distance",
                 "f_constraint": lambda geom: self._distance_constraint(
                     geom, self.plasma, self.min_distance
                 ),

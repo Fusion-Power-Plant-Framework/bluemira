@@ -71,6 +71,7 @@ class PanellingOptProblem(OptimisationProblem):
         """
         return [
             {
+                "name": "Panel",
                 "f_constraint": self.constrain_min_length_and_angles,
                 "tolerance": np.full(self.n_constraints, 1e-8),
             }

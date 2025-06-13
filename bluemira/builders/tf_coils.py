@@ -193,6 +193,7 @@ class RipplePointSelector:
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
         return {
+            "name": type(self).__name__,
             "f_constraint": self._constrain_ripple,
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
@@ -341,6 +342,7 @@ class MaximiseSelector(RipplePointSelector):
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
         return {
+            "name": type(self).__name__,
             "f_constraint": self._constrain_max_ripple,
             "tolerance": np.full(2, rip_con_tol),
         }
