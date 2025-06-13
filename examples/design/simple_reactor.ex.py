@@ -283,6 +283,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         minimum distance to the plasma.
         """
         distance_constraint = {
+            "name": "distance",
             "f_constraint": lambda g: self._constrain_distance(g, min_dist_to_plasma),
             "tolerance": np.array([1e-6]),
         }
