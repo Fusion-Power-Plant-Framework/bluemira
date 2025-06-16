@@ -264,6 +264,7 @@ class ConstraintPlotter(Plotter):
 
         for constraint in self.constraint_set.constraints:
             constraint.plot(self.ax)
+        self.ax.legend()
 
 
 class LimiterPlotter(Plotter):
@@ -523,13 +524,21 @@ class PlasmaCoilPlotter(Plotter):
             cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
 
             levels = np.linspace(J_TOR_MIN, np.amax(self.plasma_coil._j_tor), nlevels)
-            self.ax.contourf(
+            cont = self.ax.contourf(
                 self.plasma_coil._grid.x,
                 self.plasma_coil._grid.z,
                 self.plasma_coil._j_tor,
                 cmap=cmap,
                 levels=levels,
             )
+            cbar = plt.colorbar(
+                cont,
+                location="left",
+                ticks=np.linspace(J_TOR_MIN, np.amax(self.plasma_coil._j_tor), 2),
+                shrink=0.5,
+                ax=self.ax,
+            )
+            cbar.set_label("$j_{t}$ [$A/m^{2}$]")
             self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
 
 
@@ -563,7 +572,7 @@ class EquilibriumPlotterMixin:
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
 
         levels = np.linspace(np.amin(self.psi), np.amax(self.psi), nlevels)
-        self.ax.contour(
+        cont = self.ax.contour(
             self.eq.x,
             self.eq.z,
             self.psi,
@@ -572,6 +581,14 @@ class EquilibriumPlotterMixin:
             zorder=Zorder.PSI.value,
             linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
         )
+        cbar = plt.colorbar(
+            cont,
+            location="right",
+            ticks=np.linspace(np.amin(self.psi), np.amax(self.psi), 5),
+            shrink=0.5,
+            ax=self.ax,
+        )
+        cbar.set_label("$\\psi$ [V.s/rad]")
 
     def plot_plasma_current(self, *, smooth: bool = True, **kwargs):
         """
@@ -592,6 +609,14 @@ class EquilibriumPlotterMixin:
             cmap=cmap,
             zorder=Zorder.PLASMACURRENT.value,
         )
+        cbar = plt.colorbar(
+            cont,
+            location="left",
+            ticks=np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), 5),
+            shrink=0.5,
+            ax=self.ax,
+        )
+        cbar.set_label("$j_{t}$ [A/m^2]")
         if smooth:
             smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
 
@@ -688,12 +713,20 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             )
             self.op_psi = np.amin(self.psi)
 
-        if field not in EqBPlotParam.FIELD:
+        self.field = field
+        self.show_ox = show_ox
+        self.plasma = plasma
+        self.plot()
+        self.i = 0
+
+    def plot(self):
+        """Make plots"""
+        if self.field not in EqBPlotParam.FIELD:
             self.plot_plasma_current()
             self.plot_psi()
-        elif field is EqBPlotParam.BP:
+        elif self.field is EqBPlotParam.BP:
             self.plot_B_component()
-        elif field is EqBPlotParam.BT:
+        elif self.field is EqBPlotParam.BT:
             self.plot_B_component(poloidal=False)
 
         if self.o_points and self.x_points:
@@ -701,11 +734,11 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.plot_separatrix()
             self.plot_flux_surface(1.05, "pink")
 
-        if show_ox:
+        if self.show_ox:
             self.plot_X_points()
             self.plot_O_points()
 
-        if plasma:
+        if self.plasma:
             self.plot_plasma_coil()
 
     def plot_flux_surface(self, psi_norm, color="k"):
@@ -785,6 +818,28 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         Plot the plasma coil.
         """
         PlasmaCoilPlotter(self.eq.plasma, ax=self.ax)
+
+    def _clean_plots(self):
+        if self.i != 0:
+            self.ax.clear()
+            if legend := self.ax.get_legend():
+                legend.remove()
+
+    def update_plot(self):
+        """Update Plots"""
+        self._clean_plots()
+        self.plot()
+
+        plt.pause(PLT_PAUSE)
+
+        save_figure(
+            fig=self.f,
+            name=f"{self.diag_ops.plot_name}{self.i}",
+            save=self.diag_ops.save,
+            folder=self.diag_ops.folder,
+            dpi=DPI_GIF,
+        )
+        self.i += 1
 
 
 class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
@@ -1220,6 +1275,7 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
                     legend.remove()
 
     def update_plot(self):
+        """Update Plots"""
         self._calculate_psi()
         self._clean_plots()
 
