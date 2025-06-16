@@ -1218,9 +1218,7 @@ def make_wall_detectors(
     return wall_detectors
 
 
-def plot_radiation_loads(
-    radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
-):
+def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, fw_shape):
     """
     To plot the radiation on the wall as [MW/m^2]
     """
@@ -1269,32 +1267,34 @@ def plot_radiation_loads(
     )
     cmap.set_array([])
 
-    heat_cbar = fig.colorbar(cmap, ax=ax1)
-    heat_cbar.set_label(r"Wall Load ($MW.m^{-2}$)")
+    emiss_mwm3 = np.squeeze(t_samples) * 1e-6
 
-    ax2 = plt.subplot(gs[0, 1])
-    ax2.plot(
-        np.array(wall_loads.distance),
-        raw_uc(np.array(wall_loads.power_density), "W", "MW"),
+    bbox = ax1.get_position()
+    left = bbox.x1 + 0.01
+
+    im = ax1.imshow(
+        emiss_mwm3.T,
+        extent=[min_r, max_r, min_z, max_z],
+        origin="lower",
+        cmap="inferno",
+        vmin=0.0,
+        vmax=emiss_mwm3.max(),
     )
-    ax2.set_ylim([
-        0.0,
-        raw_uc(1.1 * np.max(np.array(wall_loads.power_density)), "W", "MW"),
+
+    emi_cbar = fig.colorbar(im, ax=ax1)
+    emi_cbar.set_label(r"Emission ($MW/m^{3}$)", labelpad=2)
+
+    # custom axis for the wall load bar
+    cax2 = fig.add_axes([
+        left + 0.1,
+        bbox.y0 + 0.005 * bbox.height,
+        0.03,
+        0.99 * bbox.height,
     ])
-    ax2.grid(visible=True)
-    ax2.set_ylabel(r"Radiation Load ($MW.m^{-2}$)")
+    cbar_wall = fig.colorbar(cmap, cax=cax2)
+    cbar_wall.set_label(r"Wall load ($MW/m^{2}$)", labelpad=10)
 
-    ax3 = plt.subplot(gs[1, 1])
-    ax3.plot(
-        np.array(wall_loads.distance),
-        np.cumsum(np.array(wall_loads.detected_power) * 1.0e-6),
-    )
-
-    ax3.set_ylabel(r"Total Power $[MW]$")
-    ax3.set_xlabel(r"Poloidal Distance $[m]$")
-    ax3.grid(visible=True)
-
-    plt.suptitle(plot_title)
+    plt.savefig("core_radiation.png", dpi=300, bbox_inches="tight")
     plt.show()
 
 
@@ -1358,7 +1358,6 @@ class FirstWallRadiationSolver:
                 rad_3d,
                 wall_detectors,
                 wall_loads,
-                "SOL & divertor radiation loads",
                 self.fw_shape,
             )
 
