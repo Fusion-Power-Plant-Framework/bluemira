@@ -126,11 +126,13 @@ tallies = openmc.Tallies([
 ])
 
 model = openmc.Model(
-    materials=openmc_mats,
     geometry=geometry,
     tallies=tallies,
     settings=settings,
 )
+# For some reason, have to set the materials after the model is created
+# (this is a bug in OpenMC)
+model.materials = openmc_mats
 model.export_to_model_xml()
 model.run()
 
