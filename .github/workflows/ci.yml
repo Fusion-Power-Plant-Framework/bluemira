@@ -16,17 +16,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: "Install pre-commit"
-        shell: bash -l {0}
-        run: |
-          pip install pre-commit
-          pre-commit install -f
 
       - name: "Cache pre-commit"
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: "Install pre-commit"
+        shell: bash -l {0}
+        run: |
+          pip install pre-commit
+          pre-commit install
+
       - name: Check Code Quality
         shell: bash -l {0}
         run: |
