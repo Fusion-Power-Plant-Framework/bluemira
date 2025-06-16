@@ -119,6 +119,9 @@ def to_constraint(
         "df_constraint": None,
         "tolerance": geom_constraint["tolerance"],
     }
+    if name := geom_constraint.get("name", None):
+        constraint["name"] = name
+
     if df_constraint := geom_constraint.get("df_constraint", None):
         constraint["df_constraint"] = to_optimiser_callable(df_constraint, geom)
     return constraint
@@ -176,7 +179,11 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
             zone_points=koz_points,
         )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
+    return {
+        "name": "KOZ",
+        "f_constraint": _f_constraint,
+        "tolerance": np.full(shape_n_discr, koz.tol),
+    }
 
 
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[ConstraintT]:
@@ -196,6 +203,7 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[Constraint
         df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
     return [
         {
+            "name": geom.name,
             "f_constraint": to_optimiser_callable_from_cls(geom.f_ineq_constraint, geom),
             "df_constraint": df_constraint,
             "tolerance": geom.tolerance,
