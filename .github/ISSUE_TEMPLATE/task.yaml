@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to add a mainenance task!
+        Thanks for taking the time to add a maintenance task!
   - type: textarea
     id: what-happened
     attributes:
@@ -21,6 +21,10 @@ body:
     attributes:
       label: Current and Future State
       description: If the change is user facing please show what the current situation is and the suggested change
-      # placeholder:
+      placeholder: |
+        1) Current usage API
+
+        2) Requested usage API
+
     validations:
       required: false
