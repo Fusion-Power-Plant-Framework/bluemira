@@ -46,6 +46,7 @@ jobs:
       - name: Run examples
         env:
           RUN_DAGMC_EX: ${{ matrix.python-version == '3.10' && '-e design/optimised_reactor' || '' }}
+          RUN_PROCESS_EX: ${{ matrix.python-version == '3.12' && '-e radiation_transport/radiation_calculation_solver_DEMO' || '' }}
         shell: bash -l {0}
         run: |
           # Exclude examples using plasmod or process, as these aren't available
@@ -64,3 +65,4 @@ jobs:
             -e 'mesh/mesh_tutorial' \
             -e 'radiation_transport/run_cad_neutronics' \
             ${RUN_DAGMC_EX} \
+            ${RUN_PROCESS_EX}
