@@ -40,6 +40,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.coils._grouping import (
+    CoilSet,
+    SymmetricCircuit,
+    symmetrise_coilset,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
@@ -70,9 +75,27 @@ EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
 eq_name = "DN-DEMO_eqref.json"
 eq_name = Path(EQDATA, eq_name)
-eq = Equilibrium.from_eqdsk(eq_name, from_cocos=3, qpsi_positive=False)
+eq = Equilibrium.from_eqdsk(
+    eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
+)
+# TODO leave the force_symmetry in even though it isnt working now
+# it will work when Georgie's fix has been merged in
+# %%
+# Symmetric circuits
+# coils = [
+#     SymmetricCircuit(eq.coilset["PF_1"]),
+#     SymmetricCircuit(eq.coilset["PF_2"]),
+#     SymmetricCircuit(eq.coilset["PF_3"]),
+#     eq.coilset["CS_1"],
+#     eq.coilset["CS_2"],
+#     eq.coilset["CS_3"],
+#     eq.coilset["CS_4"],
+#     eq.coilset["CS_5"],
+# ]
+# new_coilset = CoilSet(*coils)
 
 
+# %%
 # Plot equilibrium
 f, ax = plt.subplots()
 eq.plot(ax=ax)
@@ -146,13 +169,37 @@ th_constraint_equal = ToroidalHarmonicConstraint(
     ref_harmonics_sin=Am_sin,
     th_params=th_params,
     tolerance=None,
-    invert=False,
     constraint_type="equality",
+)
+
+th_constraint = ToroidalHarmonicConstraint(
+    ref_harmonics_cos=Am_cos,
+    ref_harmonics_sin=Am_sin,
+    th_params=th_params,
+    tolerance=None,
+    constraint_type="inequality",
+)
+th_constraint_inverted = ToroidalHarmonicConstraint(
+    ref_harmonics_cos=Am_cos,
+    ref_harmonics_sin=Am_sin,
+    th_params=th_params,
+    tolerance=None,
+    constraint_type="inequality",
 )
 
 # Make sure we only optimise with coils outside the sphere containing the core plasma by
 # setting control coils using the list of appropriate coils
 eq.coilset.control = list(th_params.th_coil_names)
+# new_coilset.control = [
+#     "PF_1",
+#     "PF_2",
+#     "PF_3",
+#     "CS_1",
+#     "CS_2",
+#     "CS_3",
+#     "CS_4",
+#     "CS_5",
+# ]
 
 # %%
 # Add an x point constraint
@@ -247,8 +294,12 @@ plt.show()
 # DOUBLE NULL OPTIMISATION
 
 # Define the constraints to use in our optimisation problem
+# NOTE Added 17th June: inequality constraints, comment in/out ones to use
+# NOTE If using inequality, need to use SLSQP in the COP, if equality use COBYLA
 constraints = [
-    th_constraint_equal,
+    # th_constraint_equal,
+    th_constraint,
+    th_constraint_inverted,
     x_point,
     DN_inner_leg_upper,
     DN_inner_leg_lower,
@@ -268,7 +319,7 @@ th_con_len_opt = TikhonovCurrentCOP(
         DN_unmoved_outer_leg_lower,
     ]),
     gamma=1e-4,
-    opt_algorithm="COBYLA",
+    opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
@@ -298,7 +349,7 @@ current_opt_problem = TikhonovCurrentCOP(
         DN_unmoved_outer_leg_lower,
     ]),
     gamma=1e-4,
-    opt_algorithm="COBYLA",
+    opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
