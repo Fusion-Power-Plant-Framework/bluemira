@@ -203,33 +203,29 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         th_params: ToroidalHarmonicsParams,
         tolerance: float | None = None,
         constraint_type: str = "equality",
-        *,
-        invert: bool = False,
     ):
         self.constraint_type = constraint_type
         if isinstance(tolerance, float):
-            self.tolerance = tolerance * np.ones(
-                len(ref_harmonics_cos) + len(ref_harmonics_sin)
-            )
+            tolerance *= np.ones(len(ref_harmonics_cos) + len(ref_harmonics_sin))
         else:
-            # self.tolerance = np.append(ref_harmonics_cos, ref_harmonics_sin, axis=0)
-            self.tolerance = 1e-3 * np.append(
-                ref_harmonics_cos, ref_harmonics_sin, axis=0
-            )
-            self.tolerance = np.abs(self.tolerance)
+            tolerance = 1e-3 * np.append(ref_harmonics_cos, ref_harmonics_sin, axis=0)
+            tolerance = np.abs(tolerance)
+        self.tolerance = tolerance
 
-        self.target_harmonics_cos = ref_harmonics_cos
-        self.target_harmonics_sin = ref_harmonics_sin
         self.max_degree = len(ref_harmonics_cos)
 
-        if invert and constraint_type == "equality":
-            bluemira_warn(
-                "Have used 'invert=True' while using 'equality' type for the"
-                "Toroidal Harmonic Constraint."
-                "Please double check your constraint inputs."
+        if constraint_type == "equality":
+            self.tolerance = tolerance
+            self.target_harmonics_cos = ref_harmonics_cos
+            self.target_harmonics_sin = ref_harmonics_sin
+        else:
+            self.tolerance = np.append(tolerance, tolerance, axis=0)
+            self.target_harmonics_cos = np.append(
+                ref_harmonics_cos, ref_harmonics_cos, axis=0
             )
-
-        self.invert = invert
+            self.target_harmonics_sin = np.append(
+                ref_harmonics_sin, ref_harmonics_sin, axis=0
+            )
 
         self.th_params = th_params
 
@@ -250,7 +246,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         return self.th_params.th_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=True):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
 
@@ -277,11 +273,15 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         )
         self._args["b_vec_cos"] = self.target_harmonics_cos - self.evaluate(equilibrium)
         self._args["b_vec_sin"] = self.target_harmonics_sin - self.evaluate(equilibrium)
-        if self.invert:
-            self._args["a_mat_cos"] *= -1
-            self._args["a_mat_sin"] *= -1
-            self._args["b_vec_cos"] *= -1
-            self._args["b_vec_sin"] *= -1
+        if self.constraint_type == "inequality":
+            self._args["a_mat_cos"] = np.append(
+                self._args["a_mat_cos"], -1 * self._args["a_mat_cos"], axis=0
+            )
+            self._args["a_mat_sin"] = np.append(
+                self._args["a_mat_sin"], -1 * self._args["a_mat_sin"], axis=0
+            )
+            self._args["b_vec_cos"][2:] *= -1
+            self._args["b_vec_sin"][2:] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
