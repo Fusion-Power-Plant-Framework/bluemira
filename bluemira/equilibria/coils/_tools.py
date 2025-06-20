@@ -90,7 +90,11 @@ def _get_symmetric_coils(
     Returns
     -------
     :
-        Symmetric coilset, indices of first coil in symmetric pairs
+        Symmetric coilset data
+    :
+        Counts of number of coils in group
+    :
+        indexes from original coilset
     """
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
@@ -100,7 +104,7 @@ def _get_symmetric_coils(
         coil = coil_matrix[i]
 
         for j, sym_coil in enumerate(sym_stack):
-            if np.allclose(coil, sym_coil[0]) and coil is not sym_coil[0]:
+            if np.allclose(coil, sym_coil[0]):
                 sym_stack[j][1] += 1
                 sym_coil[2].append(i)
                 break

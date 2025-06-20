@@ -37,8 +37,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_root
-from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.coils._grouping import symmetrise_coilset  # noqa: PLC2701
+from bluemira.equilibria.coils import Coil, CoilSet, symmetrise_coilset
 
 
 # %%
