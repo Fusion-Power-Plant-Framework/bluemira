@@ -17,6 +17,8 @@ import numpy as np
 from bluemira.magnetostatics.greens import circular_coil_inductance_elliptic, greens_psi
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.coils import CoilSet
 
 
@@ -79,7 +81,9 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     return M
 
 
-def _get_symmetric_coils(coilset: CoilSet) -> tuple[list[list], list[int]]:
+def _get_symmetric_coils(
+    coilset: CoilSet,
+) -> tuple[list[npt.NDArray], npt.NDArray, list[list[int]]]:
     """
     Coilset symmetry utility
 
@@ -89,25 +93,24 @@ def _get_symmetric_coils(coilset: CoilSet) -> tuple[list[list], list[int]]:
         Symmetric coilset, indices of first coil in symmetric pairs
     """
     x, z, dx, dz, currents = coilset.to_group_vecs()
-    ind = [coilset.name.index(cn) for cn in coilset.name]
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
-    sym_stack = [[coil_matrix[0], 1]]
-    inds = [ind[0]]
-
+    sym_stack = [[coil_matrix[0], 1, [0]]]
     for i in range(1, len(x)):
         coil = coil_matrix[i]
 
         for j, sym_coil in enumerate(sym_stack):
-            if np.allclose(coil, sym_coil[0]):
+            if np.allclose(coil, sym_coil[0]) and coil is not sym_coil[0]:
                 sym_stack[j][1] += 1
+                sym_coil[2].append(i)
                 break
 
         else:
-            sym_stack.append([coil, 1])
-            inds.append(ind[i])
+            sym_stack.append([coil, 1, [i]])
 
-    return sym_stack, inds
+    coil_data, count, indexes = np.array(sym_stack, dtype=object).T
+
+    return coil_data.tolist(), np.array(count, dtype=int), indexes.tolist()
 
 
 def check_coilset_symmetric(coilset: CoilSet) -> bool:
@@ -123,8 +126,8 @@ def check_coilset_symmetric(coilset: CoilSet) -> bool:
     -------
     Whether or not the CoilSet is symmetric about z=0
     """
-    sym_stack, _ = _get_symmetric_coils(coilset)
-    for coil, count in sym_stack:
+    coils, counts, _ = _get_symmetric_coils(coilset)
+    for coil, count in zip(coils, counts, strict=True):
         if count != 2 and not np.isclose(coil[1], 0.0):  # noqa: PLR2004
             # therefore z = 0
             return False

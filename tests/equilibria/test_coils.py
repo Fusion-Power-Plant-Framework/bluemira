@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import copy
+from collections import Counter
 
 import numpy as np
 import pytest
@@ -26,6 +27,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.magnetostatics.greens import greens_Bx, greens_Bz
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from tests._helpers import read_in_coilset
 
 
 def callable_tester(f_callable, coils=1):
@@ -586,65 +588,86 @@ class TestCoilSet:
 
 
 class TestCoilSetSymmetry:
-    def test_symmetry_check(self):
-        coilset = CoilSet(Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0))
-
-        assert check_coilset_symmetric(coilset)
-
-        coilset = CoilSet(
-            Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)
-        )
-
-        assert not check_coilset_symmetric(coilset)
-
-        coilset = CoilSet(
-            Coil(5, 5, dx=1.0, dz=1.0),
-            Coil(5, 0, dx=1.0, dz=1.0),
-            Coil(5, -5, dx=1.0, dz=1.0),
-        )
-        assert check_coilset_symmetric(coilset)
-
-        coilset = CoilSet(
-            Coil(5, 5, dx=1.0, dz=1.0),
-            Coil(5, 1, dx=1.0, dz=1.0),
-            Coil(5, -5, dx=1.0, dz=1.0),
-        )
-
-        assert not check_coilset_symmetric(coilset)
-
-        coilset = CoilSet(
-            Coil(5, 5, dx=1.0, dz=1.0),
-            Coil(5, 0, dx=1.0, dz=1.0),
-            Coil(5, 1, dx=1.0, dz=1.0),
-            Coil(5, -5, dx=1.0, dz=1.0),
-        )
-
-        assert not check_coilset_symmetric(coilset)
-
-    def test_symmetrise(self):
-        coilset = CoilSet(
-            Coil(5, 5, current=1e6, dx=1, dz=1),
-            Coil(5, -5, current=1e6, dx=1, dz=1),
-        )
-        new = symmetrise_coilset(coilset)
-        assert len(new._coils) == 1
-        assert new.n_coils() == 2
-        assert isinstance(next(iter(new._coils)), SymmetricCircuit)
-
-        coilset = CoilSet(
-            SymmetricCircuit(
-                Coil(5, 5, current=1e6, dx=1, dz=1), Coil(5, -5, current=1e6, dx=1, dz=1)
+    @pytest.mark.parametrize(
+        ("coilset", "is_sym"),
+        [
+            (CoilSet(Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0)), True),
+            (
+                CoilSet(
+                    Coil(5, 5, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)
+                ),
+                False,
             ),
-            SymmetricCircuit(
-                Coil(12, 7, current=1e6, dx=1, dz=1),
-                Coil(12, -7, current=1e6, dx=1, dz=1),
+            (
+                CoilSet(
+                    Coil(5, 5, dx=1.0, dz=1.0),
+                    Coil(5, 0, dx=1.0, dz=1.0),
+                    Coil(5, -5, dx=1.0, dz=1.0),
+                ),
+                True,
             ),
-            SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
-            Coil(5, 0, current=1e6, dx=1, dz=1),
-        )
+            (
+                CoilSet(
+                    Coil(5, 5, dx=1.0, dz=1.0),
+                    Coil(5, 1, dx=1.0, dz=1.0),
+                    Coil(5, -5, dx=1.0, dz=1.0),
+                ),
+                False,
+            ),
+            (
+                CoilSet(
+                    Coil(5, 5, dx=1.0, dz=1.0),
+                    Coil(5, 0, dx=1.0, dz=1.0),
+                    Coil(5, 1, dx=1.0, dz=1.0),
+                    Coil(5, -5, dx=1.0, dz=1.0),
+                ),
+                False,
+            ),
+        ],
+    )
+    def test_symmetry_check(self, coilset, is_sym):
+        assert check_coilset_symmetric(coilset) is is_sym
+
+    @pytest.mark.parametrize(
+        ("coilset", "n_coils", "ssc", "nc"),
+        [
+            (
+                CoilSet(
+                    Coil(5, 5, current=1e6, dx=1, dz=1),
+                    Coil(5, -5, current=1e6, dx=1, dz=1),
+                ),
+                1,
+                1,
+                0,
+            ),
+            (
+                CoilSet(
+                    SymmetricCircuit(
+                        Coil(5, 5, current=1e6, dx=1, dz=1),
+                        Coil(5, -5, current=1e6, dx=1, dz=1),
+                    ),
+                    SymmetricCircuit(
+                        Coil(12, 7, current=1e6, dx=1, dz=1),
+                        Coil(12, -7, current=1e6, dx=1, dz=1),
+                    ),
+                    SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
+                    Coil(5, 0, current=1e6, dx=1, dz=1),
+                ),
+                4,
+                3,
+                1,
+            ),
+            (read_in_coilset("DEMO-DN_coilset.json"), 6, 5, 1),
+            (read_in_coilset("MAST-U_coilset.json"), 12, 11, 1),
+        ],
+    )
+    def test_symmetrise(self, coilset, n_coils, ssc, nc):
         new = symmetrise_coilset(coilset)
-        assert len(new._coils) == len(coilset._coils)
+        assert len(new._coils) == n_coils
         assert new.n_coils() == coilset.n_coils()
+        type_count = Counter([type(c) for c in new._coils])
+        assert type_count[SymmetricCircuit] == ssc
+        assert type_count[Coil] == nc
 
 
 class TestCoilSizing:

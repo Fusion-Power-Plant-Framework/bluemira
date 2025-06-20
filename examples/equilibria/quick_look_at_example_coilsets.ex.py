@@ -117,3 +117,5 @@ print(new_mastu_coils)
 print("DEMO DN")
 print("------")
 print(new_demo_dn_coils)
+
+# %%

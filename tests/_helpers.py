@@ -9,10 +9,14 @@ A collection of general helper functions for tests.
 """
 
 import contextlib
+import json
 from pathlib import Path
 from unittest import mock
 
 import pytest
+
+from bluemira.base.file import get_bluemira_root
+from bluemira.equilibria.coils import Coil, CoilSet
 
 
 def combine_text_mock_write_calls(open_mock: mock.MagicMock) -> str:
@@ -101,3 +105,31 @@ def add_plot_title(func, request):
         return res
 
     return wrapper
+
+
+def read_coil_json(name):
+    """Read coil info and return data."""
+    root_path = get_bluemira_root()
+
+    file_path = Path(root_path, "tests/equilibria/test_data/coilsets/", name)
+    with open(file_path) as f:
+        return json.load(f)
+
+
+def read_in_coilset(filename):
+    """Make a coilset from position info. Currents not set."""
+
+    data = read_coil_json(filename)
+    coils = []
+    for xi, zi, dxi, dzi, name, ctype in zip(
+        data["xc"],
+        data["zc"],
+        data["dxc"],
+        data["dzc"],
+        data["coil_names"],
+        data["coil_types"],
+        strict=False,
+    ):
+        coil = Coil(x=xi, z=zi, dx=dxi, dz=dzi, name=name, ctype=ctype)
+        coils.append(coil)
+    return CoilSet(*coils)
