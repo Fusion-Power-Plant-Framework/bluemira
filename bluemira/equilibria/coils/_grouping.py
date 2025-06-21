@@ -25,7 +25,6 @@ from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin, CoilSetFieldsMixin
 from bluemira.equilibria.coils._tools import (
     _get_symmetric_coils,
-    check_coilset_symmetric,
     get_max_current,
 )
 from bluemira.equilibria.constants import I_MIN
@@ -40,7 +39,9 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
 
-def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
+def symmetrise_coilset(
+    coilset: CoilSet, *, symmetrise_singular: bool = False
+) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
     z=0 to SymmetricCircuits.
@@ -49,6 +50,8 @@ def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
     ----------
     coilset:
         CoilSet to symmetrise
+    symmetrise_singular:
+        make singular coils symmetric about z=0
 
     Returns
     -------
@@ -60,29 +63,23 @@ def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
     EquilibriaError
         Superposition of coils or unrecognised type
     """
-    if not check_coilset_symmetric(coilset):
-        bluemira_warn(
-            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can"
-            " result in undesirable behaviour."
-        )
     coilset = deepcopy(coilset)
 
     _, counts, indexes = _get_symmetric_coils(coilset)
     new_coils = []
     coils = coilset._coils
-    offset = 0
     for count, index in zip(counts, indexes, strict=True):
         if count == 1:
-            new_coils.append(coils[index[0] - offset])
+            coil = coils[index[0]]
+            new_coils.append(SymmetricCircuit(coil) if symmetrise_singular else coil)
         elif count == 2:  # noqa: PLR2004
-            coil = coils[index[0] - offset]
+            coil = coils[index[0]]
             if isinstance(coil, SymmetricCircuit):
                 new_coils.append(coil)
-            elif isinstance(coil, Coil):
-                new_coils.append(SymmetricCircuit(coil))
+            elif len(index) > 1:
+                new_coils.append(SymmetricCircuit(*(coils[c] for c in index)))
             else:
                 raise EquilibriaError(f"Unrecognised class {type(coil).__name__}")
-            offset += 1
         else:
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 

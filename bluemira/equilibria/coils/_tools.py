@@ -96,6 +96,8 @@ def _get_symmetric_coils(
     :
         indexes from original coilset
     """
+    from bluemira.equilibria.coils._grouping import SymmetricCircuit  # noqa: PLC0415
+
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
@@ -112,9 +114,17 @@ def _get_symmetric_coils(
         else:
             sym_stack.append([coil, 1, [i]])
 
-    coil_data, count, indexes = np.array(sym_stack, dtype=object).T
+    coil_data, count, _inds = np.array(sym_stack, dtype=object).T
 
-    return coil_data.tolist(), np.array(count, dtype=int), indexes.tolist()
+    indexes = _inds.tolist()
+    offset = 0
+    coils = coilset._coils
+    for no in range(len(indexes)):
+        indexes[no] = np.array(indexes[no]) - offset
+        if indexes[no].size >= 2 and isinstance(coils[no], SymmetricCircuit):  # noqa: PLR2004
+            offset += 1
+
+    return coil_data.tolist(), np.array(count, dtype=int), indexes
 
 
 def check_coilset_symmetric(coilset: CoilSet) -> bool:

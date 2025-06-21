@@ -657,6 +657,16 @@ class TestCoilSetSymmetry:
                 3,
                 1,
             ),
+            (
+                CoilSet(
+                    Coil(5, 5, current=1e6, dx=1, dz=1),
+                    Coil(3, 7, current=1, dx=1, dz=1),
+                    Coil(5, -5, current=1e6, dx=1, dz=1),
+                ),
+                2,
+                1,
+                1,
+            ),
             (read_in_coilset("DEMO-DN_coilset.json"), 6, 5, 1),
             (read_in_coilset("MAST-U_coilset.json"), 12, 11, 1),
         ],
@@ -668,6 +678,61 @@ class TestCoilSetSymmetry:
         type_count = Counter([type(c) for c in new._coils])
         assert type_count[SymmetricCircuit] == ssc
         assert type_count[Coil] == nc
+        _f, ax = plt.subplots(1, 2)
+        coilset.plot(ax=ax[0])
+        new.plot(ax=ax[1])
+
+    @pytest.mark.parametrize(
+        ("coilset", "n_coils", "ssc", "nc"),
+        [
+            (
+                CoilSet(
+                    Coil(5, 5, current=1e6, dx=1, dz=1),
+                    Coil(5, -5, current=1e6, dx=1, dz=1),
+                ),
+                1,
+                1,
+                0,
+            ),
+            (
+                CoilSet(
+                    SymmetricCircuit(
+                        Coil(5, 5, current=1e6, dx=1, dz=1),
+                        Coil(5, -5, current=1e6, dx=1, dz=1),
+                    ),
+                    SymmetricCircuit(
+                        Coil(12, 7, current=1e6, dx=1, dz=1),
+                        Coil(12, -7, current=1e6, dx=1, dz=1),
+                    ),
+                    SymmetricCircuit(Coil(4, 9, current=1e6, dx=1, dz=1)),
+                    Coil(5, -1, current=1e6, dx=1, dz=1),
+                ),
+                4,
+                4,
+                1,
+            ),
+            (
+                CoilSet(
+                    Coil(5, 5, current=1e6, dx=1, dz=1),
+                    Coil(3, 7, current=1, dx=1, dz=1),
+                    Coil(5, -5, current=1e6, dx=1, dz=1),
+                ),
+                2,
+                2,
+                1,
+            ),
+        ],
+    )
+    def test_symmetrise_singular(self, coilset, n_coils, ssc, nc):
+        new = symmetrise_coilset(coilset, symmetrise_singular=True)
+        assert len(new._coils) == n_coils
+        assert new.n_coils() == coilset.n_coils() + nc
+        type_count = Counter([type(c) for c in new._coils])
+        assert type_count[SymmetricCircuit] == ssc
+        assert type_count[Coil] == 0
+        _f, ax = plt.subplots(1, 2)
+        coilset.plot(ax=ax[0])
+        new.plot(ax=ax[1])
 
 
 class TestCoilSizing:
