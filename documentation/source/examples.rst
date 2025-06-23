@@ -77,11 +77,12 @@ Other Examples
 
     examples/base/units
     examples/balance_of_plant/steady_state_example
+    examples/design/optimised_reactor
     examples/fuel_cycle/EUDEMO_fuelcycle
     examples/materials/material_definitions
     examples/mesh/mesh_tutorial
     examples/plasma_physics/fusion_reactions
     examples/radiation_transport/heat_flux_calculation
-    examples/structural/tour_eiffel_example
-    examples/design/optimised_reactor
+    examples/radiation_transport/radiation_calculation_solver_DEMO
     examples/radiation_transport/run_cad_neutronics
+    examples/structural/tour_eiffel_example
