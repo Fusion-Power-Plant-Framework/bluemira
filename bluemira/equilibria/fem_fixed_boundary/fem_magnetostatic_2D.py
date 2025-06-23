@@ -57,7 +57,7 @@ class FixedBoundaryEquilibrium:
     B_0: float
     I_p: float
 
-    def plot(self, ax=None, *, show_mesh: bool = False) -> plt.Axes:
+    def plot(self, ax=None, *, show: bool = False, show_mesh: bool = False) -> plt.Axes:
         """
         Plot the fixed boundary FE equilibrium.
 
@@ -90,6 +90,9 @@ class FixedBoundaryEquilibrium:
 
         if show_mesh:
             ax = plot_dolfinx_2d_mesh_plt(self.mesh, ax=ax, title="")
+
+        if show:
+            plt.show()
 
         return ax
 
