@@ -165,7 +165,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.1
     # via blosc2
-mypy==1.16.0
+mypy==1.16.1
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
@@ -281,7 +281,7 @@ pydantic==2.11.7
     # via bluemira (pyproject.toml)
 pydantic-core==2.33.2
     # via pydantic
-pygments==2.19.1
+pygments==2.19.2
     # via
     #   ipython
     #   pytest
@@ -291,7 +291,7 @@ pyparsing==3.2.3
     # via
     #   matplotlib
     #   periodictable
-pytest==8.4.0
+pytest==8.4.1
     # via
     #   bluemira (pyproject.toml)
     #   pytest-cov
@@ -428,7 +428,7 @@ traitlets==5.14.3
     #   matplotlib-inline
     #   nbclient
     #   nbformat
-typeguard==4.4.3
+typeguard==4.4.4
     # via bluemira (pyproject.toml)
 typing-extensions==4.14.0
     # via
@@ -453,7 +453,7 @@ typing-inspection==0.4.1
     # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via requests
 virtualenv==20.31.2
     # via pre-commit

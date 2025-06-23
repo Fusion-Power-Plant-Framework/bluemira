@@ -134,7 +134,7 @@ pydantic==2.11.7
     # via bluemira (pyproject.toml)
 pydantic-core==2.33.2
     # via pydantic
-pygments==2.19.1
+pygments==2.19.2
     # via rich
 pyparsing==3.2.3
     # via
@@ -175,7 +175,7 @@ tabulate==0.9.0
     # via bluemira (pyproject.toml)
 threadpoolctl==3.6.0
     # via scikit-learn
-typeguard==4.4.3
+typeguard==4.4.4
     # via bluemira (pyproject.toml)
 typing-extensions==4.14.0
     # via
@@ -193,7 +193,7 @@ typing-inspection==0.4.1
     # via pydantic
 tzdata==2025.2
     # via pandas
-urllib3==2.4.0
+urllib3==2.5.0
     # via requests
 vtk==9.3.1
     # via
