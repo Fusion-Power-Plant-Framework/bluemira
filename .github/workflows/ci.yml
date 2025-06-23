@@ -16,10 +16,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-      - name: Check Code Quality
+
+      - name: "Cache pre-commit"
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: "Install pre-commit"
         shell: bash -l {0}
         run: |
           pip install pre-commit
+          pre-commit install
+
+      - name: Check Code Quality
+        shell: bash -l {0}
+        run: |
           echo '```console' > "$GITHUB_STEP_SUMMARY"
           pre-commit run --all-files --show-diff-on-failure --color=always | \
             tee >(sed -E 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})*)?[mGK]//g' >> "$GITHUB_STEP_SUMMARY") >&1
