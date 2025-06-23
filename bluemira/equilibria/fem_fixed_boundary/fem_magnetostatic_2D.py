@@ -76,10 +76,6 @@ class FixedBoundaryEquilibrium:
         if ax is None:
             _, ax = plt.subplots()
 
-        ax.set_xlabel("$x$ [m]")
-        ax.set_ylabel("$z$ [m]")
-        ax.set_aspect("equal")
-
         _plot_array(
             ax,
             self.mesh.geometry.x,
@@ -90,6 +86,10 @@ class FixedBoundaryEquilibrium:
 
         if show_mesh:
             ax = plot_dolfinx_2d_mesh_plt(self.mesh, ax=ax, title="")
+
+        ax.set_xlabel("$x$ [m]")
+        ax.set_ylabel("$z$ [m]")
+        ax.set_aspect("equal")
 
         if show:
             plt.show()
