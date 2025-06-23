@@ -340,7 +340,7 @@ class TestSolovevZhengEquilibrium:
             B_0=None,
             R_0=R_0,
             p_order=2,
-            max_iter=3,
+            maxiter=3,
             iter_err_max=1e-8,
             relaxation=0.0,
         )
