@@ -11,7 +11,7 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from operator import attrgetter
@@ -162,7 +162,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         label: bool = False,
         force: Iterable | None = None,
         **kwargs,
-    ) -> CoilGroupPlotter:
+    ) -> CoilGroupPlotter | None:
         """
         Plot a CoilGroup
 
@@ -916,11 +916,11 @@ class Circuit(CoilGroup):
         self.current = self._get_current()
 
     @CoilGroup.current.setter
-    def current(self, values: float | Iterable[float]):
+    def current(self, values: float | Sequence[float]):
         """
         Set current for circuit
         """
-        if isinstance(values, Iterable):
+        if isinstance(values, Sequence):
             # Force the same value of current for all coils
             values = values[0]
         self._CoilGroup__setter("current", values)
@@ -1039,7 +1039,7 @@ class SymmetricCircuit(Circuit):
         self.z = values[1]
 
     @Circuit.x.setter
-    def x(self, new_x: float):
+    def x(self, new_x: float | npt.NDArray):
         """
         Set x coordinate of each coil
         """
@@ -1049,7 +1049,7 @@ class SymmetricCircuit(Circuit):
         self.symmetric_group.x -= self._symmetrise()[0]
 
     @Circuit.z.setter
-    def z(self, new_z: float):
+    def z(self, new_z: float | npt.NDArray):
         """
         Set z coordinate of each coil
         """

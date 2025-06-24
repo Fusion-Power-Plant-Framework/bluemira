@@ -54,13 +54,13 @@ class ConvergenceCriterion(ABC):
         The limit at which the convergence criterion is met.
     """
 
-    flag_psi = True
+    flag_psi: bool = True
 
-    def __init__(self, limit: float):
-        self.limit = limit
-        self.progress = []
-        self.math_string = NotImplemented
-        self._relax = 0
+    def __init__(self, limit: float, math_string: str):
+        self.limit: float = limit
+        self.progress: list[float] = []
+        self.math_string: str = math_string
+        self._relax: int = 0
 
     @property
     def relax_steps(self):
@@ -100,7 +100,6 @@ class ConvergenceCriterion(ABC):
         :
             True if the convergence criterion is met, else False.
         """
-        ...
 
     def check_converged(self, value: float) -> bool:
         """
@@ -148,8 +147,7 @@ class DudsonConvergence(ConvergenceCriterion):
     """
 
     def __init__(self, limit: float = PSI_REL_TOL):
-        super().__init__(limit)
-        self.math_string = "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$"
+        super().__init__(limit, "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$")
 
     def __call__(
         self,
@@ -200,8 +198,7 @@ class JrelConvergence(ConvergenceCriterion):
     flag_psi = False
 
     def __init__(self, limit: float = 1e-2):
-        super().__init__(limit)
-        self.math_string = "$\\dfrac{max|\\Delta J|}{max(J)-min(J)}$"
+        super().__init__(limit, "$\\dfrac{max|\\Delta J|}{max(J)-min(J)}$")
 
     def __call__(
         self,
@@ -251,8 +248,7 @@ class LacknerConvergence(ConvergenceCriterion):
     """
 
     def __init__(self, limit: float = 10e-4):
-        super().__init__(limit)
-        self.math_string = "$max\\dfrac{|\\Delta\\psi|}{\\psi}$"
+        super().__init__(limit, "$max\\dfrac{|\\Delta\\psi|}{\\psi}$")
 
     def __call__(
         self,
@@ -297,8 +293,7 @@ class JeonConvergence(ConvergenceCriterion):
     """
 
     def __init__(self, limit: float = 1e-4):
-        super().__init__(limit)
-        self.math_string = "$||\\Delta\\psi||$"
+        super().__init__(limit, "$||\\Delta\\psi||$")
 
     def __call__(
         self,
@@ -347,8 +342,9 @@ class CunninghamConvergence(ConvergenceCriterion):
     flag_psi = False
 
     def __init__(self, limit: float = 1e-7):
-        super().__init__(limit)
-        self.math_string = "$\\dfrac{\\sum{\\Delta J_{n}^{2}}}{\\sum{J_{n+1}^{2}}}$"
+        super().__init__(
+            limit, "$\\dfrac{\\sum{\\Delta J_{n}^{2}}}{\\sum{J_{n+1}^{2}}}$"
+        )
 
     def __call__(
         self,
@@ -399,8 +395,7 @@ class JsourceConvergence(ConvergenceCriterion):
     flag_psi = False
 
     def __init__(self, limit: float = 1e-4):
-        super().__init__(limit)
-        self.math_string = "$||\\Delta J||$"
+        super().__init__(limit, "$||\\Delta J||$")
 
     def __call__(
         self,

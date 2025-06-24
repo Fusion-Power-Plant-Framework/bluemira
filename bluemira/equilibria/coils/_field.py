@@ -401,8 +401,8 @@ class CoilGroupFieldsMixin:
     def _response_greens(
         self,
         greens: Callable,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: np.ndarray,
+        z: np.ndarray,
         *,
         split: bool = False,
         _quad_x: np.ndarray | None = None,

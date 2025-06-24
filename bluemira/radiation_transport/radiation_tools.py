@@ -37,7 +37,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
 
 try:
@@ -74,7 +73,7 @@ def upstream_temperature(
     r_sep_mp: float,
     z_mp: float,
     k_0: float,
-    firstwall_geom: Grid,
+    firstwall_geom: Coordinates,
     connection_length: float | None = None,
 ) -> float:
     """
@@ -242,7 +241,7 @@ def specific_point_temperature(
     z_mp: float,
     k_0: float,
     sep_corrector: float,
-    firstwall_geom: Grid,
+    firstwall_geom: Coordinates,
     connection_length: float | None = None,
     *,
     lfs=True,

@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import cycle
@@ -50,6 +50,8 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.flux_surfaces import CoreResults
     from bluemira.equilibria.physics import EqSummary
@@ -117,10 +119,10 @@ def select_eq(
 
 
 def select_multi_eqs(
-    equilibrium_input: str | Equilibrium | Iterable[str | Equilibrium],
+    equilibrium_input: str | Equilibrium | Sequence[str | Equilibrium],
     fixed_or_free: FixedOrFree = FixedOrFree.FREE,
-    equilibrium_names: str | Iterable[str] | None = None,
-    dummy_coils=None,
+    equilibrium_names: str | Sequence[str] | None = None,
+    dummy_coils: Sequence | None = None,
     from_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
     *,
     qpsi_positive: bool | Iterable[bool] = False,
@@ -166,15 +168,15 @@ def select_multi_eqs(
     ValueError
         If list of input values is not the same length as the input equilibria
     """
-    if not isinstance(equilibrium_input, Iterable):
+    if not isinstance(equilibrium_input, Sequence):
         equilibrium_input = [equilibrium_input]
-    if not isinstance(fixed_or_free, Iterable):
+    if not isinstance(fixed_or_free, Sequence):
         fixed_or_free = [fixed_or_free] * len(equilibrium_input)
     elif len(fixed_or_free) != len(equilibrium_input):
         raise ValueError(
             "FixedOrFree list length not equal to the number of equilibria."
         )
-    if not isinstance(dummy_coils, Iterable):
+    if not isinstance(dummy_coils, Sequence):
         dummy_coils = [dummy_coils] * len(equilibrium_input)
     elif len(dummy_coils) != len(equilibrium_input):
         raise ValueError(
@@ -266,7 +268,7 @@ def get_leg_flux_info(
     dx_off=0.1,
     plasma_facing_boundary_list=None,
     legs_to_plot=DivLegsToPlot.ALL,
-) -> tuple[dict[float | np.ndarray], dict[float | np.ndarray], dict[float | np.ndarray]]:
+) -> tuple[list[dict[str, float | np.ndarray]], list[dict[str, float | np.ndarray]]]:
     """
     Get the divertor leg length and grazing angle (used in divertor comparison plotting).
 
@@ -325,7 +327,13 @@ def get_leg_flux_info(
     return lengths, angles
 
 
-def get_target_flux(eq, target, target_coords, n_layers, vertical=False):  # noqa: FBT002
+def get_target_flux(
+    eq,
+    target,
+    target_coords,
+    n_layers,
+    vertical=False,  # noqa: FBT002
+) -> list[Coordinates]:
     """
     Get a selection flux surfaces that cross the divertor target.
 
@@ -525,7 +533,7 @@ class EqAnalysis:
         plt.show()
         return plotter.ax
 
-    def plot_eq_core_analysis(self, ax=None) -> CoreResults:
+    def plot_eq_core_analysis(self, ax=None) -> tuple[CoreResults, Axes]:
         """
         Plot characteristics of the plasma core for input equilibria and return results.
         Currently only works for free boundary equilibria.
@@ -1314,10 +1322,6 @@ class MultiEqAnalysis:
 
         Parameters
         ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
         flux_surface:
             Type of flux surface to be plotted
         plot_fixed:

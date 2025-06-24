@@ -21,14 +21,13 @@ from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface, PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.error import RadiationTransportError
 
 __all__ = ["analyse_first_wall_flux_surfaces"]
 
 
 def analyse_first_wall_flux_surfaces(
-    equilibrium: Equilibrium, first_wall: BluemiraWire, dx_mp: float
+    equilibrium: Equilibrium, first_wall: Coordinates, dx_mp: float
 ) -> tuple[
     npt.NDArray[float],
     npt.NDArray[float] | None,
@@ -138,7 +137,11 @@ def _analyse_SN(
 def _analyse_DN(
     first_wall: Coordinates, dx_mp, equilibrium: Equilibrium, o_point, yz_plane
 ) -> tuple[
-    npt.NDArray[float], npt.NDArray[float], list[PartialOpenFluxSurface], float, float
+    npt.NDArray[float],
+    npt.NDArray[float],
+    tuple[list[PartialOpenFluxSurface], ...],
+    float,
+    float,
 ]:
     """
     Calculation for the case of double nulls.
@@ -174,7 +177,7 @@ def _analyse_DN(
         abs(get_array_x_mp(flux_surfaces_ib[0]) - x_sep_imp),  # Calculate values at IMP
         _clip_flux_surfaces(  # Find flux surface intersections with the first wall
             first_wall,
-            [*flux_surfaces_ob, *flux_surfaces_ib],
+            tuple(*flux_surfaces_ob, *flux_surfaces_ib),
         ),
         x_sep_omp,
         x_sep_imp,
@@ -182,8 +185,8 @@ def _analyse_DN(
 
 
 def _clip_flux_surfaces(
-    first_wall: Coordinates, flux_surfaces: list[PartialOpenFluxSurface]
-) -> list[PartialOpenFluxSurface]:
+    first_wall: Coordinates, flux_surfaces: tuple[list[PartialOpenFluxSurface], ...]
+) -> tuple[list[PartialOpenFluxSurface], ...]:
     """
     Clip the flux surfaces to a first wall. Catch the cases where no intersections
     are found.
@@ -320,7 +323,9 @@ def _get_sep_out_intersection(
     return x_sep_mp, x_out_mp
 
 
-def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
+def _make_flux_surfaces(
+    x, z, equilibrium, o_point, yz_plane
+) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
     """
     Make individual PartialOpenFluxSurface through a point.
 
@@ -339,7 +344,7 @@ def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
 
 def _make_flux_surfaces_ibob(
     dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
-) -> tuple[list]:
+) -> tuple[list[PartialOpenFluxSurface], list[PartialOpenFluxSurface]]:
     """
     Make the flux surfaces on the inboard or outboard.
 

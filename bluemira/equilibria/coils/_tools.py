@@ -167,9 +167,8 @@ def rename_coilset(coilset: CoilSet):
     coil_types = ["PF", "CS", "DUM"]
     coil_numbers = [coilset.get_coiltype(ct) for ct in coil_types]
     for n, ct in zip(coil_numbers, coil_types, strict=False):
-        if n is not None:
-            for i, coil_name in enumerate(coilset.get_coiltype(ct).name):
-                coil_num = i + 1
-                coilset[coil_name].name = ct + "_" + str(coil_num)
+        if n is not None and (coils := coilset.get_coiltype(ct)) is not None:
+            for i, coil_name in enumerate(coils.name):
+                coilset[coil_name].name = f"{ct}_{i + 1}"
     coilset.control = coilset.name
     return coilset
