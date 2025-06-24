@@ -26,6 +26,7 @@ from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
+from bluemira.display.plotter import plot_dolfinx_2d_mesh_plt
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
@@ -55,6 +56,45 @@ class FixedBoundaryEquilibrium:
     R_0: float
     B_0: float
     I_p: float
+
+    def plot(self, ax=None, *, show: bool = False, show_mesh: bool = False) -> plt.Axes:
+        """
+        Plot the fixed boundary FE equilibrium.
+
+        Parameters
+        ----------
+        ax:
+            The matplotlib axes object to plot on. If None, a new one is created.
+        show_mesh:
+            Whether or not to show the mesh on the plot.
+
+        Returns
+        -------
+        ax:
+            The matplotlib axes object
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+
+        _plot_array(
+            ax,
+            self.mesh.geometry.x,
+            self.psi(self.mesh.geometry.x),
+            "",
+            cmap=PLOT_DEFAULTS["psi"]["cmap"],
+        )
+
+        if show_mesh:
+            ax = plot_dolfinx_2d_mesh_plt(self.mesh, ax=ax, title="")
+
+        ax.set_xlabel("$x$ [m]")
+        ax.set_ylabel("$z$ [m]")
+        ax.set_aspect("equal")
+
+        if show:
+            plt.show()
+
+        return ax
 
 
 class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
@@ -110,6 +150,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._grad_psi = None
         self._pprime = None
         self._ffprime = None
+        self._mesh_area = None
 
         self._curr_target = I_p
         self._R_0 = R_0
@@ -179,8 +220,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
         """
+        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
+
         super().set_mesh(mesh=mesh)
         self._reset_psi_cache()
+        self._mesh_area = calculate_area(self.mesh, None, None)
 
     def _create_g_func(
         self,
@@ -205,11 +249,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
-        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
-
-        area = calculate_area(self.mesh, None, None)
-
-        j_target = curr_target / area if curr_target else 1.0
+        j_target = curr_target / self._mesh_area if curr_target else 1.0
 
         if not isinstance(pprime, Callable):
             _pprime = pprime
@@ -236,7 +276,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             a = r * pprime(x_psi)
             b = 1 / MU_0 / r * ffprime(x_psi)
 
-            return self.k * 2 * np.pi * (a + b)
+            return self.k * (a + b)
 
         return g
 
@@ -316,8 +356,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         self.define_g()
 
-        if self._curr_target:
+        if self._curr_target is not None:
             self.k = self._curr_target / self._calculate_curr_tot()
+
+        self.define_g()
 
     def _reset_psi_cache(self):
         """
@@ -478,17 +520,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             axis.set_ylabel("z")
             axis.set_aspect("equal")
 
-        cm = self._plot_array(
+        cm = _plot_array(
             ax[0],
             points,
             self._g_func(points),
             f"({i_iter}) " + "$J_{tor}$",
             PLOT_DEFAULTS["current"]["cmap"],
         )
-        self._add_colorbar(cm, cax[0], "A/m$^{2}$\n")
+        _add_colorbar(cm, cax[0], "A/m$^{2}$\n")
 
         levels = np.linspace(0, 1, 11)
-        cm = self._plot_array(
+        cm = _plot_array(
             ax[1],
             points,
             prev,
@@ -496,7 +538,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             PLOT_DEFAULTS["psi"]["cmap"],
             levels,
         )
-        self._add_colorbar(cm, cax[1], "")
+        _add_colorbar(cm, cax[1], "")
 
         if debug:
             cm = self._plot_array(
@@ -506,32 +548,32 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 f"({i_iter}) " + "$\\Psi_{n}$ error",
                 "seismic",
             )
-            self._add_colorbar(cm, cax[2], "%")
+            _add_colorbar(cm, cax[2], "%")
 
         plt.pause(PLT_PAUSE)
 
-    @staticmethod
-    def _plot_array(
-        ax,
-        points: np.ndarray,
-        array: np.ndarray,
-        title: str,
-        cmap: str,
-        levels: np.ndarray | None = None,
-    ):
-        cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
-        ax.tricontour(
-            points[:, 0], points[:, 1], array, colors="k", linewidths=0.5, levels=levels
-        )
 
-        ax.set_title(title)
-        return cm
+def _plot_array(
+    ax,
+    points: np.ndarray,
+    array: np.ndarray,
+    title: str,
+    cmap: str,
+    levels: np.ndarray | None = None,
+):
+    cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
+    ax.tricontour(
+        points[:, 0], points[:, 1], array, colors="k", linewidths=0.5, levels=levels
+    )
 
-    @staticmethod
-    def _add_colorbar(cm, cax, title):
-        last_axes = plt.gca()
-        ax = cm.axes
-        fig = ax.figure
-        fig.colorbar(cm, cax=cax)
-        cax.set_title(title)
-        plt.sca(last_axes)
+    ax.set_title(title)
+    return cm
+
+
+def _add_colorbar(cm, cax, title):
+    last_axes = plt.gca()
+    ax = cm.axes
+    fig = ax.figure
+    fig.colorbar(cm, cax=cax)
+    cax.set_title(title)
+    plt.sca(last_axes)
