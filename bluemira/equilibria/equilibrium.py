@@ -988,7 +988,6 @@ class Equilibrium(CoilSetMHDState):
         self.profiles = profiles
         self._o_points = None
         self._x_points = None
-        self._solver = None
         self._eqdsk = None
 
         self._li_flag: bool = False
