@@ -1982,6 +1982,7 @@ class RadiationSource:
         sol_impurities: dict[str, float],
         confinement_time_core: float = np.inf,
         confinement_time_sol: float = 10,
+        add_n_extra_points: int = 1,
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -2022,7 +2023,10 @@ class RadiationSource:
             self.x_sep_omp,
             self.x_sep_imp,
         ) = analyse_first_wall_flux_surfaces(
-            equilibrium=eq, first_wall=firstwall_shape, dx_mp=0.001
+            equilibrium=eq,
+            first_wall=firstwall_shape,
+            dx_mp=0.001,
+            add_n_extra_points=add_n_extra_points,
         )
 
     def analyse(

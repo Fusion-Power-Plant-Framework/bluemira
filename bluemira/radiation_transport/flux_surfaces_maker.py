@@ -19,7 +19,11 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface, PartialOpenFluxSurface
-from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    coords_plane_intersect,
+    interpolate_points,
+)
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.error import RadiationTransportError
@@ -28,7 +32,10 @@ __all__ = ["analyse_first_wall_flux_surfaces"]
 
 
 def analyse_first_wall_flux_surfaces(
-    equilibrium: Equilibrium, first_wall: BluemiraWire, dx_mp: float
+    equilibrium: Equilibrium,
+    first_wall: BluemiraWire,
+    dx_mp: float,
+    add_n_extra_points: int = 1,
 ) -> tuple[
     npt.NDArray[float],
     npt.NDArray[float] | None,
@@ -71,11 +78,11 @@ def analyse_first_wall_flux_surfaces(
 
     if equilibrium.is_double_null:
         dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = _analyse_DN(
-            first_wall, dx_mp, equilibrium, o_point, yz_plane
+            first_wall, dx_mp, equilibrium, o_point, yz_plane, add_n_extra_points
         )
     else:
         dx_omp, flux_surfaces, x_sep_omp = _analyse_SN(
-            first_wall, dx_mp, equilibrium, o_point, yz_plane
+            first_wall, dx_mp, equilibrium, o_point, yz_plane, add_n_extra_points
         )
         dx_imp = None
         x_sep_imp = None
@@ -104,7 +111,7 @@ def _process_first_wall(first_wall: Coordinates) -> Coordinates:
 
 
 def _analyse_SN(
-    first_wall, dx_mp, equilibrium, o_point, yz_plane
+    first_wall, dx_mp, equilibrium, o_point, yz_plane, add_n_extra_points=1
 ) -> tuple[npt.NDArray[float], list[PartialOpenFluxSurface], float]:
     """
     Calculation for the case of single nulls.
@@ -119,11 +126,21 @@ def _analyse_SN(
         intersection between the separatrix outboard and mid-plane.
     """
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
-        equilibrium, first_wall, yz_plane, outboard=True
+        equilibrium,
+        first_wall,
+        yz_plane,
+        outboard=True,
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
+        dx_mp,
+        equilibrium,
+        o_point,
+        yz_plane,
+        x_sep_omp,
+        x_out_omp,
+        outboard=True,
+        add_n_extra_points=add_n_extra_points,
     )
 
     return (
@@ -136,7 +153,12 @@ def _analyse_SN(
 
 
 def _analyse_DN(
-    first_wall: Coordinates, dx_mp, equilibrium: Equilibrium, o_point, yz_plane
+    first_wall: Coordinates,
+    dx_mp,
+    equilibrium: Equilibrium,
+    o_point,
+    yz_plane,
+    add_n_extra_points=1,
 ) -> tuple[
     npt.NDArray[float], npt.NDArray[float], list[PartialOpenFluxSurface], float, float
 ]:
@@ -164,10 +186,24 @@ def _analyse_DN(
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
+        dx_mp,
+        equilibrium,
+        o_point,
+        yz_plane,
+        x_sep_omp,
+        x_out_omp,
+        outboard=True,
+        add_n_extra_points=add_n_extra_points,
     )
     flux_surfaces_ib = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_imp, x_out_imp, outboard=False
+        dx_mp,
+        equilibrium,
+        o_point,
+        yz_plane,
+        x_sep_imp,
+        x_out_imp,
+        outboard=False,
+        add_n_extra_points=add_n_extra_points,
     )
     return (
         get_array_x_mp(flux_surfaces_ob[0]) - x_sep_omp,  # Calculate values at OMP
@@ -320,7 +356,9 @@ def _get_sep_out_intersection(
     return x_sep_mp, x_out_mp
 
 
-def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
+def _make_flux_surfaces(
+    x, z, equilibrium, o_point, yz_plane, add_n_extra_points: int = 1
+):
     """
     Make individual PartialOpenFluxSurface through a point.
 
@@ -332,13 +370,32 @@ def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
     coords = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
     )
+    if add_n_extra_points > 1:
+        new_coords = interpolate_points(
+            coords[0],
+            [0] * len(coords[0]),
+            coords[1],
+            add_n_extra_points * len(coords[0]),
+        )
+        return OpenFluxSurface(
+            Coordinates({"x": new_coords[0], "z": new_coords[2]})
+        ).split(o_point, plane=yz_plane)
+
     return OpenFluxSurface(Coordinates({"x": coords[0], "z": coords[1]})).split(
         o_point, plane=yz_plane
     )
 
 
 def _make_flux_surfaces_ibob(
-    dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
+    dx_mp,
+    equilibrium,
+    o_point,
+    yz_plane,
+    x_sep_mp,
+    x_out_mp,
+    *,
+    outboard: bool,
+    add_n_extra_points: int = 1,
 ) -> tuple[list]:
     """
     Make the flux surfaces on the inboard or outboard.
@@ -358,7 +415,9 @@ def _make_flux_surfaces_ibob(
     for x in np.arange(
         x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp)
     ):
-        lfs, hfs = _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane)
+        lfs, hfs = _make_flux_surfaces(
+            x, o_point.z, equilibrium, o_point, yz_plane, add_n_extra_points
+        )
         flux_surfaces_lfs.append(lfs)
         flux_surfaces_hfs.append(hfs)
     return flux_surfaces_lfs, flux_surfaces_hfs

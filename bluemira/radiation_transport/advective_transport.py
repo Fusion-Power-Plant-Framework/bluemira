@@ -185,7 +185,7 @@ class ChargedParticleSolver:
         alpha = np.array([fs.alpha for fs in flux_surfaces])
         return x_mp, z_mp, x_fw, z_fw, alpha
 
-    def _make_flux_surfaces_ob(self):
+    def _make_flux_surfaces_ob(self, add_n_extra_points: int = 1):
         """
         Make the flux surfaces on the outboard.
         """
@@ -205,10 +205,11 @@ class ChargedParticleSolver:
                 self.x_sep_omp,
                 x_out_omp,
                 outboard=True,
+                add_n_extra_points=add_n_extra_points,
             )
         )
 
-    def _make_flux_surfaces_ib(self):
+    def _make_flux_surfaces_ib(self, add_n_extra_points: int = 1):
         """
         Make the flux surfaces on the inboard.
         """
@@ -228,6 +229,7 @@ class ChargedParticleSolver:
                 self.x_sep_imp,
                 x_out_imp,
                 outboard=False,
+                add_n_extra_points=add_n_extra_points,
             )
         )
 
@@ -298,7 +300,7 @@ class ChargedParticleSolver:
 
         return x_reg_inter, z_reg_inter, wire_length
 
-    def analyse(self, first_wall: Coordinates):
+    def analyse(self, first_wall: Coordinates, add_n_extra_points: int = 1):
         """
         Perform the calculation to obtain charged particle heat fluxes on the
         the specified first_wall
@@ -335,14 +337,14 @@ class ChargedParticleSolver:
         ) = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
-            x, z, hf = self._analyse_DN()
+            x, z, hf = self._analyse_DN(add_n_extra_points)
         else:
-            x, z, hf = self._analyse_SN()
+            x, z, hf = self._analyse_SN(add_n_extra_points)
 
         self.result = x, z, hf
         return x, z, hf
 
-    def _analyse_SN(self):
+    def _analyse_SN(self, add_n_extra_points: int = 1):
         """
         Calculation for the case of single nulls.
 
@@ -355,7 +357,7 @@ class ChargedParticleSolver:
         heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
-        self._make_flux_surfaces_ob()
+        self._make_flux_surfaces_ob(add_n_extra_points)
 
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
@@ -414,7 +416,7 @@ class ChargedParticleSolver:
             ]),
         )
 
-    def _analyse_DN(self) -> tuple[npt.NDArray[float], ...]:  # noqa: PLR0914
+    def _analyse_DN(self, add_n_extra_points: int = 1) -> tuple[npt.NDArray[float], ...]:  # noqa: PLR0914
         """
         Calculation for the case of double nulls.
 
@@ -427,8 +429,8 @@ class ChargedParticleSolver:
         heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
-        self._make_flux_surfaces_ob()
-        self._make_flux_surfaces_ib()
+        self._make_flux_surfaces_ob(add_n_extra_points)
+        self._make_flux_surfaces_ib(add_n_extra_points)
 
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
