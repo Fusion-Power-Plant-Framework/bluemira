@@ -177,7 +177,7 @@ def _analyse_DN(
         abs(get_array_x_mp(flux_surfaces_ib[0]) - x_sep_imp),  # Calculate values at IMP
         _clip_flux_surfaces(  # Find flux surface intersections with the first wall
             first_wall,
-            tuple(*flux_surfaces_ob, *flux_surfaces_ib),
+            (*flux_surfaces_ob, *flux_surfaces_ib),
         ),
         x_sep_omp,
         x_sep_imp,
