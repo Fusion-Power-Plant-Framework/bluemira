@@ -82,9 +82,6 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
             targets=targets,
         )
         self.gamma = gamma
-        # self.opt_conditions = opt_conditions or self._opt_condition_defaults({
-        #     "max_eval": 100
-        # })
 
     def optimise(self, x0=None, *, fixed_coils=True) -> CoilsetOptimiserResult:
         """
