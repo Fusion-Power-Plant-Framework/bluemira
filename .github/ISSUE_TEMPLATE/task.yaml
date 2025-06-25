@@ -23,7 +23,6 @@ body:
       description: If the change is user facing please show what the current situation is and the suggested change
       placeholder: |
         1) Current API usage
-        
         2) Proposed API
 
     validations:
