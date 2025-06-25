@@ -454,12 +454,22 @@ class CoilSetMHDState(MHDState):
     Base class for magneto-hydrodynamic states with a CoilSet
     """
 
-    def __init__(self, grid: Grid):
+    def __init__(self, grid: Grid, coilset: CoilSet):
         super().__init__(grid)
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.coilset: CoilSet = None
+        self._coilset = coilset
+
+    @property
+    def coilset(self):
+        """Equilibria coilset"""
+        return self._coilset
+
+    @coilset.setter
+    def coilset(self, value: CoilSet):
+        self._coilset = value
+        self._remap_greens()
 
     @classmethod
     def _get_eqdsk(
@@ -636,8 +646,7 @@ class Breakdown(CoilSetMHDState):
         filename: Path | str | None = None,
         **kwargs,
     ):
-        super().__init__(grid)
-        self.coilset = coilset
+        super().__init__(grid, coilset)
         self._set_init_plasma(grid, psi)
         self.plasma = NoPlasmaCoil(grid)
         self.limiter = kwargs.get("limiter")
@@ -982,7 +991,8 @@ class Equilibrium(CoilSetMHDState):
         label: str = "Equilibrium",
     ):
         self.force_symmetry: bool = force_symmetry
-        super().__init__(grid)
+        super().__init__(grid, coilset)
+
         # Constructors
         self._jtor = jtor
         self.profiles = profiles
@@ -1000,7 +1010,6 @@ class Equilibrium(CoilSetMHDState):
         self.plasma = None
 
         self.controller = None
-        self.coilset = coilset
 
         self._set_init_plasma(self.grid, psi, jtor)
         self.boundary: FreeBoundary = FreeBoundary(self.grid)
