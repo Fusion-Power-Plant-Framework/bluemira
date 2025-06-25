@@ -460,7 +460,7 @@ class CoilSetMHDState(MHDState):
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.coilset = None
+        self.coilset: CoilSet = None
 
     @classmethod
     def _get_eqdsk(

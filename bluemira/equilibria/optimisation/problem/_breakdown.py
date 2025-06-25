@@ -8,7 +8,6 @@ import abc
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.optimisation.constraints import (
     FieldConstraints,
@@ -16,8 +15,8 @@ from bluemira.equilibria.optimisation.constraints import (
 )
 from bluemira.equilibria.optimisation.objectives import MaximiseFluxObjective
 from bluemira.equilibria.optimisation.problem.base import (
-    CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
@@ -186,14 +185,13 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
         return self.r_c
 
 
-class BreakdownCOP(CoilsetOptimisationProblem):
+class BreakdownCOP(EqCoilsetOptimisationProblem):
     """
     Coilset optimisation problem for the premagnetisation / breakdown phase.
     """
 
     def __init__(
         self,
-        coilset: CoilSet,
         breakdown: Breakdown,
         breakdown_strategy: BreakdownZoneStrategy,
         B_stray_max: float,
@@ -214,7 +212,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             else [*constraints, stray_field_cons]
         )
         super().__init__(
-            coilset,
+            breakdown,
             opt_algorithm,
             max_currents=max_currents,
             opt_conditions=opt_conditions,
@@ -222,11 +220,11 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             opt_parameters=None,
             targets=None,
         )
-        self.eq = breakdown
-
         self._args = {
             "c_psi_mat": np.array(
-                coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
+                self.coilset.psi_response(
+                    *breakdown_strategy.breakdown_point, control=True
+                )
             ),
             "scale": self.scale,
         }

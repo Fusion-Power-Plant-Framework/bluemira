@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
@@ -32,6 +31,7 @@ from bluemira.optimisation._algorithm import (
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import CoilSetMHDState
     from bluemira.optimisation._optimiser import OptimiserResult
     from bluemira.optimisation.typed import ConstraintT
 
@@ -98,12 +98,12 @@ class CoilsetOptimisationProblem(abc.ABC):
         self.max_currents = max_currents
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
-        self.targets = targets or MagneticConstraintSet()
+        self.targets = targets or MagneticConstraintSet([])
         self.constraints = constraints or []
 
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = self._opt_condition_defaults(
-            {} if opt_conditions is None else opt_conditions
+            {"max_eval": 100} if opt_conditions is None else opt_conditions
         )
         self.opt_parameters = {} if opt_parameters is None else opt_parameters
 
@@ -312,9 +312,17 @@ class CoilsetOptimisationProblem(abc.ABC):
 
 
 class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
+    """Initialise the optimisation problem for a CoilSetMHDState.
+
+    Raises
+    ------
+    ValueError
+        If the equilibrium does not have a coilset to optimise.
+    """
+
     def __init__(
         self,
-        eq: Equilibrium,
+        eq: CoilSetMHDState,
         opt_algorithm: AlgorithmType,
         *,
         max_currents: npt.ArrayLike | None = None,
@@ -323,6 +331,9 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
         opt_conditions: dict[str, float | int] | None = None,
         opt_parameters: dict[str, float] | None = None,
     ):
+        if eq.coilset is None:
+            raise ValueError("The equilibrium must have a coilset to optimise.")
+        self.eq = eq
         super().__init__(
             eq.coilset,
             opt_algorithm,
@@ -332,4 +343,3 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
             opt_conditions=opt_conditions,
             opt_parameters=opt_parameters,
         )
-        self.eq = eq

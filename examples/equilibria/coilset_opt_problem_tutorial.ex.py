@@ -365,7 +365,6 @@ x_point = FieldNullConstraint(
 #
 # %%
 opt_problem = TikhonovCurrentCOP(
-    coilset=eq.coilset,
     eq=eq,
     targets=magnetic_targets,
     gamma=1e-8,

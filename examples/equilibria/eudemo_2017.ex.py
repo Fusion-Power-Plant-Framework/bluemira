@@ -184,7 +184,6 @@ max_currents = coilset.get_max_current(0.0)
 breakdown = Breakdown(deepcopy(coilset), grid)
 
 bd_opt_problem = BreakdownCOP(
-    breakdown.coilset,
     breakdown,
     OutboardBreakdownZoneStrategy(R_0, A, 0.225),
     opt_algorithm="COBYLA",
@@ -306,7 +305,6 @@ sof_psi_boundary = PsiBoundaryConstraint(
 sof = deepcopy(reference_eq)
 
 sof_opt_problem = MinimalCurrentCOP(
-    sof.coilset,
     sof,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
@@ -332,7 +330,6 @@ eof_psi_boundary = PsiBoundaryConstraint(
 
 eof = deepcopy(reference_eq)
 eof_opt_problem = MinimalCurrentCOP(
-    eof.coilset,
     eof,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
