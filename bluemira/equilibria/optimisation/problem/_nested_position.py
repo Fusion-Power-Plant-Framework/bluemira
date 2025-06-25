@@ -26,19 +26,19 @@ import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     UpdateableConstraint,
 )
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
-class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
+class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents and positions
     subject to maximum current bounds and positions bounded within
@@ -80,27 +80,27 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        sub_opt: CoilsetOptimisationProblem,
-        eq: Equilibrium,
+        sub_opt: EqCoilsetOptimisationProblem,
         position_mapper: PositionMapper,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
         opt_conditions: dict[str, float] | None = None,
         opt_parameters: dict[str, float] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.eq = eq
+        super().__init__(
+            sub_opt.eq,
+            opt_algorithm,
+            # gets set below
+            max_currents=[],
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters=opt_parameters,
+            targets=None,
+        )
         self.position_mapper = position_mapper
-
         opt_dimension = self.position_mapper.dimension
         self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
-        self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
-            "max_eval": 100
-        })
-        self.opt_parameters = opt_parameters
-        self._constraints = [] if constraints is None else constraints
 
     def _get_initial_vector(self) -> npt.NDArray:
         """
@@ -189,7 +189,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         position_mapper: PositionMapper,
-        sub_opt_problems: list[CoilsetOptimisationProblem],
+        sub_opt_problems: list[EqCoilsetOptimisationProblem],
         opt_algorithm: AlgorithmType = Algorithm.COBYLA,
         opt_conditions: dict[str, float] | None = None,
         opt_parameters: dict[str, float] | None = None,
@@ -198,16 +198,19 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         *,
         debug: bool = False,
     ):
-        self.coilset = coilset
+        super().__init__(
+            coilset,
+            opt_algorithm,
+            # gets set below
+            max_currents=[],
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters=opt_parameters,
+            targets=None,  # targets are set by the sub-optimisation problems
+        )
+
         self.position_mapper = position_mapper
         self.sub_opt_problems = sub_opt_problems
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
-            "max_eval": 100
-        })
-        self.opt_parameters = opt_parameters
-        self._constraints = constraints
-
         if initial_currents:
             self.initial_currents = initial_currents / self.sub_opt_problems[0].scale
         else:
@@ -231,7 +234,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     @staticmethod
     def _run_diagnostics(
         debug,
-        sub_opt_prob: CoilsetOptimisationProblem,
+        sub_opt_prob: EqCoilsetOptimisationProblem,
         opt_result: CoilsetOptimiserResult,
     ):
         """
