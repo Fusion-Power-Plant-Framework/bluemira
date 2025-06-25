@@ -130,6 +130,27 @@ def grep(v_before, *, exclude_process=False):
 
 if __name__ == "__main__":
     unsafe_variables = {}
+    if len(sys.argv) == 1 or sys.argv[1].upper() == "-H":
+        print(
+            """Usage
+-----
+1. Find the process variable name change PR.
+    Open the markdown source text, save only part of the source related to variable
+    deletion and renames.
+    - verify that all variables are surrounded by ``
+    - verify that all name-changes lines are denoted as `BEFORE` -> `AFTER`.
+2. Save this text into /tmp/var.txt.
+3. Run this file by
+    - cd bluemira-process-develop/
+    - python scripts/update_process_variable.py /tmp/var.txt
+    3.1 Carry out the manual action specified in the summary printed at the end.
+4. Re-run this same file in bluemira private data by
+    - cd ../bluemira-private-data/
+    - python ../bluemira-process-develop/scripts/update_process_variable.py /tmp/var.txt
+    4.1 Carry out the manual action specified in the summary printed at the end.
+"""
+        )
+        sys.exit()
     pull_request_text = sys.argv[1]
     with open(pull_request_text) as pr:
         for line in pr:
