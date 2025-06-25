@@ -1,0 +1,29 @@
+name: Maintenace Task
+description: Report a mainenance task to help us improve Bluemira.
+type: "Task"
+labels: []
+projects: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to add a maintenance task!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Describe the Task
+      description: Please provide a clear and concise description of what should be improved.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Current and Future State
+      description: If the change is user facing please show what the current situation is and the suggested change
+      placeholder: |
+        1) Current API usage
+        2) Proposed API
+
+    validations:
+      required: false
