@@ -22,9 +22,9 @@ body:
       label: Current and Future State
       description: If the change is user facing please show what the current situation is and the suggested change
       placeholder: |
-        1) Current usage API
-
-        2) Requested usage API
+        1) Current API usage
+        
+        2) Proposed API
 
     validations:
       required: false
