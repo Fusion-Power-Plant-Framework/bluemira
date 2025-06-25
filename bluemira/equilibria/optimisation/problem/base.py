@@ -31,7 +31,7 @@ from bluemira.optimisation._algorithm import (
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.equilibrium import CoilSetMHDState
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.optimisation._optimiser import OptimiserResult
     from bluemira.optimisation.typed import ConstraintT
 
@@ -232,20 +232,6 @@ class CoilsetOptimisationProblem(abc.ABC):
         lower_bounds = -upper_bounds
         self.bounds = (lower_bounds, upper_bounds)
 
-    def update_magnetic_constraints(
-        self, *, I_not_dI: bool = True, fixed_coils: bool = True
-    ):
-        """
-        Update the magnetic optimisation constraints with the state of the Equilibrium
-        """
-        if not hasattr(self, "_constraints"):
-            return
-        for constraint in self._constraints:
-            if isinstance(constraint, UpdateableConstraint):
-                constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
-            if "scale" in constraint._args:
-                constraint._args["scale"] = self.scale
-
     def _make_numerical_constraints(
         self, coilset: CoilSet
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
@@ -322,7 +308,7 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        eq: CoilSetMHDState,
+        eq: Equilibrium,
         opt_algorithm: AlgorithmType,
         *,
         max_currents: npt.ArrayLike | None = None,
@@ -343,3 +329,17 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
             opt_conditions=opt_conditions,
             opt_parameters=opt_parameters,
         )
+
+    def update_magnetic_constraints(
+        self, *, I_not_dI: bool = True, fixed_coils: bool = True
+    ):
+        """
+        Update the magnetic optimisation constraints with the state of the Equilibrium
+        """
+        if not self.constraints:
+            return
+        for constraint in self.constraints:
+            if isinstance(constraint, UpdateableConstraint):
+                constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+            if "scale" in constraint._args:
+                constraint._args["scale"] = self.scale

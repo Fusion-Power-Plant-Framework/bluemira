@@ -156,7 +156,6 @@ class TestCoilsetOptimiser:
         _dummy_eq_sym.coilset = cls.coilset_sym
 
         cls.optimiser_none = CoilsetPositionCOP(
-            cls.coilset_none,
             _dummy_eq_none,
             None,
             PositionMapper(cls.pfregions),
@@ -164,14 +163,12 @@ class TestCoilsetOptimiser:
         )
 
         cls.optimiser_partial = CoilsetPositionCOP(
-            cls.coilset_partial,
             _dummy_eq_partial,
             None,
             PositionMapper(cls.pfregions),
             constraints=[force_c_partial, field_c_partial],
         )
         cls.optimiser_sym = CoilsetPositionCOP(
-            cls.coilset_sym,
             _dummy_eq_sym,
             None,
             PositionMapper(cls.pfregions),

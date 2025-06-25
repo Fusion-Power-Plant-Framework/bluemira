@@ -78,11 +78,10 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         # 3798
         if self.plotting_enabled:
             eq_copy = deepcopy(self.eq)
+            eq_copy.label = "Reference"
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
-                reference_equilibrium=Equilibrium(eq=eq_copy, label="Reference")
-                if reference_eq is None
-                else reference_eq,
+                reference_equilibrium=eq_copy if reference_eq is None else reference_eq,
                 diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
             )
 

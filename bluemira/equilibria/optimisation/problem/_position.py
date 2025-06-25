@@ -7,7 +7,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.equilibrium import CoilSet, Equilibrium
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
@@ -16,14 +16,14 @@ from bluemira.equilibria.optimisation.objectives import (
     RegularisedLsqObjective,
 )
 from bluemira.equilibria.optimisation.problem.base import (
-    CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
-class CoilsetPositionCOP(CoilsetOptimisationProblem):
+class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents and positions
     subject to maximum current bounds and positions bounded within
@@ -33,8 +33,6 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset:
-        Coilset to optimise.
     eq:
         Equilibrium object used to update magnetic field targets.
     targets:
@@ -71,9 +69,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        coilset: CoilSet,
         eq: Equilibrium,
-        targets: MagneticConstraintSet,
+        targets: MagneticConstraintSet | None,
         position_mapper: PositionMapper,
         max_currents: npt.ArrayLike | None = None,
         gamma=1e-8,
@@ -82,18 +79,18 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         opt_parameters: dict[str, float] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.coilset = coilset
-        self.eq = eq
-        self.targets = targets
+        super().__init__(
+            eq,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            opt_parameters=opt_parameters,
+            constraints=constraints,
+            targets=targets,
+        )
         self.position_mapper = position_mapper
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
-            "max_eval": 100
-        })
-        self.opt_parameters = opt_parameters
-        self._constraints = [] if constraints is None else constraints
 
     def optimise(self, x0: npt.NDArray | None = None, **_) -> CoilsetOptimiserResult:
         """
