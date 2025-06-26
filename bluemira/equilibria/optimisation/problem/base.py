@@ -102,9 +102,10 @@ class CoilsetOptimisationProblem(abc.ABC):
         self.constraints = constraints or []
 
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = self._opt_condition_defaults(
-            {"max_eval": 100} if opt_conditions is None else opt_conditions
-        )
+        self.opt_conditions = self._opt_condition_defaults({
+            "max_eval": 100,
+            **(opt_conditions or {}),
+        })
         self.opt_parameters = {} if opt_parameters is None else opt_parameters
 
     @property
@@ -244,7 +245,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         :
             inequality constriants
         """
-        if  len(constraints := self.constraints) == 0:
+        if len(constraints := self.constraints) == 0:
             return [], []
         equality = []
         inequality = []

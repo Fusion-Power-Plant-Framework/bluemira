@@ -76,9 +76,7 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
             max_currents=max_currents,
             opt_conditions=opt_conditions,
             constraints=constraints,
-            opt_parameters={"initial_step": 0.03}
-            if opt_parameters is None
-            else opt_parameters,
+            opt_parameters={"initial_step": 0.03, **(opt_parameters or {})},
             targets=targets,
         )
         self.gamma = gamma

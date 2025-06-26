@@ -90,7 +90,7 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
         super().__init__(
             sub_opt.eq,
             opt_algorithm,
-            # gets set below
+            # bounds set below
             max_currents=None,
             opt_conditions=opt_conditions,
             constraints=constraints,
@@ -201,7 +201,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         super().__init__(
             coilset,
             opt_algorithm,
-            # set below
+            # bounds set below
             max_currents=None,
             opt_conditions=opt_conditions,
             constraints=constraints,
