@@ -244,7 +244,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         :
             inequality constriants
         """
-        if (constraints := self.constraints) is None:
+        if  len(constraints := self.constraints) == 0:
             return [], []
         equality = []
         inequality = []
