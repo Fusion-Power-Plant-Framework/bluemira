@@ -19,11 +19,19 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
-from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
+from bluemira.equilibria.optimisation.constraints import (
+    MagneticConstraintSet,
+    UpdateableConstraint,
+)
+from bluemira.optimisation._algorithm import (
+    Algorithm,
+    AlgorithmDefaultConditions,
+    AlgorithmType,
+)
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.optimisation._optimiser import OptimiserResult
     from bluemira.optimisation.typed import ConstraintT
 
@@ -75,6 +83,45 @@ class CoilsetOptimisationProblem(abc.ABC):
     to a specific objective function for that subclass.
     """
 
+    def __init__(
+        self,
+        coilset: CoilSet,
+        opt_algorithm: AlgorithmType,
+        *,
+        max_currents: npt.ArrayLike | None = None,
+        targets: MagneticConstraintSet | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+    ):
+        self._coilset = coilset
+        self.max_currents = max_currents
+        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+
+        self.targets = targets or MagneticConstraintSet([])
+        self.constraints = constraints or []
+
+        self.opt_algorithm = opt_algorithm
+        self.opt_conditions = self._opt_condition_defaults({
+            "max_eval": 100,
+            **(opt_conditions or {}),
+        })
+        self.opt_parameters = {} if opt_parameters is None else opt_parameters
+
+    @property
+    def coilset(self) -> CoilSet:
+        """The optimisation problem coilset"""
+        return self._coilset
+
+    @coilset.setter
+    def coilset(self, value: CoilSet):
+        self._coilset = value
+
+    @property
+    def scale(self) -> float:
+        """Problem scaling value"""
+        return 1e6
+
     def _opt_condition_defaults(
         self, default_cond: dict[str, float | int]
     ) -> dict[str, float | int]:
@@ -92,15 +139,6 @@ class CoilsetOptimisationProblem(abc.ABC):
     @abc.abstractmethod
     def optimise(self, **kwargs) -> CoilsetOptimiserResult:
         """Run the coilset optimisation."""
-
-    @property
-    def coilset(self) -> CoilSet:
-        """The optimisation problem coilset"""
-        return self._coilset
-
-    @coilset.setter
-    def coilset(self, value: CoilSet):
-        self._coilset = value
 
     @staticmethod
     def get_current_bounds(
@@ -195,20 +233,6 @@ class CoilsetOptimisationProblem(abc.ABC):
         lower_bounds = -upper_bounds
         self.bounds = (lower_bounds, upper_bounds)
 
-    def update_magnetic_constraints(
-        self, *, I_not_dI: bool = True, fixed_coils: bool = True
-    ):
-        """
-        Update the magnetic optimisation constraints with the state of the Equilibrium
-        """
-        if not hasattr(self, "_constraints"):
-            return
-        for constraint in self._constraints:
-            if isinstance(constraint, UpdateableConstraint):
-                constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
-            if "scale" in constraint._args:
-                constraint._args["scale"] = self.scale
-
     def _make_numerical_constraints(
         self, coilset: CoilSet
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
@@ -221,7 +245,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         :
             inequality constriants
         """
-        if (constraints := getattr(self, "_constraints", None)) is None:
+        if len(constraints := self.constraints) == 0:
             return [], []
         equality = []
         inequality = []
@@ -273,7 +297,50 @@ class CoilsetOptimisationProblem(abc.ABC):
 
         return equality, inequality
 
-    @property
-    def scale(self) -> float:
-        """Problem scaling value"""
-        return 1e6
+
+class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
+    """Initialise the optimisation problem for a CoilSetMHDState.
+
+    Raises
+    ------
+    ValueError
+        If the equilibrium does not have a coilset to optimise.
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        opt_algorithm: AlgorithmType,
+        *,
+        max_currents: npt.ArrayLike | None = None,
+        targets: MagneticConstraintSet | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+    ):
+        if eq.coilset is None:
+            raise ValueError("The equilibrium must have a coilset to optimise.")
+        self.eq = eq
+        super().__init__(
+            eq.coilset,
+            opt_algorithm,
+            max_currents=max_currents,
+            targets=targets,
+            constraints=constraints,
+            opt_conditions=opt_conditions,
+            opt_parameters=opt_parameters,
+        )
+
+    def update_magnetic_constraints(
+        self, *, I_not_dI: bool = True, fixed_coils: bool = True
+    ):
+        """
+        Update the magnetic optimisation constraints with the state of the Equilibrium
+        """
+        if not self.constraints:
+            return
+        for constraint in self.constraints:
+            if isinstance(constraint, UpdateableConstraint):
+                constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+            if "scale" in constraint._args:
+                constraint._args["scale"] = self.scale

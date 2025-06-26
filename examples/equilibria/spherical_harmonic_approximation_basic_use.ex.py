@@ -174,7 +174,7 @@ eq.coilset.control = list(sh_coil_names)
 sh_eq = deepcopy(eq)
 # Set up a coilset optimisation problem using the spherical harmonic constraint
 sh_con_len_opt = MinimalCurrentCOP(
-    eq=sh_eq, coilset=sh_eq.coilset, max_currents=6.0e8, constraints=[sh_constraint]
+    eq=sh_eq, max_currents=6.0e8, constraints=[sh_constraint]
 )
 # Find the optimised coilset
 _ = sh_con_len_opt.optimise()
@@ -188,7 +188,6 @@ sh_eq.solve()
 sh_eq_solved = deepcopy(eq)
 sh_con_len_opt = MinimalCurrentCOP(
     eq=sh_eq_solved,
-    coilset=sh_eq_solved.coilset,
     max_currents=6.0e8,
     constraints=[sh_constraint],
 )

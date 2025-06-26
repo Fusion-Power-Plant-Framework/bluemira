@@ -56,7 +56,10 @@ if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.grid import Grid
     from bluemira.equilibria.limiter import Limiter
-    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
+    from bluemira.equilibria.optimisation.problem.base import (
+        CoilsetOptimiserResult,
+        EqCoilsetOptimisationProblem,
+    )
     from bluemira.equilibria.profiles import Profile
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.utilities.positioning import PositionMapper
@@ -129,7 +132,6 @@ class BreakdownCOPConfig:
             The breakdown problem
         """
         return self.problem(
-            breakdown.coilset,
             breakdown,
             strategy,
             B_stray_max=B_stray_max,
@@ -146,7 +148,7 @@ class BreakdownCOPConfig:
 class EQConfig:
     """Equilibrium settings for PulsedCoilsetDesign"""
 
-    problem: type[CoilsetOptimisationProblem] = MinimalCurrentCOP
+    problem: type[EqCoilsetOptimisationProblem] = MinimalCurrentCOP
     convergence: ConvergenceCriterion = field(
         default_factory=lambda: DudsonConvergence(1e-2)
     )
@@ -190,7 +192,6 @@ class EQConfig:
                 constraints += current_constraints
 
             problem = self.problem(
-                eq.coilset,
                 eq,
                 max_currents=max_currents,
                 opt_conditions=self.opt_conditions,
@@ -199,7 +200,6 @@ class EQConfig:
             )
         elif self.problem == TikhonovCurrentCOP:
             problem = self.problem(
-                eq.coilset,
                 eq,
                 max_currents=max_currents,
                 opt_conditions=self.opt_conditions,

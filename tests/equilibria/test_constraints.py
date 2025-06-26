@@ -133,7 +133,6 @@ class TestConstraintMechanics:
 
         # Test that weights have been applied
         problem = TikhonovCurrentCOP(
-            self.eq.coilset,
             self.eq,
             constraint_set,
             gamma=1e-8,

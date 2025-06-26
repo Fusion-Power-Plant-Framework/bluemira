@@ -8,7 +8,6 @@ import abc
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.optimisation.constraints import (
     FieldConstraints,
@@ -16,8 +15,8 @@ from bluemira.equilibria.optimisation.constraints import (
 )
 from bluemira.equilibria.optimisation.objectives import MaximiseFluxObjective
 from bluemira.equilibria.optimisation.problem.base import (
-    CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
@@ -186,14 +185,13 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
         return self.r_c
 
 
-class BreakdownCOP(CoilsetOptimisationProblem):
+class BreakdownCOP(EqCoilsetOptimisationProblem):
     """
     Coilset optimisation problem for the premagnetisation / breakdown phase.
     """
 
     def __init__(
         self,
-        coilset: CoilSet,
         breakdown: Breakdown,
         breakdown_strategy: BreakdownZoneStrategy,
         B_stray_max: float,
@@ -204,31 +202,32 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         opt_conditions: dict[str, float | int] | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.coilset = coilset
-        self.eq = breakdown
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-
-        self._args = {
-            "c_psi_mat": np.array(
-                coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
-            ),
-            "scale": self.scale,
-        }
-
         x_zone, z_zone = breakdown_strategy.calculate_zone_points(n_B_stray_points)
         stray_field_cons = FieldConstraints(
             x_zone, z_zone, B_max=B_stray_max, tolerance=B_stray_con_tol
         )
-        self._constraints = constraints
-        if self._constraints is not None:
-            self._constraints.append(stray_field_cons)
-        else:
-            self._constraints = [stray_field_cons]
-
-        max_currents = np.atleast_1d(max_currents)
-        self.bounds = (-max_currents / self.scale, max_currents / self.scale)
+        constraints = (
+            [stray_field_cons]
+            if constraints is None
+            else [*constraints, stray_field_cons]
+        )
+        super().__init__(
+            breakdown,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters=None,
+            targets=None,
+        )
+        self._args = {
+            "c_psi_mat": np.array(
+                self.coilset.psi_response(
+                    *breakdown_strategy.breakdown_point, control=True
+                )
+            ),
+            "scale": self.scale,
+        }
 
     def optimise(self, x0=None, *, fixed_coils=True):
         """

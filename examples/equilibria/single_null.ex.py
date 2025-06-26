@@ -283,7 +283,6 @@ force_constraints = CoilForceConstraints(
 )
 
 current_opt_problem = TikhonovCurrentCOP(
-    coilset,
     eq,
     targets=MagneticConstraintSet([isoflux]),
     gamma=0.0,
@@ -319,7 +318,6 @@ program()
 minimal_current_eq = deepcopy(eq)
 minimal_current_coilset = deepcopy(coilset)
 minimal_current_opt_problem = MinimalCurrentCOP(
-    minimal_current_coilset,
     minimal_current_eq,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
@@ -398,7 +396,6 @@ eof_psi_boundary = PsiConstraint(
 )
 
 current_opt_problem_sof = TikhonovCurrentCOP(
-    sof.coilset,
     sof,
     targets=MagneticConstraintSet([isoflux]),
     gamma=1e-12,
@@ -410,7 +407,6 @@ current_opt_problem_sof = TikhonovCurrentCOP(
 )
 
 current_opt_problem_eof = TikhonovCurrentCOP(
-    eof.coilset,
     eof,
     targets=MagneticConstraintSet([isoflux]),
     gamma=1e-12,

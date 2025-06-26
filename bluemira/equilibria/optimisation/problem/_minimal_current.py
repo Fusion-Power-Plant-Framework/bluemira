@@ -9,27 +9,24 @@ from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.diagnostics import EqDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
 from bluemira.equilibria.optimisation.problem.base import (
-    CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.equilibria.plotting import EquilibriumComparisonPlotter
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
-class MinimalCurrentCOP(CoilsetOptimisationProblem):
+class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
     """
     Bounded, constrained, minimal current optimisation problem.
 
     Parameters
     ----------
-    coilset:
-        Coilset to optimise
     eq:
         Equilibrium object to optimise the currents for
     max_currents:
@@ -56,7 +53,6 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        coilset: CoilSet,
         eq: Equilibrium,
         max_currents: npt.ArrayLike | None = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
@@ -68,24 +64,24 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         reference_eq: Equilibrium | None = None,
         diag_ops: EqDiagnosticOptions | None = None,
     ):
-        self.coilset = coilset
-        self.eq = eq
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        self.opt_conditions = opt_conditions
-        self.opt_algorithm = opt_algorithm
-        self.opt_parameters = opt_parameters
-        self._constraints = [] if constraints is None else constraints
-
+        super().__init__(
+            eq,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters=opt_parameters,
+            targets=None,
+        )
         self.plotting_enabled = plot
         # TODO @geograham: Should we have diagnostic plotting as an option for all COPs?
         # 3798
         if self.plotting_enabled:
             eq_copy = deepcopy(self.eq)
+            eq_copy.label = "Reference"
             self.comp_plot = EquilibriumComparisonPlotter(
                 equilibrium=self.eq,
-                reference_equilibrium=Equilibrium(eq=eq_copy, label="Reference")
-                if reference_eq is None
-                else reference_eq,
+                reference_equilibrium=eq_copy if reference_eq is None else reference_eq,
                 diag_ops=EqDiagnosticOptions() if diag_ops is None else diag_ops,
             )
 

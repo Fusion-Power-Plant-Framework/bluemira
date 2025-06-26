@@ -18,12 +18,13 @@ from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective,
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.tools import floatify
 
 
-class TikhonovCurrentCOP(CoilsetOptimisationProblem):
+class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
     """
     Coilset OptimisationProblem for coil currents subject to maximum current bounds.
 
@@ -32,8 +33,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset:
-        Coilset to optimise.
     eq:
         Equilibrium object used to update magnetic field targets.
     targets:
@@ -62,7 +61,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        coilset: CoilSet,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         gamma: float,
@@ -72,19 +70,16 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         max_currents: npt.ArrayLike | None = None,
         constraints: list[UpdateableConstraint] | None = None,
     ):
-        self.coilset = coilset
-        self.eq = eq
-        self.targets = targets
-        self.gamma = gamma
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
-            "max_eval": 100
-        })
-        self.opt_parameters = (
-            {"initial_step": 0.03} if opt_parameters is None else opt_parameters
+        super().__init__(
+            eq,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            constraints=constraints,
+            opt_parameters={"initial_step": 0.03, **(opt_parameters or {})},
+            targets=targets,
         )
-        self._constraints = [] if constraints is None else constraints
+        self.gamma = gamma
 
     def optimise(self, x0=None, *, fixed_coils=True) -> CoilsetOptimiserResult:
         """
