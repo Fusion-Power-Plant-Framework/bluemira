@@ -12,6 +12,9 @@ on:
   push:
     paths:
       - examples/**
+    branches:
+      - develop
+      - main
 
 jobs:
   examples:
