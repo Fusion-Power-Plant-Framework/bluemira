@@ -255,7 +255,7 @@ class Constraint(ConstraintSelection, Model):
     PAUX_LOWER_LIMIT = (
         40,
         (64,),
-        ("auxmin",),
+        ("p_hcd_injected_min",),
         "Start-up injection power upper limit (PULSE)",
     )
     IP_RAMP_LOWER_LIMIT = (

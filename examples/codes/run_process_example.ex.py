@@ -250,7 +250,7 @@ template_builder.add_input_values({
     "f_c_plasma_bootstrap_max": 0.99,
     # BOP inputs
     "eta_turbine": 0.375,
-    "etahtp": 0.87,
+    "eta_coolant_pump_electric": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
     "t_between_pulse": 0.0,
