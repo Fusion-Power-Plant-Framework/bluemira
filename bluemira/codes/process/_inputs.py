@@ -121,7 +121,7 @@ class ProcessInputs:
     declshld: float | None = None
     blkttype: int | None = None
     etaiso: float | None = None
-    etahtp: float | None = None
+    eta_coolant_pump_electric: float | None = None
     n_liq_recirc: int | None = None
     bz_channel_conduct_liq: float | None = None
     blpressure_liq: float | None = None
@@ -228,7 +228,7 @@ class ProcessInputs:
     len_tf_bus: float | None = None
 
     # PF Power
-    iscenr: int | None = None
+    i_pf_energy_storage_source: int | None = None
     maxpoloidalpower: float | None = None
 
     # Cost variables
@@ -342,7 +342,7 @@ class ProcessInputs:
     dp_he: float | None = None
 
     # Constraint variables
-    auxmin: float | None = None
+    p_hcd_injected_min: float | None = None
     beta_poloidal_max: float | None = None
     bigqmin: float | None = None
     bmxlim: float | None = None
@@ -545,7 +545,7 @@ class ProcessInputs:
     ipowerflow: int | None = None
     i_shld_primary_heat: int | None = None
     pinjmax: float | None = None
-    pwpm2: float | None = None
+    pflux_plant_floor_electric: float | None = None
     p_tritium_plant_elec_mw: float | None = None
     vachtmw: float | None = None
     i_hcd_calculations: int | None = None

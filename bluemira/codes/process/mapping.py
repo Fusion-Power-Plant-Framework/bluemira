@@ -29,7 +29,7 @@ IN_mappings = {
     "sigma_tf_wp_max": ("sig_tf_wp_max", "Pa"),
     "sigma_cs_wp_max": ("alstroh", "Pa"),
     "H_star": ("hfact", "dimensionless"),
-    "bb_pump_eta_el": ("etahtp", "dimensionless"),
+    "bb_pump_eta_el": ("eta_coolant_pump_electric", "dimensionless"),
     "bb_pump_eta_isen": ("etaiso", "dimensionless"),
     "bb_t_inlet": ("temp_blkt_coolant_in", "K"),
     "bb_t_outlet": ("temp_blkt_coolant_out", "K"),
