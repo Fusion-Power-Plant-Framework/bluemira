@@ -3648,7 +3648,7 @@
     "var_mod": "Electric Power Requirements",
     "scan01": 2758.9
   },
-  "fcsht": {
+  "p_plant_electric_base_total_mw": {
     "var_mod": "Electric Power Requirements",
     "scan01": 74.293
   },
@@ -3736,7 +3736,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.005
   },
-  "etahtp": {
+  "eta_coolant_pump_electric": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.87
   },
@@ -3784,7 +3784,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 4215.5
   },
-  "nphx": {
+  "n_primary_heat_exchangers": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 5.0
   },
