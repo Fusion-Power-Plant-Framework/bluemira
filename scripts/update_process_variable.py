@@ -180,10 +180,9 @@ if __name__ == "__main__":
                 if delete_var:
                     unsafe_variables[f"Delete '{var_before}' from:"] = grepped_files
                 else:
-                    rename_command = (
+                    unsafe_variables[
                         r'sed -i "s/\b' + var_before + r"\b/" + f'{var_after}/g"'
-                    )
-                    unsafe_variables[rename_command] = grepped_files
+                    ] = grepped_files
 
     print("█" * os.get_terminal_size().columns)
     if unsafe_variables:
