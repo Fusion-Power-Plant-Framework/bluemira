@@ -143,7 +143,7 @@ class ProcessInputs:
     dcase: float | None = None
     dcond: list[float] | None = None
     dcondins: float | None = None
-    dhecoil: float | None = None
+    dia_tf_turn_coolant_channel: float | None = None
     b_crit_upper_nbti: float | None = None
     t_crit_nbti: float | None = None
     fcutfsu: float | None = None
@@ -192,9 +192,9 @@ class ProcessInputs:
     # eff_tf_cryo: Optional[float] = -1.0 # defaults cannot be right
     n_tf_coils: int | None = None
     tftmp: float | None = None
-    thicndut: float | None = None
+    dx_tf_turn_insulation: float | None = None
     dr_tf_nose_case: float | None = None
-    thwcndut: float | None = None
+    dx_tf_turn_steel: float | None = None
     tinstf: float | None = None
     tmaxpro: float | None = None
     tmax_croco: float | None = None

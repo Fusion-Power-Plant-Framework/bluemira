@@ -1299,7 +1299,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "hmax",
+        "name": "z_tf_inside_half",
         "send": false,
         "recv": false,
         "unit": "m"

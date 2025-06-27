@@ -273,7 +273,7 @@ class TestInDatOneForOne:
         template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
         template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
         template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
-        template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
+        template_builder.add_variable("dx_tf_turn_steel", 8.0e-3, lower_bound=8.0e-3)
         template_builder.add_variable("dr_tf_nose_case", 0.52465)
         template_builder.add_variable("dr_tf_inboard", 1.2080)
         template_builder.add_variable(
@@ -459,9 +459,9 @@ class TestInDatOneForOne:
             "dr_tf_plasma_case": 0.06,
             "dx_tf_side_case": 0.05,
             "ripmax": 0.6,
-            "dhecoil": 0.01,
+            "dia_tf_turn_coolant_channel": 0.01,
             "tftmp": 4.75,
-            "thicndut": 2.0e-3,
+            "dx_tf_turn_insulation": 2.0e-3,
             "tinstf": 0.008,
             # "tfinsgap": 0.01,
             "tmargmin": 1.5,
