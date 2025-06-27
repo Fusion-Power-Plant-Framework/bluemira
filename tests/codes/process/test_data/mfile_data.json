@@ -2152,7 +2152,7 @@
     "var_mod": "TF coils",
     "scan01": 1.3182
   },
-  "hmax": {
+  "z_tf_inside_half": {
     "var_mod": "TF coils",
     "scan01": 10.551
   },
@@ -2164,43 +2164,43 @@
     "var_mod": "TF coils",
     "scan01": 1.0
   },
-  "xarc(1)": {
+  "r_tf_arc(1)": {
     "var_mod": "TF coils",
     "scan01": 3.3784
   },
-  "yarc(1)": {
+  "z_tf_arc(1)": {
     "var_mod": "TF coils",
     "scan01": 5.4207
   },
-  "xarc(2)": {
+  "r_tf_arc(2)": {
     "var_mod": "TF coils",
     "scan01": 8.0506
   },
-  "yarc(2)": {
+  "z_tf_arc(2)": {
     "var_mod": "TF coils",
     "scan01": 9.0345
   },
-  "xarc(3)": {
+  "r_tf_arc(3)": {
     "var_mod": "TF coils",
     "scan01": 16.801
   },
-  "yarc(3)": {
+  "z_tf_arc(3)": {
     "var_mod": "TF coils",
     "scan01": 0.0
   },
-  "xarc(4)": {
+  "r_tf_arc(4)": {
     "var_mod": "TF coils",
     "scan01": 8.0506
   },
-  "yarc(4)": {
+  "z_tf_arc(4)": {
     "var_mod": "TF coils",
     "scan01": -10.551
   },
-  "xarc(5)": {
+  "r_tf_arc(5)": {
     "var_mod": "TF coils",
     "scan01": 3.3784
   },
-  "yarc(5)": {
+  "z_tf_arc(5)": {
     "var_mod": "TF coils",
     "scan01": -6.3309
   },
@@ -2288,7 +2288,7 @@
     "var_mod": "TF coils",
     "scan01": 1.0
   },
-  "n_tf_turn": {
+  "n_tf_coil_turns": {
     "var_mod": "TF coils",
     "scan01": 200.0
   },
@@ -2300,11 +2300,11 @@
     "var_mod": "TF coils",
     "scan01": 10.0
   },
-  "t_turn_radial": {
+  "dr_tf_turn": {
     "var_mod": "TF coils",
     "scan01": 0.09971
   },
-  "t_turn_toroidal": {
+  "dx_tf_turn": {
     "var_mod": "TF coils",
     "scan01": 0.037366
   },
@@ -2316,27 +2316,27 @@
     "var_mod": "TF coils",
     "scan01": 0.033366
   },
-  "t_cable_radial": {
+  "dr_tf_turn_cable_space": {
     "var_mod": "TF coils",
     "scan01": 0.07971
   },
-  "t_cable_toroidal": {
+  "dx_tf_turn_cable_space": {
     "var_mod": "TF coils",
     "scan01": 0.017366
   },
-  "thwcndut": {
+  "dx_tf_turn_steel": {
     "var_mod": "TF coils",
     "scan01": 0.008
   },
-  "thicndut": {
+  "dx_tf_turn_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.002
   },
-  "dhecoil": {
+  "dia_tf_turn_coolant_channel": {
     "var_mod": "TF coils",
     "scan01": 0.01
   },
-  "acstf": {
+  "a_tf_turn_cable_space": {
     "var_mod": "TF coils",
     "scan01": 0.0013533
   },
@@ -2500,7 +2500,7 @@
     "var_mod": "Superconducting TF Coils",
     "scan01": 99486000.0
   },
-  "jwdgcrt": {
+  "j_tf_wp_critical": {
     "var_mod": "Superconducting TF Coils",
     "scan01": 23198000.0
   },

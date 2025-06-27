@@ -116,7 +116,7 @@ NONE_mappings = {
     "f_ni": ("faccd", "dimensionless"),
     "tk_tf_outboard": ("dr_tf_outboard", "m"),
     "z_cp_top": ("z_cp_top", "m"),
-    "h_tf_max_in": ("hmax", "m"),
+    "h_tf_max_in": ("z_tf_inside_half", "m"),
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
     # The following mappings are not 1:1
     "tk_sh_in": ("dr_shld_inboard", "m"),
