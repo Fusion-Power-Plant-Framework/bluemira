@@ -15,6 +15,7 @@ jobs:
     env:
       RESULT: ${{ github.event.workflow_run.conclusion }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PYTHON_VERSION: "3.11"
     steps:
       - name: "Get information about the current run"
         uses: potiuk/get-workflow-origin@v1_5
@@ -34,7 +35,7 @@ jobs:
       - name: Download reference test report
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
         env:
-          FILE_NAME: "test-report-json_3.10_ubuntu-latest"
+          FILE_NAME: "test-report-json_${{ env.PYTHON_VERSION }}_ubuntu-latest"
         run: |
           artifact_url="$( \
             gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
@@ -48,7 +49,7 @@ jobs:
       - name: Download PR test report
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
         env:
-          FILE_NAME: "test-report-json_3.10_ubuntu-latest"
+          FILE_NAME: "test-report-json_${{ env.PYTHON_VERSION }}_ubuntu-latest"
         run: |
           artifact_url="$( \
             gh api repos/${{ github.repository }}/actions/artifacts?per_page=100 --jq '.artifacts[] | select(.name == "${{ env.FILE_NAME }}") | select(.workflow_run.head_sha == "${{ github.event.workflow_run.head_sha }}") | .archive_download_url')"
