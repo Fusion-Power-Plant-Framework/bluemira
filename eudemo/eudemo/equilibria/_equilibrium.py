@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.find import OPointCalcOptions
 from bluemira.equilibria.profiles import BetaIpProfile, Profile
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.equilibria.tools import make_grid
@@ -43,6 +44,7 @@ def make_equilibrium(
     _params: EquilibriumParams | dict,
     tf_coil_boundary: BluemiraWire,
     grid_settings: dict,
+    o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
 ) -> Equilibrium:
     """
     Build an equilibrium using a coilset and a `BetaIpProfile` profile.
@@ -83,7 +85,7 @@ def make_equilibrium(
     )
     grid = make_grid(params.R_0.value, params.A.value, kappa, grid_settings)
 
-    return Equilibrium(coilset, grid, profiles)
+    return Equilibrium(coilset, grid, profiles, o_point_fallback=o_point_fallback)
 
 
 @dataclass
