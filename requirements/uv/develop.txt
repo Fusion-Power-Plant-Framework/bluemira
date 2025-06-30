@@ -23,7 +23,7 @@ babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
-blosc2==3.4.0
+blosc2==3.5.0
     # via tables
 certifi==2025.6.15
     # via requests
