@@ -31,18 +31,16 @@ Notebook displaying example coilsets for different devices.
 # Notebook displaying example coilset positions and sizes for different devices.
 # To be used in examples and tests.
 # %%
-
 import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_root
-from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.coils import Coil, CoilSet, symmetrise_coilset
+
 
 # %%
-
-
 def read_coil_json(name):
     """Read coil info and return data."""
     root_path = get_bluemira_root()
@@ -53,8 +51,6 @@ def read_coil_json(name):
 
 
 # %%
-
-
 def make_coilset(data):
     """Make a coilset from position info. Currents not set."""
     coils = []
@@ -72,45 +68,53 @@ def make_coilset(data):
     return CoilSet(*coils)
 
 
-# DEMO Single Null
-
 # %%
-
-
+# DEMO Single Null
 data = read_coil_json("DEMO-SN_coilset.json")
 demo_sn_coils = make_coilset(data)
 demo_sn_coils.plot()
 plt.show()
 
-
+# %%
 # DEMO Double Null
-
-# %%
-
-
 data = read_coil_json("DEMO-DN_coilset.json")
-demo_sn_coils = make_coilset(data)
-demo_sn_coils.plot()
+demo_dn_coils = make_coilset(data)
+demo_dn_coils.plot()
 plt.show()
 
-
+# %%
 # MAST-U
-
-# %%
-
-
 data = read_coil_json("MAST-U_coilset.json")
-demo_sn_coils = make_coilset(data)
-demo_sn_coils.plot()
+mastu_coils = make_coilset(data)
+mastu_coils.plot()
 plt.show()
-
-
-# ITER
 
 # %%
-
-
+# ITER
 data = read_coil_json("ITER_coilset.json")
-demo_sn_coils = make_coilset(data)
-demo_sn_coils.plot()
+iter_coils = make_coilset(data)
+iter_coils.plot()
 plt.show()
+
+# %% [markdown]
+# A quick look at applying symmetrise_coilset:
+
+# %%
+print("MAST")
+print("------")
+print(mastu_coils)
+print("DEMO DN")
+print("------")
+print(demo_dn_coils)
+
+# %%
+new_mastu_coils = symmetrise_coilset(mastu_coils)
+new_demo_dn_coils = symmetrise_coilset(demo_dn_coils)
+print("MAST")
+print("------")
+print(new_mastu_coils)
+print("DEMO DN")
+print("------")
+print(new_demo_dn_coils)
+
+# %%
