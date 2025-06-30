@@ -10,6 +10,7 @@ Plasma profile objects, shape functions, and associated tools
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
@@ -362,7 +363,7 @@ class LuxonExpFunc(ShapeFunction):
 # =============================================================================
 
 
-class Profile:
+class Profile(ABC):
     """
     Profile base class
 
@@ -524,6 +525,25 @@ class Profile:
             The plot axis
         """
         return ProfilePlotter(self, ax=ax)
+
+    @abstractmethod
+    def jtor(
+        self,
+        x: npt.NDArray[np.float64],
+        z: npt.NDArray[np.float64],
+        psi: npt.NDArray[np.float64],
+        o_points: list[Opoint],
+        x_points: list[Xpoint],
+    ) -> npt.NDArray[np.float64]:
+        """Calculate toroidal plasma current"""
+
+    @abstractmethod
+    def pprime(self, pn: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """dp/dpsi as a function of normalised psi"""
+
+    @abstractmethod
+    def ffprime(self, pn: npt.ArrayLike) -> npt.NDArray[np.float64]:
+        """f*df/dpsi as a function of normalised psi"""
 
 
 class BetaIpProfile(Profile):

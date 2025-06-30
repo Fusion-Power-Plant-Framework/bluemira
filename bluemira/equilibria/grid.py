@@ -10,7 +10,7 @@ Grid object and operations for equilibria.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 import numba as nb
 import numpy as np
@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 __all__ = ["Grid", "integrate_dx_dz", "revolved_volume", "volume_integral"]
 
 
+@final
 class Grid:
     """
     A rectangular Grid object with regular rectangular cells for use in finite
@@ -118,8 +119,8 @@ class Grid:
         self.x_1d = np.linspace(x_min, x_max, nx)
         self.z_1d = np.linspace(z_min, z_max, nz)
         self.x, self.z = np.meshgrid(self.x_1d, self.z_1d, indexing="ij")
-        self.dx = np.diff(self.x_1d[:2])[0]  # Grid sizes
-        self.dz = np.diff(self.z_1d[:2])[0]
+        self.dx: float = np.diff(self.x_1d[:2])[0]  # Grid sizes
+        self.dz: float = np.diff(self.z_1d[:2])[0]
         self.nx, self.nz = nx, nz
         self.bounds = [
             [x_min, x_max, x_max, x_min, x_min],  # Grid corners

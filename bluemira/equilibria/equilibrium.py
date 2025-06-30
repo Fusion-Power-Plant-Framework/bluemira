@@ -96,13 +96,13 @@ class MHDState:
     Base class for magneto-hydrodynamic states
     """
 
-    def __init__(self):
+    def __init__(self, grid: Grid):
         # Constructors
         self.x: npt.NDArray[np.float64] | None = None
         self.z: npt.NDArray[np.float64] | None = None
         self.dx: float | None = None
         self.dz: float | None = None
-        self.grid: Grid | None = None
+        self.set_grid(grid)
         self.limiter: Limiter | None = None
         self._label: str | None = None
 
@@ -127,7 +127,7 @@ class MHDState:
         grid:
             The grid upon which to solve the Equilibrium
         """
-        self.grid = grid
+        self.grid: Grid = grid
         self.x, self.z = self.grid.x, self.grid.z
         self.dx, self.dz = self.grid.dx, self.grid.dz
 
@@ -256,8 +256,7 @@ class FixedPlasmaEquilibrium(MHDState):
         filename: Path | str | None = None,
         label: str = "Fixed Plasma Equilibrium",
     ):
-        super().__init__()
-        self.set_grid(grid)
+        super().__init__(grid)
         # We just need the flux values, not the locations
         o_points = [Opoint(0.0, 0.0, psi_ax)]
         x_points = [Xpoint(0.0, 0.0, psi_b)]
@@ -455,12 +454,22 @@ class CoilSetMHDState(MHDState):
     Base class for magneto-hydrodynamic states with a CoilSet
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, grid: Grid, coilset: CoilSet):
+        super().__init__(grid)
         self._psi_green = None
         self._bx_green = None
         self._bz_green = None
-        self.coilset: CoilSet = None
+        self._coilset = coilset
+
+    @property
+    def coilset(self):
+        """Equilibria coilset"""
+        return self._coilset
+
+    @coilset.setter
+    def coilset(self, value: CoilSet):
+        self._coilset = value
+        self._remap_greens()
 
     @classmethod
     def _get_eqdsk(
@@ -637,9 +646,7 @@ class Breakdown(CoilSetMHDState):
         filename: Path | str | None = None,
         **kwargs,
     ):
-        super().__init__()
-        self.coilset = coilset
-        self.set_grid(grid)
+        super().__init__(grid, coilset)
         self._set_init_plasma(grid, psi)
         self.plasma = NoPlasmaCoil(grid)
         self.limiter = kwargs.get("limiter")
@@ -983,37 +990,35 @@ class Equilibrium(CoilSetMHDState):
         filename: Path | str | None = None,
         label: str = "Equilibrium",
     ):
-        super().__init__()
+        self.force_symmetry: bool = force_symmetry
+        super().__init__(grid, coilset)
+
         # Constructors
         self._jtor = jtor
         self.profiles = profiles
         self._o_points = None
         self._x_points = None
-        self._solver = None
         self._eqdsk = None
 
-        self._li_flag = False
+        self._li_flag: bool = False
         if isinstance(profiles, BetaLiIpProfile):
             self._li_flag = True
-            self._li = profiles._l_i_target  # target plasma normalised inductance
-            self._li_iter = 0  # li iteration count
+            self._li: float = profiles._l_i_target  # target plasma normalised inductance
+            self._li_iter: int = 0  # li iteration count
             self._li_temp = None
 
         self.plasma = None
 
-        self.force_symmetry = force_symmetry
         self.controller = None
-        self.coilset = coilset
 
-        self.set_grid(grid)
-        self._set_init_plasma(grid, psi, jtor)
-        self.boundary = FreeBoundary(self.grid)
+        self._set_init_plasma(self.grid, psi, jtor)
+        self.boundary: FreeBoundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
-        self.limiter = limiter
-        self.filename = filename
-        self._label = label
+        self.limiter: Limiter | None = limiter
+        self.filename: Path | str | None = filename
+        self._label: str = label
 
-        self._kwargs = {"vcontrol": vcontrol}
+        self._kwargs: dict[str, str | None] = {"vcontrol": vcontrol}
 
     @classmethod
     def from_eqdsk(

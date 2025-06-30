@@ -53,7 +53,6 @@ if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
     from bluemira.equilibria.grid import Grid
-    from bluemira.geometry.wire import BluemiraWire
     from bluemira.radiation_transport.midplane_temperature_density import (
         MidplaneProfiles,
     )
@@ -1493,7 +1492,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def calculate_sol_distribution(self, firstwall_geom: Grid):
+    def calculate_sol_distribution(self, firstwall_geom: Coordinates):
         """
         Temperature and density profiles calculation.
         For each scrape-off layer sector, it gives temperature
@@ -1974,7 +1973,7 @@ class RadiationSource:
     def __init__(
         self,
         eq: Equilibrium,
-        firstwall_shape: BluemiraWire,
+        firstwall_shape: Coordinates,
         params: ParameterFrameLike,
         midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
@@ -2217,7 +2216,7 @@ class RadiationSource:
         f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return interpolated_field_values(x, z, f)
 
-    def rad_map(self, firstwall_geom: Grid):
+    def rad_map(self, firstwall_geom: Coordinates):
         """
         Mapping all the radiation values associated to all the points
         as three arrays containing x coordinates, z coordinates and

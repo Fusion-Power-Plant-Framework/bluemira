@@ -11,7 +11,7 @@ Finite element method utilities
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -71,7 +71,7 @@ def model_to_mesh(
     model: type[gmsh.model] | None = None,
     comm=MPI.COMM_WORLD,
     rank: int = 0,
-    gdim: int | Iterable[int] = 3,
+    gdim: int | Sequence[int] = 3,
     **kwargs,
 ):
     """
@@ -88,7 +88,7 @@ def model_to_mesh(
     -----
     Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
     """
-    if isinstance(gdim, Iterable):
+    if isinstance(gdim, Sequence):
         dimensions = gdim
         gdim = len(dimensions)
     else:

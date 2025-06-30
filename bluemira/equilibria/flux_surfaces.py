@@ -832,7 +832,7 @@ def calculate_connection_length_flt(
     first_wall: Coordinates | Grid,
     *,
     forward: bool = True,
-    n_points: float = 200,
+    n_points: int = 200,
     n_turns_max: int = 50,
 ) -> float:
     """
@@ -927,7 +927,7 @@ def calculate_connection_length_fs(
     if f_s.closed:
         bluemira_print("Flux surface is closed. No connection length calculated.")
         return 0.0
-    f_s = OpenFluxSurface(f_s)
+    f_s: OpenFluxSurface = OpenFluxSurface(f_s)
 
     class Point:
         def __init__(self, x, z):
