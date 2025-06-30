@@ -436,7 +436,7 @@ python-json-logger==3.3.0
     # via jupyter-events
 pytz==2025.2
     # via pandas
-pyvista==0.45.2
+pyvista==0.44.1
     # via bluemira (pyproject.toml)
 pyyaml==6.0.2
     # via
@@ -625,7 +625,7 @@ urllib3==2.5.0
     # via requests
 virtualenv==20.31.2
     # via pre-commit
-vtk==9.3.1
+vtk==9.5.0
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
