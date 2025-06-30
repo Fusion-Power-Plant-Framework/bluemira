@@ -17,6 +17,7 @@ from bluemira.magnetostatics.greens import (
     greens_Bx,
     greens_Bz,
     greens_all,
+    greens_dbz_dx,
     greens_dpsi_dx,
     greens_dpsi_dz,
     greens_psi,
@@ -157,20 +158,35 @@ class TestGreenFieldsRegression:
 
 class TestGreensEdgeCases:
     @pytest.mark.parametrize(
-        "func", [greens_psi, greens_dpsi_dz, greens_dpsi_dx, greens_Bx, greens_Bz]
+        "func",
+        [
+            greens_psi,
+            greens_dpsi_dz,
+            greens_dpsi_dx,
+            greens_Bx,
+            greens_Bz,
+            greens_dbz_dx,
+        ],
     )
     @pytest.mark.parametrize("fail_point", [[0, 0, 0, 0]])
     def test_greens_on_axis(self, func, fail_point):
         with pytest.raises(ZeroDivisionError):
             func(*fail_point)
 
-    @pytest.mark.parametrize("func", [greens_Bx, greens_Bz])
+    @pytest.mark.parametrize("func", [greens_Bx, greens_Bz, greens_dbz_dx])
     @pytest.mark.parametrize("fail_point", [[1, 1, 0, 10], [-1, -1, 0, 10]])
     def test_greens_on_axis_field(self, func, fail_point):
         with pytest.raises(ZeroDivisionError):
             func(*fail_point)
 
-    @pytest.mark.parametrize("func", [greens_Bx, greens_dpsi_dz])
+    @pytest.mark.parametrize("func", [greens_Bx, greens_dpsi_dz, greens_dbz_dx])
     @pytest.mark.parametrize("zero_point", [[1, 1, 1, 1], [-1, -1, -1, -1]])
     def test_greens_at_same_point(self, func, zero_point):
         np.testing.assert_allclose(0.0, func(*zero_point), atol=1e-6)
+
+    @pytest.mark.parametrize(
+        "small_point", [[1, 1, 1 + 1e-4, 1 + 1e-4], [-1, -1, -(1 + 1e-4), -(1 + 1e-4)]]
+    )
+    def test_greens_at_small_distance_from_point(self, small_point):
+        print(greens_dbz_dx(*small_point))
+        np.testing.assert_allclose(0.00025, greens_dbz_dx(*small_point), atol=1e-6)
