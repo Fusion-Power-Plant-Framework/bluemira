@@ -629,7 +629,7 @@ class TestCoilSetSymmetry:
         assert check_coilset_symmetric(coilset) is is_sym
 
     @pytest.mark.parametrize(
-        ("coilset", "n_coils", "ssc", "nc"),
+        ("coilset", "n_coils", "n_sym_coils", "n_sing_coils"),
         [
             (
                 CoilSet(
@@ -671,19 +671,19 @@ class TestCoilSetSymmetry:
             (read_in_coilset("MAST-U_coilset.json"), 12, 11, 1),
         ],
     )
-    def test_symmetrise(self, coilset, n_coils, ssc, nc):
+    def test_symmetrise(self, coilset, n_coils, n_sym_coils, n_sing_coils):
         new = symmetrise_coilset(coilset)
         assert len(new._coils) == n_coils
         assert new.n_coils() == coilset.n_coils()
         type_count = Counter([type(c) for c in new._coils])
-        assert type_count[SymmetricCircuit] == ssc
-        assert type_count[Coil] == nc
+        assert type_count[SymmetricCircuit] == n_sym_coils
+        assert type_count[Coil] == n_sing_coils
         _f, ax = plt.subplots(1, 2)
         coilset.plot(ax=ax[0])
         new.plot(ax=ax[1])
 
     @pytest.mark.parametrize(
-        ("coilset", "n_coils", "ssc", "nc"),
+        ("coilset", "n_coils", "n_sym_coils", "n_sing_coils"),
         [
             (
                 CoilSet(
@@ -723,12 +723,12 @@ class TestCoilSetSymmetry:
             ),
         ],
     )
-    def test_symmetrise_singular(self, coilset, n_coils, ssc, nc):
+    def test_symmetrise_singular(self, coilset, n_coils, n_sym_coils, n_sing_coils):
         new = symmetrise_coilset(coilset, symmetrise_singular=True)
         assert len(new._coils) == n_coils
-        assert new.n_coils() == coilset.n_coils() + nc
+        assert new.n_coils() == coilset.n_coils() + n_sing_coils
         type_count = Counter([type(c) for c in new._coils])
-        assert type_count[SymmetricCircuit] == ssc
+        assert type_count[SymmetricCircuit] == n_sym_coils
         assert type_count[Coil] == 0
         _f, ax = plt.subplots(1, 2)
         coilset.plot(ax=ax[0])
