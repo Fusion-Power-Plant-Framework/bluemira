@@ -1144,7 +1144,7 @@ class CoilSetOptimisationState:
 
     @property
     def positions(self) -> np.ndarray:
-        """Get the positions as a (2,N) array"""
+        """Get the positions as a (2, N) array"""
         return np.array([self.xs, self.zs])
 
     @property

@@ -118,7 +118,7 @@ class CellStage:
         # self.universe.volume = total_universe_volume
 
         outer_boundary_volume = to_cm3(
-            polygon_revolve_signed_volume(ext_vertices[:, ::2])
+            polygon_revolve_signed_volume(ext_vertices[:, ::2].T)
         )
         ext_void_volume = total_universe_volume - outer_boundary_volume
         if self.tf_coils:
@@ -1233,7 +1233,7 @@ class BlanketCell(openmc.Cell):
             ),
         )
 
-        self.volume = to_cm3(polygon_revolve_signed_volume(vertices[::2].T))
+        self.volume = to_cm3(polygon_revolve_signed_volume(vertices[::2]))
         if self.volume <= 0:
             raise GeometryError("Wrong ordering of vertices!")
 

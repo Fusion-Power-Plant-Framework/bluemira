@@ -201,7 +201,7 @@ class CellWalls:
         volume: float
         """
         return polygon_revolve_signed_volume(
-            np.concatenate([self.cell_walls[i], self.cell_walls[i + 1][::-1]])
+            np.concatenate([self.cell_walls[i], self.cell_walls[i + 1][::-1]]).T
         )
 
     @property
@@ -238,17 +238,21 @@ class CellWalls:
         start_i, dir_i = self.starts[i], self.directions[i]
         new_end = start_i + dir_i * test_length
         prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
-        return polygon_revolve_signed_volume([
-            prev_wall[0],
-            prev_wall[1],
-            new_end,
-            start_i,
-        ]) + polygon_revolve_signed_volume([
-            start_i,
-            new_end,
-            next_wall[1],
-            next_wall[0],
-        ])
+        return polygon_revolve_signed_volume(
+            np.array([
+                prev_wall[0],
+                prev_wall[1],
+                new_end,
+                start_i,
+            ]).T
+        ) + polygon_revolve_signed_volume(
+            np.array([
+                start_i,
+                new_end,
+                next_wall[1],
+                next_wall[0],
+            ]).T
+        )
 
     def volume_derivative_of_cells_neighbouring(self, i, test_length):
         """

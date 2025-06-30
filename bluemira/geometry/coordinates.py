@@ -936,7 +936,7 @@ def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     side_vectors:
-        The side vectors of a polygon (shape: (N, 2)).
+        The side vectors of a polygon (shape: (2, N)).
 
     Returns
     -------

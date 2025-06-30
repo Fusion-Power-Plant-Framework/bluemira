@@ -1023,7 +1023,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     Raises
     ------
     ValueError
-        shape must be (N, 2)
+        shape must be (2, N)
 
     Returns
     -------
@@ -1045,9 +1045,9 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
     polygon = np.asarray(polygon)
-    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:  # noqa: PLR2004
-        raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
-    previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
+    if np.ndim(polygon) != 2 or np.shape(polygon)[0] != 2:  # noqa: PLR2004
+        raise ValueError("This function takes in an np.ndarray of shape (2, N).")
+    previous_points, current_points = polygon.T, np.roll(polygon.T, -1, axis=0)
     px, pz = previous_points[:, 0], previous_points[:, -1]
     cx, cz = current_points[:, 0], current_points[:, -1]
     volume_3_over_pi = (pz - cz) * (px**2 + px * cx + cx**2)
