@@ -32,7 +32,7 @@ dependencies:
   - pybind11==2.13.6
   - pybind11-global==2.13.6
   - pytools==2025.1.6
-  - vtk==9.3.1
+  - vtk==9.5.0
   - pythonocc-core
   - pip
   - pip:
