@@ -2208,23 +2208,23 @@
     "var_mod": "TF coils",
     "scan01": 24.606
   },
-  "a_tf_steel*n_tf_coils": {
+  "a_tf_coil_inboard_steel*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 17.546
   },
-  "f_tf_steel": {
+  "f_a_tf_coil_inboard_steel": {
     "var_mod": "TF coils",
     "scan01": 0.71309
   },
-  "a_tf_ins*n_tf_coils": {
+  "a_tf_coil_inboard_insulation*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 17.546
   },
-  "f_tf_ins": {
+  "f_a_tf_coil_inboard_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.087543
   },
-  "acasetf": {
+  "a_tf_coil_inboard_case": {
     "var_mod": "TF coils",
     "scan01": 0.72861
   },
@@ -2244,15 +2244,15 @@
     "var_mod": "TF coils",
     "scan01": 1195600.0
   },
-  "awpc": {
+  "a_tf_wp_with_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.80924
   },
-  "aswp": {
+  "a_tf_wp_steel": {
     "var_mod": "TF coils",
     "scan01": 0.74515
   },
-  "dr_tf_wp": {
+  "dr_tf_wp_with_insulation": {
     "var_mod": "TF coils",
     "scan01": 1.0331
   },
@@ -2260,27 +2260,27 @@
     "var_mod": "TF coils",
     "scan01": 0.78331
   },
-  "tinstf": {
+  "dx_tf_wp_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.008
   },
-  "tfinsgap": {
+  "dx_tf_wp_insertion_gap": {
     "var_mod": "TF coils",
     "scan01": 0.01
   },
-  "aswp*n_tf_coils": {
+  "a_tf_wp_steel*n_tf_coils": {
     "var_mod": "TF coils",
     "scan01": 5.8884
   },
-  "aswp/awpc": {
+  "a_tf_wp_steel/a_tf_wp_with_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.45478
   },
-  "a_tf_coil_wp_turn_insulation/awpc": {
+  "a_tf_coil_wp_turn_insulation/a_tf_wp_with_insulation": {
     "var_mod": "TF coils",
     "scan01": 0.13156
   },
-  "awpc-aswp-a_tf_coil_wp_turn_insulation)": {
+  "a_tf_wp_with_insulation-a_tf_wp_steel-a_tf_coil_wp_turn_insulation)": {
     "var_mod": "TF coils",
     "scan01": 0.41367
   },
@@ -2336,11 +2336,11 @@
     "var_mod": "TF coils",
     "scan01": 0.01
   },
-  "a_tf_turn_cable_space": {
+  "a_tf_turn_cable_space_no_void": {
     "var_mod": "TF coils",
     "scan01": 0.0013533
   },
-  "vftf": {
+  "f_a_tf_turn_cable_space_extra_void": {
     "var_mod": "TF coils",
     "scan01": 0.3
   },

@@ -190,20 +190,22 @@ class TestPROCESSTemplateBuilder:
 
     def test_input_appears_in_dat(self):
         t = PROCESSTemplateBuilder()
-        t.add_input_value("tinstf", 1000.0)
-        assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        t.add_input_value("dx_tf_wp_insulation", 1000.0)
+        assert t.values["dx_tf_wp_insulation"] == pytest.approx(1000.0, rel=0, abs=EPS)
         data = t.make_inputs()
-        assert data.to_invariable()["tinstf"]._value == pytest.approx(
+        assert data.to_invariable()["dx_tf_wp_insulation"]._value == pytest.approx(
             1000.0, rel=0, abs=EPS
         )
 
     def test_inputs_appear_in_dat(self):
         t = PROCESSTemplateBuilder()
-        t.add_input_values({"tinstf": 1000.0, "dr_bore": 1000})
-        assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        t.add_input_values({"dx_tf_wp_insulation": 1000.0, "dr_bore": 1000})
+        assert t.values["dx_tf_wp_insulation"] == pytest.approx(1000.0, rel=0, abs=EPS)
         assert t.values["dr_bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
         data = t.make_inputs().to_invariable()
-        assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert data["dx_tf_wp_insulation"]._value == pytest.approx(
+            1000.0, rel=0, abs=EPS
+        )
         assert data["dr_bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
 
 
@@ -462,10 +464,10 @@ class TestInDatOneForOne:
             "dia_tf_turn_coolant_channel": 0.01,
             "tftmp": 4.75,
             "dx_tf_turn_insulation": 2.0e-3,
-            "tinstf": 0.008,
-            # "tfinsgap": 0.01,
+            "dx_tf_wp_insulation": 0.008,
+            # "dx_tf_wp_insertion_gap": 0.01,
             "tmargmin": 1.5,
-            "vftf": 0.3,
+            "f_a_tf_turn_cable_space_extra_void": 0.3,
             "n_pancake": 20,
             "n_layer": 10,
             "qnuc": 1.292e4,

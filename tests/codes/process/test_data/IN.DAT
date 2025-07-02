@@ -526,10 +526,10 @@ tftmp    = 4.75 * peak helium coolant temperature in TF coils and PF coils (K)
 dx_tf_turn_insulation = 2.0d-3 * conduit insulation thickness (m)
 dr_tf_nose_case   = 4.9102e-01 * inboard TF coil case outer (non-plasma side) thickness (m) (`iteration variable 57`)
 dx_tf_turn_steel = 8.0000e-03 * TF coil conduit case thickness (m) (`iteration variable 58`)
-tinstf   = 0.013 * Thickness of the ground insulation layer surrounding (m)
+dx_tf_wp_insulation   = 0.013 * Thickness of the ground insulation layer surrounding (m)
 tmargmin = 1.7 * minimum allowable temperature margin ; TFC AND CS (K)
 vdalw    = 1.2650e+01 * max voltage across TF coil during quench (kV)
-vftf     = 0.33 * coolant fraction of TFC 'cable' (`i_tf_sup=1`); or of TFC leg (`i_tf_ssup=0`)
+f_a_tf_turn_cable_space_extra_void     = 0.33 * coolant fraction of TFC 'cable' (`i_tf_sup=1`); or of TFC leg (`i_tf_ssup=0`)
 
 *-----------------Times Variables------------------*
 
