@@ -27,6 +27,28 @@ from subprocess import getstatusoutput  # noqa: S404
 
 template_str = r"grep -rlw {v_before} | grep -v pycache"
 
+SAFE_TO_RENAME_VARIABLES_IN_THESE_FILES = [
+    "eudemo/eudemo/radial_build.py",
+    "eudemo/eudemo_tests/template.json",
+]
+
+
+def fits_special_inclusion_criteria(file: str) -> bool:
+    """Decide if this file is one where it is safe to rename process variables in.
+
+    Parameters
+    ----------
+    file:
+        a file path in str format.
+
+    Returns
+    -------
+    :
+        boolean to see if this file ends in the specified string or not.
+    """
+    file = str(file)
+    return any(file.endswith(f) for f in SAFE_TO_RENAME_VARIABLES_IN_THESE_FILES)
+
 
 def populate_template(v_before, *, exclude_process=False, only_process=False):
     """Fill the template grep string.
@@ -70,7 +92,7 @@ def populate_template(v_before, *, exclude_process=False, only_process=False):
     return filled_str
 
 
-def safe_variable_rename(v_before, v_after):
+def safe_variable_rename(v_before, v_after, dest_files=None):
     """Bash instructions to rename a variable.
     Safely renames as it only renames if it has 'process' in the file name.
 
@@ -90,15 +112,9 @@ def safe_variable_rename(v_before, v_after):
     -------
     sed -i "s/\bBEFORE\b/AFTER/g" $(grep -rlw BEFORE | grep -v pycache | grep -i process)
     """
-    return (
-        r'sed -i "s/\b'
-        + v_before
-        + r"\b/"
-        + v_after
-        + r'/g" $('
-        + populate_template(v_before, only_process=True)
-        + ")"
-    )
+    if not dest_files:
+        dest_files = r"$(" + populate_template(v_before, only_process=True) + ")"
+    return r'sed -i "s/\b' + v_before + r"\b/" + v_after + r'/g" ' + dest_files
 
 
 def grep(v_before, *, exclude_process=False):
@@ -180,9 +196,22 @@ if __name__ == "__main__":
                 if delete_var:
                     unsafe_variables[f"Delete '{var_before}' from:"] = grepped_files
                 else:
+                    missed_files = []
+                    for file in grepped_files.split("\n"):
+                        # bodge to reduce the number of manual re-namings
+                        if fits_special_inclusion_criteria(file):
+                            print(
+                                "Safely renaming all instances of the full word "
+                                f"'{var_before}' into '{var_after}' in {file}"
+                            )
+                            getstatusoutput(  # noqa: S605
+                                safe_variable_rename(var_before, var_after, file)
+                            )
+                        else:
+                            missed_files.append(file)
                     unsafe_variables[
                         r'sed -i "s/\b' + var_before + r"\b/" + f'{var_after}/g"'
-                    ] = grepped_files
+                    ] = "\n".join(missed_files)
 
     print("█" * os.get_terminal_size().columns)
     if unsafe_variables:
