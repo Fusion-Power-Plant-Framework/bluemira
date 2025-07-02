@@ -180,7 +180,7 @@ class ProcessInputs:
     quench_model: str = None
     tcritsc: float | None = None
     tdmptf: float | None = None
-    tfinsgap: float | None = None
+    dx_tf_wp_insertion_gap: float | None = None
     rho_tf_bus: float | None = None
     frhocp: float | None = None
     frholeg: float | None = None
@@ -195,13 +195,13 @@ class ProcessInputs:
     dx_tf_turn_insulation: float | None = None
     dr_tf_nose_case: float | None = None
     dx_tf_turn_steel: float | None = None
-    tinstf: float | None = None
+    dx_tf_wp_insulation: float | None = None
     tmaxpro: float | None = None
     tmax_croco: float | None = None
     temp_tf_cryo: float | None = None
     vdalw: float | None = None
     f_vforce_inboard: float | None = None
-    vftf: float | None = None
+    f_a_tf_turn_cable_space_extra_void: float | None = None
     etapump: float | None = None
     fcoolcp: float | None = None
     f_a_tf_cool_outboard: float | None = None
@@ -346,7 +346,7 @@ class ProcessInputs:
     beta_poloidal_max: float | None = None
     bigqmin: float | None = None
     bmxlim: float | None = None
-    dr_tf_wp: float | None = None
+    dr_tf_wp_with_insulation: float | None = None
     fauxmn: float | None = None
     fbeta: float | None = None
     fbeta_poloidal: float | None = None
