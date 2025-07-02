@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import copy
 from pathlib import Path
-from typing import ClassVar
 from unittest import mock
 
 import numpy as np
@@ -57,6 +56,17 @@ class TestTeardown:
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
         # auto unit conversion
         assert teardown.params.P_el_net.value == pytest.approx(6e8)
+        # see if radial build dict is correctly built
+        assert len(teardown.ordered_radial_build.keys()) == 3
+        assert teardown.ordered_radial_build["n_TF"] == 16
+        # confirm radial build vector is correctly built
+        assert len(teardown.ordered_radial_build["Radial Build"]) == 24
+        assert teardown.ordered_radial_build["Radial Build"][4][1] == pytest.approx(
+            1.486
+        )
+        assert teardown.ordered_radial_build["Radial Build"][4][2] == pytest.approx(
+            3.37836
+        )
 
     def test_read_unknown_outputs_set_to_nan(self):
         """
@@ -64,19 +74,6 @@ class TestTeardown:
         entry is None. If a user asks for that var we set its value to np.nan
         Tested for a value with units.
         """
-
-        class MFile:
-            data: ClassVar = {"enbeam": {"var_mod": "some info", "scan01": 1234}}
-
-        class MFW(_MFileWrapper):
-            # Overwrite some methods because data doesnt exist in 'mfile'
-
-            def __init__(self, path, name):  # noqa: ARG002
-                self.mfile = MFile()
-                self._name = name
-
-            def _derive_radial_build_params(self, data):  # noqa: ARG002
-                return {}
 
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
 
@@ -88,9 +85,9 @@ class TestTeardown:
 
         # Test
         with (
-            mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=MFW),
+            mock.patch(f"{self.MODULE_REF}._MFileWrapper", new=utils.mfw()),
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
-            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"enbeam": None}),
+            mock.patch("bluemira.codes.process.api.OBS_VARS", new={"e_beam_kev": None}),
         ):
             teardown.read()
 
@@ -183,7 +180,11 @@ class TestTeardown:
     def test_obsolete_vars_with_multiple_new_names_all_have_mappings(self):
         def fake_uov(param: str):
             if param == "thshield":
-                return ["thshield_ib", "thshield_ob", "thshield_vb"]
+                return [
+                    "dr_shld_thermal_inboard",
+                    "dr_shld_thermal_outboard",
+                    "dz_shld_thermal",
+                ]
             return param
 
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
@@ -193,13 +194,19 @@ class TestTeardown:
         ):
             teardown.read()
 
-        outputs = teardown.get_raw_outputs(["thshield_ib", "thshield_ob", "thshield_vb"])
+        outputs = teardown.get_raw_outputs([
+            "dr_shld_thermal_inboard",
+            "dr_shld_thermal_outboard",
+            "dz_shld_thermal",
+        ])
         # value from the 'thshield' param in ./test_data/mfile_data.json
         assert outputs == [0.05, 0.05, 0.05]
 
     def test_CodesError_if_process_parameter_missing_from_radial_build_calculation(self):
         teardown = Teardown(self.default_pf, None, utils.READ_DIR)
-        del self.mfile_mock.data["bore"]
+        del self.mfile_mock.data["dr_bore"]
+        del self.mfile_mock.data["radial_label(1)"]
+        del self.mfile_mock.data["radial_cum(1)"]
 
         with (
             file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
@@ -207,4 +214,4 @@ class TestTeardown:
         ):
             teardown.read()
 
-        assert "bore" in str(exc)
+        assert "dr_bore" in str(exc)
