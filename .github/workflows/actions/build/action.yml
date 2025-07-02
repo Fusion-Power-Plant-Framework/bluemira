@@ -77,12 +77,6 @@ runs:
           pip install -U -e '.[dagmc]'
         fi
 
-    - name: Install OpenBLAS for Python 3.11
-      if: ${{ matrix.python-version == '3.11' }}
-      shell: bash -l {0}
-      run: |
-        sudo apt-get install libopenblas-dev
-
     - name: Freeze conda env
       if: ${{ inputs.with-artifact == 'true' }}
       shell: bash -l {0}

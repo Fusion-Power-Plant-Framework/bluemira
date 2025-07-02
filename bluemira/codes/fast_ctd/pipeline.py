@@ -151,6 +151,7 @@ def step_to_dagmc_pipeline(
         bluemira_print(
             f"Skipping materials files creation, using '{intm_materials_csv_file_path}'"
         )
+        mats_list = []
     else:
         bluemira_print("Running `step_to_brep`")
         comps_info = step_to_brep(
