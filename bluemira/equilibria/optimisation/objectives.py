@@ -76,12 +76,9 @@ class RegularisedLsqObjective(ObjectiveFunction):
         a_mat: npt.NDArray[np.float64],
         b_vec: npt.NDArray[np.float64],
         gamma: float,
-        currents_expand_mat: npt.NDArray | None = None,
     ) -> None:
         self.scale = scale
-        self.a_mat = (
-            a_mat if currents_expand_mat is None else a_mat @ currents_expand_mat
-        )
+        self.a_mat = a_mat
         self.b_vec = b_vec
         self.gamma = gamma
 
@@ -93,18 +90,9 @@ class RegularisedLsqObjective(ObjectiveFunction):
         :
             The figure of merit
 
-        Raises
-        ------
-        EquilibriaError
-            Least squares result < 0 or NaN
         """
         vector = vector * self.scale  # nlopt read only  # noqa: PLR6104
-        fom, _ = regularised_lsq_fom(vector, self.a_mat, self.b_vec, self.gamma)
-        if fom <= 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom
+        return tikhonov(vector, self.a_mat, self.b_vec, self.gamma)
 
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Gradient of the objective function for an optimisation."""  # noqa: DOC201
@@ -166,85 +154,229 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 
 
-def tikhonov(
+def ols(
+    x: np.ndarray,
     a_mat: np.ndarray,
     b_vec: np.ndarray,
-    gamma: float,
-    currents_expand_mat: np.ndarray | None = None,
-) -> np.ndarray:
+):
     """
-    Tikhonov regularisation of Ax-b problem.
+    Ordinary Least Squares (OLS)
 
-    \t:math:`\\textrm{minimise} || Ax - b ||^2 + ||{\\gamma} \\cdot x ||^2`\n
-    \t:math:`x = (A^T A + {\\gamma}^2 I)^{-1}A^T b`
+    Can use as objective function to minimise the Residual Sum of Squares (RSS).
 
-    Parameters
-    ----------
-    a_mat:
-        The 2-D A matrix of responses
-    b_vec:
-        The 1-D b vector of values
-    gamma: float
-        The Tikhonov regularisation parameter
+    \t:math:`\\textrm{minimise} \\fraction{1}{n} \\sum_{i=1}^{n} ( A_{i}x - b_{i} )^2`
+
+    Also, written as:
+
+    \t:math:`\\textrm{minimise} || Ax - b ||^2`
+
+    where:
+    - b is the target vector,
+    - n is the number of targets,
+    - Ax is the predicted target value, given known (control) matrix A
+    and state vector x.
+
+    Raises
+    ------
+    EquilibriaError
+        Least squares result < 0 or NaN
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    residual = np.dot(a_mat, x) - b_vec
+    number_of_targets = float(len(residual))
+    fom = residual.T @ residual / number_of_targets
+    if fom <= 0:
+        raise EquilibriaError("Least-squares objective function less than zero or nan.")
+    return fom
+
+
+def lasso(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+):
+    """
+    LASSO (Least Absolute Shrinkage and Selection Operator)  a.k.a. L1 Regression
+
+    Regularisation with the absolute value of magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce some of the values to zero, in order to select only
+    the important features and ignore the less important ones.
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = || Ax - b ||^{2}`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma \\sum_{j=1}^{p} | x_{j} |`
+
+    where:
+    - b is the target vector,
+    - Ax is the predicted target value, given known (control) matrix A
+    and state vector x,
+    - gamma is regularization parameter that controls the penalty
+    applied to the coefficients,
+    - p is the number of predictor variables.
+
+    Raises
+    ------
+    EquilibriaError
+        Least squares result < 0 or NaN
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    fom_ols = ols(x, a_mat, b_vec)
+    fom_las = fom_ols + gamma * np.sum(np.abs(x))
+    if fom_las <= 0:
+        raise EquilibriaError("Least-squares objective function less than zero or nan.")
+    return fom_las
+
+
+def tikhonov(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+):
+    """
+    Tikhonov a.k.a L2 Regression
+
+    Regularisation with the squared magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce the coefficient values (but not to zero as in LASSO).
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = || Ax - b ||^{2}`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + || \\gamma x ||^{2}`
+
+    where:
+    - b is the target vector,
+    - Ax is the predicted target value, given known (control) matrix A
+    and state vector x,
+    - gamma is regularization parameter that controls the penalty
+    applied to the coefficients,
+
+    Note
+    ----
+    This function replaces the function previously called "regularised_lsq_fom".
+
+    Raises
+    ------
+    EquilibriaError
+        Least squares result < 0 or NaN
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    fom_rss = ols(x, a_mat, b_vec)
+    fom_tik = fom_rss + gamma * gamma * x.T @ x
+    if fom_tik <= 0:
+        raise EquilibriaError("Least-squares objective function less than zero or nan.")
+    return fom_tik
+
+
+def elastic_net(
+    x: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+    alpha: np.ndarray,
+):
+    """
+    Regression with a combination of both L1 and L2 regularization terms.
+
+    Have a hyperparameter, alpha, to control the ratio of regularisation terms.
+
+    L1 - promotes sparsity and variable selection
+    L2 - handles multicollinearity
+
+    Can use as objective function:
+
+    \t:math:`\\textrm{rss} = || Ax - b ||^{2}`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma`
+    \t:math:`((1-\\alpha) \\sum_{j=1}^{p} | x_{j} | +`
+    \t:math:`\\alpha \\gamma || x ||^{2})`
+
+    where:
+    - b is the target vector,
+    - Ax is the predicted target value, given known (control) matrix A
+    and state vector x,
+    - gamma is a regularization parameter that controls the penalty
+    applied to the coefficients,
+    - p is the number of predictor variables,
+    - alpha is a parameter to control the ratio of regularisation terms.
+
+    Raises
+    ------
+    EquilibriaError
+        Least squares result < 0 or NaN
+
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    fom_rss = ols(x, a_mat, b_vec)
+    fom_net = fom_rss + gamma * (
+        (1 - alpha) * np.sum(np.abs(x)) + alpha * gamma * x.T @ x
+    )
+    if fom_net <= 0:
+        raise EquilibriaError("Least-squares objective function less than zero or nan.")
+    return fom_net
+
+
+# =============================================================================
+# Solution Vector
+# =============================================================================
+
+
+def tikhonov_ridge_solution(
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    alpha: np.ndarray,
+):
+    """
+    Ridge a.k.a Tikhonov a.k.a. L2 Regression.
+
+    This is a form of Tikhonov Regularisation which replaces gamma with a multiple
+    of the identity matrix (gamma = alpha * I).
+
+    This is used to find a solution vector x:
+
+    \t:math:`x = (A^T A + {\\alpha}^2 I)^{-1}A^T b`
+
+    where:
+    - b is the target vector,
+    - A is a known (control) matrix A,
+    - alpha is a regularization parameter,
+    - I is the identity matrix.
+
+    Note
+    ----
+    This function replaces the function previously called "tikhonov".
 
     Returns
     -------
     x:
         The result vector
     """
-    if currents_expand_mat is not None:
-        a_mat = a_mat @ currents_expand_mat  # nlopt read only  # noqa: PLR6104
     try:
         return np.dot(
-            np.linalg.inv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.linalg.inv(np.dot(a_mat.T, a_mat) + alpha**2 * np.eye(a_mat.shape[1])),
             np.dot(a_mat.T, b_vec),
         )
     except np.linalg.LinAlgError:
         bluemira_warn("Tikhonov singular matrix..!")
         return np.dot(
-            np.linalg.pinv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.linalg.pinv(np.dot(a_mat.T, a_mat) + alpha**2 * np.eye(a_mat.shape[1])),
             np.dot(a_mat.T, b_vec),
         )
-
-
-def regularised_lsq_fom(
-    x: np.ndarray, a_mat: np.ndarray, b_vec: np.ndarray, gamma: float
-) -> tuple[float, np.ndarray]:
-    """
-    Figure of merit for the least squares problem Ax = b, with
-    Tikhonov regularisation term. Normalised for the number of
-    targets.
-
-    ||(Ax - b)||²/ len(b)] + ||Γx||²
-
-    Parameters
-    ----------
-    x :
-        The 1-D x state vector (m)
-    a_mat:
-        The 2-D a_mat control matrix A (n, m)
-    b_vec:
-        The 1-D b vector of target values (n)
-    gamma:
-        The Tikhonov regularisation parameter.
-
-    Returns
-    -------
-    fom:
-        Figure of merit, explicitly given by
-        ||(Ax - b)||²/ len(b)] + ||Γx||²
-    residual:
-        Residual vector (Ax - b)
-
-    Raises
-    ------
-    EquilibriaError
-        Least squares result < 0 or NaN
-    """
-    residual = np.dot(a_mat, x) - b_vec
-    number_of_targets = float(len(residual))
-    fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
-
-    if fom <= 0:
-        raise EquilibriaError("Least-squares objective function less than zero or nan.")
-    return fom, residual
