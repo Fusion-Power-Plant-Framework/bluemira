@@ -167,7 +167,6 @@ class Reactions(Enum):
     """
 
     D_T = auto()  # D + T --> 4He + n reaction
-    D_D = auto()  # D + D --> 0.5 D-D1 + 0.5 D-D2
     D_D1 = auto()  # D + D --> 3He + n reaction [50 %]
     D_D2 = auto()  # D + D --> T + p reaction [50 %]
     D_He3 = auto()  # D + 3He --> 4He + p reaction
@@ -349,11 +348,6 @@ def _reactivity_bosch_hale(
     .. doi:: 10.1088/0029-5515/32/4/I07
         :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
-    if reaction == Reactions.D_D:
-        return 0.5 * (
-            _reactivity_bosch_hale(temp_kev, Reactions.D_D1)
-            + _reactivity_bosch_hale(temp_kev, Reactions.D_D2)
-        )
     mapping = {
         Reactions.D_T: BoschHale_DT_4Hen(),
         Reactions.D_D1: BoschHale_DD_3Hen(),
@@ -420,7 +414,7 @@ def _reactivity_plasmod(
         term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
         return 1e-19 * term_1 * (term_2 + term_3)
 
-    if reaction == Reactions.D_D:
+    if reaction in {Reactions.D_D1, Reactions.D_D2}:
         term_1 = (
             0.16247 + 0.001741 * temp_kev - 0.029 * np.exp(-0.3843 * np.sqrt(temp_kev))
         )
