@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.5.0
+blosc2==3.5.1
     # via tables
 certifi==2025.6.15
     # via requests
@@ -34,13 +34,13 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.58.4
+fonttools==4.58.5
     # via matplotlib
 fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.13.1
+gmsh==4.14.0
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
@@ -110,7 +110,7 @@ pandas==2.3.0
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
-pillow==11.2.1
+pillow==11.3.0
     # via
     #   imageio
     #   matplotlib
@@ -177,7 +177,7 @@ threadpoolctl==3.6.0
     # via scikit-learn
 typeguard==4.4.4
     # via bluemira (pyproject.toml)
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   flexcache
     #   flexparser
