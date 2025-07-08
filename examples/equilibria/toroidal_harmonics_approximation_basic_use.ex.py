@@ -291,15 +291,18 @@ plt.show()
 # Define the constraints to use in our optimisation problem
 # NOTE Added 17th June: inequality constraints, comment in/out ones to use
 # NOTE If using inequality, need to use SLSQP in the COP, if equality use COBYLA
+# NOTE using slsqp w/ equality constraints means that the coil currents are not changed
+# NOTE using cobyla with inequality constraints makes the plasma drift
 constraints = [
-    # th_constraint_equal,
-    th_constraint,
-    th_constraint_inverted,
+    th_constraint_equal,
+    # th_constraint,
+    # th_constraint_inverted,
     x_point,
     DN_inner_leg_upper,
     DN_inner_leg_lower,
 ]
-
+# algorithm = "SLSQP"
+algorithm = "COBYLA"
 # %%
 # Make a copy of the equilibria
 th_eq = deepcopy(eq)
@@ -314,7 +317,7 @@ th_con_len_opt = TikhonovCurrentCOP(
         DN_unmoved_outer_leg_lower,
     ]),
     gamma=1e-4,
-    opt_algorithm="SLSQP",
+    opt_algorithm=algorithm,
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
@@ -344,7 +347,7 @@ current_opt_problem = TikhonovCurrentCOP(
         DN_unmoved_outer_leg_lower,
     ]),
     gamma=1e-4,
-    opt_algorithm="SLSQP",
+    opt_algorithm=algorithm,
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
