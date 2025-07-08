@@ -363,7 +363,6 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-3),
     relaxation=0.1,
-    plot=False,
     maxiter=30,
 )
 program()
