@@ -289,8 +289,8 @@ print(f"fit metric value = {fit_metric_value}")
 # %%
 (
     toroidal_harmonics_params,
-    Am_cos,
-    Am_sin,
+    # Am_cos,
+    # Am_sin,
     degree,
     fit_metric,
     approx_total_psi,

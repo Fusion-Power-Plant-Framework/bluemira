@@ -157,7 +157,7 @@ class Plotter:
                     )
                 else:
                     self.ax = ax
-                    self.f = self.ax.get_figure()
+                    self.f = self.ax[0].get_figure()
                 set_ax_for_psi_components(self.ax)
 
             case EqSubplots.VS_PSI_NORM_STACK:

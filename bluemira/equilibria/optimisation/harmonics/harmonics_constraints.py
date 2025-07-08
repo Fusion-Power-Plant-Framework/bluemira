@@ -185,6 +185,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     Parameters
     ----------
+    degrees:
+        Degrees required for approximation of desired core plasma
+        (Returned by toroidal_harmonic_approximation)
     ref_harmonics:
         Initial harmonic amplitudes obtained from desired core plasma
         (Returned by toroidal_harmonic_approximation)
@@ -198,12 +201,14 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
+        ref_degrees: npt.NDArray[np.float64],
         ref_harmonics_cos: npt.NDArray[np.float64],
         ref_harmonics_sin: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
         tolerance: float | None = None,
         constraint_type: str = "equality",
     ):
+        self.degrees = ref_degrees
         self.constraint_type = constraint_type
         if isinstance(tolerance, float):
             tolerance *= np.ones(len(ref_harmonics_cos) + len(ref_harmonics_sin))
@@ -297,6 +302,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # N.B., cannot use coil located within LCFS as part of this method.
         return coil_toroidal_harmonic_amplitude_matrix(
             coilset,
+            self.degrees,
             self.th_params,
             max_degree=self.max_degree,
         )
