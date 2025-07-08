@@ -108,10 +108,6 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         self.n_stab_strand = n_stab_strand
         self.cos_theta = cos_theta
 
-    def set_strands(self, sc_strand: SuperconductingStrand, stab_strand: Strand):
-        self.sc_strand = sc_strand
-        self.stab_strand = stab_strand
-
     @property
     @abstractmethod
     def dx(self):

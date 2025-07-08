@@ -462,18 +462,6 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         self._dy_vault = None
         self.dy_vault = dy_vault
 
-    @classmethod
-    def my_init(
-        self,
-        Ri: float,  # noqa: N803
-        dy_ps: float,
-        dy_vault: float,
-        theta_TF: float,
-        mat_case: Material,
-        name: str = "BaseCaseTF",
-    ):
-        return self.__init__(Ri, dy_ps, dy_vault, theta_TF, mat_case, None, name)
-
     def set_wp(self, winding_packs: list[WindingPack]):
         self.WPs = winding_packs
 

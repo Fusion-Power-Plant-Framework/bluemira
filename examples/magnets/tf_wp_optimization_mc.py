@@ -194,57 +194,19 @@ stab_strand_dict = {
 sc_strand = create_strand_from_dict(name="Nb3Sn_strand", strand_dict=sc_strand_dict)
 stab_strand = create_strand_from_dict(name="Stabilizer", strand_dict=stab_strand_dict)
 
+@dataclass
+class ConductorParams:
+    mat_jacket=ss316
+    mat_ins=dummy_insulator
+    dx_jacket=0.01
+    dx_ins=1e-3
 
-dx = 0.05  # cable length... just a dummy value
-
-cable = DummyRectangularCableLTS(
-    dx=dx,
-    sc_strand=None,
-    stab_strand=None,
-    n_sc_strand=None,
-    n_stab_strand=None,
-    d_cooling_channel=1e-2,
-    void_fraction=0.7,
-    cos_theta=0.97,
-)
-
-
-# %% md
-#
-# %% md
-# ***Change cable aspect ratio***
-# %%
-aspect_ratio = 1.2
-cable.set_aspect_ratio(
-    aspect_ratio
-)  # This adjusts the cable dimensions while maintaining the total cross-sectional area.
-
-# %%
-###########################################################
-# Create a conductor with the specified cable
-conductor = SymmetricConductor(
-    cable=None,
-    mat_jacket=ss316,
-    mat_ins=dummy_insulator,
-    dx_jacket=0.01,
-    dx_ins=1e-3,
-)
-
-# %%
-# case parameters
-layout = "auto"  # "layer" or "pancake"
-wp_reduction_factor = 0.75
-min_gap_x = 2 * dr_plasma_side
-n_layers_reduction = 4
-
-case = TrapezoidalCaseTF.my_init(
-    Ri=Ri,
-    dy_ps=dr_plasma_side,
-    dy_vault=0.7,
-    theta_TF=360 / n_TF,
-    mat_case=ss316,
-)
-
+@dataclass
+class WPCableParams:
+    dx=0.05
+    d_cooling_channel=1e-2
+    void_fraction=0.7
+    cos_theta=0.97
 
 @dataclass
 class TFWPDesignerParams:
@@ -262,6 +224,8 @@ class TFWPDesignerParams:
     hotspot_target_temperature = 250.0  # [K]
 
     # Case / WP geometry tuning
+    dy_vault = 0.7
+    mat_case = ss316
     layout = "auto"  # "layer" or "pancake"
     wp_reduction_factor = 0.75
     n_layers_reduction = 4
@@ -289,10 +253,11 @@ class TFWPDataStructure:
         self,
         sc_strand: SuperconductingStrand,
         stabiliser: Strand,
-        cable: ABCCable,
-        conductor: Conductor,
-        case: BaseCaseTF,
+        cls_cable: DummyRectangularCableLTS,
+        cls_conductor: SymmetricConductor,
         params: TFWPDesignerParams,
+        cable_params: WPCableParams,
+        cond_params: ConductorParams,
     ):
         self.params = params
         self._derive_params(params)
@@ -302,12 +267,21 @@ class TFWPDataStructure:
         )
         n_sc_strand = int(np.ceil(self.params.Iop / critical_strand_current))
 
-        cable.set_strands(sc_strand, stabiliser)
-        cable.n_sc_strand = n_sc_strand
-        conductor.set_cable(cable)
-        wp1 = WindingPack(conductor, 1, 1, name=None)
-        self.case = case
-        self.case.set_wp([wp1])
+        self.cable = cls_cable(
+            cable_params.dx,
+            sc_strand,
+            stabiliser,
+            n_sc_strand,
+            500,
+            cable_params.d_cooling_channel,
+            cable_params.void_fraction,
+            cable_params.cos_theta,
+        )
+
+        self.conductor = cls_conductor(self.cable, cond_params.mat_jacket, cond_params.mat_ins, cond_params.dx_jacket, cond_params.dx_ins)
+
+        wp1 = WindingPack(self.conductor, 1, 1, name=None)
+        self.case = TrapezoidalCaseTF(self.derived_params.r_i, self.derived_params.dr_plasma_side, params.dy_vault, 360 / params.n_TF, params.mat_case, [wp1])
         self.case.rearrange_conductors_in_wp(
             n_conductors=self.derived_params.n_conductors,
             wp_reduction_factor=params.wp_reduction_factor,
@@ -315,6 +289,9 @@ class TFWPDataStructure:
             n_layers_reduction=params.n_layers_reduction,
             layout=params.layout,
         )
+
+        self.I_fun = delayed_exp_func(params.Iop, params.tau_discharge, params.t_delay)
+        self.B_fun = delayed_exp_func(self.derived_params.peak_field, params.tau_discharge, params.t_delay)
 
         ax = self.case.plot(show=False, homogenized=False)
         ax.set_title("Case design before optimization")
@@ -343,23 +320,71 @@ class TFWPDataStructure:
             magnetic_pressure=magnetic_pressure,
             vertical_tension=t_z,
         )
+    
+    def update(self, x: np.ndarray):
+        for wp in self.case.WPs:
+            wp.conductor.cable.n_stab_strand = x[0]
+            wp.conductor.dx_jacket = x[1]
+        self.cable.n_stab_strand = x[0]
+        self.conductor.dx_jacket = x[1]
+        self.case.dy_vault = x[2]
 
 
-print(f"pre-wp reduction factor: {wp_reduction_factor}")
-
-# arrangement of conductors into the winding pack and case
-case.rearrange_conductors_in_wp(
-    n_conductors=n_cond,
-    wp_reduction_factor=wp_reduction_factor,
-    min_gap_x=min_gap_x,
-    n_layers_reduction=n_layers_reduction,
-    layout=layout,
+data = TFWPDataStructure(
+    sc_strand,
+    stab_strand,
+    DummyRectangularCableLTS,
+    SymmetricConductor,
+    params=TFWPDesignerParams(),
+    cable_params=WPCableParams(),
+    cond_params=ConductorParams(),
 )
 
-ax = case.plot(show=False, homogenized=False)
-ax.set_title("Case design before optimization")
-plt.show()
+from scipy.optimize import minimize
+from scipy.optimize import Bounds
 
+x0 = np.array([500, 0.01, 0.2])  # [n_stab_strand, dx_jacket, dy_vault]
+
+bounds = Bounds([50, 1e-5, 0.2], [1000, 0.1, 2.0])
+
+def objective(x, data: TFWPDataStructure):
+    data.update(x)
+    return -data.case.Rk
+
+def constraint_quench_protection(x, data: TFWPDataStructure):
+    data.update(x)
+    return data.cable._temperature_evolution(
+        0.0,
+        data.params.tau_discharge,
+        data.params.T_sc,
+        data.params.hotspot_target_temperature,
+        data.B_fun,
+        data.I_fun,
+    )
+
+def constraint_case_stress(x, data: TFWPDataStructure):
+    data.update(x)
+    return data.case._tresca_stress(data.derived_params.magnetic_pressure, data.derived_params.vertical_tension) - S_Y
+
+def constraint_jacket_stress(x, data: TFWPDataStructure):
+    data.update(x)
+    return data.conductor._tresca_sigma_jacket() - S_Y
+
+constraints = [
+    {'type': 'ineq', 'fun': lambda x: constraint_quench_protection(x, data)},
+    {'type': 'ineq', 'fun': lambda x: constraint_case_stress(x, data)},
+    {'type': 'ineq', 'fun': lambda x: constraint_jacket_stress(x, data)},
+]
+
+result = minimize(
+    fun=lambda x: objective(x, data),
+    x0=x0,
+    method='SLSQP',
+    bounds=bounds,
+    constraints=constraints,
+    options={'disp': True}
+)
+raise ValueError
 bluemira_print(f"Previous number of conductors: {n_cond}")
 bluemira_print(f"New number of conductors: {case.n_conductors}")
 
