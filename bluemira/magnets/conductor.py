@@ -88,6 +88,9 @@ class Conductor(metaclass=RegistrableMeta):
         self.mat_jacket = mat_jacket
         self.cable = cable
 
+    def set_cable(self, cable: ABCCable):
+        self.cable = cable
+
     @property
     def dx(self):
         """x-dimension of the conductor [m]"""
