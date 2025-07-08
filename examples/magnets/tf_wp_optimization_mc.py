@@ -353,14 +353,15 @@ def objective(x, data: TFWPDataStructure):
 
 def constraint_quench_protection(x, data: TFWPDataStructure):
     data.update(x)
-    return data.cable._temperature_evolution(
+    solution = data.cable._temperature_evolution(
         0.0,
         data.params.tau_discharge,
         data.params.T_sc,
-        data.params.hotspot_target_temperature,
         data.B_fun,
         data.I_fun,
     )
+    final_temperature = float(solution.y[0][-1])
+    return final_temperature - data.params.hotspot_target_temperature
 
 def constraint_case_stress(x, data: TFWPDataStructure):
     data.update(x)
