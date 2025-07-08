@@ -40,11 +40,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.coils._grouping import (
-    CoilSet,
-    SymmetricCircuit,
-    symmetrise_coilset,
-)
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
@@ -355,11 +350,14 @@ current_opt_problem = TikhonovCurrentCOP(
     max_currents=3e10,
     constraints=constraints,
 )
+from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 
+diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 # SOLVE
 program = PicardIterator(
     th_current_opt_eq,
     current_opt_problem,
+    diagnostic_plotting=diagnostic_plotting,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-3),
     relaxation=0.1,
