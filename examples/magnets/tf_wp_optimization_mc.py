@@ -366,7 +366,7 @@ data = TFWPDataStructure(
 
 from scipy.optimize import Bounds, minimize
 
-x0 = np.array([500, 0.01, 0.2])  # [n_stab_strand, dx_jacket, dy_vault]
+x0 = np.array([500, 0.01, 0.7])  # [n_stab_strand, dx_jacket, dy_vault]
 
 bounds = Bounds([1, 1e-5, 0.2], [10000, 0.01, 1.0])
 
@@ -386,7 +386,7 @@ def constraint_quench_protection(x, data: TFWPDataStructure):
         data.I_fun,
     )
     final_temperature = float(solution.y[0][-1])
-    return -(data.params.hotspot_target_temperature - final_temperature)
+    return data.params.hotspot_target_temperature - final_temperature
 
 
 def constraint_wp_geometry(x, data: TFWPDataStructure):
@@ -396,22 +396,22 @@ def constraint_wp_geometry(x, data: TFWPDataStructure):
 
 def constraint_case_stress(x, data: TFWPDataStructure):
     data.update(x)
-    return -(S_Y - data.case._tresca_stress(
+    return S_Y - data.case._tresca_stress(
         data.derived_params.magnetic_pressure,
         data.derived_params.vertical_tension,
         temperature=data.params.T_sc,
-    ))
+    )
 
 
 def constraint_jacket_stress(x, data: TFWPDataStructure):
     data.update(x)
-    return -(S_Y - data.conductor._tresca_sigma_jacket(
+    return S_Y - data.conductor._tresca_sigma_jacket(
         data.derived_params.magnetic_pressure,
         data.derived_params.vertical_tension,
         data.params.T_sc,
         data.derived_params.peak_field,
         "x",
-    ))
+    )
 
 
 constraints = [
