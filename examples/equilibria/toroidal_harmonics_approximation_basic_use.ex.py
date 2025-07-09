@@ -40,6 +40,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
@@ -73,21 +74,6 @@ eq_name = Path(EQDATA, eq_name)
 eq = Equilibrium.from_eqdsk(
     eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
 )
-# TODO leave the force_symmetry in even though it isnt working now
-# it will work when Georgie's fix has been merged in
-# %%
-# Symmetric circuits
-# coils = [
-#     SymmetricCircuit(eq.coilset["PF_1"]),
-#     SymmetricCircuit(eq.coilset["PF_2"]),
-#     SymmetricCircuit(eq.coilset["PF_3"]),
-#     eq.coilset["CS_1"],
-#     eq.coilset["CS_2"],
-#     eq.coilset["CS_3"],
-#     eq.coilset["CS_4"],
-#     eq.coilset["CS_5"],
-# ]
-# new_coilset = CoilSet(*coils)
 
 
 # %%
@@ -185,16 +171,6 @@ th_constraint_inverted = ToroidalHarmonicConstraint(
 # Make sure we only optimise with coils outside the sphere containing the core plasma by
 # setting control coils using the list of appropriate coils
 eq.coilset.control = list(th_params.th_coil_names)
-# new_coilset.control = [
-#     "PF_1",
-#     "PF_2",
-#     "PF_3",
-#     "CS_1",
-#     "CS_2",
-#     "CS_3",
-#     "CS_4",
-#     "CS_5",
-# ]
 
 # %%
 # Add an x point constraint
@@ -289,7 +265,7 @@ plt.show()
 # DOUBLE NULL OPTIMISATION
 
 # Define the constraints to use in our optimisation problem
-# NOTE Added 17th June: inequality constraints, comment in/out ones to use
+# NOTE Added inequality constraints, comment in/out ones to use
 # NOTE If using inequality, need to use SLSQP in the COP, if equality use COBYLA
 # NOTE using slsqp w/ equality constraints means that the coil currents are not changed
 # NOTE using cobyla with inequality constraints makes the plasma drift
@@ -301,6 +277,7 @@ constraints = [
     DN_inner_leg_upper,
     DN_inner_leg_lower,
 ]
+# comment out as required:
 # algorithm = "SLSQP"
 algorithm = "COBYLA"
 # %%
@@ -353,7 +330,6 @@ current_opt_problem = TikhonovCurrentCOP(
     max_currents=3e10,
     constraints=constraints,
 )
-from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 
 diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 # SOLVE
