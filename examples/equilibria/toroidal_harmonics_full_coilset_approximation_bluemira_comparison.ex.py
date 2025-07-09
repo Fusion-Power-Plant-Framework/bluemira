@@ -193,7 +193,9 @@ f_s = find_flux_surf(
     R_approx, Z_approx, total_psi, psi_norm, o_points=o_points, x_points=x_points
 )
 approx_fs = Coordinates({"x": f_s[0], "z": f_s[1]})
-original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
+original_fs = (
+    eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+)
 
 # Plot
 plt.contourf(R_approx, Z_approx, total_psi, nlevels, cmap=cmap)

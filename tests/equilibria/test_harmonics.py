@@ -1273,7 +1273,7 @@ class TestRegressionTH:
 
         assert test_degree == 5
 
-        assert test_fit_metric_value == 0.01014672263679008
+        assert np.isclose(test_fit_metric_value, 0.01014672263679008)
 
         expected_shape = (150, 200)
 

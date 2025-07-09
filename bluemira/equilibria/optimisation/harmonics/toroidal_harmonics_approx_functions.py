@@ -485,7 +485,6 @@ def toroidal_harmonic_approximation(
     th_params: ToroidalHarmonicsParams | None = None,
     acceptable_fit_metric: float = 0.01,
     psi_norm: float = 1.0,
-    nlevels: int = 50,
     *,
     plot: bool = False,
 ) -> tuple[
@@ -517,8 +516,6 @@ def toroidal_harmonic_approximation(
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
-    nlevels:
-        Plot setting, higher n = greater number of contour lines
     plot:
         Whether or not to plot the results
 
@@ -550,7 +547,9 @@ def toroidal_harmonic_approximation(
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
     # Get original flux surface from Bluemira for equilibrium
-    original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
+    original_fs = (
+        eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+    )
 
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for TH approximation.")

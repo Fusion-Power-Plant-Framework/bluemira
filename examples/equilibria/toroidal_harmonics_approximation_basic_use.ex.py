@@ -381,7 +381,9 @@ plt.show()
 # between the starting equilibrium and the optimised equilibrium. We also show the
 # last closed flux surfaces for each equilibrium.
 
-original_FS = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)  # noqa: N816
+original_FS = (  # noqa: N816
+    eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+)
 approx_FS = th_current_opt_eq.get_flux_surface(psi_norm)  # noqa: N816
 
 total_psi_diff = np.abs(eq.psi() - th_current_opt_eq.psi()) / np.max(
