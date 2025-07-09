@@ -285,7 +285,6 @@ algorithm = "COBYLA"
 th_eq = deepcopy(eq)
 # Set up a coilset optimisation problem using the toroidal harmonic constraints
 th_con_len_opt = TikhonovCurrentCOP(
-    th_eq.coilset,
     th_eq,
     targets=MagneticConstraintSet([
         DN_inner_leg_upper,
@@ -315,7 +314,6 @@ th_current_opt_eq = deepcopy(eq)
 
 # Set up a coilset optimisation problem using the toroidal harmonic constraint
 current_opt_problem = TikhonovCurrentCOP(
-    th_current_opt_eq.coilset,
     th_current_opt_eq,
     targets=MagneticConstraintSet([
         DN_inner_leg_upper,
