@@ -83,12 +83,9 @@ a = R0 / A  # minor radius
 # %%
 d = 1.82  # additional distance to calculate the max external radius of the inner TF leg
 Iop = 70.0e3  # operational current in each conductor
-dr_plasma_side = R0 * 2 / 3 * 1e-2  # thickness of the plate before the WP
 T_sc = 4.2  # operational temperature of superconducting cable
 T_margin = 1.5  # temperature margin
 T_op = T_sc + T_margin  # temperature considered for the superconducting cable
-t_delay = 3  # [s]
-hotspot_target_temperature = 250.0  # [K]
 
 Ri = R0 - a - d  # [m] max external radius of the internal TF leg
 Re = (R0 + a) * (1 / ripple) ** (
@@ -119,16 +116,6 @@ def B_TF_r(I_TF, n_TF, r):
     """
     return 1.08 * (MU_0_2PI * n_TF * I_TF / r)
 
-
-# max magnetic field on the inner TF leg
-B_TF_i = B_TF_r(I_TF, n_TF, Ri)
-# magnetic pressure on the inner TF leg
-pm = B_TF_i**2 / (2 * MU_0)
-
-# vertical tension acting on the equatorial section of inner TF leg
-# i.e. half of the whole F_Z
-t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF**2
-
 n_cond = np.floor(I_TF / Iop)  # minimum number of conductors
 bluemira_print(f"Total number of conductor: {n_cond}")
 # %% md
@@ -156,13 +143,6 @@ Tau_discharge2 = B0 * I_TF * n_TF * (R0 / A) ** 2 / (R_VV * S_VV)
 tau_discharge = max([Tau_discharge1, Tau_discharge2])
 
 bluemira_print(f"Maximum TF discharge time: {tau_discharge}")
-# %% md
-# ## Current and magnetic field behaviour during discharge
-#
-# %%
-I_fun = delayed_exp_func(Iop, tau_discharge, t_delay)
-B_fun = delayed_exp_func(B_TF_i, tau_discharge, t_delay)
-
 
 # %% md
 # ### Define materials (at the beginning the conductor is defined with a dummy number
@@ -391,6 +371,7 @@ def constraint_quench_protection(x, data: TFWPDataStructure):
 
 def constraint_wp_geometry(x, data: TFWPDataStructure):
     data.update(x)
+    # Is this even right?
     return data.derived_params.r_i - data.case.dy_wp_tot - data.case.dy_vault
 
 
