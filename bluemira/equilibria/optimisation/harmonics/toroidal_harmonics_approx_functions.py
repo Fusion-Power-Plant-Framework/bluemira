@@ -456,24 +456,19 @@ def toroidal_harmonic_approximate_psi(
         max_degree=max_degree,
     )
 
-    A_coil_matrix = (  # noqa: N806
-        Am_cos[:, :, None, None]
-        * epsilon[:, None, None, None]
-        * factorial_m[:, None, None, None]
-        * np.sqrt(2 / np.pi)
-        * np.sqrt(Delta[None, None, :, :])
-        * legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30)[:, None, :, :]
-        * np.cos(sigma_mult_degree)[:, None, :, :]
-        + Am_sin[:, :, None, None]
-        * epsilon[:, None, None, None]
-        * factorial_m[:, None, None, None]
-        * np.sqrt(2 / np.pi)
-        * np.sqrt(Delta[None, None, :, :])
-        * legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30)[:, None, :, :]
-        * np.sin(sigma_mult_degree)[:, None, :, :]
-    )
-    A = np.array(
-        np.sum(np.einsum("ijkl, j", A_coil_matrix, currents), axis=0), dtype=float
+    Am_cos_sin = np.einsum(  # noqa: N806
+        "ij, ikl -> ijkl", Am_cos, np.cos(sigma_mult_degree)
+    ) + np.einsum("ij, ikl -> ijkl", Am_sin, np.sin(sigma_mult_degree))
+    A = np.sqrt(2 / np.pi) * (
+        np.einsum(
+            "ijkl, i, i, kl, ikl, j -> kl",
+            Am_cos_sin,
+            epsilon,
+            factorial_m,
+            np.sqrt(Delta),
+            legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30),
+            currents,
+        )
     )
     approx_coilset_psi = A * th_params.R
 
