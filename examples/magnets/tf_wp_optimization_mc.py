@@ -24,11 +24,10 @@ from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.magnets.cable import (
-    ABCCable,
     DummyRectangularCableLTS,
 )
-from bluemira.magnets.case_tf import BaseCaseTF, TrapezoidalCaseTF
-from bluemira.magnets.conductor import Conductor, SymmetricConductor
+from bluemira.magnets.case_tf import TrapezoidalCaseTF
+from bluemira.magnets.conductor import SymmetricConductor
 from bluemira.magnets.init_magnets_registry import register_all_magnets
 from bluemira.magnets.strand import (
     Strand,
@@ -194,19 +193,22 @@ stab_strand_dict = {
 sc_strand = create_strand_from_dict(name="Nb3Sn_strand", strand_dict=sc_strand_dict)
 stab_strand = create_strand_from_dict(name="Stabilizer", strand_dict=stab_strand_dict)
 
+
 @dataclass
 class ConductorParams:
-    mat_jacket=ss316
-    mat_ins=dummy_insulator
-    dx_jacket=0.01
-    dx_ins=1e-3
+    mat_jacket = ss316
+    mat_ins = dummy_insulator
+    dx_jacket = 0.01
+    dx_ins = 1e-3
+
 
 @dataclass
 class WPCableParams:
-    dx=0.05
-    d_cooling_channel=1e-2
-    void_fraction=0.7
-    cos_theta=0.97
+    dx = 0.05
+    d_cooling_channel = 1e-2
+    void_fraction = 0.7
+    cos_theta = 0.97
+
 
 @dataclass
 class TFWPDesignerParams:
@@ -278,10 +280,23 @@ class TFWPDataStructure:
             cable_params.cos_theta,
         )
 
-        self.conductor = cls_conductor(self.cable, cond_params.mat_jacket, cond_params.mat_ins, cond_params.dx_jacket, cond_params.dx_ins)
+        self.conductor = cls_conductor(
+            self.cable,
+            cond_params.mat_jacket,
+            cond_params.mat_ins,
+            cond_params.dx_jacket,
+            cond_params.dx_ins,
+        )
 
         wp1 = WindingPack(self.conductor, 1, 1, name=None)
-        self.case = TrapezoidalCaseTF(self.derived_params.r_i, self.derived_params.dr_plasma_side, params.dy_vault, 360 / params.n_TF, params.mat_case, [wp1])
+        self.case = TrapezoidalCaseTF(
+            self.derived_params.r_i,
+            self.derived_params.dr_plasma_side,
+            params.dy_vault,
+            360 / params.n_TF,
+            params.mat_case,
+            [wp1],
+        )
         self.case.rearrange_conductors_in_wp(
             n_conductors=self.derived_params.n_conductors,
             wp_reduction_factor=params.wp_reduction_factor,
@@ -291,7 +306,9 @@ class TFWPDataStructure:
         )
 
         self.I_fun = delayed_exp_func(params.Iop, params.tau_discharge, params.t_delay)
-        self.B_fun = delayed_exp_func(self.derived_params.peak_field, params.tau_discharge, params.t_delay)
+        self.B_fun = delayed_exp_func(
+            self.derived_params.peak_field, params.tau_discharge, params.t_delay
+        )
 
         ax = self.case.plot(show=False, homogenized=False)
         ax.set_title("Case design before optimization")
@@ -320,14 +337,21 @@ class TFWPDataStructure:
             magnetic_pressure=magnetic_pressure,
             vertical_tension=t_z,
         )
-    
+
     def update(self, x: np.ndarray):
-        for wp in self.case.WPs:
-            wp.conductor.cable.n_stab_strand = x[0]
-            wp.conductor.dx_jacket = x[1]
         self.cable.n_stab_strand = x[0]
+        self.cable.set_aspect_ratio(1.2)
         self.conductor.dx_jacket = x[1]
         self.case.dy_vault = x[2]
+        for wp in data.case.WPs:
+            wp.conductor = self.conductor
+        self.case.rearrange_conductors_in_wp(
+            data.derived_params.n_conductors,
+            data.params.wp_reduction_factor,
+            data.derived_params.min_gap_x,
+            data.params.n_layers_reduction,
+            data.params.layout,
+        )
 
 
 data = TFWPDataStructure(
@@ -340,16 +364,17 @@ data = TFWPDataStructure(
     cond_params=ConductorParams(),
 )
 
-from scipy.optimize import minimize
-from scipy.optimize import Bounds
+from scipy.optimize import Bounds, minimize
 
 x0 = np.array([500, 0.01, 0.2])  # [n_stab_strand, dx_jacket, dy_vault]
 
-bounds = Bounds([50, 1e-5, 0.2], [1000, 0.1, 2.0])
+bounds = Bounds([1, 1e-5, 0.2], [10000, 0.01, 1.0])
+
 
 def objective(x, data: TFWPDataStructure):
     data.update(x)
     return -data.case.Rk
+
 
 def constraint_quench_protection(x, data: TFWPDataStructure):
     data.update(x)
@@ -361,30 +386,55 @@ def constraint_quench_protection(x, data: TFWPDataStructure):
         data.I_fun,
     )
     final_temperature = float(solution.y[0][-1])
-    return final_temperature - data.params.hotspot_target_temperature
+    return data.params.hotspot_target_temperature - final_temperature
+
+
+def constraint_wp_geometry(x, data: TFWPDataStructure):
+    data.update(x)
+    return data.derived_params.r_i - data.case.dy_wp_tot - data.case.dy_vault
+
 
 def constraint_case_stress(x, data: TFWPDataStructure):
     data.update(x)
-    return data.case._tresca_stress(data.derived_params.magnetic_pressure, data.derived_params.vertical_tension) - S_Y
+    return S_Y - data.case._tresca_stress(
+        data.derived_params.magnetic_pressure,
+        data.derived_params.vertical_tension,
+        temperature=data.params.T_sc,
+    )
+
 
 def constraint_jacket_stress(x, data: TFWPDataStructure):
     data.update(x)
-    return data.conductor._tresca_sigma_jacket() - S_Y
+    return S_Y - data.conductor._tresca_sigma_jacket(
+        data.derived_params.magnetic_pressure,
+        data.derived_params.vertical_tension,
+        data.params.T_sc,
+        data.derived_params.peak_field,
+        "x",
+    )
+
 
 constraints = [
-    {'type': 'ineq', 'fun': lambda x: constraint_quench_protection(x, data)},
-    {'type': 'ineq', 'fun': lambda x: constraint_case_stress(x, data)},
-    {'type': 'ineq', 'fun': lambda x: constraint_jacket_stress(x, data)},
+    {"type": "ineq", "fun": lambda x: constraint_quench_protection(x, data)},
+    {"type": "ineq", "fun": lambda x: constraint_case_stress(x, data)},
+    {"type": "ineq", "fun": lambda x: constraint_jacket_stress(x, data)},
+    {"type": "eq", "fun": lambda x: constraint_wp_geometry(x, data)},
 ]
 
 result = minimize(
     fun=lambda x: objective(x, data),
     x0=x0,
-    method='SLSQP',
+    method="SLSQP",
     bounds=bounds,
     constraints=constraints,
-    options={'disp': True}
+    options={"disp": True},
 )
+
+data.update(result.x)
+ax = data.case.plot(show=False, homogenized=False)
+ax.set_title("Case design before optimization")
+plt.show()
+
 raise ValueError
 bluemira_print(f"Previous number of conductors: {n_cond}")
 bluemira_print(f"New number of conductors: {case.n_conductors}")
