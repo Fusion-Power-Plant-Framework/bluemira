@@ -37,7 +37,6 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.geometry.wire import BluemiraWire
 
 try:
     from cherab.core.math import AxisymmetricMapper, sample3d
@@ -1298,7 +1297,7 @@ class FirstWallRadiationSolver:
     Parameters
     ----------
     firstwall_shape:
-        BluemiraWire defining the first wall.
+        Coordinates defining the first wall.
     source_func:
         Function describing radiation source
     """
@@ -1306,7 +1305,7 @@ class FirstWallRadiationSolver:
     def __init__(
         self,
         source_func: Callable,
-        firstwall_shape: BluemiraWire,
+        firstwall_shape: Coordinates,
     ):
         self.rad_source = source_func
         self.rad_3d = AxisymmetricMapper(self.rad_source)
