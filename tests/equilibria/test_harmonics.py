@@ -1251,7 +1251,7 @@ class TestRegressionTH:
 
         assert test_th_parameters == self.test_th_params
 
-        expected_Am_cos = [  # noqa: N806[
+        expected_Am_cos = [  # noqa: N806
             -4.26075939,
             -3.73344285,
             -10.65579929,
@@ -1399,7 +1399,6 @@ class TestRegressionTH:
             ref_harmonics_sin=ref_harmonics_sin,
             th_params=th_params,
             tolerance=None,
-            invert=False,
             constraint_type="equality",
         )
 
@@ -1432,7 +1431,6 @@ class TestRegressionTH:
             ref_harmonics_sin=ref_harmonics_sin,
             th_params=th_params,
             tolerance=tolerance,
-            invert=False,
             constraint_type="equality",
         )
         assert len(test_constraint_class.tolerance) == len(ref_harmonics_cos) + len(
