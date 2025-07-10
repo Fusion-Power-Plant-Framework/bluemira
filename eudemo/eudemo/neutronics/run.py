@@ -18,7 +18,6 @@ from bluemira.radiation_transport.neutronics.blanket_data import (
 from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
 from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
-    NeutronicsReactorParameterFrame,
 )
 
 if TYPE_CHECKING:
@@ -85,8 +84,7 @@ def run_neutronics(
     )
     material_library = create_materials(breeder_materials)
 
-    csg_params = NeutronicsReactorParameterFrame.from_config_params(params)
-    csg_params.update_from_dict(
+    params.update_from_dict(
         {
             "inboard_fw_tk": {"value": tokamak_geometry.inb_fw_thick, "unit": "m"},
             "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
@@ -99,7 +97,7 @@ def run_neutronics(
         source="Neutronics",
     )
     neutronics_csg = EUDEMONeutronicsCSGReactor(
-        csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
+        params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
 
     solver = neutronics_code_solver(
@@ -112,6 +110,8 @@ def run_neutronics(
         tally_function=tally_function,
     )
 
-    res = solver.execute()
+    res, new_params = solver.execute()
+
+    params.update_from_frame(new_params)
 
     return neutronics_csg, res
