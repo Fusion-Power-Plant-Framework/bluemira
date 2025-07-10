@@ -1081,12 +1081,6 @@
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
   },
-  "reactor_power": {
-    "value": 1998,
-    "unit": "MW",
-    "source": "Input",
-    "long_name": "neutronics reactor power"
-  },
   "peaking_factor": {
     "value": 1.508,
     "unit": "",

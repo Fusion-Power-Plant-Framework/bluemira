@@ -230,7 +230,6 @@ class EUDEMOReactorParams(ParameterFrame):
     fw_dL_min: Parameter[float]  # noqa: N815
 
     # CSG neutronics
-    reactor_power: Parameter[float]
     peaking_factor: Parameter[float]
     vertical_shift: Parameter[float]
     inboard_fw_tk: Parameter[float]
