@@ -26,6 +26,7 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     ----------
     major_radius:
         Major radius of the machine
+<<<<<<< HEAD
     profile_rho_ped:
         Pedestal location in normalized (minor) radius
     reactor_power:
@@ -54,6 +55,20 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         Volume-averaged fuel ion density
     n_e:
         Volume-averaged electron density
+=======
+    aspect_ratio:
+        aspect ratio of the machine
+    elongation:
+        elongation of the plasma
+    triangularity:
+        triangularity of the plasma
+    P_fus_DT:
+        Reactor D-T fusion power when operating at 100%
+    peaking_factor:
+        (max. heat flux on fw)/(avg. heat flux on fw)
+    temperature:
+        plasma temperature (assumed to be uniform throughout the plasma)
+>>>>>>> 87954f71 (P_fus_DT and e_mult)
     shaf_shift:
         Radial Shafranov shift
     """
