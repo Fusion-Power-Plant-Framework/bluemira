@@ -150,6 +150,18 @@ class OpenMCCSGResult:
         peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
         peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
 
+        fusion_power, fusion_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "Total power"
+        )
+
+        # MC: There is power in the TF + CS, and probably the radiation shield
+        # that I am ignoring here. Perhaps worth adding filters for these
+        total_power = blanket_power + divertor_power + vessel_power
+        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
+
+        e_mult = total_power / fusion_power
+        e_mult_err = total_power_err / fusion_power_err
+
         return cls(
             universe=universe,
             cell_arrays=cell_arrays,
