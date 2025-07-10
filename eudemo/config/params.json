@@ -1140,5 +1140,42 @@
     "unit": "m",
     "source": "Input",
     "long_name": "Blanket manifold outboard thickness"
+  },
+  "TBR": {
+    "value": 1.05,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Tritium breeding ratio"
+  },
+  "P_n_blanket": {
+    "value": 1800,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Blanket neutron heating power"
+  },
+  "P_n_divertor": {
+    "value": 150,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Divertor neutron heating power"
+  },
+  "P_n_vessel": {
+    "value": 25,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Vacuum vessel neutron heating power"
+  },
+  "peak_NWL": {
+    "value": 1.2,
+    "unit": "MW/m^2",
+    "source": "Input",
+    "long_name": "Peak neutron wall load"
+  },
+  "peak_iron_dpa_rate": {
+    "value": 10.0,
+    "unit": "dpa/fpy",
+    "source": "Input",
+    "long_name": "Peak damage rate in Fe",
+    "description": "Usually defined in EUROfer at the outboard midplane behind the W first wall"
   }
 }

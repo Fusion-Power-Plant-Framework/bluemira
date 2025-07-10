@@ -36,7 +36,7 @@ from bluemira.codes.openmc.make_csg import (
     make_cell_arrays,
 )
 from bluemira.codes.openmc.material import MaterialsLibrary
-from bluemira.codes.openmc.output import OpenMCResult
+from bluemira.codes.openmc.output import CSGNeutronicsOutputParams, OpenMCResult
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
@@ -356,9 +356,11 @@ class Teardown(CodesTeardown):
             n_DT_reactions(source_params.P_fus_DT),
             statepoint_file,
         )
+        output_params = CSGNeutronicsOutputParams.from_openmc_result(result)
+
         if delete_files:
             self.delete_files(files_created)
-        return result
+        return result, output_params
 
     def plot(
         self,
