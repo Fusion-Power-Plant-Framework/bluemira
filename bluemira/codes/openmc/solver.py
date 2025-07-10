@@ -36,7 +36,7 @@ from bluemira.codes.openmc.make_csg import (
 )
 from bluemira.codes.openmc.material import MaterialsLibrary
 from bluemira.codes.openmc.output import (
-    NeutronicsOutputParams,
+    CSGNeutronicsOutputParams,
     OpenMCCSGResult,
 )
 from bluemira.codes.openmc.params import (
@@ -534,7 +534,7 @@ class OpenMCCSGTeardown(CodesTeardown):
             source_info.triton_rate,
             statepoint_file,
         )
-        output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
+        output_params = CSGNeutronicsOutputParams.from_openmc_result(result)
 
         if delete_files:
             self.delete_files(files_created)

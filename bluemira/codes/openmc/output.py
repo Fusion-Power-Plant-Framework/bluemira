@@ -530,9 +530,9 @@ class OpenMCCSGResult:
 
 
 @dataclass
-class NeutronicsOutputParams(ParameterFrame):
+class CSGNeutronicsOutputParams(ParameterFrame):
     """
-    Neutronics output parameters
+    CSG neutronics output parameters
     """
 
     e_mult: Parameter[float]

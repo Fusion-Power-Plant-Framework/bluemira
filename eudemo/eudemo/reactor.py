@@ -664,7 +664,7 @@ if __name__ == "__main__":
     if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
         reactor.neutronics = NeutronicsManager(
             *run_csg_neutronics(
-                reactor_config.params_for("Neutronics", "CSG"),
+                reactor_config.params_for("Neutronics", "CSG").global_params,
                 reactor_config.config_for("Neutronics", "CSG"),
                 blanket=reactor.blanket,
                 vacuum_vessel=reactor.vacuum_vessel,
