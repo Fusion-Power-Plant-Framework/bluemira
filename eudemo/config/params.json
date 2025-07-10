@@ -1256,7 +1256,7 @@
     "long_name": "Peak neutron wall load"
   },
   "peak_bb_iron_dpa_rate": {
-    "value": 10.2,
+    "value": 10.0,
     "unit": "dpa/fpy",
     "source": "Input",
     "long_name": "Peak damage rate in Fe in the BB",
