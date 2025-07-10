@@ -568,6 +568,11 @@ def toroidal_harmonic_approximation(
     # Have cos and sin components so this must be half
     allowable_n_degrees = int(np.trunc(max_degree / 2))
 
+    # Find LCFS from TH approx
+    approx_eq = deepcopy(eq)
+    approx_eq.coilset.control = th_params.th_coil_names
+    o_points, x_points = approx_eq.get_OX_points()
+
     for degree in range(min_degree, allowable_n_degrees):
         # Construct matrix from harmonic amplitudes for the coils and approximate psi
         approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
@@ -575,11 +580,6 @@ def toroidal_harmonic_approximation(
         )
         # Add the non TH coil contribution to the total
         approx_total_psi = approx_coilset_psi + non_th_contribution_psi
-
-        # Find LCFS from TH approx
-        approx_eq = deepcopy(eq)
-        approx_eq.coilset.control = th_params.th_coil_names
-        o_points, x_points = approx_eq.get_OX_points()
 
         # Find flux surface for our TH approximation equilibrium
         f_s = find_flux_surf(
