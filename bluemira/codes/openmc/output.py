@@ -16,6 +16,8 @@ from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.parameter_frame._frame import ParameterFrame
+from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.radiation_transport.neutronics.constants import DPACoefficients
 
 
@@ -410,4 +412,36 @@ class OpenMCResult:
             showindex=False,
             numalign="right",
             floatfmt=floatfmt,
+        )
+
+
+@dataclass
+class CSGNeutronicsOutputParams(ParameterFrame):
+    """
+    CSG neutronics output parameters
+    """
+
+    e_mult: Parameter[float]
+    TBR: Parameter[float]
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    peak_NWL: Parameter[float]  # noqa: N815
+    peak_iron_dpa_rate: Parameter[float]
+
+    @classmethod
+    def from_openmc_result(cls, result: OpenMCResult):
+        """
+        Produce output parameters from an OpenMC CSG result
+        """
+        source = "OpenMC CSG"
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
+            Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
+            Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
+            # TODO @Ocean: Add these  # noqa: TD003
+            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
+            Parameter("peak_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
         )

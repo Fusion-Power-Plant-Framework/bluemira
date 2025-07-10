@@ -688,7 +688,7 @@ if __name__ == "__main__":
     if reactor_config.config_for("Neutronics").get("enabled", False):
         reactor.neutronics = NeutronicsManager(
             *run_neutronics(
-                reactor_config.params_for("Neutronics"),
+                reactor_config.params_for("Neutronics").global_params,
                 reactor_config.config_for("Neutronics"),
                 blanket=reactor.blanket,
                 vacuum_vessel=reactor.vacuum_vessel,

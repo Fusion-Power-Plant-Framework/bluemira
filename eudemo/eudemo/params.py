@@ -240,3 +240,10 @@ class EUDEMOReactorParams(ParameterFrame):
     outboard_breeding_tk: Parameter[float]
     blk_ib_manifold: Parameter[float]
     blk_ob_manifold: Parameter[float]
+
+    TBR: Parameter[float]
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    peak_NWL: Parameter[float]  # noqa: N815
+    peak_iron_dpa_rate: Parameter[float]
