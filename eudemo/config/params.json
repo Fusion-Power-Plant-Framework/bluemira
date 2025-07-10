@@ -292,7 +292,7 @@
     "description": "Maximum turning angle (clockwise tail-to-tail angle) between adjacent first wall panels"
   },
   "fw_dL_min": {
-    "value": 0.3,
+    "value": 0.15,
     "source": "Input",
     "unit": "meter",
     "long_name": "Minimum panel length",
