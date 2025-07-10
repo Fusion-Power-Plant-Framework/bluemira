@@ -65,7 +65,8 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     """
     F = 0
     for s in range(n_max + 1):
-        F = F + (poch(a, s) * poch(b, s)) / (gamma(c + s) * factorial(s)) * z**s  # noqa: PLR6104
+        gamma_value = np.asarray(gamma(c + s) * factorial(s), dtype=float)
+        F += (poch(a, s) * poch(b, s)) / gamma_value * z**s
     return F
 
 
