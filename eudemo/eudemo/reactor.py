@@ -900,8 +900,3 @@ if __name__ == "__main__":
 
     reactor.plot("xz")
     reactor.show_cad(n_sectors=2)
-
-    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-    sspc_result = sspc_solver.execute()
-    sspc_solver.model.plot()
-    plt.show()
