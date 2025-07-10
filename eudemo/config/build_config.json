@@ -137,7 +137,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -167,7 +167,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",

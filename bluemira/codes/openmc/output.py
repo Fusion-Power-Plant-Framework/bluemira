@@ -57,6 +57,8 @@ class OpenMCResult:
 
     tbr: float
     tbr_err: float
+    e_mult: float
+    e_mult_err: float
     heating: dict
     neutron_wall_load: dict
     blanket_power: float
@@ -115,6 +117,18 @@ class OpenMCResult:
             statepoint, src_rate, "vacuum vessel power"
         )
 
+        fusion_power, fusion_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "Total power"
+        )
+
+        # MC: There is power in the TF + CS, and probably the radiation shield
+        # that I am ignoring here. Perhaps worth adding filters for these
+        total_power = blanket_power + divertor_power + vessel_power
+        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
+
+        e_mult = total_power / fusion_power
+        e_mult_err = total_power_err / fusion_power_err
+
         return cls(
             universe=universe,
             src_rate=src_rate,
@@ -125,6 +139,8 @@ class OpenMCResult:
             mat_names=mat_names,
             tbr=tbr,
             tbr_err=tbr_err,
+            e_mult=e_mult,
+            e_mult_err=e_mult_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
             blanket_power=blanket_power,
             blanket_power_err=blanket_power_err,
