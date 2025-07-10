@@ -446,7 +446,6 @@ class NeutronicsOutputParams(ParameterFrame):
         Produce output parameters from an OpenMC CSG result
         """
         source = "OpenMC CSG"
-
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
