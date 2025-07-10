@@ -1485,3 +1485,16 @@ class TestRegressionTH:
         assert test_constraint.df_constraint(vector) == pytest.approx(
             approx_derivative(test_constraint.f_constraint, vector)
         )
+
+    def test_inequality_constraints(self):
+        raise NotImplementedError
+
+    def test_extra_control_coils(self):
+        raise NotImplementedError
+
+    def test_fixed_coils_raises_valueerror(self):
+        raise NotImplementedError
+
+    def test_plotting(self):
+        # might be tested as part of another test
+        raise NotImplementedError
