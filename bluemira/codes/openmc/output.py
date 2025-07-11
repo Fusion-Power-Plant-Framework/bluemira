@@ -605,16 +605,4 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         Produce output parameters from simplified 0-D neutronics model
         """
-        source = "0-D neutronics"
-        return cls(
-            Parameter("e_mult", result.e_mult, unit="", source=source),
-            Parameter("TBR", result.tbr, unit="", source=source),
-            Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
-            Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
-            Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
-            # TODO @Ocean: Add these  # noqa: TD003
-            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
-            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-        )
+        return cls.from_frame(result)
