@@ -20,10 +20,13 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
-from bluemira.plasma_physics.reactions import E_DT_fusion
+from bluemira.plasma_physics.reactions import E_DT_fusion, n_DT_reactions
 from bluemira.radiation_transport.neutronics.constants import (
     FE_DPA_THRESHOLD_EV,
     get_dpa_coefficients,
+)
+from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+    ZeroDNeutronicsResult,
 )
 
 
@@ -598,7 +601,20 @@ class NeutronicsOutputParams(ParameterFrame):
         )
 
     @classmethod
-    def from_0d_result(cls, params: ParameterFrame):
+    def from_0d_result(cls, result: ZeroDNeutronicsResult):
         """
         Produce output parameters from simplified 0-D neutronics model
         """
+        source = "0-D neutronics"
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
+            Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
+            Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
+            # TODO @Ocean: Add these  # noqa: TD003
+            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
+            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+        )
