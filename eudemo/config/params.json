@@ -1172,20 +1172,20 @@
     "long_name": "Peak neutron wall load"
   },
   "peak_bb_iron_dpa_rate": {
-    "value": 10.0,
+    "value": 10.2,
     "unit": "dpa/fpy",
     "source": "Input",
     "long_name": "Peak damage rate in Fe in the BB",
     "description": "Usually defined in EUROfer at the outboard midplane behind the W first wall"
   },
   "peak_vv_iron_dpa_rate": {
-    "value": 0.1,
+    "value": 0.3,
     "unit": "dpa/fpy",
     "source": "Input",
     "long_name": "Peak damage rate in Fe in the VV"
   },
   "peak_div_cu_dpa_rate": {
-    "value": 4.0,
+    "value": 3.0,
     "unit": "dpa/fpy",
     "source": "Input",
     "long_name": "Peak damage rate in Cu in the divertor"
