@@ -183,6 +183,7 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
     Notes
     -----
     Ref: Current status and future perspectives of EU ceramic breeder development
+    (Fusion Eng. Des., 164, 112171)
     """
     return HomogenisedMixture(
         name="kalos_acb",  # optional name of homogeneous material
@@ -195,9 +196,8 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
             ),
         ],
         percent_type="ao",
-        packing_fraction=0.642,
+        packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
     )  # combination fraction type is by atom fraction
-    # TODO @OceanNuclear:  check if this packing fraction is correct (as set above)
     # KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  # applying packing fraction
     # 3657
 
