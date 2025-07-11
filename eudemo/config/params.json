@@ -1165,6 +1165,24 @@
     "source": "Input",
     "long_name": "Vacuum vessel neutron heating power"
   },
+  "P_n_aux": {
+    "value": 10.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Auxiliary neutron heating power"
+  },
+  "P_n_e_mult": {
+    "value": 500.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Total energy multiplication thermal power"
+  },
+  "P_n_decay": {
+    "value": 30.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Instantaneous (steady-state) radioactice decay power"
+  },
   "peak_NWL": {
     "value": 1.2,
     "unit": "MW/m^2",
