@@ -18,6 +18,7 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.plasma_physics.reactions import n_DT_reactions
 from bluemira.radiation_transport.neutronics.constants import DPACoefficients
 
 
@@ -86,10 +87,11 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
-        src_rate: float,
+        P_fus_DT: float,
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
+        src_rate = n_DT_reactions(P_fus_DT)
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}
@@ -119,17 +121,16 @@ class OpenMCResult:
             statepoint, src_rate, "vacuum vessel power"
         )
 
-        fusion_power, fusion_power_err = cls._load_filter_power_err(
-            statepoint, src_rate, "Total power"
-        )
-
         # MC: There is power in the TF + CS, and probably the radiation shield
         # that I am ignoring here. Perhaps worth adding filters for these
         total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
+        total_power_err = np.sqrt(
+            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        )
 
-        e_mult = total_power / fusion_power
-        e_mult_err = total_power_err / fusion_power_err
+        dt_neuton_power = 0.8 * P_fus_DT
+        e_mult = total_power / dt_neuton_power
+        e_mult_err = total_power_err / dt_neuton_power
 
         return cls(
             universe=universe,
@@ -416,9 +417,9 @@ class OpenMCResult:
 
 
 @dataclass
-class CSGNeutronicsOutputParams(ParameterFrame):
+class NeutronicsOutputParams(ParameterFrame):
     """
-    CSG neutronics output parameters
+    Neutronics output parameters
     """
 
     e_mult: Parameter[float]
@@ -427,10 +428,12 @@ class CSGNeutronicsOutputParams(ParameterFrame):
     P_n_divertor: Parameter[float]
     P_n_vessel: Parameter[float]
     peak_NWL: Parameter[float]  # noqa: N815
-    peak_iron_dpa_rate: Parameter[float]
+    peak_bb_iron_dpa_rate: Parameter[float]
+    peak_vv_iron_dpa_rate: Parameter[float]
+    peak_div_cu_dpa_rate: Parameter[float]
 
     @classmethod
-    def from_openmc_result(cls, result: OpenMCResult):
+    def from_openmc_csg_result(cls, result: OpenMCResult):
         """
         Produce output parameters from an OpenMC CSG result
         """
@@ -443,5 +446,13 @@ class CSGNeutronicsOutputParams(ParameterFrame):
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
             # TODO @Ocean: Add these  # noqa: TD003
             Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
-            Parameter("peak_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
         )
+
+    @classmethod
+    def from_0d_result(cls, params: ParameterFrame):
+        """
+        Produce output parameters from simplified 0-D neutronics model
+        """

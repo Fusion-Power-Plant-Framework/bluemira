@@ -246,4 +246,6 @@ class EUDEMOReactorParams(ParameterFrame):
     P_n_divertor: Parameter[float]
     P_n_vessel: Parameter[float]
     peak_NWL: Parameter[float]  # noqa: N815
-    peak_iron_dpa_rate: Parameter[float]
+    peak_bb_iron_dpa_rate: Parameter[float]
+    peak_vv_iron_dpa_rate: Parameter[float]
+    peak_div_cu_dpa_rate: Parameter[float]
