@@ -104,6 +104,7 @@ class OpenMCCSGResult:
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
+        src_rate = n_DT_reactions(P_fus_DT)
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}
@@ -150,17 +151,16 @@ class OpenMCCSGResult:
         peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
         peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
 
-        fusion_power, fusion_power_err = cls._load_filter_power_err(
-            statepoint, src_rate, "Total power"
-        )
-
         # MC: There is power in the TF + CS, and probably the radiation shield
         # that I am ignoring here. Perhaps worth adding filters for these
         total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
+        total_power_err = np.sqrt(
+            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        )
 
-        e_mult = total_power / fusion_power
-        e_mult_err = total_power_err / fusion_power_err
+        dt_neuton_power = 0.8 * P_fus_DT
+        e_mult = total_power / dt_neuton_power
+        e_mult_err = total_power_err / dt_neuton_power
 
         return cls(
             universe=universe,
@@ -530,9 +530,9 @@ class OpenMCCSGResult:
 
 
 @dataclass
-class CSGNeutronicsOutputParams(ParameterFrame):
+class NeutronicsOutputParams(ParameterFrame):
     """
-    CSG neutronics output parameters
+    Neutronics output parameters
     """
 
     e_mult: Parameter[float]
@@ -596,3 +596,9 @@ class CSGNeutronicsOutputParams(ParameterFrame):
                 source=source,
             ),
         )
+
+    @classmethod
+    def from_0d_result(cls, params: ParameterFrame):
+        """
+        Produce output parameters from simplified 0-D neutronics model
+        """

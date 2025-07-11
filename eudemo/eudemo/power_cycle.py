@@ -64,6 +64,7 @@ class SteadyStatePowerCycleParams(ParameterFrame):
     P_rad: Parameter[float]
     P_hcd_ss: Parameter[float]
     P_hcd_ss_el: Parameter[float]
+
     vvpfrac: Parameter[float]
     e_mult: Parameter[float]
     e_decay_mult: Parameter[float]
