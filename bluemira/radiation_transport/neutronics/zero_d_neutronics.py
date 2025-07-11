@@ -17,7 +17,7 @@ from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.radiation_transport.error import NeutronicsError
 
 
-@dataclass(frozen=True)
+@dataclass
 class ZeroDNeutronicsModelParams(ParameterFrame):
     """
     ZeroDNeutronicsModel input parameters
@@ -37,7 +37,7 @@ class ZeroDNeutronicsModelParams(ParameterFrame):
     peak_div_cu_dpa_rate: Parameter[float]
 
 
-@dataclass(frozen=True)
+@dataclass
 class ZeroDNeutronicsResult(ParameterFrame):
     """
     ZeroDNeutronicsModel output parameters
