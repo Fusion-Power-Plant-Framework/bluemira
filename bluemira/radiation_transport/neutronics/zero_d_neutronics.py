@@ -18,7 +18,7 @@ from bluemira.plasma_physics.reactions import f_n_DT_fusion
 from bluemira.radiation_transport.error import NeutronicsError
 
 
-@dataclass
+@dataclass(frozen=True)
 class ZeroDNeutronicsModelParams(ParameterFrame):
     """
     ZeroDNeutronicsModel input parameters
@@ -37,7 +37,7 @@ class ZeroDNeutronicsModelParams(ParameterFrame):
     peak_div_cu_dpa_rate: Parameter[float]
 
 
-@dataclass
+@dataclass(frozen=True)
 class ZeroDNeutronicsResult(ParameterFrame):
     """
     ZeroDNeutronicsModel output parameters
