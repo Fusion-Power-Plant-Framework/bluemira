@@ -382,6 +382,13 @@ class BoPModelParams(ParameterFrame):
     P_hcd_ss: Parameter[float]
     P_hcd_ss_el: Parameter[float]
 
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    P_n_aux: Parameter[float]
+    P_n_e_mult: Parameter[float]
+    P_n_decay: Parameter[float]
+
 
 class BalanceOfPlantModel:
     """
