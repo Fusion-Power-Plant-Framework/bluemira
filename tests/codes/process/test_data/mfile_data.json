@@ -1920,7 +1920,7 @@
     "var_mod": "Vertical Build",
     "scan01": 0.9
   },
-  "beamwd": {
+  "dx_beam_duct": {
     "var_mod": "Vertical Build",
     "scan01": 0.58
   },
