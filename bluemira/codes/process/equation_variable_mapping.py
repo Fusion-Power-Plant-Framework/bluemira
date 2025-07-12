@@ -591,7 +591,7 @@ ITERATION_VAR_MAPPING = {
     "fmva": 30,
     "gapomin": 31,
     "frminor": 32,
-    "fportsz": 33,
+    "fradius_beam_tangency": 33,
     "fdivcol": 34,
     "fpeakb": 35,
     "fbeta_max": 36,

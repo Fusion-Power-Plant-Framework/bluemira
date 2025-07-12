@@ -374,7 +374,7 @@ class ProcessInputs:
     fpeakb: float | None = None
     fpinj: float | None = None
     fpnetel: float | None = None
-    fportsz: float | None = None
+    fradius_beam_tangency: float | None = None
     fpsepbqar: float | None = None
     fpsepr: float | None = None
     fptemp: float | None = None
@@ -475,7 +475,7 @@ class ProcessInputs:
     # Buildings
 
     # Current drive
-    beamwd: float | None = None
+    dx_beam_duct: float | None = None
     f_c_plasma_bootstrap_max: float | None = None
     f_c_plasma_bootstrap: float | None = None
     cboot: float | None = None
@@ -484,7 +484,7 @@ class ProcessInputs:
     eta_ecrh_injector_wall_plug: float | None = None
     eta_beam_injector_wall_plug: float | None = None
     feffcd: float | None = None
-    frbeam: float | None = None
+    f_radius_beam_tangency_rmajor: float | None = None
     f_beam_tritium: float | None = None
     eta_cd_norm_ecrh: float | None = None
     xi_ebw: float | None = None
