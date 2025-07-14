@@ -20,8 +20,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Power cycle example"""
-# %%
 
+# %%
 from __future__ import annotations
 
 from pathlib import Path
