@@ -73,6 +73,7 @@ class OpenMCResult:
     divertor_power_err: float
     vessel_power: float
     vessel_power_err: float
+    mult_power: float
     """Neutron wall load (eV)"""
 
     photon_heat_flux: dict
@@ -136,6 +137,7 @@ class OpenMCResult:
         dt_neuton_power = 0.8 * P_fus_DT
         e_mult = total_power / dt_neuton_power
         e_mult_err = total_power_err / dt_neuton_power
+        mult_power = (e_mult - 1.0) * dt_neuton_power
 
         return cls(
             universe=universe,
@@ -156,6 +158,7 @@ class OpenMCResult:
             divertor_power_err=divertor_power_err,
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
+            mult_power=mult_power,
             neutron_wall_load=cls._load_neutron_wall_loading(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -448,8 +451,7 @@ class NeutronicsOutputParams(ParameterFrame):
         Produce output parameters from an OpenMC CSG result
         """
         source = "OpenMC CSG"
-        total_power = result.blanket_power + result.divertor_power + result.vessel_power
-        p_n_e_mult = (1.0 - result.e_mult) * total_power
+
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
@@ -457,7 +459,7 @@ class NeutronicsOutputParams(ParameterFrame):
             Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
             Parameter("P_n_aux", 0.0, unit="W", source=source),
-            Parameter("P_n_e_mult", p_n_e_mult, unit="W", source=source),
+            Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
             Parameter("P_n_decay", 0.0, unit="W", source=source),
             # TODO @Ocean: Add these  # noqa: TD003
             Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),

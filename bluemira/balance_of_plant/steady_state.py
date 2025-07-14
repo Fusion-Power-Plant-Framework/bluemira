@@ -411,8 +411,6 @@ class BalanceOfPlantModel:
     rad_sep_strat:
         Strategy to calculate the where the radiation and charged particle power
         in the scrape-off-layer is carried to
-    neutron_strat:
-        Strategy to calculate where the neutron power is carried to
     blanket_pump_strat:
         Strategy to calculate the coolant pumping power for the blanket
     divertor_pump_strat:
@@ -443,7 +441,6 @@ class BalanceOfPlantModel:
         self,
         params: ParameterFrameLike,
         rad_sep_strat: FractionSplitStrategyT,
-        neutron_strat: FractionSplitStrategyT,
         blanket_pump_strat: CoolantPumpingT,
         divertor_pump_strat: CoolantPumpingT,
         bop_cycle_strat: PowerCycleEfficiencyCalcT,
@@ -451,7 +448,6 @@ class BalanceOfPlantModel:
     ):
         self.params = make_parameter_frame(params, BoPModelParams)
         self.rad_sep_strat = rad_sep_strat
-        self.neutron_strat = neutron_strat
         self.blanket_pump_strat = blanket_pump_strat
         self.divertor_pump_strat = divertor_pump_strat
         self.bop_strat = bop_cycle_strat
@@ -474,14 +470,15 @@ class BalanceOfPlantModel:
         p_hcd = self.params.P_hcd_ss.value
         p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
-        (
-            p_n_blk,
-            p_n_div,
-            p_n_vv,
-            p_n_aux,
-            p_nrgm,
-            p_blk_decay,
-        ) = self.neutron_strat.split(p_neutron)
+
+        p_n_blk = self.params.P_n_blanket.value
+        p_n_div = self.params.P_n_divertor.value
+        p_n_vv = self.params.P_n_vessel.value
+        p_n_aux = self.params.P_n_aux.value
+        p_nrgm = self.params.P_n_e_mult.value
+
+        p_blk_decay = self.params.P_n_decay.value
+
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
         )
@@ -566,16 +563,16 @@ class BalanceOfPlantModel:
             delta = sum(flow)
             if round(delta) != 0:
                 bluemira_warn(
-                    f"Power block {label} is not self-consistent.. {delta:.2f} MW are"
-                    " missing"
+                    f"Power block {label} is not self-consistent.. {delta / 1e6:.2f} MW"
+                    " are missing"
                 )
             delta_truth += delta
 
         # Global check
         if round(delta_truth) != 0:
             bluemira_warn(
-                f"The balance of plant model is inconsistent: {delta_truth:.2f} MW are"
-                " lost somewhere."
+                f"The balance of plant model is inconsistent: {delta_truth / 1e6:.2f} MW"
+                " are lost somewhere."
             )
 
     def plot(self, title: str = "", **kwargs):

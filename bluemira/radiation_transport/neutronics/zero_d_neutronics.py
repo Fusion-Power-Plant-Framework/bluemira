@@ -14,6 +14,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.plasma_physics.reactions import f_n_DT_fusion
 from bluemira.radiation_transport.error import NeutronicsError
 
 
@@ -71,6 +72,8 @@ class ZeroDNeutronicsModel:
     _source = "0-D neutronics model"
 
     def __init__(self, params: ZeroDNeutronicsModelParams):
+        if not isinstance(params, ZeroDNeutronicsModelParams):
+            params = ZeroDNeutronicsModelParams.from_frame(params)
         self.params = params
         self._check_fractions()
 
@@ -109,14 +112,14 @@ class ZeroDNeutronicsModel:
         ZeroDNeutronicsModel results
         """
         # Energy multiplication power is assigned to blanket
-        neutron_power = 0.8 * self.params.P_fus_DT.value
+        neutron_power = f_n_DT_fusion() * self.params.P_fus_DT.value
         blk_power = (
             self.params.f_n_blanket.value * self.params.e_mult.value * neutron_power
         )
         div_power = self.params.f_n_divertor.value * neutron_power
         vv_power = self.params.f_n_vessel.value * neutron_power
         aux_power = self.params.f_n_aux.value * neutron_power
-        mult_power = (self.params.e_mult.value - 1.0) * blk_power
+        mult_power = blk_power - self.params.f_n_blanket.value * neutron_power
         decay_power = (self.params.e_decay_mult.value - 1.0) * neutron_power
         power_unit = self.params.P_fus_DT.unit
         return ZeroDNeutronicsResult(
