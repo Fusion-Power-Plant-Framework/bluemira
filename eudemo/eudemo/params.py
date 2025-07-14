@@ -222,7 +222,6 @@ class EUDEMOReactorParams(ParameterFrame):
     f_sol_ch_fw: Parameter[float]
     f_sol_rad: Parameter[float]
     f_sol_rad_fw: Parameter[float]
-    vvpfrac: Parameter[float]
     P_hcd_ss_el: Parameter[float]
 
     # First wall panelling
@@ -252,3 +251,9 @@ class EUDEMOReactorParams(ParameterFrame):
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
+
+    # 0-D neutronics
+    f_n_blanket: Parameter[float]
+    f_n_divertor: Parameter[float]
+    f_n_vessel: Parameter[float]
+    f_n_aux: Parameter[float]

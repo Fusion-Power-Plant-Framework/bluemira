@@ -56,6 +56,23 @@ def E_DT_fusion() -> float:
     return raw_uc(delta_m, "amu", "J")
 
 
+def f_n_DT_fusion() -> float:
+    """
+    Calculate the fraction of neutron energy from the D-T fusion reaction
+
+    Returns
+    -------
+    The fraction of neutron energy released from the D-T fusion reaction
+
+    Notes
+    -----
+    This is a simple mass ratio, and ignores relativistic effects
+    """
+    return (HE_MOLAR_MASS - 2.0 * ELECTRON_MOLAR_MASS) / (
+        HE_MOLAR_MASS - 2.0 * ELECTRON_MOLAR_MASS + NEUTRON_MOLAR_MASS
+    )
+
+
 def E_DD_fusion() -> float:
     """
     Calculates the total energy released from the D-D fusion reaction

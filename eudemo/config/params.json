@@ -761,12 +761,6 @@
     "source": "Input",
     "long_name": "Vacuum vessel double-walled shell thickness"
   },
-  "vvpfrac": {
-    "value": 0.04,
-    "unit": "volt",
-    "source": "Input",
-    "long_name": "Fraction of neutrons deposited in VV"
-  },
   "v_burn": {
     "value": 2.949e-2,
     "unit": "volt",
@@ -1207,5 +1201,33 @@
     "unit": "dpa/fpy",
     "source": "Input",
     "long_name": "Peak damage rate in Cu in the divertor"
+  },
+  "f_n_blanket": {
+    "value": 0.81,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_divertor": {
+    "value": 0.1,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_vessel": {
+    "value": 0.04,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_aux": {
+    "value": 0.05,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
   }
 }
