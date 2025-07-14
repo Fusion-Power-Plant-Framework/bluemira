@@ -52,6 +52,9 @@ from bluemira.geometry.tools import (
     save_cad,
 )
 from bluemira.materials.cache import establish_material_cache
+from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+    ZeroDNeutronicsModel,
+)
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -699,6 +702,10 @@ if __name__ == "__main__":
         if reactor_config.config_for("Neutronics")["show_data"]:
             reactor.neutronics.plot()
             bluemira_print_clean(f"{reactor.neutronics}")
+    else:
+        model = ZeroDNeutronicsModel(reactor_config.global_params)
+        new_params = model.run()
+        reactor_config.global_params.update_from_frame(new_params)
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
