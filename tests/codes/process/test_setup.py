@@ -41,7 +41,7 @@ class TestSetup:
         assert writer.add_parameter.call_count == num_send_params
         # Expected value comes from default pf
         call_arg_list = writer.add_parameter.call_args_list
-        assert mock.call("pnetelin", 500) in call_arg_list
+        assert mock.call("p_plant_electric_net_required_mw", 500) in call_arg_list
 
     def test_run_adds_problem_setting_params_to_InDat_writer(self):
         problem_settings = {"input0": 0.0}

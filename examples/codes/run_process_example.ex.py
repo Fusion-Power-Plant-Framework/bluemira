@@ -209,7 +209,7 @@ template_builder.add_input_values({
     "radius_plasma_core_norm": 0.75,
     "coreradiationfraction": 0.6,
     # Important stuff
-    "pnetelin": 500.0,
+    "p_plant_electric_net_required_mw": 500.0,
     "t_burn_min": 7.2e3,
     "sig_tf_case_max": 5.8e8,
     "sig_tf_wp_max": 5.8e8,
@@ -372,7 +372,7 @@ except CodesError as ce:
 # TODO @je-cook: actually get to converge
 # 3667
 template_builder.set_run_title("Example that should converge")
-template_builder.adjust_variable("fpnetel", 1.0)
+template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)

@@ -103,7 +103,7 @@ class Constraint(ConstraintSelection, Model):
     NWL_UPPER_LIMIT = (
         8,
         (1, 2, 3, 4, 6, 14),
-        ("walalw",),
+        ("pflux_fw_neutron_max_mw",),
         "Neutron wall load upper limit",
     )
     FUSION_POWER_UPPER_LIMIT = (
@@ -141,7 +141,7 @@ class Constraint(ConstraintSelection, Model):
     NET_ELEC_LOWER_LIMIT = (
         16,
         (1, 2, 3, 25),
-        ("pnetelin",),
+        ("p_plant_electric_net_required_mw",),
         "Net electric power lower limit",
     )
     RAD_POWER_UPPER_LIMIT = 17, (28,), (), "Equation for radiation power upper limit"
@@ -175,7 +175,7 @@ class Constraint(ConstraintSelection, Model):
     PEAK_TF_UPPER_LIMIT = (
         25,
         (3, 13, 29, 35),
-        ("bmxlim",),
+        ("b_tf_inboard_max",),
         "Peak toroidal field upper limit",
     )
     CS_EOF_DENSITY_LIMIT = (
@@ -247,7 +247,7 @@ class Constraint(ConstraintSelection, Model):
     CD_GAMMA_UPPER_LIMIT = (
         37,
         (40, 47),
-        ("gammax",),
+        ("eta_cd_norm_hcd_primary_max",),
         "Equation for current drive gamma upper limit",
     )
     # 38 NOT USED
@@ -267,7 +267,7 @@ class Constraint(ConstraintSelection, Model):
     CYCLE_TIME_LOWER_LIMIT = (
         42,
         (17, 65, 67),
-        ("tcycmn",),
+        ("t_cycle_min",),
         "Cycle time lower limit (PULSE)",
     )
     CENTREPOST_TEMP_AVERAGE = (
@@ -410,7 +410,7 @@ class Constraint(ConstraintSelection, Model):
     TF_TURN_CURRENT_UPPER_LIMIT = (
         77,
         (146,),
-        ("cpttf_max",),
+        ("c_tf_turn_max",),
         "TF coil current per turn upper limit",
     )
     REINKE_IMP_FRAC_LOWER_LIMIT = (
@@ -572,8 +572,8 @@ ITERATION_VAR_MAPPING = {
     "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
     "dr_tf_inboard": 13,
-    "fwalld": 14,
-    "fvs": 15,
+    "fpflux_fw_neutron_max_mw": 14,
+    "fvs_plasma_total_required": 15,
     "dr_cs": 16,
     "t_between_pulse": 17,
     "q95": 18,
@@ -583,7 +583,7 @@ ITERATION_VAR_MAPPING = {
     # 22 NOT USED
     "fcoolcp": 23,
     # 24 NOT USED
-    "fpnetel": 25,
+    "fp_plant_electric_net_required_mw": 25,
     "fp_fusion_total_max_mw": 26,
     "fpflux_div_heat_load_mw": 27,
     "fradpwr": 28,
@@ -593,18 +593,18 @@ ITERATION_VAR_MAPPING = {
     "frminor": 32,
     "fradius_beam_tangency": 33,
     "fdivcol": 34,
-    "fpeakb": 35,
+    "fb_tf_inboard_max": 35,
     "fbeta_max": 36,
     "j_cs_flat_top_end": 37,
     "fjohc": 38,
     "fjohc0": 39,
-    "fgamcd": 40,
+    "feta_cd_norm_hcd_primary_max": 40,
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
     # 43 NOT USED
     "f_c_plasma_non_inductive": 44,
     "fqval": 45,
-    "fpinj": 46,
+    "fp_hcd_injected_total_mw": 46,
     "feffcd": 47,
     "fstrcase": 48,
     "fstrcond": 49,
@@ -625,7 +625,7 @@ ITERATION_VAR_MAPPING = {
     "fauxmn": 64,
     "t_current_ramp_up": 65,
     "ft_current_ramp_up": 66,
-    "ftcycl": 67,
+    "ft_cycle_min": 67,
     "fptemp": 68,
     "rcool": 69,
     "vcool": 70,
@@ -668,7 +668,7 @@ ITERATION_VAR_MAPPING = {
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
     "len_fw_channel": 114,
     "fpoloidalpower": 115,
-    "fradwall": 116,
+    "fplfux_fw_rad_max": 116,
     "fpsepbqar": 117,
     "fpsep": 118,
     "tesep": 119,
@@ -698,7 +698,7 @@ ITERATION_VAR_MAPPING = {
     "f_coppera_m2": 143,
     "fnesep": 144,
     "fgwped": 145,
-    "fcpttf": 146,
+    "fc_tf_turn_max": 146,
     "freinke": 147,
     "fzactual": 148,
     "fb_cs_limit_max": 149,

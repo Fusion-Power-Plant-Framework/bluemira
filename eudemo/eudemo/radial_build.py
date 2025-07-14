@@ -121,7 +121,7 @@ template_builder.adjust_variable(
 template_builder.adjust_variable("ft_burn", 1.0, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
-template_builder.adjust_variable("fpnetel", 1.0)
+template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
@@ -130,7 +130,7 @@ template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
 template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
 template_builder.adjust_variable("foh_stress", 1.0)
 template_builder.adjust_variable("fbeta_max", 0.48251)
-template_builder.adjust_variable("fwalld", 0.131)
+template_builder.adjust_variable("fpflux_fw_neutron_max_mw", 0.131)
 template_builder.adjust_variable("fmaxvvstress", 1.0)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
@@ -208,7 +208,7 @@ template_builder.add_input_values({
     "radius_plasma_core_norm": 0.75,
     "coreradiationfraction": 0.6,
     # Important stuff
-    "pnetelin": 500.0,
+    "p_plant_electric_net_required_mw": 500.0,
     "t_burn_min": 7.2e3,
     "sig_tf_case_max": 5.8e8,
     "sig_tf_wp_max": 5.8e8,
@@ -284,16 +284,16 @@ template_builder.add_input_values({
     # Inputs we don't care about but must specify
     "cfactr": 0.75,  # Ha!
     "kappa": 1.848,  # Should be overwritten
-    "walalw": 8.0,  # Should never get even close to this
+    "pflux_fw_neutron_max_mw": 8.0,  # Should never get even close to this
     "tlife": 40.0,
     "abktflnc": 15.0,
     "adivflnc": 20.0,
     # For sanity...
     "pflux_div_heat_load_max_mw": 10,
     "prn1": 0.4,
-    "bmxlim": 11.2,
+    "b_tf_inboard_max": 11.2,
     "fp_fusion_total_max_mw": 1.0,
-    "fpeakb": 1.0,
+    "fb_tf_inboard_max": 1.0,
     "ibkt_life": 1,
     "fkzohm": 1.0245,
     "dintrt": 0.0,
@@ -310,7 +310,7 @@ template_builder.add_input_values({
     "ucme": 3.0e8,
     # Suspicous stuff
     "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-    "fpinj": 1.0,
+    "fp_hcd_injected_total_mw": 1.0,
 })
 
 
