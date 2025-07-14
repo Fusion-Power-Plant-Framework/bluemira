@@ -1,6 +1,6 @@
 gmsh-interop==2024.1
 h5py==3.13.0
-pybind11==2.13.6
+pybind11==3.0.0
 pybind11-global==2.13.6
 pytools==2025.2.1
 vtk==9.3.1
