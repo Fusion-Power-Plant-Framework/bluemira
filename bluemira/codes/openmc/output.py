@@ -164,6 +164,7 @@ class OpenMCCSGResult:
         dt_neuton_power = 0.8 * P_fus_DT
         e_mult = total_power / dt_neuton_power
         e_mult_err = total_power_err / dt_neuton_power
+        mult_power = (e_mult - 1.0) * dt_neuton_power
 
         return cls(
             universe=universe,
