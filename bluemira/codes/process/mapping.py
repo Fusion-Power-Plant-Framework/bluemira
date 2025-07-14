@@ -70,6 +70,7 @@ OUT_mappings = {
     "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
+    "T_e": ("te", "keV"),
     "tk_fw_in": ("dr_fw_inboard", "m"),
     "tk_fw_out": ("dr_fw_outboard", "m"),
     "tk_tf_inboard": ("dr_tf_inboard", "m"),
