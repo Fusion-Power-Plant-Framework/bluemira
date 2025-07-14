@@ -887,7 +887,7 @@
     "var_mod": "Plasma",
     "scan01": 8.4384e19
   },
-  "dnla": {
+  "nd_electron_line": {
     "var_mod": "Plasma",
     "scan01": 7.1047e19
   },
@@ -1219,7 +1219,7 @@
     "var_mod": "Plasma",
     "scan01": 1.4837e-10
   },
-  "f_alpha_plasma": {
+  "f_p_alpha_plasma_deposited": {
     "var_mod": "Plasma",
     "scan01": 0.95
   },
@@ -3800,7 +3800,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 811.09
   },
-  "f_alpha_plasma*p_alpha_total_mw": {
+  "f_p_alpha_plasma_deposited*p_alpha_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 582.92
   },
@@ -3852,7 +3852,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 600.0
   },
-  "pnetelin": {
+  "p_plant_electric_net_required_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 500.0
   },

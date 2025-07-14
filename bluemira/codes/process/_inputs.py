@@ -139,7 +139,7 @@ class ProcessInputs:
     f_t_turn_tf: float | None = None
     t_turn_tf_max: float | None = None
     c_tf_turn: float | None = None
-    cpttf_max: float | None = None
+    c_tf_turn_max: float | None = None
     dcase: float | None = None
     dcond: list[float] | None = None
     dcondins: float | None = None
@@ -345,7 +345,7 @@ class ProcessInputs:
     p_hcd_injected_min: float | None = None
     beta_poloidal_max: float | None = None
     bigqmin: float | None = None
-    bmxlim: float | None = None
+    b_tf_inboard_max: float | None = None
     dr_tf_wp_with_insulation: float | None = None
     fauxmn: float | None = None
     fbeta: float | None = None
@@ -358,7 +358,7 @@ class ProcessInputs:
     fecrh_ignition: float | None = None
     fflutf: float | None = None
     fp_fusion_total_max_mw: float | None = None
-    fgamcd: float | None = None
+    feta_cd_norm_hcd_primary_max: float | None = None
     fpflux_div_heat_load_mw: float | None = None
     fiooic: float | None = None
     fipir: float | None = None
@@ -371,9 +371,9 @@ class ProcessInputs:
     fncycle: float | None = None
     fnesep: float | None = None
     foh_stress: float | None = None
-    fpeakb: float | None = None
-    fpinj: float | None = None
-    fpnetel: float | None = None
+    fb_tf_inboard_max: float | None = None
+    fp_hcd_injected_total_mw: float | None = None
+    fp_plant_electric_net_required_mw: float | None = None
     fradius_beam_tangency: float | None = None
     fpsepbqar: float | None = None
     fpsepr: float | None = None
@@ -381,7 +381,7 @@ class ProcessInputs:
     fq: float | None = None
     fqval: float | None = None
     fradpwr: float | None = None
-    fradwall: float | None = None
+    fplfux_fw_rad_max: float | None = None
     freinke: float | None = None
     fstrcase: float | None = None
     fstrcond: float | None = None
@@ -389,24 +389,24 @@ class ProcessInputs:
     fmaxvvstress: float | None = None
     ftbr: float | None = None
     ft_burn: float | None = None
-    ftcycl: float | None = None
+    ft_cycle_min: float | None = None
     ftmargoh: float | None = None
     ftmargtf: float | None = None
     ft_current_ramp_up: float | None = None
     ftpeak: float | None = None
     fvdump: float | None = None
-    fvs: float | None = None
+    fvs_plasma_total_required: float | None = None
     fvvhe: float | None = None
-    fwalld: float | None = None
+    fpflux_fw_neutron_max_mw: float | None = None
     fzeffmax: float | None = None
-    gammax: float | None = None
+    eta_cd_norm_hcd_primary_max: float | None = None
     pflux_fw_rad_max: float | None = None
     mvalim: float | None = None
     f_p_beam_shine_through_max: float | None = None
     nflutfmax: float | None = None
     p_plasma_separatrix_min_mw: float | None = None
     f_fw_rad_max: float | None = None
-    pnetelin: float | None = None
+    p_plant_electric_net_required_mw: float | None = None
     p_fusion_total_max_mw: float | None = None
     psepbqarmax: float | None = None
     pseprmax: float | None = None
@@ -414,7 +414,7 @@ class ProcessInputs:
     tbrmin: float | None = None
     t_burn_min: float | None = None
     vvhealw: float | None = None
-    walalw: float | None = None
+    pflux_fw_neutron_max_mw: float | None = None
     f_alpha_energy_confinement_min: float | None = None
     falpha_energy_confinement: float | None = None
     fniterpump: float | None = None
@@ -494,7 +494,7 @@ class ProcessInputs:
     dx_beam_shield: float | None = None
     p_hcd_primary_extra_heat_mw: float | None = None  # Listed as an output
     p_hcd_injected_max: float | None = None
-    tbeamin: float | None = None
+    n_beam_decay_length_core_required: float | None = None
 
     # Impurity radiation
     radius_plasma_core_norm: float | None = None
@@ -615,7 +615,7 @@ class ProcessInputs:
     dene: float | None = None
     beta_norm_max: float | None = None
     epbetmax: float | None = None
-    f_alpha_plasma: float | None = None
+    f_p_alpha_plasma_deposited: float | None = None
     f_deuterium: float | None = None
     f_p_div_lower: float | None = None
     ffwal: float | None = None

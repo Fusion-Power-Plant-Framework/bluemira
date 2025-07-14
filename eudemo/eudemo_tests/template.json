@@ -232,7 +232,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pnetelin",
+        "name": "p_plant_electric_net_required_mw",
         "out_name": "pnetelmw",
         "send": true,
         "recv": true,

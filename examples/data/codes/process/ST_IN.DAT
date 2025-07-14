@@ -38,7 +38,7 @@ ixc = 10 * hfact
 boundu(10) = 1.1
 ixc = 13 * dr_tf_inboard
 boundl(13) = 0.5
-ixc = 14 * fwalld
+ixc = 14 * fpflux_fw_neutron_max_mw
 ixc = 16 * dr_cs
 ixc = 18 * q
 boundl(18) = 3.0
@@ -110,7 +110,7 @@ dr_shld_thermal_inboard = 0.05
 dr_shld_blkt_gap = 0.02
 *---------------Buildings Variables----------------*
 *---------------Constraint Variables---------------*
-bmxlim   = 14.0 * Maximum peak toroidal field (t)
+b_tf_inboard_max   = 14.0 * Maximum peak toroidal field (t)
 fbeta_max = 4.8361e-01 * F-value for beta limit
 fdene    = 1.2000e+00 * F-value for density limit
 fp_fusion_total_max_mw  = 1 * F-value for maximum fusion power
@@ -120,19 +120,19 @@ fjohc    = 2.5000e-01 * F-value for central solenoid current at end-of-flattop
 fjohc0   = 2.5000e-01 * F-value for central solenoid current at beginning of pulse
 fjprot   = 1.0000e+00 * F-value for tf coil winding pack current density
 fl_h_threshold = 7.8585e-01 * F-value for l-h power threshold
-fpeakb   = 9.2290d-1 * F-value for maximum toroidal field
-fpinj    = 1.0 * F-value for injection power
-fpnetel  = 1.0 * F-value for net electric power
+fb_tf_inboard_max   = 9.2290d-1 * F-value for maximum toroidal field
+fp_hcd_injected_total_mw    = 1.0 * F-value for injection power
+fp_plant_electric_net_required_mw  = 1.0 * F-value for net electric power
 fstrcase = 1.0000e+00 * F-value for tf coil case stress
 fstrcond = 8.6890e-01 * F-value for tf coil conduit stress
 ft_burn   = 1.00e+00 * F-value for minimum burn time
 fvdump   = 1.0      * F-value for dump voltage
-fwalld   = 1.3024e-01 * F-value for maximum wall load
-pnetelin = 500.0 * Required net electric power (mw)
+fpflux_fw_neutron_max_mw   = 1.3024e-01 * F-value for maximum wall load
+p_plant_electric_net_required_mw = 500.0 * Required net electric power (mw)
 pseprmax = 17.0 * Maximum ratio of power crossing the separatrix to
 t_burn_min   = 7.2e3 * Minimum burn time (s)
 
-walalw   = 8.0 * Allowable wall-load (mw/m2)
+pflux_fw_neutron_max_mw   = 8.0 * Allowable wall-load (mw/m2)
 *------------------Cost Variables------------------*
 cost_model = 0 * use $ 1990 PROCESS model
 
