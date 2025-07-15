@@ -53,7 +53,24 @@ except ImportError:
 
 @dataclass
 class WallDetector:
-    """Dataclass for wall detectors"""
+    """
+    Dataclass for wall detectors.
+
+    detector_id:
+        ID number for detector
+    x_width:
+        Detector (rectangular) width in x-direction [m]
+        (N.B this value is in detector local coordinates)
+    y_width:
+        Detector (rectangular) width in y-direction [m]
+        (N.B this value is in detector local coordinates)
+    detector_center:
+        Detector center pont
+    normal_vector:
+        Unit vector normal to the detector surface
+    y_vector:
+        Detector unit y-vector
+    """
 
     detector_id: int
     x_width: float
@@ -513,6 +530,7 @@ def ion_front_distance(
     """
     Manual definition of ion penetration depth.
     TODO: Find sv_i and sv_m
+    # 4016
 
     Parameters
     ----------
@@ -961,10 +979,22 @@ def filtering_in_or_out(
 
 
 def get_impurity_data(
-    impurities_list: Iterable[str] = ("H", "He"), confinement_time_ms: float = 0.1
+    impurities_list: Iterable[str] = ("H", "He"), confinement_time_s: float = 0.1
 ) -> dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]]:
     """
     Function getting the PROCESS impurity data
+
+    Parameters
+    ----------
+    impurities_list:
+        List of impurity dictionaries to get the species data for.
+        Dictionary contains the impurity names (which should be found in the
+        :class:`~bluemira.codes.process.api.Impurities` Enum0, and their
+        fraction in the region of interest.
+    confinement_time_s
+        Confinement timescale in the region of interest.
+        Times available to read the data for are:
+        [0.1, 1.0, 10.0, 100.0, 1000.0, np.inf].
 
     Returns
     -------
@@ -979,9 +1009,9 @@ def get_impurity_data(
     impurity_data = {}
     for imp in impurities_list:
         impurity_data[imp] = {
-            "T_ref": imp_data_getter(imp, confinement_time_ms)[0],
-            "L_ref": imp_data_getter(imp, confinement_time_ms)[1],
-            "z_ref": imp_data_getter(imp, confinement_time_ms)[2],
+            "T_ref": imp_data_getter(imp, confinement_time_s)[0],
+            "L_ref": imp_data_getter(imp, confinement_time_s)[1],
+            "z_ref": imp_data_getter(imp, confinement_time_s)[2],
         }
 
     return impurity_data
@@ -989,7 +1019,30 @@ def get_impurity_data(
 
 @dataclass(repr=False)
 class DetectedRadiation:
-    """Detected radiation data"""
+    """
+    Detected radiation data
+
+    power_density:
+        The mean detected power divided by the detector
+        (aka pixel/tile) rectangular area [W/m^2]
+    power_density_stdev:
+        Standard deviation of the power density
+    detected_power:
+        Average power observed by the detector [W]
+        (N.B. Pixel/tile is revolved around the CYLINDRICAL z-axis)
+    detected_power_stdev:
+        Standard deviation of power observed by the detector
+    detector_area:
+        Detector area [m^2]
+    detector_numbers:
+        Number of wall detectors that have been created
+    distance:
+        The running distance from detector centre to detector centre,
+        starting from the first listed detector, moving around the wall
+        in the poloidal direction [m].
+    total_power:
+        Sum of the power observed by the detectors [W]
+    """
 
     power_density: npt.NDArray[np.float64]
     power_density_stdev: npt.NDArray[np.float64]
@@ -1010,7 +1063,18 @@ def detect_radiation(
     verbose: bool = False,
 ) -> DetectedRadiation:
     """
-    To sample the wall and detect radiation
+    To sample the wall and detect radiation.
+
+    Parameters
+    ----------
+    wall_detectors:
+        List of wall detector dataclasses
+    n_samples:
+        Number of samples to generate per pixel for a Raysect Pixel observer.
+        A Pixel observer samples rays from a hemisphere and rectangular area.
+    world:
+        Raysect class, tracks all primitives (objects making up the Raysect scene)
+        and observers in the 'world'.
 
     Returns
     -------
@@ -1216,7 +1280,20 @@ def plot_radiation_loads(
     radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
 ):
     """
-    To plot the radiation on the wall as [MW/m^2]
+    To plot the radiation on the wall as [MW/m^2].
+
+    Parameters
+    ----------
+    radiation_function:
+        Cherab AxisymmetricMapper created using a function describing radiation source
+    wall_detectors:
+        List of wall detector objects
+    wall_loads:
+        DetectedRadiation object for associated wall_detectors
+    plot_title:
+        Name of the plot
+    fw_shape:
+        First wall coordinates
     """
     min_r = min(fw_shape.x)
     max_r = max(fw_shape.x)
@@ -1294,12 +1371,37 @@ def plot_radiation_loads(
 
 class FirstWallRadiationSolver:
     """
+    Calculate the radiation detected at the first wall.
+
+    This class make use of Raysect and Cherab libraries.
+
+    - The resulting data class contains the following information:
+
+    - The power density for each first wall detector [W/m^2]
+      and its associated standard deviation.
+
+    - The power observed for each for each first wall detector [W]
+      and its associated standard deviation.
+
+    - The area of each detector [m^2].
+
+    - The running distance from detector centre to detector centre,
+      starting from the first listed detector, moving around the wall
+      in the poloidal direction [m].
+
+    - The sum of the power observed by the detectors [W]
+
     Parameters
     ----------
     firstwall_shape:
         Coordinates defining the first wall.
     source_func:
         Function describing radiation source
+
+    Returns
+    -------
+    wall_loads:
+        DetectedRadiation object for associated wall detectors
     """
 
     def __init__(
