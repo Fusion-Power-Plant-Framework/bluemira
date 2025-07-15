@@ -26,9 +26,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
-    Efficiency,
     Load,
     PowerCycle,
     interpolate_extra,
@@ -42,8 +42,11 @@ from bluemira.power_cycle.net import (
 # In principle these could come from other parts of the reactor design.
 # %%
 
-reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
-config = PowerCycle(
+
+reactor_config = ReactorConfig(
+    Path(get_bluemira_root(), "examples/power_cycle/scenario_config.json"), None
+)
+pc_config = PowerCycle(
     **{
         **reactor_config.config_for("Power Cycle"),
         "durations": {
@@ -59,15 +62,15 @@ config = PowerCycle(
 # We can then dynamically add a new load to a specific subphase of the config.
 # %%
 
-config.add_load(
+pc_config.add_load(
     "cs_power",
     load=Load(
         data={"active": [1, 2], "reactive": [10, 20]},
-        efficiencies=[Efficiency(value=0.1)],
+        efficiencies=[0.1],
         description="something made up",
     ),
     subphases=["cru", "bri"],
-    subphase_efficiency=[Efficiency(value={"reactive": 0.2})],
+    subphase_efficiency=[{"reactive": 0.2}],
 )
 
 # %% [markdown]
@@ -76,17 +79,17 @@ config.add_load(
 # Below we have interpolated the timeseries and pulled out the active and reactive loads
 # %%
 
-phase = config.get_phase("dwl")
+phase = pc_config.get_phase("dwl")
 
 timeseries = interpolate_extra(phase.timeseries(), 1)
 
-active_loads = phase.load("active", "MW", timeseries=timeseries)
-active_load_total = phase.total_load("active", "MW", timeseries=timeseries)
+active_p_loads = phase.load("active", "MW", timeseries=timeseries)
+active_p_load_total = phase.total_load("active", "MW", timeseries=timeseries)
 
 # %% [markdown]
 # Note for reactive loads the unit is 'var' (volt-ampere reactive). Although numerically
 # identical to a watt it is the wrong unit for reactive loads.
 # %%
 
-reactive_loads = phase.load("reactive", "Mvar", timeseries=timeseries)
-reactive_load_total = phase.total_load("reactive", "Mvar", timeseries=timeseries)
+reactive_p_loads = phase.load("reactive", "Mvar", timeseries=timeseries)
+reactive_p_load_total = phase.total_load("reactive", "Mvar", timeseries=timeseries)

@@ -620,12 +620,21 @@ class Load(PCBaseModel):
         default_unit = type(self).model_fields["unit"].default
         for lt in LoadTypeOptions:
             if self.data[lt].size != self.time[lt].size:
+                if self.data[lt].size == 1:
+                    # therefore time.size != 1
+                    setattr(
+                        self.data,
+                        lt.name.lower(),
+                        np.full(self.time[lt].shape, self.data[lt].item()),
+                    )
                 if all(self.time[lt] == 0):
                     setattr(self.time, lt.name.lower(), np.zeros_like(self.data[lt]))
-                else:
+
+                if self.data[lt].size != self.time[lt].size:
                     raise ValueError(
                         f"time and data must be the same length: {self.data[lt]}"
                     )
+
             if any(np.diff(self.time[lt]) < 0):
                 raise ValueError("time must increase")
 
