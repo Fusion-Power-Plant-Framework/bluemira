@@ -341,7 +341,7 @@ class SubPhase(PCBaseModel):
         self,
         load_library: LoadLibrary,
         timeseries: npt.NDArray,
-        load_type: str | LoadTypeOptions,
+        load_type: str | LoadTypeOptions | None,
         unit: str | None = None,
         end_time: float | None = None,
         *,
@@ -528,7 +528,7 @@ class LoadTypeOptions(Enum):
 
     @classmethod
     def check(
-        cls, self: LoadTypeOptions, other: str | LoadTypeOptions
+        cls, self: LoadTypeOptions | None, other: list[str] | LoadTypeOptions
     ) -> set[LoadTypeOptions]:
         """Checks allowed Load types
 
