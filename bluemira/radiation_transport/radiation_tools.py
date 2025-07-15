@@ -979,7 +979,7 @@ def filtering_in_or_out(
 
 
 def get_impurity_data(
-    impurities_list: Iterable[str] = ("H", "He"), confinement_time_s: float = 0.1
+    impurities_list: Iterable[str] = ("H", "He"), confinement_time_ms: float = 0.1
 ) -> dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]]:
     """
     Function getting the PROCESS impurity data
@@ -991,7 +991,7 @@ def get_impurity_data(
         Dictionary contains the impurity names (which should be found in the
         :class:`~bluemira.codes.process.api.Impurities` Enum0, and their
         fraction in the region of interest.
-    confinement_time_s
+    confinement_time_ms
         Confinement timescale in the region of interest.
         Times available to read the data for are:
         [0.1, 1.0, 10.0, 100.0, 1000.0, np.inf].
@@ -1009,9 +1009,9 @@ def get_impurity_data(
     impurity_data = {}
     for imp in impurities_list:
         impurity_data[imp] = {
-            "T_ref": imp_data_getter(imp, confinement_time_s)[0],
-            "L_ref": imp_data_getter(imp, confinement_time_s)[1],
-            "z_ref": imp_data_getter(imp, confinement_time_s)[2],
+            "T_ref": imp_data_getter(imp, confinement_time_ms)[0],
+            "L_ref": imp_data_getter(imp, confinement_time_ms)[1],
+            "z_ref": imp_data_getter(imp, confinement_time_ms)[2],
         }
 
     return impurity_data
