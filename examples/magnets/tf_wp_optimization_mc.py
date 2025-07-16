@@ -319,6 +319,8 @@ class TFWPDataStructure:
         )
 
     def update(self, x: np.ndarray):
+        self.params.dy_vault = x[2]
+        self._derive_params(self.params)
         self.cable.n_stab_strand = x[0]
         self.cable.set_aspect_ratio(1.2)
         self.conductor.dx_jacket = x[1]
