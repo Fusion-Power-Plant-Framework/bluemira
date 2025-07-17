@@ -162,7 +162,7 @@ source = RadiationSource(
     sol_impurities=config["f_imp_sol"],
     confinement_time_core=config["tau_core"],
     confinement_time_sol=config["tau_sol"],
-    add_n_extra_points=10,
+    add_n_extra_points=1,
 )
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
@@ -196,8 +196,8 @@ else:
     f_sol = linear_interpolator(x_sol, z_sol, raw_uc(source.sol_rad.rad_tot, "MW", "W"))
 
     # SOL radiation grid
-    x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 2000)
-    z_sol = np.linspace(min(fw_shape.z), max(fw_shape.z), 3000)
+    x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 10000)
+    z_sol = np.linspace(min(fw_shape.z), max(fw_shape.z), 15000)
     rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
 
     # Filter in/out zones

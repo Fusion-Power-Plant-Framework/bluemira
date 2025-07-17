@@ -25,6 +25,7 @@ from bluemira.geometry.coordinates import (
     interpolate_points,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.error import RadiationTransportError
 
@@ -370,7 +371,16 @@ def _make_flux_surfaces(
     coords = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
     )
+
+    interm_wire = make_polygon({
+        "x": coords[0],
+        "y": [0] * len(coords[0]),
+        "z": coords[1],
+    })
+    coords = (interm_wire.discretise(dl=0.05)).xz
+    # coords = interm_wire.vertexes.xz
     if add_n_extra_points > 1:
+        # or may be interpolate so that the distances between points are equal
         new_coords = interpolate_points(
             coords[0],
             [0] * len(coords[0]),
