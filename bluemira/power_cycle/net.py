@@ -742,14 +742,34 @@ class Phase:
             )
             for sp in self.subphases.root.values()
         ]
-        if len(load_data) > 1:
+        if self._config.operation == "sum":
             data = {}
             for ld_name in self.loads.root:
                 for dat in load_data:
-                    if ld_name in dat:
-                        data[ld_name] = data.get(ld_name, 0) + dat[ld_name]
+                    if ld_name in dat and ld_name not in data:
+                        data[ld_name] = dat[ld_name]
             return data
-        return load_data[0]
+        if self._config.operation == "max":
+            # could just do this
+            ind, _sp = max(
+                enumerate(self.subphases.root.values()),
+                key=lambda k_sp: k_sp[1].duration,
+            )
+
+            data = load_data[ind]
+
+            # for missing loads
+            for ld_name in self.loads.root:
+                for i, dat in enumerate(load_data):
+                    _sp_d = None
+                    if ld_name in dat and ld_name not in data:
+                        if _sp_d is None:
+                            _sp_d = list(self.subphases.root.values())[i].duration
+
+                        data[ld_name] = np.where(dat[ld_name] > _sp_d, 0, dat[ld_name])
+
+            return data
+        raise NotImplementedError("Only max and sum operations are supported on a phase")
 
     def total_load(
         self,
