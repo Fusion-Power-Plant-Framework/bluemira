@@ -227,18 +227,18 @@ class TestPhaseFromScenario:
         [
             (
                 np.array([0, 0.005, 0.6, 1]),  # seen as already normalised time
-                np.full(4, -9.4),
-                np.array([-20.4, -20.4, 0.0, 0.0]),
+                np.full(4, -4.7),
+                np.array([-10.2, -10.2, 0.0, 0.0]),
             ),
             (
                 np.array([0, 0.005, 0.6, 100]),
-                np.full(4, -9.4),
-                np.array([-20.4, -20.4, -20.4, 0.0]),
+                np.full(4, -4.7),
+                np.array([-10.2, -10.2, -10.2, 0.0]),
             ),
             (
                 np.array([0, 1, 120, 200]),
-                np.full(4, -9.4),
-                np.array([-20.4, -20.4, 0.0, 0.0]),
+                np.full(4, -4.7),
+                np.array([-10.2, -10.2, 0.0, 0.0]),
             ),
         ],
     )
@@ -251,9 +251,9 @@ class TestPhaseFromScenario:
     @pytest.mark.parametrize(
         ("time", "res"),
         [
-            (np.array([0, 0.6, 1]), np.array([214.35, 234.75, 234.75])),
-            (np.array([0, 120, 150]), np.array([214.35, 234.75, 234.75])),
-            (np.array([0, 0.6, 600]), np.array([214.35, 214.35, 234.75])),
+            (np.array([0, 0.6, 1]), np.array([107.175, 117.375, 117.375])),
+            (np.array([0, 120, 150]), np.array([107.175, 117.375, 117.375])),
+            (np.array([0, 0.6, 600]), np.array([107.175, 107.175, 117.375])),
         ],
     )
     def test_get_load_total(self, time, res):
