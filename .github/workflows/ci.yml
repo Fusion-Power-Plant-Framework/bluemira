@@ -70,6 +70,9 @@ jobs:
           - os: "ubuntu-latest"
             python-version: "3.12"
             with-process: "process_disabled"
+          - os: "macos-latest"
+            python-version: "3.11"
+            with-process: "process_disabled"
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
