@@ -71,7 +71,7 @@ runs:
     - name: Install bluemira
       shell: bash -l {0}
       run: |
-        if [[ "${{ inputs.python-version }}" == "3.10" ]]; then
+        if [[ "${{ inputs.python-version }}" == "3.10" ]] || [[ "${{ inputs.os }}" == "macos-latest" ]]; then
           pip install -U -e .
         else
           pip install -U -e '.[dagmc]'
