@@ -1080,6 +1080,15 @@ def detect_radiation(
     -------
     :
         DetectedRadiation object describing the radiation data.
+
+    Notes
+    -----
+    Each detector tile is rectangular and located on a cylindrical surface. The
+    detected power is the average radiation power that would be intercepted by
+    revolving the tile around the cylindrical z-axis.
+
+    i.e. This models a wall detector as representative of a full ring in a
+    cylindrically symmetric system.
     """
     # Storage lists for results
     power_density = []
@@ -1135,11 +1144,16 @@ def detect_radiation(
         )
 
         detector_area.append(pixel_area)
+        # The mean detected power per tile area
         power_density.append(
             power_data.value.mean / pixel_area
         )  # convert to W/m^2 !!!!!!!!!!!!!!!!!!!
 
         power_density_stdev.append(np.sqrt(power_data.value.variance) / pixel_area)
+
+        # Mean detected power per revolved tile [W]
+        # Computed as power_density * (2 * math.pi * radius * y_width)
+        # y_width is the tile height; tile is revolved around z-axis (toroidal symmetry)
         detected_power.append(
             power_data.value.mean
             / pixel_area
