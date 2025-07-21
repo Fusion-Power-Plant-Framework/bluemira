@@ -40,6 +40,12 @@ runs:
       run: |
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
+    - name: Create cache folder
+      shell: bash -l {0}
+      run: |
+        mkdir -p ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        mkdir -p ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+
     - name: Cache pip
       id: cache-pip
       uses: actions/cache/restore@v4
