@@ -38,7 +38,6 @@ jobs:
         uses: ./.github/workflows/actions/build
         with:
           python-version: ${{ matrix.python-version }}
-          cache-key: "examples-${{ matrix.process-version }}"
 
       - name: Install PROCESS
         if: ${{ matrix.process-version!= 'process_disabled' }}

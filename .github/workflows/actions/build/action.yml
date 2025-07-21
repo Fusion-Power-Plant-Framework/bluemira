@@ -3,8 +3,6 @@ name: Build
 inputs:
   python-version:
     required: true
-  cache-key:
-    required: true
   bm-private-data-key:
     default: ""
   with-artifact:
@@ -37,7 +35,7 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ inputs.python-version }}-${{ inputs.cache-key }}-${{
+        key: ${{ runner.os }}-pip-${{ inputs.python-version }}-${{
           hashFiles('requirements/uv/all.txt', 'pyproject.toml') }}
 
     - name: Cache conda
@@ -45,7 +43,7 @@ runs:
       uses: actions/cache/restore@v4
       with:
         path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-conda-${{ inputs.python-version }}-${{ inputs.cache-key }}-${{
+        key: ${{ runner.os }}-conda-${{ inputs.python-version }}-${{
           hashFiles('conda/environment.yml','requirements/conda.txt','pyproject.toml') }}
 
     - name: Install Environment
@@ -68,13 +66,13 @@ runs:
         fi
 
     - name: Freeze conda env
-      if: ${{ inputs.with-artifact == 'true' }}
+      if: inputs.with-artifact == 'true'
       shell: bash -l {0}
       run: |
         conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
 
     - uses: actions/upload-artifact@v4
-      if: ${{ inputs.with-artifact == 'true' }}
+      if: inputs.with-artifact == 'true'
       with:
         name: bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
         path: bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
@@ -82,14 +80,14 @@ runs:
 
     - name: Save pip build cache
       uses: actions/cache/save@v4
-      if: always() && steps.cache-pip.outputs.cache-hit != 'true'
+      if: always() && steps.cache-pip.outputs.cache-hit != 'true' && inputs.with-artifact == 'true'
       with:
         path: ~/.cache/pip
         key: ${{ steps.cache-pip.outputs.cache-primary-key }}
 
     - name: Save conda build cache
       uses: actions/cache/save@v4
-      if: always() && steps.cache-conda.outputs.cache-hit != 'true'
+      if: always() && steps.cache-conda.outputs.cache-hit != 'true' && inputs.with-artifact == 'true'
       with:
         path: ~/conda_pkgs_dir
         key: ${{ steps.cache-conda.outputs.cache-primary-key }}
