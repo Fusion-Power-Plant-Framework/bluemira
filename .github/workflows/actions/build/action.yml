@@ -11,6 +11,12 @@ inputs:
     required: false
     default: "false"
 
+
+env:
+    # Increase this value to reset cache if hashed files have not changed
+    PIP_CACHE_NUMBER: 1
+    CONDA_CACHE_NUMBER: 1
+
 runs:
   using: "composite"
   steps:
@@ -33,30 +39,20 @@ runs:
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
     - name: Cache pip
-      uses: actions/cache@v4
-      env:
-        # Increase this value to reset cache if requirements.txt has not changed
-        PIP_CACHE_NUMBER: 1
+      id: cache-pip
+      uses: actions/cache/restore@v4
       with:
         path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
-          hashFiles('requirements.txt', 'requirements-develop.txt', 'pyproject.toml') }}
+          hashFiles('requirements/uv/all.txt', 'pyproject.toml') }}
 
     - name: Cache conda
-      uses: actions/cache@v4
-      env:
-        # Increase this value to reset cache if conda/environment.yml has not changed
-        CONDA_CACHE_NUMBER: 1
+      id: cache-conda
+      uses: actions/cache/restore@v4
       with:
         path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
-          hashFiles(
-          'conda/environment.yml',
-          'requirements.txt',
-          'requirements-develop.txt',
-          'requirements-conda.txt',
-          'pyproject.toml'
-          ) }}
+          hashFiles('conda/environment.yml','requirements/conda.txt','pyproject.toml') }}
 
     - name: Install Environment
       uses: conda-incubator/setup-miniconda@v3
@@ -89,3 +85,17 @@ runs:
         name: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
         path: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
         overwrite: true
+
+    - name: Save pip build cache
+      uses: actions/cache/save@v4
+      if: always() && steps.cache-pip.outputs.cache-hit != 'true'
+      with:
+        path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        key: ${{ steps.cache-pip.outputs.cache-primary-key }}
+
+    - name: Save conda build cache
+      uses: actions/cache/save@v4
+      if: always() && steps.cache-conda.outputs.cache-hit != 'true'
+      with:
+        path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+        key: ${{ steps.cache-conda.outputs.cache-primary-key }}
