@@ -34,7 +34,7 @@ beautifulsoup4==4.13.4
     # via nbconvert
 bleach==6.2.0
     # via nbconvert
-blosc2==3.5.1
+blosc2==3.6.1
     # via tables
 certifi==2025.7.14
     # via
@@ -59,7 +59,7 @@ coolprop==6.8.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.14
+debugpy==1.8.15
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -79,7 +79,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.58.5
+fonttools==4.59.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -123,7 +123,7 @@ json5==0.12.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.24.0
+jsonschema==4.25.0
     # via
     #   jupyter-events
     #   jupyterlab-server
@@ -146,7 +146,7 @@ jupyter-core==5.8.1
     #   nbformat
 jupyter-events==0.12.0
     # via jupyter-server
-jupyter-lsp==2.2.5
+jupyter-lsp==2.2.6
     # via jupyterlab
 jupyter-server==2.16.0
     # via
@@ -157,7 +157,7 @@ jupyter-server==2.16.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.4
+jupyterlab==4.4.5
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -169,6 +169,8 @@ jupytext==1.17.2
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.8
     # via matplotlib
+lark==1.2.2
+    # via rfc3987-syntax
 llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
@@ -335,7 +337,7 @@ python-json-logger==3.3.0
     # via jupyter-events
 pytz==2025.2
     # via pandas
-pyvista==0.45.2
+pyvista==0.45.3
     # via bluemira (pyproject.toml)
 pyyaml==6.0.2
     # via
@@ -364,6 +366,8 @@ rfc3986-validator==0.1.1
     # via
     #   jsonschema
     #   jupyter-events
+rfc3987-syntax==1.1.0
+    # via jsonschema
 rich==14.0.0
     # via
     #   bluemira (pyproject.toml)
@@ -372,7 +376,7 @@ rpds-py==0.26.0
     # via
     #   jsonschema
     #   referencing
-scikit-learn==1.7.0
+scikit-learn==1.7.1
     # via bluemira (pyproject.toml)
 scipy==1.15.3
     # via

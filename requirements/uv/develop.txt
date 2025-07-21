@@ -23,7 +23,7 @@ babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
-blosc2==3.5.1
+blosc2==3.6.1
     # via tables
 certifi==2025.7.14
     # via requests
@@ -48,11 +48,11 @@ coverage==7.9.2
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.14
+debugpy==1.8.15
     # via ipykernel
 decorator==5.2.1
     # via ipython
-distlib==0.3.9
+distlib==0.4.0
     # via virtualenv
 docutils==0.21.2
     # via
@@ -75,7 +75,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.58.5
+fonttools==4.59.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -115,7 +115,7 @@ jinja2==3.1.6
     #   sphinx-autoapi
 joblib==1.5.1
     # via scikit-learn
-jsonschema==4.24.0
+jsonschema==4.25.0
     # via nbformat
 jsonschema-specifications==2025.4.1
     # via jsonschema
@@ -165,7 +165,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.1
     # via blosc2
-mypy==1.16.1
+mypy==1.17.0
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
@@ -316,7 +316,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.45.2
+pyvista==0.45.3
     # via bluemira (pyproject.toml)
 pyyaml==6.0.2
     # via
@@ -349,7 +349,7 @@ rpds-py==0.26.0
     #   referencing
 ruff==0.12.4
     # via bluemira (pyproject.toml)
-scikit-learn==1.7.0
+scikit-learn==1.7.1
     # via bluemira (pyproject.toml)
 scipy==1.15.3
     # via
@@ -455,7 +455,7 @@ tzdata==2025.2
     # via pandas
 urllib3==2.5.0
     # via requests
-virtualenv==20.31.2
+virtualenv==20.32.0
     # via pre-commit
 vtk==9.3.1
     # via

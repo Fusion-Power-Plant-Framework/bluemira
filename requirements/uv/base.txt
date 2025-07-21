@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.5.1
+blosc2==3.6.1
     # via tables
 certifi==2025.7.14
     # via requests
@@ -34,7 +34,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.58.5
+fonttools==4.59.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -146,7 +146,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.45.2
+pyvista==0.45.3
     # via bluemira (pyproject.toml)
 requests==2.32.4
     # via
@@ -156,7 +156,7 @@ rich==14.0.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-scikit-learn==1.7.0
+scikit-learn==1.7.1
     # via bluemira (pyproject.toml)
 scipy==1.15.3
     # via
