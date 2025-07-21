@@ -5,6 +5,8 @@ inputs:
     required: true
   python-version:
     required: true
+  cache-dir:
+    required: true
   bm-private-data-key:
     default: ""
   with-artifact:
@@ -42,7 +44,7 @@ runs:
       id: cache-pip
       uses: actions/cache/restore@v4
       with:
-        path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
           hashFiles('requirements/uv/all.txt', 'pyproject.toml') }}
 
@@ -50,7 +52,7 @@ runs:
       id: cache-conda
       uses: actions/cache/restore@v4
       with:
-        path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
           hashFiles('conda/environment.yml','requirements/conda.txt','pyproject.toml') }}
 
@@ -90,12 +92,12 @@ runs:
       uses: actions/cache/save@v4
       if: always() && steps.cache-pip.outputs.cache-hit != 'true'
       with:
-        path: ~/.cache/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ steps.cache-pip.outputs.cache-primary-key }}
 
     - name: Save conda build cache
       uses: actions/cache/save@v4
       if: always() && steps.cache-conda.outputs.cache-hit != 'true'
       with:
-        path: ~/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
         key: ${{ steps.cache-conda.outputs.cache-primary-key }}
