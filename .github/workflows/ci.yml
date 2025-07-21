@@ -50,7 +50,7 @@ jobs:
           os: ubuntu-latest
           python-version: "3.12"
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-          cache-dir: ~/.cache
+          cache-dir: ${{ env.HOME }}/.cache
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
@@ -85,7 +85,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
           with-artifact: ${{ matrix.with-process == 'process_disabled' && 'false' || 'true' }}
-          cache-dir: ~/.cache
+          cache-dir: ${{ env.HOME }}/.cache
 
       - name: Install PROCESS
         if: ${{ matrix.with-process != 'process_disabled' }}
