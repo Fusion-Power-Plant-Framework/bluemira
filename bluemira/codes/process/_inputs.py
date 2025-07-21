@@ -372,7 +372,7 @@ class ProcessInputs:
     fnesep: float | None = None
     foh_stress: float | None = None
     fb_tf_inboard_max: float | None = None
-    fp_hcd_injected_total_mw: float | None = None
+    fp_hcd_injected_max: float | None = None
     fp_plant_electric_net_required_mw: float | None = None
     fradius_beam_tangency: float | None = None
     fpsepbqar: float | None = None
@@ -381,19 +381,19 @@ class ProcessInputs:
     fq: float | None = None
     fqval: float | None = None
     fradpwr: float | None = None
-    fplfux_fw_rad_max: float | None = None
+    fpflux_fw_rad_max: float | None = None
     freinke: float | None = None
     fstrcase: float | None = None
     fstrcond: float | None = None
     fstr_wp: float | None = None
     fmaxvvstress: float | None = None
     ftbr: float | None = None
-    ft_burn: float | None = None
+    ft_burn_min: float | None = None
     ft_cycle_min: float | None = None
     ftmargoh: float | None = None
     ftmargtf: float | None = None
     ft_current_ramp_up: float | None = None
-    ftpeak: float | None = None
+    ftemp_fw_max: float | None = None
     fvdump: float | None = None
     fvs_plasma_total_required: float | None = None
     fvvhe: float | None = None
@@ -494,7 +494,7 @@ class ProcessInputs:
     dx_beam_shield: float | None = None
     p_hcd_primary_extra_heat_mw: float | None = None  # Listed as an output
     p_hcd_injected_max: float | None = None
-    n_beam_decay_length_core_required: float | None = None
+    n_beam_decay_lengths_core_required: float | None = None
 
     # Impurity radiation
     radius_plasma_core_norm: float | None = None

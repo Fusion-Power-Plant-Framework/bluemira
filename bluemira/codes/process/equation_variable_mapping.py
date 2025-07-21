@@ -579,7 +579,7 @@ ITERATION_VAR_MAPPING = {
     "q95": 18,
     "e_beam_kev": 19,
     "tcpav": 20,
-    "ft_burn": 21,
+    "ft_burn_min": 21,
     # 22 NOT USED
     "fcoolcp": 23,
     # 24 NOT USED
@@ -604,7 +604,7 @@ ITERATION_VAR_MAPPING = {
     # 43 NOT USED
     "f_c_plasma_non_inductive": 44,
     "fqval": 45,
-    "fp_hcd_injected_total_mw": 46,
+    "fp_hcd_injected_max": 46,
     "feffcd": 47,
     "fstrcase": 48,
     "fstrcond": 49,
@@ -621,7 +621,7 @@ ITERATION_VAR_MAPPING = {
     "c_tf_turn": 60,
     "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
-    "ftpeak": 63,
+    "ftemp_fw_max": 63,
     "fauxmn": 64,
     "t_current_ramp_up": 65,
     "ft_current_ramp_up": 66,
@@ -668,7 +668,7 @@ ITERATION_VAR_MAPPING = {
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
     "len_fw_channel": 114,
     "fpoloidalpower": 115,
-    "fplfux_fw_rad_max": 116,
+    "fpflux_fw_rad_max": 116,
     "fpsepbqar": 117,
     "fpsep": 118,
     "tesep": 119,
