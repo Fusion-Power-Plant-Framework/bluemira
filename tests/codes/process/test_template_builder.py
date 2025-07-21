@@ -305,7 +305,7 @@ class TestInDatOneForOne:
         template_builder.adjust_variable(
             "fl_h_threshold", 0.833, lower_bound=0.833, upper_bound=0.909
         )
-        template_builder.adjust_variable("ft_burn", 1.0, upper_bound=1.0)
+        template_builder.adjust_variable("ft_burn_min", 1.0, upper_bound=1.0)
 
         # Modifying the initial variable vector to improve convergence
         template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
@@ -501,7 +501,7 @@ class TestInDatOneForOne:
             "ucme": 3.0e8,
             # Suspicous stuff
             "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            "fp_hcd_injected_total_mw": 1.0,
+            "fp_hcd_injected_max": 1.0,
         })
 
         cls.template = template_builder.make_inputs().to_invariable()
