@@ -5,19 +5,13 @@ inputs:
     required: true
   python-version:
     required: true
-  cache-dir:
+  cache-key:
     required: true
   bm-private-data-key:
     default: ""
   with-artifact:
     required: false
     default: "false"
-
-
-env:
-    # Increase this value to reset cache if hashed files have not changed
-    PIP_CACHE_NUMBER: 1
-    CONDA_CACHE_NUMBER: 1
 
 runs:
   using: "composite"
@@ -40,26 +34,20 @@ runs:
       run: |
         mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
-    - name: Create cache folder
-      shell: bash -l {0}
-      run: |
-        mkdir -p ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
-        mkdir -p ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
-
     - name: Cache pip
       id: cache-pip
       uses: actions/cache/restore@v4
       with:
-        path: ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
-        key: ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ inputs.python-version }}-${{ inputs.cache-key }}-${{
           hashFiles('requirements/uv/all.txt', 'pyproject.toml') }}
 
     - name: Cache conda
       id: cache-conda
       uses: actions/cache/restore@v4
       with:
-        path: ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
-        key: ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-conda-${{ inputs.python-version }}-${{ inputs.cache-key }}-${{
           hashFiles('conda/environment.yml','requirements/conda.txt','pyproject.toml') }}
 
     - name: Install Environment
@@ -98,12 +86,12 @@ runs:
       uses: actions/cache/save@v4
       if: always() && steps.cache-pip.outputs.cache-hit != 'true'
       with:
-        path: ${{ inputs.cache-dir }}/pip_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ~/.cache/pip
         key: ${{ steps.cache-pip.outputs.cache-primary-key }}
 
     - name: Save conda build cache
       uses: actions/cache/save@v4
       if: always() && steps.cache-conda.outputs.cache-hit != 'true'
       with:
-        path: ${{ inputs.cache-dir }}/conda_pkgs_dir_${{ inputs.python-version }}_${{ inputs.os }}
+        path: ~/conda_pkgs_dir
         key: ${{ steps.cache-conda.outputs.cache-primary-key }}
