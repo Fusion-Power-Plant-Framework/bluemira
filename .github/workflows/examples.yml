@@ -37,8 +37,8 @@ jobs:
       - name: Build
         uses: ./.github/workflows/actions/build
         with:
-          os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
+          cache-key: "examples-${{ matrix.process-version }}"
 
       - name: Install PROCESS
         if: ${{ matrix.process-version!= 'process_disabled' }}

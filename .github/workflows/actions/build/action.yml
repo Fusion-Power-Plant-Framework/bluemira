@@ -1,8 +1,6 @@
 name: Build
 
 inputs:
-  os:
-    required: true
   python-version:
     required: true
   cache-key:
@@ -73,13 +71,13 @@ runs:
       if: ${{ inputs.with-artifact == 'true' }}
       shell: bash -l {0}
       run: |
-        conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+        conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
 
     - uses: actions/upload-artifact@v4
       if: ${{ inputs.with-artifact == 'true' }}
       with:
-        name: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
-        path: bluemira_${{ inputs.python-version }}_${{ inputs.os }}.yml
+        name: bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
+        path: bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
         overwrite: true
 
     - name: Save pip build cache
