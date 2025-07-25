@@ -1,7 +1,7 @@
 fuel_cycle
 ==========
 
-The following documentation is mostly an extract from: Coleman, Hörstensmeyer and Cismondi, DEMO tritium fuel cycle: performance, parameter explorations, and design space constraints, Fusion Engineering and Design, Volume 141, pp79-90 (2019) :doi:`<10.1016/j.fusengdes.2019.01.150>`
+The following documentation is mostly an extract from: :doi:`Coleman, Hörstensmeyer and Cismondi, DEMO tritium fuel cycle: performance, parameter explorations, and design space constraints, Fusion Engineering and Design, Volume 141, pp79-90 (2019) <10.1016/j.fusengdes.2019.01.150>`
 
 
 Introduction
