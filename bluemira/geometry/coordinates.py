@@ -1825,7 +1825,7 @@ def vector_intersect_3d(
     Notes
     -----
     Credit: Paul Bourke at
-    http://paulbourke.net/geometry/pointlineplane/#:~:text=The%20shortest%20line%20between%20two%20lines%20in%203D
+    https://paulbourke.net/geometry/pointlineplane/#:~:text=The%20shortest%20line%20between%20two%20lines%20in%203D
     """
     p_13 = p_1 - p_3
     p_43 = p_4 - p_3
