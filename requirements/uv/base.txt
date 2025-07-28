@@ -152,7 +152,7 @@ requests==2.32.4
     # via
     #   blosc2
     #   pooch
-rich==14.0.0
+rich==14.1.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -185,7 +185,6 @@ typing-extensions==4.14.1
     #   pydantic
     #   pydantic-core
     #   pyvista
-    #   rich
     #   tables
     #   typeguard
     #   typing-inspection
