@@ -21,7 +21,7 @@ import gmsh
 import pyvista
 
 # DOLFINx core
-from dolfinx import (mesh,fem, io, plot, common, default_real_type, default_scalar_type, geometry)
+from dolfinx import mesh,fem, io, plot, common, default_real_type, default_scalar_type, geometry
 
 # DOLFINx FEM
 from dolfinx.fem import (Function, Constant, form, dirichletbc,locate_dofs_topological)
@@ -38,7 +38,7 @@ from dolfinx.cpp.mesh import to_type, cell_entity_type
 from dolfinx.cpp.la.petsc import (get_local_vectors, scatter_local_vectors)
 
 # UFL
-from ufl import (FacetNormal, Identity, Measure, TestFunctions, TrialFunctions, as_tensor, as_vector, dot, dx, ds, inner, sym, tr, grad, nabla_grad, extract_blocks, MixedFunctionSpace)
+from ufl import (FacetNormal, Identity, Measure, TestFunction, TrialFunction, as_tensor, as_vector, dot, dx, ds, inner, sym, tr, grad, nabla_grad, extract_blocks, MixedFunctionSpace)
 
 # Basix
 import basix
@@ -52,7 +52,6 @@ from dolfinx_mpc.utils import (create_point_to_point_constraint, determine_close
 
 # scifem utilities
 from scifem import (create_real_functionspace,assemble_scalar)
-from scifem.petsc import (apply_lifting_and_set_bc, zero_petsc_vector)
 
 ## Importing mesh from GMSH
 # Mesh
@@ -86,8 +85,8 @@ cellname = domain.ufl_cell().cellname()
 Ve = basix.ufl.element(basix.ElementFamily.P, cellname, 2, shape=(domain.geometry.dim,), dtype=default_real_type)
 Qe = basix.ufl.element(basix.ElementFamily.P, cellname, 1, dtype=default_real_type)
 
-V = dolfinx.fem.functionspace(domain, Ve)
-Q = dolfinx.fem.functionspace(domain, Qe)
+V = fem.functionspace(domain, Ve)
+Q = fem.functionspace(domain, Qe)
 
 # Dirichlet BC on u_x = 0 at left edge (tag 2)
 left_facets = np.flatnonzero(facet_tags.values == 2)
@@ -112,9 +111,9 @@ nu = Constant(domain, 0.3)
 lmbda = E * nu / ((1 + nu) * (1 - 2 * nu))
 mu = E / (2 * (1 + nu))
 
-f = dolfinx.fem.Constant(domain, default_scalar_type((0, 0)))
-(u, ezz) = ufl.TrialFunction(V), ufl.TrialFunction(Q)
-(v, ezz_test) = ufl.TestFunction(V), ufl.TestFunction(Q)
+f = fem.Constant(domain, default_scalar_type((0, 0)))
+(u, ezz) = TrialFunction(V), TrialFunction(Q)
+(v, ezz_test) = TestFunction(V), TestFunction(Q)
 
 
 # Helper functions for strains and stresses
@@ -148,7 +147,7 @@ L = [fem.form(L0), fem.form(L1)]
 constraints = [mpc, mpc_q]
 
 # Assemble system
-with dolfinx.common.Timer("~Assemble LHS and RHS"):
+with common.Timer("~Assemble LHS and RHS"):
     A = dolfinx_mpc.create_matrix_nest(a, constraints)
     dolfinx_mpc.assemble_matrix_nest(A, a, constraints, bcs)
     A.assemble()
@@ -163,7 +162,7 @@ with dolfinx.common.Timer("~Assemble LHS and RHS"):
 
 
 # Preconditioner
-P11 = dolfinx.fem.petsc.assemble_matrix(dolfinx.fem.form(ezz * ezz_test * ufl.dx))
+P11 = fem.petsc.assemble_matrix(fem.form(ezz * ezz_test * dx))
 P = PETSc.Mat().createNest([[A.getNestSubMatrix(0, 0), None], [None, P11]])  # type: ignore
 P.assemble()
 
@@ -201,10 +200,10 @@ for Uh_sub in Uh.getNestSubVecs():
     )  # type: ignore
 
 # ----------------------------- Put NestVec into DOLFINx Function - ---------
-uh = dolfinx.fem.Function(mpc.function_space)
+uh = fem.Function(mpc.function_space)
 uh.x.petsc_vec.setArray(Uh.getNestSubVecs()[0].array)
 
-ezzh = dolfinx.fem.Function(mpc_q.function_space)
+ezzh = fem.Function(mpc_q.function_space)
 ezzh.x.petsc_vec.setArray(Uh.getNestSubVecs()[1].array)
 
 uh.x.scatter_forward()
@@ -230,8 +229,8 @@ strain_func = fem.Function(TensorSpace, name="strain")
 stress_func = fem.Function(TensorSpace, name="stress")
 
 # Define expressions
-strain_expr = eps(uh, ezzh)
-stress_expr = sigma(uh, ezzh)
+strain_expr = eps_3d(uh, ezzh)
+stress_expr = sigma_3d(uh, ezzh)
 
 # Interpolate
 strain_func.interpolate(fem.Expression(strain_expr, TensorSpace.element.interpolation_points()))
@@ -242,8 +241,9 @@ if MPI.COMM_WORLD.rank == 0 and not os.path.exists("results"):
     os.makedirs("results")
 MPI.COMM_WORLD.barrier()
 
-with VTKFile(domain.comm, "results/1Gen-Plane-BM", "w") as vtk:
+with VTKFile(domain.comm, "jason3", "w") as vtk:
     vtk.write_function(uh_interp)
     vtk.write_function(ezzh)
     vtk.write_function(strain_func)
     vtk.write_function(stress_func)
+
