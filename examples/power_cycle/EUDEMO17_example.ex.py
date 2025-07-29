@@ -149,3 +149,6 @@ net_ftt = turbine_power + consumption_Minucci_SSEN_HCPB_ftt
 # pp(turbine_power)
 # pp(consumption_Minucci_SSEN_HCPB_ftt)
 # pp(net_ftt)
+
+# Last value should be 21 in 'eps_upkeep': array([-21., -21.,  -0.])
+print(phase_loads_active["ftt"]["eps_upkeep"])  # MW
