@@ -16,14 +16,9 @@ import dolfinx.fem.petsc
 from dolfinx.io import VTXWriter, distribute_entity_data, gmshio
 from dolfinx.mesh import create_mesh, meshtags_from_entities
 from dolfinx.plot import vtk_mesh
-from dolfinx.io import XDMFFile
-from ufl import (FacetNormal, FiniteElement, as_matrix, Identity, Measure, TestFunction, tr, TrialFunction, VectorElement, as_vector, div, dot, ds, dx, inner, lhs, grad, nabla_grad, rhs, sym)
-from dolfinx_mpc.utils import (create_point_to_point_constraint, determine_closest_block, rigid_motions_nullspace, facet_normal_approximation)
+from ufl import (FacetNormal, as_matrix, Identity, Measure, TestFunction, tr, TrialFunction, as_vector, div, dot, ds, dx, inner, lhs, grad, nabla_grad, rhs, sym)
 from dolfinx_mpc import LinearProblem, MultiPointConstraint
 from dolfinx_mpc.utils import create_normal_approximation
-from dolfinx_mpc import MultiPointConstraint
-
-
 
 # Mesh
 mesh_path = "neufrustum4.msh"
@@ -45,70 +40,11 @@ p.view_xy()
 p.show_axes()
 p.show()
 
-from dolfinx.plot import vtk_mesh
-from dolfinx.io import XDMFFile
-
-with XDMFFile(MPI.COMM_WORLD, "neufrustum4.xdmf", "w") as xdmf:
-    xdmf.write_mesh(domain)
-    xdmf.write_meshtags(cell_markers, domain.geometry)
-    
-###-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------###
-
-# Checks the Measure for the Complete Mesh Domain and Not Just Each Tags
-import ufl
 
 dx = ufl.Measure("dx", domain=domain, subdomain_data=cell_markers)
 dS = ufl.Measure("dS", domain=domain, subdomain_data=facet_markers)
 ds = ufl.Measure("ds", domain=domain, subdomain_data=facet_markers)
-areaj = fem.assemble_scalar(fem.form(1.0 * dx(2)))
-print(f"Computed area_areaj = {areaj:.7f}")
 
-areav = fem.assemble_scalar(fem.form(1.0 * dx(1)))
-print(f"Computed area_areav = {areav:.7f}")
-
-Ten = 100000.0
-
-sigma_z = (0.5*Ten)/(areaj + areav)
-print(f"The longitudinal stress (sigma_Z)=", sigma_z)
-
-
-length_1 = fem.assemble_scalar(fem.form(1.0 * dS(2)))
-print(f"Computed length_l1 = {length_1:.7f}")
-
-length_12 = fem.assemble_scalar(fem.form(1.0 * ds(1)))
-print(f"Computed length_l2 = {length_12:.7f}")
-
-
-
-####--------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Defining Material Properties through subdomains
-
-Q = fem.functionspace(domain, ("DG", 0))
-E = fem.Function(Q)
-nu = fem.Function(Q)
-
-my_surface_cells = cell_markers.find(1)
-E.x.array[my_surface_cells] = np.full_like(my_surface_cells, 2e11, dtype=default_scalar_type)
-nu.x.array[my_surface_cells] = np.full_like(my_surface_cells, 0.3, dtype=default_scalar_type)
-
-EFGH_cells = cell_markers.find(2)
-E.x.array[EFGH_cells] = np.full_like(EFGH_cells, 2e11, dtype=default_scalar_type)
-nu.x.array[EFGH_cells] = np.full_like(EFGH_cells, 0.3, dtype=default_scalar_type)
-
-IJKL_cells = cell_markers.find(3)
-E.x.array[IJKL_cells] = np.full_like(IJKL_cells, 2e11, dtype=default_scalar_type)
-nu.x.array[IJKL_cells] = np.full_like(IJKL_cells, 0.3, dtype=default_scalar_type)
-
-MNOP_cells = cell_markers.find(4)
-E.x.array[MNOP_cells] = np.full_like(MNOP_cells, 2e11, dtype=default_scalar_type)
-nu.x.array[MNOP_cells] = np.full_like(MNOP_cells, 0.3, dtype=default_scalar_type)
-
-QRST_cells = cell_markers.find(5)
-E.x.array[QRST_cells] = np.full_like(QRST_cells, 2e11, dtype=default_scalar_type)
-nu.x.array[QRST_cells] = np.full_like(QRST_cells, 0.3, dtype=default_scalar_type)
-
-
-####------------------------------------------------------------------------------------------------------------------------------------------------------------
 gdim = 2
 
 def strain(u, repr ="vectorial"):
@@ -139,7 +75,6 @@ def stress(u, repr ="vectorial"):
 # Define Function Space
 degree = 2
 V = fem.functionspace(domain, ("P",degree, (gdim,)))
-
 
 
 #Define Variational Problem
@@ -176,8 +111,6 @@ uh_mpc = problem.solve()
 uh.name = "u"
 
 
-
-
 # Compute stress and strain components
 # Use DG(0) space for storing element-wise quantities
 DG0 = fem.functionspace(domain, ("DG", 0, (3,)))  # for vectorial stress/strain
@@ -201,7 +134,8 @@ for i in range(3):
     stress_fn.x.array[i::3] = stress_i.x.array
 
 
-with VTKFile(domain.comm, "neufrus41_vs.pvd", "w") as vtk:
+with VTKFile(domain.comm, "jason2.pvd", "w") as vtk:
     vtk.write_function(strain_fn)
     vtk.write_function(uh_mpc)
     vtk.write_function(stress_fn)
+
