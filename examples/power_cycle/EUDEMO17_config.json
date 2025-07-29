@@ -38,29 +38,46 @@
         "description": "Central Solenoid recharge",
         "duration": 500,
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": { "reactive": 5, "active": 5 },
+              "value": { "reactive": 0.2, "active": 0.2 },
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
+            }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
             }
           ]
         },
@@ -71,29 +88,46 @@
         "duration": 600,
         "unit": "second",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": 5,
+              "value": 0.2,
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
+            }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
             }
           ]
         },
@@ -104,29 +138,46 @@
         "duration": 180,
         "unit": "second",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": 5,
+              "value": 0.2,
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
+            }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
             }
           ]
         },
@@ -137,33 +188,50 @@
         "duration": 150,
         "unit": "second",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": 5,
+              "value": 0.2,
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
             }
           ],
-          "hcpb_hirn": [
+          "pcs_hirn": [
             { "value": { "reactive": 0 }, "description": "no reactive load" }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
+            }
           ]
         },
         "reference": "Minucci (2020). https://doi.org/10.3390/en13092269."
@@ -173,30 +241,46 @@
         "duration": 10,
         "unit": "second",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": 5,
+              "value": 0.2,
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
+            }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
             }
           ]
         },
@@ -207,33 +291,50 @@
         "duration": 10,
         "unit": "second",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "hcpb_bb_peak": [
+          "pht_hcpb_peak": [
             {
-              "value": 5,
+              "value": 0.2,
               "description": "coolant flow to 20%"
             }
           ],
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
             }
           ],
-          "hcpb_hirn": [
+          "pcs_hirn": [
             { "value": { "reactive": 0 }, "description": "no reactive load" }
+          ],
+          "swy_peak": [
+            {
+              "value": { "reactive": 0.75, "active": 0.9 },
+              "description": "load reduction outside ftt, estimated from Minucci (2020)"
+            }
           ]
         },
         "reference": "(assumed)"
@@ -243,23 +344,34 @@
         "duration": 2,
         "unit": "hour",
         "loads": [
-          "vv",
-          "hcpb_vvps",
-          "div_lim",
-          "hcpb_bb_peak",
-          "hcpb_hirn",
-          "turb",
-          "eps_peak",
-          "eps_upk",
+          "tps_upkeep",
+          "ter_hcpb",
+          "pdc_upkeep",
+          "ppc_upkeep",
+          "pht_vv",
+          "pht_vvps",
+          "pht_div_lim",
+          "pht_hcpb_peak",
+          "pcs_hirn",
+          "pcs_turb",
+          "eps_upkeep",
+          "swy_peak",
           "buildings",
           "site",
-          "sf6_air"
+          "dist_h2o_sf6",
+          "rmt_rm",
+          "rmt_ass",
+          "rad_upkeep"
         ],
         "efficiencies": {
-          "turb": [
+          "pcs_turb": [
             {
-              "value": { "reactive": 1.25 },
-              "description": "inverse of minimum power factor @ 0.8"
+              "value": { "active": 0.85 },
+              "description": "indirect storage retains ~15% of the power"
+            },
+            {
+              "value": { "reactive": 0.8 },
+              "description": "minimum power factor @ 0.8"
             }
           ]
         },
@@ -267,51 +379,314 @@
       }
     },
     "system_library": {
+      "MAG": {
+        "description": "Magnet Systems (PBS = 11,81)",
+        "subsystems": ["CPS", "CRY"]
+      },
       "TFV": {
         "description": "Tritium, Fueling, Vacuum (PBS = 22,25)",
-        "subsystems": []
+        "subsystems": ["TPS", "TER"]
+      },
+      "DGC": {
+        "description": "Diagnostics & Control (PBS = 40, 85)",
+        "subsystems": ["PDC", "PPC"]
+      },
+      "HCD": {
+        "description": "Heating and Current Drive (PBS = 30,31,32)",
+        "subsystems": ["ECH", "NBI", "ICH"]
       },
       "BOP": {
         "description": "Balance-of-Plant (PBS = 49,50,54,58,70)",
         "subsystems": ["PHT", "IHT", "PCS"]
       },
+      "PES": {
+        "description": "Plant Electrical Systems (PBS = 82)",
+        "subsystems": ["EPS", "SWY"]
+      },
+      "MNT": {
+        "description": "Maintenance Systems (PBS = 60,61,63)",
+        "subsystems": ["RMT", "RAD"]
+      },
       "AUX": {
-        "description": "Auxiliaries (PBS = 80,82,83,87)",
-        "subsystems": ["EPS", "BSU", "OTR"]
+        "description": "Auxiliaries (PBS = 80,83,87)",
+        "subsystems": ["BSU", "OTR"]
       }
     },
     "sub_system_library": {
+      "RMT": {
+        "description": "Remote Maintenance & Assembly (PBS = 60, 61)",
+        "loads": ["rmt_rm", "rmt_ass"]
+      },
+      "RAD": {
+        "description": "Radwaste Treatment and Storage (PBS = 63)",
+        "loads": ["rad_upkeep"]
+      },
+      "ECH": {
+        "description": "Electron Cyclotron Resonant Heating (PBS = 30)",
+        "loads": ["ech_peak", "ech_upkeep"]
+      },
+      "NBI": {
+        "description": "Neutron Beam Injection (PBS = 31)",
+        "loads": ["nbi_peak", "nbi_upkeep"]
+      },
+      "ICH": {
+        "description": "Ion Cyclotron Resonant Heating (PBS = 32)",
+        "loads": ["ich_peak", "ich_upkeep"]
+      },
+      "CPS": {
+        "description": "Coil Power Supply (PBS = 11)",
+        "loads": ["cps_upkeep"]
+      },
+      "CRY": {
+        "description": "Cryoplant and Cryodistribution (PBS = 81)",
+        "loads": ["cry_dist"]
+      },
+      "TPS": {
+        "description": "Tritium Plant Systems (PBS = 22)",
+        "loads": ["tps_upkeep"]
+      },
+      "TER": {
+        "description": "Tritium Extraction and Recovery (PBS = 25)",
+        "loads": ["ter_hcpb"]
+      },
+      "PDC": {
+        "description": "Plasma Diagnostics & Control (PBS = 40)",
+        "loads": ["pdc_upkeep"]
+      },
+      "PPC": {
+        "description": "Power Plant Control (PBS = 85)",
+        "loads": ["ppc_upkeep"]
+      },
       "PHT": {
-        "description": "Primary Heat Transfer System",
-        "loads": ["vv", "hcpb_vvps", "div_lim", "hcpb_bb_peak"]
+        "description": "Primary Heat Transfer System (PBS = 49,50,54,58)",
+        "loads": ["pht_vv", "pht_vvps", "pht_div_lim", "pht_hcpb_peak"]
       },
       "IHT": {
         "description": "Intermediate Heat Transfer System",
         "loads": []
       },
       "PCS": {
-        "description": "Power Conversion System",
-        "loads": ["hcpb_hirn", "turb"]
+        "description": "Power Conversion System (PBS = 70)",
+        "loads": ["pcs_hirn", "pcs_turb"]
       },
       "EPS": {
-        "description": "Electrical Power Supply",
-        "loads": ["eps_peak", "eps_upk"]
+        "description": "Electrical Power Supply (PBS = 82)",
+        "loads": ["eps_peak", "eps_upkeep"]
+      },
+      "SWY": {
+        "description": "Switchyard (PBS = ?)",
+        "loads": ["swy_peak"]
       },
       "BSU": {
-        "description": "Buildings & Site Utilities",
+        "description": "Buildings & Site Utilities (PBS = 80,83)",
         "loads": ["buildings", "site"]
       },
       "OTR": {
-        "description": "Other Auxiliary Systems",
-        "loads": ["sf6_air"]
+        "description": "Other Auxiliary Systems (PBS = 87)",
+        "loads": ["dist_h2o_sf6"]
       }
     },
     "load_library": {
-      "vv": {
+      "rmt_rm": {
         "time": [0, 1],
         "data": {
-          "reactive": [4.7, 4.7],
-          "active": [9.7, 9.7]
+          "reactive": 3.1,
+          "active": 5.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "load for minor maintenance during normal operation"
+      },
+      "rmt_ass": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 2.2,
+          "active": 4.6
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "load for minor maintenance during normal operation"
+      },
+      "rad_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 1.5,
+          "active": 3.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "continuous operation"
+      },
+      "ech_peak": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 60.5,
+          "active": 125.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "peak power for ECH system"
+      },
+      "ech_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 2.9,
+          "active": 6.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "auxiliary power for ECH system"
+      },
+      "nbi_peak": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 60.5,
+          "active": 125.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "peak power for NBI system"
+      },
+      "nbi_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 2.9,
+          "active": 6.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "auxiliary power for NBI system"
+      },
+      "ich_peak": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 60.5,
+          "active": 125.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "peak power for ICH system"
+      },
+      "ich_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 2.9,
+          "active": 6.0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "auxiliary power for ICH system"
+      },
+      "cps_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 0,
+          "active": 0
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "negligible upkeep; operation power attributed to EPS"
+      },
+      "cry_dist": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 63.1,
+          "active": 101.8
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "first guess projected from ITER consumption"
+      },
+      "tps_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 7.7,
+          "active": 12.2
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "first guess projected from ITER solution"
+      },
+      "ter_hcpb": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 1.9,
+          "active": 3
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "first guess projected from ITER solution"
+      },
+      "pdc_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 3.0,
+          "active": 6.1
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "estimated from ITER data (with air conditioning)"
+      },
+      "ppc_upkeep": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 1.7,
+          "active": 3.6
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "estimated from CODAC, CIS & CSS in ITER"
+      },
+      "pht_vv": {
+        "time": [0, 1],
+        "data": {
+          "reactive": 4.7,
+          "active": 9.7
         },
         "unit": "MW",
         "model": "RAMP",
@@ -320,20 +695,20 @@
         "efficiencies": [],
         "description": "Vacuum Vessel (VV)"
       },
-      "hcpb_vvps": {
+      "pht_vvps": {
         "time": { "active": [0, 1] },
-        "data": { "active": [2.3, 2.3] },
+        "data": { "active": 2.3 },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
         "normalised": true,
         "description": "(HCPB) Vacuum Vessel pressure suppression (VVPS)"
       },
-      "div_lim": {
+      "pht_div_lim": {
         "time": [0, 1],
         "data": {
-          "reactive": [12.1, 12.1],
-          "active": [19.5, 19.5]
+          "reactive": 12.1,
+          "active": 19.5
         },
         "unit": "MW",
         "model": "RAMP",
@@ -341,65 +716,83 @@
         "normalised": true,
         "description": "Divertor & Limiter (DV & LM)"
       },
-      "hcpb_bb_peak": {
+      "pht_hcpb_peak": {
         "description": "(HCPB) Breeding Blanket (BB) - peak value",
         "time": [0, 1],
         "data": {
-          "reactive": [54.4, 54.4],
-          "active": [165.6, 165.6]
+          "reactive": 54.4,
+          "active": 165.6
         },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
         "normalised": true
       },
-      "hcpb_hirn": {
+      "pcs_hirn": {
         "description": "(HCPB) Hirn Cycle components",
         "time": [0, 1],
         "data": {
-          "reactive": [5.8, 5.8],
-          "active": [12, 12]
+          "reactive": 5.8,
+          "active": 12
         },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
         "normalised": true
       },
-      "turb": {
+      "pcs_turb": {
         "description": "nominal turbine power for direct concept",
         "time": [0, 1],
-        "data": [750, 750],
+        "data": 790,
         "unit": "MW",
         "model": "RAMP",
-        "efficiencies": [{ "value": 0.85, "description": "indirect storage" }],
+        "efficiencies": [
+          {
+            "value": 0.95,
+            "description": "conservative turbine-synchronous generator coupling efficiency"
+          }
+        ],
         "consumption": false,
         "normalised": true
       },
       "eps_peak": {
-        "description": "peak value extrapolated to all relevant phases",
+        "description": "value substitutes linear combination of HCD systems",
         "time": [0, 1],
-        "data": [300, 300],
+        "data": 300,
         "unit": "MW",
         "model": "STEP"
       },
-      "eps_upk": {
-        "description": "EPS upkeep",
+      "eps_upkeep": {
+        "description": "upkeep loads for electrical distribution",
         "time": [0, 120],
         "data": {
-          "reactive": [10.2, 10.2],
-          "active": [21, 21]
+          "reactive": 10.2,
+          "active": 21
         },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
         "normalised": false
       },
-      "buildings": {
-        "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
+      "swy_peak": {
         "time": [0, 1],
         "data": {
-          "reactive": [26.6, 26.6],
-          "active": [54.8, 54.8]
+          "reactive": 120,
+          "active": 32
+        },
+        "unit": "MW",
+        "model": "RAMP",
+        "normalised": true,
+        "consumption": true,
+        "efficiencies": [],
+        "description": "transformer switchyard peak loads estimated in Minucci (2020)"
+      },
+      "buildings": {
+        "description": "ITER extrapolation for buildings (light/elevators/HVAC)",
+        "time": [0, 1],
+        "data": {
+          "reactive": 26.6,
+          "active": 54.8
         },
         "unit": "MW",
         "model": "RAMP",
@@ -410,20 +803,20 @@
         "description": "site utilities",
         "time": [0, 1],
         "data": {
-          "reactive": [1.9, 1.9],
-          "active": [3.1, 3.1]
+          "reactive": 1.9,
+          "active": 3.1
         },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
         "normalised": true
       },
-      "sf6_air": {
-        "description": "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS",
+      "dist_h2o_sf6": {
+        "description": "ITER extrapolation for distribution: SF6, compressed air, CCWS, CHWS",
         "time": [0, 1],
         "data": {
-          "reactive": [56.4, 56.4],
-          "active": [90.9, 90.9]
+          "reactive": 56.4,
+          "active": 90.9
         },
         "unit": "MW",
         "model": "RAMP",
