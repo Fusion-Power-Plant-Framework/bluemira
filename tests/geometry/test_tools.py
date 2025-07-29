@@ -8,6 +8,7 @@ import difflib
 import json
 import re
 from datetime import datetime
+from itertools import pairwise
 from pathlib import Path
 from unittest import mock
 
@@ -52,9 +53,11 @@ from bluemira.geometry.tools import (
     revolve_shape,
     save_as_STP,
     save_cad,
+    serialise_shape,
     signed_distance,
     signed_distance_2D_polygon,
     slice_shape,
+    split_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
@@ -937,3 +940,36 @@ class TestForceWireToSpline:
         p2 = force_wire_to_spline(p)
         assert p2 == p
         bm_debug.assert_called_once()
+
+
+class TestSplineSerialisation:
+    filename = "vvts_face_polygon_test.json"
+    wires = []
+
+    @classmethod
+    def setup_class(cls):
+        path = get_bluemira_path("geometry/test_data", subfolder="tests")
+        with open(Path(path, cls.filename)) as file:
+            data = json.load(file)
+
+        cls.wires = []
+        for wire in data["BluemiraFace"]["boundary"]:
+            closed_spline = deserialise_shape(wire)
+            cls.wires.extend(cls.split_wire(closed_spline))
+
+    @staticmethod
+    def split_wire(spline) -> BluemiraWire:
+        cuts = spline.discretise(7, byedges=False)
+
+        wires = []
+        for start, end in pairwise(cuts.points[1:-1]):
+            _, segment = split_wire(spline, start)
+            segment, _ = split_wire(segment, end)
+            wires.append(segment)
+        return wires
+
+    @pytest.mark.parametrize("wire", wires)
+    def test_serialisation(self, wire):
+        reconstructed_wire = deserialise_shape(serialise_shape(wire))
+        np.testing.assert_allclose(wire.start_point(), reconstructed_wire.start_point())
+        np.testing.assert_allclose(wire.end_point(), reconstructed_wire.end_point())
