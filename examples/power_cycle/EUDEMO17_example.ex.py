@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from json import dumps
 from pathlib import Path
 
 import numpy as np
@@ -39,7 +40,7 @@ powercycle_config = ReactorConfig(config_path / "EUDEMO17_config.json", None)
 power_cycle = PowerCycle(**powercycle_config.config_for("Power Cycle"), durations={})
 
 
-def get_pulse_load(
+def get_pulse_data(
     power_cycle: PowerCycle,
     pulse_label: str,
     load_type: str,
@@ -82,34 +83,57 @@ def get_pulse_load(
     # pp(phase_total_for_type)
     # pp(pulse_loads_for_type)
 
+    pulse_timeseries = np.concatenate(pulse_timeseries)
     pulse_total_for_type = list(pulse_loads_for_type.values())
     pulse_total_for_type = np.sum(pulse_total_for_type, axis=0)
     # pp(pulse_total_for_type)
 
-    return (
-        phase_timeseries,
-        phase_loads_for_type,
-        phase_total_for_type,
-        pulse_timeseries,
-        pulse_loads_for_type,
-        pulse_total_for_type,
-    )
+    return {
+        "pulse_label": pulse_label,
+        "load_type": load_type,
+        "load_unit": load_unit,
+        "phase_order": phase_order,
+        "phase_timeseries": phase_timeseries,
+        "phase_loads": phase_loads_for_type,
+        "phase_total": phase_total_for_type,
+        "pulse_timeseries": pulse_timeseries,
+        "pulse_loads": pulse_loads_for_type,
+        "pulse_total": pulse_total_for_type,
+    }
 
 
-(
-    phase_timeseries,
-    phase_loads_active,
-    phase_total_active,
-    pulse_timeseries,
-    pulse_loads_active,
-    pulse_total_active,
-) = get_pulse_load(
+def export_pulse_data(pulse_data, filename="pulse_data.json"):
+    """Recursively convert arrays to lists and export pulse to a JSON file."""
+
+    def convert_arrays_to_lists(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.flatten().tolist()  # Convert to 1D list
+        if isinstance(obj, dict):
+            return {k: convert_arrays_to_lists(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [convert_arrays_to_lists(item) for item in obj]
+        if isinstance(obj, OrderedDict):
+            return OrderedDict((k, convert_arrays_to_lists(v)) for k, v in obj.items())
+        return obj
+
+    pulse_json = convert_arrays_to_lists(pulse_data)
+    pulse_json = dumps(pulse_json, indent=4)
+    Path(filename).write_text(pulse_json)
+
+
+pulse_active_data = get_pulse_data(
     power_cycle,
     pulse_label="std",
     load_type="active",
     load_unit="MW",
     extra_points=0,
 )
+phase_timeseries = pulse_active_data["phase_timeseries"]
+phase_loads_active = pulse_active_data["phase_loads"]
+phase_total_active = pulse_active_data["phase_total"]
+pulse_timeseries = pulse_active_data["pulse_timeseries"]
+pulse_loads_active = pulse_active_data["pulse_loads"]
+pulse_total_active = pulse_active_data["pulse_total"]
 # pp(phase_timeseries)
 # pp(phase_loads_active)
 # pp(phase_total_active)
@@ -117,9 +141,12 @@ def get_pulse_load(
 # pp(pulse_loads_active)
 # pp(pulse_total_active)
 
+export_filename = config_path / "EUDEMO17_pulse_active_data.json"
+export_pulse_data(pulse_active_data, filename=export_filename)
+
 # TEMP: add turbine load to pulse, because it is zero due to bug
-turbine_power = 790 * 0.95 * 0.85
-consumption_Minucci_SSEN_HCPB_ftt = sum([
+production_minucci_turbine_hcpb = 790 * 0.95 * 0.85
+consumption_minucci_ssen_hcpb_ftt = sum([
     -12.2,  # TFV
     -3,  # TER
     -3 * 6,  # ECH + NBI + ICH upkeeps
@@ -139,16 +166,12 @@ consumption_Minucci_SSEN_HCPB_ftt = sum([
     -90.9,  # Auxiliaries
     -32,  # Switchyard estimates
 ])  # MW
-net_ftt = turbine_power + consumption_Minucci_SSEN_HCPB_ftt
-
-# Add turbine power to the total active load
-# phase_total_active = OrderedDict(
-#     (k, v + turbine_power) for k, v in phase_total_active.items()
-#     )
-# pulse_total_active += turbine_power
-# pp(turbine_power)
-# pp(consumption_Minucci_SSEN_HCPB_ftt)
+net_ftt = production_minucci_turbine_hcpb + consumption_minucci_ssen_hcpb_ftt
 # pp(net_ftt)
+
+# Remove turbine power to plot only consumption
+pulse_consumption = pulse_total_active - production_minucci_turbine_hcpb
+# pp(pulse_consumption)
 
 # Last value should be 21 in 'eps_upkeep': array([-21., -21.,  -0.])
 print(phase_loads_active["ftt"]["eps_upkeep"])  # MW
