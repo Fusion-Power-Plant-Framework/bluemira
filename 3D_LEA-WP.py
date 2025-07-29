@@ -13,11 +13,11 @@ from dolfinx.io import VTXWriter, distribute_entity_data, gmshio
 from dolfinx.mesh import create_mesh, meshtags_from_entities
 from dolfinx.plot import vtk_mesh
 from dolfinx.io import XDMFFile
-from ufl import (FacetNormal, sqrt, FiniteElement, as_matrix, Identity, Measure, TestFunction, tr, TrialFunction, VectorElement, as_vector, div, dot, ds, dx, inner, lhs, grad, nabla_grad, nabla_div, rhs, sym)
+from ufl import (FacetNormal, sqrt, as_matrix, Identity, Measure, TestFunction, tr, TrialFunction, as_vector, div, dot, ds, dx, inner, lhs, grad, nabla_grad, nabla_div, rhs, sym)
 import pyvista
 
 # Mesh
-mesh_path = "3d_solid.msh"
+mesh_path = "3d-barr.msh"
 domain, cell_markers, facet_markers = gmshio.read_from_msh(mesh_path, MPI.COMM_WORLD, gdim=2)
 
 pyvista.set_jupyter_backend("static")
@@ -34,10 +34,21 @@ p.show()
 from dolfinx.plot import vtk_mesh
 from dolfinx.io import XDMFFile
 
-with XDMFFile(MPI.COMM_WORLD, "3d_solid.xdmf", "w") as xdmf:
+with XDMFFile(MPI.COMM_WORLD, "solid_bar.xdmf", "w") as xdmf:
     xdmf.write_mesh(domain)
     xdmf.write_meshtags(cell_markers, domain.geometry)
 
+
+
+
+E = fem.Constant(domain, 200000000000.0)
+nu = fem.Constant(domain,0.3)
+
+lmbda = E*nu/(1+nu)/(1-2*nu)
+mu = E/2/(1+nu)
+
+rho = 8000.0
+g = 9.81
 
 
 # Define Function Space
@@ -45,35 +56,37 @@ V = fem.functionspace(domain, ("Lagrange", 1, (domain.geometry.dim, )))
 
 
 def clamped_boundary(x):
-    return np.isclose(x[0], 0)
+    return np.isclose(x[2], 0)
 
 
-fdim = domain.topology.dim - 1
-boundary_facets = mesh.locate_entities_boundary(domain, fdim, clamped_boundary)
+u_zero = np.array((0,) * domain.geometry.dim, dtype=default_scalar_type)
+bc = fem.dirichletbc(u_zero, fem.locate_dofs_geometrical(V, clamped_boundary), V)
+bcs = [bc]
 
-u_D = np.array([0, 0, 0], dtype=default_scalar_type)
-bc = fem.dirichletbc(u_D, fem.locate_dofs_topological(V, fdim, boundary_facets), V)
+
+dx = Measure("dx", domain=domain, subdomain_data=cell_markers)
+dS = Measure("dS", domain=domain, subdomain_data=facet_markers)
+ds = Measure("ds", domain=domain, subdomain_data=facet_markers)
+
 
 T = fem.Constant(domain, default_scalar_type((0, 0, 0)))
 
-ds = Measure("ds", domain=domain)
-
 def epsilon(u):
-    return sym(grad(u))
+    return sym(grad(u))  # Equivalent to 0.5*(ufl.nabla_grad(u) + ufl.nabla_grad(u).T)
 
 
 def sigma(u):
-    return lambda_ * nabla_div(u) * Identity(len(u)) + 2 * mu * epsilon(u)
+    return lmbda * nabla_div(u) * Identity(len(u)) + 2 * mu * epsilon(u)
 
 
 u = TrialFunction(V)
 v = TestFunction(V)
-f = fem.Constant(domain, default_scalar_type((0, 0, -rho * g)))
+f = fem.Constant(domain, default_scalar_type((10000.0, 0, 0)))
 a = inner(sigma(u), epsilon(v)) * dx
-L = dot(f, v) * dx + dot(T, v) * ds
+L = dot(f, v) * dx
 
 
-problem = LinearProblem(a, L, bcs=[bc], petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+problem = LinearProblem(a, L, bcs, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
 uh = problem.solve()
 
 
@@ -96,3 +109,5 @@ with io.XDMFFile(domain.comm, "trry.xdmf", "w") as xdmf:
     uh.name = "Deformation"
     xdmf.write_function(uh)
     xdmf.write_function(stresses)
+
+
