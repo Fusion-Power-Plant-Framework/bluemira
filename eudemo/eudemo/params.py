@@ -183,7 +183,9 @@ class EUDEMOReactorParams(ParameterFrame):
     div_Ltarg_ob: Parameter[float]  # noqa: N815
     div_targ_angle_ib: Parameter[float]
     div_targ_angle_ob: Parameter[float]
-    div_open: Parameter[bool]
+    div_targ_type_ib: Parameter[str]
+    div_targ_type_ob: Parameter[str]
+    div_baffle_type: Parameter[str]
 
     # Remote maintenance
     c_rm: Parameter[float]
