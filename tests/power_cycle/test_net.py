@@ -191,6 +191,16 @@ class TestSubPhase:
             # not normalised
             assert np.allclose(load_data["eps_upk"], res2)
 
+    def test_get_load_data_with_efficiencies_unset_efficiency_is_one(self):
+        for sp in self.subphases.root.values():
+            load_data = sp.get_load_data_with_efficiencies(
+                self._config.load_library,
+                np.array([0, 0.005, 0.6, 1]),
+                "active",
+                unit="MW",
+            )
+            assert np.allclose(load_data["turb"], 750 * 0.85)
+
 
 class TestPhaseFromScenario:
     @classmethod

@@ -130,6 +130,12 @@ class Efficiency(PCBaseModel):
         """
         if not isinstance(self, dict):
             return {"value": self}
+
+        if isinstance(self["value"], dict):
+            if "active" not in self["value"]:
+                self["value"]["active"] = 1
+            if "reactive" not in self["value"]:
+                self["value"]["reactive"] = 1
         return self
 
 
