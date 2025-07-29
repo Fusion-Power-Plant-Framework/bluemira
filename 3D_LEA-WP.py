@@ -17,12 +17,12 @@ from ufl import (FacetNormal, sqrt, as_matrix, Identity, Measure, TestFunction, 
 import pyvista
 
 # Mesh
-mesh_path = "3d-barr.msh"
-domain, cell_markers, facet_markers = gmshio.read_from_msh(mesh_path, MPI.COMM_WORLD, gdim=2)
+mesh_path = "3d-bar.msh"
+domain, cell_markers, facet_markers = gmshio.read_from_msh(mesh_path, MPI.COMM_WORLD, gdim=3)
 
 pyvista.set_jupyter_backend("static")
 
-topology, cell_types, geometry = plot.vtk_mesh(domain, 2)
+topology, cell_types, geometry = plot.vtk_mesh(domain, 3)
 grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
 
 p = pyvista.Plotter()
@@ -37,7 +37,6 @@ from dolfinx.io import XDMFFile
 with XDMFFile(MPI.COMM_WORLD, "solid_bar.xdmf", "w") as xdmf:
     xdmf.write_mesh(domain)
     xdmf.write_meshtags(cell_markers, domain.geometry)
-
 
 
 
@@ -81,7 +80,7 @@ def sigma(u):
 
 u = TrialFunction(V)
 v = TestFunction(V)
-f = fem.Constant(domain, default_scalar_type((10000.0, 0, 0)))
+f = fem.Constant(domain, default_scalar_type((0, -rho * g, 0)))
 a = inner(sigma(u), epsilon(v)) * dx
 L = dot(f, v) * dx
 
@@ -100,14 +99,18 @@ s = sigma(uh) - 1. / 3 * tr(sigma(uh)) * Identity(len(uh))
 von_Mises = sqrt(3. / 2 * inner(s, s))
 
 V_von_mises = fem.functionspace(domain, ("DG", 0))
-stress_expr = fem.Expression(von_Mises, V_von_mises.element.interpolation_points())
+element = V_von_mises.element
+stress_expr = fem.Expression(von_Mises, element.interpolation_points())
+#stress_expr = fem.Expression(von_Mises, V_von_mises.element.interpolation_points())
 stresses = fem.Function(V_von_mises)
 stresses.interpolate(stress_expr)
 
-with io.XDMFFile(domain.comm, "trry.xdmf", "w") as xdmf:
-    xdmf.write_mesh(domain)
-    uh.name = "Deformation"
-    xdmf.write_function(uh)
-    xdmf.write_function(stresses)
 
+
+with io.XDMFFile(domain.comm, "fry2.xdmf", "w") as xdmf:
+    xdmf.write_mesh(domain)
+    uh.name = "Displacement"
+    xdmf.write_function(uh)
+    stresses.name = "Von_Mises"
+    xdmf.write_function(stresses)
 
