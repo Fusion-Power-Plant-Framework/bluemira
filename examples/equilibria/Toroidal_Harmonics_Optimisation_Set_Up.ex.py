@@ -39,49 +39,36 @@ Usage of the 'toroidal_harmonic_approximation' function.
 # ## Imports
 
 # %%
-from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    FieldNullConstraint,
-    IsofluxConstraint,
-    MagneticConstraintSet,
-)
-from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
-    fs_fit_metric,
-)
-from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
-    ToroidalHarmonicConstraint,
-)
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     toroidal_harmonic_approximation,
-)
-from bluemira.equilibria.optimisation.problem._tikhonov import (
-    TikhonovCurrentCOP,  # noqa: PLC2701
-)
-from bluemira.equilibria.plotting import PLOT_DEFAULTS
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
 )
 
 # %%
 # Data from EQDSK file
 # Using a double null DEMO-like equilibria here
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
-
+# Double null
 eq_name = "DN-DEMO_eqref.json"
 eq_name = Path(EQDATA, eq_name)
 eq = Equilibrium.from_eqdsk(
     eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
 )
 
+<<<<<<< HEAD:examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up.ex.py
+=======
+# Single null
+# eq_name = "eqref_OOB.json"
+# eq_name = Path(EQDATA, eq_name)
+# eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
+
+# %%
+>>>>>>> cd6b127a (Use brute force for harmonic selection (constraint fns unmodified)):examples/equilibria/toroidal_harmonics_approximation_basic_use.ex.py
 # Plot equilibrium
 f, ax = plt.subplots()
 eq.plot(ax=ax)
@@ -108,6 +95,7 @@ plt.show()
 # %%
 # Information needed for TH Approximation
 psi_norm = 0.95
+<<<<<<< HEAD:examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up.ex.py
 th_params, Am_cos, Am_sin, degree, fit_metric, approx_total_psi, approx_coilset_psi = (
     toroidal_harmonic_approximation(eq=eq, psi_norm=psi_norm, acceptable_fit_metric=0.01)
 )
@@ -419,3 +407,14 @@ plt.show()
 # %%
 fit_metric = fs_fit_metric(original_FS, approx_FS)
 print(f"fit metric = {fit_metric}")
+=======
+(
+    error,
+    combo,
+    total_psi,
+    vacuum_psi,
+    cos_amplitudes,
+    sin_amplitudes,
+    th_params,
+) = toroidal_harmonic_approximation(eq=eq, psi_norm=psi_norm, plot=True)
+>>>>>>> cd6b127a (Use brute force for harmonic selection (constraint fns unmodified)):examples/equilibria/toroidal_harmonics_approximation_basic_use.ex.py
