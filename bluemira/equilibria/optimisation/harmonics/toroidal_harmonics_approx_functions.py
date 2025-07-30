@@ -10,6 +10,7 @@ A collection of functions used to approximate toroidal harmonics.
 
 from copy import deepcopy
 from dataclasses import dataclass
+from itertools import combinations
 from math import factorial
 
 import numpy as np
@@ -17,14 +18,11 @@ from matplotlib import pyplot as plt
 from scipy.special import gamma, poch
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._grouping import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import find_flux_surf
-from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
-    fs_fit_metric,
-)
+from bluemira.equilibria.find import _in_plasma, find_flux_surf
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.tools import (
@@ -292,12 +290,13 @@ def toroidal_harmonic_grid_and_coil_setup(
 def coil_toroidal_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     th_params: ToroidalHarmonicsParams,
-    max_degree: int | None = None,
+    cos_degrees_chosen: np.ndarray | None = None,
+    sin_degrees_chosen: np.ndarray | None = None,
     sig_figures: int = 15,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Construct coefficient matrices from toroidal harmonic amplitudes at given coil
-    locations.
+    locations, for the specified cos and sin degrees.
 
     To get the individual cos and sin arrays of toroidal harmonic amplitudes/coefficients
     (Am_cos, Am_sin) which can be used in a toroidal harmonic approximation of the
@@ -333,8 +332,10 @@ def coil_toroidal_harmonic_amplitude_matrix(
         Bluemira CoilSet
     th_params:
         Dataclass holding necessary parameters for the TH approximation
-    max_degree:
-        Maximum number of degrees to calculate up to
+    cos_degrees_chosen:
+        Degrees chosen to be used for the cos components
+    sin_degrees_chosen:
+        Degrees chosen to be used for the sin components
     sig_figures:
         Number of significant figures for rounding currents2harmonics values
 
@@ -346,9 +347,6 @@ def coil_toroidal_harmonic_amplitude_matrix(
         Sin component of matrix of harmonic amplitudes
 
     """
-    if max_degree is None:
-        max_degree = len(th_params.th_coil_names) - 1
-
     R_0 = th_params.R_0
     Z_0 = th_params.Z_0
 
@@ -368,39 +366,68 @@ def coil_toroidal_harmonic_amplitude_matrix(
     Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
 
     # [number of degrees, number of coils]
-    currents2harmonics = np.zeros([max_degree, np.size(tau_c)])
+    currents2harmonics_cos = np.zeros([len(cos_degrees_chosen), np.size(tau_c)])
+    currents2harmonics_sin = np.zeros([len(sin_degrees_chosen), np.size(tau_c)])
 
     # TH coefficients from function of the current distribution
     # outside of the region containing the core plasma
     # TH coefficients = currents2harmonics @ coil currents
-    degrees = np.arange(0, max_degree)[:, None]
-    factorial_term = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in range(max_degree)
+    factorial_term_cos = np.array([
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in cos_degrees_chosen
+    ])
+    factorial_term_sin = np.array([
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in sin_degrees_chosen
     ])
 
-    currents2harmonics[:, :] = (
-        (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
-        * factorial_term[:, None]
-        * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
-        * legendre_p(degrees - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
-    )
-    sigma_c_mult_degree = [m * th_params.sigma_c for m in range(max_degree)]
-    Am_cos = currents2harmonics * np.cos(sigma_c_mult_degree)  # noqa: N806
-    Am_sin = currents2harmonics * np.sin(sigma_c_mult_degree)  # noqa: N806
-    return sig_fig_round(Am_cos, sig_figures), sig_fig_round(Am_sin, sig_figures)
+    cos_empty = len(cos_degrees_chosen) == 0
+    sin_empty = len(sin_degrees_chosen) == 0
+
+    if cos_empty:
+        # No cos degrees selected
+        Am_cos = []  # noqa: N806
+    else:
+        currents2harmonics_cos[:, :] = (
+            (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
+            * factorial_term_cos[:, None]
+            * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
+            * legendre_p(
+                cos_degrees_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
+            )
+        )
+        sigma_c_mult_degree_cos = [m * th_params.sigma_c for m in cos_degrees_chosen]
+        Am_cos = currents2harmonics_cos * np.cos(sigma_c_mult_degree_cos)  # noqa: N806
+        Am_cos = sig_fig_round(Am_cos, sig_figures)  # noqa: N806
+
+    if sin_empty:
+        # No sin degrees selected
+        Am_sin = []  # noqa: N806
+    else:
+        currents2harmonics_sin[:, :] = (
+            (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
+            * factorial_term_sin[:, None]
+            * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
+            * legendre_p(
+                sin_degrees_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
+            )
+        )
+        sigma_c_mult_degree_sin = [m * th_params.sigma_c for m in sin_degrees_chosen]
+        Am_sin = currents2harmonics_sin * np.sin(sigma_c_mult_degree_sin)  # noqa: N806
+        Am_sin = sig_fig_round(Am_sin, sig_figures)  # noqa: N806
+    return Am_cos, Am_sin
 
 
 def toroidal_harmonic_approximate_psi(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
-    max_degree: int | None = None,
+    cos_degrees_chosen: np.ndarray | None = None,
+    sin_degrees_chosen: np.ndarray | None = None,
     # TODO @clmould: add different ways to set th grid size
     # e.g. limit_type: TH_GRID_LIMIT = TH_GRID_LIMIT.LCFS or TH_GRID_LIMIT.COILSET
     # 3870
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Approximate psi using toroidal harmonic amplitudes calculated in
-    coil_toroidal_harmonic_amplitude_matrix.
+    Approximate psi using toroidal harmonic amplitudes for the specified cos and sin
+    degrees as calculated in coil_toroidal_harmonic_amplitude_matrix.
 
     ..math::
         A_{m} = \\frac{\\mu_{0} I_{c}}{2^{5/2}} \\frac{(2m+1)!!}{2^m m!}
@@ -422,8 +449,10 @@ def toroidal_harmonic_approximate_psi(
         Bluemira Equilibrium
     th_params:
         Dataclass holding necessary parameters for the TH approximation
-    max_degree:
-        Maximum number of degrees to calculate up to
+    cos_degrees_chosen:
+        Degrees chosen to be used for the cos components
+    sin_degrees_chosen:
+        Degrees chosen to be used for the sin components
 
     Returns
     -------
@@ -435,11 +464,11 @@ def toroidal_harmonic_approximate_psi(
         TH sin coefficients for required number of degrees
 
     """
-    if max_degree is None:
-        max_degree = len(th_params.th_coil_names) - 1
-
     # Get coil positions and currents from equilibrium
     currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
+
+    cos_empty = len(cos_degrees_chosen) == 0
+    sin_empty = len(sin_degrees_chosen) == 0
 
     # Initialise psi and A arrays
     approx_coilset_psi = np.zeros_like(th_params.R)
@@ -447,43 +476,97 @@ def toroidal_harmonic_approximate_psi(
     # Useful combination
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
     # Get sigma values for the grid
-    sigma_mult_degree = [m * th_params.sigma for m in range(max_degree)]
+    sigma_mult_degree_cos = [m * th_params.sigma for m in cos_degrees_chosen]
+    sigma_mult_degree_sin = [m * th_params.sigma for m in sin_degrees_chosen]
 
-    epsilon = 2 * np.ones(max_degree)
-    epsilon[0] = 1
-    factorial_m = np.array([factorial(m) for m in range(max_degree)])
-    degrees = np.arange(0, max_degree)[:, None, None]
+    factorial_m_cos = np.array([factorial(m) for m in cos_degrees_chosen])
+    factorial_m_sin = np.array([factorial(m) for m in sin_degrees_chosen])
+
     # TH coefficient matrix
-    Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
-        input_coils=eq.coilset,
-        th_params=th_params,
-        max_degree=max_degree,
-    )
-
-    Am_cos_sin = np.einsum(  # noqa: N806
-        "ij, ikl -> ijkl", Am_cos, np.cos(sigma_mult_degree)
-    ) + np.einsum("ij, ikl -> ijkl", Am_sin, np.sin(sigma_mult_degree))
-    A = np.sqrt(2 / np.pi) * (
-        np.einsum(
-            "ijkl, i, i, kl, ikl, j -> kl",
-            Am_cos_sin,
-            epsilon,
-            factorial_m,
-            np.sqrt(Delta),
-            legendre_q(degrees - 1 / 2, 1, np.cosh(th_params.tau), n_max=30),
-            currents,
+    Am_cos_current_function, Am_sin_current_function = (  # noqa: N806
+        coil_toroidal_harmonic_amplitude_matrix(
+            input_coils=eq.coilset,
+            th_params=th_params,
+            cos_degrees_chosen=cos_degrees_chosen,
+            sin_degrees_chosen=sin_degrees_chosen,
         )
     )
+
+    if cos_empty:
+        A_cos = 0  # noqa: N806
+    else:
+        epsilon = 2 * np.ones(len(cos_degrees_chosen))
+        epsilon[0] = 1
+        Am_cos_matrix = (  # noqa: N806
+            0
+            if cos_empty
+            else np.einsum(
+                "ij, ikl, i, ikl -> ijkl",
+                Am_cos_current_function,
+                np.cos(sigma_mult_degree_cos),
+                factorial_m_cos,
+                legendre_q(
+                    cos_degrees_chosen[:, None, None] - 1 / 2,
+                    1,
+                    np.cosh(th_params.tau),
+                    n_max=30,
+                ),
+            )
+        )
+        A_cos = np.sqrt(2 / np.pi) * (  # noqa: N806
+            np.einsum(
+                "ijkl, i, kl, j -> kl",
+                Am_cos_matrix,
+                epsilon,
+                np.sqrt(Delta),
+                currents,
+            )
+        )
+    if sin_empty:
+        A_sin = 0  # noqa: N806
+    else:
+        epsilon = 2 * np.ones(len(sin_degrees_chosen))
+        epsilon[0] = 1
+        Am_sin_matrix = (  # noqa: N806
+            0
+            if sin_empty
+            else np.einsum(
+                "ij, ikl, i, ikl-> ijkl",
+                Am_sin_current_function,
+                np.sin(sigma_mult_degree_sin),
+                factorial_m_sin,
+                legendre_q(
+                    sin_degrees_chosen[:, None, None] - 1 / 2,
+                    1,
+                    np.cosh(th_params.tau),
+                    n_max=30,
+                ),
+            )
+        )
+        A_sin = np.sqrt(2 / np.pi) * (  # noqa: N806
+            np.einsum(
+                "ijkl, i, kl, j -> kl",
+                Am_sin_matrix,
+                epsilon,
+                np.sqrt(Delta),
+                currents,
+            )
+        )
+
+    A = A_cos + A_sin
+    # Calc approx coilset psi using \psi = A * R
     approx_coilset_psi = A * th_params.R
+    Am_cos = [] if cos_empty else Am_cos_current_function @ currents  # noqa: N806
+    Am_sin = [] if sin_empty else Am_sin_current_function @ currents  # noqa: N806
+    return approx_coilset_psi, Am_cos, Am_sin
 
-    return approx_coilset_psi, Am_cos @ currents, Am_sin @ currents
 
-
-def toroidal_harmonic_approximation(
+def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams | None = None,
-    acceptable_fit_metric: float = 0.01,
-    psi_norm: float = 1.0,
+    max_error_value: float = 0.5,
+    psi_norm: float = 0.95,
+    tol: float = 0.001,
     *,
     plot: bool = False,
 ) -> tuple[
@@ -492,7 +575,13 @@ def toroidal_harmonic_approximation(
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
-    Use a FS fit metric to determine the required number of degrees.
+    The objective: to get the lowest number of degrees to sufficiently approximate
+    the coilset psi.
+
+    Our selection requirements are satisfied when:
+        - the RMS error for the coilset psi is lower than the max_error_value
+        - adding an extra degree doesn't significantly lower the achieved error.
+
 
     Parameters
     ----------
@@ -504,36 +593,34 @@ def toroidal_harmonic_approximation(
         we do not need to re-solve for the equilibria during optimisation
     th_params:
         Dataclass containing necessary parameters for use in TH approximation
-    acceptable_fit_metric:
-        The default flux surface (FS) used for this metric is the LCFS.
-        (psi_norm value is used to select an alternative)
-        If the FS found using the TH approximation method perfectly matches the
-        FS of the input equilibria then the fit metric = 0.
-        A fit metric of 1 means that they do not overlap at all.
-        fit_metric_value = total area within one but not both FSs /
-        (input FS area + approximation FS area)
+    max_error_value:
+        Maximum allowable error between equilibria psi and TH approximation
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
+    tol:
+        Value used for error comparison to determine a sufficient combination of
+        degrees
     plot:
         Whether or not to plot the results
 
     Returns
     -------
+    error_success:
+        The value of the error for the combination of degrees chosen
+    combo_success:
+        The degrees chosen
+    total_psi_success:
+        The total psi calculated using the TH approximation for the vacuum
+        contribution using the combination of degrees chosen
+    vacuum_psi_success:
+        The TH approximation for the vacuum psi using the combination of degrees chosen
+    cos_amplitudes_success:
+        The cos amplitudes for the combination of degrees chosen
+    sin_amplitudes_success:
+        The sin amplitudes for the combination of degrees chosen
     th_params:
         Dataclass containing necessary parameters for use in TH approximation
-    Am_cos:
-        TH cos coefficients/amplitudes for required number of degrees
-    Am_sin:
-        TH sin coefficients/amplitudes for required number of degrees
-    degree:
-        Number of degrees required for a TH approx with the desired fit metric
-    fit_metric_value:
-        Fit metric achieved
-    approx_total_psi:
-        Total psi obtained using the TH approximation
-    approx_coilset_psi:
-        Coilset psi obtained using the TH approximation
 
     Raises
     ------
@@ -556,7 +643,6 @@ def toroidal_harmonic_approximation(
     R_approx = th_params.R  # noqa: N806
     Z_approx = th_params.Z  # noqa: N806
 
-    bluemira_total_psi = eq.psi(R_approx, Z_approx)
     # Non TH contribution to psi field
     non_th_contribution_psi = eq.plasma.psi(R_approx, Z_approx)
     excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
@@ -564,8 +650,6 @@ def toroidal_harmonic_approximation(
     for coil in excluded_coils:
         non_th_contribution_psi += eq.coilset[coil].psi(R_approx, Z_approx)
 
-    # Set min degree to save some time
-    min_degree = 2
     # Can't have more degrees than sampled psi
     max_degree = len(th_params.th_coil_names) - 1
     # Have cos and sin components so this must be half
@@ -576,70 +660,209 @@ def toroidal_harmonic_approximation(
     approx_eq.coilset.control = th_params.th_coil_names
     o_points, x_points = approx_eq.get_OX_points()
 
-    for degree in range(min_degree, allowable_n_degrees):
-        # Construct matrix from harmonic amplitudes for the coils and approximate psi
-        approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(  # noqa: N806
-            eq=eq, th_params=th_params, max_degree=degree + 1
-        )
-        # Add the non TH coil contribution to the total
-        approx_total_psi = approx_coilset_psi + non_th_contribution_psi
+    degree_id = np.arange(0, max_degree)
+    degree_values = np.arange(0, allowable_n_degrees)
+    degree_values = np.append(degree_values, degree_values)
 
-        # Find flux surface for our TH approximation equilibrium
-        f_s = find_flux_surf(
-            R_approx,
-            Z_approx,
-            approx_total_psi,
-            psi_norm,
-            o_points=o_points,
-            x_points=x_points,
-        )
-        approx_fs = Coordinates({"x": f_s[0], "z": f_s[1]})
+    # Initialise arrays to hold errors, combinations, amplitudes and psi values
+    # Loop over combinations of degrees and save results which satisfy error condition
+    errors_old = []
+    combo_old = []
+    cos_amplitudes_old = []
+    sin_amplitudes_old = []
+    total_psis_old = []
+    vacuum_psis_old = []
+    for n in np.arange(2, max_degree):
+        errors = []
+        combo = []
+        cos_amplitudes = []
+        sin_amplitudes = []
+        total_psis = []
+        vacuum_psis = []
+        for c in combinations(degree_id, n):
+            deg_id = [  # noqa: C416
+                i for i in c
+            ]
+            cos_degrees_chosen = np.array([
+                degree_values[i] for i in deg_id if i < allowable_n_degrees
+            ])
+            sin_degrees_chosen = np.array([
+                degree_values[i] for i in deg_id if i >= allowable_n_degrees
+            ])
 
-        # Compare staring equilibrium to new approximate equilibrium
-        fit_metric_value = fs_fit_metric(original_fs, approx_fs)
-
-        bluemira_print(
-            f"Fit metric value = {fit_metric_value} using {degree + 1} degrees."
-        )
-
-        if fit_metric_value <= acceptable_fit_metric:
-            break
-        if degree + 1 == max_degree:
-            bluemira_warn(
-                "You may need to use more degrees for a fit metric of"
-                f" {acceptable_fit_metric}!"
+            # Calculate psi using the combination of degrees selected in this iteration
+            approximate_coilset_psi, cos_amps, sin_amps = (
+                toroidal_harmonic_approximate_psi(
+                    eq=eq,
+                    th_params=th_params,
+                    cos_degrees_chosen=cos_degrees_chosen,
+                    sin_degrees_chosen=sin_degrees_chosen,
+                )
+            )
+            # Want to mask to be able to calculate error in the plasma region only
+            mask_matrix = np.zeros_like(R_approx)
+            mask = _in_plasma(
+                R_approx, Z_approx, mask_matrix, original_fs.xz.T, include_edges=True
             )
 
-    # Plot comparing original psi to the TH approximation
-    if plot:
-        nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-        cmap = PLOT_DEFAULTS["psi"]["cmap"]
-        # Plot difference between approx total psi and bluemira total psi
-        total_psi_diff = np.abs(approx_total_psi - bluemira_total_psi) / np.max(
-            np.abs(bluemira_total_psi)
-        )
-        f, ax = plt.subplots()
-        ax.plot(approx_fs.x, approx_fs.z, color="red", label="Approx FS from TH")
-        ax.plot(
-            original_fs.x,
-            original_fs.z,
-            color="c",
-            linestyle="dashed",
-            label="FS from Bluemira",
-        )
-        im = ax.contourf(R_approx, Z_approx, total_psi_diff, levels=nlevels, cmap=cmap)
-        f.colorbar(mappable=im)
-        # ax.set_title("|th_approx_psi - psi| / max(psi)")
-        ax.legend(loc="upper right")
-        eq.coilset.plot(ax=ax)
-        plt.show()
+            total_psi_approx = approximate_coilset_psi + non_th_contribution_psi
+            total_psi_approx_masked = mask * total_psi_approx
+            total_psi_bluemira = (
+                eq.coilset.psi(R_approx, Z_approx) + non_th_contribution_psi
+            )
+            total_psi_bluemira_masked = mask * total_psi_bluemira
 
-    return (
-        th_params,
-        Am_cos,
-        Am_sin,
-        degree + 1,
-        fit_metric_value,
-        approx_total_psi,
-        approx_coilset_psi,
-    )
+            error = np.sqrt(
+                np.sum(
+                    (total_psi_bluemira_masked - total_psi_approx_masked) ** 2
+                    / (len(R_approx) * len(Z_approx))
+                )
+            )
+
+            # If error for this combination satisfies the max_error_value, then save this
+            # result to the lists
+            if error < max_error_value:
+                errors.append(error)
+                combo.append(c)
+                total_psis.append(total_psi_approx)
+                vacuum_psis.append(approximate_coilset_psi)
+                cos_amplitudes.append(cos_amps)
+                sin_amplitudes.append(sin_amps)
+
+        # If sufficiently small change by adding extra degree, then
+        # use the previous total number of degrees
+        full = (len(errors_old) != 0) & (len(errors) != 0)
+        succeeded = (np.min(errors_old) - np.min(errors) < tol) if full else False
+        print(f"succeeded = {succeeded}")
+        if succeeded:
+            index_chosen = np.argmin(errors_old)
+            error_success = errors_old[index_chosen]
+            combo_success = combo_old[index_chosen]
+            total_psi_success = total_psis_old[index_chosen]
+            vacuum_psi_success = vacuum_psis_old[index_chosen]
+            cos_amplitude_success = cos_amplitudes_old[index_chosen]
+            sin_amplitude_success = sin_amplitudes_old[index_chosen]
+
+            # Find the flux surface to plot
+            flux_surface = find_flux_surf(
+                R_approx,
+                Z_approx,
+                total_psi_success,
+                psi_norm,
+                o_points=o_points,
+                x_points=x_points,
+            )
+            approximation_flux_surface = Coordinates({
+                "x": flux_surface[0],
+                "z": flux_surface[1],
+            })
+
+            if plot:
+                nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
+                cmap = PLOT_DEFAULTS["psi"]["cmap"]
+                # Plot TH approx for vacuum psi
+                f, ax = plt.subplots()
+                im = ax.contourf(
+                    th_params.R,
+                    th_params.Z,
+                    vacuum_psi_success,
+                    levels=nlevels,
+                    cmap=cmap,
+                )
+                ax.plot(
+                    approximation_flux_surface.x,
+                    approximation_flux_surface.z,
+                    color="r",
+                    label="TH FS",
+                )
+                ax.plot(
+                    original_fs.x,
+                    original_fs.z,
+                    color="blue",
+                    linestyle="dashed",
+                    label="BM FS",
+                )
+                ax.legend(loc="upper right")
+                f.colorbar(mappable=im)
+                plt.title("TH approximation for vacuum psi")
+                plt.show()
+
+                # Plot total psi using TH approx for vacuum psi
+                f, ax = plt.subplots()
+                im = ax.contourf(
+                    th_params.R,
+                    th_params.Z,
+                    total_psi_success,
+                    levels=nlevels,
+                    cmap=cmap,
+                )
+                ax.plot(
+                    approximation_flux_surface.x,
+                    approximation_flux_surface.z,
+                    color="r",
+                    label="TH FS",
+                )
+                ax.plot(
+                    original_fs.x,
+                    original_fs.z,
+                    color="blue",
+                    linestyle="dashed",
+                    label="BM FS",
+                )
+                ax.legend(loc="upper right")
+                f.colorbar(mappable=im)
+                plt.title("Total psi using TH approximation for vacuum psi")
+                plt.show()
+
+                # Plot abs relative difference between approx total psi vs bluemira psi
+                f, ax = plt.subplots()
+                diff = np.abs(total_psi_success - total_psi_bluemira) / np.max(
+                    np.abs(total_psi_bluemira)
+                )
+                im = ax.contourf(
+                    th_params.R, th_params.Z, diff, levels=nlevels, cmap=cmap
+                )
+                ax.plot(
+                    approximation_flux_surface.x,
+                    approximation_flux_surface.z,
+                    color="r",
+                    label="TH FS",
+                )
+                ax.plot(
+                    original_fs.x,
+                    original_fs.z,
+                    color="blue",
+                    linestyle="dashed",
+                    label="BM FS",
+                )
+                ax.legend(loc="upper right")
+                f.colorbar(mappable=im)
+                plt.title(
+                    "Absolute relative difference in total psi between TH approx and "
+                    "bluemira"
+                )
+                plt.show()
+
+                return (
+                    error_success,
+                    combo_success,
+                    total_psi_success,
+                    vacuum_psi_success,
+                    cos_amplitude_success,
+                    sin_amplitude_success,
+                    th_params,
+                )
+
+        errors_old = errors
+        combo_old = combo
+        cos_amplitudes_old = cos_amplitudes
+        sin_amplitudes_old = sin_amplitudes
+        total_psis_old = total_psis
+        vacuum_psis_old = vacuum_psis
+    if not errors:
+        raise EquilibriaError(
+            f"No combination of up to {max_degree} degrees gives an error of"
+            f"{max_error_value} for chosen equilibrium! Please adjust the allowable error"
+            "value or error tolerance values."
+        )
+    return None
