@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -26,7 +26,7 @@ from pydantic import (
 from scipy.interpolate import interp1d
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -121,7 +121,7 @@ class Efficiency(PCBaseModel):
     description: str = ""
 
     @model_validator(mode="before")
-    def value_validation(self) -> Efficiency:
+    def value_validation(self) -> Any:
         """
         Returns
         -------
@@ -130,6 +130,9 @@ class Efficiency(PCBaseModel):
         """
         if not isinstance(self, dict):
             return {"value": self}
+
+        if "value" not in self:
+            self = {"value": self}  # noqa: PLW0642
 
         if isinstance(self["value"], dict):
             if "active" not in self["value"]:
@@ -236,7 +239,7 @@ class PhaseLibrary(PCRootModel):
     root: dict[str, PhaseConfig]
 
 
-class Pulse(PCBaseModel):
+class PulseConfig(PCBaseModel):
     """Pulse Model"""
 
     description: str = ""
@@ -246,7 +249,7 @@ class Pulse(PCBaseModel):
 class PulseLibrary(PCRootModel):
     """Pulse library model"""
 
-    root: dict[str, Pulse]
+    root: dict[str, PulseConfig]
 
 
 class PulseRuns(PCRootModel):
@@ -838,6 +841,8 @@ class Phase:
         """
         if timeseries is None:
             timeseries = self.timeseries(load_type, consumption=consumption)
+        if timeseries.size == 0:
+            return {}
         return self._load(
             _normalise_timeseries(timeseries, self.duration)[0],
             load_type,
@@ -850,7 +855,188 @@ class PulseDictType(TypedDict):
     """Pulse dictionary typing"""
 
     repeat: int
-    data: dict[str, Phase]
+    data: Pulse
+
+
+class Pulse:
+    """Pulse definition object"""
+
+    def __init__(
+        self,
+        config: PulseConfig,
+        phases: dict[str, Phase],
+    ):
+        self._config = config
+        self.phases = phases
+
+    @property
+    def duration(self) -> float:
+        """Duration of pulse"""
+        return sum(phase.duration for phase in self.phases)
+
+    def phase_timeseries(
+        self,
+        load_type: str | LoadTypeOptions | None = None,
+        *,
+        consumption: bool | None = None,
+    ) -> list[npt.NDArray]:
+        """
+        Returns
+        -------
+        :
+            Timeseries for each phase of the pulse
+        """
+        return [
+            self.phases[phase_name].timeseries(load_type, consumption=consumption)
+            for phase_name in self._config.phases
+        ]
+
+    def timeseries(
+        self,
+        load_type: str | LoadTypeOptions | None = None,
+        *,
+        consumption: bool | None = None,
+    ) -> npt.NDArray:
+        """
+        Returns
+        -------
+        :
+            Timeseries of pulse
+        """
+        time = self.phase_timeseries(load_type, consumption=consumption)
+        for no, t in enumerate(time[1:]):
+            t += max(time[no])  # noqa: PLW2901
+        return np.concatenate(time)
+
+    def _timecheck(
+        self,
+        timeseries: npt.NDArray | list[npt.NDArray] | None,
+        load_type: str | LoadTypeOptions,
+        *,
+        consumption: bool,
+    ) -> list[npt.NDArray]:
+        """Check timeseries inputs"""  # noqa: DOC201
+        if timeseries is None:
+            return self.phase_timeseries(load_type, consumption=consumption)
+        if isinstance(timeseries, np.ndarray):
+            durations = np.cumsum([
+                self.phases[phase_name].duration for phase_name in self._config.phases
+            ])
+            phase_timeseries = [timeseries[np.nonzero(timeseries <= durations[0])]]
+            for no, d in enumerate(durations[:-1], start=1):
+                phase_timeseries.append(
+                    timeseries[
+                        np.nonzero((timeseries >= d) & (timeseries <= durations[no]))
+                    ]
+                )
+
+            if max(phase_timeseries[-1]) < max(timeseries):
+                bluemira_warn("Timeseries longer than pulse, clipping to end of pulse")
+            return phase_timeseries
+        return timeseries
+
+    def _load(
+        self,
+        phase_timeseries: npt.NDArray,
+        load_type: str | LoadTypeOptions,
+        unit: str | None = None,
+        *,
+        consumption: bool | None = None,
+    ) -> dict[str, npt.NDArray]:
+        phase_data = [
+            self.phases[phase_name].load(
+                load_type, unit, timeseries=time, consumption=consumption
+            )
+            for time, phase_name in zip(
+                phase_timeseries, self._config.phases, strict=False
+            )
+        ]
+
+        load_names = np.unique([load for pd in phase_data for load in pd])
+        pulse_load = {}
+        for load in load_names:
+            for pd in phase_data:
+                if pd == {}:
+                    continue
+                if load in pd:
+                    if load in pulse_load:
+                        pulse_load[load] = np.concatenate([pulse_load[load], pd[load]])
+                    else:
+                        pulse_load[load] = pd[load]
+                elif load in pulse_load:
+                    pulse_load[load] = np.concatenate([
+                        pulse_load[load],
+                        np.zeros_like(next(iter(pd.values()))),
+                    ])
+                else:
+                    pulse_load[load] = np.zeros_like(next(iter(pd.values())))
+        return pulse_load
+
+    def total_load(
+        self,
+        load_type: str | LoadTypeOptions,
+        unit: str | None = None,
+        *,
+        timeseries: npt.NDArray | list[npt.NDArray] | None = None,
+        consumption: bool | None = None,
+    ) -> npt.NDArray:
+        """Total load for each timeseries point for a given load_type
+
+        Parameters
+        ----------
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+
+        Returns
+        -------
+        :
+            Total load
+        """
+        phase_timeseries = self._timecheck(
+            timeseries, load_type, consumption=consumption
+        )
+        return np.sum(
+            list(
+                self._load(
+                    phase_timeseries, load_type, unit, consumption=consumption
+                ).values()
+            ),
+            axis=0,
+        )
+
+    def load(
+        self,
+        load_type: str | LoadTypeOptions,
+        unit: str | None = None,
+        *,
+        timeseries: npt.NDArray | list[npt.NDArray] | None = None,
+        consumption: bool | None = None,
+    ) -> dict[str, npt.NDArray]:
+        """
+        Get load data taking into account efficiencies and consumption
+
+        Parameters
+        ----------
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+
+        Returns
+        -------
+        :
+            Load
+        """
+        phase_timeseries = self._timecheck(
+            timeseries, load_type, consumption=consumption
+        )
+        return self._load(phase_timeseries, load_type, unit, consumption=consumption)
 
 
 class PowerCycle(PCBaseModel):
@@ -968,17 +1154,20 @@ class PowerCycle(PCBaseModel):
             for pulse, reps in self.scenario.pulses.root.items()
         }
 
-    def get_pulse(self, pulse: str) -> dict[str, Phase]:
+    def get_pulse(self, pulse: str) -> Pulse:
         """
         Returns
         -------
         :
             A pulse dictionary
         """
-        return {
-            phase: self.get_phase(phase)
-            for phase in self.pulse_library.root[pulse].phases
-        }
+        return Pulse(
+            self.pulse_library.root[pulse],
+            {
+                phase: self.get_phase(phase)
+                for phase in self.pulse_library.root[pulse].phases
+            },
+        )
 
     def add_load(
         self,
@@ -1004,14 +1193,14 @@ class PowerCycle(PCBaseModel):
             self.subphase_library.root[subphase].loads.append(name)
             if subphase_efficiency is not None:
                 self.subphase_library.root[subphase].efficiencies[name] = (
-                    subphase_efficiency
+                    Efficiency.model_validate(sp_e) for sp_e in subphase_efficiency
                 )
 
 
 def make_power_cycle(
     scenario_name: str,
     pulse_runs: PulseRuns | None = None,
-    pulses: dict[str, Pulse] | None = None,
+    pulses: dict[str, PulseConfig] | None = None,
     phases: dict[str, PhaseConfig] | None = None,
     subphases: dict[str, SubPhase] | None = None,
     systems: dict[str, System] | None = None,
