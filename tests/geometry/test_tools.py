@@ -942,31 +942,64 @@ class TestForceWireToSpline:
         bm_debug.assert_called_once()
 
 
-class TestSplineSerialisation:
+def load_split_polysplines() -> list[BluemiraWire]:
+    """Load the poly spline, and then split them in half."""
     filename = "vvts_face_polygon_test.json"
+    path = get_bluemira_path("geometry/test_data", subfolder="tests")
+
+    with open(Path(path, filename)) as file:
+        data = json.load(file)
+
     wires = []
+    for wire in data["BluemiraFace"]["boundary"]:
+        closed_spline = deserialise_shape(wire)
+        wires.extend(middles_of_splines(closed_spline))
+        wires.extend(split_at_vertices(closed_spline, 5))
+    return wires
 
-    @classmethod
-    def setup_class(cls):
-        path = get_bluemira_path("geometry/test_data", subfolder="tests")
-        with open(Path(path, cls.filename)) as file:
-            data = json.load(file)
 
-        cls.wires = []
-        for wire in data["BluemiraFace"]["boundary"]:
-            closed_spline = deserialise_shape(wire)
-            cls.wires.extend(cls.split_wire(closed_spline))
+def middles_of_splines(spline) -> list[BluemiraWire]:
+    """Take the middle segments of a spline."""
+    cuts = spline.discretise(7, byedges=False)
 
-    @staticmethod
-    def split_wire(spline) -> BluemiraWire:
-        cuts = spline.discretise(7, byedges=False)
+    wires = []
+    for start, end in pairwise(cuts.points[1:-1]):
+        _, segment = split_wire(spline, start)
+        segment, _ = split_wire(segment, end)
+        wires.append(segment)
+    return wires
 
-        wires = []
-        for start, end in pairwise(cuts.points[1:-1]):
-            _, segment = split_wire(spline, start)
-            segment, _ = split_wire(segment, end)
-            wires.append(segment)
-        return wires
+
+def split_at_vertices(spline, top_n: int = 5) -> list[BluemiraWire]:
+    """Split a spline at its top n vertices. If n=5, then we get 5 wires out."""
+    wire = spline.copy()
+    segments = []
+    for vertex in spline.shape.Vertexes[1:-1][:top_n]:
+        new_segment, wire = split_wire(wire, np.array(vertex.CenterOfGravity))
+        segments.append(new_segment)
+    # ignore first vertex because that's the start of the wire.
+    return segments
+
+
+def split_fourier_wire_in_2() -> list[BluemiraWire]:
+    """Create a wire from a sinusoidal signal,
+    Then split it in half.
+    """
+    x = np.linspace(0, 10, 1000)
+    y = np.zeros(1000)
+    z = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
+
+    spline = interpolate_bspline(np.array([x, y, z]))
+
+    cut_point = (1.5 * np.pi, 0, 0.5 * -1 + 3 * 0**2)
+
+    wire_1, wire_2 = split_wire(spline, cut_point, 1e-5)
+    return [wire_1, wire_2]
+
+
+class TestSplineSerialisation:
+    wires = load_split_polysplines()
+    wires.extend(split_fourier_wire_in_2())
 
     @pytest.mark.parametrize("wire", wires)
     def test_serialisation(self, wire):
