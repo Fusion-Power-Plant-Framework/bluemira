@@ -55,8 +55,8 @@ def test_make_powercycle():
         loads={"lone": {"time": [0, 1, 2], "data": [2, 0, 4]}},
     )
     sc = pc.get_scenario()
-    assert isinstance(sc["std"]["data"]["one"], Phase)
-    assert isinstance(sc["other"]["data"]["one"], Phase)
+    assert isinstance(sc["std"]["data"].phases["one"], Phase)
+    assert isinstance(sc["other"]["data"].phases["one"], Phase)
     ph = pc.get_phase("one")
     assert np.allclose(ph.timeseries(), [0, 5, 10])
     assert np.allclose(ph.load("active")["lone"], [-2, -1, 0])
@@ -360,12 +360,17 @@ class TestPowerCycle:
         scenario = self.config.get_scenario()
 
         assert scenario["std"]["repeat"] == 1
-        assert len(scenario["std"]["data"].keys()) == 4
-        assert all(isinstance(val, Phase) for val in scenario["std"]["data"].values())
-        assert scenario["std"]["data"]["dwl"].subphases.root.keys() == {"csr", "pmp"}
+        assert len(scenario["std"]["data"].phases.keys()) == 4
+        assert all(
+            isinstance(val, Phase) for val in scenario["std"]["data"].phases.values()
+        )
+        assert scenario["std"]["data"].phases["dwl"].subphases.root.keys() == {
+            "csr",
+            "pmp",
+        }
 
-        sph = scenario["std"]["data"]["dwl"].subphases.root
-        assert scenario["std"]["data"]["dwl"].loads.root.keys() == set(
+        sph = scenario["std"]["data"].phases["dwl"].subphases.root
+        assert scenario["std"]["data"].phases["dwl"].loads.root.keys() == set(
             sph["csr"].loads + sph["pmp"].loads
         )
 

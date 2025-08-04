@@ -841,6 +841,7 @@ class Phase:
         """
         if timeseries is None:
             timeseries = self.timeseries(load_type, consumption=consumption)
+        timeseries = np.asarray(timeseries)
         if timeseries.size == 0:
             return {}
         return self._load(
