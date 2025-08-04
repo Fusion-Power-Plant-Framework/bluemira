@@ -200,6 +200,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         self,
         ref_harmonics_cos: npt.NDArray[np.float64],
         ref_harmonics_sin: npt.NDArray[np.float64],
+        ref_harmonics_cos_amplitudes: npt.NDArray[np.float64],
+        ref_harmonics_sin_amplitudes: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
         tolerance: float | None = None,
         constraint_type: str = "equality",
@@ -212,19 +214,20 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             tolerance = np.abs(tolerance)
         self.tolerance = tolerance
 
-        self.max_degree = len(ref_harmonics_cos)
+        self.cos_degrees_chosen = ref_harmonics_cos
+        self.sin_degrees_chosen = ref_harmonics_sin
 
         if constraint_type == "equality":
             self.tolerance = tolerance
-            self.target_harmonics_cos = ref_harmonics_cos
-            self.target_harmonics_sin = ref_harmonics_sin
+            self.target_harmonics_cos = ref_harmonics_cos_amplitudes
+            self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
             self.tolerance = np.append(tolerance, tolerance, axis=0)
             self.target_harmonics_cos = np.append(
-                ref_harmonics_cos, ref_harmonics_cos, axis=0
+                ref_harmonics_cos_amplitudes, ref_harmonics_cos_amplitudes, axis=0
             )
             self.target_harmonics_sin = np.append(
-                ref_harmonics_sin, ref_harmonics_sin, axis=0
+                ref_harmonics_sin_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
 
         self.th_params = th_params
@@ -271,8 +274,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
             equilibrium.coilset
         )
-        self._args["b_vec_cos"] = self.target_harmonics_cos - self.evaluate(equilibrium)
-        self._args["b_vec_sin"] = self.target_harmonics_sin - self.evaluate(equilibrium)
+        cos_evaluated, sin_evaluated = self.evaluate(equilibrium)
+        self._args["b_vec_cos"] = self.target_harmonics_cos - cos_evaluated
+        self._args["b_vec_sin"] = self.target_harmonics_sin - sin_evaluated
         if self.constraint_type == "inequality":
             self._args["a_mat_cos"] = np.append(
                 self._args["a_mat_cos"], -1 * self._args["a_mat_cos"], axis=0
@@ -296,16 +300,21 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # containing the plasma, i.e., LCFS
         # N.B., cannot use coil located within LCFS as part of this method.
         return coil_toroidal_harmonic_amplitude_matrix(
-            coilset,
-            self.th_params,
-            max_degree=self.max_degree,
+            input_coils=coilset,
+            th_params=self.th_params,
+            cos_degrees_chosen=self.cos_degrees_chosen,
+            sin_degrees_chosen=self.sin_degrees_chosen,
         )
 
-    def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
+    def evaluate(
+        self, _eq: Equilibrium
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
-        return np.zeros(len(self.target_harmonics_cos))
+        return np.zeros(len(self.target_harmonics_cos)), np.zeros(
+            len(self.target_harmonics_sin)
+        )
 
     def f_constraint(self) -> ToroidalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201

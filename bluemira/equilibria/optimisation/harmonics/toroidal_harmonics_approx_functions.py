@@ -561,7 +561,7 @@ def toroidal_harmonic_approximate_psi(
     return approx_coilset_psi, Am_cos, Am_sin
 
 
-def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
+def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams | None = None,
     max_error_value: float = 0.5,
@@ -570,7 +570,15 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
     *,
     plot: bool = False,
 ) -> tuple[
-    ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    ToroidalHarmonicsParams,
 ]:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
@@ -668,6 +676,8 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
     # Loop over combinations of degrees and save results which satisfy error condition
     errors_old = []
     combo_old = []
+    cos_degrees_old = []
+    sin_degrees_old = []
     cos_amplitudes_old = []
     sin_amplitudes_old = []
     total_psis_old = []
@@ -675,6 +685,8 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
     for n in np.arange(2, max_degree):
         errors = []
         combo = []
+        cos_degrees = []
+        sin_degrees = []
         cos_amplitudes = []
         sin_amplitudes = []
         total_psis = []
@@ -724,6 +736,8 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
             if error < max_error_value:
                 errors.append(error)
                 combo.append(c)
+                cos_degrees.append(cos_degrees_chosen)
+                sin_degrees.append(sin_degrees_chosen)
                 total_psis.append(total_psi_approx)
                 vacuum_psis.append(approximate_coilset_psi)
                 cos_amplitudes.append(cos_amps)
@@ -733,136 +747,165 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914
         # use the previous total number of degrees
         full = (len(errors_old) != 0) & (len(errors) != 0)
         succeeded = (np.min(errors_old) - np.min(errors) < tol) if full else False
-        print(f"succeeded = {succeeded}")
+        # TODO shall we add a condition that the psi_norm flux surface for _old should
+        # be closed?
         if succeeded:
             index_chosen = np.argmin(errors_old)
             error_success = errors_old[index_chosen]
             combo_success = combo_old[index_chosen]
+            cos_degrees_success = cos_degrees_old[index_chosen]
+            sin_degrees_success = sin_degrees_old[index_chosen]
             total_psi_success = total_psis_old[index_chosen]
             vacuum_psi_success = vacuum_psis_old[index_chosen]
             cos_amplitude_success = cos_amplitudes_old[index_chosen]
             sin_amplitude_success = sin_amplitudes_old[index_chosen]
 
-            # Find the flux surface to plot
-            flux_surface = find_flux_surf(
-                R_approx,
-                Z_approx,
-                total_psi_success,
-                psi_norm,
-                o_points=o_points,
-                x_points=x_points,
-            )
-            approximation_flux_surface = Coordinates({
-                "x": flux_surface[0],
-                "z": flux_surface[1],
-            })
-
             if plot:
-                nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-                cmap = PLOT_DEFAULTS["psi"]["cmap"]
-                # Plot TH approx for vacuum psi
-                f, ax = plt.subplots()
-                im = ax.contourf(
-                    th_params.R,
-                    th_params.Z,
-                    vacuum_psi_success,
-                    levels=nlevels,
-                    cmap=cmap,
+                plotting(
+                    R_approx=R_approx,
+                    Z_approx=Z_approx,
+                    total_psi_success=total_psi_success,
+                    psi_norm=psi_norm,
+                    o_points=o_points,
+                    x_points=x_points,
+                    total_psi_bluemira=total_psi_bluemira,
+                    th_params=th_params,
+                    original_fs=original_fs,
                 )
-                ax.plot(
-                    approximation_flux_surface.x,
-                    approximation_flux_surface.z,
-                    color="r",
-                    label="TH FS",
-                )
-                ax.plot(
-                    original_fs.x,
-                    original_fs.z,
-                    color="blue",
-                    linestyle="dashed",
-                    label="BM FS",
-                )
-                ax.legend(loc="upper right")
-                f.colorbar(mappable=im)
-                plt.title("TH approximation for vacuum psi")
-                plt.show()
 
-                # Plot total psi using TH approx for vacuum psi
-                f, ax = plt.subplots()
-                im = ax.contourf(
-                    th_params.R,
-                    th_params.Z,
-                    total_psi_success,
-                    levels=nlevels,
-                    cmap=cmap,
-                )
-                ax.plot(
-                    approximation_flux_surface.x,
-                    approximation_flux_surface.z,
-                    color="r",
-                    label="TH FS",
-                )
-                ax.plot(
-                    original_fs.x,
-                    original_fs.z,
-                    color="blue",
-                    linestyle="dashed",
-                    label="BM FS",
-                )
-                ax.legend(loc="upper right")
-                f.colorbar(mappable=im)
-                plt.title("Total psi using TH approximation for vacuum psi")
-                plt.show()
-
-                # Plot abs relative difference between approx total psi vs bluemira psi
-                f, ax = plt.subplots()
-                diff = np.abs(total_psi_success - total_psi_bluemira) / np.max(
-                    np.abs(total_psi_bluemira)
-                )
-                im = ax.contourf(
-                    th_params.R, th_params.Z, diff, levels=nlevels, cmap=cmap
-                )
-                ax.plot(
-                    approximation_flux_surface.x,
-                    approximation_flux_surface.z,
-                    color="r",
-                    label="TH FS",
-                )
-                ax.plot(
-                    original_fs.x,
-                    original_fs.z,
-                    color="blue",
-                    linestyle="dashed",
-                    label="BM FS",
-                )
-                ax.legend(loc="upper right")
-                f.colorbar(mappable=im)
-                plt.title(
-                    "Absolute relative difference in total psi between TH approx and "
-                    "bluemira"
-                )
-                plt.show()
-
-                return (
-                    error_success,
-                    combo_success,
-                    total_psi_success,
-                    vacuum_psi_success,
-                    cos_amplitude_success,
-                    sin_amplitude_success,
-                    th_params,
-                )
+            return (
+                error_success,
+                combo_success,
+                cos_degrees_success,
+                sin_degrees_success,
+                total_psi_success,
+                vacuum_psi_success,
+                cos_amplitude_success,
+                sin_amplitude_success,
+                th_params,
+            )
+        elif n == max_degree:  # noqa: RET505
+            raise EquilibriaError(
+                f"No combination of up to {max_degree} degrees gives an error of"
+                f"{max_error_value} for chosen equilibrium! Please adjust the allowable error"
+                "value or error tolerance values."
+            )
 
         errors_old = errors
         combo_old = combo
+        cos_degrees_old = cos_degrees
+        sin_degrees_old = sin_degrees
         cos_amplitudes_old = cos_amplitudes
         sin_amplitudes_old = sin_amplitudes
         total_psis_old = total_psis
         vacuum_psis_old = vacuum_psis
-    if not errors:
-        raise EquilibriaError(
-            f"No combination of up to {max_degree} degrees gives an error of"
-            f"{max_error_value} for chosen equilibrium! Please adjust the allowable error"
-            "value or error tolerance values."
-        )
-    return None
+
+
+def plotting(
+    R_approx,
+    Z_approx,
+    total_psi_success,
+    psi_norm,
+    o_points,
+    x_points,
+    total_psi_bluemira,
+    th_params,
+    original_fs,
+):
+    # Find the flux surface to plot
+    flux_surface = find_flux_surf(
+        R_approx,
+        Z_approx,
+        total_psi_success,
+        psi_norm,
+        o_points=o_points,
+        x_points=x_points,
+    )
+    approximation_flux_surface = Coordinates({
+        "x": flux_surface[0],
+        "z": flux_surface[1],
+    })
+    # Plotting if successful
+    nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
+    cmap = PLOT_DEFAULTS["psi"]["cmap"]
+    # Plot TH approx for vacuum psi
+    # f, ax = plt.subplots()
+    # im = ax.contourf(
+    #     th_params.R,
+    #     th_params.Z,
+    #     vacuum_psi_success,
+    #     levels=nlevels,
+    #     cmap=cmap,
+    # )
+    # ax.plot(
+    #     approximation_flux_surface.x,
+    #     approximation_flux_surface.z,
+    #     color="r",
+    #     label="TH FS",
+    # )
+    # ax.plot(
+    #     original_fs.x,
+    #     original_fs.z,
+    #     color="blue",
+    #     linestyle="dashed",
+    #     label="BM FS",
+    # )
+    # ax.legend(loc="upper right")
+    # f.colorbar(mappable=im)
+    # plt.title("TH approximation for vacuum psi")
+    # plt.show()
+
+    # # Plot total psi using TH approx for vacuum psi
+    # f, ax = plt.subplots()
+    # im = ax.contourf(
+    #     th_params.R,
+    #     th_params.Z,
+    #     total_psi_success,
+    #     levels=nlevels,
+    #     cmap=cmap,
+    # )
+    # ax.plot(
+    #     approximation_flux_surface.x,
+    #     approximation_flux_surface.z,
+    #     color="r",
+    #     label="TH FS",
+    # )
+    # ax.plot(
+    #     original_fs.x,
+    #     original_fs.z,
+    #     color="blue",
+    #     linestyle="dashed",
+    #     label="BM FS",
+    # )
+    # ax.legend(loc="upper right")
+    # f.colorbar(mappable=im)
+    # plt.title("Total psi using TH approximation for vacuum psi")
+    # plt.show()
+
+    # Plot abs relative difference between approx total psi vs bluemira psi
+    f, ax = plt.subplots()
+    diff = np.abs(total_psi_success - total_psi_bluemira) / np.max(
+        np.abs(total_psi_bluemira)
+    )
+    im = ax.contourf(th_params.R, th_params.Z, diff, levels=nlevels, cmap=cmap)
+    ax.plot(
+        approximation_flux_surface.x,
+        approximation_flux_surface.z,
+        color="r",
+        label="TH FS",
+    )
+    ax.plot(
+        original_fs.x,
+        original_fs.z,
+        color="blue",
+        linestyle="dashed",
+        label="BM FS",
+    )
+    ax.legend(loc="upper right")
+    f.colorbar(mappable=im)
+    # plt.title(
+    #     "Absolute relative difference in total psi between TH approx and "
+    #     "bluemira"
+    # )
+    plt.title("errors_old chosen")
+    plt.show()
