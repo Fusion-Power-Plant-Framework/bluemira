@@ -97,19 +97,32 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         self.scale = scale
         self.name = name
 
+        self.cos_empty = len(b_vec_cos) == 0
+        self.sin_empty = len(b_vec_sin) == 0
+
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
+        if self.cos_empty:
+            result_cos = []
+        else:
+            result_cos = self.a_mat_cos @ currents
+            result_cos -= self.b_vec_cos + self.value
 
-        result_cos = self.a_mat_cos @ currents
-        result_sin = self.a_mat_sin @ currents
+        if self.sin_empty:
+            result_sin = []
+        else:
+            result_sin = self.a_mat_sin @ currents
+            result_sin -= self.b_vec_sin + self.value
 
-        result_cos -= self.b_vec_cos + self.value
-        result_sin -= self.b_vec_sin + self.value
         return np.append(result_cos, result_sin, axis=0)
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""  # noqa: DOC201
-        scaled_cos = self.a_mat_cos * self.scale
-        scaled_sin = self.a_mat_sin * self.scale
-        return np.append(scaled_cos, scaled_sin, axis=0)
+        if self.cos_empty:
+            return self.a_mat_sin * self.scale
+        if self.sin_empty:
+            return self.a_mat_cos * self.scale
+        return np.append(
+            self.a_mat_cos * self.scale, self.a_mat_sin * self.scale, axis=0
+        )

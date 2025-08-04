@@ -46,6 +46,9 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
 # %%
 # Data from EQDSK file
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
+
+# Comment in/out as required
+
 # Double null
 eq_name = "DN-DEMO_eqref.json"
 eq_name = Path(EQDATA, eq_name)
@@ -53,12 +56,11 @@ eq = Equilibrium.from_eqdsk(
     eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
 )
 
-# Single null
+# # Single null
 # eq_name = "eqref_OOB.json"
 # eq_name = Path(EQDATA, eq_name)
 # eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
 
-# %%
 # Plot equilibrium
 f, ax = plt.subplots()
 eq.plot(ax=ax)
@@ -90,9 +92,25 @@ psi_norm = 0.95
 (
     error,
     combo,
+    cos_degrees,
+    sin_degrees,
     total_psi,
     vacuum_psi,
     cos_amplitudes,
     sin_amplitudes,
     th_params,
-) = toroidal_harmonic_approximation(eq=eq, psi_norm=psi_norm, plot=True)
+) = toroidal_harmonic_approximation(
+    eq=eq,
+    psi_norm=psi_norm,
+    plot=True,
+    # tol=0.2, # Use this for SN
+)
+# Some notes:
+# The default values work for DN
+# For SN, use default max error and tol=0.2
+
+# %%
+# NOTE
+
+# Removed the rest of this notebook. Can add own constraints here to play around with
+# I will be updating all the example notebooks
