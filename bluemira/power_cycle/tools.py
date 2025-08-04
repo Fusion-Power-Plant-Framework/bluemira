@@ -8,33 +8,10 @@
 Utility functions for the power cycle model.
 """
 
-import json
-from typing import Any
-
-import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 
 from bluemira.base.constants import EPS
-
-
-def read_json(file_path) -> dict[str, Any]:
-    """
-    Returns the contents of a 'json' file.
-    """
-    with open(file_path) as json_file:
-        return json.load(json_file)
-
-
-def create_axes(ax=None):
-    """
-    Create axes object.
-
-    If 'None', creates a new 'axes' instance.
-    """
-    if ax is None:
-        _, ax = plt.subplots()
-    return ax
 
 
 @nb.jit
@@ -45,20 +22,38 @@ def _needs_nudge(x_last, x_this):
 
 
 @nb.jit
-def validate_monotonic_increase(x, strict_flag):
-    """Validate that vector is (strictly) monotonically increasing."""
+def validate_monotonic_increase(x, strict_flag: bool = False):  # noqa: FBT001, FBT002
+    """Validate that vector is (strictly) monotonically increasing.
+
+    Raises
+    ------
+    ValueError
+        The vector is not monotonically increasing
+    """
     for x_last, x_this in zip(x[:-1], x[1:]):  # noqa: RUF007, B905
-        if strict_flag and not (x_this > x_last):
-            raise ValueError("Vector is not strictly monotonically increasing.")
-        if not strict_flag and not (x_this >= x_last):
+        if (strict_flag and not (x_this > x_last)) or (
+            not strict_flag and not (x_this >= x_last)
+        ):
             raise ValueError("Vector is not monotonically increasing.")
 
 
 @nb.jit
-def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations=500):
+def unique_domain(x: np.ndarray, epsilon: float = 1e-10, max_iterations: int = 500):
     """
     Ensure x has only unique values to make (Domain: x -> Image: y) a function.
 
+    Returns
+    -------
+    :
+        unique domain array
+
+    Raises
+    ------
+    ValueError
+        max iterations reached
+
+    Notes
+    -----
     To be a function domain, x must be strictly monotonically increasing. So x
     must start at least as a monotonically increasing vector. The function then
     ensures strict monotonicity by nudging forward repeated values by a small
@@ -104,6 +99,15 @@ def match_domains(
     """
     Match the domains of multiple functions, each represented by 2 vectors.
 
+    Returns
+    -------
+    :
+        Matched x values
+    :
+        Matched y values
+
+    Notes
+    -----
     First, for each pair of vectors (x,y) that define a function, the domain
     x is ensured to be unique with 'unique_domain' (otherwise, calling 'unique'
     on 'x_matched' later can neglect step functions).
