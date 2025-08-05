@@ -26,6 +26,22 @@ class FEMPlainStrainLEA2D:
     def __init__(self, mesh: Mesh, cell_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
                  facet_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None, degree: int = 2,
                  repr: str = "vectorial"):
+        """
+        Initialize the FEM solver for plane strain elasticity.
+
+        Parameters
+        ----------
+        mesh : Mesh
+            The computational mesh.
+        cell_markers : MeshTags, optional
+            Mesh cell markers for material assignment.
+        facet_markers : MeshTags, optional
+            Mesh facet markers for boundary conditions.
+        degree : int, optional
+            Polynomial degree of the finite element basis. Default is 2.
+        repr : str, optional
+            Representation type for stress/strain ('vectorial' only supported).
+        """
 
         if repr != "vectorial":
             raise NotImplementedError("Only 'vectorial' representation is currently supported.")
@@ -53,11 +69,22 @@ class FEMPlainStrainLEA2D:
         self._define_constitutive_laws()
 
     def _setup_domain(self):
+        """
+        Set up UFL integration measures for volume (dx) and boundary (ds, dS)
+        using provided cell and facet markers.
+        """
         self.dx = Measure("dx", domain=self.domain, subdomain_data=self.cell_markers)
         self.ds = Measure("ds", domain=self.domain, subdomain_data=self.facet_markers)
         self.dS = Measure("dS", domain=self.domain, subdomain_data=self.facet_markers)
 
     def _define_function_spaces(self):
+        """
+        Define function spaces for:
+        - Displacement field (P-deg vector)
+        - Material properties (DG(0) scalar)
+        - Stress/strain fields (DG(0) vector)
+        Also defines trial/test functions used in variational forms.
+        """
         self.V = fem.functionspace(self.domain, ("P", self.degree, (self._gdim,)))
         self.V0 = fem.functionspace(self.domain, ("DG", 0))  # For E and nu
         self.VDG0_v = fem.functionspace(self.domain, ("DG", 0, (3,)))
@@ -66,8 +93,8 @@ class FEMPlainStrainLEA2D:
 
     def _define_constitutive_laws(self):
         """
-        Defines the constitutive (material) laws for strain and stress.
-        These can be evaluated for any displacement function later.
+        Define stress and strain expressions symbolically using material tensors.
+        These are stored as lambda functions and evaluated later using displacement.
         """
         zz = self.E / ((1 + self.nu) * (1 - 2 * self.nu))
         C = as_matrix([
@@ -88,8 +115,12 @@ class FEMPlainStrainLEA2D:
 
     def set_materials(self, materials: dict[int, tuple[float, float]]):
         """
-        Assigns materials to mesh subdomains by tag.
-        Each tag is associated with (E, nu).
+        Assigns material properties to regions of the mesh.
+
+        Parameters
+        ----------
+        materials : dict[int, tuple[float, float]]
+            Dictionary mapping cell marker tags to tuples of (E, nu).
         """
         cell_tags = self.cell_markers.values
         for tag, (E_val, nu_val) in materials.items():
@@ -99,7 +130,14 @@ class FEMPlainStrainLEA2D:
 
     def set_normal_pressure(self, value: float, tag: int):
         """
-        Apply normal pressure on a boundary facet identified by `tag`.
+        Apply a constant normal pressure load on a boundary identified by its facet tag.
+
+        Parameters
+        ----------
+        value : float
+            Pressure magnitude (positive is outward).
+        tag : int
+            Facet marker tag identifying the boundary region.
         """
         T = fem.Constant(self.domain, value)
         n = FacetNormal(self.domain)
@@ -108,7 +146,13 @@ class FEMPlainStrainLEA2D:
 
     def apply_slip_conditions(self, slip_tags: list):
         """
-        Enforces slip boundary conditions on specified tags using MPC.
+        Apply slip boundary conditions using MultiPoint Constraints (MPC)
+        on specified facet marker tags.
+
+        Parameters
+        ----------
+        slip_tags : list[int]
+            List of facet marker tags where slip conditions are applied.
         """
         if self.mpc is None:
             self.mpc = MultiPointConstraint(self.V)
@@ -120,6 +164,10 @@ class FEMPlainStrainLEA2D:
         self._mpc_activated = True
 
     def _setup_forms(self):
+        """
+        Assemble the bilinear form (stiffness matrix) and linear form (load vector)
+        for the variational problem using current boundary conditions and loads.
+        """
         self.a_form = inner(self._stress(self.du), self._strain(self.v)) * self.dx
 
         if self.loads:
@@ -129,6 +177,20 @@ class FEMPlainStrainLEA2D:
             self.L_form = dot(zero * FacetNormal(self.domain), self.v) * self.ds
 
     def solve(self):
+        """
+        Solve the linear system for displacements under applied loads and constraints.
+
+        Returns
+        -------
+        fem.Function
+            The computed displacement field.
+
+        Raises
+        ------
+        RuntimeError
+            If materials are not set or slip conditions are not applied.
+        """
+        #TODO: consider the case without mpc
         if not self._mpc_activated:
             raise RuntimeError("Slip conditions not applied. Call apply_slip_conditions() first.")
 
@@ -144,7 +206,14 @@ class FEMPlainStrainLEA2D:
 
     def postprocess_stress_strain(self):
         """
-        Computes and returns strain and stress fields from the solution.
+        Compute element-wise strain and stress tensors from the solved displacement field.
+
+        Returns
+        -------
+        strain_fn : fem.Function
+            The strain field stored in DG(0, 3) format.
+        stress_fn : fem.Function
+            The stress field stored in DG(0, 3) format.
         """
         strain_expr = self._strain(self.uh)
         stress_expr = self._stress(self.uh)
@@ -167,7 +236,14 @@ class FEMPlainStrainLEA2D:
 
     def export_vtk(self, filename="output.pvd", *functions):
         """
-        Export any number of computed functions to a VTK file.
+        Export one or more finite element functions to a VTK file for visualization.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the VTK file to write to.
+        functions : fem.Function
+            One or more functions to include in the output.
         """
         with VTKFile(self.domain.comm, filename, "w") as vtk:
             for f in functions:
