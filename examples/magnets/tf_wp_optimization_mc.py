@@ -116,6 +116,7 @@ def B_TF_r(I_TF, n_TF, r):
     """
     return 1.08 * (MU_0_2PI * n_TF * I_TF / r)
 
+
 n_cond = np.floor(I_TF / Iop)  # minimum number of conductors
 bluemira_print(f"Total number of conductor: {n_cond}")
 # %% md
@@ -198,7 +199,7 @@ class TFWPDesignerParams:
     n_TF = 16  # number of TF coils
     ripple = 6e-3  # requirement on the maximum plasma ripple
     d = 1.82  # additional distance to calculate the max external radius of the inner TF leg
-    Iop = 70.0e3  # operational current in each conductor
+    Iop = 60.0e3  # operational current in each conductor
     T_sc = 4.2  # operational temperature of superconducting cable
     T_margin = 1.5  # temperature margin
     tau_discharge = tau_discharge
@@ -354,51 +355,70 @@ bounds = Bounds([1, 1e-5, 0.2], [10000, 0.01, 1.0])
 
 
 def objective(x, data: TFWPDataStructure):
-    data.update(x)
-    return -data.case.Rk
+    try:
+        data.update(x)
+        return data.case.Ri - data.case.Rk
+    except Exception:
+        return np.inf
 
 
 def constraint_quench_protection(x, data: TFWPDataStructure):
-    data.update(x)
-    solution = data.cable._temperature_evolution(
-        0.0,
-        data.params.tau_discharge,
-        data.params.T_sc,
-        data.B_fun,
-        data.I_fun,
-    )
-    final_temperature = float(solution.y[0][-1])
-    return data.params.hotspot_target_temperature - final_temperature
+    try:
+        data.update(x)
+        solution = data.cable._temperature_evolution(
+            0.0,
+            data.params.tau_discharge,
+            data.params.T_sc,
+            data.B_fun,
+            data.I_fun,
+        )
+        final_temperature = float(solution.y[0][-1])
+        return data.params.hotspot_target_temperature - final_temperature
+    except Exception:
+        return np.inf
 
 
 def constraint_wp_geometry(x, data: TFWPDataStructure):
-    data.update(x)
-    # Is this even right?
-    return data.derived_params.r_i - data.case.dy_wp_tot - data.case.dy_vault
+    try:
+        data.update(x)
+        return -(
+            data.derived_params.r_i
+            - data.case.dy_wp_tot
+            - data.case.dy_vault
+            - data.case.dy_ps
+        )
+    except Exception:
+        return -np.inf
 
 
 def constraint_case_stress(x, data: TFWPDataStructure):
-    data.update(x)
-    return S_Y - data.case._tresca_stress(
-        data.derived_params.magnetic_pressure,
-        data.derived_params.vertical_tension,
-        temperature=data.params.T_sc,
-    )
+    try:
+        data.update(x)
+        return S_Y - data.case._tresca_stress(
+            data.derived_params.magnetic_pressure,
+            data.derived_params.vertical_tension,
+            temperature=data.params.T_sc,
+        )
+    except Exception:
+        return -np.inf
 
 
 def constraint_jacket_stress(x, data: TFWPDataStructure):
-    data.update(x)
-    return S_Y - data.conductor._tresca_sigma_jacket(
-        data.derived_params.magnetic_pressure,
-        data.derived_params.vertical_tension,
-        data.params.T_sc,
-        data.derived_params.peak_field,
-        "x",
-    )
+    try:
+        data.update(x)
+        return S_Y - data.conductor._tresca_sigma_jacket(
+            data.derived_params.magnetic_pressure,
+            data.derived_params.vertical_tension,
+            data.params.T_sc,
+            data.derived_params.peak_field,
+            "x",
+        )
+    except Exception:
+        return -np.inf
 
 
 constraints = [
-    {"type": "ineq", "fun": lambda x: constraint_quench_protection(x, data)},
+    {"type": "eq", "fun": lambda x: constraint_quench_protection(x, data)},
     {"type": "ineq", "fun": lambda x: constraint_case_stress(x, data)},
     {"type": "ineq", "fun": lambda x: constraint_jacket_stress(x, data)},
     {"type": "eq", "fun": lambda x: constraint_wp_geometry(x, data)},
@@ -418,39 +438,110 @@ ax = data.case.plot(show=False, homogenized=False)
 ax.set_title("Case design before optimization")
 plt.show()
 
-raise ValueError
+case = data.case
+
 bluemira_print(f"Previous number of conductors: {n_cond}")
 bluemira_print(f"New number of conductors: {case.n_conductors}")
 
-# %% md
-# ## Optimize cable jacket and case vault thickness
-# %%
-# Optimization parameters
-bounds_cond_jacket = np.array([1e-5, 0.2])
-bounds_dy_vault = np.array([0.1, 2])
-max_niter = 100
-err = 1e-6
 
-# case.optimize_jacket_and_vault(
-case.optimize_jacket_and_vault(
-    pm=pm,
-    fz=t_z,
-    temperature=T_op,
-    B=B_TF_i,
-    allowable_sigma=S_Y,
-    bounds_cond_jacket=bounds_cond_jacket,
-    bounds_dy_vault=bounds_dy_vault,
-    layout=layout,
-    wp_reduction_factor=wp_reduction_factor,
-    min_gap_x=min_gap_x,
-    n_layers_reduction=n_layers_reduction,
-    max_niter=max_niter,
-    eps=err,
-    n_conds=n_cond,
+# Summary table
+from tabulate import tabulate
+
+# x_opt = result.x.copy()
+# x_opt[0] = int(np.round(x_opt[0]))
+# data.update(x_opt)
+
+
+# Evaluate constraint components
+try:
+    sol = data.cable._temperature_evolution(
+        0.0, data.params.tau_discharge, data.params.T_sc, data.B_fun, data.I_fun
+    )
+    T_hotspot = float(sol.y[0][-1])
+    T_target = data.params.hotspot_target_temperature
+    quench_margin = T_target - T_hotspot
+except:
+    T_target = T_hotspot = quench_margin = np.nan
+
+try:
+    sigma_case = data.case._tresca_stress(
+        data.derived_params.magnetic_pressure,
+        data.derived_params.vertical_tension,
+        temperature=data.params.T_sc,
+    )
+    case_margin = S_Y - sigma_case
+except:
+    sigma_case = case_margin = np.nan
+
+try:
+    sigma_jacket = data.conductor._tresca_sigma_jacket(
+        data.derived_params.magnetic_pressure,
+        data.derived_params.vertical_tension,
+        data.params.T_sc,
+        data.derived_params.peak_field,
+        "x",
+    )
+    jacket_margin = S_Y - sigma_jacket
+except:
+    sigma_jacket = jacket_margin = np.nan
+
+try:
+    r_i = data.derived_params.r_i
+    dy_wp = data.case.dy_wp_tot
+    dy_vault = data.case.dy_vault
+    dy_ps = data.case.dy_ps
+    geo_margin = r_i - dy_wp - dy_vault - dy_ps
+except:
+    r_i = dy_wp = dy_vault = dy_ps = geo_margin = np.nan
+
+# Build constraint table with raw values
+table = [
+    [
+        "Quench protection",
+        "T_target - T_hotspot",
+        f"{quench_margin:.2f} K",
+        ">= 0",
+        f"T_target = {T_target:.1f} K",
+        f"T_hotspot = {T_hotspot:.1f} K",
+    ],
+    [
+        "Case stress",
+        "S_Y - σ_case",
+        f"{case_margin / 1e6:.2f} MPa",
+        ">= 0",
+        f"S_Y = {S_Y / 1e6:.1f} MPa",
+        f"σ_case = {sigma_case / 1e6:.1f} MPa",
+    ],
+    [
+        "Jacket stress",
+        "S_Y - σ_jacket",
+        f"{jacket_margin / 1e6:.2f} MPa",
+        ">= 0",
+        f"S_Y = {S_Y / 1e6:.1f} MPa",
+        f"σ_jacket = {sigma_jacket / 1e6:.1f} MPa",
+    ],
+    [
+        "Geometry clearance",
+        "r_i - (dy_wp + dy_vault + dy_ps)",
+        f"{geo_margin * 1000:.2f} mm",
+        ">= -1 mm",
+        f"r_i = {r_i:.3f} m",
+        f"sum = {(dy_wp + dy_vault + dy_ps):.3f} m",
+    ],
+]
+
+print("\n=== Constraint Verification Table ===")
+print(
+    tabulate(
+        table,
+        headers=[
+            "Constraint",
+            "Expression",
+            "Value",
+            "Requirement",
+            "Reference 1",
+            "Reference 2",
+        ],
+        tablefmt="github",
+    )
 )
-
-# %%
-# new operational current
-bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")
-
-case.plot_convergence()
