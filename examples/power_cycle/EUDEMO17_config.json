@@ -800,7 +800,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": false
+        "normalised": true
       },
       "swy_peak": {
         "time": [0, 1],

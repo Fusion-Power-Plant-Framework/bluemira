@@ -172,6 +172,3 @@ net_ftt = production_minucci_turbine_hcpb + consumption_minucci_ssen_hcpb_ftt
 # Remove turbine power to plot only consumption
 pulse_consumption = pulse_total_active - production_minucci_turbine_hcpb
 # pp(pulse_consumption)
-
-# Last value should be 21 in 'eps_upkeep': array([-21., -21.,  -0.])
-print(phase_loads_active["ftt"]["eps_upkeep"])  # MW
