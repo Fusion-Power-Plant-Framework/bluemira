@@ -2204,7 +2204,7 @@
     "var_mod": "TF coils",
     "scan01": -6.3309
   },
-  "a_tf_coil_inboard": {
+  "a_tf_inboard_total": {
     "var_mod": "TF coils",
     "scan01": 24.606
   },
@@ -2236,7 +2236,7 @@
     "var_mod": "TF coils",
     "scan01": 0.32795
   },
-  "dx_tf_side_case": {
+  "dx_tf_side_case_min": {
     "var_mod": "TF coils",
     "scan01": 0.05
   },

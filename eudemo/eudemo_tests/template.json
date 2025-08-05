@@ -2375,7 +2375,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "dx_tf_side_case",
+        "name": "dx_tf_side_case_min",
         "send": true,
         "recv": false,
         "unit": "m"
