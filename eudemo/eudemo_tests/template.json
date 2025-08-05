@@ -461,7 +461,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "estotftgj",
+        "name": "e_tf_magnetic_stored_total_gj",
         "send": false,
         "recv": true,
         "unit": "GJ"
@@ -1885,7 +1885,7 @@
     "description": "Including insulation",
     "mapping": {
       "PROCESS": {
-        "name": "wwp1",
+        "name": "dx_tf_wp_primary_toroidal",
         "send": false,
         "recv": true,
         "unit": "m"

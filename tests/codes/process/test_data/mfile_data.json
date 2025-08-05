@@ -2256,7 +2256,7 @@
     "var_mod": "TF coils",
     "scan01": 1.0331
   },
-  "wwp1": {
+  "dx_tf_wp_primary_toroidal": {
     "var_mod": "TF coils",
     "scan01": 0.78331
   },
@@ -2416,7 +2416,7 @@
     "var_mod": "TF coils",
     "scan01": 7363600.0
   },
-  "estotftgj": {
+  "e_tf_magnetic_stored_total_gj": {
     "var_mod": "TF coils",
     "scan01": 130.84
   },
