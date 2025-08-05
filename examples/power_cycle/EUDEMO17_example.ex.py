@@ -47,7 +47,6 @@ def get_pulse_load(
     extra_points: int = 0,
 ):
     """Get the total load for a specific type and unit."""
-    pulse = power_cycle.get_pulse(pulse_label)
     phase_order = power_cycle.pulse_library.root[pulse_label].phases
 
     starting_time = 0
@@ -58,7 +57,7 @@ def get_pulse_load(
     pulse_timeseries = []
     pulse_loads_for_type = {}
     for p_name in phase_order:
-        phase = pulse[p_name]
+        phase = power_cycle.get_phase(p_name)
         p_times = phase.timeseries()
         new_times = interpolate_extra(p_times, n_points=extra_points)
         p_loads = phase.load(load_type, load_unit, timeseries=new_times)
@@ -110,6 +109,22 @@ def get_pulse_load(
     load_unit="MW",
     extra_points=0,
 )
+
+pulse = power_cycle.get_pulse("std")
+
+print("Phase timeseries (first is raw second is cumsum)")
+print(pulse.phase_timeseries())
+print(pulse.timeseries())
+print(phase_timeseries)
+
+pla = pulse.load("active", unit="MW")
+
+for k in pulse_loads_active:
+    assert np.allclose(pulse_loads_active[k], pla[k])
+
+print("Pulse load total active")
+print(pulse.total_load("active", "MW"))
+print(pulse_total_active)
 # pp(phase_timeseries)
 # pp(phase_loads_active)
 # pp(phase_total_active)
