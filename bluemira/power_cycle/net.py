@@ -873,7 +873,7 @@ class Pulse:
     @property
     def duration(self) -> float:
         """Duration of pulse"""
-        return sum(phase.duration for phase in self.phases)
+        return sum(phase.duration for phase in self.phases.values())
 
     def phase_timeseries(
         self,
