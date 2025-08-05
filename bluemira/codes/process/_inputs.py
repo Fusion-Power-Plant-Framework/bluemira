@@ -220,7 +220,7 @@ class ProcessInputs:
     dr_tf_inboard: float | None = None
     dr_tf_shld_gap: float | None = None
     dr_tf_plasma_case: float | None = None
-    dx_tf_side_case: float | None = None
+    dx_tf_side_case_min: float | None = None
     tmargmin: float | None = None
     tmargmin_cs: float | None = None
     oacdcp: float | None = None
