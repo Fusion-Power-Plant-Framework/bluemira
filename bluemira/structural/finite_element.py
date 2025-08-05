@@ -139,7 +139,7 @@ class FEMPlainStrainLEA2D:
         self._setup_forms()
 
         self.problem = LinearProblem(self.a_form, self.L_form, self.mpc, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
-        self.problem.solve()
+        self.uh = self.problem.solve()
         return self.uh
 
     def postprocess_stress_strain(self):
