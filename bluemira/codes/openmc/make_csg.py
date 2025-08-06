@@ -1294,10 +1294,9 @@ class BlanketCellStack:
         )
 
     @staticmethod
-    def check_cut_point_ordering(
+    def enforce_cut_point_ordering(
         cut_point_series: npt.NDArray[np.float64],
         direction_vector: npt.NDArray[np.float64],
-        location_msg: str = "",
     ):
         """
         Parameters
@@ -1315,8 +1314,34 @@ class BlanketCellStack:
         """
         direction = direction_vector / np.linalg.norm(direction_vector)
         projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction)
+
         if not is_monotonically_increasing(projections):
-            raise GeometryError(f"Some surfaces crosses over each other! {location_msg}")
+            squashed_cut_point_series = np.zeros_like(cut_point_series)
+            squashed_cut_point_series[0] = cut_point_series[0]
+            squashed_cut_point_series[-1] = cut_point_series[-1]
+            actual_range = projections[-1] - projections[0]
+
+            corrected_diff = np.clip(np.diff(projections), 0, np.inf)
+            attempted_range = corrected_diff.sum()
+            scaled_diff = corrected_diff * (actual_range / attempted_range)
+            squashed_cut_point_series[1:-1] = (
+                np.outer(
+                    np.cumsum(scaled_diff)[:-1], direction / np.linalg.norm(direction)
+                )
+                + squashed_cut_point_series[0]
+            )
+            # raise GeometryWarning(f
+            #     "Some surfaces crosses over each other! {location_msg}"
+            # )
+            cut_point_series = squashed_cut_point_series
+
+            projections = np.dot(np.array(cut_point_series)[:, [0, -1]], direction)
+            if not is_monotonically_increasing(projections):
+                raise GeometryError(
+                    "Failed to automatically squish all layers of the blanket into "
+                    "the space provided!"
+                )
+        return cut_point_series
 
     @property
     def interior_surface(self):
@@ -1452,17 +1477,17 @@ class BlanketCellStack:
         directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
         i = "(unspecified)" if blanket_stack_num is None else blanket_stack_num
-        cls.check_cut_point_ordering(
+        cls.enforce_cut_point_ordering(
             wall_cut_pts[:, 0],
             dirs[0],
-            location_msg=f"\nOccuring in cell stack {i}'s CCW wall:"
-            "\nCheck if the thickness specified can fit into the blanket?",
+            # location_msg=f"\nOccuring in cell stack {i}'s CCW wall:"
+            # "\nCheck if the thickness specified can fit into the blanket?",
         )
-        cls.check_cut_point_ordering(
+        cls.enforce_cut_point_ordering(
             wall_cut_pts[:, 1],
             dirs[1],
-            location_msg=f"\nOccuring in cell stack {i}'s CW wall:"
-            "\nCheck if the thickness specified can fit into the blanket?",
+            # location_msg=f"\nOccuring in cell stack {i}'s CW wall:"
+            # "\nCheck if the thickness specified can fit into the blanket?",
         )
         # 2. Accumulate the corners of each cell.
         vertices = [
