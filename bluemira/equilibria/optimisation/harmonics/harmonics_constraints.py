@@ -240,6 +240,14 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             "value": 0.0,
             "scale": 1e6,
         }
+        # print("In __init__ of ToroidalHarmonicConstraint")
+        # print(
+        #     f"target_harmonics_cos = ref_harmonic_cos_amplitudes = \n {self.target_harmonics_cos}"
+        # )
+        # print(
+        #     f"target_harmonics_sin = ref_harmonic_sin_amplitudes = \n {self.target_harmonics_sin}"
+        # )
+        # print(f"_args = {self._args}")
 
     @property
     def control_coil_names(self):
@@ -274,7 +282,13 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
             equilibrium.coilset
         )
+        # print(f"eq.coilset = {equilibrium.coilset}")
+        # print(f"eq.coilset.current = {equilibrium.coilset.current}")
+
         cos_evaluated, sin_evaluated = self.evaluate(equilibrium)
+        # print(f"cos_evaluated = {cos_evaluated}")
+        # print(f"sin_evaluated = {sin_evaluated}")
+
         self._args["b_vec_cos"] = self.target_harmonics_cos - cos_evaluated
         self._args["b_vec_sin"] = self.target_harmonics_sin - sin_evaluated
         if self.constraint_type == "inequality":
@@ -286,6 +300,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             )
             self._args["b_vec_cos"][2:] *= -1
             self._args["b_vec_sin"][2:] *= -1
+        # print("In prepare of ToroidalHarmonicConstraint")
+        # print(f"updated _args = {self._args}")
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
