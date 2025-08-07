@@ -9,9 +9,12 @@
 # %%
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
-# import numpy as np
+import matplotlib.pyplot as plt
+import numpy as np
+
 # from _tiago_.tools import pp
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.reactor_config import ReactorConfig
@@ -50,21 +53,24 @@ def get_pulse_data(
 
     phase_timeseries = pulse.phase_timeseries()
     pulse_timeseries = pulse.timeseries()
+
+    # pp(phase_timeseries)
     # pp(pulse_timeseries)
-    new_timeseries = interpolate_extra(pulse_timeseries, n_points=extra_points)
+    pulse_timeseries = interpolate_extra(pulse_timeseries, n_points=extra_points)
+    # pp(pulse_timeseries)
 
     phase_loads_for_type = {}
     pulse_loads_for_type = pulse.load(
         load_type,
         load_unit,
-        timeseries=new_timeseries,
+        timeseries=pulse_timeseries,
     )
 
     phase_total_for_type = {}
     pulse_total_for_type = pulse.total_load(
         load_type,
         load_unit,
-        timeseries=new_timeseries,
+        timeseries=pulse_timeseries,
     )
 
     for p_index, p_name in enumerate(phase_order):
@@ -99,6 +105,114 @@ def get_pulse_data(
     }
 
 
+def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
+    """Create plots for each phase and the whole pulse showing load vectors."""
+    pulse_label = pulse_data["pulse_label"]
+    load_type = pulse_data["load_type"]
+
+    load_names = list(pulse_data["pulse_loads"].keys())
+    colors = plt.cm.tab10(np.linspace(0, 1, len(load_names)))
+    color_map = {load_name: colors[i] for i, load_name in enumerate(load_names)}
+
+    n_plots = len(pulse_data["phase_order"])
+    fig_phase, axes = plt.subplots(n_plots, 1, figsize=(12, 4 * n_plots))
+    if n_plots == 1:
+        axes = [axes]
+
+    handles, labels = [], []
+
+    for i, phase_name in enumerate(pulse_data["phase_order"]):
+        ax = axes[i]
+        for load_name, load_values in pulse_data["phase_loads"][phase_name].items():
+            line = ax.plot(
+                pulse_data["phase_timeseries"][i],
+                load_values,
+                label=load_name,
+                color=color_map[load_name],
+                linestyle="--",
+                alpha=load_alpha,
+            )[0]
+            if load_name not in labels:
+                handles.append(line)
+                labels.append(load_name)
+
+        total_line = ax.plot(
+            pulse_data["phase_timeseries"][i],
+            pulse_data["phase_total"][phase_name],
+            label="Total",
+            linewidth=3,
+            color="black",
+            alpha=total_alpha,
+        )[0]
+        if "Total" not in labels:
+            handles.append(total_line)
+            labels.append("Total")
+
+        ax.set_title(f"Phase: {phase_name}")
+        ax.set_xlabel("Time [s]")
+        ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
+        ax.grid(visible=True, alpha=0.3)
+
+    fig_phase.legend(handles, labels, loc="upper right", bbox_to_anchor=(0.98, 0.98))
+
+    plt.tight_layout()
+    plt.show()
+    fig_phase.savefig(
+        f"{pulse_label}_{load_type}_phases.pdf",
+        bbox_inches="tight",
+    )
+
+    fig_pulse, ax = plt.subplots(1, 1, figsize=(12, 6))
+    for load_name, load_values in pulse_data["pulse_loads"].items():
+        ax.plot(
+            pulse_data["pulse_timeseries"],
+            load_values,
+            label=load_name,
+            color=color_map[load_name],
+            linestyle="--",
+            alpha=load_alpha,
+        )
+    ax.plot(
+        pulse_data["pulse_timeseries"],
+        pulse_data["pulse_total"],
+        label="Total",
+        linewidth=3,
+        color="black",
+        alpha=total_alpha,
+    )
+    ax.set_title(f"Whole Pulse: {pulse_label}")
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
+    ax.legend()
+    ax.grid(visible=True, alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+    fig_pulse.savefig(
+        f"{pulse_label}_{load_type}_pulse.pdf",
+        bbox_inches="tight",
+    )
+
+    return fig_phase, fig_pulse
+
+
+def export_pulse_data(pulse_data, filename="pulse_data.json"):
+    """Recursively convert arrays to lists and export pulse to a JSON file."""
+
+    def convert_arrays_to_lists(obj):
+        if isinstance(obj, np.ndarray):
+            return obj.flatten().tolist()  # Convert to 1D list
+        if isinstance(obj, dict):
+            return {k: convert_arrays_to_lists(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [convert_arrays_to_lists(item) for item in obj]
+        return obj
+
+    pulse_json = convert_arrays_to_lists(pulse_data)
+    pulse_json = json.dumps(pulse_json, indent=4)
+    Path(filename).write_text(pulse_json)
+
+
 pulse_active_data = get_pulse_data(
     power_cycle,
     pulse_label="std",
@@ -106,6 +220,9 @@ pulse_active_data = get_pulse_data(
     load_unit="MW",
     extra_points=0,
 )
+export_filename = config_path / "EUDEMO17_pulse_active_data.json"
+export_pulse_data(pulse_active_data, filename=export_filename)
+plot_pulse_data(pulse_active_data)
 
 
 # def get_pulse_data(
@@ -170,25 +287,6 @@ pulse_active_data = get_pulse_data(
 #     }
 
 
-# def export_pulse_data(pulse_data, filename="pulse_data.json"):
-#     """Recursively convert arrays to lists and export pulse to a JSON file."""
-
-#     def convert_arrays_to_lists(obj):
-#         if isinstance(obj, np.ndarray):
-#             return obj.flatten().tolist()  # Convert to 1D list
-#         if isinstance(obj, dict):
-#             return {k: convert_arrays_to_lists(v) for k, v in obj.items()}
-#         if isinstance(obj, (list, tuple)):
-#             return [convert_arrays_to_lists(item) for item in obj]
-#         if isinstance(obj, OrderedDict):
-#             return OrderedDict((k, convert_arrays_to_lists(v)) for k, v in obj.items())
-#         return obj
-
-#     pulse_json = convert_arrays_to_lists(pulse_data)
-#     pulse_json = dumps(pulse_json, indent=4)
-#     Path(filename).write_text(pulse_json)
-
-
 # pulse_active_data = get_pulse_data(
 #     power_cycle,
 #     pulse_label="std",
@@ -209,8 +307,6 @@ pulse_active_data = get_pulse_data(
 # # pp(pulse_loads_active)
 # # pp(pulse_total_active)
 
-# export_filename = config_path / "EUDEMO17_pulse_active_data.json"
-# export_pulse_data(pulse_active_data, filename=export_filename)
 
 # # TEMP: add turbine load to pulse, because it is zero due to bug
 # production_minucci_turbine_hcpb = 790 * 0.95 * 0.85
