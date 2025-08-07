@@ -17,7 +17,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
     PowerCycle,
-    # interpolate_extra,
+    interpolate_extra,
 )
 
 # %% [markdown]
@@ -40,9 +40,9 @@ power_cycle = PowerCycle(**powercycle_config.config_for("Power Cycle"), duration
 def get_pulse_data(
     power_cycle: PowerCycle,
     pulse_label: str,
-    # load_type: str,
-    # load_unit: str,
-    # extra_points: int = 0,
+    load_type: str,
+    load_unit: str,
+    extra_points: int = 0,
 ):
     """Get the total load for a specific type and unit."""
     pulse = power_cycle.get_pulse(pulse_label)
@@ -53,23 +53,28 @@ def get_pulse_data(
     pulse_timeseries = pulse.timeseries()
     # pp(phase_timeseries)
     # pp(pulse_timeseries)
+
+    phase_loads_for_type = {}
+    pulse_loads_for_type = pulse.load(load_type, load_unit)
+
     for p_index, p_name in enumerate(phase_order):
         phase = pulse.phases[p_name]
         p_times = phase.timeseries()
-        # pp(p_times)
         if not all(p_times == phase_timeseries[p_index]):
             print("error")
-    # pulse_loads_for_type = {}
-    # phase_timeseries = {}
-    # pp(pulse.phases)
+        # pp(p_times)
 
-    phase_loads_for_type = {}
-    pulse_loads_for_type = {}
+        new_times = interpolate_extra(p_times, n_points=extra_points)
+        p_loads = phase.load(load_type, load_unit, timeseries=new_times)
+        phase_loads_for_type[p_name] = p_loads
+        # pp(p_loads)
+    # pp(phase_loads_for_type)
+    # pp(pulse_loads_for_type)
 
     return {
         "pulse_label": pulse_label,
-        # "load_type": load_type,
-        # "load_unit": load_unit,
+        "load_type": load_type,
+        "load_unit": load_unit,
         "phase_order": phase_order,
         "phase_timeseries": phase_timeseries,
         "pulse_timeseries": pulse_timeseries,
@@ -80,7 +85,13 @@ def get_pulse_data(
     }
 
 
-pulse_data = get_pulse_data(power_cycle, pulse_label="std")
+pulse_active_data = get_pulse_data(
+    power_cycle,
+    pulse_label="std",
+    load_type="active",
+    load_unit="MW",
+    extra_points=0,
+)
 
 
 # def get_pulse_data(
