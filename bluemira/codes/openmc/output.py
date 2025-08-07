@@ -258,7 +258,7 @@ class OpenMCResult:
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "Total power")
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
