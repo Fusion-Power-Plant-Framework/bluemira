@@ -382,6 +382,7 @@
           "pht_hcpb_peak",
           "pcs_hirn",
           "pcs_turb",
+          "eps_peak",
           "eps_upkeep",
           "swy_peak",
           "buildings",
@@ -392,6 +393,12 @@
           "rad_upkeep"
         ],
         "efficiencies": {
+          "eps_peak": [
+            {
+              "value": { "reactive": 0.167, "active": 0.167 },
+              "description": "use ~50MW of the peak 300MW for HCD systems"
+            }
+          ],
           "pcs_turb": [
             {
               "value": { "active": 0.85 },
@@ -785,10 +792,12 @@
       },
       "eps_peak": {
         "description": "value substitutes linear combination of HCD systems",
-        "time": [0, 120],
+        "time": [0, 1],
         "data": 300,
         "unit": "MW",
-        "model": "STEP"
+        "model": "STEP",
+        "consumption": true,
+        "normalise": true
       },
       "eps_upkeep": {
         "description": "upkeep loads for electrical distribution",

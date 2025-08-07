@@ -11,8 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import numpy as np
-
+# import numpy as np
 # from _tiago_.tools import pp
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.reactor_config import ReactorConfig
@@ -50,7 +49,7 @@ def get_pulse_data(
     phase_order = pulse._config.phases
 
     phase_timeseries = pulse.phase_timeseries()
-    pulse_timeseries = np.unique(pulse.timeseries())  # CORRECTION NECESSARY
+    pulse_timeseries = pulse.timeseries()
     # pp(pulse_timeseries)
     new_timeseries = interpolate_extra(pulse_timeseries, n_points=extra_points)
 
@@ -81,6 +80,8 @@ def get_pulse_data(
         p_total = phase.total_load(load_type, load_unit, timeseries=new_times)
         phase_total_for_type[p_name] = p_total
 
+    # pp(phase_loads_for_type)
+    # pp(pulse_loads_for_type)
     # pp(phase_total_for_type)
     # pp(pulse_total_for_type)
 
