@@ -332,3 +332,6 @@ axs[0].set_aspect("equal")
 axs[1].set_aspect("equal")
 axs[2].set_aspect("equal")
 plt.show()
+
+# Text and images from here will go into the paper
+# Private git repo for stuff in the paper - open source, reproducibility etc

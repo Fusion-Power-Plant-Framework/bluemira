@@ -149,7 +149,7 @@ R_0, Z_0 = eq.effective_centre()
 # necessary parameters for the TH approximation, such as the relevant coordinates
 # and coil names for use in the approximation. The
 # function returns the approx_coilset_psi array and the TH coefficient matrix A_m.
-# The default focus point is the plasma o point.
+# The default focus point is the effective centre of the plasma.
 # The white dot in the plot shows the focus point.
 # %%
 # Approximate psi and plot
