@@ -321,13 +321,15 @@ class SubPhase(PCBaseModel):
         times = []
         for load_name in self.loads:
             load = load_library.root[load_name]
+
             for time in _gettime(load, load_type, consumption=consumption):
-                if load.normalised:
-                    times.append(time)
+                if load.normalise:
+                    times.append(time / max(time))
                 else:
-                    times.append(time / (max(time) if end_time is None else end_time))
+                    times.append(time / (1 if end_time is None else end_time))
+
         if len(times) > 0:
-            return np.unique(np.concatenate(times))
+            times = np.unique(np.concatenate(times))
         return times
 
     def _find_duplicate_loads(self):
@@ -610,7 +612,7 @@ class Load(PCBaseModel):
     model: LoadModel = LoadModel.RAMP
     unit: str = "W"
     description: str = ""
-    normalised: bool = True
+    normalise: bool = False
     consumption: bool = True
 
     @model_validator(mode="after")
@@ -637,7 +639,9 @@ class Load(PCBaseModel):
                         np.full(self.time[lt].shape, self.data[lt].item()),
                     )
                 if all(self.time[lt] == 0):
-                    setattr(self.time, lt.name.lower(), np.zeros_like(self.data[lt]))
+                    time = np.zeros_like(self.data[lt])
+                    time[-1] = 1
+                    setattr(self.time, lt.name.lower(), time)
 
                 if self.data[lt].size != self.time[lt].size:
                     raise ValueError(
@@ -677,13 +681,20 @@ class Load(PCBaseModel):
         Any out-of-bound values are set to zero.
         """
         load_type = LoadTypeOptions(load_type)
+        normaliser = (
+            max(self.time[load_type])
+            if self.normalise
+            else 1
+            if end_time is None
+            else end_time
+        )
         return interp1d(
-            self.time[load_type],
+            self.time[load_type] / normaliser,
             self.data[load_type],
             kind=self.model.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
-        )(time if self.normalised or end_time is None else np.array(time) * end_time)
+        )(time)
 
 
 class LoadLibrary(PCRootModel):
@@ -724,8 +735,8 @@ class Phase:
                 sp.build_timeseries(
                     self.loads,
                     load_type=load_type,
-                    end_time=self.duration,
                     consumption=consumption,
+                    end_time=self.duration,
                 )
                 for sp in self.subphases.root.values()
             ])

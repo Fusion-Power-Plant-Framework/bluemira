@@ -301,7 +301,7 @@
         "data": { "reactive": 4.7, "active": 9.7 },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "Vacuum Vessel (VV)"
@@ -312,7 +312,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true,
+        "normalise": true,
         "description": "(HCPB) Vacuum Vessel pressure suppression (VVPS)"
       },
       "div_lim": {
@@ -321,7 +321,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true,
+        "normalise": true,
         "description": "Divertor & Limiter (DV & LM)"
       },
       "hcpb_bb_peak": {
@@ -330,7 +330,7 @@
         "data": { "reactive": 54.4, "active": 165.6 },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true
+        "normalise": true
       },
       "hcpb_hirn": {
         "description": "(HCPB) Hirn Cycle components",
@@ -339,7 +339,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "turb": {
         "description": "nominal turbine power for direct concept",
@@ -349,7 +349,7 @@
         "model": "RAMP",
         "efficiencies": [{ "value": 0.85, "description": "indirect storage" }],
         "consumption": false,
-        "normalised": true
+        "normalise": true
       },
       "eps_peak": {
         "description": "peak value extrapolated to all relevant phases",
@@ -365,7 +365,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": false
+        "normalise": false
       },
       "buildings": {
         "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
@@ -374,7 +374,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "site": {
         "description": "site utilities",
@@ -383,7 +383,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "sf6_air": {
         "description": "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS",
@@ -392,7 +392,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       }
     }
   }

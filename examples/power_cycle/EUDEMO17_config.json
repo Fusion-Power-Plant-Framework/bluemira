@@ -523,7 +523,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "load for minor maintenance during normal operation"
@@ -536,7 +536,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "load for minor maintenance during normal operation"
@@ -549,7 +549,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "continuous operation"
@@ -562,7 +562,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "peak power for ECH system"
@@ -575,7 +575,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "auxiliary power for ECH system"
@@ -588,7 +588,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "peak power for NBI system"
@@ -601,7 +601,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "auxiliary power for NBI system"
@@ -614,7 +614,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "peak power for ICH system"
@@ -627,7 +627,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "auxiliary power for ICH system"
@@ -640,7 +640,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "negligible upkeep; operation power attributed to EPS"
@@ -653,7 +653,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "first guess projected from ITER consumption"
@@ -666,7 +666,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "first guess projected from ITER solution"
@@ -679,7 +679,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "first guess projected from ITER solution"
@@ -692,7 +692,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "estimated from ITER data (with air conditioning)"
@@ -705,7 +705,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "estimated from CODAC, CIS & CSS in ITER"
@@ -718,7 +718,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "Vacuum Vessel (VV)"
@@ -729,7 +729,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true,
+        "normalise": true,
         "description": "(HCPB) Vacuum Vessel pressure suppression (VVPS)"
       },
       "pht_div_lim": {
@@ -741,7 +741,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true,
+        "normalise": true,
         "description": "Divertor & Limiter (DV & LM)"
       },
       "pht_hcpb_peak": {
@@ -754,7 +754,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "pcs_hirn": {
         "description": "(HCPB) Hirn Cycle components",
@@ -766,7 +766,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "pcs_turb": {
         "description": "nominal turbine power for direct concept",
@@ -781,11 +781,11 @@
           }
         ],
         "consumption": false,
-        "normalised": true
+        "normalise": true
       },
       "eps_peak": {
         "description": "value substitutes linear combination of HCD systems",
-        "time": [0, 1],
+        "time": [0, 120],
         "data": 300,
         "unit": "MW",
         "model": "STEP"
@@ -800,7 +800,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": false
+        "normalise": true
       },
       "swy_peak": {
         "time": [0, 1],
@@ -810,7 +810,7 @@
         },
         "unit": "MW",
         "model": "RAMP",
-        "normalised": true,
+        "normalise": true,
         "consumption": true,
         "efficiencies": [],
         "description": "transformer switchyard peak loads estimated in Minucci (2020)"
@@ -825,7 +825,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "site": {
         "description": "site utilities",
@@ -837,7 +837,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       },
       "dist_h2o_sf6": {
         "description": "ITER extrapolation for distribution: SF6, compressed air, CCWS, CHWS",
@@ -849,7 +849,7 @@
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
-        "normalised": true
+        "normalise": true
       }
     }
   }

@@ -97,7 +97,7 @@ class TestLoad:
             time=np.array([0, 0.5, 2]),
             data={"active": np.arange(3)},
             model="ramp",
-            normalised=False,
+            normalise=False,
         )
         assert np.allclose(
             pcsl.interpolate([0, 0.1, 0.2, 0.3, 1], 10),
