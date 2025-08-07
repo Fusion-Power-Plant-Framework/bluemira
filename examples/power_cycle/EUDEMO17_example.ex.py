@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# import numpy as np
+import numpy as np
+
 # from _tiago_.tools import pp
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.reactor_config import ReactorConfig
@@ -47,29 +48,41 @@ def get_pulse_data(
     """Get the total load for a specific type and unit."""
     pulse = power_cycle.get_pulse(pulse_label)
     phase_order = pulse._config.phases
-    # pp(phase_order)
 
     phase_timeseries = pulse.phase_timeseries()
-    pulse_timeseries = pulse.timeseries()
-    # pp(phase_timeseries)
+    pulse_timeseries = np.unique(pulse.timeseries())  # CORRECTION NECESSARY
     # pp(pulse_timeseries)
+    new_timeseries = interpolate_extra(pulse_timeseries, n_points=extra_points)
 
     phase_loads_for_type = {}
-    pulse_loads_for_type = pulse.load(load_type, load_unit)
+    pulse_loads_for_type = pulse.load(
+        load_type,
+        load_unit,
+        timeseries=new_timeseries,
+    )
+
+    phase_total_for_type = {}
+    pulse_total_for_type = pulse.total_load(
+        load_type,
+        load_unit,
+        timeseries=new_timeseries,
+    )
 
     for p_index, p_name in enumerate(phase_order):
         phase = pulse.phases[p_name]
         p_times = phase.timeseries()
         if not all(p_times == phase_timeseries[p_index]):
             print("error")
-        # pp(p_times)
 
         new_times = interpolate_extra(p_times, n_points=extra_points)
         p_loads = phase.load(load_type, load_unit, timeseries=new_times)
         phase_loads_for_type[p_name] = p_loads
-        # pp(p_loads)
-    # pp(phase_loads_for_type)
-    # pp(pulse_loads_for_type)
+
+        p_total = phase.total_load(load_type, load_unit, timeseries=new_times)
+        phase_total_for_type[p_name] = p_total
+
+    # pp(phase_total_for_type)
+    # pp(pulse_total_for_type)
 
     return {
         "pulse_label": pulse_label,
@@ -80,8 +93,8 @@ def get_pulse_data(
         "pulse_timeseries": pulse_timeseries,
         "phase_loads": phase_loads_for_type,
         "pulse_loads": pulse_loads_for_type,
-        # "phase_total": phase_total_for_type,
-        # "pulse_total": pulse_total_for_type,
+        "phase_total": phase_total_for_type,
+        "pulse_total": pulse_total_for_type,
     }
 
 
