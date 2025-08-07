@@ -135,9 +135,22 @@ R_0, Z_0 = eq.effective_centre()
 # %% [markdown]
 # Use the `toroidal_harmonic_grid_and_coil_setup` to obtain the necessary
 # parameters required for the TH approximation, such as the R and Z coordinates of the
+<<<<<<< HEAD:examples/equilibria/Toroidal_Approximation_Explained.ex.py
 # TH grid. We then plot the equilibrium and in orange we show the region over which
 # we will use our toroidal harmonic approximation.
 
+=======
+# TH grid.
+#
+# We then use the `toroidal_harmonic_approximate_psi` function to approximate the coilset
+# contribution to the flux using toroidal harmonics. We need to provide this function
+# with the equilibrium, eq, and the ToroidalHarmonicsParams dataclass, which contains
+# necessary parameters for the TH approximation, such as the relevant coordinates
+# and coil names for use in the approximation. The
+# function returns the approx_coilset_psi array and the TH coefficient matrix A_m.
+# The default focus point is the effective centre of the plasma.
+# The white dot in the plot shows the focus point.
+>>>>>>> e5150c10 (work up until midday 7th aug - committing before moving back to toroidal-harmonics-constraints branch to tidy up before release):examples/equilibria/toroidal_harmonics_full_coilset_approximation_bluemira_comparison.ex.py
 # %%
 # Approximate psi and plot
 th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)

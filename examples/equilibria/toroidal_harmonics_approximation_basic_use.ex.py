@@ -33,15 +33,37 @@ Usage of the 'toroidal_harmonic_approximation' function.
 # in coilset current and position optimisation for conventional aspect ratio tokamaks.
 
 # %%
+from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_multi_eqs
+from bluemira.equilibria.coils._coil import Coil
+from bluemira.equilibria.coils._grouping import CoilSet
+from bluemira.equilibria.diagnostics import (
+    EqDiagnosticOptions,
+    EqSubplots,
+    PicardDiagnostic,
+    PicardDiagnosticOptions,
+    PsiPlotType,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.optimisation.constraints import (
+    FieldNullConstraint,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+)
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
+    ToroidalHarmonicConstraint,
+)
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     toroidal_harmonic_approximation,
 )
+from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Data from EQDSK file
@@ -50,16 +72,16 @@ EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 # Comment in/out as required
 
 # Double null
-eq_name = "DN-DEMO_eqref.json"
-eq_name = Path(EQDATA, eq_name)
-eq = Equilibrium.from_eqdsk(
-    eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
-)
+# eq_name = "DN-DEMO_eqref.json"
+# eq_name = Path(EQDATA, eq_name)
+# eq = Equilibrium.from_eqdsk(
+#     eq_name, from_cocos=3, qpsi_positive=False, force_symmetry=True
+# )
 
 # # Single null
-# eq_name = "eqref_OOB.json"
-# eq_name = Path(EQDATA, eq_name)
-# eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
+eq_name = "eqref_OOB.json"
+eq_name = Path(EQDATA, eq_name)
+eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
 
 # Plot equilibrium
 f, ax = plt.subplots()
@@ -68,27 +90,30 @@ eq.coilset.plot(ax=ax)
 plt.show()
 
 
-# %% [markdown]
-# ## Inputs
-#
-# ### Required
-#
-# - eq = Our chosen bluemira equilibrium
-#
-# ### Optional
-#
-# - th_params: dataclass containing necessary parameters for use in TH approximation.
-#   'None' will default to using the toroidal_grid_and_coil_setup function with the
-#   input equilibrium to generate the th_params
-# - acceptable_fit_metric: how 'good' we require the approximation to be
-# - psi_norm: 'None' will default to LCFS, otherwise choose the desired
-#   normalised psi value of a closed flux surface that contains the core plasma
-# - plot: Whether or not to plot the results
+# new_coils = []
+# for name in eq.coilset.name:
+#     new_coils.append(eq.coilset[name])
+# new_coil = Coil(
+#     8,
+#     -11,
+#     current=0,
+#     dx=0.25,
+#     dz=0.25,
+#     ctype="PF",
+#     name=f"PF_7",
+# )
+# new_coils.append(new_coil)
+# new_coilset = CoilSet(*new_coils)
+# eq.coilset = new_coilset
+# f, ax = plt.subplots()
+# eq.plot(ax=ax)
+# eq.coilset.plot(ax=ax)
+# plt.show()
 
 # %%
 # Information needed for TH Approximation
 # The acceptable fit metric value used here forces the approximation to use 10 degrees
-psi_norm = 0.95
+psi_norm = 1.0
 (
     error,
     combo,
@@ -103,7 +128,8 @@ psi_norm = 0.95
     eq=eq,
     psi_norm=psi_norm,
     plot=True,
-    # tol=0.2, # Use this for SN
+    max_error_value=0.1,
+    tol=0.01,  # 0.2,  # Use this for SN
 )
 # Some notes:
 # The default values work for DN
@@ -114,3 +140,276 @@ psi_norm = 0.95
 
 # Removed the rest of this notebook. Can add own constraints here to play around with
 # I will be updating all the example notebooks
+
+
+# TODO tikhonov and SN - SN version of the prev version of this notebook
+# experiment with convergence parameter, tolerance etc
+# just need legs on bottom
+# keep isoflux points on the actual legs - give it nothing to do to see what it does
+# then can try making the legs mvoe a tad after
+
+# doing nothin - should stay the same and _should_ satisfy all the constraints
+# try to move whichever leg has the most coils near it
+# could
+
+# %%
+print(f"Combo used = {combo}")
+print(f"cos degrees used = {cos_degrees}")
+print(f"sin degrees used = {sin_degrees}")
+
+# %%
+th_constraint_equal = ToroidalHarmonicConstraint(
+    ref_harmonics_cos=cos_degrees,
+    ref_harmonics_sin=sin_degrees,
+    ref_harmonics_cos_amplitudes=cos_amplitudes,
+    ref_harmonics_sin_amplitudes=sin_amplitudes,
+    constraint_type="equality",
+    th_params=th_params,
+    tolerance=1e-3,
+)
+
+th_constraint_inequal = ToroidalHarmonicConstraint(
+    ref_harmonics_cos=cos_degrees,
+    ref_harmonics_sin=sin_degrees,
+    ref_harmonics_cos_amplitudes=cos_amplitudes,
+    ref_harmonics_sin_amplitudes=sin_amplitudes,
+    constraint_type="inequality",
+    th_params=th_params,
+    tolerance=1e-3,
+)
+
+# %%
+eq.coilset.control = list(th_params.th_coil_names)
+
+
+# Add an x point constraint
+lcfs = eq.get_LCFS()
+x_bdry, z_bdry = lcfs.x, lcfs.z
+xp_idx = np.argmin(z_bdry)
+x_point = FieldNullConstraint(
+    x_bdry[xp_idx],
+    z_bdry[xp_idx],
+    tolerance=1e-3,
+)
+arg_inner = np.argmin(x_bdry)
+
+
+# Define points to use for theqe isoflux constraints
+# NOTE not moving the legs at all here
+inner_leg_points_x = (
+    np.array([
+        7.0,
+        7.5,
+        8.0,
+    ])
+    - 0.5
+)
+
+inner_leg_points_z = (
+    np.array([
+        6.15,
+        5.8,
+        5.5,
+    ])
+    + 0.5
+)
+
+outer_leg_points_x = np.array([
+    8.5,
+    8.8,
+    9.05,
+])
+
+outer_leg_points_z = np.array([6.5, 7.0, 7.5])
+
+# Create the necessary isoflux constraints
+
+SN_unmoved_outer_leg_lower = IsofluxConstraint(
+    outer_leg_points_x,
+    -outer_leg_points_z,
+    ref_x=x_bdry[arg_inner],
+    ref_z=z_bdry[arg_inner],
+    tolerance=1e-3,
+)
+
+
+SN_unmoved_inner_leg_lower = IsofluxConstraint(
+    inner_leg_points_x,
+    -inner_leg_points_z,
+    ref_x=x_bdry[arg_inner],
+    ref_z=z_bdry[arg_inner],
+    tolerance=1e-3,
+)
+
+# Plot the isoflux points and the starting equilibrium
+f, ax = plt.subplots()
+eq.plot(ax=ax)
+SN_unmoved_outer_leg_lower.plot(ax=ax)
+SN_unmoved_inner_leg_lower.plot(ax=ax)
+plt.show()
+
+# %%
+constraints = [
+    th_constraint_equal,
+    x_point,
+    SN_unmoved_outer_leg_lower,
+    SN_unmoved_inner_leg_lower,
+]
+
+algorithm = "COBYLA"
+# algorithm = "SLSQP"
+
+
+# %%
+# Make copy of eq
+th_eq = deepcopy(eq)
+
+th_opt_unmoved_legs = TikhonovCurrentCOP(
+    th_eq,
+    targets=MagneticConstraintSet([
+        SN_unmoved_outer_leg_lower,
+        SN_unmoved_inner_leg_lower,
+        x_point,
+    ]),
+    gamma=1e-4,
+    opt_algorithm=algorithm,
+    opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
+    opt_parameters={"initial_step": 0.1},
+    max_currents=3e10,
+    constraints=constraints,
+)
+# Find the optimised coilseteq
+_ = th_opt_unmoved_legs.optimise()
+
+diag_ops = EqDiagnosticOptions(
+    psi_diff=PsiPlotType.PSI_DIFF,
+    split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
+)
+eq_analysis = EqAnalysis(input_eq=th_eq, reference_eq=eq)
+_ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
+
+
+# %%
+# Update plasma - one solve
+th_eq.solve()
+
+eq_analysis = EqAnalysis(input_eq=th_eq, reference_eq=eq)
+_ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
+
+
+# %%
+
+eq_dict = select_multi_eqs([eq, th_eq])
+multi_analysis = MultiEqAnalysis(eq_dict)
+
+# %%
+# NOTE use analyse_plasma() to get the results to compare
+eq_summary = eq.analyse_plasma()
+print(
+    eq_summary.tabulate(["Parameter", "value"], tablefmt="simple", value_label="start")
+)
+# %%
+th_eq_summary = th_eq.analyse_plasma()
+print(
+    th_eq_summary.tabulate(
+        ["Parameter", "value"], tablefmt="simple", value_label="post optimisation"
+    )
+)
+# # %%
+# # Plot physics parameters for the plasma core
+# # Note that a list with the results is also output
+
+core_results, ax = multi_analysis.plot_core_physics()
+
+# %%
+axs = multi_analysis.plot_eq_core_mag_axis()
+# # %%
+# # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# # Try moving outer leg further towards the smaller coil
+# # move end pt of separatrix to line up with bottom of 2nd teal line after light pink
+
+# outer_leg_points_x = np.array([
+#     8.8,
+#     9.2,
+#     10.4,
+# ])
+
+# outer_leg_points_z = np.array([
+#     6.5,
+#     7.0,
+#     8.1,
+# ])
+
+# # Create the necessary isoflux constraints
+
+# SN_moved_outer_leg_lower = IsofluxConstraint(
+#     outer_leg_points_x,
+#     -outer_leg_points_z,
+#     ref_x=x_bdry[arg_inner],
+#     ref_z=z_bdry[arg_inner],
+#     tolerance=1e-3,
+# )
+
+
+# # Plot the isoflux points and the starting equilibrium
+# f, ax = plt.subplots()
+# eq.plot(ax=ax)
+# SN_moved_outer_leg_lower.plot(ax=ax)
+# # SN_unmoved_inner_leg_lower.plot(ax=ax)
+# plt.show()
+
+# # %%
+# constraints = [
+#     th_constraint_equal,
+#     x_point,
+#     # SN_moved_outer_leg_lower,
+#     # SN_unmoved_inner_leg_lower,
+#     # SN_unmoved_outer_leg_lower,
+# ]
+
+# algorithm = "COBYLA"
+# # algorithm = "SLSQP"
+
+
+# # %%
+# # Make copy of eq
+# th_eq_moved = deepcopy(eq)
+
+# th_opt_unmoved_legs = TikhonovCurrentCOP(
+#     th_eq_moved,
+#     targets=MagneticConstraintSet([
+#         x_point,
+#         # SN_moved_outer_leg_lower,
+#         # SN_unmoved_inner_leg_lower,
+#         # SN_unmoved_outer_leg_lower
+#     ]),
+#     gamma=1e-4,
+#     opt_algorithm=algorithm,
+#     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
+#     opt_parameters={"initial_step": 0.1},
+#     max_currents=3e10,
+#     constraints=constraints,
+# )
+# # Find the optimised coilseteq
+# _ = th_opt_unmoved_legs.optimise()
+
+# diag_ops = EqDiagnosticOptions(
+#     psi_diff=PsiPlotType.PSI_DIFF,
+#     split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
+# )
+# eq_analysis = EqAnalysis(input_eq=th_eq_moved, reference_eq=eq)
+# _ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
+
+
+# # %%
+# # Update plasma - one solve
+# th_eq_moved.solve()
+
+# eq_analysis = EqAnalysis(input_eq=th_eq_moved, reference_eq=eq)
+# _ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
+
+# # %%
+# f, ax = plt.subplots()
+# th_eq_moved.plot(ax=ax)
+# SN_moved_outer_leg_lower.plot(ax=ax)
