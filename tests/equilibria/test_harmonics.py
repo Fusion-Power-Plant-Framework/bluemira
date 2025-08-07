@@ -1461,9 +1461,7 @@ class TestRegressionTH:
         cur_expand_mat = self.eq.coilset._opt_currents_expand_mat
 
         ref_vector = cur_expand_mat @ np.ones(len(self.eq.coilset.name))
-        ref_currents = ref_vector * 1e6
-        ref_eq = deepcopy(self.eq)
-        ref_eq.coilset.current = ref_currents
+
         ref_constraint_class = ToroidalHarmonicConstraint(
             ref_harmonics_cos=cos_degrees,
             ref_harmonics_sin=sin_degrees,
@@ -1473,7 +1471,7 @@ class TestRegressionTH:
             tolerance=None,
             constraint_type="equality",
         )
-        ref_constraint_class.prepare(ref_eq)
+        ref_constraint_class.prepare(self.eq)
 
         ref_result_cos = ref_constraint_class._args["a_mat_cos"] @ ref_vector
         ref_result_sin = ref_constraint_class._args["a_mat_sin"] @ ref_vector
