@@ -209,13 +209,12 @@ class Setup(CodesSetup):
             self.settings.batches = int(runtime_params.batches)
             self.settings.photon_transport = runtime_params.photon_transport
             self.settings.electron_treatment = runtime_params.electron_treatment
-
             self._set_tallies(
                 run_mode,
                 tally_function,
                 self.blanket_cell_array,
                 self.divertor_cell_array,
-                self.matlist(self.materials),
+                material_list=self.materials.get_all_materials(),
             )
         self._source_rate = source_rate
         self._source_triton_rate = source_t_rate

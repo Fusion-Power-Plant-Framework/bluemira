@@ -64,9 +64,7 @@ def filter_cells(
     # bz_filter = openmc.CellFilter(bz_cells)
 
     # material filters
-    mat_filter = openmc.MaterialFilter(
-        material_list
-    )  # TODO @Ocean: Likely related to #4009
+    mat_filter = openmc.MaterialFilter(material_list)
     eurofer_filter = openmc.MaterialFilter([material_list[-1]])
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
@@ -75,7 +73,7 @@ def filter_cells(
     return (
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
-        ("Total power", "heating", [mat_filter]),
+        ("total power", "heating", [mat_filter, cell_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [blanket_cell_filter]),
