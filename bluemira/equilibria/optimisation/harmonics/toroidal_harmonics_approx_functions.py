@@ -324,6 +324,9 @@ def coil_toroidal_harmonic_amplitude_matrix(
     Legendre functions of the first kind of degree lambda and order minus mu, and :math:
     \\Delta_c = \\cosh{\\tau_c} - \\cos{\\sigma_c}.
 
+    Note: the factorial term \\frac{(2m+1)!!}{2^m m!} is equivalent to 1 if m = 0,
+    otherwise \\prod_{i=0}^{m-1} \\left( 1 + \\frac{1}{2(m-i)}\\right)
+
     Parameters
     ----------
     input_coils:
@@ -368,7 +371,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
     currents2harmonics = np.zeros([max_degree, np.size(tau_c)])
 
     # TH coefficients from function of the current distribution
-    # outside of the region containing the core plamsa
+    # outside of the region containing the core plasma
     # TH coefficients = currents2harmonics @ coil currents
     degrees = np.arange(0, max_degree)[:, None]
     factorial_term = np.array([
