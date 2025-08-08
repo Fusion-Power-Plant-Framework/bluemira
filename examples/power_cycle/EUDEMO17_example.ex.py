@@ -104,10 +104,15 @@ def get_pulse_data(
     }
 
 
-def plot_pulse_data(pulse_data, fig_path, load_alpha=0.7, total_alpha=1.0):
+def plot_pulse_data(pulse_data, fig_path, phase_verification, load_verification):
     """Create plots for each phase and the whole pulse showing load vectors."""
     pulse_label = pulse_data["pulse_label"]
     load_type = pulse_data["load_type"]
+
+    load_alpha = 0.7
+    total_alpha = 1.0
+    tol = 1e-3
+    bbox_options = {"boxstyle": "round", "pad": 0.3, "facecolor": "white", "alpha": 0.8}
 
     load_names = list(pulse_data["pulse_loads"].keys())
     colors = plt.cm.hsv(np.linspace(0, 1, len(load_names)))
@@ -119,7 +124,6 @@ def plot_pulse_data(pulse_data, fig_path, load_alpha=0.7, total_alpha=1.0):
     axes = axes.flatten()
 
     handles, labels = [], []
-
     for i, phase_name in enumerate(pulse_data["phase_order"]):
         ax = axes[i]
         for load_name, load_values in pulse_data["phase_loads"][phase_name].items():
@@ -152,8 +156,8 @@ def plot_pulse_data(pulse_data, fig_path, load_alpha=0.7, total_alpha=1.0):
         ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
         ax.grid(visible=True, alpha=0.3)
 
-        # if i == 0:
-        #     ax.legend(handles, labels, bbox_to_anchor=(1.05, 1), loc="upper left")
+    for j in range(n_plots, len(axes)):
+        axes[j].set_visible(False)
 
     plt.tight_layout()
     fig_phase.savefig(
@@ -179,7 +183,34 @@ def plot_pulse_data(pulse_data, fig_path, load_alpha=0.7, total_alpha=1.0):
         color="black",
         alpha=total_alpha,
     )
-    ax.set_title(f"Pulse: {pulse_label}")
+
+    memory_x = 0
+    memory_y = 0
+    for i, phase_name in enumerate(pulse_data["phase_order"]):
+        phase_time = pulse_data["phase_timeseries"][i]
+        phase_total = pulse_data["phase_total"][phase_name]
+
+        avg_load = np.mean(phase_total)
+        phase_start = memory_x
+        phase_end = memory_x + max(phase_time)
+        middle_x = (phase_start + phase_end) / 2
+        shift = 0.05 * (ax.get_ylim()[1] - ax.get_ylim()[0])
+        above_y = max(phase_total)
+        ax.text(
+            middle_x,
+            above_y + (3 if (above_y - memory_y) < tol else 1) * shift,
+            f"{phase_name}: {avg_load:.1f} {pulse_data['load_unit']}",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            bbox=bbox_options,
+        )
+        memory_x = phase_end
+        memory_y = above_y
+
+    ax.set_title(
+        f"Pulse: {pulse_label} [verification: {phase_verification}, {load_verification}]"
+    )
     ax.set_xlabel("Time [s]")
     ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
     ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
@@ -221,116 +252,40 @@ pulse_active_data = get_pulse_data(
 )
 export_filename = config_path / "EUDEMO17_pulse_active_data.json"
 export_pulse_data(pulse_active_data, filename=export_filename)
-plot_pulse_data(pulse_active_data, fig_path=config_path)
+
+production_minucci_turbine_hcpb = 790 * 0.95 * 0.85
+consumption_minucci_ssen_hcpb_ftt = sum([
+    -12.2,  # TFV
+    -3,  # TER
+    -3 * 6,  # ECH + NBI + ICH upkeeps
+    -6.1,  # DGC
+    -9.7,  # VV PHTS
+    -165.6,  # HCPB PHTS
+    -2.3,  # VVPS
+    -19.5,  # DIV+LIM PHTS
+    -(5 + 4.6 + 3),  # RM, Assembly, Waste
+    -12,  # BOP
+    -3.1,  # Site
+    -101.8,  # Cryogenics
+    -21,  # EPS upkeep
+    -50,  # EPS peak (~1/6 of 300MW)
+    -54.8,  # Buildings
+    -3.6,  # Plant Control
+    -90.9,  # Auxiliaries
+    -32,  # Switchyard estimates
+])  # MW
+net_minucci_ftt = production_minucci_turbine_hcpb + consumption_minucci_ssen_hcpb_ftt
+
+plot_pulse_data(
+    pulse_active_data,
+    fig_path=config_path,
+    phase_verification="ftt",
+    load_verification=f"{net_minucci_ftt:.2f} MW",
+)
 
 
-# def get_pulse_data(
-#     power_cycle: PowerCycle,
-#     pulse_label: str,
-#     load_type: str,
-#     load_unit: str,
-#     extra_points: int = 0,
-# ):
-#     """Get the total load for a specific type and unit."""
-#     pulse = power_cycle.get_pulse(pulse_label)
-#     phase_order = power_cycle.pulse_library.root[pulse_label].phases
+# TEMP: add turbine load to pulse, because it is zero due to bug
 
-#     starting_time = 0
-#     phase_timeseries = OrderedDict()
-#     phase_loads_for_type = OrderedDict()
-#     phase_total_for_type = OrderedDict()
-
-#     pulse_timeseries = []
-#     pulse_loads_for_type = {}
-#     for p_name in phase_order:
-#         phase = pulse[p_name]
-#         p_times = phase.timeseries()
-#         new_times = interpolate_extra(p_times, n_points=extra_points)
-#         p_loads = phase.load(load_type, load_unit, timeseries=new_times)
-#         p_total = phase.total_load(load_type, load_unit, timeseries=new_times)
-
-#         timeseries = new_times + starting_time
-#         phase_timeseries[p_name] = timeseries
-#         pulse_timeseries.append(timeseries)
-#         starting_time = timeseries[-1]
-
-#         phase_loads_for_type[p_name] = p_loads
-#         phase_total_for_type[p_name] = p_total
-
-#         for l_name, load in p_loads.items():
-#             if l_name not in pulse_loads_for_type:
-#                 pulse_loads_for_type[l_name] = load
-#             else:
-#                 last_load = pulse_loads_for_type[l_name]
-#                 pulse_loads_for_type[l_name] = np.concatenate([last_load, load])
-#     # pp(phase_loads_for_type)
-#     # pp(phase_total_for_type)
-#     # pp(pulse_loads_for_type)
-
-#     pulse_timeseries = np.concatenate(pulse_timeseries)
-#     pulse_total_for_type = list(pulse_loads_for_type.values())
-#     pulse_total_for_type = np.sum(pulse_total_for_type, axis=0)
-#     # pp(pulse_total_for_type)
-
-#     return {
-#         "pulse_label": pulse_label,
-#         "load_type": load_type,
-#         "load_unit": load_unit,
-#         "phase_order": phase_order,
-#         "phase_timeseries": phase_timeseries,
-#         "phase_loads": phase_loads_for_type,
-#         "phase_total": phase_total_for_type,
-#         "pulse_timeseries": pulse_timeseries,
-#         "pulse_loads": pulse_loads_for_type,
-#         "pulse_total": pulse_total_for_type,
-#     }
-
-
-# pulse_active_data = get_pulse_data(
-#     power_cycle,
-#     pulse_label="std",
-#     load_type="active",
-#     load_unit="MW",
-#     extra_points=0,
-# )
-# phase_timeseries = pulse_active_data["phase_timeseries"]
-# phase_loads_active = pulse_active_data["phase_loads"]
-# phase_total_active = pulse_active_data["phase_total"]
-# pulse_timeseries = pulse_active_data["pulse_timeseries"]
-# pulse_loads_active = pulse_active_data["pulse_loads"]
-# pulse_total_active = pulse_active_data["pulse_total"]
-# # pp(phase_timeseries)
-# # pp(phase_loads_active)
-# # pp(phase_total_active)
-# # pp(pulse_timeseries)
-# # pp(pulse_loads_active)
-# # pp(pulse_total_active)
-
-
-# # TEMP: add turbine load to pulse, because it is zero due to bug
-# production_minucci_turbine_hcpb = 790 * 0.95 * 0.85
-# consumption_minucci_ssen_hcpb_ftt = sum([
-#     -12.2,  # TFV
-#     -3,  # TER
-#     -3 * 6,  # ECH + NBI + ICH upkeeps
-#     -6.1,  # DGC
-#     -9.7,  # VV PHTS
-#     -165.6,  # HCPB PHTS
-#     -2.3,  # VVPS
-#     -19.5,  # DIV+LIM PHTS
-#     -(5 + 4.6 + 3),  # RM, Assembly, Waste
-#     -12,  # BOP
-#     -3.1,  # Site
-#     -101.8,  # Cryogenics
-#     -21,  # EPS upkeep
-#     # TEMP: add "eps_peak" to `plb` subphase to also model PPEN
-#     -54.8,  # Buildings
-#     -3.6,  # Plant Control
-#     -90.9,  # Auxiliaries
-#     -32,  # Switchyard estimates
-# ])  # MW
-# net_ftt = production_minucci_turbine_hcpb + consumption_minucci_ssen_hcpb_ftt
-# # pp(net_ftt)
 
 # # Remove turbine power to plot only consumption
 # pulse_consumption = pulse_total_active - production_minucci_turbine_hcpb
