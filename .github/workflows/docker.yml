@@ -31,6 +31,12 @@ jobs:
         with:
           ref: ${{ steps.versions.outputs.checkout_ref }}
 
+      # We need the currently checked out revision of the repository, not the
+      # one from the CI trigger. Use `git rev-parse` instead of `GITHUB_SHA`.
+      - name: Get Git revision
+        id: revision
+        run: echo "bluemira_revision=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Log in to Quay.io
         uses: docker/login-action@v3
         with:
@@ -47,4 +53,6 @@ jobs:
           file: ./docker/conda.Dockerfile
           tags: quay.io/fusion-power-plant-framework/bluemira:${{ steps.versions.outputs.image_tag }}
           build-args: |
+            BLUEMIRA_VERSION=${{ steps.versions.outputs.image_tag }}
+            BLUEMIRA_REVISION=${{ steps.revision.outputs.bluemira_revision }}
             PROCESS_VERSION=v3.1.0

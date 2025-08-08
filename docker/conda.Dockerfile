@@ -57,7 +57,6 @@ SHELL ["/opt/conda/bin/conda", "run", "-n", "bluemira", "/bin/bash", "-c"]
 RUN git lfs install
 
 # Install PROCESS.
-ARG PROCESS_VERSION=v3.1.0
 ENV PROCESS_ROOT=/opt/process
 RUN git clone \
         --branch ${PROCESS_VERSION} \
