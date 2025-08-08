@@ -52,25 +52,24 @@ def get_pulse_data(
     phase_order = pulse._config.phases
 
     phase_timeseries = pulse.phase_timeseries()
-    pulse_timeseries = pulse.timeseries()
-
-    # pp(phase_timeseries)
-    # pp(pulse_timeseries)
+    pulse_timeseries = pulse.timeseries()  # BUG WHEN ARGUMENT FOR PULSE.LOAD
     pulse_timeseries = interpolate_extra(pulse_timeseries, n_points=extra_points)
+    # pp(phase_timeseries)
     # pp(pulse_timeseries)
 
     phase_loads_for_type = {}
+    phase_total_for_type = {}
+
+    pulse_times = [interpolate_extra(t, n_points=extra_points) for t in phase_timeseries]
     pulse_loads_for_type = pulse.load(
         load_type,
         load_unit,
-        timeseries=pulse_timeseries,
+        timeseries=pulse_times,
     )
-
-    phase_total_for_type = {}
     pulse_total_for_type = pulse.total_load(
         load_type,
         load_unit,
-        timeseries=pulse_timeseries,
+        timeseries=pulse_times,
     )
 
     for p_index, p_name in enumerate(phase_order):
@@ -111,13 +110,13 @@ def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
     load_type = pulse_data["load_type"]
 
     load_names = list(pulse_data["pulse_loads"].keys())
-    colors = plt.cm.tab10(np.linspace(0, 1, len(load_names)))
+    colors = plt.cm.hsv(np.linspace(0, 1, len(load_names)))
     color_map = {load_name: colors[i] for i, load_name in enumerate(load_names)}
 
     n_plots = len(pulse_data["phase_order"])
-    fig_phase, axes = plt.subplots(n_plots, 1, figsize=(12, 4 * n_plots))
-    if n_plots == 1:
-        axes = [axes]
+    n_row = n_col = int(np.ceil(np.sqrt(n_plots)))
+    fig_phase, axes = plt.subplots(n_row, n_col, figsize=(14, 8))
+    axes = axes.flatten()
 
     handles, labels = [], []
 
@@ -139,30 +138,30 @@ def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
         total_line = ax.plot(
             pulse_data["phase_timeseries"][i],
             pulse_data["phase_total"][phase_name],
-            label="Total",
+            label="Net",
             linewidth=3,
             color="black",
             alpha=total_alpha,
         )[0]
-        if "Total" not in labels:
+        if "Net" not in labels:
             handles.append(total_line)
-            labels.append("Total")
+            labels.append("Net")
 
         ax.set_title(f"Phase: {phase_name}")
         ax.set_xlabel("Time [s]")
         ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
         ax.grid(visible=True, alpha=0.3)
 
-    fig_phase.legend(handles, labels, loc="upper right", bbox_to_anchor=(0.98, 0.98))
+        # if i == 0:
+        #     ax.legend(handles, labels, bbox_to_anchor=(1.05, 1), loc="upper left")
 
     plt.tight_layout()
-    plt.show()
     fig_phase.savefig(
         f"{pulse_label}_{load_type}_phases.pdf",
         bbox_inches="tight",
     )
 
-    fig_pulse, ax = plt.subplots(1, 1, figsize=(12, 6))
+    fig_pulse, ax = plt.subplots(1, 1, figsize=(14, 6))
     for load_name, load_values in pulse_data["pulse_loads"].items():
         ax.plot(
             pulse_data["pulse_timeseries"],
@@ -175,24 +174,24 @@ def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
     ax.plot(
         pulse_data["pulse_timeseries"],
         pulse_data["pulse_total"],
-        label="Total",
+        label="Net",
         linewidth=3,
         color="black",
         alpha=total_alpha,
     )
-    ax.set_title(f"Whole Pulse: {pulse_label}")
+    ax.set_title(f"Pulse: {pulse_label}")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel(f"{load_type.capitalize()} Power [{pulse_data['load_unit']}]")
-    ax.legend()
+    ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
     ax.grid(visible=True, alpha=0.3)
 
     plt.tight_layout()
-    plt.show()
     fig_pulse.savefig(
         f"{pulse_label}_{load_type}_pulse.pdf",
         bbox_inches="tight",
     )
 
+    plt.show()
     return fig_phase, fig_pulse
 
 
