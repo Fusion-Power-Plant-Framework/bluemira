@@ -104,7 +104,7 @@ def get_pulse_data(
     }
 
 
-def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
+def plot_pulse_data(pulse_data, fig_path, load_alpha=0.7, total_alpha=1.0):
     """Create plots for each phase and the whole pulse showing load vectors."""
     pulse_label = pulse_data["pulse_label"]
     load_type = pulse_data["load_type"]
@@ -157,7 +157,7 @@ def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
 
     plt.tight_layout()
     fig_phase.savefig(
-        f"{pulse_label}_{load_type}_phases.pdf",
+        fig_path / f"{pulse_label}_{load_type}_phases.pdf",
         bbox_inches="tight",
     )
 
@@ -187,7 +187,7 @@ def plot_pulse_data(pulse_data, load_alpha=0.7, total_alpha=1.0):
 
     plt.tight_layout()
     fig_pulse.savefig(
-        f"{pulse_label}_{load_type}_pulse.pdf",
+        fig_path / f"{pulse_label}_{load_type}_pulse.pdf",
         bbox_inches="tight",
     )
 
@@ -221,7 +221,7 @@ pulse_active_data = get_pulse_data(
 )
 export_filename = config_path / "EUDEMO17_pulse_active_data.json"
 export_pulse_data(pulse_active_data, filename=export_filename)
-plot_pulse_data(pulse_active_data)
+plot_pulse_data(pulse_active_data, fig_path=config_path)
 
 
 # def get_pulse_data(
