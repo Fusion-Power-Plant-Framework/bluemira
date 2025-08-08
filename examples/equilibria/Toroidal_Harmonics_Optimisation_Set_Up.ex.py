@@ -36,7 +36,7 @@ Usage of the 'toroidal_harmonic_approximation' function.
 # see Toroidal_Approximation_Explained.ex.py.
 
 # %% [markdown]
-# ### Imports
+# ## Imports
 
 # %%
 from copy import deepcopy

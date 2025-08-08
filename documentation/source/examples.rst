@@ -27,9 +27,8 @@ Equilibria Examples
     examples/equilibria/coilset_opt_problem_tutorial
     examples/equilibria/anaylsis_toolbox_examples
     examples/equilibria/quick_look_at_example_coilsets
-    examples/equilibria/toroidal_harmonics_approximation_basic_use
-    examples/equilibria/toroidal_harmonics_component_function_walkthrough_and_verification
-    examples/equilibria/toroidal_harmonics_full_coilset_approximation_bluemira_comparison
+    examples/equilibria/Toroidal_Approximation_Explained
+    examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up
 
 
 Geometry Examples
