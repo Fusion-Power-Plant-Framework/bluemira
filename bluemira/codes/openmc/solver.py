@@ -97,7 +97,7 @@ class OpenMCSimulationRuntimeParameters:
     plot_pixel_per_metre: int = 100
 
 
-class Setup(CodesSetup):
+class OpenMCSetup(CodesSetup):
     """Setup task for OpenMC solver"""
 
     def __init__(
@@ -262,7 +262,7 @@ class Setup(CodesSetup):
         )
 
 
-class Run(CodesTask):
+class OpenMCRun(CodesTask):
     """Run task for OpenMC solver"""
 
     def __init__(self, out_path: Path, codes_name: str):
@@ -306,7 +306,7 @@ class Run(CodesTask):
         self._run(run_mode, debug=debug)
 
 
-class Teardown(CodesTeardown):
+class OpenMCTeardown(CodesTeardown):
     """Teardown task for OpenMC solver"""
 
     def __init__(
@@ -408,9 +408,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
     params: OpenMCNeutronicsSolverParams
     run_mode_cls: type[OpenMCRunModes] = OpenMCRunModes
-    setup_cls: type[Setup] = Setup
-    run_cls: type[Run] = Run
-    teardown_cls: type[Teardown] = Teardown
+    setup_cls: type[CodesSetup] = OpenMCSetup
+    run_cls: type[CodesTask] = OpenMCRun
+    teardown_cls: type[CodesTeardown] = OpenMCTeardown
 
     def __init__(
         self,
