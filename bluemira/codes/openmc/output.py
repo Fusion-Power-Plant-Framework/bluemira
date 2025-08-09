@@ -18,8 +18,16 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.codes.openmc.make_csg import CellStage
+from bluemira.geometry.tools import revolve_shape
 from bluemira.plasma_physics.reactions import n_DT_reactions
-from bluemira.radiation_transport.neutronics.constants import DPACoefficients
+from bluemira.radiation_transport.neutronics.make_pre_cell import (
+    DivertorPreCellArray,
+    PreCellArray,
+)
+from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
+    NeutronicsReactor,
+)
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
 )
@@ -53,6 +61,31 @@ def get_percent_err(row):
     return row["std. dev."] / row["mean"] * 100.0
 
 
+def extract_pf_areas(
+    cell_arrays: CellStage,
+    blanket_array: PreCellArray,
+    divertor_array: DivertorPreCellArray,
+) -> dict[int, str]:
+    """
+    Extract a dictionary that stores the plasma-facing area of each plasma-facing cell,
+    according to the cell id in openmc.
+    """
+    area_dict = {}
+    for blanket_cell_stack, pre_cell in zip(
+        cell_arrays.blanket, blanket_array, strict=False
+    ):
+        plasma_facing_area = revolve_shape(pre_cell.interior_wire).area * 2
+        area_dict[blanket_cell_stack[0].id] = plasma_facing_area
+    for divertor_cell_stack, div_pre_cell in zip(
+        cell_arrays.divertor, divertor_array, strict=False
+    ):
+        plasma_facing_area = (
+            revolve_shape(div_pre_cell.interior_wire.restore_to_wire()).area * 2
+        )
+        area_dict[divertor_cell_stack[0].id] = plasma_facing_area
+    return area_dict
+
+
 @dataclass
 class OpenMCResult:
     """
@@ -76,7 +109,9 @@ class OpenMCResult:
     total_power: float
     total_power_err: float
     mult_power: float
-    """Neutron wall load (eV)"""
+    """Fluxes and neutron wall loads"""
+    fluxes: dict
+    neutron_wall_load: dict
 
     photon_heat_flux: dict
     """Photon heat flux"""
@@ -93,6 +128,8 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
+        pre_cell_model: NeutronicsReactor,
+        cell_arrays: CellStage,
         P_fus_DT: float,
         statepoint_file: str = "",
     ):
@@ -137,6 +174,16 @@ class OpenMCResult:
         e_mult = total_power / dt_neuton_power
         e_mult_err = total_power_err / dt_neuton_power
         mult_power = (e_mult - 1.0) * dt_neuton_power
+        all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
+        cell_pf_area = extract_pf_areas(
+            cell_arrays, pre_cell_model.blanket, pre_cell_model.divertor
+        )
+
+        nwl_df = (
+            cls._load_neutron_wall_loading(
+                statepoint, cell_names, cell_vols, cell_pf_area, src_rate
+            ),
+        )
 
         return cls(
             universe=universe,
@@ -159,10 +206,9 @@ class OpenMCResult:
             divertor_power_err=divertor_power_err,
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
+            fluxes=all_fluxes,
+            neutron_wall_load=nwl_df,
             mult_power=mult_power,
-            neutron_wall_load=cls._load_neutron_wall_loading(
-                statepoint, cell_names, cell_vols, src_rate
-            ),
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -273,7 +319,6 @@ class OpenMCResult:
                 "material",
                 "material_name",
                 "nuclide",
-                "score",
                 "mean(W)",
                 "err.",
                 "%err.",
@@ -283,47 +328,80 @@ class OpenMCResult:
         return cls._convert_dict_contents(hdf)
 
     @classmethod
-    def _load_neutron_wall_loading(cls, statepoint, cell_names, cell_vols, src_rate):
-        """Load the neutron wall load dataframe"""
-        dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
-        n_wl_df = cls._load_dataframe_from_statepoint(
+    def _load_fluxes(cls, statepoint, cell_names, cell_vols, src_rate):
+        """Load the neutron fluxes dataframe."""
+        flux_df = cls._load_dataframe_from_statepoint(
             statepoint, "neutron flux in every cell"
         )
-        n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
-        n_wl_df["vol (m^3)"] = n_wl_df["cell"].map(cell_vols)
-        total_displacements_per_second = (
-            n_wl_df["mean"] * dfa_coefs.displacements_per_damage_eV * src_rate
-        )  # "mean" has units "eV per source particle"
-        # total number of atomic displacements per second in the cell.
-        num_atoms_in_cell = n_wl_df["vol (m^3)"] * raw_uc(
-            dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
+        flux_df["cell_name"] = flux_df["cell"].map(cell_names)
+        flux_df["vol (m^3)"] = flux_df["cell"].map(cell_vols)
+        flux_df["flux (m^-2)"] = (
+            raw_uc(flux_df["mean"].to_numpy(), "cm", "m")
+            * src_rate
+            / flux_df["vol (m^3)"]
         )
-        n_wl_df["dpa/fpy"] = raw_uc(
-            total_displacements_per_second.to_numpy() / num_atoms_in_cell.to_numpy(),
-            "1/s",
-            "1/year",
-        )
+        flux_df["%err."] = flux_df.apply(get_percent_err, axis=1)
 
-        n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1)
-        # keep only the surface cells:
-        n_wl_df = n_wl_df.drop(
-            n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
-        )
-        # DataFrame columns rearrangement
-        n_wl_df = n_wl_df[
+        flux_df = flux_df[
             [
                 "cell",
                 "cell_name",
                 "particle",
                 "nuclide",
-                "score",
                 "vol (m^3)",
-                "dpa/fpy",
+                "flux (m^-2)",
                 "%err.",
             ]
         ]
+        return cls._convert_dict_contents(flux_df.to_dict())
 
-        return cls._convert_dict_contents(n_wl_df.to_dict())
+    @classmethod
+    def _load_neutron_wall_loading(
+        cls, statepoint, cell_names, cell_vols, cell_pf_area, src_rate
+    ):
+        """
+        Notes
+        -----
+        Note that thinner components will have lower [W/m^2] value, because we
+        are measuring ONLY volumetric heating; All photonic heating directly
+        from the plasma (e.g. infrared, Brehmsstralung, etc.) are all omitted, because
+        this is a neutron simulation code. (But Brehmsstralung generated within the
+        material is accounted for.)
+        """
+        flux = cls._load_dataframe_from_statepoint(statepoint, "neutron flux at PFS")
+        flux["vol (m^3)"] = flux["cell"].map(cell_vols)
+        flux["flux (m^-2)"] = (
+            raw_uc(flux["mean"].to_numpy(), "cm", "m") * src_rate / flux["vol (m^3)"]
+        )
+        flux["flux %err."] = flux.apply(get_percent_err, axis=1)
+
+        heating = cls._load_dataframe_from_statepoint(
+            statepoint, "volumetric heating at PFS"
+        )
+        heating["cell_name"] = heating["cell"].map(cell_names)
+        heating["area (m^2)"] = heating["cell"].map(cell_pf_area)
+        heating["heating (W)"] = raw_uc(
+            heating["mean"].to_numpy() * src_rate, "eV/s", "W"
+        )
+        heating["neutron wall load (W/m^2)"] = (
+            heating["heating (W)"] / heating["area (m^2)"]
+        )
+        heating["heating %err."] = heating.apply(get_percent_err, axis=1)
+
+        nwl = heating[
+            [
+                "cell",
+                "cell_name",
+                "nuclide",
+                "neutron wall load (W/m^2)",
+                "heating %err.",
+            ]
+        ].merge(
+            flux[["cell", "flux (m^-2)", "flux %err."]],
+            on="cell",
+        )
+        # total number of atomic displacements per second in the cell.
+        return cls._convert_dict_contents(nwl.to_dict())
 
     @classmethod
     def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols, src_rate):
