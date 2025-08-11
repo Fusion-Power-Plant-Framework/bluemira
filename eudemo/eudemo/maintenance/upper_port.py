@@ -235,7 +235,7 @@ class UpperPortKOZDesigner(Designer[tuple[BluemiraFace, float, float]]):
         params: dict | ParameterFrame,
         build_config: dict,
         blanket_face: BluemiraFace,
-        upper_port_extrema=10,
+        upper_port_extrema=13,
     ):
         super().__init__(params, build_config)
         self.blanket_face = blanket_face
