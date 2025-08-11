@@ -1002,23 +1002,6 @@ def convex_hull_wires_2d(
     return make_polygon(hull_coords, closed=True)
 
 
-def convexify(array_coords: npt.NDArray[float]):
-    """
-    Parameters
-    ----------
-    array_coords:
-        Coordinates as a numpy array.
-
-    Returns
-    -------
-    :
-        ONLY the list of vertices that forms the convex hull. Those that doesn't form the
-        convex hull are removed.
-    """
-    hull = ConvexHull(array_coords)
-    return hull.points[sorted(hull.vertices)]
-
-
 # # =============================================================================
 # # Volume function
 # # =============================================================================
