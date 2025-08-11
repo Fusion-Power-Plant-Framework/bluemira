@@ -10,11 +10,11 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.5.0
+blosc2==3.6.1
     # via tables
-certifi==2025.6.15
+certifi==2025.8.3
     # via requests
-charset-normalizer==3.4.2
+charset-normalizer==3.4.3
     # via requests
 click==8.2.1
     # via
@@ -24,7 +24,7 @@ contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==6.8.0
+coolprop==7.0.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
@@ -34,13 +34,13 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.58.4
+fonttools==4.59.0
     # via matplotlib
 fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.13.1
+gmsh==4.14.0
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
@@ -48,13 +48,13 @@ imageio==2.37.0
     # via bluemira (pyproject.toml)
 joblib==1.5.1
     # via scikit-learn
-kiwisolver==1.4.8
+kiwisolver==1.4.9
     # via matplotlib
 llvmlite==0.44.0
     # via numba
 markdown-it-py==3.0.0
     # via rich
-matplotlib==3.10.3
+matplotlib==3.10.5
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
@@ -106,11 +106,11 @@ packaging==25.0
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.3.0
+pandas==2.3.1
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
-pillow==11.2.1
+pillow==11.3.0
     # via
     #   imageio
     #   matplotlib
@@ -146,17 +146,17 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.45.2
+pyvista==0.46.0
     # via bluemira (pyproject.toml)
 requests==2.32.4
     # via
     #   blosc2
     #   pooch
-rich==14.0.0
+rich==14.1.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-scikit-learn==1.7.0
+scikit-learn==1.7.1
     # via bluemira (pyproject.toml)
 scipy==1.15.3
     # via
@@ -177,7 +177,7 @@ threadpoolctl==3.6.0
     # via scikit-learn
 typeguard==4.4.4
     # via bluemira (pyproject.toml)
-typing-extensions==4.14.0
+typing-extensions==4.14.1
     # via
     #   flexcache
     #   flexparser
@@ -185,7 +185,6 @@ typing-extensions==4.14.0
     #   pydantic
     #   pydantic-core
     #   pyvista
-    #   rich
     #   tables
     #   typeguard
     #   typing-inspection
