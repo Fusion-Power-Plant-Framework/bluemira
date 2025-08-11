@@ -29,7 +29,7 @@ from bluemira.geometry.plane import (
     xz_plane_from_2_points,
     z_plane,
 )
-from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.tools import convexify, get_wire_plane_intersect, make_polygon
 from bluemira.radiation_transport.neutronics.constants import (
     DISCRETISATION_LEVEL,
     TOLERANCE_DEGREES,
