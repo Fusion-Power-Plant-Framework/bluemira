@@ -24,7 +24,7 @@ from bluemira.geometry.plane import (
     xz_plane_from_2_points,
     z_plane,
 )
-from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.tools import convexify, get_wire_plane_intersect, make_polygon
 from bluemira.radiation_transport.neutronics.constants import (
     DISCRETISATION_LEVEL,
     TOLERANCE_DEGREES,
@@ -407,7 +407,7 @@ class PanelsAndExteriorCurve:
         self.vv_interior = vv_interior
         self.vv_exterior = vv_exterior
         # shape = (N+1, 3)
-        self.interior_panels = panel_break_points
+        self.interior_panels = convexify(panel_break_points)
         if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:  # noqa: PLR2004
             raise ValueError(
                 "Expected an input np.ndarray of breakpoints of shape = "
