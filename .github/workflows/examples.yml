@@ -37,7 +37,6 @@ jobs:
       - name: Build
         uses: ./.github/workflows/actions/build
         with:
-          os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
 
       - name: Install PROCESS

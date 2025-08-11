@@ -47,7 +47,6 @@ jobs:
       - name: Build
         uses: ./.github/workflows/actions/build
         with:
-          os: ubuntu-latest
           python-version: "3.12"
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
 
@@ -80,10 +79,9 @@ jobs:
       - name: Build
         uses: ./.github/workflows/actions/build
         with:
-          os: ${{ matrix.os }}
           python-version: ${{ matrix.python-version }}
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-          with-artifact: ${{ matrix.with-process == 'process_disabled' && 'false' || 'true' }}
+          with-artifact: ${{ matrix.with-process == 'process_disabled' && 'true' || 'false' }}
 
       - name: Install PROCESS
         if: ${{ matrix.with-process != 'process_disabled' }}
