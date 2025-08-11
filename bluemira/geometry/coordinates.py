@@ -21,6 +21,7 @@ import numba as nb
 import numpy as np
 from numba.np.extensions import cross2d
 from scipy.interpolate import interp1d
+from scipy.spatial import ConvexHull
 from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation
 
@@ -2038,6 +2039,50 @@ def join_intersect(
         insertion_locations = [dest_poly.argmin([x, 0, z]) for x, z in xz_inter]
         return dest_poly, list(set(insertion_locations))
     return dest_poly
+
+
+def convex_2d_hull_coordinates(coordinates: Coordinates) -> Coordinates:
+    """
+    Given a list of coordinates, simplify it so that only the points that makes up the
+    convex hull of this coordinates set remains.
+
+    Parameter
+    ---------
+    coordinates:
+        Either a set of planar coordinates (in which case, a 2d convex hull is made),
+        or a set of 3D, non-planar coordinates (in which case, a 3D convex hull is made.)
+
+    Returns
+    -------
+    :
+        ONLY the list of vertices that forms the convex hull. Those that doesn't form the
+        convex hull are removed.
+
+    Raises
+    ------
+    CoordinatesError
+        Cannot process coplanar coordinates whose common plane is not perpendicular to
+        one of the 3 cardinal axes.
+    """
+    if coordinates.is_planar:
+        if np.array_equal(abs(coordinates.normal_vector), [1, 0, 0]):
+            hull = ConvexHull(coordinates.yz.T)
+            filtered_points = np.insert(hull.points[sorted(hull.vertices)], 0, 0, axis=1)
+        elif np.array_equal(abs(coordinates.normal_vector), [0, 1, 0]):
+            hull = ConvexHull(coordinates.xz.T)
+            filtered_points = np.insert(hull.points[sorted(hull.vertices)], 1, 0, axis=1)
+        elif np.array_equal(abs(coordinates.normal_vector), [0, 0, 1]):
+            hull = ConvexHull(coordinates.xy.T)
+            filtered_points = np.insert(hull.points[sorted(hull.vertices)], 2, 0, axis=1)
+        else:
+            raise CoordinatesError(
+                "Cannot find the convex hull of a plane that isn't parallel to the"
+                "x/y/z plane."
+            )
+    else:
+        hull = ConvexHull(coordinates.xyz.T)
+        filtered_points = hull.points[sorted(hull.vertices)]
+    return Coordinates(filtered_points)
 
 
 def choose_direction(
