@@ -988,7 +988,7 @@ def convex_hull_wires_2d(
     elif hull_plane is HullPlane.YZ:
         plane_idxs = (1, 2)
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Cannot find the Convex hull for a 3D object yet.")
 
     shape_discretisations = []
     for wire in wires:
@@ -1000,6 +1000,23 @@ def convex_hull_wires_2d(
     hull_coords = np.zeros((3, len(hull.vertices)))
     hull_coords[plane_idxs, :] = coords[:, hull.vertices]
     return make_polygon(hull_coords, closed=True)
+
+
+def convexify(array_coords: npt.NDArray[float]):
+    """
+    Parameters
+    ----------
+    array_coords:
+        Coordinates as a numpy array.
+
+    Returns
+    -------
+    :
+        ONLY the list of vertices that forms the convex hull. Those that doesn't form the
+        convex hull are removed.
+    """
+    hull = ConvexHull(array_coords)
+    return hull.points[sorted(hull.vertices)]
 
 
 # # =============================================================================
