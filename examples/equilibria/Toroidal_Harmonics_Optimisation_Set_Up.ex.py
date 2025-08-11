@@ -25,7 +25,7 @@ Usage of the 'toroidal_harmonic_approximation' function.
 """
 
 # %% [markdown]
-# # toroidal_harmonic_approximation Function
+# # Example of using Toroidal Harmonic Constraints in a Coil Current Optimisation
 #
 # This example illustrates the usage of the bluemira
 # toroidal_harmonics_approximation function to create Toroidal
@@ -255,6 +255,7 @@ plt.show()
 # %% [markdown]
 # Now we perform the Tikhonov coilset optimisation using our toroidal
 # harmonic and isoflux leg constraints.
+# Note that the constraints are violated in this example.
 
 # %%
 # OPTIMISATION

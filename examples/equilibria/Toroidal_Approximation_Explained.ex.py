@@ -51,8 +51,8 @@ from Bluemira.
 # There are benefits to using TH as a minimal set of constraints:
 # - We can choose not to re-solve for the plasma equilibrium at each step, since the
 # coilset contribution to the core plasma (within the LCFS) is constrained.
-# - We have a minimal set of constraints (a set of harmonic amplitudes) for the core
-# plasma contribution, which can reduce the dimensionality of the problem we are
+# - We have a small, viable set of constraints (a set of harmonic amplitudes) for the
+# core plasma contribution, which can reduce the dimensionality of the problem we are
 # considering.
 #
 # %% [markdown]
@@ -88,8 +88,6 @@ from Bluemira.
 # \left( 1 + \frac{1}{2(m-i)}\right) $
 #
 # We can then obtain the flux, $\psi$ by using $\psi = R A$.
-# %% [markdown]
-# ### Imports
 
 # %%
 from copy import deepcopy
@@ -119,10 +117,6 @@ from bluemira.geometry.coordinates import Coordinates
 # %%
 # Get equilibrium
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
-
-# eq_name = "eqref_OOB.json"
-# eq_name = Path(EQDATA, eq_name)
-# eq = Equilibrium.from_eqdsk(eq_name, from_cocos=7)
 
 eq_name = "DN-DEMO_eqref.json"
 eq_name = Path(EQDATA, eq_name)
