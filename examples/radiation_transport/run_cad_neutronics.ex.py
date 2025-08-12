@@ -30,11 +30,11 @@ from pathlib import Path
 
 import openmc
 import vtk
+from openmc_plasma_source import tokamak_source
 from vtkmodules.util import numpy_support
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.codes.openmc.sources import create_ring_source
 from bluemira.materials.cache import establish_material_cache, get_cached_material
 
 par = Path(__file__).parent
@@ -44,11 +44,14 @@ par = Path(__file__).parent
 # %%
 n_batches = 5
 particles_per_batch = 10000
-ring_source_major_radius = 900  # cm, the reactor major radius
+# there are other parameters that can be set, see the tokamak_source below
+source_major_radius = 900  # cm, the reactor major radius
+source_minor_radius = 292.258  # cm, the reactor minor radius
+
 # OptimisedReactor can be exported by running examples/design/optimised_reactor.ex.py
 # Change this to the name of your DAGMC model
-dag_model_path = par / "OptimisedReactor.h5m"
-meta_data_path = par / "OptimisedReactor.meta.json"
+dag_model_path = par / "EUDEMO.h5m"
+meta_data_path = par / "EUDEMO.meta.json"
 
 # %%
 establish_material_cache([
@@ -78,7 +81,25 @@ openmc_mats = [
 # load DAG model
 geometry = openmc.Geometry(dagmc_univ)
 
-my_source = create_ring_source(ring_source_major_radius, 0)
+my_source = tokamak_source(
+    elongation=1.557,
+    ion_density_centre=1.09e20,
+    ion_density_pedestal=1.09e20,
+    ion_density_peaking_factor=1,
+    ion_density_separatrix=3e19,
+    ion_temperature_centre=45.9e3,
+    ion_temperature_pedestal=6.09e3,
+    ion_temperature_separatrix=0.1e3,
+    ion_temperature_peaking_factor=8.06,
+    ion_temperature_beta=6,
+    major_radius=source_major_radius,
+    minor_radius=source_minor_radius,
+    pedestal_radius=0.8 * source_minor_radius,
+    mode="H",
+    shafranov_factor=0.44789,
+    triangularity=0.270,
+    fuel={"D": 0.5, "T": 0.5},
+)
 
 settings = openmc.Settings()
 settings.batches = n_batches
