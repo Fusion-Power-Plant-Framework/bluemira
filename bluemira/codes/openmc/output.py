@@ -61,7 +61,7 @@ def get_percent_err(row):
     return row["std. dev."] / row["mean"] * 100.0
 
 
-def extract_pf_areas(
+def extract_plasma_facing_areas(
     cell_arrays: CellStage,
     blanket_array: PreCellArray,
     divertor_array: DivertorPreCellArray,
@@ -74,14 +74,14 @@ def extract_pf_areas(
     for blanket_cell_stack, pre_cell in zip(
         cell_arrays.blanket, blanket_array, strict=False
     ):
-        plasma_facing_area = revolve_shape(pre_cell.interior_wire).area * 2
+        plasma_facing_area = revolve_shape(pre_cell.interior_wire, degree=360).area
         area_dict[blanket_cell_stack[0].id] = plasma_facing_area
     for divertor_cell_stack, div_pre_cell in zip(
         cell_arrays.divertor, divertor_array, strict=False
     ):
-        plasma_facing_area = (
-            revolve_shape(div_pre_cell.interior_wire.restore_to_wire()).area * 2
-        )
+        plasma_facing_area = revolve_shape(
+            div_pre_cell.interior_wire.restore_to_wire(), degree=360
+        ).area
         area_dict[divertor_cell_stack[0].id] = plasma_facing_area
     return area_dict
 
@@ -175,13 +175,13 @@ class OpenMCResult:
         e_mult_err = total_power_err / dt_neuton_power
         mult_power = (e_mult - 1.0) * dt_neuton_power
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        cell_pf_area = extract_pf_areas(
+        cell_plasma_facing_area = extract_plasma_facing_areas(
             cell_arrays, pre_cell_model.blanket, pre_cell_model.divertor
         )
 
         nwl_df = (
             cls._load_neutron_wall_loading(
-                statepoint, cell_names, cell_vols, cell_pf_area, src_rate
+                statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
             ),
         )
 
@@ -332,7 +332,7 @@ class OpenMCResult:
         """Load the neutron fluxes dataframe."""
         flux_df = cls._load_dataframe_from_statepoint(
             statepoint, "neutron flux in every cell"
-        )
+        )  # this loads the track length per cell, given in [particle-cm].
         flux_df["cell_name"] = flux_df["cell"].map(cell_names)
         flux_df["vol (m^3)"] = flux_df["cell"].map(cell_vols)
         flux_df["flux (m^-2)"] = (
@@ -357,7 +357,7 @@ class OpenMCResult:
 
     @classmethod
     def _load_neutron_wall_loading(
-        cls, statepoint, cell_names, cell_vols, cell_pf_area, src_rate
+        cls, statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
     ):
         """
         Notes
@@ -379,7 +379,7 @@ class OpenMCResult:
             statepoint, "volumetric heating at PFS"
         )
         heating["cell_name"] = heating["cell"].map(cell_names)
-        heating["area (m^2)"] = heating["cell"].map(cell_pf_area)
+        heating["area (m^2)"] = heating["cell"].map(cell_plasma_facing_area)
         heating["heating (W)"] = raw_uc(
             heating["mean"].to_numpy() * src_rate, "eV/s", "W"
         )
