@@ -1674,7 +1674,7 @@ class Equilibrium(CoilSetMHDState):
             Plasma pressure map.
         """
         mask = self._get_core_mask(pn)
-        pn_max = pn or 1
+        pn_max = 1 if pn is None else pn
         p = self.pressure(np.clip(self.psi_norm(), 0, pn_max))
         return p * mask
 
