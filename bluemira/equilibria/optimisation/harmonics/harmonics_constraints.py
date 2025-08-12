@@ -41,6 +41,9 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     Parameters
     ----------
+    degrees:
+        Degrees required for approximation of desired core plasma
+        (Returned by spherical_harmonic_approximation)
     ref_harmonics:
         Initial harmonic amplitudes obtained from desired core plasma
         (Returned by spherical_harmonic_approximation)
@@ -56,14 +59,13 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
+        ref_degrees: npt.NDArray[np.float64],
         ref_harmonics: npt.NDArray[np.float64],
         r_t: float,
         sh_coil_names: list,
         tolerance: float | npt.NDArray | None = None,
         smallest_tol: float = 1e-6,
         constraint_type: str = "equality",
-        *,
-        invert: bool = False,
     ):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
@@ -82,15 +84,14 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self.target_harmonics = ref_harmonics
         self.max_degree = len(ref_harmonics)
 
-        if invert and constraint_type == "equality":
-            bluemira_warn(
-                "Have used 'invert=True' while using 'equality' type for the"
-                "Spherical Harmonic Constraint."
-                "Please double check your constraint inputs."
-            )
+        if self.constraint_type == "equality":
+            self.tolerance = tolerance
+            self.target_harmonics = ref_harmonics
+        else:
+            self.tolerance = np.append(tolerance, tolerance, axis=0)
+            self.target_harmonics = np.append(ref_harmonics, ref_harmonics, axis=0)
 
-        self.invert = invert
-
+        self.degrees = ref_degrees
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
 
@@ -109,7 +110,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """
         return self.sh_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=True):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
 
@@ -133,9 +134,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
         self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
-        if self.invert:
-            self._args["a_mat"] *= -1
-            self._args["b_vec"] *= -1
+        if self.constraint_type == "inequality":
+            self._args["a_mat"] = np.append(
+                self._args["a_mat"], -1 * self._args["a_mat"], axis=0
+            )
+            self._args["b_vec"][2:] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
@@ -151,7 +154,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         # N.B., cannot use coil located within r_lcfs as part of this method.
         return coil_harmonic_amplitude_matrix(
             coilset,
-            self.max_degree,
+            self.degrees,
             self.r_t,
             self.sh_coil_names,
         )
