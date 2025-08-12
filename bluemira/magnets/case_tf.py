@@ -462,6 +462,9 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         self._dy_vault = None
         self.dy_vault = dy_vault
 
+    def set_wp(self, winding_packs: list[WindingPack]):
+        self.WPs = winding_packs
+
     @property
     def name(self) -> str:
         """

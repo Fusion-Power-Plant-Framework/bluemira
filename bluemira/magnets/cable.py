@@ -144,7 +144,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             msg = f"The number of superconducting strands must be positive, got {value}"
             bluemira_error(msg)
             raise ValueError(msg)
-        self._n_sc_strand = int(np.ceil(value))
+        self._n_sc_strand = value
 
     @property
     def n_stab_strand(self):
@@ -165,7 +165,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             msg = f"The number of stabilizing strands must be positive, got {value}"
             bluemira_error(msg)
             raise ValueError(msg)
-        self._n_stab_strand = int(np.ceil(value))
+        self._n_stab_strand = value
 
     @property
     def d_cooling_channel(self):
