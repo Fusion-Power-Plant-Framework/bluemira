@@ -33,7 +33,8 @@ from bluemira.equilibria.find import (
     in_zone,
     o_point_fallback_calculator,
 )
-from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
+from bluemira.equilibria.grid import integrate_dx_dz
+from bluemira.equilibria.physics import calc_beta_p_approx
 from bluemira.equilibria.plotting import ProfilePlotter
 
 if TYPE_CHECKING:
@@ -636,6 +637,11 @@ class BetaIpProfile(Profile):
         \t:math:`\\lambda=\\dfrac{I_{p}-\\lambda{\\beta_{0}}\\bigg(\\int\\int\\dfrac{X}{R_{0}}f+\\int\\int\\dfrac{R_{0}}{X}f\\bigg)}{\\int\\int\\dfrac{R_{0}}{X}f}`
 
         Derivation: book 10, p 120
+
+        Note
+        ----
+        Please be careful, the beta_p approximation used here is not good for high elongation plasmas,
+        see calc_beta_p_approx.
         """  # noqa: W505, E501, DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
@@ -664,11 +670,9 @@ class BetaIpProfile(Profile):
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )
-            v_plasma = revolved_volume(*lcfs.xz)
-            Bp = MU_0 * self.I_p / lcfs.length
-            p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
-            beta_p_actual = 2 * MU_0 * p_avg / Bp**2
-
+            beta_p_actual = calc_beta_p_approx(
+                pfunc, lcfs, x, self.dx, self.dz, self.I_p
+            )
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
         else:

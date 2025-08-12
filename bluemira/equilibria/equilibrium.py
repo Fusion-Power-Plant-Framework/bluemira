@@ -50,7 +50,7 @@ from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import (
     EqSummary,
-    calc_li3minargs,
+    _calc_li3minargs,
     calc_psi_norm,
 )
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
@@ -1446,7 +1446,7 @@ class Equilibrium(CoilSetMHDState):
 
             plasma_psi = self._solver(rhs)
             self._update_plasma(plasma_psi, jtor_opt)
-            li = calc_li3minargs(
+            li = _calc_li3minargs(
                 self.x,
                 self.z,
                 self.psi(),
@@ -1666,18 +1666,19 @@ class Equilibrium(CoilSetMHDState):
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
-    def pressure_map(self) -> npt.NDArray[np.float64]:
+    def pressure_map(self, pn=None) -> npt.NDArray[np.float64]:
         """
         Returns
         -------
         :
             Plasma pressure map.
         """
-        mask = self._get_core_mask()
-        p = self.pressure(np.clip(self.psi_norm(), 0, 1))
+        mask = self._get_core_mask(pn)
+        pn_max = pn or 1
+        p = self.pressure(np.clip(self.psi_norm(), 0, pn_max))
         return p * mask
 
-    def _get_core_mask(self) -> npt.NDArray[np.float64]:
+    def _get_core_mask(self, pn=None) -> npt.NDArray[np.float64]:
         """
         Returns
         -------
@@ -1685,9 +1686,14 @@ class Equilibrium(CoilSetMHDState):
             A 2-D masking array for the plasma core.
         """
         o_points, x_points = self.get_OX_points()
-        return in_plasma(
-            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+        if pn is None:
+            return in_plasma(
+                self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+            )
+        zone = self.get_flux_surface(
+            pn, self.psi(), o_points=o_points, x_points=x_points
         )
+        return in_zone(self.x, self.z, zone.xz.T)
 
     def q(
         self,
