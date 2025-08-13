@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 import openmc
+import pandas as pd
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
@@ -246,7 +247,9 @@ class OpenMCResult:
         return vol_results, cell_volumes
 
     @staticmethod
-    def _load_dataframe_from_statepoint(statepoint, tally_name: str):
+    def _load_dataframe_from_statepoint(
+        statepoint: openmc.StatePoint, tally_name: str
+    ) -> pd.DataFrame:
         return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
@@ -270,7 +273,7 @@ class OpenMCResult:
             into a float by .sum().
         """
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
-        return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
+        return tbr_df["mean"].sum(), np.sqrt((tbr_df["std. dev."] ** 2).sum())
 
     @classmethod
     def _load_filter_power_err(

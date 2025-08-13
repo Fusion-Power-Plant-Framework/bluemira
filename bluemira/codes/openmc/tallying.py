@@ -9,13 +9,12 @@ from itertools import chain
 
 import openmc
 
-from bluemira.codes.openmc.make_csg import BlanketCellArray, DivertorCellArray
+from bluemira.codes.openmc.make_csg import CellStage
 
 
 def filter_cells(
     material_list,
-    blanket_cell_array: BlanketCellArray,
-    divertor_cell_array: DivertorCellArray,
+    csg_model: CellStage,
 ):
     """
     Create scores and the filter for the scores. Give them names.
@@ -42,13 +41,13 @@ def filter_cells(
         Divide by area to get fluence in unit: cm^-2.
 
     """
-    blanket_cells = [*chain.from_iterable(blanket_cell_array)]
-    div_cells = [*chain.from_iterable(divertor_cell_array)]
+    blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
     blanket_excl_vv = [
         *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
     ]
     div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
-    cells = blanket_cells + div_cells
+    cells = list(csg_model.cells[:-1])  # exclude the external void
+    cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [
         *(stack[0] for stack in blanket_cell_array),
         *(stack[1] for stack in blanket_cell_array),
