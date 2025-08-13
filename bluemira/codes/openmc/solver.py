@@ -119,11 +119,10 @@ class OpenMCSetup(CodesSetup):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
+        self.cell_arrays = cell_arrays
         self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
         self.source = source
-        self.blanket_cell_array = cell_arrays.blanket
-        self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
         self.materials = materials
         self.matlist = attrgetter(
@@ -169,15 +168,12 @@ class OpenMCSetup(CodesSetup):
         self,
         run_mode,
         tally_function: TALLY_FUNCTION_TYPE,
-        blanket_cell_array: BlanketCellArray,
-        divertor_cell_array: DivertorCellArray,
+        cell_arrays: CellStage,
         material_list: list[openmc.Material],
     ):
         out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
         tallies_list = []
-        for name, scores, filters in tally_function(
-            material_list, blanket_cell_array, divertor_cell_array
-        ):
+        for name, scores, filters in tally_function(material_list, cell_arrays):
             tally = openmc.Tally(name=name)
             tally.scores = [scores]
             tally.filters = filters
@@ -205,8 +201,7 @@ class OpenMCSetup(CodesSetup):
             self._set_tallies(
                 run_mode,
                 tally_function,
-                self.blanket_cell_array,
-                self.divertor_cell_array,
+                self.cell_arrays,
                 material_list=self.materials.get_all_materials(),
             )
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
