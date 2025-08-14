@@ -3156,7 +3156,7 @@
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 1690.1
   },
-  "volshld": {
+  "vol_shld_total": {
     "var_mod": "First wall and blanket : CCFE HCPB model",
     "scan01": 877.86
   },
