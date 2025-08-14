@@ -10,7 +10,9 @@ from enum import auto
 from pathlib import Path
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import patches
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
@@ -27,6 +29,8 @@ from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
+from bluemira.display.plotter import plot_coordinates
+from bluemira.geometry.coordinates import Coordinates
 
 BuildConfig = dict[str, Union[float, str, "BuildConfig"]]
 
@@ -200,6 +204,103 @@ class Solver(CodesSolver):
             teardown()
 
         return self.params
+
+    def plot_radial_build(
+        self,
+        width: float = 1.5,
+        *,
+        show: bool = False,
+    ) -> plt.Axes:
+        """
+        Plot PROCESS radial build.
+
+        Parameters
+        ----------
+        width:
+            The relative width of the plot.
+        show:
+            If True then immediately display the plot,
+            else delay displaying the plot until
+            the user shows it, by default True.
+
+        Returns
+        -------
+        The plot Axes object.
+        """
+        radial_build = self._teardown.ordered_radial_build
+
+        R_0 = radial_build["R_0"]
+
+        col = {
+            "Gap": "w",
+            "Breeding blanket": "#edb120",
+            "TF coil": "#7e2f8e",
+            "Vacuum vessel": "k",
+            "Radiation shield": "#5dbb63",
+            "Plasma": "#f77ec7",
+            "First Wall": "#cb9832",
+            "bore": "w",
+            "Scrape-off layer": "#a2142f",
+            "Central solenoid": "#0072bd",
+            "Thermal shield": "#77ac30",
+        }
+
+        _, ax = plt.subplots(figsize=[14, 10])
+
+        lpatches = []
+        for comp in radial_build["Radial Build"]:
+            colour = col.get(comp[0], "w")
+            # Generate coordinates for an arbitrary
+            # height radial width.
+            xc = [
+                comp[2] - comp[1],
+                comp[2] - comp[1],
+                comp[2],
+                comp[2],
+                comp[2] - comp[1],
+            ]
+            yc = [-width, width, width, -width, -width]
+            ax.plot(xc, yc, color=colour, linewidth=0, label=comp[0])
+            if comp[1] > 0:
+                coords = Coordinates({"x": xc, "y": yc})
+                plot_coordinates(
+                    coords, ax=ax, facecolor=colour, edgecolor="k", linewidth=0
+                )
+            if colour != "w" and comp[0] not in [
+                patch.get_label() for patch in lpatches
+            ]:
+                lpatches.append(patches.Patch(color=colour, label=comp[0]))
+
+        ax.set_xlim([0, np.ceil(radial_build["Radial Build"][-1][-1])])
+        ax.set_ylim([-width * 0.5, width * 0.5])
+        ax.set_xticks([*list(ax.get_xticks()), R_0])
+        ax.axes.set_axisbelow(b=False)
+
+        def tick_format(value, n):  # noqa: ARG001
+            if value == R_0:
+                return "\n$R_{0}$"
+            return int(value)
+
+        def tick_formaty(value, n):  # noqa: ARG001
+            if value == 0:
+                return int(value)
+            return ""
+
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
+        ax.set_xlabel("$x$ [m]")
+        ax.set_aspect("equal")
+        ax.legend(
+            handles=lpatches,
+            ncol=3,
+            loc="lower left",
+            bbox_to_anchor=(0.0, 1.0),
+            frameon=False,
+        )
+
+        if show:
+            plt.show()
+        return ax
 
     def get_raw_variables(self, params: list | str) -> list[float]:
         """
