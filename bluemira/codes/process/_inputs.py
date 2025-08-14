@@ -197,9 +197,9 @@ class ProcessInputs:
     dx_tf_turn_steel: float | None = None
     dx_tf_wp_insulation: float | None = None
     tmaxpro: float | None = None
-    tmax_croco: float | None = None
+    temp_croco_quench_max: float | None = None
     temp_tf_cryo: float | None = None
-    vdalw: float | None = None
+    v_tf_coil_dump_quench_max_kv: float | None = None
     f_vforce_inboard: float | None = None
     f_a_tf_turn_cable_space_extra_void: float | None = None
     etapump: float | None = None
@@ -344,10 +344,10 @@ class ProcessInputs:
     # Constraint variables
     p_hcd_injected_min: float | None = None
     beta_poloidal_max: float | None = None
-    bigqmin: float | None = None
+    big_q_plasma_min: float | None = None
     b_tf_inboard_max: float | None = None
     dr_tf_wp_with_insulation: float | None = None
-    fauxmn: float | None = None
+    fp_hcd_injected_min_mw: float | None = None
     fbeta: float | None = None
     fbeta_poloidal: float | None = None
     fbeta_max: float | None = None
@@ -378,8 +378,8 @@ class ProcessInputs:
     fpsepbqar: float | None = None
     fpsepr: float | None = None
     fptemp: float | None = None
-    fq: float | None = None
-    fqval: float | None = None
+    fq95_min: float | None = None
+    fbig_q_plasma_min: float | None = None
     fradpwr: float | None = None
     fpflux_fw_rad_max: float | None = None
     freinke: float | None = None
@@ -398,7 +398,7 @@ class ProcessInputs:
     fvs_plasma_total_required: float | None = None
     fvvhe: float | None = None
     fpflux_fw_neutron_max_mw: float | None = None
-    fzeffmax: float | None = None
+    fzeff_max: float | None = None
     eta_cd_norm_hcd_primary_max: float | None = None
     pflux_fw_rad_max: float | None = None
     mvalim: float | None = None
@@ -413,15 +413,13 @@ class ProcessInputs:
     ptfnucmax: float | None = None
     tbrmin: float | None = None
     t_burn_min: float | None = None
-    vvhealw: float | None = None
     pflux_fw_neutron_max_mw: float | None = None
     f_alpha_energy_confinement_min: float | None = None
     falpha_energy_confinement: float | None = None
     fniterpump: float | None = None
-    zeffmax: float | None = None
+    zeff_max: float | None = None
     fpoloidalpower: float | None = None
-    fpsep: float | None = None
-    fcqt: float | None = None
+    ftemp_croco_quench_max: float | None = None
 
     # Build variables
     aplasmin: float | None = None
