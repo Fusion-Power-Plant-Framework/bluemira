@@ -193,7 +193,7 @@ class Constraint(ConstraintSelection, Model):
     Q_LOWER_LIMIT = (
         28,
         (40, 45, 47),
-        ("bigqmin",),
+        ("big_q_plasma_min",),
         "Equation for fusion gain (big Q) lower limit",
     )
     IB_RADIAL_BUILD_CONSISTENCY = (
@@ -229,7 +229,7 @@ class Constraint(ConstraintSelection, Model):
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
         (51, 56, 57, 58, 59, 60),
-        ("vdalw",),
+        ("v_tf_coil_dump_quench_max_kv",),
         "TF dump voltage upper limit",
     )
     TF_CURRENT_DENSITY_UPPER_LIMIT = (
@@ -307,12 +307,6 @@ class Constraint(ConstraintSelection, Model):
         ("ptfnucmax",),
         "Peak TF coil nuclear heating upper limit",
     )
-    HE_VV_UPPER_LIMIT = (
-        55,
-        (93, 94, 96),
-        ("vvhealw",),
-        "Vacuum vessel helium concentration upper limit i_blanket_type=2",
-    )
     PSEPR_UPPER_LIMIT = (
         56,
         (1, 3, 97),
@@ -349,7 +343,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "The number of ITER-like vacuum pumps niterpump < tfno",
     )
-    ZEFF_UPPER_LIMIT = 64, (112,), ("zeffmax",), "Zeff less than or equal to zeffmax"
+    ZEFF_UPPER_LIMIT = 64, (112,), ("zeff_max",), "Zeff less than or equal to zeff_max"
     DUMP_TIME_LOWER_LIMIT = (
         65,
         (56, 113),
@@ -399,7 +393,7 @@ class Constraint(ConstraintSelection, Model):
         "Central solenoid shear stress limit (Tresca yield criterion)",
     )
     PSEP_LH_AUX_CONSISTENCY = 73, (137,), (), "Psep >= Plh + Paux"
-    TF_CROCO_T_UPPER_LIMIT = 74, (141,), ("tmax_croco",), "TFC quench"
+    TF_CROCO_T_UPPER_LIMIT = 74, (141,), ("temp_croco_quench_max",), "TFC quench"
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
         (143,),
@@ -603,7 +597,7 @@ ITERATION_VAR_MAPPING = {
     "dr_cs_tf_gap": 42,
     # 43 NOT USED
     "f_c_plasma_non_inductive": 44,
-    "fqval": 45,
+    "fbig_q_plasma_min": 45,
     "fp_hcd_injected_max": 46,
     "feffcd": 47,
     "fstrcase": 48,
@@ -622,14 +616,14 @@ ITERATION_VAR_MAPPING = {
     "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
     "ftemp_fw_max": 63,
-    "fauxmn": 64,
+    "fp_hcd_injected_min_mw": 64,
     "t_current_ramp_up": 65,
     "ft_current_ramp_up": 66,
     "ft_cycle_min": 67,
     "fptemp": 68,
     "rcool": 69,
     "vcool": 70,
-    "fq": 71,
+    "fq95_min": 71,
     "fipir": 72,
     "dr_fw_plasma_gap_inboard": 73,
     "dr_fw_plasma_gap_outboard": 74,
@@ -664,13 +658,12 @@ ITERATION_VAR_MAPPING = {
     "f_nd_alpha_electron": 109,
     "falpha_energy_confinement": 110,
     "fniterpump": 111,
-    "fzeffmax": 112,
+    "fzeff_max": 112,
     "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
     "len_fw_channel": 114,
     "fpoloidalpower": 115,
     "fpflux_fw_rad_max": 116,
     "fpsepbqar": 117,
-    "fpsep": 118,
     "tesep": 119,
     "ttarget": 120,
     "neratio": 121,
@@ -693,7 +686,7 @@ ITERATION_VAR_MAPPING = {
     "rebco_thickness": 138,
     "copper_thick": 139,
     "dr_tf_wp_with_insulation": 140,
-    "fcqt": 141,
+    "ftemp_croco_quench_max": 141,
     "nesep": 142,
     "f_coppera_m2": 143,
     "fnesep": 144,

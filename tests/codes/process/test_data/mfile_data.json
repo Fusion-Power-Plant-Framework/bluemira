@@ -1539,7 +1539,7 @@
     "var_mod": "Current Drive System",
     "scan01": 223.26
   },
-  "bigq": {
+  "big_q_plasma": {
     "var_mod": "Current Drive System",
     "scan01": 13.657
   },
@@ -2456,11 +2456,11 @@
     "var_mod": "TF coils",
     "scan01": 28.886
   },
-  "vdalw": {
+  "v_tf_coil_dump_quench_max_kv": {
     "var_mod": "TF coils",
     "scan01": 10.0
   },
-  "vtfskv": {
+  "v_tf_coil_dump_quench_kv": {
     "var_mod": "TF coils",
     "scan01": 10.0
   },
