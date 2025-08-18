@@ -10,12 +10,8 @@ Objects and tools for calculating cross-sectional properties
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from bluemira.structural.material import StructuralMaterial
-
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
@@ -24,6 +20,10 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.structural.constants import NEAR_ZERO
 from bluemira.structural.error import StructuralError
+
+if TYPE_CHECKING:
+    from matproplib.conditions import OperationalConditions
+    from matproplib.material import Material
 
 
 @nb.jit(nopython=True, cache=True)
@@ -96,9 +96,6 @@ class CrossSection:
         "y",
         "z",
     )
-
-    def __init__(self):
-        pass
 
     def make_geometry(self, *args, **kwargs):
         """
@@ -184,7 +181,6 @@ class RectangularBeam(CrossSection):
     __slots__ = ()
 
     def __init__(self, width: float, height: float):
-        super().__init__()
         self.area = width * height
         self.i_zz = width**3 * height / 12
         self.i_yy = width * height**3 / 12
@@ -249,7 +245,6 @@ class CircularBeam(CrossSection):
     __slots__ = ()
 
     def __init__(self, radius: float, n_discr: int = 30):
-        super().__init__()
         self.area = np.pi * radius**2
         self.i_zz = np.pi * radius**4 / 4
         self.i_yy = np.pi * radius**4 / 4
@@ -281,7 +276,6 @@ class CircularHollowBeam(CrossSection):
     __slots__ = ()
 
     def __init__(self, r_inner: float, r_outer: float, n_discr: int = 30):
-        super().__init__()
         self.area = np.pi * (r_outer**2 - r_inner**2)
         self.i_zz = np.pi / 4 * (r_outer**4 - r_inner**4)
         self.i_yy = np.pi / 4 * (r_outer**4 - r_inner**4)
@@ -320,7 +314,6 @@ class IBeam(CrossSection):
     __slots__ = ()
 
     def __init__(self, base: float, depth: float, flange: float, web: float):
-        super().__init__()
         self.check_dimensions(base, depth, flange, web)
         h = depth - 2 * flange
         b, d, t, s = base, depth, web, flange
@@ -409,7 +402,6 @@ class AnalyticalCrossSection(CrossSection):
     def __init__(
         self, geometry: BluemiraFace, n_discr: int = 100, j_opt_var: float = 14.123
     ):
-        super().__init__()
         self.geometry = deepcopy(geometry)
         self.area = area = self.geometry.area
         self.y, self.z = (
@@ -473,8 +465,12 @@ class AnalyticalCompositeCrossSection(CrossSection):
 
     __slots__ = ("ea", "gj", "nu", "rho")
 
-    def __init__(self, geometry: BluemiraFace, materials: list[StructuralMaterial]):
-        super().__init__()
+    def __init__(
+        self,
+        geometry: BluemiraFace,
+        materials: list[Material],
+        op_cond: OperationalConditions,
+    ):
         self.geometry = deepcopy(geometry)
 
         n = len(geometry.boundary)
@@ -491,9 +487,9 @@ class AnalyticalCompositeCrossSection(CrossSection):
         cross_sections = [outer]
         cross_sections.extend(inners)
 
-        e_values = np.array([mat["E"] for mat in materials])
-        g_values = np.array([mat["G"] for mat in materials])
-        rho_values = np.array([mat["rho"] for mat in materials])
+        e_values = np.array([mat.youngs_modulus(op_cond) for mat in materials])
+        g_values = np.array([mat.shear_modulus(op_cond) for mat in materials])
+        rho_values = np.array([mat.density(op_cond) for mat in materials])
         areas = np.array([xs.area for xs in cross_sections])
         i_yy_values = np.array([xs.i_yy for xs in cross_sections])
         i_zz_values = np.array([xs.i_zz for xs in cross_sections])

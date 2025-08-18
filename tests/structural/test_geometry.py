@@ -8,11 +8,12 @@ from copy import deepcopy
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matproplib.conditions import STPConditions
 
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.materials.basic import SS316
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.geometry import Geometry
-from bluemira.structural.material import SS316
 
 
 def add_node(geometry, *node):
@@ -22,12 +23,15 @@ def add_node(geometry, *node):
 
 class TestKMatrix:
     def test_k(self):
+        op_cond = STPConditions()
+
+        ss316 = SS316()
         geometry = Geometry()
         i_300_200 = IBeam(0.2, 0.3, 0.05, 0.04)
         add_node(geometry, (4, 5, 6), (7, 8, 9), (8, 8, 9))
-        geometry.add_element(0, 1, i_300_200, SS316)
-        geometry.add_element(0, 1, i_300_200, SS316)
-        geometry.add_element(1, 2, i_300_200, SS316)
+        geometry.add_element(0, 1, i_300_200, ss316, op_cond)
+        geometry.add_element(0, 1, i_300_200, ss316, op_cond)
+        geometry.add_element(1, 2, i_300_200, ss316, op_cond)
 
         k_matrix = geometry.k_matrix()
 
@@ -40,12 +44,15 @@ class TestKMatrix:
 class TestMembership:
     @classmethod
     def setup_class(cls):
+        cls.ss316 = SS316()
+        cls.op_cond = STPConditions()
+
         geometry = Geometry()
         add_node(geometry, (-1, 0, -1), (0, 0, 0), (1, 1, 1), (2, 2, 0))
         i_300_200 = IBeam(0.2, 0.3, 0.05, 0.04)
-        geometry.add_element(0, 1, i_300_200, SS316)
-        geometry.add_element(1, 2, i_300_200, SS316)
-        geometry.add_element(2, 3, i_300_200, SS316)
+        geometry.add_element(0, 1, i_300_200, cls.ss316, cls.op_cond)
+        geometry.add_element(1, 2, i_300_200, cls.ss316, cls.op_cond)
+        geometry.add_element(2, 3, i_300_200, cls.ss316, cls.op_cond)
         cls._geometry = geometry
 
     def setup_method(self):
@@ -67,34 +74,38 @@ class TestMembership:
     def test_element_membership(self):
         i_300_300 = IBeam(0.3, 0.3, 0.05, 0.04)
 
-        elem_id = self.geometry.add_element(0, 1, i_300_300, SS316)
+        elem_id = self.geometry.add_element(0, 1, i_300_300, self.ss316, self.op_cond)
         assert len(self.geometry.elements) == 3
         assert elem_id == 0
         # Check the properties were modified
-        eiyy = i_300_300.i_yy * SS316.E
+        eiyy = i_300_300.i_yy * self.ss316.youngs_modulus(None)
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
-        elem_id = self.geometry.add_element(2, 3, i_300_300, SS316)
+        elem_id = self.geometry.add_element(2, 3, i_300_300, self.ss316, self.op_cond)
         assert len(self.geometry.elements) == 3
         assert elem_id == 2
         # Check the properties were modified
-        eiyy = i_300_300.i_yy * SS316.E
+        eiyy = i_300_300.i_yy * self.ss316.youngs_modulus(None)
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
         self.geometry.add_node(2, 2, 2)
-        elem_id = self.geometry.add_element(3, 4, i_300_300, SS316)
+        elem_id = self.geometry.add_element(3, 4, i_300_300, self.ss316, self.op_cond)
         assert len(self.geometry.elements) == 4
         assert elem_id == 3
 
 
 class TestRemove:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_remove_node(self):
         x_section = IBeam(1, 1, 0.25, 0.5)
         g = Geometry()
         add_node(g, (0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0))
-        g.add_element(0, 1, x_section, SS316)
-        g.add_element(1, 2, x_section, SS316)
-        g.add_element(2, 3, x_section, SS316)
+        g.add_element(0, 1, x_section, self.ss316, self.op_cond)
+        g.add_element(1, 2, x_section, self.ss316, self.op_cond)
+        g.add_element(2, 3, x_section, self.ss316, self.op_cond)
 
         assert g.n_nodes == 4
         assert g.n_elements == 3
@@ -120,13 +131,13 @@ class TestRemove:
             (0, 2, 0),  # 4
             (0, 1, 0),  # 5
         )
-        g.add_element(0, 1, x_section, SS316)  # 0
-        g.add_element(1, 2, x_section, SS316)  # 1
-        g.add_element(2, 3, x_section, SS316)  # 2
-        g.add_element(3, 4, x_section, SS316)  # 3
-        g.add_element(4, 5, x_section, SS316)  # 4
-        g.add_element(5, 0, x_section, SS316)  # 5
-        g.add_element(2, 5, x_section, SS316)  # 6
+        g.add_element(0, 1, x_section, self.ss316, self.op_cond)  # 0
+        g.add_element(1, 2, x_section, self.ss316, self.op_cond)  # 1
+        g.add_element(2, 3, x_section, self.ss316, self.op_cond)  # 2
+        g.add_element(3, 4, x_section, self.ss316, self.op_cond)  # 3
+        g.add_element(4, 5, x_section, self.ss316, self.op_cond)  # 4
+        g.add_element(5, 0, x_section, self.ss316, self.op_cond)  # 5
+        g.add_element(2, 5, x_section, self.ss316, self.op_cond)  # 6
 
         assert g.n_elements == 7
         assert g.nodes[2].connections == {1, 2, 6}
@@ -155,18 +166,18 @@ class TestRemove:
             (0, -2, 0),  # 9
             (0, -1, 0),  # 10
         )
-        g.add_element(0, 1, x_section, SS316)  # 0
-        g.add_element(1, 2, x_section, SS316)  # 1
-        g.add_element(2, 3, x_section, SS316)  # 2
-        g.add_element(3, 4, x_section, SS316)  # 3
-        g.add_element(4, 5, x_section, SS316)  # 4
-        g.add_element(5, 0, x_section, SS316)  # 5
-        g.add_element(2, 5, x_section, SS316)  # 6
-        g.add_element(0, 6, x_section, SS316)  # 7
-        g.add_element(6, 7, x_section, SS316)  # 8
-        g.add_element(7, 8, x_section, SS316)  # 9
-        g.add_element(8, 9, x_section, SS316)  # 10
-        g.add_element(9, 10, x_section, SS316)  # 11
+        g.add_element(0, 1, x_section, self.ss316, self.op_cond)  # 0
+        g.add_element(1, 2, x_section, self.ss316, self.op_cond)  # 1
+        g.add_element(2, 3, x_section, self.ss316, self.op_cond)  # 2
+        g.add_element(3, 4, x_section, self.ss316, self.op_cond)  # 3
+        g.add_element(4, 5, x_section, self.ss316, self.op_cond)  # 4
+        g.add_element(5, 0, x_section, self.ss316, self.op_cond)  # 5
+        g.add_element(2, 5, x_section, self.ss316, self.op_cond)  # 6
+        g.add_element(0, 6, x_section, self.ss316, self.op_cond)  # 7
+        g.add_element(6, 7, x_section, self.ss316, self.op_cond)  # 8
+        g.add_element(7, 8, x_section, self.ss316, self.op_cond)  # 9
+        g.add_element(8, 9, x_section, self.ss316, self.op_cond)  # 10
+        g.add_element(9, 10, x_section, self.ss316, self.op_cond)  # 11
 
         # Prior to removal
         assert g.nodes[0].connections == {0, 5, 7}
@@ -181,17 +192,20 @@ class TestRemove:
 
 
 class TestMove:
-    @staticmethod
-    def _add_element(g):
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
+    def _add_element(self, g):
         x_section = IBeam(0.1, 0.1, 0.025, 0.05)
 
-        g.add_element(0, 1, x_section, SS316)  # 0
-        g.add_element(1, 2, x_section, SS316)  # 1
-        g.add_element(2, 3, x_section, SS316)  # 2
-        g.add_element(3, 4, x_section, SS316)  # 3
-        g.add_element(4, 5, x_section, SS316)  # 4
-        g.add_element(5, 0, x_section, SS316)  # 5
-        g.add_element(2, 5, x_section, SS316)  # 6
+        g.add_element(0, 1, x_section, self.ss316, self.op_cond)  # 0
+        g.add_element(1, 2, x_section, self.ss316, self.op_cond)  # 1
+        g.add_element(2, 3, x_section, self.ss316, self.op_cond)  # 2
+        g.add_element(3, 4, x_section, self.ss316, self.op_cond)  # 3
+        g.add_element(4, 5, x_section, self.ss316, self.op_cond)  # 4
+        g.add_element(5, 0, x_section, self.ss316, self.op_cond)  # 5
+        g.add_element(2, 5, x_section, self.ss316, self.op_cond)  # 6
 
     def test_move_node(self):
         g = Geometry()
@@ -239,6 +253,6 @@ class TestMove:
         x_section = IBeam(0.1, 0.1, 0.025, 0.05)
         g = Geometry()
         c = Coordinates({"x": [0, 1, 2, 3], "z": [0, -1, 1, -1]})
-        g.add_coordinates(c, x_section, SS316)
+        g.add_coordinates(c, x_section, self.ss316, self.op_cond)
         assert g.n_nodes == 4
         assert g.n_elements == 3
