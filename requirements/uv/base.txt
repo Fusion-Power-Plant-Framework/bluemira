@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.6.1
+blosc2==3.7.1
     # via tables
 certifi==2025.8.3
     # via requests
@@ -34,7 +34,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.0
+fonttools==4.59.1
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -52,7 +52,7 @@ kiwisolver==1.4.9
     # via matplotlib
 llvmlite==0.44.0
     # via numba
-markdown-it-py==3.0.0
+markdown-it-py==4.0.0
     # via rich
 matplotlib==3.10.5
     # via
@@ -146,7 +146,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.0
+pyvista==0.46.1
     # via bluemira (pyproject.toml)
 requests==2.32.4
     # via
