@@ -61,8 +61,10 @@ class DivertorSilhouetteDesigner(DivertorDesigner):
         equilibrium: Equilibrium,
         wall: BluemiraWire,
     ):
-        super().__init__(params, equilibrium, wall=wall)
-        if self.params.div_type.value == "DN":
+        x_limits = (wall.start_point().x[0], wall.end_point().x[0])
+        z_limits = (wall.start_point().z[0], wall.end_point().z[0])
+        super().__init__(params, equilibrium, x_limits=x_limits, z_limits=z_limits)
+        if self.equilibrium.is_double_null:
             raise NotImplementedError("Double Null divertor not implemented")
 
     def run(self) -> tuple[BluemiraWire, ...]:

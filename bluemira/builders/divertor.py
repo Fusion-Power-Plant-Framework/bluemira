@@ -90,14 +90,15 @@ class DivertorDesignerParams(ParameterFrame):
     Divertor designer parameters
     """
 
-    # SN or DN
-    div_type: Parameter[str]
     # Length of divertor legs
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]
     # Target length
     div_Ltarg_ib: Parameter[float]  # noqa: N815
     div_Ltarg_ob: Parameter[float]  # noqa: N815
+    # Target Location - fraction of target length from the PFR side of target
+    strike_loc_ib: Parameter[float]
+    strike_loc_ob: Parameter[float]
     # Target angle (ccw)
     div_targ_angle_ib: Parameter[float]
     div_targ_angle_ob: Parameter[float]
@@ -140,10 +141,11 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         self,
         params: dict | ParameterFrame,
         equilibrium: Equilibrium,
+        x_limits: tuple[float],
+        z_limits: tuple[float],
         build_config: BuildConfig | None = None,
-        wall: BluemiraWire | None = None,
         keep_in_zone_wire: BluemiraWire | None = None,
-        keep_out_zone_wires: list[BluemiraWire] | None = None,
+        keep_out_zone_wires: list[BluemiraWire] | BluemiraWire | None = None,
     ):
         """
         Parameters
@@ -163,8 +165,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         """
         super().__init__(params, build_config)
         self.equilibrium = equilibrium
-        self.x_limits = (wall.start_point().x[0], wall.end_point().x[0])
-        self.z_limits = (wall.start_point().z[0], wall.end_point().z[0])
+        self.x_limits = x_limits
+        self.z_limits = z_limits
         self.kiz_wire = keep_in_zone_wire
         self.koz_wires = keep_out_zone_wires
         self.leg_length = {
@@ -233,14 +235,25 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
 
         b_hat = rot_matrix @ a_hat
 
-        target_half_length = (
-            0.5 * self.params.div_Ltarg_ib.value
-            if leg is LegPosition.INNER
-            else 0.5 * self.params.div_Ltarg_ob.value
-        )
+        if leg is LegPosition.INNER:
+            pfr_side_length = (
+                self.params.strike_loc_ib.value * self.params.div_Ltarg_ib.value
+            )
+            sol_side_length = (
+                1 - self.params.strike_loc_ib.value
+            ) * self.params.div_Ltarg_ib.value
+            p1 = target_point - b_hat * sol_side_length
+            p2 = target_point + b_hat * pfr_side_length
+        else:
+            pfr_side_length = (
+                self.params.strike_loc_ob.value * self.params.div_Ltarg_ob.value
+            )
+            sol_side_length = (
+                1 - self.params.strike_loc_ob.value
+            ) * self.params.div_Ltarg_ob.value
+            p1 = target_point - b_hat * pfr_side_length
+            p2 = target_point + b_hat * sol_side_length
 
-        p1 = target_point - b_hat * target_half_length
-        p2 = target_point + b_hat * target_half_length
         return np.array([p1, p2]).T
 
     def _get_sols_for_leg(
@@ -256,7 +269,13 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         """
         return [self.separatrix_legs[leg][layer] for layer in layers]
 
-    def make_dome(self, start: np.ndarray, end: np.ndarray, label: str) -> BluemiraWire:
+    def make_dome(
+        self,
+        start: np.ndarray,
+        end: np.ndarray,
+        label: str,
+        start_picked: bool | None = None,  # noqa: FBT001
+    ) -> BluemiraWire:
         """
         Make a dome between the two given points.
 
@@ -271,12 +290,11 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         coordinates.
         The nearest point on the flux surface to the start point and the end point are
         joined.
-        The flux surface is picked based on the lowest z coordinate of the start and end
-        point to ensure a continuous divertor shape is produced.
+        The default is that the flux surface is picked based on the lowest z coordinate
+        of the start and end point to ensure a continuous divertor shape is produced.
         """
-        # Get the flux surface that crosses the through the start or end point.
-        # We can use this surface to guide the shape of the dome.
-        start_picked = start[1] < end[1]
+        if start_picked is None:
+            start_picked = start[1] < end[1]
         return self.make_flux_line_wire(start, end, start_picked, label)
 
     def make_flux_line_wire(
@@ -407,7 +425,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         if self.params.div_baffle_type.value == self.OPEN_BAFFLE:
             raise NotImplementedError("Open baffle not implemented")
         if self.params.div_baffle_type.value == self.FLUXLINE_BAFFLE:
-            self._make_fluxline_baffle(
+            return self._make_fluxline_baffle(
                 label,
                 wall_join_point,
                 target_baffle_join_point,
