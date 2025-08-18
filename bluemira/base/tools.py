@@ -16,6 +16,7 @@ from enum import Enum
 from functools import wraps
 from typing import TYPE_CHECKING, Any, TypeVar, TypedDict
 
+from matproplib.library.fluids import Void
 from typing_extensions import NotRequired
 
 from bluemira.base.components import (
@@ -37,12 +38,13 @@ from bluemira.geometry.tools import (
     save_cad,
     serialise_shape,
 )
-from bluemira.materials.material import Material, Void
 from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from pathlib import Path
+
+    from matproplib.material import Material
 
     import bluemira.codes._freecadapi as cadapi
     from bluemira.base.reactor import ComponentManager
