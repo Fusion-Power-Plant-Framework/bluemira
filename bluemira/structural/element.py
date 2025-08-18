@@ -24,8 +24,10 @@ from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
 
 if TYPE_CHECKING:
+    from matproplib.conditions import OperationalCondition
+    from matproplib.material import Material
+
     from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
     from bluemira.structural.node import Node
 
 
@@ -274,6 +276,7 @@ class Element:
         "max_stress",
         "node_1",
         "node_2",
+        "op_cond",
         "safety_factor",
         "shapes",
         "stresses",
@@ -285,7 +288,8 @@ class Element:
         node_2: Node,
         id_number: int,
         cross_section: CrossSection,
-        material: StructuralMaterial | None = None,
+        material: Material | None = None,
+        op_cond: OperationalCondition | None = None,
     ):
         # Utility properties
         self.node_1 = node_1
@@ -300,11 +304,12 @@ class Element:
         self.stresses = None
         self.max_stress = None
         self.safety_factor = None
-
+        self.op_cond = op_cond
         # Private properties
         self._material = material  # Record input material
-        self.material = None
-        self._properties = self._process_properties(cross_section, material)
+        self._properties, self.material = self._process_properties(
+            cross_section, material, op_cond
+        )
 
         self._cross_section = cross_section
 
@@ -318,7 +323,12 @@ class Element:
         # Private construction utilities
         self._s_functs = None
 
-    def _process_properties(self, cross_section, material):
+    @staticmethod
+    def _process_properties(
+        cross_section,
+        material: Material | None = None,
+        op_cond: OperationalCondition | None = None,
+    ):
         """
         Handles cross-sectional and material properties, including if a
         composite material cross-section is specified.
@@ -337,22 +347,23 @@ class Element:
             properties["A"] = cross_section.area
             properties["rho"] = cross_section.rho  # area-weighted density
 
-            # Override material=None with a list of materials from the CS
-            self.material = cross_section.material
+            material = cross_section.material
         else:
             # Single material weight cross-section properties
-            e_mat, g_mat = material.E, material.G
+            e_mat, g_mat = (
+                material.youngs_modulus(op_cond),
+                material.shear_modulus(op_cond),
+            )
             properties["EA"] = e_mat * cross_section.area
             properties["EIyy"] = e_mat * cross_section.i_yy
             properties["EIzz"] = e_mat * cross_section.i_zz
             properties["GJ"] = g_mat * cross_section.j
             properties["ry"] = cross_section.ry
             properties["rz"] = cross_section.rz
-            properties["rho"] = material.rho
+            properties["rho"] = material.density(op_cond)
             properties["A"] = cross_section.area
-            self.material = material
 
-        return properties
+        return properties, material
 
     @property
     def length(self) -> float:
@@ -656,18 +667,20 @@ class Element:
             kappa_y = m_matrix[:, 1].reshape(-1, 1) @ np.ones((1, n_points))
 
             # Bending stresses (at all interp points, at all loop points)
-            sigma_z = -mat.E * y * kappa_z
-            sigma_y = -mat.E * z * kappa_y
+            sigma_z = -mat.youngs_modulus(self.op_cond) * y * kappa_z
+            sigma_y = -mat.youngs_modulus(self.op_cond) * z * kappa_y
 
             # Axial stress = E*axial strain (constant along Element)
             du = u[6] - u[0]
-            sigma_axial = mat.E * du / self.length
+            sigma_axial = mat.youngs_modulus(self.op_cond) * du / self.length
 
             stress = sigma_axial + sigma_y + sigma_z
             stresses.append(stress)
 
             argmax = np.argmax(np.abs(stress))
-            safety_factor = stress.flatten()[argmax] / mat.sigma_y
+            safety_factor = stress.flatten()[argmax] / mat.average_yield_stress(
+                self.op_cond
+            )
             safety_factors.append(safety_factor)
 
         part_index = int(np.argmax(np.abs(safety_factors)))

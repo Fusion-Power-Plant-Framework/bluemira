@@ -5,17 +5,21 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
+from matproplib.conditions import STPConditions
+
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.materials.basic import SS316
 from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
-from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.plotting import GeometryPlotter
 
 
 class TestPlotting:
     def test_no_errors(self):
+        op_cond = STPConditions()
+        ss316 = SS316()
         fem = FiniteElementModel()
 
         geometry = Geometry()
@@ -24,9 +28,9 @@ class TestPlotting:
         for node in nodes:
             geometry.add_node(*node)
         for i in range(5):
-            geometry.add_element(i, i + 1, rect_beam, SS316)
-        geometry.add_element(0, 3, rect_beam, SS316)
-        geometry.add_element(2, 5, rect_beam, SS316)
+            geometry.add_element(i, i + 1, rect_beam, ss316, op_cond)
+        geometry.add_element(0, 3, rect_beam, ss316, op_cond)
+        geometry.add_element(2, 5, rect_beam, ss316, op_cond)
 
         l_loop = Coordinates([[2.5, 1.5, 1.5], [0, 0, 0], [0, 0, 2]])
         u_loop = Coordinates([[0, 0, 1, 1], [0, 0, 0, 0], [2, 0, 0, 2]])
@@ -54,7 +58,7 @@ class TestPlotting:
 
         for letter in [l_loop, u_loop, e_loop, p_loop, r_loop, i_loop, n_loop, t_loop]:
             letter.rotate(base=(0, 0, 1), direction=(0, 0, 1), degree=30)
-            geometry.add_coordinates(letter, rect_beam, SS316)
+            geometry.add_coordinates(letter, rect_beam, ss316, op_cond)
 
         fem.set_geometry(geometry)
         fem.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
