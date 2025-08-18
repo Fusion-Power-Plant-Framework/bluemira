@@ -8,7 +8,3 @@
 """
 Module-level functionality for materials.
 """
-
-from matproplib.library.fluids import Void
-
-__all__ = ["Void"]
