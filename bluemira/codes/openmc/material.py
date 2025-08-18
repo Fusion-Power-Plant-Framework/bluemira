@@ -16,6 +16,8 @@ import openmc
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from matproplib.conditions import OperationalCondition
+
     from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
 
@@ -75,10 +77,12 @@ class MaterialsLibrary:
     rad_shield: openmc.Material
 
     @classmethod
-    def from_neutronics_materials(cls, materials_lib: NeutronicsMaterials):
+    def from_neutronics_materials(
+        cls, materials_lib: NeutronicsMaterials, op_cond: OperationalCondition
+    ):
         """Initialise from neutronics materials"""  # noqa: DOC201
         return cls(**{
-            field.name: getattr(materials_lib, field.name).to_openmc_material()
+            field.name: getattr(materials_lib, field.name).convert("openmc", op_cond)
             for field in fields(materials_lib)
         })
 

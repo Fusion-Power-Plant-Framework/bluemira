@@ -11,27 +11,26 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bluemira.materials.material import MassFractionMaterial
-    from bluemira.materials.mixtures import HomogenisedMixture
+    from matproplib.material import Material
 
 
 @dataclass
 class NeutronicsMaterials:
     """A dictionary of materials according to the type of blanket used"""
 
-    inb_vv_mat: HomogenisedMixture | MassFractionMaterial
-    inb_fw_mat: HomogenisedMixture | MassFractionMaterial
-    inb_bz_mat: HomogenisedMixture | MassFractionMaterial
-    inb_mani_mat: HomogenisedMixture | MassFractionMaterial
-    divertor_mat: HomogenisedMixture | MassFractionMaterial
-    div_fw_mat: HomogenisedMixture | MassFractionMaterial
-    outb_fw_mat: HomogenisedMixture | MassFractionMaterial
-    outb_bz_mat: HomogenisedMixture | MassFractionMaterial
-    outb_mani_mat: HomogenisedMixture | MassFractionMaterial
-    outb_vv_mat: HomogenisedMixture | MassFractionMaterial
-    tf_coil_mat: HomogenisedMixture | MassFractionMaterial
-    container_mat: HomogenisedMixture | MassFractionMaterial
-    inb_sf_mat: HomogenisedMixture | MassFractionMaterial
-    outb_sf_mat: HomogenisedMixture | MassFractionMaterial
-    div_sf_mat: HomogenisedMixture | MassFractionMaterial
-    rad_shield: HomogenisedMixture | MassFractionMaterial
+    inb_vv_mat: Material
+    inb_fw_mat: Material
+    inb_bz_mat: Material
+    inb_mani_mat: Material
+    divertor_mat: Material
+    div_fw_mat: Material
+    outb_fw_mat: Material
+    outb_bz_mat: Material
+    outb_mani_mat: Material
+    outb_vv_mat: Material
+    tf_coil_mat: Material
+    container_mat: Material
+    inb_sf_mat: Material
+    outb_sf_mat: Material
+    div_sf_mat: Material
+    rad_shield: Material

@@ -114,6 +114,7 @@ class OpenMCResult:
         vessel_power, vessel_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "vacuum vessel power"
         )
+        dpa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
 
         return cls(
             universe=universe,
@@ -133,7 +134,7 @@ class OpenMCResult:
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
             neutron_wall_load=cls._load_neutron_wall_loading(
-                statepoint, cell_names, cell_vols, src_rate
+                statepoint, cell_names, cell_vols, src_rate, dpa_coefs
             ),
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
@@ -255,20 +256,21 @@ class OpenMCResult:
         return cls._convert_dict_contents(hdf)
 
     @classmethod
-    def _load_neutron_wall_loading(cls, statepoint, cell_names, cell_vols, src_rate):
+    def _load_neutron_wall_loading(
+        cls, statepoint, cell_names, cell_vols, src_rate, dpa_coefs
+    ):
         """Load the neutron wall load dataframe"""
-        dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         n_wl_df = cls._load_dataframe_from_statepoint(
             statepoint, "neutron flux in every cell"
         )
         n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
         n_wl_df["vol (m^3)"] = n_wl_df["cell"].map(cell_vols)
         total_displacements_per_second = (
-            n_wl_df["mean"] * dfa_coefs.displacements_per_damage_eV * src_rate
+            n_wl_df["mean"] * dpa_coefs.displacements_per_damage_eV * src_rate
         )  # "mean" has units "eV per source particle"
         # total number of atomic displacements per second in the cell.
         num_atoms_in_cell = n_wl_df["vol (m^3)"] * raw_uc(
-            dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
+            dpa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
         )
         n_wl_df["dpa/fpy"] = raw_uc(
             total_displacements_per_second.to_numpy() / num_atoms_in_cell.to_numpy(),
