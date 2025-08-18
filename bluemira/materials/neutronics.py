@@ -367,8 +367,6 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     breeder_fraction_vo = 0.103  # 0.163
     helium_fraction_vo = 0.276  # 0.062
 
-    KALOS_ACB_MAT = make_KALOS_ACB_mat(li_enrich_ao)
-
     return ReactorBaseMaterials(
         inb_vv_mat=inb_vv_mat,
         inb_fw_mat=mixture(
