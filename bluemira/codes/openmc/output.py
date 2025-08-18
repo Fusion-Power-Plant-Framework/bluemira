@@ -340,7 +340,6 @@ class OpenMCCSGResult(OpenMCResultBase):
             / flux_df["vol (m^3)"]
         )
         flux_df["%err."] = flux_df.apply(get_percent_err, axis=1)
-
         flux_df = flux_df[
             [
                 "cell",
