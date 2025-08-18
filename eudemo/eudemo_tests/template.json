@@ -833,6 +833,18 @@
     "unit": "m",
     "source": "Input"
   },
+  "strike_loc_ib": {
+    "name": "Divertor target strike point location, fraction of length from PFR side",
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input"
+  },
+  "strike_loc_ob": {
+    "name": "Divertor target outboard length, fraction of length from PFR side",
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input"
+  },
   "div_dpa": {
     "name": "Divertor life limit (CuCrZr)",
     "value": 5,
