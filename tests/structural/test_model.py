@@ -8,12 +8,13 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
+from matproplib.conditions import STPConditions
 
 from bluemira.base.constants import ANSI_COLOR
+from bluemira.materials.basic import SS316
 from bluemira.structural.crosssection import IBeam, RectangularBeam
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import LoadCase
-from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel, check_matrix_condition
 
 
@@ -42,6 +43,10 @@ def test_illconditioned():
 
 
 class TestFEModel:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     @pytest.mark.parametrize(("sup", "dof"), zip([False, True], [5, 6], strict=False))
     def test_errors(self, sup, dof):
         """
@@ -58,8 +63,8 @@ class TestFEModel:
         model.add_node(length, 0, 0)
         model.add_node(2 * length, 0, 0)
 
-        model.add_element(0, 1, i_beam, SS316)
-        model.add_element(1, 2, i_beam, SS316)
+        model.add_element(0, 1, i_beam, self.ss316, self.op_cond)
+        model.add_element(1, 2, i_beam, self.ss316, self.op_cond)
         model.add_support(0, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
         model.add_support(2, dx=sup, dy=True, dz=True, rx=False, ry=False, rz=False)
         model.find_supports()
@@ -89,12 +94,12 @@ class TestFEModel:
         model.add_node(0, 0, 0)
         model.add_node(length, 0, 0)
         model.add_node(2 * length, 0, 0)
-        model.add_element(0, 1, i_beam, SS316)
-        model.add_element(1, 2, i_beam, SS316)
+        model.add_element(0, 1, i_beam, self.ss316, self.op_cond)
+        model.add_element(1, 2, i_beam, self.ss316, self.op_cond)
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_support(2, dx=False, dy=True, dz=True, rx=False, ry=False, rz=False)
 
-        e_mat, i_xs = SS316.E, i_beam.i_zz
+        e_mat, i_xs = self.ss316.youngs_modulus(None), i_beam.i_zz
         # Check element lengths
         for element in model.geometry.elements:
             assert element.length == length
@@ -167,6 +172,9 @@ class TestFEModel:
 
 class TestCantilever:
     def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
         model = FiniteElementModel()
         length = 4
 
@@ -174,9 +182,9 @@ class TestCantilever:
 
         model.add_node(0, 0, 0)
         model.add_node(-length, 0, 0)
-        dummy_material = deepcopy(SS316)
-        dummy_material.E = 10e9
-        model.add_element(0, 1, rect_beam, dummy_material)
+        dummy_material = deepcopy(self.ss316)
+        dummy_material.youngs_modulus = 10e9
+        model.add_element(0, 1, rect_beam, dummy_material, self.op_cond)
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         self.model = model
         self.material = dummy_material
@@ -191,7 +199,7 @@ class TestCantilever:
         load = -1000
         length = 4
         b = 3
-        e_mat = self.material.E
+        e_mat = self.material.youngs_modulus(self.op_cond)
         i_xs = self.cross_section.i_yy
         load_case = LoadCase()
         load_case.add_element_load(0, load, b / length, "Fz")
@@ -205,7 +213,7 @@ class TestCantilever:
     def test_end_load(self):
         load = 8000
         length = 34
-        e_mat = self.material.E
+        e_mat = self.material.youngs_modulus(self.op_cond)
         i_xs = self.cross_section.i_yy
         end_deflection = load * length**3 / (3 * e_mat * i_xs)
 
@@ -213,7 +221,7 @@ class TestCantilever:
             model = FiniteElementModel()
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
-            model.add_element(0, 1, self.cross_section, self.material)
+            model.add_element(0, 1, self.cross_section, self.material, self.op_cond)
             model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
@@ -233,7 +241,7 @@ class TestCantilever:
     def test_end_moment(self):
         load = -41278
         length = 8
-        e_mat = self.material.E
+        e_mat = self.material.youngs_modulus(self.op_cond)
         i_xs = self.cross_section.i_yy
         end_deflection = -load * length**2 / (2 * e_mat * i_xs)
 
@@ -241,7 +249,7 @@ class TestCantilever:
             model = FiniteElementModel()
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
-            model.add_element(0, 1, self.cross_section, self.material)
+            model.add_element(0, 1, self.cross_section, self.material, self.op_cond)
             model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
@@ -281,10 +289,10 @@ class TestCantilever:
 
         b = 3
         rect_beam = RectangularBeam(0.1, 0.1)
-        dummy_material = deepcopy(SS316)
-        dummy_material.E = 10e9
+        dummy_material = self.ss316
+        dummy_material.youngs_modulus = 10e9
 
-        e_mat = dummy_material.E
+        e_mat = dummy_material.youngs_modulus(self.op_cond)
         i_xs = rect_beam.i_yy
 
         for node_coords in [
@@ -296,7 +304,7 @@ class TestCantilever:
             model = FiniteElementModel()
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
-            model.add_element(0, 1, rect_beam, dummy_material)
+            model.add_element(0, 1, rect_beam, dummy_material, self.op_cond)
             model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             load_case = LoadCase()
 
@@ -317,7 +325,7 @@ class TestCantilever:
 
     def test_node_load(self):
         load = 40000
-        e_mat = self.material.E
+        e_mat = self.material.youngs_modulus(self.op_cond)
         i_xs = self.cross_section.i_yy
         load_case = LoadCase()
         load_case.add_node_load(1, load, "Fz")
@@ -350,6 +358,10 @@ class TestCantilever:
 
 
 class TestDistributedLoads:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_fixed_fixed_load(self):
         # The middle node is just an easy way to get the deflection before
         # having implemented full-beam deflection mapping
@@ -357,11 +369,11 @@ class TestDistributedLoads:
         # simplest to implement!
 
         length = 2
-        dummy_material = deepcopy(SS316)
+        dummy_material = self.ss316
         rect_beam = RectangularBeam(0.05, 0.61867)
         w = 2000
 
-        e_mat = dummy_material.E
+        e_mat = dummy_material.youngs_modulus(self.op_cond)
         i_xs = rect_beam.i_yy
 
         for node_coords in [[length, 0, 0]]:
@@ -372,8 +384,8 @@ class TestDistributedLoads:
             node2 = 2 * np.array(node_coords)
             model.add_node(*node2)
 
-            model.add_element(0, 1, rect_beam, dummy_material)
-            model.add_element(1, 2, rect_beam, dummy_material)
+            model.add_element(0, 1, rect_beam, dummy_material, self.op_cond)
+            model.add_element(1, 2, rect_beam, dummy_material, self.op_cond)
             model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
             model.add_support(2, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
@@ -404,7 +416,7 @@ class TestDistributedLoads:
 
         rect_beam = RectangularBeam(0.5, 0.7)
         w = -2000
-        e_mat = SS316.E
+        e_mat = self.ss316.youngs_modulus(self.op_cond)
         i_xs = rect_beam.i_yy
 
         end_deflection = w * length**4 / (8 * e_mat * i_xs)
@@ -420,7 +432,7 @@ class TestDistributedLoads:
             model.add_node(0, 0, 0)
             model.add_node(*node_coords)
 
-            model.add_element(0, 1, rect_beam, SS316)
+            model.add_element(0, 1, rect_beam, self.ss316, self.op_cond)
             model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
             load_case = LoadCase()
@@ -434,6 +446,9 @@ class TestDistributedLoads:
 class TestLFrame:
     # https://structx.com/Frame_Formulas_017.html
     def setup_method(self):
+        ss316 = SS316()
+        op_cond = STPConditions()
+
         length = 4
         height = 15
         model = FiniteElementModel()
@@ -443,11 +458,11 @@ class TestLFrame:
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         rect_beam = RectangularBeam(0.5, 0.5)
-        model.add_element(0, 1, rect_beam, SS316)
-        model.add_element(1, 2, rect_beam, SS316)
+        model.add_element(0, 1, rect_beam, ss316)
+        model.add_element(1, 2, rect_beam, ss316)
         self.length = length
         self.height = height
-        self.e_mat = SS316.E
+        self.e_mat = ss316.youngs_modulus(op_cond)
         self.i_xs = rect_beam.i_yy
 
         self.model = model
@@ -475,6 +490,10 @@ class TestLFrame:
 
 
 class TestCompoundDeflection:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_fixedfixed(self):
         length = 4
 
@@ -488,10 +507,10 @@ class TestCompoundDeflection:
         model.add_node(4 * length, 0, 0)
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_support(4, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
-        model.add_element(0, 1, rect_beam, SS316)
-        model.add_element(1, 2, rect_beam, SS316)
-        model.add_element(2, 3, rect_beam, SS316)
-        model.add_element(3, 4, rect_beam, SS316)
+        model.add_element(0, 1, rect_beam, self.ss316, self.op_cond)
+        model.add_element(1, 2, rect_beam, self.ss316, self.op_cond)
+        model.add_element(2, 3, rect_beam, self.ss316, self.op_cond)
+        model.add_element(3, 4, rect_beam, self.ss316, self.op_cond)
 
         load = -10000
         load_case = LoadCase()
@@ -521,10 +540,10 @@ class TestCompoundDeflection:
         model.add_node(3 * length, 0, 0)
         model.add_node(4 * length, 0, 0)
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
-        model.add_element(0, 1, rect_beam, SS316)
-        model.add_element(1, 2, rect_beam, SS316)
-        model.add_element(2, 3, rect_beam, SS316)
-        model.add_element(3, 4, rect_beam, SS316)
+        model.add_element(0, 1, rect_beam, self.ss316, self.op_cond)
+        model.add_element(1, 2, rect_beam, self.ss316, self.op_cond)
+        model.add_element(2, 3, rect_beam, self.ss316, self.op_cond)
+        model.add_element(3, 4, rect_beam, self.ss316, self.op_cond)
 
         w_load = -10000
         load_case = LoadCase()
@@ -543,6 +562,10 @@ class TestCompoundDeflection:
 
 
 class TestGravityLoads:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_angled_cantilever(self):
         model = FiniteElementModel()
         model.add_node(0, 0, 0)
@@ -555,7 +578,7 @@ class TestGravityLoads:
         for i in range(1, n + 1):
             model.add_node(i * length / n, i * length / n, i * length / n)
 
-            model.add_element(i - 1, i, rect_beam, SS316)
+            model.add_element(i - 1, i, rect_beam, self.ss316, self.op_cond)
 
         model.add_gravity_loads()
 
@@ -567,6 +590,10 @@ class TestGravityLoads:
 
 
 class TestFixedFixedStress:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_stress(self):
         model = FiniteElementModel()
 
@@ -578,9 +605,9 @@ class TestFixedFixedStress:
         model.add_node(length / 2, 0, 0)
         model.add_node(length, 0, 0)
         model.add_node(length + 1, 0, 0)
-        model.add_element(0, 1, rect_beam, SS316)
-        model.add_element(1, 2, rect_beam, SS316)
-        model.add_element(2, 3, rect_beam, SS316)
+        model.add_element(0, 1, rect_beam, self.ss316, self.op_cond)
+        model.add_element(1, 2, rect_beam, self.ss316, self.op_cond)
+        model.add_element(2, 3, rect_beam, self.ss316, self.op_cond)
         model.add_support(0, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
         model.add_support(2, dx=True, dy=True, dz=True, rx=False, ry=False, rz=False)
         model.add_support(3, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
@@ -594,7 +621,9 @@ class TestFixedFixedStress:
 class TestMiniEiffelTower:
     @classmethod
     def setup_class(cls):
+        cls.ss316 = SS316()
         model = FiniteElementModel()
+        cls.op_cond = STPConditions()
 
         def make_platform(
             width, elevation, cross_section, *, elements=True, internodes=False
@@ -608,8 +637,12 @@ class TestMiniEiffelTower:
 
                 if elements:
                     for j in range(3):
-                        model.add_element(i_id + j, i_id + j + 1, cross_section, SS316)
-                    model.add_element(i_id + j + 1, i_id, cross_section, SS316)
+                        model.add_element(
+                            i_id + j, i_id + j + 1, cross_section, cls.ss316, cls.op_cond
+                        )
+                    model.add_element(
+                        i_id + j + 1, i_id, cross_section, cls.ss316, cls.op_cond
+                    )
             if internodes:
                 model.add_node(-width / 2, -width / 2, elevation)
                 i_id = model.geometry.nodes[-1].id_number
@@ -622,8 +655,12 @@ class TestMiniEiffelTower:
                 model.add_node(-width / 2, 0, elevation)
                 if elements:
                     for j in range(7):
-                        model.add_element(i_id + j, i_id + j + 1, cross_section, SS316)
-                    model.add_element(i_id + j + 1, i_id, cross_section, SS316)
+                        model.add_element(
+                            i_id + j, i_id + j + 1, cross_section, cls.ss316, cls.op_cond
+                        )
+                    model.add_element(
+                        i_id + j + 1, i_id, cross_section, cls.ss316, cls.op_cond
+                    )
 
         cs1 = RectangularBeam(3, 3)
         cs2 = RectangularBeam(1.5, 1.5)
@@ -642,7 +679,7 @@ class TestMiniEiffelTower:
         ]).T
 
         for x1, x2 in cs1_array:
-            model.add_element(x1, x2, cs1, SS316)
+            model.add_element(x1, x2, cs1, cls.ss316, cls.op_cond)
 
         make_platform(40.96, 115.73, cs3)
 
@@ -651,22 +688,22 @@ class TestMiniEiffelTower:
             [12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15],
         ]).T
         for x1, x2 in cs2_array:
-            model.add_element(x1, x2, cs2, SS316)
+            model.add_element(x1, x2, cs2, cls.ss316, cls.op_cond)
 
         make_platform(18.65, 276.13, cs4)
 
         cs3_array = np.array([[12, 13, 14, 15], [16, 17, 18, 19]]).T
 
         for x1, x2 in cs3_array:
-            model.add_element(x1, x2, cs3, SS316)
+            model.add_element(x1, x2, cs3, cls.ss316, cls.op_cond)
 
         model.add_node(0, 0, 316)
 
         for i in range(4):
-            model.add_element(16 + i, 20, cs3, SS316)
+            model.add_element(16 + i, 20, cs3, cls.ss316, cls.op_cond)
 
         model.add_node(0, 0, 324)
-        model.add_element(20, 21, cs5, SS316)
+        model.add_element(20, 21, cs5, cls.ss316, cls.op_cond)
 
         model.plot()
 
@@ -680,6 +717,10 @@ class TestMiniEiffelTower:
 
 
 class TestInterpolation:
+    def setup_method(self):
+        self.ss316 = SS316()
+        self.op_cond = STPConditions()
+
     def test_model(self):
         xsection = RectangularBeam(0.2, 0.3)
 
@@ -692,13 +733,13 @@ class TestInterpolation:
         model.add_node(4, 0, 0)
         model.add_node(4, 2, 2)
         model.add_node(4, 2, 0)
-        model.add_element(0, 1, xsection, SS316)
-        model.add_element(1, 2, xsection, SS316)
-        model.add_element(2, 3, xsection, SS316)
-        model.add_element(3, 4, xsection, SS316)
+        model.add_element(0, 1, xsection, self.ss316, self.op_cond)
+        model.add_element(1, 2, xsection, self.ss316, self.op_cond)
+        model.add_element(2, 3, xsection, self.ss316, self.op_cond)
+        model.add_element(3, 4, xsection, self.ss316, self.op_cond)
 
-        model.add_element(2, 5, xsection, SS316)
-        model.add_element(5, 6, xsection, SS316)
+        model.add_element(2, 5, xsection, self.ss316, self.op_cond)
+        model.add_element(5, 6, xsection, self.ss316, self.op_cond)
 
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
         model.add_support(4, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)

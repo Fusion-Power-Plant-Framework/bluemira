@@ -28,10 +28,11 @@ from bluemira.structural.symmetry import CyclicSymmetry
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from matproplib.conditions import OperationalCondition
+    from matproplib.material import Material
 
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
 
 
 class BoundaryConditionMethod(Enum):
@@ -163,7 +164,8 @@ class FiniteElementModel:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: StructuralMaterial | None = None,
+        material: Material | None = None,
+        op_cond: OperationalCondition | None = None,
     ) -> int:
         """
         Adds an Element to the FiniteElementModel
@@ -183,13 +185,16 @@ class FiniteElementModel:
         -------
         The ID number of the element that was added
         """
-        return self.geometry.add_element(node_id1, node_id2, cross_section, material)
+        return self.geometry.add_element(
+            node_id1, node_id2, cross_section, material, op_cond
+        )
 
     def add_coordinates(
         self,
         coords: Coordinates,
         cross_section: CrossSection,
-        material: StructuralMaterial | None = None,
+        material: Material | None = None,
+        op_cond: OperationalCondition | None = None,
     ):
         """
         Adds a Coordinates object to the FiniteElementModel
@@ -203,7 +208,7 @@ class FiniteElementModel:
         material:
             The material of all the Elements in the Coordinates
         """
-        self.geometry.add_coordinates(coords, cross_section, material)
+        self.geometry.add_coordinates(coords, cross_section, material, op_cond)
 
     def add_support(
         self,
