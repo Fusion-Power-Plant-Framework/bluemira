@@ -988,7 +988,7 @@ def convex_hull_wires_2d(
     elif hull_plane is HullPlane.YZ:
         plane_idxs = (1, 2)
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Cannot find the Convex hull for a 3D object yet.")
 
     shape_discretisations = []
     for wire in wires:

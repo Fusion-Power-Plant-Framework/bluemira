@@ -36,13 +36,12 @@ from bluemira.codes.openmc.make_csg import (
     make_cell_arrays,
 )
 from bluemira.codes.openmc.material import MaterialsLibrary
-from bluemira.codes.openmc.output import OpenMCResult
+from bluemira.codes.openmc.output import NeutronicsOutputParams, OpenMCResult
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
 from bluemira.codes.openmc.tallying import filter_cells
-from bluemira.plasma_physics.reactions import n_DT_reactions
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -353,12 +352,14 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            n_DT_reactions(source_params.reactor_power),
+            source_params.P_fus_DT,
             statepoint_file,
         )
+        output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
+
         if delete_files:
             self.delete_files(files_created)
-        return result
+        return result, output_params
 
     def plot(
         self,
