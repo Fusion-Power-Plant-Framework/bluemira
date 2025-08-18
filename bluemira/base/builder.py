@@ -22,9 +22,10 @@ from bluemira.materials.error import MaterialsError
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
+    from matproplib.material import Material
+
     from bluemira.base.components import ComponentT
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
-    from bluemira.materials.material import Material
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
 """
