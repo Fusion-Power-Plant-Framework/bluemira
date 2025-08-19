@@ -20,7 +20,6 @@ import numpy as np
 from CoolProp.CoolProp import PropsSI
 
 from bluemira.base.constants import to_celsius, to_kelvin
-from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
 from bluemira.materials.tools import _try_calc_property, matproperty, to_openmc_material
@@ -182,15 +181,11 @@ class MaterialProperty:
             raise ValueError("Temperature is not set")
         temperatures = np.atleast_1d(temperature)
         if self.temp_min is not None and (temperatures < self.temp_min).any():
-            bluemira_debug(f"obj: {self.obj}")
-            bluemira_debug(f"{self.temp_min}, {self.temp_max}, {temperatures}")
             raise ValueError(
                 "Material property not valid outside of temperature range: "
                 f"{temperatures} < T_min = {self.temp_min}"
             )
         if self.temp_max is not None and (temperatures > self.temp_max).any():
-            bluemira_debug(f"obj: {self.obj}")
-            bluemira_debug(f"{self.temp_min}, {self.temp_max}, {temperatures}")
             raise ValueError(
                 "Material property not valid outside of temperature range: "
                 f"{temperature} > T_max = {self.temp_max}"
@@ -522,7 +517,7 @@ class MassFractionMaterial:
         """
         return _try_calc_property(self, "thermal_conductivity", temperature)
 
-    def E(self, temperature: float, **kwargs) -> float:  # noqa: N802, ARG002
+    def E(self, temperature: float) -> float:  # noqa: N802
         """
         Returns
         -------
@@ -531,7 +526,7 @@ class MassFractionMaterial:
         """
         return _try_calc_property(self, "youngs_modulus", temperature)
 
-    def Cp(self, temperature: float, **kwargs) -> float:  # noqa: N802, ARG002
+    def Cp(self, temperature: float) -> float:  # noqa: N802
         """
         Returns
         -------
@@ -549,7 +544,7 @@ class MassFractionMaterial:
         """
         return _try_calc_property(self, "coefficient_thermal_expansion", temperature)
 
-    def rho(self, temperature: float, **kwargs) -> float:  # noqa: ARG002
+    def rho(self, temperature: float) -> float:
         """
         Returns
         -------
@@ -558,12 +553,12 @@ class MassFractionMaterial:
         """
         return _try_calc_property(self, "density", temperature)
 
-    def erho(self, temperature: float, **kwargs) -> float:  # noqa: ARG002
+    def erho(self, temperature: float) -> float:
         """
         Returns
         -------
         :
-            Electrical resistivity in Ohm.m
+            Electrical resistivity in 10^(-8)Ohm.m
         """
         return _try_calc_property(self, "electrical_resistivity", temperature)
 
