@@ -1051,7 +1051,7 @@ class UnitCellCompound:
         """
         return self.name
 
-    def Cp(self, temperature: float, **kwargs) -> float:  # noqa: N802, ARG002
+    def Cp(self, temperature: float) -> float:  # noqa: N802
         """
         Returns
         -------
