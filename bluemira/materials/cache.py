@@ -16,13 +16,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from bluemira.materials.material import (
     BePebbleBed,
-    CopperRRR,
     Liquid,
     MassFractionMaterial,
     Material,
     MaterialsError,
     NbSnSuperconductor,
-    NbSnSuperconductorMag,
     NbTiSuperconductor,
     Plasma,
     UnitCellCompound,
@@ -46,19 +44,15 @@ class MaterialCache:
     _material_dict: ClassVar = {}
 
     default_classes = (
-        HomogenisedMixture,
-        BePebbleBed,
-        Liquid,
-        MassFractionMaterial,
-        Material,
-        MaterialsError,
-        NbSnSuperconductor,
-        NbSnSuperconductorMag,
-        NbTiSuperconductor,
-        Plasma,
-        UnitCellCompound,
         Void,
-        CopperRRR,
+        MassFractionMaterial,
+        NbTiSuperconductor,
+        NbSnSuperconductor,
+        Liquid,
+        UnitCellCompound,
+        BePebbleBed,
+        Plasma,
+        HomogenisedMixture,
     )
 
     def __init__(self):
