@@ -368,6 +368,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         label: str,
         target_baffle_join_point: np.ndarray,
         target_dome_join_point: np.ndarray,
+        target_start: bool | None = None,  # noqa: FBT001
     ) -> BluemiraWire:
         """
         Divertor designer method for making the baffles.
@@ -382,6 +383,12 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             The position (in x-z) where the target connects to the baffle.
         target_dome_join_point:
             The position (in x-z) where the target connects to the dome.
+        target_start:
+            Determines which flux surface is selected to create the baffle shape
+            when using a fluxline baffle design (see div_baffle_type parameter).
+            True -> use flux surface closest to target join point.
+            False -> use flux surface closest to wall join point.
+            Default (None) will mean that the point with the lowest z value is selected.
 
         Returns
         -------
@@ -429,6 +436,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
                 label,
                 wall_join_point,
                 target_baffle_join_point,
+                target_start,
             )
         target_gradient = grad_xz(target_baffle_join_point, target_dome_join_point)
         return self._make_circular_baffle(
@@ -440,6 +448,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         label: str,
         wall_join_point: np.ndarray,
         target_join_point: np.ndarray,
+        target_start: bool | None = None,  # noqa: FBT001
     ) -> BluemiraWire:
         """
         Make a baffle using the divertor leg flux line shape.
@@ -448,16 +457,34 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         ----------
         label:
             The label to give the returned Component.
+        wall_join_point:
+            The position (in x-z) where the wall connects to the baffle.
         target_baffle_join_point:
             The position (in x-z) where the target connects to the baffle.
+        target_start:
+            Determines which flux surface is selected to create the baffle shape.
+            True -> use flux surface closest to target join point.
+            False -> use flux surface closest to wall join point.
 
         Returns
         -------
         :
             The baffle shape.
+
+        Notes
+        -----
+        The baffle shape follows a constant line of flux that is closest to the input
+        coordinates.
+        The nearest point on the flux surface to the start point and the end point are
+        joined.
+        The default is that the flux surface is picked based on the lowest z coordinate
+        of the start and end point.
         """
         return self.make_flux_line_wire(
-            start=target_join_point, end=wall_join_point, start_picked=True, label=label
+            start=target_join_point,
+            end=wall_join_point,
+            start_picked=target_start,
+            label=label,
         )
 
     def _make_circular_baffle(
