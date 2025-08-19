@@ -375,7 +375,7 @@ class OpenMCResult:
         flux["vol (m^3)"] = flux["cell"].map(cell_vols)
         flux["flux (m^-2)"] = (
             raw_uc(flux["mean"].to_numpy(), "cm", "m") * src_rate / flux["vol (m^3)"]
-        )
+        )  # "mean" is actually the volume integrated flux (in cm) per source particle.
         flux["flux %err."] = flux.apply(get_percent_err, axis=1)
 
         heating = cls._load_dataframe_from_statepoint(
