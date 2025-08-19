@@ -118,7 +118,6 @@ class HomogenisedMixture:
         prop: str,
         temperature: float | None = None,
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
-        **kwargs,
     ) -> float:
         """
         Returns
@@ -151,7 +150,7 @@ class HomogenisedMixture:
         # for certain properties
         for mat in self.materials:
             try:
-                v = getattr(mat.material, prop)(temperature=temperature, **kwargs)
+                v = getattr(mat.material, prop)(temperature)
                 if v is None:
                     warn.append([mat.name, prop])
                 else:
@@ -184,7 +183,6 @@ class HomogenisedMixture:
         self,
         temperature: float | None = None,
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
-        **kwargs,
     ) -> float:
         """
         Young's modulus.
@@ -199,15 +197,12 @@ class HomogenisedMixture:
         :
             The Young's modulus of the material at the given temperature.
         """
-        return self._calc_homogenised_property(
-            "E", temperature, mix_type=mix_type, **kwargs
-        )
+        return self._calc_homogenised_property("E", temperature, mix_type=mix_type)
 
     def mu(
         self,
         temperature: float | None = None,
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
-        **kwargs,
     ) -> float:
         """
         Poisson's ratio.
@@ -222,9 +217,7 @@ class HomogenisedMixture:
         :
             Poisson's ratio for the material at the given temperature.
         """
-        return self._calc_homogenised_property(
-            "mu", temperature, mix_type=mix_type, **kwargs
-        )
+        return self._calc_homogenised_property("mu", temperature, mix_type=mix_type)
 
     def CTE(  # noqa: N802
         self,
@@ -265,16 +258,15 @@ class HomogenisedMixture:
         :
             The density of the material at the given temperature.
         """
-        return self._calc_homogenised_property("density", temperature, mix_type=mix_type)
+        return self._calc_homogenised_property("rho", temperature, mix_type=mix_type)
 
     def erho(
         self,
         temperature: float | None = None,
         mix_type: MixtureConnectionType = MixtureConnectionType.PARALLEL,
-        **kwargs,
     ) -> float:
         """
-        Electrical resistivity in Ohm.m
+        Electrical resistivity.
 
         Parameters
         ----------
@@ -286,9 +278,7 @@ class HomogenisedMixture:
         :
             The electrical resistivity of the material at the given temperature.
         """
-        return self._calc_homogenised_property(
-            "erho", temperature, mix_type=mix_type, **kwargs
-        )
+        return self._calc_homogenised_property("erho", temperature, mix_type=mix_type)
 
     def Sy(  # noqa: N802
         self,
@@ -309,75 +299,6 @@ class HomogenisedMixture:
             Minimum yield stress in MPa at the given temperature.
         """
         return self._calc_homogenised_property("Sy", temperature, mix_type=mix_type)
-
-    def Cp(  # noqa: N802
-        self,
-        temperature: float | None = None,
-        mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,  # noqa: ARG002
-        **kwargs,
-    ) -> float:
-        """
-        Compute the homogenized specific heat capacity of the mixture [J/kg/K].
-
-        Parameters
-        ----------
-        temperature : float, optional
-            The temperature at which to evaluate the specific heat [K]. If not provided,
-            defaults to the internal `self.temperature`.
-
-        mix_type : MixtureConnectionType, optional
-            Type of mixing model. Retained for API consistency but unused in this method.
-
-        **kwargs :
-            Additional parameters passed to the material-specific property functions.
-
-        Returns
-        -------
-        float
-            Specific heat of the homogenized mixture [J/kg/K].
-        """
-        prop = "Cp"
-        temperature = self.temperature if temperature is None else temperature
-        warn = []
-        values, fractions, densities = [], [], []
-
-        for mat in self.materials:
-            try:
-                v = getattr(mat.material, prop)(temperature=temperature, **kwargs)
-                if v is None:
-                    warn.append([mat.name, prop])
-                else:
-                    values.append(v)
-                    fractions.append(mat.fraction)
-                    densities.append(
-                        mat.material.density(temperature=temperature, **kwargs)
-                    )
-            except AttributeError:  # noqa: PERF203
-                warn.append([mat.name, prop])
-
-        if warn:
-            txt = (
-                f"Materials::{type(self).__name__}: The following "
-                f"mat.prop {prop} calls failed:\n"
-            )
-            for w in warn:
-                txt += f"{w[0]}: {w[1]}\n"
-            bluemira_warn(txt)
-
-        hom_density = sum(
-            density * fraction
-            for density, fraction in zip(densities, fractions, strict=False)
-        )
-
-        return (
-            sum(
-                Cp * density * fraction
-                for Cp, density, fraction in zip(
-                    values, densities, fractions, strict=False
-                )
-            )
-            / hom_density
-        )
 
     @classmethod
     def from_dict(
