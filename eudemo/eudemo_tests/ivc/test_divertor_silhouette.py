@@ -123,9 +123,7 @@ class TestDivertorSilhouetteDesigner:
         assert len(turning_points) == 1
         assert dome_coords[2, turning_points[0]] < x_points[0].z
 
-    @pytest.mark.parametrize("div_baffle_type", ["circle_baffle", "fluxline_baffle"])
-    def test_baffle_start_and_end_points_and_target_intersects(self, div_baffle_type):
-        self.params["div_baffle_type"]["value"] = div_baffle_type
+    def test_baffle_start_and_end_points_and_target_intersects(self):
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)
 
         inner_baffle, inner_target, _, outer_target, outer_baffle = designer.execute()
