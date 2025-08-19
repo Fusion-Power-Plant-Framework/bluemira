@@ -10,6 +10,8 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
+import operator
+from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -23,6 +25,7 @@ from bluemira.base.components import (
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.display.palettes import ColorPalette
+from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -43,6 +46,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from bluemira.base.components import ComponentT
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.geometry.base import BluemiraGeoT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
@@ -575,3 +579,87 @@ def build_sectioned_xyz(
         if enable_sectioning
         else bodies
     )
+
+
+class CutLocation(Enum):
+    """TODO"""
+
+    UPPER = auto()
+    LOWER = auto()
+
+
+def clip_wall_silhouette_at_xpoint(eq: Equilibrium, wall: BluemiraWire):
+    """
+    Remove the parts of the wire below or above the x-point.
+
+    Returns
+    -------
+    wall_piece:
+        The section of the wall above the x point
+    """
+    _, x_points = find_OX_points(eq.x, eq.z, eq.psi())
+    if x_points[0].z < x_points[1].z:
+        lower_x_point_z, upper_x_point_z = x_points[0].z, x_points[1].z
+    else:
+        lower_x_point_z, upper_x_point_z = x_points[1].z, x_points[0].z
+
+    cut_wall_boundary = cut_shape_at_z_value(wall, lower_x_point_z, CutLocation.LOWER)
+
+    if eq.is_double_null:
+        cut_wall_boundary = cut_shape_at_z_value(
+            wall, upper_x_point_z, CutLocation.UPPER
+        )
+
+    return cut_wall_boundary
+
+
+def cut_shape_at_z_value(
+    shape: BluemiraWire,
+    point_z: float,
+    location: CutLocation = CutLocation.LOWER,
+    point_name: str = "x-point",
+) -> BluemiraWire:
+    """
+    Remove the parts of the wire below or above the given value in the z-axis.
+
+    Returns
+    -------
+    wall_piece:
+        The section of the wall above the x point
+
+    Raises
+    ------
+    ValueError
+        No parts of shape found about the x points
+    """
+    # Create a box that surrounds the wall above/below the given z
+    # coordinate, then perform a boolean cut to remove that portion
+    # of the wall's shape.
+    bounding_box = shape.bounding_box
+    box_z = bounding_box.z_min if location is CutLocation.LOWER else bounding_box.z_max
+    cut_box_points = np.array([
+        [bounding_box.x_min, 0, box_z],
+        [bounding_box.x_min, 0, point_z],
+        [bounding_box.x_max, 0, point_z],
+        [bounding_box.x_max, 0, box_z],
+        [bounding_box.x_min, 0, box_z],
+    ])
+    cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion", closed=True)
+    # For a single-null, we expect three 'pieces' from the cut: the
+    # upper wall shape and the two separatrix legs
+    pieces = boolean_cut(shape, [cut_zone])
+
+    wall_piece = (
+        pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+        if location is CutLocation.LOWER
+        else pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
+    )
+
+    func = operator.lt if location is CutLocation.LOWER else operator.gt
+    loc = "above" if location is CutLocation.LOWER else "below"
+    if func(wall_piece.center_of_mass[2], point_z):
+        raise ValueError(
+            "Could not cut wall shape. "
+            "No parts of the wall found " + loc + " " + point_name
+        )
+    return wall_piece
