@@ -14,14 +14,21 @@ for conductor design, thermal and structural optimization, and case layout visua
 # %% md
 # ## Some import
 # %%
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+# get some materials from EUROfusion materials library
+from eurofusion_materials.library.magnet_branch_mats import (
+    COPPER_100,
+    COPPER_300,
+    DUMMY_INSULATOR,
+    NB3SN_MAG,
+    SS316_LN_MAG,
+)
 from matplotlib import cm
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.magnets.cable import (
     DummyRectangularCableHTS,
@@ -35,23 +42,12 @@ from bluemira.magnets.utils import (
     delayed_exp_func,
 )
 from bluemira.magnets.winding_pack import WindingPack
-from bluemira.materials import MaterialCache
 
 # %%
 # cache all the magnets classes for future use
 register_all_magnets()
 
-# load supporting bluemira materials
-MATERIAL_DATA_PATH = get_bluemira_path("magnets", subfolder="examples")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(MATERIAL_DATA_PATH, "materials_mag.json"))
 
-# get some materials from MATERIAL_CACHE
-ss316 = MATERIAL_CACHE.get_material("SS316-LN")
-nb3sn = MATERIAL_CACHE.get_material("Nb3Sn - WST")
-copper100 = MATERIAL_CACHE.get_material("Copper100")
-copper300 = MATERIAL_CACHE.get_material("Copper300")
-dummy_insulator = MATERIAL_CACHE.get_material("DummyInsulator")
 # %% md
 # ## Plot options
 # %%
@@ -307,11 +303,8 @@ cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
 
 # operational_point = {"temperature": 5.7, "B": B(0)}
-nb3sn = cable.sc_strand.materials[0].material
-copper100 = cable.sc_strand.materials[1].material
-copper300 = cable.stab_strand.materials[0].material
 
-mats = [nb3sn, copper100, copper300, ss316]
+mats = [NB3SN_MAG, COPPER_100, COPPER_300, SS316_LN_MAG]
 mat_names = ["nb3sn", "copper100", "copper300", "ss316"]
 temperatures = np.linspace(5, 250, 500)
 operational_point = {"B": B_fun(0)}
@@ -413,8 +406,8 @@ bluemira_print(
 # Create a conductor with the specified cable
 conductor = SymmetricConductor(
     cable=cable,
-    mat_jacket=ss316,
-    mat_ins=dummy_insulator,
+    mat_jacket=SS316_LN_MAG,
+    mat_ins=DUMMY_INSULATOR,
     dx_jacket=0.01,
     dx_ins=1e-3,
 )
@@ -434,7 +427,7 @@ case = TrapezoidalCaseTF(
     dy_ps=dr_plasma_side,
     dy_vault=0.7,
     theta_TF=360 / n_TF,
-    mat_case=ss316,
+    mat_case=SS316_LN_MAG,
     WPs=[wp1],
 )
 
