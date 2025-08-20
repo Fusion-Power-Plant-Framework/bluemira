@@ -17,7 +17,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 from matproplib import OperationalConditions
-from matproplib.material import MaterialFraction, Mixture
+from matproplib.material import MaterialFraction, mixture
 
 from bluemira import display
 from bluemira.base.look_and_feel import bluemira_error
@@ -80,11 +80,11 @@ class Strand(metaclass=RegistrableMeta):
         self.temperature = temperature
 
         # Create homogenised material
-        self._homogenised_material = Mixture(
+        self._homogenised_material = mixture(
             name=name,
             materials=materials,
-            percent_type="volume",
-            packing_fraction=1,
+            fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=293.15),
         )
 
     @property
@@ -510,7 +510,8 @@ class SuperconductingStrand(Strand):
         """
         sc = None
         for material in self.materials:
-            if material.material.is_superconductor:
+            # if material.material.is_superconductor:
+            if hasattr(material.material, "critical_current_density"):
                 if sc is None:
                     sc = material
                 else:
@@ -555,7 +556,9 @@ class SuperconductingStrand(Strand):
             Critical current density [A/m²].
         """
         op_cond = OperationalConditions(
-            temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B")
+            temperature=kwargs.get("temperature"),
+            magnetic_field=kwargs.get("B"),
+            strain=kwargs.get("eps", 0.0055),
         )
         return self._sc.material.critical_current_density(op_cond)
 
