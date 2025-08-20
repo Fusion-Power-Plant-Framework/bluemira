@@ -1,17 +1,13 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
+from eurofusion_materials.library.magnet_branch_mats import (
+    COPPER_100,
+    COPPER_300,
+    SS316_LN_MAG,
+)
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
-from bluemira.base.file import get_bluemira_path
 from bluemira.magnets.case_tf import create_case_tf_from_dict
-from bluemira.materials import MaterialCache
-
-material_path = get_bluemira_path("magnets", subfolder="examples")
-material_file = Path(material_path, "materials_mag.json")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(material_file)
 
 case_tf_dict = {
     "name_in_registry": "TrapezoidalCaseTF",
@@ -43,7 +39,7 @@ case_tf_dict = {
                         "temperature": 5.7,
                         "materials": [
                             {"material": "Nb3Sn - WST", "fraction": 0.5},
-                            {"material": "Copper100", "fraction": 0.5},
+                            {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
                     "stab_strand": {
@@ -51,12 +47,12 @@ case_tf_dict = {
                         "name": "Stabilizer",
                         "d_strand": 0.001,
                         "temperature": 5.7,
-                        "materials": [{"material": "Copper300", "fraction": 1.0}],
+                        "materials": [{"material": COPPER_300, "fraction": 1.0}],
                     },
                     "dx": 0.034648435154495685,
                     "aspect_ratio": 1.2,
                 },
-                "mat_jacket": "SS316-LN",
+                "mat_jacket": SS316_LN_MAG,
                 "mat_ins": "DummyInsulator",
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
@@ -85,7 +81,7 @@ case_tf_dict = {
                         "temperature": 5.7,
                         "materials": [
                             {"material": "Nb3Sn - WST", "fraction": 0.5},
-                            {"material": "Copper100", "fraction": 0.5},
+                            {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
                     "stab_strand": {
@@ -93,12 +89,12 @@ case_tf_dict = {
                         "name": "Stabilizer",
                         "d_strand": 0.001,
                         "temperature": 5.7,
-                        "materials": [{"material": "Copper300", "fraction": 1.0}],
+                        "materials": [{"material": COPPER_300, "fraction": 1.0}],
                     },
                     "dx": 0.034648435154495685,
                     "aspect_ratio": 1.2,
                 },
-                "mat_jacket": "SS316-LN",
+                "mat_jacket": SS316_LN_MAG,
                 "mat_ins": "DummyInsulator",
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
