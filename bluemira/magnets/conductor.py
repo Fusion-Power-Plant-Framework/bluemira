@@ -10,6 +10,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -21,8 +22,6 @@ from bluemira.magnets.utils import (
     serie_k,
     serie_r,
 )
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.material import MassFractionMaterial
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -48,8 +47,8 @@ class Conductor(metaclass=RegistrableMeta):
     def __init__(
         self,
         cable: ABCCable,
-        mat_jacket: MassFractionMaterial,
-        mat_ins: MassFractionMaterial,
+        mat_jacket: Material,
+        mat_ins: Material,
         dx_jacket: float,
         dy_jacket: float,
         dx_ins: float,
@@ -228,13 +227,9 @@ class Conductor(metaclass=RegistrableMeta):
 
         # Resolve jacket material
         mat_jacket = conductor_dict["mat_jacket"]
-        if isinstance(mat_jacket, str):
-            mat_jacket = get_cached_material(mat_jacket)
 
         # Resolve insulation material
         mat_ins = conductor_dict["mat_ins"]
-        if isinstance(mat_ins, str):
-            mat_ins = get_cached_material(mat_ins)
 
         # Instantiate
         return cls(
@@ -803,8 +798,8 @@ class SymmetricConductor(Conductor):
     def __init__(
         self,
         cable: ABCCable,
-        mat_jacket: MassFractionMaterial,
-        mat_ins: MassFractionMaterial,
+        mat_jacket: Material,
+        mat_ins: Material,
         dx_jacket: float,
         dx_ins: float,
         name: str = "SymmetricConductor",
@@ -938,13 +933,9 @@ class SymmetricConductor(Conductor):
 
         # Resolve jacket material
         mat_jacket = conductor_dict["mat_jacket"]
-        if isinstance(mat_jacket, str):
-            mat_jacket = get_cached_material(mat_jacket)
 
         # Resolve insulation material
         mat_ins = conductor_dict["mat_ins"]
-        if isinstance(mat_ins, str):
-            mat_ins = get_cached_material(mat_ins)
 
         # Instantiate
         return cls(
