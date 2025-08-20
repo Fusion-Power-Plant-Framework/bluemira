@@ -22,6 +22,10 @@ from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
 from bluemira.geometry.tools import revolve_shape
 from bluemira.plasma_physics.reactions import n_DT_reactions
+from bluemira.radiation_transport.neutronics.constants import (
+    DPACoefficients,
+    dpa_Fe_threshold_eV,
+)
 from bluemira.radiation_transport.neutronics.make_pre_cell import (
     DivertorPreCellArray,
     PreCellArray,
@@ -113,11 +117,13 @@ class OpenMCResult:
     """Fluxes and neutron wall loads"""
     fluxes: dict
     neutron_wall_load: dict
+    damage: dict
 
     photon_heat_flux: dict
     """Photon heat flux"""
 
     universe: openmc.Universe
+    cell_arrays: CellStage
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: str
@@ -180,20 +186,23 @@ class OpenMCResult:
             cell_arrays, pre_cell_model.blanket, pre_cell_model.divertor
         )
 
-        nwl_df = (
-            cls._load_neutron_wall_loading(
-                statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
-            ),
+        nwl_df = cls._load_neutron_wall_loading(
+            statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
+        )
+        damage = cls._load_damage(
+            statepoint, cell_names, cell_vols, cell_arrays, src_rate
         )
 
         return cls(
             universe=universe,
+            cell_arrays=cell_arrays,
             src_rate=src_rate,
             statepoint_file=statepoint_file,
             statepoint=statepoint,
             cell_names=cell_names,
             cell_vols=cell_vols,
             mat_names=mat_names,
+            damage=damage,
             tbr=tbr,
             tbr_err=tbr_err,
             e_mult=e_mult,
@@ -396,6 +405,7 @@ class OpenMCResult:
                 "cell",
                 "cell_name",
                 "nuclide",
+                "area (m^2)",
                 "neutron wall load (W/m^2)",
                 "heating %err.",
             ]
@@ -405,6 +415,99 @@ class OpenMCResult:
         )
         # total number of atomic displacements per second in the cell.
         return cls._convert_dict_contents(nwl.to_dict())
+
+    @classmethod
+    def _load_damage(cls, statepoint, cell_names, cell_vols, cell_arrays, src_rate):
+        """
+        Load the damage-energy tally dataframe, post-process them until we get:
+        - Fe damage rate for the FW
+        - Fe damage rate behind the FW
+        - Cu damage rate in the divertor
+        - Fe damage rate in the VV
+
+        """
+        all_damages = cls._load_dataframe_from_statepoint(statepoint, "damage")
+        all_damages["cell_names"] = all_damages["cell"].map(cell_names)
+        all_damages["vol (m^3)"] = all_damages["cell"].map(cell_vols)
+        # volume integrated damage rate
+        all_damages["damage (eV)/fpy"] = all_damages["mean"] * raw_uc(
+            src_rate, "1/s", "1/yr"
+        )
+        all_damages["%err."] = all_damages.apply(get_percent_err, axis=1)
+        density_g_cc, molar_mass_g = {}, {}
+        for cell in cell_arrays.cells:
+            if cell.fill:
+                density_g_cc[cell.id] = cell.fill.density
+                molar_mass_g[cell.id] = cell.fill.average_molar_mass
+            else:
+                density_g_cc[cell.id] = 0.0
+                molar_mass_g[cell.id] = 0.0
+        all_damages["density (g/cc)"] = all_damages["cell"].map(density_g_cc)
+        all_damages["molar mass (g)"] = all_damages["cell"].map(molar_mass_g)
+
+        # Finding all Eurofer cells
+        eurofer_mask = dict.fromkeys(all_damages.cell.values, False)
+        for cell in cell_arrays.cells:
+            if cell.fill and any(("Fe" in nuc.name) for nuc in cell.fill.nuclides):
+                eurofer_mask[cell.id] = True
+        eurofer_selection = all_damages["cell"].map(eurofer_mask)
+        eurofer_damage = cls._add_dpa_column(
+            all_damages[eurofer_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+
+        bb_mask = dict.fromkeys(all_damages.cell.values, False)
+        vv_mask = dict.fromkeys(all_damages.cell.values, False)
+        div_mask = dict.fromkeys(all_damages.cell.values, False)
+        for cell_stack in cell_arrays.blanket:
+            for cell in cell_stack[:-1]:
+                bb_mask[cell.id] = True
+            vv_mask[cell_stack[-1].id] = True
+        for cell_stack in cell_arrays.divertor:
+            for cell in cell_stack[:-1]:
+                div_mask[cell.id] = True
+            vv_mask[cell_stack[-1].id] = True
+        bb_selection = all_damages["cell"].map(bb_mask)
+        vv_selection = all_damages["cell"].map(vv_mask)
+        div_selection = all_damages["cell"].map(div_mask)
+
+        bb_damage = cls._add_dpa_column(
+            all_damages[bb_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+        vv_damage = cls._add_dpa_column(
+            all_damages[vv_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+        div_damage = cls._add_dpa_column(
+            all_damages[div_selection],
+            dpa_threshold_eV=40,  # Cu is also 40. In fact most metals are 40.
+        )
+        return {
+            "eurofer damage": cls._convert_dict_contents(eurofer_damage.to_dict()),
+            "blanket damage": cls._convert_dict_contents(bb_damage.to_dict()),
+            "VV damage": cls._convert_dict_contents(vv_damage.to_dict()),
+            "divertor damage": cls._convert_dict_contents(div_damage.to_dict()),
+        }
+
+    @staticmethod
+    def _add_dpa_column(df, dpa_threshold_eV):
+        """Add the data for number of atoms and number of displacements, which are then
+        used to calculate the DPA/FPY.
+        """
+        num_atoms, num_displacements = {}, {}
+        for i, row in df.iterrows():
+            dpa_coefs = DPACoefficients(
+                row["density (g/cc)"], row["molar mass (g)"], dpa_threshold_eV
+            )
+            num_atoms[i] = row["vol (m^3)"] * raw_uc(
+                dpa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
+            )
+            num_displacements[i] = (
+                row["damage (eV)/fpy"] * dpa_coefs.displacements_per_damage_eV
+            )
+
+        df["num_atoms"] = num_atoms
+        df["num_displacements"] = num_displacements
+        df["dpa/fpy"] = df["num_displacements"] / df["num_atoms"]
+        return df[["cell", "cell_names", "vol (m^3)", "num_atoms", "dpa/fpy", "%err."]]
 
     @classmethod
     def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols, src_rate):
@@ -520,7 +623,9 @@ class NeutronicsOutputParams(ParameterFrame):
     P_n_aux: Parameter[float]
     P_n_e_mult: Parameter[float]
     P_n_decay: Parameter[float]
+    avg_NWL: Parameter[float]  # noqa: N815
     peak_NWL: Parameter[float]  # noqa: N815
+    peak_eurofer_dpa_rate: Parameter[float]
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
@@ -538,6 +643,18 @@ class NeutronicsOutputParams(ParameterFrame):
             - result.divertor_power
             - result.vessel_power
         )
+        nwl_value, area = (
+            result.neutron_wall_load["neutron wall load (W/m^2)"],
+            result.neutron_wall_load["area (m^2)"],
+        )
+        average_neutron_wall_load = (
+            nwl_value * area
+        ).sum() / area.sum()  # weighted by area
+        peak_nwl = result.neutron_wall_load["neutron wall load (W/m^2)"].max()
+        peak_eurofer_dpa_rate = result.damage["eurofer damage"]["dpa/fpy"].max()
+        peak_bb_iron_dpa_rate = result.damage["blanket damage"]["dpa/fpy"].max()
+        peak_vv_iron_dpa_rate = result.damage["VV damage"]["dpa/fpy"].max()
+        peak_div_cu_dpa_rate = result.damage["divertor damage"]["dpa/fpy"].max()
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
@@ -546,12 +663,35 @@ class NeutronicsOutputParams(ParameterFrame):
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
             Parameter("P_n_aux", auxiliary_power, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
-            Parameter("P_n_decay", 0.0, unit="W", source=source),
-            # TODO @Ocean: Add these  # noqa: TD003
-            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
-            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter(
+                "P_n_decay", np.nan, unit="W", source=source
+            ),  # can't get this without coupling to D1S/R2S/involving fispact
+            Parameter("avg_NWL", average_neutron_wall_load, unit="W/m^2", source=source),
+            Parameter("peak_NWL", peak_nwl, unit="W/m^2", source=source),
+            Parameter(
+                "peak_eurofer_dpa_rate",
+                peak_eurofer_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_bb_iron_dpa_rate",
+                peak_bb_iron_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_vv_iron_dpa_rate",
+                peak_vv_iron_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_div_cu_dpa_rate",
+                peak_div_cu_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
         )
 
     @classmethod
