@@ -210,7 +210,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if isinstance(tolerance, float):
             tolerance *= np.ones(len(ref_harmonics_cos) + len(ref_harmonics_sin))
         else:
-            tolerance = 1e-3 * np.append(ref_harmonics_cos, ref_harmonics_sin, axis=0)
+            tolerance = 1e-3 * np.append(
+                ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
+            )
             tolerance = np.abs(tolerance)
         self.tolerance = tolerance
 
