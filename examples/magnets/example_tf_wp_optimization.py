@@ -22,7 +22,7 @@ import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
-    DUMMY_INSULATOR,
+    DUMMY_INSULATOR_MAG,
     NB3SN_MAG,
     SS316_LN_MAG,
 )
@@ -407,7 +407,7 @@ bluemira_print(
 conductor = SymmetricConductor(
     cable=cable,
     mat_jacket=SS316_LN_MAG,
-    mat_ins=DUMMY_INSULATOR,
+    mat_ins=DUMMY_INSULATOR_MAG,
     dx_jacket=0.01,
     dx_ins=1e-3,
 )

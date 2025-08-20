@@ -3,6 +3,8 @@ import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
+    DUMMY_INSULATOR_MAG,
+    NB3SN_MAG,
     SS316_LN_MAG,
 )
 
@@ -16,7 +18,7 @@ case_tf_dict = {
     "dy_ps": 0.05733333333333333,
     "dy_vault": 0.4529579163961617,
     "theta_TF": 22.5,
-    "mat_case": "SS316-LN",
+    "mat_case": SS316_LN_MAG,
     "WPs": [
         {
             "name_in_registry": "WindingPack",
@@ -38,7 +40,7 @@ case_tf_dict = {
                         "d_strand": 0.001,
                         "temperature": 5.7,
                         "materials": [
-                            {"material": "Nb3Sn - WST", "fraction": 0.5},
+                            {"material": NB3SN_MAG, "fraction": 0.5},
                             {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
@@ -53,7 +55,7 @@ case_tf_dict = {
                     "aspect_ratio": 1.2,
                 },
                 "mat_jacket": SS316_LN_MAG,
-                "mat_ins": "DummyInsulator",
+                "mat_ins": DUMMY_INSULATOR_MAG,
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
             },
@@ -80,7 +82,7 @@ case_tf_dict = {
                         "d_strand": 0.001,
                         "temperature": 5.7,
                         "materials": [
-                            {"material": "Nb3Sn - WST", "fraction": 0.5},
+                            {"material": NB3SN_MAG, "fraction": 0.5},
                             {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
@@ -95,7 +97,7 @@ case_tf_dict = {
                     "aspect_ratio": 1.2,
                 },
                 "mat_jacket": SS316_LN_MAG,
-                "mat_ins": "DummyInsulator",
+                "mat_ins": DUMMY_INSULATOR_MAG,
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
             },
