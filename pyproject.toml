@@ -45,6 +45,7 @@ dependencies = [
     "tabulate>=0.8.10",
     "typeguard>=3.0.1",
     "scipy>=1.11.2",
+    "eurofusion_materials @ git+ssh://github.com/Fusion-Power-Plant-Framework/eurofusion-materials@magnet_branch_materials",
 ]
 
 [project.entry-points.numba_extensions]
