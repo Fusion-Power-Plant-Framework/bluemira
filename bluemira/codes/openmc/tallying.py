@@ -72,7 +72,6 @@ def filter_cells(
 
     # material filters
     mat_filter = openmc.MaterialFilter(material_list)
-    eurofer_filter = openmc.MaterialFilter([material_list[-1]])
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
 
@@ -92,8 +91,6 @@ def filter_cells(
         # ("neutron flux in 2d mesh", "flux", [cyl_mesh_filter, neutron_filter]),
         # TF winding pack does not exits yet, so this will have to wait
         # DPA
-        ("eurofer damage", "damage-energy", [cell_filter, eurofer_filter]),
+        ("damage", "damage-energy", [cell_filter]),
         # used to get the EUROFER OBMP
-        ("divertor damage", "damage-energy", [div_cell_filter, mat_filter]),
-        ("vacuum vessel damage", "damage-energy", [vv_filter]),
     )
