@@ -661,10 +661,7 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
     # Can't have more degrees than sampled psi
     max_degree = len(th_params.th_coil_names) - 1
     # Have cos and sin components so this must be half
-    allowable_n_degrees = int(np.trunc(max_degree / 2))
-    # allowable_n_degrees = (
-    #     allowable_n_degrees if max_degree % 2 == 0 else allowable_n_degrees + 1
-    # )
+    allowable_n_degrees = max_degree
 
     # Find LCFS from TH approx
     approx_eq = deepcopy(eq)
