@@ -73,6 +73,8 @@ class OpenMCResult:
     divertor_power_err: float
     vessel_power: float
     vessel_power_err: float
+    total_power: float
+    total_power_err: float
     mult_power: float
     """Neutron wall load (eV)"""
 
@@ -127,9 +129,8 @@ class OpenMCResult:
 
         # MC: There is power in the TF + CS, and probably the radiation shield
         # that I am ignoring here. Perhaps worth adding filters for these
-        total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = np.sqrt(
-            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        total_power, total_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "total power"
         )
 
         dt_neuton_power = 0.8 * P_fus_DT
@@ -150,6 +151,8 @@ class OpenMCResult:
             e_mult=e_mult,
             e_mult_err=e_mult_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
+            total_power=total_power,
+            total_power_err=total_power_err,
             blanket_power=blanket_power,
             blanket_power_err=blanket_power_err,
             divertor_power=divertor_power,
@@ -255,7 +258,7 @@ class OpenMCResult:
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "Total power")
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
@@ -448,13 +451,19 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         source = "OpenMC CSG"
 
+        auxiliary_power = (
+            result.total_power
+            - result.blanket_power
+            - result.divertor_power
+            - result.vessel_power
+        )
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
             Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
             Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
-            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_aux", auxiliary_power, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
             Parameter("P_n_decay", 0.0, unit="W", source=source),
             # TODO @Ocean: Add these  # noqa: TD003

@@ -44,6 +44,10 @@ def filter_cells(
     """
     blanket_cells = [*chain.from_iterable(blanket_cell_array)]
     div_cells = [*chain.from_iterable(divertor_cell_array)]
+    blanket_excl_vv = [
+        *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
+    ]
+    div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
     cells = blanket_cells + div_cells
     fw_surf_cells = [
         *(stack[0] for stack in blanket_cell_array),
@@ -56,17 +60,15 @@ def filter_cells(
     # bz_cells = [stack[2] for stack in blanket_cell_array]
 
     # Cell filters
-    blanket_cell_filter = openmc.CellFilter(blanket_cells)
-    div_cell_filter = openmc.CellFilter(div_cells)
+    blanket_cell_filter = openmc.CellFilter(blanket_excl_vv)
+    div_cell_filter = openmc.CellFilter(div_excl_vv)
     cell_filter = openmc.CellFilter(cells)
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
     vv_filter = openmc.CellFilter(vv_cells)
     # bz_filter = openmc.CellFilter(bz_cells)
 
     # material filters
-    mat_filter = openmc.MaterialFilter(
-        material_list
-    )  # TODO @Ocean: Likely related to #4009
+    mat_filter = openmc.MaterialFilter(material_list)
     eurofer_filter = openmc.MaterialFilter([material_list[-1]])
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
@@ -75,7 +77,7 @@ def filter_cells(
     return (
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
-        ("Total power", "heating", [mat_filter]),
+        ("total power", "heating", [mat_filter, cell_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [blanket_cell_filter]),

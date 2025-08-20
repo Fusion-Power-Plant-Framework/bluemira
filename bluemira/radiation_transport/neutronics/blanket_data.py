@@ -692,5 +692,5 @@ def _create_from_blanket_type(
         div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(eurofer_mat, "div_sf", 604),
+        rad_shield=duplicate_mat_as(eurofer_mat, "rad_shield", 604),
     )
