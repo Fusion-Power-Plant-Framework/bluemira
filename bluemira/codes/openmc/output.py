@@ -451,13 +451,19 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         source = "OpenMC CSG"
 
+        auxiliary_power = (
+            result.total_power
+            - result.blanket_power
+            - result.divertor_power
+            - result.vessel_power
+        )
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
             Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
             Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
-            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_aux", auxiliary_power, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
             Parameter("P_n_decay", 0.0, unit="W", source=source),
             # TODO @Ocean: Add these  # noqa: TD003
