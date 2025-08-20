@@ -21,6 +21,7 @@ from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import (
@@ -32,8 +33,6 @@ from bluemira.base.look_and_feel import (
 from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import parall_k, serie_k
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.material import Material
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -1031,7 +1030,6 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        mat_case = get_cached_material(case_dict["mat_case"])
         WPs = [create_wp_from_dict(wp_dict) for wp_dict in case_dict["WPs"]]  # noqa:N806
 
         return cls(
@@ -1039,7 +1037,7 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             dy_ps=case_dict["dy_ps"],
             dy_vault=case_dict["dy_vault"],
             theta_TF=case_dict["theta_TF"],
-            mat_case=mat_case,
+            mat_case=case_dict["mat_case"],
             WPs=WPs,
             name=name or case_dict.get("name"),
         )
