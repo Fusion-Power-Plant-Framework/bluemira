@@ -1355,13 +1355,15 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         R_wp_i = self.R_wp_i[0]  # noqa: N806
 
         dx_WP = self.dx_i * wp_reduction_factor  # noqa: N806
-        debug_msg.extend(f"dx_WP = {dx_WP}")
-        debug_msg.extend(f"self.dx_i = {self.dx_i}")
-        debug_msg.extend(f"wp_reduction_factor = {wp_reduction_factor}")
-        debug_msg.extend(f"min_gap_x = {min_gap_x}")
-        debug_msg.extend(f"n_layers_reduction = {n_layers_reduction}")
-        debug_msg.extend(f"layout = {layout}")
-        debug_msg.extend(f"n_conductors = {n_conductors}")
+        debug_msg.extend([
+            f"dx_WP = {dx_WP}",
+            f"self.dx_i = {self.dx_i}",
+            f"wp_reduction_factor = {wp_reduction_factor}",
+            f"min_gap_x = {min_gap_x}",
+            f"n_layers_reduction = {n_layers_reduction}",
+            f"layout = {layout}",
+            f"n_conductors = {n_conductors}",
+        ])
 
         WPs = []  # noqa: N806
         # number of conductors to be allocated
@@ -1719,10 +1721,10 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             conductor.optimize_jacket_conductor(
                 pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
             )
-            debug_msg.extend(f"t_z_cable_jacket: {t_z_cable_jacket}")
-            debug_msg.extend(
-                f"after optimization: conductor jacket area = {conductor.area_jacket}"
-            )
+            debug_msg.extend([
+                f"t_z_cable_jacket: {t_z_cable_jacket}",
+                f"after optimization: conductor jacket area = {conductor.area_jacket}",
+            ])
 
             conductor.dx_jacket = (
                 1 - damping_factor
@@ -1740,7 +1742,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
                 layout=layout,
             )
 
-            debug_msg.extend(f"before optimization: case dy_vault = {self.dy_vault}")
+            debug_msg.append(f"before optimization: case dy_vault = {self.dy_vault}")
             self.optimize_vault_radial_thickness(
                 pm=pm,
                 fz=fz,
