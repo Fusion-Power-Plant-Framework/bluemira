@@ -12,6 +12,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
@@ -236,50 +237,52 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             + self.stab_strand.rho(**kwargs) * self.area_stab
         ) / (self.area_sc + self.area_stab)
 
-    def erho(self, **kwargs):
+    def erho(self, op_cond: OperationalConditions):
         """
         Computes the cable's equivalent resistivity considering the resistance
         of its strands in parallel.
 
         Parameters
         ----------
-        **kwargs: dict
-            Additional parameters for resistance calculations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
             float [Ohm m]
         """
         resistances = np.array([
-            self.sc_strand.erho(**kwargs) / self.area_sc,
-            self.stab_strand.erho(**kwargs) / self.area_stab,
+            self.sc_strand.erho(op_cond) / self.area_sc,
+            self.stab_strand.erho(op_cond) / self.area_stab,
         ])
         res_tot = parall_r(resistances)
         return res_tot * self.area
 
-    def Cp(self, **kwargs):  # noqa: N802
+    def Cp(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Computes the cable's equivalent specific heat considering the specific heats
         of its strands in series.
 
         Parameters
         ----------
-        **kwargs: dict
-            Additional parameters for specific heat calculations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
             float [J/K/m]
         """
         weighted_specific_heat = np.array([
-            self.sc_strand.Cp(**kwargs) * self.area_sc * self.sc_strand.rho(**kwargs),
-            self.stab_strand.Cp(**kwargs)
+            self.sc_strand.Cp(op_cond) * self.area_sc * self.sc_strand.rho(op_cond),
+            self.stab_strand.Cp(op_cond)
             * self.area_stab
-            * self.stab_strand.rho(**kwargs),
+            * self.stab_strand.rho(op_cond),
         ])
         return serie_r(weighted_specific_heat) / (
-            self.area_sc * self.sc_strand.rho(**kwargs)
-            + self.area_stab * self.stab_strand.rho(**kwargs)
+            self.area_sc * self.sc_strand.rho(op_cond)
+            + self.area_stab * self.stab_strand.rho(op_cond)
         )
 
     @property
@@ -353,12 +356,12 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         if isinstance(temperature, np.ndarray):
             temperature = temperature[0]
 
-        operational_point = {"B": B_fun(t), "temperature": temperature}
+        op_cond = OperationalConditions(temperature=temperature, magnetic_field=B_fun(t))
 
-        Q_gen = (I_fun(t) / self.area) ** 2 * self.erho(**operational_point)  # noqa:N806
+        Q_gen = (I_fun(t) / self.area) ** 2 * self.erho(op_cond)  # noqa:N806
 
         # Calculate the rate of heat absorption by conductor components
-        Q_abs = self.Cp(**operational_point) * self.rho(**operational_point)  # noqa:N806
+        Q_abs = self.Cp(op_cond) * self.rho(op_cond)  # noqa:N806
 
         # Calculate the derivative of temperature with respect to time (dT/dt)
         # dTdt = Q_gen / Q_abs
@@ -1059,7 +1062,7 @@ class DummyRectangularCableHTS(RectangularCable):
         kwargs.setdefault("name", "DummyRectangularCableHTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus of the cable material.
 
@@ -1069,8 +1072,9 @@ class DummyRectangularCableHTS(RectangularCable):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (unused in this implementation).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1091,7 +1095,7 @@ class DummyRectangularCableLTS(RectangularCable):
         kwargs.setdefault("name", "DummyRectangularCableLTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus of the cable material.
 
@@ -1101,8 +1105,9 @@ class DummyRectangularCableLTS(RectangularCable):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (not used here).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1293,14 +1298,15 @@ class DummySquareCableHTS(SquareCable):
         kwargs.setdefault("name", "DummySquareCableHTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus for the HTS dummy cable.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (unused in this implementation).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1321,14 +1327,15 @@ class DummySquareCableLTS(SquareCable):
         kwargs.setdefault("name", "DummySquareCableLTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus for the LTS dummy cable.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (unused in this implementation).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1578,14 +1585,15 @@ class DummyRoundCableHTS(RoundCable):
         kwargs.setdefault("name", "DummyRoundCableHTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus for the HTS dummy round cable.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (unused in this implementation).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1609,14 +1617,15 @@ class DummyRoundCableLTS(RoundCable):
         kwargs.setdefault("name", "DummyRoundCableLTS")
         super().__init__(*args, **kwargs)
 
-    def E(self, **kwargs):  # noqa: N802, PLR6301, ARG002
+    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
         """
         Return the Young's modulus for the LTS dummy round cable.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments (unused in this implementation).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
