@@ -510,8 +510,7 @@ class SuperconductingStrand(Strand):
         """
         sc = None
         for material in self.materials:
-            # if material.material.is_superconductor:
-            if hasattr(material.material, "critical_current_density"):
+            if material.material.is_superconductor:
                 if sc is None:
                     sc = material
                 else:
