@@ -17,8 +17,6 @@ for conductor design, thermal and structural optimization, and case layout visua
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-# get some materials from EUROfusion materials library
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
@@ -27,6 +25,9 @@ from eurofusion_materials.library.magnet_branch_mats import (
     SS316_LN_MAG,
 )
 from matplotlib import cm
+
+# get some materials from EUROfusion materials library
+from matproplib import OperationalConditions
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.look_and_feel import bluemira_print
@@ -196,8 +197,8 @@ sc_strand_dict = {
     "d_strand": 1.0e-3,
     "temperature": T_op,
     "materials": [
-        {"material": "Nb3Sn - WST", "fraction": 0.5},
-        {"material": "Copper100", "fraction": 0.5},
+        {"material": NB3SN_MAG, "fraction": 0.5},
+        {"material": COPPER_100, "fraction": 0.5},
     ],
 }
 
@@ -206,7 +207,7 @@ stab_strand_dict = {
     "name": "Stabilizer",
     "d_strand": 1.0e-3,
     "temperature": T_op,
-    "materials": [{"material": "Copper300", "fraction": 1.0}],
+    "materials": [{"material": COPPER_300, "fraction": 1.0}],
 }
 
 # Create strand objects using class-based factory methods
@@ -318,15 +319,15 @@ ax1, ax2, ax3, ax4, ax5 = axes.flatten()[:5]  # Extracting the first five axes
 
 for mat, name in zip(mats, mat_names, strict=False):
     # Calculate properties over the temperature range
-    density = np.array([
-        mat.density(temperature=T, **operational_point) for T in temperatures
-    ])
-    cp_per_mass = np.array([
-        mat.Cp(temperature=T, **operational_point) for T in temperatures
-    ])
+    op_conds = [
+        OperationalConditions(temperature=T, magnetic_field=operational_point["B"])
+        for T in temperatures
+    ]
+    density = np.array([mat.density(op) for op in op_conds])
+    cp_per_mass = np.array([mat.specific_heat_capacity(op) for op in op_conds])
     cp_per_volume = cp_per_mass * density
-    erho = np.array([mat.erho(temperature=T, **operational_point) for T in temperatures])
-    E = np.array([mat.E(temperature=T, **operational_point) for T in temperatures])
+    erho = np.array([mat.electrical_resistivity(op) for op in op_conds])
+    E = np.array([mat.youngs_modulus(op) for op in op_conds])
 
     # Plot density
     ax1.plot(temperatures, density, label=name)
