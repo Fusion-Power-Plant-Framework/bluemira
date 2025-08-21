@@ -340,14 +340,15 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        Ri : float
-            External radius at the top of the TF coil case [m].
-        dy_ps : float
-            Radial thickness of the poloidal support region [m].
-        dy_vault : float
-            Radial thickness of the vault support region [m].
-        theta_TF : float
-            Toroidal angular aperture of the coil [degrees].
+        params:
+            Structure containing the input parameters. Keys are:
+                - Ri: float
+                - theta_TF: float
+                - dy_ps: float
+                - dy_vault: float
+
+            See :class:`~bluemira.magnets.case_tf.TFCaseParams`
+            for parameter details.
         mat_case : Material
             Structural material assigned to the TF coil case.
         WPs : list[WindingPack]
@@ -412,7 +413,7 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
 
     def update_Rk(self, value: float):  # noqa: N802
         """
-        Set the internal (innermost) radius of the TF case.
+        Set or update the internal (innermost) radius of the TF case.
         """
         self.Rk = value
         self.params.dy_vault.value = self.R_wp_k[-1] - self._Rk
