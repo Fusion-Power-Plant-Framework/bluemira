@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-from bluemira.magnets.cable import DummyRectangularCableLTS
-from bluemira.magnets.strand import SuperconductingStrand
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
@@ -10,6 +8,9 @@ from eurofusion_materials.library.magnet_branch_mats import (
     SS316_LN_MAG,
 )
 from matproplib import OperationalConditions
+
+from bluemira.magnets.cable import DummyRectangularCableLTS
+from bluemira.magnets.strand import SuperconductingStrand
 
 op_cond = OperationalConditions(temperature=5.7, magnetic_field=10.0, strain=0.0055)
 
@@ -141,7 +142,7 @@ print(f"Cable Cp: {cable.Cp(temperature=5.7, B=10.0)}")
 print(f"Cable rho: {cable.rho(temperature=5.7, B=10.0)}")
 print(f"Cable E: {cable.E(temperature=5.7, B=10.0)}")
 
-
+raise ValueError
 case_tf = create_case_tf_from_dict(case_tf_dict)
 
 case_tf.plot(show=True, homogenized=False)
