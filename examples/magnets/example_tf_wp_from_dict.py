@@ -142,7 +142,7 @@ print(f"Cable Cp: {cable.Cp(temperature=5.7, B=10.0)}")
 print(f"Cable rho: {cable.rho(temperature=5.7, B=10.0)}")
 print(f"Cable E: {cable.E(temperature=5.7, B=10.0)}")
 
-raise ValueError
+
 case_tf = create_case_tf_from_dict(case_tf_dict)
 
 case_tf.plot(show=True, homogenized=False)
