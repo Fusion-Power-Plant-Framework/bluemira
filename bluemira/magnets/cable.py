@@ -446,7 +446,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
                 f"Final temperature ({final_temperature:.2f} K) exceeds target "
                 f"temperature "
                 f"({target_temperature} K) even with maximum n_stab = "
-                f"{self.n_stab_strand}."
+                f"{self.params.n_stab_strand.value}."
             )
             raise ValueError(
                 "Optimization failed to keep final temperature ≤ target. "
