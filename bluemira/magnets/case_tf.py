@@ -1155,7 +1155,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent radial stiffness of the poloidal support [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dy_ps / self.dx_ps
 
     def Kx_lat(self, **kwargs):  # noqa: N802
@@ -1181,7 +1181,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
 
     def Kx_vault(self, **kwargs):  # noqa: N802
@@ -1198,7 +1198,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent radial stiffness of the vault [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dy_vault / self.dx_vault
 
     def Kx(self, **kwargs):  # noqa: N802
@@ -1244,7 +1244,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent toroidal stiffness of the PS region [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
 
     def Ky_lat(self, **kwargs):  # noqa: N802
@@ -1270,7 +1270,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
 
     def Ky_vault(self, **kwargs):  # noqa: N802
@@ -1287,7 +1287,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent toroidal stiffness of the vault [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("T"), magnetic_field=kwargs.get("B", 0))
+        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.dy_vault
 
     def Ky(self, **kwargs):  # noqa: N802
