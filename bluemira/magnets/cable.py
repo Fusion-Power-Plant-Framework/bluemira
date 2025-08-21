@@ -49,9 +49,9 @@ class CableParams(ParameterFrame):
     """Number of stabilizing strands."""
     d_cooling_channel: Parameter[float]
     """Diameter of the cooling channel [m]."""
-    void_fraction: Parameter[float] = 0.725
+    void_fraction: Parameter[float]
     """Ratio of material volume to total volume [unitless]."""
-    cos_theta: Parameter[float] = 0.97
+    cos_theta: Parameter[float]
     """Correction factor for twist in the cable layout."""
 
 
@@ -717,23 +717,13 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
 
 @dataclass
-class RectangularCableParams(ParameterFrame):
+class RectangularCableParams(CableParams):
     """
     Parameters needed for the TF cable
     """
 
     dx: Parameter[float]
     """Cable width in the x-direction [m]."""
-    n_sc_strand: Parameter[int]
-    """Number of superconducting strands."""
-    n_stab_strand: Parameter[int]
-    """Number of stabilizing strands."""
-    d_cooling_channel: Parameter[float]
-    """Diameter of the cooling channel [m]."""
-    void_fraction: Parameter[float] = 0.725
-    """Ratio of material volume to total volume [unitless]."""
-    cos_theta: Parameter[float] = 0.97
-    """Correction factor for twist in the cable layout."""
 
 
 class RectangularCable(ABCCable):

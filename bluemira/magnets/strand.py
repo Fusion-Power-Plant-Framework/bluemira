@@ -45,9 +45,9 @@ class StrandParams(ParameterFrame):
     Parameters needed for the strand
     """
 
-    d_strand: Parameter[float] = 0.82e-3
-    """Strand diameter in meters (default 0.82e-3)."""
-    temperature: Parameter[float] | None = None
+    d_strand: Parameter[float]
+    """Strand diameter in meters."""
+    temperature: Parameter[float]
     """Operating temperature [K]."""
 
 
