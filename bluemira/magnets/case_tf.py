@@ -356,7 +356,7 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             String identifier for the TF coil case instance (default is "BaseCaseTF").
         """
         super().__init__(
-            params,
+            params=params,
             mat_case=mat_case,
             WPs=WPs,
             name=name,
