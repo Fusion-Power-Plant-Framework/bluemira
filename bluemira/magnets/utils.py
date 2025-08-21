@@ -9,9 +9,9 @@
 import numpy as np
 
 
-def serie_r(arr: list | np.ndarray):
+def summation(arr: list | np.ndarray):
     """
-    Compute the serie (as for resistance)
+    Compute the simple summation of the series
 
     Parameters
     ----------
@@ -22,65 +22,33 @@ def serie_r(arr: list | np.ndarray):
     Returns
     -------
     Result: float
+
+    i.e.
+
+    Y = sum(x1 + x2 + x3 ...)
     """
     return np.sum(arr)
 
 
-def parall_r(arr: list | np.ndarray):
+def reciprocal_summation(arr: list | np.ndarray):
     """
-    Compute the parallel (as for resistance)
+    Compute the inverse of the summation of a reciprocal series
 
     Parameters
     ----------
     arr:
-        list or numpy array containing the elements on which the parallel
-        shall be calculated
+        list or numpy array containing the elements on which the serie shall
+        be calculated
 
     Returns
     -------
     Result: float
+
+    i.e.
+
+    Y = [sum(1/x1 + 1/x2 + 1/x3 ...)]^-1
     """
-    out = 0
-    for i in range(len(arr)):
-        out += 1 / arr[i]
-    return out**-1
-
-
-def serie_k(arr: list | np.ndarray):
-    """
-    Compute the serie (as for spring)
-
-    Parameters
-    ----------
-    arr:
-        list or numpy array containing the elements on which the serie
-        shall be calculated
-
-    Returns
-    -------
-    Result: float
-    """
-    out = 0
-    for i in range(len(arr)):
-        out += 1 / arr[i]
-    return out**-1
-
-
-def parall_k(arr: list | np.ndarray):
-    """
-    Compute the parallel (as for spring)
-
-    Parameters
-    ----------
-    arr:
-        list or numpy array containing the elements on which the parallel
-        shall be calculated
-
-    Returns
-    -------
-    Result: float
-    """
-    return np.sum(arr)
+    return (np.sum((1 / element) for element in arr)) ** -1
 
 
 def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
