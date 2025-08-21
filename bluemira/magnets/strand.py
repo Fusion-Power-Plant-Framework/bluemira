@@ -616,7 +616,9 @@ class SuperconductingStrand(Strand):
 
         op_conds = [
             OperationalConditions(
-                temperature=temperature, magnetic_field=Bi, strain=kwargs.get("eps")
+                temperature=temperature,
+                magnetic_field=Bi,
+                strain=kwargs.get("eps", 0.0055),
             )
             for Bi in B
         ]

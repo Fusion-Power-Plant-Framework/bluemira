@@ -1459,7 +1459,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             bluemira_error(msg)
             raise ValueError(msg)
 
-    def _tresca_stress(self, pm: float, fz: float, **kwargs):
+    def _tresca_stress(self, pm: float, fz: float, op_cond: OperationalConditions):
         """
         Estimate the maximum principal (Tresca) stress on the inner case of the TF coil.
 
@@ -1477,9 +1477,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Radial magnetic pressure acting on the case [Pa].
         fz : float
             Vertical force acting on the inner leg of the case [N].
-        **kwargs :
-            Additional keyword arguments forwarded to the stiffness calculations (e.g.,
-            temperature, material model switches).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1494,7 +1494,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         # the maximum hoop stress, corrected to account for the presence of the WP, is
         # placed at the innermost radius of the case as:
         sigma_theta = (
-            2.0 / (1 - beta**2) * pm * self.Kx_vault(**kwargs) / self.Kx(**kwargs)
+            2.0 / (1 - beta**2) * pm * self.Kx_vault(op_cond) / self.Kx(op_cond)
         )
 
         # In addition to the radial centripetal force, the second in-plane component
@@ -1510,8 +1510,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self,
         pm: float,
         fz: float,
-        T: float,  # noqa: N803
-        B: float,
+        op_cond,
         allowable_sigma: float,
         bounds: np.array = None,
     ):
@@ -1525,10 +1524,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         f_z :
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        T :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the jacket material.
         bounds :
@@ -1550,7 +1548,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         result = minimize_scalar(
             fun=self._sigma_difference,
-            args=(pm, fz, T, B, allowable_sigma),
+            args=(pm, fz, op_cond, allowable_sigma),
             bounds=bounds,
             method=method,
             options={"xatol": 1e-4},
@@ -1569,8 +1567,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         dy_vault: float,
         pm: float,
         fz: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
     ):
         """
@@ -1587,10 +1584,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         fz :
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        temperature :
-            The temperature (K) at which the conductor operates.
-        B :
-            The magnetic field (T) at which the conductor operates.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the vault material.
 
@@ -1605,7 +1601,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             using the value provided in jacket_thickness.
         """
         self.dy_vault = dy_vault
-        sigma = self._tresca_stress(pm, fz, temperature=temperature, B=B)
+        sigma = self._tresca_stress(pm, fz, op_cond)
         # bluemira_print(f"sigma: {sigma}, allowable_sigma: {allowable_sigma},
         # diff: {sigma - allowable_sigma}")
         return abs(sigma - allowable_sigma)
@@ -1614,8 +1610,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self,
         pm: float,
         fz: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
         bounds_cond_jacket: np.array = None,
         bounds_dy_vault: np.array = None,
@@ -1645,10 +1640,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Radial magnetic pressure on the conductor [Pa].
         fz : float
             Axial electromagnetic force on the winding pack [N].
-        temperature : float
-            Operating temperature [K].
-        B : float
-            Operating magnetic field [T].
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma : float
             Maximum allowable stress for structural material [Pa].
         bounds_cond_jacket : np.ndarray, optional
@@ -1723,7 +1717,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
                 / self.n_conductors
             )
             conductor.optimize_jacket_conductor(
-                pm, t_z_cable_jacket, temperature, B, allowable_sigma, bounds_cond_jacket
+                pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
             )
             debug_msg.extend(f"t_z_cable_jacket: {t_z_cable_jacket}")
             debug_msg.extend(
@@ -1750,8 +1744,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             self.optimize_vault_radial_thickness(
                 pm=pm,
                 fz=fz,
-                T=temperature,
-                B=B,
+                op_cond=op_cond,
                 allowable_sigma=allowable_sigma,
                 bounds=bounds_dy_vault,
             )

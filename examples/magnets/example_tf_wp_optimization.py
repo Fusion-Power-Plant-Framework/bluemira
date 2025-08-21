@@ -468,8 +468,7 @@ err = 1e-6
 case.optimize_jacket_and_vault(
     pm=pm,
     fz=t_z,
-    temperature=T_op,
-    B=B_TF_i,
+    op_cond=OperationalConditions(temperature=T_op, magnetic_field=B_TF_i),
     allowable_sigma=S_Y,
     bounds_cond_jacket=bounds_cond_jacket,
     bounds_dy_vault=bounds_dy_vault,
