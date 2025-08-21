@@ -469,8 +469,7 @@ class Conductor(metaclass=RegistrableMeta):
         self,
         pressure: float,
         f_z: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         direction: str = "x",
     ) -> float:
         """
@@ -487,10 +486,9 @@ class Conductor(metaclass=RegistrableMeta):
         f_z :
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
-        T :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
         direction :
             The direction along which the pressure is applied ('x' or 'y'). Default is
             'x'.
@@ -504,7 +502,6 @@ class Conductor(metaclass=RegistrableMeta):
         ValueError
             If the specified direction is not 'x' or 'y'.
         """
-        op_cond = OperationalConditions(temperature=temperature, magnetic_field=B)
         if direction not in {"x", "y"}:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
@@ -544,8 +541,7 @@ class Conductor(metaclass=RegistrableMeta):
         self,
         pressure: float,
         f_z: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
         bounds: np.ndarray | None = None,
         direction: str = "x",
@@ -561,10 +557,9 @@ class Conductor(metaclass=RegistrableMeta):
         f_z :
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
-        temperature :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the jacket material.
         bounds :
@@ -595,8 +590,7 @@ class Conductor(metaclass=RegistrableMeta):
             jacket_thickness: float,
             pressure: float,
             fz: float,
-            temperature: float,
-            B: float,
+            op_cond: OperationalConditions,
             allowable_sigma: float,
             direction: str = "x",
         ):
@@ -619,10 +613,9 @@ class Conductor(metaclass=RegistrableMeta):
                 [Pa].
             fz : float
                 Axial or vertical force applied perpendicular to the cross-section [N].
-            temperature : float
-                Operating temperature of the conductor [K].
-            B : float
-                Magnetic field at the conductor location [T].
+            op_cond: OperationalConditions
+                Operational conditions including temperature, magnetic field, and strain
+                at which to calculate the material property.
             allowable_sigma : float
                 Maximum allowed stress for the jacket material [Pa].
             direction : str, optional
@@ -655,7 +648,7 @@ class Conductor(metaclass=RegistrableMeta):
             else:
                 self.dy_jacket = jacket_thickness
 
-            sigma_r = self._tresca_sigma_jacket(pressure, fz, temperature, B, direction)
+            sigma_r = self._tresca_sigma_jacket(pressure, fz, op_cond, direction)
 
             # Normal difference
             diff = abs(sigma_r - allowable_sigma)
@@ -681,7 +674,7 @@ class Conductor(metaclass=RegistrableMeta):
 
         result = minimize_scalar(
             fun=sigma_difference,
-            args=(pressure, f_z, temperature, B, allowable_sigma),
+            args=(pressure, f_z, op_cond, allowable_sigma),
             bounds=bounds,
             method=method,
             options={"xatol": 1e-4},
@@ -697,7 +690,7 @@ class Conductor(metaclass=RegistrableMeta):
             debug_msg.append(f"Optimal dy_jacket: {self.dy_jacket}")
         debug_msg.append(
             f"Averaged sigma in the {direction}-direction: "
-            f"{self._tresca_sigma_jacket(pressure, f_z, temperature, B) / 1e6} MPa\n"
+            f"{self._tresca_sigma_jacket(pressure, f_z, op_cond) / 1e6} MPa\n"
             f"Allowable stress in the {direction}-direction: {allowable_sigma / 1e6} "
             f"MPa."
         )
