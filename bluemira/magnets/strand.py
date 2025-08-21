@@ -293,6 +293,13 @@ class Strand(metaclass=RegistrableMeta):
         op_cond = OperationalConditions(
             temperature=temperature, magnetic_field=kwargs.get("B")
         )
+        # Treat parallel calculation for resistivity
+        if len(self._homogenised_material.mixture_fraction) > 1:
+            # If multiple materials, calculate resistivity in parallel
+            return 1 / sum(
+                m.fraction / m.material.electrical_resistivity(op_cond)
+                for m in self._homogenised_material.mixture_fraction
+            )
         return self._homogenised_material.electrical_resistivity(op_cond)
 
     def Cp(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802

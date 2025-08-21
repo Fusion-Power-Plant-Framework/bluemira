@@ -7,6 +7,22 @@ from eurofusion_materials.library.magnet_branch_mats import (
     NB3SN_MAG,
     SS316_LN_MAG,
 )
+from matproplib import OperationalConditions
+
+op_cond = OperationalConditions(temperature=5.7, magnetic_field=10.0, strain=0.0055)
+
+print("Nb3Sn resistivity:", NB3SN_MAG.electrical_resistivity(op_cond))
+print("Copper 100 resistivity:", COPPER_100.electrical_resistivity(op_cond))
+print("Copper 300 resistivity:", COPPER_300.electrical_resistivity(op_cond))
+print("SS316 LN resistivity:", SS316_LN_MAG.electrical_resistivity(op_cond))
+print(
+    "Dummy insulator resistivity:", DUMMY_INSULATOR_MAG.electrical_resistivity(op_cond)
+)
+print("Nb3Sn specific heat:", NB3SN_MAG.specific_heat_capacity(op_cond))
+print("Copper 100 specific heat:", COPPER_100.specific_heat_capacity(op_cond))
+print("Copper 300 specific heat:", COPPER_300.specific_heat_capacity(op_cond))
+
+raise ValueError
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.magnets.case_tf import create_case_tf_from_dict
