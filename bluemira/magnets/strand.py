@@ -321,6 +321,20 @@ class Strand(metaclass=RegistrableMeta):
         op_cond = OperationalConditions(
             temperature=temperature, magnetic_field=kwargs.get("B")
         )
+        # Treat volume/specific heat capacity calculation
+        if len(self._homogenised_material.mixture_fraction) > 1:
+            # Match dw-Cp (even if multiplied by density later, this is still different
+            # to a normal homogenised mixture)
+            density = self._homogenised_material.density(op_cond)
+            return (
+                sum(
+                    mf.fraction
+                    * mf.material.specific_heat_capacity(op_cond)
+                    * mf.material.density(op_cond)
+                    for mf in self._homogenised_material.mixture_fraction
+                )
+                / density
+            )
         return self._homogenised_material.specific_heat_capacity(op_cond)
 
     def plot(self, ax=None, *, show: bool = True, **kwargs):
