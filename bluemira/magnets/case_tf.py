@@ -18,6 +18,7 @@ Note:
 
 import math
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,6 +32,8 @@ from bluemira.base.look_and_feel import (
     bluemira_print,
     bluemira_warn,
 )
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import parall_k, serie_k
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
@@ -44,6 +47,20 @@ CASETF_REGISTRY = {}
 # ------------------------------------------------------------------------------
 # TFcoil cross section Geometry Base and Implementations
 # ------------------------------------------------------------------------------
+@dataclass
+class TFCaseGeometryParams(ParameterFrame):
+    """
+    Parameters needed for the TF casing geometry
+    """
+
+    Ri: Parameter[float]
+    """External radius of the TF coil case [m]."""
+    Rk: Parameter[float]
+    """Internal radius of the TF coil case [m]."""
+    theta_TF: Parameter[float]
+    """Toroidal angular span of the TF coil [degrees]."""
+
+
 class CaseGeometry(ABC):
     """
     Abstract base class for TF case geometry profiles.
@@ -52,132 +69,11 @@ class CaseGeometry(ABC):
     as well as geometric plotting and area calculation interfaces.
     """
 
-    def __init__(self, Ri: float, Rk: float, theta_TF: float):  # noqa: N803
-        """
-        Initialize the geometry base.
+    param_cls: type[TFCaseGeometryParams] = TFCaseGeometryParams
 
-        Parameters
-        ----------
-        Ri : float
-            External radius of the TF coil case [m].
-        Rk : float
-            Internal radius of the TF coil case [m].
-        theta_TF : float
-            Toroidal angular span of the TF coil [degrees].
-        """
-        self._Ri = None
-        self.Ri = Ri
-
-        self._Rk = None
-        self.Rk = Rk
-
-        self.theta_TF = theta_TF
-
-    @property
-    def Ri(self) -> float:  # noqa: N802
-        """
-        External (outermost) radius of the TF case at the top [m].
-
-        Returns
-        -------
-        float
-            Outer radius measured from the machine center to the case outer wall [m].
-        """
-        return self._Ri
-
-    @Ri.setter
-    def Ri(self, value: float):  # noqa: N802
-        """
-        Set the external (outermost) radius of the TF case.
-
-        Parameters
-        ----------
-        value : float
-            Outer radius [m]. Must be a strictly positive number.
-
-        Raises
-        ------
-        ValueError
-            If the provided radius is not positive.
-        """
-        if value <= 0:
-            raise ValueError("Ri must be positive.")
-        self._Ri = value
-
-    @property
-    def Rk(self) -> float:  # noqa: N802
-        """
-        Internal (innermost) radius of the TF case at the top [m].
-
-        Returns
-        -------
-        float
-            Inner radius measured from the machine center to the case outer wall [m].
-        """
-        return self._Rk
-
-    @Rk.setter
-    def Rk(self, value: float):  # noqa: N802
-        """
-        Set the internal (innermost) radius of the TF case.
-
-        Parameters
-        ----------
-        value : float
-            Outer radius [m]. Must be a strictly positive number.
-
-        Raises
-        ------
-        ValueError
-            If the provided radius is not positive.
-        """
-        if value < 0:
-            raise ValueError("Rk must be positive.")
-        self._Rk = value
-
-    @property
-    def theta_TF(self) -> float:
-        """
-        Toroidal angular span of the TF coil [degrees].
-
-        Returns
-        -------
-        float
-            Toroidal angular span [°].
-        """
-        return self._theta_TF
-
-    @theta_TF.setter
-    def theta_TF(self, value: float):
-        """
-        Set the toroidal angular span and update the internal radian representation.
-
-        Parameters
-        ----------
-        value : float
-            New toroidal angular span [degrees].
-
-        Raises
-        ------
-        ValueError
-            If the provided value is not within (0, 360] degrees.
-        """
-        if not (0.0 < value <= 360.0):  # noqa: PLR2004
-            raise ValueError("theta_TF must be in the range (0, 360] degrees.")
-        self._theta_TF = value
-        self._rad_theta_TF = np.radians(value)
-
-    @property
-    def rad_theta_TF(self):
-        """
-        Toroidal angular span of the TF coil [radians].
-
-        Returns
-        -------
-        float
-            Toroidal aperture converted to radians.
-        """
-        return self._rad_theta_TF
+    def __init__(self, params: ParameterFrameLike):
+        super().__init__(params)  # fix when split into builders and designers
+        self.rad_theta_TF = np.radians(self.params.theta_TF.value)
 
     def dx_at_radius(self, radius: float) -> float:
         """
@@ -260,8 +156,11 @@ class TrapezoidalGeometry(CaseGeometry):
         """
         return (
             0.5
-            * (self.dx_at_radius(self.Ri) + self.dx_at_radius(self.Rk))
-            * (self.Ri - self.Rk)
+            * (
+                self.dx_at_radius(self.params.Ri.value)
+                + self.dx_at_radius(self.params.Rk.value)
+            )
+            * (self.params.Ri.value - self.params.Rk.value)
         )
 
     def build_polygon(self) -> np.ndarray:
@@ -275,14 +174,14 @@ class TrapezoidalGeometry(CaseGeometry):
             Coordinates are ordered counterclockwise starting from the top-left corner:
             [(-dx_outer/2, Ri), (dx_outer/2, Ri), (dx_inner/2, Rk), (-dx_inner/2, Rk)].
         """
-        dx_outer = self.dx_at_radius(self.Ri)
-        dx_inner = self.dx_at_radius(self.Rk)
+        dx_outer = self.dx_at_radius(self.params.Ri.value)
+        dx_inner = self.dx_at_radius(self.params.Rk.value)
 
         return np.array([
-            [-dx_outer / 2, self.Ri],
-            [dx_outer / 2, self.Ri],
-            [dx_inner / 2, self.Rk],
-            [-dx_inner / 2, self.Rk],
+            [-dx_outer / 2, self.params.Ri.value],
+            [dx_outer / 2, self.params.Ri.value],
+            [dx_inner / 2, self.params.Rk.value],
+            [-dx_inner / 2, self.params.Rk.value],
         ])
 
     def plot(self, ax=None, *, show=False) -> plt.Axes:
@@ -332,7 +231,9 @@ class WedgedGeometry(CaseGeometry):
             Cross-sectional area [m²] defined by the wedge between outer radius Ri
             and inner radius Rk over the toroidal angle theta_TF.
         """
-        return 0.5 * self.rad_theta_TF * (self.Ri**2 - self.Rk**2)
+        return (
+            0.5 * self.rad_theta_TF * (self.params.Ri.value**2 - self.params.Rk.value**2)
+        )
 
     def build_polygon(self, n_points: int = 50) -> np.ndarray:
         """
@@ -358,12 +259,12 @@ class WedgedGeometry(CaseGeometry):
         angles_inner = np.linspace(theta2, theta1, n_points)
 
         arc_outer = np.column_stack((
-            self.Ri * np.sin(angles_outer),
-            self.Ri * np.cos(angles_outer),
+            self.params.Ri.value * np.sin(angles_outer),
+            self.params.Ri.value * np.cos(angles_outer),
         ))
         arc_inner = np.column_stack((
-            self.Rk * np.sin(angles_inner),
-            self.Rk * np.cos(angles_inner),
+            self.params.Rk.value * np.sin(angles_inner),
+            self.params.Rk.value * np.cos(angles_inner),
         ))
 
         return np.vstack((arc_outer, arc_inner))
@@ -399,6 +300,22 @@ class WedgedGeometry(CaseGeometry):
 # ------------------------------------------------------------------------------
 # CaseTF Class
 # ------------------------------------------------------------------------------
+@dataclass
+class TFCaseParams(ParameterFrame):
+    """
+    Parameters needed for the TF casing
+    """
+
+    Ri: Parameter[float]
+    """External radius at the top of the TF coil case [m]."""
+    theta_TF: Parameter[float]
+    """Toroidal angular aperture of the coil [degrees]."""
+    dy_ps: Parameter[float]
+    """Radial thickness of the poloidal support region [m]."""
+    dy_vault: Parameter[float]
+    """Radial thickness of the vault support region [m]."""
+
+
 class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
     """
     Abstract Base Class for Toroidal Field Coil Case configurations.
@@ -409,12 +326,11 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
     _registry_ = CASETF_REGISTRY
     _name_in_registry_ = None
 
+    param_cls: type[TFCaseParams] = TFCaseParams
+
     def __init__(
         self,
-        Ri: float,  # noqa: N803
-        dy_ps: float,
-        dy_vault: float,
-        theta_TF: float,
+        params: ParameterFrameLike,
         mat_case: Material,
         WPs: list[WindingPack],  # noqa: N803
         name: str = "BaseCaseTF",
@@ -439,28 +355,17 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         name : str, optional
             String identifier for the TF coil case instance (default is "BaseCaseTF").
         """
-        self._name = None
-        self.name = name
-
-        self._dy_ps = None
-        self.dy_ps = dy_ps
-
-        self._WPs = None
-        self.WPs = WPs
-
-        self._mat_case = None
-        self.mat_case = mat_case
-
-        self._Ri = None
-        self.Ri = Ri
-
-        self._theta_TF = None
-        self.theta_TF = theta_TF
-
-        # super().__init__(Ri=Ri, Rk=0, theta_TF=theta_TF)
-
-        self._dy_vault = None
-        self.dy_vault = dy_vault
+        super().__init__(
+            params,
+            mat_case=mat_case,
+            WPs=WPs,
+            name=name,
+        )
+        self.dx_i = 2 * self.params.Ri.value * np.tan(self.rad_theta_TF / 2)
+        self.dx_ps = (
+            self.params.Ri.value + (self.params.Ri.value - self.params.dy_ps.value)
+        ) * np.tan(self.rad_theta_TF / 2)
+        self.update_dy_vault(self.params.dy_vault.value)
 
     @property
     def name(self) -> str:
@@ -493,70 +398,24 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             raise TypeError("name must be a string.")
         self._name = value
 
-    @property
-    def dy_ps(self) -> float:
+    def update_dy_vault(self, value: float):
         """
-        Radial thickness of the poloidal support (PS) region [m].
-
-        Returns
-        -------
-        float
-            Thickness of the upper structural cap between the TF case wall and the
-            first winding pack [m].
-        """
-        return self._dy_ps
-
-    @dy_ps.setter
-    def dy_ps(self, value: float):
-        """
-        Set the thickness of the poloidal support region.
-
-        Parameters
-        ----------
-        value : float
-            Poloidal support thickness [m].
-
-        Raises
-        ------
-        ValueError
-            If value is not positive.
-        """
-        if value <= 0:
-            raise ValueError("dy_ps must be positive.")
-        self._dy_ps = value
-
-    @property
-    def dy_vault(self) -> float:
-        """
-        Radial thickness of the vault support region [m].
-
-        Returns
-        -------
-        float
-            Thickness of the lower structural region supporting the winding packs [m].
-        """
-        return self._dy_vault
-
-    @dy_vault.setter
-    def dy_vault(self, value: float):
-        """
-        Set the thickness of the vault support region.
+        Update the value of the vault support region thickness
 
         Parameters
         ----------
         value : float
             Vault thickness [m].
-
-        Raises
-        ------
-        ValueError
-            If value is not positive.
         """
-        if value <= 0:
-            raise ValueError("dy_vault must be positive.")
-        self._dy_vault = value
+        self.params.dy_vault.value = value
+        self.Rk = self.R_wp_k[-1] - self.params.dy_vault.value
 
-        self.Rk = self.R_wp_k[-1] - self._dy_vault
+    def update_Rk(self, value: float):  # noqa: N802
+        """
+        Set the internal (innermost) radius of the TF case.
+        """
+        self.Rk = value
+        self.params.dy_vault.value = self.R_wp_k[-1] - self._Rk
 
     @property
     @abstractmethod
@@ -638,16 +497,6 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             self.dy_vault = self.dy_vault
 
     @property
-    def dx_i(self):
-        """Toroidal length of the coil case at its maximum radial position [m]"""
-        return 2 * self.Ri * np.tan(self._rad_theta_TF / 2)
-
-    @property
-    def dx_ps(self):
-        """Average toroidal length of the ps plate [m]"""
-        return (self.Ri + (self.Ri - self.dy_ps)) * np.tan(self._rad_theta_TF / 2)
-
-    @property
     def n_conductors(self):
         """Total number of conductors in the winding pack."""
         return sum(w.n_conductors for w in self.WPs)
@@ -711,39 +560,6 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             each winding pack.
         """
         return self.R_wp_i - self.dy_wp_i
-
-    @property
-    def Rk(self) -> float:  # noqa: N802
-        """
-        Internal (innermost) radius of the TF case at the top [m].
-
-        Returns
-        -------
-        float
-            Inner radius measured from the machine center to the case outer wall [m].
-        """
-        return self._Rk
-
-    @Rk.setter
-    def Rk(self, value: float):  # noqa: N802
-        """
-        Set the internal (innermost) radius of the TF case.
-
-        Parameters
-        ----------
-        value : float
-            Outer radius [m]. Must be a strictly positive number.
-
-        Raises
-        ------
-        ValueError
-            If the provided radius is not positive.
-        """
-        if value < 0:
-            raise ValueError("Rk must be positive.")
-        self._Rk = value
-
-        self._dy_vault = self.R_wp_k[-1] - self._Rk
 
     def plot(self, ax=None, *, show: bool = False, homogenized: bool = False):
         """
@@ -991,10 +807,10 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
                 self, "_name_in_registry_", self.__class__.__name__
             ),
             "name": self.name,
-            "Ri": self.Ri,
-            "dy_ps": self.dy_ps,
-            "dy_vault": self.dy_vault,
-            "theta_TF": self.theta_TF,
+            "Ri": self.params.Ri.value,
+            "dy_ps": self.params.dy_ps.value,
+            "dy_vault": self.params.dy_vault.value,
+            "theta_TF": self.params.theta_TF.value,
             "mat_case": self.mat_case.name,  # Assume Material has 'name' attribute
             "WPs": [wp.to_dict() for wp in self.WPs],
             # Assume each WindingPack implements to_dict()
@@ -1054,11 +870,11 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         """
         return (
             f"CaseTF '{self.name}'\n"
-            f"  - Ri: {self.Ri:.3f} m\n"
+            f"  - Ri: {self.params.Ri.value:.3f} m\n"
             f"  - Rk: {self.Rk:.3f} m\n"
-            f"  - dy_ps: {self.dy_ps:.3f} m\n"
-            f"  - dy_vault: {self.dy_vault:.3f} m\n"
-            f"  - theta_TF: {self.theta_TF:.2f}°\n"
+            f"  - dy_ps: {self.params.dy_ps.value:.3f} m\n"
+            f"  - dy_vault: {self.params.dy_vault.value:.3f} m\n"
+            f"  - theta_TF: {self.params.theta_TF.value:.2f}°\n"
             f"  - Material: {self.mat_case.name}\n"
             f"  - Winding Packs: {len(self.WPs)} packs\n"
         )
@@ -1072,13 +888,11 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
     _registry_ = CASETF_REGISTRY
     _name_in_registry_ = "TrapezoidalCaseTF"
+    param_cls: type[TFCaseParams] = TFCaseParams
 
     def __init__(
         self,
-        Ri: float,  # noqa: N803
-        dy_ps: float,
-        dy_vault: float,
-        theta_TF: float,
+        params: ParameterFrameLike,
         mat_case: Material,
         WPs: list[WindingPack],  # noqa: N803
         name: str = "TrapezoidalCaseTF",
@@ -1086,10 +900,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self._check_WPs(WPs)
 
         super().__init__(
-            Ri=Ri,
-            dy_ps=dy_ps,
-            dy_vault=dy_vault,
-            theta_TF=theta_TF,
+            params,
             mat_case=mat_case,
             WPs=WPs,
             name=name,
@@ -1155,7 +966,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent radial stiffness of the poloidal support [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dy_ps / self.dx_ps
+        return self.mat_case.youngs_modulus(op_cond) * * self.params.dy_ps.value / self.dx_ps
 
     def Kx_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
@@ -1198,7 +1009,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent radial stiffness of the vault [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dy_vault / self.dx_vault
+        return self.mat_case.youngs_modulus(op_cond) * self.params.dy_vault.value / self.dx_vault
 
     def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
@@ -1245,7 +1056,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent toroidal stiffness of the PS region [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
+        return self.mat_case.youngs_modulus(op_cond) * self.dx_ps /  self.params.dy_ps.value
 
     def Ky_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
@@ -1266,7 +1077,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Array of toroidal stiffness values for each lateral segment [Pa].
         """
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self._rad_theta_TF / 2)
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
             - w.dx / 2
             for i, w in enumerate(self.WPs)
         ])
@@ -1288,7 +1099,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         float
             Equivalent toroidal stiffness of the vault [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.dy_vault
+        return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.params.dy_vault.value
 
     def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
@@ -1492,7 +1303,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         # The maximum principal stress acting on the case nose is the compressive
         # hoop stress generated in the equivalent shell from the magnetic pressure. From
         # the Shell theory, for an isotropic continuous shell with a thickness ratio:
-        beta = self.Rk / (self.Rk + self.dy_vault)
+        beta = self.Rk / (self.Rk + self.params.dy_vault.value)
         # the maximum hoop stress, corrected to account for the presence of the WP, is
         # placed at the innermost radius of the case as:
         sigma_theta = (
@@ -1558,7 +1369,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         if not result.success:
             raise ValueError("dy_vault optimization did not converge.")
-        self.dy_vault = result.x
+        self.params.dy_vault.value = result.x
         # print(f"Optimal dy_vault: {self.dy_vault}")
         # print(f"Tresca sigma: {self._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
 
@@ -1602,7 +1413,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             This function modifies the case's vault thickness
             using the value provided in jacket_thickness.
         """
-        self.dy_vault = dy_vault
+        self.params.dy_vault.value = dy_vault
         sigma = self._tresca_stress(pm, fz, op_cond)
         # bluemira_print(f"sigma: {sigma}, allowable_sigma: {allowable_sigma},
         # diff: {sigma - allowable_sigma}")
@@ -1691,11 +1502,11 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self._convergence_array.append([
             i,
             conductor.dy_jacket,
-            self.dy_vault,
+            self.params.dy_vault.value,
             err_conductor_area_jacket,
             err_dy_vault,
             self.dy_wp_tot,
-            self.Ri - self.Rk,
+            self.params.Ri.value - self.Rk,
         ])
 
         damping_factor = 0.3
@@ -1751,16 +1562,16 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
                 bounds=bounds_dy_vault,
             )
 
-            self.dy_vault = (
+            self.params.dy_vault.value = (
                 1 - damping_factor
-            ) * case_dy_vault0 + damping_factor * self.dy_vault
+            ) * case_dy_vault0 + damping_factor * self.params.dy_vault.value
 
             delta_case_dy_vault = abs(self.dy_vault - case_dy_vault0)
-            err_dy_vault = delta_case_dy_vault / self.dy_vault
+            err_dy_vault = delta_case_dy_vault / self.params.dy_vault.value
             tot_err = err_dy_vault + err_conductor_area_jacket
 
             debug_msg.append(
-                f"after optimization: case dy_vault = {self.dy_vault}\n"
+                f"after optimization: case dy_vault = {self.params.dy_vault.value}\n"
                 f"err_dy_jacket = {err_conductor_area_jacket}\n "
                 f"err_dy_vault = {err_dy_vault}\n "
                 f"tot_err = {tot_err}"
@@ -1770,11 +1581,11 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             self._convergence_array.append([
                 i,
                 conductor.dy_jacket,
-                self.dy_vault,
+                self.params.dy_vault.value,
                 err_conductor_area_jacket,
                 err_dy_vault,
                 self.dy_wp_tot,
-                self.Ri - self.Rk,
+                self.params.Ri.value - self.Rk,
             ])
 
         # final check
