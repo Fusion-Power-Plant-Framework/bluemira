@@ -61,6 +61,7 @@ class Conductor(metaclass=RegistrableMeta):
 
     _registry_ = CONDUCTOR_REGISTRY
     _name_in_registry_ = "Conductor"
+    param_cls: type[ConductorParams] = ConductorParams
 
     def __init__(
         self,
@@ -807,6 +808,7 @@ class SymmetricConductor(Conductor):
     """
 
     _name_in_registry_ = "SymmetricConductor"
+    param_cls: type[SymmetricConductorParams] = SymmetricConductorParams
 
     def __init__(
         self,
