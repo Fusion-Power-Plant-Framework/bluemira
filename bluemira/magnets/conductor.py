@@ -10,6 +10,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
 from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
@@ -292,6 +293,18 @@ class Conductor(metaclass=RegistrableMeta):
         ])
         return serie_r(weighted_specific_heat) / self.area
 
+    def _mat_ins_y_modulus(self, **kwargs):
+        op_cond = OperationalConditions(
+            temperature=kwargs.get("temperature"), B=kwargs.get("B", 0)
+        )
+        return self.mat_ins.youngs_modulus(op_cond)
+
+    def _mat_jacket_y_modulus(self, **kwargs):
+        op_cond = OperationalConditions(
+            temperature=kwargs.get("temperature"), B=kwargs.get("B", 0)
+        )
+        return self.mat_jacket.youngs_modulus(op_cond)
+
     def _Kx_topbot_ins(self, **kwargs):  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the x-direction.
@@ -301,7 +314,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.cable.dy / self.dx_ins
+        return self._mat_ins_y_modulus(**kwargs) * self.cable.dy / self.dx_ins
 
     def _Kx_lat_ins(self, **kwargs):  # noqa: N802
         """
@@ -312,7 +325,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.dy_ins / self.dx
+        return self._mat_ins_y_modulus(**kwargs) * self.dy_ins / self.dx
 
     def _Kx_lat_jacket(self, **kwargs):  # noqa: N802
         """
@@ -323,7 +336,11 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.dy_jacket / (self.dx - 2 * self.dx_ins)
+        return (
+            self._mat_jacket_y_modulus(**kwargs)
+            * self.dy_jacket
+            / (self.dx - 2 * self.dx_ins)
+        )
 
     def _Kx_topbot_jacket(self, **kwargs):  # noqa: N802
         """
@@ -334,7 +351,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.cable.dy / self.dx_jacket
+        return self._mat_jacket_y_modulus(**kwargs) * self.cable.dy / self.dx_jacket
 
     def _Kx_cable(self, **kwargs):  # noqa: N802
         """
@@ -379,7 +396,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.cable.dx / self.dy_ins
+        return self._mat_ins_y_modulus(**kwargs) * self.cable.dx / self.dy_ins
 
     def _Ky_lat_ins(self, **kwargs):  # noqa: N802
         """
@@ -390,7 +407,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.dx_ins / self.dy
+        return self._mat_ins_y_modulus(**kwargs) * self.dx_ins / self.dy
 
     def _Ky_lat_jacket(self, **kwargs):  # noqa: N802
         """
@@ -401,7 +418,11 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.dx_jacket / (self.dy - 2 * self.dy_ins)
+        return (
+            self._mat_jacket_y_modulus(**kwargs)
+            * self.dx_jacket
+            / (self.dy - 2 * self.dy_ins)
+        )
 
     def _Ky_topbot_jacket(self, **kwargs):  # noqa: N802
         """
@@ -412,7 +433,7 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.cable.dx / self.dy_jacket
+        return self._mat_jacket_y_modulus(**kwargs) * self.cable.dx / self.dy_jacket
 
     def _Ky_cable(self, **kwargs):  # noqa: N802
         """

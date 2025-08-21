@@ -219,7 +219,6 @@ case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
 )
 
 print("Time taken for optimization:", time.time() - t)
-raise ValueError
 
 # Optimize case with structural constraints
 case_tf.optimize_jacket_and_vault(
