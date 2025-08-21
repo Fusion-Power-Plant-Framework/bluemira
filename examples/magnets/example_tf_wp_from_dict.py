@@ -153,7 +153,8 @@ err = 1e-6
 
 # optimize number of stabilizer strands
 sc_strand = case_tf.WPs[0].conductor.cable.sc_strand
-Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=T_op)
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
+Ic_sc = sc_strand.Ic(op_cond)
 case_tf.WPs[0].conductor.cable.n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 from bluemira.magnets.utils import delayed_exp_func
@@ -189,8 +190,9 @@ print("Time taken for optimization:", time.time() - t)
 case_tf.optimize_jacket_and_vault(
     pm=pm,
     fz=t_z,
-    temperature=T_op,
-    B=B_TF_i,
+    op_cond=OperationalConditions(
+        temperature=T_op, magnetic_field=B_TF_i, strain=0.0055
+    ),
     allowable_sigma=S_Y,
     bounds_cond_jacket=bounds_cond_jacket,
     bounds_dy_vault=bounds_dy_vault,
@@ -246,7 +248,8 @@ if show:
 
     plt.show()
 
-I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(B=B_TF_i, temperature=T_op)
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
+I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(op_cond)
 I_max = I_sc * case_tf.WPs[0].conductor.cable.n_sc_strand
 I_TF_max = I_max * case_tf.n_conductors
 print(I_max)
