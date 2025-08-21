@@ -703,8 +703,8 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             n_sc_strand=cable_dict["n_sc_strand"],
             n_stab_strand=cable_dict["n_stab_strand"],
             d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict.get("void_fraction", 0.725),
-            cos_theta=cable_dict.get("cos_theta", 0.97),
+            void_fraction=cable_dict["void_fraction"],
+            cos_theta=cable_dict["cos_theta"],
             name=name or cable_dict.get("name"),
         )
 
@@ -915,8 +915,8 @@ class RectangularCable(ABCCable):
         n_sc_strand = cable_dict["n_sc_strand"]
         n_stab_strand = cable_dict["n_stab_strand"]
         d_cooling_channel = cable_dict["d_cooling_channel"]
-        void_fraction = cable_dict.get("void_fraction", 0.725)
-        cos_theta = cable_dict.get("cos_theta", 0.97)
+        void_fraction = cable_dict["void_fraction"]
+        cos_theta = cable_dict["cos_theta"]
 
         # how to handle with parameterframe?
         # Create cable
@@ -1084,7 +1084,7 @@ class SquareCable(ABCCable):
         float
             Homogenized stiffness in the x-direction [Pa].
         """
-        return self.E(**kwargs) * self.dy / self.dx  # dx = dy therefore = 1?
+        return self.E(**kwargs)
 
     def Ky(self, **kwargs):  # noqa: N802
         """
@@ -1100,7 +1100,7 @@ class SquareCable(ABCCable):
         float
             Homogenized stiffness in the y-direction [Pa].
         """
-        return self.E(**kwargs) * self.dx / self.dy  # dx = dy therefore = 1?
+        return self.E(**kwargs)
 
     def to_dict(self) -> dict:
         """
@@ -1162,8 +1162,8 @@ class SquareCable(ABCCable):
             n_sc_strand=cable_dict["n_sc_strand"],
             n_stab_strand=cable_dict["n_stab_strand"],
             d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict.get("void_fraction", 0.725),
-            cos_theta=cable_dict.get("cos_theta", 0.97),
+            void_fraction=cable_dict["void_fraction"],
+            cos_theta=cable_dict["cos_theta"],
             name=name or cable_dict.get("name"),
         )
 
@@ -1305,7 +1305,7 @@ class RoundCable(ABCCable):
         float
             Equivalent stiffness in the x-direction [Pa].
         """
-        return self.E(**kwargs) * self.dy / self.dx  # dx = dy therefore = 1?
+        return self.E(**kwargs)
 
     def Ky(self, **kwargs):  # noqa: N802
         """
@@ -1327,7 +1327,7 @@ class RoundCable(ABCCable):
         float
             Equivalent stiffness in the y-direction [Pa].
         """
-        return self.E(**kwargs) * self.dx / self.dy  # dx = dy therefore = 1?
+        return self.E(**kwargs)
 
     def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
         """
@@ -1441,8 +1441,8 @@ class RoundCable(ABCCable):
             n_sc_strand=cable_dict["n_sc_strand"],
             n_stab_strand=cable_dict["n_stab_strand"],
             d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict.get("void_fraction", 0.725),
-            cos_theta=cable_dict.get("cos_theta", 0.97),
+            void_fraction=cable_dict["void_fraction"],
+            cos_theta=cable_dict["cos_theta"],
             name=name or cable_dict.get("name"),
         )
 
