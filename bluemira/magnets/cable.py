@@ -26,7 +26,7 @@ from bluemira.magnets.strand import (
     SuperconductingStrand,
     create_strand_from_dict,
 )
-from bluemira.magnets.utils import parall_r, serie_r
+from bluemira.magnets.utils import reciprocal_summation, summation
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -172,7 +172,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             self.sc_strand.erho(op_cond) / self.area_sc,
             self.stab_strand.erho(op_cond) / self.area_stab,
         ])
-        res_tot = parall_r(resistances)
+        res_tot = reciprocal_summation(resistances)
         return res_tot * self.area
 
     def Cp(self, op_cond: OperationalConditions):  # noqa: N802
@@ -196,7 +196,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             * self.area_stab
             * self.stab_strand.rho(op_cond),
         ])
-        return serie_r(weighted_specific_heat) / (
+        return summation(weighted_specific_heat) / (
             self.area_sc * self.sc_strand.rho(op_cond)
             + self.area_stab * self.stab_strand.rho(op_cond)
         )
