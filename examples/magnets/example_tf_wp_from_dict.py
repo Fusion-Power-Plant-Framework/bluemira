@@ -130,7 +130,6 @@ print(f"Strand erho: {strand.erho(temperature=5.7, B=10.0)}")
 print(f"Strand Cp: {strand.Cp(temperature=5.7, B=10.0)}")
 print(f"Strand rho: {strand.rho(temperature=5.7, B=10.0)}")
 
-raise ValueError
 
 case_tf = create_case_tf_from_dict(case_tf_dict)
 
