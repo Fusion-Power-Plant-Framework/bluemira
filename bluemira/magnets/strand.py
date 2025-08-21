@@ -232,67 +232,55 @@ class Strand(metaclass=RegistrableMeta):
             self._shape = BluemiraFace([make_circle(self.d_strand)])
         return self._shape
 
-    def E(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
+    def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Young's modulus of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Young's modulus [Pa].
         """
-        op_cond = OperationalConditions(
-            temperature=temperature, magnetic_field=kwargs.get("B")
-        )
         return self._homogenised_material.youngs_modulus(op_cond)
 
-    def rho(self, temperature: float | None = None, **kwargs) -> float:
+    def rho(self, op_cond: OperationalConditions) -> float:
         """
         Density of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Density [kg/m³].
         """
-        op_cond = OperationalConditions(
-            temperature=temperature, magnetic_field=kwargs.get("B")
-        )
         return self._homogenised_material.density(op_cond)
 
-    def erho(self, temperature: float | None = None, **kwargs) -> float:
+    def erho(self, op_cond: OperationalConditions) -> float:
         """
         Electrical resistivity of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Electrical resistivity [Ohm·m].
         """
-        op_cond = OperationalConditions(
-            temperature=temperature, magnetic_field=kwargs.get("B")
-        )
         # Treat parallel calculation for resistivity
         if len(self._homogenised_material.mixture_fraction) > 1:
             # If multiple materials, calculate resistivity in parallel
@@ -302,25 +290,21 @@ class Strand(metaclass=RegistrableMeta):
             )
         return self._homogenised_material.electrical_resistivity(op_cond)
 
-    def Cp(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
+    def Cp(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Specific heat capacity of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Specific heat [J/kg/K].
         """
-        op_cond = OperationalConditions(
-            temperature=temperature, magnetic_field=kwargs.get("B")
-        )
         # Treat volume/specific heat capacity calculation
         if len(self._homogenised_material.mixture_fraction) > 1:
             # Match dw-Cp (even if multiplied by density later, this is still different
@@ -561,42 +545,41 @@ class SuperconductingStrand(Strand):
         """
         return self.area * self._sc.fraction
 
-    def Jc(self, **kwargs) -> float:  # noqa:N802
+    def Jc(self, op_cond: OperationalConditions) -> float:  # noqa:N802
         """
         Critical current density of the superconducting material.
 
         Parameters
         ----------
-        kwargs : dict
-            Additional arguments for the Jc model (e.g., magnetic field B, temperature).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Critical current density [A/m²].
         """
-        op_cond = OperationalConditions(
-            temperature=kwargs.get("temperature"),
-            magnetic_field=kwargs.get("B"),
-            strain=kwargs.get("eps", 0.0055),
-        )
+        if op_cond.strain is None:
+            op_cond.strain = 0.0055
         return self._sc.material.critical_current_density(op_cond)
 
-    def Ic(self, **kwargs) -> float:  # noqa:N802
+    def Ic(self, op_cond: OperationalConditions) -> float:  # noqa:N802
         """
         Critical current based on Jc and superconducting area.
 
         Parameters
         ----------
-        kwargs : dict
-            Additional arguments forwarded to Jc computation.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Critical current [A].
         """
-        return self.Jc(**kwargs) * self.sc_area
+        return self.Jc(op_cond) * self.sc_area
 
     def plot_Ic_B(  # noqa:N802
         self,
@@ -631,7 +614,13 @@ class SuperconductingStrand(Strand):
         if ax is None:
             _, ax = plt.subplots()
 
-        ic_values = [self.Ic(B=Bi, temperature=temperature, **kwargs) for Bi in B]
+        op_conds = [
+            OperationalConditions(
+                temperature=temperature, magnetic_field=Bi, strain=kwargs.get("eps")
+            )
+            for Bi in B
+        ]
+        ic_values = [self.Ic(op) for op in op_conds]
         ax.plot(B, ic_values)
         ax.set_title(
             f"Critical Current for {self.__class__.__name__}\nTemperature = "
