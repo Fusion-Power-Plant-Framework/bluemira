@@ -6,16 +6,31 @@
 
 """Winding pack module"""
 
+from dataclasses import dataclass
 from typing import Any, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
 from bluemira.magnets.registry import RegistrableMeta
 
 # Global registries
 WINDINGPACK_REGISTRY = {}
+
+
+@dataclass
+class WindingPackParams(ParameterFrame):
+    """
+    Parameters needed for the Winding Pack
+    """
+
+    nx: Parameter[int]
+    """Number of conductors along the x-axis."""
+    ny: Parameter[int]
+    """Number of conductors along the y-axis."""
 
 
 class WindingPack(metaclass=RegistrableMeta):
@@ -34,9 +49,10 @@ class WindingPack(metaclass=RegistrableMeta):
 
     _registry_: ClassVar[dict] = WINDINGPACK_REGISTRY
     _name_in_registry_: ClassVar[str] = "WindingPack"
+    param_cls: type[WindingPackParams] = WindingPackParams
 
     def __init__(
-        self, conductor: Conductor, nx: int, ny: int, name: str = "WindingPack"
+        self, conductor: Conductor, params: ParameterFrameLike, name: str = "WindingPack"
     ):
         """
         Initialize a WindingPack instance.
@@ -45,27 +61,29 @@ class WindingPack(metaclass=RegistrableMeta):
         ----------
         conductor : Conductor
             The conductor instance.
-        nx : int
-            Number of conductors along the x-direction.
-        ny : int
-            Number of conductors along the y-direction.
+        params:
+            Structure containing the input parameters. Keys are:
+                - nx : int
+                - ny : int
+
+            See :class:`~bluemira.magnets.winding_pack.WindingPackParams`
+            for parameter details.
         name : str, optional
             Name of the winding pack instance.
         """
         self.conductor = conductor
-        self.nx = int(nx)
-        self.ny = int(ny)
+        self.params = params
         self.name = name
 
     @property
     def dx(self) -> float:
         """Return the total width of the winding pack [m]."""
-        return self.conductor.dx * self.nx
+        return self.conductor.dx * self.params.nx.value
 
     @property
     def dy(self) -> float:
         """Return the total height of the winding pack [m]."""
-        return self.conductor.dy * self.ny
+        return self.conductor.dy * self.params.ny.value
 
     @property
     def area(self) -> float:
@@ -75,7 +93,7 @@ class WindingPack(metaclass=RegistrableMeta):
     @property
     def n_conductors(self) -> int:
         """Return the total number of conductors."""
-        return self.nx * self.ny
+        return self.params.nx.value * self.params.ny.value
 
     @property
     def jacket_area(self) -> float:
@@ -96,7 +114,7 @@ class WindingPack(metaclass=RegistrableMeta):
         float
             Stiffness along the x-axis [N/m].
         """
-        return self.conductor.Kx(**kwargs) * self.ny / self.nx
+        return self.conductor.Kx(**kwargs) * self.params.ny.value / self.params.nx.value
 
     def Ky(self, **kwargs) -> float:  # noqa: N802
         """
@@ -112,7 +130,7 @@ class WindingPack(metaclass=RegistrableMeta):
         float
             Stiffness along the y-axis [N/m].
         """
-        return self.conductor.Ky(**kwargs) * self.nx / self.ny
+        return self.conductor.Ky(**kwargs) * self.params.nx.value / self.params.ny.value
 
     def plot(
         self,
@@ -162,8 +180,8 @@ class WindingPack(metaclass=RegistrableMeta):
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
         if not homogenized:
-            for i in range(self.nx):
-                for j in range(self.ny):
+            for i in range(self.params.nx.value):
+                for j in range(self.params.ny.value):
                     xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx
                     yc_c = yc - self.dy / 2 + (j + 0.5) * self.conductor.dy
                     self.conductor.plot(xc=xc_c, yc=yc_c, ax=ax)
@@ -187,8 +205,8 @@ class WindingPack(metaclass=RegistrableMeta):
             ),
             "name": self.name,
             "conductor": self.conductor.to_dict(),
-            "nx": self.nx,
-            "ny": self.ny,
+            "nx": self.params.nx.value,
+            "ny": self.params.ny.value,
         }
 
     @classmethod
