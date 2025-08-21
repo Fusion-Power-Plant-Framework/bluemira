@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from bluemira.magnets.cable import DummyRectangularCableLTS
 from bluemira.magnets.strand import SuperconductingStrand
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
@@ -130,6 +131,15 @@ print(f"Strand erho: {strand.erho(temperature=5.7, B=10.0)}")
 print(f"Strand Cp: {strand.Cp(temperature=5.7, B=10.0)}")
 print(f"Strand rho: {strand.rho(temperature=5.7, B=10.0)}")
 print(f"Strand E: {strand.E(temperature=5.7, B=10.0)}")
+
+cable_cls = DummyRectangularCableLTS
+
+cable = cable_cls.from_dict(case_tf_dict["WPs"][0]["conductor"]["cable"])
+
+print(f"Cable erho: {cable.erho(temperature=5.7, B=10.0)}")
+print(f"Cable Cp: {cable.Cp(temperature=5.7, B=10.0)}")
+print(f"Cable rho: {cable.rho(temperature=5.7, B=10.0)}")
+print(f"Cable E: {cable.E(temperature=5.7, B=10.0)}")
 
 
 case_tf = create_case_tf_from_dict(case_tf_dict)
