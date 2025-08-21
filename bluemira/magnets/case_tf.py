@@ -411,6 +411,8 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         self.params.dy_vault.value = value
         self.Rk = self.R_wp_k[-1] - self.params.dy_vault.value
 
+    # jm -  not used but replaces functionality of original Rk setter
+    #       can't find when (if) it was used originally
     def update_Rk(self, value: float):  # noqa: N802
         """
         Set or update the internal (innermost) radius of the TF case.
@@ -494,8 +496,7 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
         self._WPs = value
 
         # fix dy_vault (this will recalculate Rk)
-        if hasattr(self, "dy_vault"):
-            self.dy_vault = self.dy_vault
+        self.update_dy_vault(self.params.dy_vault.value)
 
     @property
     def n_conductors(self):

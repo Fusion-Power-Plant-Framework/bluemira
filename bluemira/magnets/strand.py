@@ -88,10 +88,10 @@ class Strand(metaclass=RegistrableMeta):
             Name of the strand. Defaults to "Strand".
         """
         self.params = params
-        self._shape = None
-        self._materials = None
 
+        self._materials = None  # jm - remove
         self.materials = materials
+
         self.name = name
 
         # Create homogenised material
