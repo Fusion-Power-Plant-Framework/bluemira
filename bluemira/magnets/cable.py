@@ -362,6 +362,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
         # Calculate the derivative of temperature with respect to time (dT/dt)
         # dTdt = Q_gen / Q_abs
+        print(Q_gen / Q_abs)
 
         return Q_gen / Q_abs
 
