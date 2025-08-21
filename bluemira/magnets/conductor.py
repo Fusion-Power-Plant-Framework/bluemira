@@ -119,8 +119,8 @@ class Conductor(metaclass=RegistrableMeta):
         """Area of the conductor [m^2]"""
         return self.dx * self.dy
 
-    # surely this should be done from inside out ie cable dx + jacket dx
-    # rather than out in and depend on more variables?
+    # jm -  surely this should be done from inside out ie cable dx + jacket dx
+    #       rather than out in and depend on more variables?
     @property
     def area_jacket(self):
         """Area of the jacket [m^2]"""
@@ -797,7 +797,8 @@ class SymmetricConductorParams(ParameterFrame):
     """x-thickness of the insulator [m]."""
 
 
-class SymmetricConductor(Conductor):
+class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set up
+    #         conductor with dx = dy and don't duplicate?
     """
     Representation of a symmetric conductor in which both jacket and insulator
     mantain a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
@@ -844,8 +845,8 @@ class SymmetricConductor(Conductor):
             params=params,
             name=name,
         )
-        self.dy_jacket = self.params.dx_jacket.value  # needed or just property?
-        self.dy_ins = self.params.dx_ins.value  # needed or just property?
+        self.dy_jacket = self.params.dx_jacket.value  # jm - needed or just property?
+        self.dy_ins = self.params.dx_ins.value  # jm - needed or just property?
 
     @property
     def dy_jacket(self):
