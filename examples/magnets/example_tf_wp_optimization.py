@@ -225,7 +225,11 @@ sc_strand.plot_Ic_B(Bt_arr, temperature=(T_sc + T_margin))
 Iop_range = (
     np.linspace(30, 100, 100) * 1e3
 )  # 5 equally spaced values between 30 and 100 A
-Ic_sc_arr = sc_strand.Ic(B=Bt_arr, temperature=(T_sc + T_margin))
+op_conds = [
+    OperationalConditions(temperature=T_sc + T_margin, magnetic_field=Bti)
+    for Bti in Bt_arr
+]
+Ic_sc_arr = np.array([sc_strand.Ic(op) for op in op_conds])
 
 # Create a colormap to assign colors to different Iop values
 colors = cm.viridis(np.linspace(0, 1, len(Iop_range)))  # Use the 'viridis' colormap
@@ -260,7 +264,8 @@ plt.show()
 # **Calculate number of superconducting strands considering the strand critical
 # current at B_TF_i and T_sc + T_margin**
 # %%
-Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=(T_op))
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i)
+Ic_sc = sc_strand.Ic(op_cond)
 n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 ###########################################################
@@ -308,7 +313,7 @@ bluemira_print(f"cable area: {cable.area}")
 mats = [NB3SN_MAG, COPPER_100, COPPER_300, SS316_LN_MAG]
 mat_names = ["nb3sn", "copper100", "copper300", "ss316"]
 temperatures = np.linspace(5, 250, 500)
-operational_point = {"B": B_fun(0)}
+magnetic_field = B_fun(0)
 
 # Prepare plots
 # Adjusted for 5 plots (3x2 grid)
@@ -320,7 +325,7 @@ ax1, ax2, ax3, ax4, ax5 = axes.flatten()[:5]  # Extracting the first five axes
 for mat, name in zip(mats, mat_names, strict=False):
     # Calculate properties over the temperature range
     op_conds = [
-        OperationalConditions(temperature=T, magnetic_field=operational_point["B"])
+        OperationalConditions(temperature=T, magnetic_field=magnetic_field)
         for T in temperatures
     ]
     density = np.array([mat.density(op) for op in op_conds])
