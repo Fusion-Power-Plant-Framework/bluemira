@@ -107,8 +107,6 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             Identifier for the cable instance.
         """
         super().__init__(params)  # fix when split into builders and designers
-        # initialize private variables
-        self._shape = None  # remove?
 
         # assign
         # Setting self.name triggers automatic instance registration
