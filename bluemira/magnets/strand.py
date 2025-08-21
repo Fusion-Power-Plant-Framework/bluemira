@@ -76,10 +76,13 @@ class Strand(metaclass=RegistrableMeta):
         ----------
         materials : list of MaterialFraction
             Materials composing the strand with their fractions.
-        d_strand : float, optional
-            Strand diameter in meters (default 0.82e-3).
-        temperature : float, optional
-            Operating temperature [K].
+        params:
+            Structure containing the input parameters. Keys are:
+                - d_strand: float
+                - temperature: float
+
+            See :class:`~bluemira.magnets.strand.StrandParams`
+            for parameter details.
         name : str or None, optional
             Name of the strand. Defaults to "Strand".
         """
@@ -416,10 +419,13 @@ class SuperconductingStrand(Strand):
         materials : list of MaterialFraction
             Materials composing the strand with their fractions. One material must be
             a supercoductor.
-        d_strand : float, optional
-            Strand diameter in meters (default 0.82e-3).
-        temperature : float, optional
-            Operating temperature [K].
+        params:
+            Structure containing the input parameters. Keys are:
+                - d_strand: float
+                - temperature: float
+
+            See :class:`~bluemira.magnets.strand.StrandParams`
+            for parameter details.
         name : str or None, optional
             Name of the strand. Defaults to "Strand".
         """

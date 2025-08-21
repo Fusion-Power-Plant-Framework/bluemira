@@ -93,16 +93,16 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             The superconducting strand.
         stab_strand : Strand
             The stabilizer strand.
-        n_sc_strand : int
-            Number of superconducting strands.
-        n_stab_strand : int
-            Number of stabilizing strands.
-        d_cooling_channel : float
-            Diameter of the cooling channel [m].
-        void_fraction : float
-            Ratio of material volume to total volume [unitless].
-        cos_theta : float
-            Correction factor for twist in the cable layout.
+        params:
+            Structure containing the input parameters. Keys are:
+                - n_sc_strand: int
+                - n_stab_strand: int
+                - d_cooling_channel: float
+                - void_fraction: float = 0.725
+                - cos_theta: float = 0.97
+
+            See :class:`~bluemira.magnets.cable.CableParams`
+            for parameter details.
         name : str
             Identifier for the cable instance.
         """
@@ -745,6 +745,7 @@ class RectangularCable(ABCCable):
     """
 
     _name_in_registry_ = "RectangularCable"
+    param_cls: type[RectangularCableParams] = RectangularCableParams
 
     def __init__(
         self,
@@ -763,22 +764,21 @@ class RectangularCable(ABCCable):
 
         Parameters
         ----------
-        dx : float
-            Cable width in the x-direction [m].
         sc_strand : SuperconductingStrand
             Superconducting strand.
         stab_strand : Strand
             Stabilizer strand.
-        n_sc_strand : int
-            Number of superconducting strands.
-        n_stab_strand : int
-            Number of stabilizer strands.
-        d_cooling_channel : float
-            Cooling channel diameter [m].
-        void_fraction : float, optional
-            Void fraction (material_volume / total_volume).
-        cos_theta : float, optional
-            Correction factor for strand twist.
+        params:
+            Structure containing the input parameters. Keys are:
+                - dx: float
+                - n_sc_strand: int
+                - n_stab_strand: int
+                - d_cooling_channel: float
+                - void_fraction: float = 0.725
+                - cos_theta: float = 0.97
+
+            See :class:`~bluemira.magnets.cable.RectangularCableParams`
+            for parameter details.
         name : str, optional
             Name of the cable.
         """
@@ -1055,16 +1055,16 @@ class SquareCable(ABCCable):
             strand of the superconductor
         stab_strand:
             strand of the stabilizer
-        d_cooling_channel:
-            diameter of the cooling channel
-        n_sc_strand:
-            number of superconducting strands
-        n_stab_strand:
-            number of stabilizer strands
-        void_fraction:
-            void fraction defined as material_volume/total_volume
-        cos_theta:
-            corrective factor that consider the twist of the cable
+        params:
+            Structure containing the input parameters. Keys are:
+                - n_sc_strand: int
+                - n_stab_strand: int
+                - d_cooling_channel: float
+                - void_fraction: float = 0.725
+                - cos_theta: float = 0.97
+
+            See :class:`~bluemira.magnets.cable.CableParams`
+            for parameter details.
         name:
             cable string identifier
 
@@ -1276,16 +1276,16 @@ class RoundCable(ABCCable):
             strand of the superconductor
         stab_strand:
             strand of the stabilizer
-        d_cooling_channel:
-            diameter of the cooling channel
-        n_sc_strand:
-            number of superconducting strands
-        n_stab_strand:
-            number of stabilizer strands
-        void_fraction:
-            void fraction defined as material_volume/total_volume
-        cos_theta:
-            corrective factor that consider the twist of the cable
+        params:
+            Structure containing the input parameters. Keys are:
+                - n_sc_strand: int
+                - n_stab_strand: int
+                - d_cooling_channel: float
+                - void_fraction: float = 0.725
+                - cos_theta: float = 0.97
+
+            See :class:`~bluemira.magnets.cable.CableParams`
+            for parameter details.
         name:
             cable string identifier
         """

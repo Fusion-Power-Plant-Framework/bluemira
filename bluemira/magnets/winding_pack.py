@@ -62,10 +62,13 @@ class WindingPack(metaclass=RegistrableMeta):
         ----------
         conductor : Conductor
             The conductor instance.
-        nx : int
-            Number of conductors along the x-direction.
-        ny : int
-            Number of conductors along the y-direction.
+        params:
+            Structure containing the input parameters. Keys are:
+                - nx : int
+                - ny : int
+
+            See :class:`~bluemira.magnets.winding_pack.WindingPackParams`
+            for parameter details.
         name : str, optional
             Name of the winding pack instance.
         """

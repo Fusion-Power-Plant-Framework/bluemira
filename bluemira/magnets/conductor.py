@@ -78,14 +78,15 @@ class Conductor(metaclass=RegistrableMeta):
             jacket's material
         mat_ins:
             insulator's material
-        dx_jacket:
-            x-thickness of the jacket
-        dy_jacket:
-            y-tickness of the jacket
-        dx_ins:
-            x-thickness of the insulator
-        dy_ins:
-            y-tickness of the insulator
+        params:
+            Structure containing the input parameters. Keys are:
+                - dx_jacket: float
+                - dy_jacket: float
+                - dx_ins: float
+                - dy_ins: float
+
+            See :class:`~bluemira.magnets.conductor.ConductorParams`
+            for parameter details.
         name:
             string identifier
         """
@@ -825,10 +826,13 @@ class SymmetricConductor(Conductor):
             jacket's material
         mat_ins:
             insulator's material
-        dx_jacket:
-            x(y)-thickness of the jacket
-        dx_ins:
-            x(y)-thickness of the insulator
+        params:
+            Structure containing the input parameters. Keys are:
+                - dx_jacket: float
+                - dx_ins: float
+
+            See :class:`~bluemira.magnets.conductor.SymmetricConductorParams`
+            for parameter details.
         name:
             string identifier
 
