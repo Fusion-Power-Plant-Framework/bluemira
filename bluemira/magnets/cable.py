@@ -218,14 +218,15 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
         self._cos_theta = value
 
-    def rho(self, **kwargs):
+    def rho(self, op_cond: OperationalConditions):
         """
         Compute the average mass density of the cable [kg/m³].
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments forwarded to strand property evaluations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -233,8 +234,8 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             Averaged mass density in kg/m³.
         """
         return (
-            self.sc_strand.rho(**kwargs) * self.area_sc
-            + self.stab_strand.rho(**kwargs) * self.area_stab
+            self.sc_strand.rho(op_cond) * self.area_sc
+            + self.stab_strand.rho(op_cond) * self.area_stab
         ) / (self.area_sc + self.area_stab)
 
     def erho(self, op_cond: OperationalConditions):
@@ -307,7 +308,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             self.area_sc + self.area_stab
         ) / self.void_fraction / self.cos_theta + self.area_cc
 
-    def E(self, **kwargs):  # noqa: N802
+    def E(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Return the effective Young's modulus of the cable [Pa].
 
@@ -316,8 +317,9 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        **kwargs :
-            Arbitrary keyword arguments (ignored here).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------

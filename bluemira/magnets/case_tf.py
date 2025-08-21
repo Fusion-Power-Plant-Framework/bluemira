@@ -1140,25 +1140,24 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta_TF / 2)
 
-    def Kx_ps(self, **kwargs):  # noqa: N802
+    def Kx_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus
-            function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent radial stiffness of the poloidal support [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dy_ps / self.dx_ps
 
-    def Kx_lat(self, **kwargs):  # noqa: N802
+    def Kx_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the lateral case sections.
 
@@ -1167,8 +1166,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1181,27 +1181,26 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
 
-    def Kx_vault(self, **kwargs):  # noqa: N802
+    def Kx_vault(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the vault region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent radial stiffness of the vault [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dy_vault / self.dx_vault
 
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent radial stiffness of the entire case structure.
 
@@ -1212,8 +1211,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to subcomponent stiffness evaluations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1222,32 +1222,32 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         temp = [
             serie_k([
-                self.Kx_lat(**kwargs)[i],
-                w.Kx(**kwargs),
-                self.Kx_lat(**kwargs)[i],
+                self.Kx_lat(op_cond)[i],
+                w.Kx(op_cond),
+                self.Kx_lat(op_cond)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return parall_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs), *temp])
+        return parall_k([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
 
-    def Ky_ps(self, **kwargs):  # noqa: N802
+    def Ky_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent toroidal stiffness of the PS region [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
 
-    def Ky_lat(self, **kwargs):  # noqa: N802
+    def Ky_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of lateral case sections
         per winding pack.
@@ -1256,8 +1256,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1270,27 +1271,26 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
 
-    def Ky_vault(self, **kwargs):  # noqa: N802
+    def Ky_vault(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the vault region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent toroidal stiffness of the vault [Pa].
         """
-        op_cond = OperationalConditions(temperature=kwargs.get("temperature"), magnetic_field=kwargs.get("B", 0))
         return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.dy_vault
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent toroidal stiffness of the entire case structure.
 
@@ -1301,8 +1301,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to subcomponent stiffness evaluations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1311,13 +1312,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         temp = [
             parall_k([
-                self.Ky_lat(**kwargs)[i],
-                w.Ky(**kwargs),
-                self.Ky_lat(**kwargs)[i],
+                self.Ky_lat(op_cond)[i],
+                w.Ky(op_cond),
+                self.Ky_lat(op_cond)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return serie_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs), *temp])
+        return serie_k([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
 
     def rearrange_conductors_in_wp(
         self,
