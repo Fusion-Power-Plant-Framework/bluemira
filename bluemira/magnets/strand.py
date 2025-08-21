@@ -12,6 +12,7 @@ Includes:
 - Automatic class and instance registration mechanisms
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -21,6 +22,8 @@ from matproplib.material import MaterialFraction, mixture
 
 from bluemira import display
 from bluemira.base.look_and_feel import bluemira_error
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
@@ -32,9 +35,20 @@ from bluemira.magnets.registry import RegistrableMeta
 
 STRAND_REGISTRY = {}
 
+
 # ------------------------------------------------------------------------------
 # Strand Class
 # ------------------------------------------------------------------------------
+@dataclass
+class StrandParams(ParameterFrame):
+    """
+    Parameters needed for the strand
+    """
+
+    d_strand: Parameter[float] = 0.82e-3
+    """Strand diameter in meters (default 0.82e-3)."""
+    temperature: Parameter[float] | None = None
+    """Operating temperature [K]."""
 
 
 class Strand(metaclass=RegistrableMeta):
@@ -47,12 +61,12 @@ class Strand(metaclass=RegistrableMeta):
 
     _registry_ = STRAND_REGISTRY
     _name_in_registry_ = "Strand"
+    param_cls: type[StrandParams] = StrandParams
 
     def __init__(
         self,
         materials: list[MaterialFraction],
-        d_strand: float = 0.82e-3,
-        temperature: float | None = None,
+        params: ParameterFrameLike,
         name: str | None = "Strand",
     ):
         """
@@ -69,15 +83,12 @@ class Strand(metaclass=RegistrableMeta):
         name : str or None, optional
             Name of the strand. Defaults to "Strand".
         """
-        self._d_strand = None
+        self.params = params
         self._shape = None
         self._materials = None
-        self._temperature = None
 
-        self.d_strand = d_strand
         self.materials = materials
         self.name = name
-        self.temperature = temperature
 
         # Create homogenised material
         self._homogenised_material = mixture(
@@ -128,84 +139,6 @@ class Strand(metaclass=RegistrableMeta):
         self._materials = new_materials
 
     @property
-    def temperature(self) -> float | None:
-        """
-        Operating temperature of the strand.
-
-        Returns
-        -------
-        float or None
-            Temperature in Kelvin.
-        """
-        return self._temperature
-
-    @temperature.setter
-    def temperature(self, value: float | None):
-        """
-        Set a new operating temperature for the strand.
-
-        Parameters
-        ----------
-        value : float or None
-            New operating temperature in Kelvin.
-
-        Raises
-        ------
-        ValueError
-            If temperature is negative.
-        TypeError
-            If temperature is not a float or None.
-        """
-        if value is not None:
-            if not isinstance(value, (float, int)):
-                raise TypeError(
-                    f"temperature must be a float or int, got {type(value).__name__}."
-                )
-
-            if value < 0:
-                raise ValueError("Temperature cannot be negative.")
-
-        self._temperature = float(value) if value is not None else None
-
-    @property
-    def d_strand(self) -> float:
-        """
-        Diameter of the strand.
-
-        Returns
-        -------
-        Parameter
-            Diameter [m].
-        """
-        return self._d_strand
-
-    @d_strand.setter
-    def d_strand(self, d: float):
-        """
-        Set the strand diameter and reset shape if changed.
-
-        Parameters
-        ----------
-        d : float or Parameter
-            New strand diameter.
-
-        Raises
-        ------
-        ValueError
-            If diameter is non-positive.
-        TypeError
-            If diameter is not a float number.
-        """
-        if not isinstance(d, (float, int)):
-            raise TypeError(f"d_strand must be a float, got {type(d).__name__}")
-        if d <= 0:
-            raise ValueError("d_strand must be positive.")
-
-        if self.d_strand is None or d != self.d_strand:
-            self._d_strand = float(d)
-            self._shape = None
-
-    @property
     def area(self) -> float:
         """
         Cross-sectional area of the strand.
@@ -215,7 +148,7 @@ class Strand(metaclass=RegistrableMeta):
         float
             Area [m²].
         """
-        return np.pi * (self.d_strand**2) / 4
+        return np.pi * (self.params.d_strand.value**2) / 4
 
     @property
     def shape(self) -> BluemiraFace:
@@ -228,7 +161,7 @@ class Strand(metaclass=RegistrableMeta):
             Circular face of the strand.
         """
         if self._shape is None:
-            self._shape = BluemiraFace([make_circle(self.d_strand)])
+            self._shape = BluemiraFace([make_circle(self.params.d_strand.value)])
         return self._shape
 
     def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -355,7 +288,7 @@ class Strand(metaclass=RegistrableMeta):
         """
         return (
             f"name = {self.name}\n"
-            f"d_strand = {self.d_strand}\n"
+            f"d_strand = {self.params.d_strand.value}\n"
             f"materials = {self.materials}\n"
             f"shape = {self.shape}\n"
         )
@@ -374,8 +307,8 @@ class Strand(metaclass=RegistrableMeta):
                 self, "_name_in_registry_", self.__class__.__name__
             ),
             "name": self.name,
-            "d_strand": self.d_strand,
-            "temperature": self.temperature,
+            "d_strand": self.params.d_strand.value,
+            "temperature": self.params.temperature.value,
             "materials": [
                 {
                     "material": m.material,
@@ -442,7 +375,7 @@ class Strand(metaclass=RegistrableMeta):
             material_mix.append(
                 MaterialFraction(material=material_obj, fraction=m["fraction"])
             )
-
+        # resolve
         return cls(
             materials=material_mix,
             temperature=strand_dict.get("temperature"),
@@ -467,12 +400,12 @@ class SuperconductingStrand(Strand):
     """
 
     _name_in_registry_ = "SuperconductingStrand"
+    param_cls: type[StrandParams] = StrandParams
 
     def __init__(
         self,
         materials: list[MaterialFraction],
-        d_strand: float = 0.82e-3,
-        temperature: float | None = None,
+        params: ParameterFrameLike,
         name: str | None = "SuperconductingStrand",
     ):
         """
@@ -492,8 +425,7 @@ class SuperconductingStrand(Strand):
         """
         super().__init__(
             materials=materials,
-            d_strand=d_strand,
-            temperature=temperature,
+            params=params,
             name=name,
         )
         self._sc = self._check_materials()
