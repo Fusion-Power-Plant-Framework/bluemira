@@ -129,6 +129,7 @@ strand = strand_cls.from_dict(case_tf_dict["WPs"][0]["conductor"]["cable"]["sc_s
 print(f"Strand erho: {strand.erho(temperature=5.7, B=10.0)}")
 print(f"Strand Cp: {strand.Cp(temperature=5.7, B=10.0)}")
 print(f"Strand rho: {strand.rho(temperature=5.7, B=10.0)}")
+print(f"Strand E: {strand.E(temperature=5.7, B=10.0)}")
 
 
 case_tf = create_case_tf_from_dict(case_tf_dict)
