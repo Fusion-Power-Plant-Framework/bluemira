@@ -611,11 +611,11 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
     # OD homogenized structural properties
     @abstractmethod
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """Total equivalent stiffness along x-axis"""
 
     @abstractmethod
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """Total equivalent stiffness along y-axis"""
 
     def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
@@ -899,37 +899,39 @@ class RectangularCable(ABCCable):
         self.dx = np.sqrt(value * self.area)
 
     # OD homogenized structural properties
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments for material or geometric modifiers.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Homogenized stiffness in the x-direction [Pa].
         """
-        return self.E(**kwargs) * self.dy / self.dx
+        return self.E(op_cond) * self.dy / self.dx
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent stiffness along the y-axis.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments for material or geometric modifiers.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Homogenized stiffness in the y-direction [Pa].
         """
-        return self.E(**kwargs) * self.dx / self.dy
+        return self.E(op_cond) * self.dx / self.dy
 
     def to_dict(self) -> dict:
         """
@@ -1192,37 +1194,39 @@ class SquareCable(ABCCable):
         return self.dx
 
     # OD homogenized structural properties
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material stiffness function `E`.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Homogenized stiffness in the x-direction [Pa].
         """
-        return self.E(**kwargs) * self.dy / self.dx
+        return self.E(op_cond) * self.dy / self.dx
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent stiffness along the y-axis.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material stiffness function `E`.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Homogenized stiffness in the y-direction [Pa].
         """
-        return self.E(**kwargs) * self.dx / self.dy
+        return self.E(op_cond) * self.dx / self.dy
 
     def to_dict(self) -> dict:
         """
@@ -1414,7 +1418,7 @@ class RoundCable(ABCCable):
     # OD homogenized structural properties
     # A structural analysis should be performed to check how much the rectangular
     #  approximation is fine also for the round cable.
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the x-axis.
 
@@ -1424,19 +1428,18 @@ class RoundCable(ABCCable):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments forwarded to the `E` method. These may include
-            temperature, magnetic field, or other conditions if supported by the
-            subclass.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent stiffness in the x-direction [Pa].
         """
-        return self.E(**kwargs) * self.dy / self.dx
+        return self.E(op_cond) * self.dy / self.dx
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the y-axis.
 
@@ -1446,17 +1449,16 @@ class RoundCable(ABCCable):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments forwarded to the `E` method. These may include
-            temperature, magnetic field, or other conditions if supported by the
-            subclass.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent stiffness in the y-direction [Pa].
         """
-        return self.E(**kwargs) * self.dx / self.dy
+        return self.E(op_cond) * self.dx / self.dy
 
     def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
         """
