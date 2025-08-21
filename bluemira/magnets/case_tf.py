@@ -33,7 +33,7 @@ from bluemira.base.look_and_feel import (
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.registry import RegistrableMeta
-from bluemira.magnets.utils import parall_k, serie_k
+from bluemira.magnets.utils import reciprocal_summation, summation
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import Material
@@ -1030,14 +1030,14 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Total equivalent radial stiffness of the TF case [Pa].
         """
         temp = [
-            serie_k([
+            reciprocal_summation([
                 self.Kx_lat(**kwargs)[i],
                 w.Kx(**kwargs),
                 self.Kx_lat(**kwargs)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return parall_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs), *temp])
+        return summation([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs), *temp])
 
     def Ky_ps(self, **kwargs):  # noqa: N802
         """
@@ -1116,14 +1116,18 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Total equivalent toroidal stiffness of the TF case [Pa].
         """
         temp = [
-            parall_k([
+            summation([
                 self.Ky_lat(**kwargs)[i],
                 w.Ky(**kwargs),
                 self.Ky_lat(**kwargs)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return serie_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs), *temp])
+        return reciprocal_summation([
+            self.Ky_ps(**kwargs),
+            self.Ky_vault(**kwargs),
+            *temp,
+        ])
 
     def rearrange_conductors_in_wp(
         self,

@@ -18,12 +18,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
 from bluemira.magnets.registry import RegistrableMeta
-from bluemira.magnets.utils import (
-    parall_k,
-    parall_r,
-    serie_k,
-    serie_r,
-)
+from bluemira.magnets.utils import reciprocal_summation, summation
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.material import MassFractionMaterial
 
@@ -256,7 +251,7 @@ class Conductor(metaclass=RegistrableMeta):
             self.cable.erho(**kwargs) / self.cable.area,
             self.mat_jacket.erho(**kwargs) / self.area_jacket,
         ])
-        res_tot = parall_r(resistances)
+        res_tot = reciprocal_summation(resistances)
         return res_tot * self.area
 
     def Cp(self, **kwargs):  # noqa: N802
@@ -281,7 +276,7 @@ class Conductor(metaclass=RegistrableMeta):
             self.cable.Cp(**kwargs) * self.cable.area,
             self.mat_jacket.Cp(**kwargs) * self.area_jacket,
         ])
-        return serie_r(weighted_specific_heat) / self.area
+        return summation(weighted_specific_heat) / self.area
 
     def _Kx_topbot_ins(self, **kwargs):  # noqa: N802
         """
@@ -351,10 +346,10 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return parall_k([
+        return summation([
             self._Kx_lat_ins(**kwargs),
             self._Kx_lat_jacket(**kwargs),
-            serie_k([
+            reciprocal_summation([
                 self._Kx_topbot_ins(**kwargs),
                 self._Kx_topbot_jacket(**kwargs),
                 self._Kx_cable(**kwargs),
@@ -433,10 +428,10 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return parall_k([
+        return summation([
             self._Ky_lat_ins(**kwargs),
             self._Ky_lat_jacket(**kwargs),
-            serie_k([
+            reciprocal_summation([
                 self._Ky_topbot_ins(**kwargs),
                 self._Ky_topbot_jacket(**kwargs),
                 self._Ky_cable(**kwargs),
@@ -495,10 +490,10 @@ class Conductor(metaclass=RegistrableMeta):
                 2 * self.params.dx_jacket.value
             )
 
-            K = parall_k([  # noqa: N806
+            K = summation([  # noqa: N806
                 2 * self._Ky_lat_ins(**operational_point),
                 2 * self._Ky_lat_jacket(**operational_point),
-                serie_k([
+                reciprocal_summation([
                     self._Ky_cable(**operational_point),
                     self._Ky_topbot_jacket(**operational_point) / 2,
                 ]),
@@ -511,10 +506,10 @@ class Conductor(metaclass=RegistrableMeta):
                 2 * self.params.dy_jacket.value
             )
 
-            K = parall_k([  # noqa: N806
+            K = summation([  # noqa: N806
                 2 * self._Kx_lat_ins(**operational_point),
                 2 * self._Kx_lat_jacket(**operational_point),
-                serie_k([
+                reciprocal_summation([
                     self._Kx_cable(**operational_point),
                     self._Kx_topbot_jacket(**operational_point) / 2,
                 ]),
