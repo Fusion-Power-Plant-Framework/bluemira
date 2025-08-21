@@ -204,6 +204,9 @@ B_fun = delayed_exp_func(B_TF_i, Tau_discharge, t_delay)
 print("cable")
 print(case_tf.WPs[0].conductor.cable)
 
+import time
+
+t = time.time()
 case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
     t0,
     tf,
@@ -212,8 +215,11 @@ case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
     B_fun,
     I_fun,
     bounds=[1, 10000],
-    show=True,
+    show=False,
 )
+
+print("Time taken for optimization:", time.time() - t)
+raise ValueError
 
 # Optimize case with structural constraints
 case_tf.optimize_jacket_and_vault(
