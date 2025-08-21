@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from bluemira.magnets.strand import SuperconductingStrand
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
@@ -22,7 +23,6 @@ print("Nb3Sn specific heat:", NB3SN_MAG.specific_heat_capacity(op_cond))
 print("Copper 100 specific heat:", COPPER_100.specific_heat_capacity(op_cond))
 print("Copper 300 specific heat:", COPPER_300.specific_heat_capacity(op_cond))
 
-raise ValueError
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.magnets.case_tf import create_case_tf_from_dict
@@ -122,6 +122,15 @@ case_tf_dict = {
         },
     ],
 }
+
+strand_cls = SuperconductingStrand
+strand = strand_cls.from_dict(case_tf_dict["WPs"][0]["conductor"]["cable"]["sc_strand"])
+
+print(f"Strand erho: {strand.erho(temperature=5.7, B=10.0)}")
+print(f"Strand Cp: {strand.Cp(temperature=5.7, B=10.0)}")
+print(f"Strand rho: {strand.rho(temperature=5.7, B=10.0)}")
+
+raise ValueError
 
 case_tf = create_case_tf_from_dict(case_tf_dict)
 
