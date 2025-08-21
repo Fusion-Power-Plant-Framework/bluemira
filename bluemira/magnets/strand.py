@@ -83,8 +83,7 @@ class Strand(metaclass=RegistrableMeta):
         self._homogenised_material = mixture(
             name=name,
             materials=materials,
-            fraction_type="volume",
-            volume_conditions=OperationalConditions(temperature=293.15),
+            fraction_type="mass",
         )
 
     @property
