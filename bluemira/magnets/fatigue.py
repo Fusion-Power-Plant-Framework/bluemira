@@ -1,23 +1,8 @@
-# bluemira is an integrated inter-disciplinary design tool for future fusion
-# reactors. It incorporates several modules, some of which rely on other
-# codes, to carry out a range of typical conceptual fusion reactor design
-# activities.
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
-# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short
-#
-# bluemira is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# bluemira is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
 Paris Law fatigue model with FE-inspired analytical crack propagation
@@ -85,6 +70,10 @@ def _stress_intensity_factor(
 ) -> float:
     """
     Equation 1a of Newman and Raju, 1984
+
+    Returns
+    -------
+    Stress intensity factor
     """
     return (hoop_stress + H * bend_stress) * np.sqrt(np.pi * a / Q) * F
 
@@ -94,6 +83,10 @@ def _boundary_correction_factor(
 ) -> float:
     """
     Equation 1b of Newman and Raju, 1984
+
+    Returns
+    -------
+    Boundary correction factor
     """
     return (m1 + m2 * a_d_t**2 + m3 * a_d_t**4) * g * f_phi * f_w
 
@@ -101,6 +94,10 @@ def _boundary_correction_factor(
 def _bending_correction_factor(h1: float, h2: float, p: float, phi: float) -> float:
     """
     Equation 1c of Newman and Raju, 1984
+
+    Returns
+    -------
+    Bending correction factor
     """
     return h1 + (h2 - h1) * np.sin(phi) ** p
 
@@ -108,6 +105,10 @@ def _bending_correction_factor(h1: float, h2: float, p: float, phi: float) -> fl
 def _ellipse_shape_factor(ratio: float) -> float:
     """
     Equation 2 of Newman and Raju, 1984
+
+    Returns
+    -------
+    Ellipse shape factor
     """
     return 1.0 + 1.464 * ratio**1.65
 
@@ -115,6 +116,10 @@ def _ellipse_shape_factor(ratio: float) -> float:
 def _angular_location_correction(a: float, c: float, phi: float) -> float:
     """
     Equation 10 and 13 of Newman and Raju, 1984
+
+    Returns
+    -------
+    Angular location correction factor
     """
     if a <= c:
         return ((a / c) ** 2 * np.cos(phi) ** 2 + np.sin(phi) ** 2) ** 0.25  # (10)
@@ -124,11 +129,15 @@ def _angular_location_correction(a: float, c: float, phi: float) -> float:
 def _finite_width_correction(a_d_t: float, c: float, w: float) -> float:
     """
     Equation 11 of Newman and Raju, 1984
+
+    Returns
+    -------
+    Finite width correction factor
     """
     return 1.0 / np.sqrt(np.cos(np.sqrt(a_d_t) * np.pi * c / (2 * w)))  # (11)
 
 
-class Crack(abc.ABC):
+class Crack(abc.ABC):  # noqa: B024
     """
     Crack description ABC for the Paris fatigue model
 
@@ -150,6 +159,10 @@ class Crack(abc.ABC):
     def from_area(cls, area: float, aspect_ratio: float):
         """
         Instatiate a crack from an area and aspect ratio
+
+        Returns
+        -------
+        Crack instance
         """
         depth = np.sqrt(area / (cls.alpha * np.pi * aspect_ratio))
         width = aspect_ratio * depth
@@ -159,23 +172,32 @@ class Crack(abc.ABC):
     def area(self) -> float:
         """
         Cross-sectional area of the crack
+
+        Returns
+        -------
+        Area of the crack
         """
         return self.alpha * np.pi * self.depth * self.width
 
-    @abc.abstractmethod
+    @staticmethod
+    @abc.abstractsmethod
     def stress_intensity_factor(
-        self,
-        hoop_stress: float,
-        bend_stress: float,
-        t: float,
-        w: float,
-        a: float,
-        c: float,
-        phi: float,
+        hoop_stress: float,  # noqa: ARG004
+        bend_stress: float,  # noqa: ARG004
+        t: float,  # noqa: ARG004
+        w: float,  # noqa: ARG004
+        a: float,  # noqa: ARG004
+        c: float,  # noqa: ARG004
+        phi: float,  # noqa: ARG004
     ) -> float:
         """
         Calculate the crack stress intensity factor
+
+        Returns
+        -------
+        Stress intensity factor
         """
+        return NotImplementedError
 
 
 class QuarterEllipticalCornerCrack(Crack):
@@ -192,8 +214,8 @@ class QuarterEllipticalCornerCrack(Crack):
 
     alpha = 0.25
 
+    @staticmethod
     def stress_intensity_factor(
-        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -292,8 +314,8 @@ class SemiEllipticalSurfaceCrack(Crack):
 
     alpha = 0.5
 
+    @staticmethod
     def stress_intensity_factor(
-        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -383,8 +405,8 @@ class EllipticalEmbeddedCrack(Crack):
 
     alpha = 1.0
 
+    @staticmethod
     def stress_intensity_factor(
-        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -424,7 +446,7 @@ class EllipticalEmbeddedCrack(Crack):
         https://ntrs.nasa.gov/api/citations/19840015857/downloads/19840015857.pdf
         """
         # NOTE: for embedded cracks, t is defined as one-half the plate thickness
-        t = 0.5 * t
+        t *= 0.5
         a_d_t = a / t
 
         if a <= c:  # a/c <= 1
