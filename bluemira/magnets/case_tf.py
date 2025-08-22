@@ -21,6 +21,8 @@ from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
+from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import (
@@ -32,8 +34,6 @@ from bluemira.base.look_and_feel import (
 from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import parall_k, serie_k
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.material import Material
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -1031,7 +1031,6 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        mat_case = get_cached_material(case_dict["mat_case"])
         WPs = [create_wp_from_dict(wp_dict) for wp_dict in case_dict["WPs"]]  # noqa:N806
 
         return cls(
@@ -1039,7 +1038,7 @@ class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
             dy_ps=case_dict["dy_ps"],
             dy_vault=case_dict["dy_vault"],
             theta_TF=case_dict["theta_TF"],
-            mat_case=mat_case,
+            mat_case=case_dict["mat_case"],
             WPs=WPs,
             name=name or case_dict.get("name"),
         )
@@ -1141,24 +1140,24 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta_TF / 2)
 
-    def Kx_ps(self, **kwargs):  # noqa: N802
+    def Kx_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus
-            function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent radial stiffness of the poloidal support [Pa].
         """
-        return self.mat_case.E(**kwargs) * self.dy_ps / self.dx_ps
+        return self.mat_case.youngs_modulus(op_cond) * self.dy_ps / self.dx_ps
 
-    def Kx_lat(self, **kwargs):  # noqa: N802
+    def Kx_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the lateral case sections.
 
@@ -1167,8 +1166,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1181,25 +1181,26 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.E(**kwargs) * dy_lat / dx_lat
+        return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
 
-    def Kx_vault(self, **kwargs):  # noqa: N802
+    def Kx_vault(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the vault region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent radial stiffness of the vault [Pa].
         """
-        return self.mat_case.E(**kwargs) * self.dy_vault / self.dx_vault
+        return self.mat_case.youngs_modulus(op_cond) * self.dy_vault / self.dx_vault
 
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent radial stiffness of the entire case structure.
 
@@ -1210,8 +1211,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to subcomponent stiffness evaluations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1220,31 +1222,32 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         temp = [
             serie_k([
-                self.Kx_lat(**kwargs)[i],
-                w.Kx(**kwargs),
-                self.Kx_lat(**kwargs)[i],
+                self.Kx_lat(op_cond)[i],
+                w.Kx(op_cond),
+                self.Kx_lat(op_cond)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return parall_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs), *temp])
+        return parall_k([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
 
-    def Ky_ps(self, **kwargs):  # noqa: N802
+    def Ky_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent toroidal stiffness of the PS region [Pa].
         """
-        return self.mat_case.E(**kwargs) * self.dx_ps / self.dy_ps
+        return self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
 
-    def Ky_lat(self, **kwargs):  # noqa: N802
+    def Ky_lat(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of lateral case sections
         per winding pack.
@@ -1253,8 +1256,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1267,25 +1271,26 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.E(**kwargs) * dx_lat / dy_lat
+        return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
 
-    def Ky_vault(self, **kwargs):  # noqa: N802
+    def Ky_vault(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the vault region.
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to the material's Young's modulus function.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Equivalent toroidal stiffness of the vault [Pa].
         """
-        return self.mat_case.E(**kwargs) * self.dx_vault / self.dy_vault
+        return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.dy_vault
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the total equivalent toroidal stiffness of the entire case structure.
 
@@ -1296,8 +1301,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        **kwargs :
-            Optional keyword arguments passed to subcomponent stiffness evaluations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1306,13 +1312,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         temp = [
             parall_k([
-                self.Ky_lat(**kwargs)[i],
-                w.Ky(**kwargs),
-                self.Ky_lat(**kwargs)[i],
+                self.Ky_lat(op_cond)[i],
+                w.Ky(op_cond),
+                self.Ky_lat(op_cond)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return serie_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs), *temp])
+        return serie_k([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
 
     def rearrange_conductors_in_wp(
         self,
@@ -1349,13 +1355,15 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         R_wp_i = self.R_wp_i[0]  # noqa: N806
 
         dx_WP = self.dx_i * wp_reduction_factor  # noqa: N806
-        debug_msg.extend(f"dx_WP = {dx_WP}")
-        debug_msg.extend(f"self.dx_i = {self.dx_i}")
-        debug_msg.extend(f"wp_reduction_factor = {wp_reduction_factor}")
-        debug_msg.extend(f"min_gap_x = {min_gap_x}")
-        debug_msg.extend(f"n_layers_reduction = {n_layers_reduction}")
-        debug_msg.extend(f"layout = {layout}")
-        debug_msg.extend(f"n_conductors = {n_conductors}")
+        debug_msg.extend([
+            f"dx_WP = {dx_WP}",
+            f"self.dx_i = {self.dx_i}",
+            f"wp_reduction_factor = {wp_reduction_factor}",
+            f"min_gap_x = {min_gap_x}",
+            f"n_layers_reduction = {n_layers_reduction}",
+            f"layout = {layout}",
+            f"n_conductors = {n_conductors}",
+        ])
 
         WPs = []  # noqa: N806
         # number of conductors to be allocated
@@ -1453,7 +1461,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             bluemira_error(msg)
             raise ValueError(msg)
 
-    def _tresca_stress(self, pm: float, fz: float, **kwargs):
+    def _tresca_stress(self, pm: float, fz: float, op_cond: OperationalConditions):
         """
         Estimate the maximum principal (Tresca) stress on the inner case of the TF coil.
 
@@ -1471,9 +1479,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Radial magnetic pressure acting on the case [Pa].
         fz : float
             Vertical force acting on the inner leg of the case [N].
-        **kwargs :
-            Additional keyword arguments forwarded to the stiffness calculations (e.g.,
-            temperature, material model switches).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -1488,7 +1496,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         # the maximum hoop stress, corrected to account for the presence of the WP, is
         # placed at the innermost radius of the case as:
         sigma_theta = (
-            2.0 / (1 - beta**2) * pm * self.Kx_vault(**kwargs) / self.Kx(**kwargs)
+            2.0 / (1 - beta**2) * pm * self.Kx_vault(op_cond) / self.Kx(op_cond)
         )
 
         # In addition to the radial centripetal force, the second in-plane component
@@ -1504,8 +1512,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self,
         pm: float,
         fz: float,
-        T: float,  # noqa: N803
-        B: float,
+        op_cond,
         allowable_sigma: float,
         bounds: np.array = None,
     ):
@@ -1519,10 +1526,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         f_z :
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        T :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the jacket material.
         bounds :
@@ -1544,7 +1550,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         result = minimize_scalar(
             fun=self._sigma_difference,
-            args=(pm, fz, T, B, allowable_sigma),
+            args=(pm, fz, op_cond, allowable_sigma),
             bounds=bounds,
             method=method,
             options={"xatol": 1e-4},
@@ -1563,8 +1569,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         dy_vault: float,
         pm: float,
         fz: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
     ):
         """
@@ -1581,10 +1586,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         fz :
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        temperature :
-            The temperature (K) at which the conductor operates.
-        B :
-            The magnetic field (T) at which the conductor operates.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the vault material.
 
@@ -1599,7 +1603,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             using the value provided in jacket_thickness.
         """
         self.dy_vault = dy_vault
-        sigma = self._tresca_stress(pm, fz, temperature=temperature, B=B)
+        sigma = self._tresca_stress(pm, fz, op_cond)
         # bluemira_print(f"sigma: {sigma}, allowable_sigma: {allowable_sigma},
         # diff: {sigma - allowable_sigma}")
         return abs(sigma - allowable_sigma)
@@ -1608,8 +1612,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self,
         pm: float,
         fz: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
         bounds_cond_jacket: np.array = None,
         bounds_dy_vault: np.array = None,
@@ -1639,10 +1642,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             Radial magnetic pressure on the conductor [Pa].
         fz : float
             Axial electromagnetic force on the winding pack [N].
-        temperature : float
-            Operating temperature [K].
-        B : float
-            Operating magnetic field [T].
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma : float
             Maximum allowable stress for structural material [Pa].
         bounds_cond_jacket : np.ndarray, optional
@@ -1717,12 +1719,12 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
                 / self.n_conductors
             )
             conductor.optimize_jacket_conductor(
-                pm, t_z_cable_jacket, temperature, B, allowable_sigma, bounds_cond_jacket
+                pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
             )
-            debug_msg.extend(f"t_z_cable_jacket: {t_z_cable_jacket}")
-            debug_msg.extend(
-                f"after optimization: conductor jacket area = {conductor.area_jacket}"
-            )
+            debug_msg.extend([
+                f"t_z_cable_jacket: {t_z_cable_jacket}",
+                f"after optimization: conductor jacket area = {conductor.area_jacket}",
+            ])
 
             conductor.dx_jacket = (
                 1 - damping_factor
@@ -1740,12 +1742,11 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
                 layout=layout,
             )
 
-            debug_msg.extend(f"before optimization: case dy_vault = {self.dy_vault}")
+            debug_msg.append(f"before optimization: case dy_vault = {self.dy_vault}")
             self.optimize_vault_radial_thickness(
                 pm=pm,
                 fz=fz,
-                T=temperature,
-                B=B,
+                op_cond=op_cond,
                 allowable_sigma=allowable_sigma,
                 bounds=bounds_dy_vault,
             )

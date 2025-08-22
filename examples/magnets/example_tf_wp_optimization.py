@@ -14,14 +14,22 @@ for conductor design, thermal and structural optimization, and case layout visua
 # %% md
 # ## Some import
 # %%
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from eurofusion_materials.library.magnet_branch_mats import (
+    COPPER_100,
+    COPPER_300,
+    DUMMY_INSULATOR_MAG,
+    NB3SN_MAG,
+    SS316_LN_MAG,
+)
 from matplotlib import cm
 
+# get some materials from EUROfusion materials library
+from matproplib import OperationalConditions
+
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.magnets.cable import (
     DummyRectangularCableHTS,
@@ -35,23 +43,12 @@ from bluemira.magnets.utils import (
     delayed_exp_func,
 )
 from bluemira.magnets.winding_pack import WindingPack
-from bluemira.materials import MaterialCache
 
 # %%
 # cache all the magnets classes for future use
 register_all_magnets()
 
-# load supporting bluemira materials
-MATERIAL_DATA_PATH = get_bluemira_path("magnets", subfolder="examples")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(MATERIAL_DATA_PATH, "materials_mag.json"))
 
-# get some materials from MATERIAL_CACHE
-ss316 = MATERIAL_CACHE.get_material("SS316-LN")
-nb3sn = MATERIAL_CACHE.get_material("Nb3Sn - WST")
-copper100 = MATERIAL_CACHE.get_material("Copper100")
-copper300 = MATERIAL_CACHE.get_material("Copper300")
-dummy_insulator = MATERIAL_CACHE.get_material("DummyInsulator")
 # %% md
 # ## Plot options
 # %%
@@ -200,8 +197,8 @@ sc_strand_dict = {
     "d_strand": 1.0e-3,
     "temperature": T_op,
     "materials": [
-        {"material": "Nb3Sn - WST", "fraction": 0.5},
-        {"material": "Copper100", "fraction": 0.5},
+        {"material": NB3SN_MAG, "fraction": 0.5},
+        {"material": COPPER_100, "fraction": 0.5},
     ],
 }
 
@@ -210,7 +207,7 @@ stab_strand_dict = {
     "name": "Stabilizer",
     "d_strand": 1.0e-3,
     "temperature": T_op,
-    "materials": [{"material": "Copper300", "fraction": 1.0}],
+    "materials": [{"material": COPPER_300, "fraction": 1.0}],
 }
 
 # Create strand objects using class-based factory methods
@@ -228,7 +225,11 @@ sc_strand.plot_Ic_B(Bt_arr, temperature=(T_sc + T_margin))
 Iop_range = (
     np.linspace(30, 100, 100) * 1e3
 )  # 5 equally spaced values between 30 and 100 A
-Ic_sc_arr = sc_strand.Ic(B=Bt_arr, temperature=(T_sc + T_margin))
+op_conds = [
+    OperationalConditions(temperature=T_sc + T_margin, magnetic_field=Bti)
+    for Bti in Bt_arr
+]
+Ic_sc_arr = np.array([sc_strand.Ic(op) for op in op_conds])
 
 # Create a colormap to assign colors to different Iop values
 colors = cm.viridis(np.linspace(0, 1, len(Iop_range)))  # Use the 'viridis' colormap
@@ -263,7 +264,8 @@ plt.show()
 # **Calculate number of superconducting strands considering the strand critical
 # current at B_TF_i and T_sc + T_margin**
 # %%
-Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=(T_op))
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i)
+Ic_sc = sc_strand.Ic(op_cond)
 n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 ###########################################################
@@ -307,14 +309,11 @@ cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
 
 # operational_point = {"temperature": 5.7, "B": B(0)}
-nb3sn = cable.sc_strand.materials[0].material
-copper100 = cable.sc_strand.materials[1].material
-copper300 = cable.stab_strand.materials[0].material
 
-mats = [nb3sn, copper100, copper300, ss316]
+mats = [NB3SN_MAG, COPPER_100, COPPER_300, SS316_LN_MAG]
 mat_names = ["nb3sn", "copper100", "copper300", "ss316"]
 temperatures = np.linspace(5, 250, 500)
-operational_point = {"B": B_fun(0)}
+magnetic_field = B_fun(0)
 
 # Prepare plots
 # Adjusted for 5 plots (3x2 grid)
@@ -325,15 +324,15 @@ ax1, ax2, ax3, ax4, ax5 = axes.flatten()[:5]  # Extracting the first five axes
 
 for mat, name in zip(mats, mat_names, strict=False):
     # Calculate properties over the temperature range
-    density = np.array([
-        mat.density(temperature=T, **operational_point) for T in temperatures
-    ])
-    cp_per_mass = np.array([
-        mat.Cp(temperature=T, **operational_point) for T in temperatures
-    ])
+    op_conds = [
+        OperationalConditions(temperature=T, magnetic_field=magnetic_field)
+        for T in temperatures
+    ]
+    density = np.array([mat.density(op) for op in op_conds])
+    cp_per_mass = np.array([mat.specific_heat_capacity(op) for op in op_conds])
     cp_per_volume = cp_per_mass * density
-    erho = np.array([mat.erho(temperature=T, **operational_point) for T in temperatures])
-    E = np.array([mat.E(temperature=T, **operational_point) for T in temperatures])
+    erho = np.array([mat.electrical_resistivity(op) for op in op_conds])
+    E = np.array([mat.youngs_modulus(op) for op in op_conds])
 
     # Plot density
     ax1.plot(temperatures, density, label=name)
@@ -413,8 +412,8 @@ bluemira_print(
 # Create a conductor with the specified cable
 conductor = SymmetricConductor(
     cable=cable,
-    mat_jacket=ss316,
-    mat_ins=dummy_insulator,
+    mat_jacket=SS316_LN_MAG,
+    mat_ins=DUMMY_INSULATOR_MAG,
     dx_jacket=0.01,
     dx_ins=1e-3,
 )
@@ -434,7 +433,7 @@ case = TrapezoidalCaseTF(
     dy_ps=dr_plasma_side,
     dy_vault=0.7,
     theta_TF=360 / n_TF,
-    mat_case=ss316,
+    mat_case=SS316_LN_MAG,
     WPs=[wp1],
 )
 
@@ -469,8 +468,7 @@ err = 1e-6
 case.optimize_jacket_and_vault(
     pm=pm,
     fz=t_z,
-    temperature=T_op,
-    B=B_TF_i,
+    op_cond=OperationalConditions(temperature=T_op, magnetic_field=B_TF_i),
     allowable_sigma=S_Y,
     bounds_cond_jacket=bounds_cond_jacket,
     bounds_dy_vault=bounds_dy_vault,
@@ -517,6 +515,9 @@ if show:
     ax.set_ylabel("Radial direction [m]")
 
     plt.show()
+
+
+bluemira_print("Convergence should be: 9.066682976310327e-07 after 68 iterations")
 # %%
 # new operational current
 bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")

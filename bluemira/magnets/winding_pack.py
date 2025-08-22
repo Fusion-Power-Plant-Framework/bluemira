@@ -10,6 +10,7 @@ from typing import Any, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
 
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
 from bluemira.magnets.registry import RegistrableMeta
@@ -82,37 +83,39 @@ class WindingPack(metaclass=RegistrableMeta):
         """Return the total jacket material area [m²]."""
         return self.conductor.area_jacket * self.n_conductors
 
-    def Kx(self, **kwargs) -> float:  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        **kwargs
-            Additional arguments forwarded to the conductor.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Stiffness along the x-axis [N/m].
         """
-        return self.conductor.Kx(**kwargs) * self.ny / self.nx
+        return self.conductor.Kx(op_cond) * self.ny / self.nx
 
-    def Ky(self, **kwargs) -> float:  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness along the y-axis.
 
         Parameters
         ----------
-        **kwargs
-            Additional arguments forwarded to the conductor.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Stiffness along the y-axis [N/m].
         """
-        return self.conductor.Ky(**kwargs) * self.nx / self.ny
+        return self.conductor.Ky(op_cond) * self.nx / self.ny
 
     def plot(
         self,

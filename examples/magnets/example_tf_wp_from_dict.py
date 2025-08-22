@@ -1,17 +1,19 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
+from bluemira.base.look_and_feel import bluemira_print
 import numpy as np
+from eurofusion_materials.library.magnet_branch_mats import (
+    COPPER_100,
+    COPPER_300,
+    DUMMY_INSULATOR_MAG,
+    NB3SN_MAG,
+    SS316_LN_MAG,
+)
+from matproplib import OperationalConditions
+
+op_cond = OperationalConditions(temperature=5.7, magnetic_field=10.0, strain=0.0055)
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
-from bluemira.base.file import get_bluemira_path
 from bluemira.magnets.case_tf import create_case_tf_from_dict
-from bluemira.materials import MaterialCache
-
-material_path = get_bluemira_path("magnets", subfolder="examples")
-material_file = Path(material_path, "materials_mag.json")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(material_file)
 
 case_tf_dict = {
     "name_in_registry": "TrapezoidalCaseTF",
@@ -20,7 +22,7 @@ case_tf_dict = {
     "dy_ps": 0.05733333333333333,
     "dy_vault": 0.4529579163961617,
     "theta_TF": 22.5,
-    "mat_case": "SS316-LN",
+    "mat_case": SS316_LN_MAG,
     "WPs": [
         {
             "name_in_registry": "WindingPack",
@@ -42,8 +44,8 @@ case_tf_dict = {
                         "d_strand": 0.001,
                         "temperature": 5.7,
                         "materials": [
-                            {"material": "Nb3Sn - WST", "fraction": 0.5},
-                            {"material": "Copper100", "fraction": 0.5},
+                            {"material": NB3SN_MAG, "fraction": 0.5},
+                            {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
                     "stab_strand": {
@@ -51,13 +53,13 @@ case_tf_dict = {
                         "name": "Stabilizer",
                         "d_strand": 0.001,
                         "temperature": 5.7,
-                        "materials": [{"material": "Copper300", "fraction": 1.0}],
+                        "materials": [{"material": COPPER_300, "fraction": 1.0}],
                     },
                     "dx": 0.034648435154495685,
                     "aspect_ratio": 1.2,
                 },
-                "mat_jacket": "SS316-LN",
-                "mat_ins": "DummyInsulator",
+                "mat_jacket": SS316_LN_MAG,
+                "mat_ins": DUMMY_INSULATOR_MAG,
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
             },
@@ -84,8 +86,8 @@ case_tf_dict = {
                         "d_strand": 0.001,
                         "temperature": 5.7,
                         "materials": [
-                            {"material": "Nb3Sn - WST", "fraction": 0.5},
-                            {"material": "Copper100", "fraction": 0.5},
+                            {"material": NB3SN_MAG, "fraction": 0.5},
+                            {"material": COPPER_100, "fraction": 0.5},
                         ],
                     },
                     "stab_strand": {
@@ -93,13 +95,13 @@ case_tf_dict = {
                         "name": "Stabilizer",
                         "d_strand": 0.001,
                         "temperature": 5.7,
-                        "materials": [{"material": "Copper300", "fraction": 1.0}],
+                        "materials": [{"material": COPPER_300, "fraction": 1.0}],
                     },
                     "dx": 0.034648435154495685,
                     "aspect_ratio": 1.2,
                 },
-                "mat_jacket": "SS316-LN",
-                "mat_ins": "DummyInsulator",
+                "mat_jacket": SS316_LN_MAG,
+                "mat_ins": DUMMY_INSULATOR_MAG,
                 "dx_jacket": 0.0030808556812487366,
                 "dx_ins": 0.001,
             },
@@ -152,7 +154,8 @@ err = 1e-6
 
 # optimize number of stabilizer strands
 sc_strand = case_tf.WPs[0].conductor.cable.sc_strand
-Ic_sc = sc_strand.Ic(B=B_TF_i, temperature=T_op)
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
+Ic_sc = sc_strand.Ic(op_cond)
 case_tf.WPs[0].conductor.cable.n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 from bluemira.magnets.utils import delayed_exp_func
@@ -167,9 +170,10 @@ T_for_hts = T_op
 I_fun = delayed_exp_func(Iop, Tau_discharge, t_delay)
 B_fun = delayed_exp_func(B_TF_i, Tau_discharge, t_delay)
 
-print("cable")
-print(case_tf.WPs[0].conductor.cable)
 
+import time
+
+t = time.time()
 case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
     t0,
     tf,
@@ -178,15 +182,18 @@ case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
     B_fun,
     I_fun,
     bounds=[1, 10000],
-    show=True,
+    show=False,
 )
+
+print("Time taken for optimization:", time.time() - t)
 
 # Optimize case with structural constraints
 case_tf.optimize_jacket_and_vault(
     pm=pm,
     fz=t_z,
-    temperature=T_op,
-    B=B_TF_i,
+    op_cond=OperationalConditions(
+        temperature=T_op, magnetic_field=B_TF_i, strain=0.0055
+    ),
     allowable_sigma=S_Y,
     bounds_cond_jacket=bounds_cond_jacket,
     bounds_dy_vault=bounds_dy_vault,
@@ -242,7 +249,10 @@ if show:
 
     plt.show()
 
-I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(B=B_TF_i, temperature=T_op)
+bluemira_print("Convergence should be: 9.020308301268381e-07 after 11 iterations")
+
+op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
+I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(op_cond)
 I_max = I_sc * case_tf.WPs[0].conductor.cable.n_sc_strand
 I_TF_max = I_max * case_tf.n_conductors
 print(I_max)
