@@ -78,6 +78,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         stab_strand: Strand,
         params: ParameterFrameLike,
         name: str = "Cable",
+        **props,
     ):
         """
         Representation of a cable. Only the x-dimension of the cable is given as
@@ -113,6 +114,10 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         self.name = name
         self.sc_strand = sc_strand
         self.stab_strand = stab_strand
+
+        for k, v in props.items():
+            setattr(self, k, v if callable(v) else lambda *arg, v=v, **kwargs: v)  # noqa: ARG005
+        self._props = list(props.keys())
 
     @property
     @abstractmethod
@@ -648,6 +653,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             "cos_theta": self.params.cos_theta.value,
             "sc_strand": self.sc_strand.to_dict(),
             "stab_strand": self.stab_strand.to_dict(),
+            **{k: getattr(k)() for k in self._props},
         }
 
     @classmethod
@@ -679,7 +685,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         ValueError
             If name_in_registry mismatch or duplicate instance name.
         """
-        name_in_registry = cable_dict.get("name_in_registry")
+        name_in_registry = cable_dict.pop("name_in_registry", None)
         expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
 
         if name_in_registry != expected_name_in_registry:
@@ -689,13 +695,13 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             )
 
         # Deserialize strands
-        sc_strand_data = cable_dict["sc_strand"]
+        sc_strand_data = cable_dict.pop("sc_strand")
         if isinstance(sc_strand_data, Strand):
             sc_strand = sc_strand_data
         else:
             sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
 
-        stab_strand_data = cable_dict["stab_strand"]
+        stab_strand_data = cable_dict.pop("stab_strand")
         if isinstance(stab_strand_data, Strand):
             stab_strand = stab_strand_data
         else:
@@ -705,12 +711,13 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=cable_dict["n_sc_strand"],
-            n_stab_strand=cable_dict["n_stab_strand"],
-            d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict["void_fraction"],
-            cos_theta=cable_dict["cos_theta"],
-            name=name or cable_dict.get("name"),
+            n_sc_strand=cable_dict.pop("n_sc_strand"),
+            n_stab_strand=cable_dict.pop("n_stab_strand"),
+            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
+            void_fraction=cable_dict.pop("void_fraction"),
+            cos_theta=cable_dict.pop("cos_theta"),
+            name=name or cable_dict.pop("name", None),
+            **cable_dict,
         )
 
 
@@ -741,6 +748,7 @@ class RectangularCable(ABCCable):
         stab_strand: Strand,
         params: ParameterFrameLike,
         name: str = "RectangularCable",
+        **props,
     ):
         """
         Representation of a cable. Only the x-dimension of the cable is given as
@@ -768,14 +776,22 @@ class RectangularCable(ABCCable):
             See :class:`~bluemira.magnets.cable.RectangularCableParams`
             for parameter details.
         name : str, optional
-            Name of the cable.
+            Name of the cable
+        props:
+            extra properties
         """
         super().__init__(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
             params=params,
             name=name,
+            **props,
         )
+
+    @property
+    def dx(self):
+        """Cable dimension in the x direction [m]"""
+        return self.params.dx.value
 
     @property
     def dy(self):
@@ -885,21 +901,21 @@ class RectangularCable(ABCCable):
             )
 
         # Deserialize strands
-        sc_strand_data = cable_dict["sc_strand"]
+        sc_strand_data = cable_dict.pop("sc_strand")
         if isinstance(sc_strand_data, Strand):
             sc_strand = sc_strand_data
         else:
             sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
 
-        stab_strand_data = cable_dict["stab_strand"]
+        stab_strand_data = cable_dict.pop("stab_strand")
         if isinstance(stab_strand_data, Strand):
             stab_strand = stab_strand_data
         else:
             stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
 
         # Geometry parameters
-        dx = cable_dict.get("dx")
-        aspect_ratio = cable_dict.get("aspect_ratio")
+        dx = cable_dict.pop("dx", None)
+        aspect_ratio = cable_dict.pop("aspect_ratio")
 
         if dx is not None and aspect_ratio is not None:
             bluemira_warn(
@@ -919,11 +935,11 @@ class RectangularCable(ABCCable):
             )
 
         # Base cable parameters
-        n_sc_strand = cable_dict["n_sc_strand"]
-        n_stab_strand = cable_dict["n_stab_strand"]
-        d_cooling_channel = cable_dict["d_cooling_channel"]
-        void_fraction = cable_dict["void_fraction"]
-        cos_theta = cable_dict["cos_theta"]
+        n_sc_strand = cable_dict.pop("n_sc_strand")
+        n_stab_strand = cable_dict.pop("n_stab_strand")
+        d_cooling_channel = cable_dict.pop("d_cooling_channel")
+        void_fraction = cable_dict.pop("void_fraction")
+        cos_theta = cable_dict.pop("cos_theta")
 
         # how to handle with parameterframe?
         # Create cable
@@ -936,7 +952,8 @@ class RectangularCable(ABCCable):
             d_cooling_channel=d_cooling_channel,
             void_fraction=void_fraction,
             cos_theta=cos_theta,
-            name=name or cable_dict.get("name"),
+            name=name or cable_dict.pop("name", None),
+            **cable_dict,
         )
 
         # Adjust aspect ratio if needed
@@ -944,72 +961,6 @@ class RectangularCable(ABCCable):
             cable.set_aspect_ratio(aspect_ratio)
 
         return cable
-
-
-class DummyRectangularCableHTS(RectangularCable):
-    """
-    Dummy rectangular cable with young's moduli set to 120 GPa.
-    """
-
-    _name_in_registry_ = "DummyRectangularCableHTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummyRectangularCableHTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus of the cable material.
-
-        This is a constant value specific to the implementation. Subclasses may override
-        this method to provide a temperature- or field-dependent modulus. The `kwargs`
-        parameter is unused here but retained for interface consistency.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 120e9
-
-
-class DummyRectangularCableLTS(RectangularCable):
-    """
-    Dummy square cable with young's moduli set to 0.1 GPa
-    """
-
-    _name_in_registry_ = "DummyRectangularCableLTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummyRectangularCableLTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus of the cable material.
-
-        This implementation returns a fixed value (0.1 GPa). Subclasses may override
-        this method with more sophisticated behavior. `kwargs` are included for
-        compatibility but not used in this implementation.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 0.1e9
 
 
 class SquareCable(ABCCable):
@@ -1154,7 +1105,7 @@ class SquareCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
-        name_in_registry = cable_dict.get("name_in_registry")
+        name_in_registry = cable_dict.pop("name_in_registry", None)
         expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
 
         if name_in_registry != expected_name_in_registry:
@@ -1163,78 +1114,20 @@ class SquareCable(ABCCable):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
-        stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
+        sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
+        stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
 
         # how to handle this?
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=cable_dict["n_sc_strand"],
-            n_stab_strand=cable_dict["n_stab_strand"],
-            d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict["void_fraction"],
-            cos_theta=cable_dict["cos_theta"],
-            name=name or cable_dict.get("name"),
+            n_sc_strand=cable_dict.pop("n_sc_strand"),
+            n_stab_strand=cable_dict.pop("n_stab_strand"),
+            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
+            void_fraction=cable_dict.pop("void_fraction"),
+            cos_theta=cable_dict.pop("cos_theta"),
+            name=name or cable_dict.pop("name", None),
         )
-
-
-class DummySquareCableHTS(SquareCable):
-    """
-    Dummy square cable with Young's modulus set to 120 GPa.
-    """
-
-    _name_in_registry_ = "DummySquareCableHTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummySquareCableHTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus for the HTS dummy cable.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 120e9
-
-
-class DummySquareCableLTS(SquareCable):
-    """
-    Dummy square cable with Young's modulus set to 0.1 GPa.
-    """
-
-    _name_in_registry_ = "DummySquareCableLTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummySquareCableLTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus for the LTS dummy cable.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 0.1e9
 
 
 class RoundCable(ABCCable):
@@ -1433,7 +1326,7 @@ class RoundCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
-        name_in_registry = cable_dict.get("name_in_registry")
+        name_in_registry = cable_dict.pop("name_in_registry", None)
         expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
 
         if name_in_registry != expected_name_in_registry:
@@ -1442,84 +1335,21 @@ class RoundCable(ABCCable):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        sc_strand = create_strand_from_dict(strand_dict=cable_dict["sc_strand"])
-        stab_strand = create_strand_from_dict(strand_dict=cable_dict["stab_strand"])
+        sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
+        stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
 
         # how to handle?
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=cable_dict["n_sc_strand"],
-            n_stab_strand=cable_dict["n_stab_strand"],
-            d_cooling_channel=cable_dict["d_cooling_channel"],
-            void_fraction=cable_dict["void_fraction"],
-            cos_theta=cable_dict["cos_theta"],
-            name=name or cable_dict.get("name"),
+            n_sc_strand=cable_dict.pop("n_sc_strand"),
+            n_stab_strand=cable_dict.pop("n_stab_strand"),
+            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
+            void_fraction=cable_dict.pop("void_fraction"),
+            cos_theta=cable_dict.pop("cos_theta"),
+            name=name or cable_dict.pop("name", None),
+            **cable_dict,
         )
-
-
-class DummyRoundCableHTS(RoundCable):
-    """
-    Dummy round cable with Young's modulus set to 120 GPa.
-
-    This class provides a simplified round cable configuration for high-temperature
-    superconducting (HTS) analysis with a fixed stiffness value.
-    """
-
-    _name_in_registry_ = "DummyRoundCableHTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummyRoundCableHTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus for the HTS dummy round cable.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 120e9
-
-
-class DummyRoundCableLTS(RoundCable):
-    """
-    Dummy round cable with Young's modulus set to 0.1 GPa.
-
-    This class provides a simplified round cable configuration for low-temperature
-    superconducting (LTS) analysis with a fixed, softer stiffness value.
-    """
-
-    _name_in_registry_ = "DummyRoundCableLTS"
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("name", "DummyRoundCableLTS")
-        super().__init__(*args, **kwargs)
-
-    def E(self, op_cond: OperationalConditions):  # noqa: N802, PLR6301, ARG002
-        """
-        Return the Young's modulus for the LTS dummy round cable.
-
-        Parameters
-        ----------
-        op_cond: OperationalConditions
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        float
-            Young's modulus in Pascals [Pa].
-        """
-        return 0.1e9
 
 
 def create_cable_from_dict(
