@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from bluemira.base.look_and_feel import bluemira_print
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
