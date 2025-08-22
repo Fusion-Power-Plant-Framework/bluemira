@@ -248,6 +248,8 @@ if show:
 
     plt.show()
 
+bluemira_print("Convergence should be: 9.020308301268381e-07 ")
+
 op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
 I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(op_cond)
 I_max = I_sc * case_tf.WPs[0].conductor.cable.n_sc_strand
