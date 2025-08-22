@@ -515,6 +515,9 @@ if show:
     ax.set_ylabel("Radial direction [m]")
 
     plt.show()
+
+
+bluemira_print("Convergence should be: 9.066682976310327e-07 after 68 iterations")
 # %%
 # new operational current
 bluemira_print(f"Operational current after optimization: {I_TF / case.n_conductors}")
