@@ -137,7 +137,7 @@ def _finite_width_correction(a_d_t: float, c: float, w: float) -> float:
     return 1.0 / np.sqrt(np.cos(np.sqrt(a_d_t) * np.pi * c / (2 * w)))  # (11)
 
 
-class Crack(abc.ABC):  # noqa: B024
+class Crack(abc.ABC):
     """
     Crack description ABC for the Paris fatigue model
 
@@ -180,15 +180,15 @@ class Crack(abc.ABC):  # noqa: B024
         return self.alpha * np.pi * self.depth * self.width
 
     @staticmethod
-    @abc.abstractsmethod
+    @abc.abstractmethod
     def stress_intensity_factor(
-        hoop_stress: float,  # noqa: ARG004
-        bend_stress: float,  # noqa: ARG004
-        t: float,  # noqa: ARG004
-        w: float,  # noqa: ARG004
-        a: float,  # noqa: ARG004
-        c: float,  # noqa: ARG004
-        phi: float,  # noqa: ARG004
+        hoop_stress: float,
+        bend_stress: float,
+        t: float,
+        w: float,
+        a: float,
+        c: float,
+        phi: float,
     ) -> float:
         """
         Calculate the crack stress intensity factor
