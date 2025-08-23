@@ -20,7 +20,6 @@ from scipy.optimize import minimize_scalar
 from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
-from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.strand import (
     Strand,
     SuperconductingStrand,
@@ -28,15 +27,7 @@ from bluemira.magnets.strand import (
 )
 from bluemira.magnets.utils import reciprocal_summation, summation
 
-# ------------------------------------------------------------------------------
-# Global Registries
-# ------------------------------------------------------------------------------
-CABLE_REGISTRY = {}
 
-
-# ------------------------------------------------------------------------------
-# Cable Class
-# ------------------------------------------------------------------------------
 @dataclass
 class CableParams(ParameterFrame):
     """
@@ -55,7 +46,7 @@ class CableParams(ParameterFrame):
     """Correction factor for twist in the cable layout."""
 
 
-class ABCCable(ABC, metaclass=RegistrableMeta):
+class ABCCable(ABC):
     """
     Abstract base class for superconducting cables.
 
@@ -68,7 +59,6 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
     - Subclasses must define `dx`, `dy`, `Kx`, `Ky`, and `from_dict`.
     """
 
-    _registry_ = CABLE_REGISTRY
     _name_in_registry_: str | None = None  # Abstract base classes should NOT register
     param_cls: type[CableParams] = CableParams
 
@@ -274,7 +264,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
         """
         # Calculate the rate of heat generation (Joule dissipation)
         if isinstance(temperature, np.ndarray):
-            temperature = temperature[0]
+            temperature = temperature.item()
 
         op_cond = OperationalConditions(temperature=temperature, magnetic_field=B_fun(t))
 
@@ -309,7 +299,7 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
 
         return solution
 
-    def optimize_n_stab_ths(
+    def optimise_n_stab_ths(
         self,
         t0: float,
         tf: float,
@@ -421,15 +411,11 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             # diff = abs(final_temperature - target_temperature)
             return abs(final_temperature - target_temperature)
 
-        method = None
-        if bounds is not None:
-            method = "bounded"
-
         result = minimize_scalar(
             fun=final_temperature_difference,
             args=(t0, tf, initial_temperature, target_temperature, B_fun, I_fun),
             bounds=bounds,
-            method=method,
+            method=None if bounds is None else "bounded",
         )
 
         if not result.success:
@@ -460,72 +446,22 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
         )
 
-        if show:
-            _, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+        @dataclass
+        class StabilisingStrandRes:
+            solution: Any
+            info_text: str
 
-            # --- Plot Temperature Evolution ---
-            ax_temp.plot(solution.t, solution.y[0], "r*", label="Simulation points")
-            time_steps = np.linspace(t0, tf, 100)
-            ax_temp.plot(
-                time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve"
-            )
-            ax_temp.grid(visible=True)
-            ax_temp.set_ylabel("Temperature [K]", fontsize=10)
-            ax_temp.set_title("Quench temperature evolution", fontsize=11)
-            ax_temp.legend(fontsize=9)
-
-            ax_temp.tick_params(axis="y", labelcolor="k", labelsize=9)
-
-            # Insert text box with additional info
-            info_text = (
+        return StabilisingStrandRes(
+            solution,
+            (
                 f"Target T: {target_temperature:.2f} K\n"
                 f"Initial T: {initial_temperature:.2f} K\n"
                 f"SC Strand: {self.sc_strand.name}\n"
                 f"n. sc. strand = {self.params.n_sc_strand.value}\n"
                 f"Stab. strand = {self.stab_strand.name}\n"
                 f"n. stab. strand = {self.params.n_stab_strand.value}\n"
-            )
-            props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.8}
-            ax_temp.text(
-                0.65,
-                0.5,
-                info_text,
-                transform=ax_temp.transAxes,
-                fontsize=9,
-                verticalalignment="top",
-                bbox=props,
-            )
-
-            # --- Plot I_fun(t) and B_fun(t) ---
-            time_steps_fine = np.linspace(t0, tf, 300)
-            I_values = [I_fun(t) for t in time_steps_fine]  # noqa: N806
-            B_values = [B_fun(t) for t in time_steps_fine]
-
-            ax_ib.plot(time_steps_fine, I_values, "g", label="Current [A]")
-            ax_ib.set_ylabel("Current [A]", color="g", fontsize=10)
-            ax_ib.tick_params(axis="y", labelcolor="g", labelsize=9)
-            ax_ib.grid(visible=True)
-
-            ax_ib_right = ax_ib.twinx()
-            ax_ib_right.plot(
-                time_steps_fine, B_values, "m--", label="Magnetic field [T]"
-            )
-            ax_ib_right.set_ylabel("Magnetic field [T]", color="m", fontsize=10)
-            ax_ib_right.tick_params(axis="y", labelcolor="m", labelsize=9)
-
-            # Labels
-            ax_ib.set_xlabel("Time [s]", fontsize=10)
-            ax_ib.tick_params(axis="x", labelsize=9)
-
-            # Combined legend for both sides
-            lines, labels = ax_ib.get_legend_handles_labels()
-            lines2, labels2 = ax_ib_right.get_legend_handles_labels()
-            ax_ib.legend(lines + lines2, labels + labels2, loc="best", fontsize=9)
-
-            plt.tight_layout()
-            plt.show()
-
-        return result
+            ),
+        )
 
     # OD homogenized structural properties
     @abstractmethod

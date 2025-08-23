@@ -16,10 +16,6 @@ from matproplib import OperationalConditions
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
-from bluemira.magnets.registry import RegistrableMeta
-
-# Global registries
-WINDINGPACK_REGISTRY = {}
 
 
 @dataclass
@@ -34,7 +30,7 @@ class WindingPackParams(ParameterFrame):
     """Number of conductors along the y-axis."""
 
 
-class WindingPack(metaclass=RegistrableMeta):
+class WindingPack:
     """
     Represents a winding pack composed of a grid of conductors.
 
@@ -48,7 +44,6 @@ class WindingPack(metaclass=RegistrableMeta):
         Number of conductors along the y-axis.
     """
 
-    _registry_: ClassVar[dict] = WINDINGPACK_REGISTRY
     _name_in_registry_: ClassVar[str] = "WindingPack"
     param_cls: type[WindingPackParams] = WindingPackParams
 

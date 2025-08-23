@@ -19,19 +19,9 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
-from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import reciprocal_summation, summation
 
-# ------------------------------------------------------------------------------
-# Global Registries
-# ------------------------------------------------------------------------------
 
-CONDUCTOR_REGISTRY = {}
-
-
-# ------------------------------------------------------------------------------
-# Strand Class
-# ------------------------------------------------------------------------------
 @dataclass
 class ConductorParams(ParameterFrame):
     """
@@ -48,13 +38,12 @@ class ConductorParams(ParameterFrame):
     """y-thickness of the insulator [m]."""
 
 
-class Conductor(metaclass=RegistrableMeta):
+class Conductor:
     """
     A generic conductor consisting of a cable surrounded by a jacket and an
     insulator.
     """
 
-    _registry_ = CONDUCTOR_REGISTRY
     _name_in_registry_ = "Conductor"
     param_cls: type[ConductorParams] = ConductorParams
 

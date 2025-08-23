@@ -31,13 +31,14 @@ case_tf_dict = {
                 "name_in_registry": "SymmetricConductor",
                 "name": "SymmetricConductor",
                 "cable": {
-                    "name_in_registry": "DummyRectangularCableLTS",
-                    "name": "DummyRectangularCableLTS",
+                    "name_in_registry": "RectangularCable",
+                    "name": "RectangularCableLTS",
                     "n_sc_strand": 321,
                     "n_stab_strand": 476,
                     "d_cooling_channel": 0.01,
                     "void_fraction": 0.7,
                     "cos_theta": 0.97,
+                    "E": 0.1e9,
                     "sc_strand": {
                         "name_in_registry": "SuperconductingStrand",
                         "name": "Nb3Sn_strand",
@@ -73,13 +74,14 @@ case_tf_dict = {
                 "name_in_registry": "SymmetricConductor",
                 "name": "SymmetricConductor",
                 "cable": {
-                    "name_in_registry": "DummyRectangularCableLTS",
-                    "name": "DummyRectangularCableLTS",
+                    "name_in_registry": "RectangularCable",
+                    "name": "RectangularCableLTS",
                     "n_sc_strand": 321,
                     "n_stab_strand": 476,
                     "d_cooling_channel": 0.01,
                     "void_fraction": 0.7,
                     "cos_theta": 0.97,
+                    "E": 0.1e9,
                     "sc_strand": {
                         "name_in_registry": "SuperconductingStrand",
                         "name": "Nb3Sn_strand",

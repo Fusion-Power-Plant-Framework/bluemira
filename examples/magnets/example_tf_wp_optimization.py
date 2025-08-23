@@ -31,10 +31,7 @@ from matproplib import OperationalConditions
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.magnets.cable import (
-    DummyRectangularCableHTS,
-    DummyRectangularCableLTS,
-)
+from bluemira.magnets.cable import RectangularCable
 from bluemira.magnets.case_tf import TrapezoidalCaseTF
 from bluemira.magnets.conductor import SymmetricConductor
 from bluemira.magnets.init_magnets_registry import register_all_magnets
@@ -273,7 +270,8 @@ dx = 0.05  # cable length... just a dummy value
 B_ref = 15  # [T] Reference B field value (limit for LTS)
 
 if B_TF_i < B_ref:
-    cable = DummyRectangularCableLTS(
+    cable = RectangularCable(
+        name="RectangularCableLTS",
         dx=dx,
         sc_strand=sc_strand,
         stab_strand=stab_strand,
@@ -282,9 +280,11 @@ if B_TF_i < B_ref:
         d_cooling_channel=1e-2,
         void_fraction=0.7,
         cos_theta=0.97,
+        E=0.1e9,
     )
 else:
-    cable = DummyRectangularCableHTS(
+    cable = RectangularCable(
+        name="RectangularCableHTS",
         dx=dx,
         sc_strand=sc_strand,
         stab_strand=stab_strand,
@@ -293,6 +293,7 @@ else:
         d_cooling_channel=1e-2,
         void_fraction=0.7,
         cos_theta=0.97,
+        E=120e9,
     )
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")

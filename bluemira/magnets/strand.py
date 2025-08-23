@@ -27,18 +27,8 @@ from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-from bluemira.magnets.registry import RegistrableMeta
-
-# ------------------------------------------------------------------------------
-# Global Registries
-# ------------------------------------------------------------------------------
-
-STRAND_REGISTRY = {}
 
 
-# ------------------------------------------------------------------------------
-# Strand Class
-# ------------------------------------------------------------------------------
 @dataclass
 class StrandParams(ParameterFrame):
     """
@@ -51,7 +41,7 @@ class StrandParams(ParameterFrame):
     """Operating temperature [K]."""
 
 
-class Strand(metaclass=RegistrableMeta):
+class Strand:
     """
     Represents a strand with a circular cross-section, composed of a homogenized
     mixture of materials.
@@ -59,7 +49,6 @@ class Strand(metaclass=RegistrableMeta):
     This class automatically registers itself and its instances.
     """
 
-    _registry_ = STRAND_REGISTRY
     _name_in_registry_ = "Strand"
     param_cls: type[StrandParams] = StrandParams
 

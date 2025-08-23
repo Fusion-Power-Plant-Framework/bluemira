@@ -10,6 +10,7 @@ Paris Law fatigue model with FE-inspired analytical crack propagation
 
 import abc
 from dataclasses import dataclass
+from typing import Final
 
 import numpy as np
 
@@ -170,7 +171,6 @@ class Crack(abc.ABC):
         Crack width along the plate length direction
     """
 
-    alpha = None
     param_cls: type[CrackParams] = CrackParams
 
     def __init__(self, params: ParameterFrameLike):
@@ -202,6 +202,10 @@ class Crack(abc.ABC):
         """
         return self.alpha * np.pi * self.params.depth.value * self.params.width.value
 
+    @property
+    @abc.abstractmethod
+    def alpha(self) -> float: ...
+
     @abc.abstractmethod
     def stress_intensity_factor(
         self,
@@ -230,7 +234,7 @@ class QuarterEllipticalCornerCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 0.25
+    alpha: Final[float] = 0.25
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,
@@ -330,7 +334,7 @@ class SemiEllipticalSurfaceCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 0.5
+    alpha: Final[float] = 0.5
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,
@@ -421,7 +425,7 @@ class EllipticalEmbeddedCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 1.0
+    alpha: Final[float] = 1.0
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,

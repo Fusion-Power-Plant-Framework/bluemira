@@ -34,19 +34,12 @@ from bluemira.base.look_and_feel import (
 )
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
-from bluemira.magnets.registry import RegistrableMeta
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnets.utils import reciprocal_summation, summation
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
 
-# ------------------------------------------------------------------------------
-# Global Registries
-# ------------------------------------------------------------------------------
-CASETF_REGISTRY = {}
 
-
-# ------------------------------------------------------------------------------
-# TFcoil cross section Geometry Base and Implementations
-# ------------------------------------------------------------------------------
 @dataclass
 class TFCaseGeometryParams(ParameterFrame):
     """
@@ -132,7 +125,7 @@ class CaseGeometry(ABC):
         """
 
 
-class TrapezoidalGeometry(CaseGeometry):
+class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
     """
     Geometry of a Toroidal Field (TF) coil case with trapezoidal cross-section.
 
@@ -163,7 +156,7 @@ class TrapezoidalGeometry(CaseGeometry):
             * (self.params.Ri.value - self.params.Rk.value)
         )
 
-    def build_polygon(self) -> np.ndarray:
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Construct the (x, r) coordinates of the trapezoidal cross-section polygon.
 
@@ -184,36 +177,8 @@ class TrapezoidalGeometry(CaseGeometry):
             [-dx_inner / 2, self.params.Rk.value],
         ])
 
-    def plot(self, ax=None, *, show=False) -> plt.Axes:
-        """
-        Plot the trapezoidal cross-sectional shape of the TF case.
 
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes, optional
-            Axis object on which to draw the geometry. If None, a new figure and axis
-            are created.
-        show : bool, optional
-            If True, the plot is immediately displayed using plt.show(). Default is
-            False.
-
-        Returns
-        -------
-        matplotlib.axes.Axes
-            Axis object containing the plotted geometry.
-        """
-        if ax is None:
-            _, ax = plt.subplots()
-        poly = self.build_polygon()
-        poly = np.vstack([poly, poly[0]])  # Close the polygon
-        ax.plot(poly[:, 0], poly[:, 1], "k-", linewidth=2)
-        ax.set_aspect("equal")
-        if show:
-            plt.show()
-        return ax
-
-
-class WedgedGeometry(CaseGeometry):
+class WedgedGeometry(GeometryParameterisation):
     """
     TF coil case shaped as a sector of an annulus (wedge with arcs).
 
@@ -235,7 +200,7 @@ class WedgedGeometry(CaseGeometry):
             0.5 * self.rad_theta_TF * (self.params.Ri.value**2 - self.params.Rk.value**2)
         )
 
-    def build_polygon(self, n_points: int = 50) -> np.ndarray:
+    def create_shape(self, label: str = "", n_points: int = 50) -> BluemiraWire:
         """
         Build the polygon representing the wedge shape.
 
@@ -269,33 +234,6 @@ class WedgedGeometry(CaseGeometry):
 
         return np.vstack((arc_outer, arc_inner))
 
-    def plot(self, ax=None, *, show=False):
-        """
-        Plot the wedge-shaped TF coil case cross-section.
-
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes, optional
-            Axis on which to draw the geometry. If None, a new figure and axis are
-            created.
-        show : bool, optional
-            If True, immediately display the plot with plt.show(). Default is False.
-
-        Returns
-        -------
-        matplotlib.axes.Axes
-            The axis object containing the plot.
-        """
-        if ax is None:
-            _, ax = plt.subplots()
-        poly = self.build_polygon()
-        poly = np.vstack([poly, poly[0]])  # Close the polygon
-        ax.plot(poly[:, 0], poly[:, 1], "k-", linewidth=2)
-        ax.set_aspect("equal")
-        if show:
-            plt.show()
-        return ax
-
 
 # ------------------------------------------------------------------------------
 # CaseTF Class
@@ -316,7 +254,7 @@ class TFCaseParams(ParameterFrame):
     """Radial thickness of the vault support region [m]."""
 
 
-class BaseCaseTF(CaseGeometry, ABC, metaclass=RegistrableMeta):
+class BaseCaseTF(CaseGeometry, ABC):
     """
     Abstract Base Class for Toroidal Field Coil Case configurations.
 
