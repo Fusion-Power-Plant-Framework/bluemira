@@ -258,10 +258,10 @@ class Conductor:
         ])
         return summation(weighted_specific_heat) / self.area
 
-    def _mat_ins_y_modulus(self, op_cond: OperationalConditions):
+    def _mat_ins_y_modulus(self, op_cond: OperationalConditions):  # why?
         return self.mat_ins.youngs_modulus(op_cond)
 
-    def _mat_jacket_y_modulus(self, op_cond: OperationalConditions):
+    def _mat_jacket_y_modulus(self, op_cond: OperationalConditions):  # why?
         return self.mat_jacket.youngs_modulus(op_cond)
 
     def _Kx_topbot_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -318,17 +318,6 @@ class Conductor:
             / self.params.dx_jacket.value
         )
 
-    def _Kx_cable(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Equivalent stiffness of the cable in the x-direction.
-
-        Returns
-        -------
-        :
-            Axial stiffness [N/m]
-        """
-        return self.cable.Kx(op_cond)
-
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the conductor in the x-direction.
@@ -344,7 +333,7 @@ class Conductor:
             reciprocal_summation([
                 self._Kx_topbot_ins(op_cond),
                 self._Kx_topbot_jacket(op_cond),
-                self._Kx_cable(op_cond),
+                self.cable.Kx(op_cond),
                 self._Kx_topbot_jacket(op_cond),
                 self._Kx_topbot_ins(op_cond),
             ]),
@@ -406,17 +395,6 @@ class Conductor:
             / self.params.dy_jacket.value
         )
 
-    def _Ky_cable(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Equivalent stiffness of the cable in the y-direction.
-
-        Returns
-        -------
-        :
-            Axial stiffness [N/m]
-        """
-        return self.cable.Ky(op_cond)
-
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the conductor in the y-direction.
@@ -432,7 +410,7 @@ class Conductor:
             reciprocal_summation([
                 self._Ky_topbot_ins(op_cond),
                 self._Ky_topbot_jacket(op_cond),
-                self._Ky_cable(op_cond),
+                self.cable.Ky(op_cond),
                 self._Ky_topbot_jacket(op_cond),
                 self._Ky_topbot_ins(op_cond),
             ]),
@@ -490,7 +468,7 @@ class Conductor:
                 2 * self._Ky_lat_ins(op_cond),
                 2 * self._Ky_lat_jacket(op_cond),
                 reciprocal_summation([
-                    self._Ky_cable(op_cond),
+                    self.cable.Ky(op_cond),
                     self._Ky_topbot_jacket(op_cond) / 2,
                 ]),
             ])
@@ -506,7 +484,7 @@ class Conductor:
                 2 * self._Kx_lat_ins(op_cond),
                 2 * self._Kx_lat_jacket(op_cond),
                 reciprocal_summation([
-                    self._Kx_cable(op_cond),
+                    self.cable.Kx(op_cond),
                     self._Kx_topbot_jacket(op_cond) / 2,
                 ]),
             ])
