@@ -166,11 +166,12 @@ class CoilGroupFieldsMixin:
             # true divide errors for zero current coils
             cr_ind = np.nonzero(cr)
             fx = np.zeros_like(cr)
+            xv = self.x[cr_ind]
             fx[cr_ind] = (
                 MU_0
                 * self.current[cr_ind] ** 2
-                / (4 * np.pi * self.x[cr_ind])
-                * (np.log(8 * self.x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                / (4 * np.pi * xv)
+                * (np.log(8 * xv / cr[cr_ind]) - 1 + 0.25)
             )
         else:
             fx = 0
@@ -192,42 +193,29 @@ class CoilGroupFieldsMixin:
             The Green's matrix element for the coil mutual force.
 
         """
-        # TODO @je-cook: Vectorise
-        # 3575
         x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
-        pos = np.array([x, z])
-        response = np.zeros((x.size, coil_grp.x.size, 2))
-        for j, coil in enumerate(coil_grp.all_coils()):
-            xw = np.nonzero(x == coil.x)[0]
-            zw = np.nonzero(z == coil.z)[0]
-            same_pos = np.array(list(set(xw) & set(zw)))
-            if same_pos.size > 0:
-                # self inductance
-                cr = self._current_radius[same_pos]
-                Bz = np.zeros((x.size, 1))
-                Bx = Bz.copy()  # Should be 0 anyway
-                mask = np.zeros_like(Bz, dtype=bool)
-                mask[same_pos] = True
-                if any(cr != 0):
-                    cr_ind = np.nonzero(cr)
-                    Bz[mask][cr_ind] = (
-                        MU_0
-                        / (4 * np.pi * x[cr_ind])
-                        * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
-                    )
-                if False in mask:
-                    Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
-                    Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
 
-            else:
-                Bz = coil.Bz_response(x, z)
-                Bx = coil.Bx_response(x, z)
+        same_pos = (x[:, None] == coil_grp.x[None]) & (z[:, None] == coil_grp.z[None])
 
-            # 1 cross B
-            response[:, j, :] = (
-                2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
+        Bx, Bz = np.zeros((2, x.size, coil_grp.n_coils()))
+
+        # Self-inductance
+        i_self, j_self = np.nonzero(same_pos)
+        cr_values = self._current_radius[i_self]
+        if any(cr_values != 0):
+            cr_ind = np.nonzero(cr_values)
+            xv = x[i_self][cr_ind]
+            Bz[i_self, j_self][cr_ind] = (
+                MU_0 / (4 * np.pi * xv) * (np.log(8 * xv / cr_values[cr_ind]) - 1 + 0.25)
             )
-        return response
+
+        # External field
+        mask_ext = np.nonzero(~same_pos)
+        Bz[mask_ext] = coil_grp.Bz_response(x, z)[mask_ext]
+        Bx[mask_ext] = coil_grp.Bx_response(x, z)[mask_ext]
+
+        # Final response: 1 x B
+        return 2 * np.pi * x[:, None, None] * np.stack([Bz, -Bx], axis=-1)
 
     def _stored_greens(self, green: float | np.ndarray):
         """
@@ -262,7 +250,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Mixed control response
+        :
+            Mixed control response
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
@@ -313,7 +302,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Combined control response
+        :
+            Combined control response
         """
         response = np.zeros_like(inside, dtype=float)
         for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
@@ -376,7 +366,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        The Boolean array of point indices inside/outside the coil boundary
+        :
+            The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = (
             np.ascontiguousarray(x)[..., np.newaxis],
@@ -432,7 +423,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Greens response
+        :
+            Greens response
         """
         if not split:
             _quad_x = self._quad_x
@@ -494,7 +486,8 @@ class CoilGroupFieldsMixin:
 
         Returns
         -------
-        Analytical response
+        :
+            Analytical response
         """
         if not split:
             coil_x = self.x
@@ -548,7 +541,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Poloidal magnetic flux density
+        :
+            Poloidal magnetic flux density
         """
         return self._sum(super().psi(x, z), sum_coils=sum_coils, control=control)
 
@@ -576,7 +570,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Radial magnetic field
+        :
+            Radial magnetic field
         """
         return self._sum(super().Bx(x, z), sum_coils=sum_coils, control=control)
 
@@ -604,7 +599,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Vertical magnetic field
+        :
+            Vertical magnetic field
         """
         return self._sum(super().Bz(x, z), sum_coils=sum_coils, control=control)
 
@@ -632,7 +628,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Psi response
+        :
+            Psi response
         """
         return self._sum(
             super().psi_response(x, z), sum_coils=sum_coils, control=control
@@ -662,7 +659,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Bx response
+        :
+            Bx response
         """
         return self._sum(super().Bx_response(x, z), sum_coils=sum_coils, control=control)
 
@@ -690,7 +688,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Bz response
+        :
+            Bz response
         """
         return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
 
@@ -776,7 +775,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        The Boolean array of point indices inside/outside the coil boundary
+        :
+            The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = (
             np.ascontiguousarray(x)[..., np.newaxis],
@@ -822,7 +822,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Combined response
+        :
+            Combined response
         """
         response = np.zeros(inside.shape[:-1])
         points = inside[..., 0]
@@ -862,7 +863,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Analytical response
+        :
+            Analytical response
         """
         return super()._response_analytical(
             semianalytic,

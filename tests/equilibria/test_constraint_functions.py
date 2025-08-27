@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraint_funcs import (
@@ -64,6 +65,54 @@ class TestSimpleABConstraintFuntions:
             assert test_f == pytest.approx(f)
 
 
+def old_control_F(self, coil_grp) -> np.ndarray:
+    """
+    Calculates the coil mutual force
+
+    \t:math:`Fz_{i,j}=-2\\pi X_i\\mathcal{G}(X_j,Z_j,X_i,Z_i)`
+
+    Returns
+    -------
+    :
+        The Green's matrix element for the coil mutual force.
+
+    """
+    x, z = np.atleast_1d(self.x), np.atleast_1d(self.z)  # single coil
+    pos = np.array([x, z])
+    response = np.zeros((x.size, coil_grp.x.size, 2))
+    for j, coil in enumerate(coil_grp.all_coils()):
+        xw = np.nonzero(x == coil.x)[0]
+        zw = np.nonzero(z == coil.z)[0]
+        same_pos = np.array(list(set(xw) & set(zw)))
+        if same_pos.size > 0:
+            # self inductance
+            cr = self._current_radius[same_pos]
+            Bz = np.zeros((x.size, 1))
+            Bx = Bz.copy()  # Should be 0 anyway
+            mask = np.zeros_like(Bz, dtype=bool)
+            mask[same_pos] = True
+            if any(cr != 0):
+                cr_ind = np.nonzero(cr)
+                Bz[mask][cr_ind] = (
+                    MU_0
+                    / (4 * np.pi * x[cr_ind])
+                    * (np.log(8 * x[cr_ind] / cr[cr_ind]) - 1 + 0.25)
+                )
+            if False in mask:
+                Bz[~mask] = coil.Bz_response(*pos[:, ~mask[:, 0]])
+                Bx[~mask] = coil.Bx_response(*pos[:, ~mask[:, 0]])
+
+        else:
+            Bz = coil.Bz_response(x, z)
+            Bx = coil.Bx_response(x, z)
+
+        # 1 cross B
+        response[:, j, :] = (
+            2 * np.pi * x[:, np.newaxis] * np.squeeze(np.array([Bz, -Bx]).T)
+        )
+    return response
+
+
 class TestEquilibriumInput:
     @classmethod
     def setup_class(cls):
@@ -114,6 +163,14 @@ class TestEquilibriumInput:
                 inboard=b,
             )
             assert cmc.f_constraint(self.vector) == pytest.approx(c)
+
+    def test_coil_force_constraint_against_old_function(self):
+        np.testing.assert_allclose(
+            old_control_F(self.coilset, self.coilset),
+            self.coilset.control_F(self.coilset),
+            atol=0.0,
+            rtol=0.0,
+        )
 
     def test_coil_force_constraint(self):
         a_mat = self.coilset.control_F(self.coilset)
