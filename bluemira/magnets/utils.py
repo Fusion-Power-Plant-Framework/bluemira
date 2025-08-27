@@ -6,10 +6,12 @@
 
 """Utils for magnets"""
 
+from collections.abc import Callable, Sequence
+
 import numpy as np
 
 
-def summation(arr: list | np.ndarray):
+def summation(arr: Sequence[float]) -> float:
     """
     Compute the simple summation of the series
 
@@ -21,16 +23,17 @@ def summation(arr: list | np.ndarray):
 
     Returns
     -------
-    Result: float
+    :
+        the resulting summation
 
-    i.e.
-
-    Y = sum(x1 + x2 + x3 ...)
+    Notes
+    -----
+    Y = sum(x1...xn)
     """
     return np.sum(arr)
 
 
-def reciprocal_summation(arr: list | np.ndarray):
+def reciprocal_summation(arr: Sequence[float]) -> float:
     """
     Compute the inverse of the summation of a reciprocal series
 
@@ -42,16 +45,19 @@ def reciprocal_summation(arr: list | np.ndarray):
 
     Returns
     -------
-    Result: float
+    :
+        resulting summation
 
-    i.e.
-
+    Notes
+    -----
     Y = [sum(1/x1 + 1/x2 + 1/x3 ...)]^-1
     """
     return (np.sum((1 / element) for element in arr)) ** -1
 
 
-def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
+def delayed_exp_func(
+    x0: float, tau: float, t_delay: float = 0
+) -> Callable[[float], float]:
     """
     Delayed Exponential function
 
@@ -59,16 +65,17 @@ def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
 
     Parameters
     ----------
-    x0: float
+    x0:
         initial value
-    tau: float
+    tau:
         characteristic time constant
-    t_delay: float
+    t_delay:
         delay time
 
     Returns
     -------
-    A Callable - exponential function
+    :
+        An exponential function
 
     """
 

@@ -6,10 +6,11 @@
 
 """Cable class"""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,15 +18,24 @@ from matproplib import OperationalConditions
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
-from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_debug,
+    bluemira_error,
+    bluemira_print,
+    bluemira_warn,
+)
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.strand import (
     Strand,
     SuperconductingStrand,
     create_strand_from_dict,
 )
 from bluemira.magnets.utils import reciprocal_summation, summation
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 @dataclass
@@ -80,9 +90,9 @@ class ABCCable(ABC):
 
         Parameters
         ----------
-        sc_strand : SuperconductingStrand
+        sc_strand:
             The superconducting strand.
-        stab_strand : Strand
+        stab_strand:
             The stabilizer strand.
         params:
             Structure containing the input parameters. Keys are:
@@ -94,7 +104,7 @@ class ABCCable(ABC):
 
             See :class:`~bluemira.magnets.cable.CableParams`
             for parameter details.
-        name : str
+        name:
             Identifier for the cable instance.
         """
         super().__init__(params)  # fix when split into builders and designers
@@ -105,9 +115,24 @@ class ABCCable(ABC):
         self.sc_strand = sc_strand
         self.stab_strand = stab_strand
 
+        youngs_modulus: Callable[[Any, OperationalConditions], float] | float | None = (
+            props.pop("E", None)
+        )
+        if youngs_modulus is not None:
+            if "E" in vars(type(self)):
+                bluemira_debug("E already defined in class, ignoring")
+            else:
+                self.E = (
+                    youngs_modulus
+                    if callable(youngs_modulus)
+                    else lambda self, op_cond, v=youngs_modulus: youngs_modulus
+                )
+
         for k, v in props.items():
             setattr(self, k, v if callable(v) else lambda *arg, v=v, **kwargs: v)  # noqa: ARG005
-        self._props = list(props.keys())
+        self._props = list(props.keys()) + (
+            [] if "E" in vars(type(self)) or youngs_modulus is None else ["E"]
+        )
 
     @property
     @abstractmethod
@@ -132,7 +157,7 @@ class ABCCable(ABC):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
@@ -146,20 +171,21 @@ class ABCCable(ABC):
             + self.stab_strand.rho(op_cond) * self.area_stab
         ) / (self.area_sc + self.area_stab)
 
-    def erho(self, op_cond: OperationalConditions):
+    def erho(self, op_cond: OperationalConditions) -> float:
         """
         Computes the cable's equivalent resistivity considering the resistance
         of its strands in parallel.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-            float [Ohm m]
+        :
+            resistivity [Ohm m]
         """
         resistances = np.array([
             self.sc_strand.erho(op_cond) / self.area_sc,
@@ -175,13 +201,14 @@ class ABCCable(ABC):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-            float [J/K/m]
+        :
+            Specific heat capacity [J/K/m]
         """
         weighted_specific_heat = np.array([
             self.sc_strand.Cp(op_cond) * self.area_sc * self.sc_strand.rho(op_cond),
@@ -195,28 +222,28 @@ class ABCCable(ABC):
         )
 
     @property
-    def area_stab(self):
+    def area_stab(self) -> float:
         """Area of the stabilizer region"""
         return self.stab_strand.area * self.params.n_stab_strand.value
 
     @property
-    def area_sc(self):
+    def area_sc(self) -> float:
         """Area of the superconductor region"""
         return self.sc_strand.area * self.params.n_sc_strand.value
 
     @property
-    def area_cc(self):
+    def area_cc(self) -> float:
         """Area of the cooling channel"""
         return self.params.d_cooling_channel.value**2 / 4 * np.pi
 
     @property
-    def area(self):
+    def area(self) -> float:
         """Area of the cable considering the void fraction"""
         return (
             self.area_sc + self.area_stab
         ) / self.params.void_fraction.value / self.params.cos_theta.value + self.area_cc
 
-    def E(self, op_cond: OperationalConditions):  # noqa: N802
+    def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Return the effective Young's modulus of the cable [Pa].
 
@@ -225,13 +252,13 @@ class ABCCable(ABC):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Default Young's modulus (0).
         """
         raise NotImplementedError("E for Cable is not implemented.")
@@ -242,25 +269,25 @@ class ABCCable(ABC):
         temperature: float,
         B_fun: Callable,
         I_fun: Callable,  # noqa: N803
-    ):
+    ) -> float:
         """
         Calculate the derivative of temperature (dT/dt) for a 0D heat balance problem.
 
         Parameters
         ----------
-            t : float
-                The current time in seconds.
-            temperature : float
-                The current temperature in Celsius.
-            B_fun : Callable
-                The magnetic field [T] as time function
-            I_fun : Callable
-                The current [A] flowing through the conductor as time function
+        t:
+            The current time in seconds.
+        temperature:
+            The current temperature in Celsius.
+        B_fun:
+            The magnetic field [T] as time function
+        I_fun:
+            The current [A] flowing through the conductor as time function
 
         Returns
         -------
-            dTdt : float
-                The derivative of temperature with respect to time (dT/dt).
+        :
+            The derivative of temperature with respect to time (dT/dt).
         """
         # Calculate the rate of heat generation (Joule dissipation)
         if isinstance(temperature, np.ndarray):
@@ -305,9 +332,9 @@ class ABCCable(ABC):
         tf: float,
         initial_temperature: float,
         target_temperature: float,
-        B_fun: Callable,
-        I_fun: Callable,  # noqa: N803
-        bounds: np.ndarray = None,
+        B_fun: Callable[[float], float],
+        I_fun: Callable[[float], float],  # noqa: N803
+        bounds: np.ndarray | None = None,
         *,
         show: bool = False,
     ):
@@ -336,7 +363,7 @@ class ABCCable(ABC):
 
         Returns
         -------
-        result : scipy.optimize.OptimizeResult
+        :
             The result of the optimization process.
 
         Raises
@@ -356,9 +383,9 @@ class ABCCable(ABC):
             tf: float,
             initial_temperature: float,
             target_temperature: float,
-            B_fun: Callable,
-            I_fun: Callable,  # noqa: N803
-        ):
+            B_fun: Callable[[float], float],
+            I_fun: Callable[[float], float],  # noqa: N803
+        ) -> float:
             """
             Compute the absolute temperature difference at final time between the
             simulated and target temperatures.
@@ -370,24 +397,24 @@ class ABCCable(ABC):
 
             Parameters
             ----------
-            n_stab : int
+            n_stab:
                 Number of stabilizer strands to set temporarily for this simulation.
-            t0 : float
+            t0:
                 Initial time of the simulation [s].
-            tf : float
+            tf:
                 Final time of the simulation [s].
-            initial_temperature : float
+            initial_temperature:
                 Temperature at the start of the simulation [K].
-            target_temperature : float
+            target_temperature:
                 Desired temperature at the end of the simulation [K].
-            B_fun : Callable
+            B_fun:
                 Magnetic field as a time-dependent function [T].
-            I_fun : Callable
+            I_fun:
                 Current as a time-dependent function [A].
 
             Returns
             -------
-            float
+            :
                 Absolute difference between the simulated final temperature and the
                 target temperature [K].
 
@@ -472,7 +499,9 @@ class ABCCable(ABC):
     def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """Total equivalent stiffness along y-axis"""
 
-    def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
+    def plot(
+        self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=plt.Axes | None
+    ):
         """
         Plot a schematic view of the cable cross-section.
 
@@ -483,20 +512,20 @@ class ABCCable(ABC):
 
         Parameters
         ----------
-        xc : float, optional
+        xc:
             x-coordinate of the cable center in the plot [m]. Default is 0.
-        yc : float, optional
+        yc:
             y-coordinate of the cable center in the plot [m]. Default is 0.
-        show : bool, optional
+        show:
             If True, the plot is rendered immediately with `plt.show()`.
             Default is False.
-        ax : matplotlib.axes.Axes or None, optional
+        ax:
             The matplotlib Axes object to draw on. If None, a new figure and
             Axes are created internally.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The Axes object with the cable plot, which can be further customized
             or saved.
 
@@ -539,7 +568,7 @@ class ABCCable(ABC):
             plt.show()
         return ax
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return a human-readable summary of the cable configuration.
 
@@ -548,7 +577,7 @@ class ABCCable(ABC):
 
         Returns
         -------
-        str
+        :
             A formatted multiline string describing the cable.
         """
         return (
@@ -568,7 +597,7 @@ class ABCCable(ABC):
             f"n stab strand: {self.params.n_stab_strand.value}"
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str | float | int | dict[str, Any]]:
         """
         Serialize the cable instance to a dictionary.
 
@@ -578,9 +607,6 @@ class ABCCable(ABC):
             Dictionary containing cable and strand configuration.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "n_sc_strand": self.params.n_sc_strand.value,
             "n_stab_strand": self.params.n_stab_strand.value,
@@ -597,23 +623,21 @@ class ABCCable(ABC):
         cls,
         cable_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "ABCCable":
+    ) -> ABCCable:
         """
         Deserialize a cable instance from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Cable or subclass).
-        cable_dict : dict
+        cable_dict:
             Dictionary containing serialized cable data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        ABCCable
+        :
             Instantiated cable object.
 
         Raises
@@ -696,9 +720,9 @@ class RectangularCable(ABCCable):
 
         Parameters
         ----------
-        sc_strand : SuperconductingStrand
+        sc_strand:
             Superconducting strand.
-        stab_strand : Strand
+        stab_strand:
             Stabilizer strand.
         params:
             Structure containing the input parameters. Keys are:
@@ -711,7 +735,7 @@ class RectangularCable(ABCCable):
 
             See :class:`~bluemira.magnets.cable.RectangularCableParams`
             for parameter details.
-        name : str, optional
+        name:
             Name of the cable
         props:
             extra properties
@@ -725,63 +749,63 @@ class RectangularCable(ABCCable):
         )
 
     @property
-    def dx(self):
+    def dx(self) -> float:
         """Cable dimension in the x direction [m]"""
         return self.params.dx.value
 
     @property
-    def dy(self):
+    def dy(self) -> float:
         """Cable dimension in the y direction [m]"""
         return self.area / self.params.dx.value
 
     # Decide if this function shall be a setter.
     # Defined as "normal" function to underline that it modifies dx.
-    def set_aspect_ratio(self, value: float) -> None:
+    def set_aspect_ratio(self, value: float):
         """Modify dx in order to get the given aspect ratio"""
         self.params.dx.value = np.sqrt(value * self.area)
 
     # OD homogenized structural properties
-    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Homogenized stiffness in the x-direction [Pa].
         """
-        return self.E(op_cond) * self.dy /         self.params.dx.value
+        return self.E(op_cond) * self.dy / self.params.dx.value
 
-    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the y-axis.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Homogenized stiffness in the y-direction [Pa].
         """
         return self.E(op_cond) * self.params.dx.value / self.dy
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the rectangular cable into a dictionary.
 
         Returns
         -------
-        dict
+        :
             Dictionary including rectangular cable parameters.
         """
         data = super().to_dict()
@@ -796,7 +820,7 @@ class RectangularCable(ABCCable):
         cls,
         cable_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "RectangularCable":
+    ) -> RectangularCable:
         """
         Deserialize a RectangularCable from a dictionary.
 
@@ -809,17 +833,15 @@ class RectangularCable(ABCCable):
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Cable or subclass).
-        cable_dict : dict
+        cable_dict:
             Dictionary containing serialized cable data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        RectangularCable
+        :
             Instantiated rectangular cable object.
 
         Raises
@@ -915,6 +937,7 @@ class SquareCable(ABCCable):
         stab_strand: Strand,
         params: ParameterFrameLike,
         name: str = "SquareCable",
+        **props,
     ):
         """
         Representation of a square cable.
@@ -952,61 +975,61 @@ class SquareCable(ABCCable):
             stab_strand=stab_strand,
             params=params,
             name=name,
+            **props,
         )
 
-    # replace dx and dy with dl?
     @property
-    def dx(self):
+    def dx(self) -> float:
         """Cable dimension in the x direction [m]"""
         return np.sqrt(self.area)
 
     @property
-    def dy(self):
+    def dy(self) -> float:
         """Cable dimension in the y direction [m]"""
         return self.dx
 
     # OD homogenized structural properties
-    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Homogenized stiffness in the x-direction [Pa].
         """
         return self.E(op_cond)
 
-    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the y-axis.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Homogenized stiffness in the y-direction [Pa].
         """
         return self.E(op_cond)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the SquareCable.
 
         Returns
         -------
-        dict
+        :
             Serialized dictionary.
         """
         return super().to_dict()
@@ -1016,23 +1039,21 @@ class SquareCable(ABCCable):
         cls,
         cable_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "SquareCable":
+    ) -> SquareCable:
         """
         Deserialize a SquareCable from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Cable or subclass).
-        cable_dict : dict
+        cable_dict:
             Dictionary containing serialized cable data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        SquareCable
+        :
             Instantiated square cable.
 
         Raises
@@ -1041,15 +1062,6 @@ class SquareCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
-        name_in_registry = cable_dict.pop("name_in_registry", None)
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
         sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
         stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
 
@@ -1074,7 +1086,6 @@ class RoundCable(ABCCable):
     around a central cooling channel.
     """
 
-    _name_in_registry_ = "RoundCable"
     param_cls: type[CableParams] = CableParams
 
     def __init__(
@@ -1083,6 +1094,7 @@ class RoundCable(ABCCable):
         stab_strand: Strand,
         params: ParameterFrameLike,
         name: str = "RoundCable",
+        **props,
     ):
         """
         Representation of a round cable
@@ -1111,23 +1123,23 @@ class RoundCable(ABCCable):
             stab_strand=stab_strand,
             params=params,
             name=name,
+            **props,
         )
 
-    # replace dx and dy with dr?
     @property
-    def dx(self):
+    def dx(self) -> float:
         """Cable dimension in the x direction [m] (i.e. cable's diameter)"""
         return np.sqrt(self.area * 4 / np.pi)
 
     @property
-    def dy(self):
+    def dy(self) -> float:
         """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
         return self.dx
 
     # OD homogenized structural properties
     # A structural analysis should be performed to check how much the rectangular
     #  approximation is fine also for the round cable.
-    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the x-axis.
 
@@ -1137,18 +1149,18 @@ class RoundCable(ABCCable):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent stiffness in the x-direction [Pa].
         """
         return self.E(op_cond)
 
-    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the y-axis.
 
@@ -1158,36 +1170,43 @@ class RoundCable(ABCCable):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent stiffness in the y-direction [Pa].
         """
         return self.E(op_cond)
 
-    def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
+    def plot(
+        self,
+        xc: float = 0,
+        yc: float = 0,
+        *,
+        show: bool = False,
+        ax: plt.Axes | None = None,
+    ) -> plt.Axes:
         """
         Schematic plot of the cable cross-section.
 
         Parameters
         ----------
-        xc : float, optional
+        xc:
             x-coordinate of the cable center [m]. Default is 0.
-        yc : float, optional
+        yc:
             y-coordinate of the cable center [m]. Default is 0.
-        show : bool, optional
+        show:
             If True, the plot is displayed immediately using `plt.show()`.
             Default is False.
-        ax : matplotlib.axes.Axes or None, optional
+        ax:
             Axis to plot on. If None, a new figure and axis are created.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axis object containing the cable plot, useful for further customization
             or saving.
         """
@@ -1221,13 +1240,13 @@ class RoundCable(ABCCable):
             plt.show()
         return ax
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the RoundCable.
 
         Returns
         -------
-        dict
+        :
             Serialized dictionary.
         """
         return super().to_dict()
@@ -1237,23 +1256,21 @@ class RoundCable(ABCCable):
         cls,
         cable_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "RoundCable":
+    ) -> RoundCable:
         """
         Deserialize a RoundCable from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Cable or subclass).
-        cable_dict : dict
+        cable_dict:
             Dictionary containing serialized cable data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        RoundCable
+        :
             Instantiated square cable.
 
         Raises
@@ -1262,15 +1279,6 @@ class RoundCable(ABCCable):
             If unique_name is False and a duplicate name is detected in the instance
             cache.
         """
-        name_in_registry = cable_dict.pop("name_in_registry", None)
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
         sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
         stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
 
@@ -1291,20 +1299,20 @@ class RoundCable(ABCCable):
 def create_cable_from_dict(
     cable_dict: dict,
     name: str | None = None,
-):
+) -> ABCCable:
     """
     Factory function to create a Cable or its subclass from a serialized dictionary.
 
     Parameters
     ----------
-    cable_dict : dict
+    cable_dict:
         Dictionary with serialized cable data. Must include a 'name_in_registry' field.
-    name : str, optional
+    name:
         If given, overrides the name from the dictionary.
 
     Returns
     -------
-    ABCCable
+    :
         Instantiated cable object.
 
     Raises

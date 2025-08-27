@@ -16,14 +16,15 @@ Note:
 - Focused on the two-dimensional analysis of the inboard leg.
 """
 
+from __future__ import annotations
+
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matproplib import OperationalConditions
-from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import (
@@ -33,11 +34,16 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
 )
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnets.utils import reciprocal_summation, summation
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
+
+if TYPE_CHECKING:
+    from matproplib import OperationalConditions
+    from matproplib.material import Material
+
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 @dataclass
@@ -74,12 +80,12 @@ class CaseGeometry(ABC):
 
         Parameters
         ----------
-        radius : float
+        radius:
             Radial position at which to compute the toroidal width [m].
 
         Returns
         -------
-        float
+        :
             Toroidal width [m] at the given radius.
         """
         return 2 * radius * np.tan(self.rad_theta_TF / 2)
@@ -92,7 +98,7 @@ class CaseGeometry(ABC):
 
         Returns
         -------
-        float
+        :
             Cross-sectional area [m²] enclosed by the case geometry.
 
         Notes
@@ -101,22 +107,22 @@ class CaseGeometry(ABC):
         """
 
     @abstractmethod
-    def plot(self, ax=None, *, show: bool = False) -> plt.Axes:
+    def plot(self, ax: plt.Axes = None, *, show: bool = False) -> plt.Axes:
         """
         Plot the cross-sectional geometry of the TF case.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axis on which to draw the geometry. If None, a new figure and axis are
             created.
-        show : bool, optional
+        show:
             If True, the plot is displayed immediately using plt.show().
             Default is False.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axis object containing the plot.
 
         Notes
@@ -144,7 +150,7 @@ class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
 
         Returns
         -------
-        float
+        :
             Cross-sectional area [m²].
         """
         return (
@@ -162,7 +168,7 @@ class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
 
         Returns
         -------
-        np.ndarray
+        :
             Array of shape (4, 2) representing the corners of the trapezoid.
             Coordinates are ordered counterclockwise starting from the top-left corner:
             [(-dx_outer/2, Ri), (dx_outer/2, Ri), (dx_inner/2, Rk), (-dx_inner/2, Rk)].
@@ -192,7 +198,7 @@ class WedgedGeometry(GeometryParameterisation):
 
         Returns
         -------
-        float
+        :
             Cross-sectional area [m²] defined by the wedge between outer radius Ri
             and inner radius Rk over the toroidal angle theta_TF.
         """
@@ -209,12 +215,12 @@ class WedgedGeometry(GeometryParameterisation):
 
         Parameters
         ----------
-        n_points : int, optional
+        n_points:
             Number of points to discretize each arc. Default is 50.
 
         Returns
         -------
-        np.ndarray
+        :
             Array of (x, y) coordinates [m] describing the wedge polygon.
         """
         theta1 = -self.rad_theta_TF / 2
@@ -235,9 +241,6 @@ class WedgedGeometry(GeometryParameterisation):
         return np.vstack((arc_outer, arc_inner))
 
 
-# ------------------------------------------------------------------------------
-# CaseTF Class
-# ------------------------------------------------------------------------------
 @dataclass
 class TFCaseParams(ParameterFrame):
     """
@@ -260,9 +263,6 @@ class BaseCaseTF(CaseGeometry, ABC):
 
     Defines the universal properties common to all TF case geometries.
     """
-
-    _registry_ = CASETF_REGISTRY
-    _name_in_registry_ = None
 
     param_cls: type[TFCaseParams] = TFCaseParams
 
@@ -287,11 +287,11 @@ class BaseCaseTF(CaseGeometry, ABC):
 
             See :class:`~bluemira.magnets.case_tf.TFCaseParams`
             for parameter details.
-        mat_case : Material
+        mat_case:
             Structural material assigned to the TF coil case.
-        WPs : list[WindingPack]
+        WPs:
             List of winding pack objects embedded inside the TF case.
-        name : str, optional
+        name:
             String identifier for the TF coil case instance (default is "BaseCaseTF").
         """
         super().__init__(
@@ -313,7 +313,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        str
+        :
             Human-readable label for the coil case instance.
         """
         return self._name
@@ -325,7 +325,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        value : str
+        value:
             Case name.
 
         Raises
@@ -343,7 +343,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        value : float
+        value:
             Vault thickness [m].
         """
         self.params.dy_vault.value = value
@@ -366,7 +366,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        float
+        :
             Average length of the vault in the toroidal direction [m].
         """
 
@@ -377,7 +377,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        Material
+        :
             Material object providing mechanical and thermal properties.
         """
         return self._mat_case
@@ -389,7 +389,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        value : Material
+        value:
             Material object.
 
         Raises
@@ -407,7 +407,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        list of WindingPack
+        :
             Winding pack instances composing the internal coil layout.
         """
         return self._WPs
@@ -419,7 +419,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        value : list[WindingPack]
+        value:
             List containing only WindingPack objects.
 
         Raises
@@ -437,7 +437,7 @@ class BaseCaseTF(CaseGeometry, ABC):
         self.update_dy_vault(self.params.dy_vault.value)
 
     @property
-    def n_conductors(self):
+    def n_conductors(self) -> int:
         """Total number of conductors in the winding pack."""
         return sum(w.n_conductors for w in self.WPs)
 
@@ -448,7 +448,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        np.ndarray
+        :
             Array containing the radial thickness [m] of each Winding Pack.
             Each element corresponds to one WP in the self.WPs list.
         """
@@ -461,7 +461,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        float
+        :
             Total radial thickness [m] summed over all winding packs.
         """
         return sum(self.dy_wp_i)
@@ -473,7 +473,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        np.ndarray
+        :
             Array of radial positions [m] corresponding to the outer edge of each WP.
         """
         dy_wp_cumsum = np.cumsum(np.concatenate(([0.0], self.dy_wp_i)))
@@ -495,54 +495,54 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        np.ndarray
+        :
             Array of radial positions [m] corresponding to the outer edge of
             each winding pack.
         """
         return self.R_wp_i - self.dy_wp_i
 
-    def plot(self, ax=None, *, show: bool = False, homogenized: bool = False):
+    def plot(
+        self,
+        ax: plt.Axes | None = None,
+        *,
+        show: bool = False,
+        homogenized: bool = False,
+    ) -> plt.Axes:
         """
         Schematic plot of the TF case cross-section including winding packs.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axis on which to draw the figure. If `None`, a new figure and axis will be
             created.
-        show : bool, optional
+        show:
             If `True`, displays the plot immediately using `plt.show()`.
             Default is `False`.
-        homogenized : bool, optional
+        homogenized:
             If `True`, plots winding packs as homogenized blocks.
             If `False`, plots individual conductors inside WPs.
             Default is `False`.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             The axis object containing the rendered plot.
         """
         if ax is None:
             _, ax = plt.subplots()
             ax.set_aspect("equal", adjustable="box")
 
-        # --------------------------------------
         # Plot external case boundary (delegate)
-        # --------------------------------------
         super().plot(ax=ax, show=False)
 
-        # --------------------------------------
         # Plot winding packs
-        # --------------------------------------
         for i, wp in enumerate(self.WPs):
             xc_wp = 0.0
             yc_wp = self.R_wp_i[i] - wp.dy / 2
             ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenized=homogenized)
 
-        # --------------------------------------
         # Finalize plot
-        # --------------------------------------
         ax.set_xlabel("Toroidal direction [m]")
         ax.set_ylabel("Radial direction [m]")
         ax.set_title(f"TF Case Cross Section: {self.name}")
@@ -553,37 +553,36 @@ class BaseCaseTF(CaseGeometry, ABC):
         return ax
 
     @property
-    def area_case_jacket(self):
+    def area_case_jacket(self) -> float:
         """
         Area of the case jacket (excluding winding pack regions).
 
         Returns
         -------
-        float
             Case jacket area [m²], computed as total area minus total WP area.
         """
         return self.area - self.area_wps
 
     @property
-    def area_wps(self):
+    def area_wps(self) -> float:
         """
         Total area occupied by all winding packs.
 
         Returns
         -------
-        float
+        :
             Combined area of the winding packs [m²].
         """
         return np.sum([w.area for w in self.WPs])
 
     @property
-    def area_wps_jacket(self):
+    def area_wps_jacket(self) -> float:
         """
         Total jacket area of all winding packs.
 
         Returns
         -------
-        float
+        :
             Combined area of conductor jackets in all WPs [m²].
         """
         return np.sum([w.jacket_area for w in self.WPs])
@@ -599,7 +598,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        float
+        :
             Combined area of the case structure and the conductor jackets [m²].
 
         Notes
@@ -623,15 +622,15 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        n_conductors : int
+        n_conductors:
             Total number of conductors to distribute.
-        wp_reduction_factor : float
+        wp_reduction_factor:
             Fractional reduction of available toroidal space for WPs.
-        min_gap_x : float
+        min_gap_x:
             Minimum gap between the WP and the case boundary in toroidal direction [m].
-        n_layers_reduction : int
+        n_layers_reduction:
             Number of layers to remove after each WP.
-        layout : str, optional
+        layout:
             Layout strategy ("auto", "layer", "pancake").
         """
 
@@ -651,15 +650,15 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        n_conductors : int
+        n_conductors:
             Number of conductors to allocate.
-        dx_WP : float
+        dx_WP:
             Available toroidal width for the winding pack [m].
-        dx_cond : float
+        dx_cond:
             Toroidal width of a single conductor [m].
-        dy_cond : float
+        dy_cond:
             Radial height of a single conductor [m].
-        layout : str
+        layout:
             Layout type:
             - "auto"    : no constraints
             - "layer"   : enforce even number of turns (ny % 2 == 0)
@@ -667,8 +666,10 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        tuple[int, int]
-            n_layers_max (nx), n_turns_max (ny)
+        :
+            n_layers_max (nx)
+        :
+            n_turns_max (ny)
 
         Raises
         ------
@@ -718,21 +719,21 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Parameters
         ----------
-        pm : float
+        pm:
             Radial magnetic pressure [Pa].
-        fz : float
+        fz:
             Axial electromagnetic force [N].
-        T : float
+        T:
             Operating temperature [K].
-        B : float
+        B:
             Magnetic field strength [T].
-        allowable_sigma : float
+        allowable_sigma:
             Allowable maximum stress [Pa].
-        bounds : np.ndarray, optional
+        bounds:
             Optimization bounds for vault thickness [m].
         """
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, float | str | list[dict[str, float | str | Any]]]:
         """
         Serialize the BaseCaseTF instance into a dictionary.
 
@@ -743,9 +744,6 @@ class BaseCaseTF(CaseGeometry, ABC):
             information.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "Ri": self.params.Ri.value,
             "dy_ps": self.params.dy_ps.value,
@@ -757,20 +755,20 @@ class BaseCaseTF(CaseGeometry, ABC):
         }
 
     @classmethod
-    def from_dict(cls, case_dict: dict, name: str | None = None) -> "BaseCaseTF":
+    def from_dict(cls, case_dict: dict, name: str | None = None) -> BaseCaseTF:
         """
         Deserialize a BaseCaseTF instance from a dictionary.
 
         Parameters
         ----------
-        case_dict : dict
+        case_dict:
             Dictionary containing serialized TF case data.
-        name : str, optional
+        name:
             Optional name override for the new instance.
 
         Returns
         -------
-        BaseCaseTF
+        :
             Reconstructed TF case instance.
 
         Raises
@@ -778,15 +776,6 @@ class BaseCaseTF(CaseGeometry, ABC):
         ValueError
             If the 'name_in_registry' field does not match this class.
         """
-        name_in_registry = case_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
         WPs = [create_wp_from_dict(wp_dict) for wp_dict in case_dict["WPs"]]  # noqa:N806
 
         return cls(
@@ -805,7 +794,7 @@ class BaseCaseTF(CaseGeometry, ABC):
 
         Returns
         -------
-        str
+        :
             Multiline string summarizing key properties of the TF case.
         """
         return (
@@ -826,8 +815,6 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
     Note: this class considers a set of Winding Pack with the same conductor (instance).
     """
 
-    _registry_ = CASETF_REGISTRY
-    _name_in_registry_ = "TrapezoidalCaseTF"
     param_cls: type[TFCaseParams] = TFCaseParams
 
     def __init__(
@@ -856,7 +843,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        WPs : list of WindingPack
+        WPs:
             List of winding pack objects to validate.
 
         Raises
@@ -886,29 +873,31 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Returns
         -------
-        float
+        :
             Average length of the vault in the toroidal direction [m].
         """
         return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta_TF / 2)
 
-    def Kx_ps(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx_ps(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent radial stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent radial stiffness of the poloidal support [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * * self.params.dy_ps.value / self.dx_ps
+        return (
+            self.mat_case.youngs_modulus(op_cond) * self.params.dy_ps.value / self.dx_ps
+        )
 
-    def Kx_lat(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx_lat(self, op_cond: OperationalConditions) -> np.ndarray:  # noqa: N802
         """
         Compute the equivalent radial stiffness of the lateral case sections.
 
@@ -917,13 +906,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        np.ndarray
+        :
             Array of radial stiffness values for each lateral segment [Pa].
         """
         dx_lat = np.array([
@@ -934,24 +923,28 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         dy_lat = np.array([w.dy for w in self.WPs])
         return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
 
-    def Kx_vault(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent radial stiffness of the vault region.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent radial stiffness of the vault [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.params.dy_vault.value / self.dx_vault
+        return (
+            self.mat_case.youngs_modulus(op_cond)
+            * self.params.dy_vault.value
+            / self.dx_vault
+        )
 
-    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent radial stiffness of the entire case structure.
 
@@ -962,13 +955,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Total equivalent radial stiffness of the TF case [Pa].
         """
         temp = [
@@ -981,24 +974,26 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         ]
         return summation([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
 
-    def Ky_ps(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky_ps(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the poloidal support (PS) region.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent toroidal stiffness of the PS region [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dx_ps /  self.params.dy_ps.value
+        return (
+            self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.params.dy_ps.value
+        )
 
-    def Ky_lat(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky_lat(self, op_cond: OperationalConditions) -> np.ndarray:  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of lateral case sections
         per winding pack.
@@ -1007,13 +1002,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        np.ndarray
+        :
             Array of toroidal stiffness values for each lateral segment [Pa].
         """
         dx_lat = np.array([
@@ -1024,24 +1019,28 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         dy_lat = np.array([w.dy for w in self.WPs])
         return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
 
-    def Ky_vault(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent toroidal stiffness of the vault region.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Equivalent toroidal stiffness of the vault [Pa].
         """
-        return self.mat_case.youngs_modulus(op_cond) * self.dx_vault / self.params.dy_vault.value
+        return (
+            self.mat_case.youngs_modulus(op_cond)
+            * self.dx_vault
+            / self.params.dy_vault.value
+        )
 
-    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent toroidal stiffness of the entire case structure.
 
@@ -1052,13 +1051,13 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Total equivalent toroidal stiffness of the TF case [Pa].
         """
         temp = [
@@ -1085,15 +1084,15 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        n_conductors : int
+        n_conductors:
             Total number of conductors to be allocated.
-        wp_reduction_factor : float
+        wp_reduction_factor:
             Fractional reduction of the total available toroidal space for WPs.
-        min_gap_x : float
+        min_gap_x:
             Minimum allowable toroidal gap between WP and boundary [m].
-        n_layers_reduction : int
+        n_layers_reduction:
             Number of horizontal layers to reduce after each WP.
-        layout : str, optional
+        layout:
             Layout type ("auto", "layer", "pancake").
 
         Raises
@@ -1212,7 +1211,9 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             bluemira_error(msg)
             raise ValueError(msg)
 
-    def _tresca_stress(self, pm: float, fz: float, op_cond: OperationalConditions):
+    def _tresca_stress(
+        self, pm: float, fz: float, op_cond: OperationalConditions
+    ) -> float:
         """
         Estimate the maximum principal (Tresca) stress on the inner case of the TF coil.
 
@@ -1226,17 +1227,17 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        pm : float
+        pm:
             Radial magnetic pressure acting on the case [Pa].
-        fz : float
+        fz:
             Vertical force acting on the inner leg of the case [N].
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Estimated maximum stress [Pa] acting on the case nose (hoop + vertical
             contribution).
         """
@@ -1263,7 +1264,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         self,
         pm: float,
         fz: float,
-        op_cond,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
         bounds: np.array = None,
     ):
@@ -1272,21 +1273,22 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        pm :
+        pm:
             The magnetic pressure applied along the radial direction (Pa).
-        f_z :
+        f_z:
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material properties.
-        allowable_sigma :
+        allowable_sigma:
             The allowable stress (Pa) for the jacket material.
-        bounds :
+        bounds:
             Optional bounds for the jacket thickness optimization (default is None).
 
         Returns
         -------
+        :
             The result of the optimization process containing information about the
             optimal vault thickness.
 
@@ -1322,36 +1324,37 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         fz: float,
         op_cond: OperationalConditions,
         allowable_sigma: float,
-    ):
+    ) -> float:
         """
         Fitness function for the optimization problem. It calculates the absolute
         difference between the Tresca stress and the allowable stress.
 
         Parameters
         ----------
-        dy_vault :
+        dy_vault:
             The thickness of the vault in the direction perpendicular to the
             applied pressure(m).
-        pm :
+        pm:
             The magnetic pressure applied along the radial direction (Pa).
-        fz :
+        fz:
             The force applied in the z direction, perpendicular to the case
             cross-section (N).
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material properties.
-        allowable_sigma :
+        allowable_sigma:
             The allowable stress (Pa) for the vault material.
 
         Returns
         -------
+        :
             The absolute difference between the calculated Tresca stress and the
             allowable stress (Pa).
 
         Notes
         -----
-            This function modifies the case's vault thickness
-            using the value provided in jacket_thickness.
+        This function modifies the case's vault thickness
+        using the value provided in jacket_thickness.
         """
         self.params.dy_vault.value = dy_vault
         sigma = self._tresca_stress(pm, fz, op_cond)
@@ -1365,8 +1368,8 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         fz: float,
         op_cond: OperationalConditions,
         allowable_sigma: float,
-        bounds_cond_jacket: np.array = None,
-        bounds_dy_vault: np.array = None,
+        bounds_cond_jacket: np.ndarray | None = None,
+        bounds_dy_vault: np.ndarray | None = None,
         layout: str = "auto",
         wp_reduction_factor: float = 0.8,
         min_gap_x: float = 0.05,
@@ -1389,38 +1392,38 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
 
         Parameters
         ----------
-        pm : float
+        pm:
             Radial magnetic pressure on the conductor [Pa].
-        fz : float
+        fz:
             Axial electromagnetic force on the winding pack [N].
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material properties.
-        allowable_sigma : float
+        allowable_sigma:
             Maximum allowable stress for structural material [Pa].
-        bounds_cond_jacket : np.ndarray, optional
+        bounds_cond_jacket:
             Min/max bounds for conductor jacket area optimization [m²].
-        bounds_dy_vault : np.ndarray, optional
+        bounds_dy_vault:
             Min/max bounds for the case vault thickness optimization [m].
-        layout : str, optional
+        layout:
             Cable layout strategy; "auto" or predefined layout name.
-        wp_reduction_factor : float, optional
+        wp_reduction_factor:
             Reduction factor applied to WP footprint during conductor rearrangement.
-        min_gap_x : float, optional
+        min_gap_x:
             Minimum spacing between adjacent conductors [m].
-        n_layers_reduction : int, optional
+        n_layers_reduction:
             Number of conductor layers to remove when reducing WP height.
-        max_niter : int, optional
+        max_niter:
             Maximum number of optimization iterations.
-        eps : float, optional
+        eps:
             Convergence threshold for the combined optimization loop.
-        n_conds : int, optional
+        n_conds:
             Target total number of conductors in the winding pack. If None, the self
             number of conductors is used.
 
         Notes
         -----
-            The function modifies the internal state of `conductor` and `self.dy_vault`.
+        The function modifies the internal state of `conductor` and `self.dy_vault`.
         """
         debug_msg = ["Method optimize_jacket_and_vault"]
 
@@ -1602,14 +1605,14 @@ def create_case_tf_from_dict(
 
     Parameters
     ----------
-    case_dict : dict
+    case_dict:
         Serialized case dictionary, must include 'name_in_registry' field.
-    name : str, optional
+    name:
         Name to assign to the created case. If None, uses the name in the dictionary.
 
     Returns
     -------
-    BaseCaseTF
+    :
         A fully instantiated CaseTF (or subclass) object.
 
     Raises

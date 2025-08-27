@@ -36,11 +36,11 @@ class WindingPack:
 
     Attributes
     ----------
-    conductor : Conductor
+    conductor:
         The base conductor type used in the winding pack.
-    nx : int
+    nx:
         Number of conductors along the x-axis.
-    ny : int
+    ny:
         Number of conductors along the y-axis.
     """
 
@@ -55,16 +55,16 @@ class WindingPack:
 
         Parameters
         ----------
-        conductor : Conductor
+        conductor:
             The conductor instance.
         params:
             Structure containing the input parameters. Keys are:
-                - nx : int
-                - ny : int
+                - nx: int
+                - ny: int
 
             See :class:`~bluemira.magnets.winding_pack.WindingPackParams`
             for parameter details.
-        name : str, optional
+        name:
             Name of the winding pack instance.
         """
         self.conductor = conductor
@@ -102,13 +102,13 @@ class WindingPack:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Stiffness along the x-axis [N/m].
         """
         return self.conductor.Kx(op_cond) * self.params.ny.value / self.params.nx.value
@@ -119,13 +119,13 @@ class WindingPack:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Stiffness along the y-axis [N/m].
         """
         return self.conductor.Ky(op_cond) * self.params.nx.value / self.params.ny.value
@@ -136,28 +136,28 @@ class WindingPack:
         yc: float = 0,
         *,
         show: bool = False,
-        ax=None,
+        ax: plt.Axes | None = None,
         homogenized: bool = True,
-    ):
+    ) -> plt.Axes:
         """
         Plot the winding pack geometry.
 
         Parameters
         ----------
-        xc : float
+        xc:
             Center x-coordinate [m].
-        yc : float
+        yc:
             Center y-coordinate [m].
-        show : bool, optional
+        show:
             If True, immediately show the plot.
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axes object to draw on.
-        homogenized : bool, optional
+        homogenized:
             If True, plot as a single block. Otherwise, plot individual conductors.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             Axes object containing the plot.
         """
         if ax is None:
@@ -188,19 +188,16 @@ class WindingPack:
             plt.show()
         return ax
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the WindingPack to a dictionary.
 
         Returns
         -------
-        dict
+        :
             Serialized dictionary of winding pack attributes.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "conductor": self.conductor.to_dict(),
             "nx": self.params.nx.value,
@@ -218,15 +215,15 @@ class WindingPack:
 
         Parameters
         ----------
-        windingpack_dict : dict
+        windingpack_dict:
             Serialized winding pack dictionary.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        WindingPack
+        :
             Reconstructed WindingPack instance.
 
         Raises
@@ -268,15 +265,15 @@ def create_wp_from_dict(
 
     Parameters
     ----------
-    windingpack_dict : dict
+    windingpack_dict:
         Dictionary containing serialized winding pack data.
         Must include a 'name_in_registry' field matching a registered class.
-    name : str, optional
+    name:
         Optional name override for the reconstructed WindingPack.
 
     Returns
     -------
-    WindingPack
+    :
         An instance of the appropriate WindingPack subclass.
 
     Raises

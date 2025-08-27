@@ -12,8 +12,10 @@ Includes:
 - Automatic class and instance registration mechanisms
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +29,9 @@ from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 @dataclass
@@ -49,7 +54,6 @@ class Strand:
     This class automatically registers itself and its instances.
     """
 
-    _name_in_registry_ = "Strand"
     param_cls: type[StrandParams] = StrandParams
 
     def __init__(
@@ -63,7 +67,7 @@ class Strand:
 
         Parameters
         ----------
-        materials : list of MaterialFraction
+        materials:
             Materials composing the strand with their fractions.
         params:
             Structure containing the input parameters. Keys are:
@@ -72,12 +76,11 @@ class Strand:
 
             See :class:`~bluemira.magnets.strand.StrandParams`
             for parameter details.
-        name : str or None, optional
+        name:
             Name of the strand. Defaults to "Strand".
         """
         self.params = params
 
-        self._materials = None  # jm - remove
         self.materials = materials
 
         self.name = name
@@ -90,25 +93,25 @@ class Strand:
         )
 
     @property
-    def materials(self) -> list:
+    def materials(self) -> list[MaterialFraction]:
         """
         List of MaterialFraction materials composing the strand.
 
         Returns
         -------
-        list of MaterialFraction
+        :
             Materials and their fractions.
         """
         return self._materials
 
     @materials.setter
-    def materials(self, new_materials: list):
+    def materials(self, new_materials: list[MaterialFraction]):
         """
         Set a new list of materials for the strand.
 
         Parameters
         ----------
-        new_materials : list of MaterialFraction
+        new_materials:
             New materials to set.
 
         Raises
@@ -137,7 +140,7 @@ class Strand:
 
         Returns
         -------
-        float
+        :
             Area [m²].
         """
         return np.pi * (self.params.d_strand.value**2) / 4
@@ -149,7 +152,7 @@ class Strand:
 
         Returns
         -------
-        BluemiraFace
+        :
             Circular face of the strand.
         """
         if self._shape is None:
@@ -162,13 +165,13 @@ class Strand:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Young's modulus [Pa].
         """
         return self._homogenised_material.youngs_modulus(op_cond)
@@ -179,13 +182,13 @@ class Strand:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Density [kg/m³].
         """
         return self._homogenised_material.density(op_cond)
@@ -196,13 +199,13 @@ class Strand:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Electrical resistivity [Ohm·m].
         """
         # Treat parallel calculation for resistivity
@@ -220,13 +223,13 @@ class Strand:
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Specific heat [J/kg/K].
         """
         # Treat volume/specific heat capacity calculation
@@ -245,17 +248,19 @@ class Strand:
             )
         return self._homogenised_material.specific_heat_capacity(op_cond)
 
-    def plot(self, ax=None, *, show: bool = True, **kwargs):
+    def plot(
+        self, ax: plt.Axes | None = None, *, show: bool = True, **kwargs
+    ) -> plt.Axes:
         """
         Plot a 2D cross-section of the strand.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axis to plot on.
-        show : bool, optional
+        show:
             Whether to show the plot immediately.
-        kwargs : dict
+        kwargs:
             Additional arguments passed to the plot function.
 
         Returns
@@ -275,7 +280,7 @@ class Strand:
 
         Returns
         -------
-        str
+        :
             Description of the strand.
         """
         return (
@@ -285,19 +290,16 @@ class Strand:
             f"shape = {self.shape}\n"
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the strand instance to a dictionary.
 
         Returns
         -------
-        dict
+        :
             Dictionary with serialized strand data.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "d_strand": self.params.d_strand.value,
             "temperature": self.params.temperature.value,
@@ -315,17 +317,15 @@ class Strand:
         cls,
         strand_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "Strand":
+    ) -> Strand:
         """
         Deserialize a Strand instance from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Strand or subclass).
-        strand_dict : dict
+        strand_dict:
             Dictionary containing serialized strand data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
@@ -405,7 +405,7 @@ class SuperconductingStrand(Strand):
 
         Parameters
         ----------
-        materials : list of MaterialFraction
+        materials:
             Materials composing the strand with their fractions. One material must be
             a supercoductor.
         params:
@@ -415,7 +415,7 @@ class SuperconductingStrand(Strand):
 
             See :class:`~bluemira.magnets.strand.StrandParams`
             for parameter details.
-        name : str or None, optional
+        name:
             Name of the strand. Defaults to "Strand".
         """
         super().__init__(
@@ -431,7 +431,7 @@ class SuperconductingStrand(Strand):
 
         Returns
         -------
-        MaterialFraction
+        :
             The identified superconducting material.
 
         Raises
@@ -466,7 +466,7 @@ class SuperconductingStrand(Strand):
 
         Returns
         -------
-        float
+        :
             Superconducting area [m²].
         """
         return self.area * self._sc.fraction
@@ -477,13 +477,13 @@ class SuperconductingStrand(Strand):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Critical current density [A/m²].
         """
         if op_cond.strain is None:
@@ -496,13 +496,13 @@ class SuperconductingStrand(Strand):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Critical current [A].
         """
         return self.Jc(op_cond) * self.sc_area
@@ -511,30 +511,30 @@ class SuperconductingStrand(Strand):
         self,
         B: np.ndarray,
         temperature: float,
-        ax=None,
+        ax: plt.Axes | None = None,
         *,
         show: bool = True,
         **kwargs,
-    ):
+    ) -> plt.Axes:
         """
         Plot critical current Ic as a function of magnetic field B.
 
         Parameters
         ----------
-        B : np.ndarray
+        B:
             Array of magnetic field values [T].
-        temperature : float
+        temperature:
             Operating temperature [K].
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axis to plot on. If None, a new figure is created.
-        show : bool, optional
+        show:
             Whether to immediately show the plot.
-        kwargs : dict
+        kwargs:
             Additional arguments passed to Ic calculation.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             Axis with the plotted Ic vs B curve.
         """
         if ax is None:
@@ -564,9 +564,6 @@ class SuperconductingStrand(Strand):
         return ax
 
 
-# ------------------------------------------------------------------------------
-# Supporting functions
-# ------------------------------------------------------------------------------
 def create_strand_from_dict(
     strand_dict: dict[str, Any],
     name: str | None = None,
@@ -576,10 +573,10 @@ def create_strand_from_dict(
 
     Parameters
     ----------
-    strand_dict : dict
+    strand_dict:
         Dictionary with serialized strand data. Must include a 'name_in_registry' field
         corresponding to a registered class.
-    name : str, optional
+    name:
         If given, overrides the name from the dictionary.
 
     Returns

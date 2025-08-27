@@ -6,20 +6,25 @@
 
 """Conductor class"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matproplib import OperationalConditions
-from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
 from bluemira.magnets.utils import reciprocal_summation, summation
+
+if TYPE_CHECKING:
+    from matproplib import OperationalConditions
+    from matproplib.material import Material
+
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 
 @dataclass
@@ -44,7 +49,6 @@ class Conductor:
     insulator.
     """
 
-    _name_in_registry_ = "Conductor"
     param_cls: type[ConductorParams] = ConductorParams
 
     def __init__(
@@ -124,23 +128,21 @@ class Conductor:
 
         Returns
         -------
-            float [m²]
+        :
+            area [m²]
         """
         return self.area - self.area_jacket - self.cable.area
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the conductor instance to a dictionary.
 
         Returns
         -------
-        dict
+        :
             Dictionary with serialized conductor data.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "cable": self.cable.to_dict(),
             "mat_jacket": self.mat_jacket.name,
@@ -156,23 +158,21 @@ class Conductor:
         cls,
         conductor_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "Conductor":
+    ) -> Conductor:
         """
         Deserialize a Conductor instance from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (Conductor or subclass).
-        conductor_dict : dict
+        conductor_dict:
             Dictionary containing serialized conductor data.
-        name : str
+        name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
 
         Returns
         -------
-        Conductor
+        :
             A fully reconstructed Conductor instance.
 
         Raises
@@ -182,16 +182,6 @@ class Conductor:
             registration name,
             or if the name already exists and unique_name is False.
         """
-        # Validate registration name
-        name_in_registry = conductor_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
         # Deserialize cable
         cable = create_cable_from_dict(
             cable_dict=conductor_dict["cable"],
@@ -215,20 +205,21 @@ class Conductor:
             name=name or conductor_dict.get("name"),
         )
 
-    def erho(self, op_cond: OperationalConditions):
+    def erho(self, op_cond: OperationalConditions) -> float:
         """
         Computes the conductor's equivalent resistivity considering the resistance
         of its strands in parallel.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-            float [Ohm m]
+        :
+            resistivity [Ohm m]
 
         Notes
         -----
@@ -241,20 +232,21 @@ class Conductor:
         res_tot = reciprocal_summation(resistances)
         return res_tot * self.area
 
-    def Cp(self, op_cond: OperationalConditions):  # noqa: N802
+    def Cp(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Computes the conductor's equivalent specific heat considering the specific heats
         of its components in series.
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-            float [J/K/m]
+        :
+            Specific heat capacity [J/K/m]
 
         Notes
         -----
@@ -272,35 +264,37 @@ class Conductor:
     def _mat_jacket_y_modulus(self, op_cond: OperationalConditions):
         return self.mat_jacket.youngs_modulus(op_cond)
 
-    def _Kx_topbot_ins(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Kx_topbot_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.cable.dy / self.params.dx_ins.value
+        return (
+            self._mat_ins_y_modulus(op_cond) * self.cable.dy / self.params.dx_ins.value
+        )
 
-    def _Kx_lat_ins(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Kx_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the lateral insulator in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.params.dy_ins.value  / self.dx
+        return self._mat_ins_y_modulus(op_cond) * self.params.dy_ins.value / self.dx
 
-    def _Kx_lat_jacket(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Kx_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the lateral jacket in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return (
@@ -309,35 +303,39 @@ class Conductor:
             / (self.dx - 2 * self.params.dx_ins.value)
         )
 
-    def _Kx_topbot_jacket(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Kx_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the top/bottom jacket in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_jacket_y_modulus(op_cond) * self.cable.dy / self.params.dx_jacket.value
+        return (
+            self._mat_jacket_y_modulus(op_cond)
+            * self.cable.dy
+            / self.params.dx_jacket.value
+        )
 
-    def _Kx_cable(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Kx_cable(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the cable in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return self.cable.Kx(op_cond)
 
-    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the conductor in the x-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return summation([
@@ -354,35 +352,37 @@ class Conductor:
             self._Kx_lat_ins(op_cond),
         ])
 
-    def _Ky_topbot_ins(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Ky_topbot_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.cable.dx / self.params.dy_ins.value
+        return (
+            self._mat_ins_y_modulus(op_cond) * self.cable.dx / self.params.dy_ins.value
+        )
 
-    def _Ky_lat_ins(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Ky_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the lateral insulator in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.params.dx_ins.value  / self.dy
+        return self._mat_ins_y_modulus(op_cond) * self.params.dx_ins.value / self.dy
 
-    def _Ky_lat_jacket(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Ky_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the lateral jacket in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return (
@@ -391,35 +391,39 @@ class Conductor:
             / (self.dy - 2 * self.params.dy_ins.value)
         )
 
-    def _Ky_topbot_jacket(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Ky_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the top/bottom jacket in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
-        return self._mat_jacket_y_modulus(op_cond) * self.cable.dx / self.params.dy_jacket.value
+        return (
+            self._mat_jacket_y_modulus(op_cond)
+            * self.cable.dx
+            / self.params.dy_jacket.value
+        )
 
-    def _Ky_cable(self, op_cond: OperationalConditions):  # noqa: N802
+    def _Ky_cable(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the cable in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return self.cable.Ky(op_cond)
 
-    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the conductor in the y-direction.
 
         Returns
         -------
-        float
+        :
             Axial stiffness [N/m]
         """
         return summation([
@@ -452,20 +456,21 @@ class Conductor:
 
         Parameters
         ----------
-        pressure :
+        pressure:
             The pressure applied along the specified direction (Pa).
-        f_z :
+        f_z:
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
         op_cond: OperationalConditions
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
-        direction :
+        direction:
             The direction along which the pressure is applied ('x' or 'y'). Default is
             'x'.
 
         Returns
         -------
+        :
             The calculated Tresca stress in the jacket (Pa).
 
         Raises
@@ -508,8 +513,7 @@ class Conductor:
 
             X_jacket = 2 * self._Kx_lat_jacket(op_cond) / K  # noqa: N806
 
-        # tresca_stress = pressure * X_jacket * saf_jacket + f_z / self.area_jacket
-
+        # tresca_stress
         return pressure * X_jacket * saf_jacket + f_z / self.area_jacket
 
     def optimize_jacket_conductor(
@@ -527,24 +531,25 @@ class Conductor:
 
         Parameters
         ----------
-        pressure :
+        pressure:
             The pressure applied along the specified direction (Pa).
-        f_z :
+        f_z:
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material properties.
-        allowable_sigma :
+        allowable_sigma:
             The allowable stress (Pa) for the jacket material.
-        bounds :
+        bounds:
             Optional bounds for the jacket thickness optimization (default is None).
-        direction :
+        direction:
             The direction along which the pressure is applied ('x' or 'y'). Default is
             'x'.
 
         Returns
         -------
+        :
             The result of the optimization process containing information about the
             optimal jacket thickness.
 
@@ -568,7 +573,7 @@ class Conductor:
             op_cond: OperationalConditions,
             allowable_sigma: float,
             direction: str = "x",
-        ):
+        ) -> float:
             """
             Objective function for optimizing conductor jacket thickness based on the
             Tresca yield criterion.
@@ -580,26 +585,26 @@ class Conductor:
 
             Parameters
             ----------
-            jacket_thickness : float
+            jacket_thickness:
                 Proposed thickness of the conductor jacket [m] in the direction
                 perpendicular to the applied pressure.
-            pressure : float
+            pressure:
                 Magnetic or mechanical pressure applied along the specified direction
                 [Pa].
-            fz : float
+            fz:
                 Axial or vertical force applied perpendicular to the cross-section [N].
-            op_cond: OperationalConditions
+            op_cond:
                 Operational conditions including temperature, magnetic field, and strain
                 at which to calculate the material property.
-            allowable_sigma : float
+            allowable_sigma:
                 Maximum allowed stress for the jacket material [Pa].
-            direction : str, optional
+            direction:
                 Direction of the applied pressure. Can be either 'x' (horizontal) or
                 'y' (vertical). Default is 'x'.
 
             Returns
             -------
-            float
+            :
                 Absolute difference between the calculated Tresca stress and the
                 allowable stress [Pa].
 
@@ -685,22 +690,22 @@ class Conductor:
 
         Parameters
         ----------
-        xc : float, optional
+        xc:
             X-coordinate of the conductor center in the reference coordinate system.
             Default is 0.
-        yc : float, optional
+        yc:
             Y-coordinate of the conductor center in the reference coordinate system.
             Default is 0.
-        show : bool, optional
+        show:
             If True, the figure is rendered immediately using `plt.show()`.
             Default is False.
-        ax : matplotlib.axes.Axes or None, optional
+        ax:
             Axis on which to render the plot. If None, a new figure and axis will be
             created internally.
 
         Returns
         -------
-        ax : matplotlib.axes.Axes
+        ax:
             The axis containing the rendered plot.
 
         Notes
@@ -745,13 +750,13 @@ class Conductor:
 
         return ax
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Generate a human-readable string representation of the conductor.
 
         Returns
         -------
-        str
+        :
             A multi-line summary of the conductor's key dimensions and its nested
             cable description. This includes:
               - Total x and y dimensions,
@@ -793,7 +798,6 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
     mantain a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
     """
 
-    _name_in_registry_ = "SymmetricConductor"
     param_cls: type[SymmetricConductorParams] = SymmetricConductorParams
 
     def __init__(
@@ -877,9 +881,6 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             Dictionary with serialized symmetric conductor data.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "cable": self.cable.to_dict(),
             "mat_jacket": self.mat_jacket.name,
@@ -893,22 +894,20 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         cls,
         conductor_dict: dict[str, Any],
         name: str | None = None,
-    ) -> "SymmetricConductor":
+    ) -> SymmetricConductor:
         """
         Deserialize a SymmetricConductor instance from a dictionary.
 
         Parameters
         ----------
-        cls : type
-            Class to instantiate (SymmetricConductor).
-        conductor_dict : dict
+        conductor_dict:
             Dictionary containing serialized conductor data.
-        name : str, optional
+        name:
             Name for the new instance.
 
         Returns
         -------
-        SymmetricConductor
+        :
             A fully reconstructed SymmetricConductor instance.
 
         Raises
@@ -916,16 +915,6 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         ValueError
             If the 'name_in_registry' does not match the expected registration name.
         """
-        # Validate registration name
-        name_in_registry = conductor_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
         # Deserialize cable
         cable = create_cable_from_dict(
             cable_dict=conductor_dict["cable"],
@@ -951,21 +940,21 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
 def create_conductor_from_dict(
     conductor_dict: dict,
     name: str | None = None,
-) -> "Conductor":
+) -> Conductor:
     """
     Factory function to create a Conductor (or subclass) from a serialized dictionary.
 
     Parameters
     ----------
-    conductor_dict : dict
+    conductor_dict:
         Serialized conductor dictionary, must include 'name_in_registry' field.
-    name : str, optional
+    name:
         Name to assign to the created conductor. If None, uses the name in the
         dictionary.
 
     Returns
     -------
-    Conductor
+    :
         A fully instantiated Conductor (or subclass) object.
 
     Raises
