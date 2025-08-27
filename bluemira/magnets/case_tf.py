@@ -35,15 +35,36 @@ from bluemira.base.look_and_feel import (
 )
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import make_polygon
 from bluemira.magnets.utils import reciprocal_summation, summation
 from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 if TYPE_CHECKING:
     from matproplib import OperationalConditions
     from matproplib.material import Material
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.geometry.wire import BluemiraWire
+
+
+def _dx_at_radius(radius: float, rad_theta: float) -> float:
+    """
+    Compute the toroidal width at a given radial position.
+
+    Parameters
+    ----------
+    radius:
+        Radial position at which to compute the toroidal width [m].
+    rad_theta:
+        Toroidal angular span of the TF coil [radians].
+
+    Returns
+    -------
+    :
+        Toroidal width [m] at the given radius.
+    """
+    return 2 * radius * np.tan(rad_theta / 2)
 
 
 @dataclass
@@ -73,22 +94,6 @@ class CaseGeometry(ABC):
     def __init__(self, params: ParameterFrameLike):
         super().__init__(params)  # fix when split into builders and designers
         self.rad_theta_TF = np.radians(self.params.theta_TF.value)
-
-    def dx_at_radius(self, radius: float) -> float:
-        """
-        Compute the toroidal width at a given radial position.
-
-        Parameters
-        ----------
-        radius:
-            Radial position at which to compute the toroidal width [m].
-
-        Returns
-        -------
-        :
-            Toroidal width [m] at the given radius.
-        """
-        return 2 * radius * np.tan(self.rad_theta_TF / 2)
 
     @property
     @abstractmethod
@@ -131,7 +136,34 @@ class CaseGeometry(ABC):
         """
 
 
-class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
+@dataclass
+class TrapezoidalGeometryOptVariables(OptVariablesFrame):
+    """Optimisiation variables for Trapezoidal Geometry."""
+
+    Ri: OptVariable = ov(
+        "Ri",
+        3,  # value?
+        lower_bound=0,
+        upper_bound=np.inf,
+        description="External radius of the TF coil case [m].",
+    )
+    Rk: OptVariable = ov(
+        "Rk",
+        5,  # value?
+        lower_bound=0,
+        upper_bound=np.inf,
+        description="Internal radius of the TF coil case [m].",
+    )
+    theta_TF: OptVariable = ov(
+        "theta_TF",
+        15,  # value?
+        lower_bound=0,
+        upper_bound=360,
+        description="Toroidal angular span of the TF coil [degrees].",
+    )
+
+
+class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariables]):
     """
     Geometry of a Toroidal Field (TF) coil case with trapezoidal cross-section.
 
@@ -139,6 +171,18 @@ class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
     and narrower at the inner radius (Rk), reflecting typical TF coil designs
     for magnetic and mechanical optimization.
     """
+
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = TrapezoidalGeometryOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    @property
+    def rad_theta(self) -> float:
+        """
+        Compute the Toroidal angular span of the TF coil in radians
+        """
+        return np.radians(self.variables.theta_TF.value)
 
     @property
     def area(self) -> float:
@@ -156,10 +200,10 @@ class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
         return (
             0.5
             * (
-                self.dx_at_radius(self.params.Ri.value)
-                + self.dx_at_radius(self.params.Rk.value)
+                _dx_at_radius(self.variables.Ri.value, self.rad_theta)
+                + _dx_at_radius(self.variables.Rk.value, self.rad_theta)
             )
-            * (self.params.Ri.value - self.params.Rk.value)
+            * (self.variables.Ri.value - self.variables.Rk.value)
         )
 
     def create_shape(self, label: str = "") -> BluemiraWire:
@@ -173,24 +217,66 @@ class TrapezoidalGeometry(GeometryParameterisation):  # TODO Opvariablesframe
             Coordinates are ordered counterclockwise starting from the top-left corner:
             [(-dx_outer/2, Ri), (dx_outer/2, Ri), (dx_inner/2, Rk), (-dx_inner/2, Rk)].
         """
-        dx_outer = self.dx_at_radius(self.params.Ri.value)
-        dx_inner = self.dx_at_radius(self.params.Rk.value)
+        dx_outer = _dx_at_radius(self.variables.Ri.value, self.rad_theta)
+        dx_inner = _dx_at_radius(self.variables.Rk.value, self.rad_theta)
 
-        return np.array([
-            [-dx_outer / 2, self.params.Ri.value],
-            [dx_outer / 2, self.params.Ri.value],
-            [dx_inner / 2, self.params.Rk.value],
-            [-dx_inner / 2, self.params.Rk.value],
-        ])
+        return make_polygon(
+            [
+                [-dx_outer / 2, self.variables.Ri.value],
+                [dx_outer / 2, self.variables.Ri.value],
+                [dx_inner / 2, self.variables.Rk.value],
+                [-dx_inner / 2, self.variables.Rk.value],
+            ],
+            label=label,
+        )
 
 
-class WedgedGeometry(GeometryParameterisation):
+@dataclass
+class WedgedGeometryOptVariables(OptVariablesFrame):
+    """Optimisiation variables for Wedged Geometry."""
+
+    Ri: OptVariable = ov(
+        "Ri",
+        3,  # value?
+        lower_bound=0,
+        upper_bound=np.inf,
+        description="External radius of the TF coil case [m].",
+    )
+    Rk: OptVariable = ov(
+        "Rk",
+        5,  # value?
+        lower_bound=0,
+        upper_bound=np.inf,
+        description="Internal radius of the TF coil case [m].",
+    )
+    theta_TF: OptVariable = ov(
+        "theta_TF",
+        15,  # value?
+        lower_bound=0,
+        upper_bound=360,
+        description="Toroidal angular span of the TF coil [degrees].",
+    )
+
+
+class WedgedGeometry(GeometryParameterisation[WedgedGeometryOptVariables]):
     """
     TF coil case shaped as a sector of an annulus (wedge with arcs).
 
     The geometry consists of two circular arcs (inner and outer radii)
     connected by radial lines, forming a wedge-like shape.
     """
+
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = WedgedGeometryOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    @property
+    def rad_theta(self) -> float:
+        """
+        Compute the Toroidal angular span of the TF coil in radians
+        """
+        return np.radians(self.variables.theta_TF.value)
 
     def area(self) -> float:
         """
@@ -203,7 +289,9 @@ class WedgedGeometry(GeometryParameterisation):
             and inner radius Rk over the toroidal angle theta_TF.
         """
         return (
-            0.5 * self.rad_theta_TF * (self.params.Ri.value**2 - self.params.Rk.value**2)
+            0.5
+            * self.rad_theta
+            * (self.variables.Ri.value**2 - self.variables.Rk.value**2)
         )
 
     def create_shape(self, label: str = "", n_points: int = 50) -> BluemiraWire:
@@ -223,22 +311,22 @@ class WedgedGeometry(GeometryParameterisation):
         :
             Array of (x, y) coordinates [m] describing the wedge polygon.
         """
-        theta1 = -self.rad_theta_TF / 2
+        theta1 = -self.rad_theta / 2
         theta2 = -theta1
 
         angles_outer = np.linspace(theta1, theta2, n_points)
         angles_inner = np.linspace(theta2, theta1, n_points)
 
         arc_outer = np.column_stack((
-            self.params.Ri.value * np.sin(angles_outer),
-            self.params.Ri.value * np.cos(angles_outer),
+            self.variables.Ri.value * np.sin(angles_outer),
+            self.variables.Ri.value * np.cos(angles_outer),
         ))
         arc_inner = np.column_stack((
-            self.params.Rk.value * np.sin(angles_inner),
-            self.params.Rk.value * np.cos(angles_inner),
+            self.variables.Rk.value * np.sin(angles_inner),
+            self.variables.Rk.value * np.cos(angles_inner),
         ))
 
-        return np.vstack((arc_outer, arc_inner))
+        return make_polygon(np.vstack((arc_outer, arc_inner)), label=label)
 
 
 @dataclass
