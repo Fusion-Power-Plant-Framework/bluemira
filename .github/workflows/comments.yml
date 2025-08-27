@@ -18,7 +18,7 @@ jobs:
       PYTHON_VERSION: "3.11"
     steps:
       - name: "Get information about the current run"
-        uses: potiuk/get-workflow-origin@v1_5
+        uses: potiuk/get-workflow-origin@e2dae063368361e4cd1f510e8785cd73bca9352e # v1_5
         id: workflow-run-info
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
 
       - name: Find warning report comment
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: find-warning-report-comment
         with:
           issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
@@ -84,7 +84,7 @@ jobs:
 
       - name: Create or update warning report comment
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-        uses: peter-evans/create-or-update-comment@v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
         with:
           comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
           issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
