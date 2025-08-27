@@ -966,51 +966,6 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         """
         return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta_TF / 2)
 
-    def Kx_ps(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Compute the equivalent radial stiffness of the poloidal support (PS) region.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Equivalent radial stiffness of the poloidal support [Pa].
-        """
-        return (
-            self.mat_case.youngs_modulus(op_cond) * self.params.dy_ps.value / self.dx_ps
-        )
-
-    def Kx_lat(self, op_cond: OperationalConditions) -> np.ndarray:  # noqa: N802
-        """
-        Compute the equivalent radial stiffness of the lateral case sections.
-
-        These are the mechanical links between each winding pack and the outer case.
-        Each lateral segment is approximated as a rectangular element.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Array of radial stiffness values for each lateral segment [Pa].
-        """
-        dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
-            - w.dx / 2
-            for i, w in enumerate(self.WPs)
-        ])
-        dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
-
     def Kx_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent radial stiffness of the vault region.
@@ -1052,81 +1007,27 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         :
             Total equivalent radial stiffness of the TF case [Pa].
         """
-        temp = [
-            reciprocal_summation([
-                self.Kx_lat(op_cond)[i],
-                w.Kx(op_cond),
-                self.Kx_lat(op_cond)[i],
-            ])
-            for i, w in enumerate(self.WPs)
-        ]
-        return summation([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
-
-    def Ky_ps(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Compute the equivalent toroidal stiffness of the poloidal support (PS) region.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Equivalent toroidal stiffness of the PS region [Pa].
-        """
-        return (
-            self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.params.dy_ps.value
+        # toroidal stiffness of the poloidal support region
+        kx_ps = (
+            self.mat_case.youngs_modulus(op_cond) / self.dx_ps * self.params.dy_ps.value
         )
-
-    def Ky_lat(self, op_cond: OperationalConditions) -> np.ndarray:  # noqa: N802
-        """
-        Compute the equivalent toroidal stiffness of lateral case sections
-        per winding pack.
-
-        Each lateral piece is treated as a rectangular beam in the toroidal direction.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Array of toroidal stiffness values for each lateral segment [Pa].
-        """
         dx_lat = np.array([
             (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
             - w.dx / 2
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
-
-    def Ky_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Compute the equivalent toroidal stiffness of the vault region.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Equivalent toroidal stiffness of the vault [Pa].
-        """
-        return (
-            self.mat_case.youngs_modulus(op_cond)
-            * self.dx_vault
-            / self.params.dy_vault.value
-        )
+        # toroidal stiffness of lateral case sections per winding pack
+        kx_lat = self.mat_case.youngs_modulus(op_cond) / dx_lat * dy_lat
+        temp = [
+            reciprocal_summation([
+                kx_lat[i],
+                w.Kx(op_cond),
+                kx_lat[i],
+            ])
+            for i, w in enumerate(self.WPs)
+        ]
+        return summation([kx_ps, self.Kx_vault(op_cond), *temp])
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -1148,15 +1049,33 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         :
             Total equivalent toroidal stiffness of the TF case [Pa].
         """
+        # toroidal stiffness of the poloidal support region
+        ky_ps = (
+            self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.params.dy_ps.value
+        )
+        dx_lat = np.array([
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
+            - w.dx / 2
+            for i, w in enumerate(self.WPs)
+        ])
+        dy_lat = np.array([w.dy for w in self.WPs])
+        # toroidal stiffness of lateral case sections per winding pack
+        ky_lat = self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
+        # toroidal stiffness of the vault region
+        ky_vault = (
+            self.mat_case.youngs_modulus(op_cond)
+            * self.dx_vault
+            / self.params.dy_vault.value
+        )
         temp = [
             summation([
-                self.Ky_lat(op_cond)[i],
+                ky_lat[i],
                 w.Ky(op_cond),
-                self.Ky_lat(op_cond)[i],
+                ky_lat[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return reciprocal_summation([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
+        return reciprocal_summation([ky_ps, ky_vault, *temp])
 
     def rearrange_conductors_in_wp(
         self,
