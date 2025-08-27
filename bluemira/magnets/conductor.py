@@ -250,12 +250,6 @@ class Conductor:
         ])
         return summation(weighted_specific_heat) / self.area
 
-    def _mat_ins_y_modulus(self, op_cond: OperationalConditions):  # why?
-        return self.mat_ins.youngs_modulus(op_cond)
-
-    def _mat_jacket_y_modulus(self, op_cond: OperationalConditions):  # why?
-        return self.mat_jacket.youngs_modulus(op_cond)
-
     def _Kx_topbot_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the x-direction.
@@ -266,7 +260,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond)
+            self.mat_ins.youngs_modulus(op_cond)
             * 2
             * self.cable.dy
             / self.params.dx_ins.value
@@ -282,7 +276,9 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond) * self.params.dy_ins.value / (2 * self.dx)
+            self.mat_ins.youngs_modulus(op_cond)
+            * self.params.dy_ins.value
+            / (2 * self.dx)
         )
 
     def _Kx_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -295,7 +291,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_jacket_y_modulus(op_cond)
+            self.mat_jacket.youngs_modulus(op_cond)
             * self.params.dy_jacket.value
             / (2 * self.dx - 2 * self.params.dx_ins.value)
         )
@@ -310,7 +306,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_jacket_y_modulus(op_cond)
+            self.mat_jacket.youngs_modulus(op_cond)
             * 2
             * self.cable.dy
             / self.params.dx_jacket.value
@@ -349,7 +345,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond)
+            self.mat_ins.youngs_modulus(op_cond)
             * 2
             * self.cable.dx
             / self.params.dy_ins.value
@@ -365,7 +361,9 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond) * self.params.dx_ins.value / (2 * self.dy)
+            self.mat_ins.youngs_modulus(op_cond)
+            * self.params.dx_ins.value
+            / (2 * self.dy)
         )
 
     def _Ky_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -378,7 +376,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_jacket_y_modulus(op_cond)
+            self.mat_jacket.youngs_modulus(op_cond)
             * self.params.dx_jacket.value
             / (2 * self.dy - 2 * self.params.dy_ins.value)
         )
@@ -393,7 +391,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_jacket_y_modulus(op_cond)
+            self.mat_jacket.youngs_modulus(op_cond)
             * 2
             * self.cable.dx
             / self.params.dy_jacket.value
