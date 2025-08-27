@@ -657,5 +657,5 @@ class PicardIterator:
             self.eq.psi(),
             o_points,
             x_points,
-            o_point_fallback=self.eq.o_point_fallback,
+            o_point_fallback=self.eq._o_point_fallback,
         )

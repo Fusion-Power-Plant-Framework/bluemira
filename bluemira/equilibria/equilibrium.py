@@ -114,7 +114,7 @@ class MHDState:
         self.dz: float | None = None
         self.set_grid(grid)
         self.limiter: Limiter | None = None
-        self.o_point_fallback = o_point_fallback
+        self._o_point_fallback = o_point_fallback
         self._label: str | None = None
 
     @property
@@ -280,7 +280,7 @@ class FixedPlasmaEquilibrium(MHDState):
             o_points=o_points,
             x_points=x_points,
             lcfs=lcfs.xz.T,
-            o_point_fallback=self.o_point_fallback,
+            o_point_fallback=self._o_point_fallback,
         )
         self._psi = psi
         self._jtor = j_tor
@@ -1356,7 +1356,7 @@ class Equilibrium(CoilSetMHDState):
                 psi,
                 o_points,
                 x_points,
-                o_point_fallback=self.o_point_fallback,
+                o_point_fallback=self._o_point_fallback,
             )
 
         plasma_psi = self.plasma.psi()
@@ -1437,7 +1437,7 @@ class Equilibrium(CoilSetMHDState):
                 psi,
                 o_points,
                 x_points,
-                o_point_fallback=self.o_point_fallback,
+                o_point_fallback=self._o_point_fallback,
             )
             plasma_psi = self.plasma.psi()
             self.boundary(plasma_psi, jtor_opt)
@@ -1895,7 +1895,7 @@ class Equilibrium(CoilSetMHDState):
                 self.z,
                 psi,
                 limiter=self.limiter,
-                o_point_fallback=o_point_fallback or self.o_point_fallback,
+                o_point_fallback=o_point_fallback or self._o_point_fallback,
                 R_0=self.profiles.R_0,
             )
         return self._o_points, self._x_points

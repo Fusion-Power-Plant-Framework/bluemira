@@ -680,8 +680,8 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.psi,
             force_update=True,
             o_point_fallback=OPointCalcOptions.GRID_CENTRE
-            if self.eq.o_point_fallback is OPointCalcOptions.RAISE
-            else self.eq.o_point_fallback,
+            if self.eq._o_point_fallback is OPointCalcOptions.RAISE
+            else self.eq._o_point_fallback,
         )
 
         if self.x_points:
