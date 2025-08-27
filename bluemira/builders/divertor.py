@@ -32,6 +32,7 @@ from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
     interpolate_bspline,
+    make_bezier,
     make_circle,
     make_polygon,
 )
@@ -106,7 +107,8 @@ class DivertorDesignerParams(ParameterFrame):
     div_targ_type_ib: Parameter[str]
     div_targ_type_ob: Parameter[str]
     # Type of divertor baffles
-    div_baffle_type: Parameter[str]
+    div_baffle_type_ib: Parameter[str]
+    div_baffle_type_ob: Parameter[str]
 
 
 @dataclass
@@ -133,6 +135,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
     OPEN_BAFFLE = "open_baffle"
     CIRCLE_BAFFLE = "circle_baffle"
     FLUXLINE_BAFFLE = "fluxline_baffle"
+    STRAIGHT_BAFFLE = "straight_baffle"
 
     params: DivertorDesignerParams
     param_cls: type[DivertorDesignerParams] = DivertorDesignerParams
@@ -385,7 +388,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             The position (in x-z) where the target connects to the dome.
         target_start:
             Determines which flux surface is selected to create the baffle shape
-            when using a fluxline baffle design (see div_baffle_type parameter).
+            when using a fluxline baffle design (see div_baffle_type_ib/ob parameter).
             True -> use flux surface closest to target join point.
             False -> use flux surface closest to wall join point.
             Default (None) will mean that the point with the lowest z value is selected.
@@ -428,20 +431,63 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             ])
         )
 
+        baffle_type = (
+            self.params.div_baffle_type_ib.value
+            if label == self.INNER_BAFFLE
+            else self.params.div_baffle_type_ob.value
+        )
+
         # Different methods used to create the baffle shape.
-        if self.params.div_baffle_type.value == self.OPEN_BAFFLE:
+        if baffle_type == self.OPEN_BAFFLE:
             raise NotImplementedError("Open baffle not implemented")
-        if self.params.div_baffle_type.value == self.FLUXLINE_BAFFLE:
+        if baffle_type == self.FLUXLINE_BAFFLE:
             return self._make_fluxline_baffle(
                 label,
                 wall_join_point,
                 target_baffle_join_point,
                 target_start,
             )
+        if baffle_type == self.STRAIGHT_BAFFLE:
+            return self._make_straight_baffle(
+                label,
+                wall_join_point,
+                target_baffle_join_point,
+            )
         target_gradient = grad_xz(target_baffle_join_point, target_dome_join_point)
         return self._make_circular_baffle(
             label, wall_join_point, target_baffle_join_point, target_gradient
         )
+
+    @staticmethod
+    def _make_straight_baffle(
+        label: str,
+        wall_join_point: np.ndarray,
+        target_join_point: np.ndarray,
+    ) -> BluemiraWire:
+        """
+        Make a baffle using straight line shape.
+
+        Parameters
+        ----------
+        label:
+            The label to give the returned Component.
+        wall_join_point:
+            The position (in x-z) where the wall connects to the baffle.
+        target_join_point:
+            The position (in x-z) where the target connects to the baffle.
+
+        Returns
+        -------
+        :
+            The baffle shape
+        """
+        wire = make_bezier(
+            points=[
+                np.insert(wall_join_point, 1, 0.0),
+                np.insert(target_join_point, 1, 0.0),
+            ]
+        )
+        return BluemiraWire(wire, label=label)
 
     def _make_fluxline_baffle(
         self,

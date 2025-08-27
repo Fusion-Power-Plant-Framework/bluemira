@@ -857,8 +857,14 @@
     "unit": "\u00b0",
     "source": "Input"
   },
-  "div_baffle_type": {
-    "name": "Divertor baffle configuration (arc shaped, leg flux shaped, open)",
+  "div_baffle_type_ib": {
+    "name": "Divertor baffle configuration (arc shaped, leg flux shaped, straight, open)",
+    "value": "circle_baffle",
+    "unit": "dimensionless",
+    "source": "Input"
+  },
+  "div_baffle_type_ob": {
+    "name": "Divertor baffle configuration (arc shaped, leg flux shaped, straight, open)",
     "value": "circle_baffle",
     "unit": "dimensionless",
     "source": "Input"

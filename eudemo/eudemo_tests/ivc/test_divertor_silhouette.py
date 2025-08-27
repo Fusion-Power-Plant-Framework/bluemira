@@ -43,7 +43,8 @@ class TestDivertorSilhouetteDesigner:
         "div_targ_angle_ob": {"value": -25, "unit": "degrees"},
         "div_targ_type_ib": {"value": "verticle", "unit": ""},
         "div_targ_type_ob": {"value": "verticle", "unit": ""},
-        "div_baffle_type": {"value": "circle_baffle", "unit": ""},
+        "div_baffle_type_ib": {"value": "circle_baffle", "unit": ""},
+        "div_baffle_type_ob": {"value": "circle_baffle", "unit": ""},
     }
 
     @classmethod
