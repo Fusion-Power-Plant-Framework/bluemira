@@ -139,6 +139,7 @@ class MHDState:
         *,
         qpsi_positive: bool | None = None,
         full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid]:
         """
@@ -190,7 +191,10 @@ class MHDState:
             e.dxc /= 2
             e.dzc /= 2
 
-        return e, Grid.from_eqdsk(e)
+        grid = Grid.from_eqdsk(e)
+        if regrid_nx_nz is not None:
+            grid = grid.regrid(*regrid_nx_nz)
+        return e, grid
 
     def to_eqdsk(
         self,
@@ -279,6 +283,7 @@ class FixedPlasmaEquilibrium(MHDState):
         *,
         qpsi_positive: bool | None = None,
         full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ):
         """
@@ -305,8 +310,10 @@ class FixedPlasmaEquilibrium(MHDState):
             from_cocos=from_cocos,
             full_coil=full_coil,
             qpsi_positive=qpsi_positive,
+            regrid_nx_nz=regrid_nx_nz,
             **kwargs,
         )
+
         psi_ax = e.psimag
         psi_b = e.psibdry
         lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
@@ -481,6 +488,7 @@ class CoilSetMHDState(MHDState):
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
         full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid, CoilSet, Limiter | None]:
         """
@@ -524,6 +532,7 @@ class CoilSetMHDState(MHDState):
             from_cocos=from_cocos,
             qpsi_positive=qpsi_positive,
             full_coil=full_coil,
+            regrid_nx_nz=regrid_nx_nz,
             **kwargs,
         )
         coilset = user_coils if user_coils is not None else CoilSet.from_group_vecs(e)
@@ -666,6 +675,7 @@ class Breakdown(CoilSetMHDState):
         force_symmetry: bool,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ):
         """
@@ -699,8 +709,10 @@ class Breakdown(CoilSetMHDState):
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
+            regrid_nx_nz=regrid_nx_nz,
             **kwargs,
         )
+
         self = cls(coilset, grid, limiter=limiter, psi=eqdsk.psi, filename=filename)
         self._eqdsk = eqdsk
         return self
@@ -1030,6 +1042,7 @@ class Equilibrium(CoilSetMHDState):
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
         full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ):
         """
@@ -1067,6 +1080,7 @@ class Equilibrium(CoilSetMHDState):
             force_symmetry=force_symmetry,
             user_coils=user_coils,
             full_coil=full_coil,
+            regrid_nx_nz=regrid_nx_nz,
             **kwargs,
         )
 
