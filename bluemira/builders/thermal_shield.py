@@ -38,7 +38,6 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
-from bluemira.materials.cache import Void
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
@@ -128,7 +127,7 @@ class VVTSBuilder(Builder):
 
         vvts = PhysicalComponent(self.VVTS, vvts_face)
         vvts_void = PhysicalComponent(
-            self.VOID, BluemiraFace(vvts_face.boundary[1]), material=Void("vacuum")
+            self.VOID, BluemiraFace(vvts_face.boundary[1]), material=vacuum_void
         )
 
         apply_component_display_options(vvts, color=BLUE_PALETTE["TS"][0])
@@ -166,10 +165,7 @@ class VVTSBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
-            material=[
-                self.get_material(self.VVTS),
-                Void("vacuum"),
-            ],
+            material=[self.get_material(self.VVTS), vacuum_void],
         )
 
 
@@ -297,7 +293,7 @@ class CryostatTSBuilder(Builder):
 
         cryostat_ts = PhysicalComponent(self.CRYO_TS, cts)
         cryostat_ts_void = PhysicalComponent(
-            self.VOID, cts_void_face, material=Void("vacuum")
+            self.VOID, cts_void_face, material=vacuum_void
         )
 
         apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
@@ -329,8 +325,5 @@ class CryostatTSBuilder(Builder):
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
             enable_sectioning=True,
-            material=[
-                self.get_material(self.CRYO_TS),
-                Void("vacuum"),
-            ],
+            material=[self.get_material(self.CRYO_TS), vacuum_void],
         )

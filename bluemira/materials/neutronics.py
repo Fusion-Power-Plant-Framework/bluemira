@@ -285,14 +285,9 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """
     inb_vv_mat = mixture(
         name="inb_vacuum_vessel",
-        materials=[
-            (eurofer_mat, 0.8),
-            (water_mat, 0.2),
-        ],
+        materials=[(eurofer_mat, 0.8), (water_mat, 0.2)],
         fraction_type="vo",
-        converters=OpenMCNeutronicsConfig(
-            material_id=104,
-        ),
+        converters=OpenMCNeutronicsConfig(material_id=104),
     )
 
     # Making first wall
@@ -305,9 +300,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (lined_euro_mat, 11.5 / 27.0),
         ],
         fraction_type="vo",
-        converters=OpenMCNeutronicsConfig(
-            material_id=101,
-        ),
+        converters=OpenMCNeutronicsConfig(material_id=101),
     )
 
     # Making blanket
@@ -318,9 +311,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (make_PbLi_mat(li_enrich_ao), 0.9395 * 0.95),
         ],
         fraction_type="vo",
-        converters=OpenMCNeutronicsConfig(
-            material_id=102,
-        ),
+        converters=OpenMCNeutronicsConfig(material_id=102),
     )
 
     return ReactorBaseMaterials(
@@ -329,10 +320,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         inb_bz_mat=inb_bz_mat,
         inb_mani_mat=mixture(
             name="inb_manifold",
-            materials=[
-                (eurofer_mat, 0.573),
-                (inb_bz_mat, 0.426),
-            ],  # 1% void
+            materials=[(eurofer_mat, 0.573), (inb_bz_mat, 0.426)],  # 1% void
             fraction_type="vo",
             converters=OpenMCNeutronicsConfig(material_id=103),
         ),
@@ -448,11 +436,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     # Using Eurofer instead of SS316LN
     inb_fw_mat = mixture(
         name="inb_first_wall",
-        materials=[
-            (tungsten_mat, 0.0766),
-            (water_mat, 0.1321),
-            (eurofer_mat, 0.7913),
-        ],
+        materials=[(tungsten_mat, 0.0766), (water_mat, 0.1321), (eurofer_mat, 0.7913)],
         fraction_type="vo",
         converters=OpenMCNeutronicsConfig(material_id=101),
     )
@@ -460,10 +444,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     return ReactorBaseMaterials(
         inb_vv_mat=mixture(
             name="inb_vacuum_vessel",
-            materials=[
-                (eurofer_mat, 0.6),
-                (water_mat, 0.4),
-            ],
+            materials=[(eurofer_mat, 0.6), (water_mat, 0.4)],
             fraction_type="vo",
             converters=OpenMCNeutronicsConfig(material_id=104),
         ),
@@ -481,11 +462,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
-            materials=[
-                (PbLi_mat, 0.2129),
-                (water_mat, 0.2514),
-                (eurofer_mat, 0.5357),
-            ],
+            materials=[(PbLi_mat, 0.2129), (water_mat, 0.2514), (eurofer_mat, 0.5357)],
             fraction_type="vo",
             converters=OpenMCNeutronicsConfig(material_id=103),
         ),

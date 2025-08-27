@@ -21,8 +21,9 @@ from bluemira.display.displayer import DisplayableCAD
 from bluemira.display.plotter import Plottable
 
 if TYPE_CHECKING:
+    from matproplib.material import Material
+
     from bluemira.geometry.base import BluemiraGeoT
-    from bluemira.materials.material import Material
 
 
 ComponentT = TypeVar("ComponentT", bound="Component")

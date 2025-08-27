@@ -42,11 +42,12 @@ from bluemira.geometry.tools import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from physical_materials.material import Material
+
     from bluemira.base.components import ComponentT
     from bluemira.geometry.base import BluemiraGeoT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
-    from bluemira.materials.material import Material
 
 __all__ = [
     "apply_component_display_options",
