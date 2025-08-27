@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 
 def _dx_at_radius(radius: float, rad_theta: float) -> float:
     """
-    Compute the toroidal width at a given radial position.
+    Compute the toroidal half-width at a given radial position.
 
     Parameters
     ----------
@@ -64,7 +64,7 @@ def _dx_at_radius(radius: float, rad_theta: float) -> float:
     :
         Toroidal width [m] at the given radius.
     """
-    return 2 * radius * np.tan(rad_theta / 2)
+    return radius * np.tan(rad_theta / 2)
 
 
 @dataclass
@@ -198,13 +198,9 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
             Cross-sectional area [m²].
         """
         return (
-            0.5
-            * (
-                _dx_at_radius(self.variables.Ri.value, self.rad_theta)
-                + _dx_at_radius(self.variables.Rk.value, self.rad_theta)
-            )
-            * (self.variables.Ri.value - self.variables.Rk.value)
-        )
+            2 * _dx_at_radius(self.variables.Ri.value, self.rad_theta)
+            + 2 * _dx_at_radius(self.variables.Rk.value, self.rad_theta)
+        ) * (self.variables.Ri.value - self.variables.Rk.value)
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -215,17 +211,17 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
         :
             Array of shape (4, 2) representing the corners of the trapezoid.
             Coordinates are ordered counterclockwise starting from the top-left corner:
-            [(-dx_outer/2, Ri), (dx_outer/2, Ri), (dx_inner/2, Rk), (-dx_inner/2, Rk)].
+            [(-dx_outer, Ri), (dx_outer, Ri), (dx_inner, Rk), (-dx_inner, Rk)].
         """
-        dx_outer = _dx_at_radius(self.variables.Ri.value, self.rad_theta)
-        dx_inner = _dx_at_radius(self.variables.Rk.value, self.rad_theta)
+        dx_outer = 2 * _dx_at_radius(self.variables.Ri.value, self.rad_theta)
+        dx_inner = 2 * _dx_at_radius(self.variables.Rk.value, self.rad_theta)
 
         return make_polygon(
             [
-                [-dx_outer / 2, self.variables.Ri.value],
-                [dx_outer / 2, self.variables.Ri.value],
-                [dx_inner / 2, self.variables.Rk.value],
-                [-dx_inner / 2, self.variables.Rk.value],
+                [-dx_outer, self.variables.Ri.value],
+                [dx_outer, self.variables.Ri.value],
+                [dx_inner, self.variables.Rk.value],
+                [-dx_inner, self.variables.Rk.value],
             ],
             label=label,
         )
@@ -388,10 +384,13 @@ class BaseCaseTF(CaseGeometry, ABC):
             WPs=WPs,
             name=name,
         )
-        self.dx_i = 2 * self.params.Ri.value * np.tan(self.rad_theta_TF / 2)
+        # Toroidal half-length of the coil case at its maximum radial position [m]
+        self.dx_i = _dx_at_radius(self.params.Ri.value, self.rad_theta_TF)
+        # Average toroidal length of the ps plate
         self.dx_ps = (
             self.params.Ri.value + (self.params.Ri.value - self.params.dy_ps.value)
         ) * np.tan(self.rad_theta_TF / 2)
+        # sets Rk
         self.update_dy_vault(self.params.dy_vault.value)
 
     @property
@@ -540,7 +539,7 @@ class BaseCaseTF(CaseGeometry, ABC):
             Array containing the radial thickness [m] of each Winding Pack.
             Each element corresponds to one WP in the self.WPs list.
         """
-        return np.array([wp.dy for wp in self.WPs])
+        return np.array([2 * wp.dy for wp in self.WPs])
 
     @property
     def dy_wp_tot(self) -> float:
@@ -741,11 +740,11 @@ class BaseCaseTF(CaseGeometry, ABC):
         n_conductors:
             Number of conductors to allocate.
         dx_WP:
-            Available toroidal width for the winding pack [m].
+            Available toroidal half-width for the winding pack [m].
         dx_cond:
-            Toroidal width of a single conductor [m].
+            Toroidal half-width of a single conductor [m].
         dy_cond:
-            Radial height of a single conductor [m].
+            Radial half-height of a single conductor [m].
         layout:
             Layout type:
             - "auto"    : no constraints
@@ -1012,11 +1011,10 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             self.mat_case.youngs_modulus(op_cond) / self.dx_ps * self.params.dy_ps.value
         )
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
-            - w.dx / 2
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2) - w.dx
             for i, w in enumerate(self.WPs)
         ])
-        dy_lat = np.array([w.dy for w in self.WPs])
+        dy_lat = np.array([2 * w.dy for w in self.WPs])
         # toroidal stiffness of lateral case sections per winding pack
         kx_lat = self.mat_case.youngs_modulus(op_cond) / dx_lat * dy_lat
         temp = [
@@ -1054,11 +1052,10 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.params.dy_ps.value
         )
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2)
-            - w.dx / 2
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2) - w.dx
             for i, w in enumerate(self.WPs)
         ])
-        dy_lat = np.array([w.dy for w in self.WPs])
+        dy_lat = np.array([2 * w.dy for w in self.WPs])
         # toroidal stiffness of lateral case sections per winding pack
         ky_lat = self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
         # toroidal stiffness of the vault region

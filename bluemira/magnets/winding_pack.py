@@ -73,18 +73,18 @@ class WindingPack:
 
     @property
     def dx(self) -> float:
-        """Return the total width of the winding pack [m]."""
+        """Return the half width of the winding pack [m]."""
         return self.conductor.dx * self.params.nx.value
 
     @property
     def dy(self) -> float:
-        """Return the total height of the winding pack [m]."""
+        """Return the half height of the winding pack [m]."""
         return self.conductor.dy * self.params.ny.value
 
     @property
     def area(self) -> float:
         """Return the total cross-sectional area [m²]."""
-        return self.dx * self.dy
+        return 4 * self.dx * self.dy
 
     @property
     def n_conductors(self) -> int:
@@ -164,13 +164,11 @@ class WindingPack:
             _, ax = plt.subplots()
 
         pc = np.array([xc, yc])
-        a = self.dx / 2
-        b = self.dy / 2
 
-        p0 = np.array([-a, -b])
-        p1 = np.array([a, -b])
-        p2 = np.array([a, b])
-        p3 = np.array([-a, b])
+        p0 = np.array([-self.dx, -self.dy])
+        p1 = np.array([self.dx, -self.dy])
+        p2 = np.array([self.dx, self.dy])
+        p3 = np.array([-self.dx, self.dy])
 
         points_ext = np.vstack((p0, p1, p2, p3, p0)) + pc
 
@@ -180,8 +178,8 @@ class WindingPack:
         if not homogenized:
             for i in range(self.params.nx.value):
                 for j in range(self.params.ny.value):
-                    xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx
-                    yc_c = yc - self.dy / 2 + (j + 0.5) * self.conductor.dy
+                    xc_c = xc - self.dx + (2 * i + 1) * self.conductor.dx
+                    yc_c = yc - self.dy + (2 * j + 1) * self.conductor.dy
                     self.conductor.plot(xc=xc_c, yc=yc_c, ax=ax)
 
         if show:

@@ -137,12 +137,12 @@ class ABCCable(ABC):
     @property
     @abstractmethod
     def dx(self):
-        """Cable dimension in the x-direction [m]."""
+        """Half Cable dimension in the x-direction [m]."""
 
     @property
     @abstractmethod
     def dy(self):
-        """Cable dimension in the y-direction [m]."""
+        """Half Cable dimension in the y-direction [m]."""
 
     @property
     def aspect_ratio(self):
@@ -541,13 +541,11 @@ class ABCCable(ABC):
             _, ax = plt.subplots()
 
         pc = np.array([xc, yc])
-        a = self.dx / 2
-        b = self.dy / 2
 
-        p0 = np.array([-a, -b])
-        p1 = np.array([a, -b])
-        p2 = np.array([[a, b]])
-        p3 = np.array([-a, b])
+        p0 = np.array([-self.dx, -self.dy])
+        p1 = np.array([self.dx, -self.dy])
+        p2 = np.array([[self.dx, self.dy]])
+        p3 = np.array([-self.dx, self.dy])
 
         points_ext = np.vstack((p0, p1, p2, p3, p0)) + pc
         points_cc = (
@@ -688,7 +686,7 @@ class RectangularCableParams(CableParams):
     """
 
     dx: Parameter[float]
-    """Cable width in the x-direction [m]."""
+    """Cable half-width in the x-direction [m]."""
 
 
 class RectangularCable(ABCCable):
@@ -750,19 +748,19 @@ class RectangularCable(ABCCable):
 
     @property
     def dx(self) -> float:
-        """Cable dimension in the x direction [m]"""
+        """Half Cable dimension in the x direction [m]"""
         return self.params.dx.value
 
     @property
     def dy(self) -> float:
-        """Cable dimension in the y direction [m]"""
-        return self.area / self.params.dx.value
+        """Half Cable dimension in the y direction [m]"""
+        return self.area / self.params.dx.value / 4
 
     # Decide if this function shall be a setter.
     # Defined as "normal" function to underline that it modifies dx.
     def set_aspect_ratio(self, value: float):
         """Modify dx in order to get the given aspect ratio"""
-        self.params.dx.value = np.sqrt(value * self.area)
+        self.params.dx.value = np.sqrt(value * self.area) / 2
 
     # OD homogenized structural properties
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -980,12 +978,12 @@ class SquareCable(ABCCable):
 
     @property
     def dx(self) -> float:
-        """Cable dimension in the x direction [m]"""
-        return np.sqrt(self.area)
+        """Half Cable dimension in the x direction [m]"""
+        return np.sqrt(self.area / 4)
 
     @property
     def dy(self) -> float:
-        """Cable dimension in the y direction [m]"""
+        """Half Cable dimension in the y direction [m]"""
         return self.dx
 
     # OD homogenized structural properties
@@ -1128,12 +1126,12 @@ class RoundCable(ABCCable):
 
     @property
     def dx(self) -> float:
-        """Cable dimension in the x direction [m] (i.e. cable's diameter)"""
-        return np.sqrt(self.area * 4 / np.pi)
+        """Half Cable dimension in the x direction [m] (i.e. cable's radius)"""
+        return np.sqrt(self.area / np.pi)
 
     @property
     def dy(self) -> float:
-        """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
+        """Half Cable dimension in the y direction [m] (i.e. cable's radius)"""
         return self.dx
 
     # OD homogenized structural properties
@@ -1217,7 +1215,7 @@ class RoundCable(ABCCable):
 
         points_ext = (
             np.array([
-                np.array([np.cos(theta), np.sin(theta)]) * self.dx / 2
+                np.array([np.cos(theta), np.sin(theta)]) * self.dx
                 for theta in np.linspace(0, np.radians(360), 19)
             ])
             + pc

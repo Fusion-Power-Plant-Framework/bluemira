@@ -91,35 +91,27 @@ class Conductor:
 
     @property
     def dx(self):
-        """x-dimension of the conductor [m]"""
-        return (
-            self.params.dx_ins.value * 2
-            + self.params.dx_jacket.value * 2
-            + self.cable.dx
-        )
+        """Half x-dimension of the conductor [m]"""
+        return self.params.dx_ins.value + self.params.dx_jacket.value + self.cable.dx
 
     @property
     def dy(self):
-        """y-dimension of the conductor [m]"""
-        return (
-            self.params.dy_ins.value * 2
-            + self.params.dy_jacket.value * 2
-            + self.cable.dy
-        )
+        """Half y-dimension of the conductor [m]"""
+        return self.params.dy_ins.value + self.params.dy_jacket.value + self.cable.dy
 
     @property
     def area(self):
         """Area of the conductor [m^2]"""
-        return self.dx * self.dy
+        return self.dx * self.dy * 4
 
-    # jm -  surely this should be done from inside out ie cable dx + jacket dx
-    #       rather than out in and depend on more variables?
     @property
     def area_jacket(self):
         """Area of the jacket [m^2]"""
-        return (self.dx - 2 * self.params.dx_ins.value) * (
-            self.dy - 2 * self.params.dy_ins.value
-        ) - self.cable.area
+        return (
+            4
+            * (self.cable.dx + self.params.dx_jacket.value)
+            * (self.cable.dy + self.params.dy_jacket.value)
+        )
 
     @property
     def area_ins(self):
@@ -274,7 +266,10 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond) * self.cable.dy / self.params.dx_ins.value
+            self._mat_ins_y_modulus(op_cond)
+            * 2
+            * self.cable.dy
+            / self.params.dx_ins.value
         )
 
     def _Kx_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -286,7 +281,9 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.params.dy_ins.value / self.dx
+        return (
+            self._mat_ins_y_modulus(op_cond) * self.params.dy_ins.value / (2 * self.dx)
+        )
 
     def _Kx_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -300,7 +297,7 @@ class Conductor:
         return (
             self._mat_jacket_y_modulus(op_cond)
             * self.params.dy_jacket.value
-            / (self.dx - 2 * self.params.dx_ins.value)
+            / (2 * self.dx - 2 * self.params.dx_ins.value)
         )
 
     def _Kx_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -314,6 +311,7 @@ class Conductor:
         """
         return (
             self._mat_jacket_y_modulus(op_cond)
+            * 2
             * self.cable.dy
             / self.params.dx_jacket.value
         )
@@ -351,7 +349,10 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self._mat_ins_y_modulus(op_cond) * self.cable.dx / self.params.dy_ins.value
+            self._mat_ins_y_modulus(op_cond)
+            * 2
+            * self.cable.dx
+            / self.params.dy_ins.value
         )
 
     def _Ky_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -363,7 +364,9 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return self._mat_ins_y_modulus(op_cond) * self.params.dx_ins.value / self.dy
+        return (
+            self._mat_ins_y_modulus(op_cond) * self.params.dx_ins.value / (2 * self.dy)
+        )
 
     def _Ky_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -377,7 +380,7 @@ class Conductor:
         return (
             self._mat_jacket_y_modulus(op_cond)
             * self.params.dx_jacket.value
-            / (self.dy - 2 * self.params.dy_ins.value)
+            / (2 * self.dy - 2 * self.params.dy_ins.value)
         )
 
     def _Ky_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -391,6 +394,7 @@ class Conductor:
         """
         return (
             self._mat_jacket_y_modulus(op_cond)
+            * 2
             * self.cable.dx
             / self.params.dy_jacket.value
         )
@@ -460,8 +464,8 @@ class Conductor:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
         if direction == "x":
-            saf_jacket = (self.cable.dx + 2 * self.params.dx_jacket.value) / (
-                2 * self.params.dx_jacket.value
+            saf_jacket = (self.cable.dx + self.params.dx_jacket.value) / (
+                self.params.dx_jacket.value
             )
 
             K = summation([  # noqa: N806
@@ -476,8 +480,8 @@ class Conductor:
             X_jacket = 2 * self._Ky_lat_jacket(op_cond) / K  # noqa: N806
 
         else:
-            saf_jacket = (self.cable.dy + 2 * self.params.dy_jacket.value) / (
-                2 * self.params.dy_jacket.value
+            saf_jacket = (self.cable.dy + self.params.dy_jacket.value) / (
+                self.params.dy_jacket.value
             )
 
             K = summation([  # noqa: N806
@@ -699,8 +703,8 @@ class Conductor:
             _, ax = plt.subplots()
 
         pc = np.array([xc, yc])
-        a = self.cable.dx / 2 + self.params.dx_jacket.value
-        b = self.cable.dy / 2 + self.params.dy_jacket.value
+        a = self.cable.dx + self.params.dx_jacket.value
+        b = self.cable.dy + self.params.dy_jacket.value
 
         p0 = np.array([-a, -b])
         p1 = np.array([a, -b])
