@@ -138,10 +138,7 @@ class ParameterisedRippleSolver:
         )
 
     def ripple(
-        self,
-        x: float | np.ndarray,
-        y: float | np.ndarray,
-        z: float | np.ndarray,
+        self, x: float | np.ndarray, y: float | np.ndarray, z: float | np.ndarray
     ) -> float | np.ndarray:
         """
         Get the toroidal field ripple at points.

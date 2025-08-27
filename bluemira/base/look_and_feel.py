@@ -355,9 +355,7 @@ def version_banner() -> list[str]:
     list[str]
         The list of strings of text describing the version and code information
     """
-    mapping = {
-        "SLOC": "total",
-    }
+    mapping = {"SLOC": "total"}
     root = get_bluemira_root()
     if not Path(f"{root}/.git").is_dir() or shutil.which("git") is None:
         return [

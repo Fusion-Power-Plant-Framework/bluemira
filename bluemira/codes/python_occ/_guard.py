@@ -10,7 +10,4 @@ API guard for the OCC package.
 
 from bluemira.codes.utilities import code_guard
 
-occ_guard = code_guard(
-    "OCC",
-    "Run `conda install pythonocc-core` to use this function.",
-)
+occ_guard = code_guard("OCC", "Run `conda install pythonocc-core` to use this function.")

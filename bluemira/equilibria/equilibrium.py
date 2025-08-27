@@ -48,11 +48,7 @@ from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import (
-    EqSummary,
-    _calc_li3minargs,
-    calc_psi_norm,
-)
+from bluemira.equilibria.physics import EqSummary, _calc_li3minargs, calc_psi_norm
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
@@ -357,9 +353,7 @@ class FixedPlasmaEquilibrium(MHDState):
         return deepcopy(self._lcfs)
 
     def Bx(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils
@@ -381,9 +375,7 @@ class FixedPlasmaEquilibrium(MHDState):
         return self.plasma.Bx(x, z)
 
     def Bz(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils
@@ -405,9 +397,7 @@ class FixedPlasmaEquilibrium(MHDState):
         return self.plasma.Bz(x, z)
 
     def Bp(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point(s) (x, z)
@@ -429,9 +419,7 @@ class FixedPlasmaEquilibrium(MHDState):
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def psi(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic flux, either for the whole grid, or for
@@ -816,9 +804,7 @@ class Breakdown(CoilSetMHDState):
         return self.psi(*self.breakdown_point)
 
     def Bx(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils
@@ -843,9 +829,7 @@ class Breakdown(CoilSetMHDState):
         return self.coilset.Bx(x, z)
 
     def Bz(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils
@@ -870,9 +854,7 @@ class Breakdown(CoilSetMHDState):
         return self.coilset.Bz(x, z)
 
     def Bp(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point (x, z) from coils
@@ -900,9 +882,7 @@ class Breakdown(CoilSetMHDState):
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def psi(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Returns the poloidal magnetic flux, either for the whole grid, or for
@@ -1533,9 +1513,7 @@ class Equilibrium(CoilSetMHDState):
         return xcur, zcur
 
     def Bx(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total radial magnetic field at point (x, z) from coils and plasma
@@ -1560,9 +1538,7 @@ class Equilibrium(CoilSetMHDState):
         return self.plasma.Bx(x, z) + self.coilset.Bx(x, z)
 
     def Bz(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total vertical magnetic field at point (x, z) from coils and plasma
@@ -1587,9 +1563,7 @@ class Equilibrium(CoilSetMHDState):
         return self.plasma.Bz(x, z) + self.coilset.Bz(x, z)
 
     def Bp(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Total poloidal magnetic field at point (x, z) from coils and plasma
@@ -1627,9 +1601,7 @@ class Equilibrium(CoilSetMHDState):
         return self.fvac() / x
 
     def psi(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Returns the poloidal magnetic flux, either for the whole grid, or for
@@ -2102,12 +2074,7 @@ class Equilibrium(CoilSetMHDState):
         :
             The plot axis
         """
-        return EquilibriumPlotter(
-            self,
-            ax,
-            plasma=plasma,
-            show_ox=show_ox,
-        )
+        return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
     def plot_field(self, ax: Axes | None = None, *, show_ox: bool = True):
         """
@@ -2119,11 +2086,7 @@ class Equilibrium(CoilSetMHDState):
             The plot axis
         """
         return EquilibriumPlotter(
-            self,
-            ax,
-            plasma=False,
-            show_ox=show_ox,
-            field=EqBPlotParam.BP,
+            self, ax, plasma=False, show_ox=show_ox, field=EqBPlotParam.BP
         )
 
     def plot_core(self, ax=None):

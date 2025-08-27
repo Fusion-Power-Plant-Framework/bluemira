@@ -74,11 +74,7 @@ class CryostatDesigner(Designer[tuple[float, float]]):
 
     param_cls: type[CryostatDesignerParams] = CryostatDesignerParams
 
-    def __init__(
-        self,
-        params: ParameterFrameLike,
-        cryo_ts_xz: BluemiraFace,
-    ):
+    def __init__(self, params: ParameterFrameLike, cryo_ts_xz: BluemiraFace):
         super().__init__(params)
         self.cryo_ts_xz = cryo_ts_xz
 

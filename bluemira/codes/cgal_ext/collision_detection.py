@@ -108,10 +108,7 @@ def tri_mesh_to_cgal_mesh(points: np.ndarray, tris: np.ndarray, scale: float = 1
 
 
 @cgal_guard
-def do_polys_collide(
-    mesh_a: Polyhedron_3,
-    mesh_b: Polyhedron_3,
-) -> bool:
+def do_polys_collide(mesh_a: Polyhedron_3, mesh_b: Polyhedron_3) -> bool:
     """
     Check if two CGAL Polyhedron_3 objects collide.
 

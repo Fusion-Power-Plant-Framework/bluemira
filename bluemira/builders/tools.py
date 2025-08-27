@@ -106,10 +106,7 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
 
 
 def compound_from_components(
-    components: list[ComponentT],
-    name: str,
-    *,
-    material: Material | None = None,
+    components: list[ComponentT], name: str, *, material: Material | None = None
 ) -> PhysicalComponent:
     """
     Imprints and fuses (boolean merge) all PhysicalComponents of a list of
@@ -135,10 +132,7 @@ def compound_from_components(
 
 
 def fuse_components(
-    components: list[ComponentT],
-    name: str,
-    *,
-    material: Material | None = None,
+    components: list[ComponentT], name: str, *, material: Material | None = None
 ) -> PhysicalComponent:
     """
     Iteratively boolean fuses all PhysicalComponents of components
@@ -477,9 +471,7 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 
 def build_sectioned_xy(
-    face: BluemiraFace,
-    plot_colour: tuple[float],
-    material: Material | None = None,
+    face: BluemiraFace, plot_colour: tuple[float], material: Material | None = None
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component

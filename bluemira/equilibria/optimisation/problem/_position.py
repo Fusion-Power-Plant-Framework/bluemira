@@ -12,9 +12,7 @@ from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
 )
-from bluemira.equilibria.optimisation.objectives import (
-    RegularisedLsqObjective,
-)
+from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimiserResult,
     EqCoilsetOptimisationProblem,

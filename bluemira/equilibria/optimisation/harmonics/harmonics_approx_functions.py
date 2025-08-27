@@ -455,8 +455,7 @@ def coils_outside_fs_sphere(
     c_names = np.array(eq.coilset.control)
     bdry_r = np.max(np.linalg.norm([bndry.x, bndry.z], axis=0))
     coil_r = np.linalg.norm(
-        [eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z],
-        axis=0,
+        [eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z], axis=0
     )
     # Approximation boundary - sphere must contain
     # plasma for chosen equilibrium.
@@ -657,13 +656,7 @@ def spherical_harmonic_approximation(
         )
 
     # Create the set of collocation points within the FS for the SH calculations
-    collocation = collocation_points(
-        original_fs,
-        point_type,
-        n_points,
-        seed,
-        grid_num,
-    )
+    collocation = collocation_points(original_fs, point_type, n_points, seed, grid_num)
 
     # SH amplitudes needed to produce an approximation of vacuum psi contribution
     psi_harmonic_amplitudes = get_psi_harmonic_amplitudes(

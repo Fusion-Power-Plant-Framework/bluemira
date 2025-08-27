@@ -174,7 +174,7 @@ def add_features(
 
     # loop over every face adding their meshes to polyscope
     for shape_i, (label, part, option) in enumerate(
-        zip(labels, parts, options, strict=False),
+        zip(labels, parts, options, strict=False)
     ):
         verts, faces = cadapi.collect_verts_faces(part, option["tesselation"])
 
