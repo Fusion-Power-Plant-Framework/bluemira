@@ -26,9 +26,7 @@ import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.optimisation.constraints import (
-    UpdateableConstraint,
-)
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,

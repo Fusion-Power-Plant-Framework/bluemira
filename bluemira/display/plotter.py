@@ -563,8 +563,7 @@ class WirePlotter(BasePlotter):
     def _populate_data(self, obj: BluemiraWire):
         new_wire = obj.deepcopy()
         pointsw = new_wire.discretise(
-            ndiscr=self.options._options.ndiscr,
-            byedges=self.options._options.byedges,
+            ndiscr=self.options._options.ndiscr, byedges=self.options._options.byedges
         ).T
         self._pplotter = PointsPlotter(self.options, data=pointsw)
         self._data = pointsw
@@ -645,11 +644,7 @@ class FacePlotter(BasePlotter):
             face_opts = self.options.face_options
             if face_opts.get("hatch", None) is not None:
                 self.ax.add_patch(
-                    Polygon(
-                        np.asarray(self._projected_data).T,
-                        fill=False,
-                        **face_opts,
-                    )
+                    Polygon(np.asarray(self._projected_data).T, fill=False, **face_opts)
                 )
             else:
                 self.ax.fill(*self._projected_data, **face_opts)
@@ -780,9 +775,7 @@ def _validate_plot_inputs(
     return parts, options
 
 
-def _get_plotter_class(
-    part: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
-):
+def _get_plotter_class(part: npt.ArrayLike | Coordinates | BluemiraGeoT | Component):
     """
     Returns
     -------

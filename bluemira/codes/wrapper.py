@@ -85,9 +85,7 @@ def plot_radial_build(
 
 
 def transport_code_solver(
-    params: ParameterFrame,
-    build_config: BuildConfig,
-    module: str = "PLASMOD",
+    params: ParameterFrame, build_config: BuildConfig, module: str = "PLASMOD"
 ) -> TransportSolver:
     """
     Transport solver

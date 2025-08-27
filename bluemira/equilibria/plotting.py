@@ -49,10 +49,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
-    from bluemira.equilibria.equilibrium import (
-        Equilibrium,
-        FixedPlasmaEquilibrium,
-    )
+    from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
     from bluemira.equilibria.flux_surfaces import CoreResults
     from bluemira.equilibria.profiles import Profile
 
@@ -950,12 +947,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
 
         else:
             self.ax[0].contour(
-                x,
-                z,
-                self.coilset_psi,
-                levels=levels,
-                cmap=cmap,
-                zorder=8,
+                x, z, self.coilset_psi, levels=levels, cmap=cmap, zorder=8
             )
             plt.suptitle(
                 "Psi split by contribution from coilset and plasma for current"
@@ -1011,14 +1003,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 plt.tight_layout()
 
         else:
-            self.ax[1].contour(
-                x,
-                z,
-                self.plasma_psi,
-                levels=levels,
-                cmap=cmap,
-                zorder=8,
-            )
+            self.ax[1].contour(x, z, self.plasma_psi, levels=levels, cmap=cmap, zorder=8)
         # Plot current and reference lcfs
         self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
         self.plot_reference_LCFS(

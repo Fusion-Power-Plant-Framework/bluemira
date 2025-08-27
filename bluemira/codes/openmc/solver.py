@@ -311,12 +311,7 @@ class Run(CodesTask):
 class Teardown(CodesTeardown):
     """Teardown task for OpenMC solver"""
 
-    def __init__(
-        self,
-        cells,
-        out_path: str,
-        codes_name: str,
-    ):
+    def __init__(self, cells, out_path: str, codes_name: str):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
@@ -352,21 +347,13 @@ class Teardown(CodesTeardown):
     ):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
-            universe,
-            n_DT_reactions(source_params.reactor_power),
-            statepoint_file,
+            universe, n_DT_reactions(source_params.reactor_power), statepoint_file
         )
         if delete_files:
             self.delete_files(files_created)
         return result
 
-    def plot(
-        self,
-        _universe,
-        files_created,
-        *_args,
-        delete_files: bool = False,
-    ):
+    def plot(self, _universe, files_created, *_args, delete_files: bool = False):
         """Plot stage for Teardown task"""
         if delete_files:
             self.delete_files(files_created)

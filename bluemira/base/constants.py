@@ -72,9 +72,7 @@ class BMUnitRegistry(UnitRegistry):
         # M$ makes sense if a bit non-standard
         super().__init__(
             fmt_locale="en_GB",
-            preprocessors=[
-                lambda x: x.replace("$", "USD "),
-            ],
+            preprocessors=[lambda x: x.replace("$", "USD ")],
         )
 
         self._gas_flow_temperature = None
@@ -428,9 +426,7 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
 
 
 def raw_uc(
-    value: npt.ArrayLike,
-    unit_from: str | ureg.Unit,
-    unit_to: str | ureg.Unit,
+    value: npt.ArrayLike, unit_from: str | ureg.Unit, unit_to: str | ureg.Unit
 ) -> float | np.ndarray:
     """
     Raw unit converter
@@ -563,16 +559,13 @@ def _temp_check(unit: Unit, val: complex | Quantity):
     """
     if unit.dimensionality == UnitsContainer({"[temperature]": 1}) and np.any(
         np.less(
-            val,
-            ABS_ZERO.get(unit, ureg.Quantity(0, ureg.kelvin).to(unit).magnitude),
+            val, ABS_ZERO.get(unit, ureg.Quantity(0, ureg.kelvin).to(unit).magnitude)
         )
     ):
         raise ValueError("Negative temperature in K specified.")
 
 
-def kgm3_to_gcm3(
-    density: npt.ArrayLike,
-) -> float | np.ndarray:
+def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
     """
     Convert a density in kg/m3 to g/cm3
 
@@ -588,9 +581,7 @@ def kgm3_to_gcm3(
     return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
 
-def gcm3_to_kgm3(
-    density: npt.ArrayLike,
-) -> float | np.ndarray:
+def gcm3_to_kgm3(density: npt.ArrayLike) -> float | np.ndarray:
     """
     Convert a density in g/cm3 to kg/m3
 

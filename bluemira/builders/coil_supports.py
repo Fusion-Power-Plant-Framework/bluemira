@@ -201,23 +201,21 @@ class ITERGravitySupportBuilder(Builder):
         :
         """
         plate_list = []
-        yz_profile = Coordinates(
-            {
-                "x": 4 * [v1x],
-                "y": [
-                    -0.5 * width,
-                    0.5 * width,
-                    0.5 * self.params.tf_gs_base_depth.value,
-                    -0.5 * self.params.tf_gs_base_depth.value,
-                ],
-                "z": [
-                    z_block_lower,
-                    z_block_lower,
-                    self.params.z_gs.value,
-                    self.params.z_gs.value,
-                ],
-            },
-        )
+        yz_profile = Coordinates({
+            "x": 4 * [v1x],
+            "y": [
+                -0.5 * width,
+                0.5 * width,
+                0.5 * self.params.tf_gs_base_depth.value,
+                -0.5 * self.params.tf_gs_base_depth.value,
+            ],
+            "z": [
+                z_block_lower,
+                z_block_lower,
+                self.params.z_gs.value,
+                self.params.z_gs.value,
+            ],
+        })
         yz_profile = make_polygon(yz_profile, closed=True)
 
         plating_width = v4x - v1x
@@ -238,31 +236,23 @@ class ITERGravitySupportBuilder(Builder):
         plate_list.append(plate)
         for _ in range(n_plates - 1):
             plate = plate.deepcopy()
-            plate.translate(
-                vector=(
-                    plate_and_gap,
-                    0,
-                    0,
-                )
-            )
+            plate.translate(vector=(plate_and_gap, 0, 0))
             plate_list.append(plate)
         return plate_list
 
     def _make_floor_block(self, v1x, v4x):
         xz_profile = BluemiraFace(
             make_polygon(
-                Coordinates(
-                    {
-                        "x": [v1x, v1x, v4x, v4x],
-                        "y": [
-                            -0.5 * self.params.tf_gs_base_depth.value,
-                            0.5 * self.params.tf_gs_base_depth.value,
-                            0.5 * self.params.tf_gs_base_depth.value,
-                            -0.5 * self.params.tf_gs_base_depth.value,
-                        ],
-                        "z": 4 * [self.params.z_gs.value],
-                    },
-                ),
+                Coordinates({
+                    "x": [v1x, v1x, v4x, v4x],
+                    "y": [
+                        -0.5 * self.params.tf_gs_base_depth.value,
+                        0.5 * self.params.tf_gs_base_depth.value,
+                        0.5 * self.params.tf_gs_base_depth.value,
+                        -0.5 * self.params.tf_gs_base_depth.value,
+                    ],
+                    "z": 4 * [self.params.z_gs.value],
+                }),
                 closed=True,
             )
         )
@@ -270,9 +260,7 @@ class ITERGravitySupportBuilder(Builder):
             xz_profile, vec=(0, 0, -5 * self.params.tf_gs_tk_plate.value)
         )
 
-    def build_xyz(
-        self,
-    ) -> PhysicalComponent:
+    def build_xyz(self) -> PhysicalComponent:
         """
         Build the x-y-z component of the ITER-like gravity support.
 
@@ -306,9 +294,7 @@ class ITERGravitySupportBuilder(Builder):
         shape_list.append(self._make_floor_block(floatify(v1.x), floatify(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent(
-            "ITER-like gravity support",
-            shape,
-            material=self.get_material(self.GS),
+            "ITER-like gravity support", shape, material=self.get_material(self.GS)
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -376,9 +362,7 @@ class PFCoilSupportBuilder(Builder):
         result.sort(key=lambda wire: -wire.length)
         face = BluemiraFace(result)
         component = PhysicalComponent(
-            self.name,
-            face,
-            material=self.get_material(self.PF_ICS),
+            self.name, face, material=self.get_material(self.PF_ICS)
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -564,9 +548,7 @@ class PFCoilSupportBuilder(Builder):
                 rib_list.append(rib)
         return rib_list
 
-    def build_xyz(
-        self,
-    ) -> PhysicalComponent:
+    def build_xyz(self) -> PhysicalComponent:
         """
         Build the x-y-z components of the PF coil support.
 
@@ -601,9 +583,7 @@ class PFCoilSupportBuilder(Builder):
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(
-            self.name,
-            shape,
-            material=self.get_material(self.PF_ICS),
+            self.name, shape, material=self.get_material(self.PF_ICS)
         )
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
@@ -624,10 +604,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     """
 
     def __init__(
-        self,
-        wire: BluemiraWire,
-        keep_out_zone: BluemiraFace,
-        n_koz_discr: int = 100,
+        self, wire: BluemiraWire, keep_out_zone: BluemiraFace, n_koz_discr: int = 100
     ):
         self.wire = wire
         self.n_koz_discr = n_koz_discr
@@ -788,10 +765,7 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         """
         inner_tf_wire = self.tf_face.boundary[1]
         koz_centreline = offset_wire(
-            inner_tf_wire,
-            self.params.g_ois_tf_edge.value,
-            open_wire=False,
-            join="arc",
+            inner_tf_wire, self.params.g_ois_tf_edge.value, open_wire=False, join="arc"
         )
         ois_centreline = offset_wire(
             inner_tf_wire,
@@ -929,9 +903,7 @@ class OISBuilder(Builder):
         for i, ois_profile in enumerate(self.ois_xz_profiles):
             face = BluemiraFace(ois_profile)
             component = PhysicalComponent(
-                f"{self.TF_OIS} {i}",
-                face,
-                material=self.get_material(self.TF_OIS),
+                f"{self.TF_OIS} {i}", face, material=self.get_material(self.TF_OIS)
             )
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)

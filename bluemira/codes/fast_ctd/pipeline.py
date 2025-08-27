@@ -33,10 +33,7 @@ with contextlib.suppress(ImportError):
 
 
 def _run_check_or_make_watertight(
-    dagmc_file: Path,
-    output_h5m_file: Path,
-    *,
-    check_or_make: Literal["check", "make"],
+    dagmc_file: Path, output_h5m_file: Path, *, check_or_make: Literal["check", "make"]
 ):
     # just run make or check. Their output is the same
     # as make runs check at the end internally
@@ -57,10 +54,10 @@ def _run_check_or_make_watertight(
     percentages = decode_tightness_checks(sub_proc_res.stdout)
     if not percentages or any(p > 0 for p in percentages):
         stout_log_dump_path = dagmc_file.with_name(
-            f"{output_h5m_file.stem}-{cmd}.stdout.txt",
+            f"{output_h5m_file.stem}-{cmd}.stdout.txt"
         )
         sterr_log_dump_path = dagmc_file.with_name(
-            f"{output_h5m_file.stem}-{cmd}.stderr.txt",
+            f"{output_h5m_file.stem}-{cmd}.stderr.txt"
         )
         with stout_log_dump_path.open("w") as log_dump:
             log_dump.write(sub_proc_res.stdout)
@@ -72,7 +69,7 @@ def _run_check_or_make_watertight(
             "but the model is not watertight or the output could not be parsed. "
             "Check log files for further details.:\n"
             f"stout_log: {stout_log_dump_path}\n"
-            f"sterr_log: {sterr_log_dump_path}\n",
+            f"sterr_log: {sterr_log_dump_path}\n"
         )
     else:
         bluemira_print(f"`{cmd}` completed successfully, showing no leaky volumes.")

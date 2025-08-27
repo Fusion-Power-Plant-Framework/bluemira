@@ -256,11 +256,7 @@ class CryostatTSBuilder(Builder):
         )
 
         tf_o_wire = offset_wire(
-            tf_koz,
-            self.params.g_ts_tf.value,
-            join="arc",
-            open_wire=False,
-            ndiscr=600,
+            tf_koz, self.params.g_ts_tf.value, join="arc", open_wire=False, ndiscr=600
         )
 
         try:

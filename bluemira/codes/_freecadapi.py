@@ -1375,9 +1375,7 @@ class Document:
         FreeCAD.setActiveDocument(self.doc.Name)
         return self
 
-    def parts(
-        self,
-    ) -> Iterator[Part.Feature]:
+    def parts(self) -> Iterator[Part.Feature]:
         """
         Get FreeCAD parts.
 
@@ -1456,8 +1454,7 @@ class _CADType:
         try:
             export_func = (
                 getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]), modlist[-1]
                 ).export
                 if len(modlist) > 1
                 else __import__(self.export_module).export
@@ -1481,8 +1478,7 @@ class _CADType:
         try:
             read = (
                 getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]), modlist[-1]
                 ).insert
                 if len(modlist) > 1
                 else __import__(self.import_module).insert
@@ -1587,11 +1583,7 @@ class CADFileType(enum.Enum):
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""  # noqa: DOC201
-        return (
-            cls.GLTRANSMISSION,
-            cls.PLY_STANFORD,
-            cls.SIMPLE_MODEL,
-        )
+        return (cls.GLTRANSMISSION, cls.PLY_STANFORD, cls.SIMPLE_MODEL)
 
     @classmethod
     def not_importable_formats(cls) -> tuple[CADFileType, ...]:
@@ -2399,12 +2391,7 @@ def _edges_tangent(edge_1, edge_2) -> bool:
     angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
         edge_2.tangentAt(edge_2.FirstParameter)
     )
-    return np.isclose(
-        angle,
-        0.0,
-        rtol=1e-4,
-        atol=1e-4,
-    )
+    return np.isclose(angle, 0.0, rtol=1e-4, atol=1e-4)
 
 
 def _wire_edges_tangent(wire) -> bool:

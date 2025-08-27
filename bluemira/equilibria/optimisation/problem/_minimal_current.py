@@ -125,8 +125,7 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         )
         opt_currents = opt_result.x
         self.coilset.set_optimisation_state(
-            opt_currents=opt_currents,
-            current_scale=self.scale,
+            opt_currents=opt_currents, current_scale=self.scale
         )
 
         if self.plotting_enabled:

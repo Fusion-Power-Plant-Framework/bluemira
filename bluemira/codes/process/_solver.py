@@ -15,10 +15,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface import (
-    BaseRunMode,
-    CodesSolver,
-)
+from bluemira.codes.interface import BaseRunMode, CodesSolver
 from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup, create_template_from_path
@@ -181,9 +178,7 @@ class Solver(CodesSolver):
             raise CodesError(f"{self.name} installation not found")
 
         self._setup = self.setup_cls(
-            self.params,
-            self.in_dat_path,
-            self.problem_settings,
+            self.params, self.in_dat_path, self.problem_settings
         )
         self._run = self.run_cls(
             self.params, self.in_dat_path, self.binary, self.custom_solver

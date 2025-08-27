@@ -432,11 +432,7 @@ class PulsedCoilsetDesign(ABC):
     def run_reference_equilibrium(self):
         """Run a reference equilibrium."""
         coilset = deepcopy(self.coilset)
-        eq = Equilibrium(
-            coilset,
-            self.grid,
-            self.profiles,
-        )
+        eq = Equilibrium(coilset, self.grid, self.profiles)
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             coilset,
             eq,
@@ -702,9 +698,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     def _prepare_coilset(self, coilset: CoilSet) -> CoilSet:
         coilset = deepcopy(coilset)
         coilset.discretisation = np.where(
-            coilset._flag_sizefix,
-            self.eq_config.coil_mesh_size,
-            coilset.discretisation,
+            coilset._flag_sizefix, self.eq_config.coil_mesh_size, coilset.discretisation
         )
         return coilset
 

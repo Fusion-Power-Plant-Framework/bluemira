@@ -14,7 +14,4 @@ def cgal_available():
     return is_code_available("CGAL")
 
 
-cgal_guard = code_guard(
-    "CGAL",
-    "Run `pip install cgal` to use this function.",
-)
+cgal_guard = code_guard("CGAL", "Run `pip install cgal` to use this function.")

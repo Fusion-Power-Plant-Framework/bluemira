@@ -190,10 +190,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             self._grad_psi = BluemiraFemFunction(w)
             grad_psi_expr = Expression(
-                as_vector((
-                    self.psi.dx(0),
-                    self.psi.dx(1),
-                )),
+                as_vector((self.psi.dx(0), self.psi.dx(1))),
                 w.element.interpolation_points(),
             )
             self._grad_psi.interpolate(grad_psi_expr)
@@ -437,11 +434,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 self._plot_current_iteration(ax, cax, i, points, prev, diff, debug=debug)
                 if debug or gif:
                     save_figure(
-                        f,
-                        figname + str(i),
-                        save=True,
-                        folder=folder,
-                        dpi=DPI_GIF,
+                        f, figname + str(i), save=True, folder=folder, dpi=DPI_GIF
                     )
 
             super().solve()

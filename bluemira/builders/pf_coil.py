@@ -156,9 +156,7 @@ class PFCoilBuilder(Builder):
         return [wp, ins, casing]
 
     def build_xyz(
-        self,
-        shape: BluemiraWire,
-        degree: float = 360.0,
+        self, shape: BluemiraWire, degree: float = 360.0
     ) -> list[PhysicalComponent]:
         """
         Build the xyz representation of the PF coil.

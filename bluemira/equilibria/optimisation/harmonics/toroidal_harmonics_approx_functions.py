@@ -271,21 +271,14 @@ def toroidal_harmonic_grid_and_coil_setup(
         th_coil_names = c_names.tolist()
 
     eq.coilset.control = th_coil_names
-    R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
+    R_coils, Z_coils = (  # noqa: N806
+        eq.coilset.get_control_coils().x,
+        eq.coilset.get_control_coils().z,
+    )
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
 
     return ToroidalHarmonicsParams(
-        R_0,
-        Z_0,
-        R,
-        Z,
-        R_coils,
-        Z_coils,
-        tau,
-        sigma,
-        tau_c,
-        sigma_c,
-        th_coil_names,
+        R_0, Z_0, R, Z, R_coils, Z_coils, tau, sigma, tau_c, sigma_c, th_coil_names
     )
 
 
@@ -455,9 +448,7 @@ def toroidal_harmonic_approximate_psi(
     degrees = np.arange(0, max_degree)[:, None, None]
     # TH coefficient matrix
     Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
-        input_coils=eq.coilset,
-        th_params=th_params,
-        max_degree=max_degree,
+        input_coils=eq.coilset, th_params=th_params, max_degree=max_degree
     )
 
     Am_cos_sin = np.einsum(  # noqa: N806
