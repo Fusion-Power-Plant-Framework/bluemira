@@ -168,7 +168,8 @@ class TestEquilibriumInput:
         np.testing.assert_allclose(
             old_control_F(self.coilset, self.coilset),
             self.coilset.control_F(self.coilset),
-            atol=4e-6,
+            atol=0.0,
+            rtol=0.0,
         )
 
     def test_coil_force_constraint(self):
