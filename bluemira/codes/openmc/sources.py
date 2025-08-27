@@ -7,43 +7,37 @@
 
 import numpy as np
 import openmc
+from openmc_plasma_source import tokamak_source
 
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
-from bluemira.radiation_transport.error import SourceError
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
-try:
-    from pps_isotropic.source import create_parametric_plasma_source
 
-    PPS_ISO_INSTALLED = True
-except ImportError:
-    PPS_ISO_INSTALLED = False
-
-
-def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
-    """Make a plasma source
-
-    Raises
-    ------
-    SourceError
-        Source not found
-    """  # noqa: DOC201
-    if not PPS_ISO_INSTALLED:
-        raise SourceError("pps_isotropic installation not found")
-    return create_parametric_plasma_source(
-        # tokamak geometry
-        major_r=source_parameters.plasma_physics_units.major_radius,
-        minor_r=source_parameters.plasma_physics_units.minor_radius,
-        elongation=source_parameters.plasma_physics_units.elongation,
-        triangularity=source_parameters.plasma_physics_units.triangularity,
-        # plasma geometry
-        peaking_factor=source_parameters.plasma_physics_units.peaking_factor,
-        temperature=source_parameters.plasma_physics_units.temperature,
-        radial_shift=source_parameters.plasma_physics_units.shaf_shift,
-        vertical_shift=source_parameters.plasma_physics_units.vertical_shift,
-        # plasma type
-        mode="DT",
+def make_tokamak_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
+    """Make a tokamak neutron source"""
+    return tokamak_source(
+        # tokamak geometry: Check units
+        major_r=source_parameters.major_radius,
+        minor_r=source_parameters.minor_radius,
+        elongation=source_parameters.elongation,
+        triangularity=source_parameters.triangularity,
+        # plasma geometry: ion stuff
+        ion_density_centre=1.09e20,
+        ion_density_pedestal=1.09e20,
+        ion_density_peaking_factor=source_parameters.peaking_factor,  # Check this one!
+        ion_density_separatrix=3e19,
+        ion_temperature_centre=source_parameters.temperature,  # Change the name in source param
+        ion_temperature_pedestal=6.09e3,
+        ion_temperature_separatrix=0.1e3,
+        ion_temperature_peaking_factor=8.06,
+        ion_temperature_beta=6,
+        shafranov_factor=source_parameters.shaf_shift,  # Check if it's relative v.s. absolute
+        # shaping
+        pedestal_radius=0.8 * source_minor_radius,
+        mode="H",
+        # plasma composition
+        fuel={"D": 0.5, "T": 0.5},
     )
 
 
