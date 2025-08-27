@@ -511,12 +511,7 @@ class OptVariablesFrame:
         else:
             opt_var.adjust(value, lower_bound, upper_bound, strict_bounds=strict_bounds)
 
-    def adjust_variables(
-        self,
-        var_dict: VarDictT | None = None,
-        *,
-        strict_bounds=True,
-    ):
+    def adjust_variables(self, var_dict: VarDictT | None = None, *, strict_bounds=True):
         """
         Adjust multiple variables in the frame.
 
@@ -729,11 +724,7 @@ class OptVariablesFrame:
         )
 
         return f"{self.__class__.__name__}\n" + tabulate(
-            records,
-            headers="keys",
-            tablefmt=tablefmt,
-            showindex=False,
-            numalign="right",
+            records, headers="keys", tablefmt=tablefmt, showindex=False, numalign="right"
         )
 
     def __str__(self) -> str:

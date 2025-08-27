@@ -110,11 +110,7 @@ class VVTSBuilder(Builder):
         # _offset_wire_discretised used because
         # the cad offset regularly doesn't work properly here.
         # due to topology but unknown why here particularly
-        ex_args = {
-            "join": "intersect",
-            "open_wire": False,
-            "ndiscr": 600,
-        }
+        ex_args = {"join": "intersect", "open_wire": False, "ndiscr": 600}
         vvts_inner_wire = _offset_wire_discretised(
             koz, self.params.g_vv_ts.value, **ex_args
         )

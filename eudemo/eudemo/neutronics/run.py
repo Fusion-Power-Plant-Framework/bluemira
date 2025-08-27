@@ -41,10 +41,7 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
     """EUDEMO Axis-symmetric neutronics model"""
 
     def _get_wires_from_components(
-        self,
-        ivc_shapes: IVCShapes,
-        blanket: Blanket,
-        vacuum_vessel: VacuumVessel,
+        self, ivc_shapes: IVCShapes, blanket: Blanket, vacuum_vessel: VacuumVessel
     ) -> tuple[TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
         return (
             TokamakDimensions.from_parameterframe(self.params, blanket.r_inner_cut),

@@ -239,19 +239,9 @@ class CellWalls:
         new_end = start_i + dir_i * test_length
         prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
         return polygon_revolve_signed_volume(
-            np.array([
-                prev_wall[0],
-                prev_wall[1],
-                new_end,
-                start_i,
-            ]).T
+            np.array([prev_wall[0], prev_wall[1], new_end, start_i]).T
         ) + polygon_revolve_signed_volume(
-            np.array([
-                start_i,
-                new_end,
-                next_wall[1],
-                next_wall[0],
-            ]).T
+            np.array([start_i, new_end, next_wall[1], next_wall[0]]).T
         )
 
     def volume_derivative_of_cells_neighbouring(self, i, test_length):

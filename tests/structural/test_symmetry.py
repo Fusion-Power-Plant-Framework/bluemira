@@ -47,10 +47,7 @@ class TestCyclicSymmetry:
         fullmodel._apply_load_case(fullmodel.load_case)
         fullmodel.clear_load_case()  # To avoid duplicate loads on the first sector
         fullmodel.geometry = cyclic_pattern(
-            fullmodel.geometry,
-            np.array([0, 0, 1]),
-            30,
-            int(360 / 30),
+            fullmodel.geometry, np.array([0, 0, 1]), 30, int(360 / 30)
         )
         # Deconstruct cyclic_symmetry
         fullmodel.cycle_sym = None

@@ -40,12 +40,7 @@ class TestFreecadapi:
 
     @staticmethod
     def offsetter(wire):
-        return cadapi.offset_wire(
-            wire,
-            0.05,
-            join="intersect",
-            open_wire=False,
-        )
+        return cadapi.offset_wire(wire, 0.05, join="intersect", open_wire=False)
 
     def test_multi_offset_wire(self):
         circ = cadapi.make_circle(10)
@@ -393,13 +388,7 @@ class TestFreecadapi:
             (-2, False, True),
         ],
     )
-    def test_reverse(
-        self,
-        two_pi_offset: int,
-        *,
-        positive_y_axis: bool,
-        reverse: bool,
-    ):
+    def test_reverse(self, two_pi_offset: int, *, positive_y_axis: bool, reverse: bool):
         """
         By swapping the start-end points (x2), and choosing opposite rotation axis (x2),
         re-drawing the same arc four times (=4).

@@ -34,11 +34,7 @@ class TestPlasmodSetup:
         self.input_file = "/path/to/input.dat"
 
     def test_inputs_updated_from_problem_settings_on_init(self):
-        problem_settings = {
-            "v_loop": -1.5e-3,
-            "q_heat": 1.5,
-            "nx": 25,
-        }
+        problem_settings = {"v_loop": -1.5e-3, "q_heat": 1.5, "nx": 25}
 
         setup = Setup(self.default_pf, problem_settings, self.input_file)
 
@@ -47,11 +43,7 @@ class TestPlasmodSetup:
         assert setup.inputs.nx == pytest.approx(25, rel=0, abs=EPS)
 
     def test_update_inputs_changes_input_values(self):
-        new_inputs = {
-            "v_loop": -1.5e-3,
-            "q_heat": 1.5,
-            "nx": 25,
-        }
+        new_inputs = {"v_loop": -1.5e-3, "q_heat": 1.5, "nx": 25}
 
         setup = Setup(self.default_pf, {}, self.input_file)
 
@@ -295,8 +287,7 @@ class TestPlasmodTeardown:
 class TestPlasmodSolver:
     def setup_method(self):
         self._run_subprocess_patch = mock.patch(
-            RUN_SUBPROCESS_REF,
-            wraps=self._plasmod_run_subprocess_fake,
+            RUN_SUBPROCESS_REF, wraps=self._plasmod_run_subprocess_fake
         )
         self.run_subprocess_mock = self._run_subprocess_patch.start()
         self.default_pf = PlasmodSolverParams.from_json(PARAMS_FILE)

@@ -64,8 +64,7 @@ omc_output_path.mkdir(parents=True, exist_ok=True)
 
 # %%
 dagmc_univ = openmc.DAGMCUniverse(
-    filename=dag_model_path.as_posix(),
-    auto_geom_ids=True,
+    filename=dag_model_path.as_posix(), auto_geom_ids=True
 ).bounded_universe()
 
 # load model materials
@@ -125,11 +124,7 @@ tallies = openmc.Tallies([
     flux_mesh_tally,
 ])
 
-model = openmc.Model(
-    geometry=geometry,
-    tallies=tallies,
-    settings=settings,
-)
+model = openmc.Model(geometry=geometry, tallies=tallies, settings=settings)
 # For some reason, have to set the materials after the model is created
 # (this is a bug in OpenMC)
 model.materials = openmc_mats
@@ -194,8 +189,7 @@ bluemira_print(
 
 mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
 mesh.write_data_to_vtk(
-    filename="tbr_mesh_mean.vtk",
-    datasets={"mean": tbr_mesh_tally.mean},
+    filename="tbr_mesh_mean.vtk", datasets={"mean": tbr_mesh_tally.mean}
 )
 
 model_w = dagmc_univ.bounding_box.width

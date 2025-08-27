@@ -430,20 +430,11 @@ def add_pair_to_dict(sorted_legs, x_p, o_p):
     """  # noqa: DOC201
     location = "lower" if x_p.z < o_p.z else "upper"
     if sorted_legs is None:
-        return {
-            f"{location}_inner": [None],
-            f"{location}_outer": [None],
-        }
+        return {f"{location}_inner": [None], f"{location}_outer": [None]}
     if len(sorted_legs) <= 1:
-        return {
-            f"{location}_inner": [None],
-            f"{location}_outer": [None],
-        }
+        return {f"{location}_inner": [None], f"{location}_outer": [None]}
     # Legs always sorted IN then OUT
-    return {
-        f"{location}_inner": [sorted_legs[0]],
-        f"{location}_outer": [sorted_legs[1]],
-    }
+    return {f"{location}_inner": [sorted_legs[0]], f"{location}_outer": [sorted_legs[1]]}
 
 
 def _extract_leg(
@@ -588,10 +579,7 @@ def calculate_connection_length(
     if first_wall is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
         z1, z2 = eq.grid.z_min, eq.grid.z_max
-        first_wall = Coordinates({
-            "x": [x1, x2, x2, x1, x1],
-            "z": [z1, z1, z2, z2, z1],
-        })
+        first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
     # Use intersection between plasma facing surface and flux surface
     # with chosen normalised psi. Note: this will override an input

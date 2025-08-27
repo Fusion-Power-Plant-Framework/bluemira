@@ -37,12 +37,7 @@ class TestPathInterpolator:
 
     @pytest.mark.parametrize(
         ("alpha", "point"),
-        [
-            (0.0, [10, 0]),
-            (0.25, [0, 10]),
-            (0.5, [-10, 0]),
-            (0.75, [0, -10]),
-        ],
+        [(0.0, [10, 0]), (0.25, [0, 10]), (0.5, [-10, 0]), (0.75, [0, -10])],
     )
     def test_closed(self, alpha, point):
         interpolator = PathInterpolator(self.circle)

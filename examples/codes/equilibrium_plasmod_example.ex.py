@@ -110,11 +110,7 @@ binary = Path(PLASMOD_PATH, "plasmod").as_posix()
 source = "Plasmod Example"
 plasmod_params = {
     "A": {"value": A, "unit": "", "source": source},
-    "R_0": {
-        "value": R_0,
-        "unit": "m",
-        "source": source,
-    },
+    "R_0": {"value": R_0, "unit": "m", "source": source},
     "I_p": {"value": I_p, "unit": "A", "source": source},
     "B_0": {"value": B_0, "unit": "T", "source": source},
     "V_p": {"value": -2500, "unit": "m^3", "source": source},

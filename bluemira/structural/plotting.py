@@ -19,12 +19,7 @@ from matplotlib.colors import Normalize, TwoSlopeNorm
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.structural.constants import (
-    DEFLECT_COLOR,
-    STRESS_COLOR,
-    LoadKind,
-    LoadType,
-)
+from bluemira.structural.constants import DEFLECT_COLOR, STRESS_COLOR, LoadKind, LoadType
 from bluemira.utilities.plot_tools import Plot3D
 
 if TYPE_CHECKING:
@@ -57,14 +52,7 @@ def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
     Annotate a node.
     """
     name = f"N{node.id_number}"
-    ax.text(
-        node.x,
-        node.y,
-        node.z,
-        name,
-        fontsize=text_size,
-        color=color,
-    )
+    ax.text(node.x, node.y, node.z, name, fontsize=text_size, color=color)
 
 
 def annotate_element(ax: Axes, element: Element, text_size: int, color: str):
@@ -72,12 +60,7 @@ def annotate_element(ax: Axes, element: Element, text_size: int, color: str):
     Annotate an element.
     """
     name = f"E{element.id_number}"
-    ax.text(
-        *element.mid_point,
-        name,
-        size=text_size,
-        color=color,
-    )
+    ax.text(*element.mid_point, name, size=text_size, color=color)
 
 
 def arrow_scale(vector: np.ndarray, max_length: float, max_force: float) -> np.ndarray:

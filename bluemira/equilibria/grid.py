@@ -216,12 +216,7 @@ class Grid:
         """
         if z is None:
             x, z = x
-        return np.abs([
-            x - self.x_min,
-            x - self.x_max,
-            z - self.z_min,
-            z - self.z_max,
-        ])
+        return np.abs([x - self.x_min, x - self.x_max, z - self.z_min, z - self.z_max])
 
     def plot(self, ax=None, **kwargs):
         """

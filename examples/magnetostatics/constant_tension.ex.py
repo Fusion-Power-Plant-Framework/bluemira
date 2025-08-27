@@ -40,9 +40,7 @@ from bluemira.builders.tf_coils import (
     RippleConstrainedLengthGOPParams,
 )
 from bluemira.equilibria.shapes import KuiroukidisLCFS
-from bluemira.geometry.parameterisations import (
-    PrincetonDDiscrete,
-)
+from bluemira.geometry.parameterisations import PrincetonDDiscrete
 from bluemira.geometry.tools import make_polygon
 
 #  %% [markdown]
@@ -68,15 +66,13 @@ wp_xs = make_polygon(
 
 lcfs = KuiroukidisLCFS().create_shape()
 
-params = RippleConstrainedLengthGOPParams.from_dict(
-    {
-        "n_TF": {"value": 16, "unit": "", "source": "test"},
-        "R_0": {"value": 9, "unit": "m", "source": "test"},
-        "z_0": {"value": 0, "unit": "m", "source": "test"},
-        "B_0": {"value": 6, "unit": "T", "source": "test"},
-        "TF_ripple_limit": {"value": 0.6, "unit": "%", "source": "test"},
-    },
-)
+params = RippleConstrainedLengthGOPParams.from_dict({
+    "n_TF": {"value": 16, "unit": "", "source": "test"},
+    "R_0": {"value": 9, "unit": "m", "source": "test"},
+    "z_0": {"value": 0, "unit": "m", "source": "test"},
+    "B_0": {"value": 6, "unit": "T", "source": "test"},
+    "TF_ripple_limit": {"value": 0.6, "unit": "%", "source": "test"},
+})
 
 
 # %% [markdown]

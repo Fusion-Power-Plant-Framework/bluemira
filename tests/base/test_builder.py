@@ -54,11 +54,4 @@ class TestBuilder:
         # xyz child's view is not changed from the default
         assert [
             desc.plot_options.view_placement.label for desc in component.descendants
-        ] == [
-            "xzy",
-            "xzy",
-            "xyz",
-            "xyz",
-            "xzy",
-            "xzy",
-        ]
+        ] == ["xzy", "xzy", "xyz", "xyz", "xzy", "xzy"]

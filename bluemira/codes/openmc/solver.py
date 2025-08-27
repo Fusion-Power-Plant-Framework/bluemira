@@ -381,9 +381,7 @@ class Teardown(CodesTeardown):
 TALLY_FUNCTION_TYPE = Callable[
     [list[openmc.Material], BlanketCellArray, DivertorCellArray],
     tuple[
-        str,
-        str,
-        list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter],
+        str, str, list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter]
     ],
 ]
 

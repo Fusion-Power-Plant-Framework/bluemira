@@ -115,9 +115,9 @@ class DPACoefficients:
 
     def __init__(
         self,
+        dpa_threshold_eV: float = dpa_Fe_threshold_eV,
         density_g_cc: float = Fe_density_g_cc,
         molar_mass_g: float = Fe_molar_mass_g,
-        dpa_threshold_eV: float = dpa_Fe_threshold_eV,
     ):
         """
         Parameters

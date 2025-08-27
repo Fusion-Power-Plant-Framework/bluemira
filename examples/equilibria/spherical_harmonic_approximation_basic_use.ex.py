@@ -50,13 +50,8 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     SphericalHarmonicConstraint,
 )
-from bluemira.equilibria.optimisation.problem import (
-    MinimalCurrentCOP,
-)
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
-)
+from bluemira.equilibria.optimisation.problem import MinimalCurrentCOP
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 plot_defaults()
 
@@ -161,9 +156,7 @@ plt.show()
 # %%
 # Use results of the spherical harmonic approximation to create a set of coil constraints
 sh_constraint = SphericalHarmonicConstraint(
-    ref_harmonics=coil_current_harmonic_amplitudes,
-    r_t=r_t,
-    sh_coil_names=sh_coil_names,
+    ref_harmonics=coil_current_harmonic_amplitudes, r_t=r_t, sh_coil_names=sh_coil_names
 )
 # Make sure we only optimise with coils outside the sphere containing the core plasma by
 # setting control coils using the list of appropriate coils
@@ -187,9 +180,7 @@ sh_eq.solve()
 # is sufficiently good, but we can have a look at what happens.
 sh_eq_solved = deepcopy(eq)
 sh_con_len_opt = MinimalCurrentCOP(
-    eq=sh_eq_solved,
-    max_currents=6.0e8,
-    constraints=[sh_constraint],
+    eq=sh_eq_solved, max_currents=6.0e8, constraints=[sh_constraint]
 )
 
 # SOLVE

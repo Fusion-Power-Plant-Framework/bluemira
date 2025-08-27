@@ -174,8 +174,7 @@ class TestKuiroukidis:
         cls.f, cls.ax = plt.subplots(2, 3)
 
     @pytest.mark.parametrize(
-        ("R_0", "A", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"),
-        fixture,
+        ("R_0", "A", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"), fixture
     )
     def test_kuiroukidis_coords(self, R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax):
         flux_surface = flux_surface_kuiroukidis(
@@ -215,8 +214,7 @@ class TestKuiroukidis:
         )
 
     @pytest.mark.parametrize(
-        ("R_0", "A", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"),
-        fixture,
+        ("R_0", "A", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"), fixture
     )
     def test_kuiroukidis_ccw(
         self,

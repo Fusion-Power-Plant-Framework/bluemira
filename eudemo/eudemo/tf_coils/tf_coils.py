@@ -63,10 +63,7 @@ class TFCoil(ComponentManager):
         self._field_solver = field_solver
 
     def field(
-        self,
-        x: npt.ArrayLike,
-        y: npt.ArrayLike,
-        z: npt.ArrayLike,
+        self, x: npt.ArrayLike, y: npt.ArrayLike, z: npt.ArrayLike
     ) -> npt.NDArray[np.float64]:
         """
         Calculate the magnetic field due to the TF coils at a set of points.
@@ -365,8 +362,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         else:
             rs_config = self.problem_settings["ripple_selector"]
             ripple_selector = get_class_from_module(
-                rs_config["cls"],
-                default_module="bluemira.builders.tf_coils",
+                rs_config["cls"], default_module="bluemira.builders.tf_coils"
             )
             self.problem_settings["ripple_selector"] = ripple_selector(
                 **rs_config.get("args", {})
@@ -505,11 +501,7 @@ class TFCoilBuilder(Builder):
         y_in, ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
 
         xyz_case, xyz = self.build_xyz(
-            y_in,
-            ins_inner_face,
-            ib_cas_wire,
-            ob_cas_wire,
-            degree=0,
+            y_in, ins_inner_face, ib_cas_wire, ob_cas_wire, degree=0
         )
         return self.component_tree(
             xz=self.build_xz(xyz_case),
@@ -725,10 +717,7 @@ class TFCoilBuilder(Builder):
         apply_component_display_options(ib_cas_comp, color=BLUE_PALETTE["TF"][0])
         apply_component_display_options(ob_cas_comp, color=BLUE_PALETTE["TF"][0])
 
-        return Component(
-            self.CASING,
-            children=[ib_cas_comp, ob_cas_comp],
-        )
+        return Component(self.CASING, children=[ib_cas_comp, ob_cas_comp])
 
     def _build_xyz_wp(self) -> PhysicalComponent:
         """
@@ -739,9 +728,7 @@ class TFCoilBuilder(Builder):
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(
-            self.WP,
-            wp_solid,
-            material=self.get_material(self.WP),
+            self.WP, wp_solid, material=self.get_material(self.WP)
         )
 
         apply_component_display_options(winding_pack, color=BLUE_PALETTE["TF"][1])
@@ -749,9 +736,7 @@ class TFCoilBuilder(Builder):
         return winding_pack
 
     def _build_xyz_ins(
-        self,
-        wp_solid: BluemiraSolid,
-        ins_inner_face: BluemiraFace,
+        self, wp_solid: BluemiraSolid, ins_inner_face: BluemiraFace
     ) -> PhysicalComponent:
         """
         Returns
@@ -763,9 +748,7 @@ class TFCoilBuilder(Builder):
             sweep_shape(ins_inner_face.boundary[0], self.centreline), wp_solid
         )[0]
         insulation = PhysicalComponent(
-            self.INS,
-            ins_solid,
-            material=self.get_material(self.INS),
+            self.INS, ins_solid, material=self.get_material(self.INS)
         )
 
         apply_component_display_options(insulation, color=BLUE_PALETTE["TF"][2])
@@ -818,9 +801,7 @@ class TFCoilBuilder(Builder):
         )[0]
 
         casing = PhysicalComponent(
-            self.CASING,
-            case_solid_hollow,
-            material=self.get_material(self.CASING),
+            self.CASING, case_solid_hollow, material=self.get_material(self.CASING)
         )
 
         apply_component_display_options(casing, color=BLUE_PALETTE["TF"][0])
@@ -880,11 +861,7 @@ class TFCoilBuilder(Builder):
         y_in = x_in * tan_half_angle
         y_out = x_out * tan_half_angle
         inboard_wire = make_polygon(
-            [
-                [x_in, x_out, x_out, x_in],
-                [-y_in, -y_out, y_out, y_in],
-                [0, 0, 0, 0],
-            ],
+            [[x_in, x_out, x_out, x_in], [-y_in, -y_out, y_out, y_in], [0, 0, 0, 0]],
             closed=True,
         )
 

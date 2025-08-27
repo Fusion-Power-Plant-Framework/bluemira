@@ -480,12 +480,7 @@ class EUDEMOFuelCycleModel:
             "$m_{T_{start}}$",
             xy=[0, self.m_T_req],
             xytext=[1, self.m_T_req + 4],
-            arrowprops={
-                "headwidth": 0.5,
-                "width": 0.5,
-                "facecolor": "k",
-                "shrink": 0.1,
-            },
+            arrowprops={"headwidth": 0.5, "width": 0.5, "facecolor": "k", "shrink": 0.1},
         )
 
         if np.isfinite(self.t_d):

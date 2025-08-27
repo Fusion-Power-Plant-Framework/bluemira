@@ -391,18 +391,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             elif v.name.startswith("z") or v.name[1] == "z":
                 xcor = shape.center_of_mass[0] + offset_ar_z
                 self._annotator(
-                    ax,
-                    v.name,
-                    (xcor, 0),
-                    (xcor, v.value),
-                    (xcor, v.value * 0.4),
+                    ax, v.name, (xcor, 0), (xcor, v.value), (xcor, v.value * 0.4)
                 )
                 ax.plot([shape.center_of_mass[0], xcor], [0, 0], color="k")
-                ax.plot(
-                    [shape.center_of_mass[0], xcor],
-                    [v.value, v.value],
-                    color="k",
-                )
+                ax.plot([shape.center_of_mass[0], xcor], [v.value, v.value], color="k")
                 offset_ar_z += 1.5
         return offset_ar_x, offset_ar_z
 
@@ -519,11 +511,7 @@ class PrincetonDOptVariables(OptVariablesFrame):
         "x1", 4, lower_bound=2, upper_bound=6, description="Inboard limb radius"
     )
     x2: OptVariable = ov(
-        "x2",
-        14,
-        lower_bound=10,
-        upper_bound=18,
-        description="Outboard limb radius",
+        "x2", 14, lower_bound=10, upper_bound=18, description="Outboard limb radius"
     )
     dz: OptVariable = ov(
         "dz",
@@ -990,11 +978,7 @@ class TripleArcOptVaribles(OptVariablesFrame):
         "x1", 4.486, lower_bound=4, upper_bound=5, description="Inner limb radius"
     )
     dz: OptVariable = ov(
-        "dz",
-        0,
-        lower_bound=-1,
-        upper_bound=1,
-        description="Vertical offset from z=0",
+        "dz", 0, lower_bound=-1, upper_bound=1, description="Vertical offset from z=0"
     )
     sl: OptVariable = ov(
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
@@ -1138,13 +1122,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         ]
         wires = []
         for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
-            *_get_centres(
-                (a1, a2),
-                (f1, f2),
-                x1,
-                dz + sl / 2,
-                reflection_zplane=dz,
-            ),
+            *_get_centres((a1, a2), (f1, f2), x1, dz + sl / 2, reflection_zplane=dz),
             wire_names,
             strict=True,
         ):
@@ -1195,11 +1173,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             (x_val + 0.1, dz),
         )
         centres, angles, radii = _get_centres(
-            (a1, a2),
-            (f1, f2),
-            x1,
-            dz + half_straight_length,
-            reflection_zplane=dz,
+            (a1, a2), (f1, f2), x1, dz + half_straight_length, reflection_zplane=dz
         )
 
         for i, (centre, s_f_angles, radius) in enumerate(
@@ -1225,18 +1199,10 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 @dataclass
 class SextupleArcOptVariables(OptVariablesFrame):
     x1: OptVariable = ov(
-        "x1",
-        4.486,
-        lower_bound=4,
-        upper_bound=5,
-        description="Inner limb radius",
+        "x1", 4.486, lower_bound=4, upper_bound=5, description="Inner limb radius"
     )
     z1: OptVariable = ov(
-        "z1",
-        5,
-        lower_bound=0,
-        upper_bound=10,
-        description="Inboard limb height",
+        "z1", 5, lower_bound=0, upper_bound=10, description="Inboard limb height"
     )
     r1: OptVariable = ov(
         "r1", 4, lower_bound=4, upper_bound=12, description="1st arc radius"
@@ -1254,40 +1220,20 @@ class SextupleArcOptVariables(OptVariablesFrame):
         "r5", 8, lower_bound=4, upper_bound=12, description="5th arc radius"
     )
     a1: OptVariable = ov(
-        "a1",
-        45,
-        lower_bound=5,
-        upper_bound=50,
-        description="1st arc angle [degrees]",
+        "a1", 45, lower_bound=5, upper_bound=50, description="1st arc angle [degrees]"
     )
     a2: OptVariable = ov(
-        "a2",
-        60,
-        lower_bound=10,
-        upper_bound=80,
-        description="2nd arc angle [degrees]",
+        "a2", 60, lower_bound=10, upper_bound=80, description="2nd arc angle [degrees]"
     )
 
     a3: OptVariable = ov(
-        "a3",
-        90,
-        lower_bound=10,
-        upper_bound=100,
-        description="3rd arc angle [degrees]",
+        "a3", 90, lower_bound=10, upper_bound=100, description="3rd arc angle [degrees]"
     )
     a4: OptVariable = ov(
-        "a4",
-        40,
-        lower_bound=10,
-        upper_bound=80,
-        description="4th arc angle [degrees]",
+        "a4", 40, lower_bound=10, upper_bound=80, description="4th arc angle [degrees]"
     )
     a5: OptVariable = ov(
-        "a5",
-        30,
-        lower_bound=10,
-        upper_bound=80,
-        description="5th arc angle [degrees]",
+        "a5", 30, lower_bound=10, upper_bound=80, description="5th arc angle [degrees]"
     )
 
 
@@ -1596,18 +1542,10 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 @dataclass
 class PolySplineOptVariables(OptVariablesFrame):
     x1: OptVariable = ov(
-        "x1",
-        4.3,
-        lower_bound=4,
-        upper_bound=5,
-        description="Inner limb radius",
+        "x1", 4.3, lower_bound=4, upper_bound=5, description="Inner limb radius"
     )
     x2: OptVariable = ov(
-        "x2",
-        16.56,
-        lower_bound=5,
-        upper_bound=25,
-        description="Outer limb radius",
+        "x2", 16.56, lower_bound=5, upper_bound=25, description="Outer limb radius"
     )
     z2: OptVariable = ov(
         "z2",
@@ -1617,32 +1555,16 @@ class PolySplineOptVariables(OptVariablesFrame):
         description="Outer note vertical shift",
     )
     height: OptVariable = ov(
-        "height",
-        15.5,
-        lower_bound=10,
-        upper_bound=50,
-        description="Full height",
+        "height", 15.5, lower_bound=10, upper_bound=50, description="Full height"
     )
     top: OptVariable = ov(
-        "top",
-        0.52,
-        lower_bound=0.2,
-        upper_bound=1,
-        description="Horizontal shift",
+        "top", 0.52, lower_bound=0.2, upper_bound=1, description="Horizontal shift"
     )
     upper: OptVariable = ov(
-        "upper",
-        0.67,
-        lower_bound=0.2,
-        upper_bound=1,
-        description="Vertical shift",
+        "upper", 0.67, lower_bound=0.2, upper_bound=1, description="Vertical shift"
     )
     dz: OptVariable = ov(
-        "dz",
-        -0.6,
-        lower_bound=-5,
-        upper_bound=5,
-        description="Vertical offset",
+        "dz", -0.6, lower_bound=-5, upper_bound=5, description="Vertical offset"
     )
     flat: OptVariable = ov(
         "flat",
@@ -1659,18 +1581,10 @@ class PolySplineOptVariables(OptVariablesFrame):
         description="Outboard angle [degrees]",
     )
     bottom: OptVariable = ov(
-        "bottom",
-        0.4,
-        lower_bound=0,
-        upper_bound=1,
-        description="Lower horizontal shift",
+        "bottom", 0.4, lower_bound=0, upper_bound=1, description="Lower horizontal shift"
     )
     lower: OptVariable = ov(
-        "lower",
-        0.67,
-        lower_bound=0.2,
-        upper_bound=1,
-        description="Lower vertical shift",
+        "lower", 0.67, lower_bound=0.2, upper_bound=1, description="Lower vertical shift"
     )
     l0s: OptVariable = ov(
         "l0s",
@@ -1799,19 +1713,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         CAD Wire of the geometry
         """
         variables = self.variables.values
-        (
-            x1,
-            x2,
-            z2,
-            height,
-            top,
-            upper,
-            dz,
-            flat,
-            tilt,
-            bottom,
-            lower,
-        ) = variables[:11]
+        (x1, x2, z2, height, top, upper, dz, flat, tilt, bottom, lower) = variables[:11]
         l_start = variables[11:15]
         l_end = variables[15:]
 
@@ -1933,26 +1835,12 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         # TODO @athoynilimanew: add labels for tilt l0s - l3s l0e - l3e
         # 3587
 
-        (
-            x1,
-            x2,
-            z2,
-            height,
-            top,
-            upper,
-            dz,
-            flat,
-            tilt,
-            bottom,
-            lower,
-        ) = self.variables.values[:11]
+        (x1, x2, z2, height, top, upper, dz, flat, tilt, bottom, lower) = (
+            self.variables.values[:11]
+        )
 
         # Label for xs
-        for v, name in zip(
-            [x1, x2],
-            ["x1", "x2"],
-            strict=False,
-        ):
+        for v, name in zip([x1, x2], ["x1", "x2"], strict=False):
             annotate_offset_z = self._get_annotator_offset_z(shape, v)
 
             self._annotator(
@@ -1996,10 +1884,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         # Label for upper, lower
         for v, name in zip(
             [upper * height * 0.5, -lower * height * 0.5],
-            [
-                "upper \\times \\frac{{height}}{2}",
-                "lower \\times \\frac{{height}}{2}",
-            ],
+            ["upper \\times \\frac{{height}}{2}", "lower \\times \\frac{{height}}{2}"],
             strict=False,
         ):
             self._annotator(
@@ -2015,11 +1900,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         # Label for height, z2, dz
         annotate_offset_x = -0.5
-        for v, name in zip(
-            [height, z2, dz],
-            ["height", "z2", "dz"],
-            strict=False,
-        ):
+        for v, name in zip([height, z2, dz], ["height", "z2", "dz"], strict=False):
             xcor = (
                 x1 - 0.7
                 if name == "dz"
@@ -2028,11 +1909,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             zcors = [dz - height / 2, dz + height / 2] if name == "height" else [0, v]
 
             self._annotator(
-                ax,
-                name,
-                (xcor, zcors[0]),
-                (xcor, zcors[1]),
-                (xcor, zcors[1] * 0.8),
+                ax, name, (xcor, zcors[0]), (xcor, zcors[1]), (xcor, zcors[1] * 0.8)
             )
             ax.plot([xcor - 0.05, xcor + 0.05], [zcors[0], zcors[0]], color="k")
             ax.plot([xcor - 0.05, xcor + 0.05], [zcors[1], zcors[1]], color="k")
@@ -2450,53 +2327,25 @@ class PFrameSection(Enum):
 @dataclass
 class PictureFrameOptVariables(OptVariablesFrame):
     x1: OptVariable = ov(
-        "x1",
-        0.4,
-        lower_bound=0.3,
-        upper_bound=0.5,
-        description="Inner limb radius",
+        "x1", 0.4, lower_bound=0.3, upper_bound=0.5, description="Inner limb radius"
     )
     x2: OptVariable = ov(
-        "x2",
-        9.5,
-        lower_bound=9.4,
-        upper_bound=9.8,
-        description="Outer limb radius",
+        "x2", 9.5, lower_bound=9.4, upper_bound=9.8, description="Outer limb radius"
     )
     z1: OptVariable = ov(
-        "z1",
-        9.5,
-        lower_bound=8,
-        upper_bound=10.5,
-        description="Upper limb height",
+        "z1", 9.5, lower_bound=8, upper_bound=10.5, description="Upper limb height"
     )
     z2: OptVariable = ov(
-        "z2",
-        -9.5,
-        lower_bound=-10.5,
-        upper_bound=-8,
-        description="Lower limb height",
+        "z2", -9.5, lower_bound=-10.5, upper_bound=-8, description="Lower limb height"
     )
     ri: OptVariable = ov(
-        "ri",
-        0.1,
-        lower_bound=0,
-        upper_bound=2,
-        description="Inboard corner radius",
+        "ri", 0.1, lower_bound=0, upper_bound=2, description="Inboard corner radius"
     )
     ro: OptVariable = ov(
-        "ro",
-        2,
-        lower_bound=1,
-        upper_bound=5,
-        description="Outboard corner radius",
+        "ro", 2, lower_bound=1, upper_bound=5, description="Outboard corner radius"
     )
     x3: OptVariable = ov(
-        "x3",
-        2.5,
-        lower_bound=2.4,
-        upper_bound=2.6,
-        description="Curve start radius",
+        "x3", 2.5, lower_bound=2.4, upper_bound=2.6, description="Curve start radius"
     )
     z1_peak: OptVariable = ov(
         "z1_peak",
@@ -2513,18 +2362,10 @@ class PictureFrameOptVariables(OptVariablesFrame):
         description="Lower limb curve height",
     )
     x4: OptVariable = ov(
-        "x4",
-        1.1,
-        lower_bound=1,
-        upper_bound=1.3,
-        description="Middle limb radius",
+        "x4", 1.1, lower_bound=1, upper_bound=1.3, description="Middle limb radius"
     )
     z3: OptVariable = ov(
-        "z3",
-        6.5,
-        lower_bound=6,
-        upper_bound=8,
-        description="Taper angle stop height",
+        "z3", 6.5, lower_bound=6, upper_bound=8, description="Taper angle stop height"
     )
 
     def configure(
@@ -2675,17 +2516,11 @@ class PictureFrame(
             if self.inner is not PFrameSection.TAPERED_INNER:
                 raise ValueError(f"The inner leg cannot be {self.inner}")
             return self.inner(
-                v.x1.value,
-                v.x4.value,
-                v.z2 + v.ri,
-                v.z3.value,
-                v.z1 - v.ri,
-                v.ri.value,
+                v.x1.value, v.x4.value, v.z2 + v.ri, v.z3.value, v.z1 - v.ri, v.ri.value
             )
         if self.inner is None:
             return self._connect_straight_to_inner_limb(
-                [v.x1.value, 0, v.z2 + v.ri],
-                [v.x1.value, 0, v.z1 - v.ri],
+                [v.x1.value, 0, v.z2 + v.ri], [v.x1.value, 0, v.z1 - v.ri]
             )
         return None
 

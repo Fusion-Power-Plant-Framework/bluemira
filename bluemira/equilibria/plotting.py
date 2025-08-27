@@ -66,48 +66,16 @@ __all__ = [
 ]
 
 PLOT_DEFAULTS = {
-    "psi": {
-        "nlevels": 15,
-        "cmap": "viridis",
-    },
-    "field": {
-        "nlevels": 15,
-        "cmap": "magma",
-    },
-    "current": {
-        "nlevels": 30,
-        "cmap": "plasma",
-    },
-    "separatrix": {
-        "color": "r",
-        "linewidth": 1.5,
-    },
-    "opoint": {
-        "marker": "o",
-        "color": "g",
-    },
-    "xpoint": {
-        "marker": "x",
-        "color": "k",
-        "linewidth": 1.4,
-        "size": 5,
-    },
-    "grid": {
-        "edgewidth": 2,
-        "linewidth": 1,
-        "color": "k",
-    },
-    "limiter": {
-        "marker": "o",
-        "color": "b",
-    },
+    "psi": {"nlevels": 15, "cmap": "viridis"},
+    "field": {"nlevels": 15, "cmap": "magma"},
+    "current": {"nlevels": 30, "cmap": "plasma"},
+    "separatrix": {"color": "r", "linewidth": 1.5},
+    "opoint": {"marker": "o", "color": "g"},
+    "xpoint": {"marker": "x", "color": "k", "linewidth": 1.4, "size": 5},
+    "grid": {"edgewidth": 2, "linewidth": 1, "color": "k"},
+    "limiter": {"marker": "o", "color": "b"},
     "coil": {
-        "facecolor": {
-            "PF": "#0098D4",
-            "CS": "#003688",
-            "Plasma": "r",
-            "NONE": "grey",
-        },
+        "facecolor": {"PF": "#0098D4", "CS": "#003688", "Plasma": "r", "NONE": "grey"},
         "edgecolor": "k",
         "linewidth": 1,
         "fontsize": 6,

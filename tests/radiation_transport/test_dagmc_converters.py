@@ -18,20 +18,11 @@ from bluemira.radiation_transport.neutronics.dagmc import (
 class TestDAGMCConverter:
     @pytest.mark.parametrize(
         ("converter_config"),
-        [
-            DAGMCConverterFastCTDConfig(
-                fix_step_to_brep_geometry=True,
-            ),
-            None,
-        ],
+        [DAGMCConverterFastCTDConfig(fix_step_to_brep_geometry=True), None],
     )
     @pytest.mark.parametrize(
         ("translate_x", "translate_y"),
-        [
-            (0.6, 0.6),
-            (0.3, 0.5),
-            (2.5, 2.5),
-        ],
+        [(0.6, 0.6), (0.3, 0.5), (2.5, 2.5)],
     )
     def test_dagmc_converter_fast_ctd(
         self,
@@ -63,10 +54,6 @@ class TestDAGMCConverter:
             shapes=shapes,
             names=names,
             filename=tmp_path / "test.h5m",
-            comp_mat_mapping={
-                "box_a": "mat_a",
-                "box_b": "mat_b",
-                "box_c": "mat_c",
-            },
+            comp_mat_mapping={"box_a": "mat_a", "box_b": "mat_b", "box_c": "mat_c"},
             converter_config=converter_config,
         )

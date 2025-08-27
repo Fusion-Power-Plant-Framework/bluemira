@@ -60,12 +60,7 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize(
         ("name", "value"),
-        [
-            ("name", 100),
-            ("value", "wrong type"),
-            ("value", 30.532423),
-            ("unit", 0.5),
-        ],
+        [("name", 100), ("value", "wrong type"), ("value", 30.532423), ("unit", 0.5)],
     )
     def test_from_dict_TypeError_given_invalid_type(self, name, value):
         data = {
@@ -257,11 +252,7 @@ class TestParameterFrame:
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame(self, func):
         update_frame = BasicFrame.from_dict({
-            "height": {
-                "value": 160.4,
-                "unit": "m",
-                "source": "a test",
-            },
+            "height": {"value": 160.4, "unit": "m", "source": "a test"},
             "age": {"value": 20, "unit": "years"},
         })
         getattr(self.frame, func)(update_frame)
@@ -274,11 +265,7 @@ class TestParameterFrame:
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame_with_None(self, func):
         update_frame = BasicFrame.from_dict({
-            "height": {
-                "value": 160.4,
-                "unit": "m",
-                "source": "a test",
-            },
+            "height": {"value": 160.4, "unit": "m", "source": "a test"},
             "age": {"value": None, "unit": "years"},
         })
         getattr(self.frame, func)(update_frame)
@@ -404,11 +391,9 @@ class TestParameterFrame:
     def test_tabulate_method_columns_have_correct_data(self, head_keys):
         headers, table_rows, frame_data = self._call_tabulate(head_keys)
 
-        (
-            data_keys,
-            data_values,
-            data_values_index,
-        ) = self._get_data_keys_and_values(frame_data, head_keys)
+        (data_keys, data_values, data_values_index) = self._get_data_keys_and_values(
+            frame_data, head_keys
+        )
 
         for no, (tr, dvi) in enumerate(zip(table_rows, data_values_index, strict=False)):
             # name is correct
@@ -651,10 +636,7 @@ class TestParameterSetup:
 
     @pytest.mark.parametrize(
         "frame",
-        [
-            FRAME_DATA,
-            BasicFrame.from_dict(FRAME_DATA),
-        ],
+        [FRAME_DATA, BasicFrame.from_dict(FRAME_DATA)],
     )
     def test_params_type(self, frame):
         params = make_parameter_frame(frame, BasicFrame)

@@ -271,10 +271,8 @@ def toroidal_harmonic_grid_and_coil_setup(
         th_coil_names = c_names.tolist()
 
     eq.coilset.control = th_coil_names
-    R_coils, Z_coils = (  # noqa: N806
-        eq.coilset.get_control_coils().x,
-        eq.coilset.get_control_coils().z,
-    )
+    R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
+
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
 
     return ToroidalHarmonicsParams(

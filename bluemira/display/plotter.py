@@ -1200,11 +1200,7 @@ def plot_2d_mesh_plt(
         # No face colors specified → draw only triangle edges
         edges = []
         for tri in triangles:
-            edges.extend([
-                [tri[0], tri[1]],
-                [tri[1], tri[2]],
-                [tri[2], tri[0]],
-            ])
+            edges.extend([[tri[0], tri[1]], [tri[1], tri[2]], [tri[2], tri[0]]])
         edge_collection = LineCollection(edges, colors="k", linewidths=1)
         ax.add_collection(edge_collection)
 

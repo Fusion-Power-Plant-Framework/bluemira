@@ -39,16 +39,7 @@ class TestMSHtoXDMF:
     @pytest.mark.xfail
     @pytest.mark.parametrize(
         "dimensions",
-        [
-            (0,),
-            (0, 0),
-            (1, 1),
-            (0, 0, 0),
-            (0, 0, 1),
-            (0, 1, 2, 3),
-            (0, 1, 1),
-            (0, 2, 2),
-        ],
+        [(0,), (0, 0), (1, 1), (0, 0, 0), (0, 0, 1), (0, 1, 2, 3), (0, 1, 1), (0, 2, 2)],
     )
     def test_dimension_errors(self, dimensions):
         with pytest.raises(MeshConversionError):

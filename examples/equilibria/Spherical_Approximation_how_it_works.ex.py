@@ -217,12 +217,7 @@ plt.show()
 n = 10
 
 # Create the set of collocation points for the harmonics
-collocation = collocation_points(
-    original_LCFS,
-    PointType.GRID_POINTS,
-    n,
-    seed=15,
-)
+collocation = collocation_points(original_LCFS, PointType.GRID_POINTS, n, seed=15)
 
 # Plot
 
@@ -444,10 +439,7 @@ clipped_eq.x, clipped_eq.z = eq.grid.x[:, clip], eq.grid.z[:, clip]
 for degree in np.arange(min_degree, max_degree):  # + 1):
     # Construct matrix from harmonic amplitudes for coils
     currents2harmonics = coil_harmonic_amplitude_matrix(
-        eq.coilset,
-        degree,
-        r_t,
-        sh_coil_names,
+        eq.coilset, degree, r_t, sh_coil_names
     )
 
     # Account for matrix condition number

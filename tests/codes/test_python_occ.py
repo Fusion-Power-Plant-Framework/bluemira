@@ -17,11 +17,7 @@ class TestImprintSolids:
     @pytest.mark.parametrize("use_cgal", [True, False])
     @pytest.mark.parametrize(
         ("translate_x", "translate_y", "t_imprints", "a_faces", "bc_faces"),
-        [
-            (0.6, 0.6, 2, 8, 7),
-            (0.3, 0.5, 3, 9, 8),
-            (2.5, 2.5, 0, 6, 6),
-        ],
+        [(0.6, 0.6, 2, 8, 7), (0.3, 0.5, 3, 9, 8), (2.5, 2.5, 0, 6, 6)],
     )
     def test_imprint_solids(
         self,

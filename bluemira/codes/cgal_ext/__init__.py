@@ -13,8 +13,4 @@ from bluemira.codes.cgal_ext.collision_detection import (
     tri_mesh_to_cgal_mesh,
 )
 
-__all__ = [
-    "cgal_available",
-    "do_polys_collide",
-    "tri_mesh_to_cgal_mesh",
-]
+__all__ = ["cgal_available", "do_polys_collide", "tri_mesh_to_cgal_mesh"]

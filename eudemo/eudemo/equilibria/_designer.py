@@ -126,11 +126,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
     params: EquilibriumDesignerParams
     param_cls: type[EquilibriumDesignerParams] = EquilibriumDesignerParams
 
-    def __init__(
-        self,
-        params: dict | ParameterFrame,
-        build_config: dict | None = None,
-    ):
+    def __init__(self, params: dict | ParameterFrame, build_config: dict | None = None):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
         self.diagnostic_plotting = PicardDiagnosticOptions(
@@ -351,11 +347,7 @@ class FixedEquilibriumDesigner(Designer[tuple[Coordinates, CustomProfile]]):
     params: FixedEquilibriumDesignerParams
     param_cls = FixedEquilibriumDesignerParams
 
-    def __init__(
-        self,
-        params: dict | ParameterFrame,
-        build_config: dict | None = None,
-    ):
+    def __init__(self, params: dict | ParameterFrame, build_config: dict | None = None):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
         if self.run_mode == "read" and self.file_path is None:
@@ -557,11 +549,7 @@ class DummyFixedEquilibriumDesigner(Designer[tuple[Coordinates, Profile]]):
         input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)
         lcfs_parameterisation = param_cls(input_dict)
 
-        default_settings = {
-            "n_points": 200,
-            "li_rel_tol": 0.01,
-            "li_min_iter": 2,
-        }
+        default_settings = {"n_points": 200, "li_rel_tol": 0.01, "li_min_iter": 2}
         settings = self.build_config.get("settings", {})
         settings = {**default_settings, **settings}
         lcfs_coords = lcfs_parameterisation.create_shape().discretise(
@@ -754,10 +742,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         self._update_params_from_eq(eq)
         return eq
 
-    def _make_tf_boundary(
-        self,
-        lcfs_shape: BluemiraWire,
-    ) -> BluemiraWire:
+    def _make_tf_boundary(self, lcfs_shape: BluemiraWire) -> BluemiraWire:
         coords = lcfs_shape.discretise(byedges=True, ndiscr=200)
         xu_arg = np.argmax(coords.z)
         xl_arg = np.argmin(coords.z)

@@ -225,12 +225,7 @@ class TestVariedOffsetFunction:
 
 
 class TestPatterning:
-    fixture = (
-        (3, 16, 0.0),
-        (3, 16, 0.1),
-        (10, 20, 0.05),
-        (2, 1, 1),
-    )
+    fixture = ((3, 16, 0.0), (3, 16, 0.1), (10, 20, 0.05), (2, 1, 1))
 
     @pytest.mark.parametrize(("n_segments", "n_sectors", "gap"), fixture)
     def test_revolved_silhouette(self, n_segments, n_sectors, gap):
@@ -277,12 +272,7 @@ class TestPatterning:
 
 
 class TestMakeCircularRing:
-    fixture = (
-        (0.002, 0.003),
-        (3, 4),
-        (3.15, 3.16),
-        (1e5, 1e6),
-    )
+    fixture = ((0.002, 0.003), (3, 4), (3.15, 3.16), (1e5, 1e6))
 
     @pytest.mark.parametrize(("r_in", "r_out"), fixture)
     def test_annulus_area(self, r_in, r_out):
@@ -321,13 +311,7 @@ class TestBuildSectioned:
     for sec in [sq_arr, sq_arr_2, circ1]:
         if not isinstance(sec, BluemiraWire):
             sec = make_polygon(sec, closed=True)  # noqa: PLW2901
-        offset = offset_wire(
-            sec,
-            1,
-            join="intersect",
-            open_wire=False,
-            ndiscr=600,
-        )
+        offset = offset_wire(sec, 1, join="intersect", open_wire=False, ndiscr=600)
         faces.append(BluemiraFace([offset, sec]))
 
     @pytest.mark.parametrize("face", faces)

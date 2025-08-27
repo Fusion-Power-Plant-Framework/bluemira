@@ -129,10 +129,7 @@ def build_reference_equilibrium(
         The reference equilibrium
     """
     designer = ReferenceFreeBoundaryEquilibriumDesigner(
-        params,
-        build_config,
-        lcfs_coords,
-        profiles,
+        params, build_config, lcfs_coords, profiles
     )
     reference_eq = designer.execute()
     constraints = None
@@ -204,12 +201,7 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
     :
         Cryostat thermal shield component manager
     """
-    cts_builder = CryostatTSBuilder(
-        params,
-        build_config,
-        pf_kozs,
-        tf_koz,
-    )
+    cts_builder = CryostatTSBuilder(params, build_config, pf_kozs, tf_koz)
     return CryostatThermalShield(cts_builder.build())
 
 
@@ -326,11 +318,7 @@ def build_pf_coils(
 
 
 def build_coil_structures(
-    params,
-    build_config,
-    tf_coil_xz_face,
-    pf_coil_xz_wires,
-    pf_coil_keep_out_zones,
+    params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
 ) -> CoilStructures:
     """
     Design and build the coil structures for the reactor.
@@ -543,10 +531,7 @@ if __name__ == "__main__":
     set_log_level("INFO")
 
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
-    reactor = EUDEMO(
-        "EUDEMO",
-        n_sectors=reactor_config.global_params.n_TF.value,
-    )
+    reactor = EUDEMO("EUDEMO", n_sectors=reactor_config.global_params.n_TF.value)
 
     establish_material_cache([
         reactor_config.config_for("materials_path")["materials"],
@@ -673,11 +658,7 @@ if __name__ == "__main__":
         reactor_config.config_for("PF coils"),
         reactor.equilibria,
         reactor.tf_coils.xz_outer_boundary,
-        pf_coil_keep_out_zones=[
-            upper_port_koz_xz,
-            eq_port_koz_xz,
-            lower_port_koz_xz,
-        ],
+        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz],
     )
 
     cryostat_thermal_shield = build_cryots(
@@ -696,11 +677,7 @@ if __name__ == "__main__":
         reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face,
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary,
-        pf_coil_keep_out_zones=[
-            upper_port_koz_xz,
-            eq_port_koz_xz,
-            lower_port_koz_xz,
-        ],
+        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz],
     )
 
     reactor.cryostat = build_cryostat(
@@ -764,20 +741,13 @@ if __name__ == "__main__":
         reactor.radiation_shield.xz_boundary,
     )
 
-    reactor.cryostat.add_plugs(
-        cr_plugs,
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
+    reactor.cryostat.add_plugs(cr_plugs, n_TF=reactor_config.global_params.n_TF.value)
 
     reactor.radiation_shield.add_plugs(
-        rs_plugs,
-        n_TF=reactor_config.global_params.n_TF.value,
+        rs_plugs, n_TF=reactor_config.global_params.n_TF.value
     )
 
-    export_dagmc_model(
-        reactor,
-        reactor_config.config_for("CAD_Neutronics"),
-    )
+    export_dagmc_model(reactor, reactor_config.config_for("CAD_Neutronics"))
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary)

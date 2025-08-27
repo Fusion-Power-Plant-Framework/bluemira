@@ -60,14 +60,12 @@ class Solovev:
         rt_lg, rt_2 = np.log(rt), rt**2
         zt_2 = zt**2
 
-        m = np.array(
-            [
-                [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
-                [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
-                [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
-                [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
-            ],
-        )
+        m = np.array([
+            [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
+            [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
+            [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
+            [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
+        ])
 
         b = np.sum(
             np.array([
@@ -292,7 +290,7 @@ if __name__ == "__main__":
     i = 0
     # for what written before, error with boundary conditions set to 0 is higher
     # than that with exact solution.
-    for dirich_bc in (None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3):
+    for dirich_bc in ((None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3)):
         for d in dirich_bc:
             i += 1
             print(f"boundary conditions n.{i}")
@@ -331,12 +329,7 @@ if __name__ == "__main__":
             )
 
             plot_scalar_field(
-                dof_points[:, 0],
-                dof_points[:, 1],
-                diff,
-                levels=20,
-                ax=None,
-                tofill=True,
+                dof_points[:, 0], dof_points[:, 1], diff, levels=20, ax=None, tofill=True
             )
             plt.title(f"Diff between psi exact and fem solution with bcs {i}")
             plt.show()

@@ -110,11 +110,7 @@ class TSUpperPortDuctBuilder(Builder):
         # Add start-cap for future boolean fragmentation help
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
-        comp = PhysicalComponent(
-            self.name,
-            port,
-            material=self.get_material(self.TS),
-        )
+        comp = PhysicalComponent(self.name, port, material=self.get_material(self.TS))
         apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         void = PhysicalComponent(
             self.name + " voidspace",
@@ -216,11 +212,7 @@ class TSEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(
-            self.name,
-            port,
-            self.get_material(self.TS),
-        )
+        comp = PhysicalComponent(self.name, port, self.get_material(self.TS))
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
@@ -297,11 +289,7 @@ class VVUpperPortDuctBuilder(Builder):
             self.y_offset,
         )
 
-        return self.component_tree(
-            None,
-            self.build_xy(xy_face),
-            self.build_xyz(xy_face),
-        )
+        return self.component_tree(None, self.build_xy(xy_face), self.build_xyz(xy_face))
 
     def build_xyz(self, xy_face: BluemiraFace) -> list[PhysicalComponent]:
         """
@@ -319,11 +307,7 @@ class VVUpperPortDuctBuilder(Builder):
         cap = extrude_shape(xy_outface, vec=(0, 0, 0.1))
         port = boolean_fuse([port, cap])
 
-        comp = PhysicalComponent(
-            self.name,
-            port,
-            material=self.get_material(self.VV),
-        )
+        comp = PhysicalComponent(self.name, port, material=self.get_material(self.VV))
         apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         void = PhysicalComponent(
             self.name + " voidspace",
@@ -405,11 +389,7 @@ class VVEquatorialPortDuctBuilder(Builder):
             self.params.tk_vv_single_wall.value,
         )
 
-        return self.component_tree(
-            None,
-            None,
-            self.build_xyz(yz_face),
-        )
+        return self.component_tree(None, None, self.build_xyz(yz_face))
 
     def build_xyz(self, yz_face: BluemiraFace) -> PhysicalComponent:
         """
@@ -425,11 +405,7 @@ class VVEquatorialPortDuctBuilder(Builder):
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
         port.rotate(degree=degree)
-        comp = PhysicalComponent(
-            self.name,
-            port,
-            material=self.get_material(self.VV),
-        )
+        comp = PhysicalComponent(self.name, port, material=self.get_material(self.VV))
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)

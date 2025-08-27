@@ -561,8 +561,7 @@ def get_preset_physical_properties(
     blanket_type = BlanketType(blanket_type)
 
     breeder_materials = BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=0.60,
+        blanket_type=blanket_type, enrichment_fraction_Li6=0.60
     )
 
     # Geometry variables
@@ -624,9 +623,7 @@ def get_preset_physical_properties(
     return breeder_materials, tokamak_geometry
 
 
-def create_materials(
-    breeder_materials: BreederTypeParameters,
-) -> NeutronicsMaterials:
+def create_materials(breeder_materials: BreederTypeParameters) -> NeutronicsMaterials:
     """
     Parameters
     ----------

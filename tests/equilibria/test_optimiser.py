@@ -10,11 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    SymmetricCircuit,
-)
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,

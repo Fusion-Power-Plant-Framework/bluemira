@@ -224,13 +224,7 @@ class RectangularBeam(CrossSection):
         h = 0.5 * height
         self.y = np.array([-w, w, w, -w, -w])
         self.z = np.array([-h, -h, h, h, -h])
-        polygon = BluemiraFace(
-            make_polygon({
-                "x": 0,
-                "y": self.y,
-                "z": self.z,
-            })
-        )
+        polygon = BluemiraFace(make_polygon({"x": 0, "y": self.y, "z": self.z}))
         self.geometry = polygon
 
 

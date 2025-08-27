@@ -194,10 +194,7 @@ class TestNloptOptimiser:
 
     def test_minimum_found_on_rosenbrock_within_bounds(self):
         opt = NloptOptimiser(
-            "SLSQP",
-            2,
-            rosenbrock,
-            opt_conditions={"ftol_rel": 1e-6, "max_eval": 200},
+            "SLSQP", 2, rosenbrock, opt_conditions={"ftol_rel": 1e-6, "max_eval": 200}
         )
         opt.set_lower_bounds(np.array([1.1, 0.5]))
         opt.set_upper_bounds(np.array([2, 0.9]))
@@ -282,19 +279,13 @@ class TestNloptOptimiser:
         np.testing.assert_equal(grad, [2])
         np.testing.assert_allclose(add_ineq_mock.call_args[0][1], np.array([1, 1]))
 
-    @pytest.mark.parametrize(
-        "cond",
-        ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"],
-    )
+    @pytest.mark.parametrize("cond", ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"])
     @mock.patch("bluemira.optimisation._nlopt.conditions.bluemira_warn")
     def test_warning_given_stopping_condition_lt_eps(self, bm_warn, cond):
         NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS / 1.1})
         bm_warn.assert_called_once()
 
-    @pytest.mark.parametrize(
-        "cond",
-        ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"],
-    )
+    @pytest.mark.parametrize("cond", ["ftol_abs", "ftol_rel", "xtol_abs", "xtol_rel"])
     @mock.patch("bluemira.optimisation._nlopt.conditions.bluemira_warn")
     def test_no_warning_given_stopping_condition_gt_eps(self, bm_warn, cond):
         NloptOptimiser("SLSQP", 1, no_op, opt_conditions={cond: EPS * 1.1})

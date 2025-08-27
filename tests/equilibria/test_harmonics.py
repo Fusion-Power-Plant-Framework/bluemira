@@ -200,11 +200,7 @@ def test_SphericalHarmonicConstraintFunction():
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 
-    for fc, res in zip(
-        test_f_constraint,
-        (test_result - b_vec),
-        strict=False,
-    ):
+    for fc, res in zip(test_f_constraint, (test_result - b_vec), strict=False):
         assert fc == res
 
 
@@ -286,10 +282,7 @@ class TestRegressionSH:
         )
 
         ref_harmonics = get_psi_harmonic_amplitudes(
-            self.test_v_psi,
-            self.eq.grid,
-            self.test_colocation,
-            test_r_t,
+            self.test_v_psi, self.eq.grid, self.test_colocation, test_r_t
         )
 
         ref_harmonics = ref_harmonics[:test_degree]
@@ -329,9 +322,7 @@ class TestRegressionSH:
         )
 
         test_constraint_class = SphericalHarmonicConstraint(
-            ref_harmonics=ref_harmonics,
-            r_t=r_t,
-            sh_coil_names=self.sh_coil_names,
+            ref_harmonics=ref_harmonics, r_t=r_t, sh_coil_names=self.sh_coil_names
         )
         assert test_constraint_class.constraint_type == "equality"
         assert test_constraint_class.max_degree == len(ref_harmonics)
@@ -936,8 +927,7 @@ class TestRegressionTH:
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(
-            Path(TEST_PATH, "eqref_OOB.json").as_posix(),
-            from_cocos=7,
+            Path(TEST_PATH, "eqref_OOB.json").as_posix(), from_cocos=7
         )
         cls.eq.get_OX_points()
         cls.R_0, cls.Z_0 = cls.eq._o_points[0].x, cls.eq._o_points[0].z
@@ -1472,11 +1462,7 @@ class TestRegressionTH:
 
         test_f_constraint = test_constraint.f_constraint(test_vector)
 
-        for fc, res in zip(
-            test_f_constraint,
-            (test_result - b_vec),
-            strict=False,
-        ):
+        for fc, res in zip(test_f_constraint, (test_result - b_vec), strict=False):
             assert fc == res
 
         vector = self.eq.coilset.current

@@ -469,10 +469,7 @@ def interpolate_bspline(
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
     except Part.OCCError as error:
-        msg = "\n".join([
-            "FreeCAD was unable to make a spline:",
-            f"{error.args[0]}",
-        ])
+        msg = "\n".join(["FreeCAD was unable to make a spline:", f"{error.args[0]}"])
         raise FreeCADError(msg) from error
     return wire
 
@@ -1685,11 +1682,7 @@ def import_cad(
             raise NotImplementedError("Mesh CAD formats not implemented")
         objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
         if len(objs) == 0:
-            if filetype in {
-                CADFileType.STEP,
-                CADFileType.BREP,
-                CADFileType.IGES,
-            }:
+            if filetype in {CADFileType.STEP, CADFileType.BREP, CADFileType.IGES}:
                 Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
                 objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
                 if len(objs) > 0:

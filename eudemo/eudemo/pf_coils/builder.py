@@ -71,10 +71,7 @@ def build_pf_coils_component(params, build_config, coilset) -> Component:
             if coil_type is CoilType.PF
             else params.tk_cs_casing.value
         )
-        bc = {
-            **build_config,
-            "name": coil_name,
-        }
+        bc = {**build_config, "name": coil_name}
         builder = PFCoilBuilder(
             {
                 "n_TF": {"value": params.n_TF.value, "unit": params.n_TF.unit},

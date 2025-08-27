@@ -157,17 +157,12 @@ class DummyTransportSolver:
 class TestSolveTransportFixedBoundary:
     transport_solver = DummyTransportSolver()
     gs_solver = FemGradShafranovFixedBoundary(
-        p_order=2,
-        maxiter=30,
-        iter_err_max=1.0,
-        relaxation=0,
+        p_order=2, maxiter=30, iter_err_max=1.0, relaxation=0
     )
 
     @pytest.mark.parametrize(
         ("maxiter", "message"),
-        [
-            (1, "did not"),
-        ],
+        [(1, "did not")],
     )
     def test_full_run_through(self, maxiter, message, caplog, tmp_path):
         johner_parameterisation = JohnerLCFS({
