@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.7.1
+blosc2==3.7.2
     # via tables
 certifi==2025.8.3
     # via requests
@@ -106,7 +106,7 @@ packaging==25.0
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.3.1
+pandas==2.3.2
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
@@ -117,7 +117,7 @@ pillow==11.3.0
     #   pyvista
 pint==0.24.4
     # via bluemira (pyproject.toml)
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via
     #   blosc2
     #   pint
@@ -146,9 +146,9 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.1
+pyvista==0.46.3
     # via bluemira (pyproject.toml)
-requests==2.32.4
+requests==2.32.5
     # via
     #   blosc2
     #   pooch
@@ -177,7 +177,7 @@ threadpoolctl==3.6.0
     # via scikit-learn
 typeguard==4.4.4
     # via bluemira (pyproject.toml)
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   flexcache
     #   flexparser
