@@ -206,9 +206,7 @@ class BluemiraRichHandler(RichHandler):
             The text to be rendered by the logger
         """
         log_renderable = super().render(
-            record=record,
-            traceback=traceback,
-            message_renderable=message_renderable,
+            record=record, traceback=traceback, message_renderable=message_renderable
         )
         if getattr(record, "_flushing", False):
             self.console._flushing = True

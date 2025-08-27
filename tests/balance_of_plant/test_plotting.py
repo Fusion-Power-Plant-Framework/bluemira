@@ -62,8 +62,7 @@ class TestSuperSankey:
             for res, text in zip([1000, 500, 1500], sf.texts, strict=False)
         ]
         assert_allclose(
-            sf.tips,
-            [(-1.58045022, 0.25), (-0.75, -1.14022509), (1.90449771, 0.0)],
+            sf.tips, [(-1.58045022, 0.25), (-0.75, -1.14022509), (1.90449771, 0.0)]
         )
 
         figure = sankey.ax.figure

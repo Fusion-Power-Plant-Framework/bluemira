@@ -33,8 +33,7 @@ class TestGeometry:
             ],
             [
                 make_polygon(
-                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
-                    closed=True,
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]), closed=True
                 ),
                 make_polygon(
                     np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
@@ -187,12 +186,7 @@ class TestGeometry:
                 parameterisation,
                 lambda _: 1.0,
                 keep_out_zones=[
-                    {
-                        "wire": zone,
-                        "n_discr": 20,
-                        "byedges": False,
-                        "dl": None,
-                    }
+                    {"wire": zone, "n_discr": 20, "byedges": False, "dl": None}
                 ],
                 opt_conditions={"max_eval": 1},
             )

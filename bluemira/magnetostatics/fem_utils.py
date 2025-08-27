@@ -171,10 +171,7 @@ class BluemiraFemFunction(Function):
 
         if hasattr(u, "function_space"):
             nmm = create_interpolation_data(
-                self.function_space,
-                u.function_space,
-                cells,
-                padding=1e-8,
+                self.function_space, u.function_space, cells, padding=1e-8
             )
             super().interpolate_nonmatching(u, cells, interpolation_data=nmm)
         else:
@@ -726,10 +723,7 @@ def compute_B_from_Psi(
     x_0 = ufl.SpatialCoordinate(mesh)[0]
 
     B_expr = Expression(
-        ufl.as_vector((
-            -psi.dx(1) / (2 * np.pi * x_0),
-            psi.dx(0) / (2 * np.pi * x_0),
-        )),
+        ufl.as_vector((-psi.dx(1) / (2 * np.pi * x_0), psi.dx(0) / (2 * np.pi * x_0))),
         W0.element.interpolation_points(),
     )
 

@@ -34,9 +34,7 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.midplane_temperature_density import (
-    midplane_profiles,
-)
+from bluemira.radiation_transport.midplane_temperature_density import midplane_profiles
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSource,
     interpolated_field_values,
@@ -235,8 +233,5 @@ else:
 
     func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
     # Calculate radiation of FW points
-    solver = FirstWallRadiationSolver(
-        source_func=func,
-        firstwall_shape=fw_shape,
-    )
+    solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
     wall_loads = solver.solve(verbose=verbose)

@@ -11,10 +11,7 @@ PROCESS run functions
 import numpy as np
 from rich.progress import Progress, TextColumn
 
-from bluemira.base.look_and_feel import (
-    bluemira_debug_flush,
-    bluemira_print,
-)
+from bluemira.base.look_and_feel import bluemira_debug_flush, bluemira_print
 from bluemira.codes.interface import CodesTask
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME

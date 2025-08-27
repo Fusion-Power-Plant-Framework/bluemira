@@ -80,10 +80,7 @@ class OpenMCResult:
 
     @classmethod
     def from_run(
-        cls,
-        universe: openmc.Universe,
-        src_rate: float,
-        statepoint_file: str = "",
+        cls, universe: openmc.Universe, src_rate: float, statepoint_file: str = ""
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -241,15 +238,7 @@ class OpenMCResult:
         heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
         # rearrange dataframe into this desired order
         heating_df = heating_df[
-            [
-                "material",
-                "material_name",
-                "nuclide",
-                "score",
-                "mean(W)",
-                "err.",
-                "%err.",
-            ]
+            ["material", "material_name", "nuclide", "score", "mean(W)", "err.", "%err."]
         ]
         hdf = heating_df.to_dict()
         return cls._convert_dict_contents(hdf)
@@ -370,11 +359,7 @@ class OpenMCResult:
         ret_str = f"TBR\n{self.tbr:.3f}±{self.tbr_err:.3f}"
         for title, data in zip(
             ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m)"),
-            (
-                self.heating,
-                self.neutron_wall_load,
-                self.photon_heat_flux,
-            ),
+            (self.heating, self.neutron_wall_load, self.photon_heat_flux),
             strict=True,
         ):
             ret_str += f"\n{title}\n{self._tabulate(data)}"

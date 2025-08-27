@@ -61,8 +61,7 @@ def to_objective(
 
 
 def to_optimiser_callable(
-    geom_callable: GeomOptimiserCallable,
-    geom: GeometryParameterisation,
+    geom_callable: GeomOptimiserCallable, geom: GeometryParameterisation
 ) -> OptimiserCallable:
     """
     Convert a geometry optimiser function to a normal optimiser function.
@@ -83,8 +82,7 @@ def to_optimiser_callable(
 
 
 def to_optimiser_callable_from_cls(
-    geom_callable: GeomClsOptimiserCallable,
-    geom: GeometryParameterisation,
+    geom_callable: GeomClsOptimiserCallable, geom: GeometryParameterisation
 ) -> OptimiserCallable:
     """
     Convert a geometry optimiser function to a normal optimiser function.
@@ -174,9 +172,7 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
         return calculate_signed_distance(
-            geom,
-            n_shape_discr=shape_n_discr,
-            zone_points=koz_points,
+            geom, n_shape_discr=shape_n_discr, zone_points=koz_points
         )
 
     return {

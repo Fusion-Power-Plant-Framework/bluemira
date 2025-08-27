@@ -44,10 +44,7 @@ def test_try_get_bluemira_path(path, subfolder, allow_missing, expect_none):
 
 @pytest.mark.parametrize(
     ("path", "subfolder"),
-    [
-        ("spam", "tests"),
-        ("spam", "ham"),
-    ],
+    [("spam", "tests"), ("spam", "ham")],
 )
 def test_try_get_bluemira_path_raises(path, subfolder):
     with pytest.raises(ValueError):  # noqa: PT011
@@ -202,9 +199,7 @@ def test_create_reference_data_dirs(tmp_path):
             )
         else:
             assert value == get_system_path(
-                file_manager.reference_data_root,
-                file_manager.reactor_name,
-                key,
+                file_manager.reference_data_root, file_manager.reactor_name, key
             )
 
     # Make sure we clean up the directories after testing that they have been created.

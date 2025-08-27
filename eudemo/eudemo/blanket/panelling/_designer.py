@@ -156,10 +156,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         return paneller.joints(paneller.x0)
 
     def _run_opt_problem_with_retries(
-        self,
-        boundary: np.ndarray,
-        opt_problem: PanellingOptProblem,
-        max_retries: int,
+        self, boundary: np.ndarray, opt_problem: PanellingOptProblem, max_retries: int
     ) -> tuple[np.ndarray | None, PanellingOptProblem, int]:
         """
         Run the minimise panel length optimisation problem.

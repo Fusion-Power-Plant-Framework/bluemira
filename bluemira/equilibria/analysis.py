@@ -36,10 +36,7 @@ from bluemira.equilibria.diagnostics import (
 )
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, find_flux_surfs
-from bluemira.equilibria.find_legs import (
-    LegFlux,
-    get_legs_length_and_angle,
-)
+from bluemira.equilibria.find_legs import LegFlux, get_legs_length_and_angle
 from bluemira.equilibria.flux_surfaces import analyse_plasma_core
 from bluemira.equilibria.plotting import (
     CorePlotter,
@@ -112,9 +109,7 @@ def select_eq(
             eq.coilset.control = eq.coilset.get_coiltype(control).name
         return eq
     return FixedPlasmaEquilibrium.from_eqdsk(
-        file_path,
-        from_cocos=from_cocos,
-        qpsi_positive=qpsi_positive,
+        file_path, from_cocos=from_cocos, qpsi_positive=qpsi_positive
     )
 
 
@@ -392,12 +387,7 @@ def get_target_flux(
     fs_list = []
     for x, z in zip(dx, dz, strict=False):
         fs_x, fs_z = find_flux_surface_through_point(
-            eq.x,
-            eq.z,
-            eq.psi(),
-            x,
-            z,
-            eq.psi(x, z),
+            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
         )
         # Only need to plot from midpoint
         select_idx = (fs_z >= 0) if target.find("lower") == -1 else (fs_z <= 0)
@@ -755,11 +745,7 @@ class EqAnalysis:
             ax.plot(ref_eq_fs[1].x, ref_eq_fs[1].z, color="blue", linestyle="--")
         else:
             ax.plot(
-                ref_eq_fs.x,
-                ref_eq_fs.z,
-                color="blue",
-                linestyle="--",
-                label=ref.label,
+                ref_eq_fs.x, ref_eq_fs.z, color="blue", linestyle="--", label=ref.label
             )
 
         ax.legend(loc="best")
@@ -773,11 +759,7 @@ class EqAnalysis:
             plt.show()
         return ax
 
-    def plot_compare_psi(
-        self,
-        diag_ops: EqDiagnosticOptions | None = None,
-        ax=None,
-    ):
+    def plot_compare_psi(self, diag_ops: EqDiagnosticOptions | None = None, ax=None):
         """
         Plot Psi comparison.
 
@@ -803,10 +785,7 @@ class EqAnalysis:
         ref = self._get_reference()
         diag_ops = diag_ops or self.diag_ops
         return EquilibriumComparisonPostOptPlotter(
-            equilibrium=eq,
-            reference_equilibrium=ref,
-            diag_ops=diag_ops,
-            ax=ax,
+            equilibrium=eq, reference_equilibrium=ref, diag_ops=diag_ops, ax=ax
         ).plot_compare_psi()
 
     def plot_compare_profiles(
@@ -998,12 +977,7 @@ class EqAnalysis:
                 else:
                     ax.plot(target_flux[i].x, target_flux[i].z, color="red")
         elif target_flux is not None:
-            ax.plot(
-                target_flux.x,
-                target_flux.z,
-                color="red",
-                label=eq.label + " LCFS",
-            )
+            ax.plot(target_flux.x, target_flux.z, color="red", label=eq.label + " LCFS")
         else:
             bluemira_warn("No flux found crossing target coordinates.")
 
@@ -1051,11 +1025,7 @@ class MultiEqAnalysis:
 
     """
 
-    def __init__(
-        self,
-        equilibria_dict: dict,
-        n_points: int = 50,
-    ):
+    def __init__(self, equilibria_dict: dict, n_points: int = 50):
         self.equilibria_dict = equilibria_dict
         self.set_equilibria(equilibria_dict, n_points)
 
@@ -1234,12 +1204,7 @@ class MultiEqAnalysis:
         print(table)  # noqa: T201
         return table
 
-    def plot_compare_profiles(
-        self,
-        ax=None,
-        header=None,
-        n_points=None,
-    ):
+    def plot_compare_profiles(self, ax=None, header=None, n_points=None):
         """
         Plot the profiles of all the listed equilibria.
 

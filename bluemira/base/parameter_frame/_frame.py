@@ -10,13 +10,7 @@ import json
 from contextlib import suppress
 from dataclasses import dataclass, fields
 from operator import itemgetter
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    get_args,
-    get_type_hints,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -149,8 +143,7 @@ class ParameterFrame:
             yield getattr(self, field.name)
 
     def update(
-        self,
-        new_values: dict[str, ParameterValueType] | ParamDictT | ParameterFrame,
+        self, new_values: dict[str, ParameterValueType] | ParamDictT | ParameterFrame
     ):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
@@ -276,10 +269,7 @@ class ParameterFrame:
                     continue
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
-            kwargs[member] = cls._member_data_to_parameter(
-                member,
-                param_data,
-            )
+            kwargs[member] = cls._member_data_to_parameter(member, param_data)
 
         if not allow_unknown and len(data) > 0:
             raise ValueError(f"Unknown parameter(s) {str(list(data))[1:-1]} in dict.")
@@ -376,10 +366,7 @@ class ParameterFrame:
         for member in cls.__dataclass_fields__:
             if member not in lp:
                 continue
-            kwargs[member] = cls._member_data_to_parameter(
-                member,
-                lp[member],
-            )
+            kwargs[member] = cls._member_data_to_parameter(member, lp[member])
 
         gp = config_params.global_params
         for member in cls.__dataclass_fields__:
@@ -399,9 +386,7 @@ class ParameterFrame:
 
     @classmethod
     def _member_data_to_parameter(
-        cls,
-        member: str,
-        member_param_data: ParamDictT,
+        cls, member: str, member_param_data: ParamDictT
     ) -> Parameter:
         """Convert a member's data to a Parameter object.
 
@@ -420,11 +405,7 @@ class ParameterFrame:
             _validate_units(member_param_data, value_type)
         except pint.errors.PintError as pe:
             raise ValueError("Unit conversion failed") from pe
-        return Parameter(
-            name=member,
-            **member_param_data,
-            _value_types=value_type,
-        )
+        return Parameter(name=member, **member_param_data, _value_types=value_type)
 
     def to_dict(self) -> dict[str, dict[str, Any]]:
         """Serialise this ParameterFrame to a dictionary.

@@ -70,11 +70,7 @@ class TSLowerPortDuctBuilder(Builder):
         :
             The lower port component tree
         """
-        return self.component_tree(
-            xz=None,
-            xy=None,
-            xyz=self.build_xyz(),
-        )
+        return self.component_tree(xz=None, xy=None, xyz=self.build_xyz())
 
     def build_xyz(self) -> list[PhysicalComponent]:
         """
@@ -94,11 +90,7 @@ class TSLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(
-            self.name,
-            duct,
-            material=self.get_material(self.TS),
-        )
+        pc = PhysicalComponent(self.name, duct, material=self.get_material(self.TS))
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
@@ -154,11 +146,7 @@ class VVLowerPortDuctBuilder(Builder):
         :
             The lower port component tree
         """
-        return self.component_tree(
-            xz=None,
-            xy=None,
-            xyz=self.build_xyz(),
-        )
+        return self.component_tree(xz=None, xy=None, xyz=self.build_xyz())
 
     def build_xyz(self) -> list[PhysicalComponent]:
         """
@@ -178,11 +166,7 @@ class VVLowerPortDuctBuilder(Builder):
             self.x_straight_end,
         )
 
-        pc = PhysicalComponent(
-            self.name,
-            duct,
-            material=self.get_material(self.VV),
-        )
+        pc = PhysicalComponent(self.name, duct, material=self.get_material(self.VV))
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
@@ -271,8 +255,7 @@ def build_lower_port_xyz(
     angled_void = extrude_shape(angled_void_face, ext_vector)
 
     straight_duct_backwall = extrude_shape(
-        straight_duct_backwall_face,
-        straight_duct_backwall_face.normal_at() * wall_tk,
+        straight_duct_backwall_face, straight_duct_backwall_face.normal_at() * wall_tk
     )
 
     ext_vector = straight_duct_face.normal_at() * -straight_duct_extrude_extent

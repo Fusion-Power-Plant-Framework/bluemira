@@ -106,15 +106,7 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
         if j > 6:  # noqa: PLR2004
             j = 1
         ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
-        coil = Coil(
-            xi,
-            zi,
-            current=0,
-            dx=dxi,
-            dz=dzi,
-            ctype=ctype,
-            name=f"{ctype}_{j}",
-        )
+        coil = Coil(xi, zi, current=0, dx=dxi, dz=dzi, ctype=ctype, name=f"{ctype}_{j}")
         coils.append(coil)
         j += 1
 
@@ -248,10 +240,7 @@ class BBBuilder(Builder):
     params: OptimisedReactorParams
 
     def __init__(
-        self,
-        params: OptimisedReactorParams,
-        lcfs_wire: BluemiraWire,
-        material_name: str,
+        self, params: OptimisedReactorParams, lcfs_wire: BluemiraWire, material_name: str
     ):
         super().__init__(params, {"material": {self.BB: material_name}})
         self.lcfs_wire = lcfs_wire
@@ -358,10 +347,7 @@ class TFBuilder(Builder):
     params: OptimisedReactorParams
 
     def __init__(
-        self,
-        params: OptimisedReactorParams,
-        centerline: PrincetonD,
-        material_name: str,
+        self, params: OptimisedReactorParams, centerline: PrincetonD, material_name: str
     ):
         super().__init__(params, {"material": {self.TF: material_name}})
         self.centerline = centerline
@@ -481,9 +467,6 @@ r.show_cad(construction_params={"n_sectors": 8})
 # %%
 r.save_cad(
     cad_format="dagmc",
-    construction_params={
-        "without_components": [r.plasma],
-        "group_by_materials": True,
-    },
+    construction_params={"without_components": [r.plasma], "group_by_materials": True},
     directory=Path(__file__).parent,
 )

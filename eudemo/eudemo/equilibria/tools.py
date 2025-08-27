@@ -123,10 +123,7 @@ def handle_lcfs_shape_input(
     :
         Input dictionary for the initialisation of the specified GeometryParameterisation
     """
-    defaults = {
-        "f_kappa_l": 1.0,
-        "f_delta_l": 1.0,
-    }
+    defaults = {"f_kappa_l": 1.0, "f_delta_l": 1.0}
     shape_config = {**defaults, **shape_config}
     kappa_95 = params.kappa_95.value
     delta_95 = params.delta_95.value
@@ -182,12 +179,7 @@ def make_grid(
     :
         Finite difference grid for an Equilibrium
     """
-    defaults = {
-        "grid_scale_x": 2.0,
-        "grid_scale_z": 2.0,
-        "nx": 65,
-        "nz": 65,
-    }
+    defaults = {"grid_scale_x": 2.0, "grid_scale_z": 2.0, "nx": 65, "nz": 65}
     grid_settings = {**defaults, **grid_settings}
     scale_x = grid_settings["grid_scale_x"]
     scale_z = grid_settings["grid_scale_z"]
@@ -432,9 +424,7 @@ class ReferenceConstraints(MagneticConstraintSet):
 
         else:
             # Upper single null
-            constraints = [
-                FieldNullConstraint(coords.x[arg_xu], coords.z[arg_xu]),
-            ]
+            constraints = [FieldNullConstraint(coords.x[arg_xu], coords.z[arg_xu])]
 
         constraints.append(
             IsofluxConstraint(

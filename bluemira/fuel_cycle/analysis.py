@@ -166,20 +166,12 @@ class FuelCycleAnalysis:
         if np.all(self.t_d == np.inf):
             # If all the doubling times are infinite, make a special hist plot
             t_d = 100 * np.ones(len(self.t_d))
-            ax[1].hist(
-                t_d,
-                bins=bins,
-                color=ax[0]._get_lines.get_next_color(),
-                **kwargs,
-            )
+            ax[1].hist(t_d, bins=bins, color=ax[0]._get_lines.get_next_color(), **kwargs)
             ax[1].set_xticks([100 + 0.5 / bins])
             ax[1].set_xticklabels([r"$\infty$"])
         else:
             ax[1].hist(
-                self.t_d,
-                bins=bins,
-                color=ax[0]._get_lines.get_next_color(),
-                **kwargs,
+                self.t_d, bins=bins, color=ax[0]._get_lines.get_next_color(), **kwargs
             )
         ax[1].set_xlabel("$t_{d}$ [yr]")
         f.tight_layout()

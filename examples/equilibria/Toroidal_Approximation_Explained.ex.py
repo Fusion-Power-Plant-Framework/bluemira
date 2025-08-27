@@ -234,12 +234,7 @@ cmap = PLOT_DEFAULTS["psi"]["cmap"]
 axs0_plot = axs[0].contourf(R_approx, Z_approx, total_psi, nlevels, cmap=cmap)
 axs[0].set_xlabel("R")
 axs[0].set_ylabel("Z")
-axs[0].plot(
-    approx_fs.x,
-    approx_fs.z,
-    color="red",
-    label="Approx. FS from TH",
-)
+axs[0].plot(approx_fs.x, approx_fs.z, color="red", label="Approx. FS from TH")
 axs[0].set_title("Total Psi using TH approximation for coilset psi")
 axs[0].legend(loc="upper right")
 

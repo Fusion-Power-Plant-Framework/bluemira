@@ -101,15 +101,7 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz, strict=False)):
     if j > 6:  # noqa: PLR2004
         j = 1
     ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
-    coil = Coil(
-        xi,
-        zi,
-        current=0,
-        dx=dxi,
-        dz=dzi,
-        ctype=ctype,
-        name=f"{ctype}_{j}",
-    )
+    coil = Coil(xi, zi, current=0, dx=dxi, dz=dzi, ctype=ctype, name=f"{ctype}_{j}")
     coils.append(coil)
     j += 1
 
@@ -275,11 +267,7 @@ program()
 field_constraints = CoilFieldConstraints(eq.coilset, eq.coilset.b_max, tolerance=1e-6)
 
 force_constraints = CoilForceConstraints(
-    eq.coilset,
-    PF_Fz_max=450e6,
-    CS_Fz_sum_max=300e6,
-    CS_Fz_sep_max=250e6,
-    tolerance=5e-5,
+    eq.coilset, PF_Fz_max=450e6, CS_Fz_sum_max=300e6, CS_Fz_sep_max=250e6, tolerance=5e-5
 )
 
 current_opt_problem = TikhonovCurrentCOP(
@@ -372,27 +360,17 @@ print(
 
 # %%
 isoflux = IsofluxConstraint(
-    x_bdry,
-    z_bdry,
-    x_bdry[arg_inner],
-    z_bdry[arg_inner],
-    tolerance=1e-3,
+    x_bdry, z_bdry, x_bdry[arg_inner], z_bdry[arg_inner], tolerance=1e-3
 )
 
 sof = deepcopy(eq)
 sof_psi_boundary = PsiConstraint(
-    x_bdry[arg_inner],
-    z_bdry[arg_inner],
-    target_value=50 / 2 / np.pi,
-    tolerance=1e-3,
+    x_bdry[arg_inner], z_bdry[arg_inner], target_value=50 / 2 / np.pi, tolerance=1e-3
 )
 
 eof = deepcopy(eq)
 eof_psi_boundary = PsiConstraint(
-    x_bdry[arg_inner],
-    z_bdry[arg_inner],
-    target_value=-150 / 2 / np.pi,
-    tolerance=1e-3,
+    x_bdry[arg_inner], z_bdry[arg_inner], target_value=-150 / 2 / np.pi, tolerance=1e-3
 )
 
 current_opt_problem_sof = TikhonovCurrentCOP(

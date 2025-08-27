@@ -101,16 +101,10 @@ class PlasmaFaceDesigner(
         )[0]
 
         rm_clearance_face = _make_clearance_face(
-            vessel_bbox.x_min,
-            vessel_bbox.x_max,
-            min_z,
-            self.params.c_rm.value,
+            vessel_bbox.x_min, vessel_bbox.x_max, min_z, self.params.c_rm.value
         )
         rm_outer_clearance_face = _angled_wall_cutter(
-            max_x,
-            min_z,
-            self.params.c_rm.value,
-            self.params.lower_port_angle.value,
+            max_x, min_z, self.params.c_rm.value, self.params.lower_port_angle.value
         )
 
         blanket_face, divertor_face = _cut_vessel_shape(

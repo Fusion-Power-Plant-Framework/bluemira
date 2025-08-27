@@ -43,10 +43,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.constants import PLT_PAUSE
-from bluemira.equilibria.diagnostics import (
-    PicardDiagnostic,
-    PicardDiagnosticOptions,
-)
+from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -107,15 +104,7 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz, strict=False)):
     if j > 6:  # noqa: PLR2004
         j = 1
     ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
-    coil = Coil(
-        xi,
-        zi,
-        current=0,
-        dx=dxi,
-        dz=dzi,
-        ctype=ctype,
-        name=f"{ctype}_{j}",
-    )
+    coil = Coil(xi, zi, current=0, dx=dxi, dz=dzi, ctype=ctype, name=f"{ctype}_{j}")
     coils.append(coil)
     j += 1
 
@@ -255,11 +244,7 @@ profiles = BetaLiIpProfile(
 # Solve the SOF and EOF equilibria
 
 # %%
-reference_eq = Equilibrium(
-    deepcopy(coilset),
-    grid,
-    profiles,
-)
+reference_eq = Equilibrium(deepcopy(coilset), grid, profiles)
 
 # Make a set of magnetic constraints for the equilibria... I got lazy here,
 # this is just:
@@ -279,11 +264,7 @@ isoflux = IsofluxConstraint(
     constraint_value=0.25,  # Difficult to choose...
 )
 xp_idx = np.argmin(sof_zbdry)
-x_point = FieldNullConstraint(
-    sof_xbdry[xp_idx],
-    sof_zbdry[xp_idx],
-    tolerance=1e-3,
-)
+x_point = FieldNullConstraint(sof_xbdry[xp_idx], sof_zbdry[xp_idx], tolerance=1e-3)
 
 ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     reference_eq.coilset,
@@ -296,10 +277,7 @@ program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxa
 program()
 
 sof_psi_boundary = PsiBoundaryConstraint(
-    sof_xbdry,
-    sof_zbdry,
-    psi_sof / (2 * np.pi),
-    tolerance=0.5,
+    sof_xbdry, sof_zbdry, psi_sof / (2 * np.pi), tolerance=0.5
 )
 
 sof = deepcopy(reference_eq)
@@ -312,20 +290,12 @@ sof_opt_problem = MinimalCurrentCOP(
     constraints=[sof_psi_boundary, x_point],
 )
 
-iterator = PicardIterator(
-    sof,
-    sof_opt_problem,
-    fixed_coils=True,
-    relaxation=0.2,
-)
+iterator = PicardIterator(sof, sof_opt_problem, fixed_coils=True, relaxation=0.2)
 iterator()
 
 
 eof_psi_boundary = PsiBoundaryConstraint(
-    sof_xbdry,
-    sof_zbdry,
-    psi_eof / (2 * np.pi),
-    tolerance=0.5,
+    sof_xbdry, sof_zbdry, psi_eof / (2 * np.pi), tolerance=0.5
 )
 
 eof = deepcopy(reference_eq)

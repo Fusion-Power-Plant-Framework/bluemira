@@ -85,11 +85,7 @@ lcar_coil = 0.01  # Characteristic length of coil
 
 
 poly_coil = make_polygon(
-    [
-        [rc - drc, rc + drc, rc + drc, rc - drc],
-        [-drc, -drc, +drc, +drc],
-        np.zeros(4),
-    ],
+    [[rc - drc, rc + drc, rc + drc, rc - drc], [-drc, -drc, +drc, +drc], np.zeros(4)],
     closed=True,
     label="poly_enclo",
 )
@@ -102,11 +98,7 @@ poly_axis = make_polygon([np.zeros(3), [-r_enclo, 0, r_enclo], np.zeros(3)])
 poly_axis.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_axis"}
 
 poly_ext = make_polygon(
-    [
-        [0, r_enclo, r_enclo, 0],
-        [r_enclo, r_enclo, -r_enclo, -r_enclo],
-        np.zeros(4),
-    ],
+    [[0, r_enclo, r_enclo, 0], [r_enclo, r_enclo, -r_enclo, -r_enclo], np.zeros(4)],
     label="poly_ext",
 )
 poly_ext.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_ext"}

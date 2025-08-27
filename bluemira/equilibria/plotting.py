@@ -49,10 +49,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
-    from bluemira.equilibria.equilibrium import (
-        Equilibrium,
-        FixedPlasmaEquilibrium,
-    )
+    from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
     from bluemira.equilibria.flux_surfaces import CoreResults
     from bluemira.equilibria.profiles import Profile
 
@@ -69,48 +66,16 @@ __all__ = [
 ]
 
 PLOT_DEFAULTS = {
-    "psi": {
-        "nlevels": 15,
-        "cmap": "viridis",
-    },
-    "field": {
-        "nlevels": 15,
-        "cmap": "magma",
-    },
-    "current": {
-        "nlevels": 30,
-        "cmap": "plasma",
-    },
-    "separatrix": {
-        "color": "r",
-        "linewidth": 1.5,
-    },
-    "opoint": {
-        "marker": "o",
-        "color": "g",
-    },
-    "xpoint": {
-        "marker": "x",
-        "color": "k",
-        "linewidth": 1.4,
-        "size": 5,
-    },
-    "grid": {
-        "edgewidth": 2,
-        "linewidth": 1,
-        "color": "k",
-    },
-    "limiter": {
-        "marker": "o",
-        "color": "b",
-    },
+    "psi": {"nlevels": 15, "cmap": "viridis"},
+    "field": {"nlevels": 15, "cmap": "magma"},
+    "current": {"nlevels": 30, "cmap": "plasma"},
+    "separatrix": {"color": "r", "linewidth": 1.5},
+    "opoint": {"marker": "o", "color": "g"},
+    "xpoint": {"marker": "x", "color": "k", "linewidth": 1.4, "size": 5},
+    "grid": {"edgewidth": 2, "linewidth": 1, "color": "k"},
+    "limiter": {"marker": "o", "color": "b"},
     "coil": {
-        "facecolor": {
-            "PF": "#0098D4",
-            "CS": "#003688",
-            "Plasma": "r",
-            "NONE": "grey",
-        },
+        "facecolor": {"PF": "#0098D4", "CS": "#003688", "Plasma": "r", "NONE": "grey"},
         "edgecolor": "k",
         "linewidth": 1,
         "fontsize": 6,
@@ -950,12 +915,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
 
         else:
             self.ax[0].contour(
-                x,
-                z,
-                self.coilset_psi,
-                levels=levels,
-                cmap=cmap,
-                zorder=8,
+                x, z, self.coilset_psi, levels=levels, cmap=cmap, zorder=8
             )
             plt.suptitle(
                 "Psi split by contribution from coilset and plasma for current"
@@ -1011,14 +971,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 plt.tight_layout()
 
         else:
-            self.ax[1].contour(
-                x,
-                z,
-                self.plasma_psi,
-                levels=levels,
-                cmap=cmap,
-                zorder=8,
-            )
+            self.ax[1].contour(x, z, self.plasma_psi, levels=levels, cmap=cmap, zorder=8)
         # Plot current and reference lcfs
         self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
         self.plot_reference_LCFS(

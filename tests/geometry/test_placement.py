@@ -55,15 +55,7 @@ class TestPlacement:
             [[0, 0, 1], [0, 0, 0], [0, 0, -1]],  # co-linear bad order
             [[0, 0, 0], [0, 0, 0], [0, 0, 1]],  # two the same #1
             [[0, 0, 1], [0, 0, 0], [0, 0, 0]],  # two the same #2
-            [
-                [
-                    1,
-                    1,
-                    1,
-                ],
-                [1, 1, 1],
-                [1, 1, 1],
-            ],  # all the same non-zero
+            [[1, 1, 1], [1, 1, 1], [1, 1, 1]],  # all the same non-zero
         ]
         for bad in bad_sets:
             with pytest.raises(GeometryError):

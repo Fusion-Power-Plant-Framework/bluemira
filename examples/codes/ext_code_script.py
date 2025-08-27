@@ -22,10 +22,7 @@ def parse_args():
     """
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--add-header",
-        action="store_true",
-        default=False,
-        help="add header to file",
+        "--add-header", action="store_true", default=False, help="add header to file"
     )
     parser.add_argument(
         "--number", action="store_true", default=False, help="add line numbers"

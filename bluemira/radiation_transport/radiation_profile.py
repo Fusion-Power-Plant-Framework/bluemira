@@ -849,23 +849,13 @@ class ScrapeOffLayerRadiation(Radiation):
         ne_sep = self.params.n_e_sep.value
 
         te_sol, ne_sol = electron_density_and_temperature_sol_decay(
-            te_sep,
-            ne_sep,
-            fw_lambda_q_near,
-            fw_lambda_q_far,
-            dx,
+            te_sep, ne_sep, fw_lambda_q_near, fw_lambda_q_far, dx
         )
 
         return te_sol, ne_sol
 
     def any_point_density_temperature_profiles(
-        self,
-        x_p: float,
-        z_p: float,
-        t_p: float,
-        t_u: float,
-        *,
-        lfs: bool = True,
+        self, x_p: float, z_p: float, t_p: float, t_u: float, *, lfs: bool = True
     ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
@@ -1165,25 +1155,15 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # profiles through the SoL
         t_in_prof, n_in_prof = self.any_point_density_temperature_profiles(
-            in_x,
-            in_z,
-            t_rad_in,
-            t_u_ev,
-            lfs=lfs,
+            in_x, in_z, t_rad_in, t_u_ev, lfs=lfs
         )
 
         t_out_prof, n_out_prof = self.any_point_density_temperature_profiles(
-            out_x,
-            out_z,
-            t_rad_out,
-            t_u_ev,
-            lfs=lfs,
+            out_x, out_z, t_rad_out, t_u_ev, lfs=lfs
         )
 
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
-            n_out_prof,
-            t_out_prof,
-            detachment=detachment,
+            n_out_prof, t_out_prof, detachment=detachment
         )
         # temperature poloidal distribution
         t_pol = [
@@ -1539,13 +1519,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         return self.t_and_n_pol
 
-    def calculate_sol_radiation_distribution(
-        self,
-        lfs_low,
-        lfs_up,
-        hfs_low,
-        hfs_up,
-    ):
+    def calculate_sol_radiation_distribution(self, lfs_low, lfs_up, hfs_low, hfs_up):
         """
         Radiation profiles calculation.
         For each scrape-off layer sector, it gives the
@@ -1840,9 +1814,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         }
 
     def calculate_sol_radiation_distribution(
-        self,
-        lfs: np.ndarray,
-        hfs: np.ndarray,
+        self, lfs: np.ndarray, hfs: np.ndarray
     ) -> dict[str, list[list[np.ndarray]]]:
         """
         Radiation profiles calculation.

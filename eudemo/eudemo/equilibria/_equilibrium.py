@@ -76,10 +76,7 @@ def make_equilibrium(
         PF_bmax=params.PF_bmax.value,
     )
     profiles = BetaIpProfile(
-        params.beta_p.value,
-        params.I_p.value,
-        params.R_0.value,
-        params.B_0.value,
+        params.beta_p.value, params.I_p.value, params.R_0.value, params.B_0.value
     )
     grid = make_grid(params.R_0.value, params.A.value, kappa, grid_settings)
 
@@ -139,11 +136,6 @@ def make_reference_equilibrium(
         n_PF=params.n_PF.value,
     )
 
-    grid = make_grid(
-        params.R_0.value,
-        params.A.value,
-        params.kappa.value,
-        grid_settings,
-    )
+    grid = make_grid(params.R_0.value, params.A.value, params.kappa.value, grid_settings)
 
     return Equilibrium(coilset, grid, profiles)

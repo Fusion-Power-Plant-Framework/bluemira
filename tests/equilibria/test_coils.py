@@ -379,12 +379,7 @@ class TestSymmetricCircuit:
 
     @pytest.mark.parametrize("fieldtype", ["_response", ""])
     def test_fields(self, fieldtype):
-        points = [
-            [1, 1],
-            [2, 2],
-            [1.5, 6],
-            [1.5, -6],
-        ]
+        points = [[1, 1], [2, 2], [1.5, 6], [1.5, -6]]
 
         for point in points:
             coil_psi = sum(

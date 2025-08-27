@@ -41,11 +41,7 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
 
     param_cls: type[IVCBoundaryParams] = IVCBoundaryParams
 
-    def __init__(
-        self,
-        params: ParameterFrame | dict,
-        wall_shape: BluemiraWire,
-    ):
+    def __init__(self, params: ParameterFrame | dict, wall_shape: BluemiraWire):
         super().__init__(params)
 
         if not wall_shape.is_closed():

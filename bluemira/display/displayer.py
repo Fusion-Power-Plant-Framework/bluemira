@@ -285,10 +285,7 @@ class ComponentDisplayer(BaseDisplayer):
     """
 
     @staticmethod
-    def show_cad(
-        comps,
-        **kwargs,
-    ):
+    def show_cad(comps, **kwargs):
         """
         Display the CAD of a component or iterable of components
 

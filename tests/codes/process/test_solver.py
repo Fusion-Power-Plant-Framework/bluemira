@@ -133,10 +133,7 @@ class TestSolverIntegration:
     @pytest.mark.longrun
     def test_runinput_mode_does_not_edit_template(self, tmp_path):
         template_path = Path(self.DATA_DIR, "IN.DAT")
-        build_config = {
-            "run_dir": tmp_path,
-            "template_in_dat": template_path,
-        }
+        build_config = {"run_dir": tmp_path, "template_in_dat": template_path}
 
         solver = Solver(self.params, build_config)
         with contextlib.suppress(CodesError):
@@ -156,10 +153,7 @@ class TestSolverIntegration:
         assert z_eff.size > 0
 
     def test_run_inits_writer_with_template_file_if_file_exists(self, tmp_path):
-        build_config = {
-            "run_dir": tmp_path,
-            "template_in_dat": "template/path/in.dat",
-        }
+        build_config = {"run_dir": tmp_path, "template_in_dat": "template/path/in.dat"}
 
         class BLANK:
             get_value = 0.0
@@ -182,9 +176,7 @@ class TestSolverIntegration:
         assert indat_cls_mock.return_value.data == self.params.template_defaults
 
     def test_run_raises_CodesError_given_no_data_in_template_file(self):
-        build_config = {
-            "template_in_dat": "template/path/in.dat",
-        }
+        build_config = {"template_in_dat": "template/path/in.dat"}
 
         with pytest.raises(CodesError):
             Solver(self.params, build_config)
@@ -192,9 +184,7 @@ class TestSolverIntegration:
     @pytest.mark.parametrize(("pf_n", "pf_v"), [(None, None), ("tk_sh_in", 3)])
     @pytest.mark.parametrize(
         ("template", "result"),
-        [
-            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
-        ],
+        [(ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2))],
     )
     def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
         if pf_n is None:
@@ -205,10 +195,7 @@ class TestSolverIntegration:
             pf[pf_n]["value"] = pf_v
             result = (result[0], pf_v, result[2])
         path = tmp_path / "IN.DAT"
-        build_config = {
-            "in_dat_path": path,
-            "template_in_dat": template,
-        }
+        build_config = {"in_dat_path": path, "template_in_dat": template}
 
         solver = Solver(pf, build_config)
         solver.params.mappings["tk_sh_in"].send = True

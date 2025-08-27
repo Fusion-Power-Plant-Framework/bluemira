@@ -55,10 +55,7 @@ class TFCoilPolySpline(PolySpline):
 
         if not self.variables.x1.fixed:
             self.adjust_variable(
-                "x1",
-                ib_radius,
-                lower_bound=ib_radius - 2,
-                upper_bound=ib_radius * 1.1,
+                "x1", ib_radius, lower_bound=ib_radius - 2, upper_bound=ib_radius * 1.1
             )
         if not self.variables.x2.fixed:
             self.adjust_variable(

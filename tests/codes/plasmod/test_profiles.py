@@ -121,26 +121,12 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         x1D, volume, g1, g2, g3 = calc_metric_coefficients(
             self.flux_surfaces[1:], f_grad_psi, self.rho, self.psi_ax
         )
-        self.results = {
-            "x_1d": x1D,
-            "V": volume,
-            "g1": g1,
-            "g2": g2,
-            "g3": g3,
-        }
+        self.results = {"x_1d": x1D, "V": volume, "g1": g1, "g2": g2, "g3": g3}
 
     def test_volume(self):
         f, ax = plt.subplots()
-        ax.plot(
-            self.rho,
-            self.volprof,
-            label="$V_{PLASMOD}$",
-        )
-        ax.plot(
-            self.rho,
-            self.results["V"],
-            label="$V_{Zakharov}$",
-        )
+        ax.plot(self.rho, self.volprof, label="$V_{PLASMOD}$")
+        ax.plot(self.rho, self.results["V"], label="$V_{Zakharov}$")
         ax.set_ylabel("[$m^3$]")
         ax.set_xlabel("$\\rho$")
         ax.legend()

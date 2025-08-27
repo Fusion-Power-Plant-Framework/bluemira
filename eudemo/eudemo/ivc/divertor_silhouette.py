@@ -22,11 +22,7 @@ from bluemira.base.reactor import ComponentManager
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.find_legs import LegFlux
-from bluemira.geometry.tools import (
-    interpolate_bspline,
-    make_circle,
-    make_polygon,
-)
+from bluemira.geometry.tools import interpolate_bspline, make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
@@ -128,10 +124,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     param_cls = DivertorSilhouetteParams
 
     def __init__(
-        self,
-        params: dict | ParameterFrame,
-        equilibrium: Equilibrium,
-        wall: BluemiraWire,
+        self, params: dict | ParameterFrame, equilibrium: Equilibrium, wall: BluemiraWire
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
@@ -322,10 +315,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
 
         # grad of the target
         mt = grad_xz(
-            target_xz_start[0],
-            target_xz_end[0],
-            target_xz_start[1],
-            target_xz_end[1],
+            target_xz_start[0], target_xz_end[0], target_xz_start[1], target_xz_end[1]
         )
 
         # Solve the two linear equations in the form Ax + Bz = C
@@ -377,10 +367,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         )
 
     def make_inner_baffle(
-        self,
-        target: BluemiraWire,
-        x_lim: float,
-        z_lim: float,
+        self, target: BluemiraWire, x_lim: float, z_lim: float
     ) -> BluemiraWire:
         """
         Build the inner baffle to join with the given target.
@@ -402,10 +389,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         )
 
     def make_outer_baffle(
-        self,
-        target: BluemiraWire,
-        x_lim: float,
-        z_lim: float,
+        self, target: BluemiraWire, x_lim: float, z_lim: float
     ) -> BluemiraWire:
         """
         Build the outer baffle to join with the given target.

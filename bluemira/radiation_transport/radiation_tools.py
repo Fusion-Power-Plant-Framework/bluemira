@@ -18,11 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 from rich.progress import track
-from scipy.interpolate import (
-    LinearNDInterpolator,
-    RectBivariateSpline,
-    interp1d,
-)
+from scipy.interpolate import LinearNDInterpolator, RectBivariateSpline, interp1d
 from scipy.spatial import Delaunay
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
@@ -138,12 +134,7 @@ def upstream_temperature(
 
     # connection length from the midplane to the target
     l_tot = (
-        calculate_connection_length_flt(
-            eq,
-            r_sep_mp,
-            z_mp,
-            first_wall=firstwall_geom,
-        )
+        calculate_connection_length_flt(eq, r_sep_mp, z_mp, first_wall=firstwall_geom)
         if connection_length is None
         else connection_length
     )
@@ -321,20 +312,12 @@ def specific_point_temperature(
 
     # Distance between the chosen point and the the target
     l_p = calculate_connection_length_flt(
-        eq,
-        x_p + (d * f_exp),
-        z_p,
-        forward=forward,
-        first_wall=firstwall_geom,
+        eq, x_p + (d * f_exp), z_p, forward=forward, first_wall=firstwall_geom
     )
     # connection length from the midplane to the target
     l_tot = (
         calculate_connection_length_flt(
-            eq,
-            r_sep_mp,
-            z_mp,
-            forward=forward,
-            first_wall=firstwall_geom,
+            eq, r_sep_mp, z_mp, forward=forward, first_wall=firstwall_geom
         )
         if connection_length is None
         else connection_length
@@ -1105,9 +1088,7 @@ def detect_radiation(
 
     # Loop over each tile detector
     for detector in track(
-        wall_detectors,
-        total=len(wall_detectors),
-        description="Radiation detectors...",
+        wall_detectors, total=len(wall_detectors), description="Radiation detectors..."
     ):
         # extract the dimensions and orientation of the tile
         pixel_area = detector.x_width * detector.y_width
@@ -1418,11 +1399,7 @@ class FirstWallRadiationSolver:
         DetectedRadiation object for associated wall detectors
     """
 
-    def __init__(
-        self,
-        source_func: Callable,
-        firstwall_shape: Coordinates,
-    ):
+    def __init__(self, source_func: Callable, firstwall_shape: Coordinates):
         self.rad_source = source_func
         self.rad_3d = AxisymmetricMapper(self.rad_source)
         self.fw_shape = firstwall_shape

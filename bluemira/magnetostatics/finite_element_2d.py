@@ -13,24 +13,11 @@ from collections.abc import Iterable
 import dolfinx.fem
 import numpy as np
 from basix.ufl import element
-from dolfinx.fem import (
-    Expression,
-    dirichletbc,
-    functionspace,
-    locate_dofs_topological,
-)
+from dolfinx.fem import Expression, dirichletbc, functionspace, locate_dofs_topological
 from dolfinx.fem.petsc import LinearProblem
 from dolfinx.mesh import locate_entities_boundary
 from petsc4py.PETSc import ScalarType
-from ufl import (
-    SpatialCoordinate,
-    TestFunction,
-    TrialFunction,
-    as_vector,
-    dot,
-    dx,
-    grad,
-)
+from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
 
 from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
@@ -212,8 +199,7 @@ class FemMagnetostatic2d:
         return self.psi
 
     def calculate_b(
-        self,
-        interpolation_eltype: tuple | None = None,
+        self, interpolation_eltype: tuple | None = None
     ) -> BluemiraFemFunction:
         """
         Calculates the magnetic field intensity from psi

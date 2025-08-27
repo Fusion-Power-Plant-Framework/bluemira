@@ -37,13 +37,7 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 @pytest.mark.parametrize(
     "param_class",
-    [
-        PictureFrame,
-        PolySpline,
-        PrincetonD,
-        SextupleArc,
-        TripleArc,
-    ],
+    [PictureFrame, PolySpline, PrincetonD, SextupleArc, TripleArc],
 )
 def test_read_write(param_class: type[GeometryParameterisation]):
     tempdir = tempfile.mkdtemp()
@@ -173,23 +167,19 @@ class TestPrincetonDDiscrete:
 
     def test_princeton_d_discrete_parameterisation_init_error(self):
         with pytest.raises(GeometryParameterisationError):
-            PrincetonDDiscrete(
-                {
-                    "x1": {"value": 5, "fixed": True},
-                    "x2": {"value": 14, "fixed": False},
-                    "dz": {"value": 0.1},
-                },
-            )
+            PrincetonDDiscrete({
+                "x1": {"value": 5, "fixed": True},
+                "x2": {"value": 14, "fixed": False},
+                "dz": {"value": 0.1},
+            })
 
     def test_princeton_d_discrete_parameterisation_call_error(self):
         with pytest.raises(GeometryParameterisationError):
-            PrincetonDDiscrete(
-                {
-                    "x1": {"value": 14, "fixed": True},
-                    "x2": {"value": 5, "fixed": False},
-                    "dz": {"value": 0.1},
-                },
-            )
+            PrincetonDDiscrete({
+                "x1": {"value": 14, "fixed": True},
+                "x2": {"value": 5, "fixed": False},
+                "dz": {"value": 0.1},
+            })
 
     def test_princeton_d_discrete_parameterisation_init_error_2(self):
         with pytest.raises(GeometryParameterisationError):
@@ -243,18 +233,8 @@ class TestPictureFrame:
         p = PictureFrame()
         p.adjust_variable("x1", value=4, lower_bound=4, upper_bound=5)
         p.adjust_variable("x2", value=16, lower_bound=14, upper_bound=18)
-        p.adjust_variable(
-            "z1",
-            value=8,
-            lower_bound=5,
-            upper_bound=15,
-        )
-        p.adjust_variable(
-            "z2",
-            value=-8,
-            lower_bound=-15,
-            upper_bound=-5,
-        )
+        p.adjust_variable("z1", value=8, lower_bound=5, upper_bound=15)
+        p.adjust_variable("z2", value=-8, lower_bound=-15, upper_bound=-5)
         p.adjust_variable("ri", value=0, lower_bound=0, upper_bound=2)
         p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
         wire = p.create_shape()

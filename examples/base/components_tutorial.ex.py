@@ -78,22 +78,13 @@ for i in range(6):
 # %%
 in_vessel = Component("InVessel", parent=reactor)
 blanket = PhysicalComponent(
-    "Blanket",
-    shape="BB_shape",
-    material="BB_material",
-    parent=in_vessel,
+    "Blanket", shape="BB_shape", material="BB_material", parent=in_vessel
 )
 divertor = PhysicalComponent(
-    "Divertor",
-    shape="Div_shape",
-    material="Div_material",
-    parent=in_vessel,
+    "Divertor", shape="Div_shape", material="Div_material", parent=in_vessel
 )
 vessel = PhysicalComponent(
-    "Vessel",
-    shape="VV_shape",
-    material="VV_material",
-    parent=in_vessel,
+    "Vessel", shape="VV_shape", material="VV_material", parent=in_vessel
 )
 
 # %% [markdown]

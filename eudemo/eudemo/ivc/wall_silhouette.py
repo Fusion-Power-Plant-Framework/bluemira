@@ -61,10 +61,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     param_cls: type[WallSilhouetteDesignerParams] = WallSilhouetteDesignerParams
 
     def __init__(
-        self,
-        params: ParameterFrame | dict,
-        build_config: dict,
-        equilibrium: Equilibrium,
+        self, params: ParameterFrame | dict, build_config: dict, equilibrium: Equilibrium
     ) -> None:
         super().__init__(params, build_config)
 

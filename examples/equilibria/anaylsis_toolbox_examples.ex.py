@@ -171,8 +171,7 @@ table = eq_analysis_single.control_coil_table(control=CoilType.PF)
 # %%
 # Diagnostic settings for looking at the psi difference
 diag_ops_1 = EqDiagnosticOptions(
-    psi_diff=PsiPlotType.PSI_DIFF,
-    split_psi_plots=EqSubplots.XZ,
+    psi_diff=PsiPlotType.PSI_DIFF, split_psi_plots=EqSubplots.XZ
 )
 # Diagnostic settings for looking at the relative psi difference,
 # with the plasma and coilset psi contributions plotted separately.
@@ -241,20 +240,17 @@ ax, _, _ = eq_analysis_2.plot_target_flux(
 
 # %%
 ax, _, _ = eq_analysis_2.plot_target_flux(
-    target="upper_outer",
-    target_coords=Coordinates({"x": [10, 11], "z": [7.5, 7.5]}),
+    target="upper_outer", target_coords=Coordinates({"x": [10, 11], "z": [7.5, 7.5]})
 )
 
 # %%
 ax, _, _ = eq_analysis_2.plot_target_flux(
-    target="lower_inner",
-    target_coords=Coordinates({"x": [5.5, 6.5], "z": [-7.5, -7.5]}),
+    target="lower_inner", target_coords=Coordinates({"x": [5.5, 6.5], "z": [-7.5, -7.5]})
 )
 
 # %%
 ax, _, _ = eq_analysis_2.plot_target_flux(
-    target="upper_inner",
-    target_coords=Coordinates({"x": [5.5, 6.5], "z": [7.5, 7.5]}),
+    target="upper_inner", target_coords=Coordinates({"x": [5.5, 6.5], "z": [7.5, 7.5]})
 )
 
 # %% [markdown]

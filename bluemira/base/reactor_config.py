@@ -100,7 +100,7 @@ class ReactorConfig:
                     },
                 },
             },
-            GlobalParams,
+            GlobalParams
         )
 
     """
@@ -124,8 +124,7 @@ class ReactorConfig:
 
         self.config_data = config_data
         self.global_params = make_parameter_frame(
-            self.config_data.get(_PARAMETERS_KEY, {}),
-            global_params_type,
+            self.config_data.get(_PARAMETERS_KEY, {}), global_params_type
         )
 
         if not self.global_params:
@@ -190,10 +189,7 @@ class ReactorConfig:
                 warn=self.warn_on_empty_local_params,
             )
 
-        return ConfigParams(
-            global_params=self.global_params,
-            local_params=local_params,
-        )
+        return ConfigParams(global_params=self.global_params, local_params=local_params)
 
     def config_for(self, component_name: str, *args: str) -> dict:
         """
@@ -252,12 +248,7 @@ class ReactorConfig:
     def _pprint_dict(d: dict) -> str:
         return pprint.pformat(d, sort_dicts=False, indent=1)
 
-    def _warn_on_duplicate_keys(
-        self,
-        shared_key: str,
-        arg: str,
-        existing_value,
-    ):
+    def _warn_on_duplicate_keys(self, shared_key: str, arg: str, existing_value):
         self._warn_or_debug_log(
             "duplicate config key: "
             f"'{shared_key}' in {arg} wil be overwritten with {existing_value}",

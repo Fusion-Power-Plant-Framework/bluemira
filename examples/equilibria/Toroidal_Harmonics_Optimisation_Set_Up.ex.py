@@ -66,10 +66,7 @@ from bluemira.equilibria.optimisation.problem._tikhonov import (
     TikhonovCurrentCOP,  # noqa: PLC2701
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
-)
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Data from EQDSK file
@@ -173,11 +170,7 @@ eq.coilset.control = list(th_params.th_coil_names)
 lcfs = eq.get_LCFS()
 x_bdry, z_bdry = lcfs.x, lcfs.z
 xp_idx = np.argmin(z_bdry)
-x_point = FieldNullConstraint(
-    x_bdry[xp_idx],
-    z_bdry[xp_idx],
-    tolerance=1e-1,
-)
+x_point = FieldNullConstraint(x_bdry[xp_idx], z_bdry[xp_idx], tolerance=1e-1)
 
 # %% [markdown]
 # We are aiming to move the inner leg of the divertor, and we will use isoflux
@@ -189,23 +182,11 @@ x_point = FieldNullConstraint(
 arg_inner = np.argmin(x_bdry)
 
 # Define points to use for the isoflux constraints
-inner_leg_points_x = np.array([
-    6.5,
-    7.0,
-    7.5,
-])
+inner_leg_points_x = np.array([6.5, 7.0, 7.5])
 
-inner_leg_points_z = np.array([
-    6.25,
-    5.95,
-    5.7,
-])
+inner_leg_points_z = np.array([6.25, 5.95, 5.7])
 
-outer_legs_x_unmoved = np.array([
-    9.7,
-    9.89,
-    10.1,
-])
+outer_legs_x_unmoved = np.array([9.7, 9.89, 10.1])
 
 outer_legs_z_unmoved = np.array([6.5, 7.0, 7.5])
 
@@ -261,12 +242,7 @@ plt.show()
 # OPTIMISATION
 
 # Define the constraints to use in our optimisation problem
-constraints = [
-    th_constraint,
-    x_point,
-    DN_inner_leg_upper,
-    DN_inner_leg_lower,
-]
+constraints = [th_constraint, x_point, DN_inner_leg_upper, DN_inner_leg_lower]
 
 algorithm = "COBYLA"
 # %%

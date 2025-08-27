@@ -25,18 +25,11 @@ from bluemira.base.components import (
     get_properties_from_components,
 )
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
-from bluemira.builders.tools import (
-    circular_pattern_component,
-    compound_from_components,
-)
+from bluemira.builders.tools import circular_pattern_component, compound_from_components
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.tools import (
-    revolve_shape,
-    save_cad,
-    serialise_shape,
-)
+from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
 from bluemira.materials.material import Material, Void
 from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
@@ -309,26 +302,19 @@ def circular_pattern_xyz_components(
     ValueError
         If no xyz components are found in the component.
     """
-    xyzs = comp.get_component(
-        "xyz",
-        first=False,
-    )
+    xyzs = comp.get_component("xyz", first=False)
     if xyzs is None:
         raise ValueError("No xyz components found in the component")
     xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
     for xyz in xyzs:
         xyz.children = circular_pattern_component(
-            list(xyz.children),
-            n_sectors,
-            degree=degree,
+            list(xyz.children), n_sectors, degree=degree
         )
     return comp
 
 
 def copy_and_filter_component(
-    comp: Component,
-    dim: str,
-    component_filter: Callable[[ComponentT], bool] | None,
+    comp: Component, dim: str, component_filter: Callable[[ComponentT], bool] | None
 ) -> Component:
     """
     Copies a component (deeply) then filters
@@ -382,11 +368,7 @@ def save_components_cad(
             filename,
             comp_mat_mapping={
                 n: "undef_material" if m is None else m.name
-                for n, m in zip(
-                    names,
-                    mats,
-                    strict=False,
-                )
+                for n, m in zip(names, mats, strict=False)
             },
             converter_config=kwargs.get("converter_config"),
         )
@@ -394,21 +376,14 @@ def save_components_cad(
         save_cad(shapes, filename, cad_format, names, **kwargs)
 
 
-def show_components_cad(
-    components: ComponentT | Iterable[ComponentT],
-    **kwargs,
-):
+def show_components_cad(components: ComponentT | Iterable[ComponentT], **kwargs):
     """
     Show the CAD build of the component.
     """
     ComponentDisplayer().show_cad(components, **kwargs)
 
 
-def plot_component_dim(
-    dim: str,
-    component: ComponentT,
-    **kwargs,
-):
+def plot_component_dim(dim: str, component: ComponentT, **kwargs):
     """
     Plot the component in the specified dimension.
     """
@@ -416,8 +391,7 @@ def plot_component_dim(
 
 
 def _construct_comp_manager_physical_comps(
-    comp_manager: ComponentManager,
-    construction_params: ConstructionParamValues,
+    comp_manager: ComponentManager, construction_params: ConstructionParamValues
 ) -> tuple[list[PhysicalComponent], str]:
     """
     Construct the compoent using the construction type
@@ -448,31 +422,23 @@ def _construct_comp_manager_physical_comps(
     xyz_phy_comps = None
     if construction_type is CADConstructionType.REVOLVE_XZ:
         xz_phy_comps: list[PhysicalComponent] = copy_and_filter_component(
-            manager_comp,
-            "xz",
-            component_filter,
+            manager_comp, "xz", component_filter
         ).leaves
 
         xyz_phy_comps = [
             PhysicalComponent(
-                c.name,
-                revolve_shape(c.shape, degree=sec_degrees),
-                material=c.material,
+                c.name, revolve_shape(c.shape, degree=sec_degrees), material=c.material
             )
             for c in xz_phy_comps
         ]
     else:
         xyz_copy_and_filtered = copy_and_filter_component(
-            manager_comp,
-            "xyz",
-            component_filter,
+            manager_comp, "xyz", component_filter
         )
         match construction_type:
             case CADConstructionType.PATTERN_RADIAL:
                 xyz_phy_comps = circular_pattern_xyz_components(
-                    xyz_copy_and_filtered,
-                    n_secs,
-                    degree=sec_degrees,
+                    xyz_copy_and_filtered, n_secs, degree=sec_degrees
                 ).leaves
             case CADConstructionType.NO_OP:
                 xyz_phy_comps = xyz_copy_and_filtered.leaves
@@ -504,8 +470,7 @@ def _group_physical_components_by_material(
 
 
 def _build_compounds_from_mat_map(
-    mat_to_comps_map: dict[str, list[PhysicalComponent]],
-    manager_name: str,
+    mat_to_comps_map: dict[str, list[PhysicalComponent]], manager_name: str
 ) -> list[PhysicalComponent]:
     """
     Build the compounds from the material to components map.
@@ -535,8 +500,7 @@ def _build_compounds_from_mat_map(
 
 
 def build_comp_manager_save_xyz_cad_tree(
-    comp_manager: ComponentManager,
-    construction_params: ConstructionParamValues,
+    comp_manager: ComponentManager, construction_params: ConstructionParamValues
 ) -> Component:
     """
     Build the CAD of the component manager's components.
@@ -578,10 +542,7 @@ def build_comp_manager_save_xyz_cad_tree(
         # on the shapes downstream (such as DAGMC exporting).
         mat_to_comps_map = {"": constructed_phy_comps}
 
-    return_comp.children = _build_compounds_from_mat_map(
-        mat_to_comps_map,
-        manager_name,
-    )
+    return_comp.children = _build_compounds_from_mat_map(mat_to_comps_map, manager_name)
 
     return return_comp
 
@@ -612,11 +573,7 @@ def build_comp_manager_show_cad_tree(
     component_filter = construction_params.component_filter
 
     manager_comp: Component = comp_manager.component()
-    filtered_comp = copy_and_filter_component(
-        manager_comp,
-        dim,
-        component_filter,
-    )
+    filtered_comp = copy_and_filter_component(manager_comp, dim, component_filter)
 
     if dim == "xyz":
         tot_secs = construction_params.total_sectors
@@ -624,9 +581,7 @@ def build_comp_manager_show_cad_tree(
         sec_degrees = int((360 / tot_secs) * n_secs)
 
         filtered_comp = circular_pattern_xyz_components(
-            filtered_comp,
-            n_secs,
-            degree=sec_degrees,
+            filtered_comp, n_secs, degree=sec_degrees
         )
 
     return_comp = Component(name=manager_comp.name)

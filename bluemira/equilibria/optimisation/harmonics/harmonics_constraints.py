@@ -94,12 +94,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
 
-        self._args = {
-            "a_mat": None,
-            "b_vec": None,
-            "value": 0.0,
-            "scale": 1e6,
-        }
+        self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1e6}
 
     @property
     def control_coil_names(self):
@@ -150,10 +145,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         # containing the plasma, i.e., LCFS (r_lcfs)
         # N.B., cannot use coil located within r_lcfs as part of this method.
         return coil_harmonic_amplitude_matrix(
-            coilset,
-            self.max_degree,
-            self.r_t,
-            self.sh_coil_names,
+            coilset, self.max_degree, self.r_t, self.sh_coil_names
         )
 
     def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
@@ -296,9 +288,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # containing the plasma, i.e., LCFS
         # N.B., cannot use coil located within LCFS as part of this method.
         return coil_toroidal_harmonic_amplitude_matrix(
-            coilset,
-            self.th_params,
-            max_degree=self.max_degree,
+            coilset, self.th_params, max_degree=self.max_degree
         )
 
     def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:

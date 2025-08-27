@@ -165,10 +165,7 @@ class TestPFCoilSupportBuilder:
 
     @pytest.mark.parametrize(
         ("x", "z", "dx", "dz"),
-        [
-            (100, 0, 0.3, 0.3),
-            (0.3, 0.3, 0.3, 0.3),
-        ],
+        [(100, 0, 0.3, 0.3), (0.3, 0.3, 0.3, 0.3)],
     )
     def test_bad_positions(self, x, z, dx, dz):
         pf_xz = self.make_dummy_pf(x, z, dx, dz)

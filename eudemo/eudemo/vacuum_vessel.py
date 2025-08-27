@@ -148,10 +148,7 @@ class VacuumVesselBuilder(Builder):
     param_cls: type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
 
     def __init__(
-        self,
-        params: ParameterFrame | dict,
-        build_config: dict,
-        ivc_koz: BluemiraWire,
+        self, params: ParameterFrame | dict, build_config: dict, ivc_koz: BluemiraWire
     ):
         super().__init__(params, build_config)
         self.ivc_koz = ivc_koz
@@ -175,9 +172,7 @@ class VacuumVesselBuilder(Builder):
             xyz=self.build_xyz(vv_face, vacuum_face, degree=0),
         )
 
-    def build_xz(
-        self,
-    ) -> tuple[PhysicalComponent, ...]:
+    def build_xz(self) -> tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the vacuum vessel.
 
@@ -206,11 +201,7 @@ class VacuumVesselBuilder(Builder):
         outer_vv = force_wire_to_spline(outer_vv, n_edges_max=100)
         face = BluemiraFace([outer_vv, inner_vv])
 
-        body = PhysicalComponent(
-            self.BODY,
-            face,
-            material=self.get_material(),
-        )
+        body = PhysicalComponent(self.BODY, face, material=self.get_material())
         vacuum = PhysicalComponent(
             self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
         )
@@ -247,8 +238,5 @@ class VacuumVesselBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
-            material=[
-                self.get_material(),
-                Void("vacuum"),
-            ],
+            material=[self.get_material(), Void("vacuum")],
         )

@@ -522,18 +522,13 @@ def make_radiation_shield_box(
 ):
     """Define the radiation shield wall as a hollow of the universe box."""
     bottom_inner = csg.find_suitable_z_plane(
-        z_min,
-        name="Radiation shield bottom inner wall",
+        z_min, name="Radiation shield bottom inner wall"
     )
 
-    top_inner = csg.find_suitable_z_plane(
-        z_max,
-        name="Radiation shield top inner wall",
-    )
+    top_inner = csg.find_suitable_z_plane(z_max, name="Radiation shield top inner wall")
 
     radial_cylinder_inboard = openmc.ZCylinder(
-        r=to_cm(r_max),
-        name="Radiation shield wall radial inboard",
+        r=to_cm(r_max), name="Radiation shield wall radial inboard"
     )
 
     rad_shield_inner = -top_inner & +bottom_inner & -radial_cylinder_inboard
@@ -581,9 +576,7 @@ def make_coils(
     solenoid = openmc.ZCylinder(r=to_cm(solenoid_radius))
     central_tf_coil = openmc.ZCylinder(r=to_cm(tf_coil_thick + solenoid_radius))
     top = csg.find_suitable_z_plane(
-        z_max,
-        [z_max - D_TOLERANCE, z_max + D_TOLERANCE],
-        name="Top of central solenoid",
+        z_max, [z_max - D_TOLERANCE, z_max + D_TOLERANCE], name="Top of central solenoid"
     )
     bottom = csg.find_suitable_z_plane(
         z_min,
@@ -702,9 +695,7 @@ def make_void_cells(
             name="Plasma void",
         ),
         openmc.Cell(
-            region=flat_intersection(void_region),
-            fill=None,
-            name="Exterior void",
+            region=flat_intersection(void_region), fill=None, name="Exterior void"
         ),
     )
 
@@ -791,12 +782,7 @@ def make_cell_arrays(
     # make the radiation shield wall
     # which is a hollow of the universe box
     rad_shield = make_radiation_shield_box(
-        csg,
-        z_min_adj,
-        z_max_adj,
-        r_max_adj,
-        universe,
-        materials,
+        csg, z_min_adj, z_max_adj, r_max_adj, universe, materials
     )
     plasma, ext_void = make_void_cells(
         csg,

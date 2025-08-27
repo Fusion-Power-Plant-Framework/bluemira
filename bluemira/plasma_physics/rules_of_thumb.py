@@ -272,10 +272,7 @@ def estimate_q95_uckan(
     return q_star * geometry_factor
 
 
-def estimate_li_wesson(
-    q_star: float,
-    q_0: float = 1.0,
-) -> float:
+def estimate_li_wesson(q_star: float, q_0: float = 1.0) -> float:
     """
     Estimate the normalised plasma internal inductance based on an empirical fit.
 

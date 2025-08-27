@@ -29,10 +29,7 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.radiation_transport.neutronics.radial_wall import (
-    CellWalls,
-    Vert,
-)
+from bluemira.radiation_transport.neutronics.radial_wall import CellWalls, Vert
 from bluemira.radiation_transport.neutronics.wires import (
     CircleInfo,
     StraightLineInfo,

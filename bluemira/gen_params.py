@@ -125,16 +125,10 @@ def parse_args():
         "-d", "--save-directory", dest="directory", type=str, default="./"
     )
     parser.add_argument(
-        "-v",
-        action="count",
-        default=0,
-        help="Increase logging severity level.",
+        "-v", action="count", default=0, help="Increase logging severity level."
     )
     parser.add_argument(
-        "-q",
-        action="count",
-        default=0,
-        help="Decrease logging severity level.",
+        "-q", action="count", default=0, help="Decrease logging severity level."
     )
 
     args = parser.parse_args()

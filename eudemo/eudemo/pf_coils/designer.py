@@ -238,10 +238,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
             "optimisation_settings": {
                 "algorithm_name": "COBYLA",
-                "conditions": {
-                    "max_eval": 5000,
-                    "ftol_rel": 1e-10,
-                },
+                "conditions": {"max_eval": 5000, "ftol_rel": 1e-10},
             },
             "B_stray_con_tol": 1e-6,
             "n_B_stray_points": 10,
@@ -262,28 +259,18 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "peak_PF_current_factor": 1.5,
             "optimisation_settings": {
                 "algorithm_name": "SLSQP",
-                "conditions": {
-                    "max_eval": 5000,
-                    "ftol_rel": 1e-6,
-                },
+                "conditions": {"max_eval": 5000, "ftol_rel": 1e-6},
             },
             "diagnostic_plotting": {"plot": "no_plot"},
         }
-        eq_config = {
-            **eq_defaults,
-            **self.build_config.get("equilibrium_settings", {}),
-        }
+        eq_config = {**eq_defaults, **self.build_config.get("equilibrium_settings", {})}
         eq_converger = get_class_from_module(eq_config["convergence_class"])
 
         pos_defaults = {
             "optimisation_settings": {
                 "algorithm_name": "COBYLA",
-                "conditions": {
-                    "max_eval": 200,
-                    "ftol_rel": 1e-6,
-                    "xtol_rel": 1e-6,
-                },
-            },
+                "conditions": {"max_eval": 200, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+            }
         }
         pos_config = {**pos_defaults, **self.build_config.get("position_settings", {})}
 

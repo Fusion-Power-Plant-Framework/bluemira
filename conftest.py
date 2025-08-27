@@ -18,10 +18,7 @@ import matplotlib as mpl
 import numpy as np
 import pytest
 from sybil import Sybil
-from sybil.parsers.rest import (
-    DocTestParser,
-    PythonCodeBlockParser,
-)
+from sybil.parsers.rest import DocTestParser, PythonCodeBlockParser
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root

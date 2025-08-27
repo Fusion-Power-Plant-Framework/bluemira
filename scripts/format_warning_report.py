@@ -108,10 +108,7 @@ def make_collapsable(md_lines: list[str], summary: str) -> list[str]:
     :
         Formatted list of strings
     """
-    lines = [
-        "<details>\n",
-        f"{' ' * INDENT_SIZE}<summary>{summary}</summary>\n",
-    ]
+    lines = ["<details>\n", f"{' ' * INDENT_SIZE}<summary>{summary}</summary>\n"]
     lines.extend(md_lines)
     lines.append("\n</details>")
     return lines

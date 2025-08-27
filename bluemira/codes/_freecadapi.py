@@ -469,10 +469,7 @@ def interpolate_bspline(
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
     except Part.OCCError as error:
-        msg = "\n".join([
-            "FreeCAD was unable to make a spline:",
-            f"{error.args[0]}",
-        ])
+        msg = "\n".join(["FreeCAD was unable to make a spline:", f"{error.args[0]}"])
         raise FreeCADError(msg) from error
     return wire
 
@@ -1375,9 +1372,7 @@ class Document:
         FreeCAD.setActiveDocument(self.doc.Name)
         return self
 
-    def parts(
-        self,
-    ) -> Iterator[Part.Feature]:
+    def parts(self) -> Iterator[Part.Feature]:
         """
         Get FreeCAD parts.
 
@@ -1456,8 +1451,7 @@ class _CADType:
         try:
             export_func = (
                 getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]), modlist[-1]
                 ).export
                 if len(modlist) > 1
                 else __import__(self.export_module).export
@@ -1481,8 +1475,7 @@ class _CADType:
         try:
             read = (
                 getattr(
-                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]),
-                    modlist[-1],
+                    __import__(".".join(modlist[:-1]), fromlist=modlist[1:]), modlist[-1]
                 ).insert
                 if len(modlist) > 1
                 else __import__(self.import_module).insert
@@ -1587,11 +1580,7 @@ class CADFileType(enum.Enum):
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""  # noqa: DOC201
-        return (
-            cls.GLTRANSMISSION,
-            cls.PLY_STANFORD,
-            cls.SIMPLE_MODEL,
-        )
+        return (cls.GLTRANSMISSION, cls.PLY_STANFORD, cls.SIMPLE_MODEL)
 
     @classmethod
     def not_importable_formats(cls) -> tuple[CADFileType, ...]:
@@ -1693,11 +1682,7 @@ def import_cad(
             raise NotImplementedError("Mesh CAD formats not implemented")
         objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
         if len(objs) == 0:
-            if filetype in {
-                CADFileType.STEP,
-                CADFileType.BREP,
-                CADFileType.IGES,
-            }:
+            if filetype in {CADFileType.STEP, CADFileType.BREP, CADFileType.IGES}:
                 Part.insert(file.as_posix(), doc.doc.Name, **kwargs)
                 objs = [(o.Shape, o.Label) for o in doc.doc.Objects]
                 if len(objs) > 0:
@@ -2399,12 +2384,7 @@ def _edges_tangent(edge_1, edge_2) -> bool:
     angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
         edge_2.tangentAt(edge_2.FirstParameter)
     )
-    return np.isclose(
-        angle,
-        0.0,
-        rtol=1e-4,
-        atol=1e-4,
-    )
+    return np.isclose(angle, 0.0, rtol=1e-4, atol=1e-4)
 
 
 def _wire_edges_tangent(wire) -> bool:

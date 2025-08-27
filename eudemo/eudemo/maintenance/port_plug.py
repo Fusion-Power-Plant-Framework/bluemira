@@ -232,11 +232,7 @@ class CryostatPortPlugBuilder(Builder):
         :
             The port plug component tree
         """
-        return self.component_tree(
-            xz=None,
-            xy=None,
-            xyz=self.build_xyz(),
-        )
+        return self.component_tree(xz=None, xy=None, xyz=self.build_xyz())
 
     def build_xyz(self) -> list[PhysicalComponent]:
         """
@@ -261,9 +257,7 @@ class CryostatPortPlugBuilder(Builder):
         plug_comps, void_comps = [], []
         for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
             plug = PhysicalComponent(  # noqa: PLW2901
-                f"{self.name} {i}",
-                plug,
-                material=self.get_material(self.PORT_PLUG),
+                f"{self.name} {i}", plug, material=self.get_material(self.PORT_PLUG)
             )
             void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
@@ -320,11 +314,7 @@ class RadiationPortPlugBuilder(Builder):
         :
             The port plug component tree
         """
-        return self.component_tree(
-            xz=None,
-            xy=None,
-            xyz=self.build_xyz(),
-        )
+        return self.component_tree(xz=None, xy=None, xyz=self.build_xyz())
 
     def build_xyz(self) -> list[PhysicalComponent]:
         """

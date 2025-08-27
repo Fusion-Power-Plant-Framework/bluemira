@@ -200,10 +200,7 @@ class EUDEMOFuelCycleModel:
         return m_T
 
     def plasma(
-        self,
-        eta_iv: float,
-        max_inventory: float,
-        flows: list[np.ndarray] | None = None,
+        self, eta_iv: float, max_inventory: float, flows: list[np.ndarray] | None = None
     ) -> np.ndarray:
         """
         In-vessel environment
@@ -461,9 +458,7 @@ class EUDEMOFuelCycleModel:
         )
 
         (c,) = ax.plot(
-            self.t[self.max_T[0]],
-            self.max_T[1],
-            label="Total unsequestered T inventory",
+            self.t[self.max_T[0]], self.max_T[1], label="Total unsequestered T inventory"
         )
         ax.plot(
             self.t,

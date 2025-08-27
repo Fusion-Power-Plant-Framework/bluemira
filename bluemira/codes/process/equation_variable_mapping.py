@@ -87,12 +87,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "DEPRECATED - Electron Power Balance Consistency",
     )
-    DENSITY_UPPER_LIMIT = (
-        5,
-        (1, 2, 3, 4, 6, 9),
-        (),
-        "Density Upper Limit (Greenwald)",
-    )
+    DENSITY_UPPER_LIMIT = (5, (1, 2, 3, 4, 6, 9), (), "Density Upper Limit (Greenwald)")
     EPS_BETA_POL_UPPER_LIMIT = (
         6,
         (1, 2, 3, 4, 6, 8),
@@ -144,7 +139,7 @@ class Constraint(ConstraintSelection, Model):
         ("pnetelin",),
         "Net electric power lower limit",
     )
-    RAD_POWER_UPPER_LIMIT = 17, (28,), (), "Equation for radiation power upper limit"
+    RAD_POWER_UPPER_LIMIT = (17, (28,), (), "Equation for radiation power upper limit")
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
         (27),
@@ -202,7 +197,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation for minor radius lower limit OR Inboard radial build consistency",
     )
-    PINJ_UPPER_LIMIT = 30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit"
+    PINJ_UPPER_LIMIT = (30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit")
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
         (48, 56, 57, 58, 59, 60),
@@ -246,7 +241,7 @@ class Constraint(ConstraintSelection, Model):
         "Equation for current drive gamma upper limit",
     )
     # 38 NOT USED
-    FW_TEMP_UPPER_LIMIT = 39, (63,), (), "First wall peak temperature upper limit"
+    FW_TEMP_UPPER_LIMIT = (39, (63,), (), "First wall peak temperature upper limit")
     PAUX_LOWER_LIMIT = (
         40,
         (64,),
@@ -308,12 +303,7 @@ class Constraint(ConstraintSelection, Model):
         ("vvhealw",),
         "Vacuum vessel helium concentration upper limit iblanket=2",
     )
-    PSEPR_UPPER_LIMIT = (
-        56,
-        (1, 3, 97),
-        ("pseprmax",),
-        "Pseparatrix/Rmajor upper limit",
-    )
+    PSEPR_UPPER_LIMIT = 56, (1, 3, 97), ("pseprmax",), "Pseparatrix/Rmajor upper limit"
     # 57, 58 NOT USED
     NBI_SHINETHROUGH_UPPER_LIMIT = (
         59,
@@ -414,11 +404,7 @@ class Constraint(ConstraintSelection, Model):
     BMAX_CS_UPPER_LIMIT = 79, (149,), ("bmaxcs_lim",), "Peak CS field upper limit"
     PDIVT_LOWER_LIMIT = 80, (153,), ("pdivtlim",), "Divertor power lower limit"
     DENSITY_PROFILE_CONSISTENCY = 81, (154,), (), "Ne(0) > ne(ped) constraint"
-    STELLARATOR_COIL_CONSISTENCY = (
-        82,
-        (171,),
-        ("toroidalgap",),
-    )
+    STELLARATOR_COIL_CONSISTENCY = 82, (171,), ("toroidalgap",)
     STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
         83,
         (172,),

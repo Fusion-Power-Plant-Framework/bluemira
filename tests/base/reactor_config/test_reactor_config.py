@@ -124,10 +124,7 @@ class TestReactorConfigClass:
         assert cpf.location.value == "here"
 
     def test_params_for_warnings_make_param_frame_type_value_overrides(self, caplog):
-        reactor_config = ReactorConfig(
-            test_config_path,
-            TestGlobalParams,
-        )
+        reactor_config = ReactorConfig(test_config_path, TestGlobalParams)
 
         cp = reactor_config.params_for("comp A", "designer")
 
@@ -145,10 +142,7 @@ class TestReactorConfigClass:
         assert cpf.age is reactor_config.global_params.age
 
     def test_config_for_warnings_value_overrides(self, caplog):
-        reactor_config = ReactorConfig(
-            test_config_path,
-            TestGlobalParams,
-        )
+        reactor_config = ReactorConfig(test_config_path, TestGlobalParams)
 
         cf_comp_a = reactor_config.config_for("comp A")
         cf_comp_a_des = reactor_config.config_for("comp A", "designer")
@@ -163,11 +157,7 @@ class TestReactorConfigClass:
 
     def test_no_params_warning(self, caplog):
         reactor_config = ReactorConfig(
-            {
-                "comp A": {
-                    "designer": {},
-                },
-            },
+            {"comp A": {"designer": {}}},
             EmptyFrame,
         )
 
@@ -183,11 +173,7 @@ class TestReactorConfigClass:
 
     def test_no_config_warning(self, caplog):
         reactor_config = ReactorConfig(
-            {
-                "comp A": {
-                    "designer": {},
-                },
-            },
+            {"comp A": {"designer": {}}},
             EmptyFrame,
         )
 
@@ -205,18 +191,11 @@ class TestReactorConfigClass:
 
     def test_invalid_rc_initialisation(self):
         with pytest.raises(ReactorConfigError):
-            ReactorConfig(
-                ["wrong"],
-                EmptyFrame,
-            )
+            ReactorConfig(["wrong"], EmptyFrame)
 
     def test_args_arent_str(self):
         reactor_config = ReactorConfig(
-            {
-                "comp A": {
-                    "designer": {},
-                },
-            },
+            {"comp A": {"designer": {}}},
             EmptyFrame,
         )
 

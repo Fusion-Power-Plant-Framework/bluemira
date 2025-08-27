@@ -49,10 +49,7 @@ class TestUpperPortDesigner:
             "pf_s_tk_plate": {"value": 0.09, "unit": "m"},
         }
         bb = make_polygon(
-            {
-                "x": [5, 6, 6, 11, 11, 12, 12, 5],
-                "z": [-5, -5, 5, 5, -5, -5, 6, 6],
-            },
+            {"x": [5, 6, 6, 11, 11, 12, 12, 5], "z": [-5, -5, 5, 5, -5, -5, 6, 6]},
             closed=True,
         )
         bb = BluemiraFace(bb)
@@ -95,11 +92,7 @@ class TestDuctConnection:
 
     def _wires(self, arc: BluemiraWire):
         return [
-            make_polygon({
-                "x": [0, point[0][0]],
-                "y": [0, point[1][0]],
-                "z": point[2],
-            })
+            make_polygon({"x": [0, point[0][0]], "y": [0, point[1][0]], "z": point[2]})
             for point in (arc.start_point(), arc.end_point())
         ]
 
@@ -169,8 +162,7 @@ class TestDuctConnection:
         # Is the extruded shape sensible
         xyz = port.get_component("xyz").get_component_properties("shape")
         cylinder = extrude_shape(
-            BluemiraFace((o_sector, i_sector)),
-            (0, 0, port_koz.bounding_box.z_max),
+            BluemiraFace((o_sector, i_sector)), (0, 0, port_koz.bounding_box.z_max)
         )
         show_cad([cylinder, xyz])
         finalshape = boolean_fuse([cylinder, xyz])

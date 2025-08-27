@@ -170,11 +170,7 @@ class ZakharovLCFSOptVariables(OptVariablesFrame):
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
     delta: OptVariable = ov(
-        "delta",
-        0.4,
-        lower_bound=0.0,
-        upper_bound=1.0,
-        description="Triangularity",
+        "delta", 0.4, lower_bound=0.0, upper_bound=1.0, description="Triangularity"
     )
 
 
@@ -279,18 +275,10 @@ class CunninghamLCFSOptVariables(OptVariablesFrame):
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
     delta: OptVariable = ov(
-        "delta",
-        0.4,
-        lower_bound=0.0,
-        upper_bound=1.0,
-        description="Triangularity",
+        "delta", 0.4, lower_bound=0.0, upper_bound=1.0, description="Triangularity"
     )
     delta2: OptVariable = ov(
-        "delta2",
-        0.0,
-        lower_bound=0.0,
-        upper_bound=1.0,
-        description="Curliness",
+        "delta2", 0.0, lower_bound=0.0, upper_bound=1.0, description="Curliness"
     )
 
 
@@ -396,18 +384,10 @@ class ManickamLCFSOptVariables(OptVariablesFrame):
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
     delta: OptVariable = ov(
-        "delta",
-        0.4,
-        lower_bound=0.0,
-        upper_bound=1.0,
-        description="Triangularity",
+        "delta", 0.4, lower_bound=0.0, upper_bound=1.0, description="Triangularity"
     )
     indent: OptVariable = ov(
-        "indent",
-        0.0,
-        lower_bound=0.0,
-        upper_bound=1.0,
-        description="Indentation",
+        "indent", 0.0, lower_bound=0.0, upper_bound=1.0, description="Indentation"
     )
 
 
@@ -627,15 +607,7 @@ def flux_surface_kuiroukidis(
     but it's not enough for me to go on at the moment.
     """
     x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
-        r_0,
-        z_0,
-        a,
-        kappa_u,
-        kappa_l,
-        delta_u,
-        delta_l,
-        n_power,
-        n_points,
+        r_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, n_power, n_points
     )
 
     return Coordinates({
@@ -647,11 +619,7 @@ def flux_surface_kuiroukidis(
 @dataclass
 class KuiroukidisLCFSOptVariables(OptVariablesFrame):
     r_0: OptVariable = ov(
-        "r_0",
-        9,
-        lower_bound=0,
-        upper_bound=np.inf,
-        description="Major radius",
+        "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
     z_0: OptVariable = ov(
         "z_0",
@@ -692,11 +660,7 @@ class KuiroukidisLCFSOptVariables(OptVariablesFrame):
         description="Lower triangularity",
     )
     n_power: OptVariable = ov(
-        "n_power",
-        8,
-        lower_bound=2,
-        upper_bound=10,
-        description="Exponent power",
+        "n_power", 8, lower_bound=2, upper_bound=10, description="Exponent power"
     )
 
 
@@ -1038,18 +1002,10 @@ class JohnerLCFSOptVariables(OptVariablesFrame):
     )
     a: OptVariable = ov("a", 6, lower_bound=1, upper_bound=6, description="Minor radius")
     kappa_u: OptVariable = ov(
-        "kappa_u",
-        1.6,
-        lower_bound=1.0,
-        upper_bound=3.0,
-        description="Upper elongation",
+        "kappa_u", 1.6, lower_bound=1.0, upper_bound=3.0, description="Upper elongation"
     )
     kappa_l: OptVariable = ov(
-        "kappa_l",
-        1.8,
-        lower_bound=1.0,
-        upper_bound=3.0,
-        description="Lower elongation",
+        "kappa_l", 1.8, lower_bound=1.0, upper_bound=3.0, description="Lower elongation"
     )
     delta_u: OptVariable = ov(
         "delta_u",

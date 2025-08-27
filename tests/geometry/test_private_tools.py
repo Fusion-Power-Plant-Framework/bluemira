@@ -149,11 +149,7 @@ class TestMixedFaces:
                 "IB_test.json",
                 100,
                 {
-                    "center_of_mass": (
-                        3.50437337,
-                        4.17634955,
-                        1.17868604,
-                    ),
+                    "center_of_mass": (3.50437337, 4.17634955, 1.17868604),
                     "volume": 106.080,
                     "area": 348.296,
                 },
@@ -162,11 +158,7 @@ class TestMixedFaces:
                 "OB_test.json",
                 15,
                 {
-                    "center_of_mass": (
-                        11.5828485,
-                        1.52491093,
-                        -0.18624372,
-                    ),
+                    "center_of_mass": (11.5828485, 1.52491093, -0.18624372),
                     "volume": 43.02953145397336,
                     "area": 121.585591636,
                 },
@@ -189,11 +181,7 @@ class TestMixedFaces:
                 "TF_case_in_test.json",
                 (0, 1, 0),
                 {
-                    "center_of_mass": (
-                        9.45877,
-                        0.5,
-                        -2.1217e-5,
-                    ),
+                    "center_of_mass": (9.45877, 0.5, -2.1217e-5),
                     "volume": 185.185,
                     "area": 423.998,
                 },
@@ -202,11 +190,7 @@ class TestMixedFaces:
                 "div_test_mfm2.json",
                 (0, 2, 0),
                 {
-                    "center_of_mass": (
-                        8.03265,
-                        0.9900,
-                        -6.44432,
-                    ),
+                    "center_of_mass": (8.03265, 0.9900, -6.44432),
                     "volume": 4.58959,
                     "area": 29.1868,
                 },
@@ -231,9 +215,7 @@ class TestMixedFaces:
         fn = Path(TEST_PATH, "divertor_seg_fault_LDS.json")
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
-        true_props = {
-            "area": 2.26163,
-        }
+        true_props = {"area": 2.26163}
         self.assert_properties(true_props, face)
 
     @pytest.mark.parametrize(
@@ -241,21 +223,15 @@ class TestMixedFaces:
         [
             (
                 "shell_mixed_test",
-                {
-                    "area": 6.35215,
-                },
+                {"area": 6.35215},
             ),
             (
                 "failing_mixed_shell",
-                {
-                    "area": 31.4998,
-                },
+                {"area": 31.4998},
             ),
             (
                 "tf_wp_tricky",
-                {
-                    "area": 31.0914,
-                },
+                {"area": 31.0914},
             ),
         ],
     )

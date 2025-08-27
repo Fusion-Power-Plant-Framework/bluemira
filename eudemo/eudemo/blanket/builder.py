@@ -169,9 +169,7 @@ class BlanketBuilder(Builder):
         ]:
             for no, shape in enumerate(bs_shape):
                 segment = PhysicalComponent(
-                    f"{name}_{no}",
-                    shape,
-                    material=self.get_material(name),
+                    f"{name}_{no}", shape, material=self.get_material(name)
                 )
                 apply_component_display_options(
                     segment, color=BLUE_PALETTE[self.BB][base_no + no]

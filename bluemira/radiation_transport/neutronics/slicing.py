@@ -577,9 +577,7 @@ class PanelsAndExteriorCurve:
 
         vv_curve_segments = [
             self.approximate_curve(
-                self.vv_interior,
-                t_range,
-                label=f"vacuum vessel interior curve {i + 1}",
+                self.vv_interior, t_range, label=f"vacuum vessel interior curve {i + 1}"
             )
             for i, t_range in enumerate(
                 cut_curve(
@@ -590,9 +588,7 @@ class PanelsAndExteriorCurve:
 
         exterior_curve_segments = [
             self.approximate_curve(
-                self.vv_exterior,
-                t_range,
-                label=f"vacuum vessel exterior curve {i + 1}",
+                self.vv_exterior, t_range, label=f"vacuum vessel exterior curve {i + 1}"
             )
             for i, t_range in enumerate(
                 cut_curve(

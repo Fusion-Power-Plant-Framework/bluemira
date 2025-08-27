@@ -547,14 +547,9 @@ class BalanceOfPlantModel:
         p_hcd = self.params.P_hcd_ss.value
         p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
-        (
-            p_n_blk,
-            p_n_div,
-            p_n_vv,
-            p_n_aux,
-            p_nrgm,
-            p_blk_decay,
-        ) = self.neutron_strat.split(p_neutron)
+        (p_n_blk, p_n_div, p_n_vv, p_n_aux, p_nrgm, p_blk_decay) = (
+            self.neutron_strat.split(p_neutron)
+        )
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
         )

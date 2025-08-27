@@ -638,12 +638,9 @@ class PolyhedralPrismCurrentSource(
         # Project and translate points onto end cap plane
         upper[1] += self._halflength + upper[0] * np.tan(self._alpha)
         upper_points = self._local_to_global(upper.T)
-        (
-            self._face_points,
-            self._mid_points,
-            self._face_normals,
-            self._n_sides,
-        ) = _generate_source_geometry(lower_points, upper_points)
+        (self._face_points, self._mid_points, self._face_normals, self._n_sides) = (
+            _generate_source_geometry(lower_points, upper_points)
+        )
 
         # Points for plotting only
         points = [np.vstack(lower_points), np.vstack(upper_points)]

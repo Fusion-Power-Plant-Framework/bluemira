@@ -14,9 +14,7 @@ from typing import TYPE_CHECKING, Any, Literal, get_args, get_type_hints
 
 from rich.progress import track
 
-from bluemira.base.components import (
-    Component,
-)
+from bluemira.base.components import Component
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
@@ -271,12 +269,7 @@ class ComponentManager(BaseManager):
         )
         filename = filename or comp.name
 
-        save_components_cad(
-            comp,
-            Path(directory, filename),
-            cad_format,
-            **kwargs,
-        )
+        save_components_cad(comp, Path(directory, filename), cad_format, **kwargs)
 
     def show_cad(
         self,
@@ -302,8 +295,7 @@ class ComponentManager(BaseManager):
 
         show_components_cad(
             self._build_show_cad_component(
-                dim,
-                self._init_construction_param_values(construction_params, kwargs),
+                dim, self._init_construction_param_values(construction_params, kwargs)
             ),
             **kwargs,
         )

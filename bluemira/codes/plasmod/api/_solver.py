@@ -71,9 +71,7 @@ class Solver(CodesSolver):
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
     def __init__(
-        self,
-        params: dict | ParameterFrame,
-        build_config: dict[str, Any] | None = None,
+        self, params: dict | ParameterFrame, build_config: dict[str, Any] | None = None
     ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
