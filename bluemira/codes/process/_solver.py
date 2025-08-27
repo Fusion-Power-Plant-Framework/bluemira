@@ -200,12 +200,7 @@ class Solver(CodesSolver):
 
         return self.params
 
-    def plot_radial_build(
-        self,
-        width: float = 1.5,
-        *,
-        show: bool = False,
-    ) -> plt.Axes:
+    def plot_radial_build(self, width: float = 1.5, *, show: bool = False) -> plt.Axes:
         """
         Plot PROCESS radial build.
 

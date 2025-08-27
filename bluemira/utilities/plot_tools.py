@@ -181,11 +181,7 @@ def set_ax_for_psi_components(ax):
 
 
 def xz_plot_setup(
-    pname,
-    folder,
-    *,
-    save: bool = False,
-    split_psi_plots: bool = False,
+    pname, folder, *, save: bool = False, split_psi_plots: bool = False
 ) -> dict:
     """
     Set up for an xz plot (poloidal slice).
@@ -220,13 +216,7 @@ def xz_plot_setup(
         ax.set_xlabel("$x$ [m]")
         ax.set_ylabel("$z$ [m]")
         ax.set_aspect("equal")
-    return {
-        "f": f,
-        "ax": ax,
-        "pname": pname,
-        "folder": folder,
-        "save": save,
-    }
+    return {"f": f, "ax": ax, "pname": pname, "folder": folder, "save": save}
 
 
 def save_figure(

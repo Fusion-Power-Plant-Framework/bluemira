@@ -36,12 +36,7 @@ class NLOptConditions:
         return asdict(self)
 
     def _validate(self) -> None:
-        for condition in [
-            self.ftol_abs,
-            self.ftol_rel,
-            self.xtol_abs,
-            self.xtol_rel,
-        ]:
+        for condition in [self.ftol_abs, self.ftol_rel, self.xtol_abs, self.xtol_rel]:
             if condition and condition < EPS:
                 bluemira_warn(
                     "optimisation: Setting stopping condition is too small given this "

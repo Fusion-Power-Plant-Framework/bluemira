@@ -30,13 +30,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 def param_face(*coords):
     return [
-        BluemiraFace(
-            make_polygon(
-                c,
-                label=f"wire{no}",
-                closed=True,
-            )
-        )
+        BluemiraFace(make_polygon(c, label=f"wire{no}", closed=True))
         for no, c in enumerate(coords, start=1)
     ]
 
@@ -98,10 +92,7 @@ class TestGeometry:
         major_radius = 5.0
         minor_radius = 2.0
 
-        bm_ellipse = make_ellipse(
-            major_radius=major_radius,
-            minor_radius=minor_radius,
-        )
+        bm_ellipse = make_ellipse(major_radius=major_radius, minor_radius=minor_radius)
         edge = bm_ellipse.boundary[0].OrderedEdges[0]
 
         # ellispe eccentricity
@@ -231,10 +222,7 @@ class TestGeometry:
     @pytest.mark.parametrize(("test_input", "expected"), params_for_fuse_faces)
     def test_fuse_faces(self, test_input, expected):
         face_fuse = boolean_fuse(test_input)
-        assert (
-            face_fuse.length,
-            face_fuse.area,
-        ) == expected
+        assert (face_fuse.length, face_fuse.area) == expected
 
     params_for_cut_wires = (
         pytest.param(
@@ -416,12 +404,7 @@ class TestShapeTransformations:
     @classmethod
     def setup_class(cls):
         cls._wire = make_polygon(
-            [
-                (4.0, -0.5, 0.0),
-                (5.0, -0.5, 0.0),
-                (5.0, 0.5, 0.0),
-                (4.0, 0.5, 0.0),
-            ],
+            [(4.0, -0.5, 0.0), (5.0, -0.5, 0.0), (5.0, 0.5, 0.0), (4.0, 0.5, 0.0)],
             closed=True,
             label="test_wire",
         )
@@ -539,12 +522,7 @@ class TestShapeTransformations:
 
 def test_circular_pattern():
     wire = make_polygon(
-        [
-            (4.0, -0.5, 0.0),
-            (5.0, -0.5, 0.0),
-            (5.0, 0.5, 0.0),
-            (4.0, 0.5, 0.0),
-        ],
+        [(4.0, -0.5, 0.0), (5.0, -0.5, 0.0), (5.0, 0.5, 0.0), (4.0, 0.5, 0.0)],
         closed=True,
     )
     face = BluemiraFace(wire)

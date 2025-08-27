@@ -95,12 +95,7 @@ def make_tokamak_source(
     flux_map = FluxMap(
         ClosedFluxSurface(lcfs.x, lcfs.z),
         o_point,
-        EQDSKFluxInterpolator(
-            eq.x,
-            eq.z,
-            eq.psi_norm(),
-            o_point,
-        ),
+        EQDSKFluxInterpolator(eq.x, eq.z, eq.psi_norm(), o_point),
     )
 
     source = TokamakNeutronSource(
@@ -111,11 +106,7 @@ def make_tokamak_source(
         cell_side_length=cell_side_length,
     )
 
-    return (
-        source.to_openmc_source(),
-        source.source_rate,
-        source.source_T_rate,
-    )
+    return (source.to_openmc_source(), source.source_rate, source.source_T_rate)
 
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:

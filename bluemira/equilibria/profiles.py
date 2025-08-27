@@ -679,14 +679,7 @@ class BetaIpProfile(Profile):
             Bx = _Bx_func(x, z)
             Bz = _Bz_func(x, z)
             Bp = np.hypot(Bx, Bz)
-            beta_p_actual = _calc_beta_p(
-                pfunc,
-                Bp,
-                mask,
-                x,
-                self.dx,
-                self.dz,
-            )
+            beta_p_actual = _calc_beta_p(pfunc, Bp, mask, x, self.dx, self.dz)
 
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
@@ -762,13 +755,7 @@ class BetaLiIpProfile(BetaIpProfile):
         li_rel_tol: float = 0.015,
         li_min_iter: int = 5,
     ):
-        super().__init__(
-            betap,
-            I_p,
-            R_0,
-            B_0,
-            shape=shape,
-        )
+        super().__init__(betap, I_p, R_0, B_0, shape=shape)
         self._l_i_target = l_i
         self._l_i_rel_tol = li_rel_tol
         self._l_i_min_iter = li_min_iter

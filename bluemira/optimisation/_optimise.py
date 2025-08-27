@@ -7,10 +7,7 @@
 
 from collections.abc import Callable, Iterable, Mapping
 from pprint import pformat
-from typing import (
-    Any,
-    Literal,
-)
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -23,11 +20,7 @@ from bluemira.optimisation._algorithm import (
 )
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation.typed import (
-    ConstraintT,
-    ObjectiveCallable,
-    OptimiserCallable,
-)
+from bluemira.optimisation.typed import ConstraintT, ObjectiveCallable, OptimiserCallable
 
 
 def optimise(
@@ -385,8 +378,7 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
 
 
 def _set_default_termination_conditions(
-    algorithm: AlgorithmType,
-    opt_conditions: Mapping[str, int | float] | None = None,
+    algorithm: AlgorithmType, opt_conditions: Mapping[str, int | float] | None = None
 ) -> Mapping[str, int | float] | None:
     """
     Returns

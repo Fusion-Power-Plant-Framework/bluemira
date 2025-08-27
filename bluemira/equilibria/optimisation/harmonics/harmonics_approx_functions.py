@@ -293,12 +293,7 @@ def collocation_points(
             x_bdry[np.argmax(z_bdry)],
             x_bdry[np.argmin(z_bdry)],
         ])
-        extrema_z = np.array([
-            0,
-            0,
-            np.amax(z_bdry) - d,
-            np.amin(z_bdry) + d,
-        ])
+        extrema_z = np.array([0, 0, np.amax(z_bdry) - d, np.amin(z_bdry) + d])
 
         # Equispaced arc + extrema
         collocation_x = np.concatenate([collocation_x, extrema_x])

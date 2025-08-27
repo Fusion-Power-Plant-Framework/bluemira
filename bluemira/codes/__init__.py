@@ -45,7 +45,4 @@ _freecad_save_config()
 # External codes wrapper imports
 from bluemira.codes.wrapper import systems_code_solver, transport_code_solver
 
-__all__ = [
-    "systems_code_solver",
-    "transport_code_solver",
-]
+__all__ = ["systems_code_solver", "transport_code_solver"]

@@ -9,6 +9,4 @@ The API for the fast_ctd package.
 
 from bluemira.codes.fast_ctd.pipeline import step_to_dagmc_pipeline
 
-__all__ = [
-    "step_to_dagmc_pipeline",
-]
+__all__ = ["step_to_dagmc_pipeline"]

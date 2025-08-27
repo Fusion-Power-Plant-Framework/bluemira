@@ -185,10 +185,7 @@ class TestChargedParticleRecursionSN:
         self.solver.flux_surfaces_ob_down = []
         self.solver.flux_surfaces_ob_up = []
         x_sep_omp, x_wall_limit = fsm._get_sep_out_intersection(
-            self.solver.eq,
-            self.solver.first_wall,
-            self.solver._yz_plane,
-            outboard=True,
+            self.solver.eq, self.solver.first_wall, self.solver._yz_plane, outboard=True
         )
 
         for x in np.arange(x_sep_omp + 1e-3, x_wall_limit + 2e-3, step=1e-3):
@@ -259,10 +256,7 @@ class TestChargedParticleRecursionDN:
         self.solver.flux_surfaces_ob_down = []
         self.solver.flux_surfaces_ob_up = []
         x_sep_omp, x_wall_limit = fsm._get_sep_out_intersection(
-            self.solver.eq,
-            self.solver.first_wall,
-            self.solver._yz_plane,
-            outboard=True,
+            self.solver.eq, self.solver.first_wall, self.solver._yz_plane, outboard=True
         )
 
         for x in np.arange(x_sep_omp + 1e-3, x_wall_limit + 2e-3, step=1e-3):

@@ -321,14 +321,7 @@ class OpenMCCSGResult(OpenMCResultBase):
         heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
         # rearrange dataframe into this desired order
         heating_df = heating_df[
-            [
-                "material",
-                "material_name",
-                "nuclide",
-                "mean(W)",
-                "err.",
-                "%err.",
-            ]
+            ["material", "material_name", "nuclide", "mean(W)", "err.", "%err."]
         ]
         hdf = heating_df.to_dict()
         return cls._convert_dict_contents(hdf)

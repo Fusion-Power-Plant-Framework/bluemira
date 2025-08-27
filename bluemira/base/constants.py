@@ -71,8 +71,7 @@ class BMUnitRegistry(UnitRegistry):
         # space before on % so that M% is not a thing
         # M$ makes sense if a bit non-standard
         super().__init__(
-            fmt_locale="en_GB",
-            preprocessors=[lambda x: x.replace("$", "USD ")],
+            fmt_locale="en_GB", preprocessors=[lambda x: x.replace("$", "USD ")]
         )
 
         self._gas_flow_temperature = None

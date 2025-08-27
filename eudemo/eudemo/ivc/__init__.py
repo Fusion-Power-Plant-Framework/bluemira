@@ -65,9 +65,7 @@ def design_ivc(
     _, x_points = find_OX_points(equilibrium.x, equilibrium.z, equilibrium.psi())
     cut_wall_boundary = cut_wall_below_x_point(wall_boundary, x_points[0].z)
     divertor_shapes = DivertorSilhouetteDesigner(
-        params,
-        equilibrium=equilibrium,
-        wall=cut_wall_boundary,
+        params, equilibrium=equilibrium, wall=cut_wall_boundary
     ).execute()
     ivc_boundary = IVCBoundaryDesigner(params, wall_shape=wall_boundary).execute()
     plasma_face, divertor_face, div_wall_join_pt = PlasmaFaceDesigner(

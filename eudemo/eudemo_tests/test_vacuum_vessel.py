@@ -21,14 +21,12 @@ class TestVacuumVesselBuilder:
             "vv_out_off_deg": {"value": 160, "unit": "deg"},
         }
 
-        cls.picture_frame = PictureFrame(
-            {
-                "x1": {"value": 2},
-                "ro": {"value": 3.5},
-                "ri": {"value": 3},
-                "x2": {"value": 10},
-            },
-        ).create_shape()
+        cls.picture_frame = PictureFrame({
+            "x1": {"value": 2},
+            "ro": {"value": 3.5},
+            "ri": {"value": 3},
+            "x2": {"value": 10},
+        }).create_shape()
 
     def test_components_and_segments(self):
         builder = VacuumVesselBuilder(self.params, {}, self.picture_frame)

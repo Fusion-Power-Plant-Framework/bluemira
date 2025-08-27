@@ -27,16 +27,14 @@ class TestMakeCoilMapper:
             "x2": {"value": 14},
             "dz": {"value": 0},
         }).create_shape(label="PrincetonD"),
-        PictureFrame(
-            {
-                "x1": {"value": 4, "upper_bound": 5, "lower_bound": 0.3},
-                "x2": {"value": 11.5, "upper_bound": 12, "lower_bound": 6},
-                "ri": {"value": 0},
-                "ro": {"value": 1},
-                "z1": {"value": 8},
-                "z2": {"value": -9},
-            },
-        ).create_shape(label="PFrame"),
+        PictureFrame({
+            "x1": {"value": 4, "upper_bound": 5, "lower_bound": 0.3},
+            "x2": {"value": 11.5, "upper_bound": 12, "lower_bound": 6},
+            "ri": {"value": 0},
+            "ro": {"value": 1},
+            "z1": {"value": 8},
+            "z2": {"value": -9},
+        }).create_shape(label="PFrame"),
         TripleArc().create_shape(label="TripleArc"),
     )
 
@@ -135,10 +133,7 @@ class TestMakeCoilset:
 
 
 class TestMakePfCoilPath:
-    fixtures = (
-        PrincetonD().create_shape(),
-        PictureFrame().create_shape(),
-    )
+    fixtures = (PrincetonD().create_shape(), PictureFrame().create_shape())
 
     @pytest.mark.parametrize("wire", fixtures)
     def test_make_pf_coil_path(self, wire):

@@ -116,20 +116,16 @@ class LowerPortKOZDesigner(Designer):
         ib_div_pt, ob_div_pt = self._get_div_pts_at_angle()
         ib_div_pt_padded, ob_div_pt_padded = self._pad_points(ib_div_pt, ob_div_pt)
 
-        (
-            duct_inner_xz,
-            duct_outer_xz,
-            straight_top_inner_pt,
-            straight_bot_inner_pt,
-        ) = self._duct_xz_shapes(ib_div_pt_padded, ob_div_pt_padded)
+        (duct_inner_xz, duct_outer_xz, straight_top_inner_pt, straight_bot_inner_pt) = (
+            self._duct_xz_shapes(ib_div_pt_padded, ob_div_pt_padded)
+        )
 
         duct_angled_inner_extrude_boundary = self._angled_duct_inner_xy_boundary(
             ib_div_pt_padded, ob_div_pt_padded
         )
 
         duct_straight_inner_extrude_boundary = self._straight_duct_inner_yz_boundary(
-            straight_top_inner_pt,
-            straight_bot_inner_pt,
+            straight_top_inner_pt, straight_bot_inner_pt
         )
 
         return (
@@ -187,9 +183,7 @@ class LowerPortKOZDesigner(Designer):
         return padded_ib_pt, padded_ob_pt
 
     def _straight_duct_inner_yz_boundary(
-        self,
-        straight_top_inner_pt: tuple,
-        straight_bot_inner_pt: tuple,
+        self, straight_top_inner_pt: tuple, straight_bot_inner_pt: tuple
     ) -> BluemiraWire:
         """
         Make the inner yz boundary of the straight duct.
@@ -282,11 +276,9 @@ class LowerPortKOZDesigner(Designer):
             ib_div_pt_padded, ob_div_pt_padded
         )
 
-        (
-            straight_duct_boundary,
-            straight_top_inner_pt,
-            straight_bot_inner_pt,
-        ) = self._straight_duct_xz_boundary(angled_duct_boundary)
+        (straight_duct_boundary, straight_top_inner_pt, straight_bot_inner_pt) = (
+            self._straight_duct_xz_boundary(angled_duct_boundary)
+        )
 
         angled_cuts = boolean_cut(angled_duct_boundary, [straight_duct_boundary])
 
@@ -333,19 +325,9 @@ class LowerPortKOZDesigner(Designer):
 
         return make_polygon(
             [
-                [
-                    ob_pt[0],
-                    ob_end_pt[0],
-                    ib_end_pt[0],
-                    ib_pt[0],
-                ],
+                [ob_pt[0], ob_end_pt[0], ib_end_pt[0], ib_pt[0]],
                 [0, 0, 0, 0],
-                [
-                    ob_pt[1],
-                    ob_end_pt[1],
-                    ib_end_pt[1],
-                    ib_pt[1],
-                ],
+                [ob_pt[1], ob_end_pt[1], ib_end_pt[1], ib_pt[1]],
             ],
             closed=True,
         )
@@ -382,15 +364,9 @@ class LowerPortKOZDesigner(Designer):
         if self.params.lower_port_angle.value > -45:  # noqa: PLR2004
             topleft_corner_pt = itc_top_ob_pt
 
-        topright_corner_pt = (
-            x_duct_extent,
-            topleft_corner_pt[1],
-        )
+        topright_corner_pt = (x_duct_extent, topleft_corner_pt[1])
 
-        botright_corner_pt = (
-            x_duct_extent,
-            topleft_corner_pt[1] - self.port_height,
-        )
+        botright_corner_pt = (x_duct_extent, topleft_corner_pt[1] - self.port_height)
 
         botleft_corner_pt = (
             topleft_corner_pt[0],
@@ -431,9 +407,7 @@ class LowerPortKOZDesigner(Designer):
 
     @staticmethod
     def _xz_points_dist_away_from(
-        starting_xz_point: tuple | list,
-        gradient: float,
-        distance: float,
+        starting_xz_point: tuple | list, gradient: float, distance: float
     ) -> tuple[list[float], list[float]]:
         """
         Returns
@@ -453,10 +427,7 @@ class LowerPortKOZDesigner(Designer):
         return [f_x_nve, f_z_nve], [f_x_pve, f_z_pve]
 
     @staticmethod
-    def _make_xz_wire_from_points(
-        a_xz_point: tuple,
-        b_xz_point: tuple,
-    ) -> BluemiraWire:
+    def _make_xz_wire_from_points(a_xz_point: tuple, b_xz_point: tuple) -> BluemiraWire:
         return make_polygon([
             [a_xz_point[0], b_xz_point[0]],
             [0] * 2,
@@ -464,10 +435,7 @@ class LowerPortKOZDesigner(Designer):
         ])
 
     @staticmethod
-    def _intersection_points(
-        shape_a: BluemiraGeo,
-        shape_b: BluemiraGeo,
-    ) -> list[tuple]:
+    def _intersection_points(shape_a: BluemiraGeo, shape_b: BluemiraGeo) -> list[tuple]:
         dist, vects = distance_to(shape_a, shape_b)
         if dist > D_TOLERANCE:  # not intersecting
             return []
@@ -478,10 +446,7 @@ class LowerPortKOZDesigner(Designer):
         return pois
 
     @staticmethod
-    def _closest_points(
-        shape_a: BluemiraGeo,
-        shape_b: BluemiraGeo,
-    ) -> list[tuple]:
+    def _closest_points(shape_a: BluemiraGeo, shape_b: BluemiraGeo) -> list[tuple]:
         dist, vects = distance_to(shape_a, shape_b)
         if dist < D_TOLERANCE:  # intersecting, return intersection points
             return LowerPortKOZDesigner._intersection_points(shape_a, shape_b)

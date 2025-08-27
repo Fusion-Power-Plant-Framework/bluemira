@@ -2068,7 +2068,7 @@ class DivertorCellStack:
                 csg=csg,
                 name=f"Bulk of divertor in diver cell stack {stack_num}",
                 fill=materials.match_material(CellType.DivertorBulk),
-            ),
+            )
         ]
         # make the vacuum vessel cell
         cell_stack.append(

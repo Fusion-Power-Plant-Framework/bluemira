@@ -444,9 +444,7 @@ class PulsedCoilsetDesign(ABC):
             o_point_fallback=self.eq_config.o_point_fallback,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq,
-            MagneticConstraintSet(self.eq_constraints),
-            gamma=self.eq_config.gamma,
+            eq, MagneticConstraintSet(self.eq_constraints), gamma=self.eq_config.gamma
         )
         program = PicardIterator(
             eq,

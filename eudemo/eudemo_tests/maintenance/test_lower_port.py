@@ -39,11 +39,7 @@ class TestLowerPort:
     @classmethod
     def setup_class(cls):
         cls.divertor_xz_silhouette = BluemiraWire([
-            make_polygon([
-                [2, 4],
-                [0, 0],
-                [0, 0],
-            ]),
+            make_polygon([[2, 4], [0, 0], [0, 0]]),
             make_circle(
                 1, center=(3, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
             ),
@@ -57,11 +53,7 @@ class TestLowerPort:
         cls.tf_coils_outer_boundary = offset_wire(cls.tf_coils_centre_boundary, 0.5)
 
         BluemiraWire([
-            make_polygon([
-                [3, 3],
-                [0, 0],
-                [8, -8],
-            ]),
+            make_polygon([[3, 3], [0, 0], [8, -8]]),
             make_circle(
                 8, center=(3, 0, 0), start_angle=-90, end_angle=90, axis=(0, -1, 0)
             ),
@@ -251,7 +243,4 @@ class TestLowerPort:
             closed=True,
         )
 
-        return sweep_shape(
-            xy_cross,
-            self.tf_coils_centre_boundary,
-        )
+        return sweep_shape(xy_cross, self.tf_coils_centre_boundary)

@@ -24,9 +24,7 @@ class TestPlasmaBuilder:
 
     def test_plasma_contains_components_in_3_dimensions(self):
         builder = PlasmaBuilder(
-            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
-            {},
-            self.square,
+            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)), {}, self.square
         )
         plasma = Plasma(builder.build())
 
@@ -36,9 +34,7 @@ class TestPlasmaBuilder:
 
     def test_lcfs_eq_to_designer_shape(self):
         builder = PlasmaBuilder(
-            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
-            {},
-            self.square,
+            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)), {}, self.square
         )
 
         plasma = Plasma(builder.build())

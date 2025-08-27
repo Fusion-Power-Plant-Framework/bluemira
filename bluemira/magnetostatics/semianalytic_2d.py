@@ -215,12 +215,7 @@ def _array_dispatcher(func):
                 for i in range(x.shape[0]):
                     for j in range(z.shape[1]):
                         result[i, j, ..., k] = func(
-                            xc[:, k],
-                            zc[:, k],
-                            x[i, j],
-                            z[i, j],
-                            d_xc[:, k],
-                            d_zc[:, k],
+                            xc[:, k], zc[:, k], x[i, j], z[i, j], d_xc[:, k], d_zc[:, k]
                         )
         return result
 

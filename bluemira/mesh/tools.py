@@ -35,11 +35,7 @@ from bluemira.mesh.error import MeshConversionError
 __all__ = ("import_mesh", "msh_to_xdmf")
 
 
-CELL_TYPE_DIM = {
-    2: "line",
-    3: "triangle",
-    4: "tetra",
-}
+CELL_TYPE_DIM = {2: "line", 3: "triangle", 4: "tetra"}
 
 
 GMSH_PHYS = "gmsh:physical"
@@ -75,9 +71,7 @@ def plot_dolfinx_mesh(mesh, *, show: bool = True):
 
 
 def msh_to_xdmf(
-    mesh_name: str,
-    dimensions: tuple[int, ...] | int = (0, 2),
-    directory: str = ".",
+    mesh_name: str, dimensions: tuple[int, ...] | int = (0, 2), directory: str = "."
 ):
     """
     Convert a MSH file to an XMDF file.
@@ -260,10 +254,7 @@ def _export_domain(mesh, file_prefix, directory, dimensions):
 
     domain = _make_mesh(mesh, dimensions, cells, cell_data)
 
-    _write_mesh(
-        Path(directory, f"{file_prefix}_{DOMAIN_SUFFIX}").as_posix(),
-        domain,
-    )
+    _write_mesh(Path(directory, f"{file_prefix}_{DOMAIN_SUFFIX}").as_posix(), domain)
 
 
 def _export_boundaries(mesh, file_prefix, directory, dimensions):
@@ -288,8 +279,7 @@ def _export_boundaries(mesh, file_prefix, directory, dimensions):
     boundaries = _make_mesh(mesh, dimensions, cells, cell_data)
 
     _write_mesh(
-        Path(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}").as_posix(),
-        boundaries,
+        Path(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}").as_posix(), boundaries
     )
 
 
@@ -341,8 +331,4 @@ def _get_cells(mesh, cell_type):
 
 
 def _write_mesh(filename, obj):
-    meshio.write(
-        filename,
-        obj,
-        file_format="xdmf",
-    )
+    meshio.write(filename, obj, file_format="xdmf")

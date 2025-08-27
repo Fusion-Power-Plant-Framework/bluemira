@@ -229,9 +229,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         lower_bounds = -upper_bounds
         self.bounds = (lower_bounds, upper_bounds)
 
-    def _make_numerical_constraints(
-        self,
-    ) -> tuple[list[ConstraintT], list[ConstraintT]]:
+    def _make_numerical_constraints(self) -> tuple[list[ConstraintT], list[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries.
 
         Returns

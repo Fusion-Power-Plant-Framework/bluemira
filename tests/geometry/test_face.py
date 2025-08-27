@@ -33,10 +33,7 @@ if TYPE_CHECKING:
 
 
 class TestBluemiraFace:
-    polygon = make_polygon(
-        [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
-        closed=True,
-    )
+    polygon = make_polygon([[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]], closed=True)
     princeton = PrincetonD().create_shape(n_points=150)
     triple = TripleArc().create_shape()
     sextuple = SextupleArc().create_shape()
@@ -67,8 +64,7 @@ class TestBluemiraFace:
         assert not face.is_null()
         assert face.is_valid()
         assert np.isclose(
-            face.area,
-            BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area,
+            face.area, BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area
         )
 
     @pytest.mark.parametrize("shape", shapes)
@@ -121,10 +117,7 @@ class TestNormalAt:
     )
     def test_xy_polygon_normal(self, alphas):
         xy_polygon = BluemiraFace(
-            make_polygon(
-                [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
-                closed=True,
-            )
+            make_polygon([[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]], closed=True)
         )
 
         np.testing.assert_allclose(xy_polygon.normal_at(*alphas), (0, 0, 1))

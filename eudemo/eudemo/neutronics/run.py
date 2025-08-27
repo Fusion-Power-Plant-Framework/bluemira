@@ -47,10 +47,7 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
     """EUDEMO Axis-symmetric neutronics model"""
 
     def _get_wires_from_components(
-        self,
-        ivc_shapes: IVCShapes,
-        blanket: Blanket,
-        vacuum_vessel: VacuumVessel,
+        self, ivc_shapes: IVCShapes, blanket: Blanket, vacuum_vessel: VacuumVessel
     ) -> tuple[TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
         return (
             TokamakDimensions.from_parameterframe(self.params, blanket.r_inner_cut),
@@ -167,10 +164,7 @@ def export_dagmc_model(reactor, build_config):
             directory=build_config.get("dagmc_export_dir", None),
             cad_format="dagmc",
             construction_params={
-                "without_components": [
-                    reactor.plasma,
-                    reactor.coil_structures,
-                ],
+                "without_components": [reactor.plasma, reactor.coil_structures],
                 "group_by_materials": True,
             },
             converter_config=build_config.get("converter_config", {}),

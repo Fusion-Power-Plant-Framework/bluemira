@@ -277,13 +277,7 @@ class TestSolveEquilibrium:
 
     @pytest.mark.parametrize("shape", shape_funcs)
     def test_betaip_profile(self, shape):
-        profiles = BetaIpProfile(
-            self.beta_p,
-            self.I_p,
-            self.R_0,
-            self.B_0,
-            shape=shape,
-        )
+        profiles = BetaIpProfile(self.beta_p, self.I_p, self.R_0, self.B_0, shape=shape)
         eq = Equilibrium(deepcopy(self.coilset), self.grid, deepcopy(profiles))
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             eq, self.targets, gamma=1e-8

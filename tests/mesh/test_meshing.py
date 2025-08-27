@@ -35,9 +35,7 @@ class TestMeshing:
         msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=tmp_path)
 
         _, boundaries, _, labels = import_mesh(
-            "Mesh",
-            directory=tmp_path,
-            subdomains=True,
+            "Mesh", directory=tmp_path, subdomains=True
         )
 
         arr = boundaries.values
@@ -63,9 +61,7 @@ class TestMeshing:
         msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=tmp_path)
 
         _, boundaries, _, labels = import_mesh(
-            "Mesh",
-            directory=tmp_path,
-            subdomains=True,
+            "Mesh", directory=tmp_path, subdomains=True
         )
 
         arr = boundaries.values

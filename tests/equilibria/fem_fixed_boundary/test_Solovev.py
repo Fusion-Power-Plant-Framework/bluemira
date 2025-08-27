@@ -22,9 +22,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     find_magnetic_axis,
     plot_scalar_field,
 )
-from bluemira.magnetostatics.fem_utils import (
-    model_to_mesh,
-)
+from bluemira.magnetostatics.fem_utils import model_to_mesh
 
 
 class Solovev:
@@ -58,14 +56,12 @@ class Solovev:
         rt_lg, rt_2 = np.log(rt), rt**2
         zt_2 = zt**2
 
-        m = np.array(
-            [
-                [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
-                [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
-                [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
-                [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
-            ],
-        )
+        m = np.array([
+            [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
+            [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
+            [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
+            [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
+        ])
 
         b = np.sum(
             np.array([

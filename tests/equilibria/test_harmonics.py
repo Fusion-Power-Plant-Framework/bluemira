@@ -212,11 +212,7 @@ def test_SphericalHarmonicConstraintFunction():
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 
-    for fc, res in zip(
-        test_f_constraint,
-        (test_result - b_vec),
-        strict=False,
-    ):
+    for fc, res in zip(test_f_constraint, (test_result - b_vec), strict=False):
         assert fc == res
 
 
@@ -298,10 +294,7 @@ class TestRegressionSH:
         )
 
         ref_harmonics = get_psi_harmonic_amplitudes(
-            self.test_v_psi,
-            self.eq.grid,
-            self.test_colocation,
-            test_r_t,
+            self.test_v_psi, self.eq.grid, self.test_colocation, test_r_t
         )
 
         ref_harmonics = ref_harmonics[:test_degree]
@@ -341,9 +334,7 @@ class TestRegressionSH:
         )
 
         test_constraint_class = SphericalHarmonicConstraint(
-            ref_harmonics=ref_harmonics,
-            r_t=r_t,
-            sh_coil_names=self.sh_coil_names,
+            ref_harmonics=ref_harmonics, r_t=r_t, sh_coil_names=self.sh_coil_names
         )
         assert test_constraint_class.constraint_type == "equality"
         assert test_constraint_class.max_degree == len(ref_harmonics)
@@ -565,22 +556,14 @@ def test_legendre_q_function():
     ],
 )
 def test_th_n_dof_limits(
-    n_dof: int | None,
-    max_harmonic_mode: int,
-    max_n_dof: int,
-    expected_dof: int,
+    n_dof: int | None, max_harmonic_mode: int, max_n_dof: int, expected_dof: int
 ):
     n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
     assert n_dof == expected_dof
 
 
 @pytest.mark.parametrize(
-    (
-        "cos_m_chosen",
-        "sin_m_chosen",
-        "expected_Am_cos",
-        "expected_Am_sin",
-    ),
+    ("cos_m_chosen", "sin_m_chosen", "expected_Am_cos", "expected_Am_sin"),
     [
         # Case where cos_m_chosen empty
         (
@@ -606,12 +589,7 @@ def test_th_n_dof_limits(
             np.array([[6.24538906e-09, -6.24538906e-09]]),
         ),
         # Case where sin_m_chosen is 0
-        (
-            np.array([]),
-            np.array([0]),
-            None,
-            np.array([[0.0, -0.0]]),
-        ),
+        (np.array([]), np.array([0]), None, np.array([[0.0, -0.0]])),
         # Case with arrays chosen for each
         (
             np.array([2, 3, 4]),
@@ -924,8 +902,7 @@ class TestRegressionTH:
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(
-            Path(TEST_PATH, "eqref_OOB.json").as_posix(),
-            from_cocos=7,
+            Path(TEST_PATH, "eqref_OOB.json").as_posix(), from_cocos=7
         )
         file_path = Path(TEST_PATH, "toroidal_harmonics_test_data.json")
         cls.param_dict = cls._read_json(file_path)
@@ -952,10 +929,7 @@ class TestRegressionTH:
             max_harmonic_mode=cls.max_harmonic_mode,
             plasma_mask=True,
         )
-        cls.collocation = collocation_points(
-            cls.eq.get_LCFS(),
-            PointType.GRID_POINTS,
-        )
+        cls.collocation = collocation_points(cls.eq.get_LCFS(), PointType.GRID_POINTS)
 
     @pytest.mark.parametrize("cc_all", [True, False])
     def test_toroidal_harmonic_grid_and_coil_setup(self, cc_all):
@@ -1009,14 +983,7 @@ class TestRegressionTH:
                 0.29235689,
             ]
             if cc_all
-            else [
-                0.54743133,
-                0.91207134,
-                1.02497178,
-                1.05937582,
-                0.87854201,
-                0.49935848,
-            ]
+            else [0.54743133, 0.91207134, 1.02497178, 1.05937582, 0.87854201, 0.49935848]
         )
 
         np.testing.assert_array_almost_equal(expected_tau_c, th_params.tau_c)
@@ -1389,11 +1356,7 @@ class TestRegressionTH:
 
         test_result = test_constraint_function.f_constraint(vector)
 
-        for fc, res in zip(
-            test_result,
-            ref_function_result,
-            strict=False,
-        ):
+        for fc, res in zip(test_result, ref_function_result, strict=False):
             assert fc == pytest.approx(res)
 
         assert test_constraint_function.df_constraint(vector) == pytest.approx(

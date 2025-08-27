@@ -93,12 +93,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
 
-        self._args = {
-            "a_mat": None,
-            "b_vec": None,
-            "value": 0.0,
-            "scale": 1e6,
-        }
+        self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1e6}
 
     @property
     def control_coil_names(self):
@@ -322,11 +317,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         z_centre = np.min(self.th_params.Z) + radius
         ax.add_patch(
             patch.Circle(
-                (x_centre, z_centre),
-                radius,
-                ec="orange",
-                fill=True,
-                fc="orange",
+                (x_centre, z_centre), radius, ec="orange", fill=True, fc="orange"
             )
         )
 

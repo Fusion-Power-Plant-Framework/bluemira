@@ -207,23 +207,11 @@ def make_coilset(
         tf_boundary, 1, fallback_method="miter", fallback_force_spline=True
     )
 
-    x_c, z_c = make_PF_coil_positions(
-        tf_track,
-        n_PF,
-        R_0,
-        kappa,
-        delta,
-    )
+    x_c, z_c = make_PF_coil_positions(tf_track, n_PF, R_0, kappa, delta)
     pf_coils = []
     for i, (x, z) in enumerate(zip(x_c, z_c, strict=False)):
         coil = Coil(
-            x,
-            z,
-            current=0,
-            ctype="PF",
-            name=f"PF_{i + 1}",
-            j_max=PF_jmax,
-            b_max=PF_bmax,
+            x, z, current=0, ctype="PF", name=f"PF_{i + 1}", j_max=PF_jmax, b_max=PF_bmax
         )
         pf_coils.append(coil)
     coilset = CoilSet(*pf_coils + solenoid, control_names=True)
@@ -282,14 +270,7 @@ def make_reference_coilset(
 
     pf_coils = []
     for i, (x, z) in enumerate(zip(x_c, z_c, strict=False)):
-        coil = Coil(
-            x,
-            z,
-            current=0,
-            ctype="PF",
-            name=f"PF_{i + 1}",
-            j_max=100.0e6,
-        )
+        coil = Coil(x, z, current=0, ctype="PF", name=f"PF_{i + 1}", j_max=100.0e6)
         pf_coils.append(coil)
     return CoilSet(*pf_coils + solenoid, control_names=True)
 

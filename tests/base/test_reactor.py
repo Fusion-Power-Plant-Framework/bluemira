@@ -94,8 +94,7 @@ class TestReactor:
     def test_show_3d_cad_displays_components_set_by_without_components(self):
         with patch("bluemira.display.displayer.show_cad") as mock_show:
             self.reactor.show_cad(
-                "xyz",
-                construction_params={"without_components": [self.reactor.vvts]},
+                "xyz", construction_params={"without_components": [self.reactor.vvts]}
             )
 
         call_arg = mock_show.call_args[0][0]
@@ -172,9 +171,7 @@ class TestReactor:
         lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
         reactor.plasma = Plasma(
             PlasmaBuilder(
-                PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
-                {},
-                lcfs,
+                PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)), {}, lcfs
             ).build()
         )
         reactor.vvts = VVTS(
@@ -196,9 +193,7 @@ class TestComponentMananger:
         lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
 
         self.p_comp = PlasmaBuilder(
-            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
-            {},
-            lcfs,
+            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)), {}, lcfs
         ).build()
 
         self.plasma = Plasma(self.p_comp)

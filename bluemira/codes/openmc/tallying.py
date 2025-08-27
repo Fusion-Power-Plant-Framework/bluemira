@@ -12,10 +12,7 @@ import openmc
 from bluemira.codes.openmc.make_csg import CellStage
 
 
-def csg_filter_cells(
-    material_list,
-    csg_model: CellStage,
-):
+def csg_filter_cells(material_list, csg_model: CellStage):
     """
     Create scores and the filter for the scores. Give them names.
 

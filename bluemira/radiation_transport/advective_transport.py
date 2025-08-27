@@ -190,10 +190,7 @@ class ChargedParticleSolver:
         Make the flux surfaces on the outboard.
         """
         self.x_sep_omp, x_out_omp = fsm._get_sep_out_intersection(
-            self.eq,
-            self.first_wall,
-            self._yz_plane,
-            outboard=True,
+            self.eq, self.first_wall, self._yz_plane, outboard=True
         )
 
         self.flux_surfaces_ob_down, self.flux_surfaces_ob_up = (
@@ -213,10 +210,7 @@ class ChargedParticleSolver:
         Make the flux surfaces on the inboard.
         """
         self.x_sep_imp, x_out_imp = fsm._get_sep_out_intersection(
-            self.eq,
-            self.first_wall,
-            self._yz_plane,
-            outboard=False,
+            self.eq, self.first_wall, self._yz_plane, outboard=False
         )
 
         self.flux_surfaces_ib_down, self.flux_surfaces_ib_up = (
@@ -328,11 +322,9 @@ class ChargedParticleSolver:
         remaining power of from the exponential decay is deposited on
         the wall perpendicularly.
         """
-        (
-            self.first_wall,
-            self.imp_int,
-            self.omp_int,
-        ) = self._process_first_wall(first_wall)
+        (self.first_wall, self.imp_int, self.omp_int) = self._process_first_wall(
+            first_wall
+        )
 
         if self.eq.is_double_null:
             x, z, hf = self._analyse_DN()
@@ -433,23 +425,15 @@ class ChargedParticleSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
 
-        (
-            x_omp,
-            z_omp,
-            x_lfs_down_inter,
-            z_lfs_down_inter,
-            alpha_lfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ob_down)
+        (x_omp, z_omp, x_lfs_down_inter, z_lfs_down_inter, alpha_lfs_down) = (
+            self._get_arrays(self.flux_surfaces_ob_down)
+        )
         _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = self._get_arrays(
             self.flux_surfaces_ob_up
         )
-        (
-            x_imp,
-            z_imp,
-            x_hfs_down_inter,
-            z_hfs_down_inter,
-            alpha_hfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ib_down)
+        (x_imp, z_imp, x_hfs_down_inter, z_hfs_down_inter, alpha_hfs_down) = (
+            self._get_arrays(self.flux_surfaces_ib_down)
+        )
         _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = self._get_arrays(
             self.flux_surfaces_ib_up
         )

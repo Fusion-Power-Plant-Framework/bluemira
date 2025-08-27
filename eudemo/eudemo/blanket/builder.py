@@ -256,18 +256,13 @@ class BlanketBuilder(Builder):
             name = self.OBS
 
         shapes = pattern_revolved_silhouette(
-            silhouette,
-            n_seg_per_sector,
-            self.params.n_TF.value,
-            self.params.c_rm.value,
+            silhouette, n_seg_per_sector, self.params.n_TF.value, self.params.c_rm.value
         )
 
         segments = []
         for no, shape in enumerate(shapes):
             segment = PhysicalComponent(
-                f"{name}_{sub_name}_{no}",
-                shape,
-                material=self.get_material(sub_name),
+                f"{name}_{sub_name}_{no}", shape, material=self.get_material(sub_name)
             )
             apply_component_display_options(
                 segment, color=BLUE_PALETTE[self.BB][color_index]

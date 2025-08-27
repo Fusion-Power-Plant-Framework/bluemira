@@ -29,10 +29,10 @@ CONFIG = {
     "param_class": f"{WALL_MODULE_REF}::WallPolySpline",
     "variables_map": {
         "x1": {  # ib radius
-            "value": "r_fw_ib_in",
+            "value": "r_fw_ib_in"
         },
         "x2": {  # ob radius
-            "value": "r_fw_ob_in",
+            "value": "r_fw_ob_in"
         },
     },
     "run_mode": "mock",
@@ -142,10 +142,10 @@ class TestWallSilhouetteDesigner:
     def test_width_matches_params_given_PrincetonD_mock_mode(self):
         vm = {
             "x1": {  # ib radius
-                "value": "r_fw_ib_in",
+                "value": "r_fw_ib_in"
             },
             "x2": {  # ob radius
-                "value": "r_fw_ob_in",
+                "value": "r_fw_ob_in"
             },
             "dz": -2,
         }

@@ -296,11 +296,7 @@ def find_approx_overlapping_pairs(
             # bbs can quickly be checked for intersection.
             approx_geometry.append(
                 np.array([
-                    bb_of_tri_coords(
-                        points[tri[0]],
-                        points[tri[1]],
-                        points[tri[2]],
-                    )
+                    bb_of_tri_coords(points[tri[0]], points[tri[1]], points[tri[2]])
                     for tri in tris
                 ])
             )

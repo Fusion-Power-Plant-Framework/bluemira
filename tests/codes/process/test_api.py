@@ -11,11 +11,7 @@ import pytest
 
 from bluemira.codes.process import api
 
-PROCESS_OBS_VAR = {
-    "ni": "ni wang",
-    "ni wang": "ni peng",
-    "garden": "shrubbery",
-}
+PROCESS_OBS_VAR = {"ni": "ni wang", "ni wang": "ni peng", "garden": "shrubbery"}
 
 
 @patch("bluemira.codes.process.api.OBS_VARS", PROCESS_OBS_VAR)

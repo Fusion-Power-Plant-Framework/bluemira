@@ -246,13 +246,7 @@ class TestCoordinates:
         assert np.isclose(c.length, c2.length)
 
     def test_rotate_90(self):
-        c = Coordinates(
-            np.array([
-                [2, 3, 3, 2, 2],
-                [0, 0, 0, 0, 0],
-                [1, 1, 2, 2, 1],
-            ])
-        )
+        c = Coordinates(np.array([[2, 3, 3, 2, 2], [0, 0, 0, 0, 0], [1, 1, 2, 2, 1]]))
         v1 = c.normal_vector
         assert np.allclose(v1, [0, 1, 0])
         assert c.check_ccw()
@@ -278,13 +272,7 @@ class TestCoordinates:
         assert c.check_ccw([0, 1, 0])
 
     def test_is_planar(self):
-        c = Coordinates(
-            np.array([
-                [2, 3, 3, 2, 2],
-                [0, 0, 0, 0, 0],
-                [1, 1, 2, 2, 1],
-            ])
-        )
+        c = Coordinates(np.array([[2, 3, 3, 2, 2], [0, 0, 0, 0, 0], [1, 1, 2, 2, 1]]))
         v = self.rng.random(3)
         base = self.rng.random(3)
         direction = self.rng.random(3)

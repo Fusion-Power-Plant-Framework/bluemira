@@ -10,11 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    SymmetricCircuit,
-)
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
@@ -223,8 +219,7 @@ class TestCoilsetOptimiser:
         assert n_control_currents == len(coilset_current_limits)
 
         optimiser_current_bounds = self.optimiser_partial.get_current_bounds(
-            user_max_current,
-            self.optimiser_partial.scale,
+            user_max_current, self.optimiser_partial.scale
         )
         assert np.allclose(
             bounds[0],

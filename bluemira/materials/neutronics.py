@@ -138,10 +138,7 @@ def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
         name="lithium_titanate",
         elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
-            density=(
-                packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)),
-                "g/cm^3",
-            )
+            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
             enrichment=li_enrich_ao * 100,
@@ -154,10 +151,7 @@ def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
 # mixture of existing materials
 lined_euro_mat = mixture(
     name="Eurofer with Al2O3 lining",
-    materials=[
-        (EUROFER_MAT, 2.0 / 2.4),
-        (al2o3_mat, 0.4 / 2.4),
-    ],
+    materials=[(EUROFER_MAT, 2.0 / 2.4), (al2o3_mat, 0.4 / 2.4)],
     fraction_type="volume",
     mix_condition=OperationalConditions(temperature=673.15),
     converters=OpenMCNeutronicConfig(),
@@ -201,9 +195,7 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
 
 
 def duplicate_mat_as(
-    mat_to_clone: Material,
-    new_name: str,
-    new_id: int | None = None,
+    mat_to_clone: Material, new_name: str, new_id: int | None = None
 ) -> Material:
     """
     Clones and renames an OpenMC material

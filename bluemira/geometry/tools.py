@@ -286,11 +286,7 @@ class GeometryCreationIn(Protocol):
     """Typing for closed_wire_wrapper input"""
 
     def __call__(
-        self,
-        points: Coordinates,
-        label: str = "",
-        *,
-        closed: bool = False,
+        self, points: Coordinates, label: str = "", *, closed: bool = False
     ) -> BluemiraWire:
         """Typing for coordinates wrapping"""
         ...
@@ -637,9 +633,7 @@ def interpolate_bspline(
 
 
 def force_wire_to_spline(
-    wire: BluemiraWire,
-    n_edges_max: int = 200,
-    l2_tolerance: float = 5e-3,
+    wire: BluemiraWire, n_edges_max: int = 200, l2_tolerance: float = 5e-3
 ) -> BluemiraWire:
     """
     Force a wire to be a spline wire.
@@ -947,8 +941,7 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire),
-        label=label,
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
     )
 
 
@@ -1280,10 +1273,7 @@ def loft_shape(
     """
     return convert(
         cadapi.loft(
-            [p.shape for p in profiles],
-            solid=solid,
-            ruled=ruled,
-            closed=closed,
+            [p.shape for p in profiles], solid=solid, ruled=ruled, closed=closed
         ),
         label=label,
     )
@@ -1467,9 +1457,7 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire,
-    plane: BluemiraPlane,
-    cut_direction: npt.NDArray[float],
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
 ) -> npt.NDArray[float]:
     """
     Cut a wire using a plane.
@@ -1594,11 +1582,7 @@ def is_convex(points: npt.NDArray):
 # # =============================================================================
 # # Save functions
 # # =============================================================================
-def save_as_STP(
-    shapes: BluemiraGeoT | Iterable[BluemiraGeoT],
-    filename: str,
-    **kwargs,
-):
+def save_as_STP(shapes: BluemiraGeoT | Iterable[BluemiraGeoT], filename: str, **kwargs):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1932,10 +1916,7 @@ def connect_shapes(
 # ======================================================================================
 
 
-def make_compound(
-    shapes: Iterable[BluemiraGeo],
-    label: str = "",
-) -> BluemiraCompound:
+def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraCompound:
     """
     Make a compound of the given shapes.
 

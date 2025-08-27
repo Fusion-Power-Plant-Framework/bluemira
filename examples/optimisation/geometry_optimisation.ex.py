@@ -100,7 +100,7 @@ result = optimise_geometry(
         {
             "f_constraint": lambda g: distance_constraint(g, plasma, min_distance),
             "tolerance": np.array([1e-8]),
-        },
+        }
     ],
 )
 
