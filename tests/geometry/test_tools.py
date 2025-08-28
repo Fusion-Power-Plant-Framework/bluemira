@@ -7,6 +7,7 @@
 import difflib
 import json
 import re
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
@@ -30,8 +31,11 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    boolean_cut,
     boolean_fragments,
+    boolean_fuse,
     chamfer_wire_2D,
+    connect_shapes,
     convex_hull_wires_2d,
     deserialise_shape,
     extrude_shape,
@@ -937,3 +941,127 @@ class TestForceWireToSpline:
         p2 = force_wire_to_spline(p)
         assert p2 == p
         bm_debug.assert_called_once()
+
+
+def _crude_connect(pipe_1, void_1, pipe_2, void_2):
+    solid = boolean_fuse([pipe_1, pipe_2])
+    solid = boolean_cut(solid, void_1)[0]
+    return boolean_cut(solid, void_2)[0]
+
+
+class TestConnect:
+    def test_input_len_fails(self):
+        with pytest.raises(ValueError):  # noqa: PT011
+            connect_shapes(make_circle(1.0))
+
+    def test_mixed_input_fails(self):
+        p1 = make_polygon({"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}, closed=True)
+        p2 = offset_wire(p1, 0.1)
+        f = BluemiraFace(p1)
+        s = extrude_shape(f, (0, 3, 0))
+        with pytest.raises(ValueError):  # noqa: PT011
+            connect_shapes([s, p2])
+
+    @pytest.mark.parametrize(
+        ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (0.1, 1.0)]
+    )
+    def test_overlapping_solids(self, width, length):
+        thickness = 0.1
+        p1 = make_polygon(
+            {"x": [0, width, width, 0], "y": 0, "z": [0, 0, width, width]}, closed=True
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+
+        s = extrude_shape(f, (0, length, 0))
+        s.translate((0, 0, -width / 2))
+
+        p1 = make_polygon(
+            {
+                "x": [0, width / 2, width / 2, 0],
+                "z": 0,
+                "y": [0, 0, width / 2, width / 2],
+            },
+            closed=True,
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+        s2 = extrude_shape(f, (0, 0, length))
+
+        s3 = deepcopy(s2)
+        s2.translate((width / 2, width, 0))
+        s3.translate((width / 2, -width, 0))
+
+        true_volume = ((width + 2.0 * thickness) ** 2 - width**2) * length
+        true_volume += ((width / 2 + 2.0 * thickness) ** 2 - (width / 2) ** 2) * (
+            length - width / 2 - thickness
+        )
+        true_volume -= (width / 2) ** 2 * thickness
+        result = connect_shapes([s, s2], tolerance=0.0)
+        assert len(result.solids) == 1
+        assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
+
+    @pytest.mark.parametrize(
+        ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (1.5, 10.0)]
+    )
+    def test_overlapping_solids_triplet(self, width, length):
+        thickness = 0.1
+        p1 = make_polygon(
+            {"x": [0, width, width, 0], "y": 0, "z": [0, 0, width, width]}, closed=True
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+
+        s = extrude_shape(f, (0, length, 0))
+        s.translate((0, 0, -width / 2))
+
+        p1 = make_polygon(
+            {
+                "x": [0, width / 2, width / 2, 0],
+                "z": 0,
+                "y": [0, 0, width / 2, width / 2],
+            },
+            closed=True,
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+        s2 = extrude_shape(f, (0, 0, length))
+
+        s3 = deepcopy(s2)
+        s2.translate((width / 4, width, 0))
+        s3.translate((width / 4, 2 * width, 0))
+
+        true_volume = ((width + 2.0 * thickness) ** 2 - width**2) * length
+        true_volume += (
+            2
+            * ((width / 2 + 2.0 * thickness) ** 2 - (width / 2) ** 2)
+            * (length - width / 2 - thickness)
+        )
+        true_volume -= 2 * (width / 2) ** 2 * thickness
+        result = connect_shapes([s, s2, s3], tolerance=0.0)
+        assert len(result.solids) == 1
+        assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
+
+    @pytest.mark.parametrize(
+        ("r1", "t1", "r2", "t2", "l1", "l2"),
+        [(1, 0.1, 0.8, 0.1, 3, 3), (2, 0.2, 1, 0.1, 5, 5)],
+    )
+    def test_overlapping_pipes(self, r1, t1, r2, t2, l1, l2):
+        c1 = make_circle(r1, (0, 0, 0), axis=(0, 1, 0))
+        c2 = make_circle(r1 + t1, (0, 0, 0), axis=(0, 1, 0))
+        finner = BluemiraFace(c1)
+        f1 = BluemiraFace([c2, c1])
+        pipe1 = extrude_shape(f1, (0, l1, 0))
+        void1 = extrude_shape(finner, (0, l1, 0))
+        c1 = make_circle(r2, (0, 0, 0), axis=(0, 0, 1))
+        c2 = make_circle(r2 + t2, (0, 0, 0), axis=(0, 0, 1))
+        finner = BluemiraFace(c1)
+        f2 = BluemiraFace([c2, c1])
+        f2.translate((0, l2 / 2, 0))
+        finner.translate((0, l2 / 2, 0))
+        pipe2 = extrude_shape(f2, (0, 0, l2))
+        void2 = extrude_shape(finner, (0, 0, l2))
+        crude = _crude_connect(pipe1, void1, pipe2, void2)
+        result = connect_shapes([pipe1, pipe2])
+        assert len(result.solids) == 1
+        assert np.isclose(crude.volume, result.solids[0].volume)
