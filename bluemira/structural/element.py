@@ -24,7 +24,7 @@ from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
 
 if TYPE_CHECKING:
-    from matproplib.conditions import OperationalCondition
+    from matproplib.conditions import OperationalConditions
     from matproplib.material import Material
 
     from bluemira.structural.crosssection import CrossSection
@@ -289,7 +289,7 @@ class Element:
         id_number: int,
         cross_section: CrossSection,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ):
         # Utility properties
         self.node_1 = node_1
@@ -327,7 +327,7 @@ class Element:
     def _process_properties(
         cross_section,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ):
         """
         Handles cross-sectional and material properties, including if a

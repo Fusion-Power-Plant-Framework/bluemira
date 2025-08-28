@@ -29,7 +29,7 @@ from bluemira.structural.plotting import (
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
-    from matproblib.conditions import OperationalCondition
+    from matproblib.conditions import OperationalConditions
     from matproplib.material import Material
 
     from bluemira.geometry.coordinates import Coordinates
@@ -229,7 +229,7 @@ class Geometry:
         node_id2: int,
         cross_section: CrossSection,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ) -> int:
         """
         Adds an Element to the Geometry object
@@ -324,7 +324,7 @@ class Geometry:
         coordinates: Coordinates,
         cross_section: CrossSection,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ):
         """
         Adds a Coordinates object to the Geometry

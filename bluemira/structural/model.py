@@ -28,7 +28,7 @@ from bluemira.structural.symmetry import CyclicSymmetry
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from matproplib.conditions import OperationalCondition
+    from matproplib.conditions import OperationalConditions
     from matproplib.material import Material
 
     from bluemira.geometry.coordinates import Coordinates
@@ -165,7 +165,7 @@ class FiniteElementModel:
         node_id2: int,
         cross_section: CrossSection,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ) -> int:
         """
         Adds an Element to the FiniteElementModel
@@ -194,7 +194,7 @@ class FiniteElementModel:
         coords: Coordinates,
         cross_section: CrossSection,
         material: Material | None = None,
-        op_cond: OperationalCondition | None = None,
+        op_cond: OperationalConditions | None = None,
     ):
         """
         Adds a Coordinates object to the FiniteElementModel
