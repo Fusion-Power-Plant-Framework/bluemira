@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
-from bluemira.radiation_transport.error import NeutronicsError
 from bluemira.radiation_transport.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
@@ -100,17 +100,12 @@ def run_neutronics(
     neutronics_csg = EUDEMONeutronicsCSGReactor(
         csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
-    if source is None:
-        try:
-            from bluemira.codes.openmc.sources import make_pps_source  # noqa: PLC0415
-        except ImportError:
-            raise NeutronicsError("Cannot import neutronics source") from None
 
     solver = neutronics_code_solver(
         params,
         build_config,
         neutronics_csg,
-        source=source or make_pps_source,
+        source=source or make_tokamak_source,
         tally_function=tally_function,
     )
 
