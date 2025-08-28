@@ -7,6 +7,7 @@
 
 from dataclasses import dataclass
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
@@ -26,6 +27,7 @@ class TFCoilXYDesignerParams(ParameterFrame):
     Parameters needed for all aspects of the TF coil design
     """
 
+    # base params
     R0: Parameter[float]
     """Major radius [m]"""
     B0: Parameter[float]
@@ -38,6 +40,63 @@ class TFCoilXYDesignerParams(ParameterFrame):
     """Maximum plasma ripple"""
     d: Parameter[float]
     """Additional distance to calculate max external radius of inner TF leg"""
+    S_VV: Parameter[float]
+    """Vacuum vessel steel limit"""
+    safety_factor: Parameter[float]
+    """Allowable stress values"""
+    B_ref: Parameter[float]
+    """Reference value for B field (LTS limit) [T]"""
+
+    # strand params
+    d_strand_sc: Parameter[float]
+    """Diameter of superconducting strand"""
+    d_strand: Parameter[float]
+    """Diameter of stabilising strand"""
+    operating_temperature: Parameter[float]
+    """Operating temperature for the strands [K]"""
+
+    # cable params
+    n_sc_strand: Parameter[int]
+    """Number of superconducting strands."""
+    n_stab_strand: Parameter[int]
+    """Number of stabilizing strands."""
+    d_cooling_channel: Parameter[float]
+    """Diameter of the cooling channel [m]."""
+    void_fraction: Parameter[float]
+    """Ratio of material volume to total volume [unitless]."""
+    cos_theta: Parameter[float]
+    """Correction factor for twist in the cable layout."""
+    dx: Parameter[float]
+    """Cable half-width in the x-direction [m]."""
+
+    # conductor params
+    dx_jacket: Parameter[float]
+    """x-thickness of the jacket [m]."""
+    dy_jacket: Parameter[float]
+    """y-tickness of the jacket [m]."""
+    dx_ins: Parameter[float]
+    """x-thickness of the insulator [m]."""
+    dy_ins: Parameter[float]
+    """y-thickness of the insulator [m]."""
+
+    # winding pack params
+    nx: Parameter[int]
+    """Number of conductors along the x-axis."""
+    ny: Parameter[int]
+    """Number of conductors along the y-axis."""
+
+    # case params
+    Ri: Parameter[float]
+    """External radius of the TF coil case [m]."""
+    Rk: Parameter[float]
+    """Internal radius of the TF coil case [m]."""
+    theta_TF: Parameter[float]
+    """Toroidal angular span of the TF coil [degrees]."""
+    dy_ps: Parameter[float]
+    """Radial thickness of the poloidal support region [m]."""
+    dy_vault: Parameter[float]
+    """Radial thickness of the vault support region [m]."""
+
     Iop: Parameter[float]
     """Operational current in conductor"""
     T_sc: Parameter[float]
@@ -46,22 +105,14 @@ class TFCoilXYDesignerParams(ParameterFrame):
     """Temperature margin"""
     t_delay: Parameter[float]
     """Time delay for exponential functions"""
+
+    # optimisation params
     t0: Parameter[float]
     """Initial time"""
+    Tau_discharge: Parameter[float]
+    """Characteristic time constant"""
     hotspot_target_temperature: Parameter[float]
     """Target temperature for hotspot for cable optimisiation"""
-    S_VV: Parameter[float]
-    """Vacuum vessel steel limit"""
-    d_strand_sc: Parameter[float]
-    """Diameter of superconducting strand"""
-    d_strand_stab: Parameter[float]
-    """Diameter of stabilising strand"""
-    safety_factor: Parameter[float]
-    """Allowable stress values"""
-    dx: Parameter[float]
-    """Cable length"""
-    B_ref: Parameter[float]
-    """Reference value for B field (LTS limit) [T]"""
     layout: Parameter[str]
     """Cable layout strategy"""
     wp_reduction_factor: Parameter[float]
@@ -76,8 +127,6 @@ class TFCoilXYDesignerParams(ParameterFrame):
     """Maximum number of optimization iterations"""
     eps: Parameter[float]
     """Convergence threshold for the combined optimization loop."""
-    Tau_discharge: Parameter[float]
-    """Characteristic time constant"""
 
 
 class TFCoilXYDesigner(Designer):
@@ -101,6 +150,7 @@ class TFCoilXYDesigner(Designer):
         super().__init__(params, build_config)
 
     def _derived_values(self):
+        # Needed params that are calculated using the base params
         a = self.params.R0.value / self.params.A.value
         Ri = self.params.R0.value - a - self.params.d.value  # noqa: N806
         Re = (self.params.R0.value + a) * (1 / self.params.ripple.value) ** (  # noqa: N806
@@ -132,6 +182,9 @@ class TFCoilXYDesigner(Designer):
             ** 2
         )
         T_op = self.params.T_sc.value + self.params.T_margin.value  # noqa: N806
+        self.params.operating_temperature.value = (
+            T_op  # this necessary? Or just remove T_sc and T_margin
+        )
         s_y = 1e9 / self.params.safety_factor.value
         n_cond = int(
             np.floor(
@@ -192,41 +245,32 @@ class TFCoilXYDesigner(Designer):
         sc_strand_config = self.build_config.get("superconducting_strand")
         conductor_config = self.build_config.get("conductor")
         case_config = self.build_config.get("case")
-        # sort params (break down into smaller parts rather than pass in all params?)
-        stab_strand_params = self.params.get("stab_strand")
-        sc_strand_params = self.params.get("sc_strand")
-        cable_params = self.params.get("cable")
-        conductor_params = self.params.get("conductor")
-        winding_pack_params = self.params.get("winding_pack")
-        case_params = self.params.get("case")
-        optimisation_params = self.params.get("optimisation")
+        # params that are function of another param
         derived_params = self._derived_values()
 
-        stab_strand = self._make_stab_strand(stab_strand_config, stab_strand_params)
-        sc_strand = self._make_sc_strand(sc_strand_config, sc_strand_params)
-        initial_cable = self._make_cable(cable_params, stab_strand, sc_strand)
+        stab_strand = self._make_stab_strand(stab_strand_config)
+        sc_strand = self._make_sc_strand(sc_strand_config)
+        initial_cable = self._make_cable(stab_strand, sc_strand)
         # param frame optimisation stuff?
         optimised_cable = initial_cable.optimise_n_stab_ths(
-            t0=optimisation_params.t0.value,
-            tf=optimisation_params.Tau_discharge.value,
+            t0=self.params.t0.value,
+            tf=self.params.Tau_discharge.value,
             T_for_hts=derived_params["T_op"],
-            hotspot_target_temperature=optimisation_params.hotspot_target_temperature.value,
+            hotspot_target_temperature=self.params.hotspot_target_temperature.value,
             B_fun=derived_params["B_fun"],
             I_fun=derived_params["I_fun"],
             bounds=[1, 10000],
         )
-        conductor = self._make_conductor(
-            conductor_config, conductor_params, optimised_cable
-        )
-        winding_pack = self._make_winding_pack(winding_pack_params, conductor)
-        case = self._make_case(case_config, case_params, [winding_pack])
+        conductor = self._make_conductor(conductor_config, optimised_cable)
+        winding_pack = self._make_winding_pack(conductor)
+        case = self._make_case(case_config, [winding_pack])
         # param frame optimisation stuff?
         case.rearrange_conductors_in_wp(
             n_conductors=derived_params["n_cond"],
-            wp_reduction_factor=optimisation_params.wp_reduction_factor.value,
+            wp_reduction_factor=self.params.wp_reduction_factor.value,
             min_gap_x=derived_params["min_gap_x"],
-            n_layers_reduction=optimisation_params.n_layers_reduction.value,
-            layout=optimisation_params.layout.value,
+            n_layers_reduction=self.params.n_layers_reduction.value,
+            layout=self.params.layout.value,
         )
         # param frame optimisation stuff?
         case.optimize_jacket_and_vault(
@@ -235,14 +279,14 @@ class TFCoilXYDesigner(Designer):
             temperature=derived_params["T_op"],
             B=derived_params["B_TF_i"],
             allowable_sigma=derived_params["s_y"],
-            bounds_cond_jacket=optimisation_params.bounds_cond_jacket.value,
-            bounds_dy_vault=optimisation_params.bounds_dy_vault.value,
-            layout=optimisation_params.layout.value,
-            wp_reduction_factor=optimisation_params.wp_reduction_factor.value,
+            bounds_cond_jacket=self.params.bounds_cond_jacket.value,
+            bounds_dy_vault=self.params.bounds_dy_vault.value,
+            layout=self.params.layout.value,
+            wp_reduction_factor=self.params.wp_reduction_factor.value,
             min_gap_x=derived_params["min_gap_x"],
-            n_layers_reduction=optimisation_params.n_layers_reduction.value,
-            max_niter=optimisation_params.max_niter.value,
-            eps=optimisation_params.eps.value,
+            n_layers_reduction=self.params.n_layers_reduction.value,
+            max_niter=self.params.max_niter.value,
+            eps=self.params.eps.value,
             n_conds=derived_params["n_cond"],
         )
         return case
@@ -270,97 +314,149 @@ class TFCoilXYDesigner(Designer):
 
     def _make_stab_strand(self):
         stab_strand_config = self.build_config.get("stabilising_strand")
-        stab_strand_params = self.params.get("stab_strand")
         return Strand(
             materials=stab_strand_config.get("material"),
-            params=stab_strand_params,
+            params=self.params,
             name="stab_strand",
         )
 
     def _make_sc_strand(self):
         sc_strand_config = self.build_config.get("superconducting_strand")
-        sc_strand_params = self.params.get("sc_strand")
         return SuperconductingStrand(
             materials=sc_strand_config.get("material"),
-            params=sc_strand_params,
+            params=self.params,
             name="sc_strand",
         )
 
     def _make_cable(self, stab_strand, sc_strand):
-        cable_params = self.params.get("cable")
-        if cable_params.cable_type == "Rectangular":
+        if self.params.cable_type == "Rectangular":
             cable = RectangularCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
-                params=cable_params,
+                params=self.params,
                 name="RectangularCable",
             )
-        elif cable_params.cable_type == "Square":
+        elif self.params.cable_type == "Square":
             cable = SquareCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
-                params=cable_params,
+                params=self.params,
                 name="SquareCable",
             )
-        elif cable_params.cable_type == "Round":
+        elif self.params.cable_type == "Round":
             cable = RoundCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
-                params=cable_params,
+                params=self.params,
                 name="RoundCable",
             )
         else:
             raise ValueError(
-                f"Cable type {cable_params.cable_type} is not known."
+                f"Cable type {self.params.cable_type} is not known."
                 "Available options are 'Rectangular', 'Square' and 'Round'."
             )
         return cable
 
     def _make_conductor(self, cable):
         conductor_config = self.build_config.get("conductor")
-        conductor_params = self.params.get("conductor")
-        if conductor_params.conductor_type == "Conductor":
+        if self.params.conductor_type == "Conductor":
             conductor = Conductor(
                 cable=cable,
-                mat_jacket=conductor_config.get("mat_jacket"),
-                mat_ins=conductor_config.get("mat_ins"),
-                params=conductor_params,
+                mat_jacket=conductor_config.get("jacket", "material"),
+                mat_ins=conductor_config.get("ins", "material"),
+                params=self.params,
                 name="Conductor",
             )
-        elif conductor_params.conductor_type == "SymmetricConductor":
+        elif self.params.conductor_type == "SymmetricConductor":
             conductor = SymmetricConductor(
                 cable=cable,
-                mat_jacket=conductor_config.get("mat_jacket"),
-                mat_ins=conductor_config.get("mat_ins"),
-                params=conductor_params,
+                mat_jacket=conductor_config.get("jacket", "material"),
+                mat_ins=conductor_config.get("ins", "material"),
+                params=self.params,
                 name="SymmetricConductor",
             )
         else:
             raise ValueError(
-                f"Conductor type {conductor_params.conductor_type} is not known."
+                f"Conductor type {self.params.conductor_type} is not known."
                 "Available options are 'Conductor' and 'SymmetricConductor'."
             )
         return conductor
 
     def _make_winding_pack(self, conductor):
-        winding_pack_params = self.params.get("winding_pack")
-        return WindingPack(
-            conductor=conductor, params=winding_pack_params, name="winding_pack"
-        )
+        return WindingPack(conductor=conductor, params=self.params, name="winding_pack")
 
     def _make_case(self, WPs):  # noqa: N803
         case_config = self.build_config.get("case")
-        case_params = self.params.get("case")
-        if case_params.case_type == "Trapezoidal":
+        if self.params.case_type == "Trapezoidal":
             case = TrapezoidalCaseTF(
-                params=case_params,
+                params=self.params,
                 mat_case=case_config.get("material"),
                 WPs=WPs,
                 name="TrapezoidalCase",
             )
         else:
             raise ValueError(
-                f"Case type {case_params.case_type} is not known."
+                f"Case type {self.params.case_type} is not known."
                 "Available options are 'Trapezoidal'."
             )
         return case
+
+
+def plot_cable_temperature_evolution(result, t0, tf, ax, n_steps=100):
+    solution = result.solution
+
+    ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
+    time_steps = np.linspace(t0, tf, n_steps)
+    ax.plot(time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve")
+    ax.grid(visible=True)
+    ax.set_ylabel("Temperature [K]", fontsize=10)
+    ax.set_title("Quench temperature evolution", fontsize=11)
+    ax.legend(fontsize=9)
+
+    ax.tick_params(axis="y", labelcolor="k", labelsize=9)
+
+    props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.8}
+    ax.text(
+        0.65,
+        0.5,
+        result.info_text,
+        transform=ax.transAxes,
+        fontsize=9,
+        verticalalignment="top",
+        bbox=props,
+    )
+    ax.figure.tight_layout()
+
+
+def plot_I_B(I_fun, B_fun, t0, tf, ax, n_steps=300):
+    time_steps = np.linspace(t0, tf, n_steps)
+    I_values = [I_fun(t) for t in time_steps]  # noqa: N806
+    B_values = [B_fun(t) for t in time_steps]
+
+    ax.plot(time_steps, I_values, "g", label="Current [A]")
+    ax.set_ylabel("Current [A]", color="g", fontsize=10)
+    ax.tick_params(axis="y", labelcolor="g", labelsize=9)
+    ax.grid(visible=True)
+
+    ax_right = ax.twinx()
+    ax_right.plot(time_steps, B_values, "m--", label="Magnetic field [T]")
+    ax_right.set_ylabel("Magnetic field [T]", color="m", fontsize=10)
+    ax_right.tick_params(axis="y", labelcolor="m", labelsize=9)
+
+    # Labels
+    ax.set_xlabel("Time [s]", fontsize=10)
+    ax.tick_params(axis="x", labelsize=9)
+
+    # Combined legend for both sides
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax_right.get_legend_handles_labels()
+    ax.legend(lines + lines2, labels + labels2, loc="best", fontsize=9)
+
+    ax.figure.tight_layout()
+
+
+def plot_summary(result, t0, tf, I_fun, B_fun, n_steps, show=False):
+    f, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+    plot_cable_temperature_evolution(result, t0, tf, ax_temp, n_steps)
+    plot_I_B(I_fun, B_fun, t0, tf, ax_ib, n_steps * 3)
+    return f

@@ -42,7 +42,7 @@ class StrandParams(ParameterFrame):
 
     d_strand: Parameter[float]
     """Strand diameter in meters."""
-    temperature: Parameter[float]
+    operating_temperature: Parameter[float]
     """Operating temperature [K]."""
 
 
@@ -72,7 +72,7 @@ class Strand:
         params:
             Structure containing the input parameters. Keys are:
                 - d_strand: float
-                - temperature: float
+                - operating_temperature: float
 
             See :class:`~bluemira.magnets.strand.StrandParams`
             for parameter details.
@@ -302,7 +302,7 @@ class Strand:
         return {
             "name": self.name,
             "d_strand": self.params.d_strand.value,
-            "temperature": self.params.temperature.value,
+            "temperature": self.params.operating_temperature.value,
             "materials": [
                 {
                     "material": m.material,
@@ -370,7 +370,7 @@ class Strand:
         # resolve
         return cls(
             materials=material_mix,
-            temperature=strand_dict.get("temperature"),
+            operating_temperature=strand_dict.get("operating_temperature"),
             d_strand=strand_dict.get("d_strand"),
             name=name or strand_dict.get("name"),
         )
@@ -379,6 +379,14 @@ class Strand:
 # ------------------------------------------------------------------------------
 # SuperconductingStrand Class
 # ------------------------------------------------------------------------------
+@dataclass
+class SuperconductingStrandParams(StrandParams):
+    """
+    Parameters needed for the strand
+    """
+
+    d_strand_sc: Parameter[float]  # not sure this will work?
+    """Superconducting Strand diameter in meters."""
 
 
 class SuperconductingStrand(Strand):
@@ -410,8 +418,7 @@ class SuperconductingStrand(Strand):
             a supercoductor.
         params:
             Structure containing the input parameters. Keys are:
-                - d_strand: float
-                - temperature: float
+                - d_strand_sc: float
 
             See :class:`~bluemira.magnets.strand.StrandParams`
             for parameter details.
@@ -424,6 +431,7 @@ class SuperconductingStrand(Strand):
             name=name,
         )
         self._sc = self._check_materials()
+        self.params.d_strand.value = self.params.d_strand_sc.value
 
     def _check_materials(self) -> MaterialFraction:
         """
