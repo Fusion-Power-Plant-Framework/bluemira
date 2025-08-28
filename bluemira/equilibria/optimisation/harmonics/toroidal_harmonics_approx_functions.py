@@ -564,7 +564,6 @@ def toroidal_harmonic_approximate_psi(
 def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams | None = None,
-    max_error_value: float = 0.5,
     psi_norm: float = 0.95,
     tol: float = 0.001,
     *,
@@ -586,9 +585,8 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
     The objective: to get the lowest number of degrees to sufficiently approximate
     the coilset psi.
 
-    Our selection requirements are satisfied when:
-        - the RMS error for the coilset psi is lower than the max_error_value
-        - adding an extra degree doesn't significantly lower the achieved error.
+    Our selection requirement is satisfied when adding an extra degree doesn't
+    significantly lower the achieved error.
 
 
     Parameters
@@ -601,8 +599,6 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
         we do not need to re-solve for the equilibria during optimisation
     th_params:
         Dataclass containing necessary parameters for use in TH approximation
-    max_error_value:
-        Maximum allowable error between equilibria psi and TH approximation
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
@@ -731,17 +727,14 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
                 )
             )
 
-            # If error for this combination satisfies the max_error_value, then save this
-            # result to the lists
-            if error < max_error_value:
-                errors.append(error)
-                combo.append(c)
-                cos_degrees.append(cos_degrees_chosen)
-                sin_degrees.append(sin_degrees_chosen)
-                total_psis.append(total_psi_approx)
-                vacuum_psis.append(approximate_coilset_psi)
-                cos_amplitudes.append(cos_amps)
-                sin_amplitudes.append(sin_amps)
+            errors.append(error)
+            combo.append(c)
+            cos_degrees.append(cos_degrees_chosen)
+            sin_degrees.append(sin_degrees_chosen)
+            total_psis.append(total_psi_approx)
+            vacuum_psis.append(approximate_coilset_psi)
+            cos_amplitudes.append(cos_amps)
+            sin_amplitudes.append(sin_amps)
 
         # If sufficiently small change by adding extra degree, then
         # use the previous total number of degrees
@@ -786,9 +779,9 @@ def toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
             )
         elif n == max_degree:  # noqa: RET505
             raise EquilibriaError(
-                f"No combination of up to {max_degree} degrees gives an error of"
-                f"{max_error_value} for chosen equilibrium! Please adjust the allowable error"
-                "value or error tolerance values."
+                f"No combination of up to {max_degree} degrees gives an acceptable"
+                "solution for the input parameters for chosen equilibrium! Please adjust"
+                "the error tolerance value and try again."
             )
 
         errors_old = errors

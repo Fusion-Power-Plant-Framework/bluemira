@@ -41,13 +41,9 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.analysis import EqAnalysis, MultiEqAnalysis, select_multi_eqs
-from bluemira.equilibria.coils._coil import Coil
-from bluemira.equilibria.coils._grouping import CoilSet
 from bluemira.equilibria.diagnostics import (
     EqDiagnosticOptions,
     EqSubplots,
-    PicardDiagnostic,
-    PicardDiagnosticOptions,
     PsiPlotType,
 )
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -63,7 +59,6 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     toroidal_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
-from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Data from EQDSK file
@@ -113,7 +108,7 @@ plt.show()
 # %%
 # Information needed for TH Approximation
 # The acceptable fit metric value used here forces the approximation to use 10 degrees
-psi_norm = 1.0
+psi_norm = 0.95
 (
     error,
     combo,
@@ -128,7 +123,6 @@ psi_norm = 1.0
     eq=eq,
     psi_norm=psi_norm,
     plot=True,
-    max_error_value=0.1,
     tol=0.01,  # 0.2,  # Use this for SN
 )
 # Some notes:
@@ -320,96 +314,3 @@ print(
 # # Note that a list with the results is also output
 
 core_results, ax = multi_analysis.plot_core_physics()
-
-# %%
-axs = multi_analysis.plot_eq_core_mag_axis()
-# # %%
-# # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# # Try moving outer leg further towards the smaller coil
-# # move end pt of separatrix to line up with bottom of 2nd teal line after light pink
-
-# outer_leg_points_x = np.array([
-#     8.8,
-#     9.2,
-#     10.4,
-# ])
-
-# outer_leg_points_z = np.array([
-#     6.5,
-#     7.0,
-#     8.1,
-# ])
-
-# # Create the necessary isoflux constraints
-
-# SN_moved_outer_leg_lower = IsofluxConstraint(
-#     outer_leg_points_x,
-#     -outer_leg_points_z,
-#     ref_x=x_bdry[arg_inner],
-#     ref_z=z_bdry[arg_inner],
-#     tolerance=1e-3,
-# )
-
-
-# # Plot the isoflux points and the starting equilibrium
-# f, ax = plt.subplots()
-# eq.plot(ax=ax)
-# SN_moved_outer_leg_lower.plot(ax=ax)
-# # SN_unmoved_inner_leg_lower.plot(ax=ax)
-# plt.show()
-
-# # %%
-# constraints = [
-#     th_constraint_equal,
-#     x_point,
-#     # SN_moved_outer_leg_lower,
-#     # SN_unmoved_inner_leg_lower,
-#     # SN_unmoved_outer_leg_lower,
-# ]
-
-# algorithm = "COBYLA"
-# # algorithm = "SLSQP"
-
-
-# # %%
-# # Make copy of eq
-# th_eq_moved = deepcopy(eq)
-
-# th_opt_unmoved_legs = TikhonovCurrentCOP(
-#     th_eq_moved,
-#     targets=MagneticConstraintSet([
-#         x_point,
-#         # SN_moved_outer_leg_lower,
-#         # SN_unmoved_inner_leg_lower,
-#         # SN_unmoved_outer_leg_lower
-#     ]),
-#     gamma=1e-4,
-#     opt_algorithm=algorithm,
-#     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
-#     opt_parameters={"initial_step": 0.1},
-#     max_currents=3e10,
-#     constraints=constraints,
-# )
-# # Find the optimised coilseteq
-# _ = th_opt_unmoved_legs.optimise()
-
-# diag_ops = EqDiagnosticOptions(
-#     psi_diff=PsiPlotType.PSI_DIFF,
-#     split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
-# )
-# eq_analysis = EqAnalysis(input_eq=th_eq_moved, reference_eq=eq)
-# _ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
-
-
-# # %%
-# # Update plasma - one solve
-# th_eq_moved.solve()
-
-# eq_analysis = EqAnalysis(input_eq=th_eq_moved, reference_eq=eq)
-# _ = eq_analysis.plot_compare_psi(diag_ops=diag_ops)
-
-# # %%
-# f, ax = plt.subplots()
-# th_eq_moved.plot(ax=ax)
-# SN_moved_outer_leg_lower.plot(ax=ax)
