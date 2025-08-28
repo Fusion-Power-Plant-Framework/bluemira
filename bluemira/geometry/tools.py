@@ -1910,7 +1910,6 @@ def connect_shapes(
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
-    # check that all the shapes are of the same time
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")

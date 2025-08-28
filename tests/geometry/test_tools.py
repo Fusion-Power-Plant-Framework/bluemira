@@ -949,7 +949,19 @@ def _crude_connect(pipe_1, void_1, pipe_2, void_2):
     return boolean_cut(solid, void_2)[0]
 
 
-class TestConnectSolids:
+class TestConnect:
+    def test_input_len_fails(self):
+        with pytest.raises(ValueError):  # noqa: PT011
+            connect_shapes(make_circle(1.0))
+
+    def test_mixed_input_fails(self):
+        p1 = make_polygon({"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}, closed=True)
+        p2 = offset_wire(p1, 0.1)
+        f = BluemiraFace(p1)
+        s = extrude_shape(f, (0, 3, 0))
+        with pytest.raises(ValueError):  # noqa: PT011
+            connect_shapes([s, p2])
+
     @pytest.mark.parametrize(
         ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (0.1, 1.0)]
     )
