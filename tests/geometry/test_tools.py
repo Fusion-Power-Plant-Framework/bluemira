@@ -7,6 +7,7 @@
 import difflib
 import json
 import re
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
@@ -975,7 +976,9 @@ class TestConnectSolids:
         f = BluemiraFace([p2, p1])
         s2 = extrude_shape(f, (0, 0, length))
 
+        s3 = deepcopy(s2)
         s2.translate((width / 2, width, 0))
+        s3.translate((width / 2, -width, 0))
 
         true_volume = ((width + 2.0 * thickness) ** 2 - width**2) * length
         true_volume += ((width / 2 + 2.0 * thickness) ** 2 - (width / 2) ** 2) * (
@@ -983,6 +986,47 @@ class TestConnectSolids:
         )
         true_volume -= (width / 2) ** 2 * thickness
         result = connect_shapes([s, s2], tolerance=0.0)
+        assert len(result.solids) == 1
+        assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
+
+    @pytest.mark.parametrize(
+        ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (1.5, 10.0)]
+    )
+    def test_overlapping_solids_triplet(self, width, length):
+        thickness = 0.1
+        p1 = make_polygon(
+            {"x": [0, width, width, 0], "y": 0, "z": [0, 0, width, width]}, closed=True
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+
+        s = extrude_shape(f, (0, length, 0))
+        s.translate((0, 0, -width / 2))
+
+        p1 = make_polygon(
+            {
+                "x": [0, width / 2, width / 2, 0],
+                "z": 0,
+                "y": [0, 0, width / 2, width / 2],
+            },
+            closed=True,
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+        s2 = extrude_shape(f, (0, 0, length))
+
+        s3 = deepcopy(s2)
+        s2.translate((width / 4, width, 0))
+        s3.translate((width / 4, 2 * width, 0))
+
+        true_volume = ((width + 2.0 * thickness) ** 2 - width**2) * length
+        true_volume += (
+            2
+            * ((width / 2 + 2.0 * thickness) ** 2 - (width / 2) ** 2)
+            * (length - width / 2 - thickness)
+        )
+        true_volume -= 2 * (width / 2) ** 2 * thickness
+        result = connect_shapes([s, s2, s3], tolerance=0.0)
         assert len(result.solids) == 1
         assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
 
