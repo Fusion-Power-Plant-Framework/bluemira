@@ -946,7 +946,6 @@ def _crude_connect(pipe_1, void_1, pipe_2, void_2):
     solid = boolean_fuse([pipe_1, pipe_2])
     solid = boolean_cut(solid, void_1)[0]
     return boolean_cut(solid, void_2)[0]
-    return solid
 
 
 class TestConnectSolids:
