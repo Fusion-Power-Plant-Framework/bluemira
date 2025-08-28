@@ -32,6 +32,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     boolean_fragments,
     chamfer_wire_2D,
+    connect_shapes,
     convex_hull_wires_2d,
     deserialise_shape,
     extrude_shape,
@@ -937,3 +938,42 @@ class TestForceWireToSpline:
         p2 = force_wire_to_spline(p)
         assert p2 == p
         bm_debug.assert_called_once()
+
+
+class TestConnectSolids:
+    @pytest.mark.parametrize(
+        ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (0.1, 1.0)]
+    )
+    def test_overlapping_solids(self, width, length):
+        thickness = 0.1
+        p1 = make_polygon(
+            {"x": [0, width, width, 0], "y": 0, "z": [0, 0, width, width]}, closed=True
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+
+        s = extrude_shape(f, (0, length, 0))
+        s.translate((0, 0, -width / 2))
+
+        p1 = make_polygon(
+            {
+                "x": [0, width / 2, width / 2, 0],
+                "z": 0,
+                "y": [0, 0, width / 2, width / 2],
+            },
+            closed=True,
+        )
+        p2 = offset_wire(p1, thickness)
+        f = BluemiraFace([p2, p1])
+        s2 = extrude_shape(f, (0, 0, length))
+
+        s2.translate((width / 2, width, 0))
+
+        true_volume = ((width + 2.0 * thickness) ** 2 - width**2) * length
+        true_volume += ((width / 2 + 2.0 * thickness) ** 2 - (width / 2) ** 2) * (
+            length - width / 2 - thickness
+        )
+        true_volume -= (width / 2) ** 2 * thickness
+        result = connect_shapes([s, s2], tolerance=0.0)
+        assert len(result.solids) == 1
+        assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
