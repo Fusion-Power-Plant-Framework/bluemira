@@ -73,10 +73,7 @@ class PlasmaSourceParameters:
     ----------
     reactor_power:
         total reactor (thermal) power when operating at 100%
-    peaking_factor:
-        (max. heat flux on fw)/(avg. heat flux on fw)
-    temperature:
-        plasma temperature (assumed to be uniform throughout the plasma)
+
     shaf_shift:
         Shafranov shift
         shift of the centre of flux surfaces, i.e.
@@ -94,8 +91,22 @@ class PlasmaSourceParameters:
     elongation: float  # [dimensionless]
     triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
-    peaking_factor: float  # [dimensionless]
-    temperature: float  # [K]
+
+    rho_pedestal: float  # [dimensionless]
+    ion_density_alpha: float  # [dimensionless]
+
+    ion_density_core: float  # [1/m^3]
+    ion_density_ped: float  # [1/m^3]
+    ion_density_sep: float  # [1/m^3]
+
+    ion_temperature_alpha: float  # [dimensionless]
+    ion_temperature_beta: float  # [dimensionless]
+    ion_temperature_core: (
+        float  # [keV]  # TODO: @Ocean check this - it was in [K] before
+    )
+    ion_temperature_ped: float  # [keV]
+    ion_temperature_sep: float  # [keV]
+
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
     plasma_physics_units: PlasmaSourceParameters | None = None
@@ -107,14 +118,7 @@ class PlasmaSourceParameters:
         ------
         GeometryError
             Elongation and aspect ratio must be greater than 1
-        ValueError
-            Peaking factor >= 1
         """
-        if self.peaking_factor < 1.0:
-            raise ValueError(
-                "Peaking factor (peak heat load/avg. heat load) "
-                "must be larger than 1, by definition."
-            )
         if self.aspect_ratio < 1.0:
             raise GeometryError(
                 "By construction, tokamak aspect ratio can't be smaller than 1."
@@ -147,7 +151,9 @@ class PlasmaSourceParameters:
         conversion = {
             "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
-            "temperature": ("J", "keV"),
+            "ion_temperature_core": ("J", "keV"),  # TODO: @Ocean
+            "ion_temperature_ped": ("J", "keV"),
+            "ion_temperature_sep": ("J", "keV"),
             "shaf_shift": ("m", "cm"),
             "vertical_shift": ("m", "cm"),
         }
@@ -156,7 +162,16 @@ class PlasmaSourceParameters:
             "major_radius": "R_0",
             "elongation": "kappa",
             "triangularity": "delta",
-            "temperature": "T_e",
+            "rho_pedestal": "profile_rho_ped",
+            "ion_density_alpha": "n_profile_alpha",
+            "ion_temperature_alpha": "T_profile_alpha",
+            "ion_temperature_beta": "T_profile_beta",
+            "ion_density_core": "n_e_core",
+            "ion_density_ped": "n_e_ped",
+            "ion_density_sep": "n_e_sep",
+            "ion_temperature_core": "T_e_core",
+            "ion_temperature_ped": "T_e_ped",
+            "ion_temperature_sep": "T_e_sep",
         }
         param_convert_dict = {}
         param_dict = {}
