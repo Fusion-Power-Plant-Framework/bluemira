@@ -57,8 +57,7 @@ def make_tokamak_source(
         ion_temperature_beta=source_parameters.ion_temperature_beta,  # dimensionless
         # shaping
         shafranov_factor=source_parameters.shaf_shift,  # dimensionless, in terms of fraction of minor_radius. # 0.44789
-        pedestal_radius=source_parameters.rho_pedestal
-        * raw_uc(source_parameters.minor_radius, "m", "cm"),
+        pedestal_radius=source_parameters.pedestal_radius,
         # plasma composition
         fuel={"D": 0.5, "T": 0.5},
     )
