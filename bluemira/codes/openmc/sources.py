@@ -14,14 +14,29 @@ from bluemira.codes.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
 
-def make_tokamak_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
-    """Make a tokamak neutron source"""
+def make_tokamak_source(
+    source_parameters: PlasmaSourceParameters,
+) -> list[openmc.Source]:
+    """Make a tokamak neutron source using a PlasmaSourceParameters.
+    Some parameters are hard coded, while the rest are rest in from the params.json
+    and stored in the PlasmaSourceParameters
+
+    Parameters
+    ----------
+    source_parameters:
+        PlasmaSourceParameters
+
+    Returns
+    -------
+
+    """
     return tokamak_source(
         # tokamak geometry: Check units
-        major_r=source_parameters.major_radius,
-        minor_r=source_parameters.minor_radius,
+        major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
+        minor_radius=raw_uc(source_parameters.minor_radius, "m", "cm"),
         elongation=source_parameters.elongation,
         triangularity=source_parameters.triangularity,
+        mode="H",
         # plasma geometry: ion stuff
         ion_density_centre=1.09e20,
         ion_density_pedestal=1.09e20,
@@ -32,10 +47,9 @@ def make_tokamak_source(source_parameters: PlasmaSourceParameters) -> openmc.Sou
         ion_temperature_separatrix=0.1e3,
         ion_temperature_peaking_factor=8.06,
         ion_temperature_beta=6,
-        shafranov_factor=source_parameters.shaf_shift,  # Check if it's relative v.s. absolute
         # shaping
-        pedestal_radius=0.8 * source_minor_radius,
-        mode="H",
+        shafranov_factor=source_parameters.shaf_shift,  # Check if it's relative v.s. absolute
+        pedestal_radius=0.8 * raw_uc(source_parameters.minor_radius, "m", "cm"),
         # plasma composition
         fuel={"D": 0.5, "T": 0.5},
     )
