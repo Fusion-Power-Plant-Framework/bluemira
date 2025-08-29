@@ -30,27 +30,33 @@ def make_tokamak_source(
     -------
     source: openmc.Source
         D-T fusion source for OpenMC
+
+    Notes
+    -----
+    The same source material referenced by openmc_plasma_source is used:
+    [1] : Fausser et al, 'Tokamak D-T neutron source models for different
+    plasma physics confinement modes', Fus. Eng. and Design,
+    https://doi.org/10.1016/j.fusengdes.2012.02.025
     """
     return tokamak_source(
-        # tokamak geometry: Check units
+        # tokamak geometry
         major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
         minor_radius=raw_uc(source_parameters.minor_radius, "m", "cm"),
-        elongation=source_parameters.elongation,
-        triangularity=source_parameters.triangularity,
+        elongation=source_parameters.elongation,  # 0.44789
+        triangularity=source_parameters.triangularity,  # 0.270
         mode="H",
         # plasma geometry: ion stuff
-        ion_density_centre=source_parameters.ion_density_core,
-        ion_density_pedestal=source_parameters.ion_density_ped,
-        ion_density_peaking_factor=source_parameters.ion_density_alpha,
-        ion_density_separatrix=source_parameters.ion_density_sep,
-        ion_temperature_centre=source_parameters.ion_temperature_core,
-        ion_temperature_pedestal=source_parameters.ion_temperature_ped,
-        ion_temperature_separatrix=source_parameters.ion_temperature_sep,
-        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,
-        ion_temperature_beta=source_parameters.ion_temperature_beta,
+        ion_density_centre=source_parameters.ion_density_core,  # m^-3 # 1.09e20
+        ion_density_pedestal=source_parameters.ion_density_ped,  # m^-3 # 1.09e20
+        ion_density_peaking_factor=source_parameters.ion_density_alpha,  # dimensionless
+        ion_density_separatrix=source_parameters.ion_density_sep,  # m^-3 # 3e19
+        ion_temperature_centre=source_parameters.ion_temperature_core,  # eV # 45.9e3
+        ion_temperature_pedestal=source_parameters.ion_temperature_ped,  # eV # 6.09e3
+        ion_temperature_separatrix=source_parameters.ion_temperature_sep,  # eV # 0.1e3
+        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,  # dimensionless
+        ion_temperature_beta=source_parameters.ion_temperature_beta,  # dimensionless
         # shaping
-        # Check if it's relative v.s. absolute
-        shafranov_factor=source_parameters.shaf_shift,
+        shafranov_factor=source_parameters.shaf_shift,  # dimensionless, in terms of fraction of minor_radius. # 0.44789
         pedestal_radius=source_parameters.rho_pedestal
         * raw_uc(source_parameters.minor_radius, "m", "cm"),
         # plasma composition
