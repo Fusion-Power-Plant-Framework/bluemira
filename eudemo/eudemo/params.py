@@ -89,7 +89,6 @@ class EUDEMOReactorParams(ParameterFrame):
     sigma_cs_wp_max: Parameter[float]
     sigma_tf_case_max: Parameter[float]
     sigma_tf_wp_max: Parameter[float]
-    T_e: Parameter[float]
     tau_e: Parameter[float]
     tau_flattop: Parameter[float]
     TF_currpt_ob: Parameter[float]
@@ -134,8 +133,32 @@ class EUDEMOReactorParams(ParameterFrame):
     well_depth: Parameter[float]
     Z_eff: Parameter[float]
 
-    # PLASMOD
+    # Parabolic with pedestal profiles (double-power parameterisation)
+    T_profile_alpha: Parameter[float]
+    """Temperature profile alpha exponent [dimensionless]."""
+    T_profile_beta: Parameter[float]
+    """Temperature profile beta exponent [dimensionless]."""
+    n_profile_alpha: Parameter[float]
+    """Density profile alpha exponent [dimensionless]."""
+    profile_rho_ped: Parameter[float]
+    """Pedestal location in normalized radius [dimensionless]."""
+    T_e: Parameter[float]
+    """Volumed-averaged plasma electron temperature [kiloelectron_volt]."""
+    T_e_core: Parameter[float]
+    """Core electron temperature [kiloelectron_volt]."""
     T_e_ped: Parameter[float]
+    """Pedestal electron temperature [kiloelectron_volt]."""
+    T_e_sep: Parameter[float]
+    """Electron temperature at the separatrix [kiloelectron_volt]."""
+    n_e: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    n_e_core: Parameter[float]
+    """Core electron density [1/metre ** 3]."""
+    n_e_ped: Parameter[float]
+    """Pedestal electron density [1/metre ** 3]."""
+    n_e_sep: Parameter[float]
+    """Electron density at the separatrix [1/metre ** 3]."""
+
     q_control: Parameter[float]
 
     # Heating and current drive
