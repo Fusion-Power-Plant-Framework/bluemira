@@ -35,6 +35,11 @@ IN_mappings = {
     "bb_t_outlet": ("outlet_temp", "K"),
     "eta_ecrh": ("etaech", "dimensionless"),
     "gamma_ecrh": ("gamma_ecrh", "1e20 A/W/m^2"),
+    "T_profile_alpha": ("alphat", "dimensionless"),
+    "T_profile_beta": ("tbeta", "dimensionless"),
+    "n_profile_alpha": ("alphan", "dimensionless"),
+    # Note: PROCESS has both rhopedt and rhopedn - they are usually the same...
+    "profile_rho_ped": ("rhopedt", "dimensionless"),
 }
 
 OUT_mappings = {
@@ -88,6 +93,12 @@ OUT_mappings = {
     "TF_currpt_ob": ("cpttf", "A"),
     "P_bd_in": ("pinjmw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
+    "T_e_core": ("te0", "keV"),
+    "T_e_ped": ("teped", "keV"),
+    "n_e_core": ("ne0", "1/m^3"),
+    "n_e": ("dene", "1/m^3"),
+    "n_e_ped": ("neped", "1/m^3"),
+    "n_e_sep": ("nesep", "1/m^3"),
 }
 
 IO_mappings = {
@@ -102,6 +113,7 @@ IO_mappings = {
     "g_cs_tf": ("gapoh", "m"),
     "g_ts_tf": ("tftsgap", "m"),
     "g_vv_bb": ("vvblgap", "m"),
+    "T_e_sep": ("tesep", "keV"),
 }
 
 NONE_mappings = {
