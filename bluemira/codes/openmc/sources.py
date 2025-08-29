@@ -28,7 +28,8 @@ def make_tokamak_source(
 
     Returns
     -------
-
+    source: openmc.Source
+        D-T fusion source for OpenMC
     """
     return tokamak_source(
         # tokamak geometry: Check units
@@ -38,18 +39,20 @@ def make_tokamak_source(
         triangularity=source_parameters.triangularity,
         mode="H",
         # plasma geometry: ion stuff
-        ion_density_centre=1.09e20,
-        ion_density_pedestal=1.09e20,
-        ion_density_peaking_factor=source_parameters.peaking_factor,  # Check this one!
-        ion_density_separatrix=3e19,
-        ion_temperature_centre=source_parameters.temperature,  # Change the name in source param
-        ion_temperature_pedestal=6.09e3,
-        ion_temperature_separatrix=0.1e3,
-        ion_temperature_peaking_factor=8.06,
-        ion_temperature_beta=6,
+        ion_density_centre=source_parameters.ion_density_core,
+        ion_density_pedestal=source_parameters.ion_density_ped,
+        ion_density_peaking_factor=source_parameters.ion_density_alpha,
+        ion_density_separatrix=source_parameters.ion_density_sep,
+        ion_temperature_centre=source_parameters.ion_temperature_core,
+        ion_temperature_pedestal=source_parameters.ion_temperature_ped,
+        ion_temperature_separatrix=source_parameters.ion_temperature_sep,
+        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,
+        ion_temperature_beta=source_parameters.ion_temperature_beta,
         # shaping
-        shafranov_factor=source_parameters.shaf_shift,  # Check if it's relative v.s. absolute
-        pedestal_radius=0.8 * raw_uc(source_parameters.minor_radius, "m", "cm"),
+        # Check if it's relative v.s. absolute
+        shafranov_factor=source_parameters.shaf_shift,
+        pedestal_radius=source_parameters.rho_pedestal
+        * raw_uc(source_parameters.minor_radius, "m", "cm"),
         # plasma composition
         fuel={"D": 0.5, "T": 0.5},
     )
