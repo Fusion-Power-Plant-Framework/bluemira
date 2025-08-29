@@ -8,11 +8,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
+from types import MappingProxyType
+from typing import TYPE_CHECKING, ClassVar
 
-from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.error import GeometryError
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 @dataclass
@@ -40,26 +44,35 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         shift of the centre of flux surfaces, i.e.
         mean(min radius, max radius) of the LCFS,
         towards the outboard radial direction.
-    vertical_shift:
-        how far (upwards) in the z direction is the centre of the plasma
-        shifted compared to the geometric center of the poloidal cross-section.
     """
 
-    R_0: Parameter[float]
     """Major Radius"""
-    A: Parameter[float]
+    R_0: Parameter[float]
     """Aspect ratio"""
-    kappa: Parameter[float]
+    A: Parameter[float]
+    """Pedestal location in normalized (minor) radius"""
+    profile_rho_ped: Parameter[float]
+
     """Plasma elongation"""
-    delta: Parameter[float]
+    kappa: Parameter[float]
     """Plasma triangularity"""
-    reactor_power: Parameter[float]  # [W]
-    peaking_factor: Parameter[float]  # [dimensionless]
-    T_e: Parameter[float]
-    """Average plasma electron temperature [J]"""
-    shaf_shift: Parameter[float]
+    delta: Parameter[float]
+    """Reactor power"""
+    reactor_power: Parameter[float]
+    """ion density profile descriptors"""
+    n_profile_alpha: Parameter[float]
+    n_e_core: Parameter[float]
+    n_e_ped: Parameter[float]
+    n_e_sep: Parameter[float]
+    """temperature profile descriptors"""
+    T_profile_alpha: Parameter[float]
+    T_profile_beta: Parameter[float]
+    T_e_core: Parameter[float]
+    T_e_ped: Parameter[float]
+    T_e_sep: Parameter[float]
+
     """Shafranov shift"""
-    vertical_shift: Parameter[float]  # [m]
+    shaf_shift: Parameter[float]
 
 
 @dataclass(frozen=True)
@@ -75,49 +88,77 @@ class PlasmaSourceParameters:
         total reactor (thermal) power when operating at 100%
 
     shaf_shift:
-        Shafranov shift
-        shift of the centre of flux surfaces, i.e.
-        mean(min radius, max radius) of the LCFS,
-        towards the outboard radial direction.
-    vertical_shift:
-        how far (upwards) in the z direction is the centre of the plasma
-        shifted compared to the geometric center of the poloidal cross-section.
-    plasma_physics_units:
-        Plasma_physics_units converted variables
+        Shafranov shift shift of the centre of flux surfaces, i.e.
+        mean(min radius, max radius) of the LCFS, towards the outboard radial direction.
     """
 
-    major_radius: float  # [m]
+    major_radius: float  # [cm]
     aspect_ratio: float  # [dimensionless]
+    rho_pedestal: float  # [dimensionless]
     elongation: float  # [dimensionless]
     triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
 
-    rho_pedestal: float  # [dimensionless]
     ion_density_alpha: float  # [dimensionless]
-
     ion_density_core: float  # [1/m^3]
     ion_density_ped: float  # [1/m^3]
     ion_density_sep: float  # [1/m^3]
 
     ion_temperature_alpha: float  # [dimensionless]
     ion_temperature_beta: float  # [dimensionless]
-    ion_temperature_core: (
-        float  # [keV]  # TODO: @Ocean check this - it was in [K] before
-    )
-    ion_temperature_ped: float  # [keV]
-    ion_temperature_sep: float  # [keV]
+    ion_temperature_core: float  # [eV]
+    ion_temperature_ped: float  # [eV]
+    ion_temperature_sep: float  # [eV]
 
     shaf_shift: float  # [m]
-    vertical_shift: float  # [m]
-    plasma_physics_units: PlasmaSourceParameters | None = None
+
+    # mapping from parameter names in params.json (extracted by
+    # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
+    _unit: ClassVar[Mapping[str, str]] = MappingProxyType({
+        "major_radius": "cm",
+        "aspect_ratio": "1",
+        "rho_pedestal": "1",
+        "elongation": "1",
+        "triangularity": "1",
+        "reactor_power": "W",
+        "ion_density_alpha": "1",
+        "ion_density_core": "1/m^3",
+        "ion_density_ped": "1/m^3",
+        "ion_density_sep": "1/m^3",
+        "ion_temperature_alpha": "1",
+        "ion_temperature_beta": "1",
+        "ion_temperature_core": "eV",
+        "ion_temperature_ped": "eV",
+        "ion_temperature_sep": "eV",
+    })
+    _mapping: ClassVar[Mapping[str, str]] = MappingProxyType({
+        "major_radius": "R_0",
+        "aspect_ratio": "A",
+        "rho_pedestal": "profile_rho_ped",
+        "elongation": "kappa",
+        "triangularity": "delta",
+        "ion_density_alpha": "n_profile_alpha",
+        "ion_density_core": "n_e_core",
+        "ion_density_ped": "n_e_ped",
+        "ion_density_sep": "n_e_sep",
+        "ion_temperature_alpha": "T_profile_alpha",
+        "ion_temperature_beta": "T_profile_beta",
+        "ion_temperature_core": "T_e_core",
+        "ion_temperature_ped": "T_e_ped",
+        "ion_temperature_sep": "T_e_sep",
+    })
 
     def __post_init__(self):
         """Check dimensionless variables are sensible.
+        Further checks will be enforced during the initialization of the
+        openmc_plasma_source.tokamak_source object.
 
         Raises
         ------
         GeometryError
             Elongation and aspect ratio must be greater than 1
+        BluemiraWarning
+            extremely large triangularity detected.
         """
         if self.aspect_ratio < 1.0:
             raise GeometryError(
@@ -136,53 +177,33 @@ class PlasmaSourceParameters:
     def minor_radius(self):
         """Calculate minor radius from
         aspect_ratio = major_radius/minor_radius
+
+        Returns
+        -------
+        minor_radius: [cm]
         """
         return self.major_radius / self.aspect_ratio
 
+    @property
+    def pedestal_radius(self):
+        """Calculate the absolute value of the pedestal radius [cm]"""
+        return self.minor_radius * self.rho_pedestal
+
     @classmethod
     def from_parameterframe(cls, params: ParameterFrame):
-        """
-        Convert from si units dataclass
-        :class:`~bluemira.radiation_transport.neutronics.params.PlasmaSourceParameters`
+        """Create an object of this class (PlasmaSourceParameters) from a ParameterFrame
+        (specifically, an object of the class OpenMCNeutronicsSolverParams), with the
+        appropriate units.
 
-        This gives the illusion that self.cgs.x = scale_factor*self.x
-        We rely on the 'frozen' nature of this dataclass so these links don't break.
-        """  # noqa: DOC201
-        conversion = {
-            "major_radius": ("m", "cm"),
-            "reactor_power": ("W", "MW"),
-            "ion_temperature_core": ("J", "keV"),  # TODO: @Ocean
-            "ion_temperature_ped": ("J", "keV"),
-            "ion_temperature_sep": ("J", "keV"),
-            "shaf_shift": ("m", "cm"),
-            "vertical_shift": ("m", "cm"),
-        }
-        mapping = {
-            "aspect_ratio": "A",
-            "major_radius": "R_0",
-            "elongation": "kappa",
-            "triangularity": "delta",
-            "rho_pedestal": "profile_rho_ped",
-            "ion_density_alpha": "n_profile_alpha",
-            "ion_temperature_alpha": "T_profile_alpha",
-            "ion_temperature_beta": "T_profile_beta",
-            "ion_density_core": "n_e_core",
-            "ion_density_ped": "n_e_ped",
-            "ion_density_sep": "n_e_sep",
-            "ion_temperature_core": "T_e_core",
-            "ion_temperature_ped": "T_e_ped",
-            "ion_temperature_sep": "T_e_sep",
-        }
-        param_convert_dict = {}
+        Returns
+        -------
+        self
+            A PlasmaSourceParameters dataclass.
+        """
         param_dict = {}
         for k in fields(cls):
-            if k.name == "plasma_physics_units":
-                continue
-            val = getattr(params, mapping.get(k.name, k.name)).value
-            param_dict[k.name] = val
-            if k.name in conversion:
-                param_convert_dict[k.name] = raw_uc(val, *conversion[k.name])
-            else:
-                param_convert_dict[k.name] = val
+            param = getattr(params, cls._mapping.get(k.name, k.name))
+            numerical_value = param.value_as(cls._unit[k.name])
+            param_dict[k.name] = numerical_value
 
-        return cls(**param_dict, plasma_physics_units=cls(**param_convert_dict))
+        return cls(**param_dict)
