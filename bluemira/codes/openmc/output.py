@@ -30,9 +30,6 @@ from bluemira.radiation_transport.neutronics.make_pre_cell import (
     DivertorPreCellArray,
     PreCellArray,
 )
-from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-    NeutronicsReactor,
-)
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
 )
@@ -132,7 +129,6 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
-        pre_cell_model: NeutronicsReactor,
         cell_arrays: CellStage,
         P_fus_DT: float,
         statepoint_file: str = "",
@@ -179,10 +175,6 @@ class OpenMCResult:
         e_mult_err = total_power_err / dt_neuton_power
         mult_power = (e_mult - 1.0) * dt_neuton_power
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        cell_plasma_facing_area = extract_plasma_facing_areas(
-            cell_arrays, pre_cell_model.blanket, pre_cell_model.divertor
-        )
-
         damage = cls._load_damage(
             statepoint, cell_names, cell_vols, cell_arrays, src_rate
         )
@@ -359,66 +351,6 @@ class OpenMCResult:
             ]
         ]
         return cls._convert_dict_contents(flux_df.to_dict())
-
-    @classmethod
-    def _load_plasma_facing_components_flux_and_heating(
-        cls, statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
-    ):
-        """
-        Parameters
-        ----------
-        cell_names:
-            names of the cells
-
-        Returns
-        -------
-        plasma_facing_components_flux_and_heating:
-            stuff
-
-
-        Notes
-        -----
-        All photonic heating directly from the plasma (e.g. infrared, Brehmsstralung,
-        etc.) are all omitted, because this is a neutron simulation code.
-        (But Brehmsstralung generated within the material is accounted for.)
-        """
-        flux = cls._load_dataframe_from_statepoint(statepoint, "neutron flux at PFS")
-        flux["vol (m^3)"] = flux["cell"].map(cell_vols)
-        flux["flux (m^-2)"] = (
-            raw_uc(flux["mean"].to_numpy(), "cm", "m") * src_rate / flux["vol (m^3)"]
-        )  # "mean" is actually the volume integrated flux (in cm) per source particle.
-        flux["flux %err."] = flux.apply(get_percent_err, axis=1)
-
-        heating = cls._load_dataframe_from_statepoint(
-            statepoint, "volumetric heating at PFS"
-        )
-        heating["cell_name"] = heating["cell"].map(cell_names)
-        heating["area (m^2)"] = heating["cell"].map(cell_plasma_facing_area)
-        heating["heating (W)"] = raw_uc(
-            heating["mean"].to_numpy() * src_rate, "eV/s", "W"
-        )
-        heating["plasma-facing surface heating (W/m^2)"] = (
-            heating["heating (W)"] / heating["area (m^2)"]
-        )
-        heating["heating %err."] = heating.apply(get_percent_err, axis=1)
-
-        plasma_facing_components_flux_and_heating = heating[
-            [
-                "cell",
-                "cell_name",
-                "nuclide",
-                "area (m^2)",
-                "plasma-facing surface heating (W/m^2)",
-                "heating %err.",
-            ]
-        ].merge(
-            flux[["cell", "flux (m^-2)", "flux %err."]],
-            on="cell",
-        )
-        # total number of atomic displacements per second in the cell.
-        return cls._convert_dict_contents(
-            plasma_facing_components_flux_and_heating.to_dict()
-        )
 
     @classmethod
     def _load_damage(cls, statepoint, cell_names, cell_vols, cell_arrays, src_rate):

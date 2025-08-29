@@ -355,7 +355,6 @@ class OpenMCTeardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            self.pre_cell_model,
             self.cell_arrays,
             source_params.P_fus_DT,
             statepoint_file,
