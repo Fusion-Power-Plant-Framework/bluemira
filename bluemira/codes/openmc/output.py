@@ -104,7 +104,6 @@ class OpenMCResult:
     e_mult: float
     e_mult_err: float
     heating: dict
-    neutron_wall_load: dict
     blanket_power: float
     blanket_power_err: float
     divertor_power: float
@@ -114,9 +113,7 @@ class OpenMCResult:
     total_power: float
     total_power_err: float
     mult_power: float
-    """Fluxes and neutron wall loads"""
     fluxes: dict
-    neutron_wall_load: dict
     damage: dict
 
     photon_heat_flux: dict
@@ -186,9 +183,6 @@ class OpenMCResult:
             cell_arrays, pre_cell_model.blanket, pre_cell_model.divertor
         )
 
-        nwl_df = cls._load_neutron_wall_loading(
-            statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
-        )
         damage = cls._load_damage(
             statepoint, cell_names, cell_vols, cell_arrays, src_rate
         )
@@ -217,7 +211,6 @@ class OpenMCResult:
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
             fluxes=all_fluxes,
-            neutron_wall_load=nwl_df,
             mult_power=mult_power,
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
@@ -368,17 +361,26 @@ class OpenMCResult:
         return cls._convert_dict_contents(flux_df.to_dict())
 
     @classmethod
-    def _load_neutron_wall_loading(
+    def _load_plasma_facing_components_flux_and_heating(
         cls, statepoint, cell_names, cell_vols, cell_plasma_facing_area, src_rate
     ):
         """
+        Parameters
+        ----------
+        cell_names:
+            names of the cells
+
+        Returns
+        -------
+        plasma_facing_components_flux_and_heating:
+            stuff
+
+
         Notes
         -----
-        Note that thinner components will have lower [W/m^2] value, because we
-        are measuring ONLY volumetric heating; All photonic heating directly
-        from the plasma (e.g. infrared, Brehmsstralung, etc.) are all omitted, because
-        this is a neutron simulation code. (But Brehmsstralung generated within the
-        material is accounted for.)
+        All photonic heating directly from the plasma (e.g. infrared, Brehmsstralung,
+        etc.) are all omitted, because this is a neutron simulation code.
+        (But Brehmsstralung generated within the material is accounted for.)
         """
         flux = cls._load_dataframe_from_statepoint(statepoint, "neutron flux at PFS")
         flux["vol (m^3)"] = flux["cell"].map(cell_vols)
@@ -395,18 +397,18 @@ class OpenMCResult:
         heating["heating (W)"] = raw_uc(
             heating["mean"].to_numpy() * src_rate, "eV/s", "W"
         )
-        heating["neutron wall load (W/m^2)"] = (
+        heating["plasma-facing surface heating (W/m^2)"] = (
             heating["heating (W)"] / heating["area (m^2)"]
         )
         heating["heating %err."] = heating.apply(get_percent_err, axis=1)
 
-        nwl = heating[
+        plasma_facing_components_flux_and_heating = heating[
             [
                 "cell",
                 "cell_name",
                 "nuclide",
                 "area (m^2)",
-                "neutron wall load (W/m^2)",
+                "plasma-facing surface heating (W/m^2)",
                 "heating %err.",
             ]
         ].merge(
@@ -414,7 +416,9 @@ class OpenMCResult:
             on="cell",
         )
         # total number of atomic displacements per second in the cell.
-        return cls._convert_dict_contents(nwl.to_dict())
+        return cls._convert_dict_contents(
+            plasma_facing_components_flux_and_heating.to_dict()
+        )
 
     @classmethod
     def _load_damage(cls, statepoint, cell_names, cell_vols, cell_arrays, src_rate):
@@ -581,12 +585,8 @@ class OpenMCResult:
         """String representation"""
         ret_str = f"TBR\n{self.tbr:.3f}±{self.tbr_err:.3f}"
         for title, data in zip(
-            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m)"),
-            (
-                self.heating,
-                self.neutron_wall_load,
-                self.photon_heat_flux,
-            ),
+            ("Heating (W)", "Photon Heat Flux (W m)"),
+            (self.heating, self.photon_heat_flux),
             strict=True,
         ):
             ret_str += f"\n{title}\n{self._tabulate(data)}"
@@ -623,8 +623,6 @@ class NeutronicsOutputParams(ParameterFrame):
     P_n_aux: Parameter[float]
     P_n_e_mult: Parameter[float]
     P_n_decay: Parameter[float]
-    avg_NWL: Parameter[float]  # noqa: N815
-    peak_NWL: Parameter[float]  # noqa: N815
     peak_eurofer_dpa_rate: Parameter[float]
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
@@ -643,14 +641,6 @@ class NeutronicsOutputParams(ParameterFrame):
             - result.divertor_power
             - result.vessel_power
         )
-        nwl_value, area = (
-            result.neutron_wall_load["neutron wall load (W/m^2)"],
-            result.neutron_wall_load["area (m^2)"],
-        )
-        average_neutron_wall_load = (
-            nwl_value * area
-        ).sum() / area.sum()  # weighted by area
-        peak_nwl = result.neutron_wall_load["neutron wall load (W/m^2)"].max()
         peak_eurofer_dpa_rate = result.damage["eurofer damage"]["dpa/fpy"].max()
         peak_bb_iron_dpa_rate = result.damage["blanket damage"]["dpa/fpy"].max()
         peak_vv_iron_dpa_rate = result.damage["VV damage"]["dpa/fpy"].max()
@@ -666,8 +656,6 @@ class NeutronicsOutputParams(ParameterFrame):
             Parameter(
                 "P_n_decay", np.nan, unit="W", source=source
             ),  # can't get this without coupling to D1S/R2S/involving fispact
-            Parameter("avg_NWL", average_neutron_wall_load, unit="W/m^2", source=source),
-            Parameter("peak_NWL", peak_nwl, unit="W/m^2", source=source),
             Parameter(
                 "peak_eurofer_dpa_rate",
                 peak_eurofer_dpa_rate,
