@@ -343,8 +343,41 @@ class ProcessSolverParams(MappedParameterFrame):
     r_tf_inboard_out: Parameter[float]
     """Outboard Radius of the TF coil inboard leg tapered region [meter]."""
 
+    T_profile_alpha: Parameter[float]
+    """Temperature profile alpha exponent [dimensionless]."""
+
+    T_profile_beta: Parameter[float]
+    """Temperature profile beta exponent [dimensionless]."""
+
+    n_profile_alpha: Parameter[float]
+    """Density profile alpha exponent [dimensionless]."""
+
+    profile_rho_ped: Parameter[float]
+    """Pedestal location in normalized radius [dimensionless]."""
+
     T_e: Parameter[float]
-    """Average plasma electron temperature [kiloelectron_volt]."""
+    """Volumed-averaged plasma electron temperature [kiloelectron_volt]."""
+
+    T_e_core: Parameter[float]
+    """Core electron temperature [kiloelectron_volt]."""
+
+    T_e_ped: Parameter[float]
+    """Pedestal electron temperature [kiloelectron_volt]."""
+
+    T_e_sep: Parameter[float]
+    """Electron temperature at the separatrix [kiloelectron_volt]."""
+
+    n_e: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+
+    n_e_core: Parameter[float]
+    """Core electron density [1/metre ** 3]."""
+
+    n_e_ped: Parameter[float]
+    """Pedestal electron density [1/metre ** 3]."""
+
+    n_e_sep: Parameter[float]
+    """Electron density at the separatrix [1/metre ** 3]."""
 
     tk_tf_outboard: Parameter[float]
     """TF coil outboard thickness [meter]."""
