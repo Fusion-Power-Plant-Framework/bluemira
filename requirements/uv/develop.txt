@@ -456,7 +456,7 @@ urllib3==2.5.0
     # via requests
 virtualenv==20.34.0
     # via pre-commit
-vtk==9.3.1
+vtk==9.5.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista

@@ -194,7 +194,7 @@ tzdata==2025.2
     # via pandas
 urllib3==2.5.0
     # via requests
-vtk==9.3.1
+vtk==9.5.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
