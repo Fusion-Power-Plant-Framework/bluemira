@@ -34,9 +34,9 @@ def make_tokamak_source(
     Notes
     -----
     The same source material referenced by openmc_plasma_source is used:
-    [1] : Fausser et al, 'Tokamak D-T neutron source models for different
-    plasma physics confinement modes', Fus. Eng. and Design,
-    https://doi.org/10.1016/j.fusengdes.2012.02.025
+    .. doi:: 10.1016/j.fusengdes.2012.02.025
+      :title: Fausser et al, 'Tokamak D-T neutron source models for different
+              plasma physics confinement modes', Fus. Eng. and Design,
     """
     return tokamak_source(
         # tokamak geometry
