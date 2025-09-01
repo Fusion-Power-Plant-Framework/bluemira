@@ -42,21 +42,21 @@ def make_tokamak_source(
         # tokamak geometry
         major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
         minor_radius=raw_uc(source_parameters.minor_radius, "m", "cm"),
-        elongation=source_parameters.elongation,  # 0.44789
-        triangularity=source_parameters.triangularity,  # 0.270
+        elongation=source_parameters.elongation,
+        triangularity=source_parameters.triangularity,
         mode="H",
         # plasma geometry: ion stuff
-        ion_density_centre=source_parameters.ion_density_core,  # m^-3 # 1.09e20
-        ion_density_pedestal=source_parameters.ion_density_ped,  # m^-3 # 1.09e20
-        ion_density_peaking_factor=source_parameters.ion_density_alpha,  # dimensionless
-        ion_density_separatrix=source_parameters.ion_density_sep,  # m^-3 # 3e19
-        ion_temperature_centre=source_parameters.ion_temperature_core,  # eV # 45.9e3
-        ion_temperature_pedestal=source_parameters.ion_temperature_ped,  # eV # 6.09e3
-        ion_temperature_separatrix=source_parameters.ion_temperature_sep,  # eV # 0.1e3
-        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,  # dimensionless
-        ion_temperature_beta=source_parameters.ion_temperature_beta,  # dimensionless
+        ion_density_centre=source_parameters.ion_density_core,
+        ion_density_pedestal=source_parameters.ion_density_ped,
+        ion_density_peaking_factor=source_parameters.ion_density_alpha,
+        ion_density_separatrix=source_parameters.ion_density_sep,
+        ion_temperature_centre=source_parameters.ion_temperature_core,
+        ion_temperature_pedestal=source_parameters.ion_temperature_ped,
+        ion_temperature_separatrix=source_parameters.ion_temperature_sep,
+        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,
+        ion_temperature_beta=source_parameters.ion_temperature_beta,
         # shaping
-        shafranov_factor=source_parameters.shaf_shift,  # dimensionless, in terms of fraction of minor_radius. # 0.44789
+        shafranov_factor=source_parameters.shaf_shift,
         pedestal_radius=source_parameters.pedestal_radius,
         # plasma composition
         fuel={"D": 0.5, "T": 0.5},

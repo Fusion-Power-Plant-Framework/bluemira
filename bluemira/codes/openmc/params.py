@@ -110,7 +110,7 @@ class PlasmaSourceParameters:
     ion_temperature_ped: float  # [eV]
     ion_temperature_sep: float  # [eV]
 
-    shaf_shift: float  # [m]
+    shaf_shift: float  # [cm]
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
@@ -130,6 +130,7 @@ class PlasmaSourceParameters:
         "ion_temperature_core": "eV",
         "ion_temperature_ped": "eV",
         "ion_temperature_sep": "eV",
+        "shaf_shift": "cm",
     })
     _mapping: ClassVar[Mapping[str, str]] = MappingProxyType({
         "major_radius": "R_0",
