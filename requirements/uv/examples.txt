@@ -71,7 +71,7 @@ exceptiongroup==1.3.0
     # via
     #   anyio
     #   ipython
-executing==2.2.0
+executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
@@ -79,7 +79,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.1
+fonttools==4.59.2
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -117,7 +117,7 @@ jinja2==3.1.6
     #   jupyterlab
     #   jupyterlab-server
     #   nbconvert
-joblib==1.5.1
+joblib==1.5.2
     # via scikit-learn
 json5==0.12.1
     # via jupyterlab-server
@@ -146,7 +146,7 @@ jupyter-core==5.8.1
     #   nbformat
 jupyter-events==0.12.0
     # via jupyter-server
-jupyter-lsp==2.2.6
+jupyter-lsp==2.3.0
     # via jupyterlab
 jupyter-server==2.17.0
     # via
@@ -165,7 +165,7 @@ jupyterlab-server==2.27.3
     # via
     #   jupyterlab
     #   notebook
-jupytext==1.17.2
+jupytext==1.17.3
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.9
     # via matplotlib
@@ -198,7 +198,7 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-mistune==3.1.3
+mistune==3.1.4
     # via nbconvert
 msgpack==1.1.1
     # via blosc2
@@ -296,7 +296,7 @@ pooch==1.8.2
     # via pyvista
 prometheus-client==0.22.1
     # via jupyter-server
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via ipython
 psutil==7.0.0
     # via ipykernel
@@ -372,7 +372,7 @@ rich==14.1.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
@@ -397,7 +397,7 @@ six==1.17.0
     #   rfc3339-validator
 sniffio==1.3.1
     # via anyio
-soupsieve==2.7
+soupsieve==2.8
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
