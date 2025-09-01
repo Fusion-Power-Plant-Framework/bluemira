@@ -34,7 +34,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.1
+fonttools==4.59.2
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -46,7 +46,7 @@ idna==3.10
     # via requests
 imageio==2.37.0
     # via bluemira (pyproject.toml)
-joblib==1.5.1
+joblib==1.5.2
     # via scikit-learn
 kiwisolver==1.4.9
     # via matplotlib

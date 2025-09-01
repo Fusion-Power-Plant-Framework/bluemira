@@ -44,7 +44,7 @@ contourpy==1.3.2
     #   matplotlib
 coolprop==7.0.0
     # via bluemira (pyproject.toml)
-coverage==7.10.5
+coverage==7.10.6
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -65,7 +65,7 @@ exceptiongroup==1.3.0
     # via
     #   ipython
     #   pytest
-executing==2.2.0
+executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
@@ -75,7 +75,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.1
+fonttools==4.59.2
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -113,7 +113,7 @@ jinja2==3.1.6
     #   pytest-html
     #   sphinx
     #   sphinx-autoapi
-joblib==1.5.1
+joblib==1.5.2
     # via scikit-learn
 jsonschema==4.25.1
     # via nbformat
@@ -131,7 +131,7 @@ jupyter-core==5.8.1
     #   jupyter-client
     #   nbclient
     #   nbformat
-jupytext==1.17.2
+jupytext==1.17.3
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.9
     # via matplotlib
@@ -263,7 +263,7 @@ pooch==1.8.2
     # via pyvista
 pre-commit==4.3.0
     # via bluemira (pyproject.toml)
-prompt-toolkit==3.0.51
+prompt-toolkit==3.0.52
     # via ipython
 psutil==7.0.0
     # via ipykernel
@@ -343,7 +343,7 @@ rich==14.1.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.27.0
+rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
