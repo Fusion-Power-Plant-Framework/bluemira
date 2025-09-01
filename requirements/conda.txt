@@ -3,4 +3,4 @@ h5py==3.13.0
 pybind11==3.0.1
 pybind11-global==3.0.1
 pytools==2025.2.3
-vtk==9.3.1
+vtk==9.5.1
