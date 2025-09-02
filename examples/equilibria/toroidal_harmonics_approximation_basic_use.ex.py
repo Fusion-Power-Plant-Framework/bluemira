@@ -56,7 +56,8 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    toroidal_harmonic_approximation,
+    optimisation_toroidal_harmonic_approximation,
+    brute_force_toroidal_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
 
@@ -109,45 +110,45 @@ plt.show()
 # Information needed for TH Approximation
 # The acceptable fit metric value used here forces the approximation to use 10 degrees
 psi_norm = 0.95
-(
-    error,
-    combo,
-    cos_degrees,
-    sin_degrees,
-    total_psi,
-    vacuum_psi,
-    cos_amplitudes,
-    sin_amplitudes,
-    th_params,
-) = toroidal_harmonic_approximation(
-    eq=eq,
-    psi_norm=psi_norm,
-    plot=True,
-    tol=0.01,  # 0.2,  # Use this for SN
-)
+# (
+#     error,
+#     combo,
+#     cos_degrees,
+#     sin_degrees,
+#     total_psi,
+#     vacuum_psi,
+#     cos_amplitudes,
+#     sin_amplitudes,
+#     th_params,
+# ) = brute_force_toroidal_harmonic_approximation(
+#     eq=eq,
+#     psi_norm=psi_norm,
+#     plot=True,
+#     tol=0.01,  # 0.2,  # Use this for SN
+# )
 # Some notes:
 # The default values work for DN
 # For SN, use default max error and tol=0.2
 
-# %%
-# NOTE
-
-# Removed the rest of this notebook. Can add own constraints here to play around with
-# I will be updating all the example notebooks
-
-
-# TODO tikhonov and SN - SN version of the prev version of this notebook
-# experiment with convergence parameter, tolerance etc
-# just need legs on bottom
-# keep isoflux points on the actual legs - give it nothing to do to see what it does
-# then can try making the legs mvoe a tad after
-
-# doing nothin - should stay the same and _should_ satisfy all the constraints
-# try to move whichever leg has the most coils near it
-# could
 
 # %%
-print(f"Combo used = {combo}")
+# using optimisation fn :
+(
+    th_params,
+    cos_amplitudes,
+    sin_amplitudes,
+    cos_degrees,
+    sin_degrees,
+    fit_metric_value,
+    approx_total_psi,
+    vacuum_psi_approx,
+) = optimisation_toroidal_harmonic_approximation(
+    eq=eq,
+    psi_norm=psi_norm,
+)
+
+# %%
+# print(f"Combo used = {combo}")
 print(f"cos degrees used = {cos_degrees}")
 print(f"sin degrees used = {sin_degrees}")
 

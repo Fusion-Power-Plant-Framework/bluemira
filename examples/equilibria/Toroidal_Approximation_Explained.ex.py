@@ -105,7 +105,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     toroidal_harmonic_approximate_psi,
-    toroidal_harmonic_approximation,
+    brute_force_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
@@ -312,6 +312,6 @@ print(f"fit metric value = {fit_metric_value}")
     fit_metric,
     approx_total_psi,
     approx_coilset_psi,
-) = toroidal_harmonic_approximation(
+) = brute_force_toroidal_harmonic_approximation(
     eq=eq, th_params=th_params, plot=True, psi_norm=psi_norm
 )
