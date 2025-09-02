@@ -65,12 +65,23 @@ class Conductor:
         """
         self.name = name
         self.dx_jacket = dx_jacket
-        self.dy_jacket = dy_jacket
+        self._dy_jacket = dy_jacket
         self.dx_ins = dx_ins
-        self.dy_ins = dy_ins
+        self._dy_ins = dy_ins
         self.mat_ins = mat_ins
         self.mat_jacket = mat_jacket
         self.cable = cable
+
+
+    @property
+    def dy_jacket(self):
+        """y-thickness of the jacket [m]"""
+        return self._dy_jacket
+    
+    @property
+    def dy_ins(self):
+        """y-thickness of the ins [m]"""
+        return self._dy_ins
 
     @property
     def dx(self):
@@ -744,12 +755,16 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             string identifier
 
         """
+        dy_jacket=dx_jacket
+        dy_ins=dx_ins
         super().__init__(
             cable=cable,
             mat_jacket=mat_jacket,
             mat_ins=mat_ins,
             dx_jacket=dx_jacket,
+            dy_jacket=dy_jacket,
             dx_ins=dx_ins,
+            dy_ins=dy_ins,
             name=name,
         )
 

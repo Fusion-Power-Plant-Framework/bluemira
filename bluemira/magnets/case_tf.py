@@ -65,70 +65,6 @@ def _dx_at_radius(radius: float, rad_theta: float) -> float:
     return radius * np.tan(rad_theta / 2)
 
 
-class CaseGeometry(ABC):
-    """
-    Abstract base class for TF case geometry profiles.
-
-    Provides access to radial dimensions and toroidal width calculations
-    as well as geometric plotting and area calculation interfaces.
-
-    Parameters
-    ----------
-    Ri:
-        External radius of the TF coil case [m].
-    Rk:
-        Internal radius of the TF coil case [m].
-    theta_TF:
-        Toroidal angular span of the TF coil [degrees].
-    """
-
-    def __init__(self, Ri: float, Rk: float, theta_TF: float):
-        self.Ri = Ri
-        self.Rk = Rk
-        self.theta_TF = theta_TF
-        self.rad_theta_TF = np.radians(self.theta_TF)  # property if theta_TF gets reset?
-
-    @property
-    @abstractmethod
-    def area(self) -> float:
-        """
-        Compute the cross-sectional area of the TF case.
-
-        Returns
-        -------
-        :
-            Cross-sectional area [m²] enclosed by the case geometry.
-
-        Notes
-        -----
-        Must be implemented by each specific geometry class.
-        """
-
-    @abstractmethod
-    def plot(self, ax: plt.Axes = None, *, show: bool = False) -> plt.Axes:
-        """
-        Plot the cross-sectional geometry of the TF case.
-
-        Parameters
-        ----------
-        ax:
-            Axis on which to draw the geometry. If None, a new figure and axis are
-            created.
-        show:
-            If True, the plot is displayed immediately using plt.show().
-            Default is False.
-
-        Returns
-        -------
-        :
-            The axis object containing the plot.
-
-        Notes
-        -----
-        Must be implemented by each specific geometry class.
-        """
-
-
 @dataclass
 class TrapezoidalGeometryOptVariables(OptVariablesFrame):
     """Optimisiation variables for Trapezoidal Geometry."""
@@ -318,7 +254,7 @@ class WedgedGeometry(GeometryParameterisation[WedgedGeometryOptVariables]):
         return make_polygon(np.vstack((arc_outer, arc_inner)), label=label)
 
 
-class BaseCaseTF(CaseGeometry, ABC):
+class BaseCaseTF(ABC):
     """
     Abstract Base Class for Toroidal Field Coil Case configurations.
 
@@ -355,13 +291,11 @@ class BaseCaseTF(CaseGeometry, ABC):
         name:
             String identifier for the TF coil case instance (default is "BaseCaseTF").
         """
-        super().__init__(
-            Ri=Ri,
-            theta_TF=theta_TF,
-            mat_case=mat_case,
-            WPs=WPs,
-            name=name,
-        )
+        self.Ri=Ri,
+        self.theta_TF=theta_TF,
+        self.mat_case=mat_case,
+        self.WPs=WPs,
+        self.name=name,
         self.dy_ps = dy_ps
         self.dy_vault = dy_vault
         # Toroidal half-length of the coil case at its maximum radial position [m]

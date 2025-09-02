@@ -727,7 +727,12 @@ class RectangularCable(ABCCable):
             name=name,
             **props,
         )
-        self.dx = dx
+        self._dx = dx
+
+    @property
+    def dx(self) -> float:
+        """Half Cable dimension in the x direction [m]"""
+        return self._dx
 
     @property
     def dy(self) -> float:
