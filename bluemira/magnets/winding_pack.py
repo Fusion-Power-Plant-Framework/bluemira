@@ -6,28 +6,13 @@
 
 """Winding pack module"""
 
-from dataclasses import dataclass
 from typing import Any, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matproplib import OperationalConditions
 
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
-
-
-@dataclass
-class WindingPackParams(ParameterFrame):
-    """
-    Parameters needed for the Winding Pack
-    """
-
-    nx: Parameter[int]
-    """Number of conductors along the x-axis."""
-    ny: Parameter[int]
-    """Number of conductors along the y-axis."""
 
 
 class WindingPack:
@@ -45,10 +30,9 @@ class WindingPack:
     """
 
     _name_in_registry_: ClassVar[str] = "WindingPack"
-    param_cls: type[WindingPackParams] = WindingPackParams
 
     def __init__(
-        self, conductor: Conductor, params: ParameterFrameLike, name: str = "WindingPack"
+        self, conductor: Conductor, nx: int, ny: int, name: str = "WindingPack"
     ):
         """
         Initialize a WindingPack instance.
@@ -57,29 +41,27 @@ class WindingPack:
         ----------
         conductor:
             The conductor instance.
-        params:
-            Structure containing the input parameters. Keys are:
-                - nx: int
-                - ny: int
-
-            See :class:`~bluemira.magnets.winding_pack.WindingPackParams`
-            for parameter details.
+        nx:
+            Number of conductors along the x-axis.
+        ny:
+            Number of conductors along the y-axis.
         name:
             Name of the winding pack instance.
         """
         self.conductor = conductor
-        self.params = params
+        self.nx = nx
+        self.ny = ny
         self.name = name
 
     @property
     def dx(self) -> float:
         """Return the half width of the winding pack [m]."""
-        return self.conductor.dx * self.params.nx.value
+        return self.conductor.dx * self.nx
 
     @property
     def dy(self) -> float:
         """Return the half height of the winding pack [m]."""
-        return self.conductor.dy * self.params.ny.value
+        return self.conductor.dy * self.ny
 
     @property
     def area(self) -> float:
@@ -89,7 +71,7 @@ class WindingPack:
     @property
     def n_conductors(self) -> int:
         """Return the total number of conductors."""
-        return self.params.nx.value * self.params.ny.value
+        return self.nx * self.ny
 
     @property
     def jacket_area(self) -> float:
@@ -111,7 +93,7 @@ class WindingPack:
         :
             Stiffness along the x-axis [N/m].
         """
-        return self.conductor.Kx(op_cond) * self.params.ny.value / self.params.nx.value
+        return self.conductor.Kx(op_cond) * self.ny / self.nx
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -128,7 +110,7 @@ class WindingPack:
         :
             Stiffness along the y-axis [N/m].
         """
-        return self.conductor.Ky(op_cond) * self.params.nx.value / self.params.ny.value
+        return self.conductor.Ky(op_cond) * self.nx / self.ny
 
     def plot(
         self,
@@ -176,8 +158,8 @@ class WindingPack:
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
         if not homogenized:
-            for i in range(self.params.nx.value):
-                for j in range(self.params.ny.value):
+            for i in range(self.nx):
+                for j in range(self.ny):
                     xc_c = xc - self.dx + (2 * i + 1) * self.conductor.dx
                     yc_c = yc - self.dy + (2 * j + 1) * self.conductor.dy
                     self.conductor.plot(xc=xc_c, yc=yc_c, ax=ax)
@@ -198,8 +180,8 @@ class WindingPack:
         return {
             "name": self.name,
             "conductor": self.conductor.to_dict(),
-            "nx": self.params.nx.value,
-            "ny": self.params.ny.value,
+            "nx": self.nx,
+            "ny": self.ny,
         }
 
     @classmethod

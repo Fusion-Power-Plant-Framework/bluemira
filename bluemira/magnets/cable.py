@@ -24,7 +24,6 @@ from bluemira.base.look_and_feel import (
     bluemira_print,
     bluemira_warn,
 )
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.magnets.strand import (
     Strand,
     SuperconductingStrand,
@@ -34,26 +33,6 @@ from bluemira.magnets.utils import reciprocal_summation, summation
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike
-
-
-@dataclass
-class CableParams(ParameterFrame):
-    """
-    Parameters needed for the TF cable
-    """
-
-    n_sc_strand: Parameter[int]
-    """Number of superconducting strands."""
-    n_stab_strand: Parameter[int]
-    """Number of stabilizing strands."""
-    d_cooling_channel: Parameter[float]
-    """Diameter of the cooling channel [m]."""
-    void_fraction: Parameter[float]
-    """Ratio of material volume to total volume [unitless]."""
-    cos_theta: Parameter[float]
-    """Correction factor for twist in the cable layout."""
 
 
 class ABCCable(ABC):
@@ -70,13 +49,16 @@ class ABCCable(ABC):
     """
 
     _name_in_registry_: str | None = None  # Abstract base classes should NOT register
-    param_cls: type[CableParams] = CableParams
 
     def __init__(
         self,
         sc_strand: SuperconductingStrand,
         stab_strand: Strand,
-        params: ParameterFrameLike,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float,
+        cos_theta: float,
         name: str = "Cable",
         **props,
     ):
@@ -94,26 +76,29 @@ class ABCCable(ABC):
             The superconducting strand.
         stab_strand:
             The stabilizer strand.
-        params:
-            Structure containing the input parameters. Keys are:
-                - n_sc_strand: int
-                - n_stab_strand: int
-                - d_cooling_channel: float
-                - void_fraction: float = 0.725
-                - cos_theta: float = 0.97
-
-            See :class:`~bluemira.magnets.cable.CableParams`
-            for parameter details.
+        n_sc_strand:
+            Number of superconducting strands.
+        n_stab_strand:
+            Number of stabilizing strands.
+        d_cooling_channel:
+            Diameter of the cooling channel [m].
+        void_fraction:
+            Ratio of material volume to total volume [unitless].
+        cos_theta:
+            Correction factor for twist in the cable layout.
         name:
             Identifier for the cable instance.
         """
-        super().__init__(params)  # fix when split into builders and designers
-
         # assign
         # Setting self.name triggers automatic instance registration
         self.name = name
         self.sc_strand = sc_strand
         self.stab_strand = stab_strand
+        self.n_sc_strand = n_sc_strand
+        self.n_stab_strand = n_stab_strand
+        self.d_cooling_channel = d_cooling_channel
+        self.void_fraction = void_fraction
+        self.cos_theta = cos_theta
 
         youngs_modulus: Callable[[Any, OperationalConditions], float] | float | None = (
             props.pop("E", None)
@@ -224,24 +209,24 @@ class ABCCable(ABC):
     @property
     def area_stab(self) -> float:
         """Area of the stabilizer region"""
-        return self.stab_strand.area * self.params.n_stab_strand.value
+        return self.stab_strand.area * self.n_stab_strand
 
     @property
     def area_sc(self) -> float:
         """Area of the superconductor region"""
-        return self.sc_strand.area * self.params.n_sc_strand.value
+        return self.sc_strand.area * self.n_sc_strand
 
     @property
     def area_cc(self) -> float:
         """Area of the cooling channel"""
-        return self.params.d_cooling_channel.value**2 / 4 * np.pi
+        return self.d_cooling_channel**2 / 4 * np.pi
 
     @property
     def area(self) -> float:
         """Area of the cable considering the void fraction"""
         return (
             self.area_sc + self.area_stab
-        ) / self.params.void_fraction.value / self.params.cos_theta.value + self.area_cc
+        ) / self.void_fraction / self.cos_theta + self.area_cc
 
     def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -425,7 +410,7 @@ class ABCCable(ABC):
             - It modifies the internal state `self._n_stab_strand`, which may affect
               subsequent evaluations unless restored.
             """
-            self.params.n_stab_strand.value = n_stab
+            self.n_stab_strand = n_stab
 
             solution = self._temperature_evolution(
                 t0=t0,
@@ -452,7 +437,7 @@ class ABCCable(ABC):
             )
 
         # Here we re-ensure the n_stab_strand to be an integer
-        self.params.n_stab_strand.value = int(np.ceil(self.params.n_stab_strand.value))
+        self.n_stab_strand = int(np.ceil(self.n_stab_strand))
 
         solution = self._temperature_evolution(t0, tf, initial_temperature, B_fun, I_fun)
         final_temperature = solution.y[0][-1]
@@ -462,13 +447,13 @@ class ABCCable(ABC):
                 f"Final temperature ({final_temperature:.2f} K) exceeds target "
                 f"temperature "
                 f"({target_temperature} K) even with maximum n_stab = "
-                f"{self.params.n_stab_strand.value}."
+                f"{self.n_stab_strand}."
             )
             raise ValueError(
                 "Optimization failed to keep final temperature ≤ target. "
                 "Try increasing the upper bound of n_stab or adjusting cable parameters."
             )
-        bluemira_print(f"Optimal n_stab: {self.params.n_stab_strand.value}")
+        bluemira_print(f"Optimal n_stab: {self.n_stab_strand}")
         bluemira_print(
             f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
         )
@@ -484,9 +469,9 @@ class ABCCable(ABC):
                 f"Target T: {target_temperature:.2f} K\n"
                 f"Initial T: {initial_temperature:.2f} K\n"
                 f"SC Strand: {self.sc_strand.name}\n"
-                f"n. sc. strand = {self.params.n_sc_strand.value}\n"
+                f"n. sc. strand = {self.n_sc_strand}\n"
                 f"Stab. strand = {self.stab_strand.name}\n"
-                f"n. stab. strand = {self.params.n_stab_strand.value}\n"
+                f"n. stab. strand = {self.n_stab_strand}\n"
             ),
         )
 
@@ -550,9 +535,7 @@ class ABCCable(ABC):
         points_ext = np.vstack((p0, p1, p2, p3, p0)) + pc
         points_cc = (
             np.array([
-                np.array([np.cos(theta), np.sin(theta)])
-                * self.params.d_cooling_channel.value
-                / 2
+                np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
                 for theta in np.linspace(0, np.radians(360), 19)
             ])
             + pc
@@ -583,16 +566,16 @@ class ABCCable(ABC):
             f"dx: {self.dx}\n"
             f"dy: {self.dy}\n"
             f"aspect ratio: {self.aspect_ratio}\n"
-            f"d cooling channel: {self.params.d_cooling_channel.value}\n"
-            f"void fraction: {self.params.void_fraction.value}\n"
-            f"cos(theta): {self.params.cos_theta.value}\n"
+            f"d cooling channel: {self.d_cooling_channel}\n"
+            f"void fraction: {self.void_fraction}\n"
+            f"cos(theta): {self.cos_theta}\n"
             f"----- sc strand -------\n"
             f"sc strand: {self.sc_strand!s}\n"
             f"----- stab strand -------\n"
             f"stab strand: {self.stab_strand!s}\n"
             f"-----------------------\n"
-            f"n sc strand: {self.params.n_sc_strand.value}\n"
-            f"n stab strand: {self.params.n_stab_strand.value}"
+            f"n sc strand: {self.n_sc_strand}\n"
+            f"n stab strand: {self.n_stab_strand}"
         )
 
     def to_dict(self) -> dict[str, str | float | int | dict[str, Any]]:
@@ -606,11 +589,11 @@ class ABCCable(ABC):
         """
         return {
             "name": self.name,
-            "n_sc_strand": self.params.n_sc_strand.value,
-            "n_stab_strand": self.params.n_stab_strand.value,
-            "d_cooling_channel": self.params.d_cooling_channel.value,
-            "void_fraction": self.params.void_fraction.value,
-            "cos_theta": self.params.cos_theta.value,
+            "n_sc_strand": self.n_sc_strand,
+            "n_stab_strand": self.n_stab_strand,
+            "d_cooling_channel": self.d_cooling_channel,
+            "void_fraction": self.void_fraction,
+            "cos_theta": self.cos_theta,
             "sc_strand": self.sc_strand.to_dict(),
             "stab_strand": self.stab_strand.to_dict(),
             **{k: getattr(k)() for k in self._props},
@@ -679,16 +662,6 @@ class ABCCable(ABC):
         )
 
 
-@dataclass
-class RectangularCableParams(CableParams):
-    """
-    Parameters needed for the TF cable
-    """
-
-    dx: Parameter[float]
-    """Cable half-width in the x-direction [m]."""
-
-
 class RectangularCable(ABCCable):
     """
     Cable with a rectangular cross-section.
@@ -698,13 +671,17 @@ class RectangularCable(ABCCable):
     """
 
     _name_in_registry_ = "RectangularCable"
-    param_cls: type[RectangularCableParams] = RectangularCableParams
 
     def __init__(
         self,
         sc_strand: SuperconductingStrand,
         stab_strand: Strand,
-        params: ParameterFrameLike,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float,
+        cos_theta: float,
+        dx: float,
         name: str = "RectangularCable",
         **props,
     ):
@@ -722,17 +699,18 @@ class RectangularCable(ABCCable):
             Superconducting strand.
         stab_strand:
             Stabilizer strand.
-        params:
-            Structure containing the input parameters. Keys are:
-                - dx: float
-                - n_sc_strand: int
-                - n_stab_strand: int
-                - d_cooling_channel: float
-                - void_fraction: float = 0.725
-                - cos_theta: float = 0.97
-
-            See :class:`~bluemira.magnets.cable.RectangularCableParams`
-            for parameter details.
+        n_sc_strand:
+            Number of superconducting strands.
+        n_stab_strand:
+            Number of stabilizing strands.
+        d_cooling_channel:
+            Diameter of the cooling channel [m].
+        void_fraction:
+            Ratio of material volume to total volume [unitless].
+        cos_theta:
+            Correction factor for twist in the cable layout.
+        dx:
+            Cable half-width in the x-direction [m].
         name:
             Name of the cable
         props:
@@ -741,26 +719,26 @@ class RectangularCable(ABCCable):
         super().__init__(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            params=params,
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
             name=name,
             **props,
         )
-
-    @property
-    def dx(self) -> float:
-        """Half Cable dimension in the x direction [m]"""
-        return self.params.dx.value
+        self.dx = dx
 
     @property
     def dy(self) -> float:
         """Half Cable dimension in the y direction [m]"""
-        return self.area / self.params.dx.value / 4
+        return self.area / self.dx / 4
 
     # Decide if this function shall be a setter.
     # Defined as "normal" function to underline that it modifies dx.
     def set_aspect_ratio(self, value: float):
         """Modify dx in order to get the given aspect ratio"""
-        self.params.dx.value = np.sqrt(value * self.area) / 2
+        self.dx = np.sqrt(value * self.area) / 2
 
     # OD homogenized structural properties
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -778,7 +756,7 @@ class RectangularCable(ABCCable):
         :
             Homogenized stiffness in the x-direction [Pa].
         """
-        return self.E(op_cond) * self.dy / self.params.dx.value
+        return self.E(op_cond) * self.dy / self.dx
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -795,7 +773,7 @@ class RectangularCable(ABCCable):
         :
             Homogenized stiffness in the y-direction [Pa].
         """
-        return self.E(op_cond) * self.params.dx.value / self.dy
+        return self.E(op_cond) * self.dx / self.dy
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -808,7 +786,7 @@ class RectangularCable(ABCCable):
         """
         data = super().to_dict()
         data.update({
-            "dx": self.params.dx.value,
+            "dx": self.dx,
             "aspect_ratio": self.aspect_ratio,
         })
         return data
@@ -927,13 +905,16 @@ class SquareCable(ABCCable):
     """
 
     _name_in_registry_ = "SquareCable"
-    param_cls: type[CableParams] = CableParams
 
     def __init__(
         self,
         sc_strand: SuperconductingStrand,
         stab_strand: Strand,
-        params: ParameterFrameLike,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float,
+        cos_theta: float,
         name: str = "SquareCable",
         **props,
     ):
@@ -951,16 +932,16 @@ class SquareCable(ABCCable):
             strand of the superconductor
         stab_strand:
             strand of the stabilizer
-        params:
-            Structure containing the input parameters. Keys are:
-                - n_sc_strand: int
-                - n_stab_strand: int
-                - d_cooling_channel: float
-                - void_fraction: float = 0.725
-                - cos_theta: float = 0.97
-
-            See :class:`~bluemira.magnets.cable.CableParams`
-            for parameter details.
+        n_sc_strand:
+            Number of superconducting strands.
+        n_stab_strand:
+            Number of stabilizing strands.
+        d_cooling_channel:
+            Diameter of the cooling channel [m].
+        void_fraction:
+            Ratio of material volume to total volume [unitless].
+        cos_theta:
+            Correction factor for twist in the cable layout.
         name:
             cable string identifier
 
@@ -971,7 +952,11 @@ class SquareCable(ABCCable):
         super().__init__(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            params=params,
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
             name=name,
             **props,
         )
@@ -1084,13 +1069,15 @@ class RoundCable(ABCCable):
     around a central cooling channel.
     """
 
-    param_cls: type[CableParams] = CableParams
-
     def __init__(
         self,
         sc_strand: SuperconductingStrand,
         stab_strand: Strand,
-        params: ParameterFrameLike,
+        n_sc_strand: int,
+        n_stab_strand: int,
+        d_cooling_channel: float,
+        void_fraction: float,
+        cos_theta: float,
         name: str = "RoundCable",
         **props,
     ):
@@ -1103,23 +1090,27 @@ class RoundCable(ABCCable):
             strand of the superconductor
         stab_strand:
             strand of the stabilizer
-        params:
-            Structure containing the input parameters. Keys are:
-                - n_sc_strand: int
-                - n_stab_strand: int
-                - d_cooling_channel: float
-                - void_fraction: float = 0.725
-                - cos_theta: float = 0.97
-
-            See :class:`~bluemira.magnets.cable.CableParams`
-            for parameter details.
+        n_sc_strand:
+            Number of superconducting strands.
+        n_stab_strand:
+            Number of stabilizing strands.
+        d_cooling_channel:
+            Diameter of the cooling channel [m].
+        void_fraction:
+            Ratio of material volume to total volume [unitless].
+        cos_theta:
+            Correction factor for twist in the cable layout.
         name:
             cable string identifier
         """
         super().__init__(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            params=params,
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
             name=name,
             **props,
         )
@@ -1223,9 +1214,7 @@ class RoundCable(ABCCable):
 
         points_cc = (
             np.array([
-                np.array([np.cos(theta), np.sin(theta)])
-                * self.params.d_cooling_channel.value
-                / 2
+                np.array([np.cos(theta), np.sin(theta)]) * self.d_cooling_channel / 2
                 for theta in np.linspace(0, np.radians(360), 19)
             ])
             + pc

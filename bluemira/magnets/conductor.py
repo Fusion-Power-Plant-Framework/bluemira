@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
@@ -16,31 +15,12 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
 from bluemira.magnets.utils import reciprocal_summation, summation
 
 if TYPE_CHECKING:
     from matproplib import OperationalConditions
     from matproplib.material import Material
-
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike
-
-
-@dataclass
-class ConductorParams(ParameterFrame):
-    """
-    Parameters needed for the conductor
-    """
-
-    dx_jacket: Parameter[float]
-    """x-thickness of the jacket [m]."""
-    dy_jacket: Parameter[float]
-    """y-tickness of the jacket [m]."""
-    dx_ins: Parameter[float]
-    """x-thickness of the insulator [m]."""
-    dy_ins: Parameter[float]
-    """y-thickness of the insulator [m]."""
 
 
 class Conductor:
@@ -49,14 +29,15 @@ class Conductor:
     insulator.
     """
 
-    param_cls: type[ConductorParams] = ConductorParams
-
     def __init__(
         self,
         cable: ABCCable,
         mat_jacket: Material,
         mat_ins: Material,
-        params: ParameterFrameLike,
+        dx_jacket: float,
+        dy_jacket: float,
+        dx_ins: float,
+        dy_ins: float,
         name: str = "Conductor",
     ):
         """
@@ -71,20 +52,22 @@ class Conductor:
             jacket's material
         mat_ins:
             insulator's material
-        params:
-            Structure containing the input parameters. Keys are:
-                - dx_jacket: float
-                - dy_jacket: float
-                - dx_ins: float
-                - dy_ins: float
-
-            See :class:`~bluemira.magnets.conductor.ConductorParams`
-            for parameter details.
+        dx_jacket:
+            x-thickness of the jacket [m].
+        dy_jacket:
+            y-thickness of the jacket [m].
+        dx_ins:
+            x-thickness of the insulator [m].
+        dy_ins:
+            y-thickness of the insulator [m].
         name:
             string identifier
         """
         self.name = name
-        self.params = params
+        self.dx_jacket = dx_jacket
+        self.dy_jacket = dy_jacket
+        self.dx_ins = dx_ins
+        self.dy_ins = dy_ins
         self.mat_ins = mat_ins
         self.mat_jacket = mat_jacket
         self.cable = cable
@@ -92,12 +75,12 @@ class Conductor:
     @property
     def dx(self):
         """Half x-dimension of the conductor [m]"""
-        return self.params.dx_ins.value + self.params.dx_jacket.value + self.cable.dx
+        return self.dx_ins + self.dx_jacket + self.cable.dx
 
     @property
     def dy(self):
         """Half y-dimension of the conductor [m]"""
-        return self.params.dy_ins.value + self.params.dy_jacket.value + self.cable.dy
+        return self.dy_ins + self.dy_jacket + self.cable.dy
 
     @property
     def area(self):
@@ -107,11 +90,7 @@ class Conductor:
     @property
     def area_jacket(self):
         """Area of the jacket [m^2]"""
-        return (
-            4
-            * (self.cable.dx + self.params.dx_jacket.value)
-            * (self.cable.dy + self.params.dy_jacket.value)
-        )
+        return 4 * (self.cable.dx + self.dx_jacket) * (self.cable.dy + self.dy_jacket)
 
     @property
     def area_ins(self):
@@ -139,10 +118,10 @@ class Conductor:
             "cable": self.cable.to_dict(),
             "mat_jacket": self.mat_jacket.name,
             "mat_ins": self.mat_ins.name,
-            "dx_jacket": self.params.dx_jacket.value,
-            "dy_jacket": self.params.dy_jacket.value,
-            "dx_ins": self.params.dx_ins.value,
-            "dy_ins": self.params.dy_ins.value,
+            "dx_jacket": self.dx_jacket,
+            "dy_jacket": self.dy_jacket,
+            "dx_ins": self.dx_ins,
+            "dy_ins": self.dy_ins,
         }
 
     @classmethod
@@ -259,12 +238,7 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return (
-            self.mat_ins.youngs_modulus(op_cond)
-            * 2
-            * self.cable.dy
-            / self.params.dx_ins.value
-        )
+        return self.mat_ins.youngs_modulus(op_cond) * 2 * self.cable.dy / self.dx_ins
 
     def _Kx_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -275,11 +249,7 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return (
-            self.mat_ins.youngs_modulus(op_cond)
-            * self.params.dy_ins.value
-            / (2 * self.dx)
-        )
+        return self.mat_ins.youngs_modulus(op_cond) * self.dy_ins / (2 * self.dx)
 
     def _Kx_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -292,8 +262,8 @@ class Conductor:
         """
         return (
             self.mat_jacket.youngs_modulus(op_cond)
-            * self.params.dy_jacket.value
-            / (2 * self.dx - 2 * self.params.dx_ins.value)
+            * self.dy_jacket
+            / (2 * self.dx - 2 * self.dx_ins)
         )
 
     def _Kx_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -306,10 +276,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self.mat_jacket.youngs_modulus(op_cond)
-            * 2
-            * self.cable.dy
-            / self.params.dx_jacket.value
+            self.mat_jacket.youngs_modulus(op_cond) * 2 * self.cable.dy / self.dx_jacket
         )
 
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -344,12 +311,7 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return (
-            self.mat_ins.youngs_modulus(op_cond)
-            * 2
-            * self.cable.dx
-            / self.params.dy_ins.value
-        )
+        return self.mat_ins.youngs_modulus(op_cond) * 2 * self.cable.dx / self.dy_ins
 
     def _Ky_lat_ins(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -360,11 +322,7 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return (
-            self.mat_ins.youngs_modulus(op_cond)
-            * self.params.dx_ins.value
-            / (2 * self.dy)
-        )
+        return self.mat_ins.youngs_modulus(op_cond) * self.dx_ins / (2 * self.dy)
 
     def _Ky_lat_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -377,8 +335,8 @@ class Conductor:
         """
         return (
             self.mat_jacket.youngs_modulus(op_cond)
-            * self.params.dx_jacket.value
-            / (2 * self.dy - 2 * self.params.dy_ins.value)
+            * self.dx_jacket
+            / (2 * self.dy - 2 * self.dy_ins)
         )
 
     def _Ky_topbot_jacket(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -391,10 +349,7 @@ class Conductor:
             Axial stiffness [N/m]
         """
         return (
-            self.mat_jacket.youngs_modulus(op_cond)
-            * 2
-            * self.cable.dx
-            / self.params.dy_jacket.value
+            self.mat_jacket.youngs_modulus(op_cond) * 2 * self.cable.dx / self.dy_jacket
         )
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -462,9 +417,7 @@ class Conductor:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
         if direction == "x":
-            saf_jacket = (self.cable.dx + self.params.dx_jacket.value) / (
-                self.params.dx_jacket.value
-            )
+            saf_jacket = (self.cable.dx + self.dx_jacket) / (self.dx_jacket)
 
             K = summation([  # noqa: N806
                 2 * self._Ky_lat_ins(op_cond),
@@ -478,9 +431,7 @@ class Conductor:
             X_jacket = 2 * self._Ky_lat_jacket(op_cond) / K  # noqa: N806
 
         else:
-            saf_jacket = (self.cable.dy + self.params.dy_jacket.value) / (
-                self.params.dy_jacket.value
-            )
+            saf_jacket = (self.cable.dy + self.dy_jacket) / (self.dy_jacket)
 
             K = summation([  # noqa: N806
                 2 * self._Kx_lat_ins(op_cond),
@@ -604,9 +555,9 @@ class Conductor:
                 raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
             if direction == "x":
-                self.params.dx_jacket.value = jacket_thickness
+                self.dx_jacket = jacket_thickness
             else:
-                self.params.dy_jacket.value = jacket_thickness
+                self.dy_jacket = jacket_thickness
 
             sigma_r = self._tresca_sigma_jacket(pressure, fz, op_cond, direction)
 
@@ -623,9 +574,9 @@ class Conductor:
         debug_msg = ["Method optimize_jacket_conductor:"]
 
         if direction == "x":
-            debug_msg.append(f"Previous dx_jacket: {self.params.dx_jacket.value}")
+            debug_msg.append(f"Previous dx_jacket: {self.dx_jacket}")
         else:
-            debug_msg.append(f"Previous dy_jacket: {self.params.dy_jacket.value}")
+            debug_msg.append(f"Previous dy_jacket: {self.dy_jacket}")
 
         method = "bounded" if bounds is not None else None
 
@@ -643,11 +594,11 @@ class Conductor:
         if not result.success:
             raise ValueError("Optimization of the jacket conductor did not converge.")
         if direction == "x":
-            self.params.dx_jacket.value = result.x
-            debug_msg.append(f"Optimal dx_jacket: {self.params.dx_jacket.value}")
+            self.dx_jacket = result.x
+            debug_msg.append(f"Optimal dx_jacket: {self.dx_jacket}")
         else:
-            self.params.dy_jacket.value = result.x
-            debug_msg.append(f"Optimal dy_jacket: {self.params.dy_jacket.value}")
+            self.dy_jacket = result.x
+            debug_msg.append(f"Optimal dy_jacket: {self.dy_jacket}")
         debug_msg.append(
             f"Averaged sigma in the {direction}-direction: "
             f"{self._tresca_sigma_jacket(pressure, f_z, op_cond) / 1e6} MPa\n"
@@ -701,8 +652,8 @@ class Conductor:
             _, ax = plt.subplots()
 
         pc = np.array([xc, yc])
-        a = self.cable.dx + self.params.dx_jacket.value
-        b = self.cable.dy + self.params.dy_jacket.value
+        a = self.cable.dx + self.dx_jacket
+        b = self.cable.dy + self.dy_jacket
 
         p0 = np.array([-a, -b])
         p1 = np.array([a, -b])
@@ -710,8 +661,8 @@ class Conductor:
         p3 = np.array([-a, b])
         points_ext_jacket = np.vstack((p0, p1, p2, p3, p0)) + pc
 
-        c = a + self.params.dx_ins.value
-        d = b + self.params.dy_ins.value
+        c = a + self.dx_ins
+        d = b + self.dy_ins
 
         p0 = np.array([-c, -d])
         p1 = np.array([c, -d])
@@ -750,25 +701,11 @@ class Conductor:
             f"------- cable -------\n"
             f"cable: {self.cable!s}\n"
             f"---------------------\n"
-            f"dx_jacket: {self.params.dx_jacket.value}\n"
-            f"dy_jacket: {self.params.dy_jacket.value}\n"
-            f"dx_ins: {self.params.dx_ins.value}\n"
-            f"dy_ins: {self.params.dy_ins.value}"
+            f"dx_jacket: {self.dx_jacket}\n"
+            f"dy_jacket: {self.dy_jacket}\n"
+            f"dx_ins: {self.dx_ins}\n"
+            f"dy_ins: {self.dy_ins}"
         )
-
-
-@dataclass
-class SymmetricConductorParams(ParameterFrame):
-    """
-    Parameters needed for the symmetric conductor
-
-    Just use dl? instead of a different dx and dy that are equal?
-    """
-
-    dx_jacket: Parameter[float]
-    """x-thickness of the jacket [m]."""
-    dx_ins: Parameter[float]
-    """x-thickness of the insulator [m]."""
 
 
 class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set up
@@ -778,14 +715,13 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
     mantain a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
     """
 
-    param_cls: type[SymmetricConductorParams] = SymmetricConductorParams
-
     def __init__(
         self,
         cable: ABCCable,
         mat_jacket: Material,
         mat_ins: Material,
-        params: ParameterFrameLike,
+        dx_jacket: float,
+        dx_ins: float,
         name: str = "SymmetricConductor",
     ):
         """
@@ -800,13 +736,10 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             jacket's material
         mat_ins:
             insulator's material
-        params:
-            Structure containing the input parameters. Keys are:
-                - dx_jacket: float
-                - dx_ins: float
-
-            See :class:`~bluemira.magnets.conductor.SymmetricConductorParams`
-            for parameter details.
+        dx_jacket:
+            x-thickness of the jacket [m].
+        dx_ins:
+            x-thickness of the insulator [m].
         name:
             string identifier
 
@@ -815,11 +748,10 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             cable=cable,
             mat_jacket=mat_jacket,
             mat_ins=mat_ins,
-            params=params,
+            dx_jacket=dx_jacket,
+            dx_ins=dx_ins,
             name=name,
         )
-        self.dy_jacket = self.params.dx_jacket.value  # jm - needed or just property?
-        self.dy_ins = self.params.dx_ins.value  # jm - needed or just property?
 
     @property
     def dy_jacket(self):
@@ -834,7 +766,7 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         -----
         Assumes the same value as `dx_jacket`, ensuring symmetry in both directions.
         """
-        return self.params.dx_jacket.value
+        return self.dx_jacket
 
     @property
     def dy_ins(self):
@@ -849,7 +781,7 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         -----
         Assumes the same value as `dx_ins`, ensuring symmetry in both directions.
         """
-        return self.params.dx_ins.value
+        return self.dx_ins
 
     def to_dict(self) -> dict:
         """
@@ -865,8 +797,8 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             "cable": self.cable.to_dict(),
             "mat_jacket": self.mat_jacket.name,
             "mat_ins": self.mat_ins.name,
-            "dx_jacket": self.params.dx_jacket.value,
-            "dx_ins": self.params.dx_ins.value,
+            "dx_jacket": self.dx_jacket,
+            "dx_ins": self.dx_ins,
         }
 
     @classmethod

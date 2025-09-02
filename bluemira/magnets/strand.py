@@ -14,8 +14,7 @@ Includes:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,26 +23,9 @@ from matproplib.material import MaterialFraction, mixture
 
 from bluemira import display
 from bluemira.base.look_and_feel import bluemira_error
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-
-if TYPE_CHECKING:
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike
-
-
-@dataclass
-class StrandParams(ParameterFrame):
-    """
-    Parameters needed for the strand
-    """
-
-    d_strand: Parameter[float]
-    """Strand diameter in meters."""
-    operating_temperature: Parameter[float]
-    """Operating temperature [K]."""
 
 
 class Strand:
@@ -54,12 +36,11 @@ class Strand:
     This class automatically registers itself and its instances.
     """
 
-    param_cls: type[StrandParams] = StrandParams
-
     def __init__(
         self,
         materials: list[MaterialFraction],
-        params: ParameterFrameLike,
+        d_strand: float,
+        operating_temperature: float,
         name: str | None = "Strand",
     ):
         """
@@ -69,18 +50,16 @@ class Strand:
         ----------
         materials:
             Materials composing the strand with their fractions.
-        params:
-            Structure containing the input parameters. Keys are:
-                - d_strand: float
-                - operating_temperature: float
+        d_strand:
+            Strand diameter [m].
+        operating_temperature: float
+            Operating temperature [K].
 
-            See :class:`~bluemira.magnets.strand.StrandParams`
-            for parameter details.
         name:
             Name of the strand. Defaults to "Strand".
         """
-        self.params = params
-
+        self.d_strand = d_strand
+        self.operating_temperature = operating_temperature
         self.materials = materials
 
         self.name = name
@@ -143,7 +122,7 @@ class Strand:
         :
             Area [m²].
         """
-        return np.pi * (self.params.d_strand.value**2) / 4
+        return np.pi * (self.d_strand**2) / 4
 
     @property
     def shape(self) -> BluemiraFace:
@@ -156,7 +135,7 @@ class Strand:
             Circular face of the strand.
         """
         if self._shape is None:
-            self._shape = BluemiraFace([make_circle(self.params.d_strand.value)])
+            self._shape = BluemiraFace([make_circle(self.d_strand)])
         return self._shape
 
     def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -285,7 +264,7 @@ class Strand:
         """
         return (
             f"name = {self.name}\n"
-            f"d_strand = {self.params.d_strand.value}\n"
+            f"d_strand = {self.d_strand}\n"
             f"materials = {self.materials}\n"
             f"shape = {self.shape}\n"
         )
@@ -301,8 +280,8 @@ class Strand:
         """
         return {
             "name": self.name,
-            "d_strand": self.params.d_strand.value,
-            "temperature": self.params.operating_temperature.value,
+            "d_strand": self.d_strand,
+            "temperature": self.operating_temperature,
             "materials": [
                 {
                     "material": m.material,
@@ -379,16 +358,6 @@ class Strand:
 # ------------------------------------------------------------------------------
 # SuperconductingStrand Class
 # ------------------------------------------------------------------------------
-@dataclass
-class SuperconductingStrandParams(StrandParams):
-    """
-    Parameters needed for the strand
-    """
-
-    d_strand_sc: Parameter[float]  # not sure this will work?
-    """Superconducting Strand diameter in meters."""
-
-
 class SuperconductingStrand(Strand):
     """
     Represents a superconducting strand with a circular cross-section.
@@ -400,12 +369,12 @@ class SuperconductingStrand(Strand):
     """
 
     _name_in_registry_ = "SuperconductingStrand"
-    param_cls: type[StrandParams] = StrandParams
 
     def __init__(
         self,
         materials: list[MaterialFraction],
-        params: ParameterFrameLike,
+        d_strand: float,
+        operating_temperature: float,
         name: str | None = "SuperconductingStrand",
     ):
         """
@@ -416,22 +385,20 @@ class SuperconductingStrand(Strand):
         materials:
             Materials composing the strand with their fractions. One material must be
             a supercoductor.
-        params:
-            Structure containing the input parameters. Keys are:
-                - d_strand_sc: float
-
-            See :class:`~bluemira.magnets.strand.StrandParams`
-            for parameter details.
+        d_strand:
+            Strand diameter [m].
+        operating_temperature: float
+            Operating temperature [K].
         name:
             Name of the strand. Defaults to "Strand".
         """
         super().__init__(
             materials=materials,
-            params=params,
+            d_strand=d_strand,
+            operating_temperature=operating_temperature,
             name=name,
         )
         self._sc = self._check_materials()
-        self.params.d_strand.value = self.params.d_strand_sc.value
 
     def _check_materials(self) -> MaterialFraction:
         """
