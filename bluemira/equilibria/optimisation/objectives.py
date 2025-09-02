@@ -207,6 +207,60 @@ def tikhonov(
         )
 
 
+def lasso_toroidal_harmonics(
+    x: np.ndarray,
+    a_mat_cos: np.ndarray,
+    a_mat_sin: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: np.ndarray,
+    n_allowed: int,
+):
+    """
+    LASSO (Least Absolute Shrinkage and Selection Operator)  a.k.a. L1 Regression
+    Regularisation with the absolute value of magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce some of the values to zero, in order to select only
+    the important features and ignore the less important ones.
+    Can use as objective function:
+    \t:math:`\\textrm{rss} = \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma \\sum_{j=1}^{p} || x_{j} ||`
+    Returns
+    -------
+    :
+        figure of merit
+    """
+    # import pdb
+
+    # pdb.set_trace()
+    return np.sum(
+        ((a_mat_cos.T @ x[:n_allowed] + a_mat_sin.T @ x[n_allowed:]) - b_vec) ** 2
+    ) + gamma * np.sum(np.abs(x))
+
+
+def ols_toroidal_harmonics(
+    x: np.ndarray,
+    a_mat_cos: np.ndarray,
+    a_mat_sin: np.ndarray,
+    b_vec: np.ndarray,
+):
+    """
+    LASSO (Least Absolute Shrinkage and Selection Operator)  a.k.a. L1 Regression
+    Regularisation with the absolute value of magnitude of x as a penalty term
+    and the strength of the penalty imposed set by gamma.
+    The aim is to reduce some of the values to zero, in order to select only
+    the important features and ignore the less important ones.
+    Can use as objective function:
+    \t:math:`\\textrm{rss} = \\sum_{i=1}^{n} || A_{i}x - b_{i}  ||^2`\n
+    \t:math:`\\textrm{minimise} \\textrm{rss} + \\gamma \\sum_{j=1}^{p} || x_{j} ||`
+    Returns
+    -------
+    :
+        figure of merit
+    """
+
+    return np.sum((np.append(a_mat_cos @ x, a_mat_sin @ x, axis=0) - b_vec) ** 2)
+
+
 def regularised_lsq_fom(
     x: np.ndarray, a_mat: np.ndarray, b_vec: np.ndarray, gamma: float
 ) -> tuple[float, np.ndarray]:
