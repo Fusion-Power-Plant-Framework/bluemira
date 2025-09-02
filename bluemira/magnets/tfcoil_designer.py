@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.designer import Designer
@@ -276,8 +277,10 @@ class TFCoilXYDesigner(Designer):
         case.optimize_jacket_and_vault(
             pm=derived_params["pm"],
             fz=derived_params["t_z"],
-            temperature=derived_params["T_op"],
-            B=derived_params["B_TF_i"],
+            op_cond=OperationalConditions(
+                temperature=derived_params["T_op"],
+                magnetic_field=derived_params["B_TF_i"],
+            ),
             allowable_sigma=derived_params["s_y"],
             bounds_cond_jacket=self.params.bounds_cond_jacket.value,
             bounds_dy_vault=self.params.bounds_dy_vault.value,
@@ -339,7 +342,7 @@ class TFCoilXYDesigner(Designer):
     def _make_stab_strand(self, i_WP):
         stab_strand_config = self.build_config.get("stabilising_strand")
         return Strand(
-            materials=stab_strand_config.get("material"),
+            materials=stab_strand_config.get("materials"),
             d_strand=self.params.d_strand.value[i_WP],
             operating_temperature=self.params.operating_temperature.value[i_WP],
             name="stab_strand",
@@ -348,14 +351,15 @@ class TFCoilXYDesigner(Designer):
     def _make_sc_strand(self, i_WP):
         sc_strand_config = self.build_config.get("superconducting_strand")
         return SuperconductingStrand(
-            materials=sc_strand_config.get("material"),
+            materials=sc_strand_config.get("materials"),
             d_strand=self.params.d_strand_sc.value[i_WP],
             operating_temperature=self.params.operating_temperature.value[i_WP],
             name="sc_strand",
         )
 
     def _make_cable(self, stab_strand, sc_strand, i_WP):
-        if self.params.cable_type == "Rectangular":
+        cable_config = self.build_config.get("cable")
+        if cable_config.get("type") == "Rectangular":
             cable = RectangularCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
@@ -367,7 +371,7 @@ class TFCoilXYDesigner(Designer):
                 dx=self.params.dx.value[i_WP],
                 name="RectangularCable",
             )
-        elif self.params.cable_type == "Square":
+        elif cable_config.get("type") == "Square":
             cable = SquareCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
@@ -378,7 +382,7 @@ class TFCoilXYDesigner(Designer):
                 cos_theta=self.params.cos_theta.value[i_WP],
                 name="SquareCable",
             )
-        elif self.params.cable_type == "Round":
+        elif cable_config.get("type") == "Round":
             cable = RoundCable(
                 sc_strand=sc_strand,
                 stab_strand=stab_strand,
@@ -391,36 +395,36 @@ class TFCoilXYDesigner(Designer):
             )
         else:
             raise ValueError(
-                f"Cable type {self.params.cable_type} is not known."
+                f"Cable type {cable_config.get('type')} is not known."
                 "Available options are 'Rectangular', 'Square' and 'Round'."
             )
         return cable
 
     def _make_conductor(self, cable, i_WP):
         conductor_config = self.build_config.get("conductor")
-        if self.params.conductor_type == "Conductor":
+        if conductor_config.get("type") == "Conductor":
             conductor = Conductor(
                 cable=cable,
-                mat_jacket=conductor_config.get("jacket", "material"),
-                mat_ins=conductor_config.get("ins", "material"),
+                mat_jacket=conductor_config.get("jacket_material"),
+                mat_ins=conductor_config.get("ins_material"),
                 dx_jacket=self.params.dx_jacket.value[i_WP],
                 dy_jacket=self.params.dy_jacket.value[i_WP],
                 dx_ins=self.params.dx_ins.value[i_WP],
                 dy_ins=self.params.dy_ins.value[i_WP],
                 name="Conductor",
             )
-        elif self.params.conductor_type == "SymmetricConductor":
+        elif conductor_config.get("type") == "SymmetricConductor":
             conductor = SymmetricConductor(
                 cable=cable,
-                mat_jacket=conductor_config.get("jacket", "material"),
-                mat_ins=conductor_config.get("ins", "material"),
+                mat_jacket=conductor_config.get("jacket_material"),
+                mat_ins=conductor_config.get("ins_material"),
                 dx_jacket=self.params.dx_jacket.value[i_WP],
                 dx_ins=self.params.dx_ins.value[i_WP],
                 name="SymmetricConductor",
             )
         else:
             raise ValueError(
-                f"Conductor type {self.params.conductor_type} is not known."
+                f"Conductor type {conductor_config.get('type')} is not known."
                 "Available options are 'Conductor' and 'SymmetricConductor'."
             )
         return conductor
@@ -435,7 +439,7 @@ class TFCoilXYDesigner(Designer):
 
     def _make_case(self, WPs):  # noqa: N803
         case_config = self.build_config.get("case")
-        if self.params.case_type == "Trapezoidal":
+        if case_config.get("type") == "Trapezoidal":
             case = TrapezoidalCaseTF(
                 Ri=self.params.Ri.value,
                 theta_TF=self.params.theta_TF.value,
@@ -447,7 +451,7 @@ class TFCoilXYDesigner(Designer):
             )
         else:
             raise ValueError(
-                f"Case type {self.params.case_type} is not known."
+                f"Case type {case_config.get('type')} is not known."
                 "Available options are 'Trapezoidal'."
             )
         return case
