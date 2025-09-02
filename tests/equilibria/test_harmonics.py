@@ -38,7 +38,7 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     legendre_p,
     legendre_q,
     toroidal_harmonic_approximate_psi,
-    toroidal_harmonic_approximation,
+    brute_force_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -1219,7 +1219,7 @@ class TestRegressionTH:
             test_cos_amplitudes,
             test_sin_amplitudes,
             test_th_parameters,
-        ) = toroidal_harmonic_approximation(
+        ) = brute_force_toroidal_harmonic_approximation(
             eq=self.eq,
             psi_norm=0.95,
             max_error_value=0.1,

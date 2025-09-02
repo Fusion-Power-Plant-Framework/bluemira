@@ -49,7 +49,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    toroidal_harmonic_approximation,
+    brute_force_toroidal_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.problem import (
     MinimalCurrentCOP,
@@ -95,7 +95,7 @@ psi_norm = 0.95
     cos_amplitudes,
     sin_amplitudes,
     th_params,
-) = toroidal_harmonic_approximation(
+) = brute_force_toroidal_harmonic_approximation(
     eq=eq,
     psi_norm=psi_norm,
     plot=True,

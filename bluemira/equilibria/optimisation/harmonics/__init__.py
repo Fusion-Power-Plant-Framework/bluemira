@@ -25,12 +25,13 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    brute_force_toroidal_harmonic_approximation,
     coil_toroidal_harmonic_amplitude_matrix,
     f_hypergeometric,
     legendre_p,
     legendre_q,
+    optimisation_toroidal_harmonic_approximation,
     toroidal_harmonic_approximate_psi,
-    toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 
@@ -40,6 +41,7 @@ __all__ = [
     "SphericalHarmonicConstraintFunction",
     "ToroidalHarmonicConstraint",
     "ToroidalHarmonicConstraintFunction",
+    "brute_force_toroidal_harmonic_approximation",
     "coil_harmonic_amplitude_matrix",
     "coil_toroidal_harmonic_amplitude_matrix",
     "coils_outside_fs_sphere",
@@ -50,9 +52,9 @@ __all__ = [
     "harmonic_amplitude_marix",
     "legendre_p",
     "legendre_q",
+    "optimisation_toroidal_harmonic_approximation",
     "plot_psi_comparision",
     "spherical_harmonic_approximation",
     "toroidal_harmonic_approximate_psi",
-    "toroidal_harmonic_approximation",
     "toroidal_harmonic_grid_and_coil_setup",
 ]
