@@ -14,12 +14,10 @@ from matproplib import OperationalConditions
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.magnets.cable import RectangularCable, RoundCable, SquareCable
-from bluemira.magnets.case_tf import TrapezoidalCaseTF
-from bluemira.magnets.conductor import Conductor, SymmetricConductor
-from bluemira.magnets.strand import Strand, SuperconductingStrand
+from bluemira.magnets.cable import RectangularCable
+from bluemira.magnets.conductor import SymmetricConductor
 from bluemira.magnets.utils import delayed_exp_func
-from bluemira.magnets.winding_pack import WindingPack
+from bluemira.utilities.tools import get_class_from_module
 
 
 @dataclass
@@ -341,120 +339,92 @@ class TFCoilXYDesigner(Designer):
 
     def _make_stab_strand(self, i_WP):
         stab_strand_config = self.build_config.get("stabilising_strand")
-        return Strand(
-            materials=stab_strand_config.get("materials"),
+        cls_name = stab_strand_config["class"]
+        stab_strand_cls = get_class_from_module(cls_name)
+        return stab_strand_cls(
+            materials=stab_strand_config["materials"],
             d_strand=self.params.d_strand.value[i_WP],
             operating_temperature=self.params.operating_temperature.value[i_WP],
-            name="stab_strand",
+            name=stab_strand_config.get("name", cls_name.rsplit("::", 1)[-1]),
         )
 
     def _make_sc_strand(self, i_WP):
         sc_strand_config = self.build_config.get("superconducting_strand")
-        return SuperconductingStrand(
-            materials=sc_strand_config.get("materials"),
+        cls_name = sc_strand_config["class"]
+        sc_strand_cls = get_class_from_module(cls_name)
+        return sc_strand_cls(
+            materials=sc_strand_config["materials"],
             d_strand=self.params.d_strand_sc.value[i_WP],
             operating_temperature=self.params.operating_temperature.value[i_WP],
-            name="sc_strand",
+            name=sc_strand_config.get("name", cls_name.rsplit("::", 1)[-1]),
         )
 
     def _make_cable(self, stab_strand, sc_strand, i_WP):
         cable_config = self.build_config.get("cable")
-        if cable_config.get("type") == "Rectangular":
-            cable = RectangularCable(
-                sc_strand=sc_strand,
-                stab_strand=stab_strand,
-                n_sc_strand=self.params.n_sc_strand.value[i_WP],
-                n_stab_strand=self.params.n_stab_strand.value[i_WP],
-                d_cooling_channel=self.params.d_cooling_channel.value[i_WP],
-                void_fraction=self.params.void_fraction.value[i_WP],
-                cos_theta=self.params.cos_theta.value[i_WP],
-                dx=self.params.dx.value[i_WP],
-                name="RectangularCable",
-            )
-        elif cable_config.get("type") == "Square":
-            cable = SquareCable(
-                sc_strand=sc_strand,
-                stab_strand=stab_strand,
-                n_sc_strand=self.params.n_sc_strand.value[i_WP],
-                n_stab_strand=self.params.n_stab_strand.value[i_WP],
-                d_cooling_channel=self.params.d_cooling_channel.value[i_WP],
-                void_fraction=self.params.void_fraction.value[i_WP],
-                cos_theta=self.params.cos_theta.value[i_WP],
-                name="SquareCable",
-            )
-        elif cable_config.get("type") == "Round":
-            cable = RoundCable(
-                sc_strand=sc_strand,
-                stab_strand=stab_strand,
-                n_sc_strand=self.params.n_sc_strand.value[i_WP],
-                n_stab_strand=self.params.n_stab_strand.value[i_WP],
-                d_cooling_channel=self.params.d_cooling_channel.value[i_WP],
-                void_fraction=self.params.void_fraction.value[i_WP],
-                cos_theta=self.params.cos_theta.value[i_WP],
-                name="RoundCable",
-            )
-        else:
-            raise ValueError(
-                f"Cable type {cable_config.get('type')} is not known."
-                "Available options are 'Rectangular', 'Square' and 'Round'."
-            )
-        return cable
+        cls_name = stab_strand_config["class"]
+        cable_cls = get_class_from_module(cls_name)
+        return cable_cls(
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=self.params.n_sc_strand.value[i_WP],
+            n_stab_strand=self.params.n_stab_strand.value[i_WP],
+            d_cooling_channel=self.params.d_cooling_channel.value[i_WP],
+            void_fraction=self.params.void_fraction.value[i_WP],
+            cos_theta=self.params.cos_theta.value[i_WP],
+            name=cable_config.get("name", cls_name.rsplit("::", 1)[-1]),
+            **(
+                {"dx": self.params.dx.value[i_WP]}
+                if issubclass(cable_cls, RectangularCable)
+                else {}
+            ),
+        )
 
     def _make_conductor(self, cable, i_WP):
         conductor_config = self.build_config.get("conductor")
-        if conductor_config.get("type") == "Conductor":
-            conductor = Conductor(
-                cable=cable,
-                mat_jacket=conductor_config.get("jacket_material"),
-                mat_ins=conductor_config.get("ins_material"),
-                dx_jacket=self.params.dx_jacket.value[i_WP],
-                dy_jacket=self.params.dy_jacket.value[i_WP],
-                dx_ins=self.params.dx_ins.value[i_WP],
-                dy_ins=self.params.dy_ins.value[i_WP],
-                name="Conductor",
-            )
-        elif conductor_config.get("type") == "SymmetricConductor":
-            conductor = SymmetricConductor(
-                cable=cable,
-                mat_jacket=conductor_config.get("jacket_material"),
-                mat_ins=conductor_config.get("ins_material"),
-                dx_jacket=self.params.dx_jacket.value[i_WP],
-                dx_ins=self.params.dx_ins.value[i_WP],
-                name="SymmetricConductor",
-            )
-        else:
-            raise ValueError(
-                f"Conductor type {conductor_config.get('type')} is not known."
-                "Available options are 'Conductor' and 'SymmetricConductor'."
-            )
-        return conductor
+        cls_name = conductor_config["class"]
+        conductor_cls = get_class_from_module(cls_name)
+        return conductor_cls(
+            cable=cable,
+            mat_jacket=conductor_config["jacket_material"],
+            mat_ins=conductor_config["ins_material"],
+            dx_jacket=self.params.dx_jacket.value[i_WP],
+            dx_ins=self.params.dx_ins.value[i_WP],
+            name=conductor_config.get("name", cls_name.rsplit("::", 1)[-1]),
+            **(
+                {}
+                if issubclass(conductor_cls, SymmetricConductor)
+                else {
+                    "dy_jacket": self.params.dy_jacket.value[i_WP],
+                    "dy_ins": self.params.dy_ins.value[i_WP],
+                }
+            ),
+        )
 
     def _make_winding_pack(self, conductor, i_WP):
-        return WindingPack(
+        winding_pack_config = self.build_config.get("winding_pack")
+        cls_name = winding_pack_config["class"]
+        winding_pack_cls = get_class_from_module(cls_name)
+        return winding_pack_cls(
             conductor=conductor,
             nx=self.params.nx.value[i_WP],
             ny=self.params.ny.value[i_WP],
-            name="winding_pack",
+            name=winding_pack_config.get("name", cls_name.rsplit("::", 1)[-1]),
         )
 
     def _make_case(self, WPs):  # noqa: N803
         case_config = self.build_config.get("case")
-        if case_config.get("type") == "Trapezoidal":
-            case = TrapezoidalCaseTF(
-                Ri=self.params.Ri.value,
-                theta_TF=self.params.theta_TF.value,
-                dy_ps=self.params.dy_ps.value,
-                dy_vault=self.params.dy_vault.value,
-                mat_case=case_config.get("material"),
-                WPs=WPs,
-                name="TrapezoidalCase",
-            )
-        else:
-            raise ValueError(
-                f"Case type {case_config.get('type')} is not known."
-                "Available options are 'Trapezoidal'."
-            )
-        return case
+        cls_name = case_config["class"]
+        case_cls = get_class_from_module(cls_name)
+
+        return case_cls(
+            Ri=self.params.Ri.value,
+            theta_TF=self.params.theta_TF.value,
+            dy_ps=self.params.dy_ps.value,
+            dy_vault=self.params.dy_vault.value,
+            mat_case=case_config["material"],
+            WPs=WPs,
+            name=case_config.get("name", cls_name.rsplit("::", 1)[-1]),
+        )
 
 
 def plot_cable_temperature_evolution(result, t0, tf, ax, n_steps=100):
