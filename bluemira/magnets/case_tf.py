@@ -291,17 +291,17 @@ class BaseCaseTF(ABC):
         name:
             String identifier for the TF coil case instance (default is "BaseCaseTF").
         """
-        self.Ri=Ri,
-        self.theta_TF=theta_TF,
-        self.mat_case=mat_case,
-        self.WPs=WPs,
-        self.name=name,
+        self.Ri = Ri
+        self.theta_TF = theta_TF
         self.dy_ps = dy_ps
         self.dy_vault = dy_vault
+        self.mat_case = mat_case
+        self.WPs = WPs
+        self.name = name
         # Toroidal half-length of the coil case at its maximum radial position [m]
-        self.dx_i = _dx_at_radius(self.Ri, self.rad_theta_TF)
+        self.dx_i = _dx_at_radius(self.Ri, self.rad_theta)
         # Average toroidal length of the ps plate
-        self.dx_ps = (self.Ri + (self.Ri - self.dy_ps)) * np.tan(self.rad_theta_TF / 2)
+        self.dx_ps = (self.Ri + (self.Ri - self.dy_ps)) * np.tan(self.rad_theta / 2)
         # sets Rk
         self.update_dy_vault(self.dy_vault)
 
@@ -335,6 +335,13 @@ class BaseCaseTF(ABC):
         if not isinstance(value, str):
             raise TypeError("name must be a string.")
         self._name = value
+
+    @property
+    def rad_theta(self) -> float:
+        """
+        Compute the Toroidal angular span of the TF coil in radians
+        """
+        return np.radians(self.theta_TF)
 
     def update_dy_vault(self, value: float):
         """
@@ -879,7 +886,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         :
             Average length of the vault in the toroidal direction [m].
         """
-        return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta_TF / 2)
+        return (self.R_wp_k[-1] + self.Rk) * np.tan(self.rad_theta / 2)
 
     def Kx_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -921,7 +928,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         # toroidal stiffness of the poloidal support region
         kx_ps = self.mat_case.youngs_modulus(op_cond) / self.dx_ps * self.dy_ps
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2) - w.dx
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([2 * w.dy for w in self.WPs])
@@ -960,7 +967,7 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
         # toroidal stiffness of the poloidal support region
         ky_ps = self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta_TF / 2) - w.dx
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([2 * w.dy for w in self.WPs])
@@ -1056,10 +1063,10 @@ class TrapezoidalCaseTF(BaseCaseTF, TrapezoidalGeometry):
             else:
                 dx_WP = n_layers_max * conductor.dx  # noqa: N806
 
-                gap_0 = R_wp_i * np.tan(self.rad_theta_TF / 2) - dx_WP / 2
+                gap_0 = R_wp_i * np.tan(self.rad_theta / 2) - dx_WP
                 gap_1 = min_gap_x
 
-                max_dy = (gap_0 - gap_1) / np.tan(self.rad_theta_TF / 2)
+                max_dy = (gap_0 - gap_1) / np.tan(self.rad_theta / 2)
                 n_turns_max = min(
                     int(np.floor(max_dy / conductor.dy)),
                     int(np.ceil(remaining_conductors / n_layers_max)),

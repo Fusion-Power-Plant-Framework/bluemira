@@ -63,7 +63,7 @@ class Strand:
         self.materials = materials
 
         self.name = name
-
+        self._shape = None
         # Create homogenised material
         self._homogenised_material = mixture(
             name=name,
