@@ -57,7 +57,6 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     optimisation_toroidal_harmonic_approximation,
-    brute_force_toroidal_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
 
@@ -86,49 +85,10 @@ eq.coilset.plot(ax=ax)
 plt.show()
 
 
-# new_coils = []
-# for name in eq.coilset.name:
-#     new_coils.append(eq.coilset[name])
-# new_coil = Coil(
-#     8,
-#     -11,
-#     current=0,
-#     dx=0.25,
-#     dz=0.25,
-#     ctype="PF",
-#     name=f"PF_7",
-# )
-# new_coils.append(new_coil)
-# new_coilset = CoilSet(*new_coils)
-# eq.coilset = new_coilset
-# f, ax = plt.subplots()
-# eq.plot(ax=ax)
-# eq.coilset.plot(ax=ax)
-# plt.show()
-
 # %%
 # Information needed for TH Approximation
 # The acceptable fit metric value used here forces the approximation to use 10 degrees
 psi_norm = 0.95
-# (
-#     error,
-#     combo,
-#     cos_degrees,
-#     sin_degrees,
-#     total_psi,
-#     vacuum_psi,
-#     cos_amplitudes,
-#     sin_amplitudes,
-#     th_params,
-# ) = brute_force_toroidal_harmonic_approximation(
-#     eq=eq,
-#     psi_norm=psi_norm,
-#     plot=True,
-#     tol=0.01,  # 0.2,  # Use this for SN
-# )
-# Some notes:
-# The default values work for DN
-# For SN, use default max error and tol=0.2
 
 
 # %%
@@ -152,7 +112,7 @@ psi_norm = 0.95
 print(f"cos degrees used = {cos_degrees}")
 print(f"sin degrees used = {sin_degrees}")
 
-# %%
+
 th_constraint_equal = ToroidalHarmonicConstraint(
     ref_harmonics_cos=cos_degrees,
     ref_harmonics_sin=sin_degrees,
