@@ -19,7 +19,7 @@ from scipy.optimize import minimize
 from scipy.special import gamma, poch
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.equilibria.coils._grouping import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -32,7 +32,6 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 )
 from bluemira.equilibria.optimisation.objectives import (
     lasso_toroidal_harmonics,
-    ols_toroidal_harmonics,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import Coordinates
@@ -572,38 +571,120 @@ def toroidal_harmonic_approximate_psi(
     return approx_coilset_psi, Am_cos, Am_sin
 
 
-def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET503
-    eq: Equilibrium,
-    th_params: ToroidalHarmonicsParams | None = None,
-    psi_norm: float = 0.95,
-    tol: float = 0.001,
-    *,
-    plot: bool = False,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    ToroidalHarmonicsParams,
-]:
+def _separate_psi_contributions(
+    eq: Equilibrium, th_params: ToroidalHarmonicsParams
+) -> tuple[np.ndarray]:
     """
-    Calculate the toroidal harmonic (TH) amplitudes/coefficients.
+    Separate the psi contributions from fixed sources (plasma + excluded coils) and from potentially
+    variable sources (coilset)
+    """
+    plasma_psi = eq.plasma.psi(th_params.R, th_params.Z)
+    coilset_psi = eq.coilset.psi(th_params.R, th_params.Z)
+    excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
-    The objective: to get the lowest number of degrees to sufficiently approximate
-    the coilset psi.
+    excluded_coil_psi = np.zeros_like(plasma_psi)
+    for coil in excluded_coils:
+        excluded_coil_psi += eq.coilset[coil].psi(th_params.R, th_params.Z)
+    return coilset_psi - excluded_coil_psi, plasma_psi + excluded_coil_psi
 
-    Our selection requirement is satisfied when adding an extra degree doesn't
-    significantly lower the achieved error.
 
+def _set_n_degrees_of_freedom(
+    n_dof: int | None, max_harmonic_order: int, max_n_dof: int
+) -> int:
+    """
+    Determine the number of degrees of freedom to use. This is limited by the number
+    of coils and by the maximum order of the harmonic functions.
+    """
+    if n_dof is None:
+        n_dof = min(max_n_dof, 2 * max_harmonic_order)
+    elif not (1 < n_dof <= max_n_dof):
+        bluemira_warn(
+            "Number of DOFs must be between 1 and the number of control coils"
+            f"but this is not the case: 1 < {n_dof} <= {max_n_dof}."
+            "Clipping accordingly."
+        )
+        n_dof = np.clip(n_dof, 1, max_n_dof)
+
+    if n_dof > 2 * max_harmonic_order:
+        bluemira_warn(
+            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_order"
+        )
+        n_dof = 2 * max_harmonic_order
+
+    return n_dof
+
+
+def _get_plasma_mask(
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    plasma_mask: bool,
+    psi_norm: float,
+) -> float | np.ndarray:
+    """
+    Get a plasma mask to apply to the psi field.
+    """
+    if plasma_mask:
+        # Want to mask to be able to calculate error in the plasma region only
+        psi_norm = np.clip(psi_norm, 0.0, 1.0)
+        # Get the original reference flux surface from the equilibrium
+        mask_fs = (
+            eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+        )
+        mask_matrix = np.zeros_like(th_params.R)
+        mask = _in_plasma(
+            th_params.R, th_params.Z, mask_matrix, mask_fs.xz.T, include_edges=True
+        )
+    else:
+        # Do not apply a mask to the error
+        mask = 1
+
+    return mask
+
+
+@dataclass
+class ToroidalHarmonicsSelectionResult:
+    """
+    Toroidal harmonic selection result class
+    """
+
+    """Selected cosine toroidal harmonic degrees"""
+    cos_degrees: np.ndarray
+    """Selected sine toroidal harmonic degrees"""
+    sin_degrees: np.ndarray
+    """Selected cosine toroidal harmonic amplitudes"""
+    cos_amplitudes: np.ndarray
+    """Selected sine toroidal harmonic amplitudes"""
+    sin_amplitudes: np.ndarray
+    """Error to desired coilset psi"""
+    error: float
+    """Approximated coilset psi"""
+    coilset_psi: np.ndarray
+    """Background psi"""
+    fixed_psi: np.ndarray
+
+
+def brute_force_toroidal_harmonic_approximation(
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    psi_norm: float = 0.95,
+    n_degrees_of_freedom: int | None = None,
+    max_harmonic_order: int = 5,
+    plasma_mask: bool = False,
+) -> ToroidalHarmonicsSelectionResult:
+    """
+    Calculate the toroidal harmonic (TH) amplitudes/coefficients for a given
+    number of degrees of freedom, using TH functions up to a given maximum
+    order.
+
+    The optimal selection of harmonic functions is carried out by brute force
+    for the different combinations, using a L2 norm of the error across the
+    full psi map. If `plasma_mask` is specified the error is evaluated as the
+    L2 norm of the psi map within the specified flux surface.
 
     Parameters
     ----------
     eq:
-        Equilibria to use as starting point for approximation.
+        Equilibrium to use as starting point for approximation.
         We will approximate psi using THs - the aim is to keep the
         core plasma contribution fixed (using TH amplitudes as constraints)
         while being able to vary the vacuum (coil) contribution, so that
@@ -613,196 +694,135 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0915, PLR0914, RET5
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
-    tol:
-        Value used for error comparison to determine a sufficient combination of
-        degrees
-    plot:
-        Whether or not to plot the results
+    n_degrees_of_freedom:
+        The number of harmonic functions (and amplitudes) to choose.
+        If None, will default to the number of "free" coils
+    max_harmonic_order:
+        The maximum order of the harmonic functions to use
+    plasma_mask:
+        Whether or not to apply a mask to the error metric (within the psi_norm flux
+        surface)
 
     Returns
     -------
-    error_success:
-        The value of the error for the combination of degrees chosen
-    combo_success:
-        The degrees chosen
-    total_psi_success:
-        The total psi calculated using the TH approximation for the vacuum
-        contribution using the combination of degrees chosen
-    vacuum_psi_success:
-        The TH approximation for the vacuum psi using the combination of degrees chosen
-    cos_amplitudes_success:
-        The cos amplitudes for the combination of degrees chosen
-    sin_amplitudes_success:
-        The sin amplitudes for the combination of degrees chosen
-    th_params:
-        Dataclass containing necessary parameters for use in TH approximation
+    result:
+        ToroidalHarmonicsSelectionResult
 
     Raises
     ------
     EquilibriaError
         Problem not setup for harmonics
-
+    ValueError
+        Number of degrees of freedom inappropriate
     """
-    if th_params is None:
-        R_0, Z_0 = eq.effective_centre()
-        th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
+    if eq.grid is None or eq.plasma is None:
+        raise EquilibriaError("Equilibrium has not been run yet.")
 
-    # Get original flux surface from Bluemira for equilibrium
+    n_degrees_of_freedom = _set_n_degrees_of_freedom(
+        n_degrees_of_freedom,
+        max_harmonic_order,
+        len(th_params.th_coil_names),
+    )
+
+    true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
+
+    mask = _get_plasma_mask(eq, th_params, plasma_mask, psi_norm)
+
+    dof_id = np.arange(0, 2 * max_harmonic_order)
+    order_values = np.tile(np.arange(max_harmonic_order), 2)
+
+    error = np.inf
+
+    for c in combinations(dof_id, n_degrees_of_freedom):
+        deg_id = np.array(c)
+        cos_degrees_chosen = order_values[deg_id[deg_id < max_harmonic_order]]
+        sin_degrees_chosen = order_values[deg_id[deg_id >= max_harmonic_order]]
+
+        # Calculate psi using the combination of degrees selected in this iteration
+        approximate_coilset_psi, cos_amps, sin_amps = toroidal_harmonic_approximate_psi(
+            eq=eq,
+            th_params=th_params,
+            cos_degrees_chosen=cos_degrees_chosen,
+            sin_degrees_chosen=sin_degrees_chosen,
+        )
+
+        error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
+
+        if error_new < error:
+            error = error_new
+            cos_degrees = cos_degrees_chosen
+            sin_degrees = sin_degrees_chosen
+            coilset_psi = approximate_coilset_psi
+            cos_amplitudes = cos_amps
+            sin_amplitudes = sin_amps
+
+    return ToroidalHarmonicsSelectionResult(
+        cos_degrees=cos_degrees,
+        sin_degrees=sin_degrees,
+        cos_amplitudes=cos_amplitudes,
+        sin_amplitudes=sin_amplitudes,
+        error=error,
+        coilset_psi=coilset_psi,
+        fixed_psi=fixed_psi,
+    )
+
+
+def plot_toroidal_harmonic_approximation(
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    result: ToroidalHarmonicsSelectionResult,
+    psi_norm: float = 0.95,
+):
     original_fs = (
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
     )
+    approx_fs = find_flux_surf(
+        th_params.R,
+        th_params.Z,
+        result.coilset_psi + result.fixed_psi,
+        psi_norm,
+        *eq.get_OX_points(),
+    )
+    approx_fs = Coordinates({"x": approx_fs[0], "z": approx_fs[1]})
 
-    if eq.grid is None or eq.plasma is None:
-        raise EquilibriaError("eq not setup for TH approximation.")
-    # Use R and Z from th_params so we can compare psi over the same grid
-    R_approx = th_params.R  # noqa: N806
-    Z_approx = th_params.Z  # noqa: N806
+    f, ax = plt.subplots()
+    ax.contour(
+        th_params.R,
+        th_params.Z,
+        eq.coilset.psi(th_params.R, th_params.Z),
+        levels=PLOT_DEFAULTS["psi"]["nlevels"],
+        colors="black",
+        linewidths=1,
+    )
+    ax.contour(
+        th_params.R,
+        th_params.Z,
+        result.coilset_psi,
+        levels=PLOT_DEFAULTS["psi"]["nlevels"],
+        colors="red",
+        linewidths=1,
+    )
 
-    # Non TH contribution to psi field
-    non_th_contribution_psi = eq.plasma.psi(R_approx, Z_approx)
-    excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
-
-    for coil in excluded_coils:
-        non_th_contribution_psi += eq.coilset[coil].psi(R_approx, Z_approx)
-
-    # Can't have more degrees than sampled psi
-    max_degree = len(th_params.th_coil_names) - 1
-    # Have cos and sin components so this must be half
-    allowable_n_degrees = max_degree
-
-    # Find LCFS from TH approx
-    approx_eq = deepcopy(eq)
-    approx_eq.coilset.control = th_params.th_coil_names
-    o_points, x_points = approx_eq.get_OX_points()
-
-    degree_id = np.arange(0, max_degree)
-    degree_values = np.arange(0, allowable_n_degrees)
-    degree_values = np.append(degree_values, degree_values)
-
-    # Initialise arrays to hold errors, combinations, amplitudes and psi values
-    # Loop over combinations of degrees and save results which satisfy error condition
-    errors_old = []
-    combo_old = []
-    cos_degrees_old = []
-    sin_degrees_old = []
-    cos_amplitudes_old = []
-    sin_amplitudes_old = []
-    total_psis_old = []
-    vacuum_psis_old = []
-    for n in np.arange(2, max_degree):
-        errors = []
-        combo = []
-        cos_degrees = []
-        sin_degrees = []
-        cos_amplitudes = []
-        sin_amplitudes = []
-        total_psis = []
-        vacuum_psis = []
-        for c in combinations(degree_id, n):
-            deg_id = [  # noqa: C416
-                i for i in c
-            ]
-            cos_degrees_chosen = np.array([
-                degree_values[i] for i in deg_id if i < allowable_n_degrees
-            ])
-            sin_degrees_chosen = np.array([
-                degree_values[i] for i in deg_id if i >= allowable_n_degrees
-            ])
-
-            # Calculate psi using the combination of degrees selected in this iteration
-            approximate_coilset_psi, cos_amps, sin_amps = (
-                toroidal_harmonic_approximate_psi(
-                    eq=eq,
-                    th_params=th_params,
-                    cos_degrees_chosen=cos_degrees_chosen,
-                    sin_degrees_chosen=sin_degrees_chosen,
-                )
-            )
-            # Want to mask to be able to calculate error in the plasma region only
-            mask_matrix = np.zeros_like(R_approx)
-            mask = _in_plasma(
-                R_approx, Z_approx, mask_matrix, original_fs.xz.T, include_edges=True
-            )
-
-            total_psi_approx = approximate_coilset_psi + non_th_contribution_psi
-            total_psi_approx_masked = mask * total_psi_approx
-            total_psi_bluemira = (
-                eq.coilset.psi(R_approx, Z_approx) + non_th_contribution_psi
-            )
-            total_psi_bluemira_masked = mask * total_psi_bluemira
-
-            error = np.sqrt(
-                np.sum(
-                    (total_psi_bluemira_masked - total_psi_approx_masked) ** 2
-                    / (len(R_approx) * len(Z_approx))
-                )
-            )
-
-            errors.append(error)
-            combo.append(c)
-            cos_degrees.append(cos_degrees_chosen)
-            sin_degrees.append(sin_degrees_chosen)
-            total_psis.append(total_psi_approx)
-            vacuum_psis.append(approximate_coilset_psi)
-            cos_amplitudes.append(cos_amps)
-            sin_amplitudes.append(sin_amps)
-
-        # If sufficiently small change by adding extra degree, then
-        # use the previous total number of degrees
-        full = (len(errors_old) != 0) & (len(errors) != 0)
-        succeeded = (np.min(errors_old) - np.min(errors) < tol) if full else False
-        # TODO shall we add a condition that the psi_norm flux surface for _old should
-        # be closed?
-        if succeeded:
-            index_chosen = np.argmin(errors_old)
-            error_success = errors_old[index_chosen]
-            combo_success = combo_old[index_chosen]
-            cos_degrees_success = cos_degrees_old[index_chosen]
-            sin_degrees_success = sin_degrees_old[index_chosen]
-            total_psi_success = total_psis_old[index_chosen]
-            vacuum_psi_success = vacuum_psis_old[index_chosen]
-            cos_amplitude_success = cos_amplitudes_old[index_chosen]
-            sin_amplitude_success = sin_amplitudes_old[index_chosen]
-
-            if plot:
-                plotting(
-                    R_approx=R_approx,
-                    Z_approx=Z_approx,
-                    total_psi_success=total_psi_success,
-                    psi_norm=psi_norm,
-                    o_points=o_points,
-                    x_points=x_points,
-                    total_psi_bluemira=total_psi_bluemira,
-                    th_params=th_params,
-                    original_fs=original_fs,
-                )
-
-            return (
-                error_success,
-                combo_success,
-                cos_degrees_success,
-                sin_degrees_success,
-                total_psi_success,
-                vacuum_psi_success,
-                cos_amplitude_success,
-                sin_amplitude_success,
-                th_params,
-            )
-        elif n == max_degree:  # noqa: RET505
-            raise EquilibriaError(
-                f"No combination of up to {max_degree} degrees gives an acceptable"
-                "solution for the input parameters for chosen equilibrium! Please adjust"
-                "the error tolerance value and try again."
-            )
-
-        errors_old = errors
-        combo_old = combo
-        cos_degrees_old = cos_degrees
-        sin_degrees_old = sin_degrees
-        cos_amplitudes_old = cos_amplitudes
-        sin_amplitudes_old = sin_amplitudes
-        total_psis_old = total_psis
-        vacuum_psis_old = vacuum_psis
+    ax.plot(
+        approx_fs.x,
+        approx_fs.z,
+        color="r",
+        label="TH FS",
+        linestyle="dashed",
+        lw=5,
+    )
+    ax.plot(
+        original_fs.x,
+        original_fs.z,
+        color="blue",
+        label="BM FS",
+        lw=5,
+    )
+    ax.legend(loc="upper right")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("z [m]")
+    ax.set_aspect("equal")
+    return f, ax
 
 
 def plotting(
@@ -832,59 +852,6 @@ def plotting(
     # Plotting if successful
     nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
-    # Plot TH approx for vacuum psi
-    # f, ax = plt.subplots()
-    # im = ax.contourf(
-    #     th_params.R,
-    #     th_params.Z,
-    #     vacuum_psi_success,
-    #     levels=nlevels,
-    #     cmap=cmap,
-    # )
-    # ax.plot(
-    #     approximation_flux_surface.x,
-    #     approximation_flux_surface.z,
-    #     color="r",
-    #     label="TH FS",
-    # )
-    # ax.plot(
-    #     original_fs.x,
-    #     original_fs.z,
-    #     color="blue",
-    #     linestyle="dashed",
-    #     label="BM FS",
-    # )
-    # ax.legend(loc="upper right")
-    # f.colorbar(mappable=im)
-    # plt.title("TH approximation for vacuum psi")
-    # plt.show()
-
-    # # Plot total psi using TH approx for vacuum psi
-    # f, ax = plt.subplots()
-    # im = ax.contourf(
-    #     th_params.R,
-    #     th_params.Z,
-    #     total_psi_success,
-    #     levels=nlevels,
-    #     cmap=cmap,
-    # )
-    # ax.plot(
-    #     approximation_flux_surface.x,
-    #     approximation_flux_surface.z,
-    #     color="r",
-    #     label="TH FS",
-    # )
-    # ax.plot(
-    #     original_fs.x,
-    #     original_fs.z,
-    #     color="blue",
-    #     linestyle="dashed",
-    #     label="BM FS",
-    # )
-    # ax.legend(loc="upper right")
-    # f.colorbar(mappable=im)
-    # plt.title("Total psi using TH approximation for vacuum psi")
-    # plt.show()
 
     # Plot abs relative difference between approx total psi vs bluemira psi
     f, ax = plt.subplots()
@@ -917,16 +884,13 @@ def plotting(
 
 def optimisation_toroidal_harmonic_approximation(
     eq: Equilibrium,
-    th_params: ToroidalHarmonicsParams | None = None,
+    th_params: ToroidalHarmonicsParams,
     psi_norm: float = 1.0,
-    nlevels: int = 50,
     gamma_max: int = 10,
     amplitude_variation_thresh: float = 2.0,
     *,
     plot: bool = False,
-) -> tuple[
-    ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray
-]:
+) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
@@ -953,27 +917,13 @@ def optimisation_toroidal_harmonic_approximation(
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
-    nlevels:
-        Plot setting, higher n = greater number of contour lines
     plot:
         Whether or not to plot the results
 
     Returns
     -------
-    th_params:
-        Dataclass containing necessary parameters for use in TH approximation
-    Am_cos:
-        TH cos coefficients/amplitudes for required number of degrees
-    Am_sin:
-        TH sin coefficients/amplitudes for required number of degrees
-    degree:
-        Number of degrees required for a TH approx with the desired fit metric
-    fit_metric_value:
-        Fit metric achieved
-    approx_total_psi:
-        Total psi obtained using the TH approximation
-    approx_coilset_psi:
-        Coilset psi obtained using the TH approximation
+    result:
+        ToroidalHarmonicsSelectionResult
 
     Raises
     ------
@@ -981,18 +931,11 @@ def optimisation_toroidal_harmonic_approximation(
         Problem not setup for harmonics
 
     """
-    if th_params is None:
-        R_0, Z_0 = eq.effective_centre()
-        th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
+    if eq.grid is None or eq.plasma is None:
+        raise EquilibriaError("eq not setup for TH approximation.")
 
     # Get original flux surface from Bluemira for equilibrium
     original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
-
-    if eq.grid is None or eq.plasma is None:
-        raise EquilibriaError("eq not setup for TH approximation.")
-    # Use R and Z from th_params so we can compare psi over the same grid
-    R_approx = th_params.R  # noqa: N806
-    Z_approx = th_params.Z  # noqa: N806
 
     collocation = collocation_points(
         original_fs,
@@ -1009,23 +952,26 @@ def optimisation_toroidal_harmonic_approximation(
     # after: set all amplitudes that arent within the threshold to 0, then see
     # how it effects the soln
     opt_results = np.zeros([n_allowed * 2, gamma_max + 1])
-    if plot:
-        _f, ax = plt.subplots(2, 2)
+
     for g in range(gamma_max + 1):
-        args = (
-            harmonics2collocation_cos,
-            harmonics2collocation_sin,
-            collocation_psivac,
-            g,
-            n_allowed,
-        )
+        if plot:
+            _, ax = plt.subplots(2, 2)
+        # TODO: MC Can't see any reason why gamma would be an integer
+        # We could also log-space rather than linspace...
         result = minimize(
             fun=lasso_toroidal_harmonics,
             x0=np.zeros(n_allowed * 2),
-            args=args,
+            args=(
+                harmonics2collocation_cos,
+                harmonics2collocation_sin,
+                collocation_psivac,
+                g,
+                n_allowed,
+            ),
             method="SLSQP",
         )
         opt_results[:, g] = result.x
+
         if plot:
             ax[0][0].plot(np.abs(result.x[:n_allowed]), label=f"gamma = {g}")
             ax[0][0].set_ylabel("amplitude")
@@ -1104,16 +1050,6 @@ def optimisation_toroidal_harmonic_approximation(
         n_allowed=n_allowed,
         th_params=th_params,
     )
-    nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-    cmap = PLOT_DEFAULTS["psi"]["cmap"]
-    f, ax = plt.subplots()
-    ax.contourf(R_approx, Z_approx, vacuum_psi_approx, levels=nlevels, cmap=cmap)
-    plt.show()
-    # import pdb
-
-    # pdb.set_trace()
-    # for all degrees that are not these degreees^, set their amplitudes to 0 for
-    # initial testing
 
     vacuum_psi_approx = toroidal_harmonics_approximate_vacuum_psi(
         Am_cos=cos_amplitudes_length_12,
@@ -1128,40 +1064,20 @@ def optimisation_toroidal_harmonic_approximation(
         cos_degrees_chosen=cos_degrees_chosen,
         sin_degrees_chosen=sin_degrees_chosen,
     )
-    # import pdb
 
-    # pdb.set_trace()
-    args = (
-        Am_cos,
-        Am_sin,
-        amplitude,
-    )
-    result = minimize(
-        fun=ols_toroidal_harmonics,
-        x0=np.ones(len(eq.coilset.x)) * 1e7,
-        args=args,
-        method="SLSQP",
-    )
-    currents_approx = result.x
     coilset_psi_approx, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(
         eq=eq,
         th_params=th_params,
         cos_degrees_chosen=cos_degrees_chosen,
         sin_degrees_chosen=sin_degrees_chosen,
     )
-    # import pdb
 
-    # pdb.set_trace()
-    bluemira_total_psi = eq.psi(R_approx, Z_approx)
+    coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
+    bluemira_total_psi = coilset_psi + fixed_psi
     # Non TH contribution to psi field
-    non_th_contribution_psi = eq.plasma.psi(R_approx, Z_approx)
-    excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
-
-    for coil in excluded_coils:
-        non_th_contribution_psi += eq.coilset[coil].psi(R_approx, Z_approx)
 
     # Add the non TH coil contribution to the total
-    approx_total_psi = vacuum_psi_approx + non_th_contribution_psi
+    approx_total_psi = vacuum_psi_approx + fixed_psi
 
     # Find LCFS from TH approx
     approx_eq = deepcopy(eq)
@@ -1170,8 +1086,8 @@ def optimisation_toroidal_harmonic_approximation(
 
     # Find flux surface for our TH approximation equilibrium
     f_s = find_flux_surf(
-        R_approx,
-        Z_approx,
+        th_params.R,
+        th_params.Z,
         approx_total_psi,
         psi_norm,
         o_points=o_points,
@@ -1182,56 +1098,6 @@ def optimisation_toroidal_harmonic_approximation(
     # Compare staring equilibrium to new approximate equilibrium
     fit_metric_value = fs_fit_metric(original_fs, approx_fs)
 
-    # Set min degree to save some time
-    min_degree = 2
-    # Can't have more degrees than sampled psi
-    max_degree = len(th_params.th_coil_names) - 1
-    # Have cos and sin components so this must be half
-    allowable_n_degrees = int(np.trunc(max_degree / 2))
-
-    # for degree in range(min_degree, allowable_n_degrees):
-    #     # Construct matrix from harmonic amplitudes for the coils and approximate psi
-    #     approx_coilset_psi, Am_cos, Am_sin = toroidal_harmonic_approximate_psi(
-    #         eq=eq, th_params=th_params, max_degree=degree + 1
-    #     )
-    #     # Add the non TH coil contribution to the total
-    #     approx_total_psi = approx_coilset_psi + non_th_contribution_psi
-
-    #     # Find LCFS from TH approx
-    #     approx_eq = deepcopy(eq)
-    #     approx_eq.coilset.control = th_params.th_coil_names
-    #     o_points, x_points = approx_eq.get_OX_points()
-
-    #     # Find flux surface for our TH approximation equilibrium
-    #     f_s = find_flux_surf(
-    #         R_approx,
-    #         Z_approx,
-    #         approx_total_psi,
-    #         psi_norm,
-    #         o_points=o_points,
-    #         x_points=x_points,
-    #     )
-    #     approx_fs = Coordinates({"x": f_s[0], "z": f_s[1]})
-
-    #     # Compare staring equilibrium to new approximate equilibrium
-    #     fit_metric_value = fs_fit_metric(original_fs, approx_fs)
-
-    #     bluemira_print(
-    #         f"Fit metric value = {fit_metric_value} using {degree + 1} degrees."
-    #     )
-
-    #     if fit_metric_value <= acceptable_fit_metric:
-    #         break
-    #     if degree + 1 == max_degree:
-    #         bluemira_warn(
-    #             "You may need to use more degrees for a fit metric of"
-    #             f" {acceptable_fit_metric}!"
-    #         )
-
-    # Plot comparing original psi to the TH approximation
-    # import pdb
-
-    # pdb.set_trace()
     if plot:
         nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
         cmap = PLOT_DEFAULTS["psi"]["cmap"]
@@ -1248,22 +1114,23 @@ def optimisation_toroidal_harmonic_approximation(
             linestyle="dashed",
             label="FS from Bluemira",
         )
-        im = ax.contourf(R_approx, Z_approx, total_psi_diff, levels=nlevels, cmap=cmap)
+        im = ax.contourf(
+            th_params.R, th_params.Z, total_psi_diff, levels=nlevels, cmap=cmap
+        )
         f.colorbar(mappable=im)
         # ax.set_title("|th_approx_psi - psi| / max(psi)")
         ax.legend(loc="upper right")
         eq.coilset.plot(ax=ax)
         plt.show()
 
-    return (
-        th_params,
-        Am_cos,
-        Am_sin,
-        cos_degrees_chosen,
-        sin_degrees_chosen,
-        fit_metric_value,
-        approx_total_psi,
-        vacuum_psi_approx,
+    return ToroidalHarmonicsSelectionResult(
+        cos_degrees=cos_degrees_chosen,
+        sin_degrees=sin_degrees_chosen,
+        cos_amplitudes=Am_cos,
+        sin_amplitudes=Am_sin,
+        error=fit_metric_value,
+        coilset_psi=vacuum_psi_approx,
+        fixed_psi=fixed_psi,
     )
 
 
@@ -1304,9 +1171,7 @@ def toroidal_harmonics_to_collocation(
     # Need term to calculate psi from A
     # \psi = A * R_0 * sinh(\tau) / Delta
     psi_conversion_term = th_params.R_0 * np.sinh(collocation_tau) / Delta
-    # import pdb
 
-    # pdb.set_trace()
     harmonics2collocation_cos = (
         epsilon[:, None]
         * factorial_m[:, None]
