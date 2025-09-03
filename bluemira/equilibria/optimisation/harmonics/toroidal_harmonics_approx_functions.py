@@ -659,23 +659,19 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
         Problem not setup for harmonics
 
     """
+    if eq.grid is None or eq.plasma is None:
+        raise EquilibriaError("eq not setup for TH approximation.")
     # Get original flux surface from Bluemira for equilibrium
     original_fs = (
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
     )
-    from bluemira.geometry._pyclipper_offset import offset_clipper
-
-    offset_fs = offset_clipper(original_fs, 0.5)
-
-    if eq.grid is None or eq.plasma is None:
-        raise EquilibriaError("eq not setup for TH approximation.")
 
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
 
     # Want to mask to be able to calculate error in the plasma region only
     mask_matrix = np.zeros_like(th_params.R)
     mask = _in_plasma(
-        th_params.R, th_params.Z, mask_matrix, offset_fs.xz.T, include_edges=True
+        th_params.R, th_params.Z, mask_matrix, original_fs.xz.T, include_edges=True
     )
     n_grid = len(th_params.R) * len(th_params.Z)
 
@@ -900,11 +896,11 @@ def optimisation_toroidal_harmonic_approximation(
         Problem not setup for harmonics
 
     """
-    # Get original flux surface from Bluemira for equilibrium
-    original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
-
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("eq not setup for TH approximation.")
+
+    # Get original flux surface from Bluemira for equilibrium
+    original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
 
     collocation = collocation_points(
         original_fs,
@@ -923,6 +919,8 @@ def optimisation_toroidal_harmonic_approximation(
     opt_results = np.zeros([n_allowed * 2, gamma_max + 1])
 
     for g in range(gamma_max + 1):
+        if plot:
+            _, ax = plt.subplots(2, 2)
         # TODO: MC Can't see any reason why gamma would be an integer
         # We could also log-space rather than linspace...
         result = minimize(
@@ -938,6 +936,7 @@ def optimisation_toroidal_harmonic_approximation(
             method="SLSQP",
         )
         opt_results[:, g] = result.x
+
         if plot:
             ax[0][0].plot(np.abs(result.x[:n_allowed]), label=f"gamma = {g}")
             ax[0][0].set_ylabel("amplitude")
@@ -1039,7 +1038,7 @@ def optimisation_toroidal_harmonic_approximation(
     )
 
     coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
-    bluemira_total_psi = eq.psi(th_params.R, th_params.Z)
+    bluemira_total_psi = coilset_psi + fixed_psi
     # Non TH contribution to psi field
 
     # Add the non TH coil contribution to the total
