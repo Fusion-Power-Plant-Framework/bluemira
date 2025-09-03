@@ -84,7 +84,6 @@ class Strand(metaclass=RegistrableMeta):
             name=name,
             materials=materials,
             fraction_type="mass",
-            # volume_conditions=OperationalConditions(temperature=298.15)
         )
 
     @property
