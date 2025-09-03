@@ -57,6 +57,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     optimisation_toroidal_harmonic_approximation,
+    toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
 
@@ -91,10 +92,12 @@ plt.show()
 psi_norm = 0.95
 
 
+R_0, Z_0 = eq.effective_centre()
+th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
+
 # %%
 # using optimisation fn :
 (
-    th_params,
     cos_amplitudes,
     sin_amplitudes,
     cos_degrees,
@@ -104,6 +107,7 @@ psi_norm = 0.95
     vacuum_psi_approx,
 ) = optimisation_toroidal_harmonic_approximation(
     eq=eq,
+    th_params=th_params,
     psi_norm=psi_norm,
 )
 

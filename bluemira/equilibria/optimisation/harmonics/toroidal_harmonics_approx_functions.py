@@ -588,9 +588,9 @@ def _separate_psi_contributions(
     return coilset_psi - excluded_coil_psi, plasma_psi + excluded_coil_psi
 
 
-def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
+def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     eq: Equilibrium,
-    th_params: ToroidalHarmonicsParams | None = None,
+    th_params: ToroidalHarmonicsParams,
     psi_norm: float = 0.95,
     max_harmonic_order: int = 5,
     tol: float = 0.001,
@@ -605,7 +605,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
     np.ndarray,
     np.ndarray,
     np.ndarray,
-    ToroidalHarmonicsParams,
 ]:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
@@ -660,10 +659,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
         Problem not setup for harmonics
 
     """
-    if th_params is None:
-        R_0, Z_0 = eq.effective_centre()
-        th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
-
     # Get original flux surface from Bluemira for equilibrium
     original_fs = (
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
@@ -749,8 +744,7 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
         # use the previous total number of degrees
         full = (len(errors_old) != 0) & (len(errors) != 0)
         succeeded = (np.min(errors_old) - np.min(errors) < tol) if full else False
-        # TODO shall we add a condition that the psi_norm flux surface for _old should
-        # be closed?
+
         if succeeded:
             index_chosen = np.argmin(errors_old)
             error_success = errors_old[index_chosen]
@@ -763,7 +757,10 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
             sin_amplitude_success = sin_amplitudes_old[index_chosen]
 
             if plot:
-                o_points, x_points = eq.get_OX_points()
+                # TODO: MC this should really not be necessary...
+                approx_eq = deepcopy(eq)
+                approx_eq.coilset.control = th_params.th_coil_names
+                o_points, x_points = approx_eq.get_OX_points()
                 plotting(
                     R_approx=th_params.R,
                     Z_approx=th_params.Z,
@@ -785,7 +782,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: PLR0914, RET503
                 vacuum_psi_success,
                 cos_amplitude_success,
                 sin_amplitude_success,
-                th_params,
             )
         elif n == max_dof:  # noqa: RET505
             raise EquilibriaError(
@@ -863,15 +859,13 @@ def plotting(
 
 def optimisation_toroidal_harmonic_approximation(
     eq: Equilibrium,
-    th_params: ToroidalHarmonicsParams | None = None,
+    th_params: ToroidalHarmonicsParams,
     psi_norm: float = 1.0,
     gamma_max: int = 10,
     amplitude_variation_thresh: float = 2.0,
     *,
     plot: bool = False,
-) -> tuple[
-    ToroidalHarmonicsParams, np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray
-]:
+) -> tuple[np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray]:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
@@ -924,10 +918,6 @@ def optimisation_toroidal_harmonic_approximation(
         Problem not setup for harmonics
 
     """
-    if th_params is None:
-        R_0, Z_0 = eq.effective_centre()
-        th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
-
     # Get original flux surface from Bluemira for equilibrium
     original_fs = eq.get_LCFS() if psi_norm == 1.0 else eq.get_flux_surface(psi_norm)
 
@@ -1139,7 +1129,6 @@ def optimisation_toroidal_harmonic_approximation(
         plt.show()
 
     return (
-        th_params,
         Am_cos,
         Am_sin,
         cos_degrees_chosen,
