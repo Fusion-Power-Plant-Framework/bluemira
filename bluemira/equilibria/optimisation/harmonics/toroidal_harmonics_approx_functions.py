@@ -616,8 +616,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     psi_norm: float = 0.95,
     max_harmonic_order: int = 5,
     tol: float = 0.001,
-    *,
-    plot: bool = False,
 ) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
@@ -645,8 +643,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     tol:
         Value used for error comparison to determine a sufficient combination of
         degrees
-    plot:
-        Whether or not to plot the results
 
     Returns
     -------
@@ -748,23 +744,6 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
 
             cos_amplitude_success = cos_amplitudes_old[index_chosen]
             sin_amplitude_success = sin_amplitudes_old[index_chosen]
-
-            if plot:
-                # TODO: MC this should really not be necessary...
-                approx_eq = deepcopy(eq)
-                approx_eq.coilset.control = th_params.th_coil_names
-                o_points, x_points = approx_eq.get_OX_points()
-                plotting(
-                    R_approx=th_params.R,
-                    Z_approx=th_params.Z,
-                    total_psi_success=coilset_psi_success,
-                    psi_norm=psi_norm,
-                    o_points=o_points,
-                    x_points=x_points,
-                    total_psi_bluemira=true_coilset_psi + fixed_psi,
-                    th_params=th_params,
-                    original_fs=original_fs,
-                )
 
             return ToroidalHarmonicsSelectionResult(
                 cos_degrees=cos_degrees_success,

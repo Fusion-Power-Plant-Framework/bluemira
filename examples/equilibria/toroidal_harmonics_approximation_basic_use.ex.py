@@ -109,7 +109,10 @@ plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
 
 # %% using brute force
 result = brute_force_toroidal_harmonic_approximation(
-    eq=eq, th_params=th_params, psi_norm=psi_norm, tol=0.1, plot=False
+    eq=eq,
+    th_params=th_params,
+    psi_norm=psi_norm,
+    tol=0.1,
 )
 
 
