@@ -97,15 +97,7 @@ th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
 # %%
 # using optimisation fn :
-(
-    cos_amplitudes,
-    sin_amplitudes,
-    cos_degrees,
-    sin_degrees,
-    fit_metric_value,
-    approx_total_psi,
-    vacuum_psi_approx,
-) = optimisation_toroidal_harmonic_approximation(
+result = optimisation_toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
     psi_norm=psi_norm,
@@ -113,25 +105,25 @@ th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
 # %%
 # print(f"Combo used = {combo}")
-print(f"cos degrees used = {cos_degrees}")
-print(f"sin degrees used = {sin_degrees}")
+print(f"cos degrees used = {result.cos_degrees}")
+print(f"sin degrees used = {result.sin_degrees}")
 
 
 th_constraint_equal = ToroidalHarmonicConstraint(
-    ref_harmonics_cos=cos_degrees,
-    ref_harmonics_sin=sin_degrees,
-    ref_harmonics_cos_amplitudes=cos_amplitudes,
-    ref_harmonics_sin_amplitudes=sin_amplitudes,
+    ref_harmonics_cos=result.cos_degrees,
+    ref_harmonics_sin=result.sin_degrees,
+    ref_harmonics_cos_amplitudes=result.cos_amplitudes,
+    ref_harmonics_sin_amplitudes=result.sin_amplitudes,
     constraint_type="equality",
     th_params=th_params,
     tolerance=1e-3,
 )
 
 th_constraint_inequal = ToroidalHarmonicConstraint(
-    ref_harmonics_cos=cos_degrees,
-    ref_harmonics_sin=sin_degrees,
-    ref_harmonics_cos_amplitudes=cos_amplitudes,
-    ref_harmonics_sin_amplitudes=sin_amplitudes,
+    ref_harmonics_cos=result.cos_degrees,
+    ref_harmonics_sin=result.sin_degrees,
+    ref_harmonics_cos_amplitudes=result.cos_amplitudes,
+    ref_harmonics_sin_amplitudes=result.sin_amplitudes,
     constraint_type="inequality",
     th_params=th_params,
     tolerance=1e-3,

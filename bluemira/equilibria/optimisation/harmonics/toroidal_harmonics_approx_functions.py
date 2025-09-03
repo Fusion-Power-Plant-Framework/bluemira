@@ -590,12 +590,23 @@ def _separate_psi_contributions(
 
 @dataclass
 class ToroidalHarmonicsSelectionResult:
+    """
+    Toroidal harmonic selection result class
+    """
+
+    """Selected cosine toroidal harmonic degrees"""
     cos_degrees: np.ndarray
+    """Selected sine toroidal harmonic degrees"""
     sin_degrees: np.ndarray
+    """Selected cosine toroidal harmonic amplitudes"""
     cos_amplitudes: np.ndarray
+    """Selected sine toroidal harmonic amplitudes"""
     sin_amplitudes: np.ndarray
+    """Error to desired coilset psi"""
     error: float
+    """Approximated coilset psi"""
     coilset_psi: np.ndarray
+    """Background psi"""
     fixed_psi: np.ndarray
 
 
