@@ -588,6 +588,17 @@ def _separate_psi_contributions(
     return coilset_psi - excluded_coil_psi, plasma_psi + excluded_coil_psi
 
 
+@dataclass
+class ToroidalHarmonicsSelectionResult:
+    cos_degrees: np.ndarray
+    sin_degrees: np.ndarray
+    cos_amplitudes: np.ndarray
+    sin_amplitudes: np.ndarray
+    error: float
+    coilset_psi: np.ndarray
+    fixed_psi: np.ndarray
+
+
 def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
@@ -596,16 +607,7 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     tol: float = 0.001,
     *,
     plot: bool = False,
-) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-]:
+) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
@@ -637,21 +639,8 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
 
     Returns
     -------
-    error_success:
-        The value of the error for the combination of degrees chosen
-    combo_success:
-        The degrees chosen
-    total_psi_success:
-        The total psi calculated using the TH approximation for the vacuum
-        contribution using the combination of degrees chosen
-    vacuum_psi_success:
-        The TH approximation for the vacuum psi using the combination of degrees chosen
-    cos_amplitudes_success:
-        The cos amplitudes for the combination of degrees chosen
-    sin_amplitudes_success:
-        The sin amplitudes for the combination of degrees chosen
-    th_params:
-        Dataclass containing necessary parameters for use in TH approximation
+    result:
+        ToroidalHarmonicsSelectionResult
 
     Raises
     ------
@@ -689,23 +678,23 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
 
     # Initialise arrays to hold errors, combinations, amplitudes and psi values
     # Loop over combinations of degrees and save results which satisfy error condition
+    # TODO: MC this list tracking can probably be removed: it is monotonically
+    # decreasing and we can just take the last values?
     errors_old = []
-    combo_old = []
     cos_degrees_old = []
     sin_degrees_old = []
     cos_amplitudes_old = []
     sin_amplitudes_old = []
-    total_psis_old = []
-    vacuum_psis_old = []
+    coilset_psis_old = []
+
     for n in np.arange(2, max_dof):
         errors = []
-        combo = []
         cos_degrees = []
         sin_degrees = []
         cos_amplitudes = []
         sin_amplitudes = []
-        total_psis = []
-        vacuum_psis = []
+        coilset_psis = []
+
         for c in combinations(dof_id, n):
             deg_id = list(c)
             cos_degrees_chosen = np.array([
@@ -732,11 +721,9 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
             )
 
             errors.append(error)
-            combo.append(c)
             cos_degrees.append(cos_degrees_chosen)
             sin_degrees.append(sin_degrees_chosen)
-            total_psis.append(approximate_coilset_psi + fixed_psi)
-            vacuum_psis.append(approximate_coilset_psi)
+            coilset_psis.append(approximate_coilset_psi)
             cos_amplitudes.append(cos_amps)
             sin_amplitudes.append(sin_amps)
 
@@ -748,11 +735,10 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
         if succeeded:
             index_chosen = np.argmin(errors_old)
             error_success = errors_old[index_chosen]
-            combo_success = combo_old[index_chosen]
             cos_degrees_success = cos_degrees_old[index_chosen]
             sin_degrees_success = sin_degrees_old[index_chosen]
-            total_psi_success = total_psis_old[index_chosen]
-            vacuum_psi_success = vacuum_psis_old[index_chosen]
+            coilset_psi_success = coilset_psis_old[index_chosen]
+
             cos_amplitude_success = cos_amplitudes_old[index_chosen]
             sin_amplitude_success = sin_amplitudes_old[index_chosen]
 
@@ -764,7 +750,7 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
                 plotting(
                     R_approx=th_params.R,
                     Z_approx=th_params.Z,
-                    total_psi_success=total_psi_success,
+                    total_psi_success=coilset_psi_success,
                     psi_norm=psi_norm,
                     o_points=o_points,
                     x_points=x_points,
@@ -773,15 +759,14 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
                     original_fs=original_fs,
                 )
 
-            return (
-                error_success,
-                combo_success,
-                cos_degrees_success,
-                sin_degrees_success,
-                total_psi_success,
-                vacuum_psi_success,
-                cos_amplitude_success,
-                sin_amplitude_success,
+            return ToroidalHarmonicsSelectionResult(
+                cos_degrees=cos_degrees_success,
+                sin_degrees=sin_degrees_success,
+                cos_amplitudes=cos_amplitude_success,
+                sin_amplitudes=sin_amplitude_success,
+                error=error_success,
+                coilset_psi=coilset_psi_success,
+                fixed_psi=fixed_psi,
             )
         elif n == max_dof:  # noqa: RET505
             raise EquilibriaError(
@@ -791,13 +776,11 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
             )
 
         errors_old = errors
-        combo_old = combo
         cos_degrees_old = cos_degrees
         sin_degrees_old = sin_degrees
         cos_amplitudes_old = cos_amplitudes
         sin_amplitudes_old = sin_amplitudes
-        total_psis_old = total_psis
-        vacuum_psis_old = vacuum_psis
+        coilset_psis_old = coilset_psis
 
 
 def plotting(
@@ -865,7 +848,7 @@ def optimisation_toroidal_harmonic_approximation(
     amplitude_variation_thresh: float = 2.0,
     *,
     plot: bool = False,
-) -> tuple[np.ndarray, np.ndarray, int, float, np.ndarray, np.ndarray]:
+) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
 
@@ -897,20 +880,8 @@ def optimisation_toroidal_harmonic_approximation(
 
     Returns
     -------
-    th_params:
-        Dataclass containing necessary parameters for use in TH approximation
-    Am_cos:
-        TH cos coefficients/amplitudes for required number of degrees
-    Am_sin:
-        TH sin coefficients/amplitudes for required number of degrees
-    degree:
-        Number of degrees required for a TH approx with the desired fit metric
-    fit_metric_value:
-        Fit metric achieved
-    approx_total_psi:
-        Total psi obtained using the TH approximation
-    approx_coilset_psi:
-        Coilset psi obtained using the TH approximation
+    result:
+        ToroidalHarmonicsSelectionResult
 
     Raises
     ------
@@ -1035,21 +1006,6 @@ def optimisation_toroidal_harmonic_approximation(
         th_params=th_params,
     )
 
-    f, ax = plt.subplots()
-    ax.contourf(
-        th_params.X,
-        th_params.Z,
-        vacuum_psi_approx,
-        levels=PLOT_DEFAULTS["psi"]["nlevels"],
-        cmap=PLOT_DEFAULTS["psi"]["cmap"],
-    )
-    plt.show()
-    # import pdb
-
-    # pdb.set_trace()
-    # for all degrees that are not these degreees^, set their amplitudes to 0 for
-    # initial testing
-
     vacuum_psi_approx = toroidal_harmonics_approximate_vacuum_psi(
         Am_cos=cos_amplitudes_length_12,
         Am_sin=sin_amplitudes_length_12,
@@ -1070,19 +1026,13 @@ def optimisation_toroidal_harmonic_approximation(
         cos_degrees_chosen=cos_degrees_chosen,
         sin_degrees_chosen=sin_degrees_chosen,
     )
-    # import pdb
 
-    # pdb.set_trace()
+    coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
     bluemira_total_psi = eq.psi(th_params.R, th_params.Z)
     # Non TH contribution to psi field
-    non_th_contribution_psi = eq.plasma.psi(th_params.R, th_params.Z)
-    excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
-
-    for coil in excluded_coils:
-        non_th_contribution_psi += eq.coilset[coil].psi(th_params.R, th_params.Z)
 
     # Add the non TH coil contribution to the total
-    approx_total_psi = vacuum_psi_approx + non_th_contribution_psi
+    approx_total_psi = vacuum_psi_approx + fixed_psi
 
     # Find LCFS from TH approx
     approx_eq = deepcopy(eq)
@@ -1128,14 +1078,14 @@ def optimisation_toroidal_harmonic_approximation(
         eq.coilset.plot(ax=ax)
         plt.show()
 
-    return (
-        Am_cos,
-        Am_sin,
-        cos_degrees_chosen,
-        sin_degrees_chosen,
-        fit_metric_value,
-        approx_total_psi,
-        vacuum_psi_approx,
+    return ToroidalHarmonicsSelectionResult(
+        cos_degrees=cos_degrees_chosen,
+        sin_degrees=sin_degrees_chosen,
+        cos_amplitudes=Am_cos,
+        sin_amplitudes=Am_sin,
+        error=fit_metric_value,
+        coilset_psi=vacuum_psi_approx,
+        fixed_psi=fixed_psi,
     )
 
 
