@@ -110,7 +110,7 @@ class ABCCable(ABC):
                 self.E = (
                     youngs_modulus
                     if callable(youngs_modulus)
-                    else lambda self, op_cond, v=youngs_modulus: youngs_modulus
+                    else lambda op_cond, v=youngs_modulus: youngs_modulus
                 )
 
         for k, v in props.items():
@@ -246,7 +246,12 @@ class ABCCable(ABC):
         :
             Default Young's modulus (0).
         """
-        raise NotImplementedError("E for Cable is not implemented.")
+        try:
+            # if fixed E value was not input
+            return self._E(op_cond)
+        except TypeError:
+            # if fixed E value was input
+            return self._E
 
     def _heat_balance_model_cable(
         self,

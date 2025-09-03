@@ -394,9 +394,9 @@ class TFCoilXYDesigner(Designer):
             cos_theta=params["cos_theta"][i_WP],
             name=config.get("name", cls_name.rsplit("::", 1)[-1]),
             **(
-                {"dx": params["dx"][i_WP]}
+                {"dx": params["dx"][i_WP], "E": params["E"][i_WP]}
                 if issubclass(cable_cls, RectangularCable)
-                else {}
+                else {"E": params["E"][i_WP]}
             ),
         )
 

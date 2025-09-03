@@ -10,9 +10,7 @@ This involves the design and optimisation of each module: strand, cable,
 conductor, winding pack and casing.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
-
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
@@ -30,20 +28,20 @@ config = {
         "params": {
             "d_strand": 1.0e-3,
             "operating_temperature": 5.7,
-        }
+        },
     },
     "superconducting_strand": {
         "class": "SuperconductingStrand",
         "materials": [
-        {"material": NB3SN_MAG, "fraction": 0.5},
-        {"material": COPPER_100, "fraction": 0.5},
+            {"material": NB3SN_MAG, "fraction": 0.5},
+            {"material": COPPER_100, "fraction": 0.5},
         ],
         "params": {
             "d_strand": 1.0e-3,
             "operating_temperature": 5.7,
-        }
+        },
     },
-    "cable":{
+    "cable": {
         "class": "RectangularCable",
         "params": {
             "n_sc_strand": 321,
@@ -52,7 +50,8 @@ config = {
             "void_fraction": 0.7,
             "cos_theta": 0.97,
             "dx": 0.034648435154495685,
-        }
+            "E": 0.1e9,
+        },
     },
     "conductor": {
         "class": "SymmetricConductor",
@@ -63,7 +62,7 @@ config = {
             "dy_jacket": 0.0,
             "dx_ins": 0.0030808556812487366,
             "dy_ins": 0.0,
-        }
+        },
     },
     "winding_pack": {
         "class": "WindingPack",
@@ -71,7 +70,7 @@ config = {
         "params": {
             "nx": [25, 18],
             "ny": [6, 1],
-        }
+        },
     },
     "case": {
         "class": "TrapezoidalCaseTF",
@@ -82,7 +81,7 @@ config = {
             "theta_TF": 22.5,
             "dy_ps": 0.05733333333333333,
             "dy_vault": 0.4529579163961617,
-        }
+        },
     },
     "optimisation_params": {
         "t0": 0,
@@ -94,65 +93,26 @@ config = {
         "bounds_cond_jacket": np.array([1e-5, 0.2]),
         "bounds_dy_vault": np.array([0.1, 2]),
         "max_niter": 100,
-        "eps": 1e-6
-    }
+        "eps": 1e-6,
+    },
 }
 
 params = {
     # base
-    "R0": {
-        "value": 8.6,
-        "unit": "m"
-    },
-    "B0": {
-        "value": 4.39,
-        "unit": "T"
-    },
-    "A": {
-        "value": 2.8,
-        "unit": "dimensionless"
-    },
-    "n_TF": {
-        "value": 16,
-        "unit": "dimensionless"
-    },
-    "ripple": {
-        "value": 6e-3,
-        "unit": "dimensionless"
-    },
-    "d": {
-        "value": 1.82,
-        "unit": "m"
-    },
-    "S_VV": {
-        "value": 100e6,
-        "unit": "dimensionless"
-    },
-    "safety_factor": {
-        "value": 1.5*1.3,
-        "unit": "dimensionless"
-    },
-    "B_ref": {
-        "value": 15,
-        "unit": "T"
-    },
+    "R0": {"value": 8.6, "unit": "m"},
+    "B0": {"value": 4.39, "unit": "T"},
+    "A": {"value": 2.8, "unit": "dimensionless"},
+    "n_TF": {"value": 16, "unit": "dimensionless"},
+    "ripple": {"value": 6e-3, "unit": "dimensionless"},
+    "d": {"value": 1.82, "unit": "m"},
+    "S_VV": {"value": 100e6, "unit": "dimensionless"},
+    "safety_factor": {"value": 1.5 * 1.3, "unit": "dimensionless"},
+    "B_ref": {"value": 15, "unit": "T"},
     # misc params
-    "Iop": {
-        "value": 70.0e3,
-        "unit": "A"
-    },
-    "T_sc": {
-        "value": 4.2,
-        "unit": "K"
-    },
-    "T_margin": {
-        "value": 1.5,
-        "unit": "K"
-    },
-    "t_delay": {
-        "value": 3,
-        "unit": "s"
-    },
+    "Iop": {"value": 70.0e3, "unit": "A"},
+    "T_sc": {"value": 4.2, "unit": "K"},
+    "T_margin": {"value": 1.5, "unit": "K"},
+    "t_delay": {"value": 3, "unit": "s"},
 }
 tf_coil_xy = TFCoilXYDesigner(params=params, build_config=config).execute()
 tf_coil_xy.plot(show=True, homogenized=False)
