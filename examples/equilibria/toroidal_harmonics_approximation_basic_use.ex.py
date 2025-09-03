@@ -58,6 +58,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     brute_force_toroidal_harmonic_approximation,
     optimisation_toroidal_harmonic_approximation,
+    plot_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
@@ -99,14 +100,16 @@ th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 # %%
 # using optimisation fn :
 result = optimisation_toroidal_harmonic_approximation(
-    eq=eq, th_params=th_params, psi_norm=psi_norm, plot=True
+    eq=eq, th_params=th_params, psi_norm=psi_norm, plot=False
 )
 print(f"cos degrees used = {result.cos_degrees}")
 print(f"sin degrees used = {result.sin_degrees}")
 
+plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
+
 # %% using brute force
 result = brute_force_toroidal_harmonic_approximation(
-    eq=eq, th_params=th_params, psi_norm=psi_norm, tol=0.2, plot=True
+    eq=eq, th_params=th_params, psi_norm=psi_norm, tol=0.1, plot=False
 )
 
 

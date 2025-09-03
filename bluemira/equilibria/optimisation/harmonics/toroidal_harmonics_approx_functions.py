@@ -790,6 +790,64 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
         coilset_psis_old = coilset_psis
 
 
+def plot_toroidal_harmonic_approximation(
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    result: ToroidalHarmonicsSelectionResult,
+    psi_norm: float = 0.95,
+):
+    original_fs = (
+        eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+    )
+    approx_fs = find_flux_surf(
+        th_params.R,
+        th_params.Z,
+        result.coilset_psi + result.fixed_psi,
+        psi_norm,
+        *eq.get_OX_points(),
+    )
+    approx_fs = Coordinates({"x": approx_fs[0], "z": approx_fs[1]})
+
+    f, ax = plt.subplots()
+    ax.contour(
+        th_params.R,
+        th_params.Z,
+        eq.coilset.psi(th_params.R, th_params.Z),
+        levels=PLOT_DEFAULTS["psi"]["nlevels"],
+        colors="black",
+        linewidths=1,
+    )
+    ax.contour(
+        th_params.R,
+        th_params.Z,
+        result.coilset_psi,
+        levels=PLOT_DEFAULTS["psi"]["nlevels"],
+        colors="red",
+        linewidths=1,
+    )
+
+    ax.plot(
+        approx_fs.x,
+        approx_fs.z,
+        color="r",
+        label="TH FS",
+        linestyle="dashed",
+        lw=5,
+    )
+    ax.plot(
+        original_fs.x,
+        original_fs.z,
+        color="blue",
+        label="BM FS",
+        lw=5,
+    )
+    ax.legend(loc="upper right")
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("z [m]")
+    ax.set_aspect("equal")
+    plt.show()
+
+
 def plotting(
     R_approx,
     Z_approx,
