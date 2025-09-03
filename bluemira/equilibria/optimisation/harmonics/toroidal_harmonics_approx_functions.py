@@ -824,7 +824,7 @@ def plot_toroidal_harmonic_approximation(
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
     ax.set_aspect("equal")
-    plt.show()
+    return f, ax
 
 
 def plotting(
