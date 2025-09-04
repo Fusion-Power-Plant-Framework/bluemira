@@ -49,7 +49,7 @@ class PROCESSTemplateBuilder:
         self.variables: dict[str, float] = {}
         self.bounds: dict[str, dict[str, str]] = {}
         self.ixc: list[int] = []
-        self.fimp: list[float] = 14 * [0.0]
+        self.f_nd_impurity_electrons: list[float] = 14 * [0.0]
 
         self.minmax: int = 0
         self.ioptimiz: int = 0
@@ -247,11 +247,12 @@ class PROCESSTemplateBuilder:
         Add an impurity concentration
         """
         idx = impurity.value - 1
-        self.fimp[idx] = value
+        self.f_nd_impurity_electrons[idx] = value
 
     def _add_to_dict(self, mapping: dict[str, Any], name: str, value: Any):
-        if "fimp(" in name:
-            num = int(name.strip("fimp(")[:2])
+        if name.startswith("f_nd_impurity_electrons"):
+            str_of_num = name.split("f_nd_impurity_electrons")[1]
+            num = int(str_of_num.strip("()"))
             impurity = Impurities(num)
             self.add_impurity(impurity, value)
         else:
@@ -327,7 +328,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
-            fimp=self.fimp,
+            f_nd_impurity_electrons=self.f_nd_impurity_electrons,
             **self.values,
             **models,
             **self.variables,

@@ -670,18 +670,18 @@ ITERATION_VAR_MAPPING = {
     "f_a_cs_steel": 122,
     "foh_stress": 123,
     "qtargettotal": 124,
-    "fimp(3)": 125,  # Beryllium
-    "fimp(4)": 126,  # Carbon
-    "fimp(5)": 127,  # Nitrogen
-    "fimp(6)": 128,  # Oxygen
-    "fimp(7)": 129,  # Neon
-    "fimp(8)": 130,  # Silicon
-    "fimp(9)": 131,  # Argon
-    "fimp(10)": 132,  # Iron
-    "fimp(11)": 133,  # Nickel
-    "fimp(12)": 134,  # Krypton
-    "fimp(13)": 135,  # Xenon
-    "fimp(14)": 136,  # Tungsten
+    "f_nd_impurity_electrons(3)": 125,  # Beryllium
+    "f_nd_impurity_electrons(4)": 126,  # Carbon
+    "f_nd_impurity_electrons(5)": 127,  # Nitrogen
+    "f_nd_impurity_electrons(6)": 128,  # Oxygen
+    "f_nd_impurity_electrons(7)": 129,  # Neon
+    "f_nd_impurity_electrons(8)": 130,  # Silicon
+    "f_nd_impurity_electrons(9)": 131,  # Argon
+    "f_nd_impurity_electrons(10)": 132,  # Iron
+    "f_nd_impurity_electrons(11)": 133,  # Nickel
+    "f_nd_impurity_electrons(12)": 134,  # Krypton
+    "f_nd_impurity_electrons(13)": 135,  # Xenon
+    "f_nd_impurity_electrons(14)": 136,  # Tungsten
     "fplhsep": 137,
     "rebco_thickness": 138,
     "copper_thick": 139,

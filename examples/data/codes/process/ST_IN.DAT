@@ -172,20 +172,20 @@ p_plant_electric_base_mw   = 55.0d6 * Base plant electric load (w)
 *------------------Ife Variables-------------------*
 *------------Impurity Radiation Module-------------*
 radius_plasma_core_norm = 0.6 * Normalised radius defining the 'core' region
-fimp(1) = 1.0
-fimp(2) = 0.1
-fimp(3) = 0.0
-fimp(4) = 0.0
-fimp(5) = 0.0
-fimp(6) = 0.0
-fimp(7) = 0.0
-fimp(8) = 0.0
-fimp(9) = 0.0
-fimp(10) = 0.0
-fimp(11) = 0.0
-fimp(12) = 0.0
-fimp(13) = 0.00044
-fimp(14) = 5e-05
+f_nd_impurity_electrons(1) = 1.0
+f_nd_impurity_electrons(2) = 0.1
+f_nd_impurity_electrons(3) = 0.0
+f_nd_impurity_electrons(4) = 0.0
+f_nd_impurity_electrons(5) = 0.0
+f_nd_impurity_electrons(6) = 0.0
+f_nd_impurity_electrons(7) = 0.0
+f_nd_impurity_electrons(8) = 0.0
+f_nd_impurity_electrons(9) = 0.0
+f_nd_impurity_electrons(10) = 0.0
+f_nd_impurity_electrons(11) = 0.0
+f_nd_impurity_electrons(12) = 0.0
+f_nd_impurity_electrons(13) = 0.00044
+f_nd_impurity_electrons(14) = 5e-05
 *---------------------Numerics---------------------*
 ioptimz  = 1 * Code operation switch;
 minmax   = 1 * Switch for figure-of-merit (see lablmm for descriptions)

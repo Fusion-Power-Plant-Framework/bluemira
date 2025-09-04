@@ -931,59 +931,59 @@
     "var_mod": "Plasma",
     "scan01": 0.094054
   },
-  "fimp(01)": {
+  "f_nd_impurity_electrons(01)": {
     "var_mod": "Plasma",
     "scan01": 0.74267
   },
-  "fimp(02)": {
+  "f_nd_impurity_electrons(02)": {
     "var_mod": "Plasma",
     "scan01": 0.094054
   },
-  "fimp(03)": {
+  "f_nd_impurity_electrons(03)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(04)": {
+  "f_nd_impurity_electrons(04)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(05)": {
+  "f_nd_impurity_electrons(05)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(06)": {
+  "f_nd_impurity_electrons(06)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(07)": {
+  "f_nd_impurity_electrons(07)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(08)": {
+  "f_nd_impurity_electrons(08)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(09)": {
+  "f_nd_impurity_electrons(09)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(10)": {
+  "f_nd_impurity_electrons(10)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(11)": {
+  "f_nd_impurity_electrons(11)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(12)": {
+  "f_nd_impurity_electrons(12)": {
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "fimp(13)": {
+  "f_nd_impurity_electrons(13)": {
     "var_mod": "Plasma",
     "scan01": 0.0013085
   },
-  "fimp(14)": {
+  "f_nd_impurity_electrons(14)": {
     "var_mod": "Plasma",
     "scan01": 5e-5
   },
