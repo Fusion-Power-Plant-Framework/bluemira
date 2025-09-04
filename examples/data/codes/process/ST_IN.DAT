@@ -147,7 +147,7 @@ p_hcd_injected_max  = 50. * Maximum allowable value for injected power (mw)
 *----------------Divertor Variables----------------*
 *------------------Fwbs Variables------------------*
 
-denstl   = 7800.0 * Density of steel (kg/m3)
+den_steel   = 7800.0 * Density of steel (kg/m3)
 f_p_blkt_multiplication    = 1.18 * Energy multiplication in blanket and shield
 fblss    = 0.13 * Kit blanket model; steel fraction of breeding zone
 fhole    = 0.05 * Area fraction taken up by other holes (not used)
