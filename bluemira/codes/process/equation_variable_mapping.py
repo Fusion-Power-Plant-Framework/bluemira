@@ -341,7 +341,7 @@ class Constraint(ConstraintSelection, Model):
         63,
         (111,),
         (),
-        "The number of ITER-like vacuum pumps niterpump < tfno",
+        "The number of ITER-like vacuum pumps n_iter_vacuum_pumps < tfno",
     )
     ZEFF_UPPER_LIMIT = 64, (112,), ("zeff_max",), "Zeff less than or equal to zeff_max"
     DUMP_TIME_LOWER_LIMIT = (

@@ -550,16 +550,16 @@ class ProcessInputs:
     # Water usage
 
     # Vacuum
-    ntype: int | None = None
-    pbase: float | None = None
-    prdiv: float | None = None
-    pumptp: float | None = None
-    rat: float | None = None
-    tn: float | None = None
+    i_vacuum_pump_type: int | None = None
+    pres_vv_chamber_base: float | None = None
+    pres_div_chamber_burn: float | None = None
+    molflow_vac_pumps: float | None = None
+    outgrat_fw: float | None = None
+    temp_vv_chamber_gas_burn_end: float | None = None
     pumpareafraction: float | None = None
-    pumpspeedmax: float | None = None
-    pumpspeedfactor: float | None = None
-    initialpressure: float | None = None
+    volflow_vac_pumps_max: float | None = None
+    f_volflow_vac_pumps_impedance: float | None = None
+    pres_vv_chamber_dwell_start: float | None = None
     outgasindex: float | None = None
     outgasfactor: float | None = None
 

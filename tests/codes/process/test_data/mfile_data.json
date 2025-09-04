@@ -1515,7 +1515,7 @@
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "qfuel": {
+  "molflow_plasma_fuelling_required": {
     "var_mod": "Plasma",
     "scan01": 5.4265e21
   },
@@ -3444,7 +3444,7 @@
     "var_mod": "PF Coils and Central Solenoid: Power and Energy",
     "scan01": 662.17
   },
-  "rat": {
+  "outgrat_fw": {
     "var_mod": "Vacuum System",
     "scan01": 1.3e-8
   },
@@ -3452,7 +3452,7 @@
     "var_mod": "Vacuum System",
     "scan01": 0.00024251
   },
-  "pbase": {
+  "pres_vv_chamber_base": {
     "var_mod": "Vacuum System",
     "scan01": 0.0005
   },
@@ -3476,7 +3476,7 @@
     "var_mod": "Vacuum System",
     "scan01": 0.001328
   },
-  "dwell_pump": {
+  "i_vac_pump_dwell": {
     "var_mod": "Vacuum System",
     "scan01": 0.0
   },
@@ -3500,7 +3500,7 @@
     "var_mod": "Vacuum System",
     "scan01": 403.93
   },
-  "prdiv": {
+  "pres_div_chamber_burn": {
     "var_mod": "Vacuum System",
     "scan01": 0.36
   },
