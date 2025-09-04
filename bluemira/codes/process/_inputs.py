@@ -115,7 +115,7 @@ class ProcessInputs:
     irefprop: int | None = None
     fblli2o: float | None = None
     fbllipb: float | None = None
-    vfblkt: float | None = None
+    f_a_blkt_cooling_channels: float | None = None
     declblkt: float | None = None
     declfw: float | None = None
     declshld: float | None = None
@@ -334,7 +334,7 @@ class ProcessInputs:
     f_copperaoh_m2: float | None = None
 
     # Primary pumping
-    i_coolant_pumping: int | None = None
+    i_p_coolant_pumping: int | None = None
     gamma_he: float | None = None
     t_in_bb: float | None = None
     t_out_bb: float | None = None
@@ -536,10 +536,10 @@ class ProcessInputs:
     f_crypmw: float | None = None
     etatf: float | None = None
     eta_turbine: float | None = None
-    fpumpblkt: float | None = None
-    fpumpdiv: float | None = None
-    fpumpfw: float | None = None
-    fpumpshld: float | None = None
+    f_p_blkt_coolant_pump_total_heat: float | None = None
+    f_p_div_coolant_pump_total_heat: float | None = None
+    f_p_fw_coolant_pump_total_heat: float | None = None
+    f_p_sgld_coolant_pump_total_heat: float | None = None
     ipowerflow: int | None = None
     i_shld_primary_heat: int | None = None
     pinjmax: float | None = None
@@ -682,7 +682,7 @@ class ProcessInputs:
     i_fw_coolant_type: str | None = None
     i_fw_blkt_shared_coolant: int | None = None
     i_blkt_liquid_breeder_type: int | None = None
-    ims: int | None = None
+    i_blkt_module_segmentation: int | None = None
     i_blkt_liquid_breeder_channel_type: int | None = None
 
     def __iter__(self) -> Iterator[tuple[str, float | list | dict]]:

@@ -3700,7 +3700,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.885
   },
-  "i_coolant_pumping": {
+  "i_p_coolant_pumping": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3.0
   },
@@ -3728,11 +3728,11 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 382.36
   },
-  "fpumpshld": {
+  "f_p_sgld_coolant_pump_total_heat": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.005
   },
-  "fpumpdiv": {
+  "f_p_div_coolant_pump_total_heat": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.005
   },
