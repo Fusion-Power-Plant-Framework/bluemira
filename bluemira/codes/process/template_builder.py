@@ -251,8 +251,8 @@ class PROCESSTemplateBuilder:
 
     def _add_to_dict(self, mapping: dict[str, Any], name: str, value: Any):
         if name.startswith("f_nd_impurity_electrons"):
-            str_of_num = name.split("f_nd_impurity_electrons")[1]
-            num = int(str_of_num.strip("()"))
+            num_with_brackets = name.split("f_nd_impurity_electrons")[1]
+            num = int(num_with_brackets.strip("()"))
             impurity = Impurities(num)
             self.add_impurity(impurity, value)
         else:
