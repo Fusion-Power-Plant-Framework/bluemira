@@ -2240,7 +2240,7 @@
     "var_mod": "TF coils",
     "scan01": 0.05
   },
-  "whtcas": {
+  "m_tf_coil_case": {
     "var_mod": "TF coils",
     "scan01": 1195600.0
   },
@@ -2364,11 +2364,11 @@
     "var_mod": "TF coils",
     "scan01": 1.5
   },
-  "whtconsc": {
+  "m_tf_coil_superconductor": {
     "var_mod": "TF coils",
     "scan01": 7568.4
   },
-  "whtconcu": {
+  "m_tf_coil_copper": {
     "var_mod": "TF coils",
     "scan01": 75643.0
   },
@@ -2376,11 +2376,11 @@
     "var_mod": "TF coils",
     "scan01": 169640.0
   },
-  "whtconin": {
+  "m_tf_coil_wp_turn_insulation": {
     "var_mod": "TF coils",
     "scan01": 11325.0
   },
-  "whtcon": {
+  "m_tf_coil_conductor": {
     "var_mod": "TF coils",
     "scan01": 264180.0
   },

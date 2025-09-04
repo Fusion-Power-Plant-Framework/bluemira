@@ -57,7 +57,7 @@ class ProcessInputs:
 
     # FWBS
     ibkt_life: int | None = None
-    denstl: float | None = None
+    den_steel: float | None = None
     f_p_blkt_multiplication: float | None = None
     fblss: float | None = None
     f_ster_div_single: float | None = None
@@ -140,9 +140,9 @@ class ProcessInputs:
     t_turn_tf_max: float | None = None
     c_tf_turn: float | None = None
     c_tf_turn_max: float | None = None
-    dcase: float | None = None
+    den_tf_coil_case: float | None = None
     dcond: list[float] | None = None
-    dcondins: float | None = None
+    den_tf_wp_turn_insulation: float | None = None
     dia_tf_turn_coolant_channel: float | None = None
     b_crit_upper_nbti: float | None = None
     t_crit_nbti: float | None = None
