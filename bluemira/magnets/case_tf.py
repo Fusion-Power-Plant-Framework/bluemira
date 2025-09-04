@@ -545,7 +545,7 @@ class CaseTF(ABC):
         # Plot winding packs
         for i, wp in enumerate(self.WPs):
             xc_wp = 0.0
-            yc_wp = self.R_wp_i[i] - wp.dy / 2
+            yc_wp = self.R_wp_i[i] - wp.dy
             ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenized=homogenized)
 
         # Finalize plot
