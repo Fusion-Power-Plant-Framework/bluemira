@@ -56,7 +56,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bmaxtfrp",
+        "name": "b_tf_inboard_peak_with_ripple",
         "send": false,
         "recv": false,
         "unit": "T"
@@ -536,7 +536,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ripmax",
+        "name": "ripple_b_tf_plasma_edge_max",
         "send": true,
         "recv": false,
         "unit": "%"

@@ -2392,7 +2392,7 @@
     "var_mod": "TF coils",
     "scan01": 23466000.0
   },
-  "b_tf_inboard_peak": {
+  "b_tf_inboard_peak_symmetric": {
     "var_mod": "TF coils",
     "scan01": 11.2
   },
@@ -2404,7 +2404,7 @@
     "var_mod": "TF coils",
     "scan01": 181190000.0
   },
-  "bmaxtfrp": {
+  "b_tf_inboard_peak_with_ripple": {
     "var_mod": "TF coils",
     "scan01": 11.716
   },
@@ -2436,11 +2436,11 @@
     "var_mod": "TF coils",
     "scan01": 63415000.0
   },
-  "ripmax": {
+  "ripple_b_tf_plasma_edge_max": {
     "var_mod": "TF coils",
     "scan01": 0.6
   },
-  "ripple": {
+  "ripple_b_tf_plasma_edge": {
     "var_mod": "TF coils",
     "scan01": 0.6
   },

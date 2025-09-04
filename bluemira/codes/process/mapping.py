@@ -12,7 +12,7 @@ from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {
     "n_TF": ("n_tf_coils", "dimensionless"),
-    "TF_ripple_limit": ("ripmax", "%"),
+    "TF_ripple_limit": ("ripple_b_tf_plasma_edge_max", "%"),
     "C_Ejima": ("ejima_coeff", "dimensionless"),
     "e_nbi": ("e_beam_kev", "keV"),
     "P_hcd_ss": ("p_hcd_injected_max", "MW"),
@@ -108,7 +108,7 @@ IO_mappings = {
 }
 
 NONE_mappings = {
-    "B_tf_peak": ("bmaxtfrp", "T"),
+    "B_tf_peak": ("b_tf_inboard_peak_with_ripple", "T"),
     "T_e": ("te", "keV"),
     "Z_eff": ("zeff", "amu"),
     "V_p": ("plasma_volume", "m^3"),
