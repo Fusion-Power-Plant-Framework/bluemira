@@ -1173,7 +1173,7 @@ class VacuumPumpingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ntype"
+        return "i_vacuum_pump_type"
 
     TURBO_PUMP = 0
     CRYO_PUMP = 1
@@ -1189,7 +1189,7 @@ class VacuumPumpingDwellModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "dwell_pump"
+        return "i_vac_pump_dwell"
 
     T_DWELL = 0
     T_RAMP = 1
