@@ -2292,14 +2292,6 @@
     "var_mod": "TF coils",
     "scan01": 200.0
   },
-  "n_pancake": {
-    "var_mod": "TF coils",
-    "scan01": 20.0
-  },
-  "n_layer": {
-    "var_mod": "TF coils",
-    "scan01": 10.0
-  },
   "dr_tf_turn": {
     "var_mod": "TF coils",
     "scan01": 0.09971

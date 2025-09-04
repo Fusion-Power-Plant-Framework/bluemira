@@ -67,7 +67,6 @@ from bluemira.codes.process.model_mapping import (
     SolenoidSwitchModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
-    TFWindingPackTurnModel,
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
@@ -315,7 +314,6 @@ for model_choice in (
     SolenoidSwitchModel.SOLENOID,
     CSSuperconductorModel.NB3SN_WST,
     TFSuperconductorModel.NB3SN_WST,
-    TFWindingPackTurnModel.INTEGER_TURN,
     PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
@@ -338,8 +336,6 @@ inputs = template_builder.make_inputs()
 
 # %%
 template_builder.add_input_value("qnuc", 1.3e4)
-template_builder.add_input_value("n_layer", 20)
-template_builder.add_input_value("n_pancake", 20)
 
 
 # %% [markdown]
