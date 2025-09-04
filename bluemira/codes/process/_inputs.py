@@ -158,8 +158,6 @@ class ProcessInputs:
     i_tf_cond_eyoung_trans: int | None = None
     i_r_cp_top: int | None = None
     i_tf_tresca: int | None = None
-    n_pancake: int | None = None
-    n_layer: int | None = None
     n_rad_per_layer: int | None = None
     i_tf_bucking: int | None = None
     n_tf_graded_layers: int | None = None

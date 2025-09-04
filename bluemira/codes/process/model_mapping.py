@@ -720,7 +720,6 @@ class TFWindingPackTurnModel(PROCESSModel):
         return "i_tf_turns_integer"
 
     CURRENT_PER_TURN = 0, ("c_tf_turn",)  # or t_cable_tf or t_turn_tf
-    INTEGER_TURN = 1, ("n_layer", "n_pancake")
 
 
 class TFCoilShapeModel(PROCESSModel):

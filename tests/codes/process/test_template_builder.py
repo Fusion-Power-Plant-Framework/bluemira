@@ -46,7 +46,6 @@ from bluemira.codes.process.model_mapping import (
     SolenoidSwitchModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
-    TFWindingPackTurnModel,
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 from bluemira.utilities.tools import compare_dicts
@@ -348,7 +347,6 @@ class TestInDatOneForOne:
             SolenoidSwitchModel.SOLENOID,
             CSSuperconductorModel.NB3SN_WST,
             TFSuperconductorModel.NB3SN_WST,
-            TFWindingPackTurnModel.INTEGER_TURN,
             PrimaryPumpingModel.PRESSURE_DROP_INPUT,
             TFNuclearHeatingModel.INPUT,
             CostModel.TETRA_1990,
@@ -468,8 +466,6 @@ class TestInDatOneForOne:
             # "dx_tf_wp_insertion_gap": 0.01,
             "tmargmin": 1.5,
             "f_a_tf_turn_cable_space_extra_void": 0.3,
-            "n_pancake": 20,
-            "n_layer": 10,
             "qnuc": 1.292e4,
             "v_tf_coil_dump_quench_max_kv": 10.0,
             # Inputs we don't care about but must specify
