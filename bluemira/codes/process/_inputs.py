@@ -215,7 +215,7 @@ class ProcessInputs:
     max_vv_stress: float | None = None
     inuclear: int | None = None
     qnuc: float | None = None
-    ripmax: float | None = None
+    ripple_b_tf_plasma_edge_max: float | None = None
     i_tf_inside_cs: int | None = None
     dr_tf_inboard: float | None = None
     dr_tf_shld_gap: float | None = None
