@@ -182,11 +182,11 @@ class TestPROCESSTemplateBuilder:
     def test_impurity_shenanigans(self):
         t = PROCESSTemplateBuilder()
         t.add_impurity(Impurities.Xe, 0.5)
-        assert t.fimp[12] == pytest.approx(0.5, rel=0, abs=EPS)
-        t.add_variable("fimp(13)", 0.6)
-        assert t.fimp[12] == pytest.approx(0.6, rel=0, abs=EPS)
+        assert t.f_nd_impurity_electrons[12] == pytest.approx(0.5, rel=0, abs=EPS)
+        t.add_variable("f_nd_impurity_electrons(13)", 0.6)
+        assert t.f_nd_impurity_electrons[12] == pytest.approx(0.6, rel=0, abs=EPS)
         t.add_impurity(Impurities.Xe, 0.4)
-        assert t.fimp[12] == pytest.approx(0.4, rel=0, abs=EPS)
+        assert t.f_nd_impurity_electrons[12] == pytest.approx(0.4, rel=0, abs=EPS)
 
     def test_input_appears_in_dat(self):
         t = PROCESSTemplateBuilder()
@@ -288,7 +288,7 @@ class TestInDatOneForOne:
             "c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
         )
         template_builder.add_variable("tdmptf", 2.5829e01)
-        template_builder.add_variable("fimp(13)", 3.573e-04)
+        template_builder.add_variable("f_nd_impurity_electrons(13)", 3.573e-04)
 
         # Some constraints require multiple f-values, but they are getting
         # ridding of those, so no fancy mechanics for now...
