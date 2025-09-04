@@ -156,7 +156,7 @@ i_thermal_electric_conversion = 2 * Switch for thermodynamic model of power conv
 temp_fw_max = 873  * Maximum temperature of first wall material (k) (i_thermal_electric_conversion>1)
 fwclfr   = 0.1 * First wall coolant fraction
 vfshld   = 0.60 * Coolant void fraction in shield
-vfblkt   = 0.10 * Coolant void fraction in blanket (blktmodel=0)
+f_a_blkt_cooling_channels   = 0.10 * Coolant void fraction in blanket (blktmodel=0)
 len_fw_channel = 7.0  * Length of a single first wall channel (all in parallel) (m) (15/11/27)
 temp_fw_coolant_in  = 573  * inlet temperature of first wall coolant (K) (15/11/27)
 temp_fw_coolant_out = 773 * outlet temperature of first wall coolant (K) (15/11/27)

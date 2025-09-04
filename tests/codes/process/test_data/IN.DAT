@@ -261,7 +261,7 @@ vfshld   = 0.60 * coolant void fraction in shield
 fblli2o  = 0.07 * lithium oxide fraction of blanket by volume (stellarator only)
 fbllipb  = 0.00 * lithium lead fraction of blanket by volume (stellarator only)
 fblvd    = 0.00 * vanadium fraction of blanket by volume (stellarator only)
-vfblkt   = 0.10 * coolant void fraction in blanket (`blktmodel=0`); (calculated if `blktmodel > 0`)
+f_a_blkt_cooling_channels   = 0.10 * coolant void fraction in blanket (`blktmodel=0`); (calculated if `blktmodel > 0`)
 
 *-----------------Global Variables-----------------*
 

@@ -1065,7 +1065,7 @@ class PrimaryPumpingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_coolant_pumping"
+        return "i_p_coolant_pumping"
 
     INPUT = 0
     FRACTION = 1
@@ -1346,7 +1346,7 @@ class ModuleSegmentSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ims"
+        return "i_blkt_module_segmentation"
 
     MMS = 0, (), "Multi Module Segment (MMS)"
     SMS = 1, (), "Single Modle Segment (SMS)"
