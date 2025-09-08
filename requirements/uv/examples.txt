@@ -87,7 +87,7 @@ fortranformat==2.0.3
     #   eqdsk
 fqdn==1.5.1
     # via jsonschema
-gmsh==4.14.0
+gmsh==4.14.1
     # via bluemira (pyproject.toml)
 h11==0.16.0
     # via httpcore
@@ -128,7 +128,7 @@ jsonschema==4.25.1
     #   jupyter-events
     #   jupyterlab-server
     #   nbformat
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter-client==8.6.3
     # via
@@ -157,7 +157,7 @@ jupyter-server==2.17.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.6
+jupyterlab==4.4.7
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert

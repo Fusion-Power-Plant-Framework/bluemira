@@ -81,11 +81,11 @@ fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.14.0
+gmsh==4.14.1
     # via bluemira (pyproject.toml)
 greenlet==3.2.4
     # via sqlalchemy
-identify==2.6.13
+identify==2.6.14
     # via pre-commit
 idna==3.10
     # via requests
@@ -117,7 +117,7 @@ joblib==1.5.2
     # via scikit-learn
 jsonschema==4.25.1
     # via nbformat
-jsonschema-specifications==2025.4.1
+jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter-cache==1.0.1
     # via myst-nb
@@ -291,14 +291,14 @@ pyparsing==3.2.3
     # via
     #   matplotlib
     #   periodictable
-pytest==8.4.1
+pytest==8.4.2
     # via
     #   bluemira (pyproject.toml)
     #   pytest-cov
     #   pytest-html
     #   pytest-json-report
     #   pytest-metadata
-pytest-cov==6.2.1
+pytest-cov==6.3.0
     # via bluemira (pyproject.toml)
 pytest-html==4.1.1
     # via bluemira (pyproject.toml)

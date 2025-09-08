@@ -40,7 +40,7 @@ fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.14.0
+gmsh==4.14.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
