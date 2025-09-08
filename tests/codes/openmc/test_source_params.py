@@ -109,7 +109,7 @@ def test_source_plot():
     tt = tokamak_source[10000:20000]
     dt = tokamak_source[20000:]
 
-    rz, energy, intensity = [], [], []
+    rz, intensity = [], []
     for src in dd:
         # position distribution: discrete distribution
         rz.append([src.space.r.x, src.space.z.x])
@@ -120,7 +120,7 @@ def test_source_plot():
     ax.set_title("Purported neutron rates from distribution DD reaction")
     plt.show()
 
-    rz, energy, intensity = [], [], []
+    rz, intensity = [], []
     for src in tt:
         # position distribution: discrete distribution
         rz.append([src.space.r.x, src.space.z.x])
@@ -131,7 +131,7 @@ def test_source_plot():
     ax.set_title("Purported neutron rates from distribution TT reaction")
     plt.show()
 
-    rz, energy, intensity = [], [], []
+    rz, intensity = [], []
     for src in dt:
         # position distribution: discrete distribution
         rz.append([src.space.r.x, src.space.z.x])
