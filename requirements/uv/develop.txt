@@ -347,7 +347,7 @@ rpds-py==0.27.1
     # via
     #   jsonschema
     #   referencing
-ruff==0.12.11
+ruff==0.12.12
     # via bluemira (pyproject.toml)
 scikit-learn==1.7.1
     # via bluemira (pyproject.toml)
