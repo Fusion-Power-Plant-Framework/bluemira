@@ -115,6 +115,7 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
+    "enabled": true,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 16800,
     "batches": 3,
