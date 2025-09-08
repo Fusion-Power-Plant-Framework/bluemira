@@ -20,15 +20,10 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
-from bluemira.geometry.tools import revolve_shape
 from bluemira.plasma_physics.reactions import n_DT_reactions
 from bluemira.radiation_transport.neutronics.constants import (
     DPACoefficients,
     dpa_Fe_threshold_eV,
-)
-from bluemira.radiation_transport.neutronics.make_pre_cell import (
-    DivertorPreCellArray,
-    PreCellArray,
 )
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
@@ -61,31 +56,6 @@ def get_percent_err(row):
         return np.nan
     # else: normal mode of operation: divide std by mean, then multiply by 100.
     return row["std. dev."] / row["mean"] * 100.0
-
-
-def extract_plasma_facing_areas(
-    cell_arrays: CellStage,
-    blanket_array: PreCellArray,
-    divertor_array: DivertorPreCellArray,
-) -> dict[int, str]:
-    """
-    Extract a dictionary that stores the plasma-facing area of each plasma-facing cell,
-    according to the cell id in openmc.
-    """
-    area_dict = {}
-    for blanket_cell_stack, pre_cell in zip(
-        cell_arrays.blanket, blanket_array, strict=False
-    ):
-        plasma_facing_area = revolve_shape(pre_cell.interior_wire, degree=360).area
-        area_dict[blanket_cell_stack[0].id] = plasma_facing_area
-    for divertor_cell_stack, div_pre_cell in zip(
-        cell_arrays.divertor, divertor_array, strict=False
-    ):
-        plasma_facing_area = revolve_shape(
-            div_pre_cell.interior_wire.restore_to_wire(), degree=360
-        ).area
-        area_dict[divertor_cell_stack[0].id] = plasma_facing_area
-    return area_dict
 
 
 @dataclass
