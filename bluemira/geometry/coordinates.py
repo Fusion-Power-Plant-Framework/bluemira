@@ -1424,6 +1424,7 @@ class Coordinates:
             linterp = np.sort(
                 np.concatenate([linterp, np.cumsum(perim / np.sum(perim))])
             )
+            linterp = np.clip(linterp, 0.0, 1.0)
 
         return Coordinates(_interpolate_points(linterp, *self._array))
 

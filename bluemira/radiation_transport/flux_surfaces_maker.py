@@ -347,7 +347,7 @@ def _make_flux_surfaces(
     )
     coords = Coordinates({"x": coords_arr[0], "z": coords_arr[1]})
     if dl is not None:
-        coords = coords.interpolate(dl=dl)
+        coords = coords.interpolate(dl=dl, preserve_points=True)
     return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
 
 
