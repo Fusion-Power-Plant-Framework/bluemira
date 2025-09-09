@@ -32,7 +32,6 @@ class ZeroDNeutronicsModelParams(ParameterFrame):
     f_n_divertor: Parameter[float]
     f_n_vessel: Parameter[float]
     f_n_aux: Parameter[float]
-    peak_NWL: Parameter[float]  # noqa: N815
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
@@ -52,7 +51,6 @@ class ZeroDNeutronicsResult(ParameterFrame):
     P_n_aux: Parameter[float]
     P_n_e_mult: Parameter[float]
     P_n_decay: Parameter[float]
-    peak_NWL: Parameter[float]  # noqa: N815
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
@@ -145,6 +143,5 @@ class ZeroDNeutronicsModel:
             ),
             peak_bb_iron_dpa_rate=self.params.peak_bb_iron_dpa_rate,
             peak_div_cu_dpa_rate=self.params.peak_div_cu_dpa_rate,
-            peak_NWL=self.params.peak_NWL,
             peak_vv_iron_dpa_rate=self.params.peak_vv_iron_dpa_rate,
         )
