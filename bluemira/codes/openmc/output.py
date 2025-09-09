@@ -12,14 +12,19 @@ from pathlib import Path
 
 import numpy as np
 import openmc
+import pandas as pd
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.codes.openmc.make_csg import CellStage
 from bluemira.plasma_physics.reactions import n_DT_reactions
-from bluemira.radiation_transport.neutronics.constants import DPACoefficients
+from bluemira.radiation_transport.neutronics.constants import (
+    DPACoefficients,
+    dpa_Fe_threshold_eV,
+)
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
 )
@@ -66,20 +71,23 @@ class OpenMCResult:
     e_mult: float
     e_mult_err: float
     heating: dict
-    neutron_wall_load: dict
     blanket_power: float
     blanket_power_err: float
     divertor_power: float
     divertor_power_err: float
     vessel_power: float
     vessel_power_err: float
+    total_power: float
+    total_power_err: float
     mult_power: float
-    """Neutron wall load (eV)"""
+    fluxes: dict
+    damage: dict
 
     photon_heat_flux: dict
     """Photon heat flux"""
 
     universe: openmc.Universe
+    cell_arrays: CellStage
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: str
@@ -91,6 +99,7 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
+        cell_arrays: CellStage,
         P_fus_DT: float,
         statepoint_file: str = "",
     ):
@@ -127,39 +136,44 @@ class OpenMCResult:
 
         # MC: There is power in the TF + CS, and probably the radiation shield
         # that I am ignoring here. Perhaps worth adding filters for these
-        total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = np.sqrt(
-            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        total_power, total_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "total power"
         )
 
         dt_neuton_power = 0.8 * P_fus_DT
         e_mult = total_power / dt_neuton_power
         e_mult_err = total_power_err / dt_neuton_power
         mult_power = (e_mult - 1.0) * dt_neuton_power
+        all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
+        damage = cls._load_damage(
+            statepoint, cell_names, cell_vols, cell_arrays, src_rate
+        )
 
         return cls(
             universe=universe,
+            cell_arrays=cell_arrays,
             src_rate=src_rate,
             statepoint_file=statepoint_file,
             statepoint=statepoint,
             cell_names=cell_names,
             cell_vols=cell_vols,
             mat_names=mat_names,
+            damage=damage,
             tbr=tbr,
             tbr_err=tbr_err,
             e_mult=e_mult,
             e_mult_err=e_mult_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
+            total_power=total_power,
+            total_power_err=total_power_err,
             blanket_power=blanket_power,
             blanket_power_err=blanket_power_err,
             divertor_power=divertor_power,
             divertor_power_err=divertor_power_err,
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
+            fluxes=all_fluxes,
             mult_power=mult_power,
-            neutron_wall_load=cls._load_neutron_wall_loading(
-                statepoint, cell_names, cell_vols, src_rate
-            ),
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -197,7 +211,9 @@ class OpenMCResult:
         return vol_results, cell_volumes
 
     @staticmethod
-    def _load_dataframe_from_statepoint(statepoint, tally_name: str):
+    def _load_dataframe_from_statepoint(
+        statepoint: openmc.StatePoint, tally_name: str
+    ) -> pd.DataFrame:
         return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
@@ -221,7 +237,7 @@ class OpenMCResult:
             into a float by .sum().
         """
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
-        return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
+        return tbr_df["mean"].sum(), np.sqrt((tbr_df["std. dev."] ** 2).sum())
 
     @classmethod
     def _load_filter_power_err(
@@ -255,7 +271,7 @@ class OpenMCResult:
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "Total power")
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
@@ -270,7 +286,6 @@ class OpenMCResult:
                 "material",
                 "material_name",
                 "nuclide",
-                "score",
                 "mean(W)",
                 "err.",
                 "%err.",
@@ -280,47 +295,125 @@ class OpenMCResult:
         return cls._convert_dict_contents(hdf)
 
     @classmethod
-    def _load_neutron_wall_loading(cls, statepoint, cell_names, cell_vols, src_rate):
-        """Load the neutron wall load dataframe"""
-        dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
-        n_wl_df = cls._load_dataframe_from_statepoint(
+    def _load_fluxes(cls, statepoint, cell_names, cell_vols, src_rate):
+        """Load the neutron fluxes dataframe."""
+        flux_df = cls._load_dataframe_from_statepoint(
             statepoint, "neutron flux in every cell"
+        )  # this loads the track length per cell, given in [particle-cm].
+        flux_df["cell_name"] = flux_df["cell"].map(cell_names)
+        flux_df["vol (m^3)"] = flux_df["cell"].map(cell_vols)
+        flux_df["flux (m^-2)"] = (
+            raw_uc(flux_df["mean"].to_numpy(), "cm", "m")
+            * src_rate
+            / flux_df["vol (m^3)"]
         )
-        n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
-        n_wl_df["vol (m^3)"] = n_wl_df["cell"].map(cell_vols)
-        total_displacements_per_second = (
-            n_wl_df["mean"] * dfa_coefs.displacements_per_damage_eV * src_rate
-        )  # "mean" has units "eV per source particle"
-        # total number of atomic displacements per second in the cell.
-        num_atoms_in_cell = n_wl_df["vol (m^3)"] * raw_uc(
-            dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
-        )
-        n_wl_df["dpa/fpy"] = raw_uc(
-            total_displacements_per_second.to_numpy() / num_atoms_in_cell.to_numpy(),
-            "1/s",
-            "1/year",
-        )
+        flux_df["%err."] = flux_df.apply(get_percent_err, axis=1)
 
-        n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1)
-        # keep only the surface cells:
-        n_wl_df = n_wl_df.drop(
-            n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
-        )
-        # DataFrame columns rearrangement
-        n_wl_df = n_wl_df[
+        flux_df = flux_df[
             [
                 "cell",
                 "cell_name",
                 "particle",
                 "nuclide",
-                "score",
                 "vol (m^3)",
-                "dpa/fpy",
+                "flux (m^-2)",
                 "%err.",
             ]
         ]
+        return cls._convert_dict_contents(flux_df.to_dict())
 
-        return cls._convert_dict_contents(n_wl_df.to_dict())
+    @classmethod
+    def _load_damage(cls, statepoint, cell_names, cell_vols, cell_arrays, src_rate):
+        """
+        Load the damage-energy tally dataframe, post-process them until we get:
+        - Fe damage rate for the FW
+        - Fe damage rate behind the FW
+        - Cu damage rate in the divertor
+        - Fe damage rate in the VV
+
+        """
+        all_damages = cls._load_dataframe_from_statepoint(statepoint, "damage")
+        all_damages["cell_names"] = all_damages["cell"].map(cell_names)
+        all_damages["vol (m^3)"] = all_damages["cell"].map(cell_vols)
+        # volume integrated damage rate
+        all_damages["damage (eV)/fpy"] = all_damages["mean"] * raw_uc(
+            src_rate, "1/s", "1/yr"
+        )
+        all_damages["%err."] = all_damages.apply(get_percent_err, axis=1)
+        density_g_cc, molar_mass_g = {}, {}
+        for cell in cell_arrays.cells:
+            if cell.fill:
+                density_g_cc[cell.id] = cell.fill.density
+                molar_mass_g[cell.id] = cell.fill.average_molar_mass
+            else:
+                density_g_cc[cell.id] = 0.0
+                molar_mass_g[cell.id] = 0.0
+        all_damages["density (g/cc)"] = all_damages["cell"].map(density_g_cc)
+        all_damages["molar mass (g)"] = all_damages["cell"].map(molar_mass_g)
+
+        # Finding all Eurofer cells
+        eurofer_mask = dict.fromkeys(all_damages.cell.values, False)
+        for cell in cell_arrays.cells:
+            if cell.fill and any(("Fe" in nuc.name) for nuc in cell.fill.nuclides):
+                eurofer_mask[cell.id] = True
+        eurofer_selection = all_damages["cell"].map(eurofer_mask)
+        eurofer_damage = cls._add_dpa_column(
+            all_damages[eurofer_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+
+        bb_mask = dict.fromkeys(all_damages.cell.values, False)
+        vv_mask = dict.fromkeys(all_damages.cell.values, False)
+        div_mask = dict.fromkeys(all_damages.cell.values, False)
+        for cell_stack in cell_arrays.blanket:
+            for cell in cell_stack[:-1]:
+                bb_mask[cell.id] = True
+            vv_mask[cell_stack[-1].id] = True
+        for cell_stack in cell_arrays.divertor:
+            for cell in cell_stack[:-1]:
+                div_mask[cell.id] = True
+            vv_mask[cell_stack[-1].id] = True
+        bb_selection = all_damages["cell"].map(bb_mask)
+        vv_selection = all_damages["cell"].map(vv_mask)
+        div_selection = all_damages["cell"].map(div_mask)
+
+        bb_damage = cls._add_dpa_column(
+            all_damages[bb_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+        vv_damage = cls._add_dpa_column(
+            all_damages[vv_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+        )
+        div_damage = cls._add_dpa_column(
+            all_damages[div_selection],
+            dpa_threshold_eV=40,  # Cu is also 40. In fact most metals are 40.
+        )
+        return {
+            "eurofer damage": cls._convert_dict_contents(eurofer_damage.to_dict()),
+            "blanket damage": cls._convert_dict_contents(bb_damage.to_dict()),
+            "VV damage": cls._convert_dict_contents(vv_damage.to_dict()),
+            "divertor damage": cls._convert_dict_contents(div_damage.to_dict()),
+        }
+
+    @staticmethod
+    def _add_dpa_column(df, dpa_threshold_eV):
+        """Add the data for number of atoms and number of displacements, which are then
+        used to calculate the DPA/FPY.
+        """
+        num_atoms, num_displacements = {}, {}
+        for i, row in df.iterrows():
+            dpa_coefs = DPACoefficients(
+                row["density (g/cc)"], row["molar mass (g)"], dpa_threshold_eV
+            )
+            num_atoms[i] = row["vol (m^3)"] * raw_uc(
+                dpa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
+            )
+            num_displacements[i] = (
+                row["damage (eV)/fpy"] * dpa_coefs.displacements_per_damage_eV
+            )
+
+        df["num_atoms"] = num_atoms
+        df["num_displacements"] = num_displacements
+        df["dpa/fpy"] = df["num_displacements"] / df["num_atoms"]
+        return df[["cell", "cell_names", "vol (m^3)", "num_atoms", "dpa/fpy", "%err."]]
 
     @classmethod
     def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols, src_rate):
@@ -394,12 +487,8 @@ class OpenMCResult:
         """String representation"""
         ret_str = f"TBR\n{self.tbr:.3f}±{self.tbr_err:.3f}"
         for title, data in zip(
-            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m)"),
-            (
-                self.heating,
-                self.neutron_wall_load,
-                self.photon_heat_flux,
-            ),
+            ("Heating (W)", "Photon Heat Flux (W m)"),
+            (self.heating, self.photon_heat_flux),
             strict=True,
         ):
             ret_str += f"\n{title}\n{self._tabulate(data)}"
@@ -436,7 +525,7 @@ class NeutronicsOutputParams(ParameterFrame):
     P_n_aux: Parameter[float]
     P_n_e_mult: Parameter[float]
     P_n_decay: Parameter[float]
-    peak_NWL: Parameter[float]  # noqa: N815
+    peak_eurofer_dpa_rate: Parameter[float]
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
@@ -448,20 +537,51 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         source = "OpenMC CSG"
 
+        auxiliary_power = (
+            result.total_power
+            - result.blanket_power
+            - result.divertor_power
+            - result.vessel_power
+        )
+        peak_eurofer_dpa_rate = result.damage["eurofer damage"]["dpa/fpy"].max()
+        peak_bb_iron_dpa_rate = result.damage["blanket damage"]["dpa/fpy"].max()
+        peak_vv_iron_dpa_rate = result.damage["VV damage"]["dpa/fpy"].max()
+        peak_div_cu_dpa_rate = result.damage["divertor damage"]["dpa/fpy"].max()
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
             Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
             Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
-            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_aux", auxiliary_power, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
-            Parameter("P_n_decay", 0.0, unit="W", source=source),
-            # TODO @Ocean: Add these  # noqa: TD003
-            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
-            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
-            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter(
+                "P_n_decay", np.nan, unit="W", source=source
+            ),  # can't get this without coupling to D1S/R2S/involving fispact
+            Parameter(
+                "peak_eurofer_dpa_rate",
+                peak_eurofer_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_bb_iron_dpa_rate",
+                peak_bb_iron_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_vv_iron_dpa_rate",
+                peak_vv_iron_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
+            Parameter(
+                "peak_div_cu_dpa_rate",
+                peak_div_cu_dpa_rate,
+                unit="dpa/fpy",
+                source=source,
+            ),
         )
 
     @classmethod

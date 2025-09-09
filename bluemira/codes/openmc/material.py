@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, astuple, dataclass, fields
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
@@ -126,3 +126,14 @@ class MaterialsLibrary:
             The xml representation
         """
         return openmc.Materials(asdict(self).values()).export_to_xml(path)
+
+    def get_all_materials(self) -> tuple[openmc.Material]:
+        """
+        Get all of the materials stored in self, as a tuple.
+
+        Returns
+        -------
+        :
+            The tuple of all dataclass fields
+        """
+        return astuple(self)
