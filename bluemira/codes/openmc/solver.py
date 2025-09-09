@@ -13,7 +13,7 @@ from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 import numpy as np
 import openmc
@@ -32,6 +32,7 @@ from bluemira.codes.interface import (
 from bluemira.codes.openmc.make_csg import (
     BlanketCellArray,
     BluemiraNeutronicsCSG,
+    CellStage,
     DivertorCellArray,
     make_cell_arrays,
 )
@@ -43,6 +44,11 @@ from bluemira.codes.openmc.params import (
 )
 from bluemira.codes.openmc.tallying import filter_cells
 from bluemira.equilibria.equilibrium import Equilibrium
+
+if TYPE_CHECKING:
+    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
+        NeutronicsReactor,
+    )
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -103,7 +109,7 @@ NeutronSourceCreator: TypeAlias = Callable[
 ]
 
 
-class Setup(CodesSetup):
+class OpenMCSetup(CodesSetup):
     """Setup task for OpenMC solver"""
 
     def __init__(
@@ -120,6 +126,7 @@ class Setup(CodesSetup):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
+        self.cell_arrays = cell_arrays
         self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
         self.eq = eq
@@ -173,15 +180,12 @@ class Setup(CodesSetup):
         self,
         run_mode,
         tally_function: TALLY_FUNCTION_TYPE,
-        blanket_cell_array: BlanketCellArray,
-        divertor_cell_array: DivertorCellArray,
+        cell_arrays: CellStage,
         material_list: list[openmc.Material],
     ):
         out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
         tallies_list = []
-        for name, scores, filters in tally_function(
-            material_list, blanket_cell_array, divertor_cell_array
-        ):
+        for name, scores, filters in tally_function(material_list, cell_arrays):
             tally = openmc.Tally(name=name)
             tally.scores = [scores]
             tally.filters = filters
@@ -212,8 +216,7 @@ class Setup(CodesSetup):
             self._set_tallies(
                 run_mode,
                 tally_function,
-                self.blanket_cell_array,
-                self.divertor_cell_array,
+                self.cell_arrays,
                 material_list=self.materials.get_all_materials(),
             )
         self._source_rate = source_rate
@@ -278,7 +281,7 @@ class Setup(CodesSetup):
         )
 
 
-class Run(CodesTask):
+class OpenMCRun(CodesTask):
     """Run task for OpenMC solver"""
 
     def __init__(self, out_path: Path, codes_name: str):
@@ -322,19 +325,22 @@ class Run(CodesTask):
         self._run(run_mode, debug=debug)
 
 
-class Teardown(CodesTeardown):
+class OpenMCTeardown(CodesTeardown):
     """Teardown task for OpenMC solver"""
 
     def __init__(
         self,
-        cells,
+        cell_arrays: CellStage,
+        pre_cell_model: NeutronicsReactor,
         out_path: str,
         codes_name: str,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
-        self.cells = cells
+        self.cell_arrays = cell_arrays
+        self.cells = cell_arrays.cells  # list[openmc.Cell]
+        self.pre_cell_model = pre_cell_model
 
     @staticmethod
     def delete_files(files_created):
@@ -426,9 +432,9 @@ class OpenMCNeutronicsSolver(CodesSolver):
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
     params: OpenMCNeutronicsSolverParams
     run_mode_cls: type[OpenMCRunModes] = OpenMCRunModes
-    setup_cls: type[Setup] = Setup
-    run_cls: type[Run] = Run
-    teardown_cls: type[Teardown] = Teardown
+    setup_cls: type[CodesSetup] = OpenMCSetup
+    run_cls: type[CodesTask] = OpenMCRun
+    teardown_cls: type[CodesTeardown] = OpenMCTeardown
 
     def __init__(
         self,
@@ -516,7 +522,10 @@ class OpenMCNeutronicsSolver(CodesSolver):
         )
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(
-            self.cell_arrays.cells, self.out_path, self.name
+            self.cell_arrays,
+            self.pre_cell_model,
+            self.out_path,
+            self.name,
         )
 
         result = None
