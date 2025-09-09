@@ -162,6 +162,7 @@ source = RadiationSource(
     sol_impurities=config["f_imp_sol"],
     confinement_time_core=config["tau_core"],
     confinement_time_sol=config["tau_sol"],
+    source_sol_dl=0.1,
 )
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
@@ -174,10 +175,10 @@ source.rad_map(fw_shape)
 
 
 # %%
-only_source = False
+only_source = True
 verbose = True
 if only_source:
-    source.plot()
+    source.plot(plot_flux_tubes=True)
     plt.show()
 
 else:

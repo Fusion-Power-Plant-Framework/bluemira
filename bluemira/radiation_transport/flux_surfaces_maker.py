@@ -27,7 +27,10 @@ __all__ = ["analyse_first_wall_flux_surfaces"]
 
 
 def analyse_first_wall_flux_surfaces(
-    equilibrium: Equilibrium, first_wall: Coordinates, dx_mp: float
+    equilibrium: Equilibrium,
+    first_wall: Coordinates,
+    dx_mp: float = 0.001,
+    source_sol_dl: float | None = None,
 ) -> tuple[
     npt.NDArray[float],
     npt.NDArray[float] | None,
@@ -46,8 +49,8 @@ def analyse_first_wall_flux_surfaces(
         the first wall to analyse
     dx_mp:
         The midplane spatial resolution between flux surfaces [m]
-        (default: 0.001).
-
+    source_sol_dl:
+        source scrape off layer discretisation (approximate)
 
     Returns
     -------
@@ -70,11 +73,11 @@ def analyse_first_wall_flux_surfaces(
 
     if equilibrium.is_double_null:
         dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = _analyse_DN(
-            first_wall, dx_mp, equilibrium, o_point, yz_plane
+            first_wall, dx_mp, equilibrium, o_point, yz_plane, source_sol_dl
         )
     else:
         dx_omp, flux_surfaces, x_sep_omp = _analyse_SN(
-            first_wall, dx_mp, equilibrium, o_point, yz_plane
+            first_wall, dx_mp, equilibrium, o_point, yz_plane, source_sol_dl
         )
         dx_imp = None
         x_sep_imp = None
@@ -103,7 +106,7 @@ def _process_first_wall(first_wall: Coordinates) -> Coordinates:
 
 
 def _analyse_SN(
-    first_wall, dx_mp, equilibrium, o_point, yz_plane
+    first_wall, dx_mp, equilibrium, o_point, yz_plane, dl: float | None = None
 ) -> tuple[npt.NDArray[float], list[PartialOpenFluxSurface], float]:
     """
     Calculation for the case of single nulls.
@@ -122,7 +125,7 @@ def _analyse_SN(
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, dl=dl, outboard=True
     )
 
     return (
@@ -135,7 +138,12 @@ def _analyse_SN(
 
 
 def _analyse_DN(
-    first_wall: Coordinates, dx_mp, equilibrium: Equilibrium, o_point, yz_plane
+    first_wall: Coordinates,
+    dx_mp,
+    equilibrium: Equilibrium,
+    o_point,
+    yz_plane,
+    dl: float | None = None,
 ) -> tuple[
     npt.NDArray[float],
     npt.NDArray[float],
@@ -167,10 +175,10 @@ def _analyse_DN(
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, dl, outboard=True
     )
     flux_surfaces_ib = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_imp, x_out_imp, outboard=False
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_imp, x_out_imp, dl, outboard=False
     )
     return (
         get_array_x_mp(flux_surfaces_ob[0]) - x_sep_omp,  # Calculate values at OMP
@@ -324,7 +332,7 @@ def _get_sep_out_intersection(
 
 
 def _make_flux_surfaces(
-    x, z, equilibrium, o_point, yz_plane
+    x, z, equilibrium, o_point, yz_plane, dl: float | None = None
 ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
     """
     Make individual PartialOpenFluxSurface through a point.
@@ -334,16 +342,25 @@ def _make_flux_surfaces(
     :
         The PartialOpenFluxSurface that passes through the point.
     """
-    coords = find_flux_surface_through_point(
+    coords_arr = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
     )
-    return OpenFluxSurface(Coordinates({"x": coords[0], "z": coords[1]})).split(
-        o_point, plane=yz_plane
-    )
+    coords = Coordinates({"x": coords_arr[0], "z": coords_arr[1]})
+    if dl is not None:
+        coords = coords.interpolate(dl=dl)
+    return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
 
 
 def _make_flux_surfaces_ibob(
-    dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
+    dx_mp,
+    equilibrium,
+    o_point,
+    yz_plane,
+    x_sep_mp,
+    x_out_mp,
+    dl: float | None = None,
+    *,
+    outboard: bool,
 ) -> tuple[list[PartialOpenFluxSurface], list[PartialOpenFluxSurface]]:
     """
     Make the flux surfaces on the inboard or outboard.
@@ -356,14 +373,13 @@ def _make_flux_surfaces_ibob(
         outboard flux surfaces
     """
     sign = 1 if outboard else -1
-
-    flux_surfaces_lfs = []
-    flux_surfaces_hfs = []
-
-    for x in np.arange(
-        x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp)
-    ):
-        lfs, hfs = _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane)
-        flux_surfaces_lfs.append(lfs)
-        flux_surfaces_hfs.append(hfs)
-    return flux_surfaces_lfs, flux_surfaces_hfs
+    rnge = np.arange(x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp))
+    return list(
+        zip(
+            *[
+                _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane, dl)
+                for x in rnge
+            ],
+            strict=False,
+        )
+    )
