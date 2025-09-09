@@ -11,6 +11,7 @@ from eurofusion_materials.library.magnet_branch_mats import (
     NB3SN_MAG,
     SS316_LN_MAG,
 )
+from matproplib import OperationalConditions
 from matproplib.material import MaterialFraction
 
 from bluemira.magnets.strand import Strand, SuperconductingStrand
@@ -55,11 +56,8 @@ def test_strand_material_properties():
     strand = Strand(name="mat_test", materials=[mat], d_strand=0.001)
 
     temperature = 20
-    assert np.isclose(
-        strand.erho(temperature=temperature), sc.erho(temperature=temperature)
-    )
+    op_cond = OperationalConditions(temperature=20)
+    assert np.isclose(strand.erho(op_cond), sc.erho(op_cond))
 
-    assert np.isclose(strand.Cp(temperature=temperature), sc.Cp(temperature=temperature))
-    assert np.isclose(
-        strand.rho(temperature=temperature), sc.rho(temperature=temperature)
-    )
+    assert np.isclose(strand.Cp(op_cond), sc.Cp(op_cond))
+    assert np.isclose(strand.rho(op_cond), sc.rho(op_cond))
