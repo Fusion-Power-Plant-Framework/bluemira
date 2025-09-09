@@ -363,6 +363,27 @@ class TestCoordinates:
         np.testing.assert_array_equal(c.y, copy.y)
         np.testing.assert_array_equal(c.z, copy.z)
 
+    def test_interpolate(self):
+        c = Coordinates({"x": [1, 2, 2, 1], "y": [1, 1, 2, 2]})
+        np.testing.assert_array_equal(c.interpolate(ndiscr=4)._array, c._array)
+
+        np.testing.assert_allclose(
+            c.interpolate(dl=0.5)._array,
+            np.array([
+                [1, 1.5, 2, 2, 2, 1.5, 1],
+                [1, 1, 1, 1.5, 2, 2, 2],
+                [0, 0, 0, 0, 0, 0, 0],
+            ]),
+        )
+        np.testing.assert_allclose(
+            c.interpolate(dl=0.7, preserve_points=True),
+            np.array([
+                [1, 1.6, 2, 2, 2, 2, 1.6, 1, 1],
+                [1, 1, 1, 1.2, 1.8, 2, 2, 2, 2],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ]),
+        )
+
 
 class TestShortCoordinates:
     point = Coordinates({"x": 0, "y": 0, "z": 0})
