@@ -666,7 +666,8 @@ def brute_force_toroidal_harmonic_approximation(
         n_degrees_of_freedom = len(th_params.th_coil_names)
     elif not (0 < n_degrees_of_freedom <= len(th_params.th_coil_names)):
         raise ValueError(
-            f"Number of degrees of freedom must be between 0 and the number of control coils, but this is not the case: 0 < {n_degrees_of_freedom} <= {len(th_params.coil_names)}"
+            "Number of degrees of freedom must be between 0 and the number of control coils, "
+            f"but this is not the case: 0 < {n_degrees_of_freedom} <= {len(th_params.coil_names)}"
         )
 
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
@@ -675,7 +676,8 @@ def brute_force_toroidal_harmonic_approximation(
         if psi_norm > 1.0:
             # We cannot mask on an open flux surface
             bluemira_warn(
-                "Cannot apply mask to an open flux surface, falling back to masking on the LCFS. If this is not what you want, please use plasma_mask=False"
+                "Cannot apply mask to an open flux surface, falling back to masking on the LCFS. "
+                "If this is not what you want, please use plasma_mask=False"
             )
             mask_fs = eq.get_LCFS()
         else:
