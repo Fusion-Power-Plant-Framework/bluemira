@@ -62,7 +62,7 @@ def _dx_at_radius(radius: float, rad_theta: float) -> float:
     :
         Half toroidal width [m] at the given radius.
     """
-    return radius * np.tan(rad_theta / 2)
+    return 2 * radius * np.tan(rad_theta / 2)
 
 
 @dataclass
@@ -126,9 +126,13 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
         :
             Cross-sectional area [m²].
         """
-        return (self.variables.Ri.value - self.variables.Rk.value) * (
-            _dx_at_radius(self.variables.Ri.value, self.rad_theta)
-            + _dx_at_radius(self.variables.Rk.value, self.rad_theta)
+        return (
+            0.5
+            * (self.variables.Ri.value - self.variables.Rk.value)
+            * (
+                _dx_at_radius(self.variables.Ri.value, self.rad_theta)
+                + _dx_at_radius(self.variables.Rk.value, self.rad_theta)
+            )
         )
 
     def create_shape(self, label: str = "") -> BluemiraWire:
@@ -142,8 +146,8 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
             Coordinates are ordered counterclockwise starting from the top-left corner:
             [(-dx_outer, Ri), (dx_outer, Ri), (dx_inner, Rk), (-dx_inner, Rk)].
         """
-        dx_outer = _dx_at_radius(self.variables.Ri.value, self.rad_theta)
-        dx_inner = _dx_at_radius(self.variables.Rk.value, self.rad_theta)
+        dx_outer = _dx_at_radius(self.variables.Ri.value, self.rad_theta) / 2
+        dx_inner = _dx_at_radius(self.variables.Rk.value, self.rad_theta) / 2
 
         return make_polygon(
             [
@@ -464,7 +468,7 @@ class CaseTF(ABC):
             Array containing the radial thickness [m] of each Winding Pack.
             Each element corresponds to one WP in the self.WPs list.
         """
-        return np.array([2 * wp.dy for wp in self.WPs])
+        return np.array([wp.dy for wp in self.WPs])
 
     @property
     def dy_wp_tot(self) -> float:
@@ -550,7 +554,7 @@ class CaseTF(ABC):
         # Plot winding packs
         for i, wp in enumerate(self.WPs):
             xc_wp = 0.0
-            yc_wp = self.R_wp_i[i] - wp.dy
+            yc_wp = self.R_wp_i[i] - wp.dy / 2
             ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenized=homogenized)
 
         # Finalize plot
@@ -937,10 +941,10 @@ class TrapezoidalCaseTF(CaseTF):
         # toroidal stiffness of the poloidal support region
         kx_ps = self.mat_case.youngs_modulus(op_cond) / self.dx_ps * self.dy_ps
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx / 2
             for i, w in enumerate(self.WPs)
         ])
-        dy_lat = np.array([2 * w.dy for w in self.WPs])
+        dy_lat = np.array([w.dy for w in self.WPs])
         # toroidal stiffness of lateral case sections per winding pack
         kx_lat = self.mat_case.youngs_modulus(op_cond) / dx_lat * dy_lat
         temp = [
@@ -976,7 +980,7 @@ class TrapezoidalCaseTF(CaseTF):
         # toroidal stiffness of the poloidal support region
         ky_ps = self.mat_case.youngs_modulus(op_cond) * self.dx_ps / self.dy_ps
         dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx / 2
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([2 * w.dy for w in self.WPs])
@@ -1052,7 +1056,7 @@ class TrapezoidalCaseTF(CaseTF):
             if i == 1:
                 n_layers_max = math.floor(dx_WP / conductor.dx)
                 if layout == "pancake":
-                    n_layers_max = math.floor(dx_WP / conductor.dx / 2.0) * 2
+                    n_layers_max = math.floor(dx_WP / conductor.dx / 2) * 2
                     if n_layers_max == 0:
                         n_layers_max = 2
             else:
@@ -1072,7 +1076,7 @@ class TrapezoidalCaseTF(CaseTF):
             else:
                 dx_WP = n_layers_max * conductor.dx  # noqa: N806
 
-                gap_0 = R_wp_i * np.tan(self.rad_theta / 2) - dx_WP
+                gap_0 = R_wp_i * np.tan(self.rad_theta / 2) - dx_WP / 2
                 gap_1 = min_gap_x
 
                 max_dy = (gap_0 - gap_1) / np.tan(self.rad_theta / 2)
