@@ -156,50 +156,20 @@ class TFCoilXYDesigner(Designer):
 
     def _derived_values(self, optimsiation_params, case_params):
         # Needed params that are calculated using the base params
-        a = self.params.R0.value / self.params.A.value
-        Ri = self.params.R0.value - a - self.params.d.value  # noqa: N806
-        Re = (self.params.R0.value + a) * (1 / self.params.ripple.value) ** (  # noqa: N806
-            1 / self.params.n_TF.value
-        )
-        B_TF_i = 1.08 * (
-            MU_0_2PI
-            * self.params.n_TF.value
-            * (
-                self.params.B0.value
-                * self.params.R0.value
-                / MU_0_2PI
-                / self.params.n_TF.value
-            )
-            / Ri
-        )
+        R0 = self.params.R0.value
+        n_TF = self.params.n_TF.value
+        B0 = self.params.B0.value
+
+        a = R0 / self.params.A.value
+        Ri = R0 - a - self.params.d.value  # noqa: N806
+        Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)  # noqa: N806
+        B_TF_i = 1.08 * (MU_0_2PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) / Ri)
         pm = B_TF_i**2 / (2 * MU_0)
-        t_z = (
-            0.5
-            * np.log(Re / Ri)
-            * MU_0_4PI
-            * self.params.n_TF.value
-            * (
-                self.params.B0.value
-                * self.params.R0.value
-                / MU_0_2PI
-                / self.params.n_TF.value
-            )
-            ** 2
-        )
+        t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) ** 2
         T_op = self.params.T_sc.value + self.params.T_margin.value  # noqa: N806
         s_y = 1e9 / self.params.safety_factor.value
-        n_cond = int(
-            np.floor(
-                (
-                    self.params.B0.value
-                    * self.params.R0.value
-                    / MU_0_2PI
-                    / self.params.n_TF.value
-                )
-                / self.params.Iop.value
-            )
-        )
-        min_gap_x = 2 * case_params["dy_ps"]  # 2 * thickness of the plate before the WP
+        n_cond = (self.params.B0.value * R0 / MU_0_2PI / n_TF) // self.params.Iop.value
+        min_gap_x = 2 * (R0 * 2 / 3 * 1e-2)  # 2 * thickness of the plate before the WP
 
         I_fun = delayed_exp_func(  # noqa: N806
             self.params.Iop.value,
@@ -218,7 +188,7 @@ class TFCoilXYDesigner(Designer):
             "t_z": t_z,
             "T_op": T_op,
             "s_y": s_y,
-            "n_cond": n_cond,
+            "n_cond": int(n_cond),
             "min_gap_x": min_gap_x,
             "I_fun": I_fun,
             "B_fun": B_fun,

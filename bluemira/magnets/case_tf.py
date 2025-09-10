@@ -880,7 +880,6 @@ class TrapezoidalCaseTF(CaseTF):
             self.rad_theta / 2
         )
 
-
     def Kx_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Compute the equivalent radial stiffness of the poloidal support (PS) region.
