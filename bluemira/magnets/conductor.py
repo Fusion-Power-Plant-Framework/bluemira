@@ -425,7 +425,7 @@ class Conductor:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
         if direction == "x":
-            saf_jacket = (self.cable.dx + self.dx_jacket) / (self.dx_jacket)
+            saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
 
             K = reciprocal_summation([  # noqa: N806
                 2 * self._Ky_lat_ins(op_cond),
@@ -439,7 +439,7 @@ class Conductor:
             X_jacket = 2 * self._Ky_lat_jacket(op_cond) / K  # noqa: N806
 
         else:
-            saf_jacket = (self.cable.dy + self.dy_jacket) / (self.dy_jacket)
+            saf_jacket = (self.cable.dy + 2 * self.dy_jacket) / (2 * self.dy_jacket)
 
             K = reciprocal_summation([  # noqa: N806
                 2 * self._Kx_lat_ins(op_cond),
