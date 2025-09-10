@@ -49,7 +49,7 @@ config = {
             "d_cooling_channel": 0.01,
             "void_fraction": 0.7,
             "cos_theta": 0.97,
-            "dx": 0.034648435154495685,
+            "dx": 0.017324217577247843,
             "E": 0.1e9,
         },
     },
@@ -58,10 +58,10 @@ config = {
         "jacket_material": SS316_LN_MAG,
         "ins_material": DUMMY_INSULATOR_MAG,
         "params": {
-            "dx_jacket": 0.0030808556812487366,
-            "dy_jacket": 0.0,
-            "dx_ins": 0.0030808556812487366,
-            "dy_ins": 0.0,
+            "dx_jacket": 0.0015404278406243683,
+            # "dy_jacket": 0.0,
+            "dx_ins": 0.0005,
+            # "dy_ins": 0.0,
         },
     },
     "winding_pack": {
@@ -79,8 +79,8 @@ config = {
             "Ri": 3.708571428571428,
             "Rk": 0.0,
             "theta_TF": 22.5,
-            "dy_ps": 0.05733333333333333,
-            "dy_vault": 0.4529579163961617,
+            "dy_ps": 0.028666666666666667,
+            "dy_vault": 0.22647895819808084,
         },
     },
     "optimisation_params": {
@@ -113,6 +113,7 @@ params = {
     "T_sc": {"value": 4.2, "unit": "K"},
     "T_margin": {"value": 1.5, "unit": "K"},
     "t_delay": {"value": 3, "unit": "s"},
+    "strain": {"value": 0.0055, "unit": ""},
 }
 tf_coil_xy = TFCoilXYDesigner(params=params, build_config=config).execute()
 tf_coil_xy.plot(show=True, homogenized=False)

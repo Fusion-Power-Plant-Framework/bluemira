@@ -106,6 +106,8 @@ class TFCoilXYDesignerParams(ParameterFrame):
     """Temperature margin"""
     t_delay: Parameter[float]
     """Time delay for exponential functions"""
+    strain: Parameter[float]
+    """Strain on system"""
 
     # # optimisation params
     # t0: Parameter[float]
@@ -220,6 +222,7 @@ class TFCoilXYDesigner(Designer):
             "min_gap_x": min_gap_x,
             "I_fun": I_fun,
             "B_fun": B_fun,
+            "strain": self.params.strain.value,
         }
 
     def run(self):
@@ -306,6 +309,7 @@ class TFCoilXYDesigner(Designer):
             op_cond=OperationalConditions(
                 temperature=derived_params["T_op"],
                 magnetic_field=derived_params["B_TF_i"],
+                strain=derived_params["strain"],
             ),
             allowable_sigma=derived_params["s_y"],
             bounds_cond_jacket=optimisation_params["bounds_cond_jacket"],

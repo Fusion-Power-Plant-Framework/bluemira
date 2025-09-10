@@ -951,7 +951,7 @@ class SquareCable(ABCCable):
     @property
     def dx(self) -> float:
         """Half Cable dimension in the x direction [m]"""
-        return np.sqrt(self.area / 4)
+        return np.sqrt(self.area) / 2
 
     @property
     def dy(self) -> float:

@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from bluemira.base.look_and_feel import bluemira_print
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
@@ -9,6 +8,8 @@ from eurofusion_materials.library.magnet_branch_mats import (
     SS316_LN_MAG,
 )
 from matproplib import OperationalConditions
+
+from bluemira.base.look_and_feel import bluemira_print
 
 op_cond = OperationalConditions(temperature=5.7, magnetic_field=10.0, strain=0.0055)
 

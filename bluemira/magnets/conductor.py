@@ -15,7 +15,7 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.magnets.cable import ABCCable, create_cable_from_dict
+from bluemira.magnets.cable import ABCCable
 from bluemira.magnets.utils import reciprocal_summation, summation
 
 if TYPE_CHECKING:
@@ -72,12 +72,11 @@ class Conductor:
         self.mat_jacket = mat_jacket
         self.cable = cable
 
-
     @property
     def dy_jacket(self):
         """y-thickness of the jacket [m]"""
         return self._dy_jacket
-    
+
     @property
     def dy_ins(self):
         """y-thickness of the ins [m]"""
@@ -755,8 +754,8 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             string identifier
 
         """
-        dy_jacket=dx_jacket
-        dy_ins=dx_ins
+        dy_jacket = dx_jacket
+        dy_ins = dx_ins
         super().__init__(
             cable=cable,
             mat_jacket=mat_jacket,
