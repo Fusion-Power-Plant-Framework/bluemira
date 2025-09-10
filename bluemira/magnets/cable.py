@@ -110,7 +110,10 @@ class ABCCable(ABC):
         )
         if "E" not in vars(type(self)):
             if youngs_modulus is None:
-                raise ValueError("E undefined on the class and not passed into the init")
+
+                def youngs_modulus(op_cond):
+                    raise NotImplementedError("E for Cable is not implemented.")
+
             self.E = (
                 youngs_modulus
                 if callable(youngs_modulus)
@@ -716,7 +719,7 @@ class RectangularCable(ABCCable):
 
     @property
     def dx(self) -> float:
-        """Half Cable dimension in the x direction [m]"""
+        """Cable dimension in the x direction [m]"""
         return self._dx
 
     @property
