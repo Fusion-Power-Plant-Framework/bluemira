@@ -373,13 +373,11 @@ def _make_flux_surfaces_ibob(
         outboard flux surfaces
     """
     sign = 1 if outboard else -1
-    rnge = np.arange(x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp))
-    return list(
-        zip(
-            *[
-                _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane, dl)
-                for x in rnge
-            ],
-            strict=False,
+    flux_surfaces = [
+        _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane, dl)
+        for x in np.arange(
+            x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp)
         )
-    )
+    ]
+
+    return tuple(map(list, zip(*flux_surfaces, strict=True)))
