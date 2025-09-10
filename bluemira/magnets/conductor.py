@@ -455,7 +455,7 @@ class Conductor:
         # tresca_stress
         return pressure * X_jacket * saf_jacket + f_z / self.area_jacket
 
-    def optimize_jacket_conductor(
+    def optimise_jacket_conductor(
         self,
         pressure: float,
         f_z: float,
@@ -465,7 +465,7 @@ class Conductor:
         direction: str = "x",
     ):
         """
-        Optimize the jacket dimension of a conductor based on allowable stress using
+        Optimise the jacket dimension of a conductor based on allowable stress using
         the Tresca criterion.
 
         Parameters
@@ -481,7 +481,7 @@ class Conductor:
         allowable_sigma:
             The allowable stress (Pa) for the jacket material.
         bounds:
-            Optional bounds for the jacket thickness optimization (default is None).
+            Optional bounds for the jacket thickness optimisation (default is None).
         direction:
             The direction along which the pressure is applied ('x' or 'y'). Default is
             'x'.
@@ -489,17 +489,17 @@ class Conductor:
         Returns
         -------
         :
-            The result of the optimization process containing information about the
+            The result of the optimisation process containing information about the
             optimal jacket thickness.
 
         Raises
         ------
         ValueError
-            If the optimization process did not converge.
+            If the optimisation process did not converge.
 
         Notes
         -----
-        This function uses the Tresca yield criterion to optimize the thickness of the
+        This function uses the Tresca yield criterion to optimise the thickness of the
         jacket surrounding the conductor.
         This function directly update the conductor's jacket thickness along the x
         direction to the optimal value.
@@ -514,7 +514,7 @@ class Conductor:
             direction: str = "x",
         ) -> float:
             """
-            Objective function for optimizing conductor jacket thickness based on the
+            Objective function for optimising conductor jacket thickness based on the
             Tresca yield criterion.
 
             This function computes the absolute difference between the calculated Tresca
@@ -556,7 +556,7 @@ class Conductor:
             -----
             - This function updates the conductor's internal jacket dimension (
             `dx_jacket` or `dy_jacket`) with the trial value `jacket_thickness`.
-            - It is intended for use with scalar optimization algorithms such as
+            - It is intended for use with scalar optimisation algorithms such as
               `scipy.optimize.minimize_scalar`.
             """
             if direction not in {"x", "y"}:
@@ -579,7 +579,7 @@ class Conductor:
 
             return diff
 
-        debug_msg = ["Method optimize_jacket_conductor:"]
+        debug_msg = ["Method optimise_jacket_conductor:"]
 
         if direction == "x":
             debug_msg.append(f"Previous dx_jacket: {self.dx_jacket}")
@@ -600,7 +600,7 @@ class Conductor:
         )
 
         if not result.success:
-            raise ValueError("Optimization of the jacket conductor did not converge.")
+            raise ValueError("Optimisation of the jacket conductor did not converge.")
         if direction == "x":
             self.dx_jacket = result.x
             debug_msg.append(f"Optimal dx_jacket: {self.dx_jacket}")

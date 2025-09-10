@@ -193,7 +193,7 @@ class WindingPackDesigner(Designer[BluemiraWire]):
             n_layers_reduction=n_layers_reduction,
             layout=layout,
         )
-        case_out = case.optimize_jacket_and_vault(
+        case_out = case.optimise_jacket_and_vault(
             pm=pm,
             fz=t_z,
             temperature=T_op,

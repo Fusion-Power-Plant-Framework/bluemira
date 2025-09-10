@@ -123,13 +123,13 @@ class TFCoilXYDesignerParams(ParameterFrame):
     # n_layers_reduction: Parameter[int]
     # """Number of layers to remove after each WP"""
     # bounds_cond_jacket: Parameter[np.ndarray]
-    # """Min/max bounds for conductor jacket area optimization [m²]"""
+    # """Min/max bounds for conductor jacket area optimisation [m²]"""
     # bounds_dy_vault: Parameter[np.ndarray]
-    # """Min/max bounds for the case vault thickness optimization [m]"""
+    # """Min/max bounds for the case vault thickness optimisation [m]"""
     # max_niter: Parameter[int]
-    # """Maximum number of optimization iterations"""
+    # """Maximum number of optimisation iterations"""
     # eps: Parameter[float]
-    # """Convergence threshold for the combined optimization loop."""
+    # """Convergence threshold for the combined optimisation loop."""
 
 
 class TFCoilXYDesigner(Designer):
@@ -303,7 +303,7 @@ class TFCoilXYDesigner(Designer):
             layout=optimisation_params["layout"],
         )
         # param frame optimisation stuff?
-        case.optimize_jacket_and_vault(
+        case.optimise_jacket_and_vault(
             pm=derived_params["pm"],
             fz=derived_params["t_z"],
             op_cond=OperationalConditions(

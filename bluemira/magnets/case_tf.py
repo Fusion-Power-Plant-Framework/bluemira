@@ -7,7 +7,7 @@
 """
 Toroidal Field (TF) Coil 2D Case Class.
 
-This class models and optimizes the cross-sectional layout of the inboard leg of a TF
+This class models and optimises the cross-sectional layout of the inboard leg of a TF
 coil.
 It is designed to define and adjust the distribution of structural materials and
 winding pack arrangement to achieve optimal performance and mechanical robustness.
@@ -98,7 +98,7 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
 
     The coil cross-section has a trapezoidal shape: wider at the outer radius (Ri)
     and narrower at the inner radius (Rk), reflecting typical TF coil designs
-    for magnetic and mechanical optimization.
+    for magnetic and mechanical optimisation.
     """
 
     def __init__(self, var_dict: VarDictT | None = None):
@@ -720,7 +720,7 @@ class CaseTF(ABC):
         return n_layers_max, n_turns_max
 
     @abstractmethod
-    def optimize_vault_radial_thickness(
+    def optimise_vault_radial_thickness(
         self,
         pm: float,
         fz: float,
@@ -730,7 +730,7 @@ class CaseTF(ABC):
         bounds: np.ndarray = None,
     ):
         """
-        Abstract method to optimize the radial thickness of the vault support region.
+        Abstract method to optimise the radial thickness of the vault support region.
 
         Parameters
         ----------
@@ -745,7 +745,7 @@ class CaseTF(ABC):
         allowable_sigma:
             Allowable maximum stress [Pa].
         bounds:
-            Optimization bounds for vault thickness [m].
+            Optimisation bounds for vault thickness [m].
         """
 
     def to_dict(self) -> dict[str, float | str | list[dict[str, float | str | Any]]]:
@@ -1190,7 +1190,7 @@ class TrapezoidalCaseTF(CaseTF):
         sigma_z = fz / (self.area_case_jacket + self.area_wps_jacket)
         return sigma_theta + sigma_z
 
-    def optimize_vault_radial_thickness(
+    def optimise_vault_radial_thickness(
         self,
         pm: float,
         fz: float,
@@ -1199,7 +1199,7 @@ class TrapezoidalCaseTF(CaseTF):
         bounds: np.array = None,
     ):
         """
-        Optimize the vault radial thickness of the case
+        Optimise the vault radial thickness of the case
 
         Parameters
         ----------
@@ -1214,18 +1214,18 @@ class TrapezoidalCaseTF(CaseTF):
         allowable_sigma:
             The allowable stress (Pa) for the jacket material.
         bounds:
-            Optional bounds for the jacket thickness optimization (default is None).
+            Optional bounds for the jacket thickness optimisation (default is None).
 
         Returns
         -------
         :
-            The result of the optimization process containing information about the
+            The result of the optimisation process containing information about the
             optimal vault thickness.
 
         Raises
         ------
         ValueError
-            If the optimization process did not converge.
+            If the optimisation process did not converge.
         """
         method = None
         if bounds is not None:
@@ -1240,7 +1240,7 @@ class TrapezoidalCaseTF(CaseTF):
         )
 
         if not result.success:
-            raise ValueError("dy_vault optimization did not converge.")
+            raise ValueError("dy_vault optimisation did not converge.")
         self.dy_vault = result.x
         # print(f"Optimal dy_vault: {self.dy_vault}")
         # print(f"Tresca sigma: {self._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
@@ -1256,7 +1256,7 @@ class TrapezoidalCaseTF(CaseTF):
         allowable_sigma: float,
     ) -> float:
         """
-        Fitness function for the optimization problem. It calculates the absolute
+        Fitness function for the optimisation problem. It calculates the absolute
         difference between the Tresca stress and the allowable stress.
 
         Parameters
@@ -1292,7 +1292,7 @@ class TrapezoidalCaseTF(CaseTF):
         # diff: {sigma - allowable_sigma}")
         return abs(sigma - allowable_sigma)
 
-    def optimize_jacket_and_vault(
+    def optimise_jacket_and_vault(
         self,
         pm: float,
         fz: float,
@@ -1309,14 +1309,14 @@ class TrapezoidalCaseTF(CaseTF):
         n_conds: int | None = None,
     ):
         """
-        Jointly optimize the conductor jacket and case vault thickness
+        Jointly optimise the conductor jacket and case vault thickness
         under electromagnetic loading constraints.
 
-        This method performs an iterative optimization of:
+        This method performs an iterative optimisation of:
         - The cross-sectional area of the conductor jacket.
         - The vault radial thickness of the TF coil casing.
 
-        The optimization loop continues until the relative change in
+        The optimisation loop continues until the relative change in
         jacket area and vault thickness drops below the specified
         convergence threshold `eps`, or `max_niter` is reached.
 
@@ -1332,9 +1332,9 @@ class TrapezoidalCaseTF(CaseTF):
         allowable_sigma:
             Maximum allowable stress for structural material [Pa].
         bounds_cond_jacket:
-            Min/max bounds for conductor jacket area optimization [m²].
+            Min/max bounds for conductor jacket area optimisation [m²].
         bounds_dy_vault:
-            Min/max bounds for the case vault thickness optimization [m].
+            Min/max bounds for the case vault thickness optimisation [m].
         layout:
             Cable layout strategy; "auto" or predefined layout name.
         wp_reduction_factor:
@@ -1344,9 +1344,9 @@ class TrapezoidalCaseTF(CaseTF):
         n_layers_reduction:
             Number of conductor layers to remove when reducing WP height.
         max_niter:
-            Maximum number of optimization iterations.
+            Maximum number of optimisation iterations.
         eps:
-            Convergence threshold for the combined optimization loop.
+            Convergence threshold for the combined optimisation loop.
         n_conds:
             Target total number of conductors in the winding pack. If None, the self
             number of conductors is used.
@@ -1355,7 +1355,7 @@ class TrapezoidalCaseTF(CaseTF):
         -----
         The function modifies the internal state of `conductor` and `self.dy_vault`.
         """
-        debug_msg = ["Method optimize_jacket_and_vault"]
+        debug_msg = ["Method optimise_jacket_and_vault"]
 
         # Initialize convergence array
         self._convergence_array = []
@@ -1393,7 +1393,7 @@ class TrapezoidalCaseTF(CaseTF):
             case_dy_vault0 = self.dy_vault
 
             debug_msg.append(
-                f"before optimization: conductor jacket area = {conductor.area_jacket}"
+                f"before optimisation: conductor jacket area = {conductor.area_jacket}"
             )
             cond_area_jacket0 = conductor.area_jacket
             t_z_cable_jacket = (
@@ -1402,12 +1402,12 @@ class TrapezoidalCaseTF(CaseTF):
                 / (self.area_case_jacket + self.area_wps_jacket)
                 / self.n_conductors
             )
-            conductor.optimize_jacket_conductor(
+            conductor.optimise_jacket_conductor(
                 pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
             )
             debug_msg.extend([
                 f"t_z_cable_jacket: {t_z_cable_jacket}",
-                f"after optimization: conductor jacket area = {conductor.area_jacket}",
+                f"after optimisation: conductor jacket area = {conductor.area_jacket}",
             ])
 
             conductor.dx_jacket = (
@@ -1426,8 +1426,8 @@ class TrapezoidalCaseTF(CaseTF):
                 layout=layout,
             )
 
-            debug_msg.append(f"before optimization: case dy_vault = {self.dy_vault}")
-            self.optimize_vault_radial_thickness(
+            debug_msg.append(f"before optimisation: case dy_vault = {self.dy_vault}")
+            self.optimise_vault_radial_thickness(
                 pm=pm,
                 fz=fz,
                 op_cond=op_cond,
@@ -1444,7 +1444,7 @@ class TrapezoidalCaseTF(CaseTF):
             tot_err = err_dy_vault + err_conductor_area_jacket
 
             debug_msg.append(
-                f"after optimization: case dy_vault = {self.dy_vault}\n"
+                f"after optimisation: case dy_vault = {self.dy_vault}\n"
                 f"err_dy_jacket = {err_conductor_area_jacket}\n "
                 f"err_dy_vault = {err_dy_vault}\n "
                 f"tot_err = {tot_err}"
@@ -1464,23 +1464,23 @@ class TrapezoidalCaseTF(CaseTF):
         # final check
         if i < max_niter:
             bluemira_print(
-                f"Optimization of jacket and vault reached after "
+                f"Optimisation of jacket and vault reached after "
                 f"{i} iterations. Total error: {tot_err} < {eps}."
             )
 
             ax = self.plot(show=False, homogenized=False)
-            ax.set_title("Case design after optimization")
+            ax.set_title("Case design after optimisation")
             plt.show()
 
         else:
             bluemira_warn(
-                f"Maximum number of optimization iterations {max_niter} "
+                f"Maximum number of optimisation iterations {max_niter} "
                 f"reached. A total of {tot_err} > {eps} has been obtained."
             )
 
     def plot_convergence(self):
         """
-        Plot the evolution of thicknesses and error values over optimization iterations.
+        Plot the evolution of thicknesses and error values over optimisation iterations.
 
         Raises
         ------
@@ -1488,7 +1488,7 @@ class TrapezoidalCaseTF(CaseTF):
             If no convergence data available
         """
         if not hasattr(self, "_convergence_array") or not self._convergence_array:
-            raise RuntimeError("No convergence data available. Run optimization first.")
+            raise RuntimeError("No convergence data available. Run optimisation first.")
 
         convergence_data = np.array(self._convergence_array)
 
@@ -1517,7 +1517,7 @@ class TrapezoidalCaseTF(CaseTF):
         axs[1].plot(iterations, err_dy_vault, marker="s", label="err_dy_vault")
         axs[1].set_ylabel("Relative Error")
         axs[1].set_xlabel("Iteration")
-        axs[1].set_title("Evolution of Errors during Optimization")
+        axs[1].set_title("Evolution of Errors during Optimisation")
         axs[1].set_yscale("log")  # Log scale for better visibility if needed
         axs[1].legend()
         axs[1].grid(visible=True)

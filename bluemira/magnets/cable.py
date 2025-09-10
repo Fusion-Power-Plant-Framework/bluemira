@@ -40,7 +40,7 @@ class ABCCable(ABC):
     Abstract base class for superconducting cables.
 
     Defines the general structure and common methods for cables
-    composed of superconducting and stabilizer strands.
+    composed of superconducting and stabiliser strands.
 
     Notes
     -----
@@ -75,7 +75,7 @@ class ABCCable(ABC):
         sc_strand:
             The superconducting strand.
         stab_strand:
-            The stabilizer strand.
+            The stabiliser strand.
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
@@ -214,7 +214,7 @@ class ABCCable(ABC):
 
     @property
     def area_stab(self) -> float:
-        """Area of the stabilizer region"""
+        """Area of the stabiliser region"""
         return self.stab_strand.area * self.n_stab_strand
 
     @property
@@ -308,7 +308,7 @@ class ABCCable(ABC):
         bounds: np.ndarray | None = None,
     ):
         """
-        Optimize the number of stabilizer strand in the superconducting cable using a
+        Optimise the number of stabiliser strand in the superconducting cable using a
         0-D hot spot criteria.
 
         Parameters
@@ -326,21 +326,21 @@ class ABCCable(ABC):
         I_fun :
             Current [A] as a time-dependent function.
         bounds:
-            Lower and upper limits for the number of stabilizer strands.
+            Lower and upper limits for the number of stabiliser strands.
 
         Returns
         -------
         :
-            The result of the optimization process.
+            The result of the optimisation process.
 
         Raises
         ------
         ValueError
-            If the optimization process does not converge.
+            If the optimisiation process does not converge.
 
         Notes
         -----
-        - The number of stabilizer strands in the cable is modified directly.
+        - The number of stabiliser strands in the cable is modified directly.
         - Cooling material contribution is neglected when applying the hot spot criteria.
         """
 
@@ -365,7 +365,7 @@ class ABCCable(ABC):
             Parameters
             ----------
             n_stab:
-                Number of stabilizer strands to set temporarily for this simulation.
+                Number of stabiliser strands to set temporarily for this simulation.
             t0:
                 Initial time of the simulation [s].
             tf:
@@ -387,7 +387,7 @@ class ABCCable(ABC):
 
             Notes
             -----
-            - This method is typically used as a cost function for optimization routines
+            - This method is typically used as a cost function for optimisation routines
               (e.g., minimizing the temperature error by tuning `n_stab`).
             - It modifies the internal state `self._n_stab_strand`, which may affect
               subsequent evaluations unless restored.
@@ -414,7 +414,7 @@ class ABCCable(ABC):
 
         if not result.success:
             raise ValueError(
-                "n_stab optimization did not converge. Check your input parameters "
+                "n_stab optimisation did not converge. Check your input parameters "
                 "or initial bracket."
             )
 
@@ -432,7 +432,7 @@ class ABCCable(ABC):
                 f"{self.n_stab_strand}."
             )
             raise ValueError(
-                "Optimization failed to keep final temperature ≤ target. "
+                "Optimisation failed to keep final temperature ≤ target. "
                 "Try increasing the upper bound of n_stab or adjusting cable parameters."
             )
         bluemira_print(f"Optimal n_stab: {self.n_stab_strand}")
@@ -539,7 +539,7 @@ class ABCCable(ABC):
         Return a human-readable summary of the cable configuration.
 
         Includes geometric properties, void and twist factors, and a string
-        representation of both the superconducting and stabilizer strands.
+        representation of both the superconducting and stabiliser strands.
 
         Returns
         -------
@@ -921,7 +921,7 @@ class SquareCable(ABCCable):
         sc_strand:
             strand of the superconductor
         stab_strand:
-            strand of the stabilizer
+            strand of the stabiliser
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
@@ -1055,7 +1055,7 @@ class RoundCable(ABCCable):
     """
     A cable with round cross-section for superconducting applications.
 
-    This cable type includes superconducting and stabilizer strands arranged
+    This cable type includes superconducting and stabiliser strands arranged
     around a central cooling channel.
     """
 
@@ -1079,7 +1079,7 @@ class RoundCable(ABCCable):
         sc_strand:
             strand of the superconductor
         stab_strand:
-            strand of the stabilizer
+            strand of the stabiliser
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
