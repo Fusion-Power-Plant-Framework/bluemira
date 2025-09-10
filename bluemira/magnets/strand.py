@@ -26,6 +26,7 @@ from bluemira.base.look_and_feel import bluemira_error
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
+from bluemira.utilities.tools import get_class_from_module
 
 
 class Strand:
@@ -559,23 +560,7 @@ def create_strand_from_dict(
     Strand
         An instance of the appropriate Strand subclass.
 
-    Raises
-    ------
-    ValueError
-        If 'name_in_registry' is missing from the dictionary.
-        If no matching registered class is found.
     """
-    name_in_registry = strand_dict.get("name_in_registry")
-    if name_in_registry is None:
-        raise ValueError(
-            "Serialized strand dictionary must contain a 'name_in_registry' field."
-        )
-
-    cls = STRAND_REGISTRY.get(name_in_registry)
-    if cls is None:
-        raise ValueError(
-            f"No registered strand class with registration name '{name_in_registry}'. "
-            "Available classes are: " + ", ".join(STRAND_REGISTRY.keys())
-        )
-
-    return cls.from_dict(name=name, strand_dict=strand_dict)
+    return get_class_from_module(
+        strand_dict.pop("class"), default_module="bluemira.magnets.strand"
+    ).from_dict(name=name, strand_dict=strand_dict)

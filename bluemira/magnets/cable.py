@@ -1256,7 +1256,6 @@ class RoundCable(ABCCable):
         sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
         stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
 
-        # how to handle?
         return cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
