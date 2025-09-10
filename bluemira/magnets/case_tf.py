@@ -60,7 +60,7 @@ def _dx_at_radius(radius: float, rad_theta: float) -> float:
     Returns
     -------
     :
-        Half toroidal width [m] at the given radius.
+        Toroidal width [m] at the given radius.
     """
     return 2 * radius * np.tan(rad_theta / 2)
 

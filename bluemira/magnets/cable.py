@@ -724,7 +724,7 @@ class RectangularCable(ABCCable):
 
     @property
     def dy(self) -> float:
-        """Half Cable dimension in the y direction [m]"""
+        """Cable dimension in the y direction [m]"""
         return self.area / self.dx
 
     # Decide if this function shall be a setter.
@@ -1110,12 +1110,12 @@ class RoundCable(ABCCable):
 
     @property
     def dx(self) -> float:
-        """Cable dimension in the x direction [m] (i.e. cable's radius)"""
+        """Cable dimension in the x direction [m] (i.e. cable's diameter)"""
         return np.sqrt(self.area * 4 / np.pi)
 
     @property
     def dy(self) -> float:
-        """Cable dimension in the y direction [m] (i.e. cable's radius)"""
+        """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
         return self.dx
 
     # OD homogenized structural properties
