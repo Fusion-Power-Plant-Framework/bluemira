@@ -56,7 +56,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    optimisation_toroidal_harmonic_approximation,
+    brute_force_toroidal_harmonic_approximation,
     plot_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
@@ -97,33 +97,23 @@ R_0, Z_0 = eq.effective_centre()
 th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
 # %%
-# using optimisation fn :
-result = optimisation_toroidal_harmonic_approximation(
-    eq=eq, th_params=th_params, psi_norm=psi_norm, plot=False
+# using brute force
+result = brute_force_toroidal_harmonic_approximation(
+    eq=eq,
+    th_params=th_params,
+    psi_norm=psi_norm,
+    n_degrees_of_freedom=8,
+    max_harmonic_order=5,
 )
 
 print(f"cos degrees used = {result.cos_degrees}")
 print(f"sin degrees used = {result.sin_degrees}")
 
 f, ax = plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
-ax.set_title("LASSO + collocation approximation")
-plt.show()
-
-# %%
-# using brute force
-# result = brute_force_toroidal_harmonic_approximation(
-#     eq=eq,
-#     th_params=th_params,
-#     psi_norm=psi_norm,
-#     tol=0.1,
-# )
-
-# print(f"cos degrees used = {result.cos_degrees}")
-# print(f"sin degrees used = {result.sin_degrees}")
-
-f, ax = plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
 ax.set_title("Brute force + grid approximation")
 plt.show()
+
+raise ValueError
 
 th_constraint_equal = ToroidalHarmonicConstraint(
     ref_harmonics_cos=result.cos_degrees,
