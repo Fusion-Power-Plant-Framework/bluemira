@@ -104,6 +104,7 @@ result = brute_force_toroidal_harmonic_approximation(
     psi_norm=psi_norm,
     n_degrees_of_freedom=8,
     max_harmonic_order=5,
+    plasma_mask=False,
 )
 
 print(f"cos degrees used = {result.cos_degrees}")
