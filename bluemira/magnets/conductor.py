@@ -172,8 +172,8 @@ class Conductor(metaclass=RegistrableMeta):
             ),
             "name": self.name,
             "cable": self.cable.to_dict(),
-            "mat_jacket": self.mat_jacket.name,
-            "mat_ins": self.mat_ins.name,
+            "mat_jacket": self.mat_jacket,
+            "mat_ins": self.mat_ins,
             "dx_jacket": self.dx_jacket,
             "dy_jacket": self.dy_jacket,
             "dx_ins": self.dx_ins,
@@ -265,7 +265,7 @@ class Conductor(metaclass=RegistrableMeta):
         """
         resistances = np.array([
             self.cable.erho(op_cond) / self.cable.area,
-            self.mat_jacket.erho(op_cond) / self.area_jacket,
+            self.mat_jacket.electrical_resistivity(op_cond) / self.area_jacket,
         ])
         res_tot = parall_r(resistances)
         return res_tot * self.area
@@ -291,7 +291,7 @@ class Conductor(metaclass=RegistrableMeta):
         """
         weighted_specific_heat = np.array([
             self.cable.Cp(op_cond) * self.cable.area,
-            self.mat_jacket.Cp(op_cond) * self.area_jacket,
+            self.mat_jacket.specific_heat_capacity(op_cond) * self.area_jacket,
         ])
         return serie_r(weighted_specific_heat) / self.area
 
@@ -892,8 +892,8 @@ class SymmetricConductor(Conductor):
             ),
             "name": self.name,
             "cable": self.cable.to_dict(),
-            "mat_jacket": self.mat_jacket.name,
-            "mat_ins": self.mat_ins.name,
+            "mat_jacket": self.mat_jacket,
+            "mat_ins": self.mat_ins,
             "dx_jacket": self.dx_jacket,
             "dx_ins": self.dx_ins,
         }

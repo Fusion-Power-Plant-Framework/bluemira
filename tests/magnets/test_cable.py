@@ -12,6 +12,7 @@ from eurofusion_materials.library.magnet_branch_mats import (
     NB3SN_MAG,
     SS316_LN_MAG,
 )
+from matproplib import OperationalConditions
 from matproplib.material import MaterialFraction
 
 from bluemira.magnets.cable import (
@@ -72,9 +73,10 @@ def test_geometry_and_area(cable):
 
 def test_material_properties(cable):
     temperature = 20  # [K]
-    assert cable.rho(temperature=temperature) > 0.0
-    assert cable.erho(temperature=temperature) > 0.0
-    assert cable.Cp(temperature=temperature) > 0.0
+    op_cond = OperationalConditions(temperature=temperature)
+    assert cable.rho(op_cond) > 0.0
+    assert cable.erho(op_cond) > 0.0
+    assert cable.Cp(op_cond) > 0.0
 
 
 def test_str_output(cable):
@@ -171,21 +173,22 @@ def test_square_and_round_cables(sc_strand, stab_strand):
         n_stab_strand=5,
         d_cooling_channel=0.001,
     )
+    dummy_op_cond = OperationalConditions(temperature=4.0)
     assert square.dx > 0
     assert square.dy > 0
     assert np.isclose(square.dx, square.dy, rtol=1e-8)
-    assert square.E() > 0
+    assert square.E(dummy_op_cond) > 0
     # since dx == dy, Kx == Ky == E
-    assert np.isclose(square.Kx(), square.E(), rtol=1e-8)
-    assert np.isclose(square.Ky(), square.E(), rtol=1e-8)
+    assert np.isclose(square.Kx(dummy_op_cond), square.E(dummy_op_cond), rtol=1e-8)
+    assert np.isclose(square.Ky(dummy_op_cond), square.E(dummy_op_cond), rtol=1e-8)
 
     assert round_.dx > 0
     assert round_.dy > 0
     assert np.isclose(round_.dx, round_.dy, rtol=1e-8)
-    assert round_.E() > 0
+    assert round_.E(dummy_op_cond) > 0
     # since dx == dy for round cable, Kx == Ky == E
-    assert np.isclose(round_.Kx(), round_.E(), rtol=1e-8)
-    assert np.isclose(round_.Ky(), round_.E(), rtol=1e-8)
+    assert np.isclose(round_.Kx(dummy_op_cond), round_.E(dummy_op_cond), rtol=1e-8)
+    assert np.isclose(round_.Ky(dummy_op_cond), round_.E(dummy_op_cond), rtol=1e-8)
 
 
 def test_cable_to_from_dict(sc_strand, stab_strand):

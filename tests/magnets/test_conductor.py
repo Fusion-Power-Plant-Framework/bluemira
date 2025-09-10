@@ -12,6 +12,7 @@ from eurofusion_materials.library.magnet_branch_mats import (
     NB3SN_MAG,
     SS316_LN_MAG,
 )
+from matproplib import OperationalConditions
 from matproplib.material import MaterialFraction
 
 from bluemira.magnets.cable import RectangularCable
@@ -36,7 +37,7 @@ def mat_ins():
 @pytest.fixture
 def sc_strand():
     sc = NB3SN_MAG
-    sc.thermal_conductivity = lambda **kwargs: 10.0  # noqa: ARG005
+    sc.specific_heat_capacity = lambda *args, **kwargs: 10.0  # noqa: ARG005
     return SuperconductingStrand(
         name="SC",
         materials=[MaterialFraction(material=sc, fraction=1.0)],
@@ -47,7 +48,7 @@ def sc_strand():
 @pytest.fixture
 def stab_strand():
     stab = SS316_LN_MAG
-    stab.thermal_conductivity = lambda **kwargs: 15.0  # noqa: ARG005
+    stab.thermal_conductivity = lambda *args, **kwargs: 15.0  # noqa: ARG005
     return Strand(
         name="Stab",
         materials=[MaterialFraction(material=stab, fraction=1.0)],
@@ -95,9 +96,9 @@ def test_geometry_and_area(conductor):
 
 
 def test_material_properties(conductor):
-    temperature = 20  # K
-    assert conductor.erho(temperature=temperature) > 0.0
-    assert conductor.Cp(temperature=temperature) > 0.0
+    op_cond = OperationalConditions(temperature=20)
+    assert conductor.erho(op_cond) > 0.0
+    assert conductor.Cp(op_cond) > 0.0
 
 
 def test_plot(monkeypatch, conductor):

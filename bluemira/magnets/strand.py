@@ -378,7 +378,7 @@ class Strand(metaclass=RegistrableMeta):
             "temperature": self.temperature,
             "materials": [
                 {
-                    "material": m.material.name,
+                    "material": m.material,
                     "fraction": m.fraction,
                 }
                 for m in self.materials

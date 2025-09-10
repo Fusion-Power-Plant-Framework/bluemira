@@ -57,7 +57,7 @@ def test_strand_material_properties():
 
     temperature = 20
     op_cond = OperationalConditions(temperature=20)
-    assert np.isclose(strand.erho(op_cond), sc.erho(op_cond))
+    assert np.isclose(strand.erho(op_cond), sc.electrical_resistivity(op_cond))
 
-    assert np.isclose(strand.Cp(op_cond), sc.Cp(op_cond))
-    assert np.isclose(strand.rho(op_cond), sc.rho(op_cond))
+    assert np.isclose(strand.Cp(op_cond), sc.specific_heat_capacity(op_cond))
+    assert np.isclose(strand.rho(op_cond), sc.density(op_cond))
