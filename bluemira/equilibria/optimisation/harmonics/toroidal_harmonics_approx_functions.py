@@ -614,8 +614,9 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     psi_norm: float = 0.95,
+    n_degrees_of_freedom: int | None = None,
     max_harmonic_order: int = 5,
-    tol: float = 0.001,
+    # tol: float = 0.001, n_dof: int,
 ) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients.
@@ -662,6 +663,20 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
     )
 
+    if n_degrees_of_freedom is None:
+        n_degrees_of_freedom = len(th_params.th_coil_names)
+    elif not (0 < n_degrees_of_freedom <= len(th_params.th_coil_names)):
+        raise ValueError(
+            f"Number of degrees of freedom must be between 0 and the number of control coils, but this is not the case: 0 < {n_degrees_of_freedom} <= {len(th_params.coil_names)}"
+        )
+
+    n_dof = (
+        len(th_params.th_coil_names)
+        if n_degrees_of_freedom is None
+        else n_degrees_of_freedom
+    )
+    dof_id = np.arange(0, n_dof)
+
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
 
     # Want to mask to be able to calculate error in the plasma region only
@@ -671,102 +686,47 @@ def brute_force_toroidal_harmonic_approximation(  # noqa: RET503
     )
     n_grid = len(th_params.R) * len(th_params.Z)
 
-    # Can't have more degrees than sampled psi
-    max_dof = len(th_params.th_coil_names) - 1
-
-    dof_id = np.arange(0, max_dof)
-
     order_values = np.arange(0, max_harmonic_order)
     order_values = np.append(order_values, order_values)
 
-    # Initialise arrays to hold errors, combinations, amplitudes and psi values
-    # Loop over combinations of degrees and save results which satisfy error condition
-    # TODO: MC this list tracking can probably be removed: it is monotonically
-    # decreasing and we can just take the last values?
-    errors_old = []
-    cos_degrees_old = []
-    sin_degrees_old = []
-    cos_amplitudes_old = []
-    sin_amplitudes_old = []
-    coilset_psis_old = []
+    error = np.inf
 
-    for n in np.arange(2, max_dof):
-        errors = []
-        cos_degrees = []
-        sin_degrees = []
-        cos_amplitudes = []
-        sin_amplitudes = []
-        coilset_psis = []
+    for c in combinations(dof_id, n_dof):
+        deg_id = list(c)
+        cos_degrees_chosen = np.array([
+            order_values[i] for i in deg_id if i < max_harmonic_order
+        ])
+        sin_degrees_chosen = np.array([
+            order_values[i] for i in deg_id if i >= max_harmonic_order
+        ])
 
-        for c in combinations(dof_id, n):
-            deg_id = list(c)
-            cos_degrees_chosen = np.array([
-                order_values[i] for i in deg_id if i < max_harmonic_order
-            ])
-            sin_degrees_chosen = np.array([
-                order_values[i] for i in deg_id if i >= max_harmonic_order
-            ])
+        # Calculate psi using the combination of degrees selected in this iteration
+        approximate_coilset_psi, cos_amps, sin_amps = toroidal_harmonic_approximate_psi(
+            eq=eq,
+            th_params=th_params,
+            cos_degrees_chosen=cos_degrees_chosen,
+            sin_degrees_chosen=sin_degrees_chosen,
+        )
 
-            # Calculate psi using the combination of degrees selected in this iteration
-            approximate_coilset_psi, cos_amps, sin_amps = (
-                toroidal_harmonic_approximate_psi(
-                    eq=eq,
-                    th_params=th_params,
-                    cos_degrees_chosen=cos_degrees_chosen,
-                    sin_degrees_chosen=sin_degrees_chosen,
-                )
-            )
+        error_new = np.sqrt(
+            np.sum((mask * (approximate_coilset_psi - true_coilset_psi)) ** 2 / n_grid)
+        )
+        if error_new < error:
+            cos_degrees = cos_degrees_chosen
+            sin_degrees = sin_degrees_chosen
+            coilset_psi = approximate_coilset_psi
+            cos_amplitudes = cos_amps
+            sin_amplitudes = sin_amps
 
-            error = np.sqrt(
-                np.sum(
-                    (mask * (approximate_coilset_psi - true_coilset_psi)) ** 2 / n_grid
-                )
-            )
-
-            errors.append(error)
-            cos_degrees.append(cos_degrees_chosen)
-            sin_degrees.append(sin_degrees_chosen)
-            coilset_psis.append(approximate_coilset_psi)
-            cos_amplitudes.append(cos_amps)
-            sin_amplitudes.append(sin_amps)
-
-        # If sufficiently small change by adding extra degree, then
-        # use the previous total number of degrees
-        full = (len(errors_old) != 0) & (len(errors) != 0)
-        succeeded = (np.min(errors_old) - np.min(errors) < tol) if full else False
-
-        if succeeded:
-            index_chosen = np.argmin(errors_old)
-            error_success = errors_old[index_chosen]
-            cos_degrees_success = cos_degrees_old[index_chosen]
-            sin_degrees_success = sin_degrees_old[index_chosen]
-            coilset_psi_success = coilset_psis_old[index_chosen]
-
-            cos_amplitude_success = cos_amplitudes_old[index_chosen]
-            sin_amplitude_success = sin_amplitudes_old[index_chosen]
-
-            return ToroidalHarmonicsSelectionResult(
-                cos_degrees=cos_degrees_success,
-                sin_degrees=sin_degrees_success,
-                cos_amplitudes=cos_amplitude_success,
-                sin_amplitudes=sin_amplitude_success,
-                error=error_success,
-                coilset_psi=coilset_psi_success,
-                fixed_psi=fixed_psi,
-            )
-        elif n == max_dof:  # noqa: RET505
-            raise EquilibriaError(
-                f"No combination of up to {max_dof} degrees gives an acceptable"
-                "solution for the input parameters for chosen equilibrium! Please adjust"
-                "the error tolerance value and try again."
-            )
-
-        errors_old = errors
-        cos_degrees_old = cos_degrees
-        sin_degrees_old = sin_degrees
-        cos_amplitudes_old = cos_amplitudes
-        sin_amplitudes_old = sin_amplitudes
-        coilset_psis_old = coilset_psis
+        return ToroidalHarmonicsSelectionResult(
+            cos_degrees=cos_degrees,
+            sin_degrees=sin_degrees,
+            cos_amplitudes=cos_amplitudes,
+            sin_amplitudes=sin_amplitudes,
+            error=error,
+            coilset_psi=coilset_psi,
+            fixed_psi=fixed_psi,
+        )
 
 
 def plot_toroidal_harmonic_approximation(

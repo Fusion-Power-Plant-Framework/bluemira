@@ -56,7 +56,6 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    brute_force_toroidal_harmonic_approximation,
     optimisation_toroidal_harmonic_approximation,
     plot_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
@@ -112,22 +111,19 @@ plt.show()
 
 # %%
 # using brute force
-result = brute_force_toroidal_harmonic_approximation(
-    eq=eq,
-    th_params=th_params,
-    psi_norm=psi_norm,
-    tol=0.1,
-)
+# result = brute_force_toroidal_harmonic_approximation(
+#     eq=eq,
+#     th_params=th_params,
+#     psi_norm=psi_norm,
+#     tol=0.1,
+# )
 
-print(f"cos degrees used = {result.cos_degrees}")
-print(f"sin degrees used = {result.sin_degrees}")
+# print(f"cos degrees used = {result.cos_degrees}")
+# print(f"sin degrees used = {result.sin_degrees}")
 
 f, ax = plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
 ax.set_title("Brute force + grid approximation")
 plt.show()
-
-raise ValueError
-
 
 th_constraint_equal = ToroidalHarmonicConstraint(
     ref_harmonics_cos=result.cos_degrees,
