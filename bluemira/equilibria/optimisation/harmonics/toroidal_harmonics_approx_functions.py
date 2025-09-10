@@ -673,6 +673,7 @@ def brute_force_toroidal_harmonic_approximation(
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
 
     if plasma_mask:
+        # Want to mask to be able to calculate error in the plasma region only
         if psi_norm > 1.0:
             # We cannot mask on an open flux surface
             bluemira_warn(
@@ -682,13 +683,13 @@ def brute_force_toroidal_harmonic_approximation(
             mask_fs = eq.get_LCFS()
         else:
             mask_fs = original_fs
-        # Want to mask to be able to calculate error in the plasma region only
+
         mask_matrix = np.zeros_like(th_params.R)
         mask = _in_plasma(
             th_params.R, th_params.Z, mask_matrix, mask_fs.xz.T, include_edges=True
         )
     else:
-        # Do not apply a mask to the errors
+        # Do not apply a mask to the error
         mask = 1
 
     dof_id = np.arange(0, 2 * max_harmonic_order)
@@ -710,7 +711,6 @@ def brute_force_toroidal_harmonic_approximation(
         )
 
         error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
-        print(f"c: {c}, error: {error_new}")
 
         if error_new < error:
             error = error_new
