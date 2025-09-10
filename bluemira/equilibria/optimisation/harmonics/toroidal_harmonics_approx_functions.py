@@ -641,6 +641,14 @@ def brute_force_toroidal_harmonic_approximation(
     psi_norm:
         Normalised flux value of the surface of interest.
         None value will default to LCFS.
+    n_degrees_of_freedom:
+        The number of harmonic functions (and amplitudes) to choose.
+        If None, will default to the number of "free" coils
+    max_harmonic_order:
+        The maximum order of the harmonic functions to use
+    plasma_mask:
+        Whether or not to apply a mask to the error metric (within the psi_norm flux
+        surface)
 
     Returns
     -------
