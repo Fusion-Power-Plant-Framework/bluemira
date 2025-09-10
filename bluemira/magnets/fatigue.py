@@ -12,14 +12,9 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 import numpy as np
-
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-
-if TYPE_CHECKING:
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 __all__ = [
     "ConductorInfo",
@@ -33,51 +28,39 @@ __all__ = [
 
 
 @dataclass
-class ConductorInfo(ParameterFrame):
+class ConductorInfo:
     """
     Cable in conduit conductor information for Paris fatigue model
     """
 
-    tk_radial: Parameter[float]  # [m] in the loaded direction
-    width: Parameter[float]  # [m] in the loaded direction
-    max_hoop_stress: Parameter[float]  # [Pa]
-    residual_stress: Parameter[float]  # [Pa]
-    walker_coeff: Parameter[float]
+    tk_radial: float  # [m] in the loaded direction
+    width: float  # [m] in the loaded direction
+    max_hoop_stress: float  # [Pa]
+    residual_stress: float  # [Pa]
+    walker_coeff: float
 
 
 @dataclass
-class ParisFatigueMaterial(ParameterFrame):
+class ParisFatigueMaterial:
     """
     Material properties for the Paris fatigue model
     """
 
-    C: Parameter[float]  # Paris law material constant
-    m: Parameter[float]  # Paris law material exponent
-    K_ic: Parameter[float]  # Fracture toughness  [Pa/m^(1/2)]
+    C: float  # Paris law material constant
+    m: float  # Paris law material exponent
+    K_ic: float  # Fracture toughness  [Pa/m^(1/2)]
 
 
 @dataclass
-class ParisFatigueSafetyFactors(ParameterFrame):
+class ParisFatigueSafetyFactors:
     """
     Safety factors for the Paris fatigue model
     """
 
-    sf_n_cycle: Parameter[float]
-    sf_depth_crack: Parameter[float]
-    sf_width_crack: Parameter[float]
-    sf_fracture: Parameter[float]
-
-
-@dataclass
-class CrackParams(ParameterFrame):
-    """
-    Parameters for the crack class
-    """
-
-    width: Parameter[float]
-    """Crack width along the plate length direction"""
-    depth: Parameter[float]
-    """Crack depth in the plate thickness direction"""
+    sf_n_cycle: float
+    sf_depth_crack: float
+    sf_width_crack: float
+    sf_fracture: float
 
 
 def _stress_intensity_factor(
@@ -175,10 +158,9 @@ class Crack(abc.ABC):
         Crack width along the plate length direction
     """
 
-    param_cls: type[CrackParams] = CrackParams
-
-    def __init__(self, params: ParameterFrameLike):
-        self.params = params
+    def __init__(self, depth, width):
+        self.depth = depth
+        self.width = width
 
     @classmethod
     def from_area(cls, area: float, aspect_ratio: float) -> Crack:
@@ -190,9 +172,9 @@ class Crack(abc.ABC):
         :
             New instance of the crack geometry.
         """
-        cls.params.depth.value = np.sqrt(area / (cls.alpha * np.pi * aspect_ratio))
-        cls.params.width.value = aspect_ratio * cls.params.depth.value
-        return cls(cls.params.depth.value, cls.params.width.value)
+        depth = np.sqrt(area / (cls.alpha * np.pi * aspect_ratio))
+        width = aspect_ratio * depth
+        return cls(depth, width)
 
     @property
     def area(self) -> float:
@@ -204,7 +186,7 @@ class Crack(abc.ABC):
         :
             Area [m²].
         """
-        return self.alpha * np.pi * self.params.depth.value * self.params.width.value
+        return self.alpha * np.pi * self.depth * self.width
 
     @property
     @abc.abstractmethod
@@ -541,8 +523,8 @@ def calculate_n_pulses(
     max_crack_width = conductor.width / safety.sf_width_crack
     max_stress_intensity = material.K_ic / safety.sf_fracture
 
-    a = crack.params.depth.value
-    c = crack.params.width.value
+    a = crack.depth
+    c = crack.width
     K_max = 0.0  # noqa: N806
     n_cycles = 0
 
