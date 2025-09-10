@@ -588,6 +588,59 @@ def _separate_psi_contributions(
     return coilset_psi - excluded_coil_psi, plasma_psi + excluded_coil_psi
 
 
+def _set_n_degrees_of_freedom(
+    n_dof: int | None, max_harmonic_order: int, max_n_dof: int
+) -> int:
+    """
+    Determine the number of degrees of freedom to use. This is limited by the number
+    of coils and by the maximum order of the harmonic functions.
+    """
+    if n_dof is None:
+        n_dof = min(max_n_dof, 2 * max_harmonic_order)
+    elif not (1 < n_dof <= max_n_dof):
+        bluemira_warn(
+            "Number of DOFs must be between 1 and the number of control coils"
+            f"but this is not the case: 1 < {n_dof} <= {max_n_dof}."
+            "Clipping accordingly."
+        )
+        n_dof = np.clip(n_dof, 1, max_n_dof)
+
+    if n_dof > 2 * max_harmonic_order:
+        bluemira_warn(
+            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_order"
+        )
+        n_dof = 2 * max_harmonic_order
+
+    return n_dof
+
+
+def _get_plasma_mask(
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    plasma_mask: bool,
+    psi_norm: float,
+) -> float | np.ndarray:
+    """
+    Get a plasma mask to apply to the psi field.
+    """
+    if plasma_mask:
+        # Want to mask to be able to calculate error in the plasma region only
+        psi_norm = np.clip(psi_norm, 0.0, 1.0)
+        # Get the original reference flux surface from the equilibrium
+        mask_fs = (
+            eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+        )
+        mask_matrix = np.zeros_like(th_params.R)
+        mask = _in_plasma(
+            th_params.R, th_params.Z, mask_matrix, mask_fs.xz.T, include_edges=True
+        )
+    else:
+        # Do not apply a mask to the error
+        mask = 1
+
+    return mask
+
+
 @dataclass
 class ToroidalHarmonicsSelectionResult:
     """
@@ -665,40 +718,15 @@ def brute_force_toroidal_harmonic_approximation(
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("Equilibrium has not been run yet.")
 
-    # Get the original reference flux surface from the equilibrium
-    original_fs = (
-        eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
+    n_degrees_of_freedom = _set_n_degrees_of_freedom(
+        n_degrees_of_freedom,
+        max_harmonic_order,
+        len(th_params.th_coil_names),
     )
-
-    if n_degrees_of_freedom is None:
-        n_degrees_of_freedom = len(th_params.th_coil_names)
-    elif not (0 < n_degrees_of_freedom <= len(th_params.th_coil_names)):
-        raise ValueError(
-            "Number of degrees of freedom must be between 0 and the number of control coils, "
-            f"but this is not the case: 0 < {n_degrees_of_freedom} <= {len(th_params.coil_names)}"
-        )
 
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
 
-    if plasma_mask:
-        # Want to mask to be able to calculate error in the plasma region only
-        if psi_norm > 1.0:
-            # We cannot mask on an open flux surface
-            bluemira_warn(
-                "Cannot apply mask to an open flux surface, falling back to masking on the LCFS. "
-                "If this is not what you want, please use plasma_mask=False"
-            )
-            mask_fs = eq.get_LCFS()
-        else:
-            mask_fs = original_fs
-
-        mask_matrix = np.zeros_like(th_params.R)
-        mask = _in_plasma(
-            th_params.R, th_params.Z, mask_matrix, mask_fs.xz.T, include_edges=True
-        )
-    else:
-        # Do not apply a mask to the error
-        mask = 1
+    mask = _get_plasma_mask(eq, th_params, plasma_mask, psi_norm)
 
     dof_id = np.arange(0, 2 * max_harmonic_order)
     order_values = np.tile(np.arange(max_harmonic_order), 2)
