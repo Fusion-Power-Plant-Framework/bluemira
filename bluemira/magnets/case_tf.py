@@ -66,7 +66,7 @@ def _dx_at_radius(radius: float, rad_theta: float) -> float:
 
 
 @dataclass
-class TrapezoidalGeometryOptVariables(OptVariablesFrame):
+class CaseGeometryOptVariables(OptVariablesFrame):
     """Optimisiation variables for Trapezoidal Geometry."""
 
     Ri: OptVariable = ov(
@@ -92,7 +92,7 @@ class TrapezoidalGeometryOptVariables(OptVariablesFrame):
     )
 
 
-class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariables]):
+class TrapezoidalGeometry(GeometryParameterisation[CaseGeometryOptVariables]):
     """
     Geometry of a Toroidal Field (TF) coil case with trapezoidal cross-section.
 
@@ -102,7 +102,7 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
     """
 
     def __init__(self, var_dict: VarDictT | None = None):
-        variables = TrapezoidalGeometryOptVariables()
+        variables = CaseGeometryOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
@@ -161,34 +161,7 @@ class TrapezoidalGeometry(GeometryParameterisation[TrapezoidalGeometryOptVariabl
         )
 
 
-@dataclass
-class WedgedGeometryOptVariables(OptVariablesFrame):
-    """Optimisiation variables for Wedged Geometry."""
-
-    Ri: OptVariable = ov(
-        "Ri",
-        0,
-        lower_bound=0,
-        upper_bound=np.inf,
-        description="External radius of the TF coil case [m].",
-    )
-    Rk: OptVariable = ov(
-        "Rk",
-        0,
-        lower_bound=0,
-        upper_bound=np.inf,
-        description="Internal radius of the TF coil case [m].",
-    )
-    theta_TF: OptVariable = ov(
-        "theta_TF",
-        0,
-        lower_bound=0,
-        upper_bound=360,
-        description="Toroidal angular span of the TF coil [degrees].",
-    )
-
-
-class WedgedGeometry(GeometryParameterisation[WedgedGeometryOptVariables]):
+class WedgedGeometry(GeometryParameterisation[CaseGeometryOptVariables]):
     """
     TF coil case shaped as a sector of an annulus (wedge with arcs).
 
@@ -197,7 +170,7 @@ class WedgedGeometry(GeometryParameterisation[WedgedGeometryOptVariables]):
     """
 
     def __init__(self, var_dict: VarDictT | None = None):
-        variables = WedgedGeometryOptVariables()
+        variables = CaseGeometryOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
