@@ -88,6 +88,11 @@ class ABCCable(ABC):
             Correction factor for twist in the cable layout.
         name:
             Identifier for the cable instance.
+
+        Raises
+        ------
+        ValueError
+            If E not defined on the class and not passed in as a kwarg
         """
         # assign
         # Setting self.name triggers automatic instance registration
@@ -103,15 +108,16 @@ class ABCCable(ABC):
         youngs_modulus: Callable[[Any, OperationalConditions], float] | float | None = (
             props.pop("E", None)
         )
-        if youngs_modulus is not None:
-            if "E" in vars(type(self)):
-                bluemira_debug("E already defined in class, ignoring")
-            else:
-                self.E = (
-                    youngs_modulus
-                    if callable(youngs_modulus)
-                    else lambda op_cond, v=youngs_modulus: youngs_modulus
-                )
+        if "E" not in vars(type(self)):
+            if youngs_modulus is None:
+                raise ValueError("E undefined on the class and not passed into the init")
+            self.E = (
+                youngs_modulus
+                if callable(youngs_modulus)
+                else lambda op_cond, v=youngs_modulus: youngs_modulus  # noqa: ARG005
+            )
+        elif youngs_modulus is not None:
+            bluemira_debug("E already defined in class, ignoring")
 
         for k, v in props.items():
             setattr(self, k, v if callable(v) else lambda *arg, v=v, **kwargs: v)  # noqa: ARG005
@@ -228,31 +234,6 @@ class ABCCable(ABC):
             self.area_sc + self.area_stab
         ) / self.void_fraction / self.cos_theta + self.area_cc
 
-    def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Return the effective Young's modulus of the cable [Pa].
-
-        This is a default placeholder implementation in the base class.
-        Subclasses may use `kwargs` to modify behavior.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Default Young's modulus (0).
-        """
-        try:
-            # if fixed E value was not input
-            return self._E(op_cond)
-        except TypeError:
-            # if fixed E value was input
-            return self._E
-
     def _heat_balance_model_cable(
         self,
         t: float,
@@ -325,8 +306,6 @@ class ABCCable(ABC):
         B_fun: Callable[[float], float],
         I_fun: Callable[[float], float],  # noqa: N803
         bounds: np.ndarray | None = None,
-        *,
-        show: bool = False,
     ):
         """
         Optimize the number of stabilizer strand in the superconducting cable using a
@@ -348,8 +327,6 @@ class ABCCable(ABC):
             Current [A] as a time-dependent function.
         bounds:
             Lower and upper limits for the number of stabilizer strands.
-        show:
-            If True, the behavior of temperature over time is plotted.
 
         Returns
         -------
@@ -1291,43 +1268,3 @@ class RoundCable(ABCCable):
             name=name or cable_dict.pop("name", None),
             **cable_dict,
         )
-
-
-def create_cable_from_dict(
-    cable_dict: dict,
-    name: str | None = None,
-) -> ABCCable:
-    """
-    Factory function to create a Cable or its subclass from a serialized dictionary.
-
-    Parameters
-    ----------
-    cable_dict:
-        Dictionary with serialized cable data. Must include a 'name_in_registry' field.
-    name:
-        If given, overrides the name from the dictionary.
-
-    Returns
-    -------
-    :
-        Instantiated cable object.
-
-    Raises
-    ------
-    ValueError
-        If 'name_in_registry' is missing or no matching class is found.
-    """
-    name_in_registry = cable_dict.get("name_in_registry")
-    if name_in_registry is None:
-        raise ValueError(
-            "Serialized cable dictionary must contain a 'name_in_registry' field."
-        )
-
-    cls = CABLE_REGISTRY.get(name_in_registry)
-    if cls is None:
-        raise ValueError(
-            f"No registered cable class with registration name '{name_in_registry}'. "
-            "Available classes are: " + ", ".join(CABLE_REGISTRY.keys())
-        )
-
-    return cls.from_dict(name=name, cable_dict=cable_dict)
