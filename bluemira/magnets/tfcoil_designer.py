@@ -7,14 +7,22 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from matproplib import OperationalConditions
 from matproplib.material import MaterialFraction
+from scipy.optimize import minimize_scalar
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.designer import Designer
+from bluemira.base.look_and_feel import (
+    bluemira_print,
+    bluemira_warn,
+    bluemira_debug,
+)
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.cable import RectangularCable
@@ -154,6 +162,7 @@ class DerivedTFCoilXYDesignerParams:
 @dataclass
 class TFCoilXY:
     case: CaseTF
+    convergence: npt.NDArray
     derived_params: DerivedTFCoilXYDesignerParams
     op_config: dict[str, float]
 
@@ -228,7 +237,46 @@ class TFCoilXY:
         return self.case.plot(ax=ax, show=show, homogenised=homogenised)
 
     def plot_convergence(self):
-        return self.case.plot_convergence()
+        """
+        Plot the evolution of thicknesses and error values over optimisation iterations.
+
+        Raises
+        ------
+        RuntimeError
+            If no convergence data available
+        """
+        iterations = self.convergence[:, 0]
+        dy_jacket = self.convergence[:, 1]
+        dy_vault = self.convergence[:, 2]
+        err_dy_jacket = self.convergence[:, 3]
+        err_dy_vault = self.convergence[:, 4]
+        dy_wp_tot = self.convergence[:, 5]
+        Ri_minus_Rk = self.convergence[:, 6]  # noqa: N806
+
+        _, axs = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+
+        # Top subplot: Thicknesses
+        axs[0].plot(iterations, dy_jacket, marker="o", label="dy_jacket [m]")
+        axs[0].plot(iterations, dy_vault, marker="s", label="dy_vault [m]")
+        axs[0].plot(iterations, dy_wp_tot, marker="^", label="dy_wp_tot [m]")
+        axs[0].plot(iterations, Ri_minus_Rk, marker="v", label="Ri - Rk [m]")
+        axs[0].set_ylabel("Thickness [m]")
+        axs[0].set_title("Evolution of Jacket, Vault, and WP Thicknesses")
+        axs[0].legend()
+        axs[0].grid(visible=True)
+
+        # Bottom subplot: Errors
+        axs[1].plot(iterations, err_dy_jacket, marker="o", label="err_dy_jacket")
+        axs[1].plot(iterations, err_dy_vault, marker="s", label="err_dy_vault")
+        axs[1].set_ylabel("Relative Error")
+        axs[1].set_xlabel("Iteration")
+        axs[1].set_title("Evolution of Errors during Optimisation")
+        axs[1].set_yscale("log")  # Log scale for better visibility if needed
+        axs[1].legend()
+        axs[1].grid(visible=True)
+
+        plt.tight_layout()
+        plt.show()
 
 
 class TFCoilXYDesigner(Designer[TFCoilXY]):
@@ -248,7 +296,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
     def __init__(
         self,
-        params: dict | ParameterFrameLike,
+        params: ParameterFrameLike,
         build_config: dict,
     ):
         super().__init__(params=params, build_config=build_config)
@@ -272,8 +320,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             t_z=t_z,
             T_op=self.params.T_sc.value + self.params.T_margin.value,
             s_y=1e9 / self.params.safety_factor.value,
-            n_cond=(self.params.B0.value * R0 / MU_0_2PI / n_TF)
-            // self.params.Iop.value,
+            n_cond=int(
+                self.params.B0.value * R0 / MU_0_2PI / n_TF // self.params.Iop.value
+            ),
             # 2 * thickness of the plate before the WP
             min_gap_x=2 * (R0 * 2 / 3 * 1e-2),
             I_fun=delayed_exp_func(
@@ -433,7 +482,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             name="stab_strand",
         )
 
-    def _make_cable(self, stab_strand, sc_strand, i_WP, config, params):
+    def _make_cable_cls(self, stab_strand, sc_strand, i_WP, config, params):
         cls_name = config["class"]
         cable_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.cable"
@@ -452,6 +501,26 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 if issubclass(cable_cls, RectangularCable)
                 else {"E": params["E"][i_WP]}
             ),
+        )
+
+    def _make_cable(self, WP_i, n_WPs):
+        stab_strand_config = self.build_config.get("stabilising_strand")
+        sc_strand_config = self.build_config.get("superconducting_strand")
+        cable_config = self.build_config.get("cable")
+
+        stab_strand_params = self._check_arrays_match(
+            n_WPs, stab_strand_config.get("params")
+        )
+        sc_strand_params = self._check_arrays_match(
+            n_WPs, sc_strand_config.get("params")
+        )
+
+        cable_params = self._check_arrays_match(n_WPs, cable_config.get("params"))
+
+        stab_strand = self._make_strand(WP_i, stab_strand_config, stab_strand_params)
+        sc_strand = self._make_strand(WP_i, sc_strand_config, sc_strand_params)
+        return self._make_cable_cls(
+            stab_strand, sc_strand, WP_i, cable_config, cable_params
         )
 
     def _make_conductor_cls(self, cable, i_WP, config, params):
@@ -476,6 +545,13 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             ),
         )
 
+    def _make_conductor(self, cable, n_WPs, WP_i=0):
+        conductor_config = self.build_config.get("conductor")
+        conductor_params = self._check_arrays_match(
+            n_WPs, conductor_config.get("params")
+        )
+        return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
+
     def _make_winding_pack(self, conductor, i_WP, config, params):
         cls_name = config["class"]
         winding_pack_cls = get_class_from_module(
@@ -483,8 +559,8 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         )
         return winding_pack_cls(
             conductor=conductor,
-            nx=params["nx"][i_WP],
-            ny=params["ny"][i_WP],
+            nx=int(params["nx"][i_WP]),
+            ny=int(params["ny"][i_WP]),
             name="winding_pack",
         )
 

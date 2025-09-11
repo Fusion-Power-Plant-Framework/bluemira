@@ -116,5 +116,5 @@ params = {
     "strain": {"value": 0.0055, "unit": ""},
 }
 tf_coil_xy = TFCoilXYDesigner(params=params, build_config=config).execute()
-tf_coil_xy.plot(show=True, homogenized=False)
+tf_coil_xy.plot(show=True, homogenised=False)
 # tf_coil_xy.plot_convergence()
