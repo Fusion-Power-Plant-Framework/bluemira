@@ -19,6 +19,7 @@ from scipy.optimize import minimize_scalar
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import (
+    bluemira_debug,
     bluemira_error,
     bluemira_print,
     bluemira_warn,
@@ -635,8 +636,13 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 / (case.area_case_jacket + case.area_wps_jacket)
                 / case.n_conductors
             )
-            conductor.optimise_jacket_conductor(
-                pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
+            self.optimise_jacket_conductor(
+                conductor,
+                pm,
+                t_z_cable_jacket,
+                op_cond,
+                allowable_sigma,
+                bounds_cond_jacket,
             )
             debug_msg.extend([
                 f"t_z_cable_jacket: {t_z_cable_jacket}",
@@ -669,13 +675,13 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 bounds=bounds_dy_vault,
             )
 
-            case.dy_vault = result.x
+            # case.dy_vault = result.x
             # print(f"Optimal dy_vault: {case.dy_vault}")
             # print(f"Tresca sigma: {case._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
 
             case.dy_vault = (
                 1 - damping_factor
-            ) * case_dy_vault0 + damping_factor * case.dy_vault
+            ) * case_dy_vault0 + damping_factor * result.x
 
             delta_case_dy_vault = abs(case.dy_vault - case_dy_vault0)
             err_dy_vault = delta_case_dy_vault / case.dy_vault
@@ -706,6 +712,94 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             )
 
         return case, np.array(convergence_array)
+
+    def optimise_jacket_conductor(
+        self,
+        conductor,
+        pressure: float,
+        f_z: float,
+        op_cond: OperationalConditions,
+        allowable_sigma: float,
+        bounds: np.ndarray | None = None,
+        direction: str = "x",
+    ):
+        """
+        Optimise the jacket dimension of a conductor based on allowable stress using
+        the Tresca criterion.
+
+        Parameters
+        ----------
+        pressure:
+            The pressure applied along the specified direction (Pa).
+        f_z:
+            The force applied in the z direction, perpendicular to the conductor
+            cross-section (N).
+        op_cond:
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
+        allowable_sigma:
+            The allowable stress (Pa) for the jacket material.
+        bounds:
+            Optional bounds for the jacket thickness optimisation (default is None).
+        direction:
+            The direction along which the pressure is applied ('x' or 'y'). Default is
+            'x'.
+
+        Returns
+        -------
+        :
+            The result of the optimisation process containing information about the
+            optimal jacket thickness.
+
+        Raises
+        ------
+        ValueError
+            If the optimisation process did not converge.
+
+        Notes
+        -----
+        This function uses the Tresca yield criterion to optimise the thickness of the
+        jacket surrounding the conductor.
+        This function directly update the conductor's jacket thickness along the x
+        direction to the optimal value.
+        """
+        debug_msg = ["Method optimise_jacket_conductor:"]
+
+        if direction == "x":
+            debug_msg.append(f"Previous dx_jacket: {conductor.dx_jacket}")
+        else:
+            debug_msg.append(f"Previous dy_jacket: {conductor.dy_jacket}")
+
+        method = "bounded" if bounds is not None else None
+
+        if method == "bounded":
+            debug_msg.append(f"bounds: {bounds}")
+
+        result = minimize_scalar(
+            fun=conductor.sigma_difference,
+            args=(pressure, f_z, op_cond, allowable_sigma),
+            bounds=bounds,
+            method=method,
+            options={"xatol": 1e-4},
+        )
+
+        if not result.success:
+            raise ValueError("Optimisation of the jacket conductor did not converge.")
+        if direction == "x":
+            conductor.dx_jacket = result.x
+            debug_msg.append(f"Optimal dx_jacket: {conductor.dx_jacket}")
+        else:
+            conductor.dy_jacket = result.x
+            debug_msg.append(f"Optimal dy_jacket: {conductor.dy_jacket}")
+        debug_msg.append(
+            f"Averaged sigma in the {direction}-direction: "
+            f"{conductor._tresca_sigma_jacket(pressure, f_z, op_cond) / 1e6} MPa\n"
+            f"Allowable stress in the {direction}-direction: {allowable_sigma / 1e6} "
+            f"MPa."
+        )
+        bluemira_debug("\n".join(debug_msg))
+
+        return result
 
     def optimise_vault_radial_thickness(
         self,

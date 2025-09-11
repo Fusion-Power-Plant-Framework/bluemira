@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize_scalar
 
-from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.magnets.cable import ABCCable
 from bluemira.magnets.utils import reciprocal_summation, summation
 
@@ -455,168 +453,80 @@ class Conductor:
         # tresca_stress
         return pressure * X_jacket * saf_jacket + f_z / self.area_jacket
 
-    def optimise_jacket_conductor(
+    def sigma_difference(
         self,
+        jacket_thickness: float,
         pressure: float,
-        f_z: float,
+        fz: float,
         op_cond: OperationalConditions,
         allowable_sigma: float,
-        bounds: np.ndarray | None = None,
         direction: str = "x",
-    ):
+    ) -> float:
         """
-        Optimise the jacket dimension of a conductor based on allowable stress using
-        the Tresca criterion.
+        Objective function for optimising conductor jacket thickness based on the
+        Tresca yield criterion.
+
+        This function computes the absolute difference between the calculated Tresca
+        stress in the jacket and the allowable stress. It is used as a fitness
+        function during scalar minimization to determine the optimal jacket
+        thickness.
 
         Parameters
         ----------
+        jacket_thickness:
+            Proposed thickness of the conductor jacket [m] in the direction
+            perpendicular to the applied pressure.
         pressure:
-            The pressure applied along the specified direction (Pa).
-        f_z:
-            The force applied in the z direction, perpendicular to the conductor
-            cross-section (N).
+            Magnetic or mechanical pressure applied along the specified direction
+            [Pa].
+        fz:
+            Axial or vertical force applied perpendicular to the cross-section [N].
         op_cond:
             Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material properties.
+            at which to calculate the material property.
         allowable_sigma:
-            The allowable stress (Pa) for the jacket material.
-        bounds:
-            Optional bounds for the jacket thickness optimisation (default is None).
+            Maximum allowed stress for the jacket material [Pa].
         direction:
-            The direction along which the pressure is applied ('x' or 'y'). Default is
-            'x'.
+            Direction of the applied pressure. Can be either 'x' (horizontal) or
+            'y' (vertical). Default is 'x'.
 
         Returns
         -------
         :
-            The result of the optimisation process containing information about the
-            optimal jacket thickness.
+            Absolute difference between the calculated Tresca stress and the
+            allowable stress [Pa].
 
         Raises
         ------
         ValueError
-            If the optimisation process did not converge.
+            If the `direction` is not 'x' or 'y'.
 
         Notes
         -----
-        This function uses the Tresca yield criterion to optimise the thickness of the
-        jacket surrounding the conductor.
-        This function directly update the conductor's jacket thickness along the x
-        direction to the optimal value.
+        - This function updates the conductor's internal jacket dimension (
+        `dx_jacket` or `dy_jacket`) with the trial value `jacket_thickness`.
+        - It is intended for use with scalar optimisation algorithms such as
+          `scipy.optimize.minimize_scalar`.
         """
-
-        def sigma_difference(
-            jacket_thickness: float,
-            pressure: float,
-            fz: float,
-            op_cond: OperationalConditions,
-            allowable_sigma: float,
-            direction: str = "x",
-        ) -> float:
-            """
-            Objective function for optimising conductor jacket thickness based on the
-            Tresca yield criterion.
-
-            This function computes the absolute difference between the calculated Tresca
-            stress in the jacket and the allowable stress. It is used as a fitness
-            function during scalar minimization to determine the optimal jacket
-            thickness.
-
-            Parameters
-            ----------
-            jacket_thickness:
-                Proposed thickness of the conductor jacket [m] in the direction
-                perpendicular to the applied pressure.
-            pressure:
-                Magnetic or mechanical pressure applied along the specified direction
-                [Pa].
-            fz:
-                Axial or vertical force applied perpendicular to the cross-section [N].
-            op_cond:
-                Operational conditions including temperature, magnetic field, and strain
-                at which to calculate the material property.
-            allowable_sigma:
-                Maximum allowed stress for the jacket material [Pa].
-            direction:
-                Direction of the applied pressure. Can be either 'x' (horizontal) or
-                'y' (vertical). Default is 'x'.
-
-            Returns
-            -------
-            :
-                Absolute difference between the calculated Tresca stress and the
-                allowable stress [Pa].
-
-            Raises
-            ------
-            ValueError
-                If the `direction` is not 'x' or 'y'.
-
-            Notes
-            -----
-            - This function updates the conductor's internal jacket dimension (
-            `dx_jacket` or `dy_jacket`) with the trial value `jacket_thickness`.
-            - It is intended for use with scalar optimisation algorithms such as
-              `scipy.optimize.minimize_scalar`.
-            """
-            if direction not in {"x", "y"}:
-                raise ValueError("Invalid direction: choose either 'x' or 'y'.")
-
-            if direction == "x":
-                self.dx_jacket = jacket_thickness
-            else:
-                self.dy_jacket = jacket_thickness
-
-            sigma_r = self._tresca_sigma_jacket(pressure, fz, op_cond, direction)
-
-            # Normal difference
-            diff = abs(sigma_r - allowable_sigma)
-
-            # Penalty if stress exceeds allowable
-            if sigma_r > allowable_sigma:
-                penalty = 1e6 + (sigma_r - allowable_sigma) * 1e6
-                return diff + penalty
-
-            return diff
-
-        debug_msg = ["Method optimise_jacket_conductor:"]
+        if direction not in {"x", "y"}:
+            raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
         if direction == "x":
-            debug_msg.append(f"Previous dx_jacket: {self.dx_jacket}")
+            self.dx_jacket = jacket_thickness
         else:
-            debug_msg.append(f"Previous dy_jacket: {self.dy_jacket}")
+            self.dy_jacket = jacket_thickness
 
-        method = "bounded" if bounds is not None else None
+        sigma_r = self._tresca_sigma_jacket(pressure, fz, op_cond, direction)
 
-        if method == "bounded":
-            debug_msg.append(f"bounds: {bounds}")
+        # Normal difference
+        diff = abs(sigma_r - allowable_sigma)
 
-        result = minimize_scalar(
-            fun=sigma_difference,
-            args=(pressure, f_z, op_cond, allowable_sigma),
-            bounds=bounds,
-            method=method,
-            options={"xatol": 1e-4},
-        )
+        # Penalty if stress exceeds allowable
+        if sigma_r > allowable_sigma:
+            penalty = 1e6 + (sigma_r - allowable_sigma) * 1e6
+            return diff + penalty
 
-        if not result.success:
-            raise ValueError("Optimisation of the jacket conductor did not converge.")
-        if direction == "x":
-            self.dx_jacket = result.x
-            debug_msg.append(f"Optimal dx_jacket: {self.dx_jacket}")
-        else:
-            self.dy_jacket = result.x
-            debug_msg.append(f"Optimal dy_jacket: {self.dy_jacket}")
-        debug_msg.append(
-            f"Averaged sigma in the {direction}-direction: "
-            f"{self._tresca_sigma_jacket(pressure, f_z, op_cond) / 1e6} MPa\n"
-            f"Allowable stress in the {direction}-direction: {allowable_sigma / 1e6} "
-            f"MPa."
-        )
-        debug_msg = "\n".join(debug_msg)
-        bluemira_debug(debug_msg)
-
-        return result
+        return diff
 
     def plot(self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=None):
         """
