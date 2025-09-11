@@ -98,8 +98,6 @@ class TFCoilXYDesignerParams(ParameterFrame):
     # """Number of conductors along the y-axis."""
 
     # # case params
-    # Ri: Parameter[float]
-    # """External radius of the TF coil case [m]."""
     # Rk: Parameter[float]
     # """Internal radius of the TF coil case [m]."""
     # theta_TF: Parameter[float]
@@ -120,33 +118,12 @@ class TFCoilXYDesignerParams(ParameterFrame):
     strain: Parameter[float]
     """Strain on system"""
 
-    # # optimisation params
-    # t0: Parameter[float]
-    # """Initial time"""
-    # Tau_discharge: Parameter[float]
-    # """Characteristic time constant"""
-    # hotspot_target_temperature: Parameter[float]
-    # """Target temperature for hotspot for cable optimisiation"""
-    # layout: Parameter[str]
-    # """Cable layout strategy"""
-    # wp_reduction_factor: Parameter[float]
-    # """Fractional reduction of available toroidal space for WPs"""
-    # n_layers_reduction: Parameter[int]
-    # """Number of layers to remove after each WP"""
-    # bounds_cond_jacket: Parameter[np.ndarray]
-    # """Min/max bounds for conductor jacket area optimisation [m²]"""
-    # bounds_dy_vault: Parameter[np.ndarray]
-    # """Min/max bounds for the case vault thickness optimisation [m]"""
-    # max_niter: Parameter[int]
-    # """Maximum number of optimisation iterations"""
-    # eps: Parameter[float]
-    # """Convergence threshold for the combined optimisation loop."""
-
 
 @dataclass
 class DerivedTFCoilXYDesignerParams:
     a: float
     Ri: float
+    """External radius of the TF coil case [m]."""
     Re: float
     B_TF_i: float
     pm: float
@@ -161,15 +138,40 @@ class DerivedTFCoilXYDesignerParams:
 
 
 @dataclass
+class OptimisationConfig:
+    t0: float
+    """Initial time"""
+    Tau_discharge: float
+    """Characteristic time constant"""
+    hotspot_target_temperature: float
+    """Target temperature for hotspot for cable optimisiation"""
+    layout: str
+    """Cable layout strategy"""
+    wp_reduction_factor: float
+    """Fractional reduction of available toroidal space for WPs"""
+    n_layers_reduction: int
+    """Number of layers to remove after each WP"""
+    bounds_cond_jacket: npt.NDArray
+    """Min/max bounds for conductor jacket area optimisation [m²]"""
+    bounds_dy_vault: npt.NDArray
+    """Min/max bounds for the case vault thickness optimisation [m]"""
+    max_niter: int
+    """Maximum number of optimisation iterations"""
+    eps: float
+    """Convergence threshold for the combined optimisation loop."""
+
+
+@dataclass
 class TFCoilXY:
     case: CaseTF
+    cable_soln: Any
     convergence: npt.NDArray
     derived_params: DerivedTFCoilXYDesignerParams
-    op_config: dict[str, float]
+    op_config: OptimisationConfig
 
     def plot_I_B(self, ax, n_steps=300):
         time_steps = np.linspace(
-            self.op_config["t0"], self.op_config["Tau_discharge"], n_steps
+            self.op_config.t0, self.op_config.Tau_discharge, n_steps
         )
         I_values = [self.derived_params.I_fun(t) for t in time_steps]  # noqa: N806
         B_values = [self.derived_params.B_fun(t) for t in time_steps]
@@ -196,11 +198,11 @@ class TFCoilXY:
         ax.figure.tight_layout()
 
     def plot_cable_temperature_evolution(self, ax, n_steps=100):
-        solution = self.case.solution
+        solution = self.cable_soln.solution
 
         ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
         time_steps = np.linspace(
-            self.op_config["t0"], self.op_config["Tau_discharge"], n_steps
+            self.op_config.t0, self.op_config.Tau_discharge, n_steps
         )
         ax.plot(time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve")
         ax.grid(visible=True)
@@ -214,7 +216,7 @@ class TFCoilXY:
         ax.text(
             0.65,
             0.5,
-            self.case.info_text,
+            self.cable_soln.info_text,
             transform=ax.transAxes,
             fontsize=9,
             verticalalignment="top",
@@ -328,11 +330,11 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             min_gap_x=2 * (R0 * 2 / 3 * 1e-2),
             I_fun=delayed_exp_func(
                 self.params.Iop.value,
-                op_config["Tau_discharge"],
+                op_config.Tau_discharge,
                 self.params.t_delay.value,
             ),
             B_fun=delayed_exp_func(
-                B_TF_i, op_config["Tau_discharge"], self.params.t_delay.value
+                B_TF_i, op_config.Tau_discharge, self.params.t_delay.value
             ),
             strain=self.params.strain.value,
         )
@@ -370,16 +372,18 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         wp_config = self.build_config.get("winding_pack")
         n_WPs = int(wp_config.get("sets"))
 
-        optimisation_params = self.build_config.get("optimisation_params")
+        optimisation_params = OptimisationConfig(
+            **self.build_config.get("optimisation_params")
+        )
         derived_params = self._derived_values(optimisation_params)
 
         # param frame optimisation stuff?
         cable = self.optimise_cable_n_stab_ths(
             self._make_cable(n_WPs, WP_i=0),
-            t0=optimisation_params["t0"],
-            tf=optimisation_params["Tau_discharge"],
+            t0=optimisation_params.t0,
+            tf=optimisation_params.Tau_discharge,
             initial_temperature=derived_params.T_op,
-            target_temperature=optimisation_params["hotspot_target_temperature"],
+            target_temperature=optimisation_params.hotspot_target_temperature,
             B_fun=derived_params.B_fun,
             I_fun=derived_params.I_fun,
             bounds=[1, 10000],
@@ -402,17 +406,19 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 strain=derived_params.strain,
             ),
             allowable_sigma=derived_params.s_y,
-            bounds_cond_jacket=optimisation_params["bounds_cond_jacket"],
-            bounds_dy_vault=optimisation_params["bounds_dy_vault"],
-            layout=optimisation_params["layout"],
-            wp_reduction_factor=optimisation_params["wp_reduction_factor"],
+            bounds_cond_jacket=optimisation_params.bounds_cond_jacket,
+            bounds_dy_vault=optimisation_params.bounds_dy_vault,
+            layout=optimisation_params.layout,
+            wp_reduction_factor=optimisation_params.wp_reduction_factor,
             min_gap_x=derived_params.min_gap_x,
-            n_layers_reduction=optimisation_params["n_layers_reduction"],
-            max_niter=optimisation_params["max_niter"],
-            eps=optimisation_params["eps"],
+            n_layers_reduction=optimisation_params.n_layers_reduction,
+            max_niter=optimisation_params.max_niter,
+            eps=optimisation_params.eps,
             n_conds=derived_params.n_cond,
         )
-        return TFCoilXY(case, convergence_array, derived_params, optimisation_params)
+        return TFCoilXY(
+            case, cable, convergence_array, derived_params, optimisation_params
+        )
 
     def optimise_cable_n_stab_ths(
         self,
@@ -1002,9 +1008,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         # param frame optimisation stuff?
         case.rearrange_conductors_in_wp(
             n_conductors=derived_params.n_cond,
-            wp_reduction_factor=optimisation_params["wp_reduction_factor"],
+            wp_reduction_factor=optimisation_params.wp_reduction_factor,
             min_gap_x=derived_params.min_gap_x,
-            n_layers_reduction=optimisation_params["n_layers_reduction"],
-            layout=optimisation_params["layout"],
+            n_layers_reduction=optimisation_params.n_layers_reduction,
+            layout=optimisation_params.layout,
         )
         return case
