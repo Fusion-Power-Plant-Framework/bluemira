@@ -44,13 +44,13 @@ def f_hypergeometric(a, b, c, z, n_max=20):
     Parameters
     ----------
     a:
-        hypergeometric function term, as defined in the equation above.
+        hypergeometric function term, as defined in the equation above
     b:
-        hypergeometric function term, as defined in the equation above.
+        hypergeometric function term, as defined in the equation above
     c:
-        hypergeometric function term, as defined in the equation above.
+        hypergeometric function term, as defined in the equation above
     z:
-        hypergeometric function term, as defined in the equation above.
+        hypergeometric function term, as defined in the equation above
         Require \\|z\\|<1.
     n_max:
         upper limit of summation, default=20
@@ -68,11 +68,11 @@ def f_hypergeometric(a, b, c, z, n_max=20):
 
 
 def legendre_p(lam, mu, x, n_max=20):
-    """Evaluates the associated Legendre function of the first kind of degree lambda and order
-    minus mu as a function of x. See https://dlmf.nist.gov/14.3#E18 for more information.
-    Works for half integer order.
+    """Evaluates the associated Legendre function of the first kind as a function of x.
+    See https://dlmf.nist.gov/14.3#E18 for more information.
+    Works for half integers.
 
-    Valid for 1<x<infinity, and real \\mu and \\nu
+    Valid for 1<x<infinity, and real \\mu and \\lambda
 
     .. math::
         P_{\\lambda}^{-\\mu}(x) = 2^{-\\mu} x^{\\lambda - \\mu} (x^2 - 1)^{\\mu/2}
@@ -84,13 +84,13 @@ def legendre_p(lam, mu, x, n_max=20):
     Parameters
     ----------
     lam:
-        degree of the associated Legendre function of the first kind.
+        legendre function term, as defined in the equation above
     mu:
-        order -mu of the associated Legendre function of the first kind.
+        legendre function term, as defined in the equation above
     x:
-        points at which to evaluate legendreP.
+        points at which to evaluate legendreP
     n_max:
-        upper value for summation in f_hypergeometric.
+        upper value for summation in f_hypergeometric
 
     Returns
     -------
@@ -108,12 +108,12 @@ def legendre_p(lam, mu, x, n_max=20):
 
 def legendre_q(lam, mu, x, n_max=20):
     """Evaluates Olver's definition of the associated Legendre function of the second
-    kind of degree lambda and order minus mu as a function of x. See
+    kind as a function of x. See
     https://dlmf.nist.gov/14, https://dlmf.nist.gov/14.3#E10, and
     https://dlmf.nist.gov/14.3#E7 for more information.
-    Works for half integer order.
+    Works for half integers.
 
-    Valid for 1<x<infinity, and real \\mu and \\nu
+    Valid for 1<x<infinity, and real \\mu and \\lambda
 
     .. math::
         \\textbf{Q}_{\\lambda}^{\\mu}(x) = \\frac{\\pi^{\\frac{1}{2}} (x^2 - 1)^
@@ -126,13 +126,13 @@ def legendre_q(lam, mu, x, n_max=20):
     Parameters
     ----------
     lam:
-        degree of the associated Legendre function of the second kind.
+        legendre function term, as defined in the equation above
     mu:
-        order mu of the associated Legendre function of the second kind.
+        legendre function term, as defined in the equation above
     x:
-        points at which to evaluate legendreQ.
+        points at which to evaluate legendreQ
     n_max:
-        upper value for summation in f_hypergeometric.
+        upper value for summation in f_hypergeometric
 
     Returns
     -------
@@ -163,7 +163,7 @@ def legendre_q(lam, mu, x, n_max=20):
 @dataclass
 class ToroidalHarmonicsParams:
     """
-    A Dataclass holding necessary parameters for the toroidal harmonics approximation.
+    A Dataclass holding necessary parameters for the toroidal harmonics approximation
     """
 
     R_0: float
@@ -289,13 +289,13 @@ def toroidal_harmonic_grid_and_coil_setup(
 def coil_toroidal_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     th_params: ToroidalHarmonicsParams,
-    cos_degrees_chosen: np.ndarray | None = None,
-    sin_degrees_chosen: np.ndarray | None = None,
+    cos_m_chosen: np.ndarray | None = None,
+    sin_m_chosen: np.ndarray | None = None,
     sig_figures: int = 15,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Construct coefficient matrices from toroidal harmonic amplitudes at given coil
-    locations, for the specified cos and sin degrees.
+    locations, for the specified cos and sin poloidal mode numbers (m).
 
     To get the individual cos and sin arrays of toroidal harmonic amplitudes/coefficients
     (Am_cos, Am_sin) which can be used in a toroidal harmonic approximation of the
@@ -318,9 +318,12 @@ def coil_toroidal_harmonic_amplitude_matrix(
         A_{m}^{\\cos} = A_m \\cos(m \\sigma_c)
 
 
-    Where m = poloidal mode number, :math: P_{\\lambda}^{-\\mu} are the associated
-    Legendre functions of the first kind of degree lambda and order minus mu, and :math:
-    \\Delta_c = \\cosh{\\tau_c} - \\cos{\\sigma_c}.
+    Where:
+    m is the poloidal mode number,
+    :math: P_{\\lambda}^{-\\mu} are the associated Legendre functions of the first kind,
+    with lambda = m - 1/2 and mu = 1 (i.e., we use multiple poloidal mode numbers but
+    toroidal mode number is fixed),
+    :math: \\Delta_c = \\cosh{\\tau_c} - \\cos{\\sigma_c}.
 
     Note: the factorial term \\frac{(2m+1)!!}{2^m m!} is equivalent to 1 if m = 0,
     otherwise \\prod_{i=0}^{m-1} \\left( 1 + \\frac{1}{2(m-i)}\\right)
@@ -331,10 +334,10 @@ def coil_toroidal_harmonic_amplitude_matrix(
         Bluemira CoilSet
     th_params:
         Dataclass holding necessary parameters for the TH approximation
-    cos_degrees_chosen:
-        Degrees chosen to be used for the cos components
-    sin_degrees_chosen:
-        Degrees chosen to be used for the sin components
+    cos_m_chosen:
+        Poloidal mode numbers (m) chosen to be used for the cos components
+    sin_m_chosen:
+        Poloidal mode numbers (m) chosen to be used for the sin components
     sig_figures:
         Number of significant figures for rounding currents2harmonics values
 
@@ -364,25 +367,25 @@ def coil_toroidal_harmonic_amplitude_matrix(
     # Useful combination
     Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
 
-    # [number of degrees, number of coils]
-    currents2harmonics_cos = np.zeros([len(cos_degrees_chosen), np.size(tau_c)])
-    currents2harmonics_sin = np.zeros([len(sin_degrees_chosen), np.size(tau_c)])
+    # [number of poloidal modes, number of coils]
+    currents2harmonics_cos = np.zeros([len(cos_m_chosen), np.size(tau_c)])
+    currents2harmonics_sin = np.zeros([len(sin_m_chosen), np.size(tau_c)])
 
     # TH coefficients from function of the current distribution
     # outside of the region containing the core plasma
     # TH coefficients = currents2harmonics @ coil currents
     factorial_term_cos = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in cos_degrees_chosen
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in cos_m_chosen
     ])
     factorial_term_sin = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in sin_degrees_chosen
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in sin_m_chosen
     ])
 
-    cos_empty = len(cos_degrees_chosen) == 0
-    sin_empty = len(sin_degrees_chosen) == 0
+    cos_empty = len(cos_m_chosen) == 0
+    sin_empty = len(sin_m_chosen) == 0
 
     if cos_empty:
-        # No cos degrees selected
+        # cos_m_chosen is None
         Am_cos = []  # noqa: N806
     else:
         currents2harmonics_cos[:, :] = (
@@ -390,15 +393,15 @@ def coil_toroidal_harmonic_amplitude_matrix(
             * factorial_term_cos[:, None]
             * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
             * legendre_p(
-                cos_degrees_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
+                cos_m_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
             )
         )
-        sigma_c_mult_degree_cos = [m * th_params.sigma_c for m in cos_degrees_chosen]
-        Am_cos = currents2harmonics_cos * np.cos(sigma_c_mult_degree_cos)  # noqa: N806
+        sigma_c_mult_mode_cos = [m * th_params.sigma_c for m in cos_m_chosen]
+        Am_cos = currents2harmonics_cos * np.cos(sigma_c_mult_mode_cos)  # noqa: N806
         Am_cos = sig_fig_round(Am_cos, sig_figures)  # noqa: N806
 
     if sin_empty:
-        # No sin degrees selected
+        # sin_m_chosen is None
         Am_sin = []  # noqa: N806
     else:
         currents2harmonics_sin[:, :] = (
@@ -406,11 +409,11 @@ def coil_toroidal_harmonic_amplitude_matrix(
             * factorial_term_sin[:, None]
             * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
             * legendre_p(
-                sin_degrees_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
+                sin_m_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
             )
         )
-        sigma_c_mult_degree_sin = [m * th_params.sigma_c for m in sin_degrees_chosen]
-        Am_sin = currents2harmonics_sin * np.sin(sigma_c_mult_degree_sin)  # noqa: N806
+        sigma_c_mult_mode_sin = [m * th_params.sigma_c for m in sin_m_chosen]
+        Am_sin = currents2harmonics_sin * np.sin(sigma_c_mult_mode_sin)  # noqa: N806
         Am_sin = sig_fig_round(Am_sin, sig_figures)  # noqa: N806
     return Am_cos, Am_sin
 
@@ -418,15 +421,15 @@ def coil_toroidal_harmonic_amplitude_matrix(
 def toroidal_harmonic_approximate_psi(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
-    cos_degrees_chosen: np.ndarray | None = None,
-    sin_degrees_chosen: np.ndarray | None = None,
+    cos_m_chosen: np.ndarray | None = None,
+    sin_m_chosen: np.ndarray | None = None,
     # TODO @clmould: add different ways to set th grid size
     # e.g. limit_type: TH_GRID_LIMIT = TH_GRID_LIMIT.LCFS or TH_GRID_LIMIT.COILSET
     # 3870
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Approximate psi using toroidal harmonic amplitudes for the specified cos and sin
-    degrees as calculated in coil_toroidal_harmonic_amplitude_matrix.
+    poloidal mode numbers (m) as calculated in coil_toroidal_harmonic_amplitude_matrix.
 
     ..math::
         A_{m} = \\frac{\\mu_{0} I_{c}}{2^{5/2}} \\frac{(2m+1)!!}{2^m m!}
@@ -448,26 +451,26 @@ def toroidal_harmonic_approximate_psi(
         Bluemira Equilibrium
     th_params:
         Dataclass holding necessary parameters for the TH approximation
-    cos_degrees_chosen:
-        Degrees chosen to be used for the cos components
-    sin_degrees_chosen:
-        Degrees chosen to be used for the sin components
+    cos_m_chosen:
+        Poloidal mode numbers (m) chosen to be used for the cos components
+    sin_m_chosen:
+        Poloidal mode numbers (m) chosen to be used for the sin components
 
     Returns
     -------
     approx_coilset_psi:
         Matrix of coilset psi values approximated using TH
     Am_cos @ currents:
-        TH cos coefficients for required number of degrees
+        TH cos coefficients for required number of poloidal mode numbers (m)
     Am_sin @ currents:
-        TH sin coefficients for required number of degrees
+        TH sin coefficients for required number of poloidal mode numbers (m)
 
     """
     # Get coil positions and currents from equilibrium
     currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
 
-    cos_empty = len(cos_degrees_chosen) == 0
-    sin_empty = len(sin_degrees_chosen) == 0
+    cos_empty = len(cos_m_chosen) == 0
+    sin_empty = len(sin_m_chosen) == 0
 
     # Initialise psi and A arrays
     approx_coilset_psi = np.zeros_like(th_params.R)
@@ -475,26 +478,26 @@ def toroidal_harmonic_approximate_psi(
     # Useful combination
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
     # Get sigma values for the grid
-    sigma_mult_degree_cos = [m * th_params.sigma for m in cos_degrees_chosen]
-    sigma_mult_degree_sin = [m * th_params.sigma for m in sin_degrees_chosen]
+    sigma_mult_mode_cos = [m * th_params.sigma for m in cos_m_chosen]
+    sigma_mult_mode_sin = [m * th_params.sigma for m in sin_m_chosen]
 
-    factorial_m_cos = np.array([factorial(m) for m in cos_degrees_chosen])
-    factorial_m_sin = np.array([factorial(m) for m in sin_degrees_chosen])
+    factorial_m_cos = np.array([factorial(m) for m in cos_m_chosen])
+    factorial_m_sin = np.array([factorial(m) for m in sin_m_chosen])
 
     # TH coefficient matrix
     Am_cos_current_function, Am_sin_current_function = (  # noqa: N806
         coil_toroidal_harmonic_amplitude_matrix(
             input_coils=eq.coilset,
             th_params=th_params,
-            cos_degrees_chosen=cos_degrees_chosen,
-            sin_degrees_chosen=sin_degrees_chosen,
+            cos_m_chosen=cos_m_chosen,
+            sin_m_chosen=sin_m_chosen,
         )
     )
 
     if cos_empty:
         A_cos = 0  # noqa: N806
     else:
-        epsilon = 2 * np.ones(len(cos_degrees_chosen))
+        epsilon = 2 * np.ones(len(cos_m_chosen))
         epsilon[0] = 1
         Am_cos_matrix = (  # noqa: N806
             0
@@ -502,10 +505,10 @@ def toroidal_harmonic_approximate_psi(
             else np.einsum(
                 "ij, ikl, i, ikl -> ijkl",
                 Am_cos_current_function,
-                np.cos(sigma_mult_degree_cos),
+                np.cos(sigma_mult_mode_cos),
                 factorial_m_cos,
                 legendre_q(
-                    cos_degrees_chosen[:, None, None] - 1 / 2,
+                    cos_m_chosen[:, None, None] - 1 / 2,
                     1,
                     np.cosh(th_params.tau),
                     n_max=30,
@@ -524,7 +527,7 @@ def toroidal_harmonic_approximate_psi(
     if sin_empty:
         A_sin = 0  # noqa: N806
     else:
-        epsilon = 2 * np.ones(len(sin_degrees_chosen))
+        epsilon = 2 * np.ones(len(sin_m_chosen))
         epsilon[0] = 1
         Am_sin_matrix = (  # noqa: N806
             0
@@ -532,10 +535,10 @@ def toroidal_harmonic_approximate_psi(
             else np.einsum(
                 "ij, ikl, i, ikl-> ijkl",
                 Am_sin_current_function,
-                np.sin(sigma_mult_degree_sin),
+                np.sin(sigma_mult_mode_sin),
                 factorial_m_sin,
                 legendre_q(
-                    sin_degrees_chosen[:, None, None] - 1 / 2,
+                    sin_m_chosen[:, None, None] - 1 / 2,
                     1,
                     np.cosh(th_params.tau),
                     n_max=30,
@@ -597,11 +600,11 @@ def _separate_psi_contributions(
 
 
 def _set_n_degrees_of_freedom(
-    n_dof: int | None, max_harmonic_order: int, max_n_dof: int
+    n_dof: int | None, max_harmonic_mode: int, max_n_dof: int
 ) -> int:
     """
     Determine the number of degrees of freedom to use. This is limited by the number
-    of coils and by the maximum order of the harmonic functions.
+    of coils and by the maximum poloidal mode number (m) of the harmonic functions.
 
 
     Parameters
@@ -609,9 +612,9 @@ def _set_n_degrees_of_freedom(
     n_dof:
         The number of harmonic functions (and amplitudes) to choose.
         If this is None, then n_dof is calculated as the minimum of max_n_dof and
-        2 * max_harmonic_order
-    max_harmonic_order:
-        The maximum order of the harmonic functions to use
+        2 * max_harmonic_mode
+    max_harmonic_mode:
+        The maximum poloidal mode number of the harmonic functions to use
     max_n_dof:
         The maximum number of degrees of freedom that could be used.
         This is equal to the number of coils used in the approximation
@@ -625,7 +628,7 @@ def _set_n_degrees_of_freedom(
         appropriate n_dof to return
     """
     if n_dof is None:
-        n_dof = min(max_n_dof, 2 * max_harmonic_order)
+        n_dof = min(max_n_dof, 2 * max_harmonic_mode)
     elif not (1 < n_dof <= max_n_dof):
         bluemira_warn(
             "Number of DOFs must be between 1 and the number of control coils"
@@ -634,11 +637,11 @@ def _set_n_degrees_of_freedom(
         )
         n_dof = np.clip(n_dof, 1, max_n_dof)
 
-    if n_dof > 2 * max_harmonic_order:
+    if n_dof > 2 * max_harmonic_mode:
         bluemira_warn(
-            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_order"
+            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_mode"
         )
-        n_dof = 2 * max_harmonic_order
+        n_dof = 2 * max_harmonic_mode
 
     return n_dof
 
@@ -694,10 +697,10 @@ class ToroidalHarmonicsSelectionResult:
     Toroidal harmonic selection result dataclass
     """
 
-    cos_degrees: np.ndarray
-    """Selected cosine toroidal harmonic degrees"""
-    sin_degrees: np.ndarray
-    """Selected sine toroidal harmonic degrees"""
+    cos_m: np.ndarray
+    """Selected cosine toroidal mode numbers"""
+    sin_m: np.ndarray
+    """Selected sine toroidal mode numbers"""
     cos_amplitudes: np.ndarray
     """Selected cosine toroidal harmonic amplitudes"""
     sin_amplitudes: np.ndarray
@@ -715,14 +718,14 @@ def brute_force_toroidal_harmonic_approximation(
     th_params: ToroidalHarmonicsParams | None = None,
     psi_norm: float = 0.95,
     n_degrees_of_freedom: int | None = None,
-    max_harmonic_order: int = 5,
+    max_harmonic_mode: int = 5,
     *,
     plasma_mask: bool = False,
 ) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients for a given
     number of degrees of freedom, using TH functions up to a given maximum
-    order.
+    poloidal mode number.
 
     The optimal selection of harmonic functions is carried out by brute force
     for the different combinations, using an L2 norm of the error across the
@@ -748,8 +751,8 @@ def brute_force_toroidal_harmonic_approximation(
     n_degrees_of_freedom:
         The number of harmonic functions (and amplitudes) to choose.
         If None, will default to the number of "free" coils
-    max_harmonic_order:
-        The maximum order of the harmonic functions to use
+    max_harmonic_mode:
+        The maximum poloidal mode number of the harmonic functions to use
     plasma_mask:
         Whether or not to apply a mask to the error metric (within the psi_norm flux
         surface)
@@ -775,7 +778,7 @@ def brute_force_toroidal_harmonic_approximation(
 
     n_degrees_of_freedom = _set_n_degrees_of_freedom(
         n_degrees_of_freedom,
-        max_harmonic_order,
+        max_harmonic_mode,
         len(th_params.th_coil_names),
     )
 
@@ -783,40 +786,41 @@ def brute_force_toroidal_harmonic_approximation(
 
     mask = _get_plasma_mask(eq, th_params, plasma_mask, psi_norm)
 
-    dof_id = np.arange(0, 2 * max_harmonic_order)
-    order_values = np.tile(np.arange(max_harmonic_order), 2)
+    dof_id = np.arange(0, 2 * max_harmonic_mode)
+    mode_values = np.tile(np.arange(max_harmonic_mode), 2)
 
     error = np.inf
 
     for c in combinations(dof_id, n_degrees_of_freedom):
-        deg_id = np.array(c)
-        cos_degrees_chosen = order_values[deg_id[deg_id < max_harmonic_order]]
-        sin_degrees_chosen = order_values[deg_id[deg_id >= max_harmonic_order]]
+        mode_id = np.array(c)
+        cos_m_chosen = mode_values[mode_id[mode_id < max_harmonic_mode]]
+        sin_m_chosen = mode_values[mode_id[mode_id >= max_harmonic_mode]]
 
-        # Calculate psi using the combination of degrees selected in this iteration
+        # Calculate psi using the combination of poloidal mode numbers (m) selected in
+        # this iteration
         approximate_coilset_psi, cos_amps, sin_amps = toroidal_harmonic_approximate_psi(
             eq=eq,
             th_params=th_params,
-            cos_degrees_chosen=cos_degrees_chosen,
-            sin_degrees_chosen=sin_degrees_chosen,
+            cos_m_chosen=cos_m_chosen,
+            sin_m_chosen=sin_m_chosen,
         )
         # Calculate L2 norm of the error between the approximated coilset psi and the
         # true coilset psi
         error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
 
         # If the new error is less than the previously lowest error, then select the
-        # current combination of degrees, amplitudes and associated psi
+        # current combination of poloidal mode numbers (m), amplitudes and associated psi
         if error_new < error:
             error = error_new
-            cos_degrees = cos_degrees_chosen
-            sin_degrees = sin_degrees_chosen
+            cos_m = cos_m_chosen
+            sin_m = sin_m_chosen
             coilset_psi = approximate_coilset_psi
             cos_amplitudes = cos_amps
             sin_amplitudes = sin_amps
 
     return ToroidalHarmonicsSelectionResult(
-        cos_degrees=cos_degrees,
-        sin_degrees=sin_degrees,
+        cos_m=cos_m,
+        sin_m=sin_m,
         cos_amplitudes=cos_amplitudes,
         sin_amplitudes=sin_amplitudes,
         error=error,
