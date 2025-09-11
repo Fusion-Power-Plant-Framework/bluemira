@@ -11,6 +11,7 @@ Utility for sets of coordinates
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Iterable
 from enum import Enum, auto
 from itertools import count, starmap
@@ -169,8 +170,12 @@ def interpolate_points(
     z:
         The interpolated z coordinates
     """
-    ll = vector_lengthnorm(x, y, z)
     linterp = np.linspace(0, 1, int(n_points))
+    return _interpolate_points(linterp, x, y, z)
+
+
+def _interpolate_points(linterp, x, y, z) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ll = vector_lengthnorm(x, y, z)
     x = interp1d(ll, x)(linterp)
     y = interp1d(ll, y)(linterp)
     z = interp1d(ll, z)(linterp)
@@ -329,10 +334,31 @@ def get_perimeter_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
     -------
     The perimeter of the coordinates
     """
+    return np.sum(_get_perim_3d(x, y, z))
+
+
+@nb.jit(cache=True, nopython=True)
+def _get_perim_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
+    """
+    Calculate the perimeter of a set of 3-D coordinates.
+
+    Parameters
+    ----------
+    x:
+        The x coordinates
+    y:
+        The y coordinates
+    z:
+        The z coordinates
+
+    Returns
+    -------
+    The perimeter of the coordinates
+    """
     dx = x[1:] - x[:-1]
     dy = y[1:] - y[:-1]
     dz = z[1:] - z[:-1]
-    return np.sum(np.sqrt(dx**2 + dy**2 + dz**2))
+    return np.sqrt(dx**2 + dy**2 + dz**2)
 
 
 @xyz_process
@@ -1346,6 +1372,61 @@ class Coordinates:
         The index of the closest point
         """
         return np.argmin(self.distance_to(point))
+
+    def interpolate(
+        self,
+        ndiscr: int | None = None,
+        dl: float | None = None,
+        *,
+        preserve_points: bool = False,
+    ):
+        """
+        Interpolate coordinates
+
+        Parameters
+        ----------
+        ndiscr:
+            number of points to discretise to
+        dl:
+            target discretisation length.
+        preserve_points:
+            will preserve the original coordinates in addition to the discretisation
+
+        Returns
+        -------
+        :
+            Array of points
+
+        Raises
+        ------
+        ValueError
+            if neither dl or ndiscr are specified
+            If ndiscr < 2
+            If dl <= 0.0
+
+        Notes
+        -----
+        When preserving original points the dl will be <= the discretisation
+
+        """
+        if {None} == {ndiscr, dl}:
+            raise ValueError("Either dl or ndsicr must be specified")
+        if dl is None:
+            if ndiscr < 2:  # noqa: PLR2004
+                raise ValueError("ndiscr must be greater than 2.")
+        else:
+            ndiscr = max(math.ceil(self.length / dl + 1), 2)
+
+        linterp = np.linspace(0, 1, int(ndiscr))
+
+        if preserve_points:
+            perim = _get_perim_3d(*self._array)
+            linterp = np.sort(
+                np.concatenate([linterp, np.cumsum(perim / np.sum(perim))])
+            )
+            linterp = np.clip(linterp, 0.0, 1.0)
+
+        return Coordinates(_interpolate_points(linterp, *self._array))
 
     # =============================================================================
     # Property access
