@@ -30,7 +30,6 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     f_hypergeometric,
     legendre_p,
     legendre_q,
-    optimisation_toroidal_harmonic_approximation,
     toroidal_harmonic_approximate_psi,
     toroidal_harmonic_grid_and_coil_setup,
 )
@@ -52,7 +51,6 @@ __all__ = [
     "harmonic_amplitude_marix",
     "legendre_p",
     "legendre_q",
-    "optimisation_toroidal_harmonic_approximation",
     "plot_psi_comparision",
     "spherical_harmonic_approximation",
     "toroidal_harmonic_approximate_psi",
