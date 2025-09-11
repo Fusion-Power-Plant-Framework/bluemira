@@ -501,7 +501,7 @@ class CaseTF(ABC):
         ax: plt.Axes | None = None,
         *,
         show: bool = False,
-        homogenized: bool = False,
+        homogenised: bool = False,
     ) -> plt.Axes:
         """
         Schematic plot of the TF case cross-section including winding packs.
@@ -514,8 +514,8 @@ class CaseTF(ABC):
         show:
             If `True`, displays the plot immediately using `plt.show()`.
             Default is `False`.
-        homogenized:
-            If `True`, plots winding packs as homogenized blocks.
+        homogenised:
+            If `True`, plots winding packs as homogenised blocks.
             If `False`, plots individual conductors inside WPs.
             Default is `False`.
 
@@ -534,7 +534,7 @@ class CaseTF(ABC):
         for i, wp in enumerate(self.WPs):
             xc_wp = 0.0
             yc_wp = self.R_wp_i[i] - wp.dy / 2
-            ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenized=homogenized)
+            ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenised=homogenised)
 
         # Finalize plot
         ax.set_xlabel("Toroidal direction [m]")
@@ -961,14 +961,14 @@ class TrapezoidalCaseTF(CaseTF):
         """
         kx_lat = self.Kx_lat(op_cond)
         temp = [
-            summation([
+            reciprocal_summation([
                 kx_lat[i],
                 w.Kx(op_cond),
                 kx_lat[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return reciprocal_summation([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
+        return summation([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
 
     def Ky_ps(self, op_cond: OperationalConditions):  # noqa: N802
         """
@@ -1052,14 +1052,14 @@ class TrapezoidalCaseTF(CaseTF):
         """
         ky_lat = self.Ky_lat(op_cond)
         temp = [
-            reciprocal_summation([
+            summation([
                 ky_lat[i],
                 w.Ky(op_cond),
                 ky_lat[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return summation([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
+        return reciprocal_summation([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
 
     def rearrange_conductors_in_wp(
         self,
@@ -1531,7 +1531,7 @@ class TrapezoidalCaseTF(CaseTF):
                 f"{i} iterations. Total error: {tot_err} < {eps}."
             )
 
-            ax = self.plot(show=False, homogenized=False)
+            ax = self.plot(show=False, homogenised=False)
             ax.set_title("Case design after optimisation")
             plt.show()
 

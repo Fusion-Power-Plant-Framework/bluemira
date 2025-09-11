@@ -460,7 +460,7 @@ class ABCCable(ABC):
             ),
         )
 
-    # OD homogenized structural properties
+    # OD homogenised structural properties
     @abstractmethod
     def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """Total equivalent stiffness along x-axis"""
@@ -733,7 +733,7 @@ class RectangularCable(ABCCable):
         """Modify dx in order to get the given aspect ratio"""
         self.dx = np.sqrt(value * self.area)
 
-    # OD homogenized structural properties
+    # OD homogenised structural properties
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
@@ -964,7 +964,7 @@ class SquareCable(ABCCable):
         """Cable dimension in the y direction [m]"""
         return self.dx
 
-    # OD homogenized structural properties
+    # OD homogenised structural properties
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
@@ -1118,14 +1118,14 @@ class RoundCable(ABCCable):
         """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
         return self.dx
 
-    # OD homogenized structural properties
+    # OD homogenised structural properties
     # A structural analysis should be performed to check how much the rectangular
     #  approximation is fine also for the round cable.
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the x-axis.
 
-        This is a homogenized 1D structural property derived from the Young's modulus
+        This is a homogenised 1D structural property derived from the Young's modulus
         and the cable's geometry. The stiffness reflects the effective resistance
         to deformation in the x-direction.
 

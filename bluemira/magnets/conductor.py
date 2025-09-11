@@ -298,10 +298,10 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return reciprocal_summation([
+        return summation([
             self._Kx_lat_ins(op_cond),
             self._Kx_lat_jacket(op_cond),
-            summation([
+            reciprocal_summation([
                 self._Kx_topbot_ins(op_cond),
                 self._Kx_topbot_jacket(op_cond),
                 self.cable.Kx(op_cond),
@@ -369,10 +369,10 @@ class Conductor:
         :
             Axial stiffness [N/m]
         """
-        return reciprocal_summation([
+        return summation([
             self._Ky_lat_ins(op_cond),
             self._Ky_lat_jacket(op_cond),
-            summation([
+            reciprocal_summation([
                 self._Ky_topbot_ins(op_cond),
                 self._Ky_topbot_jacket(op_cond),
                 self.cable.Ky(op_cond),
@@ -427,10 +427,10 @@ class Conductor:
         if direction == "x":
             saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
 
-            K = reciprocal_summation([  # noqa: N806
+            K = summation([  # noqa: N806
                 2 * self._Ky_lat_ins(op_cond),
                 2 * self._Ky_lat_jacket(op_cond),
-                summation([
+                reciprocal_summation([
                     self.cable.Ky(op_cond),
                     self._Ky_topbot_jacket(op_cond) / 2,
                 ]),
@@ -441,10 +441,10 @@ class Conductor:
         else:
             saf_jacket = (self.cable.dy + 2 * self.dy_jacket) / (2 * self.dy_jacket)
 
-            K = reciprocal_summation([  # noqa: N806
+            K = summation([  # noqa: N806
                 2 * self._Kx_lat_ins(op_cond),
                 2 * self._Kx_lat_jacket(op_cond),
-                summation([
+                reciprocal_summation([
                     self.cable.Kx(op_cond),
                     self._Kx_topbot_jacket(op_cond) / 2,
                 ]),

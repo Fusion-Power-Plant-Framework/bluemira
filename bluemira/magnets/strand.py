@@ -31,7 +31,7 @@ from bluemira.utilities.tools import get_class_from_module
 
 class Strand:
     """
-    Represents a strand with a circular cross-section, composed of a homogenized
+    Represents a strand with a circular cross-section, composed of a homogenised
     mixture of materials.
 
     This class automatically registers itself and its instances.

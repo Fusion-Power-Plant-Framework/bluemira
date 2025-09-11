@@ -119,7 +119,7 @@ class WindingPack:
         *,
         show: bool = False,
         ax: plt.Axes | None = None,
-        homogenized: bool = True,
+        homogenised: bool = True,
     ) -> plt.Axes:
         """
         Plot the winding pack geometry.
@@ -134,7 +134,7 @@ class WindingPack:
             If True, immediately show the plot.
         ax:
             Axes object to draw on.
-        homogenized:
+        homogenised:
             If True, plot as a single block. Otherwise, plot individual conductors.
 
         Returns
@@ -159,7 +159,7 @@ class WindingPack:
         ax.fill(points_ext[:, 0], points_ext[:, 1], "gold", snap=False)
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
-        if not homogenized:
+        if not homogenised:
             for i in range(self.nx):
                 for j in range(self.ny):
                     xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx

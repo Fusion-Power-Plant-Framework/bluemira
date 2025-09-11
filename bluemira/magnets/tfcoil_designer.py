@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Designer for TF Coil XY cross section."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
 from bluemira.magnets.cable import RectangularCable
+from bluemira.magnets.case_tf import CaseTF
 from bluemira.magnets.conductor import SymmetricConductor
 from bluemira.magnets.utils import delayed_exp_func
 from bluemira.utilities.tools import get_class_from_module
@@ -132,7 +134,104 @@ class TFCoilXYDesignerParams(ParameterFrame):
     # """Convergence threshold for the combined optimisation loop."""
 
 
-class TFCoilXYDesigner(Designer):
+@dataclass
+class DerivedTFCoilXYDesignerParams:
+    a: float
+    Ri: float
+    Re: float
+    B_TF_i: float
+    pm: float
+    t_z: float
+    T_op: float
+    s_y: float
+    n_cond: float
+    min_gap_x: float
+    I_fun: Callable[[float], float]
+    B_fun: Callable[[float], float]
+    strain: float
+
+
+@dataclass
+class TFCoilXY:
+    case: CaseTF
+    derived_params: DerivedTFCoilXYDesignerParams
+    op_config: dict[str, float]
+
+    def plot_I_B(self, ax, n_steps=300):
+        time_steps = np.linspace(
+            self.op_config["t0"], self.op_config["Tau_discharge"], n_steps
+        )
+        I_values = [self.derived_params.I_fun(t) for t in time_steps]  # noqa: N806
+        B_values = [self.derived_params.B_fun(t) for t in time_steps]
+
+        ax.plot(time_steps, I_values, "g", label="Current [A]")
+        ax.set_ylabel("Current [A]", color="g", fontsize=10)
+        ax.tick_params(axis="y", labelcolor="g", labelsize=9)
+        ax.grid(visible=True)
+
+        ax_right = ax.twinx()
+        ax_right.plot(time_steps, B_values, "m--", label="Magnetic field [T]")
+        ax_right.set_ylabel("Magnetic field [T]", color="m", fontsize=10)
+        ax_right.tick_params(axis="y", labelcolor="m", labelsize=9)
+
+        # Labels
+        ax.set_xlabel("Time [s]", fontsize=10)
+        ax.tick_params(axis="x", labelsize=9)
+
+        # Combined legend for both sides
+        lines, labels = ax.get_legend_handles_labels()
+        lines2, labels2 = ax_right.get_legend_handles_labels()
+        ax.legend(lines + lines2, labels + labels2, loc="best", fontsize=9)
+
+        ax.figure.tight_layout()
+
+    def plot_cable_temperature_evolution(self, ax, n_steps=100):
+        solution = self.case.solution
+
+        ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
+        time_steps = np.linspace(
+            self.op_config["t0"], self.op_config["Tau_discharge"], n_steps
+        )
+        ax.plot(time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve")
+        ax.grid(visible=True)
+        ax.set_ylabel("Temperature [K]", fontsize=10)
+        ax.set_title("Quench temperature evolution", fontsize=11)
+        ax.legend(fontsize=9)
+
+        ax.tick_params(axis="y", labelcolor="k", labelsize=9)
+
+        props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.8}
+        ax.text(
+            0.65,
+            0.5,
+            self.case.info_text,
+            transform=ax.transAxes,
+            fontsize=9,
+            verticalalignment="top",
+            bbox=props,
+        )
+        ax.figure.tight_layout()
+
+    def plot_summary(self, n_steps, show=False):
+        f, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
+        self.plot_cable_temperature_evolution(ax_temp, n_steps)
+        self.plot_I_B(ax_ib, n_steps * 3)
+        return f
+
+    def plot(
+        self,
+        ax: plt.Axes | None = None,
+        *,
+        show: bool = False,
+        homogenised: bool = False,
+    ) -> plt.Axes:
+        return self.case.plot(ax=ax, show=show, homogenised=homogenised)
+
+    def plot_convergence(self):
+        return self.case.plot_convergence()
+
+
+class TFCoilXYDesigner(Designer[TFCoilXY]):
     """
     Handles initialisation of TF Coil XY cross section from the individual parts:
         - Strands
@@ -154,46 +253,78 @@ class TFCoilXYDesigner(Designer):
     ):
         super().__init__(params=params, build_config=build_config)
 
-    def _derived_values(self, optimsiation_params, case_params):
+    def _derived_values(self, op_config):
         # Needed params that are calculated using the base params
         R0 = self.params.R0.value
         n_TF = self.params.n_TF.value
         B0 = self.params.B0.value
-
         a = R0 / self.params.A.value
-        Ri = R0 - a - self.params.d.value  # noqa: N806
-        Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)  # noqa: N806
+        Ri = R0 - a - self.params.d.value
+        Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)
         B_TF_i = 1.08 * (MU_0_2PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) / Ri)
-        pm = B_TF_i**2 / (2 * MU_0)
         t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) ** 2
-        T_op = self.params.T_sc.value + self.params.T_margin.value  # noqa: N806
-        s_y = 1e9 / self.params.safety_factor.value
-        n_cond = (self.params.B0.value * R0 / MU_0_2PI / n_TF) // self.params.Iop.value
-        min_gap_x = 2 * (R0 * 2 / 3 * 1e-2)  # 2 * thickness of the plate before the WP
+        return DerivedTFCoilXYDesignerParams(
+            a=a,
+            Ri=Ri,
+            Re=Re,
+            B_TF_i=B_TF_i,
+            pm=B_TF_i**2 / (2 * MU_0),
+            t_z=t_z,
+            T_op=self.params.T_sc.value + self.params.T_margin.value,
+            s_y=1e9 / self.params.safety_factor.value,
+            n_cond=(self.params.B0.value * R0 / MU_0_2PI / n_TF)
+            // self.params.Iop.value,
+            # 2 * thickness of the plate before the WP
+            min_gap_x=2 * (R0 * 2 / 3 * 1e-2),
+            I_fun=delayed_exp_func(
+                self.params.Iop.value,
+                op_config["Tau_discharge"],
+                self.params.t_delay.value,
+            ),
+            B_fun=delayed_exp_func(
+                B_TF_i, op_config["Tau_discharge"], self.params.t_delay.value
+            ),
+            strain=self.params.strain.value,
+        )
 
-        I_fun = delayed_exp_func(  # noqa: N806
-            self.params.Iop.value,
-            optimsiation_params["Tau_discharge"],
-            self.params.t_delay.value,
+    def _make_conductor(self, optimisation_params, derived_params, n_WPs, WP_i=0):
+        # current functionality requires conductors are the same for both WPs
+        # in future allow for different conductor objects so can vary cable and strands
+        # between the sets of the winding pack?
+        stab_strand_config = self.build_config.get("stabilising_strand")
+        sc_strand_config = self.build_config.get("superconducting_strand")
+        cable_config = self.build_config.get("cable")
+        conductor_config = self.build_config.get("conductor")
+
+        stab_strand_params = self._check_arrays_match(
+            n_WPs, stab_strand_config.get("params")
         )
-        B_fun = delayed_exp_func(
-            B_TF_i, optimsiation_params["Tau_discharge"], self.params.t_delay.value
+        sc_strand_params = self._check_arrays_match(
+            n_WPs, sc_strand_config.get("params")
         )
-        return {
-            "a": a,
-            "Ri": Ri,
-            "Re": Re,
-            "B_TF_i": B_TF_i,
-            "pm": pm,
-            "t_z": t_z,
-            "T_op": T_op,
-            "s_y": s_y,
-            "n_cond": int(n_cond),
-            "min_gap_x": min_gap_x,
-            "I_fun": I_fun,
-            "B_fun": B_fun,
-            "strain": self.params.strain.value,
-        }
+        conductor_params = self._check_arrays_match(
+            n_WPs, conductor_config.get("params")
+        )
+
+        cable_params = self._check_arrays_match(n_WPs, cable_config.get("params"))
+
+        stab_strand = self._make_strand(WP_i, stab_strand_config, stab_strand_params)
+        sc_strand = self._make_strand(WP_i, sc_strand_config, sc_strand_params)
+        cable = self._make_cable(
+            stab_strand, sc_strand, WP_i, cable_config, cable_params
+        )
+        # param frame optimisation stuff?
+        result = cable.optimise_n_stab_ths(
+            t0=optimisation_params["t0"],
+            tf=optimisation_params["Tau_discharge"],
+            initial_temperature=derived_params.T_op,
+            target_temperature=optimisation_params["hotspot_target_temperature"],
+            B_fun=derived_params.B_fun,
+            I_fun=derived_params.I_fun,
+            bounds=[1, 10000],
+        )
+
+        return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
 
     def run(self):
         """
@@ -204,95 +335,44 @@ class TFCoilXYDesigner(Designer):
         case:
             TF case object all parts that make it up.
         """
-        # configs
-        stab_strand_config = self.build_config.get("stabilising_strand")
-        sc_strand_config = self.build_config.get("superconducting_strand")
-        cable_config = self.build_config.get("cable")
-        conductor_config = self.build_config.get("conductor")
-        winding_pack_config = self.build_config.get("winding_pack")
-        case_config = self.build_config.get("case")
-        # winding pack sets
-        n_WPs = self.build_config.get("winding_pack").get("sets")
-        # params
-        stab_strand_params = self._check_arrays_match(
-            n_WPs, stab_strand_config.get("params")
-        )
-        sc_strand_params = self._check_arrays_match(
-            n_WPs, sc_strand_config.get("params")
-        )
-        cable_params = self._check_arrays_match(n_WPs, cable_config.get("params"))
-        conductor_params = self._check_arrays_match(
-            n_WPs, conductor_config.get("params")
-        )
-        winding_pack_params = self._check_arrays_match(
-            n_WPs, winding_pack_config.get("params")
-        )
-        case_params = case_config.get("params")
+        wp_config = self.build_config.get("winding_pack")
+        n_WPs = int(wp_config.get("sets"))
+
         optimisation_params = self.build_config.get("optimisation_params")
-        derived_params = self._derived_values(optimisation_params, case_params)
+        derived_params = self._derived_values(optimisation_params)
 
-        winding_pack = []
-        for i_WP in range(n_WPs):
-            if i_WP == 0:
-                # current functionality requires conductors are the same for both WPs
-                # in future allow for different conductor objects so can vary cable and strands
-                # between the sets of the winding pack?
-                stab_strand = self._make_strand(
-                    i_WP, stab_strand_config, stab_strand_params
-                )
-                sc_strand = self._make_strand(i_WP, sc_strand_config, sc_strand_params)
-                cable = self._make_cable(
-                    stab_strand, sc_strand, i_WP, cable_config, cable_params
-                )
-                # param frame optimisation stuff?
-                result = cable.optimise_n_stab_ths(
-                    t0=optimisation_params["t0"],
-                    tf=optimisation_params["Tau_discharge"],
-                    initial_temperature=derived_params["T_op"],
-                    target_temperature=optimisation_params["hotspot_target_temperature"],
-                    B_fun=derived_params["B_fun"],
-                    I_fun=derived_params["I_fun"],
-                    bounds=[1, 10000],
-                )
-                conductor = self._make_conductor(
-                    cable, i_WP, conductor_config, conductor_params
-                )
-            winding_pack += [
-                self._make_winding_pack(
-                    conductor, i_WP, winding_pack_config, winding_pack_params
-                )
-            ]
-
-        case = self._make_case(winding_pack, case_config, case_params)
-        # param frame optimisation stuff?
-        case.rearrange_conductors_in_wp(
-            n_conductors=derived_params["n_cond"],
-            wp_reduction_factor=optimisation_params["wp_reduction_factor"],
-            min_gap_x=derived_params["min_gap_x"],
-            n_layers_reduction=optimisation_params["n_layers_reduction"],
-            layout=optimisation_params["layout"],
+        conductor, conductor_result = self._make_conductor(
+            optimisation_params, derived_params, n_WPs, WP_i=0
         )
+        wp_params = self._check_arrays_match(n_WPs, wp_config.pop("params"))
+        winding_pack = [
+            self._make_winding_pack(conductor, i_WP, wp_config, wp_params)
+            for i_WP in range(n_WPs)
+        ]
+
+        case = self._make_case(winding_pack, derived_params, optimisation_params)
+
         # param frame optimisation stuff?
         case.optimise_jacket_and_vault(
-            pm=derived_params["pm"],
-            fz=derived_params["t_z"],
+            pm=derived_params.pm,
+            fz=derived_params.t_z,
             op_cond=OperationalConditions(
-                temperature=derived_params["T_op"],
-                magnetic_field=derived_params["B_TF_i"],
-                strain=derived_params["strain"],
+                temperature=derived_params.T_op,
+                magnetic_field=derived_params.B_TF_i,
+                strain=derived_params.strain,
             ),
-            allowable_sigma=derived_params["s_y"],
+            allowable_sigma=derived_params.s_y,
             bounds_cond_jacket=optimisation_params["bounds_cond_jacket"],
             bounds_dy_vault=optimisation_params["bounds_dy_vault"],
             layout=optimisation_params["layout"],
             wp_reduction_factor=optimisation_params["wp_reduction_factor"],
-            min_gap_x=derived_params["min_gap_x"],
+            min_gap_x=derived_params.min_gap_x,
             n_layers_reduction=optimisation_params["n_layers_reduction"],
             max_niter=optimisation_params["max_niter"],
             eps=optimisation_params["eps"],
-            n_conds=derived_params["n_cond"],
+            n_conds=derived_params.n_cond,
         )
-        return case
+        return TFCoilXY(case, derived_params, optimisation_params)
 
     def _check_arrays_match(self, n_WPs, param_list):
         if n_WPs > 1:
@@ -374,7 +454,7 @@ class TFCoilXYDesigner(Designer):
             ),
         )
 
-    def _make_conductor(self, cable, i_WP, config, params):
+    def _make_conductor_cls(self, cable, i_WP, config, params):
         cls_name = config["class"]
         conductor_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.conductor"
@@ -408,13 +488,16 @@ class TFCoilXYDesigner(Designer):
             name="winding_pack",
         )
 
-    def _make_case(self, WPs, config, params):  # noqa: N803
+    def _make_case(self, WPs, derived_params, optimisation_params):  # noqa: N803
+        config = self.build_config.get("case")
+        params = config.get("params")
+
         cls_name = config["class"]
         case_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.case_tf"
         )
 
-        return case_cls(
+        case = case_cls(
             Ri=params["Ri"],
             theta_TF=params["theta_TF"],
             dy_ps=params["dy_ps"],
@@ -424,62 +507,12 @@ class TFCoilXYDesigner(Designer):
             name=config.get("name", cls_name.rsplit("::", 1)[-1]),
         )
 
-
-def plot_cable_temperature_evolution(result, t0, tf, ax, n_steps=100):
-    solution = result.solution
-
-    ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
-    time_steps = np.linspace(t0, tf, n_steps)
-    ax.plot(time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve")
-    ax.grid(visible=True)
-    ax.set_ylabel("Temperature [K]", fontsize=10)
-    ax.set_title("Quench temperature evolution", fontsize=11)
-    ax.legend(fontsize=9)
-
-    ax.tick_params(axis="y", labelcolor="k", labelsize=9)
-
-    props = {"boxstyle": "round", "facecolor": "white", "alpha": 0.8}
-    ax.text(
-        0.65,
-        0.5,
-        result.info_text,
-        transform=ax.transAxes,
-        fontsize=9,
-        verticalalignment="top",
-        bbox=props,
-    )
-    ax.figure.tight_layout()
-
-
-def plot_I_B(I_fun, B_fun, t0, tf, ax, n_steps=300):
-    time_steps = np.linspace(t0, tf, n_steps)
-    I_values = [I_fun(t) for t in time_steps]  # noqa: N806
-    B_values = [B_fun(t) for t in time_steps]
-
-    ax.plot(time_steps, I_values, "g", label="Current [A]")
-    ax.set_ylabel("Current [A]", color="g", fontsize=10)
-    ax.tick_params(axis="y", labelcolor="g", labelsize=9)
-    ax.grid(visible=True)
-
-    ax_right = ax.twinx()
-    ax_right.plot(time_steps, B_values, "m--", label="Magnetic field [T]")
-    ax_right.set_ylabel("Magnetic field [T]", color="m", fontsize=10)
-    ax_right.tick_params(axis="y", labelcolor="m", labelsize=9)
-
-    # Labels
-    ax.set_xlabel("Time [s]", fontsize=10)
-    ax.tick_params(axis="x", labelsize=9)
-
-    # Combined legend for both sides
-    lines, labels = ax.get_legend_handles_labels()
-    lines2, labels2 = ax_right.get_legend_handles_labels()
-    ax.legend(lines + lines2, labels + labels2, loc="best", fontsize=9)
-
-    ax.figure.tight_layout()
-
-
-def plot_summary(result, t0, tf, I_fun, B_fun, n_steps, show=False):
-    f, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
-    plot_cable_temperature_evolution(result, t0, tf, ax_temp, n_steps)
-    plot_I_B(I_fun, B_fun, t0, tf, ax_ib, n_steps * 3)
-    return f
+        # param frame optimisation stuff?
+        case.rearrange_conductors_in_wp(
+            n_conductors=derived_params.n_cond,
+            wp_reduction_factor=optimisation_params["wp_reduction_factor"],
+            min_gap_x=derived_params.min_gap_x,
+            n_layers_reduction=optimisation_params["n_layers_reduction"],
+            layout=optimisation_params["layout"],
+        )
+        return case
