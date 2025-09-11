@@ -1111,17 +1111,13 @@ class TrapezoidalCaseTF(CaseTF):
         remaining_conductors = n_conductors
         # maximum number of winding packs in WPs
         i_max = 50
-        i = 0
-        while i < i_max and remaining_conductors > 0:
-            i += 1
-
+        n_layers_max = 0
+        for i in range(i_max):
             # maximum number of turns on the considered WP
-            if i == 1:
+            if i == 0:
                 n_layers_max = math.floor(dx_WP / conductor.dx)
                 if layout == "pancake":
-                    n_layers_max = math.floor(dx_WP / conductor.dx / 2) * 2
-                    if n_layers_max == 0:
-                        n_layers_max = 2
+                    n_layers_max = (math.floor(dx_WP / conductor.dx / 2) * 2) or 2
             else:
                 n_layers_max -= n_layers_reduction
 
@@ -1177,17 +1173,18 @@ class TrapezoidalCaseTF(CaseTF):
                     )
                     remaining_conductors -= n_layers_max * n_turns_max
 
-                if remaining_conductors < 0:
-                    bluemira_warn(
-                        f"{abs(remaining_conductors)}/{n_layers_max * n_turns_max}"
-                        f"have been added to complete the last winding pack (nx"
-                        f"={n_layers_max}, ny={n_turns_max})."
-                    )
-
                 R_wp_i -= n_turns_max * conductor.dy  # noqa: N806
                 debug_msg.append(
                     f"n_layers_max: {n_layers_max}, n_turns_max: {n_turns_max}"
                 )
+                if remaining_conductors <= 0:
+                    if remaining_conductors < 0:
+                        bluemira_warn(
+                            f"{abs(remaining_conductors)}/{n_layers_max * n_turns_max}"
+                            f"have been added to complete the last winding pack (nx"
+                            f"={n_layers_max}, ny={n_turns_max})."
+                        )
+                    break
 
         bluemira_debug("\n".join(debug_msg))
         self.WPs = WPs
