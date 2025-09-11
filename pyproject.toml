@@ -45,6 +45,8 @@ dependencies = [
     "tabulate>=0.8.10",
     "typeguard>=3.0.1",
     "scipy>=1.11.2",
+    "matproplib @ git+ssh://github.com/Fusion-Power-Plant-Framework/matproplib@main",
+    "eurofusion_materials @ git+ssh://github.com/Fusion-Power-Plant-Framework/eurofusion-materials@main",
 ]
 
 [project.entry-points.numba_extensions]

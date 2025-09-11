@@ -4,55 +4,54 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pytest
+from eurofusion_materials.library.magnet_branch_mats import (
+    DUMMY_INSULATOR_MAG,
+    NB3SN_MAG,
+    SS316_LN_MAG,
+)
+from matproplib import OperationalConditions
+from matproplib.material import MaterialFraction
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.magnets.cable import RectangularCable
 from bluemira.magnets.conductor import Conductor
 from bluemira.magnets.strand import Strand, SuperconductingStrand
-from bluemira.materials import MaterialCache
-from bluemira.materials.mixtures import MixtureFraction
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
-directory = get_bluemira_path("magnets", subfolder="tests")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(directory, "test_materials_mag.json"))
-
 
 @pytest.fixture
 def mat_jacket():
-    return MATERIAL_CACHE.get_material("SS316-LN")
+    return SS316_LN_MAG
 
 
 @pytest.fixture
 def mat_ins():
-    return MATERIAL_CACHE.get_material("DummyInsulator")
+    return DUMMY_INSULATOR_MAG
 
 
 @pytest.fixture
 def sc_strand():
-    sc = MATERIAL_CACHE.get_material("Nb3Sn - WST")
-    sc.k = lambda **kwargs: 10.0  # noqa: ARG005
+    sc = NB3SN_MAG
+    sc.specific_heat_capacity = lambda *args, **kwargs: 10.0  # noqa: ARG005
     return SuperconductingStrand(
         name="SC",
-        materials=[MixtureFraction(material=sc, fraction=1.0)],
+        materials=[MaterialFraction(material=sc, fraction=1.0)],
         d_strand=0.001,
     )
 
 
 @pytest.fixture
 def stab_strand():
-    stab = MATERIAL_CACHE.get_material("SS316-LN")
-    stab.k = lambda **kwargs: 15.0  # noqa: ARG005
+    stab = SS316_LN_MAG
+    stab.thermal_conductivity = lambda *args, **kwargs: 15.0  # noqa: ARG005
     return Strand(
         name="Stab",
-        materials=[MixtureFraction(material=stab, fraction=1.0)],
+        materials=[MaterialFraction(material=stab, fraction=1.0)],
         d_strand=0.001,
     )
 
@@ -97,9 +96,9 @@ def test_geometry_and_area(conductor):
 
 
 def test_material_properties(conductor):
-    temperature = 20  # K
-    assert conductor.erho(temperature=temperature) > 0.0
-    assert conductor.Cp(temperature=temperature) > 0.0
+    op_cond = OperationalConditions(temperature=20)
+    assert conductor.erho(op_cond) > 0.0
+    assert conductor.Cp(op_cond) > 0.0
 
 
 def test_plot(monkeypatch, conductor):

@@ -4,29 +4,26 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from eurofusion_materials.library.magnet_branch_mats import (
+    NB3SN_MAG,
+    SS316_LN_MAG,
+)
+from matproplib import OperationalConditions
+from matproplib.material import MaterialFraction
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.magnets.cable import (
     DummyRoundCableLTS,
     DummySquareCableLTS,
     RectangularCable,
 )
 from bluemira.magnets.strand import Strand, SuperconductingStrand
-from bluemira.materials import MaterialCache
-from bluemira.materials.mixtures import MixtureFraction
 
-# -- Load materials from cache ------------------------------------------------
-directory = get_bluemira_path("magnets", subfolder="tests")
-MATERIAL_CACHE = MaterialCache()
-MATERIAL_CACHE.load_from_file(Path(directory, "test_materials_mag.json"))
-
-DummySteel = MATERIAL_CACHE.get_material("SS316-LN")
-DummySuperconductor = MATERIAL_CACHE.get_material("Nb3Sn - WST")
+DummySteel = SS316_LN_MAG
+DummySuperconductor = NB3SN_MAG
 
 # -- Pytest Fixtures ----------------------------------------------------------
 
@@ -35,7 +32,7 @@ DummySuperconductor = MATERIAL_CACHE.get_material("Nb3Sn - WST")
 def sc_strand():
     return SuperconductingStrand(
         name="SC",
-        materials=[MixtureFraction(material=DummySuperconductor, fraction=1.0)],
+        materials=[MaterialFraction(material=DummySuperconductor, fraction=1.0)],
         d_strand=0.001,
     )
 
@@ -44,7 +41,7 @@ def sc_strand():
 def stab_strand():
     return Strand(
         name="Stab",
-        materials=[MixtureFraction(material=DummySteel, fraction=1.0)],
+        materials=[MaterialFraction(material=DummySteel, fraction=1.0)],
         d_strand=0.001,
     )
 
@@ -76,9 +73,10 @@ def test_geometry_and_area(cable):
 
 def test_material_properties(cable):
     temperature = 20  # [K]
-    assert cable.rho(temperature=temperature) > 0.0
-    assert cable.erho(temperature=temperature) > 0.0
-    assert cable.Cp(temperature=temperature) > 0.0
+    op_cond = OperationalConditions(temperature=temperature)
+    assert cable.rho(op_cond) > 0.0
+    assert cable.erho(op_cond) > 0.0
+    assert cable.Cp(op_cond) > 0.0
 
 
 def test_str_output(cable):
@@ -175,21 +173,22 @@ def test_square_and_round_cables(sc_strand, stab_strand):
         n_stab_strand=5,
         d_cooling_channel=0.001,
     )
+    dummy_op_cond = OperationalConditions(temperature=4.0)
     assert square.dx > 0
     assert square.dy > 0
     assert np.isclose(square.dx, square.dy, rtol=1e-8)
-    assert square.E() > 0
+    assert square.E(dummy_op_cond) > 0
     # since dx == dy, Kx == Ky == E
-    assert np.isclose(square.Kx(), square.E(), rtol=1e-8)
-    assert np.isclose(square.Ky(), square.E(), rtol=1e-8)
+    assert np.isclose(square.Kx(dummy_op_cond), square.E(dummy_op_cond), rtol=1e-8)
+    assert np.isclose(square.Ky(dummy_op_cond), square.E(dummy_op_cond), rtol=1e-8)
 
     assert round_.dx > 0
     assert round_.dy > 0
     assert np.isclose(round_.dx, round_.dy, rtol=1e-8)
-    assert round_.E() > 0
+    assert round_.E(dummy_op_cond) > 0
     # since dx == dy for round cable, Kx == Ky == E
-    assert np.isclose(round_.Kx(), round_.E(), rtol=1e-8)
-    assert np.isclose(round_.Ky(), round_.E(), rtol=1e-8)
+    assert np.isclose(round_.Kx(dummy_op_cond), round_.E(dummy_op_cond), rtol=1e-8)
+    assert np.isclose(round_.Ky(dummy_op_cond), round_.E(dummy_op_cond), rtol=1e-8)
 
 
 def test_cable_to_from_dict(sc_strand, stab_strand):

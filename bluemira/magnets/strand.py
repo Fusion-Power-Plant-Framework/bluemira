@@ -16,6 +16,8 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
+from matproplib.material import MaterialFraction, mixture
 
 from bluemira import display
 from bluemira.base.look_and_feel import bluemira_error
@@ -23,9 +25,6 @@ from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
 from bluemira.magnets.registry import RegistrableMeta
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.material import Superconductor
-from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -51,7 +50,7 @@ class Strand(metaclass=RegistrableMeta):
 
     def __init__(
         self,
-        materials: list[MixtureFraction],
+        materials: list[MaterialFraction],
         d_strand: float = 0.82e-3,
         temperature: float | None = None,
         name: str | None = "Strand",
@@ -61,7 +60,7 @@ class Strand(metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        materials : list of MixtureFraction
+        materials : list of MaterialFraction
             Materials composing the strand with their fractions.
         d_strand : float, optional
             Strand diameter in meters (default 0.82e-3).
@@ -81,22 +80,20 @@ class Strand(metaclass=RegistrableMeta):
         self.temperature = temperature
 
         # Create homogenised material
-        self._homogenised_material = HomogenisedMixture(
+        self._homogenised_material = mixture(
             name=name,
             materials=materials,
-            percent_type="vo",
-            packing_fraction=1,
-            enrichment=None,
+            fraction_type="mass",
         )
 
     @property
     def materials(self) -> list:
         """
-        List of MixtureFraction materials composing the strand.
+        List of MaterialFraction materials composing the strand.
 
         Returns
         -------
-        list of MixtureFraction
+        list of MaterialFraction
             Materials and their fractions.
         """
         return self._materials
@@ -108,7 +105,7 @@ class Strand(metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        new_materials : list of MixtureFraction
+        new_materials : list of MaterialFraction
             New materials to set.
 
         Raises
@@ -122,9 +119,9 @@ class Strand(metaclass=RegistrableMeta):
             )
 
         for item in new_materials:
-            if not isinstance(item, MixtureFraction):
+            if not isinstance(item, MaterialFraction):
                 raise TypeError(
-                    f"Each item in materials must be a MixtureFraction, got "
+                    f"Each item in materials must be a MaterialFraction, got "
                     f"{type(item).__name__}."
                 )
 
@@ -234,77 +231,94 @@ class Strand(metaclass=RegistrableMeta):
             self._shape = BluemiraFace([make_circle(self.d_strand)])
         return self._shape
 
-    def E(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
+    def E(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Young's modulus of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Young's modulus [Pa].
         """
-        return self._homogenised_material.E(temperature=temperature, **kwargs)
+        return self._homogenised_material.youngs_modulus(op_cond)
 
-    def rho(self, temperature: float | None = None, **kwargs) -> float:
+    def rho(self, op_cond: OperationalConditions) -> float:
         """
         Density of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Density [kg/m³].
         """
-        return self._homogenised_material.rho(temperature=temperature, **kwargs)
+        return self._homogenised_material.density(op_cond)
 
-    def erho(self, temperature: float | None = None, **kwargs) -> float:
+    def erho(self, op_cond: OperationalConditions) -> float:
         """
         Electrical resistivity of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Electrical resistivity [Ohm·m].
         """
-        return self._homogenised_material.erho(temperature=temperature, **kwargs)
+        # Treat parallel calculation for resistivity
+        if len(self._homogenised_material.mixture_fraction) > 1:
+            # If multiple materials, calculate resistivity in parallel
+            return 1 / sum(
+                m.fraction / m.material.electrical_resistivity(op_cond)
+                for m in self._homogenised_material.mixture_fraction
+            )
+        return self._homogenised_material.electrical_resistivity(op_cond)
 
-    def Cp(self, temperature: float | None = None, **kwargs) -> float:  # noqa: N802
+    def Cp(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Specific heat capacity of the strand material.
 
         Parameters
         ----------
-        temperature : float, optional
-            Temperature in Kelvin.
-        **kwargs : dict
-            Additional parameters passed to the underlying material model.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Specific heat [J/kg/K].
         """
-        return self._homogenised_material.Cp(temperature=temperature, **kwargs)
+        # Treat volume/specific heat capacity calculation
+        if len(self._homogenised_material.mixture_fraction) > 1:
+            # Match dw-Cp (even if multiplied by density later, this is still different
+            # to a normal homogenised mixture)
+            density = self._homogenised_material.density(op_cond)
+            return (
+                sum(
+                    mf.fraction
+                    * mf.material.specific_heat_capacity(op_cond)
+                    * mf.material.density(op_cond)
+                    for mf in self._homogenised_material.mixture_fraction
+                )
+                / density
+            )
+        return self._homogenised_material.specific_heat_capacity(op_cond)
 
     def plot(self, ax=None, *, show: bool = True, **kwargs):
         """
@@ -364,7 +378,7 @@ class Strand(metaclass=RegistrableMeta):
             "temperature": self.temperature,
             "materials": [
                 {
-                    "material": m.material.name,
+                    "material": m.material,
                     "fraction": m.fraction,
                 }
                 for m in self.materials
@@ -397,6 +411,8 @@ class Strand(metaclass=RegistrableMeta):
 
         Raises
         ------
+        TypeError
+            If the materials in the dictionary are not valid MaterialFraction instances.
         ValueError
             If the name_in_registry in the dictionary does not match the expected
             class registration name.
@@ -417,12 +433,14 @@ class Strand(metaclass=RegistrableMeta):
         for m in strand_dict["materials"]:
             material_data = m["material"]
             if isinstance(material_data, str):
-                material_obj = get_cached_material(material_data)
-            else:
-                material_obj = material_data
+                raise TypeError(
+                    "Material data must be a Material instance, not a string - "
+                    "TEMPORARY."
+                )
+            material_obj = material_data
 
             material_mix.append(
-                MixtureFraction(material=material_obj, fraction=m["fraction"])
+                MaterialFraction(material=material_obj, fraction=m["fraction"])
             )
 
         return cls(
@@ -452,7 +470,7 @@ class SuperconductingStrand(Strand):
 
     def __init__(
         self,
-        materials: list[MixtureFraction],
+        materials: list[MaterialFraction],
         d_strand: float = 0.82e-3,
         temperature: float | None = None,
         name: str | None = "SuperconductingStrand",
@@ -462,7 +480,7 @@ class SuperconductingStrand(Strand):
 
         Parameters
         ----------
-        materials : list of MixtureFraction
+        materials : list of MaterialFraction
             Materials composing the strand with their fractions. One material must be
             a supercoductor.
         d_strand : float, optional
@@ -480,13 +498,13 @@ class SuperconductingStrand(Strand):
         )
         self._sc = self._check_materials()
 
-    def _check_materials(self) -> MixtureFraction:
+    def _check_materials(self) -> MaterialFraction:
         """
         Ensure there is exactly one superconducting material.
 
         Returns
         -------
-        MixtureFraction
+        MaterialFraction
             The identified superconducting material.
 
         Raises
@@ -496,8 +514,7 @@ class SuperconductingStrand(Strand):
         """
         sc = None
         for material in self.materials:
-            m = material.material
-            if isinstance(m, Superconductor):
+            if material.material.is_superconductor:
                 if sc is None:
                     sc = material
                 else:
@@ -527,37 +544,41 @@ class SuperconductingStrand(Strand):
         """
         return self.area * self._sc.fraction
 
-    def Jc(self, **kwargs) -> float:  # noqa:N802
+    def Jc(self, op_cond: OperationalConditions) -> float:  # noqa:N802
         """
         Critical current density of the superconducting material.
 
         Parameters
         ----------
-        kwargs : dict
-            Additional arguments for the Jc model (e.g., magnetic field B, temperature).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Critical current density [A/m²].
         """
-        return self._sc.material.Jc(**kwargs)
+        if op_cond.strain is None:
+            op_cond.strain = 0.0055
+        return self._sc.material.critical_current_density(op_cond)
 
-    def Ic(self, **kwargs) -> float:  # noqa:N802
+    def Ic(self, op_cond: OperationalConditions) -> float:  # noqa:N802
         """
         Critical current based on Jc and superconducting area.
 
         Parameters
         ----------
-        kwargs : dict
-            Additional arguments forwarded to Jc computation.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
         float
             Critical current [A].
         """
-        return self.Jc(**kwargs) * self.sc_area
+        return self.Jc(op_cond) * self.sc_area
 
     def plot_Ic_B(  # noqa:N802
         self,
@@ -592,7 +613,15 @@ class SuperconductingStrand(Strand):
         if ax is None:
             _, ax = plt.subplots()
 
-        ic_values = [self.Ic(B=Bi, temperature=temperature, **kwargs) for Bi in B]
+        op_conds = [
+            OperationalConditions(
+                temperature=temperature,
+                magnetic_field=Bi,
+                strain=kwargs.get("eps", 0.0055),
+            )
+            for Bi in B
+        ]
+        ic_values = [self.Ic(op) for op in op_conds]
         ax.plot(B, ic_values)
         ax.set_title(
             f"Critical Current for {self.__class__.__name__}\nTemperature = "

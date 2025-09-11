@@ -10,6 +10,8 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib import OperationalConditions
+from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_debug
@@ -21,8 +23,6 @@ from bluemira.magnets.utils import (
     serie_k,
     serie_r,
 )
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.material import MassFractionMaterial
 
 # ------------------------------------------------------------------------------
 # Global Registries
@@ -48,8 +48,8 @@ class Conductor(metaclass=RegistrableMeta):
     def __init__(
         self,
         cable: ABCCable,
-        mat_jacket: MassFractionMaterial,
-        mat_ins: MassFractionMaterial,
+        mat_jacket: Material,
+        mat_ins: Material,
         dx_jacket: float,
         dy_jacket: float,
         dx_ins: float,
@@ -172,8 +172,8 @@ class Conductor(metaclass=RegistrableMeta):
             ),
             "name": self.name,
             "cable": self.cable.to_dict(),
-            "mat_jacket": self.mat_jacket.name,
-            "mat_ins": self.mat_ins.name,
+            "mat_jacket": self.mat_jacket,
+            "mat_ins": self.mat_ins,
             "dx_jacket": self.dx_jacket,
             "dy_jacket": self.dy_jacket,
             "dx_ins": self.dx_ins,
@@ -228,13 +228,9 @@ class Conductor(metaclass=RegistrableMeta):
 
         # Resolve jacket material
         mat_jacket = conductor_dict["mat_jacket"]
-        if isinstance(mat_jacket, str):
-            mat_jacket = get_cached_material(mat_jacket)
 
         # Resolve insulation material
         mat_ins = conductor_dict["mat_ins"]
-        if isinstance(mat_ins, str):
-            mat_ins = get_cached_material(mat_ins)
 
         # Instantiate
         return cls(
@@ -248,15 +244,16 @@ class Conductor(metaclass=RegistrableMeta):
             name=name or conductor_dict.get("name"),
         )
 
-    def erho(self, **kwargs):
+    def erho(self, op_cond: OperationalConditions):
         """
         Computes the conductor's equivalent resistivity considering the resistance
         of its strands in parallel.
 
         Parameters
         ----------
-        **kwargs: dict
-            Additional parameters for resistance calculations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -267,21 +264,22 @@ class Conductor(metaclass=RegistrableMeta):
         The insulator in not considered into the calculation.
         """
         resistances = np.array([
-            self.cable.erho(**kwargs) / self.cable.area,
-            self.mat_jacket.erho(**kwargs) / self.area_jacket,
+            self.cable.erho(op_cond) / self.cable.area,
+            self.mat_jacket.electrical_resistivity(op_cond) / self.area_jacket,
         ])
         res_tot = parall_r(resistances)
         return res_tot * self.area
 
-    def Cp(self, **kwargs):  # noqa: N802
+    def Cp(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Computes the conductor's equivalent specific heat considering the specific heats
         of its components in series.
 
         Parameters
         ----------
-        **kwargs: dict
-            Additional parameters for resistance calculations.
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
 
         Returns
         -------
@@ -292,12 +290,18 @@ class Conductor(metaclass=RegistrableMeta):
         The insulator in not considered into the calculation.
         """
         weighted_specific_heat = np.array([
-            self.cable.Cp(**kwargs) * self.cable.area,
-            self.mat_jacket.Cp(**kwargs) * self.area_jacket,
+            self.cable.Cp(op_cond) * self.cable.area,
+            self.mat_jacket.specific_heat_capacity(op_cond) * self.area_jacket,
         ])
         return serie_r(weighted_specific_heat) / self.area
 
-    def _Kx_topbot_ins(self, **kwargs):  # noqa: N802
+    def _mat_ins_y_modulus(self, op_cond: OperationalConditions):
+        return self.mat_ins.youngs_modulus(op_cond)
+
+    def _mat_jacket_y_modulus(self, op_cond: OperationalConditions):
+        return self.mat_jacket.youngs_modulus(op_cond)
+
+    def _Kx_topbot_ins(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the x-direction.
 
@@ -306,9 +310,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.cable.dy / self.dx_ins
+        return self._mat_ins_y_modulus(op_cond) * self.cable.dy / self.dx_ins
 
-    def _Kx_lat_ins(self, **kwargs):  # noqa: N802
+    def _Kx_lat_ins(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the lateral insulator in the x-direction.
 
@@ -317,9 +321,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.dy_ins / self.dx
+        return self._mat_ins_y_modulus(op_cond) * self.dy_ins / self.dx
 
-    def _Kx_lat_jacket(self, **kwargs):  # noqa: N802
+    def _Kx_lat_jacket(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the lateral jacket in the x-direction.
 
@@ -328,9 +332,13 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.dy_jacket / (self.dx - 2 * self.dx_ins)
+        return (
+            self._mat_jacket_y_modulus(op_cond)
+            * self.dy_jacket
+            / (self.dx - 2 * self.dx_ins)
+        )
 
-    def _Kx_topbot_jacket(self, **kwargs):  # noqa: N802
+    def _Kx_topbot_jacket(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the top/bottom jacket in the x-direction.
 
@@ -339,9 +347,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.cable.dy / self.dx_jacket
+        return self._mat_jacket_y_modulus(op_cond) * self.cable.dy / self.dx_jacket
 
-    def _Kx_cable(self, **kwargs):  # noqa: N802
+    def _Kx_cable(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the cable in the x-direction.
 
@@ -350,9 +358,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.cable.Kx(**kwargs)
+        return self.cable.Kx(op_cond)
 
-    def Kx(self, **kwargs):  # noqa: N802
+    def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the conductor in the x-direction.
 
@@ -362,20 +370,20 @@ class Conductor(metaclass=RegistrableMeta):
             Axial stiffness [N/m]
         """
         return parall_k([
-            self._Kx_lat_ins(**kwargs),
-            self._Kx_lat_jacket(**kwargs),
+            self._Kx_lat_ins(op_cond),
+            self._Kx_lat_jacket(op_cond),
             serie_k([
-                self._Kx_topbot_ins(**kwargs),
-                self._Kx_topbot_jacket(**kwargs),
-                self._Kx_cable(**kwargs),
-                self._Kx_topbot_jacket(**kwargs),
-                self._Kx_topbot_ins(**kwargs),
+                self._Kx_topbot_ins(op_cond),
+                self._Kx_topbot_jacket(op_cond),
+                self._Kx_cable(op_cond),
+                self._Kx_topbot_jacket(op_cond),
+                self._Kx_topbot_ins(op_cond),
             ]),
-            self._Kx_lat_jacket(**kwargs),
-            self._Kx_lat_ins(**kwargs),
+            self._Kx_lat_jacket(op_cond),
+            self._Kx_lat_ins(op_cond),
         ])
 
-    def _Ky_topbot_ins(self, **kwargs):  # noqa: N802
+    def _Ky_topbot_ins(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the top/bottom insulator in the y-direction.
 
@@ -384,9 +392,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.cable.dx / self.dy_ins
+        return self._mat_ins_y_modulus(op_cond) * self.cable.dx / self.dy_ins
 
-    def _Ky_lat_ins(self, **kwargs):  # noqa: N802
+    def _Ky_lat_ins(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the lateral insulator in the y-direction.
 
@@ -395,9 +403,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_ins.E(**kwargs) * self.dx_ins / self.dy
+        return self._mat_ins_y_modulus(op_cond) * self.dx_ins / self.dy
 
-    def _Ky_lat_jacket(self, **kwargs):  # noqa: N802
+    def _Ky_lat_jacket(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the lateral jacket in the y-direction.
 
@@ -406,9 +414,13 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.dx_jacket / (self.dy - 2 * self.dy_ins)
+        return (
+            self._mat_jacket_y_modulus(op_cond)
+            * self.dx_jacket
+            / (self.dy - 2 * self.dy_ins)
+        )
 
-    def _Ky_topbot_jacket(self, **kwargs):  # noqa: N802
+    def _Ky_topbot_jacket(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the top/bottom jacket in the y-direction.
 
@@ -417,9 +429,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.mat_jacket.E(**kwargs) * self.cable.dx / self.dy_jacket
+        return self._mat_jacket_y_modulus(op_cond) * self.cable.dx / self.dy_jacket
 
-    def _Ky_cable(self, **kwargs):  # noqa: N802
+    def _Ky_cable(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the cable in the y-direction.
 
@@ -428,9 +440,9 @@ class Conductor(metaclass=RegistrableMeta):
         float
             Axial stiffness [N/m]
         """
-        return self.cable.Ky(**kwargs)
+        return self.cable.Ky(op_cond)
 
-    def Ky(self, **kwargs):  # noqa: N802
+    def Ky(self, op_cond: OperationalConditions):  # noqa: N802
         """
         Equivalent stiffness of the conductor in the y-direction.
 
@@ -440,25 +452,24 @@ class Conductor(metaclass=RegistrableMeta):
             Axial stiffness [N/m]
         """
         return parall_k([
-            self._Ky_lat_ins(**kwargs),
-            self._Ky_lat_jacket(**kwargs),
+            self._Ky_lat_ins(op_cond),
+            self._Ky_lat_jacket(op_cond),
             serie_k([
-                self._Ky_topbot_ins(**kwargs),
-                self._Ky_topbot_jacket(**kwargs),
-                self._Ky_cable(**kwargs),
-                self._Ky_topbot_jacket(**kwargs),
-                self._Ky_topbot_ins(**kwargs),
+                self._Ky_topbot_ins(op_cond),
+                self._Ky_topbot_jacket(op_cond),
+                self._Ky_cable(op_cond),
+                self._Ky_topbot_jacket(op_cond),
+                self._Ky_topbot_ins(op_cond),
             ]),
-            self._Ky_lat_jacket(**kwargs),
-            self._Ky_lat_ins(**kwargs),
+            self._Ky_lat_jacket(op_cond),
+            self._Ky_lat_ins(op_cond),
         ])
 
     def _tresca_sigma_jacket(
         self,
         pressure: float,
         f_z: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         direction: str = "x",
     ) -> float:
         """
@@ -475,10 +486,9 @@ class Conductor(metaclass=RegistrableMeta):
         f_z :
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
-        T :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material property.
         direction :
             The direction along which the pressure is applied ('x' or 'y'). Default is
             'x'.
@@ -492,7 +502,6 @@ class Conductor(metaclass=RegistrableMeta):
         ValueError
             If the specified direction is not 'x' or 'y'.
         """
-        operational_point = {"temperature": temperature, "B": B}
         if direction not in {"x", "y"}:
             raise ValueError("Invalid direction: choose either 'x' or 'y'.")
 
@@ -500,29 +509,29 @@ class Conductor(metaclass=RegistrableMeta):
             saf_jacket = (self.cable.dx + 2 * self.dx_jacket) / (2 * self.dx_jacket)
 
             K = parall_k([  # noqa: N806
-                2 * self._Ky_lat_ins(**operational_point),
-                2 * self._Ky_lat_jacket(**operational_point),
+                2 * self._Ky_lat_ins(op_cond),
+                2 * self._Ky_lat_jacket(op_cond),
                 serie_k([
-                    self._Ky_cable(**operational_point),
-                    self._Ky_topbot_jacket(**operational_point) / 2,
+                    self._Ky_cable(op_cond),
+                    self._Ky_topbot_jacket(op_cond) / 2,
                 ]),
             ])
 
-            X_jacket = 2 * self._Ky_lat_jacket(**operational_point) / K  # noqa: N806
+            X_jacket = 2 * self._Ky_lat_jacket(op_cond) / K  # noqa: N806
 
         else:
             saf_jacket = (self.cable.dy + 2 * self.dy_jacket) / (2 * self.dy_jacket)
 
             K = parall_k([  # noqa: N806
-                2 * self._Kx_lat_ins(**operational_point),
-                2 * self._Kx_lat_jacket(**operational_point),
+                2 * self._Kx_lat_ins(op_cond),
+                2 * self._Kx_lat_jacket(op_cond),
                 serie_k([
-                    self._Kx_cable(**operational_point),
-                    self._Kx_topbot_jacket(**operational_point) / 2,
+                    self._Kx_cable(op_cond),
+                    self._Kx_topbot_jacket(op_cond) / 2,
                 ]),
             ])
 
-            X_jacket = 2 * self._Kx_lat_jacket(**operational_point) / K  # noqa: N806
+            X_jacket = 2 * self._Kx_lat_jacket(op_cond) / K  # noqa: N806
 
         # tresca_stress = pressure * X_jacket * saf_jacket + f_z / self.area_jacket
 
@@ -532,8 +541,7 @@ class Conductor(metaclass=RegistrableMeta):
         self,
         pressure: float,
         f_z: float,
-        temperature: float,
-        B: float,
+        op_cond: OperationalConditions,
         allowable_sigma: float,
         bounds: np.ndarray | None = None,
         direction: str = "x",
@@ -549,10 +557,9 @@ class Conductor(metaclass=RegistrableMeta):
         f_z :
             The force applied in the z direction, perpendicular to the conductor
             cross-section (N).
-        temperature :
-            The operating temperature (K).
-        B :
-            The operating magnetic field (T).
+        op_cond: OperationalConditions
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
         allowable_sigma :
             The allowable stress (Pa) for the jacket material.
         bounds :
@@ -583,8 +590,7 @@ class Conductor(metaclass=RegistrableMeta):
             jacket_thickness: float,
             pressure: float,
             fz: float,
-            temperature: float,
-            B: float,
+            op_cond: OperationalConditions,
             allowable_sigma: float,
             direction: str = "x",
         ):
@@ -607,10 +613,9 @@ class Conductor(metaclass=RegistrableMeta):
                 [Pa].
             fz : float
                 Axial or vertical force applied perpendicular to the cross-section [N].
-            temperature : float
-                Operating temperature of the conductor [K].
-            B : float
-                Magnetic field at the conductor location [T].
+            op_cond: OperationalConditions
+                Operational conditions including temperature, magnetic field, and strain
+                at which to calculate the material property.
             allowable_sigma : float
                 Maximum allowed stress for the jacket material [Pa].
             direction : str, optional
@@ -643,7 +648,7 @@ class Conductor(metaclass=RegistrableMeta):
             else:
                 self.dy_jacket = jacket_thickness
 
-            sigma_r = self._tresca_sigma_jacket(pressure, fz, temperature, B, direction)
+            sigma_r = self._tresca_sigma_jacket(pressure, fz, op_cond, direction)
 
             # Normal difference
             diff = abs(sigma_r - allowable_sigma)
@@ -669,7 +674,7 @@ class Conductor(metaclass=RegistrableMeta):
 
         result = minimize_scalar(
             fun=sigma_difference,
-            args=(pressure, f_z, temperature, B, allowable_sigma),
+            args=(pressure, f_z, op_cond, allowable_sigma),
             bounds=bounds,
             method=method,
             options={"xatol": 1e-4},
@@ -685,7 +690,7 @@ class Conductor(metaclass=RegistrableMeta):
             debug_msg.append(f"Optimal dy_jacket: {self.dy_jacket}")
         debug_msg.append(
             f"Averaged sigma in the {direction}-direction: "
-            f"{self._tresca_sigma_jacket(pressure, f_z, temperature, B) / 1e6} MPa\n"
+            f"{self._tresca_sigma_jacket(pressure, f_z, op_cond) / 1e6} MPa\n"
             f"Allowable stress in the {direction}-direction: {allowable_sigma / 1e6} "
             f"MPa."
         )
@@ -803,8 +808,8 @@ class SymmetricConductor(Conductor):
     def __init__(
         self,
         cable: ABCCable,
-        mat_jacket: MassFractionMaterial,
-        mat_ins: MassFractionMaterial,
+        mat_jacket: Material,
+        mat_ins: Material,
         dx_jacket: float,
         dx_ins: float,
         name: str = "SymmetricConductor",
@@ -887,8 +892,8 @@ class SymmetricConductor(Conductor):
             ),
             "name": self.name,
             "cable": self.cable.to_dict(),
-            "mat_jacket": self.mat_jacket.name,
-            "mat_ins": self.mat_ins.name,
+            "mat_jacket": self.mat_jacket,
+            "mat_ins": self.mat_ins,
             "dx_jacket": self.dx_jacket,
             "dx_ins": self.dx_ins,
         }
@@ -938,13 +943,9 @@ class SymmetricConductor(Conductor):
 
         # Resolve jacket material
         mat_jacket = conductor_dict["mat_jacket"]
-        if isinstance(mat_jacket, str):
-            mat_jacket = get_cached_material(mat_jacket)
 
         # Resolve insulation material
         mat_ins = conductor_dict["mat_ins"]
-        if isinstance(mat_ins, str):
-            mat_ins = get_cached_material(mat_ins)
 
         # Instantiate
         return cls(
