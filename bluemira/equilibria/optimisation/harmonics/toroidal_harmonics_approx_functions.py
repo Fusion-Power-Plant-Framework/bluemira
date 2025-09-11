@@ -562,10 +562,29 @@ def toroidal_harmonic_approximate_psi(
 
 def _separate_psi_contributions(
     eq: Equilibrium, th_params: ToroidalHarmonicsParams
-) -> tuple[np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Separate the psi contributions from fixed sources (plasma + excluded coils) and from potentially
-    variable sources (coilset)
+    Separate the psi contributions from fixed sources (plasma + excluded coils) and from
+    potentially variable sources (coilset).
+
+    Excluded coils are any coils not being used in the toroidal harmonic approximation,
+    e.g. they fall within the region over which we are approximating and so their
+    contribution must be fixed.
+
+    Parameters
+    ----------
+    eq:
+        Bluemira Equilibrium
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+
+    Returns
+    -------
+    coilset_psi - excluded_coil_psi:
+        The psi contribution from coils for which we allow the currents to vary.
+        These coils are outside of our approximation region
+    plasma_psi + excluded_coil_psi:
+        The psi contribution from fixed sources
     """
     plasma_psi = eq.plasma.psi(th_params.R, th_params.Z)
     coilset_psi = eq.coilset.psi(th_params.R, th_params.Z)
@@ -583,6 +602,27 @@ def _set_n_degrees_of_freedom(
     """
     Determine the number of degrees of freedom to use. This is limited by the number
     of coils and by the maximum order of the harmonic functions.
+
+
+    Parameters
+    ----------
+    n_dof:
+        The number of harmonic functions (and amplitudes) to choose.
+        If this is None, then n_dof is calculated as the minimum of max_n_dof and
+        2 * max_harmonic_order
+    max_harmonic_order:
+        The maximum order of the harmonic functions to use
+    max_n_dof:
+        The maximum number of degrees of freedom that could be used.
+        This is equal to the number of coils used in the approximation
+
+    Returns
+    -------
+    n_dof:
+        The number of harmonic functions (and amplitudes) to choose.
+        If None, will default to the number of "free" coils.
+        Will warn if input n_dof is inappropriate and will instead select an
+        appropriate n_dof to return
     """
     if n_dof is None:
         n_dof = min(max_n_dof, 2 * max_harmonic_order)
@@ -606,11 +646,29 @@ def _set_n_degrees_of_freedom(
 def _get_plasma_mask(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
-    plasma_mask: bool,
     psi_norm: float,
-) -> float | np.ndarray:
+    *,
+    plasma_mask: bool,
+) -> int | np.ndarray:
     """
     Get a plasma mask to apply to the psi field.
+
+    Parameters
+    ----------
+    eq:
+        Bluemira Equilibrium
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    plasma_mask:
+        Whether or not to apply a mask to the error metric (within the psi_norm flux
+        surface)
+    psi_norm:
+        Normalised flux value of the surface of interest.
+
+    Returns
+    -------
+    mask:
+        The plasma mask to be applied to the psi field
     """
     if plasma_mask:
         # Want to mask to be able to calculate error in the plasma region only
@@ -633,23 +691,23 @@ def _get_plasma_mask(
 @dataclass
 class ToroidalHarmonicsSelectionResult:
     """
-    Toroidal harmonic selection result class
+    Toroidal harmonic selection result dataclass
     """
 
-    """Selected cosine toroidal harmonic degrees"""
     cos_degrees: np.ndarray
-    """Selected sine toroidal harmonic degrees"""
+    """Selected cosine toroidal harmonic degrees"""
     sin_degrees: np.ndarray
-    """Selected cosine toroidal harmonic amplitudes"""
+    """Selected sine toroidal harmonic degrees"""
     cos_amplitudes: np.ndarray
-    """Selected sine toroidal harmonic amplitudes"""
+    """Selected cosine toroidal harmonic amplitudes"""
     sin_amplitudes: np.ndarray
-    """Error to desired coilset psi"""
+    """Selected sine toroidal harmonic amplitudes"""
     error: float
-    """Approximated coilset psi"""
+    """Error of L2 norm when comparing approximated coilset psi to desired coilset psi"""
     coilset_psi: np.ndarray
-    """Background psi"""
+    """Approximated coilset psi"""
     fixed_psi: np.ndarray
+    """Background (fixed) psi"""
 
 
 def brute_force_toroidal_harmonic_approximation(
@@ -658,6 +716,7 @@ def brute_force_toroidal_harmonic_approximation(
     psi_norm: float = 0.95,
     n_degrees_of_freedom: int | None = None,
     max_harmonic_order: int = 5,
+    *,
     plasma_mask: bool = False,
 ) -> ToroidalHarmonicsSelectionResult:
     """
@@ -666,7 +725,7 @@ def brute_force_toroidal_harmonic_approximation(
     order.
 
     The optimal selection of harmonic functions is carried out by brute force
-    for the different combinations, using a L2 norm of the error across the
+    for the different combinations, using an L2 norm of the error across the
     full psi map. If `plasma_mask` is specified the error is evaluated as the
     L2 norm of the psi map within the specified flux surface.
 
@@ -741,9 +800,12 @@ def brute_force_toroidal_harmonic_approximation(
             cos_degrees_chosen=cos_degrees_chosen,
             sin_degrees_chosen=sin_degrees_chosen,
         )
-
+        # Calculate L2 norm of the error between the approximated coilset psi and the
+        # true coilset psi
         error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
 
+        # If the new error is less than the previously lowest error, then select the
+        # current combination of degrees, amplitudes and associated psi
         if error_new < error:
             error = error_new
             cos_degrees = cos_degrees_chosen
@@ -769,6 +831,29 @@ def plot_toroidal_harmonic_approximation(
     result: ToroidalHarmonicsSelectionResult,
     psi_norm: float = 0.95,
 ):
+    """
+    Plot the toroidal harmonic approximation of the coilset psi and the bluemira
+    true coilset psi on the same graph to allow comparison.
+    Also plot the psi_norm flux surfaces for the approximation psi and the equilibrium
+    coilset psi
+
+    Parameters
+    ----------
+    eq:
+        Bluemira Equilibrium
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    result:
+        ToroidalHarmonicsSelectionResult object returned from the
+        brute_force_toroidal_approximation function
+    psi_norm:
+        Normalised flux value of the surface of interest.
+
+    Returns
+    -------
+    f, ax:
+        The Matplotlib figure and axis
+    """
     original_fs = (
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
     )
