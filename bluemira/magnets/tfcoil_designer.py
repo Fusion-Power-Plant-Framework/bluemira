@@ -359,9 +359,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         stab_strand = self._make_strand(WP_i, stab_strand_config, stab_strand_params)
         sc_strand = self._make_strand(WP_i, sc_strand_config, sc_strand_params)
-        cable = self._make_cable(
-            stab_strand, sc_strand, WP_i, cable_config, cable_params
-        )
+        cable = self._make_cable(WP_i, n_WPs)
         # param frame optimisation stuff?
         result = cable.optimise_n_stab_ths(
             t0=optimisation_params["t0"],
@@ -390,7 +388,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         optimisation_params = self.build_config.get("optimisation_params")
         derived_params = self._derived_values(optimisation_params)
 
-        conductor, conductor_result = self._make_conductor(
+        conductor = self._make_conductor(
             optimisation_params, derived_params, n_WPs, WP_i=0
         )
         wp_params = self._check_arrays_match(n_WPs, wp_config.pop("params"))
@@ -421,7 +419,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             eps=optimisation_params["eps"],
             n_conds=derived_params.n_cond,
         )
-        return TFCoilXY(case, derived_params, optimisation_params)
+        return TFCoilXY(
+            case, case._convergence_array, derived_params, optimisation_params
+        )
 
     def _check_arrays_match(self, n_WPs, param_list):
         if n_WPs > 1:
@@ -544,13 +544,6 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 }
             ),
         )
-
-    def _make_conductor(self, cable, n_WPs, WP_i=0):
-        conductor_config = self.build_config.get("conductor")
-        conductor_params = self._check_arrays_match(
-            n_WPs, conductor_config.get("params")
-        )
-        return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
 
     def _make_winding_pack(self, conductor, i_WP, config, params):
         cls_name = config["class"]
