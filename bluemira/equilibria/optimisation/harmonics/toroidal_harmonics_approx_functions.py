@@ -654,7 +654,7 @@ class ToroidalHarmonicsSelectionResult:
 
 def brute_force_toroidal_harmonic_approximation(
     eq: Equilibrium,
-    th_params: ToroidalHarmonicsParams,
+    th_params: ToroidalHarmonicsParams | None = None,
     psi_norm: float = 0.95,
     n_degrees_of_freedom: int | None = None,
     max_harmonic_order: int = 5,
@@ -679,10 +679,13 @@ def brute_force_toroidal_harmonic_approximation(
         while being able to vary the vacuum (coil) contribution, so that
         we do not need to re-solve for the equilibria during optimisation
     th_params:
-        Dataclass containing necessary parameters for use in TH approximation
+        Dataclass containing necessary parameters for use in TH approximation.
+        If th_params is None, then function defaults to finding the th_params by using
+        toroidal_harmonic_grid_and_coil_setup with the focus point set to the effective
+        centre.
     psi_norm:
         Normalised flux value of the surface of interest.
-        None value will default to LCFS.
+        None value will default to 0.95 flux surface.
     n_degrees_of_freedom:
         The number of harmonic functions (and amplitudes) to choose.
         If None, will default to the number of "free" coils
@@ -706,6 +709,10 @@ def brute_force_toroidal_harmonic_approximation(
     """
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("Equilibrium has not been run yet.")
+
+    if th_params is None:
+        R_0, Z_0 = eq.effective_centre()
+        th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
     n_degrees_of_freedom = _set_n_degrees_of_freedom(
         n_degrees_of_freedom,
@@ -812,4 +819,3 @@ def plot_toroidal_harmonic_approximation(
     ax.set_ylabel("z [m]")
     ax.set_aspect("equal")
     return f, ax
-
