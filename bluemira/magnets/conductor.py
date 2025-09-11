@@ -116,12 +116,12 @@ class Conductor:
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the conductor instance to a dictionary.
+        Serialise the conductor instance to a dictionary.
 
         Returns
         -------
         :
-            Dictionary with serialized conductor data.
+            Dictionary with serialised conductor data.
         """
         return {
             "name": self.name,
@@ -141,12 +141,12 @@ class Conductor:
         name: str | None = None,
     ) -> Conductor:
         """
-        Deserialize a Conductor instance from a dictionary.
+        Deserialise a Conductor instance from a dictionary.
 
         Parameters
         ----------
         conductor_dict:
-            Dictionary containing serialized conductor data.
+            Dictionary containing serialised conductor data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -163,7 +163,7 @@ class Conductor:
             registration name,
             or if the name already exists and unique_name is False.
         """
-        # Deserialize cable
+        # Deserialise cable
         cable = create_cable_from_dict(
             cable_dict=conductor_dict["cable"],
         )
@@ -468,7 +468,7 @@ class Conductor:
 
         This function computes the absolute difference between the calculated Tresca
         stress in the jacket and the allowable stress. It is used as a fitness
-        function during scalar minimization to determine the optimal jacket
+        function during scalar minimisation to determine the optimal jacket
         thickness.
 
         Parameters
@@ -533,7 +533,7 @@ class Conductor:
         Plot a schematic cross-section of the conductor, including cable, jacket,
         and insulator layers.
 
-        This method visualizes the hierarchical geometry of the conductor centered
+        This method visualises the hierarchical geometry of the conductor centered
         at a given position. The jacket and insulator are drawn as rectangles,
         while the internal cable uses its own plotting method.
 
@@ -707,12 +707,12 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
 
     def to_dict(self) -> dict:
         """
-        Serialize the symmetric conductor instance to a dictionary.
+        Serialise the symmetric conductor instance to a dictionary.
 
         Returns
         -------
         dict
-            Dictionary with serialized symmetric conductor data.
+            Dictionary with serialised symmetric conductor data.
         """
         return {
             "name": self.name,
@@ -730,12 +730,12 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         name: str | None = None,
     ) -> SymmetricConductor:
         """
-        Deserialize a SymmetricConductor instance from a dictionary.
+        Deserialise a SymmetricConductor instance from a dictionary.
 
         Parameters
         ----------
         conductor_dict:
-            Dictionary containing serialized conductor data.
+            Dictionary containing serialised conductor data.
         name:
             Name for the new instance.
 
@@ -749,7 +749,7 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         ValueError
             If the 'name_in_registry' does not match the expected registration name.
         """
-        # Deserialize cable
+        # Deserialise cable
         cable = create_cable_from_dict(
             cable_dict=conductor_dict["cable"],
         )
@@ -776,12 +776,12 @@ def create_conductor_from_dict(
     name: str | None = None,
 ) -> Conductor:
     """
-    Factory function to create a Conductor (or subclass) from a serialized dictionary.
+    Factory function to create a Conductor (or subclass) from a serialised dictionary.
 
     Parameters
     ----------
     conductor_dict:
-        Serialized conductor dictionary, must include 'name_in_registry' field.
+        Serialised conductor dictionary, must include 'name_in_registry' field.
     name:
         Name to assign to the created conductor. If None, uses the name in the
         dictionary.

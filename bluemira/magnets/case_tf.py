@@ -199,7 +199,7 @@ class WedgedGeometry(GeometryParameterisation[CaseGeometryOptVariables]):
         """
         Build the polygon representing the wedge shape.
 
-        The polygon is created by discretizing the outer and inner arcs
+        The polygon is created by discretising the outer and inner arcs
         into a series of points connected sequentially.
 
         Parameters
@@ -249,7 +249,7 @@ class CaseTF(ABC):
         name: str = "BaseCaseTF",
     ):
         """
-        Initialize a BaseCaseTF instance.
+        Initialise a BaseCaseTF instance.
 
         Parameters
         ----------
@@ -534,7 +534,7 @@ class CaseTF(ABC):
             yc_wp = self.R_wp_i[i] - wp.dy / 2
             ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenised=homogenised)
 
-        # Finalize plot
+        # Finalise plot
         ax.set_xlabel("Toroidal direction [m]")
         ax.set_ylabel("Radial direction [m]")
         ax.set_title(f"TF Case Cross Section: {self.name}")
@@ -698,12 +698,12 @@ class CaseTF(ABC):
 
     def to_dict(self) -> dict[str, float | str | list[dict[str, float | str | Any]]]:
         """
-        Serialize the BaseCaseTF instance into a dictionary.
+        Serialise the BaseCaseTF instance into a dictionary.
 
         Returns
         -------
         dict
-            Serialized data representing the TF case, including geometry and material
+            Serialised data representing the TF case, including geometry and material
             information.
         """
         return {
@@ -720,12 +720,12 @@ class CaseTF(ABC):
     @classmethod
     def from_dict(cls, case_dict: dict, name: str | None = None) -> CaseTF:
         """
-        Deserialize a BaseCaseTF instance from a dictionary.
+        Deserialise a BaseCaseTF instance from a dictionary.
 
         Parameters
         ----------
         case_dict:
-            Dictionary containing serialized TF case data.
+            Dictionary containing serialised TF case data.
         name:
             Optional name override for the new instance.
 
@@ -758,7 +758,7 @@ class CaseTF(ABC):
         Returns
         -------
         :
-            Multiline string summarizing key properties of the TF case.
+            Multiline string summarising key properties of the TF case.
         """
         return (
             f"CaseTF '{self.name}'\n"
@@ -1270,12 +1270,12 @@ def create_case_tf_from_dict(
     name: str | None = None,
 ) -> CaseTF:
     """
-    Factory function to create a CaseTF (or subclass) from a serialized dictionary.
+    Factory function to create a CaseTF (or subclass) from a serialised dictionary.
 
     Parameters
     ----------
     case_dict:
-        Serialized case dictionary, must include 'name_in_registry' field.
+        Serialised case dictionary, must include 'name_in_registry' field.
     name:
         Name to assign to the created case. If None, uses the name in the dictionary.
 

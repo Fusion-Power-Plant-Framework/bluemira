@@ -35,7 +35,7 @@ class WindingPack:
         self, conductor: Conductor, nx: int, ny: int, name: str = "WindingPack"
     ):
         """
-        Initialize a WindingPack instance.
+        Initialise a WindingPack instance.
 
         Parameters
         ----------
@@ -172,12 +172,12 @@ class WindingPack:
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the WindingPack to a dictionary.
+        Serialise the WindingPack to a dictionary.
 
         Returns
         -------
         :
-            Serialized dictionary of winding pack attributes.
+            Serialised dictionary of winding pack attributes.
         """
         return {
             "name": self.name,
@@ -193,12 +193,12 @@ class WindingPack:
         name: str | None = None,
     ) -> "WindingPack":
         """
-        Deserialize a WindingPack from a dictionary.
+        Deserialise a WindingPack from a dictionary.
 
         Parameters
         ----------
         windingpack_dict:
-            Serialized winding pack dictionary.
+            Serialised winding pack dictionary.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -223,7 +223,7 @@ class WindingPack:
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        # Deserialize conductor
+        # Deserialise conductor
         conductor = create_conductor_from_dict(
             conductor_dict=windingpack_dict["conductor"],
             name=None,
@@ -242,13 +242,13 @@ def create_wp_from_dict(
     name: str | None = None,
 ) -> WindingPack:
     """
-    Factory function to create a WindingPack or its subclass from a serialized
+    Factory function to create a WindingPack or its subclass from a serialised
     dictionary.
 
     Parameters
     ----------
     windingpack_dict:
-        Dictionary containing serialized winding pack data.
+        Dictionary containing serialised winding pack data.
         Must include a 'name_in_registry' field matching a registered class.
     name:
         Optional name override for the reconstructed WindingPack.
@@ -267,7 +267,7 @@ def create_wp_from_dict(
     name_in_registry = windingpack_dict.get("name_in_registry")
     if name_in_registry is None:
         raise ValueError(
-            "Serialized winding pack dictionary must contain a 'name_in_registry' field."
+            "Serialised winding pack dictionary must contain a 'name_in_registry' field."
         )
 
     cls = WINDINGPACK_REGISTRY.get(name_in_registry)

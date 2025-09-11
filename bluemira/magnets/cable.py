@@ -75,7 +75,7 @@ class ABCCable(ABC):
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
-            Number of stabilizing strands.
+            Number of stabilising strands.
         d_cooling_channel:
             Diameter of the cooling channel [m].
         void_fraction:
@@ -341,7 +341,7 @@ class ABCCable(ABC):
         Notes
         -----
         - This method is typically used as a cost function for optimisation routines
-          (e.g., minimizing the temperature error by tuning `n_stab`).
+          (e.g., minimising the temperature error by tuning `n_stab`).
         - It modifies the internal state `self._n_stab_strand`, which may affect
           subsequent evaluations unless restored.
         """
@@ -373,7 +373,7 @@ class ABCCable(ABC):
         """
         Plot a schematic view of the cable cross-section.
 
-        This method visualizes the outer shape of the cable and the cooling channel,
+        This method visualises the outer shape of the cable and the cooling channel,
         assuming a rectangular or elliptical layout based on `dx`, `dy`, and
         `d_cooling_channel`. It draws the cable centered at (xc, yc) within the
         current coordinate system.
@@ -394,7 +394,7 @@ class ABCCable(ABC):
         Returns
         -------
         :
-            The Axes object with the cable plot, which can be further customized
+            The Axes object with the cable plot, which can be further customised
             or saved.
 
         Notes
@@ -466,7 +466,7 @@ class ABCCable(ABC):
 
     def to_dict(self) -> dict[str, str | float | int | dict[str, Any]]:
         """
-        Serialize the cable instance to a dictionary.
+        Serialise the cable instance to a dictionary.
 
         Returns
         -------
@@ -492,12 +492,12 @@ class ABCCable(ABC):
         name: str | None = None,
     ) -> ABCCable:
         """
-        Deserialize a cable instance from a dictionary.
+        Deserialise a cable instance from a dictionary.
 
         Parameters
         ----------
         cable_dict:
-            Dictionary containing serialized cable data.
+            Dictionary containing serialised cable data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -521,7 +521,7 @@ class ABCCable(ABC):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        # Deserialize strands
+        # Deserialise strands
         sc_strand_data = cable_dict.pop("sc_strand")
         if isinstance(sc_strand_data, Strand):
             sc_strand = sc_strand_data
@@ -584,11 +584,11 @@ class RectangularCable(ABCCable):
         sc_strand:
             Superconducting strand.
         stab_strand:
-            Stabilizer strand.
+            Stabiliser strand.
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
-            Number of stabilizing strands.
+            Number of stabilising strands.
         d_cooling_channel:
             Diameter of the cooling channel [m].
         void_fraction:
@@ -645,7 +645,7 @@ class RectangularCable(ABCCable):
         Returns
         -------
         :
-            Homogenized stiffness in the x-direction [Pa].
+            Homogenised stiffness in the x-direction [Pa].
         """
         return self.E(op_cond) * self.dy / self.dx
 
@@ -662,13 +662,13 @@ class RectangularCable(ABCCable):
         Returns
         -------
         :
-            Homogenized stiffness in the y-direction [Pa].
+            Homogenised stiffness in the y-direction [Pa].
         """
         return self.E(op_cond) * self.dx / self.dy
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the rectangular cable into a dictionary.
+        Serialise the rectangular cable into a dictionary.
 
         Returns
         -------
@@ -689,7 +689,7 @@ class RectangularCable(ABCCable):
         name: str | None = None,
     ) -> RectangularCable:
         """
-        Deserialize a RectangularCable from a dictionary.
+        Deserialise a RectangularCable from a dictionary.
 
         Behavior:
         - If both 'dx' and 'aspect_ratio' are provided, a warning is issued and
@@ -701,7 +701,7 @@ class RectangularCable(ABCCable):
         Parameters
         ----------
         cable_dict:
-            Dictionary containing serialized cable data.
+            Dictionary containing serialised cable data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -725,7 +725,7 @@ class RectangularCable(ABCCable):
                 f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
             )
 
-        # Deserialize strands
+        # Deserialise strands
         sc_strand_data = cable_dict.pop("sc_strand")
         if isinstance(sc_strand_data, Strand):
             sc_strand = sc_strand_data
@@ -755,7 +755,7 @@ class RectangularCable(ABCCable):
 
         if dx is None:
             raise ValueError(
-                "Serialized RectangularCable must include at least 'dx' or "
+                "Serialised RectangularCable must include at least 'dx' or "
                 "'aspect_ratio'."
             )
 
@@ -826,7 +826,7 @@ class SquareCable(ABCCable):
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
-            Number of stabilizing strands.
+            Number of stabilising strands.
         d_cooling_channel:
             Diameter of the cooling channel [m].
         void_fraction:
@@ -876,7 +876,7 @@ class SquareCable(ABCCable):
         Returns
         -------
         :
-            Homogenized stiffness in the x-direction [Pa].
+            Homogenised stiffness in the x-direction [Pa].
         """
         return self.E(op_cond)
 
@@ -893,18 +893,18 @@ class SquareCable(ABCCable):
         Returns
         -------
         :
-            Homogenized stiffness in the y-direction [Pa].
+            Homogenised stiffness in the y-direction [Pa].
         """
         return self.E(op_cond)
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the SquareCable.
+        Serialise the SquareCable.
 
         Returns
         -------
         :
-            Serialized dictionary.
+            Serialised dictionary.
         """
         return super().to_dict()
 
@@ -915,12 +915,12 @@ class SquareCable(ABCCable):
         name: str | None = None,
     ) -> SquareCable:
         """
-        Deserialize a SquareCable from a dictionary.
+        Deserialise a SquareCable from a dictionary.
 
         Parameters
         ----------
         cable_dict:
-            Dictionary containing serialized cable data.
+            Dictionary containing serialised cable data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -984,7 +984,7 @@ class RoundCable(ABCCable):
         n_sc_strand:
             Number of superconducting strands.
         n_stab_strand:
-            Number of stabilizing strands.
+            Number of stabilising strands.
         d_cooling_channel:
             Diameter of the cooling channel [m].
         void_fraction:
@@ -1087,7 +1087,7 @@ class RoundCable(ABCCable):
         Returns
         -------
         :
-            The axis object containing the cable plot, useful for further customization
+            The axis object containing the cable plot, useful for further customisation
             or saving.
         """
         if ax is None:
@@ -1120,12 +1120,12 @@ class RoundCable(ABCCable):
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the RoundCable.
+        Serialise the RoundCable.
 
         Returns
         -------
         :
-            Serialized dictionary.
+            Serialised dictionary.
         """
         return super().to_dict()
 
@@ -1136,12 +1136,12 @@ class RoundCable(ABCCable):
         name: str | None = None,
     ) -> RoundCable:
         """
-        Deserialize a RoundCable from a dictionary.
+        Deserialise a RoundCable from a dictionary.
 
         Parameters
         ----------
         cable_dict:
-            Dictionary containing serialized cable data.
+            Dictionary containing serialised cable data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.

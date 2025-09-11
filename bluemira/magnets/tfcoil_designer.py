@@ -71,7 +71,7 @@ class TFCoilXYDesignerParams(ParameterFrame):
     # n_sc_strand: Parameter[int]
     # """Number of superconducting strands."""
     # n_stab_strand: Parameter[int]
-    # """Number of stabilizing strands."""
+    # """Number of stabilising strands."""
     # d_cooling_channel: Parameter[float]
     # """Diameter of the cooling channel [m]."""
     # void_fraction: Parameter[float]
@@ -583,7 +583,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         """
         debug_msg = ["Method optimise_jacket_and_vault"]
 
-        # Initialize convergence array
+        # Initialise convergence array
         convergence_array = []
 
         if n_conds is None:

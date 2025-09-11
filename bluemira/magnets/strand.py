@@ -45,7 +45,7 @@ class Strand:
         name: str | None = "Strand",
     ):
         """
-        Initialize a Strand instance.
+        Initialise a Strand instance.
 
         Parameters
         ----------
@@ -272,12 +272,12 @@ class Strand:
 
     def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the strand instance to a dictionary.
+        Serialise the strand instance to a dictionary.
 
         Returns
         -------
         :
-            Dictionary with serialized strand data.
+            Dictionary with serialised strand data.
         """
         return {
             "name": self.name,
@@ -299,12 +299,12 @@ class Strand:
         name: str | None = None,
     ) -> Strand:
         """
-        Deserialize a Strand instance from a dictionary.
+        Deserialise a Strand instance from a dictionary.
 
         Parameters
         ----------
         strand_dict:
-            Dictionary containing serialized strand data.
+            Dictionary containing serialised strand data.
         name:
             Name for the new instance. If None, attempts to use the 'name' field from
             the dictionary.
@@ -333,7 +333,7 @@ class Strand:
                 f"Expected '{expected_name_in_registry}'."
             )
 
-        # Deserialize materials
+        # Deserialise materials
         material_mix = []
         for m in strand_dict["materials"]:
             material_data = m["material"]
@@ -379,7 +379,7 @@ class SuperconductingStrand(Strand):
         name: str | None = "SuperconductingStrand",
     ):
         """
-        Initialize a superconducting strand.
+        Initialise a superconducting strand.
 
         Parameters
         ----------
@@ -545,12 +545,12 @@ def create_strand_from_dict(
     name: str | None = None,
 ):
     """
-    Factory function to create a Strand or its subclass from a serialized dictionary.
+    Factory function to create a Strand or its subclass from a serialised dictionary.
 
     Parameters
     ----------
     strand_dict:
-        Dictionary with serialized strand data. Must include a 'name_in_registry' field
+        Dictionary with serialised strand data. Must include a 'name_in_registry' field
         corresponding to a registered class.
     name:
         If given, overrides the name from the dictionary.
