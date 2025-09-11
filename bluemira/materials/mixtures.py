@@ -243,6 +243,7 @@ class HomogenisedMixture:
         self,
         temperature: float | None = None,
         mix_type: MixtureConnectionType = MixtureConnectionType.SERIES,
+        **kwargs,  # noqa: ARG002
     ) -> float:
         """
         Density.

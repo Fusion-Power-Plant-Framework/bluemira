@@ -73,7 +73,8 @@ def _stress_intensity_factor(
 
     Returns
     -------
-    Stress intensity factor
+    float
+        Stress intensity factor [Pa * sqrt(m)].
     """
     return (hoop_stress + H * bend_stress) * np.sqrt(np.pi * a / Q) * F
 
@@ -86,7 +87,8 @@ def _boundary_correction_factor(
 
     Returns
     -------
-    Boundary correction factor
+    float
+        Boundary correction factor F.
     """
     return (m1 + m2 * a_d_t**2 + m3 * a_d_t**4) * g * f_phi * f_w
 
@@ -97,7 +99,8 @@ def _bending_correction_factor(h1: float, h2: float, p: float, phi: float) -> fl
 
     Returns
     -------
-    Bending correction factor
+    float
+        Bending correction factor.
     """
     return h1 + (h2 - h1) * np.sin(phi) ** p
 
@@ -108,7 +111,8 @@ def _ellipse_shape_factor(ratio: float) -> float:
 
     Returns
     -------
-    Ellipse shape factor
+    float
+        Shape factor Q.
     """
     return 1.0 + 1.464 * ratio**1.65
 
@@ -119,7 +123,8 @@ def _angular_location_correction(a: float, c: float, phi: float) -> float:
 
     Returns
     -------
-    Angular location correction factor
+    float
+        Angular correction factor f_phi.
     """
     if a <= c:
         return ((a / c) ** 2 * np.cos(phi) ** 2 + np.sin(phi) ** 2) ** 0.25  # (10)
@@ -132,7 +137,8 @@ def _finite_width_correction(a_d_t: float, c: float, w: float) -> float:
 
     Returns
     -------
-    Finite width correction factor
+    float
+        Finite width correction factor.
     """
     return 1.0 / np.sqrt(np.cos(np.sqrt(a_d_t) * np.pi * c / (2 * w)))  # (11)
 
@@ -162,7 +168,8 @@ class Crack(abc.ABC):
 
         Returns
         -------
-        Crack instance
+        Crack
+            New instance of the crack geometry.
         """
         depth = np.sqrt(area / (cls.alpha * np.pi * aspect_ratio))
         width = aspect_ratio * depth
@@ -175,13 +182,14 @@ class Crack(abc.ABC):
 
         Returns
         -------
-        Area of the crack
+        float
+            Area [m²].
         """
         return self.alpha * np.pi * self.depth * self.width
 
-    @staticmethod
     @abc.abstractmethod
     def stress_intensity_factor(
+        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -192,12 +200,7 @@ class Crack(abc.ABC):
     ) -> float:
         """
         Calculate the crack stress intensity factor
-
-        Returns
-        -------
-        Stress intensity factor
         """
-        return NotImplementedError
 
 
 class QuarterEllipticalCornerCrack(Crack):
@@ -214,8 +217,8 @@ class QuarterEllipticalCornerCrack(Crack):
 
     alpha = 0.25
 
-    @staticmethod
-    def stress_intensity_factor(
+    def stress_intensity_factor(  # noqa: PLR6301
+        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -314,8 +317,8 @@ class SemiEllipticalSurfaceCrack(Crack):
 
     alpha = 0.5
 
-    @staticmethod
-    def stress_intensity_factor(
+    def stress_intensity_factor(  # noqa: PLR6301
+        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
@@ -405,8 +408,8 @@ class EllipticalEmbeddedCrack(Crack):
 
     alpha = 1.0
 
-    @staticmethod
-    def stress_intensity_factor(
+    def stress_intensity_factor(  # noqa: PLR6301
+        self,
         hoop_stress: float,
         bend_stress: float,
         t: float,
