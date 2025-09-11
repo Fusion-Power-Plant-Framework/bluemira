@@ -21,6 +21,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import (
     bluemira_error,
     bluemira_print,
+    bluemira_warn,
 )
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
@@ -389,10 +390,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             for i_WP in range(n_WPs)
         ]
 
-        case = self._make_case(winding_pack, derived_params, optimisation_params)
-
         # param frame optimisation stuff?
-        case.optimise_jacket_and_vault(
+        case, convergence_array = self.optimise_jacket_and_vault(
+            self._make_case(winding_pack, derived_params, optimisation_params),
             pm=derived_params.pm,
             fz=derived_params.t_z,
             op_cond=OperationalConditions(
@@ -411,9 +411,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             eps=optimisation_params["eps"],
             n_conds=derived_params.n_cond,
         )
-        return TFCoilXY(
-            case, case._convergence_array, derived_params, optimisation_params
-        )
+        return TFCoilXY(case, convergence_array, derived_params, optimisation_params)
 
     def optimise_cable_n_stab_ths(
         self,
@@ -517,6 +515,252 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                 f"n. stab. strand = {cable.n_stab_strand}\n"
             ),
         )
+
+    def optimise_jacket_and_vault(
+        self,
+        case: CaseTF,
+        pm: float,
+        fz: float,
+        op_cond: OperationalConditions,
+        allowable_sigma: float,
+        bounds_cond_jacket: np.ndarray | None = None,
+        bounds_dy_vault: np.ndarray | None = None,
+        layout: str = "auto",
+        wp_reduction_factor: float = 0.8,
+        min_gap_x: float = 0.05,
+        n_layers_reduction: int = 4,
+        max_niter: int = 10,
+        eps: float = 1e-8,
+        n_conds: int | None = None,
+    ):
+        """
+        Jointly optimise the conductor jacket and case vault thickness
+        under electromagnetic loading constraints.
+
+        This method performs an iterative optimisation of:
+        - The cross-sectional area of the conductor jacket.
+        - The vault radial thickness of the TF coil casing.
+
+        The optimisation loop continues until the relative change in
+        jacket area and vault thickness drops below the specified
+        convergence threshold `eps`, or `max_niter` is reached.
+
+        Parameters
+        ----------
+        pm:
+            Radial magnetic pressure on the conductor [Pa].
+        fz:
+            Axial electromagnetic force on the winding pack [N].
+        op_cond:
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
+        allowable_sigma:
+            Maximum allowable stress for structural material [Pa].
+        bounds_cond_jacket:
+            Min/max bounds for conductor jacket area optimisation [m²].
+        bounds_dy_vault:
+            Min/max bounds for the case vault thickness optimisation [m].
+        layout:
+            Cable layout strategy; "auto" or predefined layout name.
+        wp_reduction_factor:
+            Reduction factor applied to WP footprint during conductor rearrangement.
+        min_gap_x:
+            Minimum spacing between adjacent conductors [m].
+        n_layers_reduction:
+            Number of conductor layers to remove when reducing WP height.
+        max_niter:
+            Maximum number of optimisation iterations.
+        eps:
+            Convergence threshold for the combined optimisation loop.
+        n_conds:
+            Target total number of conductors in the winding pack. If None, the self
+            number of conductors is used.
+
+        Notes
+        -----
+        The function modifies the internal state of `conductor` and `self.dy_vault`.
+        """
+        debug_msg = ["Method optimise_jacket_and_vault"]
+
+        # Initialize convergence array
+        convergence_array = []
+
+        if n_conds is None:
+            n_conds = case.n_conductors
+
+        conductor = case.WPs[0].conductor
+
+        case._check_WPs(case.WPs)
+
+        err_conductor_area_jacket = 10000 * eps
+        err_dy_vault = 10000 * eps
+        tot_err = err_dy_vault + err_conductor_area_jacket
+
+        convergence_array.append([
+            0,
+            conductor.dy_jacket,
+            case.dy_vault,
+            err_conductor_area_jacket,
+            err_dy_vault,
+            case.dy_wp_tot,
+            case.geometry.variables.Ri.value - case.geometry.variables.Rk.value,
+        ])
+
+        damping_factor = 0.3
+
+        for i in range(1, max_niter):
+            if tot_err <= eps:
+                bluemira_print(
+                    f"Optimisation of jacket and vault reached after "
+                    f"{i - 1} iterations. Total error: {tot_err} < {eps}."
+                )
+
+                ax = case.plot(show=False, homogenised=False)
+                ax.set_title("Case design after optimisation")
+                plt.show()
+                break
+            debug_msg.append(f"Internal optimazion - iteration {i}")
+
+            # Store current values
+            cond_dx_jacket0 = conductor.dx_jacket
+            case_dy_vault0 = case.dy_vault
+
+            debug_msg.append(
+                f"before optimisation: conductor jacket area = {conductor.area_jacket}"
+            )
+            cond_area_jacket0 = conductor.area_jacket
+            t_z_cable_jacket = (
+                fz
+                * case.area_wps_jacket
+                / (case.area_case_jacket + case.area_wps_jacket)
+                / case.n_conductors
+            )
+            conductor.optimise_jacket_conductor(
+                pm, t_z_cable_jacket, op_cond, allowable_sigma, bounds_cond_jacket
+            )
+            debug_msg.extend([
+                f"t_z_cable_jacket: {t_z_cable_jacket}",
+                f"after optimisation: conductor jacket area = {conductor.area_jacket}",
+            ])
+
+            conductor.dx_jacket = (
+                1 - damping_factor
+            ) * cond_dx_jacket0 + damping_factor * conductor.dx_jacket
+
+            err_conductor_area_jacket = (
+                abs(conductor.area_jacket - cond_area_jacket0) / cond_area_jacket0
+            )
+
+            case.rearrange_conductors_in_wp(
+                n_conds,
+                wp_reduction_factor,
+                min_gap_x,
+                n_layers_reduction,
+                layout=layout,
+            )
+
+            debug_msg.append(f"before optimisation: case dy_vault = {case.dy_vault}")
+            result = self.optimise_vault_radial_thickness(
+                case,
+                pm=pm,
+                fz=fz,
+                op_cond=op_cond,
+                allowable_sigma=allowable_sigma,
+                bounds=bounds_dy_vault,
+            )
+
+            case.dy_vault = result.x
+            # print(f"Optimal dy_vault: {case.dy_vault}")
+            # print(f"Tresca sigma: {case._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
+
+            case.dy_vault = (
+                1 - damping_factor
+            ) * case_dy_vault0 + damping_factor * case.dy_vault
+
+            delta_case_dy_vault = abs(case.dy_vault - case_dy_vault0)
+            err_dy_vault = delta_case_dy_vault / case.dy_vault
+            tot_err = err_dy_vault + err_conductor_area_jacket
+
+            debug_msg.append(
+                f"after optimisation: case dy_vault = {case.dy_vault}\n"
+                f"err_dy_jacket = {err_conductor_area_jacket}\n "
+                f"err_dy_vault = {err_dy_vault}\n "
+                f"tot_err = {tot_err}"
+            )
+
+            # Store iteration results in convergence array
+            convergence_array.append([
+                i,
+                conductor.dy_jacket,
+                case.dy_vault,
+                err_conductor_area_jacket,
+                err_dy_vault,
+                case.dy_wp_tot,
+                case.geometry.variables.Ri.value - case.geometry.variables.Rk.value,
+            ])
+
+        else:
+            bluemira_warn(
+                f"Maximum number of optimisation iterations {max_niter} "
+                f"reached. A total of {tot_err} > {eps} has been obtained."
+            )
+
+        return case, np.array(convergence_array)
+
+    def optimise_vault_radial_thickness(
+        self,
+        case,
+        pm: float,
+        fz: float,
+        op_cond: OperationalConditions,
+        allowable_sigma: float,
+        bounds: np.array = None,
+    ):
+        """
+        Optimise the vault radial thickness of the case
+
+        Parameters
+        ----------
+        pm:
+            The magnetic pressure applied along the radial direction (Pa).
+        f_z:
+            The force applied in the z direction, perpendicular to the case
+            cross-section (N).
+        op_cond:
+            Operational conditions including temperature, magnetic field, and strain
+            at which to calculate the material properties.
+        allowable_sigma:
+            The allowable stress (Pa) for the jacket material.
+        bounds:
+            Optional bounds for the jacket thickness optimisation (default is None).
+
+        Returns
+        -------
+        :
+            The result of the optimisation process containing information about the
+            optimal vault thickness.
+
+        Raises
+        ------
+        ValueError
+            If the optimisation process did not converge.
+        """
+        method = None
+        if bounds is not None:
+            method = "bounded"
+
+        result = minimize_scalar(
+            fun=case._sigma_difference,
+            args=(pm, fz, op_cond, allowable_sigma),
+            bounds=bounds,
+            method=method,
+            options={"xatol": 1e-4},
+        )
+
+        if not result.success:
+            raise ValueError("dy_vault optimisation did not converge.")
+
+        return result
 
     def _check_arrays_match(self, n_WPs, param_list):
         if n_WPs > 1:
