@@ -9,19 +9,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matproplib import OperationalConditions
 from scipy.integrate import solve_ivp
-from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import (
     bluemira_debug,
-    bluemira_error,
-    bluemira_print,
     bluemira_warn,
 )
 from bluemira.magnets.strand import (
@@ -300,165 +296,67 @@ class ABCCable(ABC):
 
         return solution
 
-    def optimise_n_stab_ths(
+    def final_temperature_difference(
         self,
+        n_stab: int,
         t0: float,
         tf: float,
         initial_temperature: float,
         target_temperature: float,
         B_fun: Callable[[float], float],
         I_fun: Callable[[float], float],  # noqa: N803
-        bounds: np.ndarray | None = None,
-    ):
+    ) -> float:
         """
-        Optimise the number of stabiliser strand in the superconducting cable using a
-        0-D hot spot criteria.
+        Compute the absolute temperature difference at final time between the
+        simulated and target temperatures.
+
+        This method modifies the private attribute `_n_stab_strand` to update the
+        cable configuration, simulates the temperature evolution over time, and
+        returns the absolute difference between the final temperature and the
+        specified target.
 
         Parameters
         ----------
+        n_stab:
+            Number of stabiliser strands to set temporarily for this simulation.
         t0:
-            Initial time [s].
+            Initial time of the simulation [s].
         tf:
-            Final time [s].
+            Final time of the simulation [s].
         initial_temperature:
-            Temperature [K] at initial time.
+            Temperature at the start of the simulation [K].
         target_temperature:
-            Target temperature [K] at final time.
-        B_fun :
-            Magnetic field [T] as a time-dependent function.
-        I_fun :
-            Current [A] as a time-dependent function.
-        bounds:
-            Lower and upper limits for the number of stabiliser strands.
+            Desired temperature at the end of the simulation [K].
+        B_fun:
+            Magnetic field as a time-dependent function [T].
+        I_fun:
+            Current as a time-dependent function [A].
 
         Returns
         -------
         :
-            The result of the optimisation process.
-
-        Raises
-        ------
-        ValueError
-            If the optimisiation process does not converge.
+            Absolute difference between the simulated final temperature and the
+            target temperature [K].
 
         Notes
         -----
-        - The number of stabiliser strands in the cable is modified directly.
-        - Cooling material contribution is neglected when applying the hot spot criteria.
+        - This method is typically used as a cost function for optimisation routines
+          (e.g., minimizing the temperature error by tuning `n_stab`).
+        - It modifies the internal state `self._n_stab_strand`, which may affect
+          subsequent evaluations unless restored.
         """
+        self.n_stab_strand = n_stab
 
-        def final_temperature_difference(
-            n_stab: int,
-            t0: float,
-            tf: float,
-            initial_temperature: float,
-            target_temperature: float,
-            B_fun: Callable[[float], float],
-            I_fun: Callable[[float], float],  # noqa: N803
-        ) -> float:
-            """
-            Compute the absolute temperature difference at final time between the
-            simulated and target temperatures.
-
-            This method modifies the private attribute `_n_stab_strand` to update the
-            cable configuration, simulates the temperature evolution over time, and
-            returns the absolute difference between the final temperature and the
-            specified target.
-
-            Parameters
-            ----------
-            n_stab:
-                Number of stabiliser strands to set temporarily for this simulation.
-            t0:
-                Initial time of the simulation [s].
-            tf:
-                Final time of the simulation [s].
-            initial_temperature:
-                Temperature at the start of the simulation [K].
-            target_temperature:
-                Desired temperature at the end of the simulation [K].
-            B_fun:
-                Magnetic field as a time-dependent function [T].
-            I_fun:
-                Current as a time-dependent function [A].
-
-            Returns
-            -------
-            :
-                Absolute difference between the simulated final temperature and the
-                target temperature [K].
-
-            Notes
-            -----
-            - This method is typically used as a cost function for optimisation routines
-              (e.g., minimizing the temperature error by tuning `n_stab`).
-            - It modifies the internal state `self._n_stab_strand`, which may affect
-              subsequent evaluations unless restored.
-            """
-            self.n_stab_strand = n_stab
-
-            solution = self._temperature_evolution(
-                t0=t0,
-                tf=tf,
-                initial_temperature=initial_temperature,
-                B_fun=B_fun,
-                I_fun=I_fun,
-            )
-            final_temperature = float(solution.y[0][-1])
-            # diff = abs(final_temperature - target_temperature)
-            return abs(final_temperature - target_temperature)
-
-        result = minimize_scalar(
-            fun=final_temperature_difference,
-            args=(t0, tf, initial_temperature, target_temperature, B_fun, I_fun),
-            bounds=bounds,
-            method=None if bounds is None else "bounded",
+        solution = self._temperature_evolution(
+            t0=t0,
+            tf=tf,
+            initial_temperature=initial_temperature,
+            B_fun=B_fun,
+            I_fun=I_fun,
         )
-
-        if not result.success:
-            raise ValueError(
-                "n_stab optimisation did not converge. Check your input parameters "
-                "or initial bracket."
-            )
-
-        # Here we re-ensure the n_stab_strand to be an integer
-        self.n_stab_strand = int(np.ceil(self.n_stab_strand))
-
-        solution = self._temperature_evolution(t0, tf, initial_temperature, B_fun, I_fun)
-        final_temperature = solution.y[0][-1]
-
-        if final_temperature > target_temperature:
-            bluemira_error(
-                f"Final temperature ({final_temperature:.2f} K) exceeds target "
-                f"temperature "
-                f"({target_temperature} K) even with maximum n_stab = "
-                f"{self.n_stab_strand}."
-            )
-            raise ValueError(
-                "Optimisation failed to keep final temperature ≤ target. "
-                "Try increasing the upper bound of n_stab or adjusting cable parameters."
-            )
-        bluemira_print(f"Optimal n_stab: {self.n_stab_strand}")
-        bluemira_print(
-            f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
-        )
-
-        @dataclass
-        class StabilisingStrandRes:
-            solution: Any
-            info_text: str
-
-        return StabilisingStrandRes(
-            solution,
-            (
-                f"Target T: {target_temperature:.2f} K\n"
-                f"Initial T: {initial_temperature:.2f} K\n"
-                f"SC Strand: {self.sc_strand.name}\n"
-                f"n. sc. strand = {self.n_sc_strand}\n"
-                f"Stab. strand = {self.stab_strand.name}\n"
-                f"n. stab. strand = {self.n_stab_strand}\n"
-            ),
-        )
+        final_temperature = float(solution.y[0][-1])
+        # diff = abs(final_temperature - target_temperature)
+        return abs(final_temperature - target_temperature)
 
     # OD homogenised structural properties
     @abstractmethod

@@ -19,9 +19,8 @@ from scipy.optimize import minimize_scalar
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
 from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import (
+    bluemira_error,
     bluemira_print,
-    bluemira_warn,
-    bluemira_debug,
 )
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.parameter_frame.typed import ParameterFrameLike
@@ -372,9 +371,18 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         optimisation_params = self.build_config.get("optimisation_params")
         derived_params = self._derived_values(optimisation_params)
 
-        conductor = self._make_conductor(
-            optimisation_params, derived_params, n_WPs, WP_i=0
+        # param frame optimisation stuff?
+        cable = self.optimise_cable_n_stab_ths(
+            self._make_cable(n_WPs, WP_i=0),
+            t0=optimisation_params["t0"],
+            tf=optimisation_params["Tau_discharge"],
+            initial_temperature=derived_params.T_op,
+            target_temperature=optimisation_params["hotspot_target_temperature"],
+            B_fun=derived_params.B_fun,
+            I_fun=derived_params.I_fun,
+            bounds=[1, 10000],
         )
+        conductor = self._make_conductor(cable.cable, n_WPs, WP_i=0)
         wp_params = self._check_arrays_match(n_WPs, wp_config.pop("params"))
         winding_pack = [
             self._make_winding_pack(conductor, i_WP, wp_config, wp_params)
@@ -405,6 +413,109 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         )
         return TFCoilXY(
             case, case._convergence_array, derived_params, optimisation_params
+        )
+
+    def optimise_cable_n_stab_ths(
+        self,
+        cable,
+        t0: float,
+        tf: float,
+        initial_temperature: float,
+        target_temperature: float,
+        B_fun: Callable[[float], float],
+        I_fun: Callable[[float], float],  # noqa: N803
+        bounds: np.ndarray | None = None,
+    ):
+        """
+        Optimise the number of stabiliser strand in the superconducting cable using a
+        0-D hot spot criteria.
+
+        Parameters
+        ----------
+        t0:
+            Initial time [s].
+        tf:
+            Final time [s].
+        initial_temperature:
+            Temperature [K] at initial time.
+        target_temperature:
+            Target temperature [K] at final time.
+        B_fun :
+            Magnetic field [T] as a time-dependent function.
+        I_fun :
+            Current [A] as a time-dependent function.
+        bounds:
+            Lower and upper limits for the number of stabiliser strands.
+
+        Returns
+        -------
+        :
+            The result of the optimisation process.
+
+        Raises
+        ------
+        ValueError
+            If the optimisiation process does not converge.
+
+        Notes
+        -----
+        - The number of stabiliser strands in the cable is modified directly.
+        - Cooling material contribution is neglected when applying the hot spot criteria.
+        """
+        result = minimize_scalar(
+            fun=cable.final_temperature_difference,
+            args=(t0, tf, initial_temperature, target_temperature, B_fun, I_fun),
+            bounds=bounds,
+            method=None if bounds is None else "bounded",
+        )
+
+        if not result.success:
+            raise ValueError(
+                "n_stab optimisation did not converge. Check your input parameters "
+                "or initial bracket."
+            )
+
+        # Here we re-ensure the n_stab_strand to be an integer
+        cable.n_stab_strand = int(np.ceil(cable.n_stab_strand))
+
+        solution = cable._temperature_evolution(
+            t0, tf, initial_temperature, B_fun, I_fun
+        )
+        final_temperature = solution.y[0][-1]
+
+        if final_temperature > target_temperature:
+            bluemira_error(
+                f"Final temperature ({final_temperature:.2f} K) exceeds target "
+                f"temperature "
+                f"({target_temperature} K) even with maximum n_stab = "
+                f"{cable.n_stab_strand}."
+            )
+            raise ValueError(
+                "Optimisation failed to keep final temperature ≤ target. "
+                "Try increasing the upper bound of n_stab or adjusting cable parameters."
+            )
+        bluemira_print(f"Optimal n_stab: {cable.n_stab_strand}")
+        bluemira_print(
+            f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
+        )
+
+        @dataclass
+        class StabilisingStrandRes:
+            cable: Any
+            solution: Any
+            info_text: str
+
+        return StabilisingStrandRes(
+            cable,
+            solution,
+            (
+                f"Target T: {target_temperature:.2f} K\n"
+                f"Initial T: {initial_temperature:.2f} K\n"
+                f"SC Strand: {cable.sc_strand.name}\n"
+                f"n. sc. strand = {cable.n_sc_strand}\n"
+                f"Stab. strand = {cable.stab_strand.name}\n"
+                f"n. stab. strand = {cable.n_stab_strand}\n"
+            ),
         )
 
     def _check_arrays_match(self, n_WPs, param_list):
@@ -466,7 +577,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             ),
         )
 
-    def _make_cable(self, WP_i, n_WPs):
+    def _make_cable(self, n_WPs, WP_i):
         stab_strand_config = self.build_config.get("stabilising_strand")
         sc_strand_config = self.build_config.get("superconducting_strand")
         cable_config = self.build_config.get("cable")
@@ -508,39 +619,13 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             ),
         )
 
-    def _make_conductor(self, optimisation_params, derived_params, n_WPs, WP_i=0):
+    def _make_conductor(self, cable, n_WPs, WP_i=0):
         # current functionality requires conductors are the same for both WPs
         # in future allow for different conductor objects so can vary cable and strands
         # between the sets of the winding pack?
-        stab_strand_config = self.build_config.get("stabilising_strand")
-        sc_strand_config = self.build_config.get("superconducting_strand")
-        cable_config = self.build_config.get("cable")
         conductor_config = self.build_config.get("conductor")
-
-        stab_strand_params = self._check_arrays_match(
-            n_WPs, stab_strand_config.get("params")
-        )
-        sc_strand_params = self._check_arrays_match(
-            n_WPs, sc_strand_config.get("params")
-        )
         conductor_params = self._check_arrays_match(
             n_WPs, conductor_config.get("params")
-        )
-
-        cable_params = self._check_arrays_match(n_WPs, cable_config.get("params"))
-
-        stab_strand = self._make_strand(WP_i, stab_strand_config, stab_strand_params)
-        sc_strand = self._make_strand(WP_i, sc_strand_config, sc_strand_params)
-        cable = self._make_cable(WP_i, n_WPs)
-        # param frame optimisation stuff?
-        result = cable.optimise_n_stab_ths(
-            t0=optimisation_params["t0"],
-            tf=optimisation_params["Tau_discharge"],
-            initial_temperature=derived_params.T_op,
-            target_temperature=optimisation_params["hotspot_target_temperature"],
-            B_fun=derived_params.B_fun,
-            I_fun=derived_params.I_fun,
-            bounds=[1, 10000],
         )
 
         return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
