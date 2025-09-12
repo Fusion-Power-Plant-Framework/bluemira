@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Designer for TF Coil XY cross section."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
@@ -59,54 +59,6 @@ class TFCoilXYDesignerParams(ParameterFrame):
     B_ref: Parameter[float]
     """Reference value for B field (LTS limit) [T]"""
 
-    # # strand params
-    # d_strand_sc: Parameter[float]
-    # """Diameter of superconducting strand"""
-    # d_strand: Parameter[float]
-    # """Diameter of stabilising strand"""
-    # operating_temperature: Parameter[float]
-    # """Operating temperature for the strands [K]"""
-
-    # # cable params
-    # n_sc_strand: Parameter[int]
-    # """Number of superconducting strands."""
-    # n_stab_strand: Parameter[int]
-    # """Number of stabilising strands."""
-    # d_cooling_channel: Parameter[float]
-    # """Diameter of the cooling channel [m]."""
-    # void_fraction: Parameter[float]
-    # """Ratio of material volume to total volume [unitless]."""
-    # cos_theta: Parameter[float]
-    # """Correction factor for twist in the cable layout."""
-    # dx: Parameter[float]
-    # """Cable half-width in the x-direction [m]."""
-
-    # # conductor params
-    # dx_jacket: Parameter[float]
-    # """x-thickness of the jacket [m]."""
-    # dy_jacket: Parameter[float]
-    # """y-tickness of the jacket [m]."""
-    # dx_ins: Parameter[float]
-    # """x-thickness of the insulator [m]."""
-    # dy_ins: Parameter[float]
-    # """y-thickness of the insulator [m]."""
-
-    # # winding pack params
-    # nx: Parameter[int]
-    # """Number of conductors along the x-axis."""
-    # ny: Parameter[int]
-    # """Number of conductors along the y-axis."""
-
-    # # case params
-    # Rk: Parameter[float]
-    # """Internal radius of the TF coil case [m]."""
-    # theta_TF: Parameter[float]
-    # """Toroidal angular span of the TF coil [degrees]."""
-    # dy_ps: Parameter[float]
-    # """Radial thickness of the poloidal support region [m]."""
-    # dy_vault: Parameter[float]
-    # """Radial thickness of the vault support region [m]."""
-
     Iop: Parameter[float]
     """Operational current in conductor"""
     T_sc: Parameter[float]
@@ -120,8 +72,63 @@ class TFCoilXYDesignerParams(ParameterFrame):
 
 
 @dataclass
+class StrandParams(ParameterFrame):
+    """Stand parameters"""
+
+    d_strand: Parameter[float]
+    operating_temperature: Parameter[float]
+
+
+@dataclass
+class CableParams(ParameterFrame):
+    """Cable parameters"""
+
+    d_cooling_channel: Parameter[float]
+    void_fraction: Parameter[float]
+    cos_theta: Parameter[float]
+    dx: Parameter[float]
+
+
+@dataclass
+class CableParamsWithE(CableParams):
+    """Cable parameters with custom youngs modulus"""
+
+    E: Parameter[float]
+
+
+@dataclass
+class SymConductorParams(ParameterFrame):
+    """Symmetric conductor parameters"""
+
+    dx_ins: Parameter[float]
+    dx_jacket: Parameter[float]
+
+
+@dataclass
+class ConductorParams(SymConductorParams):
+    """Conductor parameters"""
+
+    dy_ins: Parameter[float]
+    dy_jacket: Parameter[float]
+
+
+@dataclass
+class CaseParams(ParameterFrame):
+    """Case parameters"""
+
+    # Ri: Parameter[float]
+    # Rk: Parameter[float]
+    theta_TF: Parameter[float]
+    dy_ps: Parameter[float]
+    dy_vault: Parameter[float]
+
+
+@dataclass
 class DerivedTFCoilXYDesignerParams:
+    """Derived parameters for TF coils cross section design"""
+
     a: float
+    """Aspect ratio"""
     Ri: float
     """External radius of the TF coil case [m]."""
     Re: float
@@ -134,11 +141,12 @@ class DerivedTFCoilXYDesignerParams:
     min_gap_x: float
     I_fun: Callable[[float], float]
     B_fun: Callable[[float], float]
-    strain: float
 
 
 @dataclass
 class OptimisationConfig:
+    """Optimisation configuration"""
+
     t0: float
     """Initial time"""
     Tau_discharge: float
@@ -162,14 +170,26 @@ class OptimisationConfig:
 
 
 @dataclass
+class StabilisingStrandRes:
+    """Cable opt results"""
+
+    cable: Any
+    solution: Any
+    info_text: str
+
+
+@dataclass
 class TFCoilXY:
+    """TFCoil cross section solution"""
+
     case: CaseTF
-    cable_soln: Any
+    cable_soln: StabilisingStrandRes
     convergence: npt.NDArray
     derived_params: DerivedTFCoilXYDesignerParams
     op_config: OptimisationConfig
 
-    def plot_I_B(self, ax, n_steps=300):
+    def plot_I_B(self, ax, n_steps=300):  # noqa: N802
+        """Plot current and magnetic field evolution in optimisation"""
         time_steps = np.linspace(
             self.op_config.t0, self.op_config.Tau_discharge, n_steps
         )
@@ -198,6 +218,7 @@ class TFCoilXY:
         ax.figure.tight_layout()
 
     def plot_cable_temperature_evolution(self, ax, n_steps=100):
+        """Plot temperature evolution in optimisation"""
         solution = self.cable_soln.solution
 
         ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
@@ -224,10 +245,13 @@ class TFCoilXY:
         )
         ax.figure.tight_layout()
 
-    def plot_summary(self, n_steps, show=False):
+    def plot_summary(self, n_steps, *, show=False):
+        """Plot summary of optimisation"""  # noqa: DOC201
         f, (ax_temp, ax_ib) = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
         self.plot_cable_temperature_evolution(ax_temp, n_steps)
         self.plot_I_B(ax_ib, n_steps * 3)
+        if show:
+            plt.show()
         return f
 
     def plot(
@@ -237,9 +261,10 @@ class TFCoilXY:
         show: bool = False,
         homogenised: bool = False,
     ) -> plt.Axes:
+        """Plot the full cross section"""  # noqa: DOC201
         return self.case.plot(ax=ax, show=show, homogenised=homogenised)
 
-    def plot_convergence(self):
+    def plot_convergence(self, *, show: bool = False):
         """
         Plot the evolution of thicknesses and error values over optimisation iterations.
 
@@ -279,7 +304,8 @@ class TFCoilXY:
         axs[1].grid(visible=True)
 
         plt.tight_layout()
-        plt.show()
+        if show:
+            plt.show()
 
 
 class TFCoilXYDesigner(Designer[TFCoilXY]):
@@ -306,12 +332,12 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
     def _derived_values(self, op_config: OptimisationConfig):
         # Needed params that are calculated using the base params
-        R0 = self.params.R0.value
+        R0 = self.params.R0.value  # noqa: N806
         n_TF = self.params.n_TF.value
         B0 = self.params.B0.value
         a = R0 / self.params.A.value
-        Ri = R0 - a - self.params.d.value
-        Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)
+        Ri = R0 - a - self.params.d.value  # noqa: N806
+        Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)  # noqa: N806
         B_TF_i = 1.08 * (MU_0_2PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) / Ri)
         t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) ** 2
         return DerivedTFCoilXYDesignerParams(
@@ -336,7 +362,6 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             B_fun=delayed_exp_func(
                 B_TF_i, op_config.Tau_discharge, self.params.t_delay.value
             ),
-            strain=self.params.strain.value,
         )
 
     def B_TF_r(self, tf_current, r):
@@ -370,16 +395,16 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             TF case object all parts that make it up.
         """
         wp_config = self.build_config.get("winding_pack")
-        n_WPs = int(wp_config.get("sets"))
+        n_wp = int(wp_config.get("sets", 1))
 
         optimisation_params = OptimisationConfig(
             **self.build_config.get("optimisation_params")
         )
         derived_params = self._derived_values(optimisation_params)
 
-        # param frame optimisation stuff?
+        # Only a singular type of cable and conductor currently possible
         cable = self.optimise_cable_n_stab_ths(
-            self._make_cable(n_wp, WP_i=0),
+            self._make_cable(wp_i=0),
             t0=optimisation_params.t0,
             tf=optimisation_params.Tau_discharge,
             initial_temperature=derived_params.T_op,
@@ -388,11 +413,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             I_fun=derived_params.I_fun,
             bounds=[1, 10000],
         )
-        conductor = self._make_conductor(cable.cable, n_WPs, WP_i=0)
-        wp_params = self._check_arrays_match(n_WPs, wp_config.pop("params"))
+        conductor = self._make_conductor(cable.cable, wp_i=0)
         winding_pack = [
-            self._make_winding_pack(conductor, i_WP, wp_config, wp_params)
-            for i_WP in range(n_WPs)
+            self._make_winding_pack(conductor, wp_i, wp_config) for wp_i in range(n_wp)
         ]
 
         # param frame optimisation stuff?
@@ -403,7 +426,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             op_cond=OperationalConditions(
                 temperature=derived_params.T_op,
                 magnetic_field=derived_params.B_TF_i,
-                strain=derived_params.strain,
+                strain=self.params.strain.value,
             ),
             allowable_sigma=derived_params.s_y,
             bounds_cond_jacket=optimisation_params.bounds_cond_jacket,
@@ -420,8 +443,8 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             case, cable, convergence_array, derived_params, optimisation_params
         )
 
+    @staticmethod
     def optimise_cable_n_stab_ths(
-        self,
         cable,
         t0: float,
         tf: float,
@@ -504,12 +527,6 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             f"Final temperature with optimal n_stab: {final_temperature:.2f} Kelvin"
         )
 
-        @dataclass
-        class StabilisingStrandRes:
-            cable: Any
-            solution: Any
-            info_text: str
-
         return StabilisingStrandRes(
             cable,
             solution,
@@ -539,7 +556,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         max_niter: int = 10,
         eps: float = 1e-8,
         n_conds: int | None = None,
-    ):
+    ) -> tuple[CaseTF, npt.NDArray]:
         """
         Jointly optimise the conductor jacket and case vault thickness
         under electromagnetic loading constraints.
@@ -582,6 +599,13 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         n_conds:
             Target total number of conductors in the winding pack. If None, the self
             number of conductors is used.
+
+        Returns
+        -------
+        :
+            Case object
+        :
+            convergence array
 
         Notes
         -----
@@ -719,8 +743,8 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         return case, np.array(convergence_array)
 
+    @staticmethod
     def optimise_jacket_conductor(
-        self,
         conductor,
         pressure: float,
         f_z: float,
@@ -807,8 +831,8 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         return result
 
+    @staticmethod
     def optimise_vault_radial_thickness(
-        self,
         case,
         pm: float,
         fz: float,
@@ -862,22 +886,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         return result
 
-    def _check_arrays_match(self, n_WPs, param_list):
-        if n_WPs > 1:
-            for param in param_list:
-                if np.size(param_list[param]) != n_WPs:
-                    param_list[param] = [param_list[param] for _ in range(n_WPs)]
-            return param_list
-        if n_WPs == 1:
-            return param_list
-        raise ValueError(
-            f"Invalid value {n_WPs} for winding pack 'sets' in config."
-            "Value should be an integer >= 1."
-        )
-
-    def _make_strand(self, i_WP, config, params):
+    def _make_strand(self, wp_i, config, params):
         cls_name = config["class"]
-        stab_strand_cls = get_class_from_module(
+        strand_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.strand"
         )
         material_mix = []
@@ -891,100 +902,110 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             material_mix.append(
                 MaterialFraction(material=material_data, fraction=m["fraction"])
             )
-        return stab_strand_cls(
+
+        return strand_cls(
             materials=material_mix,
-            d_strand=params["d_strand"][i_WP],
-            operating_temperature=params["operating_temperature"][i_WP],
-            name="stab_strand",
+            d_strand=self._check_iterable(wp_i, params.d_strand.value),
+            operating_temperature=self._check_iterable(
+                wp_i, params.operating_temperature.value
+            ),
+            name=config.get("name", cls_name.rsplit("::", 1)[-1]),
         )
 
-    def _make_cable_cls(self, stab_strand, sc_strand, i_WP, config, params):
+    @staticmethod
+    def _check_iterable(wp_i, param_val):
+        return param_val[wp_i] if isinstance(param_val, Iterable) else param_val
+
+    def _make_cable_cls(self, stab_strand, sc_strand, wp_i, config, params):
         cls_name = config["class"]
         cable_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.cable"
         )
+        extras = {}
+        if issubclass(cable_cls, RectangularCable):
+            extras["dx"] = self._check_iterable(wp_i, params.dx.value)
+        if hasattr(params, "E"):
+            extras["E"] = self._check_iterable(wp_i, params.E.value)
         return cable_cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=params["n_sc_strand"][i_WP],
-            n_stab_strand=params["n_stab_strand"][i_WP],
-            d_cooling_channel=params["d_cooling_channel"][i_WP],
-            void_fraction=params["void_fraction"][i_WP],
-            cos_theta=params["cos_theta"][i_WP],
+            n_sc_strand=self._check_iterable(wp_i, config["n_sc_strand"]),
+            n_stab_strand=self._check_iterable(wp_i, config["n_stab_strand"]),
+            d_cooling_channel=self._check_iterable(wp_i, params.d_cooling_channel.value),
+            void_fraction=self._check_iterable(wp_i, params.void_fraction.value),
+            cos_theta=self._check_iterable(wp_i, params.cos_theta.value),
             name=config.get("name", cls_name.rsplit("::", 1)[-1]),
-            **(
-                {"dx": params["dx"][i_WP], "E": params["E"][i_WP]}
-                if issubclass(cable_cls, RectangularCable)
-                else {"E": params["E"][i_WP]}
-            ),
+            **extras,
         )
 
-    def _make_cable(self, n_WPs, WP_i):
+    def _make_cable(self, wp_i):
         stab_strand_config = self.build_config.get("stabilising_strand")
         sc_strand_config = self.build_config.get("superconducting_strand")
         cable_config = self.build_config.get("cable")
 
-        stab_strand_params = self._check_arrays_match(
-            n_WPs, stab_strand_config.get("params")
-        )
-        sc_strand_params = self._check_arrays_match(
-            n_WPs, sc_strand_config.get("params")
+        stab_strand_params = StrandParams.from_dict(stab_strand_config.pop("params"))
+        sc_strand_params = StrandParams.from_dict(sc_strand_config.pop("params"))
+        cable_params = cable_config.pop("params")
+
+        cable_params = (
+            CableParamsWithE.from_dict(cable_params)
+            if "E" in cable_params
+            else CableParams.from_dict(cable_params)
         )
 
-        cable_params = self._check_arrays_match(n_WPs, cable_config.get("params"))
-
-        stab_strand = self._make_strand(WP_i, stab_strand_config, stab_strand_params)
-        sc_strand = self._make_strand(WP_i, sc_strand_config, sc_strand_params)
+        stab_strand = self._make_strand(wp_i, stab_strand_config, stab_strand_params)
+        sc_strand = self._make_strand(wp_i, sc_strand_config, sc_strand_params)
         return self._make_cable_cls(
-            stab_strand, sc_strand, WP_i, cable_config, cable_params
+            stab_strand, sc_strand, wp_i, cable_config, cable_params
         )
 
-    def _make_conductor_cls(self, cable, i_WP, config, params):
+    def _make_conductor(self, cable, wp_i=0):
+        # current functionality requires conductors are the same for both WPs
+        # in future allow for different conductor objects so can vary cable and strands
+        # between the sets of the winding pack?
+        config = self.build_config.get("conductor")
+
         cls_name = config["class"]
         conductor_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.conductor"
         )
+        if issubclass(conductor_cls, SymmetricConductor):
+            params = SymConductorParams.from_dict(config.pop("params"))
+        else:
+            params = ConductorParams.from_dict(config.pop("params"))
+
         return conductor_cls(
             cable=cable,
             mat_jacket=config["jacket_material"],
             mat_ins=config["ins_material"],
-            dx_jacket=params["dx_jacket"][i_WP],
-            dx_ins=params["dx_ins"][i_WP],
+            dx_jacket=self._check_iterable(wp_i, params.dx_jacket.value),
+            dx_ins=self._check_iterable(wp_i, params.dx_ins.value),
             name=config.get("name", cls_name.rsplit("::", 1)[-1]),
             **(
                 {}
                 if issubclass(conductor_cls, SymmetricConductor)
                 else {
-                    "dy_jacket": params["dy_jacket"][i_WP],
-                    "dy_ins": params["dy_ins"][i_WP],
+                    "dy_jacket": self._check_iterable(wp_i, params.dy_jacket.value),
+                    "dy_ins": self._check_iterable(wp_i, params.dy_ins.value),
                 }
             ),
         )
 
-    def _make_conductor(self, cable, n_wp, WP_i=0):
-        # current functionality requires conductors are the same for both WPs
-        # in future allow for different conductor objects so can vary cable and strands
-        # between the sets of the winding pack?
-        conductor_config = self.build_config.get("conductor")
-        conductor_params = self._check_arrays_match(n_wp, conductor_config.get("params"))
-
-        return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
-
-    def _make_winding_pack(self, conductor, i_WP, config, params):
+    def _make_winding_pack(self, conductor, wp_i, config):
         cls_name = config["class"]
         winding_pack_cls = get_class_from_module(
             cls_name, default_module="bluemira.magnets.winding_pack"
         )
         return winding_pack_cls(
             conductor=conductor,
-            nx=int(params["nx"][i_WP]),
-            ny=int(params["ny"][i_WP]),
+            nx=int(self._check_iterable(wp_i, config["nx"])),
+            ny=int(self._check_iterable(wp_i, config["ny"])),
             name="winding_pack",
         )
 
     def _make_case(self, WPs, derived_params, optimisation_params):  # noqa: N803
         config = self.build_config.get("case")
-        params = config.get("params")
+        params = CaseParams.from_dict(config.get("params"))
 
         cls_name = config["class"]
         case_cls = get_class_from_module(
@@ -992,10 +1013,10 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         )
 
         case = case_cls(
-            Ri=params["Ri"],
-            theta_TF=params["theta_TF"],
-            dy_ps=params["dy_ps"],
-            dy_vault=params["dy_vault"],
+            Ri=derived_params.Ri,
+            theta_TF=params.theta_TF.value,
+            dy_ps=params.dy_ps.value,
+            dy_vault=params.dy_vault.value,
             mat_case=config["material"],
             WPs=WPs,
             name=config.get("name", cls_name.rsplit("::", 1)[-1]),

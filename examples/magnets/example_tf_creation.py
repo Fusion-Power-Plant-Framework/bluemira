@@ -26,8 +26,8 @@ config = {
         "class": "Strand",
         "materials": [{"material": COPPER_300, "fraction": 1.0}],
         "params": {
-            "d_strand": 1.0e-3,
-            "operating_temperature": 5.7,
+            "d_strand": {"value": 1.0e-3, "unit": "m"},
+            "operating_temperature": {"value": 5.7, "unit": "K"},
         },
     },
     "superconducting_strand": {
@@ -37,20 +37,20 @@ config = {
             {"material": COPPER_100, "fraction": 0.5},
         ],
         "params": {
-            "d_strand": 1.0e-3,
-            "operating_temperature": 5.7,
+            "d_strand": {"value": 1.0e-3, "unit": "m"},
+            "operating_temperature": {"value": 5.7, "unit": "K"},
         },
     },
     "cable": {
         "class": "RectangularCable",
+        "n_sc_strand": 321,
+        "n_stab_strand": 476,
         "params": {
-            "n_sc_strand": 321,
-            "n_stab_strand": 476,
-            "d_cooling_channel": 0.01,
-            "void_fraction": 0.7,
-            "cos_theta": 0.97,
-            "dx": 0.017324217577247843 * 2,
-            "E": 0.1e9,
+            "d_cooling_channel": {"value": 0.01, "unit": "m"},
+            "void_fraction": {"value": 0.7, "unit": ""},
+            "cos_theta": {"value": 0.97, "unit": ""},
+            "dx": {"value": 0.017324217577247843 * 2, "unit": "m"},
+            "E": {"value": 0.1e9, "unit": ""},
         },
     },
     "conductor": {
@@ -58,29 +58,27 @@ config = {
         "jacket_material": SS316_LN_MAG,
         "ins_material": DUMMY_INSULATOR_MAG,
         "params": {
-            "dx_jacket": 0.0015404278406243683 * 2,
+            "dx_jacket": {"value": 0.0015404278406243683 * 2, "unit": "m"},
             # "dy_jacket": 0.0,
-            "dx_ins": 0.0005 * 2,
+            "dx_ins": {"value": 0.0005 * 2, "unit": "m"},
             # "dy_ins": 0.0,
         },
     },
     "winding_pack": {
         "class": "WindingPack",
         "sets": 2,
-        "params": {
-            "nx": [25, 18],
-            "ny": [6, 1],
-        },
+        "nx": [25, 18],
+        "ny": [6, 1],
     },
     "case": {
         "class": "TrapezoidalCaseTF",
         "material": SS316_LN_MAG,
         "params": {
-            "Ri": 3.708571428571428,
-            "Rk": 0.0,
-            "theta_TF": 22.5,
-            "dy_ps": 0.028666666666666667 * 2,
-            "dy_vault": 0.22647895819808084 * 2,
+            # "Ri": {"value": 3.708571428571428, "unit": "m"},
+            # "Rk": {"value": 0, "unit": "m"},
+            "theta_TF": {"value": 22.5, "unit": "deg"},
+            "dy_ps": {"value": 0.028666666666666667 * 2, "unit": "m"},
+            "dy_vault": {"value": 0.22647895819808084 * 2, "unit": "m"},
         },
     },
     "optimisation_params": {
@@ -115,6 +113,8 @@ params = {
     "t_delay": {"value": 3, "unit": "s"},
     "strain": {"value": 0.0055, "unit": ""},
 }
+
 tf_coil_xy = TFCoilXYDesigner(params=params, build_config=config).execute()
 tf_coil_xy.plot(show=True, homogenised=False)
-# tf_coil_xy.plot_convergence()
+tf_coil_xy.plot_convergence(show=True)
+tf_coil_xy.plot_summary(100, show=True)
